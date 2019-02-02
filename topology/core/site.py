@@ -13,3 +13,11 @@ class Site(object):
             self.element = element
         if atom_type:
             self.atom_type = atom_type
+        self._connections = list()
+
+    def add_connection(self, other_site):
+        self._connections.append(other_site)
+
+    @property
+    def connections(self):
+        return self._connections
