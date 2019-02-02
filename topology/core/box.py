@@ -2,7 +2,7 @@ import numpy as np
 
 
 class Box(object):
-    """A box representing the bounds of the system.
+    """A box representing the bounds of the topology.
 
     Attributes
     ----------
@@ -12,6 +12,8 @@ class Box(object):
         Maximum x, y, z coordinates.
     lengths : np.ndarray, shape(3,), dtype=float
         Box length in x, y and z directions.
+    box_vectors : np.ndarray, shape(3,3), dtype=float
+        Support for vectors defining the bounds of the box.
 
     """
     def __init__(self, lengths=None, mins=None, maxs=None, angles=None):
