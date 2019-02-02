@@ -12,11 +12,22 @@ class Box(object):
         Maximum x, y, z coordinates.
     lengths : np.ndarray, shape(3,), dtype=float
         Box length in x, y and z directions.
-    box_vectors : np.ndarray, shape(3,3), dtype=float
-        Support for vectors defining the bounds of the box.
+    vectors : np.ndarray, shape(3,3), dtype=float
+        Unit vectors that define the edges of the box.
+    positions : np.ndarray, shape(n_atoms, 3), dtype=float
+        XYZ coordinates of the sites in the topology.
 
     """
-    def __init__(self, lengths=None, mins=None, maxs=None, angles=None):
+    def __init__(self, lengths=None, mins=None, maxs=None,
+                 angles=None, vectors=None, positions=None):
+        lengths, mins, maxs, angles, vectors = self._validate(
+            lengths=lengths, mins=mins, maxs=maxs,
+            angles=angles, vectors=vectors, positions=positions)
+        self._lengths = lengths
+        self._mins = mins
+        self._maxs = maxs
+        self._angles = angles
+        self._vectors = vectors
         if lengths is not None:
             assert mins is None and maxs is None
             self._mins = np.array([0.0, 0.0, 0.0])
@@ -35,6 +46,30 @@ class Box(object):
         elif isinstance(angles, (list, np.ndarray)):
             angles = np.array(angles, dtype=np.float)
         self._angles = angles
+
+    def _validate(self, lengths=None, mins=None, maxs=maxs, angles=angles, vectors=vectors):
+        """
+        Validate the inputs for the box class.
+
+
+        :return:
+        mins : np.ndarray, shape=(3,), dtype=float
+            Minimum x, y, z coordinates.
+        maxs : np.ndarray, shape=(3,), dtype=float
+            Maximum x, y, z coordinates.
+        lengths : np.ndarray, shape(3,), dtype=float
+            Box length in x, y and z directions.
+        vectors : np.ndarray, shape(3,3), dtype=float
+            Unit vectors that define the edges of the box.
+        """
+
+        # validate that angles and vectors are not both defined (over-defined)
+        if angles is not None and vectors is not None:
+            raise AttributeError('Over-defined system: angles and'
+                                 'vectors provided.'
+                                 'Only one of these should be passed.')
+
+        # validate that if lengths are passed,
 
     @property
     def mins(self):
