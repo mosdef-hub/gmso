@@ -21,3 +21,7 @@ class Site(object):
     @property
     def connections(self):
         return self._connections
+
+    @property
+    def n_connections(self):
+        return len(self._connections)
