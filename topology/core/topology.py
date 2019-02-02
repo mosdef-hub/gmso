@@ -19,3 +19,9 @@ class Topology(object):
     @property
     def n_sites(self):
         return len(self.site_list)
+
+    def positions(self):
+        xyz = np.empty(shape=(self.n_sites, 3))
+        for i, site in enumerate(self.site_list):
+            xyz[i, :] = site.position
+        return xyz
