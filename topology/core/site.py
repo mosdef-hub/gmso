@@ -1,8 +1,11 @@
+import numpy as np
+
+
 class Site(object):
     """A general site."""
     def __init__(self, name, position=None, element=None, atom_type=None):
         self.name = name
-        if not position:
+        if position is None:
             self.position = np.zeros(3)
         else:
             self.position = position

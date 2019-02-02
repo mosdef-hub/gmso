@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class Topology(object):
     """A topology.
 
