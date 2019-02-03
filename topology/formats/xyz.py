@@ -1,5 +1,5 @@
 import numpy as np
-from simtk.unit import angstrom, nanometer
+import unyt as u
 
 from topology.core.topology import Topology
 from topology.core.site import Site
@@ -11,7 +11,7 @@ def read_xyz(filename):
     with open(filename, 'r') as xyz_file:
         n_atoms = int(xyz_file.readline())
         xyz_file.readline()
-        coords = np.zeros(shape=(n_atoms, 3), dtype=np.float64)
+        coords = np.zeros(shape=(n_atoms, 3), dtype=np.float64) * u.nanometer
         for row, _ in enumerate(coords):
             line = xyz_file.readline().split()
             if not line:
@@ -19,8 +19,8 @@ def read_xyz(filename):
                        'number in the first line of the file, {} rows of atoms '
                        'were expected, but at least one fewer was found.')
                 raise ValueError(msg.format(n_atoms))
-            tmp = [val * angstrom for val in line[1:4]]
-            coords[row] = [val.in_units_of(nanometer) for val in tmp]
+            tmp = line[1:4] * u.angstrom
+            coords[row] = tmp.convert_to_units(u.nanometer)
             site = Site(name=line[0], position=coords[row])
             top.add_site(site)
 
