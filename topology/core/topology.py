@@ -40,20 +40,24 @@ class Topology(object):
     def connection_list(self):
         return self._connection_list
 
+    @property
+    def n_connections(self):
+        return len(self._connection_list)
+
     def add_connection(self, connection):
         self._connection_list.append(connection)
 
-    def check_connection_list(self):
+    def verify_connection_list(self):
+        connections_to_add = list()
         for site in self._site_list:
             for neighbor in site.connections:
                 if len(self._connection_list) > 0:
                     for connect in self._connection_list:
-                        if (site, neighbor) == (connect.site1, connect.site2):
-                            continue
-                        if (site, neighbor) == (connect.site2, connect.site1):
-                            continue
-                        new_connect = Connection(site1=site, site2=neighbor)
-                        self.add_connection(new_connect)
+                        if site is connect.site1 and neighbor is connect.site2:
+                            pass
+                        if site is connect.site2 and neighbor is connect.site1:
+                            pass
+                        else:
+                            raise ValueError('this aint good')
                 else:
-                    new_connect = Connection(site1=site, site2=neighbor)
-                    self.add_connection(new_connect)
+                    raise ValueError('there is a connection not in the list')

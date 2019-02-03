@@ -1,6 +1,7 @@
 from topology.core.connection import Connection
 from topology.core.site import Site
 
+
 def test_new_connect():
     site1 = Site(name='site1')
     site2 = Site(name='site2')

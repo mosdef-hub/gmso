@@ -8,3 +8,4 @@ def test_from_mbuild():
     top = from_mbuild(ethane)
 
     assert top.n_sites == 8
+    assert top.n_connections == 7

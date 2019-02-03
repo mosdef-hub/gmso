@@ -21,4 +21,6 @@ def from_mbuild(compound):
         if map[b1] not in map[b2].connections:
             map[b2].add_connection(map[b1])
 
+    top.verify_connection_list()
+
     return top

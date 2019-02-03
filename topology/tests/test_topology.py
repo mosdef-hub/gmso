@@ -24,6 +24,6 @@ def test_add_connection():
     top.add_site(site1)
     top.add_site(site2)
 
-    top.check_connection_list()
+    top.verify_connection_list()
 
     assert len(top.connection_list) == 1
