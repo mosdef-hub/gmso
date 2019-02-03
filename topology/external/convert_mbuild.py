@@ -24,3 +24,22 @@ def from_mbuild(compound):
     top.update_connection_list()
 
     return top
+
+def to_mbuild(topology):
+    msg = ("Provided argument that is not a topology")
+    assert isinstance(topology, Topology), msg
+
+    compound = mb.Compound()
+    if topology.name is not None:
+        compound.name = topology.name
+
+    map = dict()
+    for site in topology.site_list:
+        particle = mb.Compound(name=site.name, pos=site.position[0])
+        map[site] = particle
+        compound.add(particle)
+
+    for connect in topology.connection_list:
+        compound.add_bond((map[connect.site1], map[connect.site2]))
+
+    return compound
