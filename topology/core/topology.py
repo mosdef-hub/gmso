@@ -47,17 +47,10 @@ class Topology(object):
     def add_connection(self, connection):
         self._connection_list.append(connection)
 
-    def verify_connection_list(self):
-        connections_to_add = list()
-        for site in self._site_list:
+    def update_connection_list(self):
+        for site in self.site_list:
             for neighbor in site.connections:
-                if len(self._connection_list) > 0:
-                    for connect in self._connection_list:
-                        if site is connect.site1 and neighbor is connect.site2:
-                            pass
-                        if site is connect.site2 and neighbor is connect.site1:
-                            pass
-                        else:
-                            raise ValueError('this aint good')
-                else:
-                    raise ValueError('there is a connection not in the list')
+                temp_connection = Connection(site, neighbor, update=False)
+                if temp_connection not in self.connection_list:
+                    self.add_connection(Connection(site, neighbor, update=True))
+
