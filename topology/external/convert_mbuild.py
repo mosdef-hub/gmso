@@ -1,4 +1,5 @@
 import mbuild as mb
+from simtk.unit import nanometer
 
 from topology.core.topology import Topology
 from topology.core.site import Site
@@ -10,7 +11,8 @@ def from_mbuild(compound):
     top = Topology(name=compound.name)
     map = dict()
     for child in compound.particles():
-        site = Site(name=child.name, position=child.xyz)
+        pos = [val * nanometer for val in child.xyz]
+        site = Site(name=child.name, position=pos)
         map[child] = site
         top.add_site(site)
 
