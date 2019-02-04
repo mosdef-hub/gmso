@@ -54,3 +54,11 @@ class Topology(object):
                 if temp_connection not in self.connection_list:
                     self.add_connection(Connection(site, neighbor, update=True))
 
+    def __repr__(self):
+        descr = list('<')
+        descr.append(self.name + ' ')
+        descr.append('{:d} sites, '.format(self.n_sites))
+        descr.append('{:d} connectiosn, '.format(self.n_connections))
+        descr.append('id: {}>'.format(id(self)))
+
+        return ''.join(descr)
