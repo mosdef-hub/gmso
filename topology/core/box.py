@@ -14,7 +14,7 @@ class Box(object):
         Box length in x, y and z directions.
     vectors : np.ndarray, shape(3,3), dtype=float
         Unit vectors that define the edges of the box.
-    positions : np.ndarray, shape(n_atoms, 3), dtype=float
+    positions : np.ndarray, shape(n_sites, 3), dtype=float
         XYZ coordinates of the sites in the topology.
 
     """
@@ -28,6 +28,7 @@ class Box(object):
         self._maxs = maxs
         self._angles = angles
         self._vectors = vectors
+        self._positions = positions
         if lengths is not None:
             assert mins is None and maxs is None
             self._mins = np.array([0.0, 0.0, 0.0])
@@ -47,7 +48,8 @@ class Box(object):
             angles = np.array(angles, dtype=np.float)
         self._angles = angles
 
-    def _validate(self, lengths=None, mins=None, maxs=maxs, angles=angles, vectors=vectors):
+    def _validate(self, lengths=None, mins=None, maxs=None,
+                  angles=None, vectors=None, positions=None):
         """
         Validate the inputs for the box class.
 
@@ -61,15 +63,13 @@ class Box(object):
             Box length in x, y and z directions.
         vectors : np.ndarray, shape(3,3), dtype=float
             Unit vectors that define the edges of the box.
+        positions : np.ndarray, shape (n_sites, 3), dtype=float
+
         """
 
-        # validate that angles and vectors are not both defined (over-defined)
-        if angles is not None and vectors is not None:
-            raise AttributeError('Over-defined system: angles and'
-                                 'vectors provided.'
-                                 'Only one of these should be passed.')
+        if lengths is not None:
 
-        # validate that if lengths are passed,
+
 
     @property
     def mins(self):
@@ -86,6 +86,14 @@ class Box(object):
     @property
     def angles(self):
         return self._angles
+
+    @property
+    def vectors(self):
+        return self._vectors
+
+    @property
+    def positions(self):
+        return self._positions
 
     @mins.setter
     def mins(self, mins):
