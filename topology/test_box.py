@@ -21,11 +21,6 @@ class TestBox():
         box = Box(mins=np.zeros(3), maxs=np.ones(3), angles=[40.0, 50.0, 60.0])
         assert np.array_equal(box.angles, [40.0, 50.0, 60.0])
 
-    def test_init_vectors(self):
-        box = Box(lengths=np.ones(3),
-                vectors=[[1, 0, 0], [0, 1, 0], [0, 1, 0]])
-        assert np.array_equal(box.vectors, [[1, 0, 0], [0, 1, 0], [0, 1, 0]])
-
     def test_dtype(self):
         box = Box(mins=np.zeros(3), maxs=np.ones(3))
         assert box.lengths.dtype == np.float64
@@ -57,11 +52,6 @@ class TestBox():
         box.angles = np.array([60.0, 120.0, 60.0])
         assert (box.angles == np.array([60.0, 120.0, 60.0])).all()
 
-    def test_vectors_setter(self):
-        box = Box(lengths=np.ones(3))
-        box.vectors = [[1, 0, 0], [0, 1, 0], [0, 1, 0]]
-        assert np.array_equal(box.vectors, [[1, 0, 0], [0, 1, 0], [0, 1, 0]])
-
     def test_setters_with_lists(self):
         box = Box(mins=np.zeros(3), maxs=2 * np.ones(3))
         box.mins = [1, 1, 1]
@@ -75,8 +65,3 @@ class TestBox():
         box.lengths = [4, 4, 4]
         assert (box.lengths == 4 * np.ones(3)).all()
         assert (box.maxs - box.mins == 4 * np.ones(3)).all()
-    
-    def test_incorrect_box_args(self):
-        with pytest.raises(ValueError):
-            box = Box(mins=np.zeros(3), maxs=2 * np.ones(3),
-                    angles=90*np.ones(3), vectors=[[1, 0, 0], [0, 1, 0], [0, 1, 0]])
