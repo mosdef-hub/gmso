@@ -54,3 +54,7 @@ class TestBox():
     def test_default_angles(self):
         box = Box(lengths=np.zeros(3))
         assert (box.angles == np.array([90.0, 90.0, 90.0])).all()
+
+    def test_vectors(self):
+        box = Box(lengths=np.ones(3), angles=[40.0, 50.0, 60.0])
+        assert np.isclose(box.vectors, ())
