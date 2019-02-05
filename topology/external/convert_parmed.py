@@ -7,7 +7,7 @@ def from_parmed(structure):
     msg = ("Provided argument that is not a Parmed Structure")
     assert isinstance(structure, pmd.Structure), msg
 
-    top = Topology(name=structure.name)
+    top = Topology(name=structure.title)
     map = dict()
     for atom in structure.atoms:
         site = Site(name=atom.name, position=[atom.xx, atom.xy, atom.xz])
