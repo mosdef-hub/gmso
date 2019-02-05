@@ -11,8 +11,8 @@ class Topology(object):
     name : str, optional
         A name for the Topology.
     """
-    def __init__(self, name=None, box=None):
-        if name:
+    def __init__(self, name="Default Topology", box=None):
+        if name is not None:
             self.name = name
         if box:
             self.box = box
