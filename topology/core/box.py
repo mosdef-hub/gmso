@@ -4,80 +4,49 @@ import numpy as np
 class Box(object):
     """A box representing the bounds of the topology.
 
+    Parameters
+    ----------
+    lengths : array-like, shape(3,), dtype=float
+        Lengths of the box [a, b, c].
+    angles : array-link, optional, shape(3,), dtype=float
+        Interplanar angles, [alpha, beta, gamma], that describe the box shape.
+
     Attributes
     ----------
-    mins : np.ndarray, shape=(3,), dtype=float
-        Minimum x, y, z coordinates.
-    maxs : np.ndarray, shape=(3,), dtype=float
-        Maximum x, y, z coordinates.
-    lengths : np.ndarray, shape(3,), dtype=float
-        Box length in x, y and z directions.
-    vectors : np.ndarray, shape(3,3), dtype=float
-        Unit vectors that define the edges of the box.
-    positions : np.ndarray, shape(n_sites, 3), dtype=float
-        XYZ coordinates of the sites in the topology.
+    a, b, c : float
+        Lengths of the box.
+    alpha, beta, gamma : float
+        Interplanar angles fully describing the `Box`.
+
+
+    Methods
+    -------
+    vectors()
+        Output the unit vectors describing the shape of the `Box`.
+
+
 
     """
-    def __init__(self, lengths=None, mins=None, maxs=None,
-                 angles=None, vectors=None, positions=None):
-        lengths, mins, maxs, angles, vectors = self._validate(
-            lengths=lengths, mins=mins, maxs=maxs,
-            angles=angles, vectors=vectors, positions=positions)
-        self._lengths = lengths
-        self._mins = mins
-        self._maxs = maxs
-        self._angles = angles
-        self._vectors = vectors
-        self._positions = positions
-        if lengths is not None:
-            assert mins is None and maxs is None
-            self._mins = np.array([0.0, 0.0, 0.0])
-            self._maxs = np.array(lengths, dtype=np.float)
-            self._lengths = np.array(lengths, dtype=np.float)
-        elif maxs is not None:
-            assert mins is not None and lengths is None
-            self._mins = np.array(mins, dtype=np.float)
-            self._maxs = np.array(maxs, dtype=np.float)
-            self._lengths = self.maxs - self.mins
-        else:
-            raise ValueError("Either provide `lengths` or `mins` and `maxs`."
-                             "You provided: lengths={} mins={} maxs={}".format(lengths, mins, maxs))
+
+    def __init__(self, lengths, angles=None):
+        """Constructs a `Box`."""
+
+        lengths = np.asarray(lengths, dtype=float, order='C')
+        np.reshape(lengths, newshape=(3,), order='C')
+
+        if np.any(np.less(lengths, [0, 0, 0],)):
+            raise ValueError('Negative or 0 value lengths passed.'
+                             'Lengths must be a value greater than 0.0'
+                             'You passed {}'.format(lengths))
+
         if angles is None:
-            angles = np.array([90.0, 90.0, 90.0])
-        elif isinstance(angles, (list, np.ndarray)):
-            angles = np.array(angles, dtype=np.float)
+            angles = np.asarray([90, 90, 90], dtype=float, order='C')
+        else:
+            angles = np.asarray(angles, dtype=float, order='C')
+            np.reshape(angles, newshape=(3,1), order='C')
+
+        self._lengths = lengths
         self._angles = angles
-
-    def _validate(self, lengths=None, mins=None, maxs=None,
-                  angles=None, vectors=None, positions=None):
-        """
-        Validate the inputs for the box class.
-
-
-        :return:
-        mins : np.ndarray, shape=(3,), dtype=float
-            Minimum x, y, z coordinates.
-        maxs : np.ndarray, shape=(3,), dtype=float
-            Maximum x, y, z coordinates.
-        lengths : np.ndarray, shape(3,), dtype=float
-            Box length in x, y and z directions.
-        vectors : np.ndarray, shape(3,3), dtype=float
-            Unit vectors that define the edges of the box.
-        positions : np.ndarray, shape (n_sites, 3), dtype=float
-
-        """
-
-        if lengths is not None:
-
-
-
-    @property
-    def mins(self):
-        return self._mins
-
-    @property
-    def maxs(self):
-        return self._maxs
 
     @property
     def lengths(self):
@@ -87,29 +56,6 @@ class Box(object):
     def angles(self):
         return self._angles
 
-    @property
-    def vectors(self):
-        return self._vectors
-
-    @property
-    def positions(self):
-        return self._positions
-
-    @mins.setter
-    def mins(self, mins):
-        if isinstance(mins, list):
-            mins = np.array(mins, dtype=np.float)
-        assert mins.shape == (3, )
-        self._mins = mins
-        self._lengths = self.maxs - self.mins
-
-    @maxs.setter
-    def maxs(self, maxes):
-        if isinstance(maxes, list):
-            maxes = np.array(maxes, dtype=np.float)
-        assert maxes.shape == (3, )
-        self._maxs = maxes
-        self._lengths = self.maxs - self.mins
 
     @lengths.setter
     def lengths(self, lengths):
@@ -128,4 +74,5 @@ class Box(object):
         self._angles = angles
 
     def __repr__(self):
-        return "Box(mins={}, maxs={}, angles={})".format(self.mins, self.maxs, self.angles)
+        return "Box(a={}, b={}, c={}, alpha={}, beta={}, gamma={})"\
+            .format(*self._lengths, *self._angles)
