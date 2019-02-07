@@ -3,7 +3,7 @@ import sympy
 class AtomType(object):
     """An atom type."""
     def __init__(self, name="AtomType", charge=0.0, 
-            nb_function='4*epsilon*((sigma/r)**12 - (sigma/r)**6)'
+            nb_function='4*epsilon*((sigma/r)**12 - (sigma/r)**6)',
             parameters={'sigma':1, 'epsilon':100}):
 
         self._name = name
@@ -61,5 +61,5 @@ class AtomType(object):
         return (self.name == other.name)
 
     def __repr__(self):
-        desc = "<AtomType {}, id {}".format(self._name, id(self)) 
+        desc = "<AtomType {}, id {}>".format(self._name, id(self)) 
         return desc
