@@ -62,3 +62,19 @@ class Topology(object):
         descr.append('id: {}>'.format(id(self)))
 
         return ''.join(descr)
+
+    def __eq__(self, other):
+        """Compare a topology for equivalence."""
+
+        if self is other:
+            return True
+
+        if not isinstance(other, Topology):
+            return False
+
+        if self.n_sites != other.n_sites:
+            return False
+
+        for (site1, site2) in zip(self.site_list, other.site_list):
+            if not np.allclose(site1.position, site2.position):
+                return False
