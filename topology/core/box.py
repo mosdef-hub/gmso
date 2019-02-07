@@ -95,6 +95,9 @@ class Box(object):
 
         return np.asarray(box_vec, dtype=np.float)
 
+    def full_vectors_from_angles(self):
+        return (self._lengths * self.unit_vectors_from_angles().T).T
+
     def __repr__(self):
         return "Box(a={}, b={}, c={}, alpha={}, beta={}, gamma={})"\
             .format(*self._lengths, *self._angles)
