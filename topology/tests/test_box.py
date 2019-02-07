@@ -22,15 +22,19 @@ class TestBox():
         box.lengths = 2 * np.ones(3)
         assert (box.lengths == 2 * np.ones(3)).all()
 
-    def test_angles_setter(self):
+    @pytest.mark.parametrize('angles', [[40.0, 50.0, 60.0],
+        [30.0, 60.0, 70.0], [45.0, 45.0, 75.0]])
+    def test_angles_setter(self, angles):
         box = Box(lengths=np.ones(3), angles=90*np.ones(3))
-        box.angles = np.array([60.0, 120.0, 60.0])
-        assert (box.angles == np.array([60.0, 120.0, 60.0])).all()
+        box.angles = angles
+        assert (box.angles == angles).all()
 
-    def test_setters_with_lists(self):
+    @pytest.mark.parametrize('lengths', [[3, 3, 3], [4, 4, 4],
+        [4, 6, 4]])
+    def test_setters_with_lists(self, lengths):
         box = Box(lengths=np.ones(3))
-        box.lengths = [4, 4, 4]
-        assert (box.lengths == 4 * np.ones(3)).all()
+        box.lengths = lengths
+        assert (box.lengths == lengths).all()
 
     def test_default_angles(self):
         box = Box(lengths=np.zeros(3))
