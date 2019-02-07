@@ -15,7 +15,7 @@ class TestBox():
 
     def test_dtype(self):
         box = Box(lengths=np.zeros(3))
-        assert box.lengths.dtype == np.float64
+        assert box.lengths.dtype == float
 
     def test_lengths_setter(self):
         box = Box(lengths=np.ones(3))
