@@ -32,3 +32,14 @@ def test_nb_function_consistency():
     symbol_x, symbol_y = sympy.symbols('x y')
     assert new_type.nb_function.free_symbols == set([symbol_x, symbol_y])
 
+def test_equivalance():
+    first_type = AtomType(name='mytype', charge=1.0, 
+            parameters={'sigma':1, 'epsilon':10})
+    second_type = AtomType(name='mytype', charge=1.0, 
+            parameters={'sigma':1, 'epsilon':10})
+    different_type = AtomType(name='difftype', charge=4.0, 
+            parameters={'sigma':1, 'epsilon':10})
+
+    
+    assert first_type == second_type
+    assert first_type != different_type
