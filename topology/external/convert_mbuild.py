@@ -30,7 +30,9 @@ def to_mbuild(topology):
     assert isinstance(topology, Topology), msg
 
     compound = mb.Compound()
-    if topology.name is not None:
+    if topology.name is None:
+        compound.name = 'Compound'
+    else:
         compound.name = topology.name
 
     map = dict()
