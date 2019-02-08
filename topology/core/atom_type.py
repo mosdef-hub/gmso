@@ -58,7 +58,10 @@ class AtomType(object):
             raise ValueError("Please enter a string or sympy expression")
 
     def __eq__(self, other):
-        return (self.name == other.name)
+        return ((self.name == other.name) & 
+                (np.isclose(self.charge, other.charge)) & 
+                (self.parameters == other.parameters) & 
+                (self.nb_function == other.nb_function))
 
     def __repr__(self):
         desc = "<AtomType {}, id {}>".format(self._name, id(self)) 
