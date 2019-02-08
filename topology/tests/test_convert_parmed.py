@@ -1,9 +1,11 @@
 import parmed as pmd
 
 from topology.external.convert_parmed import from_parmed
+from topology.utils.io import get_fn
+
 
 def test_from_parmed():
-    struc = pmd.load_file('ethane.mol2').to_structure()
+    struc = pmd.load_file(get_fn('ethane.mol2')).to_structure()
     top = from_parmed(struc)
 
     assert top.n_sites == 8
