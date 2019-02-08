@@ -1,3 +1,4 @@
+import numpy as np
 import sympy
 
 class AtomType(object):
