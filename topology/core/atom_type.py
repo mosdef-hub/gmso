@@ -39,24 +39,48 @@ class AtomType(object):
     def parameters(self):
         return self._parameters 
 
-    @parameters.setter
-    def parameters(self, val):
-        self._parameters = val
+    #@parameters.setter
+    #def parameters(self, val):
+    #    self._parameters = val
 
     @property 
     def nb_function(self):
         return self._nb_function
 
-    @nb_function.setter
-    def nb_function(self, val):
-        if val is None:
-            self._nb_function = None
-        elif isinstance(val, str):
-            self._nb_function = sympy.sympify(val)
-        elif isinstance(val, sympy.Expr):
-            self._nb_function = val
+    #@nb_function.setter
+    #def nb_function(self, val):
+    #    if val is None:
+    #        self._nb_function = None
+    #    elif isinstance(val, str):
+    #        self._nb_function = sympy.sympify(val)
+    #    elif isinstance(val, sympy.Expr):
+    #        self._nb_function = val
+    #    else:
+    #        raise ValueError("Please enter a string or sympy expression")
+
+    def set_nb_function(self, func=None, params=None):
+        # Check valid function type (string or sympy expression)
+        # If func is undefined, just keep the old one
+        if func is None:
+            pass
+        elif isinstance(func, str):
+            self._nb_function = sympy.sympify(func)
+        elif isinstance(func, sympy.Expr):
+            self._nb_function = func
         else:
             raise ValueError("Please enter a string or sympy expression")
+
+        # If params is undefined, keep the old one
+        if params is None:
+            symbols = sympy.symbols(set(self._parameters.keys()))
+        else:
+            symbols = sympy.symbols(set(params.keys()))
+
+        # Now verify that the parameters and nb_function have consistent symbols
+        if symbols.issubset(self.nb_function.free_symbols):
+            self._parameters.update(params)
+        else:
+            raise ValueError("NB function and parameter symbols do not agree")
 
     def __eq__(self, other):
         return ((self.name == other.name) & 
