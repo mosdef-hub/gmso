@@ -51,3 +51,8 @@ class TestBox():
                                 [0.5, 0.86603, 0],
                                 [0.64278, 0.51344, 0.56852]])
         assert np.isclose(box.vectors(), test_vectors)
+
+    def test_negative_z_vector(self):
+        box = Box(lengths=np.ones(3), angles=[-90.0, -40.0, 20.0])
+        with pytest.raises(Warning):
+            box.unit_vectors_from_angles()
