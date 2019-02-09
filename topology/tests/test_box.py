@@ -19,7 +19,7 @@ class TestBox():
             box = Box(lengths=lengths, angles=90*np.ones(3))
 
     def test_dtype(self):
-        box = Box(lengths=np.zeros(3))
+        box = Box(lengths=np.ones(3))
         assert box.lengths.dtype == float
 
     def test_lengths_setter(self):
@@ -42,7 +42,7 @@ class TestBox():
         assert (box.lengths == lengths).all()
 
     def test_default_angles(self):
-        box = Box(lengths=np.zeros(3))
+        box = Box(lengths=np.ones(3))
         assert (box.angles == np.array([90.0, 90.0, 90.0])).all()
 
     def test_vectors(self):
