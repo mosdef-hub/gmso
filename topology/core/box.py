@@ -5,7 +5,7 @@ def _validate_lengths(lengths):
     lengths = np.asarray(lengths, dtype=float, order='C')
     np.reshape(lengths, newshape=(3,), order='C')
 
-    if np.any(np.less(lengths, [0, 0, 0], )):
+    if np.any(np.less_equal(lengths, [0, 0, 0], )):
         raise ValueError('Negative or 0 value lengths passed.'
                          'Lengths must be a value greater than 0.0'
                          'You passed {}'.format(lengths))
