@@ -39,24 +39,9 @@ class AtomType(object):
     def parameters(self):
         return self._parameters 
 
-    #@parameters.setter
-    #def parameters(self, val):
-    #    self._parameters = val
-
     @property 
     def nb_function(self):
         return self._nb_function
-
-    #@nb_function.setter
-    #def nb_function(self, val):
-    #    if val is None:
-    #        self._nb_function = None
-    #    elif isinstance(val, str):
-    #        self._nb_function = sympy.sympify(val)
-    #    elif isinstance(val, sympy.Expr):
-    #        self._nb_function = val
-    #    else:
-    #        raise ValueError("Please enter a string or sympy expression")
 
     def set_nb_function(self, function=None, parameters=None):
         # Check valid function type (string or sympy expression)
@@ -72,14 +57,17 @@ class AtomType(object):
 
         # If params is undefined, keep the old one
         if parameters is None:
-            symbols = sympy.symbols(set(self._parameters.keys()))
-            parameters = self._parameters
+            symbols = sympy.symbols(set(self.parameters.keys()))
+            parameters = self.parameters
         else:
             symbols = sympy.symbols(set(parameters.keys()))
 
         # Now verify that the parameters and nb_function have consistent symbols
         if symbols.issubset(self.nb_function.free_symbols):
+            # Rebuild the parameters, eliminate unnecessary parameters
             self._parameters.update(parameters)
+            self._parameters = {key: val for key, val in self._parameters.items() 
+                    if key in set(str(sym) for sym in self.nb_function.free_symbols)}
         else:
             raise ValueError("NB function and parameter symbols do not agree")
 
