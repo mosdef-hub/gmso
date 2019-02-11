@@ -66,7 +66,7 @@ def test_set_nb_func():
 
 def test_set_nb_func_bad():
     # Try changing the nonbonded function, keep the parameters, 
-    # but the nb functino uses different symbols
+    # but the nb function uses different symbols
     first_type = AtomType(nb_function='sigma*epsilon', 
             parameters={'sigma':1, 'epsilon':100})
     with pytest.raises(ValueError):
