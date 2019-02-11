@@ -22,7 +22,7 @@ def write_lammpsdata(topology, filename, atom_style='full',
     Parameters
     ----------
     Topology : Topology
-        MoSDeF Topology Object
+        Topology Object
     filename : str
         Path of the output file
     atom_style: str
