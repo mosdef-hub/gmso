@@ -64,10 +64,8 @@ class AtomType(object):
 
         # If params is undefined, keep the old one
         if parameters is None:
-            symbols = sympy.symbols(set(self.parameters.keys()))
             parameters = self.parameters
-        else:
-            symbols = sympy.symbols(set(parameters.keys()))
+        symbols = sympy.symbols(set(parameters.keys()))
 
         # Now verify that the parameters and nb_function have consistent symbols
         if symbols.issubset(self.nb_function.free_symbols):
