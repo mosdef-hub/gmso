@@ -9,7 +9,13 @@ class AtomType(object):
 
         self._name = name
         self._charge = charge
-        self._parameters = parameters
+
+        if isinstance(parameters, dict):
+            self._parameters = parameters
+        else:
+            raise ValueError("Please enter dictionary for parameters")
+
+
         if nb_function is None:
             self._nb_function = None
         elif isinstance(nb_function, str):
@@ -17,7 +23,8 @@ class AtomType(object):
         elif isinstance(nb_function, sympy.Expr):
             self._nb_function = nb_function
         else:
-            raise ValueError("Please enter a string, sympy expression, or None")
+            raise ValueError("Please enter a string, sympy expression, "
+                            "or None for nb_function")
 
     @property
     def name(self):
