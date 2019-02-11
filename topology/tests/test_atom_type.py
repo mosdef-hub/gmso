@@ -42,12 +42,12 @@ def test_equivalance():
             parameters={'sigma':1, 'epsilon':10})
     different_charge = AtomType(name='mytype', charge=4.0, 
             parameters={'sigma':1, 'epsilon':10})
-    different_function = AtomType(name='mytype', charge=4.0, 
+    different_function = AtomType(name='mytype', charge=1.0, 
             parameters={'sigma':1, 'epsilon':10},
             nb_function='sigma * epsilon')
-    different_params = AtomType(name='mytype', charge=4.0, 
-            parameters={'sigma':42, 'epsilon':100000},
-            nb_function='sigma * epsilon')
+    different_params = AtomType(name='mytype', charge=1.0, 
+            parameters={'sigma':42, 'epsilon':100000})
+            
 
     assert first_type == same_type
     assert first_type != different_name
