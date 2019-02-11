@@ -36,18 +36,21 @@ def test_nb_function_consistency():
 def test_equivalance():
     first_type = AtomType(name='mytype', charge=1.0, 
             parameters={'sigma':1, 'epsilon':10})
-    second_type = AtomType(name='mytype', charge=1.0, 
+    same_type = AtomType(name='mytype', charge=1.0, 
             parameters={'sigma':1, 'epsilon':10})
-    different_charge = AtomType(name='difftype', charge=4.0, 
+    different_name = AtomType(name='difftype', charge=1.0, 
             parameters={'sigma':1, 'epsilon':10})
-    different_function = AtomType(name='difftype', charge=4.0, 
+    different_charge = AtomType(name='mytype', charge=4.0, 
+            parameters={'sigma':1, 'epsilon':10})
+    different_function = AtomType(name='mytype', charge=4.0, 
             parameters={'sigma':1, 'epsilon':10},
             nb_function='sigma * epsilon')
-    different_params = AtomType(name='difftype', charge=4.0, 
+    different_params = AtomType(name='mytype', charge=4.0, 
             parameters={'sigma':42, 'epsilon':100000},
             nb_function='sigma * epsilon')
 
-    assert first_type == second_type
+    assert first_type == same_type
+    assert first_type != different_name
     assert first_type != different_charge
     assert first_type != different_function
     assert first_type != different_params
