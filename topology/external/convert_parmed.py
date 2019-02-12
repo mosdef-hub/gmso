@@ -20,7 +20,9 @@ def from_parmed(structure):
                 # This parallelism-contradiction might be an issue?
                 parameters={'sigma': atom.sigma * u.angstrom, 
                     'epsilon': atom.epsilon * u.kilocalorie / u.mol})
-        site = Site(name=atom.name, position=[atom.xx, atom.xy, atom.xz]*u.angstrom)
+        site = Site(name=atom.name, 
+                position=[atom.xx, atom.xy, atom.xz]*u.angstrom,
+                atom_type=atom_type)
         map[atom] = site
         top.add_site(site)
 
