@@ -14,3 +14,5 @@ def test_from_parmed_basic():
 def test_from_parmed_parametrized_structure():
     struc = pmd.load_file(get_fn('ethane.top'), xyz=get_fn('ethane.gro'))
     top = from_parmed(struc)
+
+    # Some tests for charges and atom_types for each site
