@@ -13,14 +13,20 @@ def from_parmed(structure):
     top = Topology(name=structure.title)
     map = dict()
     for atom in structure.atoms:
-        atom_type = AtomType(name=atom.atom_type.name, 
-                charge=atom.atom_type.charge * u.elementary_charge, 
-                parameters={'sigma': atom.sigma * u.angstrom, 
-                    'epsilon': atom.epsilon * 1000 * u.calorie / u.mol})
-        site = Site(name=atom.name, 
-                charge=atom.charge * u.elementary_charge,
-                position=[atom.xx, atom.xy, atom.xz]*u.angstrom,
-                atom_type=atom_type)
+        if isinstance(atom.atom_type, pmd.AtomType):
+            atom_type = AtomType(name=atom.atom_type.name, 
+                    charge=atom.atom_type.charge * u.elementary_charge, 
+                    parameters={'sigma': atom.sigma * u.angstrom, 
+                        'epsilon': atom.epsilon * 1000 * u.calorie / u.mol})
+            site = Site(name=atom.name, 
+                    charge=atom.charge * u.elementary_charge,
+                    position=[atom.xx, atom.xy, atom.xz]*u.angstrom,
+                    atom_type=atom_type)
+        else:
+            site = Site(name=atom.name, 
+                    charge=atom.charge * u.elementary_charge,
+                    position=[atom.xx, atom.xy, atom.xz]*u.angstrom,
+                    atom_type=None)
         map[atom] = site
         top.add_site(site)
 
