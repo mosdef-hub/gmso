@@ -14,13 +14,11 @@ def from_parmed(structure):
     map = dict()
     for atom in structure.atoms:
         atom_type = AtomType(name=atom.atom_type.name, 
-                charge=atom.charge * u.elementary_charge, 
-                # The parmed atomtype doens't carry the charge, but the atom does
-                # Our atomtype DOES carry the charge, but the site doens't
-                # This parallelism-contradiction might be an issue?
+                charge=atom.atom_type.charge * u.elementary_charge, 
                 parameters={'sigma': atom.sigma * u.angstrom, 
                     'epsilon': atom.epsilon * 1000 * u.calorie / u.mol})
         site = Site(name=atom.name, 
+                charge=atom.charge * u.elementary_charge,
                 position=[atom.xx, atom.xy, atom.xz]*u.angstrom,
                 atom_type=atom_type)
         map[atom] = site
