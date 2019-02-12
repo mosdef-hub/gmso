@@ -3,7 +3,9 @@ import unyt as u
 
 from topology.core.topology import Topology
 from topology.core.site import Site
+from topology.core.connection import Connection
 from topology.core.atom_type import AtomType
+from topology.core.connection_type import ConnectionType
 from topology.core.box import Box
 
 def from_parmed(structure):
@@ -35,9 +37,22 @@ def from_parmed(structure):
         top.box = Box(structure.box[0:3]*u.angstrom, angles=structure.box[4:7])
 
     for bond in structure.bonds:
-        bond_params = {'k': bond.type.k * 1000 * u.calorie / (u.angstrom**2 * u.mol),
-                        'req': bond.type.req * u.angstrom}
-        # Need to modify `Connection` to have knowledge of bond parameters
+        # Generate bond parameters for ConnectionType that gets passed
+        # to Connection
+        if isinstance(bond.type, pmd.BondType):
+            bond_params = {'k': bond.type.k * 1000 * u.calorie / (u.angstrom**2 * u.mol),
+                            'req': bond.type.req * u.angstrom}
+            new_connection_type = ConnectionType(parameters=bond_params)
+            top_connection = Connection(map[bond.atom1], map[bond.atom2],
+                    connection_type=new_connection_type)
+
+        # No bond parameters, make Connection with no connection_type
+        else:
+            top_connection = Connection(map[bond.atom1], map[bond.atom2],
+                    connection_type=None)
+
+        top.add_connection(top_connection)
+
         if map[bond.atom2] not in map[bond.atom1].connections:
             map[bond.atom1].add_connection(map[bond.atom2])
         if map[bond.atom1] not in map[bond.atom2].connections:
