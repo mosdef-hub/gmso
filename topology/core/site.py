@@ -31,10 +31,6 @@ class Site(object):
     def n_connections(self):
         return len(self._connections)
 
-    @charge.setter
-    def charge(self, charge):
-        self._charge = charge
-
     @property
     def charge(self):
         if self._charge is not None:
@@ -42,3 +38,7 @@ class Site(object):
         else:
             return self.atom_type.charge
     
+    @charge.setter
+    def charge(self, charge):
+        self._charge = charge
+
