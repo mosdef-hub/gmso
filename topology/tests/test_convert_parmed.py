@@ -16,3 +16,4 @@ def test_from_parmed_parametrized_structure():
     top = from_parmed(struc)
 
     # Some tests for charges and atom_types for each site
+    # Some tests for connection_types for each connection
