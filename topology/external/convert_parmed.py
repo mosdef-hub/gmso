@@ -19,7 +19,7 @@ def from_parmed(structure):
                 # Our atomtype DOES carry the charge, but the site doens't
                 # This parallelism-contradiction might be an issue?
                 parameters={'sigma': atom.sigma * u.angstrom, 
-                    'epsilon': atom.epsilon * u.kilocalorie / u.mol})
+                    'epsilon': atom.epsilon * 1000 * u.calorie / u.mol})
         site = Site(name=atom.name, 
                 position=[atom.xx, atom.xy, atom.xz]*u.angstrom,
                 atom_type=atom_type)
@@ -31,7 +31,7 @@ def from_parmed(structure):
         top.box = Box(structure.box[0:3]*u.angstrom, angles=structure.box[4:7])
 
     for bond in structure.bonds:
-        bond_params = {'k': bond.type.k * u.kilocalorie / (u.angstrom**2 * u.mol),
+        bond_params = {'k': bond.type.k * 1000 * u.calorie / (u.angstrom**2 * u.mol),
                         'req': bond.type.req * u.angstrom}
         # Need to modify `Connection` to have knowledge of bond parameters
         if map[bond.atom2] not in map[bond.atom1].connections:
