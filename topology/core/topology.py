@@ -11,8 +11,8 @@ class Topology(object):
     name : str, optional
         A name for the Topology.
     """
-    def __init__(self, name=None, box=None):
-        if name:
+    def __init__(self, name="Topology", box=None):
+        if name is not None:
             self.name = name
         if box:
             self.box = box
@@ -54,3 +54,11 @@ class Topology(object):
                 if temp_connection not in self.connection_list:
                     self.add_connection(Connection(site, neighbor, update=True))
 
+    def __repr__(self):
+        descr = list('<')
+        descr.append(self.name + ' ')
+        descr.append('{:d} sites, '.format(self.n_sites))
+        descr.append('{:d} connectiosn, '.format(self.n_connections))
+        descr.append('id: {}>'.format(id(self)))
+
+        return ''.join(descr)
