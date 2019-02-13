@@ -74,7 +74,9 @@ class AtomType(object):
             self._parameters = {key: val for key, val in self._parameters.items() 
                     if key in set(str(sym) for sym in self.nb_function.free_symbols)}
         else:
-            raise ValueError("NB function and parameter symbols do not agree")
+            extra_syms = symbols - self.nb_function.free_symbols
+            raise ValueError("NB function and parameter symbols do not agree," 
+                    " you supplied extraneous symbols: {}".format(extra_syms))
 
     def __eq__(self, other):
         return ((self.name == other.name) & 
