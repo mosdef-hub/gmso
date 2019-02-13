@@ -1,9 +1,17 @@
+import warnings
+
 import numpy as np
+import unyt as u
 
 
 def _validate_lengths(lengths):
+    if not isinstance(lengths, u.unyt_array):
+        warnings.warn('Lengths are assumed to be in nm')
+
     lengths = np.asarray(lengths, dtype=float, order='C')
     np.reshape(lengths, newshape=(3,), order='C')
+
+    lengths *= u.nm
 
     if np.any(np.less(lengths, [0, 0, 0], )):
         raise ValueError('Negative or 0 value lengths passed.'
@@ -16,8 +24,14 @@ def _validate_angles(angles):
     if angles is None:
         angles = np.asarray([90, 90, 90], dtype=float, order='C')
     else:
+        if not isinstance(angles, u.unyt_array):
+            warnings.warn('Angles are assumed to be in degrees')
+
         angles = np.asarray(angles, dtype=float, order='C')
         np.reshape(angles, newshape=(3, 1), order='C')
+
+    angles *= u.degree
+
     return angles
 
 
@@ -28,9 +42,13 @@ class Box(object):
     Parameters
     ----------
     lengths : array-like, shape(3,), dtype=float
-        Lengths of the box [a, b, c].
-    angles : array-link, optional, shape(3,), dtype=float
+        Lengths of the box [a, b, c]. Units are assumed to be in nm; if
+        passed in as a `unyt_array` it will be converted to nm; if passed in
+        as floats, nm is assumed.
+    angles : array-like, optional, shape(3,), dtype=float
         Interplanar angles, [alpha, beta, gamma], that describe the box shape.
+        Units are assumed to be in degrees; if passed in as a `unyt_array` it
+        will be converted to degrees; if passed in as floats, degrees iis assumed.
 
 
     Attributes

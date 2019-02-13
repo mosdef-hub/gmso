@@ -1,5 +1,7 @@
 import pytest
 import numpy as np
+import unyt as u
+
 from topology.core.box import Box
 
 
@@ -46,4 +48,5 @@ class TestBox():
         test_vectors = np.array([[1, 0, 0],
                                 [0.5, 0.86603, 0],
                                 [0.64278, 0.51344, 0.56852]])
+        test_vectors *= u.nm
         assert np.allclose(vectors, test_vectors, atol=1e-3)
