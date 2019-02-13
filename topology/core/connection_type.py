@@ -60,6 +60,6 @@ class ConnectionType(object):
             raise ValueError("Potential function and parameter"
                             " symbols do not agree")
 
-     def __eq__(self, other):
+    def __eq__(self, other):
         return ((self.parameters == other.parameters) &
                 (self.potential_function == other.potential_function))
