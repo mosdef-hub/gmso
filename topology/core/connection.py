@@ -13,6 +13,8 @@ class Connection(object):
 
         if isinstance(connection_type, ConnectionType):
             self._connection_type = connection_type
+        elif connection_type is None:
+            self._connection_type = None
         else:
             self._connection_type = ConnectionType(connection_type)
 
