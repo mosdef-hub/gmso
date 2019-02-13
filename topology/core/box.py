@@ -90,12 +90,11 @@ class Box(object):
     def unit_vectors_from_angles(self):
         (alpha, beta, gamma) = self._angles
 
-        radian_conversion = np.pi / 180.0
-        cosa = np.cos(alpha * radian_conversion)
-        cosb = np.cos(beta * radian_conversion)
-        sinb = np.sin(beta * radian_conversion)
-        cosg = np.cos(gamma * radian_conversion)
-        sing = np.sin(gamma * radian_conversion)
+        cosa = np.cos(alpha)
+        cosb = np.cos(beta)
+        sinb = np.sin(beta)
+        cosg = np.cos(gamma)
+        sing = np.sin(gamma)
         mat_coef_y = (cosa - cosb * cosg) / sing
         mat_coef_z = np.power(sinb, 2, dtype=float) - \
             np.power(mat_coef_y, 2, dtype=float)
