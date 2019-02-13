@@ -23,8 +23,13 @@ class Connection(object):
         return self._connection_type
 
     @connection_type.setter
-    def connection_type(self, val):
-        self._connection_type = val
+    def connection_type(self, connection_type):
+        if isinstance(connection_type, ConnectionType):
+            self._connection_type = connection_type
+        elif connection_type is None:
+            self._connection_type = None
+        else:
+            self._connection_type = ConnectionType(connection_type)
 
     def __eq__(self, other):
         # No comparison of connection_type in case of non-parametrization
