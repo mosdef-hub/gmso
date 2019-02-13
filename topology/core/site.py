@@ -37,5 +37,5 @@ class Site(object):
     
     @charge.setter
     def charge(self, charge):
-        self._charge = charge
+        self._charge = float(charge)
 
