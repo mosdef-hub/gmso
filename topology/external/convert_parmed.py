@@ -14,7 +14,7 @@ def from_parmed(structure):
     assert isinstance(structure, pmd.Structure), msg
 
     top = Topology(name=structure.title)
-    map = dict()
+    site_map = dict()
     for atom in structure.atoms:
         if isinstance(atom.atom_type, pmd.AtomType):
             atom_type = AtomType(name=atom.atom_type.name, 
@@ -30,7 +30,7 @@ def from_parmed(structure):
                     charge=atom.charge * u.elementary_charge,
                     position=[atom.xx, atom.xy, atom.xz]*u.angstrom,
                     atom_type=None)
-        map[atom] = site
+        site_map[atom] = site
         top.add_site(site)
 
     if np.all(structure.box):
@@ -44,20 +44,20 @@ def from_parmed(structure):
             bond_params = {'k': 2 * bond.type.k * 1000 * u.calorie / (u.angstrom**2 * u.mol),
                             'req': bond.type.req * u.angstrom}
             new_connection_type = ConnectionType(parameters=bond_params)
-            top_connection = Connection(map[bond.atom1], map[bond.atom2],
+            top_connection = Connection(site_map[bond.atom1], site_map[bond.atom2],
                     connection_type=new_connection_type)
 
         # No bond parameters, make Connection with no connection_type
         else:
-            top_connection = Connection(map[bond.atom1], map[bond.atom2],
+            top_connection = Connection(site_map[bond.atom1], site_map[bond.atom2],
                     connection_type=None)
 
         top.add_connection(top_connection)
 
-        if map[bond.atom2] not in map[bond.atom1].connections:
-            map[bond.atom1].add_connection(map[bond.atom2])
-        if map[bond.atom1] not in map[bond.atom2].connections:
-            map[bond.atom2].add_connection(map[bond.atom1])
+        if site_map[bond.atom2] not in site_map[bond.atom1].connections:
+            site_map[bond.atom1].add_connection(site_map[bond.atom2])
+        if site_map[bond.atom1] not in site_map[bond.atom2].connections:
+            site_map[bond.atom2].add_connection(site_map[bond.atom1])
 
         
 
