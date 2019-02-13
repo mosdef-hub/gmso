@@ -46,4 +46,4 @@ class TestBox():
         test_vectors = np.array([[1, 0, 0],
                                 [0.5, 0.86603, 0],
                                 [0.64278, 0.51344, 0.56852]])
-        assert np.isclose(box.vectors(), test_vectors)
+        assert np.allclose(vectors, test_vectors, atol=1e-3)
