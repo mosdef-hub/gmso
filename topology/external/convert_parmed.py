@@ -1,3 +1,4 @@
+import numpy as np
 import parmed as pmd
 import unyt as u
 
@@ -32,9 +33,9 @@ def from_parmed(structure):
         map[atom] = site
         top.add_site(site)
 
-    if structure.box:
+    if np.all(structure.box):
         # This is if we choose for topology to have abox
-        top.box = Box(structure.box[0:3]*u.angstrom, angles=structure.box[4:7])
+        top.box = Box(structure.box[0:3]*u.angstrom, angles=structure.box[3:6])
 
     for bond in structure.bonds:
         # Generate bond parameters for ConnectionType that gets passed
