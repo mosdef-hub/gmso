@@ -40,7 +40,7 @@ def from_parmed(structure):
         # Generate bond parameters for ConnectionType that gets passed
         # to Connection
         if isinstance(bond.type, pmd.BondType):
-            bond_params = {'k': bond.type.k * 1000 * u.calorie / (u.angstrom**2 * u.mol),
+            bond_params = {'k': 2 * bond.type.k * 1000 * u.calorie / (u.angstrom**2 * u.mol),
                             'req': bond.type.req * u.angstrom}
             new_connection_type = ConnectionType(parameters=bond_params)
             top_connection = Connection(map[bond.atom1], map[bond.atom2],
