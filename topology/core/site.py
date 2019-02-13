@@ -12,12 +12,9 @@ class Site(object):
             self.position = position
         if element:
             self.element = element
-        if atom_type:
-            self.atom_type = atom_type
-        if charge is not None:
-            self._charge = charge
-        else:
-            self._charge = None
+
+        self.atom_type = atom_type
+        self._charge = charge
         self._connections = list()
 
     def add_connection(self, other_site):
