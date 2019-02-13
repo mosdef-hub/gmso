@@ -57,8 +57,11 @@ class ConnectionType(object):
                     if key in set(str(sym) 
                         for sym in self.potential_function.free_symbols)}
         else:
+            extra_syms = symbols - self.potential_function.free_symbols
             raise ValueError("Potential function and parameter"
-                            " symbols do not agree")
+                            " symbols do not agree,"
+                            " you supplied extraneous symbols:"
+                            " {}".format(extra_syms))
 
     def __eq__(self, other):
         return ((self.parameters == other.parameters) &
