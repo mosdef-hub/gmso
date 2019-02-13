@@ -42,7 +42,7 @@ def from_parmed(structure):
         # to Connection
         if isinstance(bond.type, pmd.BondType):
             bond_params = {'k': 2 * bond.type.k * 1000 * u.calorie / (u.angstrom**2 * u.mol),
-                            'req': bond.type.req * u.angstrom}
+                            'r_eq': bond.type.req * u.angstrom}
             new_connection_type = ConnectionType(parameters=bond_params)
             top_connection = Connection(site_map[bond.atom1], site_map[bond.atom2],
                     connection_type=new_connection_type)
