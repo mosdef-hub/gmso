@@ -1,4 +1,7 @@
+import warnings
+
 import numpy as np
+import unyt as u
 
 
 class Site(object):
@@ -6,9 +9,9 @@ class Site(object):
     def __init__(self, name, position=None, element=None, atom_type=None):
         self.name = name
         if position is None:
-            self.position = np.zeros(3)
+            self.position = u.nm * np.zeros(3)
         else:
-            self.position = position
+            self.position = _validate_position(position)
         if element:
             self.element = element
         if atom_type:
@@ -25,3 +28,18 @@ class Site(object):
     @property
     def n_connections(self):
         return len(self._connections)
+
+def _validate_position(position):
+    if not isinstance(position, u.unyt_array):
+        warnings.warn('Positions are assumed to be in nm')
+        position *= u.nm
+
+    input_unit = position.units
+
+    position = np.asarray(position, dtype=float, order='C')
+    np.reshape(position, newshape=(3,), order='C')
+
+    position *= input_unit
+    position.in_units(u.nm)
+
+    return position
