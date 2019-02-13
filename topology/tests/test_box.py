@@ -18,6 +18,11 @@ class TestBox():
     def test_dtype(self):
         box = Box(lengths=np.zeros(3))
         assert box.lengths.dtype == float
+        assert isinstance(box.lengths, u.unyt_array)
+        assert isinstance(box.lengths, np.ndarray)
+        assert box.angles.dtype == float
+        assert isinstance(box.angles, u.unyt_array)
+        assert isinstance(box.angles, np.ndarray)
 
     def test_lengths_setter(self):
         box = Box(lengths=np.ones(3))
