@@ -5,9 +5,9 @@ import unyt as u
 class ConnectionType(object):
     """A connection type."""
     def __init__(self, 
-            potential_function='0.5 * k * (r-req)**2',
+            potential_function='0.5 * k * (r-r_eq)**2',
             parameters={'k': 1000 * u.joule / (u.mol * u.nm**2), 
-                'req':1 * u.nm}):
+                'r_eq':1 * u.nm}):
 
         if isinstance(parameters, dict):
             self._parameters = parameters
