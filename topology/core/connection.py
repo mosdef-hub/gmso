@@ -1,3 +1,5 @@
+from topology.core.connection_type import ConnectionType
+
 class Connection(object):
     """A simple connection between sites."""
     def __init__(self, site1=None, site2=None, update=True, connection_type=None):
@@ -9,7 +11,10 @@ class Connection(object):
             site1.add_connection(site2)
             site2.add_connection(site1)
 
-        self._connection_type = connection_type
+        if isinstance(connection_type, ConnectionType):
+            self._connection_type = connection_type
+        else:
+            self._connection_type = ConnectionType(connection_type)
 
     @property
     def connection_type(self):
