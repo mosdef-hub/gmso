@@ -7,11 +7,15 @@ import unyt as u
 def _validate_lengths(lengths):
     if not isinstance(lengths, u.unyt_array):
         warnings.warn('Lengths are assumed to be in nm')
+        lengths *= u.nm
+
+    input_unit = lengths.units
 
     lengths = np.asarray(lengths, dtype=float, order='C')
     np.reshape(lengths, newshape=(3,), order='C')
 
-    lengths *= u.nm
+    lengths *= input_unit
+    lengths.in_units(u.nm)
 
     if np.any(np.less(lengths, [0, 0, 0], )):
         raise ValueError('Negative or 0 value lengths passed.'
@@ -23,14 +27,19 @@ def _validate_lengths(lengths):
 def _validate_angles(angles):
     if angles is None:
         angles = np.asarray([90, 90, 90], dtype=float, order='C')
+        angles *= u.degree
     else:
         if not isinstance(angles, u.unyt_array):
             warnings.warn('Angles are assumed to be in degrees')
+            angles *= u.degree
+
+        input_unit = angles.units
 
         angles = np.asarray(angles, dtype=float, order='C')
         np.reshape(angles, newshape=(3, 1), order='C')
 
-    angles *= u.degree
+        angles *= input_unit
+        angles.in_units(u.degree)
 
     return angles
 
