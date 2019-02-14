@@ -17,7 +17,7 @@ def allclose(a, b, rtol=None, atol=None):
         atol = 1e-8 * common_unit
 
     if rtol is None:
-        rtol = 1e-5 * common_unit
+        rtol = 1e-5 * abs(b)
 
     return (abs(a - b) <= (atol + rtol)).all()
 
