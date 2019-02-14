@@ -35,14 +35,14 @@ def _infer_common_unit(a, b):
     common_unit : u.Unit
     """
 
-    if a.units() == b.units():
+    if a.units == b.units:
         return a.units
 
     # Estimate a representative order of magnitude of the values inputs
-    order_of_a = np.log10(np.mean(np.abs(a)))
-    order_of_b = np.log10(np.mean(np.abs(b)))
+    order_of_a = np.log10(np.mean(np.abs(a.in_base())))
+    order_of_b = np.log10(np.mean(np.abs(b.in_base())))
 
-    if order_of_a / order_of_b > 6:
+    if abs(order_of_a - order_of_b) > 6:
         warnings.warn('Values appear to be many orders of magnitude different')
 
     # Find which array has a typical value nearest 10 ** 0
