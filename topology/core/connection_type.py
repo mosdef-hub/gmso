@@ -33,6 +33,24 @@ class ConnectionType(object):
         return self._potential_function
 
     def set_potential_function(self, function=None, parameters=None):
+        """ Set the potential function and paramters for this connection type
+
+        Parameters
+        ----------
+        function: sympy.Expression or string
+            The mathematical expression corresponding to the bond potential
+            If None, the function remains unchanged
+        parameters: dict
+            {parameter: value} in the function
+            If None, the parameters remain unchanged
+
+        Notes
+        -----
+        Be aware of the symbols used in the `function` and `parameters`.
+        If unnecessary parameters are supplied, an error is thrown.
+        If only a subset of the parameters are supplied, they are updated
+            while the non-passed parameters default to the existing values
+       """ 
         # Check valid function type (string or sympy expression)
         # If func is undefined, just keep the old one
         if function is None:
