@@ -20,7 +20,7 @@ def from_parmed(structure):
             atom_type = AtomType(name=atom.atom_type.name, 
                     charge=atom.atom_type.charge * u.elementary_charge, 
                     parameters={'sigma': atom.sigma * u.angstrom, 
-                        'epsilon': atom.epsilon * 1000 * u.calorie / u.mol})
+                        'epsilon': atom.epsilon * u.Unit('kcal / mol')})
             site = Site(name=atom.name, 
                     charge=atom.charge * u.elementary_charge,
                     position=[atom.xx, atom.xy, atom.xz]*u.angstrom,
@@ -41,7 +41,8 @@ def from_parmed(structure):
         # Generate bond parameters for ConnectionType that gets passed
         # to Connection
         if isinstance(bond.type, pmd.BondType):
-            bond_params = {'k': 2 * bond.type.k * 1000 * u.calorie / (u.angstrom**2 * u.mol),
+            bond_params = {'k': (2 * bond.type.k * 
+                                u.Unit('kcal / (angstrom**2 * mol)')),
                             'r_eq': bond.type.req * u.angstrom}
             new_connection_type = ConnectionType(parameters=bond_params)
             top_connection = Connection(site_map[bond.atom1], site_map[bond.atom2],
