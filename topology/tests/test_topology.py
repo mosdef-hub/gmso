@@ -1,3 +1,5 @@
+import unyt as u
+
 from topology.core.topology import Topology
 from topology.core.site import Site
 from topology.core.connection import Connection
@@ -27,3 +29,15 @@ def test_add_connection():
     top.update_connection_list()
 
     assert len(top.connection_list) == 1
+
+def test_positions_dtype():
+    top = Topology()
+    site1 = Site(name='site1')
+    top.add_site(site1)
+
+    assert set([type(site.position) for site in top.site_list]) == {u.unyt_array}
+    assert set([site.position.units for site in top.site_list]) == {u.nm}
+
+    assert top.positions().dtype == float
+    assert top.positions().units == u.nm
+    assert isinstance(top.positions(), u.unyt_array)
