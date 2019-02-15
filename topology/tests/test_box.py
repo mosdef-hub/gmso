@@ -1,5 +1,7 @@
 import pytest
 import numpy as np
+import unyt as u
+
 from topology.core.box import Box
 
 
@@ -21,6 +23,11 @@ class TestBox():
     def test_dtype(self):
         box = Box(lengths=np.ones(3))
         assert box.lengths.dtype == float
+        assert isinstance(box.lengths, u.unyt_array)
+        assert isinstance(box.lengths, np.ndarray)
+        assert box.angles.dtype == float
+        assert isinstance(box.angles, u.unyt_array)
+        assert isinstance(box.angles, np.ndarray)
 
     def test_lengths_setter(self):
         box = Box(lengths=np.ones(3))
@@ -51,4 +58,5 @@ class TestBox():
         test_vectors = np.array([[1, 0, 0],
                                 [0.5, 0.86603, 0],
                                 [0.64278, 0.51344, 0.56852]])
-        assert np.isclose(box.vectors(), test_vectors)
+        test_vectors *= u.nm
+        assert np.allclose(vectors.value, test_vectors.value, atol=1e-3)

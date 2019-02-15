@@ -1,11 +1,23 @@
+import warnings
+
 import numpy as np
+import unyt as u
 
 
 def _validate_lengths(lengths):
+    if not isinstance(lengths, u.unyt_array):
+        warnings.warn('Lengths are assumed to be in nm')
+        lengths *= u.nm
+
+    input_unit = lengths.units
+
     lengths = np.asarray(lengths, dtype=float, order='C')
     np.reshape(lengths, newshape=(3,), order='C')
 
-    if np.any(np.less_equal(lengths, [0, 0, 0], )):
+    lengths *= input_unit
+    lengths.convert_to_units(u.nm)
+
+    if np.any(np.less(lengths, [0, 0, 0], )):
         raise ValueError('Negative or 0 value lengths passed.'
                          'Lengths must be a value greater than 0.0'
                          'You passed {}'.format(lengths))
@@ -15,9 +27,20 @@ def _validate_lengths(lengths):
 def _validate_angles(angles):
     if angles is None:
         angles = np.asarray([90, 90, 90], dtype=float, order='C')
+        angles *= u.degree
     else:
+        if not isinstance(angles, u.unyt_array):
+            warnings.warn('Angles are assumed to be in degrees')
+            angles *= u.degree
+
+        input_unit = angles.units
+
         angles = np.asarray(angles, dtype=float, order='C')
         np.reshape(angles, newshape=(3, 1), order='C')
+
+        angles *= input_unit
+        angles.convert_to_units(u.degree)
+
     return angles
 
 
@@ -28,9 +51,13 @@ class Box(object):
     Parameters
     ----------
     lengths : array-like, shape(3,), dtype=float
-        Lengths of the box [a, b, c].
-    angles : array-link, optional, shape(3,), dtype=float
+        Lengths of the box [a, b, c]. Units are assumed to be in nm; if
+        passed in as a `unyt_array` it will be converted to nm; if passed in
+        as floats, nm is assumed.
+    angles : array-like, optional, shape(3,), dtype=float
         Interplanar angles, [alpha, beta, gamma], that describe the box shape.
+        Units are assumed to be in degrees; if passed in as a `unyt_array` it
+        will be converted to degrees; if passed in as floats, degrees is assumed.
 
 
     Attributes
@@ -72,12 +99,11 @@ class Box(object):
     def unit_vectors_from_angles(self):
         (alpha, beta, gamma) = self._angles
 
-        radian_conversion = np.pi / 180.0
-        cosa = np.cos(alpha * radian_conversion)
-        cosb = np.cos(beta * radian_conversion)
-        sinb = np.sin(beta * radian_conversion)
-        cosg = np.cos(gamma * radian_conversion)
-        sing = np.sin(gamma * radian_conversion)
+        cosa = np.cos(alpha)
+        cosb = np.cos(beta)
+        sinb = np.sin(beta)
+        cosg = np.cos(gamma)
+        sing = np.sin(gamma)
         mat_coef_y = (cosa - cosb * cosg) / sing
         mat_coef_z = np.power(sinb, 2, dtype=float) - \
             np.power(mat_coef_y, 2, dtype=float)
