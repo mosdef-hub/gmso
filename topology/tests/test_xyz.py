@@ -13,6 +13,13 @@ def test_read_xyz():
 
     top = read_xyz(get_fn('cu_block.xyz'))
     assert top.n_sites == 108
+
     assert top.n_connections == 0
     assert set([type(site.position) for site in top.site_list]) == {u.unyt_array}
     assert set([site.position.units for site in top.site_list]) == {u.nm}
+
+def test_wrong_n_atoms(self):
+    with pytest.raises(ValueError):
+        mb.load(get_fn('too_few_atoms.xyz'))
+    with pytest.raises(ValueError):
+        mb.load(get_fn('too_many_atoms.xyz'))
