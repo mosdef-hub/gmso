@@ -20,7 +20,7 @@ def read_xyz(filename):
                        'were expected, but at least one fewer was found.')
                 raise ValueError(msg.format(n_atoms))
             tmp = line[1:4] * u.angstrom
-            coords[row] = tmp.convert_to_units(u.nanometer)
+            coords[row] = tmp.in_units(u.nanometer)
             site = Site(name=line[0], position=coords[row])
             top.add_site(site)
 

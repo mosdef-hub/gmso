@@ -40,6 +40,6 @@ def _validate_position(position):
     np.reshape(position, newshape=(3,), order='C')
 
     position *= input_unit
-    position.in_units(u.nm)
+    position.convert_to_units(u.nm)
 
     return position

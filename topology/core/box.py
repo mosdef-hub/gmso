@@ -15,7 +15,7 @@ def _validate_lengths(lengths):
     np.reshape(lengths, newshape=(3,), order='C')
 
     lengths *= input_unit
-    lengths.in_units(u.nm)
+    lengths.convert_to_units(u.nm)
 
     if np.any(np.less(lengths, [0, 0, 0], )):
         raise ValueError('Negative or 0 value lengths passed.'
