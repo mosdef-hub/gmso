@@ -28,7 +28,8 @@ def from_parmed(structure):
             site = Site(
                 name=atom.name,
                 charge=atom.charge * u.elementary_charge,
-                position=[atom.xx, atom.xy, atom.xz] * u.angstrom,
+                position=([atom.xx, atom.xy, atom.xz] * u.angstrom).in_units(
+                    u.nm),
                 atom_type=atom_type)
         else:
             site = Site(
