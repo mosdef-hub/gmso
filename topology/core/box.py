@@ -39,7 +39,7 @@ def _validate_angles(angles):
         np.reshape(angles, newshape=(3, 1), order='C')
 
         angles *= input_unit
-        angles.in_units(u.degree)
+        angles.convert_to_units(u.degree)
 
     return angles
 

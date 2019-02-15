@@ -1,3 +1,5 @@
+import unyt as u
+
 from topology.formats.xyz import read_xyz
 from topology.utils.io import get_fn
 
