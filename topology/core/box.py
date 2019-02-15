@@ -57,7 +57,7 @@ class Box(object):
     angles : array-like, optional, shape(3,), dtype=float
         Interplanar angles, [alpha, beta, gamma], that describe the box shape.
         Units are assumed to be in degrees; if passed in as a `unyt_array` it
-        will be converted to degrees; if passed in as floats, degrees iis assumed.
+        will be converted to degrees; if passed in as floats, degrees is assumed.
 
 
     Attributes
