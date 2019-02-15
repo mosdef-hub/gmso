@@ -1,4 +1,5 @@
 import numpy as np
+import unyt as u
 
 from topology.core.connection import Connection
 
@@ -27,7 +28,7 @@ class Topology(object):
         return len(self._site_list)
 
     def positions(self):
-        xyz = np.empty(shape=(self.n_sites, 3))
+        xyz = np.empty(shape=(self.n_sites, 3)) * u.nm
         for i, site in enumerate(self.site_list):
             xyz[i, :] = site.position
         return xyz
