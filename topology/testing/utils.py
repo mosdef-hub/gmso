@@ -38,6 +38,12 @@ def _infer_common_unit(a, b):
     if a.units == b.units:
         return a.units
 
+    # Check if the inputs have the same physical dimension
+    if a.in_base().units != b.in_base().units:
+        raise ValueError('Dimensionality mismatch in input. Input a has '
+                         'base units of {} and input b has base units '
+                         'of {}'.format(a.in_base().units, b.in_base().units))
+
     # Estimate a representative order of magnitude of the values inputs
     order_of_a = np.log10(np.mean(np.abs(a.in_base())))
     order_of_b = np.log10(np.mean(np.abs(b.in_base())))
