@@ -18,9 +18,17 @@ def _validate_lengths(lengths):
     lengths.convert_to_units(u.nm)
 
     if np.any(np.less(lengths, [0, 0, 0], )):
-        raise ValueError('Negative or 0 value lengths passed.'
-                         'Lengths must be a value greater than 0.0'
-                         'You passed {}'.format(lengths))
+        raise ValueError('Negative length(s) passed. Lengths must be a value '
+                         'greater than 0.0. You passed {}'.format(lengths))
+
+    if np.any(np.equal(lengths, [0, 0, 0], )):
+        if lengths[0] > 0 and lengths[1] > 0:
+            warnings.warn('A c value of 0 was passed. This will be '
+                          'interpreted as a 2-D box.')
+        else:
+            raise ValueError('Length(s) of value 0 were passed. Lengths must '
+                             'be a value greater than 0.0. You passed '
+                             '{}'.format(lengths))
     return lengths
 
 

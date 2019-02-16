@@ -15,10 +15,14 @@ class TestBox():
         box = Box(lengths=np.ones(3), angles=[40.0, 50.0, 60.0])
         assert np.array_equal(box.angles, [40.0, 50.0, 60.0])
 
-    @pytest.mark.parametrize('lengths', [[4.0, 4.0, 0.0], [4.0, 5.0, -1.0]])
+    @pytest.mark.parametrize('lengths', [[0.0, 4.0, 4.0], [4.0, 5.0, -1.0]])
     def test_bad_lengths(self, lengths):
         with pytest.raises(ValueError):
             box = Box(lengths=lengths, angles=90*np.ones(3))
+
+    def test_build_2D_Box(self):
+        with pytest.warns(UserWarning):
+            box = Box(lengths=u.nm * [4, 4, 0])
 
     def test_dtype(self):
         box = Box(lengths=np.ones(3))
