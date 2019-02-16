@@ -1,6 +1,7 @@
 import warnings
 
 import numpy as np
+import unyt
 
 
 def allclose(a, b, rtol=None, atol=None):
@@ -15,9 +16,22 @@ def allclose(a, b, rtol=None, atol=None):
 
     if atol is None:
         atol = 1e-8 * common_unit
+    else:
+        if not isinstance(atol, u.unyt_array):
+            warnings.warn('Argument atol was not passed with a unit. The '
+                          'unit {} was inferred from arguments a and b'
+                          'and was added'.format(common_unit))
+            atol *= common_unit
 
     if rtol is None:
         rtol = 1e-5 * abs(b)
+    else:
+        if not isinstance(rtol, u.unyt_array):
+            warnings.warn('Argument rtol was not passed with a unit. The '
+                          'unit {} was inferred from arguments a and b'
+                          'and was added'.format(common_unit))
+            rtol *= common_unit
+
 
     return (abs(a - b) <= (atol + rtol)).all()
 
