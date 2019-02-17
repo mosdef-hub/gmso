@@ -3,6 +3,7 @@ import numpy as np
 import unyt as u
 
 from topology.core.box import Box
+from topology.testing.utils import allclose
 
 
 class TestBox():
@@ -63,4 +64,4 @@ class TestBox():
                                 [0.5, 0.86603, 0],
                                 [0.64278, 0.51344, 0.56852]])
         test_vectors *= u.nm
-        assert np.allclose(vectors.value, test_vectors.value, atol=1e-3)
+        assert allclose(vectors, test_vectors, atol=1e-3)
