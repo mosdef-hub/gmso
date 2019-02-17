@@ -1,10 +1,12 @@
 import numpy as np
 import pytest
+import unyt as u
 
 from topology.core.topology import Topology
 from topology.core.site import Site
 from topology.core.connection import Connection
 from topology.core.box import Box
+from topology.testing.utils import allclose
 
 
 def test_new_topology():
@@ -36,7 +38,19 @@ def test_add_box():
     top = Topology()
     box = Box(2*np.ones(3))
 
-    with pytest.raises(AttributeError):
-        assert top.box is None
+    assert top.box is None
     top.box = box
-    assert np.allclose(top.box.lengths, 2*np.ones(3))
+    assert top.box is not None
+    assert allclose(top.box.lengths, u.nm*2*np.ones(3))
+
+def test_positions_dtype():
+    top = Topology()
+    site1 = Site(name='site1')
+    top.add_site(site1)
+
+    assert set([type(site.position) for site in top.site_list]) == {u.unyt_array}
+    assert set([site.position.units for site in top.site_list]) == {u.nm}
+
+    assert top.positions().dtype == float
+    assert top.positions().units == u.nm
+    assert isinstance(top.positions(), u.unyt_array)
