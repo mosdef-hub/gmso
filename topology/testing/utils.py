@@ -1,7 +1,7 @@
 import warnings
 
 import numpy as np
-import unyt
+import unyt as u
 
 
 def allclose(a, b, rtol=None, atol=None):
@@ -66,7 +66,6 @@ def _infer_common_unit(a, b):
         warnings.warn('Values appear to be many orders of magnitude different')
 
     # Find which array has a typical value nearest 10 ** 0
-
     if abs(order_of_a) < abs(order_of_b):
         common_unit = a.units
     else:
