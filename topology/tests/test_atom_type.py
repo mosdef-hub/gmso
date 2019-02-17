@@ -90,7 +90,7 @@ def test_set_nb_func_params_bad():
     # but the new parameters use different symbols
     first_type = AtomType(nb_function='sigma*epsilon',
             parameters={'sigma':1, 'epsilon':10})
-    with pytest.raises(ValueError):
+    with pytest.warns(Warning):
         first_type.set_nb_function(parameters={'a':1, 'b':10})
 
 def test_set_nb_func_params_partial():
