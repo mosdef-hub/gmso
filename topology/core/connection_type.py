@@ -78,13 +78,34 @@ class ConnectionType(object):
             while the non-passed parameters default to the existing values
        """
         if function is not None:
-            self.potential_function = function
+            if isinstance(function, str):
+                self._potential_function = sympy.sympify(function)
+            elif isinstance(function, sympy.Expr):
+                self._potential_function = function
+            else:
+                raise ValueError("Please enter a string or sympy expression")
+                self.potential_function = function
+
         if parameters is not None:
-            self.parameters = parameters
+            if not isinstance(parameters, dict):
+                raise ValueError("Provided parameters "
+                                 "{} is not a valid dictionary".format(parameters))
+
+            self._parameters.update(parameters)
 
         self._validate_function_parameters()
 
     def _validate_function_parameters(self):
+        # Check for unused symbols
+        symbols = sympy.symbols(set(self.parameters.keys()))
+        unused_symbols = symbols - self.potential_function.free_symbols
+        if len(unused_symbols) > 0:
+            warnings.warn('You supplied parameters with '
+                            'unused symbols {}'.format(unused_symbols))
+
+        # Rebuild the parameters
+        self._parameters = {key: val for key, val in self._parameters.items()
+                    if key in set(str(sym) for sym in self.potential_function.free_symbols)}
         symbols = sympy.symbols(set(self.parameters.keys()))
         if symbols != self.potential_function.free_symbols:
             extra_syms = symbols ^ self.potential_function.free_symbols
