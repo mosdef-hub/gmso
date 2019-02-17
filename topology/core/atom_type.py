@@ -2,6 +2,7 @@ import warnings
 import numpy as np
 import sympy
 import unyt as u
+from topology.testing.utils import allclose
 
 
 class AtomType(object):
@@ -129,7 +130,8 @@ class AtomType(object):
 
     def __eq__(self, other):
         return ((self.name == other.name) &
-                (np.isclose(self.charge, other.charge)) &
+                (allclose(self.charge, other.charge, 
+                    atol=0.00, rtol=1e-5*u.elementary_charge)) &
                 (self.parameters == other.parameters) &
                 (self.nb_function == other.nb_function))
 
