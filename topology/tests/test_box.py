@@ -3,6 +3,7 @@ import numpy as np
 import unyt as u
 
 from topology.core.box import Box
+from topology.testing.utils import allclose
 
 
 class TestBox():
@@ -15,8 +16,17 @@ class TestBox():
         box = Box(lengths=np.ones(3), angles=[40.0, 50.0, 60.0])
         assert np.array_equal(box.angles, [40.0, 50.0, 60.0])
 
+    @pytest.mark.parametrize('lengths', [[0.0, 4.0, 4.0], [4.0, 5.0, -1.0]])
+    def test_bad_lengths(self, lengths):
+        with pytest.raises(ValueError):
+            box = Box(lengths=lengths, angles=90*np.ones(3))
+
+    def test_build_2D_Box(self):
+        with pytest.warns(UserWarning):
+            box = Box(lengths=u.nm * [4, 4, 0])
+
     def test_dtype(self):
-        box = Box(lengths=np.zeros(3))
+        box = Box(lengths=np.ones(3))
         assert box.lengths.dtype == float
         assert isinstance(box.lengths, u.unyt_array)
         assert isinstance(box.lengths, np.ndarray)
@@ -44,7 +54,7 @@ class TestBox():
         assert (box.lengths == lengths).all()
 
     def test_default_angles(self):
-        box = Box(lengths=np.zeros(3))
+        box = Box(lengths=np.ones(3))
         assert (box.angles == np.array([90.0, 90.0, 90.0])).all()
 
     def test_vectors(self):
@@ -54,4 +64,4 @@ class TestBox():
                                 [0.5, 0.86603, 0],
                                 [0.64278, 0.51344, 0.56852]])
         test_vectors *= u.nm
-        assert np.allclose(vectors.value, test_vectors.value, atol=1e-3)
+        assert allclose(vectors, test_vectors, atol=1e-3)
