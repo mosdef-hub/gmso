@@ -110,7 +110,7 @@ class AtomType(object):
     def _validate_function_parameters(self):
         symbols = sympy.symbols(set(self.parameters.keys()))
         if symbols != self.nb_function.free_symbols:
-            extra_syms = symbols ^ self.nb.free_symbols
+            extra_syms = symbols ^ self.nb_function.free_symbols
             raise ValueError("NB function and parameter"
                              " symbols do not agree,"
                              " extraneous symbols:"
