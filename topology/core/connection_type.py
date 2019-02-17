@@ -88,8 +88,9 @@ class ConnectionType(object):
 
         if parameters is not None:
             if not isinstance(parameters, dict):
-                raise ValueError("Provided parameters "
-                                 "{} is not a valid dictionary".format(parameters))
+                raise ValueError(
+                    "Provided parameters "
+                    "{} is not a valid dictionary".format(parameters))
 
             self._parameters.update(parameters)
 
@@ -101,11 +102,14 @@ class ConnectionType(object):
         unused_symbols = symbols - self.potential_function.free_symbols
         if len(unused_symbols) > 0:
             warnings.warn('You supplied parameters with '
-                            'unused symbols {}'.format(unused_symbols))
+                          'unused symbols {}'.format(unused_symbols))
 
         # Rebuild the parameters
-        self._parameters = {key: val for key, val in self._parameters.items()
-                    if key in set(str(sym) for sym in self.potential_function.free_symbols)}
+        self._parameters = {
+            key: val
+            for key, val in self._parameters.items() if key in set(
+                str(sym) for sym in self.potential_function.free_symbols)
+        }
         symbols = sympy.symbols(set(self.parameters.keys()))
         if symbols != self.potential_function.free_symbols:
             extra_syms = symbols ^ self.potential_function.free_symbols

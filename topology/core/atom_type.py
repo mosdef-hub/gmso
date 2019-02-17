@@ -111,8 +111,9 @@ class AtomType(object):
 
         if parameters is not None:
             if not isinstance(parameters, dict):
-                raise ValueError("Provided parameters "
-                                "{} is not a valid dictionary".format(parameters))
+                raise ValueError(
+                    "Provided parameters "
+                    "{} is not a valid dictionary".format(parameters))
 
             self._parameters.update(parameters)
 
@@ -124,11 +125,14 @@ class AtomType(object):
         unused_symbols = symbols - self.nb_function.free_symbols
         if len(unused_symbols) > 0:
             warnings.warn('You supplied parameters with '
-                            'unused symbols {}'.format(unused_symbols))
+                          'unused symbols {}'.format(unused_symbols))
 
         # Rebuild the parameters
-        self._parameters = {key: val for key, val in self._parameters.items()
-                    if key in set(str(sym) for sym in self.nb_function.free_symbols)}
+        self._parameters = {
+            key: val
+            for key, val in self._parameters.items() if key in set(
+                str(sym) for sym in self.nb_function.free_symbols)
+        }
         symbols = sympy.symbols(set(self.parameters.keys()))
         if symbols != self.nb_function.free_symbols:
             extra_syms = symbols ^ self.nb_function.free_symbols
@@ -138,9 +142,11 @@ class AtomType(object):
                              " {}".format(extra_syms))
 
     def __eq__(self, other):
-        return ((self.name == other.name) &
-                (allclose(self.charge, other.charge, 
-                    atol=0.00, rtol=1e-5*u.elementary_charge)) &
+        return ((self.name == other.name) & (allclose(
+            self.charge,
+            other.charge,
+            atol=0.00,
+            rtol=1e-5 * u.elementary_charge)) &
                 (self.parameters == other.parameters) &
                 (self.nb_function == other.nb_function))
 
