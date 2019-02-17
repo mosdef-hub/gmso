@@ -1,11 +1,18 @@
 import numpy as np
 import sympy
 
+
 class AtomType(object):
     """An atom type."""
-    def __init__(self, name="AtomType", charge=0.0, 
-            nb_function='4*epsilon*((sigma/r)**12 - (sigma/r)**6)',
-            parameters={'sigma':1, 'epsilon':100}):
+
+    def __init__(self,
+                 name="AtomType",
+                 charge=0.0,
+                 nb_function='4*epsilon*((sigma/r)**12 - (sigma/r)**6)',
+                 parameters={
+                     'sigma': 1,
+                     'epsilon': 100
+                 }):
 
         self._name = name
 
@@ -16,7 +23,6 @@ class AtomType(object):
         else:
             raise ValueError("Please enter dictionary for parameters")
 
-
         if nb_function is None:
             self._nb_function = None
         elif isinstance(nb_function, str):
@@ -25,7 +31,7 @@ class AtomType(object):
             self._nb_function = nb_function
         else:
             raise ValueError("Please enter a string, sympy expression, "
-                            "or None for nb_function")
+                             "or None for nb_function")
 
     @property
     def name(self):
@@ -45,18 +51,18 @@ class AtomType(object):
 
     @property
     def parameters(self):
-        return self._parameters 
+        return self._parameters
 
     @parameters.setter
     def parameters(self, newparams):
         if not isinstance(newparams, dict):
             raise ValueError("Provided parameters "
-                            "{} is not a valid dictionary".format(newparams))
+                             "{} is not a valid dictionary".format(newparams))
 
         self._parameters.update(newparams)
         self._validate_function_parameters()
 
-    @property 
+    @property
     def nb_function(self):
         return self._nb_function
 
@@ -91,19 +97,17 @@ class AtomType(object):
         If unnecessary parameters are supplied, an error is thrown.
         If only a subset of the parameters are supplied, they are updated
             while the non-passed parameters default to the existing values
-       """ 
-       if function is not None:
-            self.nb_function = function 
-       if parameters is not None:
+       """
+        if function is not None:
+            self.nb_function = function
+        if parameters is not None:
             self.parameters = parameters
 
-       self._validate_function_parameters()
-
-
+        self._validate_function_parameters()
 
     def _validate_function_parameters(self):
         symbols = sympy.symbols(set(self.parameters.keys()))
-        if symbols != self.nb_function.free_symbols):
+        if symbols != self.nb_function.free_symbols:
             extra_syms = symbols ^ self.nb.free_symbols
             raise ValueError("NB function and parameter"
                              " symbols do not agree,"
@@ -111,14 +115,15 @@ class AtomType(object):
                              " {}".format(extra_syms))
 
     def __eq__(self, other):
-        return ((self.name == other.name) & 
-                (np.isclose(self.charge, other.charge)) & 
-                (self.parameters == other.parameters) & 
+        return ((self.name == other.name) &
+                (np.isclose(self.charge, other.charge)) &
+                (self.parameters == other.parameters) &
                 (self.nb_function == other.nb_function))
 
     def __repr__(self):
-        desc = "<AtomType {}, id {}>".format(self._name, id(self)) 
+        desc = "<AtomType {}, id {}>".format(self._name, id(self))
         return desc
+
 
 def _validate_charge(charge):
     if not isinstance(charge, u.unyt_array):
@@ -131,4 +136,3 @@ def _validate_charge(charge):
         pass
 
     return charge
-
