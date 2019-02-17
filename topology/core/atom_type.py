@@ -101,9 +101,20 @@ class AtomType(object):
             while the non-passed parameters default to the existing values
        """
         if function is not None:
-            self.nb_function = function
+            if isinstance(function, str):
+                self._nb_function = sympy.sympify(function)
+            elif isinstance(function, sympy.Expr):
+                self._nb_function = function
+            else:
+                raise ValueError("Please enter a string or sympy expression")
+
         if parameters is not None:
-            self.parameters = parameters
+            if not isinstance(parameters, dict):
+                raise ValueError("Provided parameters "
+                                "{} is not a valid dictionary".format(parameters))
+
+            self._parameters.update(parameters)
+            self._validate_function_parameters()
 
         self._validate_function_parameters()
 
