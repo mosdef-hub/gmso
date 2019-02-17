@@ -14,7 +14,7 @@ class Topology(object):
     """
     def __init__(self, name="Topology", box=None):
         if name is not None:
-            self.name = name
+            self._name = name
         if box:
             self.box = box
         self._site_list = list()
@@ -22,6 +22,14 @@ class Topology(object):
 
     def add_site(self, site):
         self._site_list.append(site)
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        self._name = str(name)
 
     @property
     def n_sites(self):
