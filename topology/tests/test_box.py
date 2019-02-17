@@ -1,17 +1,19 @@
 import pytest
 import numpy as np
+
 from topology.core.box import Box
+from topology.tests.base_test import BaseTest
 
 
-class TestBox():
+class TestBox(BaseTest):
 
-    def test_init_lengths(self):
-        box = Box(lengths=np.ones(3))
-        assert np.array_equal(box.lengths, np.ones(3))
+    def test_init_lengths(self, lengths):
+        box = Box(lengths=lengths)
+        assert np.array_equal(box.lengths, lengths)
 
-    def test_init_angles(self):
-        box = Box(lengths=np.ones(3), angles=[40.0, 50.0, 60.0])
-        assert np.array_equal(box.angles, [40.0, 50.0, 60.0])
+    def test_init_angles(self, lengths, angles):
+        box = Box(lengths=lengths, angles=angles)
+        assert np.array_equal(box.angles, angles)
 
     def test_dtype(self):
         box = Box(lengths=np.zeros(3))
