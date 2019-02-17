@@ -1,8 +1,10 @@
 import pytest
 import numpy as np
+import unyt as u
 
 from topology.core.box import Box
 from topology.tests.base_test import BaseTest
+from topology.testing.utils import allclose
 
 
 class TestBox(BaseTest):
@@ -15,9 +17,23 @@ class TestBox(BaseTest):
         box = Box(lengths=lengths, angles=angles)
         assert np.array_equal(box.angles, angles)
 
+    @pytest.mark.parametrize('lengths', [[0.0, 4.0, 4.0], [4.0, 5.0, -1.0]])
+    def test_bad_lengths(self, lengths):
+        with pytest.raises(ValueError):
+            box = Box(lengths=lengths, angles=90*np.ones(3))
+
+    def test_build_2D_Box(self):
+        with pytest.warns(UserWarning):
+            box = Box(lengths=u.nm * [4, 4, 0])
+
     def test_dtype(self):
-        box = Box(lengths=np.zeros(3))
+        box = Box(lengths=np.ones(3))
         assert box.lengths.dtype == float
+        assert isinstance(box.lengths, u.unyt_array)
+        assert isinstance(box.lengths, np.ndarray)
+        assert box.angles.dtype == float
+        assert isinstance(box.angles, u.unyt_array)
+        assert isinstance(box.angles, np.ndarray)
 
     def test_lengths_setter(self):
         box = Box(lengths=np.ones(3))
@@ -39,7 +55,7 @@ class TestBox(BaseTest):
         assert (box.lengths == lengths).all()
 
     def test_default_angles(self):
-        box = Box(lengths=np.zeros(3))
+        box = Box(lengths=np.ones(3))
         assert (box.angles == np.array([90.0, 90.0, 90.0])).all()
 
     def test_vectors(self):
@@ -48,4 +64,5 @@ class TestBox(BaseTest):
         test_vectors = np.array([[1, 0, 0],
                                 [0.5, 0.86603, 0],
                                 [0.64278, 0.51344, 0.56852]])
-        assert np.isclose(box.vectors(), test_vectors)
+        test_vectors *= u.nm
+        assert allclose(vectors, test_vectors, atol=1e-3)

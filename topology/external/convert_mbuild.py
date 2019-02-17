@@ -1,4 +1,5 @@
 import mbuild as mb
+import unyt as u
 
 from topology.core.topology import Topology
 from topology.core.site import Site
@@ -10,7 +11,8 @@ def from_mbuild(compound):
     top = Topology(name=compound.name)
     site_map = dict()
     for child in compound.particles():
-        site = Site(name=child.name, position=child.xyz)
+        pos = child.xyz * u.nanometer
+        site = Site(name=child.name, position=pos)
         site_map[child] = site
         top.add_site(site)
 
