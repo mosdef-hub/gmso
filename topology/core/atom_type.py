@@ -47,9 +47,31 @@ class AtomType(object):
     def parameters(self):
         return self._parameters 
 
+    @parameters.setter
+    def parameters(self, newparams):
+        if not isinstance(newparams, dict):
+            raise ValueError("Provided parameters "
+                            "{} is not a valid dictionary".format(newparams))
+
+        self._parameters.update(newparams)
+        self._validate_function_parameters()
+
     @property 
     def nb_function(self):
         return self._nb_function
+
+    @nb_function.setter
+    def nb_function(self, function):
+        # Check valid function type (string or sympy expression)
+        # If func is undefined, just keep the old one
+        if isinstance(function, str):
+            self._nb_function = sympy.sympify(function)
+        elif isinstance(function, sympy.Expr):
+            self._nb_function = function
+        else:
+            raise ValueError("Please enter a string or sympy expression")
+
+        self._validate_function_parameters()
 
     def set_nb_function(self, function=None, parameters=None):
         """ Set the nonbonded function and paramters for this atomtype
@@ -70,32 +92,23 @@ class AtomType(object):
         If only a subset of the parameters are supplied, they are updated
             while the non-passed parameters default to the existing values
        """ 
-        # Check valid function type (string or sympy expression)
-        # If func is undefined, just keep the old one
-        if function is None:
-            pass
-        elif isinstance(function, str):
-            self._nb_function = sympy.sympify(function)
-        elif isinstance(function, sympy.Expr):
-            self._nb_function = function
-        else:
-            raise ValueError("Please enter a string or sympy expression")
+       if function is not None:
+            self.nb_function = function 
+       if parameters is not None:
+            self.parameters = parameters
 
-        # If params is undefined, keep the old one
-        if parameters is None:
-            parameters = self.parameters
-        symbols = sympy.symbols(set(parameters.keys()))
+       self._validate_function_parameters()
 
-        # Now verify that the parameters and nb_function have consistent symbols
-        if symbols.issubset(self.nb_function.free_symbols):
-            # Rebuild the parameters, eliminate unnecessary parameters
-            self._parameters.update(parameters)
-            self._parameters = {key: val for key, val in self._parameters.items() 
-                    if key in set(str(sym) for sym in self.nb_function.free_symbols)}
-        else:
-            extra_syms = symbols - self.nb_function.free_symbols
-            raise ValueError("NB function and parameter symbols do not agree," 
-                    " you supplied extraneous symbols: {}".format(extra_syms))
+
+
+    def _validate_function_parameters(self):
+        symbols = sympy.symbols(set(self.parameters.keys()))
+        if symbols != self.nb_function.free_symbols):
+            extra_syms = symbols ^ self.nb.free_symbols
+            raise ValueError("NB function and parameter"
+                             " symbols do not agree,"
+                             " extraneous symbols:"
+                             " {}".format(extra_syms))
 
     def __eq__(self, other):
         return ((self.name == other.name) & 
