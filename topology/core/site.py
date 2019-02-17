@@ -40,11 +40,17 @@ class Site(object):
     def charge(self):
         if self._charge is not None:
             return self._charge
-        else:
+        elif self.atom_type is not None:
             return self.atom_type.charge
+        else:
+            return None
 
     @charge.setter
     def charge(self, charge):
+        if charge.units.dimensions != u.elementary_charge.units.dimensions:
+            warnings.warn("Charges are assumed to be elementary charge")
+            charge = float(charge) * u.elementary_charge
+
         self._charge = float(charge)
 
 
