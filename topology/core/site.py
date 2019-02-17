@@ -3,6 +3,8 @@ import warnings
 import numpy as np
 import unyt as u
 
+from topology.core.atom_type import AtomType
+
 
 class Site(object):
     """A general site."""
@@ -21,8 +23,8 @@ class Site(object):
         if element:
             self.element = element
 
-        self.atom_type = atom_type
-        self._charge = charge
+        self._atom_type = _validate_atom_type(atom_type)
+        self._charge = _validate_charge(charge)
         self._connections = list()
 
     def add_connection(self, other_site):
@@ -47,12 +49,16 @@ class Site(object):
 
     @charge.setter
     def charge(self, charge):
-        if charge.units.dimensions != u.elementary_charge.units.dimensions:
-            warnings.warn("Charges are assumed to be elementary charge")
-            charge = float(charge) * u.elementary_charge
+        self._charge = _validate_charge(charge)
 
-        self._charge = float(charge)
+    @property
+    def atom_type(self):
+        return self.atom_type
 
+    @atom_type.setter
+    def atom_type(self, val):
+        val = _validate_atom_type(val)
+        self._atom_type = val
 
 def _validate_position(position):
     if not isinstance(position, u.unyt_array):
@@ -68,3 +74,19 @@ def _validate_position(position):
     position.convert_to_units(u.nm)
 
     return position
+
+def _validate_charge(charge):
+    if not isinstance(charge, u.unyt_array):
+        warnings.warn("Charges are assumed to be elementary charge")
+        charge *= u.elementary_charge
+    elif charge.units.dimensions != u.elementary_charge.units.dimensions:
+        warnings.warn("Charges are assumed to be elementary charge")
+        charge = charge.value * u.elementary_charge
+
+    return charge
+
+def _validate_atom_type(val):
+    if not isinstance(val, AtomType):
+        raise ValueError("Passed value {} is not an AtomType".format(val))
+    else:
+        return val
