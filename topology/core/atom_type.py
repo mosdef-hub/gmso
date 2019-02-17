@@ -8,7 +8,8 @@ class AtomType(object):
             parameters={'sigma':1, 'epsilon':100}):
 
         self._name = name
-        self._charge = charge
+
+        self._charge = _validate_charge(charge)
 
         if isinstance(parameters, dict):
             self._parameters = parameters
@@ -40,7 +41,7 @@ class AtomType(object):
 
     @charge.setter
     def charge(self, val):
-        self._charge = val
+        self._charge = _validate_charge(val)
 
     @property
     def parameters(self):
@@ -105,3 +106,16 @@ class AtomType(object):
     def __repr__(self):
         desc = "<AtomType {}, id {}>".format(self._name, id(self)) 
         return desc
+
+def _validate_charge(charge):
+    if not isinstance(charge, u.unyt_array):
+        warnings.warn("Charges are assumed to be elementary charge")
+        charge *= u.elementary_charge
+    elif charge.units.dimensions != u.elementary_charge.units.dimensions:
+        warnings.warn("Charges are assumed to be elementary charge")
+        charge = charge.value * u.elementary_charge
+    else:
+        pass
+
+    return charge
+
