@@ -36,7 +36,7 @@ class ConnectionType(object):
     def parameters(self, newparams):
         if not isinstance(newparams, dict):
             raise ValueError("Provided parameters "
-                            "{} is not a valid dictionary".format(newparams))
+                             "{} is not a valid dictionary".format(newparams))
 
         self._parameters.update(newparams)
         self._validate_function_parameters()
@@ -77,17 +77,16 @@ class ConnectionType(object):
         If only a subset of the parameters are supplied, they are updated
             while the non-passed parameters default to the existing values
        """
-       if function is not None:
-            self.potential_function = function 
-       if parameters is not None:
+        if function is not None:
+            self.potential_function = function
+        if parameters is not None:
             self.parameters = parameters
 
         self._validate_function_parameters()
 
-        
     def _validate_function_parameters(self):
         symbols = sympy.symbols(set(self.parameters.keys()))
-        if symbols != self.potential_function.free_symbols):
+        if symbols != self.potential_function.free_symbols:
             extra_syms = symbols ^ self.potential_function.free_symbols
             raise ValueError("Potential function and parameter"
                              " symbols do not agree,"
@@ -97,4 +96,3 @@ class ConnectionType(object):
     def __eq__(self, other):
         return ((self.parameters == other.parameters) &
                 (self.potential_function == other.potential_function))
-
