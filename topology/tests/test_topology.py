@@ -1,8 +1,12 @@
+import numpy as np
+import pytest
 import unyt as u
 
 from topology.core.topology import Topology
 from topology.core.site import Site
 from topology.core.connection import Connection
+from topology.core.box import Box
+from topology.testing.utils import allclose
 
 
 def test_new_topology():
@@ -29,6 +33,15 @@ def test_add_connection():
     top.update_connection_list()
 
     assert len(top.connection_list) == 1
+
+def test_add_box():
+    top = Topology()
+    box = Box(2*np.ones(3))
+
+    assert top.box is None
+    top.box = box
+    assert top.box is not None
+    assert allclose(top.box.lengths, u.nm*2*np.ones(3))
 
 def test_positions_dtype():
     top = Topology()

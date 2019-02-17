@@ -15,8 +15,7 @@ class Topology(object):
     def __init__(self, name="Topology", box=None):
         if name is not None:
             self._name = name
-        if box:
-            self.box = box
+        self._box = box
         self._site_list = list()
         self._connection_list = list()
 
@@ -30,6 +29,14 @@ class Topology(object):
     @name.setter
     def name(self, name):
         self._name = str(name)
+
+    @property
+    def box(self):
+        return self._box
+
+    @box.setter
+    def box(self, box):
+        self._box = box
 
     @property
     def n_sites(self):
