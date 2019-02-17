@@ -82,6 +82,8 @@ def _validate_charge(charge):
     elif charge.units.dimensions != u.elementary_charge.units.dimensions:
         warnings.warn("Charges are assumed to be elementary charge")
         charge = charge.value * u.elementary_charge
+    else:
+        pass
 
     return charge
 
