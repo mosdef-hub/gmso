@@ -53,7 +53,7 @@ class Site(object):
 
     @property
     def atom_type(self):
-        return self.atom_type
+        return self._atom_type
 
     @atom_type.setter
     def atom_type(self, val):
