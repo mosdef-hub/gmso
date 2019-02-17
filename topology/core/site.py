@@ -76,7 +76,9 @@ def _validate_position(position):
     return position
 
 def _validate_charge(charge):
-    if not isinstance(charge, u.unyt_array):
+    if charge is None:
+        return None
+    elif not isinstance(charge, u.unyt_array):
         warnings.warn("Charges are assumed to be elementary charge")
         charge *= u.elementary_charge
     elif charge.units.dimensions != u.elementary_charge.units.dimensions:
@@ -88,7 +90,9 @@ def _validate_charge(charge):
     return charge
 
 def _validate_atom_type(val):
-    if not isinstance(val, AtomType):
+    if val is None:
+        return None
+    elif not isinstance(val, AtomType):
         raise ValueError("Passed value {} is not an AtomType".format(val))
     else:
         return val
