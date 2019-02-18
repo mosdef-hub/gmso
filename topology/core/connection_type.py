@@ -1,56 +1,32 @@
-import warnings
 import numpy as np
 import sympy
 import unyt as u
-from topology.testing.utils import allclose
 
 
-class AtomType(object):
-    """An atom type."""
+class ConnectionType(object):
+    """A connection type."""
 
     def __init__(self,
-                 name="AtomType",
-                 charge=0.0,
-                 nb_function='4*epsilon*((sigma/r)**12 - (sigma/r)**6)',
+                 potential_function='0.5 * k * (r-r_eq)**2',
                  parameters={
-                     'sigma': 1,
-                     'epsilon': 100
+                     'k': 1000 * u.joule / (u.mol * u.nm**2),
+                     'r_eq': 1 * u.nm
                  }):
-
-        self._name = name
-
-        self._charge = _validate_charge(charge)
 
         if isinstance(parameters, dict):
             self._parameters = parameters
         else:
             raise ValueError("Please enter dictionary for parameters")
 
-        if nb_function is None:
-            self._nb_function = None
-        elif isinstance(nb_function, str):
-            self._nb_function = sympy.sympify(nb_function)
-        elif isinstance(nb_function, sympy.Expr):
-            self._nb_function = nb_function
+        if potential_function is None:
+            self._potential_function = None
+        elif isinstance(potential_function, str):
+            self._potential_function = sympy.sympify(potential_function)
+        elif isinstance(potential_function, sympy.Expr):
+            self._potential_function = potential_function
         else:
             raise ValueError("Please enter a string, sympy expression, "
-                             "or None for nb_function")
-
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, val):
-        self._name = val
-
-    @property
-    def charge(self):
-        return self._charge
-
-    @charge.setter
-    def charge(self, val):
-        self._charge = _validate_charge(val)
+                             "or None for potential_function")
 
     @property
     def parameters(self):
@@ -66,29 +42,29 @@ class AtomType(object):
         self._validate_function_parameters()
 
     @property
-    def nb_function(self):
-        return self._nb_function
+    def potential_function(self):
+        return self._potential_function
 
-    @nb_function.setter
-    def nb_function(self, function):
+    @potential_function.setter
+    def potential_function(self, function):
         # Check valid function type (string or sympy expression)
         # If func is undefined, just keep the old one
         if isinstance(function, str):
-            self._nb_function = sympy.sympify(function)
+            self._potential_function = sympy.sympify(function)
         elif isinstance(function, sympy.Expr):
-            self._nb_function = function
+            self._potential_function = function
         else:
             raise ValueError("Please enter a string or sympy expression")
 
         self._validate_function_parameters()
 
-    def set_nb_function(self, function=None, parameters=None):
-        """ Set the nonbonded function and paramters for this atomtype
+    def set_potential_function(self, function=None, parameters=None):
+        """ Set the potential function and paramters for this connection type
 
         Parameters
         ----------
         function: sympy.Expression or string
-            The mathematical expression corresponding to the nonbonded potential
+            The mathematical expression corresponding to the bond potential
             If None, the function remains unchanged
         parameters: dict
             {parameter: value} in the function
@@ -103,11 +79,12 @@ class AtomType(object):
        """
         if function is not None:
             if isinstance(function, str):
-                self._nb_function = sympy.sympify(function)
+                self._potential_function = sympy.sympify(function)
             elif isinstance(function, sympy.Expr):
-                self._nb_function = function
+                self._potential_function = function
             else:
                 raise ValueError("Please enter a string or sympy expression")
+                self.potential_function = function
 
         if parameters is not None:
             if not isinstance(parameters, dict):
@@ -122,7 +99,7 @@ class AtomType(object):
     def _validate_function_parameters(self):
         # Check for unused symbols
         symbols = sympy.symbols(set(self.parameters.keys()))
-        unused_symbols = symbols - self.nb_function.free_symbols
+        unused_symbols = symbols - self.potential_function.free_symbols
         if len(unused_symbols) > 0:
             warnings.warn('You supplied parameters with '
                           'unused symbols {}'.format(unused_symbols))
@@ -131,38 +108,16 @@ class AtomType(object):
         self._parameters = {
             key: val
             for key, val in self._parameters.items() if key in set(
-                str(sym) for sym in self.nb_function.free_symbols)
+                str(sym) for sym in self.potential_function.free_symbols)
         }
         symbols = sympy.symbols(set(self.parameters.keys()))
-        if symbols != self.nb_function.free_symbols:
-            extra_syms = symbols ^ self.nb_function.free_symbols
-            raise ValueError("NB function and parameter"
+        if symbols != self.potential_function.free_symbols:
+            extra_syms = symbols ^ self.potential_function.free_symbols
+            raise ValueError("Potential function and parameter"
                              " symbols do not agree,"
                              " extraneous symbols:"
                              " {}".format(extra_syms))
 
     def __eq__(self, other):
-        return ((self.name == other.name) & (allclose(
-            self.charge,
-            other.charge,
-            atol=0.00,
-            rtol=1e-5 * u.elementary_charge)) &
-                (self.parameters == other.parameters) &
-                (self.nb_function == other.nb_function))
-
-    def __repr__(self):
-        desc = "<AtomType {}, id {}>".format(self._name, id(self))
-        return desc
-
-
-def _validate_charge(charge):
-    if not isinstance(charge, u.unyt_array):
-        warnings.warn("Charges are assumed to be elementary charge")
-        charge *= u.elementary_charge
-    elif charge.units.dimensions != u.elementary_charge.units.dimensions:
-        warnings.warn("Charges are assumed to be elementary charge")
-        charge = charge.value * u.elementary_charge
-    else:
-        pass
-
-    return charge
+        return ((self.parameters == other.parameters) &
+                (self.potential_function == other.potential_function))

@@ -1,27 +1,30 @@
+import unyt as u
 import numpy as np
 import sympy
 import pytest
 
 from topology.core.atom_type import AtomType
 from topology.tests.base_test import BaseTest
+from topology.testing.utils import allclose
 
 
 class TestAtomType(BaseTest):
 
     def test_new_atom_type(self):
-        new_type = AtomType(name='mytype', charge=1.0, 
-                parameters={'sigma':1, 'epsilon':10})
+        new_type = AtomType(name='mytype', charge=1.0*u.elementary_charge, 
+                parameters={'sigma':1 * u.nm, 
+                    'epsilon':10 * u.Unit('kcal / mol')})
         assert new_type.name == 'mytype'
-        assert np.isclose(new_type.charge, 1.0)
-        assert np.isclose(new_type.parameters['sigma'], 1)
-        assert np.isclose(new_type.parameters['epsilon'], 10)
+        assert allclose(new_type.charge, 1.0 * u.elementary_charge)
+        assert allclose(new_type.parameters['sigma'], 1 * u.nm)
+        assert allclose(new_type.parameters['epsilon'], 10 * u.Unit('kcal / mol'))
     
     def test_setters(self):
-        new_type = AtomType()
+        new_type = AtomType(self)
         new_type.name = "SettingName"
-        new_type.charge = -1.0
+        new_type.charge = -1.0 * u.elementary_charge
         assert new_type.name == "SettingName"
-        assert np.isclose(new_type.charge , -1.0)
+        assert allclose(new_type.charge , -1.0 * u.elementary_charge)
     
     def test_incorrect_nb_function(self):
         with pytest.raises(ValueError):
@@ -119,4 +122,3 @@ class TestAtomType(BaseTest):
                 parameters={'sigma':1, 'epsilon':10})
         with pytest.raises(ValueError):
             first_type.set_nb_function(function='a+b', parameters={'c':100, 'd':42})
-    
