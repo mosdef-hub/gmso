@@ -1,9 +1,10 @@
 import parmed as pmd
-#import unyt as u
+import unyt as u
 
 from topology.core.topology import Topology
 from topology.core.site import Site
-#from topology.core.box import Box
+from topology.core.box import Box
+
 
 def from_parmed(structure):
     msg = ("Provided argument that is not a Parmed Structure")
@@ -12,13 +13,12 @@ def from_parmed(structure):
     top = Topology(name=structure.title)
     map = dict()
     for atom in structure.atoms:
-        site = Site(name=atom.name, position=[atom.xx, atom.xy, atom.xz])
-        #site = Site(name=atom.name, position=[atom.xx, atom.xy, atom.xz]*u.nanometer)
+        site = Site(name=atom.name, position=u.angstrom*[atom.xx, atom.xy, atom.xz])
         map[atom] = site
         top.add_site(site)
 
-    #if structure.box:
-        # top.box = Box(structure.box[0:3]*u.nanometer, angles=structure.box[4:7])
+    if structure.box:
+        top.box = Box(structure.box[0:3]*u.nanometer, angles=structure.box[4:7])
 
     for bond in structure.bonds:
         if map[bond.atom2] not in map[bond.atom1].connections:
@@ -29,4 +29,3 @@ def from_parmed(structure):
     top.update_connection_list()
 
     return top
-

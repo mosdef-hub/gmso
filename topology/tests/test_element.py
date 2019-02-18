@@ -1,11 +1,14 @@
 import numpy as np
 
-import topology
+from topology.core.element import Carbon
+from topology.tests.base_test import BaseTest
 
 
-def test_element():
-    carbon = topology.core.element.carbon
+class TestElement(BaseTest):
 
-    assert carbon.name == 'carbon'
-    assert carbon.symbol == 'C'
-    assert np.isclose(carbon.mass, 12.011)
+    def test_element(self):
+        carbon = Carbon
+    
+        assert carbon.name == 'carbon'
+        assert carbon.symbol == 'C'
+        assert np.isclose(carbon.mass, 12.011)
