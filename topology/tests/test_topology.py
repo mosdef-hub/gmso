@@ -39,7 +39,7 @@ class TestTopology(BaseTest):
 
     def test_add_box(self):
         top = Topology()
-        box = Box(2*np.ones(3))
+        box = Box(2*u.nm*np.ones(3))
 
         assert top.box is None
         top.box = box
