@@ -10,7 +10,7 @@ class AtomType(object):
 
     def __init__(self,
                  name="AtomType",
-                 charge=0.0,
+                 charge=0.0 * u.elementary_charge,
                  nb_function='4*epsilon*((sigma/r)**12 - (sigma/r)**6)',
                  parameters={
                      'sigma': 1,
