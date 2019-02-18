@@ -16,3 +16,7 @@ class BaseTest:
     @pytest.fixture
     def angles(self):
         return u.degree * [90, 90, 90]
+
+    @pytest.fixture
+    def charge(self):
+        return u.elementary_charge * 1

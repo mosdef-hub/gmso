@@ -10,48 +10,48 @@ from topology.testing.utils import allclose
 
 class TestAtomType(BaseTest):
 
-    def test_new_atom_type(self):
-        new_type = AtomType(name='mytype', charge=1.0*u.elementary_charge, 
+    def test_new_atom_type(self, charge):
+        new_type = AtomType(name='mytype', charge=charge,
                 parameters={'sigma':1 * u.nm, 
                     'epsilon':10 * u.Unit('kcal / mol')})
         assert new_type.name == 'mytype'
-        assert allclose(new_type.charge, 1.0 * u.elementary_charge)
+        assert allclose(new_type.charge, charge)
         assert allclose(new_type.parameters['sigma'], 1 * u.nm)
         assert allclose(new_type.parameters['epsilon'], 10 * u.Unit('kcal / mol'))
     
-    def test_setters(self):
+    def test_setters(self, charge):
         new_type = AtomType(self)
         new_type.name = "SettingName"
-        new_type.charge = -1.0 * u.elementary_charge
+        new_type.charge = -1.0 * charge
         assert new_type.name == "SettingName"
-        assert allclose(new_type.charge , -1.0 * u.elementary_charge)
+        assert allclose(new_type.charge , -1.0 * charge)
     
-    def test_incorrect_nb_function(self):
+    def test_incorrect_nb_function(self, charge):
         with pytest.raises(ValueError):
-            new_type = AtomType(name='mytype', charge=1.0, nb_function=4.2)
+            new_type = AtomType(name='mytype', charge=charge, nb_function=4.2)
     
-    def test_nb_function_consistency(self):
+    def test_nb_function_consistency(self, charge):
         # Test nb-func symbol consistency with parameter consistency in init
-        new_type = AtomType(name='mytype', charge=1.0, 
+        new_type = AtomType(name='mytype', charge=charge,
                 parameters={'x':1, 'y':10}, nb_function='x + y')
         symbol_x, symbol_y = sympy.symbols('x y')
         correct_expr = sympy.sympify('x+y')
         assert new_type.nb_function.free_symbols == set([symbol_x, symbol_y])
         assert correct_expr == new_type.nb_function
     
-    def test_equivalance(self):
-        first_type = AtomType(name='mytype', charge=1.0, 
+    def test_equivalance(self, charge):
+        first_type = AtomType(name='mytype', charge=charge,
                 parameters={'sigma':1, 'epsilon':10})
-        same_type = AtomType(name='mytype', charge=1.0, 
+        same_type = AtomType(name='mytype', charge=charge,
                 parameters={'sigma':1, 'epsilon':10})
-        different_name = AtomType(name='difftype', charge=1.0, 
+        different_name = AtomType(name='difftype', charge=charge,
                 parameters={'sigma':1, 'epsilon':10})
-        different_charge = AtomType(name='mytype', charge=4.0, 
+        different_charge = AtomType(name='mytype', charge=4.0 * charge, 
                 parameters={'sigma':1, 'epsilon':10})
-        different_function = AtomType(name='mytype', charge=1.0, 
+        different_function = AtomType(name='mytype', charge=charge,
                 parameters={'sigma':1, 'epsilon':10},
                 nb_function='sigma * epsilon')
-        different_params = AtomType(name='mytype', charge=1.0, 
+        different_params = AtomType(name='mytype', charge=charge,
                 parameters={'sigma':42, 'epsilon':100000})
                 
     
@@ -61,9 +61,9 @@ class TestAtomType(BaseTest):
         assert first_type != different_function
         assert first_type != different_params
     
-    def test_set_nb_func(self):
+    def test_set_nb_func(self, charge):
         # Try changing the nonbonded function, but keep the parameters
-        first_type = AtomType(name='mytype', charge=1.0, 
+        first_type = AtomType(name='mytype', charge=charge,
                 parameters={'sigma':1, 'epsilon':10})
         first_type.set_nb_function(function='sigma + epsilon')
         correct_expr = sympy.sympify('sigma + epsilon')
@@ -78,9 +78,9 @@ class TestAtomType(BaseTest):
         with pytest.raises(ValueError):
             first_type.set_nb_function(function='a + b')
     
-    def test_set_nb_func_params(self):
+    def test_set_nb_func_params(self, charge):
         # Try changing the nb parameters, but keeping the function
-        first_type = AtomType(name='mytype', charge=1.0, 
+        first_type = AtomType(name='mytype', charge=charge,
                 nb_function='sigma * epsilon',
                 parameters={'sigma':1, 'epsilon':10})
         first_type.set_nb_function(parameters={'sigma':42, 'epsilon':24})
