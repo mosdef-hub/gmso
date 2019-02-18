@@ -145,7 +145,7 @@ class AtomType(object):
         return ((self.name == other.name) & (allclose(
             self.charge,
             other.charge,
-            atol=0.00,
+            atol=1e-6 * u.elementary_charge,
             rtol=1e-5 * u.elementary_charge)) &
                 (self.parameters == other.parameters) &
                 (self.nb_function == other.nb_function))
