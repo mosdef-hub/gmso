@@ -1,4 +1,5 @@
 import numpy as np
+import unyt as u
 
 from topology.core.connection import Connection
 
@@ -13,9 +14,8 @@ class Topology(object):
     """
     def __init__(self, name="Topology", box=None):
         if name is not None:
-            self.name = name
-        if box:
-            self.box = box
+            self._name = name
+        self._box = box
         self._site_list = list()
         self._connection_list = list()
 
@@ -23,11 +23,27 @@ class Topology(object):
         self._site_list.append(site)
 
     @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        self._name = str(name)
+
+    @property
+    def box(self):
+        return self._box
+
+    @box.setter
+    def box(self, box):
+        self._box = box
+
+    @property
     def n_sites(self):
         return len(self._site_list)
 
     def positions(self):
-        xyz = np.empty(shape=(self.n_sites, 3))
+        xyz = np.empty(shape=(self.n_sites, 3)) * u.nm
         for i, site in enumerate(self.site_list):
             xyz[i, :] = site.position
         return xyz
