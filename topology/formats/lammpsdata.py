@@ -5,7 +5,7 @@ from warnings import warn
 import itertools as it
 
 import numpy as np
-
+import unyt as u
 
 from topology.core.topology import Topology
 from topology.core.site import Site
@@ -45,10 +45,11 @@ def write_lammpsdata(topology, filename, atom_style='full',
     if atom_style not in ['atomic', 'charge', 'molecular', 'full']:
         raise ValueError('Atom style "{}" is invalid or is not currently supported'.format(atom_style))
 
-    xyz = np.array([[site.xx,site.xy,site.xz] for site in topology.sites])
+    xyz = np.array([[site.position[0],site.position[1],site.position[1]] for site in
+        topology.site_list])
 
     forcefield = True
-    if structure[0].type == '':
+    if topology[0].type == '':
         forcefield = False
 
     # Internally use nm
@@ -56,11 +57,23 @@ def write_lammpsdata(topology, filename, atom_style='full',
               angles=topology.box.angles)
 
     if forcefield:
-        types = [site.type for site in topology.sites]
+        types = [site.atom_type for site in topology.site_list]
     else:
-        types = [site.name for site in topology.sites]
+        types = [site.name for site in topology.site_list]
 
     unique_types = list(set(types))
     unique_types.sort(key=natural_sort)
 
-    charges = [site.charge for site in structure.sites]
+    charges = [site.charge for site in topology.site_list]
+
+    #bonds = [[bond.site1, bond.site2] for bond in topology.connection_list]
+    #[(i, j.position) for i,j in enumerate(top.site_list)]
+    #TODO: Angles
+    #angles 
+    #TODO: Dihedrals
+    #dihedrals = 
+
+    if topology.n_connections == 0:
+        bond_types = np.ones(len(bonds), dtype=int)
+    else:
+        #unique_bond_types = 
