@@ -27,8 +27,7 @@ class TestBox(BaseTest):
         with pytest.warns(UserWarning):
             box = Box(lengths=u.nm * [4, 4, 0])
 
-    def test_dtype(self, lengths, angles):
-        box = Box(lengths=lengths, angles=angles)
+    def test_dtype(self, box):
         assert box.lengths.dtype == float
         assert isinstance(box.lengths, u.unyt_array)
         assert isinstance(box.lengths, np.ndarray)
@@ -36,8 +35,7 @@ class TestBox(BaseTest):
         assert isinstance(box.angles, u.unyt_array)
         assert isinstance(box.angles, np.ndarray)
 
-    def test_lengths_setter(self, lengths):
-        box = Box(lengths=lengths)
+    def test_lengths_setter(self, box, lengths):
         box.lengths = 2*u.nm*np.ones(3)
         assert (box.lengths == 2*u.nm*np.ones(3)).all()
 
@@ -57,8 +55,7 @@ class TestBox(BaseTest):
         box.lengths = lengths
         assert (box.lengths == lengths).all()
 
-    def test_default_angles(self, lengths):
-        box = Box(lengths=lengths)
+    def test_default_angles(self, box):
         assert (box.angles == u.degree * np.array([90.0, 90.0, 90.0])).all()
 
     def test_vectors(self):
