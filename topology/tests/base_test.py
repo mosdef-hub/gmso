@@ -2,6 +2,8 @@ import pytest
 import numpy as np
 import unyt as u
 
+from topology.core.box import Box
+
 
 class BaseTest:
     @pytest.fixture(autouse=True)
@@ -19,3 +21,7 @@ class BaseTest:
     @pytest.fixture
     def charge(self):
         return u.elementary_charge * 1
+
+    @pytest.fixture
+    def box(self):
+        return Box(lengths=u.nm*np.ones(3))
