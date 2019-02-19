@@ -8,7 +8,9 @@ import numpy as np
 import unyt as u
 
 from topology.core.topology import Topology
+from topology.core.box import Box
 from topology.core.site import Site
+from mbuild.utils.sorting import natural_sort
 
 
 def write_lammpsdata(topology, filename, atom_style='full',
@@ -49,7 +51,7 @@ def write_lammpsdata(topology, filename, atom_style='full',
         topology.site_list])
 
     forcefield = True
-    if topology[0].type == '':
+    if topology.site_list[0].atom_type in ['', None]:
         forcefield = False
 
     # Internally use nm
@@ -58,22 +60,31 @@ def write_lammpsdata(topology, filename, atom_style='full',
 
     if forcefield:
         types = [site.atom_type for site in topology.site_list]
+        unique_types = list(set(types))
+        unique_types.sort(key=natural_sort)
     else:
-        types = [site.name for site in topology.site_list]
+        # TODO: I think we want to be able to write out untyped
+        # topologies
+        # types = [site.name for site in topology.site_list]
+        pass
 
-    unique_types = list(set(types))
-    unique_types.sort(key=natural_sort)
+    #unique_types = list(set(types))
+    #unique_types.sort(key=natural_sort)
 
     charges = [site.charge for site in topology.site_list]
+    site_with_index = [i for i in topology.site_list]
+    for i,site in enumerate(site_with_index):
+        site.index = i
 
-    #bonds = [[bond.site1, bond.site2] for bond in topology.connection_list]
-    #[(i, j.position) for i,j in enumerate(top.site_list)]
-    #TODO: Angles
-    #angles 
-    #TODO: Dihedrals
-    #dihedrals = 
+    # bonds = [[bond.site1, bond.site2] for bond in topology.connection_list]
+    # [(i, j.position) for i,j in enumerate(top.site_list)]
+    # TODO: Angles
+    # angles 
+    # TODO: Dihedrals
+    # dihedrals = 
 
     if topology.n_connections == 0:
         bond_types = np.ones(len(bonds), dtype=int)
     else:
+        pass
         #unique_bond_types = 
