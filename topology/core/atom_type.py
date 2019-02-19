@@ -10,7 +10,7 @@ class AtomType(object):
 
     def __init__(self,
                  name="AtomType",
-                 charge=0.0,
+                 charge=0.0 * u.elementary_charge,
                  nb_function='4*epsilon*((sigma/r)**12 - (sigma/r)**6)',
                  parameters={
                      'sigma': 1,
@@ -145,7 +145,7 @@ class AtomType(object):
         return ((self.name == other.name) & (allclose(
             self.charge,
             other.charge,
-            atol=0.00,
+            atol=1e-6 * u.elementary_charge,
             rtol=1e-5 * u.elementary_charge)) &
                 (self.parameters == other.parameters) &
                 (self.nb_function == other.nb_function))

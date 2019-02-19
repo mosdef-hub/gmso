@@ -19,7 +19,7 @@ def allclose(a, b, rtol=None, atol=None):
     else:
         if not isinstance(atol, u.unyt_array):
             warnings.warn('Argument atol was not passed with a unit. The '
-                          'unit {} was inferred from arguments a and b'
+                          'unit {} was inferred from arguments a and b '
                           'and was added'.format(common_unit))
             atol *= common_unit
 
