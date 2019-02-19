@@ -8,7 +8,6 @@ from topology.testing.utils import allclose
 
 
 class TestBox(BaseTest):
-
     def test_init_lengths(self, lengths):
         box = Box(lengths=lengths)
         assert np.array_equal(box.lengths, lengths)

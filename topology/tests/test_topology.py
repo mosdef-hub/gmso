@@ -11,7 +11,6 @@ from topology.testing.utils import allclose
 
 
 class TestTopology(BaseTest):
-
     def test_new_topology(self):
         top = Topology(name='mytop')
         assert top.name == 'mytop'
