@@ -6,25 +6,32 @@ from math import floor
 import re
 
 import numpy as np
+import unyt as u
 from oset import oset as OrderedSet
+import gsd
+import gsd.hoomd
 
+from topology.core.box import Box
+from topology.utils.geometry import coord_shift
+from topology.testing.utils import allclose
 from mbuild import Box
 from mbuild.utils.io import import_
 from mbuild.utils.sorting import natural_sort
-from mbuild.utils.geometry import coord_shift
 
 __all__ = ['write_gsd']
 
 
-def write_gsd(structure, filename, ref_distance=1.0, ref_mass=1.0,
-              ref_energy=1.0, rigid_bodies=None, shift_coords=True,
-              write_special_pairs=True):
+def write_gsd(top, filename, 
+                ref_distance=1.0*u.nm, ref_mass=1.0*u.Unit('g/mol'),
+                ref_energy=1.0*u.('kcal/mol'),
+                rigid_bodies=None, shift_coords=True,
+                write_special_pairs=True):
     """Output a GSD file (HOOMD v2 default data format).
 
     Parameters
     ----------
-    structure : parmed.Structure
-        ParmEd Structure object
+    top : topology.Topology
+        topology.Topology object
     filename : str
         Path of the output file.
     ref_distance : float, optional, default=1.0
@@ -52,12 +59,10 @@ def write_gsd(structure, filename, ref_distance=1.0, ref_mass=1.0,
 
     """
 
-    import_('gsd')
-    import gsd.hoomd
 
-    xyz = np.array([[atom.xx, atom.xy, atom.xz] for atom in structure.atoms])
+    xyz = np.array([site.position for site in top.site_list])
     if shift_coords:
-        xyz = coord_shift(xyz, structure.box[:3])
+        xyz = coord_shift(xyz, top.box.lengths)
 
     gsd_file = gsd.hoomd.Snapshot()
 
@@ -65,12 +70,12 @@ def write_gsd(structure, filename, ref_distance=1.0, ref_mass=1.0,
     gsd_file.configuration.dimensions = 3
 
     # Write box information
-    if np.allclose(structure.box[3:6], np.array([90, 90, 90])):
-        gsd_file.configuration.box = np.hstack((structure.box[:3] / ref_distance,
+    if allclose(top.box.angles, np.array([90, 90, 90])*u.degree):
+        gsd_file.configuration.box = np.hstack((top.box.lengths / ref_distance,
                                                 np.zeros(3)))
     else:
-        a, b, c = structure.box[0:3] / ref_distance
-        alpha, beta, gamma = np.radians(structure.box[3:6])
+        a, b, c = top.box.lengths / ref_distance
+        alpha, beta, gamma = top.box.angles
 
         lx = a
         xy = b * np.cos(gamma)
@@ -81,45 +86,47 @@ def write_gsd(structure, filename, ref_distance=1.0, ref_mass=1.0,
 
         gsd_file.configuration.box = np.array([lx, ly, lz, xy, xz, yz])
 
-    _write_particle_information(gsd_file, structure, xyz, ref_distance,
+    _write_particle_information(gsd_file, top, xyz, ref_distance,
             ref_mass, ref_energy, rigid_bodies)
-    if write_special_pairs:
-        _write_pair_information(gsd_file, structure)
-    if structure.bonds:
-        _write_bond_information(gsd_file, structure)
-    if structure.angles:
-        _write_angle_information(gsd_file, structure)
-    if structure.rb_torsions:
-        _write_dihedral_information(gsd_file, structure)
+    #if write_special_pairs:
+    #    _write_pair_information(gsd_file, top)
+    if top.n_connections > 0:
+        _write_bond_information(gsd_file, top)
+    #if structure.angles:
+    #    _write_angle_information(gsd_file, top)
+    #if structure.rb_torsions:
+    #    _write_dihedral_information(gsd_file, top)
 
 
     gsd.hoomd.create(filename, gsd_file)
 
-def _write_particle_information(gsd_file, structure, xyz, ref_distance,
+def _write_particle_information(gsd_file, top, xyz, ref_distance,
         ref_mass, ref_energy, rigid_bodies):
     """Write out the particle information.
 
     """
 
-    gsd_file.particles.N = len(structure.atoms)
+    gsd_file.particles.N = len(top.n_sites)
     gsd_file.particles.position = xyz / ref_distance
 
-    types = [atom.name if atom.type == '' else atom.type
-             for atom in structure.atoms]
+    types = [site.name if site.atom_type is None else site.atom_type.name
+             for site in top.site_list]
 
     unique_types = list(set(types))
-    unique_types.sort(key=natural_sort)
+    unique_types = sorted(unique_types)
+    #unique_types.sort(key=natural_sort)
     gsd_file.particles.types = unique_types
 
     typeids = np.array([unique_types.index(t) for t in types])
     gsd_file.particles.typeid = typeids
 
-    masses = np.array([atom.mass for atom in structure.atoms])
+    masses = np.array([site.mass for site in top.site_list])
     masses[masses==0] = 1.0
     gsd_file.particles.mass = masses / ref_mass
 
-    charges = np.array([atom.charge for atom in structure.atoms])
-    e0 = 2.39725e-4
+    charges = np.array([site.charge for site in top.site_list])
+    e0 = u.physical_constants.eps_0.in_units(
+            u.elementary_charge**2/u.Unit('kcal*angstrom/mol'))
     '''
     Permittivity of free space = 2.39725e-4 e^2/((kcal/mol)(angstrom)),
     where e is the elementary charge
@@ -131,8 +138,8 @@ def _write_particle_information(gsd_file, structure, xyz, ref_distance,
         rigid_bodies = [-1 if body is None else body for body in rigid_bodies]
     gsd_file.particles.body = rigid_bodies
 
-def _write_pair_information(gsd_file, structure):
-    """Write the special pairs in the system.
+def _write_pair_information(gsd_file, top):
+    """[NOT IMPLEMENTED FOR TOPOLOGY YET] Write the special pairs in the system.
 
         Parameters
     ----------
@@ -141,58 +148,58 @@ def _write_pair_information(gsd_file, structure):
     structure : parmed.Structure
         Parmed structure object holding system information
     """
-    pair_types = []
-    pair_typeid = []
-    pairs = []
-    for ai in structure.atoms:
-        for aj in ai.dihedral_partners:
-            #make sure we don't double add
-            if ai.idx > aj.idx:
-                ps = '-'.join(sorted([ai.type, aj.type], key=natural_sort))
-                if ps not in pair_types:
-                    pair_types.append(ps)
-                pair_typeid.append(pair_types.index(ps))
-                pairs.append((ai.idx, aj.idx))
-    gsd_file.pairs.types = pair_types
-    gsd_file.pairs.typeid = pair_typeid
-    gsd_file.pairs.group = pairs
-    gsd_file.pairs.N = len(pairs)
+    #pair_types = []
+    #pair_typeid = []
+    #pairs = []
+    #for ai in structure.atoms:
+    #    for aj in ai.dihedral_partners:
+    #        #make sure we don't double add
+    #        if ai.idx > aj.idx:
+    #            ps = '-'.join(sorted([ai.type, aj.type], key=natural_sort))
+    #            if ps not in pair_types:
+    #                pair_types.append(ps)
+    #            pair_typeid.append(pair_types.index(ps))
+    #            pairs.append((ai.idx, aj.idx))
+    #gsd_file.pairs.types = pair_types
+    #gsd_file.pairs.typeid = pair_typeid
+    #gsd_file.pairs.group = pairs
+    #gsd_file.pairs.N = len(pairs)
 
-def _write_bond_information(gsd_file, structure):
+def _write_bond_information(gsd_file, top):
     """Write the bonds in the system.
 
     Parameters
     ----------
     gsd_file :
         The file object of the GSD file being written
-    structure : parmed.Structure
-        Parmed structure object holding system information
+    top : topology.Topology
+        Topology object holding system information
 
     """
 
-    gsd_file.bonds.N = len(structure.bonds)
+    gsd_file.bonds.N = len(top.n_connections)
 
     unique_bond_types = set()
-    for bond in structure.bonds:
-        t1, t2 = bond.atom1.type, bond.atom2.type
-        if t1 == '' or t2 == '':
-            t1, t2 = bond.atom1.name, bond.atom2.name
-        t1, t2 = sorted([t1, t2], key=natural_sort)
+    for bond in top.connection_list:
+        t1, t2 = bond.site1.atom_type, bond.site2.atom_type
+        if t1 is None or t2 is None:
+            t1, t2 = bond.site1.name, bond.site2.name
+        t1, t2 = sorted([t1, t2])
         try:
             bond_type = ('-'.join((t1, t2)))
         except AttributeError: # no forcefield applied, bond.type is None
             bond_type = ('-'.join((t1, t2)), 0.0, 0.0)
         unique_bond_types.add(bond_type)
-    unique_bond_types = sorted(list(unique_bond_types), key=natural_sort)
+    unique_bond_types = sorted(list(unique_bond_types))
     gsd_file.bonds.types = unique_bond_types
 
     bond_typeids = []
     bond_groups = []
-    for bond in structure.bonds:
-        t1, t2 = bond.atom1.type, bond.atom2.type
-        if t1 == '' or t2 == '':
-            t1, t2 = bond.atom1.name, bond.atom2.name
-        t1, t2 = sorted([t1, t2], key=natural_sort)
+    for bond in top.connections:
+        t1, t2 = bond.site1.atom_type, bond.site2.atom_type
+        if t1 is None or t2 is None:
+            t1, t2 = bond.site1.name, bond.site2.name
+        t1, t2 = sorted([t1, t2])
         try:
             bond_type = ('-'.join((t1, t2)))
         except AttributeError: # no forcefield applied, bond.type is None
