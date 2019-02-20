@@ -14,9 +14,6 @@ import gsd.hoomd
 from topology.core.box import Box
 from topology.utils.geometry import coord_shift
 from topology.testing.utils import allclose
-from mbuild import Box
-from mbuild.utils.io import import_
-from mbuild.utils.sorting import natural_sort
 
 __all__ = ['write_gsd']
 
