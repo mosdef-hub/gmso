@@ -13,6 +13,7 @@ class Site(object):
                  name,
                  position=None,
                  charge=None,
+                 mass=None,
                  element=None,
                  atom_type=None):
         self.name = str(name)
@@ -25,6 +26,7 @@ class Site(object):
 
         self._atom_type = _validate_atom_type(atom_type)
         self._charge = _validate_charge(charge)
+        self._mass = _validate_charge(mass)
         self._connections = list()
 
     def add_connection(self, other_site):
@@ -50,6 +52,19 @@ class Site(object):
     @charge.setter
     def charge(self, charge):
         self._charge = _validate_charge(charge)
+
+    @property
+    def mass(self):
+        if self._mass is not None:
+            return self._mass
+        elif self.atom_type is not None:
+            return self.atom_type.mass
+        else:
+            return None
+
+    @charge.setter
+    def mass(self, mass):
+        self._mass = _validate_mass(mass)
 
     @property
     def atom_type(self):
@@ -88,6 +103,20 @@ def _validate_charge(charge):
         pass
 
     return charge
+
+def _validate_mass(mass):
+    if mass is None:
+        return None
+    elif not isinstance(mass, u.unyt_array):
+        warnings.warn("Masses are assumed to be g/mol")
+        mass *= u.gram/u.mol
+    elif mass.units.dimensions != (u.gram/u.mol).units.dimensions:
+        warnings.warn("Masses are assumed to be g/mol")
+        mass = mass.value * u.gram/u.mol
+    else:
+        pass
+
+    return mass
 
 def _validate_atom_type(val):
     if val is None:
