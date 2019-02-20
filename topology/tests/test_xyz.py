@@ -1,7 +1,7 @@
 import unyt as u
 import pytest
 
-from topology.formats.xyz import read_xyz
+from topology.formats.xyz import read_xyz, write_xyz
 from topology.tests.base_test import BaseTest
 from topology.utils.io import get_fn
 
@@ -26,3 +26,8 @@ class TestXYZ(BaseTest):
             read_xyz(get_fn('too_few_atoms.xyz'))
         with pytest.raises(ValueError):
             read_xyz(get_fn('too_many_atoms.xyz'))
+
+    def test_write_xyz(self):
+        top = read_xyz(get_fn('ethane.xyz'))
+        write_xyz(top, 'tmp.xyz')
+
