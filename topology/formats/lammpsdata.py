@@ -55,9 +55,7 @@ def write_lammpsdata(topology, filename, atom_style='full',
     if topology.site_list[0].atom_type in ['', None]:
         forcefield = False
 
-    # Internally use nm
-    box = Box(lengths=np.array([0.1 * val for val in topology.box.lengths]),
-              angles=topology.box.angles)
+    box = topology.box
 
     if forcefield:
         types = [site.atom_type for site in topology.site_list]
