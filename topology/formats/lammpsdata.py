@@ -10,7 +10,7 @@ import unyt as u
 from topology.core.topology import Topology
 from topology.core.box import Box
 from topology.core.site import Site
-from mbuild.utils.sorting import natural_sort
+from topology.utils.sorting import natural_sort
 from topology.testing.utils import allclose
 
 
