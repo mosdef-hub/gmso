@@ -48,7 +48,7 @@ def write_lammpsdata(topology, filename, atom_style='full',
     if atom_style not in ['atomic', 'charge', 'molecular', 'full']:
         raise ValueError('Atom style "{}" is invalid or is not currently supported'.format(atom_style))
 
-    xyz = np.array([[site.position[0],site.position[1],site.position[1]] for site in
+    xyz = np.array([[site.position[0],site.position[1],site.position[2]] for site in
         topology.site_list])
 
     forcefield = True
