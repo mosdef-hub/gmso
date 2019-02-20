@@ -33,3 +33,20 @@ def read_xyz(filename):
             raise ValueError(msg.format(n_atoms))
 
     return top
+
+def write_xyz(top, filename):
+    with open(filename, 'w') as out_file:
+        out_file.write('{:d}\n'.format(top.n_sites))
+        out_file.write('{} {} written by topology\n'.format(top.name, filename))
+        for idx, site in enumerate(top.site_list):
+            if site.element is not None:
+                tmp_name = site.element.symbol
+            elif len(site.name) <= 2:
+                tmp_name = site.name
+            else:
+                tmp_name = 'X'
+            out_file.write('{0} {1:8.3f} {2:8.3f} {3:8.3f}\n'.format(
+                tmp_name,
+                site.position[0].in_units(u.angstrom).value,
+                site.position[1].in_units(u.angstrom).value,
+                site.position[2].in_units(u.angstrom).value))
