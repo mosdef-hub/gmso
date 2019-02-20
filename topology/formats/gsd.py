@@ -208,7 +208,7 @@ def _write_bond_information(gsd_file, top):
     gsd_file.bonds.group = bond_groups
 
 def _write_angle_information(gsd_file, structure):
-    """Write the angles in the system.
+    """[NOT IMPLEMENTED] Write the angles in the system.
 
     Parameters
     ----------
@@ -219,32 +219,32 @@ def _write_angle_information(gsd_file, structure):
 
     """
 
-    gsd_file.angles.N = len(structure.angles)
+    #gsd_file.angles.N = len(structure.angles)
 
-    unique_angle_types = set()
-    for angle in structure.angles:
-        t1, t2, t3 = angle.atom1.type, angle.atom2.type, angle.atom3.type
-        t1, t3 = sorted([t1, t3], key=natural_sort)
-        angle_type = ('-'.join((t1, t2, t3)))
-        unique_angle_types.add(angle_type)
-    unique_angle_types = sorted(list(unique_angle_types), key=natural_sort)
-    gsd_file.angles.types = unique_angle_types
+    #unique_angle_types = set()
+    #for angle in structure.angles:
+    #    t1, t2, t3 = angle.atom1.type, angle.atom2.type, angle.atom3.type
+    #    t1, t3 = sorted([t1, t3], key=natural_sort)
+    #    angle_type = ('-'.join((t1, t2, t3)))
+    #    unique_angle_types.add(angle_type)
+    #unique_angle_types = sorted(list(unique_angle_types), key=natural_sort)
+    #gsd_file.angles.types = unique_angle_types
 
-    angle_typeids = []
-    angle_groups = []
-    for angle in structure.angles:
-        t1, t2, t3 = angle.atom1.type, angle.atom2.type, angle.atom3.type
-        t1, t3 = sorted([t1, t3], key=natural_sort)
-        angle_type = ('-'.join((t1, t2, t3)))
-        angle_typeids.append(unique_angle_types.index(angle_type))
-        angle_groups.append((angle.atom1.idx, angle.atom2.idx,
-                             angle.atom3.idx))
+    #angle_typeids = []
+    #angle_groups = []
+    #for angle in structure.angles:
+    #    t1, t2, t3 = angle.atom1.type, angle.atom2.type, angle.atom3.type
+    #    t1, t3 = sorted([t1, t3], key=natural_sort)
+    #    angle_type = ('-'.join((t1, t2, t3)))
+    #    angle_typeids.append(unique_angle_types.index(angle_type))
+    #    angle_groups.append((angle.atom1.idx, angle.atom2.idx,
+    #                         angle.atom3.idx))
 
-    gsd_file.angles.typeid = angle_typeids
-    gsd_file.angles.group = angle_groups
+    #gsd_file.angles.typeid = angle_typeids
+    #gsd_file.angles.group = angle_groups
 
 def _write_dihedral_information(gsd_file, structure):
-    """Write the dihedrals in the system.
+    """[NOT IMPLEMENTED] Write the dihedrals in the system.
 
     Parameters
     ----------
@@ -255,32 +255,32 @@ def _write_dihedral_information(gsd_file, structure):
 
     """
 
-    gsd_file.dihedrals.N = len(structure.rb_torsions)
+    #gsd_file.dihedrals.N = len(structure.rb_torsions)
 
-    unique_dihedral_types = set()
-    for dihedral in structure.rb_torsions:
-        t1, t2 = dihedral.atom1.type, dihedral.atom2.type
-        t3, t4 = dihedral.atom3.type, dihedral.atom4.type
-        if [t2, t3] == sorted([t2, t3], key=natural_sort):
-            dihedral_type = ('-'.join((t1, t2, t3, t4)))
-        else:
-            dihedral_type = ('-'.join((t4, t3, t2, t1)))
-        unique_dihedral_types.add(dihedral_type)
-    unique_dihedral_types = sorted(list(unique_dihedral_types), key=natural_sort)
-    gsd_file.dihedrals.types = unique_dihedral_types
+    #unique_dihedral_types = set()
+    #for dihedral in structure.rb_torsions:
+    #    t1, t2 = dihedral.atom1.type, dihedral.atom2.type
+    #    t3, t4 = dihedral.atom3.type, dihedral.atom4.type
+    #    if [t2, t3] == sorted([t2, t3], key=natural_sort):
+    #        dihedral_type = ('-'.join((t1, t2, t3, t4)))
+    #    else:
+    #        dihedral_type = ('-'.join((t4, t3, t2, t1)))
+    #    unique_dihedral_types.add(dihedral_type)
+    #unique_dihedral_types = sorted(list(unique_dihedral_types), key=natural_sort)
+    #gsd_file.dihedrals.types = unique_dihedral_types
 
-    dihedral_typeids = []
-    dihedral_groups = []
-    for dihedral in structure.rb_torsions:
-        t1, t2 = dihedral.atom1.type, dihedral.atom2.type
-        t3, t4 = dihedral.atom3.type, dihedral.atom4.type
-        if [t2, t3] == sorted([t2, t3], key=natural_sort):
-            dihedral_type = ('-'.join((t1, t2, t3, t4)))
-        else:
-            dihedral_type = ('-'.join((t4, t3, t2, t1)))
-        dihedral_typeids.append(unique_dihedral_types.index(dihedral_type))
-        dihedral_groups.append((dihedral.atom1.idx, dihedral.atom2.idx,
-                                dihedral.atom3.idx, dihedral.atom4.idx))
+    #dihedral_typeids = []
+    #dihedral_groups = []
+    #for dihedral in structure.rb_torsions:
+    #    t1, t2 = dihedral.atom1.type, dihedral.atom2.type
+    #    t3, t4 = dihedral.atom3.type, dihedral.atom4.type
+    #    if [t2, t3] == sorted([t2, t3], key=natural_sort):
+    #        dihedral_type = ('-'.join((t1, t2, t3, t4)))
+    #    else:
+    #        dihedral_type = ('-'.join((t4, t3, t2, t1)))
+    #    dihedral_typeids.append(unique_dihedral_types.index(dihedral_type))
+    #    dihedral_groups.append((dihedral.atom1.idx, dihedral.atom2.idx,
+    #                            dihedral.atom3.idx, dihedral.atom4.idx))
 
-    gsd_file.dihedrals.typeid = dihedral_typeids
-    gsd_file.dihedrals.group = dihedral_groups
+    #gsd_file.dihedrals.typeid = dihedral_typeids
+    #gsd_file.dihedrals.group = dihedral_groups
