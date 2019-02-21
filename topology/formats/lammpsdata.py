@@ -127,9 +127,9 @@ def write_lammpsdata(topology, filename, atom_style='full',
         if allclose(box.angles, u.unyt_array([90,90,90],'degree')):
             for i,dim in enumerate(['x', 'y', 'z']):
                 data.write('{0:.6f} {1:.6f} {2}lo {2}hi\n'.format(
-                    0, box.lengths[i],dim))
+                    0, box.lengths.value[i],dim))
         else:
-            a, b, c = box.lengths[i]
+            a, b, c = box.lengths.value[i]
             alpha, beta, gamma = box.angles(u.radian)
 
             lx = a
