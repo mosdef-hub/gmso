@@ -62,24 +62,13 @@ def write_lammpsdata(topology, filename, atom_style='full',
     unique_types = list(set(types))
     unique_types.sort(key=natural_sort)
 
-    #charges = [site.charge for site in topology.site_list]
-    #site_with_index = [i for i in topology.site_list]
-    #for i,site in enumerate(site_with_index):
-    #    site.index = i
-
-    # bonds = [[bond.site1, bond.site2] for bond in topology.connection_list]
-    # [(i, j.position) for i,j in enumerate(top.site_list)]
+    # TODO: charges
+ 
+    # TODO: bonds
     # TODO: Angles
-    # angles 
     # TODO: Dihedrals
-    # dihedrals = 
 
     # TODO: Figure out handling bond, angle, and dihedral indices
-    #if topology.n_connections == 0:
-    #    bond_types = np.ones(len(bonds), dtype=int)
-    #else:
-    #    pass
-    #    unique_bond_types = 
 
     # placeholder; change later
     bonds = 0
@@ -104,13 +93,8 @@ def write_lammpsdata(topology, filename, atom_style='full',
                 data.write('0 dihedrals\n')
 
         data.write('{:d} atom types\n'.format(len(set(types))))
-        #if atom_style in ['full', 'molecular']:
-        #    if bonds != 0:
-        #        data.write('{:d} bond types\n'.format(len(set(bond_types))))
-        #    if angles != 0:
-        #        data.write('{:d} angle types\n'.format(len(set(angle_types))))
-        #    if dihedrals != 0:
-        #        data.write('{:d} dihedral types\n'.format(len(set(dihedral_types))))
+
+        # TODO: Write out bonds, angles, and dihedrals
 
         data.write('\n')
         # Box data
@@ -131,7 +115,7 @@ def write_lammpsdata(topology, filename, atom_style='full',
             yz = (b*c*np.cos(alpha) - xy*xz) / ly
             lz = np.sqrt(c**2 - xz**2 - yz**2)
 
-            xlo, ylo, zlo = 0 # I believe Topology box is always starting at 0
+            xlo, ylo, zlo = 0
             xhi = xlo + lx
             yhi = ylo + ly
             zhi = zlo + lz
@@ -148,7 +132,7 @@ def write_lammpsdata(topology, filename, atom_style='full',
             data.write('{0} {1} {2}\n'.format(zlo_bound, zhi_bound, yz))
 
         # Mass data
-        # TODO: Determine where masses are coming from
+        # TODO: Get masses from 'Site' once PR is merged
         #masses = [site.atom_type.mass for site in topology.site_list]
         masses = [0,0] # hardcoded to test right now
         mass_dict = dict([(unique_types.index(atom_type)+1,mass) for atom_type,mass in zip(types,masses)])
@@ -162,67 +146,12 @@ def write_lammpsdata(topology, filename, atom_style='full',
             sigma_dict = dict([(unique_types.index(atom_type)+1,sigma) for atom_type,sigma in zip(types,sigmas)])
             epsilon_dict = dict([(unique_types.index(atom_type)+1,epsilon) for atom_type,epsilon in zip(types,epsilons)])
 
-        #    # Modified cross-interactions
+            # Modified cross-interactions
             if topology.site_list[0].atom_type.nb_function:
                 # Temporary -->
                 data.write('\nPair Coeffs # lj\n\n')
                 for idx,epsilon in epsilon_dict.items():
                     data.write('{}\t{:.5f}\t{:.5f}\n'.format(idx,epsilon,sigma_dict[idx]))
-
-        #        params = ParameterSet.from_structure(structure)
-        #        # Sort keys (maybe they should be sorted in ParmEd)
-        #        new_nbfix_types = OrderedDict()
-        #        for key, val in params.nbfix_types.items():
-        #            sorted_key = tuple(sorted(key))
-        #            if sorted_key in new_nbfix_types:
-        #                warn('Sorted key matches an existing key')
-        #                if new_nbfix_types[sorted_key]:
-        #                    warn('nbfixes are not symmetric, overwriting old nbfix')
-        #            new_nbfix_types[sorted_key] = params.nbfix_types[key]
-        #        params.nbfix_types = new_nbfix_types
-        #        warn('Explicitly writing cross interactions using mixing rule: {}'.format(
-        #            structure.combining_rule))
-        #        coeffs = OrderedDict()
-        #        for combo in it.combinations_with_replacement(unique_types, 2):
-        #            # Attempt to find pair coeffis in nbfixes
-        #            if combo in params.nbfix_types:
-        #                type1 = unique_types.index(combo[0])+1
-        #                type2 = unique_types.index(combo[1])+1
-        #                rmin = params.nbfix_types[combo][0] # Angstrom
-        #                epsilon = params.nbfix_types[combo][1] # kcal
-        #                sigma = rmin/2**(1/6)
-        #                coeffs[(type1, type2)] = (round(sigma, 8), round(epsilon, 8))
-        #            else:
-        #                type1 = unique_types.index(combo[0]) + 1
-        #                type2 = unique_types.index(combo[1]) + 1
-        #                # Might not be necessary to be this explicit
-        #                if type1 == type2:
-        #                    sigma = sigma_dict[type1]
-        #                    epsilon = epsilon_dict[type1]
-        #                else:
-        #                    if structure.combining_rule == 'lorentz':
-        #                        sigma = (sigma_dict[type1]+sigma_dict[type2])*0.5
-        #                    elif structure.combining_rule == 'geometric':
-        #                        sigma = (sigma_dict[type1]*sigma_dict[type2])**0.5
-        #                    else:
-        #                        raise ValueError('Only lorentz and geometric combining rules are supported')
-        #                    epsilon = (epsilon_dict[type1]*epsilon_dict[type2])**0.5
-        #                coeffs[(type1, type2)] = (round(sigma, 8), round(epsilon, 8))
-        #        if nbfix_in_data_file:
-        #            data.write('\nPairIJ Coeffs # modified lj\n\n')
-        #            for (type1, type2), (sigma, epsilon) in coeffs.items():
-        #                data.write('{0} {1} {2} {3}\n'.format(
-        #                    type1, type2, epsilon, sigma))
-        #        else:
-        #            data.write('\nPair Coeffs # lj\n\n')
-        #            print('Copy these commands into your input script:\n')
-        #            for (type1, type2), (sigma, epsilon) in coeffs.items():
-        #                if type1 == type2:
-        #                    data.write('{}\t{:.5f}\t{:.5f}\n'.format(
-        #                        type1,epsilon_dict[type1],sigma_dict[type1]))
-        #                else:
-        #                    print('pair_coeff\t{0} {1} {2} {3}'.format(
-        #                        type1, type2, epsilon, sigma))
 
             # Pair coefficients
             else:
@@ -230,30 +159,9 @@ def write_lammpsdata(topology, filename, atom_style='full',
                 for idx,epsilon in epsilon_dict.items():
                     data.write('{}\t{:.5f}\t{:.5f}\n'.format(idx,epsilon,sigma_dict[idx]))
 
-        #    # Bond coefficients
-        #    if bonds:
-        #        data.write('\nBond Coeffs # harmonic\n\n')
-        #        for params,idx in unique_bond_types.items():
-        #            data.write('{}\t{}\t{}\n'.format(idx,*params))
-
-        #    # Angle coefficients
-        #    if angles:
-        #        data.write('\nAngle Coeffs # harmonic\n\n')
-        #        for params,idx in unique_angle_types.items():
-        #            data.write('{}\t{}\t{:.5f}\n'.format(idx,*params))
-
-        #    # Dihedral coefficients
-        #    if dihedrals:
-        #        data.write('\nDihedral Coeffs # opls\n\n')
-        #        for params,idx in unique_dihedral_types.items():
-        #            opls_coeffs = RB_to_OPLS(params[0],
-        #                                     params[1],
-        #                                     params[2],
-        #                                     params[3],
-        #                                     params[4],
-        #                                     params[5])
-        #            data.write('{}\t{:.5f}\t{:.5f}\t{:.5f}\t{:.5f}\n'.format(idx,*opls_coeffs))
-
+        # TODO: Write out bond coefficients
+        # TODO: Write out angle coefficients
+        # TODO: Write out dihedral coefficients
 
         # Atom data
         data.write('\nAtoms\n\n')
@@ -280,25 +188,6 @@ def write_lammpsdata(topology, filename, atom_style='full',
                 zero=0,charge=0,
                 x=coords[0],y=coords[1],z=coords[2]))
 
-        #if atom_style in ['full', 'molecular']:
-        #    # Bond data
-        #    if bonds:
-        #        data.write('\nBonds\n\n')
-        #        for i,bond in enumerate(bonds):
-        #            data.write('{:d}\t{:d}\t{:d}\t{:d}\n'.format(
-        #                i+1,bond_types[i],bond[0],bond[1]))
-
-        #    # Angle data
-        #    if angles:
-        #        data.write('\nAngles\n\n')
-        #        for i,angle in enumerate(angles):
-        #            data.write('{:d}\t{:d}\t{:d}\t{:d}\t{:d}\n'.format(
-        #                i+1,angle_types[i],angle[0],angle[1],angle[2]))
-
-        #    # Dihedral data
-        #    if dihedrals:
-        #        data.write('\nDihedrals\n\n')
-        #        for i,dihedral in enumerate(dihedrals):
-        #            data.write('{:d}\t{:d}\t{:d}\t{:d}\t{:d}\t{:d}\n'.format(
-        #                i+1,dihedral_types[i],dihedral[0],
-        #                dihedral[1],dihedral[2],dihedral[3]))
+        # TODO: Write out bonds
+        # TODO: Write out angles
+        # TODO: Write out dihedrals
