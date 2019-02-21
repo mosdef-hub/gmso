@@ -52,13 +52,13 @@ def write_lammpsdata(topology, filename, atom_style='full',
         topology.site_list])
 
     forcefield = True
-    if topology.site_list[0].atom_type in ['', None]:
+    if topology.site_list[0].atom_type.name in ['', None]:
         forcefield = False
 
     box = topology.box
 
     if forcefield:
-        types = [site.atom_type for site in topology.site_list]
+        types = [site.atom_type.name for site in topology.site_list]
         unique_types = list(set(types))
         unique_types.sort(key=natural_sort)
     else:
@@ -67,8 +67,8 @@ def write_lammpsdata(topology, filename, atom_style='full',
         # types = [site.name for site in topology.site_list]
         pass
 
-    #unique_types = list(set(types))
-    #unique_types.sort(key=natural_sort)
+    unique_types = list(set(types))
+    unique_types.sort(key=natural_sort)
 
     #charges = [site.charge for site in topology.site_list]
     #site_with_index = [i for i in topology.site_list]
@@ -111,7 +111,7 @@ def write_lammpsdata(topology, filename, atom_style='full',
             else:
                 data.write('0 dihedrals\n')
 
-        #data.write('{:d} atom types\n'.format(len(set(types))))
+        data.write('{:d} atom types\n'.format(len(set(types))))
         #if atom_style in ['full', 'molecular']:
         #    if bonds != 0:
         #        data.write('{:d} bond types\n'.format(len(set(bond_types))))
@@ -163,14 +163,19 @@ def write_lammpsdata(topology, filename, atom_style='full',
         #data.write('\nMasses\n\n')
         #for atom_type,mass in mass_dict.items():
         #    data.write('{:d}\t{:.6f}\t# {}\n'.format(atom_type,mass,unique_types[atom_type-1]))
-        #if forcefield:
-        #    sigmas = [atom.sigma for atom in structure.atoms]
-        #    epsilons = [atom.epsilon for atom in structure.atoms]
-        #    sigma_dict = dict([(unique_types.index(atom_type)+1,sigma) for atom_type,sigma in zip(types,sigmas)])
-        #    epsilon_dict = dict([(unique_types.index(atom_type)+1,epsilon) for atom_type,epsilon in zip(types,epsilons)])
+        if forcefield:
+            sigmas = [site.atom_type.parameters['sigma'] for site in topology.site_list]
+            epsilons = [site.atom_type.parameters['epsilon'] for site in topology.site_list]
+            sigma_dict = dict([(unique_types.index(atom_type)+1,sigma) for atom_type,sigma in zip(types,sigmas)])
+            epsilon_dict = dict([(unique_types.index(atom_type)+1,epsilon) for atom_type,epsilon in zip(types,epsilons)])
 
         #    # Modified cross-interactions
-        #    if structure.has_NBFIX():
+            if topology.site_list[0].atom_type.nb_function:
+                # Temporary -->
+                data.write('\nPair Coeffs # lj\n\n')
+                for idx,epsilon in epsilon_dict.items():
+                    data.write('{}\t{:.5f}\t{:.5f}\n'.format(idx,epsilon,sigma_dict[idx]))
+
         #        params = ParameterSet.from_structure(structure)
         #        # Sort keys (maybe they should be sorted in ParmEd)
         #        new_nbfix_types = OrderedDict()
@@ -226,11 +231,11 @@ def write_lammpsdata(topology, filename, atom_style='full',
         #                    print('pair_coeff\t{0} {1} {2} {3}'.format(
         #                        type1, type2, epsilon, sigma))
 
-        #    # Pair coefficients
-        #    else:
-        #        data.write('\nPair Coeffs # lj\n\n')
-        #        for idx,epsilon in epsilon_dict.items():
-        #            data.write('{}\t{:.5f}\t{:.5f}\n'.format(idx,epsilon,sigma_dict[idx]))
+            # Pair coefficients
+            else:
+                data.write('\nPair Coeffs # lj\n\n')
+                for idx,epsilon in epsilon_dict.items():
+                    data.write('{}\t{:.5f}\t{:.5f}\n'.format(idx,epsilon,sigma_dict[idx]))
 
         #    # Bond coefficients
         #    if bonds:
