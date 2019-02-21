@@ -157,12 +157,13 @@ def write_lammpsdata(topology, filename, atom_style='full',
 
         # Mass data
         # TODO: Determine where masses are coming from
-        #masses = [site.mass for site in topology.site_list]
-        #mass_dict = dict([(unique_types.index(atom_type)+1,mass) for atom_type,mass in zip(types,masses)])
+        #masses = [site.atom_type.mass for site in topology.site_list]
+        masses = [0,0] # hardcoded to test right now
+        mass_dict = dict([(unique_types.index(atom_type)+1,mass) for atom_type,mass in zip(types,masses)])
 
-        #data.write('\nMasses\n\n')
-        #for atom_type,mass in mass_dict.items():
-        #    data.write('{:d}\t{:.6f}\t# {}\n'.format(atom_type,mass,unique_types[atom_type-1]))
+        data.write('\nMasses\n\n')
+        for atom_type,mass in mass_dict.items():
+            data.write('{:d}\t{:.6f}\t# {}\n'.format(atom_type,mass,unique_types[atom_type-1]))
         if forcefield:
             sigmas = [site.atom_type.parameters['sigma'] for site in topology.site_list]
             epsilons = [site.atom_type.parameters['epsilon'] for site in topology.site_list]
