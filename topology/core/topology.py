@@ -18,6 +18,7 @@ class Topology(object):
         self._box = box
         self._site_list = list()
         self._connection_list = list()
+        self._positions = None
 
     def add_site(self, site):
         self._site_list.append(site)
@@ -42,11 +43,16 @@ class Topology(object):
     def n_sites(self):
         return len(self._site_list)
 
+    @property
     def positions(self):
+        return self._positions
+
+    @positions.setter
+    def positions(self, positions):
         xyz = np.empty(shape=(self.n_sites, 3)) * u.nm
         for i, site in enumerate(self.site_list):
             xyz[i, :] = site.position
-        return xyz
+        self._positions = xyz
 
     @property
     def site_list(self):
