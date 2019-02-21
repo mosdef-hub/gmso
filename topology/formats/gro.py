@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import unyt as u
 
@@ -47,5 +49,45 @@ def read_gro(filename):
                 'were expected, but at least one more was found.'
             )
             raise ValueError(msg.format(n_atoms))
+
+    return top
+
+def write_gro(top, filename):
+    """Write a topology to a gro file."""
+
+    top = _prepare_topology(top)
+
+    with open(filename, 'w') as out_file:
+        import pdb; pdb.set_trace()
+        out_file.write('{} written by topology\n'.format(
+            top.name if top.name is not None else ''))
+        out_file.write('{:d}\n'.format(top.n_sites))
+        for idx, site in enumerate(top.site_list):
+            res_id = 1
+            res_name = 'X'
+            atom_name = site.name
+            atom_id = idx + 1
+            out_file.write('{0:5d}{1:5s}{2:5s}{3:5d}{4:8.3f}{5:8.3f}{6:8.3f}\n'.format(
+                res_id,
+                res_name,
+                atom_name,
+                atom_id,
+                site.position[0].in_units(u.nm).value,
+                site.position[1].in_units(u.nm).value,
+                site.position[2].in_units(u.nm).value,
+            ))
+
+        out_file.write(' {:0.5f} {:0.5f} {:0.5f} \n'.format(
+            top.box.lengths[0].in_units(u.nm).value.round(6),
+            top.box.lengths[1].in_units(u.nm).value.round(6),
+            top.box.lengths[2].in_units(u.nm).value.round(6),
+        ))
+
+def _prepare_topology(top):
+    """Modify topology, as necessary, to fit limitations of the GRO format."""
+    if np.min(top.positions()) < 0:
+        warnings.warn('Topology contains some negative positions. Translating '
+                      'in order to ensure all coordinates are non-negative.')
+        #top.positions() -= np.min(top.positions(), axis=0)
 
     return top
