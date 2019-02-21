@@ -202,7 +202,9 @@ def _write_bond_information(gsd_file, top):
         except AttributeError: # no forcefield applied, bond.type is None
             bond_type = ('-'.join((t1, t2)), 0.0, 0.0)
         bond_typeids.append(unique_bond_types.index(bond_type))
-        bond_groups.append((bond.atom1.idx, bond.atom2.idx))
+        bond_groups.append((
+            top.site_list.index(bond.site1), 
+            top.site_list.index(bond.site2)))
 
     gsd_file.bonds.typeid = bond_typeids
     gsd_file.bonds.group = bond_groups
