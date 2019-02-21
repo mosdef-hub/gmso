@@ -57,15 +57,7 @@ def write_lammpsdata(topology, filename, atom_style='full',
 
     box = topology.box
 
-    if forcefield:
-        types = [site.atom_type.name for site in topology.site_list]
-        unique_types = list(set(types))
-        unique_types.sort(key=natural_sort)
-    else:
-        # TODO: I think we want to be able to write out untyped
-        # topologies
-        # types = [site.name for site in topology.site_list]
-        pass
+    types = [site.atom_type.name for site in topology.site_list]
 
     unique_types = list(set(types))
     unique_types.sort(key=natural_sort)
