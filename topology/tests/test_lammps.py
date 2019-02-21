@@ -8,35 +8,18 @@ from topology.core.connection import Connection
 from topology.core.box import Box
 from topology.testing.utils import allclose
 from topology.formats.lammpsdata import write_lammpsdata
+from topology.core.atom_type import AtomType
 
 
-#def test_write():
-#    top = Topology()
-#    top.box = Box(lengths=[1,1,1])
-#    site1 = Site(name='site1')
-#    site2 = Site(name='site2')
-#    connect = Connection(site1=site1, site2=site2)
-#
-#    top.add_site(site1)
-#    top.add_site(site2)
-#
-#    top.update_connection_list()
-#    write_lammpsdata(top, filename='test.lammps')
+def test_write_lammps():
+    top = Topology()
+    top.box = Box(lengths=[1,1,1])
+    site1 = Site(name='site1', atom_type=AtomType())
+    site2 = Site(name='site2', atom_type=AtomType())
+    connect = Connection(site1=site1, site2=site2)
 
-def test_save():
-    pass
+    top.add_site(site1)
+    top.add_site(site2)
 
-def test_save_forcefield():
-    pass
-
-def test_save_box():
-    pass
-
-def test_save_triclinic_box():
-    pass
-
-def test_nbfix():
-    pass
-
-def test_save_triclinic_box():
-    pass
+    top.update_connection_list()
+    write_lammpsdata(top, filename='test.lammps')
