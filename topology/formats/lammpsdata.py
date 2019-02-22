@@ -15,7 +15,7 @@ from topology.testing.utils import allclose
 
 
 def write_lammpsdata(topology, filename, atom_style='full',
-            nbfix_in_data_file=True):
+                     nbfix_in_data_file=True):
     """Output a LAMMPS data file.
     
     Outputs a LAMMPS data file in the 'full' atom style format. Assumes use
