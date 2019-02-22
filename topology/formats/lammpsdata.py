@@ -15,7 +15,7 @@ from topology.testing.utils import allclose
 
 
 def write_lammpsdata(topology, filename, atom_style='full',
-        nbfix_in_data_file=True):
+            nbfix_in_data_file=True):
     """Output a LAMMPS data file.
     
     Outputs a LAMMPS data file in the 'full' atom style format. Assumes use
@@ -48,16 +48,17 @@ def write_lammpsdata(topology, filename, atom_style='full',
     if atom_style not in ['atomic', 'charge', 'molecular', 'full']:
         raise ValueError('Atom style "{}" is invalid or is not currently supported'.format(atom_style))
 
-    xyz = np.array([[site.position[0],site.position[1],site.position[2]] for site in
-        topology.site_list])
+    xyz = list()
+    types = list()
+    for site in topology.site_list:
+        xyz.append([site.position[0],site.position[1],site.position[2]])
+        types.append(site.atom_type.name)
 
     forcefield = True
     if topology.site_list[0].atom_type.name in ['', None]:
         forcefield = False
 
     box = topology.box
-
-    types = [site.atom_type.name for site in topology.site_list]
 
     unique_types = list(set(types))
     unique_types.sort(key=natural_sort)
@@ -76,7 +77,7 @@ def write_lammpsdata(topology, filename, atom_style='full',
     dihedrals = 0
 
     with open(filename, 'w') as data:
-        data.write(filename+' - created by MoSDeF\n\n')
+        data.write(filename+' - created by topology\n\n')
         data.write('{:d} atoms\n'.format(len(topology.site_list)))
         if atom_style in ['full', 'molecular']:
             if bonds != 0:
@@ -186,7 +187,7 @@ def write_lammpsdata(topology, filename, atom_style='full',
             data.write(atom_line.format(
                 index=i+1,type_index=0,
                 zero=0,charge=0,
-                x=coords[0],y=coords[1],z=coords[2]))
+                x=coords[0].v,y=coords[1].v,z=coords[2].v))
 
         # TODO: Write out bonds
         # TODO: Write out angles
