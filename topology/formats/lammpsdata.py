@@ -185,7 +185,7 @@ def write_lammpsdata(topology, filename, atom_style='full',
 
         for i,coords in enumerate(xyz):
             data.write(atom_line.format(
-                index=i+1,type_index=0,
+                index=i+1,type_index=unique_types.index(types[i])+1,
                 zero=0,charge=0,
                 x=coords[0].v,y=coords[1].v,z=coords[2].v))
 
