@@ -1,9 +1,11 @@
 import warnings
+import logging
 import numpy as np
 import sympy
 import unyt as u
 from topology.testing.utils import allclose
 
+logger = logging.getLogger("TopLog")
 
 class AtomType(object):
     """An atom type."""
@@ -136,7 +138,7 @@ class AtomType(object):
         symbols = sympy.symbols(set(self.parameters.keys()))
         if symbols != self.nb_function.free_symbols:
             extra_syms = symbols ^ self.nb_function.free_symbols
-            raise ValueError("NB function and parameter"
+            logger.debug("NB function and parameter"
                              " symbols do not agree,"
                              " extraneous symbols:"
                              " {}".format(extra_syms))
