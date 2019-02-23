@@ -27,5 +27,6 @@ debug_handler.setFormatter(formatter)
 warn_logger.addHandler(warn_handler)
 logger.addHandler(warn_handler)
 
-#debug_handler file receives input from just the logger
+#debug_handler file receives input from both loggers
 logger.addHandler(debug_handler)
+warn_logger.addHandler(debug_handler)
