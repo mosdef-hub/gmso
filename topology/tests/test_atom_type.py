@@ -9,21 +9,24 @@ from topology.testing.utils import allclose
 
 
 class TestAtomType(BaseTest):
-    def test_new_atom_type(self, charge):
-        new_type = AtomType(name='mytype', charge=charge,
+    def test_new_atom_type(self, charge, mass):
+        new_type = AtomType(name='mytype', charge=charge, mass=mass,
                 parameters={'sigma': 1 * u.nm,
                     'epsilon': 10 * u.Unit('kcal / mol')})
         assert new_type.name == 'mytype'
         assert allclose(new_type.charge, charge)
         assert allclose(new_type.parameters['sigma'], 1 * u.nm)
         assert allclose(new_type.parameters['epsilon'], 10 * u.Unit('kcal / mol'))
+        assert allclose(new_type.mass, mass)
 
-    def test_setters(self, charge):
+    def test_setters(self, charge, mass):
         new_type = AtomType(self)
         new_type.name = "SettingName"
         new_type.charge = -1.0 * charge
+        new_type.mass = 1 * mass
         assert new_type.name == "SettingName"
         assert allclose(new_type.charge, -1.0 * charge)
+        assert allclose(new_type.mass, 1 * mass)
 
     def test_incorrect_nb_function(self, charge):
         with pytest.raises(ValueError):
@@ -52,12 +55,16 @@ class TestAtomType(BaseTest):
                 nb_function='sigma * epsilon')
         different_params = AtomType(name='mytype', charge=charge,
                 parameters={'sigma': 42, 'epsilon': 100000})
+        different_mass = AtomType(name='mytype', charge=charge, mass=5*u.kg/u.mol,
+                parameters={'sigma': 42, 'epsilon': 10})
+
 
         assert first_type == same_type
         assert first_type != different_name
         assert first_type != different_charge
         assert first_type != different_function
         assert first_type != different_params
+        assert first_type != different_mass
 
     def test_set_nb_func(self, charge):
         # Try changing the nonbonded function, but keep the parameters
