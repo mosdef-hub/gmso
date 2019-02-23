@@ -159,7 +159,7 @@ class AtomType(object):
             self.mass,
             other.mass,
             atol=1e-6 * u.gram/u.mol,
-            rtol=1e-5 * u.gram/u.mol))
+            rtol=1e-5 * u.gram/u.mol)) &
                 (self.parameters == other.parameters) &
                 (self.nb_function == other.nb_function))
 
@@ -171,7 +171,7 @@ class AtomType(object):
 def _validate_charge(charge):
     if not isinstance(charge, u.unyt_array):
         warnings.warn("Charges are assumed to be elementary charge")
-        charge *= u.elementary_charge
+        charge = charge * u.elementary_charge
     elif charge.units.dimensions != u.elementary_charge.units.dimensions:
         warnings.warn("Charges are assumed to be elementary charge")
         charge = charge.value * u.elementary_charge
@@ -183,7 +183,7 @@ def _validate_charge(charge):
 def _validate_mass(mass):
     if not isinstance(mass, u.unyt_array):
         warnings.warn("Masses are assumed to be g/mol")
-        mass *= u.gram/u.mol
+        mass = mass * u.gram/u.mol
     elif mass.units.dimensions != (u.gram/u.mol).units.dimensions:
         warnings.warn("Charges are assumed to be g/mol")
         mass = mass.value * u.gram/u.mol
