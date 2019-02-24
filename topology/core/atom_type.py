@@ -10,7 +10,7 @@ class AtomType(object):
 
     def __init__(self,
                  name="AtomType",
-                 mass=0.0*u.gram/u.mol,
+                 mass=0.0 * u.gram / u.mol,
                  charge=0.0 * u.elementary_charge,
                  nb_function='4*epsilon*((sigma/r)**12 - (sigma/r)**6)',
                  parameters={
@@ -156,10 +156,10 @@ class AtomType(object):
             other.charge,
             atol=1e-6 * u.elementary_charge,
             rtol=1e-5 * u.elementary_charge)) & (allclose(
-            self.mass,
-            other.mass,
-            atol=1e-6 * u.gram/u.mol,
-            rtol=1e-5 * u.gram/u.mol)) &
+                self.mass,
+                other.mass,
+                atol=1e-6 * u.gram / u.mol,
+                rtol=1e-5 * u.gram / u.mol)) &
                 (self.parameters == other.parameters) &
                 (self.nb_function == other.nb_function))
 
@@ -180,13 +180,14 @@ def _validate_charge(charge):
 
     return charge
 
+
 def _validate_mass(mass):
     if not isinstance(mass, u.unyt_array):
         warnings.warn("Masses are assumed to be g/mol")
-        mass *= u.gram/u.mol
-    elif mass.units.dimensions != (u.gram/u.mol).units.dimensions:
+        mass *= u.gram / u.mol
+    elif mass.units.dimensions != (u.gram / u.mol).units.dimensions:
         warnings.warn("Charges are assumed to be g/mol")
-        mass = mass.value * u.gram/u.mol
+        mass = mass.value * u.gram / u.mol
     else:
         pass
 
