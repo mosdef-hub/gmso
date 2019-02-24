@@ -59,7 +59,6 @@ def write_gro(top, filename):
     top = _prepare_topology(top)
 
     with open(filename, 'w') as out_file:
-        import pdb; pdb.set_trace()
         out_file.write('{} written by topology at {}\n'.format(
             top.name if top.name is not None else '',
             str(datetime.datetime.now())))
@@ -90,6 +89,5 @@ def _prepare_topology_to_gro(top):
     if np.min(top.positions()) < 0:
         warnings.warn('Topology contains some negative positions. Translating '
                       'in order to ensure all coordinates are non-negative.')
-        #top.positions() -= np.min(top.positions(), axis=0)
 
     return top
