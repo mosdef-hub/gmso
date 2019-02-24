@@ -44,10 +44,9 @@ def write_xyz(top, filename):
             filename,
             str(datetime.datetime.now())))
         for idx, site in enumerate(top.site_list):
+            # TODO: Better handling of element guessing and site naming
             if site.element is not None:
                 tmp_name = site.element.symbol
-            elif len(site.name) <= 2:
-                tmp_name = site.name
             else:
                 tmp_name = 'X'
             out_file.write('{0} {1:8.3f} {2:8.3f} {3:8.3f}\n'.format(
