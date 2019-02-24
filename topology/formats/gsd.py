@@ -18,11 +18,14 @@ from topology.testing.utils import allclose
 __all__ = ['write_gsd']
 
 
-def write_gsd(top, filename, 
-                ref_distance=1.0*u.nm, ref_mass=1.0*u.Unit('g/mol'),
-                ref_energy=1.0*u.('kcal/mol'),
-                rigid_bodies=None, shift_coords=True,
-                write_special_pairs=True):
+def write_gsd(top,
+              filename,
+              ref_distance=1.0 * u.nm,
+              ref_mass=1.0 * u.Unit('g/mol'),
+              ref_energy=1.0 * u.Unit('kcal/mol'),
+              rigid_bodies=None,
+              shift_coords=True,
+              write_special_pairs=True):
     """Output a GSD file (HOOMD v2 default data format).
 
     Parameters
@@ -56,7 +59,6 @@ def write_gsd(top, filename,
 
     """
 
-
     xyz = np.array([site.position for site in top.site_list])
     if shift_coords:
         xyz = coord_shift(xyz, top.box.lengths)
@@ -67,7 +69,7 @@ def write_gsd(top, filename,
     gsd_file.configuration.dimensions = 3
 
     # Write box information
-    if allclose(top.box.angles, np.array([90, 90, 90])*u.degree):
+    if allclose(top.box.angles, np.array([90, 90, 90]) * u.degree):
         gsd_file.configuration.box = np.hstack((top.box.lengths / ref_distance,
                                                 np.zeros(3)))
     else:
@@ -78,13 +80,13 @@ def write_gsd(top, filename,
         xy = b * np.cos(gamma)
         xz = c * np.cos(beta)
         ly = np.sqrt(b**2 - xy**2)
-        yz = (b*c*np.cos(alpha) - xy*xz) / ly
+        yz = (b * c * np.cos(alpha) - xy * xz) / ly
         lz = np.sqrt(c**2 - xz**2 - yz**2)
 
         gsd_file.configuration.box = np.array([lx, ly, lz, xy, xz, yz])
 
-    _write_particle_information(gsd_file, top, xyz, ref_distance,
-            ref_mass, ref_energy, rigid_bodies)
+    _write_particle_information(gsd_file, top, xyz, ref_distance, ref_mass,
+                                ref_energy, rigid_bodies)
     #if write_special_pairs:
     #    _write_pair_information(gsd_file, top)
     if top.n_connections > 0:
@@ -94,11 +96,11 @@ def write_gsd(top, filename,
     #if structure.rb_torsions:
     #    _write_dihedral_information(gsd_file, top)
 
-
     gsd.hoomd.create(filename, gsd_file)
 
-def _write_particle_information(gsd_file, top, xyz, ref_distance,
-        ref_mass, ref_energy, rigid_bodies):
+
+def _write_particle_information(gsd_file, top, xyz, ref_distance, ref_mass,
+                                ref_energy, rigid_bodies):
     """Write out the particle information.
 
     """
@@ -106,8 +108,10 @@ def _write_particle_information(gsd_file, top, xyz, ref_distance,
     gsd_file.particles.N = len(top.n_sites)
     gsd_file.particles.position = xyz / ref_distance
 
-    types = [site.name if site.atom_type is None else site.atom_type.name
-             for site in top.site_list]
+    types = [
+        site.name if site.atom_type is None else site.atom_type.name
+        for site in top.site_list
+    ]
 
     unique_types = list(set(types))
     unique_types = sorted(unique_types)
@@ -118,22 +122,23 @@ def _write_particle_information(gsd_file, top, xyz, ref_distance,
     gsd_file.particles.typeid = typeids
 
     masses = np.array([site.mass for site in top.site_list])
-    masses[masses==0] = 1.0
+    masses[masses == 0] = 1.0
     gsd_file.particles.mass = masses / ref_mass
 
     charges = np.array([site.charge for site in top.site_list])
     e0 = u.physical_constants.eps_0.in_units(
-            u.elementary_charge**2/u.Unit('kcal*angstrom/mol'))
+        u.elementary_charge**2 / u.Unit('kcal*angstrom/mol'))
     '''
     Permittivity of free space = 2.39725e-4 e^2/((kcal/mol)(angstrom)),
     where e is the elementary charge
     '''
-    charge_factor = (4.0*np.pi*e0*ref_distance*ref_energy)**0.5
+    charge_factor = (4.0 * np.pi * e0 * ref_distance * ref_energy)**0.5
     gsd_file.particles.charge = charges / charge_factor
 
     if rigid_bodies:
         rigid_bodies = [-1 if body is None else body for body in rigid_bodies]
     gsd_file.particles.body = rigid_bodies
+
 
 def _write_pair_information(gsd_file, top):
     """[NOT IMPLEMENTED FOR TOPOLOGY YET] Write the special pairs in the system.
@@ -162,6 +167,7 @@ def _write_pair_information(gsd_file, top):
     #gsd_file.pairs.group = pairs
     #gsd_file.pairs.N = len(pairs)
 
+
 def _write_bond_information(gsd_file, top):
     """Write the bonds in the system.
 
@@ -184,7 +190,7 @@ def _write_bond_information(gsd_file, top):
         t1, t2 = sorted([t1, t2])
         try:
             bond_type = ('-'.join((t1, t2)))
-        except AttributeError: # no forcefield applied, bond.type is None
+        except AttributeError:  # no forcefield applied, bond.type is None
             bond_type = ('-'.join((t1, t2)), 0.0, 0.0)
         unique_bond_types.add(bond_type)
     unique_bond_types = sorted(list(unique_bond_types))
@@ -199,15 +205,15 @@ def _write_bond_information(gsd_file, top):
         t1, t2 = sorted([t1, t2])
         try:
             bond_type = ('-'.join((t1, t2)))
-        except AttributeError: # no forcefield applied, bond.type is None
+        except AttributeError:  # no forcefield applied, bond.type is None
             bond_type = ('-'.join((t1, t2)), 0.0, 0.0)
         bond_typeids.append(unique_bond_types.index(bond_type))
-        bond_groups.append((
-            top.site_list.index(bond.site1), 
-            top.site_list.index(bond.site2)))
+        bond_groups.append((top.site_list.index(bond.site1),
+                            top.site_list.index(bond.site2)))
 
     gsd_file.bonds.typeid = bond_typeids
     gsd_file.bonds.group = bond_groups
+
 
 def _write_angle_information(gsd_file, structure):
     """[NOT IMPLEMENTED] Write the angles in the system.
@@ -244,6 +250,7 @@ def _write_angle_information(gsd_file, structure):
 
     #gsd_file.angles.typeid = angle_typeids
     #gsd_file.angles.group = angle_groups
+
 
 def _write_dihedral_information(gsd_file, structure):
     """[NOT IMPLEMENTED] Write the dihedrals in the system.
