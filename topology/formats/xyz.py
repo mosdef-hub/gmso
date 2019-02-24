@@ -1,3 +1,5 @@
+import datetime
+
 import numpy as np
 import unyt as u
 
@@ -37,7 +39,10 @@ def read_xyz(filename):
 def write_xyz(top, filename):
     with open(filename, 'w') as out_file:
         out_file.write('{:d}\n'.format(top.n_sites))
-        out_file.write('{} {} written by topology\n'.format(top.name, filename))
+        out_file.write('{} {} written by topology at {}\n'.format(
+            top.name,
+            filename,
+            str(datetime.datetime.now())))
         for idx, site in enumerate(top.site_list):
             if site.element is not None:
                 tmp_name = site.element.symbol
