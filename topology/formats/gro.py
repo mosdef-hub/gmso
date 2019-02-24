@@ -1,4 +1,5 @@
 import warnings
+import datetime
 
 import numpy as np
 import unyt as u
@@ -59,8 +60,9 @@ def write_gro(top, filename):
 
     with open(filename, 'w') as out_file:
         import pdb; pdb.set_trace()
-        out_file.write('{} written by topology\n'.format(
-            top.name if top.name is not None else ''))
+        out_file.write('{} written by topology at {}\n'.format(
+            top.name if top.name is not None else '',
+            str(datetime.datetime.now())))
         out_file.write('{:d}\n'.format(top.n_sites))
         for idx, site in enumerate(top.site_list):
             res_id = 1
