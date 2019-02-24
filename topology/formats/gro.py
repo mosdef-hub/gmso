@@ -85,7 +85,7 @@ def write_gro(top, filename):
             top.box.lengths[2].in_units(u.nm).value.round(6),
         ))
 
-def _prepare_topology(top):
+def _prepare_topology_to_gro(top):
     """Modify topology, as necessary, to fit limitations of the GRO format."""
     if np.min(top.positions()) < 0:
         warnings.warn('Topology contains some negative positions. Translating '
