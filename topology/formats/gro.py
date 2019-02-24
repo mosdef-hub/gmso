@@ -56,7 +56,7 @@ def read_gro(filename):
 def write_gro(top, filename):
     """Write a topology to a gro file."""
 
-    top = _prepare_topology(top)
+    top = _prepare_topology_to_gro(top)
 
     with open(filename, 'w') as out_file:
         out_file.write('{} written by topology at {}\n'.format(

@@ -33,4 +33,4 @@ class TestGro(BaseTest):
     def test_write_gro(self):
         top = from_parmed(pmd.load_file(get_fn('ethane.gro'), structure=True))
 
-        write_gro(top, '/Users/mwt/out.gro')
+        write_gro(top, 'out.gro')
