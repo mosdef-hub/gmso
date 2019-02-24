@@ -4,29 +4,35 @@ import sympy
 
 
 class NonbondedPotential(ABC):
-
-    def __init__(self, symbols, potential):
+    def __init__(self, symbols=None, potential=None):
+        super().__init__()
         self._symbols = symbols
         self._potential = potential
-        super().__init__()
 
     @property
-    @abstractmethod
     def symbols(self):
         return self._symbols
 
+    @symbols.setter
+    def symbols(self, symbols):
+        self._symbols = symbols
+
     @property
-    @abstractmethod
     def potential(self):
         return self._potential
+
+    @potential.setter
+    def potential(self, potential):
+        self.potential = potential
 
 
 class LennardJonesPotential(NonbondedPotential):
 
-    def __init__(self):
+    def __init__(self,
                  symbols=sympy.symbols('epsilon sigma r'),
                  potential='4*epsilon*((sigma/r)**12 - (sigma/r)**6)'
+                 ):
+        super().__init__()
 
-    def set_potential(self):
-        epsilon, sigma, r = self.symbols
-        self._potential = 4*epsilon*((sigma/r)**12 - (sigma/r)**6)
+        self._symbols = symbols
+        self._potential = potential
