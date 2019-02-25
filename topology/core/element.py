@@ -6,7 +6,9 @@ class Element(object):
         self.mass = mass
 
     def lookup_from_name(self, name):
-        return [elem for elem in elements if elem.name == name][0]
+        for elem in elements:
+            if elem.name == name:
+                return elem
 
 Hydrogen = Element(name='hydrogen', symbol='H', mass=1.007947)
 Carbon = Element(name='carbon', symbol='C', mass=12.011)
