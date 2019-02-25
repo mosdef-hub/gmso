@@ -7,7 +7,7 @@ import unyt as u
 from topology.core.topology import Topology
 from topology.core.site import Site
 from topology.core.box import Box
-
+from topology.exceptions import NotYetImplementedWarning
 
 def read_gro(filename):
     top = Topology()
@@ -58,12 +58,17 @@ def write_gro(top, filename):
 
     top = _prepare_topology_to_gro(top)
 
+
     with open(filename, 'w') as out_file:
         out_file.write('{} written by topology at {}\n'.format(
             top.name if top.name is not None else '',
             str(datetime.datetime.now())))
         out_file.write('{:d}\n'.format(top.n_sites))
         for idx, site in enumerate(top.site_list):
+            warnings.warn('Residue information is not currently '
+                    'stored or written to GRO files.',
+                     NotYetImplementedWarning)
+            # TODO: assign residues
             res_id = 1
             res_name = 'X'
             atom_name = site.name
@@ -83,6 +88,7 @@ def write_gro(top, filename):
             top.box.lengths[1].in_units(u.nm).value.round(6),
             top.box.lengths[2].in_units(u.nm).value.round(6),
         ))
+
 
 def _prepare_topology_to_gro(top):
     """Modify topology, as necessary, to fit limitations of the GRO format."""
