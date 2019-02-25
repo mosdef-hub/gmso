@@ -68,7 +68,7 @@ class TestBox(BaseTest):
 
     def test_scaled_vectors(self):
         box = Box(lengths=u.unyt_array((2, 2, 2), u.nm), angles=u.degree*[40.0, 50.0, 60.0])
-        vectors = box.get_scaled_vectors()
+        vectors = box.get_vectors()
         test_vectors = np.array([[1, 0, 0],
                                 [0.5, 0.86603, 0],
                                 [0.64278, 0.51344, 0.56852]])
