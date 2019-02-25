@@ -34,3 +34,9 @@ class TestGro(BaseTest):
         top = from_parmed(pmd.load_file(get_fn('ethane.gro'), structure=True))
 
         write_gro(top, 'out.gro')
+
+    def test_write_gro_non_orthogonal(self):
+        top = from_parmed(pmd.load_file(get_fn('ethane.gro'), structure=True))
+        top.box.angles = u.degree * [90, 90, 120]
+
+        write_gro(top, 'out.gro')

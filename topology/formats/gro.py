@@ -8,6 +8,8 @@ from topology.core.topology import Topology
 from topology.core.site import Site
 from topology.core.box import Box
 from topology.exceptions import NotYetImplementedWarning
+from topology.testing.utils import allclose
+
 
 def read_gro(filename):
     top = Topology()
@@ -83,11 +85,27 @@ def write_gro(top, filename):
                 site.position[2].in_units(u.nm).value,
             ))
 
-        out_file.write(' {:0.5f} {:0.5f} {:0.5f} \n'.format(
-            top.box.lengths[0].in_units(u.nm).value.round(6),
-            top.box.lengths[1].in_units(u.nm).value.round(6),
-            top.box.lengths[2].in_units(u.nm).value.round(6),
-        ))
+        if allclose(top.box.angles, u.degree * [90, 90, 90]):
+            out_file.write(' {:0.5f} {:0.5f} {:0.5f} \n'.format(
+                top.box.lengths[0].in_units(u.nm).value.round(6),
+                top.box.lengths[1].in_units(u.nm).value.round(6),
+                top.box.lengths[2].in_units(u.nm).value.round(6),
+            ))
+        else:
+            # TODO: Work around GROMACS's triclinic limitations #30
+            vectors = top.box.full_vectors_from_angles()
+            out_file.write(' {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} \n'.format(
+                vectors[0, 0].in_units(u.nm).value.round(6),
+                vectors[1, 1].in_units(u.nm).value.round(6),
+                vectors[2, 2].in_units(u.nm).value.round(6),
+                vectors[0, 1].in_units(u.nm).value.round(6),
+                vectors[0, 2].in_units(u.nm).value.round(6),
+                vectors[1, 0].in_units(u.nm).value.round(6),
+                vectors[1, 2].in_units(u.nm).value.round(6),
+                vectors[2, 0].in_units(u.nm).value.round(6),
+                vectors[2, 1].in_units(u.nm).value.round(6),
+            ))
+
 
 
 def _prepare_topology_to_gro(top):
