@@ -135,7 +135,7 @@ def write_lammpsdata(topology, filename, atom_style='full',
         # Mass data
         # TODO: Get masses from 'Site' once PR is merged
         #masses = [site.atom_type.mass for site in topology.site_list]
-        masses = [0,0] # hardcoded to test right now
+        masses = np.zeros(len(xyz))
         mass_dict = dict([(unique_types.index(atom_type)+1,mass) for atom_type,mass in zip(types,masses)])
 
         data.write('\nMasses\n\n')
