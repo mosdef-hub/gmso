@@ -106,8 +106,8 @@ def write_lammpsdata(topology, filename, atom_style='full',
                 data.write('{0:.6f} {1:.6f} {2}lo {2}hi\n'.format(
                     0, box.lengths.value[i],dim))
         else:
-            a, b, c = box.lengths.value[i]
-            alpha, beta, gamma = box.angles(u.radian)
+            a, b, c = box.lengths.value
+            alpha, beta, gamma = box.angles
 
             lx = a
             xy = b * np.cos(gamma)
@@ -116,7 +116,7 @@ def write_lammpsdata(topology, filename, atom_style='full',
             yz = (b*c*np.cos(alpha) - xy*xz) / ly
             lz = np.sqrt(c**2 - xz**2 - yz**2)
 
-            xlo, ylo, zlo = 0
+            xlo, ylo, zlo = [0, 0, 0]
             xhi = xlo + lx
             yhi = ylo + ly
             zhi = zlo + lz
