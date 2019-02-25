@@ -93,7 +93,7 @@ def write_gro(top, filename):
             ))
         else:
             # TODO: Work around GROMACS's triclinic limitations #30
-            vectors = top.box.full_vectors_from_angles()
+            vectors = top.box.get_vectors()
             out_file.write(' {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} \n'.format(
                 vectors[0, 0].in_units(u.nm).value.round(6),
                 vectors[1, 1].in_units(u.nm).value.round(6),
