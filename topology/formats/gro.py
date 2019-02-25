@@ -85,7 +85,7 @@ def write_gro(top, filename):
                 site.position[2].in_units(u.nm).value,
             ))
 
-        if allclose(top.box.angles, u.degree * [90, 90, 90]):
+        if allclose(top.box.angles, u.degree * [90, 90, 90], atol=0.1*u.degree):
             out_file.write(' {:0.5f} {:0.5f} {:0.5f} \n'.format(
                 top.box.lengths[0].in_units(u.nm).value.round(6),
                 top.box.lengths[1].in_units(u.nm).value.round(6),
