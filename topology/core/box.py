@@ -104,8 +104,8 @@ class Box(object):
     def angles(self, angles):
         self._angles = _validate_angles(angles)
 
-    def unit_vectors_from_angles(self):
-        (alpha, beta, gamma) = self._angles
+    def _unit_vectors_from_angles(self):
+        (alpha, beta, gamma) = self.angles
 
         cosa = np.cos(alpha)
         cosb = np.cos(beta)
@@ -127,10 +127,15 @@ class Box(object):
                    [cosg, sing, 0],
                    [cosb, mat_coef_y, mat_coef_z]]
 
-        return np.asarray(box_vec, dtype=np.float)
+        return u.unyt_array(box_vec, u.nm, dtype=np.float)
 
-    def full_vectors_from_angles(self):
-        return (self._lengths * self.unit_vectors_from_angles().T).T
+    def get_vectors(self):
+        """ Return the vectors of the box."""
+        return (self._lengths.v * self.get_unit_vectors().T).T
+    
+    def get_unit_vectors(self):
+        """ Return the normalized vectors of the box."""
+        return self._unit_vectors_from_angles()
 
     def __repr__(self):
         return "Box(a={}, b={}, c={}, alpha={}, beta={}, gamma={})"\
