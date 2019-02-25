@@ -105,7 +105,7 @@ class Box(object):
         self._angles = _validate_angles(angles)
 
     def _unit_vectors_from_angles(self):
-        (alpha, beta, gamma) = self._angles
+        (alpha, beta, gamma) = self.angles
 
         cosa = np.cos(alpha)
         cosb = np.cos(beta)
@@ -127,7 +127,7 @@ class Box(object):
                    [cosg, sing, 0],
                    [cosb, mat_coef_y, mat_coef_z]]
 
-        return np.asarray(box_vec, dtype=np.float)
+        return u.unyt_array(box_vec, u.nm, dtype=np.float)
 
     def get_scaled_vectors(self):
         return (self._lengths * self.unit_vectors_from_angles().T).T

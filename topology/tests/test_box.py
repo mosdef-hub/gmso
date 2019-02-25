@@ -59,7 +59,7 @@ class TestBox(BaseTest):
 
     def test_vectors(self):
         box = Box(lengths=u.nm*np.ones(3), angles=u.degree*[40.0, 50.0, 60.0])
-        vectors = box.full_vectors_from_angles()
+        vectors = box.get_unit_vectors()
         test_vectors = np.array([[1, 0, 0],
                                 [0.5, 0.86603, 0],
                                 [0.64278, 0.51344, 0.56852]])
