@@ -23,7 +23,7 @@ class NonbondedPotential(ABC):
 
     @potential.setter
     def potential(self, potential):
-        self.potential = potential
+        self._potential = potential
 
 
 class LennardJonesPotential(NonbondedPotential):
