@@ -129,7 +129,7 @@ class Box(object):
 
         return np.asarray(box_vec, dtype=np.float)
 
-    def full_vectors_from_angles(self):
+    def get_unit_vectors(self):
         return (self._lengths * self.unit_vectors_from_angles().T).T
 
     def __repr__(self):
