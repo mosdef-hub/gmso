@@ -130,7 +130,7 @@ class Box(object):
         return u.unyt_array(box_vec, u.nm, dtype=np.float)
 
     def get_scaled_vectors(self):
-        return (self._lengths * self.unit_vectors_from_angles().T).T
+        return (self._lengths.v * self.get_unit_vectors().T).T
     
     def get_unit_vectors(self):
         return self._unit_vectors_from_angles()
