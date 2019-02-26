@@ -21,9 +21,8 @@ class Site(object):
             self.position = u.nm * np.zeros(3)
         else:
             self.position = _validate_position(position)
-        if element:
-            self.element = element
 
+        self._element = element
         self._atom_type = _validate_atom_type(atom_type)
         self._charge = _validate_charge(charge)
         self._mass = _validate_mass(mass)
@@ -31,6 +30,14 @@ class Site(object):
 
     def add_connection(self, other_site):
         self._connections.append(other_site)
+
+    @property
+    def element(self):
+        return self._element
+
+    @element.setter
+    def element(self, element):
+        self._element = element
 
     @property
     def connections(self):
