@@ -26,7 +26,7 @@ class Site(object):
 
         self._atom_type = _validate_atom_type(atom_type)
         self._charge = _validate_charge(charge)
-        self._mass = _validate_charge(mass)
+        self._mass = _validate_mass(mass)
         self._connections = list()
 
     def add_connection(self, other_site):
