@@ -79,17 +79,6 @@ def write_gsd(top,
         xz = u_vectors[2][0]
         yz = u_vectors[2][1]
         gsd_file.configuration.box = np.array([lx, ly, lz, xy, xz, yz])
-        #a, b, c = top.box.lengths / ref_distance
-        #alpha, beta, gamma = top.box.angles
-
-        #lx = a
-        #xy = b * np.cos(gamma)
-        #xz = c * np.cos(beta)
-        #ly = np.sqrt(b**2 - xy**2)
-        #yz = (b * c * np.cos(alpha) - xy * xz) / ly
-        #lz = np.sqrt(c**2 - xz**2 - yz**2)
-
-        gsd_file.configuration.box = np.array([lx, ly, lz, xy, xz, yz])
 
     _write_particle_information(gsd_file, top, xyz, ref_distance, ref_mass,
                                 ref_energy, rigid_bodies)
