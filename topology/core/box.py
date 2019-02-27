@@ -127,11 +127,11 @@ class Box(object):
                    [cosg, sing, 0],
                    [cosb, mat_coef_y, mat_coef_z]]
 
-        return u.unyt_array(box_vec, u.nm, dtype=np.float)
+        return u.unyt_array(box_vec, u.dimensionless, dtype=np.float)
 
     def get_vectors(self):
         """ Return the vectors of the box."""
-        return (self._lengths.v * self.get_unit_vectors().T).T
+        return (self._lengths * self.get_unit_vectors().T).T
     
     def get_unit_vectors(self):
         """ Return the normalized vectors of the box."""
