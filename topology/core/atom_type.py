@@ -151,17 +151,24 @@ class AtomType(object):
                              " {}".format(extra_syms))
 
     def __eq__(self, other):
-        return ((self.name == other.name) & (allclose(
+        name_match = (self.name == other.name)
+        charge_match = allclose(
             self.charge,
             other.charge,
             atol=1e-6 * u.elementary_charge,
-            rtol=1e-5 * u.elementary_charge)) & (allclose(
-                self.mass,
-                other.mass,
-                atol=1e-6 * u.gram / u.mol,
-                rtol=1e-5 * u.gram / u.mol)) &
-                (self.parameters == other.parameters) &
-                (self.nb_function == other.nb_function))
+            rtol=1e-5 * u.elementary_charge)
+        mass_match = allclose(
+            self.mass,
+            other.mass,
+            atol=1e-6 * u.gram / u.mol,
+            rtol=1e-5 * u.gram / u.mol)
+        parameter_match = (self.parameters == other.parameters)
+        nb_function_match = (self.nb_function == other.nb_function)
+
+        return all([
+            name_match, charge_match, mass_match, parameter_match,
+            nb_function_match
+        ])
 
     def __repr__(self):
         desc = "<AtomType {}, id {}>".format(self._name, id(self))
