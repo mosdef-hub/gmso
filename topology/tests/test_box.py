@@ -62,6 +62,16 @@ class TestBox(BaseTest):
         vectors = box.get_unit_vectors()
         assert vectors.units.is_dimensionless
 
+    def test_scaling_unit_vectors(self):
+        box = Box(lengths=u.unyt_array((2, 2, 2), u.nm), angles=u.degree*[40.0, 50.0, 60.0])
+        u_vectors = box.get_unit_vectors()
+        scaled_u_vectors = (u_vectors.T * box.lengths).T
+
+        scaled_vectors = box.get_vectors()
+
+        assert allclose(scaled_vectors, scaled_u_vectors, atol=u.nm*1e-3)
+        assert scaled_u_vectors.units == u.nm
+
     def test_scaled_vectors(self):
         box = Box(lengths=u.unyt_array((2, 2, 2), u.nm), angles=u.degree*[40.0, 50.0, 60.0])
         vectors = box.get_vectors()
