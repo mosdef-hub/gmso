@@ -180,7 +180,7 @@ def _write_bond_information(gsd_file, top):
 
     """
 
-    gsd_file.bonds.N = len(top.n_connections)
+    gsd_file.bonds.N = top.n_connections
 
     unique_bond_types = set()
     for bond in top.connection_list:
