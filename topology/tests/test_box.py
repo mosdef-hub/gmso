@@ -76,3 +76,4 @@ class TestBox(BaseTest):
                                 [0.64278, 0.51344, 0.56852]])
         test_vectors = (test_vectors.T * box.lengths).T
         assert allclose(vectors, test_vectors, atol=u.nm*1e-3)
+        assert vectors.units == u.nm
