@@ -186,7 +186,7 @@ def _validate_mass(mass):
         warnings.warn("Masses are assumed to be g/mol")
         mass *= u.gram / u.mol
     elif mass.units.dimensions != (u.gram / u.mol).units.dimensions:
-        warnings.warn("Charges are assumed to be g/mol")
+        warnings.warn("Masses are assumed to be g/mol")
         mass = mass.value * u.gram / u.mol
     else:
         pass
