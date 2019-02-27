@@ -73,15 +73,21 @@ def write_gsd(top,
         gsd_file.configuration.box = np.hstack((top.box.lengths / ref_distance,
                                                 np.zeros(3)))
     else:
-        a, b, c = top.box.lengths / ref_distance
-        alpha, beta, gamma = top.box.angles
+        u_vectors = top.box.get_unit_vectors()
+        lx, ly, lz = top.box.lengths / ref_distance
+        xy = u_vectors[1][0]
+        xz = u_vectors[2][0]
+        yz = u_vectors[2][1]
+        gsd_file.configuration.box = np.array([lx, ly, lz, xy, xz, yz])
+        #a, b, c = top.box.lengths / ref_distance
+        #alpha, beta, gamma = top.box.angles
 
-        lx = a
-        xy = b * np.cos(gamma)
-        xz = c * np.cos(beta)
-        ly = np.sqrt(b**2 - xy**2)
-        yz = (b * c * np.cos(alpha) - xy * xz) / ly
-        lz = np.sqrt(c**2 - xz**2 - yz**2)
+        #lx = a
+        #xy = b * np.cos(gamma)
+        #xz = c * np.cos(beta)
+        #ly = np.sqrt(b**2 - xy**2)
+        #yz = (b * c * np.cos(alpha) - xy * xz) / ly
+        #lz = np.sqrt(c**2 - xz**2 - yz**2)
 
         gsd_file.configuration.box = np.array([lx, ly, lz, xy, xz, yz])
 
