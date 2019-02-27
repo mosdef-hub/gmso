@@ -64,7 +64,9 @@ class TestBox(BaseTest):
                                 [0.5, 0.86603, 0],
                                 [0.64278, 0.51344, 0.56852]])
         test_vectors *= u.nm
+        vectors *=u.nm
         assert allclose(vectors, test_vectors, atol=u.nm*1e-3)
+        assert vectors.units == u.nm
 
     def test_scaled_vectors(self):
         box = Box(lengths=u.unyt_array((2, 2, 2), u.nm), angles=u.degree*[40.0, 50.0, 60.0])
