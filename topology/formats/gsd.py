@@ -115,7 +115,6 @@ def _write_particle_information(gsd_file, top, xyz, ref_distance, ref_mass,
 
     unique_types = list(set(types))
     unique_types = sorted(unique_types)
-    #unique_types.sort(key=natural_sort)
     gsd_file.particles.types = unique_types
 
     typeids = np.array([unique_types.index(t) for t in types])
@@ -187,26 +186,22 @@ def _write_bond_information(gsd_file, top):
         t1, t2 = bond.site1.atom_type, bond.site2.atom_type
         if t1 is None or t2 is None:
             t1, t2 = bond.site1.name, bond.site2.name
-        t1, t2 = sorted([t1, t2])
-        try:
-            bond_type = ('-'.join((t1, t2)))
-        except AttributeError:  # no forcefield applied, bond.type is None
-            bond_type = ('-'.join((t1, t2)), 0.0, 0.0)
+        t1, t2 = sorted([t1, t2], key=lambda x: x.name)
+        bond_type = ('-'.join((t1.name, t2.name)))
+       
         unique_bond_types.add(bond_type)
     unique_bond_types = sorted(list(unique_bond_types))
     gsd_file.bonds.types = unique_bond_types
 
     bond_typeids = []
     bond_groups = []
-    for bond in top.connections:
+    for bond in top.connection_list:
         t1, t2 = bond.site1.atom_type, bond.site2.atom_type
         if t1 is None or t2 is None:
             t1, t2 = bond.site1.name, bond.site2.name
-        t1, t2 = sorted([t1, t2])
-        try:
-            bond_type = ('-'.join((t1, t2)))
-        except AttributeError:  # no forcefield applied, bond.type is None
-            bond_type = ('-'.join((t1, t2)), 0.0, 0.0)
+        t1, t2 = sorted([t1, t2], key=lambda x: x.name)
+        
+        bond_type = ('-'.join((t1.name, t2.name)))
         bond_typeids.append(unique_bond_types.index(bond_type))
         bond_groups.append((top.site_list.index(bond.site1),
                             top.site_list.index(bond.site2)))
