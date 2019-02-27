@@ -59,9 +59,9 @@ def write_gsd(top,
 
     """
 
-    xyz = np.array([site.position for site in top.site_list])
+    xyz = u.unyt_array([site.position for site in top.site_list])
     if shift_coords:
-        xyz = coord_shift(xyz, top.box.lengths)
+        xyz = coord_shift(xyz, top.box)
 
     gsd_file = gsd.hoomd.Snapshot()
 
@@ -105,7 +105,7 @@ def _write_particle_information(gsd_file, top, xyz, ref_distance, ref_mass,
 
     """
 
-    gsd_file.particles.N = len(top.n_sites)
+    gsd_file.particles.N = top.n_sites
     gsd_file.particles.position = xyz / ref_distance
 
     types = [
