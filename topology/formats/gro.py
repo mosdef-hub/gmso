@@ -1,5 +1,6 @@
 import warnings
 import datetime
+import logging
 
 import numpy as np
 import unyt as u
@@ -10,6 +11,7 @@ from topology.core.box import Box
 from topology.exceptions import NotYetImplementedWarning
 from topology.testing.utils import allclose
 
+logger = logging.getLogger("TopLog")
 
 def read_gro(filename):
     top = Topology()
