@@ -56,8 +56,7 @@ class TestAtomType(BaseTest):
         different_params = AtomType(name='mytype', charge=charge,
                 parameters={'sigma': 42, 'epsilon': 100000})
         different_mass = AtomType(name='mytype', charge=charge, mass=5*u.kg/u.mol,
-                parameters={'sigma': 42, 'epsilon': 10})
-
+                parameters={'sigma': 1, 'epsilon': 10})
 
         assert first_type == same_type
         assert first_type != different_name
