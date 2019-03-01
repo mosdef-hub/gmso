@@ -132,9 +132,10 @@ def write_lammpsdata(topology, filename, atom_style='full',
             zlo_bound = zlo
             zhi_bound = zhi
 
-            data.write('{0} {1} {2}\n'.format(xlo_bound, xhi_bound, xy))
-            data.write('{0} {1} {2}\n'.format(ylo_bound, yhi_bound, xz))
-            data.write('{0} {1} {2}\n'.format(zlo_bound, zhi_bound, yz))
+            data.write('{0} {1} xlo xhi\n'.format(xlo_bound, xhi_bound))
+            data.write('{0} {1} ylo yhi\n'.format(ylo_bound, yhi_bound))
+            data.write('{0} {1} zlo zhi\n'.format(zlo_bound, zhi_bound))
+            data.write('{0} {1} {2} xy xz yz\n'.format(xy, xz, yz))
 
         # Mass data
         # TODO: Get masses from 'Site' once PR is merged
