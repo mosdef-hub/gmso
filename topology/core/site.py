@@ -69,7 +69,7 @@ class Site(object):
         else:
             return None
 
-    @charge.setter
+    @mass.setter
     def mass(self, mass):
         self._mass = _validate_mass(mass)
 

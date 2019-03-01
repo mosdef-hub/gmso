@@ -255,6 +255,7 @@ def _write_angle_information(gsd_file, structure):
 
     #gsd_file.angles.typeid = angle_typeids
     #gsd_file.angles.group = angle_groups
+    pass
 
 
 def _write_dihedral_information(gsd_file, structure):
@@ -298,3 +299,4 @@ def _write_dihedral_information(gsd_file, structure):
 
     #gsd_file.dihedrals.typeid = dihedral_typeids
     #gsd_file.dihedrals.group = dihedral_groups
+    pass
