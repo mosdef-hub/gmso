@@ -103,10 +103,12 @@ def write_lammpsdata(topology, filename, atom_style='full',
         box.angles.convert_to_units(u.radian)
         vectors = box.get_vectors().v
         if allclose(box.angles, u.unyt_array([90,90,90],'degree')):
+            warnings.warn("Orthorhombic box detected")
             for i,dim in enumerate(['x', 'y', 'z']):
                 data.write('{0:.6f} {1:.6f} {2}lo {2}hi\n'.format(
                     0, box.lengths.value[i],dim))
         else:
+            warnings.warn("Non-orthorhombic box detected")
             a, b, c = box.lengths.value
             alpha, beta, gamma = box.angles
 
