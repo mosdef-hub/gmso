@@ -8,6 +8,7 @@ from topology.core.connection import Connection
 from topology.core.atom_type import AtomType
 from topology.core.connection_type import ConnectionType
 from topology.core.box import Box
+from topology.tests.base_test import BaseTest
 
 
 def from_parmed(structure):
@@ -45,7 +46,7 @@ def from_parmed(structure):
         # This is if we choose for topology to have abox
         top.box = Box(
             (structure.box[0:3] * u.angstrom).in_units(u.nm),
-            angles=structure.box[3:6])
+            angles=u.degree * structure.box[3:6])
 
     for bond in structure.bonds:
         # Generate bond parameters for ConnectionType that gets passed
