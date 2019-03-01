@@ -14,6 +14,7 @@ import gsd.hoomd
 
 from topology.core.box import Box
 from topology.utils.geometry import coord_shift
+from topology.exceptions import NotYetImplementedWarning
 from topology.testing.utils import allclose
 
 __all__ = ['write_gsd']
@@ -84,6 +85,9 @@ def write_gsd(top,
         yz = u_vectors[2][1]
         gsd_file.configuration.box = np.array([lx, ly, lz, xy, xz, yz])
 
+    warnings.warn("Only writing particle and bond information."
+            " Angle and dihedral is not currently written to GSD files",
+            NotYetImplementedWarning)
     _write_particle_information(gsd_file, top, xyz, ref_distance, ref_mass,
                                 ref_energy, rigid_bodies)
     #if write_special_pairs:
