@@ -3,7 +3,7 @@ from __future__ import division
 from collections import OrderedDict
 from warnings import warn
 import itertools as it
-
+import warnings
 import numpy as np
 import unyt as u
 
@@ -98,10 +98,11 @@ def write_lammpsdata(topology, filename, atom_style='full',
         # TODO: Write out bonds, angles, and dihedrals
 
         data.write('\n')
+
         # Box data
         box.lengths.convert_to_units(u.angstrom)
         box.angles.convert_to_units(u.radian)
-        vectors = box.get_vectors().v
+        vectors = box.get_vectors().value
         if allclose(box.angles, u.unyt_array([90,90,90],'degree')):
             warnings.warn("Orthorhombic box detected")
             for i,dim in enumerate(['x', 'y', 'z']):
@@ -149,7 +150,8 @@ def write_lammpsdata(topology, filename, atom_style='full',
 
         data.write('\nMasses\n\n')
         for atom_type,mass in mass_dict.items():
-            data.write('{:d}\t{:.6f}\t# {}\n'.format(atom_type,mass.v,unique_types[atom_type-1]))
+            data.write('{:d}\t{:.6f}\t# {}\n'.format(
+                atom_type,mass.value,unique_types[atom_type-1]))
         if forcefield:
             sigmas = [site.atom_type.parameters['sigma'] for site in topology.site_list]
             epsilons = [site.atom_type.parameters['epsilon'] for site in topology.site_list]
@@ -196,7 +198,7 @@ def write_lammpsdata(topology, filename, atom_style='full',
             data.write(atom_line.format(
                 index=i+1,type_index=unique_types.index(types[i])+1,
                 zero=0,charge=0,
-                x=coords[0].v,y=coords[1].v,z=coords[2].v))
+                x=coords[0].value,y=coords[1].value,z=coords[2].value))
 
         # TODO: Write out bonds
         # TODO: Write out angles
