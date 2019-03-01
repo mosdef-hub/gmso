@@ -101,7 +101,7 @@ def write_lammpsdata(topology, filename, atom_style='full',
         # Box data
         box.lengths.convert_to_units(u.angstrom)
         box.angles.convert_to_units(u.radian)
-        vectors = box.full_vectors_from_angles().v
+        vectors = box.get_vectors().v
         if allclose(box.angles, u.unyt_array([90,90,90],'degree')):
             for i,dim in enumerate(['x', 'y', 'z']):
                 data.write('{0:.6f} {1:.6f} {2}lo {2}hi\n'.format(
@@ -132,10 +132,14 @@ def write_lammpsdata(topology, filename, atom_style='full',
             zlo_bound = zlo
             zhi_bound = zhi
 
-            data.write('{0} {1} xlo xhi\n'.format(xlo_bound, xhi_bound))
-            data.write('{0} {1} ylo yhi\n'.format(ylo_bound, yhi_bound))
-            data.write('{0} {1} zlo zhi\n'.format(zlo_bound, zhi_bound))
-            data.write('{0} {1} {2} xy xz yz\n'.format(xy, xz, yz))
+            data.write('{0:.6f} {1:.6f} xlo xhi\n'.format(
+                xlo_bound, xhi_bound))
+            data.write('{0:.6f} {1:.6f} ylo yhi\n'.format(
+                ylo_bound, yhi_bound))
+            data.write('{0:.6f} {1:.6f} zlo zhi\n'.format(
+                zlo_bound, zhi_bound))
+            data.write('{0:.6f} {1:.6f} {2:.6f} xy xz yz\n'.format(
+                xy, xz, yz))
 
         # Mass data
         # TODO: Get masses from 'Site' once PR is merged
