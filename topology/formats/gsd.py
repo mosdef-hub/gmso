@@ -85,9 +85,10 @@ def write_gsd(top,
         yz = u_vectors[2][1]
         gsd_file.configuration.box = np.array([lx, ly, lz, xy, xz, yz])
 
-    warnings.warn("Only writing particle and bond information."
-            " Angle and dihedral is not currently written to GSD files",
-            NotYetImplementedWarning)
+    warnings.warn(
+        "Only writing particle and bond information."
+        " Angle and dihedral is not currently written to GSD files",
+        NotYetImplementedWarning)
     _write_particle_information(gsd_file, top, xyz, ref_distance, ref_mass,
                                 ref_energy, rigid_bodies)
     #if write_special_pairs:
@@ -120,7 +121,8 @@ def _write_particle_information(gsd_file, top, xyz, ref_distance, ref_mass,
     unique_types = list(set(types))
     unique_types = sorted(unique_types)
     gsd_file.particles.types = unique_types
-    warnings.warn("{} unique particle types detected".format(len(unique_types)))
+    warnings.warn("{} unique particle types detected".format(
+        len(unique_types)))
 
     typeids = np.array([unique_types.index(t) for t in types])
     gsd_file.particles.typeid = typeids
@@ -194,11 +196,12 @@ def _write_bond_information(gsd_file, top):
             t1, t2 = bond.site1.name, bond.site2.name
         t1, t2 = sorted([t1, t2], key=lambda x: x.name)
         bond_type = ('-'.join((t1.name, t2.name)))
-       
+
         unique_bond_types.add(bond_type)
     unique_bond_types = sorted(list(unique_bond_types))
     gsd_file.bonds.types = unique_bond_types
-    warnings.warn("{} unique bond types detected".format(len(unique_bond_types)))
+    warnings.warn("{} unique bond types detected".format(
+        len(unique_bond_types)))
 
     bond_typeids = []
     bond_groups = []
@@ -207,7 +210,7 @@ def _write_bond_information(gsd_file, top):
         if t1 is None or t2 is None:
             t1, t2 = bond.site1.name, bond.site2.name
         t1, t2 = sorted([t1, t2], key=lambda x: x.name)
-        
+
         bond_type = ('-'.join((t1.name, t2.name)))
         bond_typeids.append(unique_bond_types.index(bond_type))
         bond_groups.append((top.site_list.index(bond.site1),
