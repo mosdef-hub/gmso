@@ -101,6 +101,7 @@ def write_lammpsdata(topology, filename, atom_style='full',
         # Box data
         box.lengths.convert_to_units(u.angstrom)
         box.angles.convert_to_units(u.radian)
+        vectors = box.full_vectors_from_angles().v
         if allclose(box.angles, u.unyt_array([90,90,90],'degree')):
             for i,dim in enumerate(['x', 'y', 'z']):
                 data.write('{0:.6f} {1:.6f} {2}lo {2}hi\n'.format(
@@ -117,9 +118,12 @@ def write_lammpsdata(topology, filename, atom_style='full',
             lz = np.sqrt(c**2 - xz**2 - yz**2)
 
             xlo, ylo, zlo = [0, 0, 0]
-            xhi = xlo + lx
-            yhi = ylo + ly
-            zhi = zlo + lz
+            xhi = vectors[0][0]
+            yhi = vectors[1][1]
+            zhi = vectors[2][2]
+            xy = vectors[1][0]
+            xz = vectors[2][0]
+            yz = vectors[2][1]
 
             xlo_bound = xlo + np.min([0.0, xy, xz, xy+xz])
             xhi_bound = xhi + np.max([0.0, xy, xz, xy+xz])
