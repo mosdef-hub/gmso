@@ -4,6 +4,7 @@ from collections import OrderedDict
 from copy import deepcopy
 from math import floor
 import re
+import warnings
 
 import numpy as np
 import unyt as u
@@ -61,6 +62,7 @@ def write_gsd(top,
 
     xyz = u.unyt_array([site.position for site in top.site_list])
     if shift_coords:
+        warnings.warn("Shifting coordinates to [-L/2, L/2]")
         xyz = coord_shift(xyz, top.box)
 
     gsd_file = gsd.hoomd.Snapshot()
@@ -70,9 +72,11 @@ def write_gsd(top,
 
     # Write box information
     if allclose(top.box.angles, np.array([90, 90, 90]) * u.degree):
+        warnings.warn("Orthorhombic box detected")
         gsd_file.configuration.box = np.hstack((top.box.lengths / ref_distance,
                                                 np.zeros(3)))
     else:
+        warnings.warn("Non-orthorhombic box detected")
         u_vectors = top.box.get_unit_vectors()
         lx, ly, lz = top.box.lengths / ref_distance
         xy = u_vectors[1][0]
@@ -101,6 +105,7 @@ def _write_particle_information(gsd_file, top, xyz, ref_distance, ref_mass,
     """
 
     gsd_file.particles.N = top.n_sites
+    warnings.warn("{} particles detected".format(top.n_sites))
     gsd_file.particles.position = xyz / ref_distance
 
     types = [
@@ -111,6 +116,7 @@ def _write_particle_information(gsd_file, top, xyz, ref_distance, ref_mass,
     unique_types = list(set(types))
     unique_types = sorted(unique_types)
     gsd_file.particles.types = unique_types
+    warnings.warn("{} unique particle types detected".format(len(unique_types)))
 
     typeids = np.array([unique_types.index(t) for t in types])
     gsd_file.particles.typeid = typeids
@@ -175,6 +181,7 @@ def _write_bond_information(gsd_file, top):
     """
 
     gsd_file.bonds.N = top.n_connections
+    warnings.warn("{} bonds detected".format(top.n_connections))
 
     unique_bond_types = set()
     for bond in top.connection_list:
@@ -187,6 +194,7 @@ def _write_bond_information(gsd_file, top):
         unique_bond_types.add(bond_type)
     unique_bond_types = sorted(list(unique_bond_types))
     gsd_file.bonds.types = unique_bond_types
+    warnings.warn("{} unique bond types detected".format(len(unique_bond_types)))
 
     bond_typeids = []
     bond_groups = []
