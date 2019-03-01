@@ -10,7 +10,7 @@ from topology.utils.io import get_fn
 from topology.testing.utils import allclose
 
 
-class TestGro(BaseTest):
+class TestGsd(BaseTest):
     def test_write_gsd(self):
         top = from_parmed(pmd.load_file(get_fn('ethane.top'), 
             xyz=get_fn('ethane.gro')))
