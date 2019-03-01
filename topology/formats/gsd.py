@@ -142,8 +142,12 @@ def _write_particle_information(gsd_file, top, xyz, ref_distance, ref_mass,
     gsd_file.particles.charge = charges / charge_factor
 
     if rigid_bodies:
-        rigid_bodies = [-1 if body is None else body for body in rigid_bodies]
-    gsd_file.particles.body = rigid_bodies
+        warnings.warn(
+            "Rigid bodies detected, but not yet implemented for GSD",
+            NotYetImplementedWarning)
+    #if rigid_bodies:
+    #    rigid_bodies = [-1 if body is None else body for body in rigid_bodies]
+    #gsd_file.particles.body = rigid_bodies
 
 
 def _write_pair_information(gsd_file, top):
