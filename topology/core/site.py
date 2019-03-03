@@ -10,13 +10,14 @@ class Site(object):
     """A general site."""
 
     def __init__(self,
-                 name,
+                 name=None,
                  position=None,
                  charge=None,
                  mass=None,
                  element=None,
                  atom_type=None):
-        self.name = str(name)
+        if name is not None:
+            self.name = str(name)
         if position is None:
             self.position = u.nm * np.zeros(3)
         else:
