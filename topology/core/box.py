@@ -151,10 +151,10 @@ class Box(object):
         if not isinstance(other, Box):
             return False
 
-        for not allclose(box.lengths, other.lengths):
+        if not allclose(self.lengths, other.lengths):
                 return False
 
-        for not allclose(box.angles, other.angles):
+        if not allclose(self.angles, other.angles):
             return False
 
         return True
