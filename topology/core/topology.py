@@ -2,6 +2,7 @@ import numpy as np
 import unyt as u
 
 from topology.core.connection import Connection
+from topology.testing.utils import allclose
 
 
 class Topology(object):
@@ -88,6 +89,9 @@ class Topology(object):
         if not isinstance(other, Topology):
             return False
 
+        if self.name != other.name:
+            return False
+
         if self.n_sites != other.n_sites:
             return False
 
@@ -99,7 +103,7 @@ class Topology(object):
             if site1.atom_type != site2.atom_type:
                 return False
 
-        if top.box != other.box:
+        if self.box != other.box:
             return False
 
         return True
