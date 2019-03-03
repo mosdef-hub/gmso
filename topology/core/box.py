@@ -2,6 +2,7 @@ import warnings
 
 import numpy as np
 import unyt as u
+from topology.testing.utils import allclose
 
 
 def _validate_lengths(lengths):
@@ -140,3 +141,20 @@ class Box(object):
     def __repr__(self):
         return "Box(a={}, b={}, c={}, alpha={}, beta={}, gamma={})"\
             .format(*self._lengths, *self._angles)
+
+    def __eq__(self, other):
+        """Compare two boxes for equivalence."""
+
+        if self is other:
+            return True
+
+        if not isinstance(other, Box):
+            return False
+
+        for not allclose(box.lengths, other.lengths):
+                return False
+
+        for not allclose(box.angles, other.angles):
+            return False
+
+        return True
