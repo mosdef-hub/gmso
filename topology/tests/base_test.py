@@ -23,5 +23,9 @@ class BaseTest:
         return u.elementary_charge * 1
 
     @pytest.fixture
+    def mass(self):
+        return 1 * u.gram/u.mol
+
+    @pytest.fixture
     def box(self):
         return Box(lengths=u.nm*np.ones(3))

@@ -12,6 +12,7 @@ class AtomType(object):
 
     def __init__(self,
                  name="AtomType",
+                 mass=0.0 * u.gram / u.mol,
                  charge=0.0 * u.elementary_charge,
                  nb_function='4*epsilon*((sigma/r)**12 - (sigma/r)**6)',
                  parameters={
@@ -20,7 +21,7 @@ class AtomType(object):
                  }):
 
         self._name = name
-
+        self._mass = _validate_mass(mass)
         self._charge = _validate_charge(charge)
 
         if isinstance(parameters, dict):
@@ -53,6 +54,14 @@ class AtomType(object):
     @charge.setter
     def charge(self, val):
         self._charge = _validate_charge(val)
+
+    @property
+    def mass(self):
+        return self._mass
+
+    @mass.setter
+    def mass(self, val):
+        self._mass = _validate_mass(val)
 
     @property
     def parameters(self):
@@ -144,13 +153,24 @@ class AtomType(object):
                              " {}".format(extra_syms))
 
     def __eq__(self, other):
-        return ((self.name == other.name) & (allclose(
+        name_match = (self.name == other.name)
+        charge_match = allclose(
             self.charge,
             other.charge,
             atol=1e-6 * u.elementary_charge,
-            rtol=1e-5 * u.elementary_charge)) &
-                (self.parameters == other.parameters) &
-                (self.nb_function == other.nb_function))
+            rtol=1e-5 * u.elementary_charge)
+        mass_match = allclose(
+            self.mass,
+            other.mass,
+            atol=1e-6 * u.gram / u.mol,
+            rtol=1e-5 * u.gram / u.mol)
+        parameter_match = (self.parameters == other.parameters)
+        nb_function_match = (self.nb_function == other.nb_function)
+
+        return all([
+            name_match, charge_match, mass_match, parameter_match,
+            nb_function_match
+        ])
 
     def __repr__(self):
         desc = "<AtomType {}, id {}>".format(self._name, id(self))
@@ -168,3 +188,16 @@ def _validate_charge(charge):
         pass
 
     return charge
+
+
+def _validate_mass(mass):
+    if not isinstance(mass, u.unyt_array):
+        warnings.warn("Masses are assumed to be g/mol")
+        mass *= u.gram / u.mol
+    elif mass.units.dimensions != (u.gram / u.mol).units.dimensions:
+        warnings.warn("Masses are assumed to be g/mol")
+        mass = mass.value * u.gram / u.mol
+    else:
+        pass
+
+    return mass
