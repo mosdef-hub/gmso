@@ -102,16 +102,17 @@ def write_lammpsdata(topology, filename, atom_style='full',
         data.write('\n')
 
         # Box data
-        box.lengths.convert_to_units(u.angstrom)
-        box.angles.convert_to_units(u.radian)
-        vectors = box.get_vectors().value
+        vectors = box.get_vectors()
         if allclose(box.angles, u.unyt_array([90,90,90],'degree')):
             warnings.warn("Orthorhombic box detected")
+            box.lengths.convert_to_units(u.angstrom)
             for i,dim in enumerate(['x', 'y', 'z']):
                 data.write('{0:.6f} {1:.6f} {2}lo {2}hi\n'.format(
                     0, box.lengths.value[i],dim))
         else:
             warnings.warn("Non-orthorhombic box detected")
+            box.lengths.convert_to_units(u.angstrom)
+            box.angles.convert_to_units(u.radian)
             a, b, c = box.lengths.value
             alpha, beta, gamma = box.angles
 
@@ -122,29 +123,33 @@ def write_lammpsdata(topology, filename, atom_style='full',
             yz = (b*c*np.cos(alpha) - xy*xz) / ly
             lz = np.sqrt(c**2 - xz**2 - yz**2)
 
-            xlo, ylo, zlo = [0, 0, 0]
             xhi = vectors[0][0]
             yhi = vectors[1][1]
             zhi = vectors[2][2]
             xy = vectors[1][0]
             xz = vectors[2][0]
             yz = vectors[2][1]
+            xlo = u.unyt_array(0, xy.units)
+            ylo = u.unyt_array(0, xy.units)
+            zlo = u.unyt_array(0, xy.units)
 
-            xlo_bound = xlo + np.min([0.0, xy, xz, xy+xz])
-            xhi_bound = xhi + np.max([0.0, xy, xz, xy+xz])
-            ylo_bound = ylo + np.min([0.0, yz])
-            yhi_bound = yhi + np.max([0.0, yz])
+            xlo_bound = xlo + u.unyt_array(np.min([0.0, xy, xz, xy+xz]),
+                    xy.units)
+            xhi_bound = xhi + u.unyt_array(np.max([0.0, xy, xz, xy+xz]),
+                    xy.units)
+            ylo_bound = ylo + u.unyt_array(np.min([0.0, yz]), xy.units)
+            yhi_bound = yhi + u.unyt_array(np.max([0.0, yz]), xy.units)
             zlo_bound = zlo
             zhi_bound = zhi
 
             data.write('{0:.6f} {1:.6f} xlo xhi\n'.format(
-                xlo_bound, xhi_bound))
+                xlo_bound.value, xhi_bound.value))
             data.write('{0:.6f} {1:.6f} ylo yhi\n'.format(
-                ylo_bound, yhi_bound))
+                ylo_bound.value, yhi_bound.value))
             data.write('{0:.6f} {1:.6f} zlo zhi\n'.format(
-                zlo_bound, zhi_bound))
+                zlo_bound.value, zhi_bound.value))
             data.write('{0:.6f} {1:.6f} {2:.6f} xy xz yz\n'.format(
-                xy, xz, yz))
+                xy.value, xz.value, yz.value))
 
         # Mass data
         masses = [site.atom_type.mass for site in topology.site_list]
