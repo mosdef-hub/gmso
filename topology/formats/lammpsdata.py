@@ -14,8 +14,7 @@ from topology.utils.sorting import natural_sort
 from topology.testing.utils import allclose
 
 
-def write_lammpsdata(topology, filename, atom_style='full',
-                     nbfix_in_data_file=True):
+def write_lammpsdata(topology, filename, atom_style='full'):
     """Output a LAMMPS data file.
     
     Outputs a LAMMPS data file in the 'full' atom style format. Assumes use
@@ -102,7 +101,6 @@ def write_lammpsdata(topology, filename, atom_style='full',
         data.write('\n')
 
         # Box data
-        vectors = box.get_vectors()
         if allclose(box.angles, u.unyt_array([90,90,90],'degree')):
             warnings.warn("Orthorhombic box detected")
             box.lengths.convert_to_units(u.angstrom)
@@ -113,7 +111,8 @@ def write_lammpsdata(topology, filename, atom_style='full',
             warnings.warn("Non-orthorhombic box detected")
             box.lengths.convert_to_units(u.angstrom)
             box.angles.convert_to_units(u.radian)
-            a, b, c = box.lengths.value
+            vectors = box.get_vectors()
+            a, b, c = box.lengths
             alpha, beta, gamma = box.angles
 
             lx = a
