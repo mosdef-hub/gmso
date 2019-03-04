@@ -16,28 +16,28 @@ from topology.core.atom_type import AtomType
 def test_write_lammps():
     top = Topology()
     top.box = Box(lengths=[1,1,1])
-    site1 = Site(name='site1', atom_type=AtomType())
-    site2 = Site(name='site2', atom_type=AtomType())
+    site1 = Site(name='site1', atom_type=AtomType(mass=1))
+    site2 = Site(name='site2', atom_type=AtomType(mass=1))
     connect = Connection(site1=site1, site2=site2)
 
     top.add_site(site1)
     top.add_site(site2)
 
     top.update_connection_list()
-    write_lammpsdata(top, filename='lammps.data')
+    write_lammpsdata(top, filename='data.lammps')
 
 def test_write_lammps_triclinic():
     top = Topology()
     top.box = Box(lengths=[1,1,1], angles=[60,90,120])
-    site1 = Site(name='site1', atom_type=AtomType())
-    site2 = Site(name='site2', atom_type=AtomType())
+    site1 = Site(name='site1', atom_type=AtomType(mass=1))
+    site2 = Site(name='site2', atom_type=AtomType(mass=1))
     connect = Connection(site1=site1, site2=site2)
 
     top.add_site(site1)
     top.add_site(site2)
 
     top.update_connection_list()
-    write_lammpsdata(top, filename='triclinic.data')
+    write_lammpsdata(top, filename='data.triclinic')
 
 #def test_num_atoms():
 #    u = mda.Universe('lammps.data')
