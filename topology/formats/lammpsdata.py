@@ -6,6 +6,7 @@ import itertools as it
 import warnings
 import numpy as np
 import unyt as u
+import datetime
 
 from topology.core.topology import Topology
 from topology.core.box import Box
@@ -77,7 +78,9 @@ def write_lammpsdata(topology, filename, atom_style='full',
     dihedrals = 0
 
     with open(filename, 'w') as data:
-        data.write(filename+' - created by topology\n\n')
+        data.write('{} written by topology at {}\n\n'.format(
+            topology.name if topology.name is not None else '',
+            str(datetime.datetime.now())))
         data.write('{:d} atoms\n'.format(len(topology.site_list)))
         if atom_style in ['full', 'molecular']:
             if bonds != 0:
