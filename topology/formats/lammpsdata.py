@@ -204,7 +204,9 @@ def write_lammpsdata(topology, filename, atom_style='full'):
             data.write(atom_line.format(
                 index=i+1,type_index=unique_types.index(types[i])+1,
                 zero=0,charge=0,
-                x=coords[0].value,y=coords[1].value,z=coords[2].value))
+                x=coords[0].value,
+                y=coords[1].value,
+                z=coords[2].value))
 
         # TODO: Write out bonds
         # TODO: Write out angles
