@@ -13,7 +13,6 @@ from topology.core.site import Site
 from topology.utils.sorting import natural_sort
 from topology.testing.utils import allclose
 
-
 def write_lammpsdata(topology, filename, atom_style='full'):
     """Output a LAMMPS data file.
     
@@ -164,18 +163,14 @@ def write_lammpsdata(topology, filename, atom_style='full'):
             sigma_dict = dict([(unique_types.index(atom_type)+1,sigma) for atom_type,sigma in zip(types,sigmas)])
             epsilon_dict = dict([(unique_types.index(atom_type)+1,epsilon) for atom_type,epsilon in zip(types,epsilons)])
 
-            # Modified cross-interactions
-            if topology.site_list[0].atom_type.nb_function:
-                # Temporary -->
-                data.write('\nPair Coeffs # lj\n\n')
-                for idx,epsilon in epsilon_dict.items():
-                    data.write('{}\t{:.5f}\t{:.5f}\n'.format(idx,epsilon,sigma_dict[idx]))
-
+            # TODO: Modified cross-interactions
             # Pair coefficients
-            else:
-                data.write('\nPair Coeffs # lj\n\n')
-                for idx,epsilon in epsilon_dict.items():
-                    data.write('{}\t{:.5f}\t{:.5f}\n'.format(idx,epsilon,sigma_dict[idx]))
+            data.write('\nPair Coeffs # lj\n\n')
+            for idx,epsilon in epsilon_dict.items():
+                data.write('{}\t{:.5f}\t{:.5f}\n'.format(
+                    idx,
+                    epsilon.in_units(u.Unit('kcal')).value,
+                    sigma_dict[idx].in_units(u.angstrom).value))
 
         # TODO: Write out bond coefficients
         # TODO: Write out angle coefficients
