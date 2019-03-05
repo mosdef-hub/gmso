@@ -95,6 +95,12 @@ def _validate_position(position):
     position *= input_unit
     position.convert_to_units(u.nm)
 
+    if position.shape == (1, 3):
+        position = position.reshape(-1)
+    if position.shape != (3,):
+        raise ValueError('Positions must be or be able to be '
+                         'converted to an array of length (3,)')
+
     return position
 
 def _validate_charge(charge):
