@@ -18,7 +18,8 @@ class TestSite(BaseTest):
         assert isinstance(site.position, np.ndarray)
 
     @pytest.mark.parametrize('position', [[0.0, 0.0],
-        [0.0, 0.0, 0.0, 0.0, 0.0], [[0.0, 0.0], [0.0, 0.0]]])
+        [0.0, 0.0, 0.0, 0.0, 0.0], [[0.0, 0.0], [0.0, 0.0]],
+        ['a', 'b', 'c'], ['a', 1, 1]])
     def test_bad_pos_input(self, position):
         with pytest.raises(ValueError):
             site = Site(name='site', position=u.nm*position)
