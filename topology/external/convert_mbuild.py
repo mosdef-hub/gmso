@@ -11,7 +11,7 @@ def from_mbuild(compound):
     top = Topology(name=compound.name)
     site_map = dict()
     for child in compound.particles():
-        pos = child.xyz * u.nanometer
+        pos = child.xyz[0] * u.nanometer
         site = Site(name=child.name, position=pos)
         site_map[child] = site
         top.add_site(site)
