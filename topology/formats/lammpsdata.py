@@ -156,7 +156,9 @@ def write_lammpsdata(topology, filename, atom_style='full'):
         data.write('\nMasses\n\n')
         for atom_type,mass in mass_dict.items():
             data.write('{:d}\t{:.6f}\t# {}\n'.format(
-                atom_type,mass.value,unique_types[atom_type-1]))
+                atom_type,
+                mass.in_units(u.g/u.mol).value,
+                unique_types[atom_type-1]))
         if forcefield:
             sigmas = [site.atom_type.parameters['sigma'] for site in topology.site_list]
             epsilons = [site.atom_type.parameters['epsilon'] for site in topology.site_list]
@@ -198,7 +200,7 @@ def write_lammpsdata(topology, filename, atom_style='full'):
         for i,coords in enumerate(xyz):
             data.write(atom_line.format(
                 index=i+1,type_index=unique_types.index(types[i])+1,
-                zero=0,charge=0,
+                zero=0,charge=0, # TODO: handle charges from atomtype and/or site
                 x=coords[0].in_units(u.angstrom).value,
                 y=coords[1].in_units(u.angstrom).value,
                 z=coords[2].in_units(u.angstrom).value))
