@@ -74,7 +74,7 @@ class Topology(object):
         descr = list('<')
         descr.append(self.name + ' ')
         descr.append('{:d} sites, '.format(self.n_sites))
-        descr.append('{:d} connectiosn, '.format(self.n_connections))
+        descr.append('{:d} connections, '.format(self.n_connections))
         descr.append('id: {}>'.format(id(self)))
 
         return ''.join(descr)
