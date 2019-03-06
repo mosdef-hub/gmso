@@ -87,10 +87,12 @@ class TestBox(BaseTest):
     def test_eq(self, box):
         assert box == box
 
+    def test_eq_bad_lengths(self, box):
         diff_lengths = deepcopy(box)
         diff_lengths.lengths = u.nm * [5.0, 5.0, 5.0]
         assert box != diff_lengths
 
+    def test_eq_bad_angles(self, box):
         diff_angles = deepcopy(box)
         diff_angles.angles = u.degree * [90, 90, 120]
         assert box != diff_angles
