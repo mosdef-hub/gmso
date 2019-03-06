@@ -57,11 +57,27 @@ class TestBox(BaseTest):
     def test_default_angles(self, box):
         assert (box.angles == u.degree * np.array([90.0, 90.0, 90.0])).all()
 
-    def test_vectors(self):
+    def test_unit_vectors(self):
         box = Box(lengths=u.nm*np.ones(3), angles=u.degree*[40.0, 50.0, 60.0])
-        vectors = box.full_vectors_from_angles()
+        vectors = box.get_unit_vectors()
+        assert vectors.units.is_dimensionless
+
+    def test_scaling_unit_vectors(self):
+        box = Box(lengths=u.unyt_array((2, 2, 2), u.nm), angles=u.degree*[40.0, 50.0, 60.0])
+        u_vectors = box.get_unit_vectors()
+        scaled_u_vectors = (u_vectors.T * box.lengths).T
+
+        scaled_vectors = box.get_vectors()
+
+        assert allclose(scaled_vectors, scaled_u_vectors, atol=u.nm*1e-3)
+        assert scaled_u_vectors.units == u.nm
+
+    def test_scaled_vectors(self):
+        box = Box(lengths=u.unyt_array((2, 2, 2), u.nm), angles=u.degree*[40.0, 50.0, 60.0])
+        vectors = box.get_vectors()
         test_vectors = np.array([[1, 0, 0],
                                 [0.5, 0.86603, 0],
                                 [0.64278, 0.51344, 0.56852]])
-        test_vectors *= u.nm
+        test_vectors = (test_vectors.T * box.lengths).T
         assert allclose(vectors, test_vectors, atol=u.nm*1e-3)
+        assert vectors.units == u.nm
