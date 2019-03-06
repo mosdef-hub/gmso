@@ -4,6 +4,7 @@ import numpy as np
 import unyt as u
 
 from topology.core.atom_type import AtomType
+from topology.testing.utils import allclose
 
 
 class Site(object):
@@ -82,6 +83,16 @@ class Site(object):
     def atom_type(self, val):
         val = _validate_atom_type(val)
         self._atom_type = val
+
+    def __eq__(self, other):
+        if not allclose(self.position, other.position):
+            return False
+        if not allclose(self.charge, other.charge):
+            return False
+        if self.atom_type != other.atom_type:
+            return False
+
+        return True
 
 def _validate_position(position):
     if not isinstance(position, u.unyt_array):

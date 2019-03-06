@@ -96,11 +96,7 @@ class Topology(object):
             return False
 
         for (site1, site2) in zip(self.site_list, other.site_list):
-            if not allclose(site1.position, site2.position):
-                return False
-            if not allclose(site1.charge, site2.charge):
-                return False
-            if site1.atom_type != site2.atom_type:
+            if site1 != site2:
                 return False
 
         if self.box != other.box:
