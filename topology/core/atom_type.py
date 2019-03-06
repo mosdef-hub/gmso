@@ -14,8 +14,8 @@ class AtomType(object):
                  charge=0.0 * u.elementary_charge,
                  nb_function='4*epsilon*((sigma/r)**12 - (sigma/r)**6)',
                  parameters={
-                     'sigma': 1,
-                     'epsilon': 100
+                     'sigma': 0.3*u.nm,
+                     'epsilon': 0.3*u.Unit('kJ'),
                  }):
 
         self._name = name

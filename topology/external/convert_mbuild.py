@@ -8,12 +8,17 @@ def from_mbuild(compound):
     msg = ("Provided argument that is not an mbuild Compound")
     assert isinstance(compound, mb.Compound), msg
 
-    top = Topology(name=compound.name)
+    top = Topology()
+
+    # Keep the name if it is not the default mbuild Compound name
+    if compound.name != mb.Compound().name:
+        top.name = compound.name
+
     site_map = dict()
-    for child in compound.particles():
-        pos = child.xyz * u.nanometer
-        site = Site(name=child.name, position=pos)
-        site_map[child] = site
+    for particle in compound.particles():
+        pos = particle.xyz[0] * u.nanometer
+        site = Site(name=particle.name, position=pos)
+        site_map[particle] = site
         top.add_site(site)
 
     for b1, b2 in compound.bonds():

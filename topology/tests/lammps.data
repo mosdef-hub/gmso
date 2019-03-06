@@ -1,0 +1,24 @@
+Topology written by topology at 2019-03-04 10:23:56.354518
+
+2 atoms
+0 bonds
+0 angles
+0 dihedrals
+1 atom types
+
+0.000000 10.000000 xlo xhi
+0.000000 10.000000 ylo yhi
+0.000000 10.000000 zlo zhi
+
+Masses
+
+1	1.000000	# AtomType
+
+Pair Coeffs # lj
+
+1	100.00000	1.00000
+
+Atoms
+
+1	0	1	0.000000	0.000000	0.000000	0.000000
+2	0	1	0.000000	0.000000	0.000000	0.000000
