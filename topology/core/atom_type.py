@@ -15,8 +15,9 @@ class AtomType(object):
                  nb_function='4*epsilon*((sigma/r)**12 - (sigma/r)**6)',
                  parameters={
                      'sigma': 0.3*u.nm,
-                     'epsilon': 0.3*u.Unit('kJ'),
-                 }):
+                     'epsilon': 0.3*u.Unit('kJ')},
+                 independent_variables=['r'],
+                 ):
 
         self._name = name
         self._mass = _validate_mass(mass)
@@ -26,6 +27,13 @@ class AtomType(object):
             self._parameters = parameters
         else:
             raise ValueError("Please enter dictionary for parameters")
+
+        if isinstance(independent_variables, (str, sympy.symbol.Symbol, list)):
+            # TODO: Validate this argument
+            self._independent_variables = independent_variables
+        else:
+            raise ValueError("Please enter a string, sympy expression, "
+                             "or list thereof for independent_variables")
 
         if nb_function is None:
             self._nb_function = None
@@ -73,6 +81,10 @@ class AtomType(object):
 
         self._parameters.update(newparams)
         self._validate_function_parameters()
+
+    @property
+    def independent_variables(self):
+        return self._independent_variables
 
     @property
     def nb_function(self):
@@ -130,19 +142,22 @@ class AtomType(object):
 
     def _validate_function_parameters(self):
         # Check for unused symbols
-        symbols = sympy.symbols(set(self.parameters.keys()))
-        unused_symbols = symbols - self.nb_function.free_symbols
+        parameter_symbols = sympy.symbols(set(self.parameters.keys()))
+        independent_variable_symbols = sympy.symbols(set(self.independent_variables))
+        used_symbols = parameter_symbols.union(independent_variable_symbols)
+        unused_symbols = self.nb_function.free_symbols - used_symbols
         if len(unused_symbols) > 0:
             warnings.warn('You supplied parameters with '
                           'unused symbols {}'.format(unused_symbols))
 
-        # Rebuild the parameters
-        self._parameters = {
-            key: val
-            for key, val in self._parameters.items() if key in set(
-                str(sym) for sym in self.nb_function.free_symbols)
-        }
-        symbols = sympy.symbols(set(self.parameters.keys()))
+        ## Rebuild the parameters
+        #self._parameters = {
+        #    key: val
+        #    for key, val in self._parameters.items() if key in set(
+        #        str(sym) for sym in self.nb_function.free_symbols)
+        #}
+        #symbols = sympy.symbols(set(self.parameters.keys()))
+        symbols = used_symbols
         if symbols != self.nb_function.free_symbols:
             extra_syms = symbols ^ self.nb_function.free_symbols
             raise ValueError("NB function and parameter"
