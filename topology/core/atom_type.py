@@ -109,8 +109,11 @@ class AtomType(object):
             else:
                 raise ValueError("Please enter a string or sympy expression")
 
-        if parameters is not None:
+        if parameters is None:
+            parameters = self._parameters
+        else:
             parameters = _validate_parameters(parameters)
+            self._parameters.update(parameters)
 
         if independent_variables is not None:
             if not isinstance(independent_variables, (set)):
@@ -121,9 +124,11 @@ class AtomType(object):
         if parameters is None:
             parameters = self._parameters
 
+        # Rebuild self._parameters based on the symbols in the new nb_function
+        tmp_params = parameters
         self._parameters = {
             key: val
-            for key, val in parameters.items() if key in set(
+            for key, val in tmp_params.items() if key in set(
             str(sym) for sym in self.nb_function.free_symbols)
         }
 
