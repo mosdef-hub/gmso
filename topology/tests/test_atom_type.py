@@ -98,15 +98,18 @@ class TestAtomType(BaseTest):
         # Try changing the parameters, keep the function,
         # but the new parameters use different symbols
         first_type = AtomType(nb_function='r*sigma*epsilon',
-                parameters={'sigma': 1, 'epsilon': 10})
-        with pytest.warns(ValueError):
+                parameters={'sigma': 1, 'epsilon': 10},
+                independent_variables={'r'})
+
+        with pytest.raises(ValueError):
             first_type.set_nb_function(parameters={'a': 1, 'b': 10})
 
     def test_set_nb_func_params_partial(self):
         # Try changing the parameters, keep the function,
         # but change only one symbol
         first_type = AtomType(nb_function='r*sigma*epsilon',
-                parameters={'sigma': 1, 'epsilon': 10})
+                parameters={'sigma': 1, 'epsilon': 10},
+                independent_variables={'r'})
         first_type.set_nb_function(parameters={'sigma': 42})
         correct_expr = sympy.sympify('r*sigma*epsilon')
         assert first_type.parameters == {'sigma': 42, 'epsilon': 10}
