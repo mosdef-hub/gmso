@@ -12,7 +12,8 @@ class TestAtomType(BaseTest):
     def test_new_atom_type(self, charge, mass):
         new_type = AtomType(name='mytype', charge=charge, mass=mass,
                 parameters={'sigma': 1 * u.nm,
-                    'epsilon': 10 * u.Unit('kcal / mol')})
+                    'epsilon': 10 * u.Unit('kcal / mol')},
+                independent_variables={'r'})
         assert new_type.name == 'mytype'
         assert allclose(new_type.charge, charge)
         assert allclose(new_type.parameters['sigma'], 1 * u.nm)
