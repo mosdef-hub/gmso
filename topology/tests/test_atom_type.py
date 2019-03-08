@@ -117,7 +117,7 @@ class TestAtomType(BaseTest):
         first_type = AtomType(nb_function='sigma*epsilon',
                 parameters={'sigma': 1, 'epsilon': 10})
         first_type.set_nb_function(function='a+b*x', parameters={'a': 100, 'b': 42}, independent_variables='x')
-        correct_expr = sympy.sympify('a+b')
+        correct_expr = sympy.sympify('a+b*x')
         correct_params = {'a': 100, 'b': 42}
         assert first_type.nb_function == correct_expr
         assert first_type.parameters == correct_params

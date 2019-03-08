@@ -105,7 +105,7 @@ class AtomType(object):
 
         self._validate_function_parameters()
 
-    def set_nb_function(self, function=None, parameters=None):
+    def set_nb_function(self, function=None, parameters=None, independent_variables=None):
         """ Set the nonbonded function and paramters for this atomtype
 
         Parameters
@@ -138,14 +138,24 @@ class AtomType(object):
                     "Provided parameters "
                     "{} is not a valid dictionary".format(parameters))
 
-            self._parameters.update(parameters)
+        if independent_variables is not None:
+            if not isinstance(independent_variables, (set)):
+                independent_variables = set(independent_variables)
+
+            self._independent_variables = set([sympy.symbols(val) for val in independent_variables if not isinstance(val, sympy.Symbol)])
+
+            self._parameters = {
+                key: val
+                for key, val in parameters.items() if key in set(
+                str(sym) for sym in self.nb_function.free_symbols)
+            }
 
         self._validate_function_parameters()
 
     def _validate_function_parameters(self):
         # Check for unused symbols
         parameter_symbols = sympy.symbols(set(self.parameters.keys()))
-        independent_variable_symbols = sympy.symbols(set(self.independent_variables))
+        independent_variable_symbols = self._independent_variables
         used_symbols = parameter_symbols.union(independent_variable_symbols)
         unused_symbols = self.nb_function.free_symbols - used_symbols
         if len(unused_symbols) > 0:
@@ -153,15 +163,14 @@ class AtomType(object):
                           'unused symbols {}'.format(unused_symbols))
 
         ## Rebuild the parameters
-        #self._parameters = {
-        #    key: val
-        #    for key, val in self._parameters.items() if key in set(
-        #        str(sym) for sym in self.nb_function.free_symbols)
-        #}
-        #symbols = sympy.symbols(set(self.parameters.keys()))
-        symbols = used_symbols
-        if symbols != self.nb_function.free_symbols:
-            extra_syms = symbols ^ self.nb_function.free_symbols
+        self._parameters = {
+            key: val
+            for key, val in self._parameters.items() if key in set(
+                str(sym) for sym in self.nb_function.free_symbols)
+        }
+
+        if used_symbols != self.nb_function.free_symbols:
+            extra_syms = used_symbols ^ self.nb_function.free_symbols
             raise ValueError("NB function and parameter"
                              " symbols do not agree,"
                              " extraneous symbols:"
