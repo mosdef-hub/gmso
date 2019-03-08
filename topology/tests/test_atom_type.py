@@ -124,7 +124,10 @@ class TestAtomType(BaseTest):
 
     def test_set_nb_func_params_both_incorrect(self):
         # Try incorrectly changing both the nb function and the parameters
-        first_type = AtomType(nb_function='sigma*epsilon',
-                parameters={'sigma': 1, 'epsilon': 10})
+        first_type = AtomType(nb_function='r*sigma*epsilon',
+                parameters={'sigma': 1, 'epsilon': 10},
+                independent_variables='r')
         with pytest.raises(ValueError):
-            first_type.set_nb_function(function='a+b', parameters={'c': 100, 'd': 42})
+            first_type.set_nb_function(function='a*x+b',
+                parameters={'c': 100, 'd': 42},
+                independent_variables='x')

@@ -16,7 +16,7 @@ class AtomType(object):
                  parameters={
                      'sigma': 0.3*u.nm,
                      'epsilon': 0.3*u.Unit('kJ')},
-                 independent_variables=['r'],
+                 independent_variables={'r'},
                  ):
 
         self._name = name
@@ -28,7 +28,9 @@ class AtomType(object):
         else:
             raise ValueError("Please enter dictionary for parameters")
 
-        if isinstance(independent_variables, (str, sympy.symbol.Symbol, list)):
+        if isinstance(independent_variables, (str, sympy.symbol.Symbol, set)):
+            if isinstance(independent_variables, str):
+                independent_variables = {sympy.symbols(independent_variables)}
             # TODO: Validate this argument
             self._independent_variables = independent_variables
         else:
