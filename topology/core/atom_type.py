@@ -144,11 +144,14 @@ class AtomType(object):
 
             self._independent_variables = set([sympy.symbols(val) for val in independent_variables if not isinstance(val, sympy.Symbol)])
 
-            self._parameters = {
-                key: val
-                for key, val in parameters.items() if key in set(
-                str(sym) for sym in self.nb_function.free_symbols)
-            }
+        if parameters is None:
+            parameters = self._parameters
+
+        self._parameters = {
+            key: val
+            for key, val in parameters.items() if key in set(
+            str(sym) for sym in self.nb_function.free_symbols)
+        }
 
         self._validate_function_parameters()
 
