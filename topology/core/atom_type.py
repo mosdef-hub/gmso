@@ -22,20 +22,8 @@ class AtomType(object):
         self._name = name
         self._mass = _validate_mass(mass)
         self._charge = _validate_charge(charge)
-
-        if isinstance(parameters, dict):
-            self._parameters = parameters
-        else:
-            raise ValueError("Please enter dictionary for parameters")
-
-        if isinstance(independent_variables, (str, sympy.symbol.Symbol, set)):
-            if isinstance(independent_variables, str):
-                independent_variables = {sympy.symbols(independent_variables)}
-            # TODO: Validate this argument
-            self._independent_variables = independent_variables
-        else:
-            raise ValueError("Please enter a string, sympy expression, "
-                             "or list thereof for independent_variables")
+        self._parameters = _validate_parameters(parameters)
+        self._independent_variables = _validate_independent_variables(independent_variables)
 
         if nb_function is None:
             self._nb_function = None
@@ -133,10 +121,7 @@ class AtomType(object):
                 raise ValueError("Please enter a string or sympy expression")
 
         if parameters is not None:
-            if not isinstance(parameters, dict):
-                raise ValueError(
-                    "Provided parameters "
-                    "{} is not a valid dictionary".format(parameters))
+            parameters = _validate_parameters(parameters)
 
         if independent_variables is not None:
             if not isinstance(independent_variables, (set)):
@@ -228,3 +213,32 @@ def _validate_mass(mass):
         pass
 
     return mass
+
+
+def _validate_parameters(parameters):
+    if isinstance(parameters, dict):
+        return parameters
+    else:
+        raise ValueError("Please enter dictionary for parameters")
+
+
+def _validate_independent_variables(indep_vars):
+    if isinstance(indep_vars, str):
+        indep_vars = {sympy.symbols(indep_vars)}
+    elif isinstance(indep_vars, sympy.symbol.Symbol):
+        indep_vars = {indep_vars}
+    elif isinstance(indep_vars, (list, set)):
+        if all([isinstance(val, sympy.symbol.Symbol) for val in indep_vars]):
+            pass
+        elif all([isinstance(val, str) for val in indep_vars]):
+            indep_vars = set([sympy.symbols(val) for val in indep_vars])
+        else:
+            raise ValueError('`independent_variabels` argument was a list '
+                             'or set of mixed variables. Please enter a '
+                             'list or set of either only strings or only '
+                             'sympy symbols')
+    else:
+        raise ValueError("Please enter a string, sympy expression, "
+                         "or list or set thereof for independent_variables")
+
+    return indep_vars
