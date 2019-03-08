@@ -56,9 +56,7 @@ class AtomType(object):
 
     @parameters.setter
     def parameters(self, newparams):
-        if not isinstance(newparams, dict):
-            raise ValueError("Provided parameters "
-                             "{} is not a valid dictionary".format(newparams))
+        newparams = _validate_parameters(newparams)
 
         self._parameters.update(newparams)
         self._validate_function_parameters()
