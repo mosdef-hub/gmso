@@ -68,9 +68,10 @@ class TestAtomType(BaseTest):
     def test_set_nb_func(self, charge):
         # Try changing the nonbonded function, but keep the parameters
         first_type = AtomType(name='mytype', charge=charge,
-                parameters={'sigma': 1, 'epsilon': 10})
-        first_type.set_nb_function(function='sigma + epsilon')
-        correct_expr = sympy.sympify('sigma + epsilon')
+                parameters={'sigma': 1, 'epsilon': 10},
+                independent_variables='r')
+        first_type.set_nb_function(function='r * (sigma + epsilon)')
+        correct_expr = sympy.sympify('r * (sigma + epsilon)')
         assert first_type.nb_function == correct_expr
         assert first_type.parameters == {'sigma': 1, 'epsilon': 10}
 
@@ -85,28 +86,29 @@ class TestAtomType(BaseTest):
     def test_set_nb_func_params(self, charge):
         # Try changing the nb parameters, but keeping the function
         first_type = AtomType(name='mytype', charge=charge,
-                nb_function='sigma * epsilon',
-                parameters={'sigma': 1, 'epsilon': 10})
+                nb_function='r * sigma * epsilon',
+                parameters={'sigma': 1, 'epsilon': 10},
+                independent_variables='r')
         first_type.set_nb_function(parameters={'sigma': 42, 'epsilon': 24})
-        correct_expr = sympy.sympify('sigma * epsilon')
+        correct_expr = sympy.sympify('r * sigma * epsilon')
         assert first_type.nb_function == correct_expr
         assert first_type.parameters == {'sigma': 42, 'epsilon': 24}
 
     def test_set_nb_func_params_bad(self):
         # Try changing the parameters, keep the function,
         # but the new parameters use different symbols
-        first_type = AtomType(nb_function='sigma*epsilon',
+        first_type = AtomType(nb_function='r*sigma*epsilon',
                 parameters={'sigma': 1, 'epsilon': 10})
-        with pytest.warns(UserWarning):
+        with pytest.warns(ValueError):
             first_type.set_nb_function(parameters={'a': 1, 'b': 10})
 
     def test_set_nb_func_params_partial(self):
         # Try changing the parameters, keep the function,
         # but change only one symbol
-        first_type = AtomType(nb_function='sigma*epsilon',
+        first_type = AtomType(nb_function='r*sigma*epsilon',
                 parameters={'sigma': 1, 'epsilon': 10})
         first_type.set_nb_function(parameters={'sigma': 42})
-        correct_expr = sympy.sympify('sigma*epsilon')
+        correct_expr = sympy.sympify('r*sigma*epsilon')
         assert first_type.parameters == {'sigma': 42, 'epsilon': 10}
         assert first_type.nb_function == correct_expr
 
@@ -114,7 +116,7 @@ class TestAtomType(BaseTest):
         # Try correctly changing both the nb function and parameters
         first_type = AtomType(nb_function='sigma*epsilon',
                 parameters={'sigma': 1, 'epsilon': 10})
-        first_type.set_nb_function(function='a+b', parameters={'a': 100, 'b': 42})
+        first_type.set_nb_function(function='a+b*x', parameters={'a': 100, 'b': 42}, independent_variables='x')
         correct_expr = sympy.sympify('a+b')
         correct_params = {'a': 100, 'b': 42}
         assert first_type.nb_function == correct_expr
