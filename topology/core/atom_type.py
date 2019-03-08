@@ -24,16 +24,7 @@ class AtomType(object):
         self._charge = _validate_charge(charge)
         self._parameters = _validate_parameters(parameters)
         self._independent_variables = _validate_independent_variables(independent_variables)
-
-        if nb_function is None:
-            self._nb_function = None
-        elif isinstance(nb_function, str):
-            self._nb_function = sympy.sympify(nb_function)
-        elif isinstance(nb_function, sympy.Expr):
-            self._nb_function = nb_function
-        else:
-            raise ValueError("Please enter a string, sympy expression, "
-                             "or None for nb_function")
+        self._nb_function = _validate_nb_function(nb_function)
 
     @property
     def name(self):
@@ -242,3 +233,17 @@ def _validate_independent_variables(indep_vars):
                          "or list or set thereof for independent_variables")
 
     return indep_vars
+
+
+def _validate_nb_function(nb_function):
+    if nb_function is None:
+        pass
+    elif isinstance(nb_function, str):
+        nb_function = sympy.sympify(nb_function)
+    elif isinstance(nb_function, sympy.Expr):
+        nb_function = nb_function
+    else:
+        raise ValueError("Please enter a string, sympy expression, "
+                         "or None for nb_function")
+
+    return nb_function
