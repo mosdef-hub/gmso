@@ -113,16 +113,13 @@ class AtomType(object):
         if independent_variables is not None:
             self._independent_variables = _validate_independent_variables(independent_variables)
 
-            self._independent_variables = set([sympy.symbols(val) for val in independent_variables if not isinstance(val, sympy.Symbol)])
-
-        if parameters is None:
-            parameters = self._parameters
+        if not set(parameters.keys()).isdisjoint(self._nb_function.free_symbols):
+            raise ValueError('Mismatch between parameters and nbfunction symbols')
 
         # Rebuild self._parameters based on the symbols in the new nb_function
-        tmp_params = parameters
         self._parameters = {
             key: val
-            for key, val in tmp_params.items() if key in set(
+            for key, val in self._parameters.items() if key in set(
             str(sym) for sym in self.nb_function.free_symbols)
         }
 
@@ -130,7 +127,7 @@ class AtomType(object):
 
     def _validate_function_parameters(self):
         # Check for unused symbols
-        parameter_symbols = sympy.symbols(set(self.parameters.keys()))
+        parameter_symbols = sympy.symbols(set(self._parameters.keys()))
         independent_variable_symbols = self._independent_variables
         used_symbols = parameter_symbols.union(independent_variable_symbols)
         unused_symbols = self.nb_function.free_symbols - used_symbols
