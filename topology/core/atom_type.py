@@ -26,6 +26,8 @@ class AtomType(object):
         self._independent_variables = _validate_independent_variables(independent_variables)
         self._nb_function = _validate_nb_function(nb_function)
 
+        self._validate_function_parameters()
+
     @property
     def name(self):
         return self._name
