@@ -210,11 +210,15 @@ def _validate_mass(mass):
 
 
 def _validate_parameters(parameters):
-    if isinstance(parameters, dict):
-        return parameters
-    else:
+    if not isinstance(parameters, dict):
         raise ValueError("Please enter dictionary for parameters")
+    for key, val in parameters.items():
+        if not isinstance(val, u.unyt_array):
+            raise ValueError('Paramter value {} lacks a unyt'.format(val))
+        if not isinstance(key, str):
+            raise ValueError('Parameter key {} is not a str'.format(key))
 
+    return parameters
 
 def _validate_independent_variables(indep_vars):
     if isinstance(indep_vars, str):
