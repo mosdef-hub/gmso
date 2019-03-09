@@ -102,12 +102,7 @@ class AtomType(object):
             while the non-passed parameters default to the existing values
        """
         if function is not None:
-            if isinstance(function, str):
-                self._nb_function = sympy.sympify(function)
-            elif isinstance(function, sympy.Expr):
-                self._nb_function = function
-            else:
-                raise ValueError("Please enter a string or sympy expression")
+            self._nb_function = _validate_nb_function(function)
 
         if parameters is None:
             parameters = self._parameters
@@ -116,8 +111,7 @@ class AtomType(object):
             self._parameters.update(parameters)
 
         if independent_variables is not None:
-            if not isinstance(independent_variables, (set)):
-                independent_variables = set(independent_variables)
+            self._independent_variables = _validate_independent_variables(independent_variables)
 
             self._independent_variables = set([sympy.symbols(val) for val in independent_variables if not isinstance(val, sympy.Symbol)])
 
