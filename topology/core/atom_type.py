@@ -135,7 +135,7 @@ class AtomType(object):
             warnings.warn('You supplied parameters with '
                           'unused symbols {}'.format(unused_symbols))
 
-        ## Rebuild the parameters
+        # Rebuild the parameters
         self._parameters = {
             key: val
             for key, val in self._parameters.items() if key in set(
@@ -222,7 +222,7 @@ def _validate_independent_variables(indep_vars):
         elif all([isinstance(val, str) for val in indep_vars]):
             indep_vars = set([sympy.symbols(val) for val in indep_vars])
         else:
-            raise ValueError('`independent_variabels` argument was a list '
+            raise ValueError('`independent_variables` argument was a list '
                              'or set of mixed variables. Please enter a '
                              'list or set of either only strings or only '
                              'sympy symbols')
