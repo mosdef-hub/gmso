@@ -25,9 +25,17 @@ class TestAtomType(BaseTest):
         new_type.name = "SettingName"
         new_type.charge = -1.0 * charge
         new_type.mass = 1 * mass
+        new_type.independent_variables = 'r'
+        new_type.parameters = {'sigma': 1 * u.nm,
+                               'epsilon': 10 * u.Unit('kcal / mol')}
+        new_type.nb_function = 'r * sigma * epsilon'
         assert new_type.name == "SettingName"
         assert allclose(new_type.charge, -1.0 * charge)
         assert allclose(new_type.mass, 1 * mass)
+        assert new_type.independent_variables == {sympy.symbols('r')}
+        assert new_type.parameters == {'sigma': 1 * u.nm,
+                                      'epsilon': 10 * u.Unit('kcal / mol')}
+        assert new_type.nb_function == sympy.sympify('r * sigma * epsilon')
 
     def test_incorrect_nb_function(self, charge):
         with pytest.raises(ValueError):

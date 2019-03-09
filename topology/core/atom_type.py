@@ -67,6 +67,10 @@ class AtomType(object):
     def independent_variables(self):
         return self._independent_variables
 
+    @independent_variables.setter
+    def independent_variables(self, indep_vars):
+        self._independent_variables = _validate_independent_variables(indep_vars)
+
     @property
     def nb_function(self):
         return self._nb_function
