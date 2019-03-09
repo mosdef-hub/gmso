@@ -108,6 +108,12 @@ class AtomType(object):
             parameters = self._parameters
         else:
             parameters = _validate_parameters(parameters)
+            if not set(self._parameters).intersection(set(parameters)):
+                if function is None:
+                    raise ValueError('`parameters` argument includes no '
+                                     'variables found in function. Expected '
+                                     'at least one of {}'.format(
+                                        self._parameters.keys()))
             self._parameters.update(parameters)
 
         if independent_variables is not None:
