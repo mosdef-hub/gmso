@@ -147,13 +147,6 @@ class AtomType(object):
             warnings.warn('You supplied parameters with '
                           'unused symbols {}'.format(unused_symbols))
 
-        # Rebuild the parameters
-        self._parameters = {
-            key: val
-            for key, val in self._parameters.items() if key in set(
-                str(sym) for sym in self.nb_function.free_symbols)
-        }
-
         if used_symbols != self.nb_function.free_symbols:
             extra_syms = used_symbols ^ self.nb_function.free_symbols
             raise ValueError("NB function and parameter"
