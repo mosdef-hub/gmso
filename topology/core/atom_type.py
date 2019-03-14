@@ -136,12 +136,6 @@ class AtomType(object):
             warnings.warn('You supplied parameters with '
                           'unused symbols {}'.format(unused_symbols))
 
-        # Rebuild the parameters
-        self._parameters = {
-            key: val
-            for key, val in self._parameters.items() if key in set(
-                str(sym) for sym in self.nb_function.free_symbols)
-        }
         symbols = sympy.symbols(set(self.parameters.keys()))
         if symbols != self.nb_function.free_symbols:
             extra_syms = symbols ^ self.nb_function.free_symbols
