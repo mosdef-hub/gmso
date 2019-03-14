@@ -138,11 +138,16 @@ class AtomType(object):
 
         symbols = sympy.symbols(set(self.parameters.keys()))
         if symbols != self.nb_function.free_symbols:
+            missing_syms = self.nb_function.free_symbols - symbols
+            if missing_syms:
+                raise ValueError("Missing necessary parameters to evaluate "
+                                 "NB function. Missing symbols: {}"
+                                 "".format(missing_syms))
             extra_syms = symbols ^ self.nb_function.free_symbols
-            raise ValueError("NB function and parameter"
-                             " symbols do not agree,"
-                             " extraneous symbols:"
-                             " {}".format(extra_syms))
+            warnings.warn("NB function and parameter"
+                          " symbols do not agree,"
+                          " extraneous symbols:"
+                          " {}".format(extra_syms))
 
     def __eq__(self, other):
         name_match = (self.name == other.name)
