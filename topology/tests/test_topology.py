@@ -4,7 +4,9 @@ import unyt as u
 
 from topology.core.topology import Topology
 from topology.core.site import Site
+from topology.core.atom_type import AtomType
 from topology.core.connection import Connection
+from topology.core.connection_type import ConnectionType
 from topology.core.box import Box
 from topology.tests.base_test import BaseTest
 from topology.testing.utils import allclose
@@ -56,3 +58,38 @@ class TestTopology(BaseTest):
         assert top.positions().dtype == float
         assert top.positions().units == u.nm
         assert isinstance(top.positions(), u.unyt_array)
+
+    def test_top_update(self):
+        top = Topology()
+        top.update_top()
+        assert len(top.atom_types) == 0
+        assert len(top.connection_types) == 0
+        assert top.n_connections == 0
+        assert len(top.atom_type_functionals) == 0
+        assert len(top.connection_type_functionals) == 0
+
+        atomtype = AtomType()
+        site1 = Site(name='site1', atom_type=atomtype)
+        top.add_site(site1)
+        site2 = Site(name='site2', atom_type=atomtype)
+        top.add_site(site2)
+        top.update_top()
+        assert len(top.atom_types) == 1
+        assert len(top.connection_types) == 0
+        assert top.n_connections == 0
+        assert len(top.atom_type_functionals) == 1
+        assert len(top.connection_type_functionals) == 0
+
+
+        ctype = ConnectionType()
+        connection_12 = Connection(site1=site1, site2=site2, 
+                connection_type=ctype)
+        top.add_connection(connection_12)
+        top.update_top()
+        assert len(top.atom_types) == 1
+        assert len(top.connection_types) == 1
+        assert top.n_connections == 1
+        assert len(top.atom_type_functionals) == 1
+        assert len(top.connection_type_functionals) == 1
+
+
