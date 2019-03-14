@@ -97,9 +97,11 @@ class Topology(object):
         self.update_connection_types()
         
     def update_atom_types(self):
-        self._atom_types = list(set(
-            site.atom_type for site in self.site_list))
-
+        self._atom_types = []
+        for site in self.site_list:
+            if site.atom_type not in self._atom_types:
+                self._atom_types.append(site.atom_type)
+        
     def update_connection_list(self):
         for site in self.site_list:
             for neighbor in site.connections:
@@ -108,8 +110,11 @@ class Topology(object):
                     self.add_connection(Connection(site, neighbor, update=True))
 
     def update_connection_types(self):
-        self._connection_types = list(set(
-            connection.connection_type for connection in self.connection_list))
+        self._connection_types = []
+        for connection in self.connection_list:
+            if connection.connection_type not in self._connection_types:
+                print(connection.connection_type)
+                self._connection_types.append(connection.connection_type)
 
     def __repr__(self):
         descr = list('<')
