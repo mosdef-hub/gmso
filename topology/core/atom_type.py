@@ -144,7 +144,7 @@ class AtomType(object):
         if used_symbols != self.nb_function.free_symbols:
             symbols = sympy.symbols(set(self.parameters.keys()))
             if symbols != self.nb_function.free_symbols:
-                missing_syms = self.nb_function.free_symbols - symbols
+                missing_syms = self.nb_function.free_symbols - symbols - self._independent_variables
                 if missing_syms:
                     raise ValueError("Missing necessary parameters to evaluate "
                                      "NB function. Missing symbols: {}"
