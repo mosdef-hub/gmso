@@ -128,12 +128,6 @@ class AtomType(object):
         if not set(parameters.keys()).isdisjoint(self._nb_function.free_symbols):
             raise ValueError('Mismatch between parameters and nbfunction symbols')
 
-        # Rebuild self._parameters based on the symbols in the new nb_function
-        self._parameters = {
-            key: val
-            for key, val in self._parameters.items() if key in set(
-            str(sym) for sym in self.nb_function.free_symbols)
-        }
 
         self._validate_function_parameters()
 
@@ -153,6 +147,19 @@ class AtomType(object):
                              " symbols do not agree,"
                              " extraneous symbols:"
                              " {}".format(extra_syms))
+
+            symbols = sympy.symbols(set(self.parameters.keys()))
+            if symbols != self.nb_function.free_symbols:
+                missing_syms = self.nb_function.free_symbols - symbols
+                if missing_syms:
+                    raise ValueError("Missing necessary parameters to evaluate "
+                                     "NB function. Missing symbols: {}"
+                                     "".format(missing_syms))
+                extra_syms = symbols ^ self.nb_function.free_symbols
+                warnings.warn("NB function and parameter"
+                              " symbols do not agree,"
+                              " extraneous symbols:"
+                              " {}".format(extra_syms))
 
     def __eq__(self, other):
         name_match = (self.name == other.name)
