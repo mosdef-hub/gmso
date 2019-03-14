@@ -142,12 +142,6 @@ class AtomType(object):
                           'unused symbols {}'.format(unused_symbols))
 
         if used_symbols != self.nb_function.free_symbols:
-            extra_syms = used_symbols ^ self.nb_function.free_symbols
-            raise ValueError("NB function and parameter"
-                             " symbols do not agree,"
-                             " extraneous symbols:"
-                             " {}".format(extra_syms))
-
             symbols = sympy.symbols(set(self.parameters.keys()))
             if symbols != self.nb_function.free_symbols:
                 missing_syms = self.nb_function.free_symbols - symbols

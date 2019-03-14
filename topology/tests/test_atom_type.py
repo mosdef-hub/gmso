@@ -142,7 +142,6 @@ class TestAtomType(BaseTest):
         correct_expr = sympy.sympify('a+b*x')
         correct_params = {'a': 100*u.m, 'b': 42*u.J, 'sigma': 1*u.m, 'epsilon': 10*u.J}
         assert first_type.nb_function == correct_expr
-        import pdb; pdb.set_trace()
         assert first_type.parameters == correct_params
 
     def test_set_nb_func_params_both_incorrect(self):
