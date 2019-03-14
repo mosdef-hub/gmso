@@ -113,7 +113,6 @@ class Topology(object):
         self._connection_types = []
         for connection in self.connection_list:
             if connection.connection_type not in self._connection_types:
-                print(connection.connection_type)
                 self._connection_types.append(connection.connection_type)
 
     def __repr__(self):
