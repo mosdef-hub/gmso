@@ -29,6 +29,18 @@ class Site(object):
         self._connections = list()
 
     def add_connection(self, other_site):
+        """ Add a connection between sites
+
+        Parameters
+        ---------
+        other_site : top.Site
+
+        Notes
+        -----
+        This function WILL NOT include ConnectionType information.
+        If ConnectionType information needs to be passed,
+        call top.add_connection
+        """
         self._connections.append(other_site)
 
     @property
