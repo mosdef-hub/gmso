@@ -80,7 +80,7 @@ class TestTopology(BaseTest):
         assert top.n_connections == 0
         assert len(top.connection_types) == 0
         assert len(top.connection_type_functionals) == 0
-        top.update_top()
+        top.update_atom_types()
         assert top.n_sites == 2
         assert len(top.atom_types) == 1
         assert len(top.atom_type_functionals) == 1
@@ -99,7 +99,7 @@ class TestTopology(BaseTest):
         assert top.n_connections == 1
         assert len(top.connection_types) == 0
         assert len(top.connection_type_functionals) == 0
-        top.update_top()
+        top.update_connection_types()
         assert top.n_sites == 2
         assert len(top.atom_types) == 1
         assert len(top.atom_type_functionals) == 1
@@ -114,7 +114,7 @@ class TestTopology(BaseTest):
         assert top.n_connections == 1
         assert len(top.connection_types) == 1
         assert len(top.connection_type_functionals) == 1
-        top.update_top()
+        top.update_atom_types()
         assert top.n_sites == 2
         assert len(top.atom_types) == 2
         assert len(top.atom_type_functionals) == 2
