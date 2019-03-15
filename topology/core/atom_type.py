@@ -15,27 +15,18 @@ class AtomType(object):
                  nb_function='4*epsilon*((sigma/r)**12 - (sigma/r)**6)',
                  parameters={
                      'sigma': 0.3*u.nm,
-                     'epsilon': 0.3*u.Unit('kJ'),
-                 }):
+                     'epsilon': 0.3*u.Unit('kJ')},
+                 independent_variables={'r'},
+                 ):
 
         self._name = name
         self._mass = _validate_mass(mass)
         self._charge = _validate_charge(charge)
+        self._parameters = _validate_parameters(parameters)
+        self._independent_variables = _validate_independent_variables(independent_variables)
+        self._nb_function = _validate_nb_function(nb_function)
 
-        if isinstance(parameters, dict):
-            self._parameters = parameters
-        else:
-            raise ValueError("Please enter dictionary for parameters")
-
-        if nb_function is None:
-            self._nb_function = None
-        elif isinstance(nb_function, str):
-            self._nb_function = sympy.sympify(nb_function)
-        elif isinstance(nb_function, sympy.Expr):
-            self._nb_function = nb_function
-        else:
-            raise ValueError("Please enter a string, sympy expression, "
-                             "or None for nb_function")
+        self._validate_function_parameters()
 
     @property
     def name(self):
@@ -67,12 +58,18 @@ class AtomType(object):
 
     @parameters.setter
     def parameters(self, newparams):
-        if not isinstance(newparams, dict):
-            raise ValueError("Provided parameters "
-                             "{} is not a valid dictionary".format(newparams))
+        newparams = _validate_parameters(newparams)
 
         self._parameters.update(newparams)
         self._validate_function_parameters()
+
+    @property
+    def independent_variables(self):
+        return self._independent_variables
+
+    @independent_variables.setter
+    def independent_variables(self, indep_vars):
+        self._independent_variables = _validate_independent_variables(indep_vars)
 
     @property
     def nb_function(self):
@@ -91,7 +88,7 @@ class AtomType(object):
 
         self._validate_function_parameters()
 
-    def set_nb_function(self, function=None, parameters=None):
+    def set_nb_function(self, function=None, parameters=None, independent_variables=None):
         """ Set the nonbonded function and paramters for this atomtype
 
         Parameters
@@ -111,44 +108,52 @@ class AtomType(object):
             while the non-passed parameters default to the existing values
        """
         if function is not None:
-            if isinstance(function, str):
-                self._nb_function = sympy.sympify(function)
-            elif isinstance(function, sympy.Expr):
-                self._nb_function = function
-            else:
-                raise ValueError("Please enter a string or sympy expression")
+            self._nb_function = _validate_nb_function(function)
 
-        if parameters is not None:
-            if not isinstance(parameters, dict):
-                raise ValueError(
-                    "Provided parameters "
-                    "{} is not a valid dictionary".format(parameters))
-
+        if parameters is None:
+            parameters = self._parameters
+        else:
+            parameters = _validate_parameters(parameters)
+            if not set(self._parameters).intersection(set(parameters)):
+                if function is None:
+                    raise ValueError('`parameters` argument includes no '
+                                     'variables found in function. Expected '
+                                     'at least one of {}'.format(
+                                        self._parameters.keys()))
             self._parameters.update(parameters)
+
+        if independent_variables is not None:
+            self._independent_variables = _validate_independent_variables(independent_variables)
+
+        if not set(parameters.keys()).isdisjoint(self._nb_function.free_symbols):
+            raise ValueError('Mismatch between parameters and nbfunction symbols')
+
 
         self._validate_function_parameters()
 
     def _validate_function_parameters(self):
         # Check for unused symbols
-        symbols = sympy.symbols(set(self.parameters.keys()))
-        unused_symbols = symbols - self.nb_function.free_symbols
+        parameter_symbols = sympy.symbols(set(self._parameters.keys()))
+        independent_variable_symbols = self._independent_variables
+        used_symbols = parameter_symbols.union(independent_variable_symbols)
+        unused_symbols = self.nb_function.free_symbols - used_symbols
         if len(unused_symbols) > 0:
             warnings.warn('You supplied parameters with '
                           'unused symbols {}'.format(unused_symbols))
 
-        # Rebuild the parameters
-        self._parameters = {
-            key: val
-            for key, val in self._parameters.items() if key in set(
-                str(sym) for sym in self.nb_function.free_symbols)
-        }
-        symbols = sympy.symbols(set(self.parameters.keys()))
-        if symbols != self.nb_function.free_symbols:
-            extra_syms = symbols ^ self.nb_function.free_symbols
-            raise ValueError("NB function and parameter"
-                             " symbols do not agree,"
-                             " extraneous symbols:"
-                             " {}".format(extra_syms))
+        if used_symbols != self.nb_function.free_symbols:
+            symbols = sympy.symbols(set(self.parameters.keys()))
+            if symbols != self.nb_function.free_symbols:
+                missing_syms = self.nb_function.free_symbols - symbols - self._independent_variables
+                if missing_syms:
+                    raise ValueError("Missing necessary parameters to evaluate "
+                                     "NB function. Missing symbols: {}"
+                                     "".format(missing_syms))
+                extra_syms = symbols ^ self.nb_function.free_symbols
+                warnings.warn("NB function and parameter"
+                              " symbols do not agree,"
+                              " extraneous symbols:"
+                              " {}".format(extra_syms))
 
     def __eq__(self, other):
         name_match = (self.name == other.name)
@@ -199,3 +204,50 @@ def _validate_mass(mass):
         pass
 
     return mass
+
+
+def _validate_parameters(parameters):
+    if not isinstance(parameters, dict):
+        raise ValueError("Please enter dictionary for parameters")
+    for key, val in parameters.items():
+        if not isinstance(val, u.unyt_array):
+            raise ValueError('Paramter value {} lacks a unyt'.format(val))
+        if not isinstance(key, str):
+            raise ValueError('Parameter key {} is not a str'.format(key))
+
+    return parameters
+
+def _validate_independent_variables(indep_vars):
+    if isinstance(indep_vars, str):
+        indep_vars = {sympy.symbols(indep_vars)}
+    elif isinstance(indep_vars, sympy.symbol.Symbol):
+        indep_vars = {indep_vars}
+    elif isinstance(indep_vars, (list, set)):
+        if all([isinstance(val, sympy.symbol.Symbol) for val in indep_vars]):
+            pass
+        elif all([isinstance(val, str) for val in indep_vars]):
+            indep_vars = set([sympy.symbols(val) for val in indep_vars])
+        else:
+            raise ValueError('`independent_variables` argument was a list '
+                             'or set of mixed variables. Please enter a '
+                             'list or set of either only strings or only '
+                             'sympy symbols')
+    else:
+        raise ValueError("Please enter a string, sympy expression, "
+                         "or list or set thereof for independent_variables")
+
+    return indep_vars
+
+
+def _validate_nb_function(nb_function):
+    if nb_function is None:
+        pass
+    elif isinstance(nb_function, str):
+        nb_function = sympy.sympify(nb_function)
+    elif isinstance(nb_function, sympy.Expr):
+        nb_function = nb_function
+    else:
+        raise ValueError("Please enter a string, sympy expression, "
+                         "or None for nb_function")
+
+    return nb_function
