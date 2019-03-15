@@ -5,7 +5,6 @@ import sympy
 import unyt as u
 from topology.testing.utils import allclose
 
-logger = logging.getLogger("TopLog")
 
 class AtomType(object):
     """An atom type."""
