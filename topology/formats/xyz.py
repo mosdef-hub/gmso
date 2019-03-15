@@ -13,7 +13,7 @@ def read_xyz(filename):
     with open(filename, 'r') as xyz_file:
         n_atoms = int(xyz_file.readline())
         xyz_file.readline()
-        coords = np.zeros(shape=(n_atoms, 3), dtype=np.float64) * u.nanometer
+        coords = np.zeros(shape=(n_atoms, 3))  * u.nanometer
         for row, _ in enumerate(coords):
             line = xyz_file.readline().split()
             if not line:
