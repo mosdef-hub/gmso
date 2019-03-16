@@ -67,7 +67,7 @@ class Potential(object):
         self._validate_expression_parameters()
 
     def set_expression(self, expression=None, parameters=None, independent_variables=None):
-        """ Set the potential expression and paramters for this atomtype
+        """Set the expression, parameters, and independent variables for this potential.
 
         Parameters
         ----------
@@ -97,7 +97,7 @@ class Potential(object):
                     raise ValueError('`parameters` argument includes no '
                                      'variables found in expression. Expected '
                                      'at least one of {}'.format(
-                        self._parameters.keys()))
+                                        self._parameters.keys()))
             self._parameters.update(parameters)
 
         if independent_variables is not None:
@@ -105,7 +105,6 @@ class Potential(object):
 
         if not set(parameters.keys()).isdisjoint(self._expression.free_symbols):
             raise ValueError('Mismatch between parameters and expression symbols')
-
 
         self._validate_expression_parameters()
 
@@ -144,7 +143,7 @@ class Potential(object):
         ])
 
     def __repr__(self):
-        desc = "<AtomType {}, id {}>".format(self._name, id(self))
+        desc = "<Potential{}, id {}>".format(self._name, id(self))
         return desc
 
 
@@ -158,6 +157,7 @@ def _validate_parameters(parameters):
             raise ValueError('Parameter key {} is not a str'.format(key))
 
     return parameters
+
 
 def _validate_independent_variables(indep_vars):
     if isinstance(indep_vars, str):

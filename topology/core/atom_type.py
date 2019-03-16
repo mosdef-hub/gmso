@@ -1,6 +1,4 @@
 import warnings
-import numpy as np
-import sympy
 import unyt as u
 
 from topology.testing.utils import allclose
@@ -18,7 +16,7 @@ class AtomType(Potential):
                  parameters={
                     'sigma': 0.3 * u.nm,
                     'epsilon': 0.3 * u.Unit('kJ')},
-                 independent_variables = {'r'}):
+                 independent_variables={'r'}):
 
         super(AtomType, self).__init__(
             name=name,
@@ -45,7 +43,6 @@ class AtomType(Potential):
     @mass.setter
     def mass(self, val):
         self._mass = _validate_mass(val)
-
 
     def __eq__(self, other):
         name_match = (self.name == other.name)

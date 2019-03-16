@@ -1,5 +1,4 @@
 import unyt as u
-import numpy as np
 import sympy
 import pytest
 
@@ -43,7 +42,7 @@ class TestAtomType(BaseTest):
 
     def test_incorrect_expression(self, charge):
         with pytest.raises(ValueError):
-            new_type = AtomType(name='mytype', charge=charge, expression=4.2)
+            AtomType(name='mytype', charge=charge, expression=4.2)
 
     def test_expression_consistency(self, charge):
         # Test nb-func symbol consistency with parameter consistency in init
