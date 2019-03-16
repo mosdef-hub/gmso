@@ -1,7 +1,7 @@
 import unyt as u
 import sympy
 
-from topology.core import Potential
+from topology.core.potential import Potential
 
 class BondType(Potential):
     """A Potential between 2-bonded partners.
