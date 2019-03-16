@@ -37,15 +37,14 @@ class Connection(object):
 
     def __repr__(self):
         descr = '<{}-partner connection between'.format(len(self.bond_partners))
-        descr += ' '.join([site for site in self.bond_partners])
-        descr += ', type {}'.format(self.connection_type)
-        return(descr)
+        descr += ', '.join([site for site in self.bond_partners])
+        descr += ', type {}>'.format(self.connection_type)
+        return descr
 
     def __eq__(self, other):
         bond_partner_match = (self.bond_partners == other.bond_partners)
         ctype_match = (self.connection_type == other.connection_type)
         return all([bond_partner_match, ctype_match])
-
 
 
 def _validate_bond_partners(bond_partners):
