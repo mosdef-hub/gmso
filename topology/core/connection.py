@@ -50,7 +50,7 @@ class Connection(object):
 def _validate_bond_partners(bond_partners):
     for partner in bond_partners:
         if not isinstance(partner, Site):
-            raise TopologyError("Supplied non-site {}".format(partner))
+            raise TopologyError("Supplied non-Site {}".format(partner))
     return bond_partners
 
 def _validate_connection_type(c_type):
