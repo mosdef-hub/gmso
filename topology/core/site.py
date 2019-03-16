@@ -28,8 +28,9 @@ class Site(object):
         self._mass = _validate_mass(mass)
         self._connections = list()
 
-    def add_connection(self, other_site):
-        self._connections.append(other_site)
+    def add_connection(self, connection):
+        connection = _validate_connection(connection)
+        self._connections.append(connection)
 
     @property
     def element(self):
@@ -135,3 +136,9 @@ def _validate_atom_type(val):
         raise ValueError("Passed value {} is not an AtomType".format(val))
     else:
         return val
+
+def _validate_connection(connection):
+    from topology.core.connection import Connection
+    if not isinstance(connection, Connection):
+        raise ValueError("Passed value {} is not a Connection".format(connection))
+    return connection
