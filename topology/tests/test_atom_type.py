@@ -28,35 +28,35 @@ class TestAtomType(BaseTest):
         new_type.independent_variables = 'r'
         new_type.parameters = {'sigma': 1 * u.nm,
                                'epsilon': 10 * u.Unit('kcal / mol')}
-        new_type.nb_function = 'r * sigma * epsilon'
+        new_type.expression = 'r * sigma * epsilon'
         assert new_type.name == "SettingName"
         assert allclose(new_type.charge, -1.0 * charge)
         assert allclose(new_type.mass, 1 * mass)
         assert new_type.independent_variables == {sympy.symbols('r')}
         assert new_type.parameters == {'sigma': 1 * u.nm,
                                       'epsilon': 10 * u.Unit('kcal / mol')}
-        assert new_type.nb_function == sympy.sympify('r * sigma * epsilon')
+        assert new_type.expression == sympy.sympify('r * sigma * epsilon')
 
     def test_incorrect_indep_vars(self):
         with pytest.raises(ValueError):
-            AtomType(nb_function='x*y', independent_variables='z')
+            AtomType(expression='x*y', independent_variables='z')
 
-    def test_incorrect_nb_function(self, charge):
+    def test_incorrect_expression(self, charge):
         with pytest.raises(ValueError):
-            new_type = AtomType(name='mytype', charge=charge, nb_function=4.2)
+            new_type = AtomType(name='mytype', charge=charge, expression=4.2)
 
-    def test_nb_function_consistency(self, charge):
+    def test_expression_consistency(self, charge):
         # Test nb-func symbol consistency with parameter consistency in init
         new_type = AtomType(name='mytype',
                             charge=charge,
                             parameters={'x': 1*u.m, 'y': 10*u.m},
-                            nb_function='x + y * z',
+                            expression='x + y * z',
                             independent_variables='z')
 
         symbol_x, symbol_y, symbol_z = sympy.symbols('x y z')
         correct_expr = sympy.sympify('x+y*z')
-        assert new_type.nb_function.free_symbols == set([symbol_x, symbol_y, symbol_z])
-        assert correct_expr == new_type.nb_function
+        assert new_type.expression.free_symbols == set([symbol_x, symbol_y, symbol_z])
+        assert correct_expr == new_type.expression
 
     def test_equivalance(self, charge):
         first_type = AtomType(name='mytype', charge=charge,
@@ -69,7 +69,7 @@ class TestAtomType(BaseTest):
                 parameters={'sigma': 1*u.m, 'epsilon': 10*u.m})
         different_function = AtomType(name='mytype', charge=charge,
                 parameters={'sigma': 1*u.m, 'epsilon': 10*u.m},
-                nb_function='r * sigma * epsilon')
+                expression='r * sigma * epsilon')
         different_params = AtomType(name='mytype', charge=charge,
                 parameters={'sigma': 42*u.m, 'epsilon': 100000*u.m})
         different_mass = AtomType(name='mytype', charge=charge, mass=5*u.kg/u.mol,
@@ -87,69 +87,69 @@ class TestAtomType(BaseTest):
         first_type = AtomType(name='mytype', charge=charge,
                 parameters={'sigma': 1*u.m, 'epsilon': 10*u.m},
                 independent_variables='r')
-        first_type.set_nb_function(function='r * (sigma + epsilon)')
+        first_type.set_expression(expression='r * (sigma + epsilon)')
         correct_expr = sympy.sympify('r * (sigma + epsilon)')
-        assert first_type.nb_function == correct_expr
+        assert first_type.expression == correct_expr
         assert first_type.parameters == {'sigma': 1*u.m, 'epsilon': 10*u.m}
 
     def test_set_nb_func_bad(self):
         # Try changing the nonbonded function, keep the parameters,
         # but the nb function uses different symbols
-        first_type = AtomType(nb_function='r*sigma*epsilon',
+        first_type = AtomType(expression='r*sigma*epsilon',
                 parameters={'sigma': 1*u.m, 'epsilon': 100*u.m},
                 independent_variables='r')
         with pytest.raises(ValueError):
-            first_type.set_nb_function(function='a + b')
+            first_type.set_expression(expression='a + b')
 
     def test_set_nb_func_params(self, charge):
         # Try changing the nb parameters, but keeping the function
         first_type = AtomType(name='mytype', charge=charge,
-                nb_function='r * sigma * epsilon',
+                expression='r * sigma * epsilon',
                 parameters={'sigma': 1*u.m, 'epsilon': 10*u.m},
                 independent_variables='r')
-        first_type.set_nb_function(parameters={'sigma': 42*u.m, 'epsilon': 24*u.m})
+        first_type.set_expression(parameters={'sigma': 42*u.m, 'epsilon': 24*u.m})
         correct_expr = sympy.sympify('r * sigma * epsilon')
-        assert first_type.nb_function == correct_expr
+        assert first_type.expression == correct_expr
         assert first_type.parameters == {'sigma': 42, 'epsilon': 24}
 
     def test_set_nb_func_params_bad(self):
         # Try changing the parameters, keep the function,
         # but the new parameters use different symbols
-        first_type = AtomType(nb_function='r*sigma*epsilon',
+        first_type = AtomType(expression='r*sigma*epsilon',
                 parameters={'sigma': 1*u.m, 'epsilon': 10*u.J},
                 independent_variables={'r'})
 
         with pytest.raises(ValueError):
-            first_type.set_nb_function(parameters={'a': 1*u.g, 'b': 10*u.m})
+            first_type.set_expression(parameters={'a': 1*u.g, 'b': 10*u.m})
 
     def test_set_nb_func_params_partial(self):
         # Try changing the parameters, keep the function,
         # but change only one symbol
-        first_type = AtomType(nb_function='r*sigma*epsilon',
+        first_type = AtomType(expression='r*sigma*epsilon',
                 parameters={'sigma': 1*u.m, 'epsilon': 10*u.J},
                 independent_variables={'r'})
-        first_type.set_nb_function(parameters={'sigma': 42*u.m})
+        first_type.set_expression(parameters={'sigma': 42*u.m})
         correct_expr = sympy.sympify('r*sigma*epsilon')
         assert first_type.parameters == {'sigma': 42*u.m, 'epsilon': 10*u.J}
-        assert first_type.nb_function == correct_expr
+        assert first_type.expression == correct_expr
 
     def test_set_nb_func_params_both_correct(self):
         # Try correctly changing both the nb function and parameters
-        first_type = AtomType(nb_function='r*sigma*epsilon',
+        first_type = AtomType(expression='r*sigma*epsilon',
                 parameters={'sigma': 1*u.m, 'epsilon': 10*u.J},
                 independent_variables='r')
-        first_type.set_nb_function(function='a+b*x', parameters={'a': 100*u.m, 'b': 42*u.J}, independent_variables='x')
+        first_type.set_expression(expression='a+b*x', parameters={'a': 100*u.m, 'b': 42*u.J}, independent_variables='x')
         correct_expr = sympy.sympify('a+b*x')
         correct_params = {'a': 100*u.m, 'b': 42*u.J, 'sigma': 1*u.m, 'epsilon': 10*u.J}
-        assert first_type.nb_function == correct_expr
+        assert first_type.expression == correct_expr
         assert first_type.parameters == correct_params
 
     def test_set_nb_func_params_both_incorrect(self):
         # Try incorrectly changing both the nb function and the parameters
-        first_type = AtomType(nb_function='r*sigma*epsilon',
+        first_type = AtomType(expression='r*sigma*epsilon',
                 parameters={'sigma': 1*u.m, 'epsilon': 10*u.J},
                 independent_variables='r')
         with pytest.raises(ValueError):
-            first_type.set_nb_function(function='a*x+b',
+            first_type.set_expression(expression='a*x+b',
                 parameters={'c': 100*u.year, 'd': 42*u.newton},
                 independent_variables='x')
