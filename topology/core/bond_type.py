@@ -2,6 +2,7 @@ import unyt as u
 import sympy
 
 from topology.core.potential import Potential
+from topology.exceptions import TopologyError
 
 class BondType(Potential):
     """A Potential between 2-bonded partners.
