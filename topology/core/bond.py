@@ -1,7 +1,7 @@
-from topology.core.connection_type import ConnectionType
+from topology.core.bond_type import BondType
 
-class Connection(object):
-    """A simple connection between sites."""
+class Bond(object):
+    """A 2-partner connection between sites."""
     def __init__(self, site1=None, site2=None, update=True, connection_type=None):
         if site1:
             self.site1 = site1
