@@ -3,7 +3,18 @@ from topology.exceptions import TopologyError
 from topology.core import Potential
 
 class Connection(object):
-    """ An abstract object that lists bonded partners and their type """
+    """ An abstract object that lists bonded partners and their type
+    This functions as a super-class for any bonded groups (bonds,
+    angles, dihedrals, etc), with a property for the conection_typie
+    
+    Parameters
+    ----------
+    bond_partners : list of topology.Site
+        A list of constituents in this bond. Should be in order
+    connection_type : topology.Potential
+        An instance of topology.Potential that describes
+        the potential function and parameters of this interaction
+        """
     def __init__(self, bond_partners=[], connection_type=None):
         self._bond_partners = _validate_bond_partners(bond_partners)
         self._connection_type = _validate_connection_type(connection_type)
