@@ -23,7 +23,8 @@ class Connection(object):
     def bond_partners(self):
         return self._bond_partners
 
-    @bond_partners.setter(self, bond_partners):
+    @bond_partners.setter
+    def bond_partners(self, bond_partners):
         self._bond_partners = _validate_bond_partners(bond_partners)
 
     @property
