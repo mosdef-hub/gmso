@@ -4,9 +4,9 @@ import unyt as u
 
 from topology.core.topology import Topology
 from topology.core.site import Site
-from topology.core.connection import Connection
 from topology.core.atom_type import AtomType
-from topology.core.connection_type import ConnectionType
+from topology.core.bond import Bond
+from topology.core.bond_type import BondType
 from topology.core.box import Box
 from topology.tests.base_test import BaseTest
 
@@ -49,32 +49,30 @@ def from_parmed(structure):
             angles=u.degree * structure.box[3:6])
 
     for bond in structure.bonds:
-        # Generate bond parameters for ConnectionType that gets passed
-        # to Connection
+        # Generate bond parameters for BondType that gets passed
+        # to Bond
         if isinstance(bond.type, pmd.BondType):
             bond_params = {
                 'k': (2 * bond.type.k * u.Unit('kcal / (angstrom**2 * mol)')),
                 'r_eq': (bond.type.req * u.angstrom).in_units(u.nm)
             }
-            new_connection_type = ConnectionType(parameters=bond_params)
-            top_connection = Connection(
-                site_map[bond.atom1],
-                site_map[bond.atom2],
+            new_connection_type = BondType(parameters=bond_params)
+            top_connection = Bond(bond_partners=[site_map[bond.atom1], 
+                site_map[bond.atom2]],
                 connection_type=new_connection_type)
 
         # No bond parameters, make Connection with no connection_type
         else:
-            top_connection = Connection(
-                site_map[bond.atom1],
-                site_map[bond.atom2],
+            top_connection = Bond(bond_parnters=[site_map[bond.atom1],
+                site_map[bond.atom2]],
                 connection_type=None)
 
         top.add_connection(top_connection)
 
-        if site_map[bond.atom2] not in site_map[bond.atom1].connections:
-            site_map[bond.atom1].add_connection(site_map[bond.atom2])
-        if site_map[bond.atom1] not in site_map[bond.atom2].connections:
-            site_map[bond.atom2].add_connection(site_map[bond.atom1])
+        #if site_map[bond.atom2] not in site_map[bond.atom1].connections:
+        #    site_map[bond.atom1].add_connection(site_map[bond.atom2])
+        #if site_map[bond.atom1] not in site_map[bond.atom2].connections:
+        #    site_map[bond.atom2].add_connection(site_map[bond.atom1])
 
     # TODO: Angles
     # TODO: Dihedrals
