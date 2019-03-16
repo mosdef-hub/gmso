@@ -63,7 +63,7 @@ def from_parmed(structure):
 
         # No bond parameters, make Connection with no connection_type
         else:
-            top_connection = Bond(bond_parnters=[site_map[bond.atom1],
+            top_connection = Bond(bond_partners=[site_map[bond.atom1],
                 site_map[bond.atom2]],
                 connection_type=None)
 
@@ -77,6 +77,6 @@ def from_parmed(structure):
     # TODO: Angles
     # TODO: Dihedrals
 
-    top.update_connection_list()
+    #top.update_connection_list()
 
     return top
