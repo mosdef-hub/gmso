@@ -13,6 +13,7 @@ import gsd
 import gsd.hoomd
 
 from topology.core.box import Box
+from topology.core.bond import Bond
 from topology.utils.geometry import coord_shift
 from topology.exceptions import NotYetImplementedWarning
 from topology.testing.utils import allclose
@@ -93,7 +94,7 @@ def write_gsd(top,
                                 ref_energy, rigid_bodies)
     #if write_special_pairs:
     #    _write_pair_information(gsd_file, top)
-    if top.n_connections > 0:
+    if top.n_bonds > 0:
         _write_bond_information(gsd_file, top)
     #if structure.angles:
     #    _write_angle_information(gsd_file, top)
@@ -190,8 +191,8 @@ def _write_bond_information(gsd_file, top):
 
     """
 
-    gsd_file.bonds.N = top.n_connections
-    warnings.warn("{} bonds detected".format(top.n_connections))
+    gsd_file.bonds.N = top.n_bonds
+    warnings.warn("{} bonds detected".format(top.n_bonds))
 
     unique_bond_types = set()
     for bond in top.connection_list:
