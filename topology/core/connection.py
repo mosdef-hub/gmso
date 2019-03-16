@@ -1,6 +1,6 @@
-from topology.core import Site
+from topology.core.site import Site
+from topology.core.potential import Potential
 from topology.exceptions import TopologyError
-from topology.core import Potential
 
 class Connection(object):
     """ An abstract object that lists bonded partners and their type
