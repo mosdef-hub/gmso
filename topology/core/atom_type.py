@@ -47,31 +47,6 @@ class AtomType(Potential):
         self._mass = _validate_mass(val)
 
 
-
-    def _validate_expression_parameters(self):
-        # Check for unused symbols
-        parameter_symbols = sympy.symbols(set(self._parameters.keys()))
-        independent_variable_symbols = self._independent_variables
-        used_symbols = parameter_symbols.union(independent_variable_symbols)
-        unused_symbols = self.expression.free_symbols - used_symbols
-        if len(unused_symbols) > 0:
-            warnings.warn('You supplied parameters with '
-                          'unused symbols {}'.format(unused_symbols))
-
-        if used_symbols != self.expression.free_symbols:
-            symbols = sympy.symbols(set(self.parameters.keys()))
-            if symbols != self.expression.free_symbols:
-                missing_syms = self.expression.free_symbols - symbols - self._independent_variables
-                if missing_syms:
-                    raise ValueError("Missing necessary parameters to evaluate "
-                                     "NB function. Missing symbols: {}"
-                                     "".format(missing_syms))
-                extra_syms = symbols ^ self.expression.free_symbols
-                warnings.warn("NB function and parameter"
-                              " symbols do not agree,"
-                              " extraneous symbols:"
-                              " {}".format(extra_syms))
-
     def __eq__(self, other):
         name_match = (self.name == other.name)
         charge_match = allclose(
