@@ -33,18 +33,9 @@ class BondType(Potential):
                  },
                  independent_variables={'r'}):
 
-        independent_variables = _validate_bondtype_independent_var(
-                independent_variables)
         super(BondType, self).__init__(name=name, expression=expression,
                 parameters=parameters, independent_variables=independent_variables)
 
     def __repr__(self):
         return "<BondType {}, id {}>".format(self.name, id(self))
 
-def _validate_bondtype_independent_var(independent_variables):
-    """For canonical purposes, ensure r is the independent varaible"""
-    if sympy.symbols('r') not in independent_variables:
-        raise TopologyError("BondType needs 'r' as independent_variable, "
-                            "you supplied independent_variables {}".format(
-                                independent_variables))
-    return independent_variables
