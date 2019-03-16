@@ -2,8 +2,6 @@ import pytest
 
 from topology.core.connection import Connection
 from topology.core.potential import Potential
-from topology.core.bond import Bond
-from topology.core.bond_type import BondType
 from topology.core.site import Site
 from topology.tests.base_test import BaseTest
 from topology.exceptions import TopologyError
