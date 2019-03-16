@@ -39,5 +39,5 @@ def _validate_two_partners(bond_partners):
 def _validate_bondtype(ctype):
     """Ensure connection_type is a BondType """
     if not isinstance(ctype, BondType):
-        raise TopologyError("Supplied non-BondType {}".format(c_type))
+        raise TopologyError("Supplied non-BondType {}".format(ctype))
     return ctype
