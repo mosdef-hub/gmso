@@ -19,7 +19,8 @@ class Connection(object):
     def connection_type(self):
         return self._connection_type
 
-    @connection_type.setter(self, ctype):
+    @connection_type.setter
+    def connection_type(self, ctype):
         self_connection_type = _validate_connection_type(ctype)
 
     def __repr__(self):
