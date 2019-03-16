@@ -82,6 +82,9 @@ class Site(object):
         val = _validate_atom_type(val)
         self._atom_type = val
 
+    def __repr__(self):
+        return "<Site {}, id {}>".format(self.name, id(self))
+
 def _validate_position(position):
     if not isinstance(position, u.unyt_array):
         warnings.warn('Positions are assumed to be in nm')
