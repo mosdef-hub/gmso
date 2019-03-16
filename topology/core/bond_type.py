@@ -3,7 +3,21 @@ import unyt as u
 from topology.core import Potential
 
 class BondType(Potential):
-    """A connection type."""
+    """A Potential between 2-bonded partners.
+    
+    Parameters
+    ----------
+    name : str
+    expression : str or sympy.Expression
+    parameters : dict
+        {str, u.Unit}
+    independent vars : set of str
+
+    Notes
+    ----
+    Inherits many functions from topology.Potential:
+        __eq__, _validate functions
+    """
 
     def __init__(self,
                  name='BondType',
