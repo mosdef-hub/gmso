@@ -3,6 +3,7 @@ import unyt as u
 
 from topology.core.topology import Topology
 from topology.core.site import Site
+from topology.core.bond import Bond
 
 def from_mbuild(compound):
     msg = ("Provided argument that is not an mbuild Compound")
@@ -22,12 +23,15 @@ def from_mbuild(compound):
         top.add_site(site)
 
     for b1, b2 in compound.bonds():
-        if site_map[b2] not in site_map[b1].connections:
-            site_map[b1].add_connection(site_map[b2])
-        if site_map[b1] not in site_map[b2].connections:
-            site_map[b2].add_connection(site_map[b1])
+        new_bond = Bond(bond_partners=[site_map[b1], site_map[b2]],
+                connection_type=None)
+        top.add_connection(new_bond)
+        #if site_map[b2] not in site_map[b1].connections:
+        #    site_map[b1].add_connection(site_map[b2])
+        #if site_map[b1] not in site_map[b2].connections:
+        #    site_map[b2].add_connection(site_map[b1])
 
-    top.update_connection_list()
+    #top.update_connection_list()
 
     return top
 
@@ -48,6 +52,9 @@ def to_mbuild(topology):
         compound.add(particle)
 
     for connect in topology.connection_list:
-        compound.add_bond((particle_map[connect.site1], particle_map[connect.site2]))
+        if isinstance(connect, Bond):
+            compound.add_bond((
+                particle_map[connect.bond_partners[0]], 
+                particle_map[connect.bond_partners[1]]))
 
     return compound
