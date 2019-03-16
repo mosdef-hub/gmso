@@ -36,9 +36,9 @@ class Connection(object):
         self_connection_type = _validate_connection_type(ctype)
 
     def __repr__(self):
-        descr = '<{}-partner connection between'.format(len(self.bond_partners))
-        descr += ', '.join([site for site in self.bond_partners])
-        descr += ', type {}>'.format(self.connection_type)
+        descr = '<{}-partner Connection, id {}, '.format(
+                len(self.bond_partners), id(self))
+        descr += 'type {}>'.format(self.connection_type)
         return descr
 
     def __eq__(self, other):
