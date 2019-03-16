@@ -1,5 +1,3 @@
-from topology.core.site import Site
-from topology.core.potential import Potential
 from topology.exceptions import TopologyError
 
 class Connection(object):
@@ -18,6 +16,7 @@ class Connection(object):
     def __init__(self, bond_partners=[], connection_type=None):
         self._bond_partners = _validate_bond_partners(bond_partners)
         self._connection_type = _validate_connection_type(connection_type)
+        self._update_partners()
 
     @property
     def bond_partners(self):
@@ -35,6 +34,11 @@ class Connection(object):
     def connection_type(self, ctype):
         self_connection_type = _validate_connection_type(ctype)
 
+    def _update_partners(self):
+        for partner in self.bond_partners:
+            if self not in partner.connections:
+                partner.add_connection(self)
+
     def __repr__(self):
         descr = '<{}-partner Connection, id {}, '.format(
                 len(self.bond_partners), id(self))
@@ -48,12 +52,14 @@ class Connection(object):
 
 
 def _validate_bond_partners(bond_partners):
+    from topology.core.site import Site
     for partner in bond_partners:
         if not isinstance(partner, Site):
             raise TopologyError("Supplied non-Site {}".format(partner))
     return bond_partners
 
 def _validate_connection_type(c_type):
+    from topology.core.potential import Potential
     if not isinstance(c_type, Potential):
         raise TopologyError("Supplied non-Potential {}".format(c_type))
     return c_type
