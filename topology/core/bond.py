@@ -1,3 +1,5 @@
+import warnings
+
 from topology.core.site import Site
 from topology.core.connection import Connection
 from topology.core.bond_type import BondType
@@ -38,6 +40,8 @@ def _validate_two_partners(bond_partners):
 
 def _validate_bondtype(ctype):
     """Ensure connection_type is a BondType """
-    if not isinstance(ctype, BondType):
+    if ctype is None:
+        warnings.warn("Non-parametrized Bond detected")
+    elif not isinstance(ctype, BondType):
         raise TopologyError("Supplied non-BondType {}".format(ctype))
     return ctype
