@@ -1,4 +1,5 @@
 import unyt as u
+import sympy
 
 from topology.core import Potential
 
@@ -41,7 +42,7 @@ class BondType(Potential):
 
 def _validate_bondtype_independent_var(independent_variables):
     """For canonical purposes, ensure r is the independent varaible"""
-    if 'r' not in independent_variables:
+    if sympy.symbols('r') not in independent_variables:
         raise TopologyError("BondType needs 'r' as independent_variable, "
                             "you supplied independent_variables {}".format(
                                 independent_variables))
