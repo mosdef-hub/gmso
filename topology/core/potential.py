@@ -166,7 +166,7 @@ class Potential(object):
         ])
 
     def __repr__(self):
-        desc = "<Potential{}, id {}>".format(self._name, id(self))
+        desc = "<Potential {}, id {}>".format(self._name, id(self))
         return desc
 
 
@@ -175,7 +175,7 @@ def _validate_parameters(parameters):
         raise ValueError("Please enter dictionary for parameters")
     for key, val in parameters.items():
         if not isinstance(val, u.unyt_array):
-            raise ValueError('Paramter value {} lacks a unyt'.format(val))
+            raise ValueError('Parameter value {} lacks a unyt'.format(val))
         if not isinstance(key, str):
             raise ValueError('Parameter key {} is not a str'.format(key))
 
