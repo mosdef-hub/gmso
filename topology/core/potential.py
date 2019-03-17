@@ -4,7 +4,30 @@ import unyt as u
 
 
 class Potential(object):
-    """An abstract potential class."""
+    """An abstract potential class.
+
+    Potential stores a general interaction between components of a chemical
+    topology that can be specified by a mathematical expression. The functional
+    form of the potential is stored as a `sympy` expression and the parameters
+    are stored explicitly. This class is agnostic to the instantiation of the
+    potential, which can be e.g. a non-bonded potential, a bonded potential, an
+    angle potential, a dihedral potential, etc. and is designed to be inherited
+    by classes that represent these potentials.
+
+    Parameters
+    ----------
+    name : str, default="Potential" 
+        The name of the potential.
+    expression : str or sympy.Expr, default='a*x+b'
+        The mathematical expression describing the functional form of the 
+        potential. 
+    parameters : dict of str : unyt.unyt_quantity pairs,
+        default={'a': 1.0*u.g, 'b': 1.0*u.m}
+        The parameters of the potential and their values, as unyt quantities.
+    independent_variables : str or sympy.Symbol or list or set thereof
+        The independent variables in the expression of the potential.
+
+    """
 
     def __init__(self,
                  name="Potential",

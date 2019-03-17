@@ -6,7 +6,39 @@ from topology.core.potential import Potential
 
 
 class AtomType(Potential):
-    """An atom type."""
+    """An atom type, inheriting from the potential class.
+
+    AtomType represents an atom type and includes the functional form describing its interactions and,
+    optionally, other properties such as mass and charge.
+    Potential stores a general interaction between components of a chemical
+    topology that can be specified by a mathematical expression. The functional
+    form of the potential is stored as a `sympy` expression and the parameters
+    are stored explicitly. This class is agnostic to the instantiation of the
+    potential, which can be e.g. a non-bonded potential, a bonded potential, an
+    angle potential, a dihedral potential, etc. and is designed to be inherited
+    by classes that represent these potentials.
+
+    Parameters
+    ----------
+    name : str, default="Potential"
+        The name of the potential.
+    mass : unyt.unyt_quantity, optional, default=0.0 * unyt.elementary_charge
+        The mass of the atom type.
+    charge : unyt.unyt_quantity, optional, default=0.0 * unyt.g / u.mol
+        The charge of the atom type.
+    expression : str or sympy.Expr,
+                 default='4*epsilon*((sigma/r)**12 - (sigma/r)**6)',
+        The mathematical expression describing the functional form of the
+        potential describing this atom type, i.e. a Lennard-Jones potential.
+    parameters : dict of str : unyt.unyt_quantity pairs,
+        default={'sigma': 0.3 * u.nm, 'epsilon': 0.3 * u.Unit('kJ')},
+        The parameters of the potential describing this atom type and their
+        values, as unyt quantities.
+    independent_variables : str or sympy.Symbol or a list or set thereof
+        The independent variables in the expression of the potential
+        describing this atom type.
+
+    """
 
     def __init__(self,
                  name='AtomType',
