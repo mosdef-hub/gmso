@@ -14,7 +14,6 @@ class BondType(Potential):
     parameters : dict
         {str, u.Unit}
     independent vars : set of str
-        For canonical purposes, r needs to be an indpeendnet variable
 
     Notes
     ----
