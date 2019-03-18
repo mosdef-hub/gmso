@@ -198,12 +198,10 @@ def _validate_independent_variables(indep_vars):
 
 
 def _validate_expression(expression):
-    if expression is None:
+    if expression is None or isinstance(expression, sympy.Expr):
         pass
     elif isinstance(expression, str):
         expression = sympy.sympify(expression)
-    elif isinstance(expression, sympy.Expr):
-        expression = expression
     else:
         raise ValueError("Please enter a string, sympy expression, "
                          "or None for expression")
