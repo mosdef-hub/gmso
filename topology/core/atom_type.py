@@ -8,35 +8,32 @@ from topology.core.potential import Potential
 class AtomType(Potential):
     """An atom type, inheriting from the potential class.
 
-    AtomType represents an atom type and includes the functional form describing its interactions and,
-    optionally, other properties such as mass and charge.
-    Potential stores a general interaction between components of a chemical
-    topology that can be specified by a mathematical expression. The functional
-    form of the potential is stored as a `sympy` expression and the parameters
-    are stored explicitly. This class is agnostic to the instantiation of the
-    potential, which can be e.g. a non-bonded potential, a bonded potential, an
-    angle potential, a dihedral potential, etc. and is designed to be inherited
-    by classes that represent these potentials.
+    AtomType represents an atom type and includes the functional form
+    describing its interactions and, optionally, other properties such as mass
+    and charge.  This class inhereits from Potential, which stores the
+    non-bonded interaction between atoms or sites. The functional form of the
+    potential is stored as a `sympy` expression and the parameters, with units,
+    are stored explicitly.
 
     Parameters
     ----------
-    name : str, default="Potential"
+    name : str, default="AtomType"
         The name of the potential.
-    mass : unyt.unyt_quantity, optional, default=0.0 * unyt.elementary_charge
+    mass : unyt.unyt_quantity, optional, default=0.0 * unyt.g / u.mol
         The mass of the atom type.
-    charge : unyt.unyt_quantity, optional, default=0.0 * unyt.g / u.mol
+    charge : unyt.unyt_quantity, optional, default=0.0 * unyt.elementary_charge 
         The charge of the atom type.
     expression : str or sympy.Expr,
                  default='4*epsilon*((sigma/r)**12 - (sigma/r)**6)',
         The mathematical expression describing the functional form of the
         potential describing this atom type, i.e. a Lennard-Jones potential.
+        The default value is a 12-6 Lennard-Jones potential.
     parameters : dict of str : unyt.unyt_quantity pairs,
         default={'sigma': 0.3 * u.nm, 'epsilon': 0.3 * u.Unit('kJ')},
         The parameters of the potential describing this atom type and their
         values, as unyt quantities.
-    independent_variables : str or sympy.Symbol or a list or set thereof
-        The independent variables in the expression of the potential
-        describing this atom type.
+    independent_variables : str, sympy.Symbol, or list-like of str, sympy.Symbol
+        The independent variables of the functional form previously described.
 
     """
 
