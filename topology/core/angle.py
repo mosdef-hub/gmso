@@ -12,7 +12,7 @@ class Angle(Connection):
     --------
     bond_partners: list of topology.Site
         Should be length 3
-    connection_type : topology.BondType
+    connection_type : topology.AngleType
 
     Notes
     -----
