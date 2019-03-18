@@ -78,14 +78,7 @@ class Potential(object):
 
     @expression.setter
     def expression(self, expression):
-        # Check valid expression type (string or sympy expression)
-        # If func is undefined, just keep the old one
-        if isinstance(expression, str):
-            self._expression = sympy.sympify(expression)
-        elif isinstance(expression, sympy.Expr):
-            self._expression = expression
-        else:
-            raise ValueError("Please enter a string or sympy expression")
+        self._expression = _validate_expression(expression)
 
         self._validate_expression_parameters()
 
@@ -205,12 +198,10 @@ def _validate_independent_variables(indep_vars):
 
 
 def _validate_expression(expression):
-    if expression is None:
+    if expression is None or isinstance(expression, sympy.Expr):
         pass
     elif isinstance(expression, str):
         expression = sympy.sympify(expression)
-    elif isinstance(expression, sympy.Expr):
-        expression = expression
     else:
         raise ValueError("Please enter a string, sympy expression, "
                          "or None for expression")
