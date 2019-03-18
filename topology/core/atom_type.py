@@ -6,7 +6,7 @@ from topology.core.potential import Potential
 
 
 class AtomType(Potential):
-    """An atom type, inheriting from the potential class.
+    """An atom type, inheriting from the Potential class.
 
     AtomType represents an atom type and includes the functional form describing its interactions and,
     optionally, other properties such as mass and charge.
