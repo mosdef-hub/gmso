@@ -4,6 +4,7 @@ import simtk.unit
 
 from topology.core.topology import Topology
 from topology.core.site import Site
+from topology.utils.sorting import natural_sort
 
 from simtk import openmm
 
@@ -28,14 +29,26 @@ def to_modeller(topology):
     openmm_pos = simtk.unit.Quantity(value=value,
             unit=openmm_unit)
 
-    # Adding a default chain that every residue belongs to
+    # Adding a default chain and residue temporarily
     chain = openmm_top.addChain()
+    residue = openmm_top.addResidue(name='RES',
+                                    chain=chain)
 
-    # Is a site equivalent to a residue?
-    residues = topology.site_list
-
+    #types = list()
     for site in topology.site_list:
-        openmm_top.addResidue(name=site.name, chain=chain)
+        #types.append(site.atom_type.name)
+        openmm_top.addAtom(name=site.name,
+                           element=site.element.name,
+                           residue=residue)
+
+    #unique_types = list(set(types))
+    #unique_types.sort(key=natural_sort)
+    #for types in unique_types:
+    #    res = openmm_top.addResidue(name=types,
+    #                          chain=chain)
+    # TODO: Figure out how to add residues
+    # TODO: Convert connections to OpenMM Bonds
+
 
     modeller = openmm.app.Modeller(openmm_top, openmm_pos)
 
