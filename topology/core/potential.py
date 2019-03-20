@@ -140,10 +140,10 @@ class Potential(object):
                 missing_syms = self.expression.free_symbols - symbols - self._independent_variables
                 if missing_syms:
                     raise ValueError("Missing necessary parameters to evaluate "
-                                     "NB expression. Missing symbols: {}"
+                                     "potential expression. Missing symbols: {}"
                                      "".format(missing_syms))
                 extra_syms = symbols ^ self.expression.free_symbols
-                warnings.warn("NB expression and parameter"
+                warnings.warn("Potential expression and parameter"
                               " symbols do not agree,"
                               " extraneous symbols:"
                               " {}".format(extra_syms))
