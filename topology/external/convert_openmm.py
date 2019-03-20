@@ -9,7 +9,7 @@ from topology.utils.sorting import natural_sort
 from simtk import openmm
     
 
-def to_openmm(topology, omm_object='topology'):
+def to_openmm(topology, openmm_object='topology'):
     """
     Convert an untyped topology object to an untyped OpenMM modeller.
     This is useful if it's preferred to atom-type a system within
@@ -25,10 +25,11 @@ def to_openmm(topology, omm_object='topology'):
     openmm_top = openmm.app.Topology()
     
     # Get topology.positions into OpenMM form
+    openmm_unit = 1 * simtk.unit.nanometer
+    topology.positions().convert_to_units(openmm_unit.unit.get_symbol())
     value = [i.value for i in topology.positions()]
-    openmm_unit = topology.positions().units
     openmm_pos = simtk.unit.Quantity(value=value,
-            unit=openmm_unit)
+            unit=openmm_unit.unit)
 
     # Adding a default chain and residue temporarily
     chain = openmm_top.addChain()
@@ -43,15 +44,10 @@ def to_openmm(topology, omm_object='topology'):
 
     # Set box
     box = topology.box
-    if box.lengths.units != u.nanometer:
-        box.lengths.convert_to_units(u.nanometer)
+    box.lengths.convert_to_units(u.nanometer)
     lengths = [i for i in box.lengths.value]
     openmm_top.setUnitCellDimensions(lengths)
-    #unique_types = list(set(types))
-    #unique_types.sort(key=natural_sort)
-    #for types in unique_types:
-    #    res = openmm_top.addResidue(name=types,
-    #                          chain=chain)
+
     # TODO: Figure out how to add residues
     # TODO: Convert connections to OpenMM Bonds
 
