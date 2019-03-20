@@ -38,10 +38,10 @@ def _validate_two_partners(bond_partners):
     return bond_partners
 
 
-def _validate_bondtype(ctype):
+def _validate_bondtype(contype):
     """Ensure connection_type is a BondType """
-    if ctype is None:
+    if contype is None:
         warnings.warn("Non-parametrized Bond detected")
-    elif not isinstance(ctype, BondType):
-        raise TopologyError("Supplied non-BondType {}".format(ctype))
-    return ctype
+    elif not isinstance(contype, BondType):
+        raise TopologyError("Supplied non-BondType {}".format(contype))
+    return contype
