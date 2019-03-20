@@ -58,7 +58,7 @@ class Topology(object):
 
     @property
     def atom_type_functionals(self):
-        return [atype.nb_function for atype in self.atom_types]
+        return [atype.expression for atype in self.atom_types]
 
     @property
     def connection_type_functionals(self):
