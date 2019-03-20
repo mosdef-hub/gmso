@@ -1,9 +1,7 @@
-import logging
 import numpy as np
 import sympy
 import unyt as u
 
-logger = logging.getLogger("TopLog")
 
 class ConnectionType(object):
     """A connection type."""
