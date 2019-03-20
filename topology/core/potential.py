@@ -21,9 +21,12 @@ class Potential(object):
     expression : str or sympy.Expr, default='a*x+b'
         The mathematical expression describing the functional form of the 
         potential. 
-    parameters : dict of str : unyt.unyt_quantity pairs,
-        default={'a': 1.0*u.g, 'b': 1.0*u.m}
+    parameters : dict {str: unyt.unyt_quantity},
+            default={'a': 1.0*u.dimensionless, 'b': 1.0*u.dimensionless}
         The parameters of the potential and their values, as unyt quantities.
+        The keys are names of the variables included in `expression` and values
+        are the numerical values of these parameters recorded as instances of
+        `unyt.unyt_quantity`, which combine both value and unit information.
     independent_variables : str or sympy.Symbol or list or set thereof
         The independent variables in the expression of the potential.
 
@@ -33,8 +36,8 @@ class Potential(object):
                  name="Potential",
                  expression='a*x+b',
                  parameters={
-                     'a': 1.0*u.g,
-                     'b': 1.0*u.m},
+                     'a': 1.0*u.dimensionless,
+                     'b': 1.0*u.dimensionless},
                  independent_variables={'x'},
                  ):
 
@@ -140,10 +143,10 @@ class Potential(object):
                 missing_syms = self.expression.free_symbols - symbols - self._independent_variables
                 if missing_syms:
                     raise ValueError("Missing necessary parameters to evaluate "
-                                     "NB expression. Missing symbols: {}"
+                                     "potential expression. Missing symbols: {}"
                                      "".format(missing_syms))
                 extra_syms = symbols ^ self.expression.free_symbols
-                warnings.warn("NB expression and parameter"
+                warnings.warn("Potential expression and parameter"
                               " symbols do not agree,"
                               " extraneous symbols:"
                               " {}".format(extra_syms))
