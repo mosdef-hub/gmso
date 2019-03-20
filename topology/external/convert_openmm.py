@@ -19,7 +19,7 @@ def to_openmm(topology, openmm_object='topology'):
     ----------
     topology: topology object
         An untyped topology object
-    omm_object: 'topology' or 'modeller', default='topology'
+    open_mm_object: 'topology' or 'modeller', default='topology'
         Untyped OpenMM object to convert to
     """
     openmm_top = openmm.app.Topology()
@@ -50,7 +50,7 @@ def to_openmm(topology, openmm_object='topology'):
     # TODO: Figure out how to add residues
     # TODO: Convert connections to OpenMM Bonds
 
-    if omm_object == 'topology':
+    if openmm_object == 'topology':
 
         return openmm_top
 
