@@ -25,7 +25,6 @@ def to_openmm(topology, omm_object='topology'):
     openmm_top = openmm.app.Topology()
     
     # Get topology.positions into OpenMM form
-    top_pos = topology.positions()
     value = [i.value for i in topology.positions()]
     openmm_unit = topology.positions().units
     openmm_pos = simtk.unit.Quantity(value=value,
@@ -85,7 +84,7 @@ def to_system(topology,
               verbose=False,
               splitDihedrals=False):
     """
-    Convert an typed topology object to a typed OpenMM System.
+    Convert a typed topology object to a typed OpenMM System.
 
     Parameters
     ----------
