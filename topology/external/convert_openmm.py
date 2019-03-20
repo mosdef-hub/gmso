@@ -37,7 +37,6 @@ def to_openmm(topology, omm_object='topology'):
 
     #types = list()
     for site in topology.site_list:
-        #types.append(site.atom_type.name)
         openmm_top.addAtom(name=site.name,
                            element=site.element.name,
                            residue=residue)
@@ -59,6 +58,7 @@ def to_openmm(topology, omm_object='topology'):
     if omm_object == 'topology':
 
         return openmm_top
+
     else:
         modeller = openmm.app.Modeller(openmm_top, openmm_pos)
 
@@ -67,14 +67,14 @@ def to_openmm(topology, omm_object='topology'):
 
 def to_system(topology,
               nonbondedMethod=None,
-              nonbondedCutoff=0.8,
-              switchDistance=0.6,
+              nonbondedCutoff=0.8*u.nm,
+              switchDistance=0.6*u.nm,
               constraints=None,
               rigidWater=True,
               implicitSolvent=None,
               implicitSolventKappa=None,
-              implicitSolventSaltConc=0.0,
-              temperature=300,
+              implicitSolventSaltConc=0.0*u.Unit('mol/dm**3'),
+              temperature=300*u.Kelvin,
               soluteDielectric=1.0,
               solventDielectric=78,
               removeCMMotion=True,
