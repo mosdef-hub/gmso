@@ -62,7 +62,7 @@ class Topology(object):
 
     @property
     def connection_type_functionals(self):
-        return [ctype.potential_function for ctype in self.connection_types]
+        return [contype.potential_function for contype in self.connection_types]
 
     def positions(self):
         xyz = np.empty(shape=(self.n_sites, 3)) * u.nm
