@@ -43,6 +43,12 @@ def to_openmm(topology, omm_object='topology'):
                            element=site.element.name,
                            residue=residue)
 
+    # Set box
+    box = topology.box
+    if box.lengths.units != u.nanometer:
+        box.lengths.convert_to_units(u.nanometer)
+    lengths = [i for i in box.lengths.value]
+    openmm_top.setUnitCellDimensions(lengths)
     #unique_types = list(set(types))
     #unique_types.sort(key=natural_sort)
     #for types in unique_types:
