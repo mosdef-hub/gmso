@@ -115,7 +115,7 @@ class ConnectionType(object):
         symbols = sympy.symbols(set(self.parameters.keys()))
         if symbols != self.potential_function.free_symbols:
             extra_syms = symbols ^ self.potential_function.free_symbols
-            logger.debug("Potential function and parameter"
+            raise ValueError("Potential function and parameter"
                              " symbols do not agree,"
                              " extraneous symbols:"
                              " {}".format(extra_syms))
