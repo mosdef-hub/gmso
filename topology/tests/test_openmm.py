@@ -54,3 +54,22 @@ def test_n_atoms():
     n_modeller_atoms = len([i for i in modeller.topology.atoms()])
 
     assert n_topology_sites == n_modeller_atoms
+
+def test_box_dims():
+    top = Topology()
+    top.box = Box(lengths=[1,1,1])
+    H = Element(name='H', symbol='H', mass=1)
+    site1 = Site(name='site1',
+            element=H,
+            atom_type=AtomType(name="at1",
+                               mass=H.mass)
+            )
+    for i in range(10):
+        top.add_site(site1)
+
+    n_topology_sites = len(top.site_list)
+    omm_top = to_openmm(top)
+    topology_lengths = top.box.lengths
+    omm_lengths = omm_top.getUnitCellDimensions()
+
+    assert (topology_lengths.value == omm_lengths._value).all()
