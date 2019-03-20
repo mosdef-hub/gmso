@@ -7,9 +7,9 @@ from topology.core.site import Site
 from topology.utils.sorting import natural_sort
 
 from simtk import openmm
+    
 
-
-def to_modeller(topology):
+def to_openmm(topology, omm_object='topology'):
     """
     Convert an untyped topology object to an untyped OpenMM modeller.
     This is useful if it's preferred to atom-type a system within
@@ -19,6 +19,8 @@ def to_modeller(topology):
     ----------
     topology: topology object
         An untyped topology object
+    omm_object: 'topology' or 'modeller', default='topology'
+        Untyped OpenMM object to convert to
     """
     openmm_top = openmm.app.Topology()
     
@@ -49,10 +51,13 @@ def to_modeller(topology):
     # TODO: Figure out how to add residues
     # TODO: Convert connections to OpenMM Bonds
 
+    if omm_object == 'topology':
 
-    modeller = openmm.app.Modeller(openmm_top, openmm_pos)
+        return openmm_top
+    else:
+        modeller = openmm.app.Modeller(openmm_top, openmm_pos)
 
-    return modeller
+        return modeller
 
 
 def to_system(topology,
