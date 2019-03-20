@@ -36,7 +36,6 @@ def to_openmm(topology, openmm_object='topology'):
     residue = openmm_top.addResidue(name='RES',
                                     chain=chain)
 
-    #types = list()
     for site in topology.site_list:
         openmm_top.addAtom(name=site.name,
                            element=site.element.name,
@@ -90,11 +89,10 @@ def to_system(topology,
         Cutoff method specified for OpenMM system.  Options supported
         are 'NoCutoff', 'CutoffNonPeriodic', 'CutoffPeriodic', 'PME',
         or Ewald objects from simtk.openmm.app.
-    nonbondedCutoff: float or distance Quantity
-        The nonbonded cutoff must either be a floating point number
-        (interpreted as nanometers) or an OpenMM Quantity with
-        attached units.
-    switchDistance: float or distance Quantity
+    nonbondedCutoff: unyt array
+        The nonbonded cutoff must either be a floating point number or
+        a unyt array
+    switchDistance: unyt array
         The distance at which the switching function is turned on for
         van der waals interactions.  This is ignored when no cutoff is
         used, and no switch is used if switchDistance is 0, negative,
@@ -106,12 +104,12 @@ def to_system(topology,
         False value is overriden if constarints is not 'None'.
     implicitSolvent: 'None', 'app.HCT', 'app.OBC1', 'app.OBC2', 'app.GBn', 'app.GBn2'
         The Generalized Born implicit solvent model to use. Default=None
-    implicitSolventKappa: float or 1/distance Quantity, default=None
+    implicitSolventKappa: float or 1/distance unyt array, default=None
         Debye kappa property related to modeling saltware conditions
         in GB.  It should have units of 1/distance (interpreted as
         1/nanometers if no units reported).  A value of 'None' means
         that kapps will be calculated from implicitSolventSaltConc.
-    implicitSolventSaltConc: float or amount/volume Quantity, default=0 moles/Liter
+    implicitSolventSaltConc: float or amount/volume unyt array, default=0 moles/Liter
         if implicitSolventKappa is 'None', the kappa will be computed
         from salt concentration.  Units should be compatible with
         mol/L.
