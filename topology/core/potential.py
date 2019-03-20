@@ -21,9 +21,11 @@ class Potential(object):
     expression : str or sympy.Expr, default='a*x+b'
         The mathematical expression describing the functional form of the 
         potential. 
-    parameters : dict of str : unyt.unyt_quantity pairs,
-        default={'a': 1.0*u.dimensionless, 'b': 1.0*u.dimensionless}
+    parameters : dict {str: unyt.unyt_quantity}
         The parameters of the potential and their values, as unyt quantities.
+        The keys are names of the variables included in `expression` and values
+        are the numerical values of these parameters recorded as instances of
+        `unyt.unyt_quantity`, which combine both value and unit information.
     independent_variables : str or sympy.Symbol or list or set thereof
         The independent variables in the expression of the potential.
 
