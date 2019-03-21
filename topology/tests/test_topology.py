@@ -138,17 +138,11 @@ class TestTopology(BaseTest):
         top.add_site(site1)
         top.add_site(site2)
         assert top.n_sites == 2
-        assert top.n_bonds == 0
-        assert top.n_connections == 0
+
         top.update_atom_types()
+        assert top.n_sites == 2
+        assert len(top.atom_types) == 2
+        assert len(top.atom_type_expressions) == 2
 
-        btype = BondType()
-        bond_12 = Bond(connection_members=[site1, site2], connection_type=btype)
-        top.add_connection(bond_12)
 
-        assert top.n_connections == 1
-        assert top.n_bonds == 0
-
-        top.update_bond_list()
-        assert top.n_connections == 1
-        assert top.n_bonds == 1
+        
