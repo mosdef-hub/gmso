@@ -100,6 +100,10 @@ class Topology(object):
         if self.n_sites != other.n_sites:
             return False
 
+        for (con1, con2) in zip(self.connection_list, other.connection_list):
+            if con1 != con2:
+                return False
+
         for (site1, site2) in zip(self.site_list, other.site_list):
             if site1 != site2:
                 return False
