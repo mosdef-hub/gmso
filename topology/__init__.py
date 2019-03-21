@@ -1,7 +1,13 @@
 from .core.topology import Topology
 from .core.element import Element
 from .core.box import Box
+
 from .core.site import Site
 from .core.connection import Connection
+from .core.bond import Bond
+from .core.angle import Angle
+
 from .core.potential import Potential
 from .core.atom_type import AtomType
+from .core.bond_type import BondType
+from .core.angle_type import AngleType
