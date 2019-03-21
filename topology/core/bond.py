@@ -33,7 +33,7 @@ def _validate_two_partners(connection_members):
     """Ensure 2 partners are involved in Bond"""
     if len(connection_members) != 2:
         raise TopologyError("Trying to create a Bond " 
-                "with {} bond partners". format(len(connection_members)))
+                "with {} connection members". format(len(connection_members)))
     
     return connection_members
 
