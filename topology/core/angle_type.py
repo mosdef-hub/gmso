@@ -28,7 +28,7 @@ class AngleType(Potential):
                  expression='0.5 * k * (theta-theta_eq)**2',
                  parameters={
                      'k': 1000 * u.Unit('kJ / (deg**2)'),
-                     'theta_eq': 60 * u.deg
+                     'theta_eq': 180 * u.deg
                  },
                  independent_variables={'theta'}):
 
