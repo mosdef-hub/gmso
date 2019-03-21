@@ -75,6 +75,20 @@ def test_box_dims():
 
     assert (topology_lengths.value == omm_lengths._value).all()
 
+def test_particle_positions():
+    top = Topology()
+    top.box = Box(lengths=[2,2,2])
+    H = Element(name='H', symbol='H', mass=1)
+    site1 = Site(name='site1',
+            element=H,
+            atom_type=AtomType(name="at1",
+                               mass=H.mass)
+            )
+    site1.position=(1,1,1)*u.nanometer
+    top.add_site(site1)
+    omm_top = to_openmm(top, openmm_object='modeller')
+    assert (omm_top.positions._value == top.positions().value).all()
+
 def test_position_units():
     top = Topology()
     top.box = Box(lengths=[1,1,1])
