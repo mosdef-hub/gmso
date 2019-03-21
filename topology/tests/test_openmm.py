@@ -1,15 +1,8 @@
-import numpy as np
 import pytest 
 import unyt as u
 import simtk.unit
 
-from topology.core.topology import Topology
-from topology.core.site import Site
-from topology.core.connection import Connection
 from topology.core.box import Box
-from topology.testing.utils import allclose
-from topology.core.atom_type import AtomType
-from topology.core.element import Element
 from topology.external.convert_openmm import to_openmm
 from topology.tests.base_test import BaseTest
 
