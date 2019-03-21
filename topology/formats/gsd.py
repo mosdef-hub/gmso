@@ -197,9 +197,9 @@ def _write_bond_information(gsd_file, top):
     unique_bond_types = set()
     for bond in top.connection_list:
         if isinstance(bond, Bond):
-            t1, t2 = bond.bond_partners[0].atom_type, bond.bond_partners[1].atom_type
+            t1, t2 = bond.connected_members[0].atom_type, bond.connected_members[1].atom_type
             if t1 is None or t2 is None:
-                t1, t2 = bond.bond_partners[0].name, bond.bond_partners[1].name
+                t1, t2 = bond.connected_members[0].name, bond.connected_members[1].name
             t1, t2 = sorted([t1, t2], key=lambda x: x.name)
             bond_type = ('-'.join((t1.name, t2.name)))
 
@@ -213,15 +213,15 @@ def _write_bond_information(gsd_file, top):
     bond_groups = []
     for bond in top.connection_list:
         if isinstance(bond, Bond):
-            t1, t2 = bond.bond_partners[0].atom_type, bond.bond_partners[1].atom_type
+            t1, t2 = bond.connected_members[0].atom_type, bond.connected_members[1].atom_type
             if t1 is None or t2 is None:
-                t1, t2 = bond.bond_partners[0].name, bond.bond_partners[1].name
+                t1, t2 = bond.connected_members[0].name, bond.connected_members[1].name
             t1, t2 = sorted([t1, t2], key=lambda x: x.name)
 
             bond_type = ('-'.join((t1.name, t2.name)))
             bond_typeids.append(unique_bond_types.index(bond_type))
-            bond_groups.append((top.site_list.index(bond.bond_partners[0]),
-                                top.site_list.index(bond.bond_partners[1])))
+            bond_groups.append((top.site_list.index(bond.connected_members[0]),
+                                top.site_list.index(bond.connected_members[1])))
 
     gsd_file.bonds.typeid = bond_typeids
     gsd_file.bonds.group = bond_groups
