@@ -56,13 +56,13 @@ def from_parmed(structure):
                 'r_eq': (bond.type.req * u.angstrom).in_units(u.nm)
             }
             new_connection_type = BondType(parameters=bond_params)
-            top_connection = Bond(connected_members=[site_map[bond.atom1], 
+            top_connection = Bond(connection_members=[site_map[bond.atom1], 
                 site_map[bond.atom2]],
                 connection_type=new_connection_type)
 
         # No bond parameters, make Connection with no connection_type
         else:
-            top_connection = Bond(connected_members=[site_map[bond.atom1],
+            top_connection = Bond(connection_members=[site_map[bond.atom1],
                 site_map[bond.atom2]],
                 connection_type=None)
 
