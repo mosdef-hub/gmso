@@ -4,14 +4,14 @@ from topology.core.site import Site
 from topology.exceptions import TopologyError
 
 class Connection(object):
-    """ An abstract object that lists bonded partners and their type
-    This functions as a super-class for any bonded groups (bonds,
-    angles, dihedrals, etc), with a property for the conection_typie
+    """ An abstract object that lists connected partners and their type
+    This functions as a super-class for any connected groups (bonds,
+    angles, dihedrals, etc), with a property for the conection_type
     
     Parameters
     ----------
     connection_members : list of topology.Site
-        A list of constituents in this bond. Should be in order
+        A list of constituents in this connection. Should be in order
     connection_type : topology.Potential
         An instance of topology.Potential that describes
         the potential function and parameters of this interaction
