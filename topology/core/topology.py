@@ -162,7 +162,9 @@ class Topology(object):
     def update_atom_types(self):
         self._atom_types = []
         for site in self.site_list:
-            if site.atom_type not in self._atom_types:
+            if site.atom_type is None:
+                warnings.warn("Site {} detected with no AtomType".format(site))
+            elif site.atom_type not in self._atom_types:
                 self._atom_types.append(site.atom_type)
 
     def update_connection_types(self):
