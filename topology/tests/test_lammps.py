@@ -1,17 +1,11 @@
-import numpy as np
 import pytest 
-import unyt as u
 
-from topology.core.topology import Topology
-from topology.core.site import Site
-from topology.core.bond import Bond
 from topology.core.box import Box
-from topology.testing.utils import allclose
 from topology.formats.lammpsdata import write_lammpsdata
-from topology.core.atom_type import AtomType
+from topology.tests.base_test import BaseTest
 
 
-class TestLammpsWriter(BaseTest)
+class TestLammpsWriter(BaseTest):
     def test_write_lammps(self, topology_site):
         top = topology_site()
         write_lammpsdata(top, filename='data.lammps')
