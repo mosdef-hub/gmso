@@ -7,7 +7,7 @@ import parmed as pmd
 
 from topology.core.topology import Topology
 from topology.core.site import Site
-from topology.core.connection import Connection
+from topology.core.bond import Bond
 from topology.core.box import Box
 from topology.core.atom_type import AtomType
 from topology.external.convert_parmed import from_parmed
@@ -33,12 +33,12 @@ class TestTopology(BaseTest):
         top = Topology()
         site1 = Site(name='site1')
         site2 = Site(name='site2')
-        connect = Connection(site1=site1, site2=site2)
+        connect = Bond(connection_members=[site1,site2])
 
+        top.add_connection(connect)
         top.add_site(site1)
         top.add_site(site2)
 
-        top.update_connection_list()
 
         assert len(top.connection_list) == 1
 

@@ -13,6 +13,7 @@ import gsd
 import gsd.hoomd
 
 from topology.core.box import Box
+from topology.core.bond import Bond
 from topology.utils.geometry import coord_shift
 from topology.exceptions import NotYetImplementedWarning
 from topology.testing.utils import allclose
@@ -93,7 +94,7 @@ def write_gsd(top,
                                 ref_energy, rigid_bodies)
     #if write_special_pairs:
     #    _write_pair_information(gsd_file, top)
-    if top.n_connections > 0:
+    if top.n_bonds > 0:
         _write_bond_information(gsd_file, top)
     #if structure.angles:
     #    _write_angle_information(gsd_file, top)
@@ -190,18 +191,19 @@ def _write_bond_information(gsd_file, top):
 
     """
 
-    gsd_file.bonds.N = top.n_connections
-    warnings.warn("{} bonds detected".format(top.n_connections))
+    gsd_file.bonds.N = top.n_bonds
+    warnings.warn("{} bonds detected".format(top.n_bonds))
 
     unique_bond_types = set()
     for bond in top.connection_list:
-        t1, t2 = bond.site1.atom_type, bond.site2.atom_type
-        if t1 is None or t2 is None:
-            t1, t2 = bond.site1.name, bond.site2.name
-        t1, t2 = sorted([t1, t2], key=lambda x: x.name)
-        bond_type = ('-'.join((t1.name, t2.name)))
+        if isinstance(bond, Bond):
+            t1, t2 = bond.connection_members[0].atom_type, bond.connection_members[1].atom_type
+            if t1 is None or t2 is None:
+                t1, t2 = bond.connection_members[0].name, bond.connection_members[1].name
+            t1, t2 = sorted([t1, t2], key=lambda x: x.name)
+            bond_type = ('-'.join((t1.name, t2.name)))
 
-        unique_bond_types.add(bond_type)
+            unique_bond_types.add(bond_type)
     unique_bond_types = sorted(list(unique_bond_types))
     gsd_file.bonds.types = unique_bond_types
     warnings.warn("{} unique bond types detected".format(
@@ -210,15 +212,16 @@ def _write_bond_information(gsd_file, top):
     bond_typeids = []
     bond_groups = []
     for bond in top.connection_list:
-        t1, t2 = bond.site1.atom_type, bond.site2.atom_type
-        if t1 is None or t2 is None:
-            t1, t2 = bond.site1.name, bond.site2.name
-        t1, t2 = sorted([t1, t2], key=lambda x: x.name)
+        if isinstance(bond, Bond):
+            t1, t2 = bond.connection_members[0].atom_type, bond.connection_members[1].atom_type
+            if t1 is None or t2 is None:
+                t1, t2 = bond.connection_members[0].name, bond.connection_members[1].name
+            t1, t2 = sorted([t1, t2], key=lambda x: x.name)
 
-        bond_type = ('-'.join((t1.name, t2.name)))
-        bond_typeids.append(unique_bond_types.index(bond_type))
-        bond_groups.append((top.site_list.index(bond.site1),
-                            top.site_list.index(bond.site2)))
+            bond_type = ('-'.join((t1.name, t2.name)))
+            bond_typeids.append(unique_bond_types.index(bond_type))
+            bond_groups.append((top.site_list.index(bond.connection_members[0]),
+                                top.site_list.index(bond.connection_members[1])))
 
     gsd_file.bonds.typeid = bond_typeids
     gsd_file.bonds.group = bond_groups

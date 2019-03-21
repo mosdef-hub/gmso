@@ -3,6 +3,10 @@ import numpy as np
 import unyt as u
 
 from topology.core.box import Box
+from topology.core.topology import Topology
+from topology.core.element import Element
+from topology.core.site import Site
+from topology.core.atom_type import AtomType
 
 
 class BaseTest:
@@ -29,3 +33,21 @@ class BaseTest:
     @pytest.fixture
     def box(self):
         return Box(lengths=u.nm*np.ones(3))
+
+    @pytest.fixture
+    def topology_site(self):
+        def _topology(sites=1):
+            top = Topology()
+            top.box = Box(lengths=[1,1,1])
+            H = Element(name='H', symbol='H', mass=1)
+            site1 = Site(name='site1',
+                    element=H,
+                    atom_type=AtomType(name="at1",
+                                       mass=H.mass)
+                    )
+            for i in range(sites):
+                top.add_site(site1)
+
+            return top
+
+        return _topology

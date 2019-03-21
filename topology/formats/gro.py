@@ -10,14 +10,13 @@ from topology.core.box import Box
 from topology.exceptions import NotYetImplementedWarning
 from topology.testing.utils import allclose
 
-
 def read_gro(filename):
     top = Topology()
 
     with open(filename, 'r') as gro_file:
         top.name = str(gro_file.readline().strip())
         n_atoms = int(gro_file.readline())
-        coords = u.nm * np.zeros(shape=(n_atoms, 3), dtype=np.float64)
+        coords = u.nm * np.zeros(shape=(n_atoms, 3))
         for row, _ in enumerate(coords):
             line = gro_file.readline()
             if not line:

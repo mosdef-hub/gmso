@@ -2,6 +2,7 @@ import numpy as np
 import unyt as u
 
 from topology.core.connection import Connection
+from topology.core.bond import Bond 
 from topology.testing.utils import allclose
 
 
@@ -60,6 +61,10 @@ class Topology(object):
     @property
     def n_connections(self):
         return len(self._connection_list)
+
+    @property
+    def n_bonds(self):
+        return len([b for b in self.connection_list if isinstance(b, Bond)])
 
     def add_connection(self, connection):
         self._connection_list.append(connection)
