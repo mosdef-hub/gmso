@@ -8,7 +8,6 @@ from topology.core.atom_type import AtomType
 from topology.core.bond import Bond
 from topology.core.bond_type import BondType
 from topology.core.box import Box
-from topology.tests.base_test import BaseTest
 
 
 def from_parmed(structure):
