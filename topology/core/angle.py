@@ -30,7 +30,7 @@ class Angle(Connection):
 
 
 def _validate_three_partners(bond_partners):
-    """Ensure 2 partners are involved in Bond"""
+    """Ensure 3 partners are involved in Bond"""
     if len(bond_partners) != 3:
         raise TopologyError("Trying to create an Angle " 
                 "with {} bond partners". format(len(bond_partners)))
