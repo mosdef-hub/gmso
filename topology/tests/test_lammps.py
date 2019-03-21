@@ -4,12 +4,11 @@ import unyt as u
 
 from topology.core.topology import Topology
 from topology.core.site import Site
-from topology.core.connection import Connection
+from topology.core.bond import Bond
 from topology.core.box import Box
 from topology.testing.utils import allclose
 from topology.formats.lammpsdata import write_lammpsdata
 from topology.core.atom_type import AtomType
-from topology.external.convert_openmm import to_openmm
 
 
 class TestLammpsWriter(BaseTest)
