@@ -6,7 +6,8 @@ from topology.core.topology import Topology
 from topology.core.site import Site
 from topology.core.atom_type import AtomType
 from topology.core.connection import Connection
-from topology.core.connection_type import ConnectionType
+from topology.core.bond import Bond
+from topology.core.bond_type import BondType
 from topology.core.box import Box
 from topology.tests.base_test import BaseTest
 from topology.testing.utils import allclose
@@ -29,12 +30,12 @@ class TestTopology(BaseTest):
         top = Topology()
         site1 = Site(name='site1')
         site2 = Site(name='site2')
-        connect = Connection(site1=site1, site2=site2)
+        connect = Bond(connection_members=[site1,site2])
 
+        top.add_connection(connect)
         top.add_site(site1)
         top.add_site(site2)
 
-        top.update_connection_list()
 
         assert len(top.connection_list) == 1
 
@@ -64,10 +65,10 @@ class TestTopology(BaseTest):
         top.update_top()
         assert top.n_sites == 0
         assert len(top.atom_types) == 0
-        assert len(top.atom_type_functionals) == 0
+        assert len(top.atom_type_expressions) == 0
         assert top.n_connections == 0
         assert len(top.connection_types) == 0
-        assert len(top.connection_type_functionals) == 0
+        assert len(top.connection_type_expressions) == 0
 
         atomtype = AtomType()
         site1 = Site(name='site1', atom_type=atomtype)
@@ -76,49 +77,78 @@ class TestTopology(BaseTest):
         top.add_site(site2)
         assert top.n_sites == 2
         assert len(top.atom_types) == 0
-        assert len(top.atom_type_functionals) == 0
+        assert len(top.atom_type_expressions) == 0
         assert top.n_connections == 0
         assert len(top.connection_types) == 0
-        assert len(top.connection_type_functionals) == 0
+        assert len(top.connection_type_expressions) == 0
         top.update_atom_types()
         assert top.n_sites == 2
         assert len(top.atom_types) == 1
-        assert len(top.atom_type_functionals) == 1
+        assert len(top.atom_type_expressions) == 1
         assert top.n_connections == 0
         assert len(top.connection_types) == 0
-        assert len(top.connection_type_functionals) == 0
+        assert len(top.connection_type_expressions) == 0
 
 
-        ctype = ConnectionType()
-        connection_12 = Connection(site1=site1, site2=site2, 
+        ctype = BondType()
+        connection_12 = Bond(connection_members=[site1, site2], 
                 connection_type=ctype)
         top.add_connection(connection_12)
         assert top.n_sites == 2
         assert len(top.atom_types) == 1
-        assert len(top.atom_type_functionals) == 1
+        assert len(top.atom_type_expressions) == 1
         assert top.n_connections == 1
         assert len(top.connection_types) == 0
-        assert len(top.connection_type_functionals) == 0
+        assert len(top.connection_type_expressions) == 0
         top.update_connection_types()
         assert top.n_sites == 2
         assert len(top.atom_types) == 1
-        assert len(top.atom_type_functionals) == 1
+        assert len(top.atom_type_expressions) == 1
         assert top.n_connections == 1
         assert len(top.connection_types) == 1
-        assert len(top.connection_type_functionals) == 1
+        assert len(top.connection_type_expressions) == 1
 
         site1.atom_type = AtomType(expression='sigma*epsilon')
         assert top.n_sites == 2
         assert len(top.atom_types) == 1
-        assert len(top.atom_type_functionals) == 1
+        assert len(top.atom_type_expressions) == 1
         assert top.n_connections == 1
         assert len(top.connection_types) == 1
-        assert len(top.connection_type_functionals) == 1
+        assert len(top.connection_type_expressions) == 1
         top.update_atom_types()
         assert top.n_sites == 2
         assert len(top.atom_types) == 2
-        assert len(top.atom_type_functionals) == 2
+        assert len(top.atom_type_expressions) == 2
         assert top.n_connections == 1
         assert len(top.connection_types) == 1
-        assert len(top.connection_type_functionals) == 1
+        assert len(top.connection_type_expressions) == 1
 
+
+    def test_atomtype_update(self):
+        top = Topology()
+
+        assert top.n_sites == 0
+        assert top.n_bonds == 0
+        assert top.n_connections == 0
+
+        atype1 = AtomType(expression='sigma + epsilon')
+        atype2 = AtomType(expression='sigma * epsilon')
+        site1 = Site('a', atom_type=atype1)
+        site2 = Site('b', atom_type=atype2)
+        top.add_site(site1)
+        top.add_site(site2)
+        assert top.n_sites == 2
+        assert top.n_bonds == 0
+        assert top.n_connections == 0
+        top.update_atom_types()
+
+        btype = BondType()
+        bond_12 = Bond(connection_members=[site1, site2], connection_type=btype)
+        top.add_connection(bond_12)
+
+        assert top.n_connections == 1
+        assert top.n_bonds == 0
+
+        top.update_bond_list()
+        assert top.n_connections == 1
+        assert top.n_bonds == 1
