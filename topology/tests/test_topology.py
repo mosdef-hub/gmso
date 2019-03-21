@@ -63,15 +63,14 @@ class TestTopology(BaseTest):
         assert top.positions().units == u.nm
         assert isinstance(top.positions(), u.unyt_array)
 
-    def test_eq(self, box, charge):
-        top = Topology(name='mytop')
-
+    def test_eq_types(self, top, box):
         assert top != box
 
         diff_name = deepcopy(top)
         diff_name.name = 'othertop'
         assert top != diff_name
 
+    def test_eq_sites(self, top, charge):
         site = Site()
         wrong_n_sites = deepcopy(top)
         assert top == wrong_n_sites
@@ -93,6 +92,35 @@ class TestTopology(BaseTest):
         wrong_atom_type.add_site(Site(atom_type=AtomType(expression='sigma')))
         assert top != wrong_atom_type
 
+    def test_eq_bonds(self):
+        ref = pmd.load_file(get_fn('ethane.top'),
+                            xyz=get_fn('ethane.gro'))
+
+        missing_bond = deepcopy(ref)
+        missing_bond.bonds[0].delete()
+
+        assert ref != missing_bond
+
+        bad_bond_type = deepcopy(ref)
+        bad_bond_type.bond_types[0].k = 22
+
+        assert ref != bad_bond_type
+
+    def test_eq_angles(self):
+        ref = pmd.load_file(get_fn('ethane.top'),
+                            xyz=get_fn('ethane.gro'))
+
+        missing_angle = deepcopy(ref)
+        missing_angle.angles[0].delete()
+
+        assert ref != missing_angle
+
+        bad_angle_type = deepcopy(ref)
+        bad_angle_type.angle_types[0].k = 22
+
+        assert ref != bad_angle_type
+
+    def test_eq_overall(self):
         ref = pmd.load_file(get_fn('ethane.top'),
                             xyz=get_fn('ethane.gro'))
 
@@ -100,23 +128,3 @@ class TestTopology(BaseTest):
         top2 = from_parmed(ref)
 
         assert top1 == top2
-
-        missing_bond = deepcopy(ref)
-        missing_bond.bonds[0].delete()
-
-        assert ref != missing_bond
-
-        missing_angle = deepcopy(ref)
-        missing_angle.angles[0].delete()
-
-        assert ref != missing_angle
-
-        bad_bond_type = deepcopy(ref)
-        bad_bond_type.bond_types[0].k = 22
-
-        assert ref != bad_bond_type
-
-        bad_angle_type = deepcopy(ref)
-        bad_angle_type.angle_types[0].k = 22
-
-        assert ref != bad_angle_type
