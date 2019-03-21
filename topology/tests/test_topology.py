@@ -93,8 +93,30 @@ class TestTopology(BaseTest):
         wrong_atom_type.add_site(Site(atom_type=AtomType(expression='sigma')))
         assert top != wrong_atom_type
 
-        top1 = from_parmed(pmd.load_file(get_fn('ethane.top'),
-                                         xyz=get_fn('ethane.gro')))
-        top2 = from_parmed(pmd.load_file(get_fn('ethane.top'),
-                                         xyz=get_fn('ethane.gro')))
+        ref = pmd.load_file(get_fn('ethane.top'),
+                            xyz=get_fn('ethane.gro'))
+
+        top1 = from_parmed(ref)
+        top2 = from_parmed(ref)
+
         assert top1 == top2
+
+        missing_bond = deepcopy(ref)
+        missing_bond.bonds[0].delete()
+
+        assert ref != missing_bond
+
+        missing_angle = deepcopy(ref)
+        missing_angle.angles[0].delete()
+
+        assert ref != missing_angle
+
+        bad_bond_type = deepcopy(ref)
+        bad_bond_type.bond_types[0].k = 22
+
+        assert ref != bad_bond_type
+
+        bad_angle_type = deepcopy(ref)
+        bad_angle_type.angle_types[0].k = 22
+
+        assert ref != bad_angle_type
