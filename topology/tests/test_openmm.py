@@ -25,7 +25,6 @@ def test_openmm_modeller():
     top.add_site(site1)
     to_openmm(top, openmm_object='modeller')
 
-
 def test_openmm_topology():
     top = Topology()
     top.box = Box(lengths=[1,1,1])
@@ -87,6 +86,7 @@ def test_particle_positions():
     site1.position=(1,1,1)*u.nanometer
     top.add_site(site1)
     omm_top = to_openmm(top, openmm_object='modeller')
+
     assert (omm_top.positions._value == top.positions().value).all()
 
 def test_position_units():
