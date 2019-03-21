@@ -1,8 +1,8 @@
 import unyt as u
-import mbuild as mb
 import simtk.unit
 
-from simtk import openmm
+from simtk.openmm.app import *
+from simtk.openmm import *
     
 
 def to_openmm(topology, openmm_object='topology'):
@@ -18,7 +18,7 @@ def to_openmm(topology, openmm_object='topology'):
     open_mm_object: 'topology' or 'modeller', default='topology'
         Untyped OpenMM object to convert to
     """
-    openmm_top = openmm.app.Topology()
+    openmm_top = app.Topology()
 
     # Get topology.positions into OpenMM form
     openmm_unit = 1 * simtk.unit.nanometer
@@ -51,7 +51,7 @@ def to_openmm(topology, openmm_object='topology'):
         return openmm_top
 
     else:
-        modeller = openmm.app.Modeller(openmm_top, openmm_pos)
+        modeller = app.Modeller(openmm_top, openmm_pos)
 
         return modeller
 
