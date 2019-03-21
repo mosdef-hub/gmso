@@ -1,37 +1,68 @@
-from topology.core.connection_type import ConnectionType
+import warnings
+from topology.core.potential import Potential
+from topology.core.site import Site
+from topology.exceptions import TopologyError
 
 class Connection(object):
-    """A simple connection between sites."""
-    def __init__(self, site1=None, site2=None, update=True, connection_type=None):
-        if site1:
-            self.site1 = site1
-        if site2:
-            self.site2 = site2
-        if update:
-            site1.add_connection(site2)
-            site2.add_connection(site1)
+    """ An abstract object that lists connected partners and their type
+    This functions as a super-class for any connected groups (bonds,
+    angles, dihedrals, etc), with a property for the conection_type
+    
+    Parameters
+    ----------
+    connection_members : list of topology.Site
+        A list of constituents in this connection. Should be in order
+    connection_type : topology.Potential
+        An instance of topology.Potential that describes
+        the potential function and parameters of this interaction
+        """
+    def __init__(self, connection_members=[], connection_type=None):
+        self._connection_members = _validate_connection_members(connection_members)
+        self._connection_type = _validate_connection_type(connection_type)
+        self._update_members()
 
-        if isinstance(connection_type, ConnectionType):
-            self._connection_type = connection_type
-        elif connection_type is None:
-            self._connection_type = None
-        else:
-            self._connection_type = ConnectionType(connection_type)
+    @property
+    def connection_members(self):
+        return self._connection_members
+
+    @connection_members.setter
+    def connection_members(self, connection_members):
+        self._connection_members = _validate_connection_members(connection_members)
 
     @property
     def connection_type(self):
         return self._connection_type
 
     @connection_type.setter
-    def connection_type(self, connection_type):
-        if isinstance(connection_type, ConnectionType):
-            self._connection_type = connection_type
-        elif connection_type is None:
-            self._connection_type = None
-        else:
-            self._connection_type = ConnectionType(connection_type)
+    def connection_type(self, contype):
+        self_connection_type = _validate_connection_type(contype)
+
+    def _update_members(self):
+        for partner in self.connection_members:
+            if self not in partner.connections:
+                partner.add_connection(self)
+
+    def __repr__(self):
+        descr = '<{}-partner Connection, id {}, '.format(
+                len(self.connection_members), id(self))
+        descr += 'type {}>'.format(self.connection_type)
+        return descr
 
     def __eq__(self, other):
-        # No comparison of connection_type in case of non-parametrization
-        return ((self.site1 == other.site1 and self.site2 == other.site2) or
-                (self.site2 == other.site1 and self.site1 == other.site2))
+        bond_partner_match = (self.connection_members == other.connection_members)
+        ctype_match = (self.connection_type == other.connection_type)
+        return all([bond_partner_match, ctype_match])
+
+
+def _validate_connection_members(connection_members):
+    for partner in connection_members:
+        if not isinstance(partner, Site):
+            raise TopologyError("Supplied non-Site {}".format(partner))
+    return connection_members
+
+def _validate_connection_type(c_type):
+    if c_type is None:
+        warnings.warn("Non-parametrized Connection detected")
+    elif not isinstance(c_type, Potential):
+        raise TopologyError("Supplied non-Potential {}".format(c_type))
+    return c_type
