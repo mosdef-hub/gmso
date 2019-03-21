@@ -71,13 +71,13 @@ class TestTopology(BaseTest):
         site2 = Site(name='site2', atom_type=atomtype)
         top.add_site(site2)
         assert top.n_sites == 2
-        assert len(top.atom_types) == 0
-        assert len(top.atom_type_expressions) == 0
-        assert top.n_connections == 0
-        assert len(top.connection_types) == 0
-        assert len(top.connection_type_expressions) == 0
-        top.update_atom_types()
-        assert top.n_sites == 2
+        #assert len(top.atom_types) == 0
+        #assert len(top.atom_type_expressions) == 0
+        #assert top.n_connections == 0
+        #assert len(top.connection_types) == 0
+        #assert len(top.connection_type_expressions) == 0
+        #top.update_atom_types()
+        #assert top.n_sites == 2
         assert len(top.atom_types) == 1
         assert len(top.atom_type_expressions) == 1
         assert top.n_connections == 0
@@ -131,11 +131,11 @@ class TestTopology(BaseTest):
         site2 = Site('b', atom_type=atype2)
         top.add_site(site1)
         top.add_site(site2)
-        assert top.n_sites == 2
-        assert len(top.atom_types) == 0
-        assert len(top.atom_type_expressions) == 0
+        #assert top.n_sites == 2
+        #assert len(top.atom_types) == 0
+        #assert len(top.atom_type_expressions) == 0
 
-        top.update_atom_types()
+        #top.update_atom_types()
         assert top.n_sites == 2
         assert len(top.atom_types) == 2
         assert len(top.atom_type_expressions) == 2
