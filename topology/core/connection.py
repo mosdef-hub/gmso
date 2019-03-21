@@ -1,4 +1,6 @@
 import warnings
+from topology.core.potential import Potential
+from topology.core.site import Site
 from topology.exceptions import TopologyError
 
 class Connection(object):
@@ -53,14 +55,12 @@ class Connection(object):
 
 
 def _validate_bond_partners(bond_partners):
-    from topology.core.site import Site
     for partner in bond_partners:
         if not isinstance(partner, Site):
             raise TopologyError("Supplied non-Site {}".format(partner))
     return bond_partners
 
 def _validate_connection_type(c_type):
-    from topology.core.potential import Potential
     if c_type is None:
         warnings.warn("Non-parametrized Connection detected")
     elif not isinstance(c_type, Potential):
