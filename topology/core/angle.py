@@ -38,10 +38,10 @@ def _validate_three_partners(bond_partners):
     return bond_partners
 
 
-def _validate_angletype(ctype):
+def _validate_angletype(contype):
     """Ensure connection_type is a AngleType """
-    if ctype is None:
+    if contype is None:
         warnings.warn("Non-parametrized Angle detected")
-    elif not isinstance(ctype, AngleType):
-        raise TopologyError("Supplied non-AngleType {}".format(ctype))
-    return ctype
+    elif not isinstance(contype, AngleType):
+        raise TopologyError("Supplied non-AngleType {}".format(contype))
+    return contype
