@@ -89,8 +89,8 @@ class TestTopology(BaseTest):
         assert top != wrong_charge
 
         wrong_atom_type = deepcopy(top)
-        top.add_site(Site(atom_type=AtomType(nb_function='epsilon*sigma')))
-        wrong_atom_type.add_site(Site(atom_type=AtomType(nb_function='sigma')))
+        top.add_site(Site(atom_type=AtomType(expression='epsilon*sigma')))
+        wrong_atom_type.add_site(Site(atom_type=AtomType(expression='sigma')))
         assert top != wrong_atom_type
 
         top1 = from_parmed(pmd.load_file(get_fn('ethane.top'),
