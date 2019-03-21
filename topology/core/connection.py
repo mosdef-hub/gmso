@@ -19,7 +19,7 @@ class Connection(object):
     def __init__(self, connection_members=[], connection_type=None):
         self._connection_members = _validate_connection_members(connection_members)
         self._connection_type = _validate_connection_type(connection_type)
-        self._update_partners()
+        self._update_members()
 
     @property
     def connection_members(self):
@@ -37,7 +37,7 @@ class Connection(object):
     def connection_type(self, contype):
         self_connection_type = _validate_connection_type(contype)
 
-    def _update_partners(self):
+    def _update_members(self):
         for partner in self.connection_members:
             if self not in partner.connections:
                 partner.add_connection(self)
