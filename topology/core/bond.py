@@ -10,7 +10,7 @@ class Bond(Connection):
     
     Partners
     --------
-    bond_partners: list of topology.Site
+    connected_members: list of topology.Site
         Should be length 2
     connection_type : topology.BondType
 
@@ -21,21 +21,21 @@ class Bond(Connection):
     Addiitonal _validate methods are presented
     """
 
-    def __init__(self, bond_partners=[], connection_type=None):
-        bond_partners = _validate_two_partners(bond_partners)
+    def __init__(self, connected_members=[], connection_type=None):
+        connected_members = _validate_two_partners(connected_members)
         connection_type = _validate_bondtype(connection_type)
 
-        super(Bond, self).__init__(bond_partners=bond_partners, 
+        super(Bond, self).__init__(connected_members=connected_members, 
                 connection_type=connection_type)
 
 
-def _validate_two_partners(bond_partners):
+def _validate_two_partners(connected_members):
     """Ensure 2 partners are involved in Bond"""
-    if len(bond_partners) != 2:
+    if len(connected_members) != 2:
         raise TopologyError("Trying to create a Bond " 
-                "with {} bond partners". format(len(bond_partners)))
+                "with {} bond partners". format(len(connected_members)))
     
-    return bond_partners
+    return connected_members
 
 
 def _validate_bondtype(contype):

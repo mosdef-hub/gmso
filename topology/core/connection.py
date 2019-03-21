@@ -10,24 +10,24 @@ class Connection(object):
     
     Parameters
     ----------
-    bond_partners : list of topology.Site
+    connected_members : list of topology.Site
         A list of constituents in this bond. Should be in order
     connection_type : topology.Potential
         An instance of topology.Potential that describes
         the potential function and parameters of this interaction
         """
-    def __init__(self, bond_partners=[], connection_type=None):
-        self._bond_partners = _validate_bond_partners(bond_partners)
+    def __init__(self, connected_members=[], connection_type=None):
+        self._connected_members = _validate_connected_members(connected_members)
         self._connection_type = _validate_connection_type(connection_type)
         self._update_partners()
 
     @property
-    def bond_partners(self):
-        return self._bond_partners
+    def connected_members(self):
+        return self._connected_members
 
-    @bond_partners.setter
-    def bond_partners(self, bond_partners):
-        self._bond_partners = _validate_bond_partners(bond_partners)
+    @connected_members.setter
+    def connected_members(self, connected_members):
+        self._connected_members = _validate_connected_members(connected_members)
 
     @property
     def connection_type(self):
@@ -38,27 +38,27 @@ class Connection(object):
         self_connection_type = _validate_connection_type(contype)
 
     def _update_partners(self):
-        for partner in self.bond_partners:
+        for partner in self.connected_members:
             if self not in partner.connections:
                 partner.add_connection(self)
 
     def __repr__(self):
         descr = '<{}-partner Connection, id {}, '.format(
-                len(self.bond_partners), id(self))
+                len(self.connected_members), id(self))
         descr += 'type {}>'.format(self.connection_type)
         return descr
 
     def __eq__(self, other):
-        bond_partner_match = (self.bond_partners == other.bond_partners)
+        bond_partner_match = (self.connected_members == other.connected_members)
         ctype_match = (self.connection_type == other.connection_type)
         return all([bond_partner_match, ctype_match])
 
 
-def _validate_bond_partners(bond_partners):
-    for partner in bond_partners:
+def _validate_connected_members(connected_members):
+    for partner in connected_members:
         if not isinstance(partner, Site):
             raise TopologyError("Supplied non-Site {}".format(partner))
-    return bond_partners
+    return connected_members
 
 def _validate_connection_type(c_type):
     if c_type is None:

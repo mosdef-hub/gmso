@@ -10,7 +10,7 @@ class Angle(Connection):
     
     Partners
     --------
-    bond_partners: list of topology.Site
+    connected_members: list of topology.Site
         Should be length 3
     connection_type : topology.AngleType
 
@@ -21,21 +21,21 @@ class Angle(Connection):
     Addiitonal _validate methods are presented
     """
 
-    def __init__(self, bond_partners=[], connection_type=None):
-        bond_partners = _validate_three_partners(bond_partners)
+    def __init__(self, connected_members=[], connection_type=None):
+        connected_members = _validate_three_partners(connected_members)
         connection_type = _validate_angletype(connection_type)
 
-        super(Angle, self).__init__(bond_partners=bond_partners, 
+        super(Angle, self).__init__(connected_members=connected_members, 
                 connection_type=connection_type)
 
 
-def _validate_three_partners(bond_partners):
+def _validate_three_partners(connected_members):
     """Ensure 3 partners are involved in Bond"""
-    if len(bond_partners) != 3:
+    if len(connected_members) != 3:
         raise TopologyError("Trying to create an Angle " 
-                "with {} bond partners". format(len(bond_partners)))
+                "with {} bond partners". format(len(connected_members)))
     
-    return bond_partners
+    return connected_members
 
 
 def _validate_angletype(contype):
