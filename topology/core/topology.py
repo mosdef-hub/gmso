@@ -1,5 +1,6 @@
 import numpy as np
 import unyt as u
+import warnings
 
 from topology.core.connection import Connection
 from topology.core.bond import Bond 
@@ -167,26 +168,34 @@ class Topology(object):
     def update_connection_types(self):
         self._connection_types = []
         for c in self.connection_list:
-            if not isinstance(c.connection_type, Potential):
+            if c.connection_type is None:
+                warnings.warn("Non-parametrized Connection {} detected".format(c))
+            elif not isinstance(c.connection_type, Potential):
                 raise TopologyError("Non-Potential {} found "
-                        "in Connection {}".format(c))
-            if c.connection_type not in self._connection_types:
+                        "in Connection {}".format(c.connection_type, c))
+            elif c.connection_type not in self._connection_types:
                 self._connection_types.append(c.connection_type)
 
     def update_bond_types(self):
         self._bond_types = []
         for b in self.bond_list:
-            if not isinstance(b.connection_type, BondType):
-                raise TopologyError("Non-BondType {} found in Bond {}".format(b))
-            if b.connection_type not in self._bond_types:
+            if b.connection_type is None:
+                warnings.warn("Non-parametrized Bond {} detected".format(b))
+            elif not isinstance(b.connection_type, BondType):
+                raise TopologyError("Non-BondType {} found in Bond {}".format(
+                    b.connection_type, b))
+            elif b.connection_type not in self._bond_types:
                 self._bond_types.append(b.connection_type)
 
     def update_angle_types(self):
         self._angle_types = []
         for a in self.angle_list:
-            if not isinstance(a.connection_type, AngleType):
-                raise TopologyError("Non-AngleType {} found in Angle {}".format(a))
-            if a.connection_type not in self._angle_types:
+            if a.connection_type is None:
+                warnings.warn("Non-parametrized Angle {} detected".format(a))
+            elif not isinstance(a.connection_type, AngleType):
+                raise TopologyError("Non-AngleType {} found in Angle {}".format(
+                    a.connection_type, a))
+            elif a.connection_type not in self._angle_types:
                 self._angle_types.append(a.connection_type)
 
     def __repr__(self):
