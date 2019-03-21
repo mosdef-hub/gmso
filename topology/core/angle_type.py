@@ -11,16 +11,16 @@ class AngleType(Potential):
     ----------
     name : str
     expression : str or sympy.Expression
-    parameters : dict
-        {str, u.Unit}
+        See `Potential` documentation for more information
+    parameters : dict {str, unyt.unyt_quantity}
+        See `Potential` documentation for more information
     independent vars : set of str
+        See `Potential` documentation for more information
 
     Notes
     ----
     Inherits many functions from topology.Potential:
         __eq__, _validate functions
-    But we have specified an addiitonal validate method for canonicalizing
-        the independent varaible
     """
 
     def __init__(self,
