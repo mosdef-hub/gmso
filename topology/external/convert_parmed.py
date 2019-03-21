@@ -71,6 +71,5 @@ def from_parmed(structure):
     # TODO: Angles
     # TODO: Dihedrals
 
-    #top.update_connection_list()
 
     return top
