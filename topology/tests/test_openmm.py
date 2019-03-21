@@ -1,6 +1,7 @@
 import pytest 
-import unyt as u
 import simtk.unit
+import unyt as u
+import numpy as np
 
 from topology.core.box import Box
 from topology.external.convert_openmm import to_openmm
@@ -29,14 +30,14 @@ class TestOpenMM(BaseTest):
         topology_lengths = top.box.lengths
         omm_lengths = omm_top.getUnitCellDimensions()
     
-        assert (topology_lengths.value == omm_lengths._value).all()
+        assert np.allclose(topology_lengths.value, omm_lengths._value)
     
     def test_particle_positions(self, topology_site):
         top = topology_site()
         top.site_list[0].position = (1,1,1) * u.nanometer
         omm_top = to_openmm(top, openmm_object='modeller')
     
-        assert (omm_top.positions._value == top.positions().value).all()
+        assert np.allclose(omm_top.positions._value, top.positions().value)
    
     def test_position_units(self, topology_site):
         top = topology_site(sites=10)

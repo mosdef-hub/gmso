@@ -40,7 +40,7 @@ def to_openmm(topology, openmm_object='topology'):
     # Set box
     box = topology.box
     box.lengths.convert_to_units(u.nanometer)
-    lengths = [i for i in box.lengths.value]
+    lengths = box.lengths.value
     openmm_top.setUnitCellDimensions(lengths)
 
     # TODO: Figure out how to add residues
