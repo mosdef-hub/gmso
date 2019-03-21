@@ -11,8 +11,8 @@ from simtk import openmm
 
 def to_openmm(topology, openmm_object='topology'):
     """
-    Convert an untyped topology object to an untyped OpenMM modeller.
-    This is useful if it's preferred to atom-type a system within
+    Convert an untyped topology object to an untyped OpenMM modeller or
+    topology. This is useful if it's preferred to atom-type a system within
     OpenMM.
 
     Parameters
