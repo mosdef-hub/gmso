@@ -10,7 +10,6 @@ from topology.core.box import Box
 from topology.exceptions import NotYetImplementedWarning
 from topology.testing.utils import allclose
 
-
 def read_gro(filename):
     top = Topology()
 
