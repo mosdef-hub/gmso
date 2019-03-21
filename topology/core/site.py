@@ -11,7 +11,7 @@ class Site(object):
     """A general site."""
 
     def __init__(self,
-                 name=None,
+                 name='Site',
                  position=None,
                  charge=None,
                  mass=None,
