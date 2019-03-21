@@ -61,10 +61,30 @@ class Topology(object):
         return xyz
 
     def add_site(self, site):
+        if site in self.site_list:
+            warnings.warn("Redundantly adding Site {}".format(site))
         self._site_list.append(site)
+        self.update_atom_types()
 
     def add_connection(self, connection):
+        if connection in self.connection_list:
+            warnings.warn("Redundantly adding Connection {}".format(connection))
+
+        if connection.connection_members[0] not in self.site_list:
+            self.add_site(connection.connection_members[0])
+        if connection.connection_members[1] not in self.site_list:
+            self.add_site(connection.connection_members[1])
+
         self._connection_list.append(connection)
+
+        self.update_connection_list()
+        self.update_connection_types()
+        if isinstance(connection, Bond):
+            self.update_bond_list()
+            self.update_bond_types()
+        elif isinstance(connection, Angle):
+            self.update_angle_list()
+            self.update_angle_types()
 
     @property
     def n_sites(self):
@@ -135,7 +155,7 @@ class Topology(object):
 
         Notes
         -----
-        Will update: atom_types, connnection_types
+        Will update: connections, bonds, angles, atom_types, bondtypes, angletypes
         """
         self.update_connection_list()
         self.update_bond_list()
@@ -147,10 +167,10 @@ class Topology(object):
         self.update_angle_types()
             
     def update_connection_list(self):
-        self._connection_list = []
+        #self._connection_list = []
         for site in self.site_list:
             for connection in site.connections:
-                if connection not in self._connection_list:
+                if connection not in self.connection_list:
                     self.add_connection(connection)
 
     def update_bond_list(self):
@@ -160,45 +180,45 @@ class Topology(object):
         self._angle_list = [a for a in self.connection_list if isinstance(a, Angle)]
 
     def update_atom_types(self):
-        self._atom_types = []
+        #self._atom_types = []
         for site in self.site_list:
             if site.atom_type is None:
                 warnings.warn("Site {} detected with no AtomType".format(site))
-            elif site.atom_type not in self._atom_types:
-                self._atom_types.append(site.atom_type)
+            elif site.atom_type not in self.atom_types:
+                self.atom_types.append(site.atom_type)
 
     def update_connection_types(self):
-        self._connection_types = []
+        #self._connection_types = []
         for c in self.connection_list:
             if c.connection_type is None:
                 warnings.warn("Non-parametrized Connection {} detected".format(c))
             elif not isinstance(c.connection_type, Potential):
                 raise TopologyError("Non-Potential {} found "
                         "in Connection {}".format(c.connection_type, c))
-            elif c.connection_type not in self._connection_types:
-                self._connection_types.append(c.connection_type)
+            elif c.connection_type not in self.connection_types:
+                self.connection_types.append(c.connection_type)
 
     def update_bond_types(self):
-        self._bond_types = []
+        #self._bond_types = []
         for b in self.bond_list:
             if b.connection_type is None:
                 warnings.warn("Non-parametrized Bond {} detected".format(b))
             elif not isinstance(b.connection_type, BondType):
                 raise TopologyError("Non-BondType {} found in Bond {}".format(
                     b.connection_type, b))
-            elif b.connection_type not in self._bond_types:
-                self._bond_types.append(b.connection_type)
+            elif b.connection_type not in self.bond_types:
+                self.bond_types.append(b.connection_type)
 
     def update_angle_types(self):
-        self._angle_types = []
+        #self._angle_types = []
         for a in self.angle_list:
             if a.connection_type is None:
                 warnings.warn("Non-parametrized Angle {} detected".format(a))
             elif not isinstance(a.connection_type, AngleType):
                 raise TopologyError("Non-AngleType {} found in Angle {}".format(
                     a.connection_type, a))
-            elif a.connection_type not in self._angle_types:
-                self._angle_types.append(a.connection_type)
+            elif a.connection_type not in self.angle_types:
+                self.angle_types.append(a.connection_type)
 
     def __repr__(self):
         descr = list('<')
