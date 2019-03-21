@@ -68,11 +68,6 @@ def from_parmed(structure):
 
         top.add_connection(top_connection)
 
-        #if site_map[bond.atom2] not in site_map[bond.atom1].connections:
-        #    site_map[bond.atom1].add_connection(site_map[bond.atom2])
-        #if site_map[bond.atom1] not in site_map[bond.atom2].connections:
-        #    site_map[bond.atom2].add_connection(site_map[bond.atom1])
-
     # TODO: Angles
     # TODO: Dihedrals
 

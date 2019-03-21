@@ -26,13 +26,7 @@ def from_mbuild(compound):
         new_bond = Bond(bond_partners=[site_map[b1], site_map[b2]],
                 connection_type=None)
         top.add_connection(new_bond)
-        #if site_map[b2] not in site_map[b1].connections:
-        #    site_map[b1].add_connection(site_map[b2])
-        #if site_map[b1] not in site_map[b2].connections:
-        #    site_map[b2].add_connection(site_map[b1])
-
-    #top.update_connection_list()
-
+        
     return top
 
 def to_mbuild(topology):
