@@ -95,6 +95,9 @@ class Site(object):
 
         return True
 
+    def __hash__(self):
+        return id(self)
+
     def __repr__(self):
         return "<Site {}, id {}>".format(self.name, id(self))
 
