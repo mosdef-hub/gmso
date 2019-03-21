@@ -197,4 +197,5 @@ class TestTopology(BaseTest):
         assert top.n_angles == 1
         assert len(top.angle_types) == 1 
         assert len(top.angle_type_expressions) == 1
+        assert len(top.atom_type_expressions) == 2
 
