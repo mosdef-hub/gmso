@@ -77,7 +77,7 @@ class Topology(object):
 
         self._connection_list.append(connection)
 
-        self.update_connection_list()
+        #self.update_connection_list() Do we need to call this? Code should work either way
         self.update_connection_types()
         if isinstance(connection, Bond):
             self.update_bond_list()
@@ -136,27 +136,29 @@ class Topology(object):
 
     @property
     def atom_type_expressions(self):
-        return [atype.expression for atype in self.atom_types]
+        return list(set([atype.expression for atype in self.atom_types]))
 
     @property
     def connection_type_expressions(self):
-        return [contype.expression for contype in self.connection_types]
+        return list(set([contype.expression for contype in self.connection_types]))
 
     @property
     def bond_type_expressions(self):
-        return [btype.expression for btype in self.bond_types]
+        return list(set([btype.expression for btype in self.bond_types]))
 
     @property
     def angle_type_expressions(self):
-        return [atype.expression for atype in self.angle_types]
+        return list(set([atype.expression for atype in self.angle_types]))
 
     def update_top(self):
-        """ Update the entire topology's unique types
+        """ Update the entire topology's attributes
 
         Notes
         -----
-        Will update: connections, bonds, angles, atom_types, bondtypes, angletypes
+        Will update: sites, connections, bonds, angles, 
+        atom_types, connectiontypes, bondtypes, angletypes
         """
+        self.update_site_list()
         self.update_connection_list()
         self.update_bond_list()
         self.update_angle_list()
@@ -165,8 +167,17 @@ class Topology(object):
         self.update_connection_types()
         self.update_bond_types()
         self.update_angle_types()
+
+    def update_site_list(self):
+        """ (Is this necessary?) 
+        Update site list based on the connection members """
+        for connection in self.connection_list:
+            for con_member in connection.connection_members:
+                if con_member not in self.site_list:
+                    self.add_site(con_member)
             
     def update_connection_list(self):
+        """ Update connection list based on the site list """
         #self._connection_list = []
         for site in self.site_list:
             for connection in site.connections:
@@ -174,12 +185,15 @@ class Topology(object):
                     self.add_connection(connection)
 
     def update_bond_list(self):
+        """ Rebuild the bond list by filtering through connection list """
         self._bond_list = [b for b in self.connection_list if isinstance(b, Bond)]
 
     def update_angle_list(self):
+        """ Rebuild the angle list by filtering through connection list """
         self._angle_list = [a for a in self.connection_list if isinstance(a, Angle)]
 
     def update_atom_types(self):
+        """ Update the atom types based on the site list """
         #self._atom_types = []
         for site in self.site_list:
             if site.atom_type is None:
@@ -188,6 +202,7 @@ class Topology(object):
                 self.atom_types.append(site.atom_type)
 
     def update_connection_types(self):
+        """ Update the connection types based on the connection list """
         #self._connection_types = []
         for c in self.connection_list:
             if c.connection_type is None:
@@ -199,6 +214,7 @@ class Topology(object):
                 self.connection_types.append(c.connection_type)
 
     def update_bond_types(self):
+        """ Update the bond types based on the bond list """
         #self._bond_types = []
         for b in self.bond_list:
             if b.connection_type is None:
@@ -210,6 +226,7 @@ class Topology(object):
                 self.bond_types.append(b.connection_type)
 
     def update_angle_types(self):
+        """ Update the angle types based on the angle list """
         #self._angle_types = []
         for a in self.angle_list:
             if a.connection_type is None:
