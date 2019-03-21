@@ -27,7 +27,7 @@ class TestTopology(BaseTest):
         top = Topology()
         site1 = Site(name='site1')
         site2 = Site(name='site2')
-        connect = Bond(connected_members=[site1,site2])
+        connect = Bond(connection_members=[site1,site2])
 
         top.add_connection(connect)
         top.add_site(site1)
