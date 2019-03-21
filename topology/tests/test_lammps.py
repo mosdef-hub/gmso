@@ -18,7 +18,7 @@ def test_write_lammps():
     top.box = Box(lengths=[1,1,1])
     site1 = Site(name='site1', atom_type=AtomType(mass=1))
     site2 = Site(name='site2', atom_type=AtomType(mass=1))
-    connect = Bond(connected_members=[site1, site2])
+    connect = Bond(connection_members=[site1, site2])
 
     top.add_site(site1)
     top.add_site(site2)
@@ -31,7 +31,7 @@ def test_write_lammps_triclinic():
     top.box = Box(lengths=[1,1,1], angles=[60,90,120])
     site1 = Site(name='site1', atom_type=AtomType(mass=1))
     site2 = Site(name='site2', atom_type=AtomType(mass=1))
-    connect = Bond(connected_members=[site1, site2])
+    connect = Bond(connection_members=[site1, site2])
 
     top.add_site(site1)
     top.add_site(site2)
