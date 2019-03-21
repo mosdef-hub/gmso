@@ -1,10 +1,6 @@
-import mbuild as mb
 import unyt as u
+import mbuild as mb
 import simtk.unit
-
-from topology.core.topology import Topology
-from topology.core.site import Site
-from topology.utils.sorting import natural_sort
 
 from simtk import openmm
     
@@ -23,7 +19,7 @@ def to_openmm(topology, openmm_object='topology'):
         Untyped OpenMM object to convert to
     """
     openmm_top = openmm.app.Topology()
-    
+
     # Get topology.positions into OpenMM form
     openmm_unit = 1 * simtk.unit.nanometer
     topology.positions().convert_to_units(openmm_unit.unit.get_symbol())
