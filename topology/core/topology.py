@@ -32,10 +32,10 @@ class Topology(object):
         self._bond_types = list()
         self._angle_types = list()
 
-        self._atom_type_functionals = list()
-        self._connection_type_functionals = list()
-        self._bond_type_functionals = list()
-        self._angle_type_functionals = list()
+        self._atom_type_expressions = list()
+        self._connection_type_expressions = list()
+        self._bond_type_expressions = list()
+        self._angle_type_expressions = list()
 
     @property
     def name(self):
@@ -114,19 +114,19 @@ class Topology(object):
         return self._angle_types
 
     @property
-    def atom_type_functionals(self):
+    def atom_type_expressions(self):
         return [atype.expression for atype in self.atom_types]
 
     @property
-    def connection_type_functionals(self):
+    def connection_type_expressions(self):
         return [contype.expression for contype in self.connection_types]
 
     @property
-    def bond_type_functionals(self):
+    def bond_type_expressions(self):
         return [btype.expression for btype in self.bond_types]
 
     @property
-    def angle_type_functionals(self):
+    def angle_type_expressions(self):
         return [atype.expression for atype in self.angle_types]
 
     def update_top(self):
