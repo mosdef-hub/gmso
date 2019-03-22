@@ -32,7 +32,7 @@ class TestTopology(BaseTest):
         top.add_site(site2)
 
 
-        assert len(top.connection_list) == 1
+        assert len(top.connections) == 1
 
     def test_add_box(self):
         top = Topology()
@@ -48,8 +48,8 @@ class TestTopology(BaseTest):
         site1 = Site(name='site1')
         top.add_site(site1)
 
-        assert set([type(site.position) for site in top.site_list]) == {u.unyt_array}
-        assert set([site.position.units for site in top.site_list]) == {u.nm}
+        assert set([type(site.position) for site in top.sites]) == {u.unyt_array}
+        assert set([site.position.units for site in top.sites]) == {u.nm}
 
         assert top.positions().dtype == float
         assert top.positions().units == u.nm

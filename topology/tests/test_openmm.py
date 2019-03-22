@@ -17,7 +17,7 @@ class TestOpenMM(BaseTest):
     
     def test_n_atoms(self, topology_site):
         top = topology_site(sites=10)
-        n_topology_sites = len(top.site_list)
+        n_topology_sites = len(top.sites)
         modeller = to_openmm(top, openmm_object='modeller')
         n_modeller_atoms = len([i for i in modeller.topology.atoms()])
     
@@ -25,7 +25,7 @@ class TestOpenMM(BaseTest):
     
     def test_box_dims(self, topology_site):
         top = topology_site(sites=10)
-        n_topology_sites = len(top.site_list)
+        n_topology_sites = len(top.sites)
         omm_top = to_openmm(top)
         topology_lengths = top.box.lengths
         omm_lengths = omm_top.getUnitCellDimensions()
@@ -34,7 +34,7 @@ class TestOpenMM(BaseTest):
     
     def test_particle_positions(self, topology_site):
         top = topology_site()
-        top.site_list[0].position = (1,1,1) * u.nanometer
+        top.sites[0].position = (1,1,1) * u.nanometer
         omm_top = to_openmm(top, openmm_object='modeller')
     
         assert np.allclose(omm_top.positions._value, top.positions().value)
@@ -43,7 +43,7 @@ class TestOpenMM(BaseTest):
         top = topology_site(sites=10)
         top.box = Box(lengths=[1,1,1])
     
-        n_topology_sites = len(top.site_list)
+        n_topology_sites = len(top.sites)
         omm_top = to_openmm(top, openmm_object='modeller')
     
         assert isinstance(omm_top.positions.unit, type(simtk.unit.nanometer))
