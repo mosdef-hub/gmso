@@ -62,7 +62,7 @@ def write_gsd(top,
 
     """
 
-    xyz = u.unyt_array([site.position for site in top.site_list])
+    xyz = u.unyt_array([site.position for site in top.sites])
     if shift_coords:
         warnings.warn("Shifting coordinates to [-L/2, L/2]")
         xyz = coord_shift(xyz, top.box)
@@ -116,7 +116,7 @@ def _write_particle_information(gsd_file, top, xyz, ref_distance, ref_mass,
 
     types = [
         site.name if site.atom_type is None else site.atom_type.name
-        for site in top.site_list
+        for site in top.sites
     ]
 
     unique_types = list(set(types))
@@ -128,11 +128,11 @@ def _write_particle_information(gsd_file, top, xyz, ref_distance, ref_mass,
     typeids = np.array([unique_types.index(t) for t in types])
     gsd_file.particles.typeid = typeids
 
-    masses = np.array([site.mass for site in top.site_list])
+    masses = np.array([site.mass for site in top.sites])
     masses[masses == 0] = 1.0
     gsd_file.particles.mass = masses / ref_mass
 
-    charges = np.array([site.charge for site in top.site_list])
+    charges = np.array([site.charge for site in top.sites])
     e0 = u.physical_constants.eps_0.in_units(
         u.elementary_charge**2 / u.Unit('kcal*angstrom/mol'))
     '''
@@ -195,7 +195,7 @@ def _write_bond_information(gsd_file, top):
     warnings.warn("{} bonds detected".format(top.n_bonds))
 
     unique_bond_types = set()
-    for bond in top.connection_list:
+    for bond in top.connections:
         if isinstance(bond, Bond):
             t1, t2 = bond.connection_members[0].atom_type, bond.connection_members[1].atom_type
             if t1 is None or t2 is None:
@@ -211,7 +211,7 @@ def _write_bond_information(gsd_file, top):
 
     bond_typeids = []
     bond_groups = []
-    for bond in top.connection_list:
+    for bond in top.bonds:
         if isinstance(bond, Bond):
             t1, t2 = bond.connection_members[0].atom_type, bond.connection_members[1].atom_type
             if t1 is None or t2 is None:
@@ -220,8 +220,8 @@ def _write_bond_information(gsd_file, top):
 
             bond_type = ('-'.join((t1.name, t2.name)))
             bond_typeids.append(unique_bond_types.index(bond_type))
-            bond_groups.append((top.site_list.index(bond.connection_members[0]),
-                                top.site_list.index(bond.connection_members[1])))
+            bond_groups.append((top.sites.index(bond.connection_members[0]),
+                                top.sites.index(bond.connection_members[1])))
 
     gsd_file.bonds.typeid = bond_typeids
     gsd_file.bonds.group = bond_groups

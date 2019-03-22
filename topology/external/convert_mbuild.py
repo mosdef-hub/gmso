@@ -40,12 +40,12 @@ def to_mbuild(topology):
         compound.name = topology.name
 
     particle_map = dict()
-    for site in topology.site_list:
+    for site in topology.sites:
         particle = mb.Compound(name=site.name, pos=site.position[0])
         particle_map[site] = particle
         compound.add(particle)
 
-    for connect in topology.connection_list:
+    for connect in topology.connections:
         if isinstance(connect, Bond):
             compound.add_bond((
                 particle_map[connect.connection_members[0]], 
