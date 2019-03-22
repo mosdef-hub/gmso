@@ -32,7 +32,7 @@ def to_openmm(topology, openmm_object='topology'):
     residue = openmm_top.addResidue(name='RES',
                                     chain=chain)
 
-    for site in topology.site_list:
+    for site in topology.sites:
         openmm_top.addAtom(name=site.name,
                            element=site.element.name,
                            residue=residue)
