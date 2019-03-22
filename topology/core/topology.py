@@ -33,11 +33,6 @@ class Topology(object):
         self._bond_types = list()
         self._angle_types = list()
 
-        self._atom_type_expressions = list()
-        self._connection_type_expressions = list()
-        self._bond_type_expressions = list()
-        self._angle_type_expressions = list()
-
     @property
     def name(self):
         return self._name
