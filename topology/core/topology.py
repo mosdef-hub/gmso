@@ -23,10 +23,10 @@ class Topology(object):
         if name is not None:
             self._name = name
         self._box = box
-        self._site_list = list()
-        self._connection_list = list()
-        self._bond_list = list()
-        self._angle_list = list()
+        self._sites = list()
+        self._connections = list()
+        self._bonds = list()
+        self._angles = list()
 
         self._atom_types = list()
         self._connection_types = list()
@@ -56,67 +56,67 @@ class Topology(object):
 
     def positions(self):
         xyz = np.empty(shape=(self.n_sites, 3)) * u.nm
-        for i, site in enumerate(self.site_list):
+        for i, site in enumerate(self.sites):
             xyz[i, :] = site.position
         return xyz
 
     def add_site(self, site):
-        if site in self.site_list:
+        if site in self.sites:
             warnings.warn("Redundantly adding Site {}".format(site))
-        self._site_list.append(site)
+        self._sites.append(site)
         self.update_atom_types()
 
     def add_connection(self, connection):
-        if connection in self.connection_list:
+        if connection in self.connections:
             warnings.warn("Redundantly adding Connection {}".format(connection))
 
-        if connection.connection_members[0] not in self.site_list:
+        if connection.connection_members[0] not in self.sites:
             self.add_site(connection.connection_members[0])
-        if connection.connection_members[1] not in self.site_list:
+        if connection.connection_members[1] not in self.sites:
             self.add_site(connection.connection_members[1])
 
-        self._connection_list.append(connection)
+        self._connections.append(connection)
 
-        #self.update_connection_list() Do we need to call this? Code should work either way
+        #self.update_connections() Do we need to call this? Code should work either way
         self.update_connection_types()
         if isinstance(connection, Bond):
-            self.update_bond_list()
+            self.update_bonds()
             self.update_bond_types()
         elif isinstance(connection, Angle):
-            self.update_angle_list()
+            self.update_angles()
             self.update_angle_types()
 
     @property
     def n_sites(self):
-        return len(self.site_list)
+        return len(self.sites)
 
     @property
     def n_connections(self):
-        return len(self.connection_list)
+        return len(self.connections)
 
     @property
     def n_bonds(self):
-        return len(self.bond_list)
+        return len(self.bonds)
 
     @property
     def n_angles(self):
-        return len(self.angle_list)
+        return len(self.angles)
 
     @property
-    def site_list(self):
-        return self._site_list
+    def sites(self):
+        return self._sites
 
     @property
-    def connection_list(self):
-        return self._connection_list
+    def connections(self):
+        return self._connections
 
     @property
-    def bond_list(self):
-        return self._bond_list
+    def bonds(self):
+        return self._bonds
 
     @property
-    def angle_list(self):
-        return self._angle_list
+    def angles(self):
+        return self._angles
 
     @property
     def atom_types(self):
@@ -158,44 +158,44 @@ class Topology(object):
         Will update: sites, connections, bonds, angles, 
         atom_types, connectiontypes, bondtypes, angletypes
         """
-        self.update_site_list()
-        self.update_connection_list()
-        self.update_bond_list()
-        self.update_angle_list()
+        self.update_sites()
+        self.update_connections()
+        self.update_bonds()
+        self.update_angles()
 
         self.update_atom_types()
         self.update_connection_types()
         self.update_bond_types()
         self.update_angle_types()
 
-    def update_site_list(self):
+    def update_sites(self):
         """ (Is this necessary?) 
         Update site list based on the connection members """
-        for connection in self.connection_list:
+        for connection in self.connections:
             for con_member in connection.connection_members:
-                if con_member not in self.site_list:
+                if con_member not in self.sites:
                     self.add_site(con_member)
             
-    def update_connection_list(self):
+    def update_connections(self):
         """ Update connection list based on the site list """
-        #self._connection_list = []
-        for site in self.site_list:
+        #self._connections = []
+        for site in self.sites:
             for connection in site.connections:
-                if connection not in self.connection_list:
+                if connection not in self.connections:
                     self.add_connection(connection)
 
-    def update_bond_list(self):
+    def update_bonds(self):
         """ Rebuild the bond list by filtering through connection list """
-        self._bond_list = [b for b in self.connection_list if isinstance(b, Bond)]
+        self._bonds = [b for b in self.connections if isinstance(b, Bond)]
 
-    def update_angle_list(self):
+    def update_angles(self):
         """ Rebuild the angle list by filtering through connection list """
-        self._angle_list = [a for a in self.connection_list if isinstance(a, Angle)]
+        self._angles = [a for a in self.connections if isinstance(a, Angle)]
 
     def update_atom_types(self):
         """ Update the atom types based on the site list """
         #self._atom_types = []
-        for site in self.site_list:
+        for site in self.sites:
             if site.atom_type is None:
                 warnings.warn("Site {} detected with no AtomType".format(site))
             elif site.atom_type not in self.atom_types:
@@ -204,7 +204,7 @@ class Topology(object):
     def update_connection_types(self):
         """ Update the connection types based on the connection list """
         #self._connection_types = []
-        for c in self.connection_list:
+        for c in self.connections:
             if c.connection_type is None:
                 warnings.warn("Non-parametrized Connection {} detected".format(c))
             elif not isinstance(c.connection_type, Potential):
@@ -216,7 +216,7 @@ class Topology(object):
     def update_bond_types(self):
         """ Update the bond types based on the bond list """
         #self._bond_types = []
-        for b in self.bond_list:
+        for b in self.bonds:
             if b.connection_type is None:
                 warnings.warn("Non-parametrized Bond {} detected".format(b))
             elif not isinstance(b.connection_type, BondType):
@@ -228,7 +228,7 @@ class Topology(object):
     def update_angle_types(self):
         """ Update the angle types based on the angle list """
         #self._angle_types = []
-        for a in self.angle_list:
+        for a in self.angles:
             if a.connection_type is None:
                 warnings.warn("Non-parametrized Angle {} detected".format(a))
             elif not isinstance(a.connection_type, AngleType):
