@@ -1,8 +1,14 @@
 import numpy as np
 import unyt as u
+import warnings
 
 from topology.core.connection import Connection
 from topology.core.bond import Bond 
+from topology.core.angle import Angle
+from topology.core.potential import Potential
+from topology.core.bond_type import BondType
+from topology.core.angle_type import AngleType
+from topology.exceptions import TopologyError
 from topology.testing.utils import allclose
 
 
@@ -18,11 +24,15 @@ class Topology(object):
         if name is not None:
             self._name = name
         self._box = box
-        self._site_list = list()
-        self._connection_list = list()
+        self._sites = list()
+        self._connections = list()
+        self._bonds = list()
+        self._angles = list()
 
-    def add_site(self, site):
-        self._site_list.append(site)
+        self._atom_types = list()
+        self._connection_types = list()
+        self._bond_types = list()
+        self._angle_types = list()
 
     @property
     def name(self):
@@ -40,41 +50,188 @@ class Topology(object):
     def box(self, box):
         self._box = box
 
-    @property
-    def n_sites(self):
-        return len(self._site_list)
-
     def positions(self):
         xyz = np.empty(shape=(self.n_sites, 3)) * u.nm
-        for i, site in enumerate(self.site_list):
+        for i, site in enumerate(self.sites):
             xyz[i, :] = site.position
         return xyz
 
-    @property
-    def site_list(self):
-        return self._site_list
+    def add_site(self, site):
+        if site in self.sites:
+            warnings.warn("Redundantly adding Site {}".format(site))
+        self._sites.append(site)
+        self.update_atom_types()
+
+    def add_connection(self, connection):
+        if connection in self.connections:
+            warnings.warn("Redundantly adding Connection {}".format(connection))
+
+        if connection.connection_members[0] not in self.sites:
+            self.add_site(connection.connection_members[0])
+        if connection.connection_members[1] not in self.sites:
+            self.add_site(connection.connection_members[1])
+
+        self._connections.append(connection)
+
+        #self.update_connections() Do we need to call this? Code should work either way
+        self.update_connection_types()
+        if isinstance(connection, Bond):
+            self.update_bonds()
+            self.update_bond_types()
+        elif isinstance(connection, Angle):
+            self.update_angles()
+            self.update_angle_types()
 
     @property
-    def connection_list(self):
-        return self._connection_list
+    def n_sites(self):
+        return len(self.sites)
 
     @property
     def n_connections(self):
-        return len(self._connection_list)
+        return len(self.connections)
 
     @property
     def n_bonds(self):
-        return len([b for b in self.connection_list if isinstance(b, Bond)])
+        return len(self.bonds)
 
-    def add_connection(self, connection):
-        self._connection_list.append(connection)
+    @property
+    def n_angles(self):
+        return len(self.angles)
 
-    def update_connection_list(self):
-        for site in self.site_list:
-            for neighbor in site.connections:
-                temp_connection = Connection(site, neighbor, update=False)
-                if temp_connection not in self.connection_list:
-                    self.add_connection(Connection(site, neighbor, update=True))
+    @property
+    def sites(self):
+        return self._sites
+
+    @property
+    def connections(self):
+        return self._connections
+
+    @property
+    def bonds(self):
+        return self._bonds
+
+    @property
+    def angles(self):
+        return self._angles
+
+    @property
+    def atom_types(self):
+        return self._atom_types
+
+    @property
+    def connection_types(self):
+        return self._connection_types
+
+    @property
+    def bond_types(self):
+        return self._bond_types
+
+    @property
+    def angle_types(self):
+        return self._angle_types
+
+    @property
+    def atom_type_expressions(self):
+        return list(set([atype.expression for atype in self.atom_types]))
+
+    @property
+    def connection_type_expressions(self):
+        return list(set([contype.expression for contype in self.connection_types]))
+
+    @property
+    def bond_type_expressions(self):
+        return list(set([btype.expression for btype in self.bond_types]))
+
+    @property
+    def angle_type_expressions(self):
+        return list(set([atype.expression for atype in self.angle_types]))
+
+    def update_top(self):
+        """ Update the entire topology's attributes
+
+        Notes
+        -----
+        Will update: sites, connections, bonds, angles, 
+        atom_types, connectiontypes, bondtypes, angletypes
+        """
+        self.update_sites()
+        self.update_connections()
+        self.update_bonds()
+        self.update_angles()
+
+        self.update_atom_types()
+        self.update_connection_types()
+        self.update_bond_types()
+        self.update_angle_types()
+
+    def update_sites(self):
+        """ (Is this necessary?) 
+        Update site list based on the connection members """
+        for connection in self.connections:
+            for con_member in connection.connection_members:
+                if con_member not in self.sites:
+                    self.add_site(con_member)
+            
+    def update_connections(self):
+        """ Update connection list based on the site list """
+        #self._connections = []
+        for site in self.sites:
+            for connection in site.connections:
+                if connection not in self.connections:
+                    self.add_connection(connection)
+
+    def update_bonds(self):
+        """ Rebuild the bond list by filtering through connection list """
+        self._bonds = [b for b in self.connections if isinstance(b, Bond)]
+
+    def update_angles(self):
+        """ Rebuild the angle list by filtering through connection list """
+        self._angles = [a for a in self.connections if isinstance(a, Angle)]
+
+    def update_atom_types(self):
+        """ Update the atom types based on the site list """
+        #self._atom_types = []
+        for site in self.sites:
+            if site.atom_type is None:
+                warnings.warn("Site {} detected with no AtomType".format(site))
+            elif site.atom_type not in self.atom_types:
+                self.atom_types.append(site.atom_type)
+
+    def update_connection_types(self):
+        """ Update the connection types based on the connection list """
+        #self._connection_types = []
+        for c in self.connections:
+            if c.connection_type is None:
+                warnings.warn("Non-parametrized Connection {} detected".format(c))
+            elif not isinstance(c.connection_type, Potential):
+                raise TopologyError("Non-Potential {} found "
+                        "in Connection {}".format(c.connection_type, c))
+            elif c.connection_type not in self.connection_types:
+                self.connection_types.append(c.connection_type)
+
+    def update_bond_types(self):
+        """ Update the bond types based on the bond list """
+        #self._bond_types = []
+        for b in self.bonds:
+            if b.connection_type is None:
+                warnings.warn("Non-parametrized Bond {} detected".format(b))
+            elif not isinstance(b.connection_type, BondType):
+                raise TopologyError("Non-BondType {} found in Bond {}".format(
+                    b.connection_type, b))
+            elif b.connection_type not in self.bond_types:
+                self.bond_types.append(b.connection_type)
+
+    def update_angle_types(self):
+        """ Update the angle types based on the angle list """
+        #self._angle_types = []
+        for a in self.angles:
+            if a.connection_type is None:
+                warnings.warn("Non-parametrized Angle {} detected".format(a))
+            elif not isinstance(a.connection_type, AngleType):
+                raise TopologyError("Non-AngleType {} found in Angle {}".format(
+                    a.connection_type, a))
+            elif a.connection_type not in self.angle_types:
+                self.angle_types.append(a.connection_type)
 
     def __repr__(self):
         descr = list('<')

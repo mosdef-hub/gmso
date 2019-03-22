@@ -11,12 +11,12 @@ class TestConvertParmEd(BaseTest):
     def test_from_parmed_basic(self, angles):
         struc = pmd.load_file(get_fn('ethane.mol2'), structure=True)
         top = from_parmed(struc)
-        for site in top.site_list:
+        for site in top.sites:
             assert site.atom_type is None
-        for connection in top.connection_list:
+        for connection in top.connections:
             assert connection.connection_type is None
         assert top.n_sites == 8
-        assert top.n_connections == 7
+        assert top.n_bonds == 7
 
         assert top.box is not None
         lengths = u.nm * [0.714, 0.7938, 0.6646]
@@ -27,13 +27,15 @@ class TestConvertParmEd(BaseTest):
         struc = pmd.load_file(get_fn('ethane.top'), xyz=get_fn('ethane.gro'))
         top = from_parmed(struc)
         assert top.n_sites == 8
-        assert top.n_connections == 7
+        assert top.n_bonds == 7
+        assert top.n_angles == 12
+        assert top.n_connections == 19
 
-        for site in top.site_list:
+        for site in top.sites:
             assert site.atom_type is not None
             assert site.charge is not None
 
-        for connection in top.connection_list:
+        for connection in top.connections:
             assert connection.connection_type is not None
 
         assert top.box is not None
