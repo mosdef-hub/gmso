@@ -65,7 +65,7 @@ def write_gro(top, filename):
             top.name if top.name is not None else '',
             str(datetime.datetime.now())))
         out_file.write('{:d}\n'.format(top.n_sites))
-        for idx, site in enumerate(top.site_list):
+        for idx, site in enumerate(top.sites):
             warnings.warn('Residue information is not currently '
                     'stored or written to GRO files.',
                      NotYetImplementedWarning)

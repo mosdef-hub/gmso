@@ -43,7 +43,7 @@ def write_xyz(top, filename):
             top.name,
             filename,
             str(datetime.datetime.now())))
-        for idx, site in enumerate(top.site_list):
+        for idx, site in enumerate(top.sites):
             # TODO: Better handling of element guessing and site naming
             if site.element is not None:
                 tmp_name = site.element.symbol
