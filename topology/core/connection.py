@@ -35,7 +35,7 @@ class Connection(object):
 
     @connection_type.setter
     def connection_type(self, contype):
-        self_connection_type = _validate_connection_type(contype)
+        self._connection_type = _validate_connection_type(contype)
 
     def _update_members(self):
         for partner in self.connection_members:
