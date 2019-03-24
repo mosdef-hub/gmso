@@ -88,7 +88,7 @@ class Site(object):
     def __eq__(self, other):
         if not allclose(self.position, other.position):
             return False
-        if not allclose(self.charge, other.charge):
+        if not allclose(self.charge, other.charge, atol=1e-22):
             return False
         if self.atom_type != other.atom_type:
             return False

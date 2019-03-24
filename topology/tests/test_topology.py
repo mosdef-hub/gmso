@@ -6,10 +6,12 @@ import unyt as u
 import parmed as pmd
 
 from topology import *
+from topology.external.convert_parmed import from_parmed
 
 from topology.tests.base_test import BaseTest
 from topology.testing.utils import allclose
 from topology.tests.base_test import BaseTest
+from topology.utils.io import get_fn
 
 
 class TestTopology(BaseTest):
@@ -67,26 +69,29 @@ class TestTopology(BaseTest):
         assert top != diff_name
 
     def test_eq_sites(self, top, charge):
-        site = Site()
+        ref = deepcopy(top)
         wrong_n_sites = deepcopy(top)
         assert top == wrong_n_sites
-        top.add_site(site)
-        assert top != wrong_n_sites
+        ref.add_site(Site())
+        assert ref != wrong_n_sites
 
+        ref = deepcopy(top)
         wrong_position = deepcopy(top)
-        top.add_site(Site(position=u.nm*[0, 0, 0]))
+        ref.add_site(Site(position=u.nm*[0, 0, 0]))
         wrong_position.add_site(Site(position=u.nm*[1, 1, 1]))
         assert top != wrong_position
 
+        ref = deepcopy(top)
         wrong_charge = deepcopy(top)
-        top.add_site(Site(charge=charge))
-        wrong_position.add_site(Site(charge=-1*charge))
-        assert top != wrong_charge
+        ref.add_site(Site(charge=charge))
+        wrong_charge.add_site(Site(charge=-1*charge))
+        assert ref != wrong_charge
 
+        ref = deepcopy(top)
         wrong_atom_type = deepcopy(top)
-        top.add_site(Site(atom_type=AtomType(expression='epsilon*sigma')))
+        ref.add_site(Site(atom_type=AtomType(expression='epsilon*sigma')))
         wrong_atom_type.add_site(Site(atom_type=AtomType(expression='sigma')))
-        assert top != wrong_atom_type
+        assert ref != wrong_atom_type
 
     def test_eq_bonds(self):
         ref = pmd.load_file(get_fn('ethane.top'),
