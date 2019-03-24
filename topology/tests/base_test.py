@@ -35,6 +35,10 @@ class BaseTest:
         return Box(lengths=u.nm*np.ones(3))
 
     @pytest.fixture
+    def top(self):
+        return Topology(name='mytop')
+
+    @pytest.fixture
     def topology_site(self):
         def _topology(sites=1):
             top = Topology()

@@ -1,5 +1,8 @@
+from copy import deepcopy
+
 import numpy as np
 import unyt as u
+import parmed as pmd
 
 from topology.core.topology import Topology
 from topology.core.box import Box
@@ -9,9 +12,12 @@ from topology.core.angle import Angle
 from topology.core.atom_type import AtomType
 from topology.core.bond_type import BondType
 from topology.core.angle_type import AngleType
+from topology.external.convert_parmed import from_parmed
 
 from topology.tests.base_test import BaseTest
 from topology.testing.utils import allclose
+from topology.tests.base_test import BaseTest
+from topology.utils.io import get_fn
 
 
 class TestTopology(BaseTest):
@@ -60,6 +66,75 @@ class TestTopology(BaseTest):
         assert top.positions().dtype == float
         assert top.positions().units == u.nm
         assert isinstance(top.positions(), u.unyt_array)
+
+    def test_eq_types(self, top, box):
+        assert top != box
+
+        diff_name = deepcopy(top)
+        diff_name.name = 'othertop'
+        assert top != diff_name
+
+    def test_eq_sites(self, top, charge):
+        ref = deepcopy(top)
+        wrong_n_sites = deepcopy(top)
+        assert top == wrong_n_sites
+        ref.add_site(Site())
+        assert ref != wrong_n_sites
+
+        ref = deepcopy(top)
+        wrong_position = deepcopy(top)
+        ref.add_site(Site(position=u.nm*[0, 0, 0]))
+        wrong_position.add_site(Site(position=u.nm*[1, 1, 1]))
+        assert top != wrong_position
+
+        ref = deepcopy(top)
+        wrong_charge = deepcopy(top)
+        ref.add_site(Site(charge=charge))
+        wrong_charge.add_site(Site(charge=-1*charge))
+        assert ref != wrong_charge
+
+        ref = deepcopy(top)
+        wrong_atom_type = deepcopy(top)
+        ref.add_site(Site(atom_type=AtomType(expression='epsilon*sigma')))
+        wrong_atom_type.add_site(Site(atom_type=AtomType(expression='sigma')))
+        assert ref != wrong_atom_type
+
+    def test_eq_bonds(self):
+        ref = pmd.load_file(get_fn('ethane.top'),
+                            xyz=get_fn('ethane.gro'))
+
+        missing_bond = deepcopy(ref)
+        missing_bond.bonds[0].delete()
+
+        assert ref != missing_bond
+
+        bad_bond_type = deepcopy(ref)
+        bad_bond_type.bond_types[0].k = 22
+
+        assert ref != bad_bond_type
+
+    def test_eq_angles(self):
+        ref = pmd.load_file(get_fn('ethane.top'),
+                            xyz=get_fn('ethane.gro'))
+
+        missing_angle = deepcopy(ref)
+        missing_angle.angles[0].delete()
+
+        assert ref != missing_angle
+
+        bad_angle_type = deepcopy(ref)
+        bad_angle_type.angle_types[0].k = 22
+
+        assert ref != bad_angle_type
+
+    def test_eq_overall(self):
+        ref = pmd.load_file(get_fn('ethane.top'),
+                            xyz=get_fn('ethane.gro'))
+
+        top1 = from_parmed(ref)
+        top2 = from_parmed(ref)
+
+        assert top1 == top2
 
     def test_top_update(self):
         top = Topology()
@@ -204,4 +279,3 @@ class TestTopology(BaseTest):
         assert len(top.angle_types) == 1 
         assert len(top.angle_type_expressions) == 1
         assert len(top.atom_type_expressions) == 2
-

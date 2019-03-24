@@ -8,6 +8,7 @@ from topology.core.potential import Potential
 from topology.core.bond_type import BondType
 from topology.core.angle_type import AngleType
 from topology.exceptions import TopologyError
+from topology.testing.utils import allclose
 
 
 class Topology(object):
@@ -239,3 +240,31 @@ class Topology(object):
         descr.append('id: {}>'.format(id(self)))
 
         return ''.join(descr)
+
+    def __eq__(self, other):
+        """Compare a topology for equivalence."""
+
+        if self is other:
+            return True
+
+        if not isinstance(other, Topology):
+            return False
+
+        if self.name != other.name:
+            return False
+
+        if self.n_sites != other.n_sites:
+            return False
+
+        for (con1, con2) in zip(self.connections, other.connections):
+            if con1 != con2:
+                return False
+
+        for (site1, site2) in zip(self.sites, other.sites):
+            if site1 != site2:
+                return False
+
+        if self.box != other.box:
+            return False
+
+        return True

@@ -4,19 +4,21 @@ import numpy as np
 import unyt as u
 
 from topology.core.atom_type import AtomType
+from topology.testing.utils import allclose
 
 
 class Site(object):
     """A general site."""
 
     def __init__(self,
-                 name,
+                 name='Site',
                  position=None,
                  charge=None,
                  mass=None,
                  element=None,
                  atom_type=None):
-        self.name = str(name)
+        if name is not None:
+            self.name = str(name)
         if position is None:
             self.position = u.nm * np.zeros(3)
         else:
@@ -82,6 +84,19 @@ class Site(object):
     def atom_type(self, val):
         val = _validate_atom_type(val)
         self._atom_type = val
+
+    def __eq__(self, other):
+        if not allclose(self.position, other.position):
+            return False
+        if not allclose(self.charge, other.charge, atol=1e-22):
+            return False
+        if self.atom_type != other.atom_type:
+            return False
+
+        return True
+
+    def __hash__(self):
+        return id(self)
 
     def __repr__(self):
         return "<Site {}, id {}>".format(self.name, id(self))
