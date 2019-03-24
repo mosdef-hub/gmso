@@ -28,6 +28,12 @@ class Bond(Connection):
         super(Bond, self).__init__(connection_members=connection_members, 
                 connection_type=connection_type)
 
+    def __eq__(self, other):
+        if not self.connection_members == other.connection_members:
+            return False
+        if not self.connection_type == other.connection_type:
+            return False
+        return True
 
 def _validate_two_partners(connection_members):
     """Ensure 2 partners are involved in Bond"""
