@@ -167,7 +167,7 @@ class TestTopology(BaseTest):
 
 
         ctype = BondType()
-        connection_12 = Bond(connection_members=[site1, site2], 
+        connection_12 = Bond(connection_members=[site1, site2],
                 connection_type=ctype)
         top.add_connection(connection_12)
         #assert top.n_sites == 2
@@ -232,21 +232,21 @@ class TestTopology(BaseTest):
         bond = Bond(connection_members=[site1, site2], connection_type=btype)
         top.add_site(site1)
         top.add_site(site2)
-        top.add_connection(bond) 
+        top.add_connection(bond)
 
         #assert top.n_connections == 1
         #assert top.n_bonds == 0
-        #assert len(top.bond_types) == 0 
-        #assert len(top.bond_type_expressions) == 0 
+        #assert len(top.bond_types) == 0
+        #assert len(top.bond_type_expressions) == 0
 
         #top.update_bond_list()
         #assert top.n_bonds == 1
-        #assert len(top.bond_types) == 0 
-        #assert len(top.bond_type_expressions) == 0 
+        #assert len(top.bond_types) == 0
+        #assert len(top.bond_type_expressions) == 0
 
         #top.update_bond_types()
         assert top.n_bonds == 1
-        assert len(top.bond_types) == 1 
+        assert len(top.bond_types) == 1
         assert len(top.bond_type_expressions) == 1
 
     def test_angle_angletype_update(self):
@@ -257,25 +257,25 @@ class TestTopology(BaseTest):
         site1 = Site('a', atom_type=atype1)
         site2 = Site('b', atom_type=atype2)
         site3 = Site('c', atom_type=atype2)
-        atype = AngleType() 
+        atype = AngleType()
         angle = Angle(connection_members=[site1, site2, site3], connection_type=atype)
         top.add_site(site1)
         top.add_site(site2)
         top.add_site(site3)
-        top.add_connection(angle) 
+        top.add_connection(angle)
 
         #assert top.n_connections == 1
         #assert top.n_angles == 0
-        #assert len(top.angle_types) == 0 
-        #assert len(top.angle_type_expressions) == 0 
+        #assert len(top.angle_types) == 0
+        #assert len(top.angle_type_expressions) == 0
 
         #top.update_angle_list()
         #assert top.n_angles == 1
-        #assert len(top.angle_types) == 0 
-        #assert len(top.angle_type_expressions) == 0 
+        #assert len(top.angle_types) == 0
+        #assert len(top.angle_type_expressions) == 0
 
         #top.update_angle_types()
         assert top.n_angles == 1
-        assert len(top.angle_types) == 1 
+        assert len(top.angle_types) == 1
         assert len(top.angle_type_expressions) == 1
         assert len(top.atom_type_expressions) == 2

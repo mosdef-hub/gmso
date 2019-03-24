@@ -29,7 +29,7 @@ class TestBond(BaseTest):
         assert site2.n_connections == 0
         bond_type = BondType()
 
-        connect = Bond(connection_members=[site1, site2], 
+        connect = Bond(connection_members=[site1, site2],
                 connection_type=bond_type)
 
         assert site1.n_connections == 1
@@ -47,6 +47,6 @@ class TestBond(BaseTest):
         site1 = Site(name='site1')
         site2 = Site(name='site2')
         with pytest.raises(TopologyError):
-            Bond(connection_members=[site1,site2],
+            Bond(connection_members=[site1, site2],
                  connection_type='Fake bondtype')
 

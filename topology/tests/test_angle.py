@@ -34,7 +34,7 @@ class TestAngle(BaseTest):
         assert site3.n_connections == 0
         angle_type = AngleType()
 
-        connect = Angle(connection_members=[site1, site2, site3], 
+        connect = Angle(connection_members=[site1, site2, site3],
                 connection_type=angle_type)
 
         assert site1.n_connections == 1

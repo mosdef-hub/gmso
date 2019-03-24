@@ -7,7 +7,7 @@ class TestLammpsWriter(BaseTest):
     def test_write_lammps(self, topology_site):
         top = topology_site()
         write_lammpsdata(top, filename='data.lammps')
-    
+
     def test_write_lammps_triclinic(self, topology_site):
         top = topology_site()
         top.box = Box(lengths=[1,1,1], angles=[60,90,120])

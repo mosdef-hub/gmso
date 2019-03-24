@@ -4,7 +4,7 @@ from topology.core.potential import Potential
 
 class BondType(Potential):
     """A Potential between 2-bonded partners.
-    
+
     Parameters
     ----------
     name : str

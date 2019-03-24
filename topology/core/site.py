@@ -127,7 +127,7 @@ def _validate_charge(charge):
         charge = charge.value * u.elementary_charge
     else:
         pass
-    
+
     return charge
 
 def _validate_mass(mass):

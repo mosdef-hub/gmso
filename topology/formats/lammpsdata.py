@@ -10,7 +10,7 @@ from topology.testing.utils import allclose
 
 def write_lammpsdata(topology, filename, atom_style='full'):
     """Output a LAMMPS data file.
-    
+
     Outputs a LAMMPS data file in the 'full' atom style format. Assumes use
     of 'real' units. See http://lammps.sandia.gov/doc/atom_style.html for
     more information on atom styles.
@@ -57,7 +57,6 @@ def write_lammpsdata(topology, filename, atom_style='full'):
     unique_types.sort(key=natural_sort)
 
     # TODO: charges
- 
     # TODO: bonds
     # TODO: Angles
     # TODO: Dihedrals

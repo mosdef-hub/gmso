@@ -7,7 +7,7 @@ class Connection(object):
     """ An abstract object that lists connected partners and their type
     This functions as a super-class for any connected groups (bonds,
     angles, dihedrals, etc), with a property for the conection_type
-    
+
     Parameters
     ----------
     connection_members : list of topology.Site

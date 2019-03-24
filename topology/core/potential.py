@@ -16,11 +16,11 @@ class Potential(object):
 
     Parameters
     ----------
-    name : str, default="Potential" 
+    name : str, default="Potential"
         The name of the potential.
     expression : str or sympy.Expr, default='a*x+b'
-        The mathematical expression describing the functional form of the 
-        potential. 
+        The mathematical expression describing the functional form of the
+        potential.
     parameters : dict {str: unyt.unyt_quantity},
             default={'a': 1.0*u.dimensionless, 'b': 1.0*u.dimensionless}
         The parameters of the potential and their values, as unyt quantities.

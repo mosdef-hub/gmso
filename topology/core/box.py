@@ -133,7 +133,7 @@ class Box(object):
     def get_vectors(self):
         """ Return the vectors of the box."""
         return (self._lengths * self.get_unit_vectors().T).T
-    
+
     def get_unit_vectors(self):
         """ Return the normalized vectors of the box."""
         return self._unit_vectors_from_angles()

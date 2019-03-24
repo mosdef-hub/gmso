@@ -150,7 +150,7 @@ class Topology(object):
 
         Notes
         -----
-        Will update: sites, connections, bonds, angles, 
+        Will update: sites, connections, bonds, angles,
         atom_types, connectiontypes, bondtypes, angletypes
         """
         self.update_sites()
@@ -164,13 +164,13 @@ class Topology(object):
         self.update_angle_types()
 
     def update_sites(self):
-        """ (Is this necessary?) 
+        """ (Is this necessary?)
         Update site list based on the connection members """
         for connection in self.connections:
             for con_member in connection.connection_members:
                 if con_member not in self.sites:
                     self.add_site(con_member)
-            
+
     def update_connections(self):
         """ Update connection list based on the site list """
         #self._connections = []
