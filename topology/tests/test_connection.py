@@ -41,12 +41,12 @@ class TestConnection(BaseTest):
         site1 = Site(name='site1')
         site2 = Site(name='site2')
         with pytest.raises(TopologyError):
-            connect = Connection(connection_members=['fakesite1', 'fakesite2'])
+            Connection(connection_members=['fakesite1', 'fakesite2'])
 
     def test_bond_fake_ctype(self):
         site1 = Site(name='site1')
         site2 = Site(name='site2')
         with pytest.raises(TopologyError):
-            connect = Connection(connection_members=[site1,site2],
-                    connection_type='Fake ctype')
+            Connection(connection_members=[site1,site2],
+                       connection_type='Fake ctype')
 

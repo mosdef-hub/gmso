@@ -1,7 +1,14 @@
 import numpy as np
 import unyt as u
 
-from topology import *
+from topology.core.topology import Topology
+from topology.core.box import Box
+from topology.core.site import Site
+from topology.core.bond import Bond
+from topology.core.angle import Angle
+from topology.core.atom_type import AtomType
+from topology.core.bond_type import BondType
+from topology.core.angle_type import AngleType
 
 from topology.tests.base_test import BaseTest
 from topology.testing.utils import allclose

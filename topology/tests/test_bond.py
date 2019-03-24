@@ -41,12 +41,12 @@ class TestBond(BaseTest):
         site1 = Site(name='site1')
         site2 = Site(name='site2')
         with pytest.raises(TopologyError):
-            connect = Bond(connection_members=['fakesite1', 'fakesite2'])
+            Bond(connection_members=['fakesite1', 'fakesite2'])
 
     def test_bond_fake_bondtype(self):
         site1 = Site(name='site1')
         site2 = Site(name='site2')
         with pytest.raises(TopologyError):
-            connect = Bond(connection_members=[site1,site2],
-                    connection_type='Fake bondtype')
+            Bond(connection_members=[site1,site2],
+                 connection_type='Fake bondtype')
 

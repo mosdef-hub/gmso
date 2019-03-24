@@ -20,11 +20,11 @@ class TestBox(BaseTest):
     def test_bad_lengths(self, lengths, angles):
         lengths *= u.nm
         with pytest.raises(ValueError):
-            box = Box(lengths=lengths, angles=angles)
+            Box(lengths=lengths, angles=angles)
 
     def test_build_2D_Box(self):
         with pytest.warns(UserWarning):
-            box = Box(lengths=u.nm * [4, 4, 0])
+            Box(lengths=u.nm * [4, 4, 0])
 
     def test_dtype(self, box):
         assert box.lengths.dtype == float
