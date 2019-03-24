@@ -1,4 +1,3 @@
-import pytest 
 import simtk.unit
 import unyt as u
 import numpy as np

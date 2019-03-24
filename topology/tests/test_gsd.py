@@ -1,13 +1,10 @@
-import numpy as np
 import unyt as u
 import parmed as pmd
-import pytest
 
 from topology.formats.gsd import write_gsd
 from topology.external.convert_parmed import from_parmed
 from topology.tests.base_test import BaseTest
 from topology.utils.io import get_fn
-from topology.testing.utils import allclose
 
 
 class TestGsd(BaseTest):

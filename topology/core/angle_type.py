@@ -1,8 +1,6 @@
 import unyt as u
-import sympy
 
 from topology.core.potential import Potential
-from topology.exceptions import TopologyError
 
 class AngleType(Potential):
     """A Potential between 3-bonded partners.

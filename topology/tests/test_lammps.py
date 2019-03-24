@@ -1,5 +1,3 @@
-import pytest 
-
 from topology.core.box import Box
 from topology.formats.lammpsdata import write_lammpsdata
 from topology.tests.base_test import BaseTest

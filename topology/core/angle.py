@@ -1,6 +1,5 @@
 import warnings
 
-from topology.core.site import Site
 from topology.core.connection import Connection
 from topology.core.angle_type import AngleType
 from topology.exceptions import TopologyError

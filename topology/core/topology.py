@@ -2,8 +2,7 @@ import numpy as np
 import unyt as u
 import warnings
 
-from topology.core.connection import Connection
-from topology.core.bond import Bond 
+from topology.core.bond import Bond
 from topology.core.angle import Angle
 from topology.core.potential import Potential
 from topology.core.bond_type import BondType

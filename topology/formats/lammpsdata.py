@@ -1,15 +1,10 @@
 from __future__ import division
 
-from warnings import warn
-import itertools as it
 import warnings
 import numpy as np
 import unyt as u
 import datetime
 
-from topology.core.topology import Topology
-from topology.core.box import Box
-from topology.core.site import Site
 from topology.utils.sorting import natural_sort
 from topology.testing.utils import allclose
 

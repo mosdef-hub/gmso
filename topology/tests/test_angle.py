@@ -1,6 +1,5 @@
 import pytest
 
-from topology.core.connection import Connection
 from topology.core.angle import Angle
 from topology.core.angle_type import AngleType
 from topology.core.site import Site
