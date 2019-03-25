@@ -4,7 +4,7 @@ import numpy as np
 import unyt as u
 
 from topology.core.atom_type import AtomType
-from topology.testing.utils import allclose
+from topology.utils.testing import allclose
 
 
 class Site(object):
@@ -127,7 +127,7 @@ def _validate_charge(charge):
         charge = charge.value * u.elementary_charge
     else:
         pass
-    
+
     return charge
 
 def _validate_mass(mass):

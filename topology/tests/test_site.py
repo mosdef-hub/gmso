@@ -22,4 +22,4 @@ class TestSite(BaseTest):
         ['a', 'b', 'c'], ['a', 1, 1]])
     def test_bad_pos_input(self, position):
         with pytest.raises((u.exceptions.UnitDtypeError, ValueError)):
-            site = Site(name='site', position=u.nm*position)
+            Site(name='site', position=u.nm*position)

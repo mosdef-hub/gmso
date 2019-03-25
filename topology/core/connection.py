@@ -3,11 +3,12 @@ from topology.core.potential import Potential
 from topology.core.site import Site
 from topology.exceptions import TopologyError
 
+
 class Connection(object):
     """ An abstract object that lists connected partners and their type
     This functions as a super-class for any connected groups (bonds,
     angles, dihedrals, etc), with a property for the conection_type
-    
+
     Parameters
     ----------
     connection_members : list of topology.Site
@@ -35,7 +36,7 @@ class Connection(object):
 
     @connection_type.setter
     def connection_type(self, contype):
-        self_connection_type = _validate_connection_type(contype)
+        self._connection_type = _validate_connection_type(contype)
 
     def _update_members(self):
         for partner in self.connection_members:

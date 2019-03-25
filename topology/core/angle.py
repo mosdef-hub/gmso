@@ -1,13 +1,13 @@
 import warnings
 
-from topology.core.site import Site
 from topology.core.connection import Connection
 from topology.core.angle_type import AngleType
 from topology.exceptions import TopologyError
 
+
 class Angle(Connection):
     """A 3-partner connection between sites.
-    
+
     Partners
     --------
     connection_members: list of topology.Site
@@ -25,7 +25,7 @@ class Angle(Connection):
         connection_members = _validate_three_partners(connection_members)
         connection_type = _validate_angletype(connection_type)
 
-        super(Angle, self).__init__(connection_members=connection_members, 
+        super(Angle, self).__init__(connection_members=connection_members,
                 connection_type=connection_type)
 
     def __eq__(self, other):
@@ -39,9 +39,9 @@ class Angle(Connection):
 def _validate_three_partners(connection_members):
     """Ensure 3 partners are involved in Angle"""
     if len(connection_members) != 3:
-        raise TopologyError("Trying to create an Angle " 
+        raise TopologyError("Trying to create an Angle "
                 "with {} connection members". format(len(connection_members)))
-    
+
     return connection_members
 
 

@@ -51,7 +51,7 @@ def from_parmed(structure):
                 'r_eq': (bond.type.req * u.angstrom).in_units(u.nm)
             }
             new_connection_type = topo.BondType(parameters=bond_params)
-            top_connection = topo.Bond(connection_members=[site_map[bond.atom1], 
+            top_connection = topo.Bond(connection_members=[site_map[bond.atom1],
                 site_map[bond.atom2]],
                 connection_type=new_connection_type)
 
@@ -72,7 +72,7 @@ def from_parmed(structure):
                 'theta_eq': (angle.type.theteq * u.degree)
             }
             new_connection_type = topo.AngleType(parameters=angle_params)
-            top_connection = topo.Angle(connection_members=[site_map[angle.atom1], 
+            top_connection = topo.Angle(connection_members=[site_map[angle.atom1],
                 site_map[angle.atom2], site_map[angle.atom3]],
                 connection_type=new_connection_type)
 

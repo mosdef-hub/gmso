@@ -26,7 +26,7 @@ def from_mbuild(compound):
         new_bond = Bond(connection_members=[site_map[b1], site_map[b2]],
                 connection_type=None)
         top.add_connection(new_bond)
-        
+
     return top
 
 def to_mbuild(topology):
@@ -48,7 +48,7 @@ def to_mbuild(topology):
     for connect in topology.connections:
         if isinstance(connect, Bond):
             compound.add_bond((
-                particle_map[connect.connection_members[0]], 
+                particle_map[connect.connection_members[0]],
                 particle_map[connect.connection_members[1]]))
 
     return compound

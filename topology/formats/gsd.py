@@ -1,22 +1,15 @@
 from __future__ import division
-
-from collections import OrderedDict
-from copy import deepcopy
-from math import floor
-import re
 import warnings
 
 import numpy as np
 import unyt as u
-from oset import oset as OrderedSet
 import gsd
 import gsd.hoomd
 
-from topology.core.box import Box
 from topology.core.bond import Bond
 from topology.utils.geometry import coord_shift
 from topology.exceptions import NotYetImplementedWarning
-from topology.testing.utils import allclose
+from topology.utils.testing import allclose
 
 __all__ = ['write_gsd']
 

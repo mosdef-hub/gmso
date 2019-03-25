@@ -4,7 +4,7 @@ import pytest
 
 from topology.core.atom_type import AtomType
 from topology.tests.base_test import BaseTest
-from topology.testing.utils import allclose
+from topology.utils.testing import allclose
 
 
 class TestAtomType(BaseTest):

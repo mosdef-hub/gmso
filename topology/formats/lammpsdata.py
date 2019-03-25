@@ -1,21 +1,16 @@
 from __future__ import division
 
-from warnings import warn
-import itertools as it
 import warnings
 import numpy as np
 import unyt as u
 import datetime
 
-from topology.core.topology import Topology
-from topology.core.box import Box
-from topology.core.site import Site
 from topology.utils.sorting import natural_sort
-from topology.testing.utils import allclose
+from topology.utils.testing import allclose
 
 def write_lammpsdata(topology, filename, atom_style='full'):
     """Output a LAMMPS data file.
-    
+
     Outputs a LAMMPS data file in the 'full' atom style format. Assumes use
     of 'real' units. See http://lammps.sandia.gov/doc/atom_style.html for
     more information on atom styles.
@@ -62,7 +57,6 @@ def write_lammpsdata(topology, filename, atom_style='full'):
     unique_types.sort(key=natural_sort)
 
     # TODO: charges
- 
     # TODO: bonds
     # TODO: Angles
     # TODO: Dihedrals

@@ -1,4 +1,3 @@
-import mbuild as mb
 from mbuild.examples import Ethane
 
 from topology.external.convert_mbuild import from_mbuild, to_mbuild

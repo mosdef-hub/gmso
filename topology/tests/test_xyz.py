@@ -4,7 +4,7 @@ import pytest
 from topology.formats.xyz import read_xyz, write_xyz
 from topology.tests.base_test import BaseTest
 from topology.utils.io import get_fn
-from topology.testing.utils import allclose
+from topology.utils.testing import allclose
 
 class TestXYZ(BaseTest):
     def test_read_xyz(self):

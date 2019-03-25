@@ -1,7 +1,7 @@
 import warnings
 import unyt as u
 
-from topology.testing.utils import allclose
+from topology.utils.testing import allclose
 from topology.core.potential import Potential
 
 
@@ -21,7 +21,7 @@ class AtomType(Potential):
         The name of the potential.
     mass : unyt.unyt_quantity, optional, default=0.0 * unyt.g / u.mol
         The mass of the atom type.
-    charge : unyt.unyt_quantity, optional, default=0.0 * unyt.elementary_charge 
+    charge : unyt.unyt_quantity, optional, default=0.0 * unyt.elementary_charge
         The charge of the atom type.
     expression : str or sympy.Expr,
                  default='4*epsilon*((sigma/r)**12 - (sigma/r)**6)',

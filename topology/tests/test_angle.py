@@ -1,6 +1,5 @@
 import pytest
 
-from topology.core.connection import Connection
 from topology.core.angle import Angle
 from topology.core.angle_type import AngleType
 from topology.core.site import Site
@@ -35,8 +34,8 @@ class TestAngle(BaseTest):
         assert site3.n_connections == 0
         angle_type = AngleType()
 
-        connect = Angle(connection_members=[site1, site2, site3], 
-                connection_type=angle_type)
+        connect = Angle(connection_members=[site1, site2, site3],
+                        connection_type=angle_type)
 
         assert site1.n_connections == 1
         assert site2.n_connections == 1
@@ -49,13 +48,13 @@ class TestAngle(BaseTest):
         site2 = Site(name='site2')
         site3 = Site(name='site3')
         with pytest.raises(TopologyError):
-            connect = Angle(connection_members=['fakesite1', 'fakesite2', 4.2])
+            Angle(connection_members=['fakesite1', 'fakesite2', 4.2])
 
     def test_angle_fake_angletype(self):
         site1 = Site(name='site1')
         site2 = Site(name='site2')
         site3 = Site(name='site3')
         with pytest.raises(TopologyError):
-            connect = Angle(connection_members=[site1, site2, site3],
-                    connection_type='Fake angletype')
+            Angle(connection_members=[site1, site2, site3],
+                  connection_type='Fake angletype')
 

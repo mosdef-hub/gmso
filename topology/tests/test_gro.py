@@ -7,7 +7,7 @@ from topology.formats.gro import read_gro, write_gro
 from topology.external.convert_parmed import from_parmed
 from topology.tests.base_test import BaseTest
 from topology.utils.io import get_fn
-from topology.testing.utils import allclose
+from topology.utils.testing import allclose
 
 
 class TestGro(BaseTest):
