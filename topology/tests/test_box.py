@@ -40,16 +40,16 @@ class TestBox(BaseTest):
         box.lengths = 2*u.nm*np.ones(3)
         assert (box.lengths == 2*u.nm*np.ones(3)).all()
 
-    @pytest.mark.parametrize('angles', [[40.0, 50.0, 60.0],
-        [30.0, 60.0, 70.0], [45.0, 45.0, 75.0]])
+    @pytest.mark.parametrize(
+        'angles', [[40.0, 50.0, 60.0], [30.0, 60.0, 70.0], [45.0, 45.0, 75.0]]
+    )
     def test_angles_setter(self, lengths, angles):
         box = Box(lengths=lengths, angles=u.degree*np.ones(3))
         angles *= u.degree
         box.angles = angles
         assert (box.angles == angles).all()
 
-    @pytest.mark.parametrize('lengths', [[3, 3, 3], [4, 4, 4],
-        [4, 6, 4]])
+    @pytest.mark.parametrize('lengths', [[3, 3, 3], [4, 4, 4], [4, 6, 4]])
     def test_setters_with_lists(self, lengths):
         box = Box(lengths=u.nm*np.ones(3))
         lengths *= u.nm

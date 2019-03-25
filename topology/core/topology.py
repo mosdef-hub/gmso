@@ -8,7 +8,6 @@ from topology.core.potential import Potential
 from topology.core.bond_type import BondType
 from topology.core.angle_type import AngleType
 from topology.exceptions import TopologyError
-from topology.testing.utils import allclose
 
 
 class Topology(object):

@@ -2,6 +2,7 @@ import unyt as u
 
 from topology.core.potential import Potential
 
+
 class AngleType(Potential):
     """A Potential between 3-bonded partners.
 

@@ -42,13 +42,13 @@ class BaseTest:
     def topology_site(self):
         def _topology(sites=1):
             top = Topology()
-            top.box = Box(lengths=[1,1,1])
+            top.box = Box(lengths=[1, 1, 1])
             H = Element(name='H', symbol='H', mass=1)
             site1 = Site(name='site1',
-                    element=H,
-                    atom_type=AtomType(name="at1",
-                                       mass=H.mass)
-                    )
+                         element=H,
+                         atom_type=AtomType(name="at1",
+                                            mass=H.mass)
+                         )
             for i in range(sites):
                 top.add_site(site1)
 

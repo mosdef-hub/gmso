@@ -53,7 +53,6 @@ def _validate_angles(angles):
     return angles
 
 
-
 class Box(object):
     """A box that bounds a `Topology`.
 
@@ -66,8 +65,8 @@ class Box(object):
     angles : array-like, optional, shape(3,), dtype=float
         Interplanar angles, [alpha, beta, gamma], that describe the box shape.
         Units are assumed to be in degrees; if passed in as a `unyt_array` it
-        will be converted to degrees; if passed in as floats, degrees is assumed.
-
+        will be converted to degrees; if passed in as floats, degrees is
+        assumed.
 
     Attributes
     ----------
@@ -152,7 +151,7 @@ class Box(object):
             return False
 
         if not allclose(self.lengths, other.lengths):
-                return False
+            return False
 
         if not allclose(self.angles, other.angles):
             return False

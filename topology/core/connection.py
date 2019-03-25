@@ -3,6 +3,7 @@ from topology.core.potential import Potential
 from topology.core.site import Site
 from topology.exceptions import TopologyError
 
+
 class Connection(object):
     """ An abstract object that lists connected partners and their type
     This functions as a super-class for any connected groups (bonds,

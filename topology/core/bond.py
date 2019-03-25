@@ -4,6 +4,7 @@ from topology.core.connection import Connection
 from topology.core.bond_type import BondType
 from topology.exceptions import TopologyError
 
+
 class Bond(Connection):
     """A 2-partner connection between sites.
 

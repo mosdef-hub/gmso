@@ -4,6 +4,7 @@ from topology.core.connection import Connection
 from topology.core.angle_type import AngleType
 from topology.exceptions import TopologyError
 
+
 class Angle(Connection):
     """A 3-partner connection between sites.
 
