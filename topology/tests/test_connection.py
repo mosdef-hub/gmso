@@ -30,7 +30,7 @@ class TestConnection(BaseTest):
         c_type = Potential()
 
         connect = Connection(connection_members=[site1, site2],
-                connection_type=c_type)
+                             connection_type=c_type)
 
         assert site1.n_connections == 1
         assert site2.n_connections == 1

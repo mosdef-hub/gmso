@@ -168,7 +168,7 @@ class TestTopology(BaseTest):
 
         ctype = BondType()
         connection_12 = Bond(connection_members=[site1, site2],
-                connection_type=ctype)
+                             connection_type=ctype)
         top.add_connection(connection_12)
         #assert top.n_sites == 2
         #assert len(top.atom_types) == 1

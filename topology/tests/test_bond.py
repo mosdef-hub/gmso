@@ -30,7 +30,7 @@ class TestBond(BaseTest):
         bond_type = BondType()
 
         connect = Bond(connection_members=[site1, site2],
-                connection_type=bond_type)
+                       connection_type=bond_type)
 
         assert site1.n_connections == 1
         assert site2.n_connections == 1
