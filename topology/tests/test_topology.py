@@ -15,7 +15,7 @@ from topology.core.angle_type import AngleType
 from topology.external.convert_parmed import from_parmed
 
 from topology.tests.base_test import BaseTest
-from topology.testing.utils import allclose
+from topology.utils.testing import allclose
 from topology.tests.base_test import BaseTest
 from topology.utils.io import get_fn
 

@@ -4,7 +4,7 @@ import numpy as np
 import unyt as u
 
 from topology.core.atom_type import AtomType
-from topology.testing.utils import allclose
+from topology.utils.testing import allclose
 
 
 class Site(object):

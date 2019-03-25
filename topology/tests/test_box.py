@@ -6,7 +6,7 @@ import unyt as u
 
 from topology.core.box import Box
 from topology.tests.base_test import BaseTest
-from topology.testing.utils import allclose
+from topology.utils.testing import allclose
 
 
 class TestBox(BaseTest):

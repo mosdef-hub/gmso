@@ -6,7 +6,7 @@ import unyt as u
 import datetime
 
 from topology.utils.sorting import natural_sort
-from topology.testing.utils import allclose
+from topology.utils.testing import allclose
 
 def write_lammpsdata(topology, filename, atom_style='full'):
     """Output a LAMMPS data file.

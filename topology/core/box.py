@@ -2,7 +2,7 @@ import warnings
 
 import numpy as np
 import unyt as u
-from topology.testing.utils import allclose
+from topology.utils.testing import allclose
 
 
 def _validate_lengths(lengths):

@@ -1,7 +1,7 @@
 import warnings
 import unyt as u
 
-from topology.testing.utils import allclose
+from topology.utils.testing import allclose
 from topology.core.potential import Potential
 
 

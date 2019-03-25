@@ -9,7 +9,7 @@ import gsd.hoomd
 from topology.core.bond import Bond
 from topology.utils.geometry import coord_shift
 from topology.exceptions import NotYetImplementedWarning
-from topology.testing.utils import allclose
+from topology.utils.testing import allclose
 
 __all__ = ['write_gsd']
 

@@ -8,7 +8,7 @@ from topology.core.topology import Topology
 from topology.core.site import Site
 from topology.core.box import Box
 from topology.exceptions import NotYetImplementedWarning
-from topology.testing.utils import allclose
+from topology.utils.testing import allclose
 
 def read_gro(filename):
     top = Topology()
