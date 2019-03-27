@@ -1,9 +1,12 @@
 import unyt as u
-import simtk.unit
 
-from simtk.openmm.app import *
-from simtk.openmm import *
+from topology.utils.io import import_, has_openmm
 
+
+if has_openmm:
+    import simtk.unit
+    from simtk.openmm.app import *
+    from simtk.openmm import *
 
 def to_openmm(topology, openmm_object='topology'):
     """

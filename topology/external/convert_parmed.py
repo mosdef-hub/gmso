@@ -1,9 +1,12 @@
 import numpy as np
-import parmed as pmd
 import unyt as u
 
 import topology as topo
+from topology.utils.io import import_, has_parmed
 
+
+if has_parmed:
+    pmd = import_('parmed')
 
 def from_parmed(structure):
     msg = ("Provided argument that is not a Parmed Structure")

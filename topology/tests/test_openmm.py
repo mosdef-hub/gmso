@@ -1,12 +1,17 @@
-import simtk.unit
 import unyt as u
 import numpy as np
+import pytest
 
 from topology.core.box import Box
 from topology.external.convert_openmm import to_openmm
 from topology.tests.base_test import BaseTest
+from topology.utils.io import import_, has_openmm
 
 
+if has_openmm:
+    simtk.unit = import_('simtk.unit')
+
+@pytest.mark.skipif(not has_openmm, reason="OpenMM is not installed")
 class TestOpenMM(BaseTest):
     def test_openmm_modeller(self, topology_site):
         to_openmm(topology_site(), openmm_object='modeller')

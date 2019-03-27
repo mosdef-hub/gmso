@@ -3,16 +3,19 @@ import warnings
 
 import numpy as np
 import unyt as u
-import gsd
-import gsd.hoomd
+import pytest
 
 from topology.core.bond import Bond
 from topology.utils.geometry import coord_shift
 from topology.exceptions import NotYetImplementedWarning
 from topology.utils.testing import allclose
+from topology.utils.io import has_gsd
 
 __all__ = ['write_gsd']
 
+if has_gsd:
+    import gsd
+    import gsd.hoomd
 
 def write_gsd(top,
               filename,
