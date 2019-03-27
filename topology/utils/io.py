@@ -1,9 +1,14 @@
 import os
+import sys
 from pkg_resources import resource_filename
 import importlib
 import inspect
 import textwrap
+from unittest import SkipTest
 
+
+class DelayImportError(ImportError, SkipTest):
+    pass
 
 def get_fn(filename):
     """Get the full path to one of the reference files shipped for utils.
@@ -55,11 +60,8 @@ def import_(module):
     try:
         return importlib.import_module(module)
     except ImportError as e:
-        try:
-            message = MESSAGES[module]
-        except KeyError:
-            message = 'The code at {filename}:{line_number} requires the ' + module + ' package'
-            e = ImportError('No module named %s' % module)
+        message = 'The code at {filename}:{line_number} requires the ' + module + ' package'
+        e = ImportError('No module named %s' % module)
 
         frame, filename, line_number, function_name, lines, index = \
             inspect.getouterframes(inspect.currentframe())[1]
@@ -96,3 +98,17 @@ try:
     del parmed
 except ImportError:
     has_parmed = False
+
+try:
+    import mdtraj
+    has_mdtraj = True
+    del mdtraj
+except ImportError:
+    has_mdtraj = False
+
+try:
+    import simtk.openmm
+    has_openmm = True
+    del simtk.openmm
+except ImportError:
+    has_openmm = False
