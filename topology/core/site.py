@@ -86,13 +86,8 @@ class Site(object):
         self._atom_type = val
 
     def __eq__(self, other):
-        if not allclose(self.position, other.position):
+        if id(self) != id(other):
             return False
-        if not allclose(self.charge, other.charge, atol=1e-22):
-            return False
-        if self.atom_type != other.atom_type:
-            return False
-
         return True
 
     def __hash__(self):
