@@ -231,6 +231,49 @@ class Topology(object):
             elif a.connection_type not in self.angle_types:
                 self.angle_types.append(a.connection_type)
 
+    def infer_connectivity(self):
+        """ From bonds in a Topology, identify angles and dihedrals 
+        
+        Notes
+        -----
+        This is kind of like a breadth-first search, but not recursive
+        It's clunky because we have to look at `Connection` objects
+            and the connection_members
+        I think a lot of verificaion will be needed so we don't look at
+            a connection_member that is either the site or first_neighbor 
+            in question (so we don't look at the same bond twice)
+        """
+        for site in self.sites:
+            first_neighbors = []
+
+            # Parse first-neighbors from the site's connections
+            for connect in site.connections:
+                if isinstance(connect, Bond):
+                    if site != connect.connection_members[0]:
+                        first_neighbors.append(connect.connection_members[0])
+                    if site != connect.connection_members[1]:
+                        first_neighbors.append(connect.connection_members[1])
+
+            # Parse second-neighbors from first-neighbor connections
+            for first_neighbor in first_neighbors:
+                second_neighbors = []
+                for connect in first_neighbor.connections:
+                    if isinstance(connect, Bond):
+                        if site not in connect.connection_members:
+                            if (first_neighbor != connect.connection_members[0]):
+                                second_neighbors.append(
+                                        connect.connection_members[0])
+                            if (first_neighbor != connect.connection_members[1]):
+                                second_neighbors.append(
+                                        connect.connection_members[1])
+
+                # Stitch 
+                for second_neighbor in second_neighbors:
+                    new_angle = Angle(connection_members=(
+                        site, first_neighbor, second_neighbor))
+                    if new_angle not in top.angles:
+                        top.add_connection(new_angle)
+
     def __repr__(self):
         descr = list('<')
         descr.append(self.name + ' ')
