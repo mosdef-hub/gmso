@@ -1,6 +1,7 @@
 import numpy as np
 import unyt as u
 import warnings
+import itertools as it
 
 from topology.core.bond import Bond
 from topology.core.angle import Angle
@@ -64,10 +65,9 @@ class Topology(object):
         if connection in self.connections:
             warnings.warn("Redundantly adding Connection {}".format(connection))
 
-        if connection.connection_members[0] not in self.sites:
-            self.add_site(connection.connection_members[0])
-        if connection.connection_members[1] not in self.sites:
-            self.add_site(connection.connection_members[1])
+        for part in connection.connection_members:
+            if part not in self.sites:
+                self.add_site(part)
 
         self._connections.append(connection)
 
@@ -231,17 +231,18 @@ class Topology(object):
             elif a.connection_type not in self.angle_types:
                 self.angle_types.append(a.connection_type)
 
-    def infer_connectivity(self):
+    def infer_angles(self):
         """ From bonds in a Topology, identify angles and dihedrals 
         
         Notes
         -----
-        This is kind of like a breadth-first search, but not recursive
-        It's clunky because we have to look at `Connection` objects
-            and the connection_members
-        I think a lot of verificaion will be needed so we don't look at
-            a connection_member that is either the site or first_neighbor 
-            in question (so we don't look at the same bond twice)
+        I think this is a good application of a connected graph, but we don't
+        implement graphs yet
+        For Angles, look at a site's Bonds, 2 Bonds should create an 
+        Angle with the site as the center atom
+        The clunky bit is we have to iterate through `connection` objects
+            and make sure we don't accidentally include the site itself as a 
+            first neighbor
         """
         for site in self.sites:
             first_neighbors = []
@@ -254,25 +255,12 @@ class Topology(object):
                     if site != connect.connection_members[1]:
                         first_neighbors.append(connect.connection_members[1])
 
-            # Parse second-neighbors from first-neighbor connections
-            for first_neighbor in first_neighbors:
-                second_neighbors = []
-                for connect in first_neighbor.connections:
-                    if isinstance(connect, Bond):
-                        if site not in connect.connection_members:
-                            if (first_neighbor != connect.connection_members[0]):
-                                second_neighbors.append(
-                                        connect.connection_members[0])
-                            if (first_neighbor != connect.connection_members[1]):
-                                second_neighbors.append(
-                                        connect.connection_members[1])
-
-                # Stitch 
-                for second_neighbor in second_neighbors:
+            for first, third in it.combinations(first_neighbors, 2):
                     new_angle = Angle(connection_members=(
-                        site, first_neighbor, second_neighbor))
-                    if new_angle not in top.angles:
-                        top.add_connection(new_angle)
+                        first, site, third))
+                    if new_angle not in self.angles:
+                        self.add_connection(new_angle)
+
 
     def __repr__(self):
         descr = list('<')
