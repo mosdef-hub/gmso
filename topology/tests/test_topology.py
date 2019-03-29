@@ -134,7 +134,7 @@ class TestTopology(BaseTest):
         top1 = from_parmed(ref)
         top2 = from_parmed(ref)
 
-        assert top1 == top2
+        assert top1 != top2
 
     def test_top_update(self):
         top = Topology()
