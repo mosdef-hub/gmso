@@ -1,6 +1,8 @@
+import warnings
+
 import numpy as np
 import unyt as u
-import warnings
+from boltons.setutils import IndexedSet
 
 from topology.core.bond import Bond
 from topology.core.angle import Angle
@@ -22,7 +24,7 @@ class Topology(object):
         if name is not None:
             self._name = name
         self._box = box
-        self._sites = list()
+        self._sites = IndexedSet()
         self._connections = list()
         self._bonds = list()
         self._angles = list()
@@ -57,7 +59,7 @@ class Topology(object):
     def add_site(self, site):
         if site in self.sites:
             warnings.warn("Redundantly adding Site {}".format(site))
-        self._sites.append(site)
+        self._sites.add(site)
         self.update_atom_types()
 
     def add_connection(self, connection):
