@@ -2,7 +2,7 @@ import warnings
 
 import numpy as np
 import unyt as u
-from orderedset import OrderedSet
+from boltons.setutils import IndexedSet
 
 from topology.core.bond import Bond
 from topology.core.angle import Angle
@@ -24,7 +24,7 @@ class Topology(object):
         if name is not None:
             self._name = name
         self._box = box
-        self._sites = OrderedSet()
+        self._sites = IndexedSet()
         self._connections = list()
         self._bonds = list()
         self._angles = list()
