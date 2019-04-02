@@ -4,7 +4,9 @@ import datetime
 def write_top(top, filename):
     """Write a topology to a GROMACS .TOP file"""
 
+    _validate_compatibility(top)
     top_vars = _get_top_vars(top)
+
     with open(filename, 'w') as out_file:
         out_file.write(
             '; File {} written by topology at {}\n\n'.format(
@@ -34,6 +36,10 @@ def write_top(top, filename):
             )
         )
 
+
+def _validate_compatibility(top):
+    """Check compatability of topology object with GROMACS TOP format"""
+    pass
 
 def _get_top_vars(top):
     """Generate a dictionary of values for the defaults directive."""
