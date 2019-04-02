@@ -1,6 +1,7 @@
 import unyt as u
 
 from topology.core.potential import Potential
+from topology.exceptions import TopologyError
 
 
 class AngleType(Potential):
@@ -51,7 +52,7 @@ class AngleType(Potential):
 
 def _validate_three_atomtypes(types):
     """Ensure 3 partners are involved in BondType"""
-    if len(types) != 3:
+    if len(types) != 3 and len(types) != 0:
         raise TopologyError("Trying to create an AngleType "
                 "with {} constituent types". format(len(types)))
     if not all([isinstance(t, str) for t in types]):

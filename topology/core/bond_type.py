@@ -1,6 +1,7 @@
 import unyt as u
 
 from topology.core.potential import Potential
+from topology.exceptions import TopologyError
 
 
 class BondType(Potential):
@@ -51,7 +52,7 @@ class BondType(Potential):
 
 def _validate_two_atomtypes(types):
     """Ensure 2 partners are involved in BondType"""
-    if len(types) != 2:
+    if len(types) != 2 and len(types) != 0:
         raise TopologyError("Trying to create a BondType "
                 "with {} constituent types". format(len(types)))
     if not all([isinstance(t, str) for t in types]):
