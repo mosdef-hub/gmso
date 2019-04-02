@@ -25,14 +25,14 @@ class Topology(object):
             self._name = name
         self._box = box
         self._sites = IndexedSet()
-        self._connections = list()
-        self._bonds = list()
-        self._angles = list()
+        self._connections = IndexedSet()
+        self._bonds = IndexedSet()
+        self._angles = IndexedSet()
 
-        self._atom_types = list()
-        self._connection_types = list()
-        self._bond_types = list()
-        self._angle_types = list()
+        self._atom_types = IndexedSet()
+        self._connection_types = IndexedSet()
+        self._bond_types = IndexedSet()
+        self._angle_types = IndexedSet()
 
     @property
     def name(self):
