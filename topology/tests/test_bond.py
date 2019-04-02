@@ -1,6 +1,7 @@
 import pytest
 
 from topology.core.bond import Bond
+from topology.core.atom_type import AtomType
 from topology.core.bond_type import BondType
 from topology.core.site import Site
 from topology.tests.base_test import BaseTest
@@ -49,4 +50,12 @@ class TestBond(BaseTest):
         with pytest.raises(TopologyError):
             Bond(connection_members=[site1, site2],
                  connection_type='Fake bondtype')
+
+    def test_bond_constituent_types(self):
+        site1 = Site(name='site1', position=[0,0,0], atom_type=AtomType(name='A'))
+        site2 = Site(name='site2', position=[1,0,0], atom_type=AtomType(name='B'))
+        bondtype = BondType(types=[site1.atom_type.name, site2.atom_type.name])
+        bond = Bond(connection_members=[site1, site2], connection_type=bondtype)
+        assert 'A' in bond.connection_type.types
+        assert 'B' in bond.connection_type.types
 
