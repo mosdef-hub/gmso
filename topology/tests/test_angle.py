@@ -58,3 +58,22 @@ class TestAngle(BaseTest):
             Angle(connection_members=[site1, site2, site3],
                   connection_type='Fake angletype')
 
+    def test_angle_eq(self):
+        site1 = Site(name='site1', position=[0, 0, 0])
+        site2 = Site(name='site2', position=[1, 1, 1])
+        site3 = Site(name='site3', position=[1, 1, 1])
+
+        ref_angle = Angle(
+            connection_members=[site1, site2, site3],
+        )
+
+        same_angle = Angle(
+            connection_members=[site1, site2, site3],
+        )
+
+        diff_angle = Angle(
+            connection_members=[site2, site2, site1],
+        )
+
+        assert ref_angle == same_angle
+        assert ref_angle != diff_angle
