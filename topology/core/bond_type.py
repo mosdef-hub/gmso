@@ -1,7 +1,6 @@
 import unyt as u
 
 from topology.core.potential import Potential
-from topology.core.atom_type import AtomType
 
 
 class BondType(Potential):
@@ -16,7 +15,7 @@ class BondType(Potential):
         See `Potential` documentation for more information
     independent vars : set of str
         see `Potential` documentation for more information
-    types : list of topology.AtomType
+    types : list of topology.AtomType.name (str)
 
     Notes
     ----
@@ -55,9 +54,9 @@ def _validate_two_atomtypes(types):
     if len(types) != 2:
         raise TopologyError("Trying to create a BondType "
                 "with {} constituent types". format(len(types)))
-    if not all([isinstance(t, AtomType) for t in types]):
+    if not all([isinstance(t, str) for t in types]):
         raise TopologyError("Types passed to BondType "
-                            "need to be topology.AtomTypes")
+                            "need to be strings corresponding to AtomType names")
 
     return types
 
