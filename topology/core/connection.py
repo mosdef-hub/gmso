@@ -56,8 +56,10 @@ class Connection(object):
         if self.connection_type:
             return hash(
                 tuple(
-                    tuple(self.connection_type),
-                    tuple(self.connection_members),
+                    (
+                        self.connection_type,
+                        tuple(self.connection_members),
+                    )
                 )
             )
         return hash(tuple(self.connection_members))
