@@ -35,6 +35,8 @@ class AtomType(Potential):
         values, as unyt quantities.
     independent_variables : str, sympy.Symbol, or list-like of str, sympy.Symbol
         The independent variables of the functional form previously described.
+    atomclass : str, default=''
+        The class of the atomtype
 
     """
 
@@ -46,7 +48,8 @@ class AtomType(Potential):
                  parameters={
                     'sigma': 0.3 * u.nm,
                     'epsilon': 0.3 * u.Unit('kJ')},
-                 independent_variables={'r'}):
+                 independent_variables={'r'},
+                 atomclass=''):
 
         super(AtomType, self).__init__(
             name=name,
@@ -55,6 +58,7 @@ class AtomType(Potential):
             independent_variables=independent_variables)
         self._mass = _validate_mass(mass)
         self._charge = _validate_charge(charge)
+        self._atomclass = atomclass
 
         self._validate_expression_parameters()
 
@@ -74,6 +78,14 @@ class AtomType(Potential):
     def mass(self, val):
         self._mass = _validate_mass(val)
 
+    @property
+    def atomclass(self):
+        return self._atomclass
+
+    @atomclass.setter
+    def atomclass(self, val):
+        self._atomclass = val
+
     def __eq__(self, other):
         return hash(self) == hash(other)
 
@@ -82,6 +94,7 @@ class AtomType(Potential):
             tuple(
                 (
                     self.name,
+                    self.atomclass,
                     unyt_to_hashable(self.mass),
                     unyt_to_hashable(self.charge),
                     self.expression,
@@ -91,6 +104,7 @@ class AtomType(Potential):
                 )
             )
         )
+
     def __repr__(self):
         desc = "<AtomType {}, id {}>".format(self._name, id(self))
         return desc
