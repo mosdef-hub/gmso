@@ -101,7 +101,7 @@ class AtomType(Potential):
 def _validate_charge(charge):
     if not isinstance(charge, u.unyt_array):
         warnings.warn("Charges are assumed to be elementary charge")
-        charge *= u.elementary_charge
+        charge = float(charge) * u.elementary_charge
     elif charge.units.dimensions != u.elementary_charge.units.dimensions:
         warnings.warn("Charges are assumed to be elementary charge")
         charge = charge.value * u.elementary_charge
