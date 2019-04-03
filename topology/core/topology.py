@@ -3,6 +3,8 @@ import warnings
 import numpy as np
 import unyt as u
 from boltons.setutils import IndexedSet
+import warnings
+import itertools as it
 
 from topology.core.bond import Bond
 from topology.core.angle import Angle
@@ -66,10 +68,9 @@ class Topology(object):
         if connection in self.connections:
             warnings.warn("Redundantly adding Connection {}".format(connection))
 
-        if connection.connection_members[0] not in self.sites:
-            self.add_site(connection.connection_members[0])
-        if connection.connection_members[1] not in self.sites:
-            self.add_site(connection.connection_members[1])
+        for part in connection.connection_members:
+            if part not in self.sites:
+                self.add_site(part)
 
         self._connections.add(connection)
 
@@ -232,6 +233,37 @@ class Topology(object):
                     a.connection_type, a))
             elif a.connection_type not in self.angle_types:
                 self.angle_types.add(a.connection_type)
+
+    def infer_angles(self):
+        """ From bonds in a Topology, identify angles and dihedrals 
+        
+        Notes
+        -----
+        I think this is a good application of a connected graph, but we don't
+        implement graphs yet
+        For Angles, look at a site's Bonds, 2 Bonds should create an 
+        Angle with the site as the center atom
+        The clunky bit is we have to iterate through `connection` objects
+            and make sure we don't accidentally include the site itself as a 
+            first neighbor
+        """
+        for site in self.sites:
+            first_neighbors = []
+
+            # Parse first-neighbors from the site's connections
+            for connect in site.connections:
+                if isinstance(connect, Bond):
+                    if site != connect.connection_members[0]:
+                        first_neighbors.append(connect.connection_members[0])
+                    if site != connect.connection_members[1]:
+                        first_neighbors.append(connect.connection_members[1])
+
+            for first, third in it.combinations(first_neighbors, 2):
+                    new_angle = Angle(connection_members=(
+                        first, site, third))
+                    if new_angle not in self.angles:
+                        self.add_connection(new_angle)
+
 
     def __repr__(self):
         descr = list('<')

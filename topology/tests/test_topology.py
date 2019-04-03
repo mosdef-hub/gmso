@@ -279,3 +279,23 @@ class TestTopology(BaseTest):
         assert len(top.angle_types) == 1
         assert len(top.angle_type_expressions) == 1
         assert len(top.atom_type_expressions) == 2
+
+    def test_infer_angles(self):
+        top = Topology()
+        site1 = Site('a', atom_type=AtomType(name='a1'))
+        site2 = Site('b', atom_type=AtomType(name='b1'))
+        site3 = Site('c', atom_type=AtomType(name='c1'))
+        site4 = Site('d', atom_type=AtomType(name='d1'))
+        bond12 = Bond(connection_members=[site1, site2])
+        bond23 = Bond(connection_members=[site2, site3])
+        bond34 = Bond(connection_members=[site3, site4])
+        top.add_connection(bond12)
+        top.add_connection(bond23)
+        top.add_connection(bond34)
+        assert top.n_sites == 4
+        assert top.n_bonds == 3
+        assert top.n_angles == 0
+        top.infer_angles()
+        assert top.n_angles == 2
+
+
