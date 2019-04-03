@@ -52,6 +52,13 @@ class Site(object):
         return len(self._connections)
 
     @property
+    def bond_partners(self):
+        bond_partners = [b for a in self.connections 
+                            for b in a.connection_members 
+                            if len(a.connection_members) == 2 and b != self]
+        return bond_partners
+
+    @property
     def charge(self):
         if self._charge is not None:
             return self._charge
