@@ -50,10 +50,19 @@ class Connection(object):
         return descr
 
     def __eq__(self, other):
-        bond_partner_match = (self.connection_members == other.connection_members)
-        ctype_match = (self.connection_type == other.connection_type)
-        return all([bond_partner_match, ctype_match])
+        return hash(self) == hash(other)
 
+    def __hash__(self):
+        if self.connection_type:
+            return hash(
+                tuple(
+                    (
+                        self.connection_type,
+                        tuple(self.connection_members),
+                    )
+                )
+            )
+        return hash(tuple(self.connection_members))
 
 def _validate_connection_members(connection_members):
     for partner in connection_members:

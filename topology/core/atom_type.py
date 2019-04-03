@@ -3,6 +3,7 @@ import unyt as u
 
 from topology.utils.testing import allclose
 from topology.core.potential import Potential
+from topology.utils.misc import unyt_to_hashable
 
 
 class AtomType(Potential):
@@ -74,25 +75,22 @@ class AtomType(Potential):
         self._mass = _validate_mass(val)
 
     def __eq__(self, other):
-        name_match = (self.name == other.name)
-        charge_match = allclose(
-            self.charge,
-            other.charge,
-            atol=1e-6 * u.elementary_charge,
-            rtol=1e-5 * u.elementary_charge)
-        mass_match = allclose(
-            self.mass,
-            other.mass,
-            atol=1e-6 * u.gram / u.mol,
-            rtol=1e-5 * u.gram / u.mol)
-        parameter_match = (self.parameters == other.parameters)
-        expression_match = (self.expression == other.expression)
+        return hash(self) == hash(other)
 
-        return all([
-            name_match, charge_match, mass_match, parameter_match,
-            expression_match
-        ])
-
+    def __hash__(self):
+        return hash(
+            tuple(
+                (
+                    self.name,
+                    unyt_to_hashable(self.mass),
+                    unyt_to_hashable(self.charge),
+                    self.expression,
+                    tuple(self.independent_variables),
+                    tuple(self.parameters.keys()),
+                    tuple(unyt_to_hashable(val) for val in self.parameters.values())
+                )
+            )
+        )
     def __repr__(self):
         desc = "<AtomType {}, id {}>".format(self._name, id(self))
         return desc

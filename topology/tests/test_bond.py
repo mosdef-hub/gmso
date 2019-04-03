@@ -59,3 +59,21 @@ class TestBond(BaseTest):
         assert 'A' in bond.connection_type.types
         assert 'B' in bond.connection_type.types
 
+    def test_bond_eq(self):
+        site1 = Site(name='site1', position=[0, 0, 0])
+        site2 = Site(name='site2', position=[1, 1, 1])
+
+        ref_connection = Bond(
+            connection_members=[site1, site2],
+        )
+
+        same_connection = Bond(
+            connection_members=[site1, site2],
+        )
+
+        diff_connection = Bond(
+            connection_members=[site2, site2],
+        )
+
+        assert ref_connection == same_connection
+        assert ref_connection != diff_connection
