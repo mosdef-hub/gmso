@@ -279,3 +279,22 @@ class TestTopology(BaseTest):
         assert len(top.angle_types) == 1
         assert len(top.angle_type_expressions) == 1
         assert len(top.atom_type_expressions) == 2
+
+    def test_parametrization(self):
+        top = Topology()
+
+        assert top.typed == False
+        top.add_site(Site(atom_type=AtomType()))
+
+        assert top.typed == False
+        assert top.is_typed() == True
+        assert top.typed == True
+
+    def test_parametrization_setter(self):
+        top = Topology()
+
+        assert top.typed == False
+        assert top.is_typed() == False
+        top.typed = True
+        assert top.typed == True
+        assert top.is_typed() == False
