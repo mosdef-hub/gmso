@@ -29,6 +29,7 @@ class Topology(object):
         self._bonds = list()
         self._angles = list()
 
+        self._typed = False
         self._atom_types = list()
         self._connection_types = list()
         self._bond_types = list()
@@ -49,6 +50,23 @@ class Topology(object):
     @box.setter
     def box(self, box):
         self._box = box
+
+    @property
+    def typed(self):
+        return self._typed
+
+    @typed.setter
+    def typed(self, typed):
+        self._typed = typed
+
+    def is_typed(self):
+        self.update_top()
+        if (len(self.atom_types) > 0 or
+            len(self.connection_types) > 0):
+            self._typed = True
+        else:
+            self._typed = False
+        return self.typed
 
     def positions(self):
         xyz = np.empty(shape=(self.n_sites, 3)) * u.nm
