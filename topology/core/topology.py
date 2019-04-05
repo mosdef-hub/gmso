@@ -60,9 +60,12 @@ class Topology(object):
         self._typed = typed
 
     def is_typed(self):
-        self.update_top()
-        if (len(self.atom_types) > 0 or
-            len(self.connection_types) > 0):
+        self.update_atom_types()
+        self.update_connection_types()
+        self.update_bond_types()
+        self.update_angle_types()
+
+        if len(self.atom_types) > 0 or len(self.connection_types) > 0:
             self._typed = True
         else:
             self._typed = False
@@ -185,6 +188,7 @@ class Topology(object):
         self.update_connection_types()
         self.update_bond_types()
         self.update_angle_types()
+        self.is_typed()
 
     def update_sites(self):
         """ (Is this necessary?)
