@@ -78,7 +78,8 @@ class Topology(object):
         if site in self.sites:
             warnings.warn("Redundantly adding Site {}".format(site))
         self._sites.add(site)
-        self.update_atom_types()
+        if self.typed:
+            self.update_atom_types()
 
     def add_connection(self, connection):
         if connection in self.connections:
@@ -92,13 +93,16 @@ class Topology(object):
         self._connections.append(connection)
 
         #self.update_connections() Do we need to call this? Code should work either way
-        self.update_connection_types()
+        if self.typed:
+            self.update_connection_types()
         if isinstance(connection, Bond):
             self.update_bonds()
-            self.update_bond_types()
+            if self.typed:
+                self.update_bond_types()
         elif isinstance(connection, Angle):
             self.update_angles()
-            self.update_angle_types()
+            if self.typed:
+                self.update_angle_types()
 
     @property
     def n_sites(self):
