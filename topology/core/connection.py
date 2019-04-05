@@ -16,10 +16,14 @@ class Connection(object):
     connection_type : topology.Potential
         An instance of topology.Potential that describes
         the potential function and parameters of this interaction
+    connection_name : string
+        A unique name for the connection. Used for writing hoomdxml
+        bonds/angles/dihedrals
         """
-    def __init__(self, connection_members=[], connection_type=None):
+    def __init__(self, connection_members=[], connection_type=None, connection_name=None):
         self._connection_members = _validate_connection_members(connection_members)
         self._connection_type = _validate_connection_type(connection_type)
+        self.connection_name = connection_name
         self._update_members()
 
     @property
@@ -38,6 +42,14 @@ class Connection(object):
     def connection_type(self, contype):
         self._connection_type = _validate_connection_type(contype)
 
+    @property
+    def connection_name(self):
+        return self._connection_name
+
+    @connection_name.setter
+    def connection_name(self, conname):
+        self._connection_type = _validate_connection_type(conname)
+
     def _update_members(self):
         for partner in self.connection_members:
             if self not in partner.connections:
@@ -46,7 +58,11 @@ class Connection(object):
     def __repr__(self):
         descr = '<{}-partner Connection, id {}, '.format(
                 len(self.connection_members), id(self))
-        descr += 'type {}>'.format(self.connection_type)
+        descr += 'type {}'.format(self.connection_type)
+        if self.connection_name:
+            descr += ', name {}'.format(self.connection_name)
+        descr += '>'
+
         return descr
 
     def __eq__(self, other):

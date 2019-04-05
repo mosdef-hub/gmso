@@ -21,17 +21,19 @@ class Bond(Connection):
     Addiitonal _validate methods are presented
     """
 
-    def __init__(self, connection_members=[], connection_type=None):
+    def __init__(self, connection_members=[], connection_type=None, connection_name=None):
         connection_members = _validate_two_partners(connection_members)
         connection_type = _validate_bondtype(connection_type)
 
         super(Bond, self).__init__(connection_members=connection_members,
-                connection_type=connection_type)
+                connection_type=connection_type, connection_name=connection_name)
 
     def __eq__(self, other):
         if not self.connection_members == other.connection_members:
             return False
         if not self.connection_type == other.connection_type:
+            return False
+        if not self.connection_name == other.connection_name:
             return False
         return True
 
