@@ -20,13 +20,13 @@ def from_mbuild(compound):
         pos = particle.xyz[0] * u.nanometer
         site = Site(name=particle.name, position=pos)
         site_map[particle] = site
-        top.add_site(site, update=False)
+        top.add_site(site, update_types=False)
     top.update_top()
 
     for b1, b2 in compound.bonds():
         new_bond = Bond(connection_members=[site_map[b1], site_map[b2]],
                 connection_type=None)
-        top.add_connection(new_bond, update=False)
+        top.add_connection(new_bond, update_types=False)
     top.update_top()
 
     return top

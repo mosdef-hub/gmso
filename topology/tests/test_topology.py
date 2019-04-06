@@ -141,12 +141,12 @@ class TestTopology(BaseTest):
 
         top = Topology()
         assert len(top.atom_types) == 0
-        top.add_site(untyped_site, update=False)
+        top.add_site(untyped_site, update_types=False)
         assert len(top.atom_types) == 0
 
         top = Topology()
         assert len(top.atom_types) == 0
-        top.add_site(untyped_site, update=True)
+        top.add_site(untyped_site, update_types=True)
         assert len(top.atom_types) == 0
 
     def test_add_typed_site_update(self):
@@ -154,12 +154,12 @@ class TestTopology(BaseTest):
 
         top = Topology()
         assert len(top.atom_types) == 0
-        top.add_site(typed_site, update=False)
+        top.add_site(typed_site, update_types=False)
         assert len(top.atom_types) == 0
 
         top= Topology()
         assert len(top.atom_types) == 0
-        top.add_site(typed_site, update=True)
+        top.add_site(typed_site, update_types=True)
         assert len(top.atom_types) == 1
 
     def test_add_untyped_bond_update(self):
@@ -169,12 +169,12 @@ class TestTopology(BaseTest):
 
         top = Topology()
         assert len(top.bond_types) == 0
-        top.add_connection(bond, update=False)
+        top.add_connection(bond, update_types=False)
         assert len(top.bond_types) == 0
 
         top = Topology()
         assert len(top.bond_types) == 0
-        top.add_connection(bond, update=True)
+        top.add_connection(bond, update_types=True)
         assert len(top.bond_types) == 0
 
     def test_add_typed_bond_update(self):
@@ -186,11 +186,11 @@ class TestTopology(BaseTest):
         top = Topology()
         top.add_site(site1)
         top.add_site(site2)
-        top.add_connection(bond, update=False)
+        top.add_connection(bond, update_types=False)
         assert len(top.connection_types) == 0
 
         top = Topology()
-        top.add_connection(bond, update=True)
+        top.add_connection(bond, update_types=True)
         assert len(top.bond_types) == 1
 
     def test_top_update(self):

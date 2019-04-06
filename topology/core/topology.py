@@ -56,14 +56,14 @@ class Topology(object):
             xyz[i, :] = site.position
         return xyz
 
-    def add_site(self, site, update=True):
+    def add_site(self, site, update_types=True):
         if site in self.sites:
             warnings.warn("Redundantly adding Site {}".format(site))
         self._sites.add(site)
-        if update:
+        if update_types:
             self.update_atom_types()
 
-    def add_connection(self, connection, update=True):
+    def add_connection(self, connection, update_types=True):
         if connection in self.connections:
             warnings.warn("Redundantly adding Connection {}".format(connection))
 
@@ -75,7 +75,7 @@ class Topology(object):
         self._connections.append(connection)
 
         #self.update_connections() Do we need to call this? Code should work either way
-        if update:
+        if update_types:
             self.update_connection_types()
             if isinstance(connection, Bond):
                 self.update_bonds()
