@@ -162,6 +162,37 @@ class TestTopology(BaseTest):
         top.add_site(typed_site, update=True)
         assert len(top.atom_types) == 1
 
+    def test_add_untyped_bond_update(self):
+        site1 = Site(atom_type=None)
+        site2 = Site(atom_type=None)
+        bond = Bond(connection_members=[site1, site2], connection_type=None)
+
+        top = Topology()
+        assert len(top.bond_types) == 0
+        top.add_connection(bond, update=False)
+        assert len(top.bond_types) == 0
+
+        top = Topology()
+        assert len(top.bond_types) == 0
+        top.add_connection(bond, update=True)
+        assert len(top.bond_types) == 0
+
+    def test_add_typed_bond_update(self):
+        site1 = Site(atom_type=None)
+        site2 = Site(atom_type=None)
+        bond = Bond(connection_members=[site1, site2],
+                    connection_type=BondType())
+
+        top = Topology()
+        top.add_site(site1)
+        top.add_site(site2)
+        top.add_connection(bond, update=False)
+        assert len(top.connection_types) == 0
+
+        top = Topology()
+        top.add_connection(bond, update=True)
+        assert len(top.bond_types) == 1
+
     def test_top_update(self):
         top = Topology()
         top.update_top()
