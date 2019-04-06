@@ -136,6 +136,32 @@ class TestTopology(BaseTest):
 
         assert top1 == top2
 
+    def test_add_untyped_site_update(self):
+        untyped_site = Site(atom_type=None)
+
+        top = Topology()
+        assert len(top.atom_types) == 0
+        top.add_site(untyped_site, update=False)
+        assert len(top.atom_types) == 0
+
+        top = Topology()
+        assert len(top.atom_types) == 0
+        top.add_site(untyped_site, update=True)
+        assert len(top.atom_types) == 0
+
+    def test_add_typed_site_update(self):
+        typed_site = Site(atom_type=AtomType())
+
+        top = Topology()
+        assert len(top.atom_types) == 0
+        top.add_site(typed_site, update=False)
+        assert len(top.atom_types) == 0
+
+        top= Topology()
+        assert len(top.atom_types) == 0
+        top.add_site(typed_site, update=True)
+        assert len(top.atom_types) == 1
+
     def test_top_update(self):
         top = Topology()
         top.update_top()
