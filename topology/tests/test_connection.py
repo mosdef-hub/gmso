@@ -31,13 +31,13 @@ class TestConnection(BaseTest):
 
         connect = Connection(connection_members=[site1, site2],
                              connection_type=c_type,
-                             connection_name='name')
+                             name='name')
 
         assert site1.n_connections == 1
         assert site2.n_connections == 1
         assert len(connect.connection_members) == 2
         assert connect.connection_type is not None
-        assert connect.connection_name is not None
+        assert connect.name is not "Connection"
 
     def test_connection_fake(self):
         site1 = Site(name='site1')
@@ -51,5 +51,5 @@ class TestConnection(BaseTest):
         with pytest.raises(TopologyError):
             Connection(connection_members=[site1, site2],
                        connection_type='Fake ctype',
-                       connection_name='fake')
+                       name='fake')
 

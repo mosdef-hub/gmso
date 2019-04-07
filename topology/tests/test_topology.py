@@ -258,7 +258,7 @@ class TestTopology(BaseTest):
         site2 = Site('b', atom_type=atype2)
         site3 = Site('c', atom_type=atype2)
         atype = AngleType()
-        angle = Angle(connection_members=[site1, site2, site3], connection_type=atype, connection_name='angle_name')
+        angle = Angle(connection_members=[site1, site2, site3], connection_type=atype, name='angle_name')
         top.add_site(site1)
         top.add_site(site2)
         top.add_site(site3)
