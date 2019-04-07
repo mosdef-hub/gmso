@@ -36,6 +36,34 @@ def write_top(top, filename):
             )
         )
 
+        out_file.write(
+            '[ atomtypes ]\n'
+            '; name\t\t'
+            'at.num\t\t'
+            'mass\t\t'
+            'charge\t\t'
+            'ptype\t\t'
+            'sigma\t\t'
+            'epsilon\n'
+        )
+        for atom_type in top.atom_types:
+            out_file.write(
+                '{0}\t\t\t\t'
+                '{1}\t\t\t\t'
+                '{2}\t\t\t\t'
+                '{3}\t\t\t\t'
+                '{4}\t\t\t\t'
+                '{5}\t\t\t\t'
+                '{6}\n'.format(
+                    atom_type.name,
+                    1.0, # TODO: Use an atomic number here
+                    atom_type.mass,
+                    atom_type.charge,
+                    'A',
+                    atom_type.parameters['sigma'].in_units(u.nanometer),
+                    atom_type.parameters['epsilon'].in_units(u.Unit('kJ')),
+                )
+            )
 
 def _validate_compatibility(top):
     """Check compatability of topology object with GROMACS TOP format"""
