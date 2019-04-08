@@ -112,3 +112,10 @@ try:
     del simtk.openmm
 except ImportError:
     has_openmm = False
+
+try:
+    import simtk.unit
+    has_simtk_unit = True
+    del simtk.unit
+except ImportError:
+    has_simtk_unit = False
