@@ -17,7 +17,7 @@ from topology.external.convert_parmed import from_parmed
 from topology.tests.base_test import BaseTest
 from topology.utils.testing import allclose
 from topology.tests.base_test import BaseTest
-from topology.utils.io import get_fn, has_parmed
+from topology.utils.io import get_fn, import_, has_parmed
 
 
 if has_parmed:
