@@ -69,7 +69,7 @@ class Connection(object):
         bond_partner_match = (self.connection_members == other.connection_members)
         ctype_match = (self.connection_type == other.connection_type)
         name_match = (self.name == other.name)
-        return all([bond_partner_match, ctype_match])
+        return all([bond_partner_match, ctype_match, name_match])
 
 
 def _validate_connection_members(connection_members):
