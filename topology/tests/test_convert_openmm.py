@@ -9,7 +9,7 @@ from topology.utils.io import import_, has_openmm
 
 
 if has_openmm:
-    simtk.unit = import_('simtk.unit')
+    simtk = import_('simtk')
 
 @pytest.mark.skipif(not has_openmm, reason="OpenMM is not installed")
 class TestOpenMM(BaseTest):
