@@ -2,7 +2,7 @@ from copy import deepcopy
 
 import numpy as np
 import unyt as u
-import parmed as pmd
+import pytest
 
 from topology.core.topology import Topology
 from topology.core.box import Box
@@ -17,8 +17,11 @@ from topology.external.convert_parmed import from_parmed
 from topology.tests.base_test import BaseTest
 from topology.utils.testing import allclose
 from topology.tests.base_test import BaseTest
-from topology.utils.io import get_fn
+from topology.utils.io import get_fn, import_, has_parmed
 
+
+if has_parmed:
+    pmd = import_('parmed')
 
 class TestTopology(BaseTest):
     def test_new_topology(self):
@@ -99,6 +102,7 @@ class TestTopology(BaseTest):
         wrong_atom_type.add_site(Site(atom_type=AtomType(expression='sigma')))
         assert ref != wrong_atom_type
 
+    @pytest.mark.skipif(not has_parmed, reason="ParmEd is not installed")
     def test_eq_bonds(self):
         ref = pmd.load_file(get_fn('ethane.top'),
                             xyz=get_fn('ethane.gro'))
@@ -113,6 +117,7 @@ class TestTopology(BaseTest):
 
         assert ref != bad_bond_type
 
+    @pytest.mark.skipif(not has_parmed, reason="ParmEd is not installed")
     def test_eq_angles(self):
         ref = pmd.load_file(get_fn('ethane.top'),
                             xyz=get_fn('ethane.gro'))
@@ -127,6 +132,7 @@ class TestTopology(BaseTest):
 
         assert ref != bad_angle_type
 
+    @pytest.mark.skipif(not has_parmed, reason="ParmEd is not installed")
     def test_eq_overall(self):
         ref = pmd.load_file(get_fn('ethane.top'),
                             xyz=get_fn('ethane.gro'))
