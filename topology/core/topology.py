@@ -77,11 +77,13 @@ class Topology(object):
         #self.update_connections() Do we need to call this? Code should work either way
         if update_types:
             self.update_connection_types()
-            if isinstance(connection, Bond):
-                self.update_bonds()
+        if isinstance(connection, Bond):
+            self.update_bonds()
+            if update_types:
                 self.update_bond_types()
-            elif isinstance(connection, Angle):
-                self.update_angles()
+        elif isinstance(connection, Angle):
+            self.update_angles()
+            if update_types:
                 self.update_angle_types()
 
     @property
