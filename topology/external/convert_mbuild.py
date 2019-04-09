@@ -1,9 +1,13 @@
-import mbuild as mb
 import unyt as u
 
 from topology.core.topology import Topology
 from topology.core.site import Site
 from topology.core.bond import Bond
+from topology.utils.io import has_mbuild
+
+
+if has_mbuild:
+    import mbuild as mb
 
 def from_mbuild(compound):
     msg = ("Provided argument that is not an mbuild Compound")

@@ -16,10 +16,14 @@ class Connection(object):
     connection_type : topology.Potential
         An instance of topology.Potential that describes
         the potential function and parameters of this interaction
+    name : string
+        A unique name for the connection. Used for writing hoomdxml
+        bonds/angles/dihedrals
         """
-    def __init__(self, connection_members=[], connection_type=None):
+    def __init__(self, connection_members=[], connection_type=None, name="Connection"):
         self._connection_members = _validate_connection_members(connection_members)
         self._connection_type = _validate_connection_type(connection_type)
+        self._name = _validate_name(name)
         self._update_members()
 
     @property
@@ -38,6 +42,14 @@ class Connection(object):
     def connection_type(self, contype):
         self._connection_type = _validate_connection_type(contype)
 
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, conname):
+        self._name = _validate_name(conname)
+
     def _update_members(self):
         for partner in self.connection_members:
             if self not in partner.connections:
@@ -46,13 +58,18 @@ class Connection(object):
     def __repr__(self):
         descr = '<{}-partner Connection, id {}, '.format(
                 len(self.connection_members), id(self))
-        descr += 'type {}>'.format(self.connection_type)
+        descr += 'type {}'.format(self.connection_type)
+        if self.name:
+            descr += ', name {}'.format(self.name)
+        descr += '>'
+
         return descr
 
     def __eq__(self, other):
         bond_partner_match = (self.connection_members == other.connection_members)
         ctype_match = (self.connection_type == other.connection_type)
-        return all([bond_partner_match, ctype_match])
+        name_match = (self.name == other.name)
+        return all([bond_partner_match, ctype_match, name_match])
 
 
 def _validate_connection_members(connection_members):
@@ -67,3 +84,8 @@ def _validate_connection_type(c_type):
     elif not isinstance(c_type, Potential):
         raise TopologyError("Supplied non-Potential {}".format(c_type))
     return c_type
+
+def _validate_name(conname):
+    if not isinstance(conname, str):
+        raise TopologyError("Supplied name {} is not a string".format(conname))
+    return conname
