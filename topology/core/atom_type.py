@@ -36,6 +36,14 @@ class AtomType(Potential):
         The independent variables of the functional form previously described.
     atomclass : str, default=''
         The class of the atomtype
+    doi : str
+        Digital Object Identifier of publication where this atom type was specified
+    desc : str
+        Simple description of the atom type
+    overrides : set of str
+        Set of other atom types that this atom type overrides
+    definition : str
+        SMARTS string defining this atom type
 
     """
 
@@ -48,7 +56,7 @@ class AtomType(Potential):
                     'sigma': 0.3 * u.nm,
                     'epsilon': 0.3 * u.Unit('kJ')},
                  independent_variables={'r'},
-                 atomclass=''):
+                 atomclass='', doi='', overrides=set(), definition=''):
 
         super(AtomType, self).__init__(
             name=name,
@@ -57,7 +65,10 @@ class AtomType(Potential):
             independent_variables=independent_variables)
         self._mass = _validate_mass(mass)
         self._charge = _validate_charge(charge)
-        self._atomclass = atomclass
+        self._atomclass = _validate_str(atomclass)
+        self._doi = _validate_str(doi)
+        self._overrides = _validate_set(overrides)
+        self._definition = _validate_str(definition)
 
         self._validate_expression_parameters()
 
@@ -135,3 +146,15 @@ def _validate_mass(mass):
         pass
 
     return mass
+
+def _validate_str(val):
+    if not isinstance(val, str):
+        raise ValueError("Passed value {} is not a string".format(val))
+    return val
+
+def _validate_set(val):
+    if not isinstance(val, set):
+        raise ValueError("Passed value {} is not a set".format(val))
+    if not all([isinstance(char, str) for char in val]):
+        raise ValueError("Passed overrides of non-string to overrides")
+    return val
