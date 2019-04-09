@@ -56,7 +56,8 @@ class AtomType(Potential):
                     'sigma': 0.3 * u.nm,
                     'epsilon': 0.3 * u.Unit('kJ')},
                  independent_variables={'r'},
-                 atomclass='', doi='', overrides=set(), definition=''):
+                 atomclass='', doi='', overrides=set(), definition='',
+                 description=''):
 
         super(AtomType, self).__init__(
             name=name,
@@ -68,6 +69,7 @@ class AtomType(Potential):
         self._atomclass = _validate_str(atomclass)
         self._doi = _validate_str(doi)
         self._overrides = _validate_set(overrides)
+        self._description = _validate_str(description)
         self._definition = _validate_str(definition)
 
         self._validate_expression_parameters()
@@ -95,6 +97,38 @@ class AtomType(Potential):
     @atomclass.setter
     def atomclass(self, val):
         self._atomclass = val
+
+    @property
+    def doi(self):
+        return self._doi
+
+    @doi.setter
+    def doi(self, doi):
+        self._doi = _validate_str(doi)
+
+    @property
+    def overrides(self):
+        return self._overrides
+
+    @overrides.setter
+    def overrides(self, overrides):
+        self._overrides = _validate_set(overrides)
+
+    @property
+    def description(self):
+        return self._description
+
+    @description.setter
+    def description(self, description):
+        self._description = _validate_str(description)
+
+    @property
+    def definition(self):
+        return self._definition
+
+    @definition.setter
+    def definition(self, definition):
+        self._definition = _validate_str(definition)
 
     def __eq__(self, other):
         name_match = (self.name == other.name)
