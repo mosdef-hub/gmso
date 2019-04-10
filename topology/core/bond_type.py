@@ -45,7 +45,10 @@ class BondType(Potential):
 
     @member_types.setter
     def member_types(self, val):
-       self._member_types = _validate_two_member_type_names(val)
+        if self.member_types != val:
+            warnings.warn("Changing a BondType's constituent "
+                    "member types: {} to {}".format(self.member_types, val))
+        self._member_types = _validate_two_member_type_names(val)
 
     def __repr__(self):
         return "<BondType {}, id {}>".format(self.name, id(self))

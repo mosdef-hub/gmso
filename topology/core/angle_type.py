@@ -1,3 +1,4 @@
+import warnings
 import unyt as u
 
 from topology.core.potential import Potential
@@ -45,7 +46,10 @@ class AngleType(Potential):
 
     @member_types.setter
     def member_types(self, val):
-       self._member_types = _validate_three_member_type_names(val)
+        if self.member_types != val:
+            warnings.warn("Changing an AngleType's constituent "
+                    "member types: {} to {}".format(self.member_types, val))
+        self._member_types = _validate_three_member_type_names(val)
 
     def __repr__(self):
         return "<AngleType {}, id {}>".format(self.name, id(self))
