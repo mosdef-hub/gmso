@@ -16,7 +16,7 @@ class BondType(Potential):
         See `Potential` documentation for more information
     independent vars : set of str
         see `Potential` documentation for more information
-    types : list of topology.AtomType.name (str)
+    member_types : list of topology.AtomType.name (str)
 
     Notes
     ----
@@ -32,25 +32,25 @@ class BondType(Potential):
                      'r_eq': 0.14 * u.nm
                  },
                  independent_variables={'r'},
-                 types=[]):
+                 member_types=[]):
 
         super(BondType, self).__init__(name=name, expression=expression,
                 parameters=parameters, independent_variables=independent_variables)
 
-        self._types = _validate_two_atomtypes(types)
+        self._member_types = _validate_two_member_type_names(member_types)
 
     @property
-    def types(self):
-        return self._types
+    def member_types(self):
+        return self._member_types
 
-    @types.setter
-    def types(self, val):
-       self._types = _validate_two_atomtypes(val)
+    @member_types.setter
+    def member_types(self, val):
+       self._member_types = _validate_two_member_type_names(val)
 
     def __repr__(self):
         return "<BondType {}, id {}>".format(self.name, id(self))
 
-def _validate_two_atomtypes(types):
+def _validate_two_member_type_names(types):
     """Ensure 2 partners are involved in BondType"""
     if len(types) != 2 and len(types) != 0:
         raise TopologyError("Trying to create a BondType "

@@ -16,7 +16,7 @@ class AngleType(Potential):
         See `Potential` documentation for more information
     independent vars : set of str
         See `Potential` documentation for more information
-    types : list of topology.AtomType.name (str)
+    member_types : list of topology.AtomType.name (str)
 
     Notes
     ----
@@ -32,25 +32,25 @@ class AngleType(Potential):
                      'theta_eq': 180 * u.deg
                  },
                  independent_variables={'theta'},
-                 types=[]):
+                 member_types=[]):
 
         super(AngleType, self).__init__(name=name, expression=expression,
                 parameters=parameters, independent_variables=independent_variables)
 
-        self._types = _validate_three_atomtypes(types)
+        self._member_types = _validate_three_member_type_names(member_types)
 
     @property
-    def types(self):
-        return self._types
+    def member_types(self):
+        return self._member_types
 
-    @types.setter
-    def types(self, val):
-       self._types = _validate_three_atomtypes(val)
+    @member_types.setter
+    def member_types(self, val):
+       self._member_types = _validate_three_member_type_names(val)
 
     def __repr__(self):
         return "<AngleType {}, id {}>".format(self.name, id(self))
 
-def _validate_three_atomtypes(types):
+def _validate_three_member_type_names(types):
     """Ensure 3 partners are involved in BondType"""
     if len(types) != 3 and len(types) != 0:
         raise TopologyError("Trying to create an AngleType "
