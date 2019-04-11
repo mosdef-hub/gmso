@@ -1,12 +1,17 @@
-import parmed as pmd
 import unyt as u
+import pytest
 
 from topology.external.convert_parmed import from_parmed
 from topology.tests.base_test import BaseTest
 from topology.utils.io import get_fn
 from topology.utils.testing import allclose
+from topology.utils.io import get_fn, import_, has_parmed
 
 
+if has_parmed:
+    pmd = import_('parmed')
+
+@pytest.mark.skipif(not has_parmed, reason="ParmEd is not installed")
 class TestConvertParmEd(BaseTest):
     def test_from_parmed_basic(self, angles):
         struc = pmd.load_file(get_fn('ethane.mol2'), structure=True)

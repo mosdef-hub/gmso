@@ -1,12 +1,18 @@
-import simtk.unit
 import unyt as u
 import numpy as np
+import pytest
 
 from topology.core.box import Box
 from topology.external.convert_openmm import to_openmm
 from topology.tests.base_test import BaseTest
+from topology.utils.io import import_, has_openmm, has_simtk_unit
 
 
+if has_openmm and has_simtk_unit:
+    simtk_unit = import_('simtk.unit')
+
+@pytest.mark.skipif(not has_openmm, reason="OpenMM is not installed")
+@pytest.mark.skipif(not has_simtk_unit, reason="SimTK is not installed")
 class TestOpenMM(BaseTest):
     def test_openmm_modeller(self, topology_site):
         to_openmm(topology_site(), openmm_object='modeller')
@@ -45,4 +51,4 @@ class TestOpenMM(BaseTest):
         n_topology_sites = len(top.sites)
         omm_top = to_openmm(top, openmm_object='modeller')
 
-        assert isinstance(omm_top.positions.unit, type(simtk.unit.nanometer))
+        assert isinstance(omm_top.positions.unit, type(simtk_unit.nanometer))
