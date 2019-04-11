@@ -171,6 +171,7 @@ class Topology(object):
     def update_sites(self):
         """ (Is this necessary?)
         Update site list based on the connection members """
+        self._sites = IndexedSet(self._sites)
         for connection in self.connections:
             for con_member in connection.connection_members:
                 if con_member not in self.sites:

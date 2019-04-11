@@ -342,3 +342,19 @@ class TestTopology(BaseTest):
         assert len(top.angle_types) == 1
         assert len(top.angle_type_expressions) == 1
         assert len(top.atom_type_expressions) == 2
+
+    def test_topology_ghost_member(self):
+        top = Topology()
+        atom_type = AtomType()
+        site = Site(atom_type=atom_type)
+        top.add_site(site, update_types=True)
+
+#        with pytest.warns(UserWarning):
+#            top.add_site(site, update_types=True)
+
+        atom_type.parameters['sigma'] = 0.1 * u.nm
+        top.add_site(site, update_types=True)
+
+        assert len(top.sites) == 2
+        top.update_sites()
+        assert len(top.sites) == 1
