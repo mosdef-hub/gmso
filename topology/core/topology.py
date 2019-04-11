@@ -6,9 +6,11 @@ from boltons.setutils import IndexedSet
 
 from topology.core.bond import Bond
 from topology.core.angle import Angle
+from topology.core.dihedral import Dihedral
 from topology.core.potential import Potential
 from topology.core.bond_type import BondType
 from topology.core.angle_type import AngleType
+from topology.core.dihedral_type import DihedralType
 from topology.exceptions import TopologyError
 
 
@@ -28,11 +30,13 @@ class Topology(object):
         self._connections = list()
         self._bonds = list()
         self._angles = list()
+        self._dihedrals = list()
 
         self._atom_types = list()
         self._connection_types = list()
         self._bond_types = list()
         self._angle_types = list()
+        self._dihedral_types = list()
 
     @property
     def name(self):
@@ -81,6 +85,9 @@ class Topology(object):
         elif isinstance(connection, Angle):
             self.update_angles()
             self.update_angle_types()
+        elif isinstance(connection, Dihedral):
+            self.update_dihedrals()
+            self.update_dihedral_types()
 
     @property
     def n_sites(self):
@@ -95,8 +102,8 @@ class Topology(object):
         return len(self.bonds)
 
     @property
-    def n_angles(self):
-        return len(self.angles)
+    def n_dihedrals(self):
+        return len(self.dihedrals)
 
     @property
     def sites(self):
@@ -115,6 +122,10 @@ class Topology(object):
         return self._angles
 
     @property
+    def dihedrals(self):
+        return self._dihedrals
+
+    @property
     def atom_types(self):
         return self._atom_types
 
@@ -129,6 +140,10 @@ class Topology(object):
     @property
     def angle_types(self):
         return self._angle_types
+
+    @property
+    def dihedral_types(self):
+        return self._dihedral_types
 
     @property
     def atom_type_expressions(self):
@@ -146,23 +161,29 @@ class Topology(object):
     def angle_type_expressions(self):
         return list(set([atype.expression for atype in self.angle_types]))
 
+    @property
+    def dihedral_type_expressions(self):
+        return list(set([atype.expression for atype in self.dihedral_types]))
+
     def update_top(self):
         """ Update the entire topology's attributes
 
         Notes
         -----
-        Will update: sites, connections, bonds, angles,
-        atom_types, connectiontypes, bondtypes, angletypes
+        Will update: sites, connections, bonds, angles, dihedrals
+        atom_types, connectiontypes, bondtypes, angletypes, dihedral_types
         """
         self.update_sites()
         self.update_connections()
         self.update_bonds()
         self.update_angles()
+        self.update_dihedrals()
 
         self.update_atom_types()
         self.update_connection_types()
         self.update_bond_types()
         self.update_angle_types()
+        self.update_dihedral_types()
 
     def update_sites(self):
         """ (Is this necessary?)
@@ -187,6 +208,10 @@ class Topology(object):
     def update_angles(self):
         """ Rebuild the angle list by filtering through connection list """
         self._angles = [a for a in self.connections if isinstance(a, Angle)]
+
+    def update_dihedrals(self):
+        """ Rebuild the dihedral list by filtering through connection list """
+        self._dihedrals = [a for a in self.connections if isinstance(a, Dihedral)]
 
     def update_atom_types(self):
         """ Update the atom types based on the site list """
@@ -232,6 +257,18 @@ class Topology(object):
                     a.connection_type, a))
             elif a.connection_type not in self.angle_types:
                 self.angle_types.append(a.connection_type)
+
+    def update_dihedral_types(self):
+        """ Update the dihedral types based on the dihedral list """
+        #self._dihedral_types = []
+        for a in self.dihedrals:
+            if a.connection_type is None:
+                warnings.warn("Non-parametrized Dihedral {} detected".format(a))
+            elif not isinstance(a.connection_type, DihedralType):
+                raise TopologyError("Non-DihedralType {} found in Dihedral {}".format(
+                    a.connection_type, a))
+            elif a.connection_type not in self.dihedral_types:
+                self.dihedral_types.append(a.connection_type)
 
     def __repr__(self):
         descr = list('<')
