@@ -39,14 +39,17 @@ class Potential(object):
                      'a': 1.0*u.dimensionless,
                      'b': 1.0*u.dimensionless},
                  independent_variables={'x'},
+                 template=False,
                  ):
 
         self._name = name
-        self._parameters = _validate_parameters(parameters)
+        if not template:
+            self._parameters = _validate_parameters(parameters)
         self._independent_variables = _validate_independent_variables(independent_variables)
         self._expression = _validate_expression(expression)
 
-        self._validate_expression_parameters()
+        if not template:
+            self._validate_expression_parameters()
 
     @property
     def name(self):
