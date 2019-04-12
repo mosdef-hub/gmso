@@ -25,14 +25,14 @@ class Topology(object):
             self._name = name
         self._box = box
         self._sites = IndexedSet()
-        self._connections = list()
-        self._bonds = list()
-        self._angles = list()
+        self._connections = IndexedSet()
+        self._bonds = IndexedSet()
+        self._angles = IndexedSet()
 
-        self._atom_types = list()
-        self._connection_types = list()
-        self._bond_types = list()
-        self._angle_types = list()
+        self._atom_types = IndexedSet()
+        self._connection_types = IndexedSet()
+        self._bond_types = IndexedSet()
+        self._angle_types = IndexedSet()
 
     @property
     def name(self):
@@ -72,7 +72,7 @@ class Topology(object):
         if connection.connection_members[1] not in self.sites:
             self.add_site(connection.connection_members[1])
 
-        self._connections.append(connection)
+        self._connections.add(connection)
 
         #self.update_connections() Do we need to call this? Code should work either way
         if update_types:
@@ -199,7 +199,7 @@ class Topology(object):
             if site.atom_type is None:
                 warnings.warn("Site {} detected with no AtomType".format(site))
             elif site.atom_type not in self.atom_types:
-                self.atom_types.append(site.atom_type)
+                self.atom_types.add(site.atom_type)
 
     def update_connection_types(self):
         """ Update the connection types based on the connection list """
@@ -211,7 +211,7 @@ class Topology(object):
                 raise TopologyError("Non-Potential {} found "
                         "in Connection {}".format(c.connection_type, c))
             elif c.connection_type not in self.connection_types:
-                self.connection_types.append(c.connection_type)
+                self.connection_types.add(c.connection_type)
 
     def update_bond_types(self):
         """ Update the bond types based on the bond list """
@@ -223,7 +223,7 @@ class Topology(object):
                 raise TopologyError("Non-BondType {} found in Bond {}".format(
                     b.connection_type, b))
             elif b.connection_type not in self.bond_types:
-                self.bond_types.append(b.connection_type)
+                self.bond_types.add(b.connection_type)
 
     def update_angle_types(self):
         """ Update the angle types based on the angle list """
@@ -235,7 +235,7 @@ class Topology(object):
                 raise TopologyError("Non-AngleType {} found in Angle {}".format(
                     a.connection_type, a))
             elif a.connection_type not in self.angle_types:
-                self.angle_types.append(a.connection_type)
+                self.angle_types.add(a.connection_type)
 
     def __repr__(self):
         descr = list('<')
