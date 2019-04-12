@@ -18,6 +18,7 @@ from topology.tests.base_test import BaseTest
 from topology.utils.testing import allclose
 from topology.tests.base_test import BaseTest
 from topology.utils.io import get_fn, import_, has_parmed
+from topology.exceptions import RedundancyError
 
 
 if has_parmed:
