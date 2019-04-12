@@ -58,8 +58,9 @@ class Topology(object):
 
     def add_site(self, site, update_types=True):
         if site in self.sites:
-            warnings.warn("Redundantly adding Site {}".format(site))
-        self._sites.add(site)
+            raise RedundancyError("Redundantly adding Site {}".format(site))
+        else:
+            self._sites.add(site)
         if update_types:
             self.update_atom_types()
 

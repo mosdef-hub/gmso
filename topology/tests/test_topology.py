@@ -44,10 +44,9 @@ class TestTopology(BaseTest):
         connect = Bond(connection_members=[site1,site2])
 
         top.add_connection(connect)
-        top.add_site(site1)
-        top.add_site(site2)
 
-
+        assert site1 in top.sites
+        assert site2 in top.sites
         assert len(top.connections) == 1
 
     def test_add_box(self):
@@ -191,8 +190,7 @@ class TestTopology(BaseTest):
                     connection_type=BondType())
 
         top = Topology()
-        top.add_site(site1)
-        top.add_site(site2)
+
         top.add_connection(bond, update_types=False)
         assert len(top.connection_types) == 0
 
@@ -344,18 +342,23 @@ class TestTopology(BaseTest):
         assert len(top.angle_type_expressions) == 1
         assert len(top.atom_type_expressions) == 2
 
-    def test_topology_ghost_member(self):
+    def test_topology_duplicate_sites(self):
         top = Topology()
         atom_type = AtomType()
         site = Site(atom_type=atom_type)
         top.add_site(site, update_types=True)
 
-#        with pytest.warns(UserWarning):
-#            top.add_site(site, update_types=True)
+        with pytest.raises(RedundancyError):
+            top.add_site(site, update_types=True)
 
-        atom_type.parameters['sigma'] = 0.1 * u.nm
+    def test_topology_ghost_site(self):
+        top = Topology()
+        atom_type = AtomType()
+        site = Site(atom_type=atom_type)
         top.add_site(site, update_types=True)
 
-        assert len(top.sites) == 2
+        atom_type.parameters['sigma'] = 0.1 * u.nm
+
+        assert site not in top.sites
         top.update_sites()
-        assert len(top.sites) == 1
+        assert site in top.sites
