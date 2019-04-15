@@ -102,6 +102,10 @@ class Topology(object):
         return len(self.bonds)
 
     @property
+    def n_angles(self):
+        return len(self.angles)
+
+    @property
     def n_dihedrals(self):
         return len(self.dihedrals)
 
