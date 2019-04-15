@@ -15,6 +15,7 @@ from topology.core.angle_type import AngleType
 from topology.external.convert_parmed import from_parmed
 
 from topology.tests.base_test import BaseTest
+from topology.exceptions import TopologyError
 from topology.utils.testing import allclose
 from topology.tests.base_test import BaseTest
 from topology.utils.io import get_fn, import_, has_parmed
@@ -27,6 +28,14 @@ class TestTopology(BaseTest):
     def test_new_topology(self):
         top = Topology(name='mytop')
         assert top.name == 'mytop'
+
+    def test_change_comb_rule(self):
+        top = Topology()
+        assert top.combining_rule == 'lorentz'
+        top.combining_rule = 'geometric'
+        assert top.combining_rule == 'geometric'
+        with pytest.raises(TopologyError):
+            top.combining_rule = 'kong'
 
     def test_add_site(self):
         top = Topology()

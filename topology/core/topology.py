@@ -34,6 +34,8 @@ class Topology(object):
         self._bond_types = IndexedSet()
         self._angle_types = IndexedSet()
 
+        self._combining_rule = 'lorentz'
+
     @property
     def name(self):
         return self._name
@@ -49,6 +51,16 @@ class Topology(object):
     @box.setter
     def box(self, box):
         self._box = box
+
+    @property
+    def combining_rule(self):
+        return self._combining_rule
+
+    @combining_rule.setter
+    def combining_rule(self, rule):
+        if rule not in ['lorentz', 'geometric']:
+            raise TopologyError('Combining rule must be `lorentz` or `geometric`')
+        self._combining_rule = rule
 
     def positions(self):
         xyz = np.empty(shape=(self.n_sites, 3)) * u.nm
@@ -259,6 +271,9 @@ class Topology(object):
             return False
 
         if self.n_sites != other.n_sites:
+            return False
+
+        if self.combining_rule != other.combining_rule:
             return False
 
         for (con1, con2) in zip(self.connections, other.connections):
