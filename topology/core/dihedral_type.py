@@ -27,7 +27,7 @@ class DihedralType(Potential):
                  expression='k * (1 + cos(n * phi - phi_eq))**2',
                  parameters={
                      'k': 1000 * u.Unit('kJ / (deg**2)'),
-                     'theta_eq': 180 * u.deg,
+                     'phi_eq': 180 * u.deg,
                      'n': 1*u.dimensionless
                  },
                  independent_variables={'phi'}):
