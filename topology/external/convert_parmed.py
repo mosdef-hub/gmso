@@ -37,7 +37,8 @@ def from_parmed(structure):
                     u.nm),
                 atom_type=None)
         site_map[atom] = site
-        top.add_site(site)
+        top.add_site(site, update_types=False)
+    top.update_top()
 
     if np.all(structure.box):
         # This is if we choose for topology to have abox
@@ -64,7 +65,8 @@ def from_parmed(structure):
                 site_map[bond.atom2]],
                 connection_type=None)
 
-        top.add_connection(top_connection)
+        top.add_connection(top_connection, update_types=False)
+    top.update_top()
 
     for angle in structure.angles:
         # Generate angle parameters for AngleType that gets passed
@@ -85,7 +87,8 @@ def from_parmed(structure):
                 site_map[angle.atom2], site_map[angle.atom3]],
                 connection_type=None)
 
-        top.add_connection(top_connection)
+        top.add_connection(top_connection, update_types=False)
+    top.update_top()
 
     # TODO: Dihedrals
 

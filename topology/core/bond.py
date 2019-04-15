@@ -29,13 +29,20 @@ class Bond(Connection):
                 connection_type=connection_type, name=name)
 
     def __eq__(self, other):
-        if not self.connection_members == other.connection_members:
-            return False
-        if not self.connection_type == other.connection_type:
-            return False
-        if not self.name == other.name:
-            return False
-        return True
+        return hash(self) == hash(other)
+
+    def __hash__(self):
+        if self.connection_type:
+            return hash(
+                tuple(
+                    (
+                        self.name,
+                        self.connection_type,
+                        tuple(self.connection_members),
+                    )
+                )
+            )
+        return hash(tuple(self.connection_members))
 
 def _validate_two_partners(connection_members):
     """Ensure 2 partners are involved in Bond"""

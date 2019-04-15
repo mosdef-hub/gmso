@@ -36,7 +36,8 @@ def read_gro(filename):
                 float(line[36:44]),
             ])
             site = Site(name=atom_name, position=coords[row])
-            top.add_site(site)
+            top.add_site(site, update_types=False)
+        top.update_top()
 
         # Box information
         line = gro_file.readline().split()
