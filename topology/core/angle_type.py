@@ -55,7 +55,7 @@ class AngleType(Potential):
         return "<AngleType {}, id {}>".format(self.name, id(self))
 
 def _validate_three_member_type_names(types):
-    """Ensure 3 partners are involved in BondType"""
+    """Ensure 3 partners are involved in AngleType"""
     if len(types) != 3 and len(types) != 0:
         raise TopologyError("Trying to create an AngleType "
                 "with {} constituent types". format(len(types)))
