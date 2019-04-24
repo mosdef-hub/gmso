@@ -65,6 +65,43 @@ def write_top(top, filename):
                 )
             )
 
+
+        # TODO: for subtop in top.subtops ...
+        out_file.write(
+            '[ moleculetype ]\n'
+            '; name\t\t\tnrexcl
+            '{0}\t'
+            '{1}\n\n'.format(
+                top.name, # TODO: subtop.name
+                3 # TODO: This should be the nrexcl
+            )
+        )
+
+        out_file.write(
+            '[ atoms ]\n'
+            ';   nr       type  resnr residue  atom   cgnr    charge       mass\n'
+        )
+        for site_idx, site in enumerate(top.sites):
+            out_file.write(
+                '\t{0}'
+                '\t{1}'
+                '\t{2}'
+                '\t{3}'
+                '\t{4}'
+                '\t{5}'
+                '\t{6}'
+                '\t{7}'.format(
+                    idx,
+                    site.atom_type.name,
+                    1, # TODO: subtop idx
+                    top.name, # TODO: subtop.name
+                    site.element,
+                    idx, # TODO: care about charge groups
+                    site.charge,
+                    site.mass,
+                )
+            )
+
 def _validate_compatibility(top):
     """Check compatability of topology object with GROMACS TOP format"""
     pass
