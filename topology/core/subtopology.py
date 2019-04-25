@@ -7,10 +7,12 @@ from topology.core.topology import Topology
 
 class SubTopology(object):
     """A sub-topology."""
-    def __init__(self, name="Topology", parent=None):
+    def __init__(self, name="Sub-Topology", parent=None):
         if name is not None:
             self._name = name
-        if parent is not None:
+        if parent is None:
+            self._parent = parent
+        else:
             self._parent = _validate_parent(parent)
         self._sites = IndexedSet()
 
@@ -36,12 +38,18 @@ class SubTopology(object):
 
     @parent.setter
     def parent(self, parent):
+        if parent is None:
+            raise NotImplementedError(
+                'Setting parents to None is not yet supported'
+            )
         self._parent = _validate_parent(parent)
 
     def add_site(self, site):
         if site in self.sites:
             warnings.warn("Redundantly adding Site {}".format(site))
         self._sites.add(site)
+        if self.parent:
+            self.parent.add_site(site)
 
     def __repr__(self):
         descr = list('<')
