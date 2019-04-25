@@ -30,3 +30,9 @@ class SubTopology(object):
         if site in self.sites:
             warnings.warn("Redundantly adding Site {}".format(site))
         self._sites.add(site)
+
+    def __repr__(self):
+        descr = list('<')
+        descr.append(self.name + ' ')
+        descr.append('{:d} sites, '.format(self.n_sites))
+        descr.append('id: {}>'.format(id(self)))
