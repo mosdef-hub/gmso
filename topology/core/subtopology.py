@@ -9,7 +9,7 @@ class SubTopology(object):
     """A sub-topology."""
     def __init__(self, name="Sub-Topology", parent=None):
         if name is not None:
-            self._name = name
+            self._name = str(name)
         if parent is None:
             self._parent = parent
         else:
@@ -38,6 +38,10 @@ class SubTopology(object):
 
     @parent.setter
     def parent(self, parent):
+        warnings.warn(
+            'Setting a parent is potentially dangerous. Consider using '
+            'Topology.add_subtopology instead'
+        )
         if parent is None:
             raise NotImplementedError(
                 'Setting parents to None is not yet supported'
