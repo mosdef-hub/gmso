@@ -3,7 +3,7 @@ import warnings
 from boltons.setutils import IndexedSet
 
 
-SubTopology(object):
+class SubTopology(object):
     """A sub-topology."""
     def __init__(self, name="Topology"):
         if name is not None:
@@ -17,6 +17,14 @@ SubTopology(object):
     @name.setter
     def name(self, name):
         self._name = str(name)
+
+    @property
+    def sites(self):
+        return self._sites
+
+    @property
+    def n_sites(self):
+        return len(self.sites)
 
     def add_site(self, site):
         if site in self.sites:
