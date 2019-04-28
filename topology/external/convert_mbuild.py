@@ -1,6 +1,7 @@
 import unyt as u
 
 from topology.core.topology import Topology
+from topology.core.subtopology import SubTopology
 from topology.core.site import Site
 from topology.core.bond import Bond
 from topology.utils.io import has_mbuild
@@ -20,11 +21,19 @@ def from_mbuild(compound):
         top.name = compound.name
 
     site_map = dict()
-    for particle in compound.particles():
-        pos = particle.xyz[0] * u.nanometer
-        site = Site(name=particle.name, position=pos)
-        site_map[particle] = site
-        top.add_site(site, update_types=False)
+    for child in compound.children:
+        if child.children is None:
+            pos = child.xyz[0] * u.nanometer
+            site = Site(name=child.name, position=pos)
+            site_map[child] = site
+        else:
+            subtop = SubTopology(name=child.name)
+            top.add_subtopology(subtop)
+            for childchild in child.children:
+                pos = childchild.xyz[0] * u.nanometer
+                site = Site(name=childchild.name, position=pos)
+                site_map[childchild] = site
+                subtop.add_site(site)
     top.update_top()
 
     for b1, b2 in compound.bonds():
