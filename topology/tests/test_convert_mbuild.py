@@ -6,6 +6,7 @@ from topology.utils.io import has_mbuild
 
 
 if has_mbuild:
+    from mbuild import mb
     from mbuild.examples import Ethane
 
 @pytest.mark.skipif(not has_mbuild, reason="mBuild is not installed")
@@ -25,3 +26,17 @@ class TestConvertMBuild(BaseTest):
 
         assert new.n_particles == 8
         assert new.n_bonds == 7
+
+    def test_3_layer_compound(self):
+        top_cmpnd = mb.Compound()
+        mid_cmpnd = mb.Compound()
+        bot_cmpnd = mb.Compound()
+
+        top_cmpnd.add(mid_cmpnd)
+        mid_cmpnd.add(bot_cmpnd)
+
+        top = from_mbuild(top_cmpnd)
+
+        assert top.n_sites == 1
+        assert top.n_subtops == 1
+        assert top.subtops[0].n_sites == 1
