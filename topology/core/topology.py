@@ -9,6 +9,7 @@ from topology.core.angle import Angle
 from topology.core.potential import Potential
 from topology.core.bond_type import BondType
 from topology.core.angle_type import AngleType
+from topology.core.connection_graph import ConnectionGraph, graph_from_top
 from topology.exceptions import TopologyError
 
 
@@ -29,6 +30,7 @@ class Topology(object):
         self._bonds = IndexedSet()
         self._angles = IndexedSet()
 
+        self._connection_graph = ConnectionGraph()
         self._atom_types = IndexedSet()
         self._connection_types = IndexedSet()
         self._bond_types = IndexedSet()
@@ -179,6 +181,10 @@ class Topology(object):
         self.update_connection_types()
         self.update_bond_types()
         self.update_angle_types()
+
+        if not self._connection_graph:
+            self._connection_graph = graph_from_top(self)
+            # TODO: functionality for checking and/or updating graph
 
     def update_sites(self):
         """ (Is this necessary?)
