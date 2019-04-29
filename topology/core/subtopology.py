@@ -3,6 +3,7 @@ import warnings
 from boltons.setutils import IndexedSet
 
 from topology.core.topology import Topology
+from topology.core.site import Site
 
 
 class SubTopology(object):
@@ -49,6 +50,7 @@ class SubTopology(object):
         self._parent = _validate_parent(parent)
 
     def add_site(self, site):
+        site = _validate_site_addability(site)
         if site in self.sites:
             warnings.warn("Redundantly adding Site {}".format(site))
         self._sites.add(site)
@@ -67,3 +69,10 @@ def _validate_parent(parent):
         return parent
     else:
         raise TypeError('Argument {} is not type Topology'.format(parent))
+
+def _validate_site_addability(site):
+    """Ensure a site is a site and not already a part of a top/subtop"""
+    if not isinstance(site, Site):
+        raise TypeError('Argument {} is not a Site. See topology/core/site.py')
+    # TODO: Some sort of a check on site.parent
+    return site
