@@ -63,6 +63,7 @@ class SubTopology(object):
         descr.append('{:d} sites, '.format(self.n_sites))
         descr.append('id: {}>'.format(id(self)))
 
+        return ''.join(descr)
 
 def _validate_parent(parent):
     if isinstance(parent, Topology):
