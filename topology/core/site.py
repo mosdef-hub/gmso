@@ -103,6 +103,21 @@ class Site(object):
             )
         )
 
+    def __le__(self, other):
+        if isinstance(other, Site):
+            return hash(self) <= hash(other)
+        else:
+            raise TypeError("Cannot compare equality between {} and {}".format(
+                type(self), type(other)))
+
+    def __lt__(self, other):
+        if isinstance(other, Site):
+            return hash(self) < hash(other)
+        else:
+            raise TypeError("Cannot compare equality between {} and {}".format(
+                type(self), type(other)))
+
+
     def __repr__(self):
         return "<Site {}, id {}>".format(self.name, id(self))
 
