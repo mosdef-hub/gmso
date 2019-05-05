@@ -26,17 +26,17 @@ class Site(object):
        If a unyt array is not passed, units are assumed to be in 'nm'.
     charge : unyt quantity or float, optional, default=None
        The charge of the site.
-       Unyt quantities are converted to units of elementary charge, float values are assumed to be in units of elementary charge.  
+       Unyt quantities are converted to units of elementary charge, float values are assumed to be in units of elementary charge.
        If no value is passed, site attempts to grab a charge from site.atom_type.
     mass : unyt quantity or float, optional, default=None
-       The mass of the site.  
-       Unyt quantities are converted to units of g/mol, float values are assumed to be in units of g/mol.  
+       The mass of the site.
+       Unyt quantities are converted to units of g/mol, float values are assumed to be in units of g/mol.
        If no value is passed, site attempts to grab a mass from site.atom_type.
     element : 'Element' object, optional, default=None
-       The element of the site represented by the `Element` object.  
+       The element of the site represented by the `Element` object.
        See `element.py` for more information.
     atom_type : 'AtomType' object, optional, default=None
-       The atom type of the site containing functional forms, interaction parameters, and other properties such as mass and charge.  
+       The atom type of the site containing functional forms, interaction parameters, and other properties such as mass and charge.
        See `atom_type.py` for more information.
 
     Attributes
@@ -124,6 +124,20 @@ class Site(object):
     def atom_type(self, val):
         val = _validate_atom_type(val)
         self._atom_type = val
+
+    def __le__(self, other):
+        if isinstance(other, Site):
+            return hash(self) <= hash(other)
+        else:
+            raise TypeError("Cannot compare equality between {} and {}".format(
+                type(self), type(other)))
+
+    def __lt__(self, other):
+        if isinstance(other, Site):
+            return hash(self) < hash(other)
+        else:
+            raise TypeError("Cannot compare equality between {} and {}".format(
+                type(self), type(other)))
 
     def __repr__(self):
         return "<Site {}, id {}>".format(self.name, id(self))
