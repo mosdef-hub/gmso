@@ -13,6 +13,8 @@ class Angle(Connection):
     connection_members: list of topology.Site
         Should be length 3
     connection_type : topology.AngleType
+    name : name of the angle
+        inherits the name attribute from Connection
 
     Notes
     -----
@@ -21,19 +23,28 @@ class Angle(Connection):
     Addiitonal _validate methods are presented
     """
 
-    def __init__(self, connection_members=[], connection_type=None):
+    def __init__(self, connection_members=[], connection_type=None, name="Angle"):
         connection_members = _validate_three_partners(connection_members)
         connection_type = _validate_angletype(connection_type)
 
         super(Angle, self).__init__(connection_members=connection_members,
-                connection_type=connection_type)
+                connection_type=connection_type, name=name)
 
     def __eq__(self, other):
-        if not self.connection_members == other.connection_members:
-            return False
-        if not self.connection_type == other.connection_type:
-            return False
-        return True
+        return hash(self) == hash(other)
+
+    def __hash__(self):
+        if self.connection_type:
+            return hash(
+                tuple(
+                    (
+                        self.name,
+                        self.connection_type,
+                        tuple(self.connection_members),
+                    )
+                )
+            )
+        return hash(tuple(self.connection_members))
 
 
 def _validate_three_partners(connection_members):
