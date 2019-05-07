@@ -115,3 +115,5 @@ def graph_from_top(top):
             node1=bond.connection_members[0],
             node2=bond.connection_members[1],
         )
+
+    return graph
