@@ -58,6 +58,10 @@ class Topology(object):
     def combining_rule(self):
         return self._combining_rule
 
+    @property
+    def connection_graph(self):
+        return self._connection_graph
+
     @combining_rule.setter
     def combining_rule(self, rule):
         if rule not in ['lorentz', 'geometric']:
@@ -70,14 +74,16 @@ class Topology(object):
             xyz[i, :] = site.position
         return xyz
 
-    def add_site(self, site, update_types=True):
+    def add_site(self, site, update_types=True, update_graph=True):
         if site in self.sites:
             warnings.warn("Redundantly adding Site {}".format(site))
         self._sites.add(site)
         if update_types:
             self.update_atom_types()
+        if update_graph:
+            self.connection_graph.add_node(site)
 
-    def add_connection(self, connection, update_types=True):
+    def add_connection(self, connection, update_types=True, update_graph=True):
         if connection in self.connections:
             warnings.warn("Redundantly adding Connection {}".format(connection))
 
@@ -99,6 +105,12 @@ class Topology(object):
             self.update_angles()
             if update_types:
                 self.update_angle_types()
+
+        if update_graph:
+            self.connection_graph.add_edge(
+                connection.connection_members[0],
+                connection.connection_members[1],
+            )
 
     @property
     def n_sites(self):
