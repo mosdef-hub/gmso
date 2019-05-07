@@ -106,7 +106,7 @@ class Topology(object):
             if update_types:
                 self.update_angle_types()
 
-        if update_graph:
+        if update_graph and isinstance(connection, Bond):
             self.connection_graph.add_edge(
                 connection.connection_members[0],
                 connection.connection_members[1],
