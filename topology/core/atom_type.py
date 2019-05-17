@@ -3,6 +3,7 @@ import unyt as u
 
 from topology.utils.testing import allclose
 from topology.core.potential import Potential
+from topology.utils.misc import unyt_to_hashable
 
 
 class AtomType(Potential):
@@ -34,6 +35,16 @@ class AtomType(Potential):
         values, as unyt quantities.
     independent_variables : str, sympy.Symbol, or list-like of str, sympy.Symbol
         The independent variables of the functional form previously described.
+    atomclass : str, default=''
+        The class of the atomtype
+    doi : str
+        Digital Object Identifier of publication where this atom type was specified
+    desc : str
+        Simple description of the atom type
+    overrides : set of str
+        Set of other atom types that this atom type overrides
+    definition : str
+        SMARTS string defining this atom type
 
     """
 
@@ -45,7 +56,9 @@ class AtomType(Potential):
                  parameters={
                     'sigma': 0.3 * u.nm,
                     'epsilon': 0.3 * u.Unit('kJ')},
-                 independent_variables={'r'}):
+                 independent_variables={'r'},
+                 atomclass='', doi='', overrides=set(), definition='',
+                 description=''):
 
         super(AtomType, self).__init__(
             name=name,
@@ -54,6 +67,11 @@ class AtomType(Potential):
             independent_variables=independent_variables)
         self._mass = _validate_mass(mass)
         self._charge = _validate_charge(charge)
+        self._atomclass = _validate_str(atomclass)
+        self._doi = _validate_str(doi)
+        self._overrides = _validate_set(overrides)
+        self._description = _validate_str(description)
+        self._definition = _validate_str(definition)
 
         self._validate_expression_parameters()
 
@@ -73,25 +91,63 @@ class AtomType(Potential):
     def mass(self, val):
         self._mass = _validate_mass(val)
 
-    def __eq__(self, other):
-        name_match = (self.name == other.name)
-        charge_match = allclose(
-            self.charge,
-            other.charge,
-            atol=1e-6 * u.elementary_charge,
-            rtol=1e-5 * u.elementary_charge)
-        mass_match = allclose(
-            self.mass,
-            other.mass,
-            atol=1e-6 * u.gram / u.mol,
-            rtol=1e-5 * u.gram / u.mol)
-        parameter_match = (self.parameters == other.parameters)
-        expression_match = (self.expression == other.expression)
+    @property
+    def atomclass(self):
+        return self._atomclass
 
-        return all([
-            name_match, charge_match, mass_match, parameter_match,
-            expression_match
-        ])
+    @atomclass.setter
+    def atomclass(self, val):
+        self._atomclass = val
+
+    @property
+    def doi(self):
+        return self._doi
+
+    @doi.setter
+    def doi(self, doi):
+        self._doi = _validate_str(doi)
+
+    @property
+    def overrides(self):
+        return self._overrides
+
+    @overrides.setter
+    def overrides(self, overrides):
+        self._overrides = _validate_set(overrides)
+
+    @property
+    def description(self):
+        return self._description
+
+    @description.setter
+    def description(self, description):
+        self._description = _validate_str(description)
+
+    @property
+    def definition(self):
+        return self._definition
+
+    @definition.setter
+    def definition(self, definition):
+        self._definition = _validate_str(definition)
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
+    def __hash__(self):
+        return hash(
+            tuple(
+                (
+                    self.name,
+                    unyt_to_hashable(self.mass),
+                    unyt_to_hashable(self.charge),
+                    self.expression,
+                    tuple(self.independent_variables),
+                    tuple(self.parameters.keys()),
+                    tuple(unyt_to_hashable(val) for val in self.parameters.values())
+                )
+            )
+        )
 
     def __repr__(self):
         desc = "<AtomType {}, id {}>".format(self._name, id(self))
@@ -122,3 +178,15 @@ def _validate_mass(mass):
         pass
 
     return mass
+
+def _validate_str(val):
+    if not isinstance(val, str):
+        raise ValueError("Passed value {} is not a string".format(val))
+    return val
+
+def _validate_set(val):
+    if not isinstance(val, set):
+        raise ValueError("Passed value {} is not a set".format(val))
+    if not all([isinstance(char, str) for char in val]):
+        raise ValueError("Passed overrides of non-string to overrides")
+    return val

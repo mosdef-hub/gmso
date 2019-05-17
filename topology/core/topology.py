@@ -27,16 +27,18 @@ class Topology(object):
             self._name = name
         self._box = box
         self._sites = IndexedSet()
-        self._connections = list()
-        self._bonds = list()
-        self._angles = list()
-        self._dihedrals = list()
 
-        self._atom_types = list()
-        self._connection_types = list()
-        self._bond_types = list()
-        self._angle_types = list()
-        self._dihedral_types = list()
+        self._connections = IndexedSet()
+        self._bonds = IndexedSet()
+        self._angles = IndexedSet()
+        self._dihedrals = IndexedSet()
+        
+        self._atom_types = IndexedSet()
+        self._connection_types = IndexedSet()
+        self._bond_types = IndexedSet()
+        self._angle_types = IndexedSet()
+        self._dihedral_types = IndexedSet()
+        self._combining_rule = 'lorentz'
 
     @property
     def name(self):
@@ -54,19 +56,30 @@ class Topology(object):
     def box(self, box):
         self._box = box
 
+    @property
+    def combining_rule(self):
+        return self._combining_rule
+
+    @combining_rule.setter
+    def combining_rule(self, rule):
+        if rule not in ['lorentz', 'geometric']:
+            raise TopologyError('Combining rule must be `lorentz` or `geometric`')
+        self._combining_rule = rule
+
     def positions(self):
         xyz = np.empty(shape=(self.n_sites, 3)) * u.nm
         for i, site in enumerate(self.sites):
             xyz[i, :] = site.position
         return xyz
 
-    def add_site(self, site):
+    def add_site(self, site, update_types=True):
         if site in self.sites:
             warnings.warn("Redundantly adding Site {}".format(site))
         self._sites.add(site)
-        self.update_atom_types()
+        if update_types:
+            self.update_atom_types()
 
-    def add_connection(self, connection):
+    def add_connection(self, connection, update_types=True):
         if connection in self.connections:
             warnings.warn("Redundantly adding Connection {}".format(connection))
 
@@ -75,19 +88,23 @@ class Topology(object):
         if connection.connection_members[1] not in self.sites:
             self.add_site(connection.connection_members[1])
 
-        self._connections.append(connection)
+        self._connections.add(connection)
 
         #self.update_connections() Do we need to call this? Code should work either way
-        self.update_connection_types()
+        if update_types:
+            self.update_connection_types()
         if isinstance(connection, Bond):
             self.update_bonds()
-            self.update_bond_types()
+            if update_types:
+                self.update_bond_types()
         elif isinstance(connection, Angle):
             self.update_angles()
-            self.update_angle_types()
+            if update_types:
+                self.update_angle_types()            
         elif isinstance(connection, Dihedral):
             self.update_dihedrals()
-            self.update_dihedral_types()
+            if update_types:
+                self.update_dihedral_types()
 
     @property
     def n_sites(self):
@@ -224,7 +241,7 @@ class Topology(object):
             if site.atom_type is None:
                 warnings.warn("Site {} detected with no AtomType".format(site))
             elif site.atom_type not in self.atom_types:
-                self.atom_types.append(site.atom_type)
+                self.atom_types.add(site.atom_type)
 
     def update_connection_types(self):
         """ Update the connection types based on the connection list """
@@ -236,7 +253,7 @@ class Topology(object):
                 raise TopologyError("Non-Potential {} found "
                         "in Connection {}".format(c.connection_type, c))
             elif c.connection_type not in self.connection_types:
-                self.connection_types.append(c.connection_type)
+                self.connection_types.add(c.connection_type)
 
     def update_bond_types(self):
         """ Update the bond types based on the bond list """
@@ -248,7 +265,7 @@ class Topology(object):
                 raise TopologyError("Non-BondType {} found in Bond {}".format(
                     b.connection_type, b))
             elif b.connection_type not in self.bond_types:
-                self.bond_types.append(b.connection_type)
+                self.bond_types.add(b.connection_type)
 
     def update_angle_types(self):
         """ Update the angle types based on the angle list """
@@ -260,7 +277,7 @@ class Topology(object):
                 raise TopologyError("Non-AngleType {} found in Angle {}".format(
                     a.connection_type, a))
             elif a.connection_type not in self.angle_types:
-                self.angle_types.append(a.connection_type)
+                self.angle_types.add(a.connection_type)
 
     def update_dihedral_types(self):
         """ Update the dihedral types based on the dihedral list """
@@ -296,6 +313,9 @@ class Topology(object):
             return False
 
         if self.n_sites != other.n_sites:
+            return False
+
+        if self.combining_rule != other.combining_rule:
             return False
 
         for (con1, con2) in zip(self.connections, other.connections):

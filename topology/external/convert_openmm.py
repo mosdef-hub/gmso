@@ -1,9 +1,12 @@
 import unyt as u
-import simtk.unit
 
-from simtk.openmm.app import *
-from simtk.openmm import *
+from topology.utils.io import import_, has_openmm, has_simtk_unit
 
+
+if has_openmm & has_simtk_unit:
+    simtk_unit = import_('simtk.unit')
+    from simtk.openmm.app import *
+    from simtk.openmm import *
 
 def to_openmm(topology, openmm_object='topology'):
     """
@@ -21,10 +24,10 @@ def to_openmm(topology, openmm_object='topology'):
     openmm_top = app.Topology()
 
     # Get topology.positions into OpenMM form
-    openmm_unit = 1 * simtk.unit.nanometer
+    openmm_unit = 1 * simtk_unit.nanometer
     topology.positions().convert_to_units(openmm_unit.unit.get_symbol())
     value = [i.value for i in topology.positions()]
-    openmm_pos = simtk.unit.Quantity(value=value,
+    openmm_pos = simtk_unit.Quantity(value=value,
             unit=openmm_unit.unit)
 
     # Adding a default chain and residue temporarily
