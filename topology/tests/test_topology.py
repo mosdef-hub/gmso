@@ -129,6 +129,20 @@ class TestTopology(BaseTest):
 
         assert ref != bad_angle_type
 
+    def test_eq_dihedrals(self):
+        ref = pmd.load_file(get_fn('ethane.top'),
+                            xyz=get_fn('ethane.gro'))
+
+        missing_dihedral = deepcopy(ref)
+        missing_dihedral.rb_torsions[0].delete()
+
+        assert ref != missing_dihedral
+
+        bad_dihedral_type = deepcopy(ref)
+        bad_dihedral_type.rb_torsion_types[0].k = 22
+
+        assert ref != bad_dihedral_type
+
     def test_eq_overall(self):
         ref = pmd.load_file(get_fn('ethane.top'),
                             xyz=get_fn('ethane.gro'))
