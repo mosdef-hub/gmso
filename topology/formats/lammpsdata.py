@@ -6,6 +6,7 @@ import unyt as u
 import datetime
 
 from topology.utils.sorting import natural_sort
+from topology.core.atom_type import AtomType
 from topology.utils.testing import allclose
 from topology.core.topology import Topology
 from topology.core.box import Box
@@ -44,6 +45,21 @@ def read_lammpsdata(filename, atom_style='full'):
         top.box = Box([u.nm*(float(x_line[1])-float(x_line[0])),
                        u.nm*(float(y_line[1])-float(y_line[0])),
                        u.nm*(float(z_line[1])-float(z_line[0]))])
+
+        lammps_file.readline()
+
+        if 'Masses' in lammps_file.readline():
+            lammps_file.readline()
+            for i in range(n_atomtypes):
+                atomtype = lammps_file.readline().split()
+                new_type = AtomType(name=atomtype[0],
+                        mass=float(atomtype[1])*u.g)
+        elif 'Pair' in line:
+            lammps_file.readline()
+        elif 'Atoms' in line:
+            lammps_file.readline()
+
+        # WIP
         
 
 def write_lammpsdata(topology, filename, atom_style='full'):
