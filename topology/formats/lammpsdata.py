@@ -7,6 +7,44 @@ import datetime
 
 from topology.utils.sorting import natural_sort
 from topology.utils.testing import allclose
+from topology.core.topology import Topology
+from topology.core.box import Box
+
+
+def read_lammpsdata(filename, atom_style='full'):
+    top = Topology()
+
+    with open(filename, 'r') as lammps_file:
+        top.name = str(lammps_file.readline().strip())
+        lammps_file.readline()
+        n_atoms = int(lammps_file.readline().split()[0])
+        n_bonds = int(lammps_file.readline().split()[0])
+        n_angles = int(lammps_file.readline().split()[0])
+        n_dihedrals = int(lammps_file.readline().split()[0])
+        lammps_file.readline()
+        n_atomtypes = int(lammps_file.readline().split()[0])
+        n_gen_types = lammps_file.readline()
+        
+        for i in range(4):
+            if n_gen_types == '\n':
+                # Consider print statement here
+                break
+            elif n_gen_types.split()[1] == 'bond':
+                n_bondtypes = int(n_gen_types.split()[0])
+            elif n_gen_types.split()[1] == 'angle':
+                n_angletypes = int(n_gen_types.split()[0])
+            elif n_gen_types.split()[1] == 'dihedral':
+                n_dihedraltypes = int(n_gen_types.split()[0])
+
+        x_line = lammps_file.readline().split()
+        y_line = lammps_file.readline().split()
+        z_line = lammps_file.readline().split()
+
+        # Box Information
+        top.box = Box([u.nm*(float(x_line[1])-float(x_line[0])),
+                       u.nm*(float(y_line[1])-float(y_line[0])),
+                       u.nm*(float(z_line[1])-float(z_line[0]))])
+        
 
 def write_lammpsdata(topology, filename, atom_style='full'):
     """Output a LAMMPS data file.
@@ -85,7 +123,7 @@ def write_lammpsdata(topology, filename, atom_style='full'):
             if dihedrals != 0:
                 data.write('{:} dihedrals\n\n'.format(len(dihedrals)))
             else:
-                data.write('0 dihedrals\n')
+                data.write('0 dihedrals\n\n')
 
         data.write('{:d} atom types\n'.format(len(set(types))))
 
