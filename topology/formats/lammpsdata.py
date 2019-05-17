@@ -51,13 +51,23 @@ def read_lammpsdata(filename, atom_style='full'):
         if 'Masses' in lammps_file.readline():
             lammps_file.readline()
             for i in range(n_atomtypes):
-                atomtype = lammps_file.readline().split()
-                new_type = AtomType(name=atomtype[0],
-                        mass=float(atomtype[1])*u.g)
-        elif 'Pair' in line:
+                type_line = lammps_file.readline().split()
+                new_type = AtomType(name=type_line[0],
+                        mass=float(type_line[1])*u.g)
+        elif 'Atoms' in lammps_file.readline():
             lammps_file.readline()
-        elif 'Atoms' in line:
-            lammps_file.readline()
+            atom = lammps_file.readline().split()
+            tag = atom[1]
+            atom_type = atom[2]
+            charge = atom[3]
+            coords[row] = u.nm * np.array([
+                float(atom[4]),
+                float(atom[5]),
+                float(atom[6])]
+
+            site = Site(name=atom_name, position=coords[row])
+            top.add_site(site, update_types=False)
+
 
         # WIP
         
