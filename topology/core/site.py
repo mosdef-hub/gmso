@@ -4,19 +4,22 @@ import numpy as np
 import unyt as u
 
 from topology.core.atom_type import AtomType
+from topology.utils.testing import allclose
+from topology.utils.misc import unyt_to_hashable
 
 
 class Site(object):
     """A general site."""
 
     def __init__(self,
-                 name,
+                 name='Site',
                  position=None,
                  charge=None,
                  mass=None,
                  element=None,
                  atom_type=None):
-        self.name = str(name)
+        if name is not None:
+            self.name = str(name)
         if position is None:
             self.position = u.nm * np.zeros(3)
         else:
@@ -83,6 +86,23 @@ class Site(object):
         val = _validate_atom_type(val)
         self._atom_type = val
 
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
+    def __hash__(self):
+        return hash(
+            tuple(
+                (
+                    self.name,
+                    unyt_to_hashable(self.position),
+                    unyt_to_hashable(self.charge),
+                    unyt_to_hashable(self.mass),
+                    self.atom_type,
+                    self.element,
+                )
+            )
+        )
+
     def __repr__(self):
         return "<Site {}, id {}>".format(self.name, id(self))
 
@@ -112,7 +132,7 @@ def _validate_charge(charge):
         charge = charge.value * u.elementary_charge
     else:
         pass
-    
+
     return charge
 
 def _validate_mass(mass):

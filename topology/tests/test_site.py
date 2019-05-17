@@ -22,4 +22,14 @@ class TestSite(BaseTest):
         ['a', 'b', 'c'], ['a', 1, 1]])
     def test_bad_pos_input(self, position):
         with pytest.raises((u.exceptions.UnitDtypeError, ValueError)):
-            site = Site(name='site', position=u.nm*position)
+            Site(name='site', position=u.nm*position)
+
+    def test_equivalence(self):
+        ref = Site(name='site', position=u.nm*np.zeros(3))
+        same_site = Site(name='site', position=u.nm*np.zeros(3))
+        other_pos = Site(name='site', position=u.nm*np.ones(3))
+        other_name = Site(name='site', position=u.nm*np.ones(3))
+
+        assert ref == same_site
+        assert ref != other_pos
+        assert ref != other_name

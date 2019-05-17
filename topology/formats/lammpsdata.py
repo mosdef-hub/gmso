@@ -1,21 +1,16 @@
 from __future__ import division
 
-from warnings import warn
-import itertools as it
 import warnings
 import numpy as np
 import unyt as u
 import datetime
 
-from topology.core.topology import Topology
-from topology.core.box import Box
-from topology.core.site import Site
 from topology.utils.sorting import natural_sort
-from topology.testing.utils import allclose
+from topology.utils.testing import allclose
 
 def write_lammpsdata(topology, filename, atom_style='full'):
     """Output a LAMMPS data file.
-    
+
     Outputs a LAMMPS data file in the 'full' atom style format. Assumes use
     of 'real' units. See http://lammps.sandia.gov/doc/atom_style.html for
     more information on atom styles.
@@ -48,12 +43,12 @@ def write_lammpsdata(topology, filename, atom_style='full'):
 
     xyz = list()
     types = list()
-    for site in topology.site_list:
+    for site in topology.sites:
         xyz.append([site.position[0],site.position[1],site.position[2]])
         types.append(site.atom_type.name)
 
     forcefield = True
-    if topology.site_list[0].atom_type.name in ['', None]:
+    if topology.sites[0].atom_type.name in ['', None]:
         forcefield = False
 
     box = topology.box
@@ -62,7 +57,6 @@ def write_lammpsdata(topology, filename, atom_style='full'):
     unique_types.sort(key=natural_sort)
 
     # TODO: charges
- 
     # TODO: bonds
     # TODO: Angles
     # TODO: Dihedrals
@@ -78,7 +72,7 @@ def write_lammpsdata(topology, filename, atom_style='full'):
         data.write('{} written by topology at {}\n\n'.format(
             topology.name if topology.name is not None else '',
             str(datetime.datetime.now())))
-        data.write('{:d} atoms\n'.format(len(topology.site_list)))
+        data.write('{:d} atoms\n'.format(len(topology.sites)))
         if atom_style in ['full', 'molecular']:
             if bonds != 0:
                 data.write('{:} bonds\n'.format(len(bonds)))
@@ -150,7 +144,7 @@ def write_lammpsdata(topology, filename, atom_style='full'):
                 xy.value, xz.value, yz.value))
 
         # Mass data
-        masses = [site.atom_type.mass for site in topology.site_list]
+        masses = [site.atom_type.mass for site in topology.sites]
         mass_dict = dict([(unique_types.index(atom_type)+1,mass) for atom_type,mass in zip(types,masses)])
 
         data.write('\nMasses\n\n')
@@ -160,8 +154,8 @@ def write_lammpsdata(topology, filename, atom_style='full'):
                 mass.in_units(u.g/u.mol).value,
                 unique_types[atom_type-1]))
         if forcefield:
-            sigmas = [site.atom_type.parameters['sigma'] for site in topology.site_list]
-            epsilons = [site.atom_type.parameters['epsilon'] for site in topology.site_list]
+            sigmas = [site.atom_type.parameters['sigma'] for site in topology.sites]
+            epsilons = [site.atom_type.parameters['epsilon'] for site in topology.sites]
             sigma_dict = dict([(unique_types.index(atom_type)+1,sigma) for atom_type,sigma in zip(types,sigmas)])
             epsilon_dict = dict([(unique_types.index(atom_type)+1,epsilon) for atom_type,epsilon in zip(types,epsilons)])
 

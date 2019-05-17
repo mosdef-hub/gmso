@@ -8,7 +8,7 @@ from topology.core.topology import Topology
 from topology.core.site import Site
 from topology.core.box import Box
 from topology.exceptions import NotYetImplementedWarning
-from topology.testing.utils import allclose
+from topology.utils.testing import allclose
 
 def read_gro(filename):
     top = Topology()
@@ -36,7 +36,8 @@ def read_gro(filename):
                 float(line[36:44]),
             ])
             site = Site(name=atom_name, position=coords[row])
-            top.add_site(site)
+            top.add_site(site, update_types=False)
+        top.update_top()
 
         # Box information
         line = gro_file.readline().split()
@@ -65,7 +66,7 @@ def write_gro(top, filename):
             top.name if top.name is not None else '',
             str(datetime.datetime.now())))
         out_file.write('{:d}\n'.format(top.n_sites))
-        for idx, site in enumerate(top.site_list):
+        for idx, site in enumerate(top.sites):
             warnings.warn('Residue information is not currently '
                     'stored or written to GRO files.',
                      NotYetImplementedWarning)

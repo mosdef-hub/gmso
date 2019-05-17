@@ -2,6 +2,7 @@ import warnings
 
 import numpy as np
 import unyt as u
+from topology.utils.testing import allclose
 
 
 def _validate_lengths(lengths):
@@ -52,7 +53,6 @@ def _validate_angles(angles):
     return angles
 
 
-
 class Box(object):
     """A box that bounds a `Topology`.
 
@@ -65,8 +65,8 @@ class Box(object):
     angles : array-like, optional, shape(3,), dtype=float
         Interplanar angles, [alpha, beta, gamma], that describe the box shape.
         Units are assumed to be in degrees; if passed in as a `unyt_array` it
-        will be converted to degrees; if passed in as floats, degrees is assumed.
-
+        will be converted to degrees; if passed in as floats, degrees is
+        assumed.
 
     Attributes
     ----------
@@ -132,7 +132,7 @@ class Box(object):
     def get_vectors(self):
         """ Return the vectors of the box."""
         return (self._lengths * self.get_unit_vectors().T).T
-    
+
     def get_unit_vectors(self):
         """ Return the normalized vectors of the box."""
         return self._unit_vectors_from_angles()
@@ -140,3 +140,20 @@ class Box(object):
     def __repr__(self):
         return "Box(a={}, b={}, c={}, alpha={}, beta={}, gamma={})"\
             .format(*self._lengths, *self._angles)
+
+    def __eq__(self, other):
+        """Compare two boxes for equivalence."""
+
+        if self is other:
+            return True
+
+        if not isinstance(other, Box):
+            return False
+
+        if not allclose(self.lengths, other.lengths):
+            return False
+
+        if not allclose(self.angles, other.angles):
+            return False
+
+        return True

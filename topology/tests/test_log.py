@@ -1,4 +1,4 @@
-import logging 
+import logging
 import topology.utils.log
 from topology.tests.base_test import BaseTest
 

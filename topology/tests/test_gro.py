@@ -1,15 +1,18 @@
 import numpy as np
 import unyt as u
-import parmed as pmd
 import pytest
 
 from topology.formats.gro import read_gro, write_gro
 from topology.external.convert_parmed import from_parmed
 from topology.tests.base_test import BaseTest
-from topology.utils.io import get_fn
-from topology.testing.utils import allclose
+from topology.utils.io import get_fn, import_, has_parmed
+from topology.utils.testing import allclose
 
 
+if has_parmed:
+    pmd = import_('parmed')
+
+@pytest.mark.skipif(not has_parmed, reason="ParmEd is not installed")
 class TestGro(BaseTest):
     def test_read_gro(self):
         top = read_gro(get_fn('acn.gro'))

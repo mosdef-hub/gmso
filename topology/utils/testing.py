@@ -6,6 +6,9 @@ import unyt as u
 
 def allclose(a, b, rtol=None, atol=None):
     """Compare two unyt arrays."""
+    if a is None and b is None:
+        return True
+
     if a.units != b.units:
         common_unit = _infer_common_unit(a, b)
     else:

@@ -4,7 +4,7 @@ import pytest
 
 from topology.core.atom_type import AtomType
 from topology.tests.base_test import BaseTest
-from topology.testing.utils import allclose
+from topology.utils.testing import allclose
 
 
 class TestAtomType(BaseTest):
@@ -152,3 +152,24 @@ class TestAtomType(BaseTest):
             first_type.set_expression(expression='a*x+b',
                 parameters={'c': 100*u.year, 'd': 42*u.newton},
                 independent_variables='x')
+
+    def test_metadata(self):
+        valid_type = AtomType(doi='123', definition='[c]', overrides={'122'},
+                description='Some type solely for testing')
+        with pytest.raises(ValueError):
+            bad_doi = AtomType(doi=123, definition='[c]', overrides={'122'},
+                description='Some type solely for testing')
+            bad_defn = AtomType(doi='123', definition=123, overrides={'122'},
+                description='Some type solely for testing')
+            bad_over = AtomType(doi='123', definition='[c]', overrides='122',
+                description='Some type solely for testing')
+            bad_desc = AtomType(doi='123', definition='[c]', overrides='122',
+                description=123)
+            valid_type.doi = 123
+            valid_type.definition = 123
+            valid_type.overrides=['123']
+            valid_type.description=123
+
+
+
+

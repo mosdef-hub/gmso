@@ -2,6 +2,7 @@ import warnings
 import sympy
 import unyt as u
 
+from topology.utils.misc import unyt_to_hashable
 
 class Potential(object):
     """An abstract potential class.
@@ -16,11 +17,11 @@ class Potential(object):
 
     Parameters
     ----------
-    name : str, default="Potential" 
+    name : str, default="Potential"
         The name of the potential.
     expression : str or sympy.Expr, default='a*x+b'
-        The mathematical expression describing the functional form of the 
-        potential. 
+        The mathematical expression describing the functional form of the
+        potential.
     parameters : dict {str: unyt.unyt_quantity},
             default={'a': 1.0*u.dimensionless, 'b': 1.0*u.dimensionless}
         The parameters of the potential and their values, as unyt quantities.
@@ -152,14 +153,20 @@ class Potential(object):
                               " {}".format(extra_syms))
 
     def __eq__(self, other):
-        name_match = (self.name == other.name)
-        parameter_match = (self.parameters == other.parameters)
-        expression_match = (self.expression == other.expression)
+        return hash(self) == hash(other)
 
-        return all([
-            name_match, parameter_match,
-            expression_match
-        ])
+    def __hash__(self):
+        return hash(
+            tuple(
+                (
+                    self.name,
+                    self.expression,
+                    tuple(self.independent_variables),
+                    tuple(self.parameters.keys()),
+                    tuple(unyt_to_hashable(val) for val in self.parameters.values())
+                )
+            )
+        )
 
     def __repr__(self):
         desc = "<Potential {}, id {}>".format(self._name, id(self))

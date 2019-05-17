@@ -1,10 +1,12 @@
+from copy import deepcopy
+
 import pytest
 import numpy as np
 import unyt as u
 
 from topology.core.box import Box
 from topology.tests.base_test import BaseTest
-from topology.testing.utils import allclose
+from topology.utils.testing import allclose
 
 
 class TestBox(BaseTest):
@@ -20,11 +22,11 @@ class TestBox(BaseTest):
     def test_bad_lengths(self, lengths, angles):
         lengths *= u.nm
         with pytest.raises(ValueError):
-            box = Box(lengths=lengths, angles=angles)
+            Box(lengths=lengths, angles=angles)
 
     def test_build_2D_Box(self):
         with pytest.warns(UserWarning):
-            box = Box(lengths=u.nm * [4, 4, 0])
+            Box(lengths=u.nm * [4, 4, 0])
 
     def test_dtype(self, box):
         assert box.lengths.dtype == float
@@ -38,16 +40,16 @@ class TestBox(BaseTest):
         box.lengths = 2*u.nm*np.ones(3)
         assert (box.lengths == 2*u.nm*np.ones(3)).all()
 
-    @pytest.mark.parametrize('angles', [[40.0, 50.0, 60.0],
-        [30.0, 60.0, 70.0], [45.0, 45.0, 75.0]])
+    @pytest.mark.parametrize(
+        'angles', [[40.0, 50.0, 60.0], [30.0, 60.0, 70.0], [45.0, 45.0, 75.0]]
+    )
     def test_angles_setter(self, lengths, angles):
         box = Box(lengths=lengths, angles=u.degree*np.ones(3))
         angles *= u.degree
         box.angles = angles
         assert (box.angles == angles).all()
 
-    @pytest.mark.parametrize('lengths', [[3, 3, 3], [4, 4, 4],
-        [4, 6, 4]])
+    @pytest.mark.parametrize('lengths', [[3, 3, 3], [4, 4, 4], [4, 6, 4]])
     def test_setters_with_lists(self, lengths):
         box = Box(lengths=u.nm*np.ones(3))
         lengths *= u.nm
@@ -81,3 +83,16 @@ class TestBox(BaseTest):
         test_vectors = (test_vectors.T * box.lengths).T
         assert allclose(vectors, test_vectors, atol=u.nm*1e-3)
         assert vectors.units == u.nm
+
+    def test_eq(self, box):
+        assert box == box
+
+    def test_eq_bad_lengths(self, box):
+        diff_lengths = deepcopy(box)
+        diff_lengths.lengths = u.nm * [5.0, 5.0, 5.0]
+        assert box != diff_lengths
+
+    def test_eq_bad_angles(self, box):
+        diff_angles = deepcopy(box)
+        diff_angles.angles = u.degree * [90, 90, 120]
+        assert box != diff_angles

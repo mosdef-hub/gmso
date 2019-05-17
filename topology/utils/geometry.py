@@ -9,12 +9,12 @@ def coord_shift(xyz, box):
     Parameters
     ----------
     xyz : unyt_array of points with shape N x 3
-    box : topology.Box 
+    box : topology.Box
     Returns
     -------
     xyz : unyt_array of points with shape N x 3
     """
-    
+
     box_max = box.lengths/2.
     box_min = -box_max
     # Shift all atoms

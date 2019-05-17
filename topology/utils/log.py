@@ -25,8 +25,8 @@ def end_logging():
 
     Notes
     ----
-    This is done by clearing the logger's associated handlers 
-    
+    This is done by clearing the logger's associated handlers
+
     Comments
     --------
     This seems to be cleaner/safer than just setting `logger.handlers = []`
