@@ -1,12 +1,15 @@
 import pytest
 
+from topology.core.topology import Topology as Top
+from topology.core.subtopology import SubTopology as SubTop
+from topology.core.site import Site
 from topology.external.convert_mbuild import from_mbuild, to_mbuild
 from topology.tests.base_test import BaseTest
 from topology.utils.io import has_mbuild
 
 
 if has_mbuild:
-    from mbuild import mb
+    import mbuild as mb
     from mbuild.examples import Ethane
 
 @pytest.mark.skipif(not has_mbuild, reason="mBuild is not installed")
@@ -40,3 +43,17 @@ class TestConvertMBuild(BaseTest):
         assert top.n_sites == 1
         assert top.n_subtops == 1
         assert top.subtops[0].n_sites == 1
+
+    def test_3_layer_top(self):
+        top_top = Top()
+        mid_top = SubTop()
+        site = Site()
+
+        top_top.add_subtopology(mid_top)
+        mid_top.add_site(site)
+
+        compound = to_mbuild(top_top)
+
+        assert len(compound.children) == 1
+        assert compound.children[0].n_particles == 1
+        assert compound.n_particles == 1
