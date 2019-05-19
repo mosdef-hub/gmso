@@ -90,6 +90,10 @@ class Topology(object):
         return xyz
 
     def add_site(self, site, update_types=True):
+        # Might be a more elegant way of handling this, see PR #128
+        if update_types and not self.typed:
+            self.typed = True
+
         if site in self.sites:
             warnings.warn("Redundantly adding Site {}".format(site))
         self._sites.add(site)
@@ -97,6 +101,10 @@ class Topology(object):
             self.update_atom_types()
 
     def add_connection(self, connection, update_types=True):
+        # Might be a more elegant way of handling this, see PR #128
+        if update_types and not self.typed:
+            self.typed = True
+
         if connection in self.connections:
             warnings.warn("Redundantly adding Connection {}".format(connection))
 
