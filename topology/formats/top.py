@@ -102,6 +102,63 @@ def write_top(top, filename):
                 )
             )
 
+        out_file.write(
+            '[ bonds ]\n'
+            ';   nr       type  resnr residue  atom   cgnr    charge       mass\n'
+            ';   ai     aj  funct   c0      c1      c2      c3\n'
+        )
+        for bond_idx, bond in enumerate(top.bonds):
+            out_file.write(
+                '\t{0}'
+                '\t{1}'
+                '\t{2}'
+                '\t{3}'
+                '\t{4}'.format(
+                    bond.connection_members[0].idx,
+                    bond.connection_members[1].idx,
+                    '1',
+                    bond.parameters['k'],
+                    bond.parameters['theta'],
+                )
+            )
+
+        out_file.write(
+            '[ angles ]\n'
+            ';   nr       type  resnr residue  atom   cgnr    charge       mass\n'
+            ';   ai     aj      ak      funct   c0      c1      c2      c3\n'
+        )
+        for angle_idx, angle in enumerate(top.angle):
+            out_file.write(
+                '\t{0}'
+                '\t{1}'
+                '\t{2}'
+                '\t{3}'
+                '\t{4}'
+                '\t{5}'.format(
+                    angle.connection_members[0].idx,
+                    angle.connection_members[1].idx,
+                    angle.connection_members[2].idx,
+                    '1',
+                    angle.parameters['k'],
+                    angle.parameters['theta'],
+                )
+            )
+
+        out_file.write(
+            '[ system ]\n'
+            '; name\n'
+            '{0}\n\n'.format(
+                top.name
+            )
+
+        out_file.write(
+            '[ molecules ]\n'
+            '; molecule     nmols\n'.format(
+                'RES            1'
+            )
+        )
+
+
 def _validate_compatibility(top):
     """Check compatability of topology object with GROMACS TOP format"""
     pass
