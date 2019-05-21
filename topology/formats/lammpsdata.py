@@ -44,10 +44,13 @@ def read_lammpsdata(filename, atom_style='full'):
         y_line = lammps_file.readline().split()
         z_line = lammps_file.readline().split()
 
+        x =  float(x_line[1])-float(x_line[0])
+        y =  float(y_line[1])-float(y_line[0])
+        z =  float(z_line[1])-float(z_line[0])
+
         # Box Information
-        top.box = Box([u.nm*(float(x_line[1])-float(x_line[0])),
-                       u.nm*(float(y_line[1])-float(y_line[0])),
-                       u.nm*(float(z_line[1])-float(z_line[0]))])
+        #top.box = Box(lengths=u.unyt_array([x,y,z], u.angstrom))
+        top.box = Box([x*u.angstrom,y*u.angstrom,z*u.angstrom])
 
 
     atomtypes = _get_masses(filename,n_atomtypes)
