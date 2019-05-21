@@ -6,6 +6,7 @@ import unyt as u
 import datetime
 
 from topology.utils.sorting import natural_sort
+from topology.core.site import Site
 from topology.core.atom_type import AtomType
 from topology.utils.testing import allclose
 from topology.core.topology import Topology
@@ -14,11 +15,13 @@ from topology.core.box import Box
 
 def read_lammpsdata(filename, atom_style='full'):
     top = Topology()
+    u.define_unit("kcal", u.cal * 1000)
 
     with open(filename, 'r') as lammps_file:
         top.name = str(lammps_file.readline().strip())
         lammps_file.readline()
         n_atoms = int(lammps_file.readline().split()[0])
+        coords = u.nm * np.zeros(shape=(n_atoms, 3))
         n_bonds = int(lammps_file.readline().split()[0])
         n_angles = int(lammps_file.readline().split()[0])
         n_dihedrals = int(lammps_file.readline().split()[0])
@@ -28,7 +31,7 @@ def read_lammpsdata(filename, atom_style='full'):
         
         for i in range(4):
             if n_gen_types == '\n':
-                # Consider print statement here
+                print("No more types to track")
                 break
             elif n_gen_types.split()[1] == 'bond':
                 n_bondtypes = int(n_gen_types.split()[0])
@@ -46,31 +49,33 @@ def read_lammpsdata(filename, atom_style='full'):
                        u.nm*(float(y_line[1])-float(y_line[0])),
                        u.nm*(float(z_line[1])-float(z_line[0]))])
 
-        lammps_file.readline()
 
-        if 'Masses' in lammps_file.readline():
-            lammps_file.readline()
-            for i in range(n_atomtypes):
-                type_line = lammps_file.readline().split()
-                new_type = AtomType(name=type_line[0],
-                        mass=float(type_line[1])*u.g)
-        elif 'Atoms' in lammps_file.readline():
-            lammps_file.readline()
-            atom = lammps_file.readline().split()
-            tag = atom[1]
-            atom_type = atom[2]
-            charge = atom[3]
-            coords[row] = u.nm * np.array([
-                float(atom[4]),
-                float(atom[5]),
-                float(atom[6])]
+    atomtypes = _get_masses(filename,n_atomtypes)
+    atoms = _get_atoms(filename, n_atoms, coords)
+    pairs = _get_pairs(filename, n_atomtypes)
 
-            site = Site(name=atom_name, position=coords[row])
-            top.add_site(site, update_types=False)
+    types = [typ for typ in atoms[0]]
+    charges = [charge for charge in atoms[1]]
+    coordinates = [coord for coord in atoms[2]]
+    epsilons = [eps for eps in pairs[1]]
+    sigmas = [sigma for sigma in pairs[2]]
 
+    for typ, charge, coord, ep, sigma in zip(types, charges,coordinates,epsilons,sigmas):
+        atomtype = AtomType(name="Type",
+                mass=atomtypes[typ],
+                charge=charge,
+                parameters={
+                    'sigma': sigma,
+                    'epsilon': ep}
+                )
+        site = Site(name="atom",
+                position=coord,
+                atom_type=atomtype
+                )
+        top.add_site(site, update_types=False)
 
-        # WIP
-        
+    return top
+
 
 def write_lammpsdata(topology, filename, atom_style='full'):
     """Output a LAMMPS data file.
@@ -266,3 +271,59 @@ def write_lammpsdata(topology, filename, atom_style='full'):
         # TODO: Write out bonds
         # TODO: Write out angles
         # TODO: Write out dihedrals
+
+
+def _get_masses(filename, n_atomtypes):
+    with open(filename, 'r') as lammps_file:
+        types = dict()
+        for line in lammps_file:
+            if 'Masses' in line:
+                lammps_file.readline()
+                for i in range(n_atomtypes):
+                    type_line = lammps_file.readline().split()
+                    types[type_line[0]] = float(type_line[1]) * u.g
+    
+    return types
+
+
+def _get_atoms(filename, n_atoms, coords):
+    types = list()
+    charges = list()
+    coord_list = list()
+    with open(filename, 'r') as lammps_file:
+        for line in lammps_file:
+            if 'Atoms' in line:
+                lammps_file.readline()
+                for i in range(n_atoms):
+                    atom = lammps_file.readline().split()
+                    atom_type = atom[2]
+                    charge = float(atom[3]) * u.elementary_charge
+                    coords[i] = u.nm * np.array([
+                        float(atom[4]),
+                        float(atom[5]),
+                        float(atom[6])])
+                    types.append(atom_type)
+                    charges.append(charge)
+                    coord_list.append(coords)
+
+    return types, charges, coord_list
+
+
+def _get_pairs(filename, n_atomtypes):
+    types = list()
+    epsilon_list = list()
+    sigma_list = list()
+    with open(filename, 'r') as lammps_file:
+        for line in lammps_file:
+            if 'Pair' in line:
+                lammps_file.readline()
+                for i in range(n_atomtypes):
+                    atom_type = lammps_file.readline().split()
+                    epsilon = float(atom_type[1]) * u.kcal / u.mol
+                    sigma = float(atom_type[2]) * u.angstrom
+                    
+                    types.append(atom_type[0])
+                    epsilon_list.append(epsilon)
+                    sigma_list.append(sigma)
+
+    return types, epsilon_list, sigma_list
