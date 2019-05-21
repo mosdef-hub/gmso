@@ -33,7 +33,6 @@ def _validate_lengths(lengths):
             raise ValueError('Length(s) of value 0 were passed. Lengths must '
                              'be a value greater than 0.0. You passed '
                              '{}'.format(lengths))
-
     return lengths
 
 
