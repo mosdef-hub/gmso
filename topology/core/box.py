@@ -7,7 +7,7 @@ from topology.utils.testing import allclose
 
 def _validate_lengths(lengths):
     if not isinstance(lengths, u.unyt_array):
-        if isinstance(lengths[0], u.unyt_quantity):
+        if all(isinstance(length, u.unyt_quantity) for length in lengths):
             print("Converting list or np.array of unyt quantities to a unyt array")
             lengths = u.unyt_array([l for l in lengths], str(lengths[0].units))
         else:
