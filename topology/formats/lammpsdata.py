@@ -49,7 +49,8 @@ def read_lammpsdata(filename, atom_style='full'):
         z =  float(z_line[1])-float(z_line[0])
 
         # Box Information
-        top.box = Box([x*u.angstrom,y*u.angstrom,z*u.angstrom])
+        lengths = u.unyt_array([x,y,z], u.angstrom)
+        top.box = Box(lengths)
 
 
     unique_types = _get_masses(filename,n_atomtypes)
