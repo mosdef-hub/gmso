@@ -358,7 +358,7 @@ class TestTopology(BaseTest):
         assert top.typed == False
         top.add_site(Site(atom_type=AtomType()))
 
-        assert top.typed == False
+        assert top.typed == True
         assert top.is_typed() == True
         assert top.typed == True
 
