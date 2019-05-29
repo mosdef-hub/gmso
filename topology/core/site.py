@@ -5,6 +5,7 @@ import unyt as u
 
 from topology.core.atom_type import AtomType
 from topology.utils.testing import allclose
+from topology.utils.misc import unyt_to_hashable
 
 
 class Site(object):
@@ -86,17 +87,21 @@ class Site(object):
         self._atom_type = val
 
     def __eq__(self, other):
-        if not allclose(self.position, other.position):
-            return False
-        if not allclose(self.charge, other.charge, atol=1e-22):
-            return False
-        if self.atom_type != other.atom_type:
-            return False
-
-        return True
+        return hash(self) == hash(other)
 
     def __hash__(self):
-        return id(self)
+        return hash(
+            tuple(
+                (
+                    self.name,
+                    unyt_to_hashable(self.position),
+                    unyt_to_hashable(self.charge),
+                    unyt_to_hashable(self.mass),
+                    self.atom_type,
+                    self.element,
+                )
+            )
+        )
 
     def __repr__(self):
         return "<Site {}, id {}>".format(self.name, id(self))

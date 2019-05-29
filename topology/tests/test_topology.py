@@ -2,7 +2,7 @@ from copy import deepcopy
 
 import numpy as np
 import unyt as u
-import parmed as pmd
+import pytest
 
 from topology.core.topology import Topology
 from topology.core.box import Box
@@ -17,15 +17,27 @@ from topology.core.dihedral_type import DihedralType
 from topology.external.convert_parmed import from_parmed
 
 from topology.tests.base_test import BaseTest
+from topology.exceptions import TopologyError
 from topology.utils.testing import allclose
 from topology.tests.base_test import BaseTest
-from topology.utils.io import get_fn
+from topology.utils.io import get_fn, import_, has_parmed
 
+
+if has_parmed:
+    pmd = import_('parmed')
 
 class TestTopology(BaseTest):
     def test_new_topology(self):
         top = Topology(name='mytop')
         assert top.name == 'mytop'
+
+    def test_change_comb_rule(self):
+        top = Topology()
+        assert top.combining_rule == 'lorentz'
+        top.combining_rule = 'geometric'
+        assert top.combining_rule == 'geometric'
+        with pytest.raises(TopologyError):
+            top.combining_rule = 'kong'
 
     def test_add_site(self):
         top = Topology()
@@ -101,6 +113,7 @@ class TestTopology(BaseTest):
         wrong_atom_type.add_site(Site(atom_type=AtomType(expression='sigma')))
         assert ref != wrong_atom_type
 
+    @pytest.mark.skipif(not has_parmed, reason="ParmEd is not installed")
     def test_eq_bonds(self):
         ref = pmd.load_file(get_fn('ethane.top'),
                             xyz=get_fn('ethane.gro'))
@@ -115,6 +128,7 @@ class TestTopology(BaseTest):
 
         assert ref != bad_bond_type
 
+    @pytest.mark.skipif(not has_parmed, reason="ParmEd is not installed")
     def test_eq_angles(self):
         ref = pmd.load_file(get_fn('ethane.top'),
                             xyz=get_fn('ethane.gro'))
@@ -129,6 +143,7 @@ class TestTopology(BaseTest):
 
         assert ref != bad_angle_type
 
+    @pytest.mark.skipif(not has_parmed, reason="ParmEd is not installed")
     def test_eq_dihedrals(self):
         ref = pmd.load_file(get_fn('ethane.top'),
                             xyz=get_fn('ethane.gro'))
@@ -143,6 +158,7 @@ class TestTopology(BaseTest):
 
         assert ref != bad_dihedral_type
 
+    @pytest.mark.skipif(not has_parmed, reason="ParmEd is not installed")
     def test_eq_overall(self):
         ref = pmd.load_file(get_fn('ethane.top'),
                             xyz=get_fn('ethane.gro'))
@@ -151,6 +167,63 @@ class TestTopology(BaseTest):
         top2 = from_parmed(ref)
 
         assert top1 == top2
+
+    def test_add_untyped_site_update(self):
+        untyped_site = Site(atom_type=None)
+
+        top = Topology()
+        assert len(top.atom_types) == 0
+        top.add_site(untyped_site, update_types=False)
+        assert len(top.atom_types) == 0
+
+        top = Topology()
+        assert len(top.atom_types) == 0
+        top.add_site(untyped_site, update_types=True)
+        assert len(top.atom_types) == 0
+
+    def test_add_typed_site_update(self):
+        typed_site = Site(atom_type=AtomType())
+
+        top = Topology()
+        assert len(top.atom_types) == 0
+        top.add_site(typed_site, update_types=False)
+        assert len(top.atom_types) == 0
+
+        top= Topology()
+        assert len(top.atom_types) == 0
+        top.add_site(typed_site, update_types=True)
+        assert len(top.atom_types) == 1
+
+    def test_add_untyped_bond_update(self):
+        site1 = Site(atom_type=None)
+        site2 = Site(atom_type=None)
+        bond = Bond(connection_members=[site1, site2], connection_type=None)
+
+        top = Topology()
+        assert len(top.bond_types) == 0
+        top.add_connection(bond, update_types=False)
+        assert len(top.bond_types) == 0
+
+        top = Topology()
+        assert len(top.bond_types) == 0
+        top.add_connection(bond, update_types=True)
+        assert len(top.bond_types) == 0
+
+    def test_add_typed_bond_update(self):
+        site1 = Site(atom_type=None)
+        site2 = Site(atom_type=None)
+        bond = Bond(connection_members=[site1, site2],
+                    connection_type=BondType())
+
+        top = Topology()
+        top.add_site(site1)
+        top.add_site(site2)
+        top.add_connection(bond, update_types=False)
+        assert len(top.connection_types) == 0
+
+        top = Topology()
+        top.add_connection(bond, update_types=True)
+        assert len(top.bond_types) == 1
 
     def test_top_update(self):
         top = Topology()
@@ -274,7 +347,7 @@ class TestTopology(BaseTest):
         site2 = Site('b', atom_type=atype2)
         site3 = Site('c', atom_type=atype2)
         atype = AngleType()
-        angle = Angle(connection_members=[site1, site2, site3], connection_type=atype)
+        angle = Angle(connection_members=[site1, site2, site3], connection_type=atype, name='angle_name')
         top.add_site(site1)
         top.add_site(site2)
         top.add_site(site3)
@@ -328,3 +401,22 @@ class TestTopology(BaseTest):
         assert len(top.dihedral_types) == 1
         assert len(top.dihedral_type_expressions) == 1
         assert len(top.atom_type_expressions) == 2
+
+    def test_parametrization(self):
+        top = Topology()
+
+        assert top.typed == False
+        top.add_site(Site(atom_type=AtomType()))
+
+        assert top.typed == True
+        assert top.is_typed() == True
+        assert top.typed == True
+
+    def test_parametrization_setter(self):
+        top = Topology()
+
+        assert top.typed == False
+        assert top.is_typed() == False
+        top.typed = True
+        assert top.typed == True
+        assert top.is_typed() == False
