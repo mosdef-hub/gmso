@@ -222,3 +222,15 @@ class TestPotential(BaseTest):
                     'u': 1.0*u.g,
                     'v': 1.0*u.m},
             )
+
+    def test_potential_template(self):
+        template = Potential(
+            expression='a*x+b',
+            independent_variables={'x'},
+            template=True,
+        )
+
+        assert template.expression == sympy.sympify('a*x+b')
+        assert template.template
+
+        assert template.expression.free_symbols - template.independent_variables is not None
