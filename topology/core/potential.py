@@ -47,6 +47,7 @@ class Potential(object):
             self._parameters = _validate_parameters(parameters)
         self._independent_variables = _validate_independent_variables(independent_variables)
         self._expression = _validate_expression(expression)
+        self._template = template
 
         if not template:
             self._validate_expression_parameters()
@@ -77,6 +78,10 @@ class Potential(object):
     @independent_variables.setter
     def independent_variables(self, indep_vars):
         self._independent_variables = _validate_independent_variables(indep_vars)
+
+    @property
+    def template(self):
+        return self._template
 
     @property
     def expression(self):
