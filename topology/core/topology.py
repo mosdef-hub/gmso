@@ -27,16 +27,16 @@ class Topology(object):
             self._name = name
         self._box = box
         self._sites = IndexedSet()
+        self._typed = False
         self._connections = IndexedSet()
         self._bonds = IndexedSet()
         self._angles = IndexedSet()
-
-        self._typed = False
+        self._dihedrals = IndexedSet()
         self._atom_types = IndexedSet()
         self._connection_types = IndexedSet()
         self._bond_types = IndexedSet()
         self._angle_types = IndexedSet()
-
+        self._dihedral_types = IndexedSet()
         self._combining_rule = 'lorentz'
 
     @property
@@ -128,6 +128,8 @@ class Topology(object):
                 self.update_bond_types()
             elif isinstance(connection, Angle):
                 self.update_angle_types()
+            elif isinstance(connection, Dihedral):
+                self.update_dihedral_types()
             self.update_connection_types()
 
     @property
