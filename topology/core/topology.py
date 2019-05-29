@@ -116,6 +116,7 @@ class Topology(object):
             self.update_bonds()
         elif isinstance(connection, Angle):
             self.update_angles()
+        self.update_connections()
 
         if update_types:
             if not self.typed:
