@@ -4,7 +4,7 @@ from topology.lib.potential_templates import PotentialTemplate
 from topology.tests.base_test import BaseTest
 
 
-class TestTempalte(BaseTest):
+class TestTemplate(BaseTest):
     def test_potential_template(self):
         template = PotentialTemplate(
             expression='a*x+b',
