@@ -15,6 +15,7 @@ class DihedralType(Potential):
         See `Potential` documentation for more information
     independent vars : set of str
         See `Potential` documentation for more information
+    member_types : list of topology.AtomType.name (str)
 
     Notes
     ----
@@ -30,11 +31,35 @@ class DihedralType(Potential):
                      'phi_eq': 180 * u.deg,
                      'n': 1*u.dimensionless
                  },
-                 independent_variables={'phi'}):
+                 independent_variables={'phi'},
+                 member_types=[]):
 
         super(DihedralType, self).__init__(name=name, expression=expression,
                 parameters=parameters, independent_variables=independent_variables)
 
+        self._member_types = _validate_three_member_type_names(member_types)
+
+    @property
+    def member_types(self):
+        return self._member_types
+
+    @member_types.setter
+    def member_types(self, val):
+        if self.member_types != val:
+            warnings.warn("Changing an DihedralType's constituent "
+                    "member types: {} to {}".format(self.member_types, val))
+        self._member_types = _validate_four_member_type_names(val)
+
     def __repr__(self):
         return "<DihedralType {}, id {}>".format(self.name, id(self))
 
+def _validate_four_member_type_names(types):
+    """Ensure 4 partners are involved in DihedralType"""
+    if len(types) != 4 and len(types) != 0:
+        raise TopologyError("Trying to create an DihedralType "
+                "with {} constituent types". format(len(types)))
+    if not all([isinstance(t, str) for t in types]):
+        raise TopologyError("Types passed to DihedralType "
+                            "need to be strings corresponding to AtomType names")
+
+    return types
