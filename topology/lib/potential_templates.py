@@ -15,6 +15,18 @@ class PotentialTemplate(Potential):
             template=template,
         )
 
+    def __hash__(self):
+        return hash(
+            tuple(
+                (
+                    self.name,
+                    self.expression,
+                    tuple(self.independent_variables),
+                )
+            )
+        )
+
+
 class LennardJonesPotential(PotentialTemplate):
     def __init__(self,
                  name='LennardJonesPotential',
