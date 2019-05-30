@@ -98,8 +98,8 @@ def _write_bondtypes(top, metadata, unitsystem):
             if hoomd_func not in metadata:
                 metadata[hoomd_func] = {}
 
-            bond_key = nb_key.format(bondtype.member_types[0], 
-                bondtype.membertypes[1])
+            bond_key = key.format(bondtype.member_types[0], 
+                bondtype.member_types[1])
             metadata[hoomd_func][bond_key] = {
                         'k': _reduce_units(bondtype.parameters['k'], unitsystem),
                         'r0': _reduce_units(bondtype.parameters['r_eq'], unitsystem)}
@@ -125,11 +125,11 @@ def _write_angletypes(top, metadata, unitsystem):
             if hoomd_func not in metadata:
                 metadata[hoomd_func] = {}
 
-            angle_key = nb_key.format(angletype.member_types[0], 
-                angletype.membertypes[1], angletype.member_types[2])
+            angle_key = key.format(angletype.member_types[0], 
+                angletype.member_types[1], angletype.member_types[2])
             metadata[hoomd_func][angle_key] = {
                         'k': _reduce_units(angletype.parameters['k'], unitsystem),
-                        'r0': _reduce_units(angletype.parameters['r_eq'], unitsystem)}
+                        't0': _reduce_units(angletype.parameters['theta_eq'], unitsystem)}
 
 def _write_nonbonded(top, metadata, unitsystem):
     key = "{},{}"
