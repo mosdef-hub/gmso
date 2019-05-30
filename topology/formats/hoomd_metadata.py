@@ -12,8 +12,11 @@ from topology.lib import potential_templates
 supported_nonbonded = {
         potential_templates.LennardJonesPotential(): 'hoomd.md.pair.lj'}
 
-supported_bonds = {
+supported_bondtypes = {
         potential_templates.HarmonicBondPotential(): 'hoomd.md.bond.harmonic'}
+
+supported_angletypes = {
+        potential_templates.HarmonicAnglePotential(): 'hoomd.md.angle.harmonic'}
 
 
 def write_metadata(top, filename, unitsystem={'distance': u.nm, 'energy': u.Unit('kJ/mol'),
@@ -36,22 +39,34 @@ def write_metadata(top, filename, unitsystem={'distance': u.nm, 'energy': u.Unit
 
     metadata = {}
     # Check for supported functions and print to metadata
-    _check_supported_bonds(top)
+    _check_supported_bondtypes(top)
+    _check_supported_angletypes(top)
     _check_supported_nonbonded(top)
 
-    _write_bonds(top, metadata, unitsystem)
+    _write_bondtypes(top, metadata, unitsystem)
+    _write_angletypes(top, metadata, unitsystem)
     _write_nonbonded(top, metadata, unitsystem)
     with open(filename, 'w') as f:
         json.dump(metadata, f, indent=4)
 
-def _check_supported_bonds(top):
+
+def _check_supported_bondtypes(top):
     """ Verify the topology's bond functions are supported in HOOMD """
     for bond_func in top.bond_type_expressions:
-        if any([bond_func == func.expression for func in supported_bonds]):
+        if any([bond_func == func.expression for func in supported_bondtypes]):
             continue
         else:
             raise NotYetImplementedWarning("Bond function <{}> not implemented "
                 "or not supported in HOOMD".format(bond_func))
+
+def _check_supported_angletypes(top):
+    """ Verify the topology's angle functions are supported in HOOMD """
+    for angle_func in top.angle_type_expressions:
+        if any([angle_func == func.expression for func in supported_angletypes]):
+            continue
+        else:
+            raise NotYetImplementedWarning("Angle function <{}> not implemented "
+                "or not supported in HOOMD".format(angle_func))
 
 def _check_supported_nonbonded(top):
     """ Verify the topology's nonbonded functions are supported in HOOMD """
@@ -62,12 +77,12 @@ def _check_supported_nonbonded(top):
             raise NotYetImplementedWarning("Nonbonded function <{}> not implemented "
                 "or not supported in HOOMD".format(nb_function))
 
-def _write_bonds(top, metadata, unitsystem):
-    nb_key = "{},{}"
+def _write_bondtypes(top, metadata, unitsystem):
+    key = "{},{}"
 
     for bondtype in top.bond_types:
         possible_hoomd_funcs = [hoomd_func for top_func, hoomd_func in 
-                supported_bonds.items() 
+                supported_bondtypes.items() 
                 if bondtype.expression == top_func.expression]
 
         if len(possible_hoomd_funcs) > 1:
@@ -82,14 +97,42 @@ def _write_bonds(top, metadata, unitsystem):
             hoomd_func = possible_hoomd_funcs[0]
             if hoomd_func not in metadata:
                 metadata[hoomd_func] = {}
-            metadata[hoomd_func][nb_key.format(
-                bondtype.member_types[0],
-                bondtype.member_types[1])] = {
+
+            bond_key = nb_key.format(bondtype.member_types[0], 
+                bondtype.membertypes[1])
+            metadata[hoomd_func][bond_key] = {
                         'k': _reduce_units(bondtype.parameters['k'], unitsystem),
                         'r0': _reduce_units(bondtype.parameters['r_eq'], unitsystem)}
 
+def _write_angletypes(top, metadata, unitsystem):
+    key = "{},{},{}"
+
+    for angletype in top.angle_types:
+        possible_hoomd_funcs = [hoomd_func for top_func, hoomd_func in 
+                supported_angletypes.items() 
+                if angletype.expression == top_func.expression]
+
+        if len(possible_hoomd_funcs) > 1:
+            warnings.warn("Multiple possible HOOMD functions "
+                    + "found for angletype {}".format(angletype))
+
+        if len(possible_hoomd_funcs) == 0:
+            raise NotYetImplementedWarning(
+                    "Bonded function for Angletype {}".format(angletype)
+                    + " not implemented or not supported in HOOMD")
+        else:
+            hoomd_func = possible_hoomd_funcs[0]
+            if hoomd_func not in metadata:
+                metadata[hoomd_func] = {}
+
+            angle_key = nb_key.format(angletype.member_types[0], 
+                angletype.membertypes[1], angletype.member_types[2])
+            metadata[hoomd_func][angle_key] = {
+                        'k': _reduce_units(angletype.parameters['k'], unitsystem),
+                        'r0': _reduce_units(angletype.parameters['r_eq'], unitsystem)}
+
 def _write_nonbonded(top, metadata, unitsystem):
-    nb_key = "{},{}"
+    key = "{},{}"
 
     for first, second in it.combinations_with_replacement(top.atom_types, 2):
         possible_hoomd_nb_funcs = [hoomd_func for top_func, hoomd_func 
@@ -116,7 +159,7 @@ def _write_nonbonded(top, metadata, unitsystem):
             else:
                 sigma, epsilon = (first.parameters['sigma'], 
                         first.parameters['epsilon'])
-
+            nb_key = key.format(first.name, second.name)
             metadata[hoomd_nb_func][nb_key.format(first.name, second.name)] = {
                     'sigma': _reduce_units(sigma, unitsystem),
                     'epsilon': _reduce_units(epsilon, unitsystem)
