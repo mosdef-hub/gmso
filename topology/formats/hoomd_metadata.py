@@ -12,6 +12,9 @@ from topology.lib import potential_templates
 supported_nonbonded = {
         potential_templates.LennardJonesPotential(): 'hoomd.md.pair.lj'}
 
+supported_bonds = {
+        potential_templates.HarmonicBondPotential(): 'hoomd.md.bond.harmonic'}
+
 
 def write_metadata(top, filename, unitsystem={'distance': u.nm, 'energy': u.Unit('kJ/mol'),
                                     'mass': u.amu}):
@@ -33,12 +36,22 @@ def write_metadata(top, filename, unitsystem={'distance': u.nm, 'energy': u.Unit
 
     metadata = {}
     # Check for supported functions and print to metadata
+    _check_supported_bonds(top)
     _check_supported_nonbonded(top)
 
+    _write_bonds(top, metadata, unitsystem)
     _write_nonbonded(top, metadata, unitsystem)
     with open(filename, 'w') as f:
         json.dump(metadata, f, indent=4)
 
+def _check_supported_bonds(top):
+    """ Verify the topology's bond functions are supported in HOOMD """
+    for bond_func in top.bond_type_expressions:
+        if any([bond_func == func.expression for func in supported_bonds]):
+            continue
+        else:
+            raise NotYetImplementedWarning("Bond function <{}> not implemented "
+                "or not supported in HOOMD".format(bond_func))
 
 def _check_supported_nonbonded(top):
     """ Verify the topology's nonbonded functions are supported in HOOMD """
@@ -48,6 +61,32 @@ def _check_supported_nonbonded(top):
         else:
             raise NotYetImplementedWarning("Nonbonded function <{}> not implemented "
                 "or not supported in HOOMD".format(nb_function))
+
+def _write_bonds(top, metadata, unitsystem):
+    nb_key = "{},{}"
+
+    for bondtype in top.bond_types:
+        possible_hoomd_funcs = [hoomd_func for top_func, hoomd_func in 
+                supported_bonds.items() 
+                if bondtype.expression == top_func.expression]
+
+        if len(possible_hoomd_funcs) > 1:
+            warnings.warn("Multiple possible HOOMD functions "
+                    + "found for bondtype {}".format(bondtype))
+
+        if len(possible_hoomd_funcs) == 0:
+            raise NotYetImplementedWarning(
+                    "Bonded function for Bondtype {}".format(bondtype)
+                    + " not implemented or not supported in HOOMD")
+        else:
+            hoomd_func = possible_hoomd_funcs[0]
+            if hoomd_func not in metadata:
+                metadata[hoomd_func] = {}
+            metadata[hoomd_func][nb_key.format(
+                bondtype.member_types[0],
+                bondtype.member_types[1])] = {
+                        'k': _reduce_units(bondtype.parameters['k'], unitsystem),
+                        'r0': _reduce_units(bondtype.parameters['r_eq'], unitsystem)}
 
 def _write_nonbonded(top, metadata, unitsystem):
     nb_key = "{},{}"
