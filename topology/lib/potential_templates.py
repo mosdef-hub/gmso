@@ -52,3 +52,17 @@ class BuckinghamPotential(PotentialTemplate):
             independent_variables=independent_variables,
             template=True,
         )
+
+class HarmonicBondPotential(PotentialTemplate):
+    def __init__(self,
+                 name='HarmonicBondPotential',
+                 expression='0.5 * k * (r-r_eq)**2',
+                 independent_variables={'r'}):
+
+        super(PotentialTemplate, self).__init__(
+            name=name,
+            expression=expression,
+            independent_variables=independent_variables,
+            template=True,
+        )
+
