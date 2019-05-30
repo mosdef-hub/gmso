@@ -66,3 +66,16 @@ class HarmonicBondPotential(PotentialTemplate):
             template=True,
         )
 
+class HarmonicAnglePotential(PotentialTemplate):
+    def __init__(self,
+                 name='HarmonicAnglePotential',
+                 expression='0.5 * k * (theta-theta_eq)**2',
+                 independent_variables={'theta'}):
+
+        super(PotentialTemplate, self).__init__(
+            name=name,
+            expression=expression,
+            independent_variables=independent_variables,
+            template=True,
+        )
+
