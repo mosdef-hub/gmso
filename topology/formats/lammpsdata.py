@@ -15,13 +15,12 @@ from topology.core.box import Box
 
 def read_lammpsdata(filename, atom_style='full'):
     top = Topology()
-    u.define_unit("kcal", u.cal * 1000)
 
     with open(filename, 'r') as lammps_file:
         top.name = str(lammps_file.readline().strip())
         lammps_file.readline()
         n_atoms = int(lammps_file.readline().split()[0])
-        coords = u.nm * np.zeros(shape=(n_atoms, 3))
+        coords = u.angstrom * np.zeros(shape=(n_atoms, 3))
         n_bonds = int(lammps_file.readline().split()[0])
         n_angles = int(lammps_file.readline().split()[0])
         n_dihedrals = int(lammps_file.readline().split()[0])
@@ -309,7 +308,7 @@ def _get_atoms(filename, n_atoms, coords):
                     atom = lammps_file.readline().split()
                     atom_type = atom[2]
                     charge = u.unyt_quantity(float(atom[3]), u.elementary_charge)
-                    coords[i] = u.nm * np.array([
+                    coords[i] = u.angstrom * np.array([
                         float(atom[4]),
                         float(atom[5]),
                         float(atom[6])])
