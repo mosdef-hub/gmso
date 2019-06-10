@@ -39,18 +39,17 @@ class BaseTest:
         return Topology(name='mytop')
 
     @pytest.fixture
-    def topology_site(self):
-        def _topology(sites=1):
+    def topology_site(self, sites=1):
+        def _topology(sites=sites):
             top = Topology()
             top.box = Box(lengths=[1, 1, 1])
             H = Element(name='H', symbol='H', mass=1)
-            site1 = Site(name='site1',
-                         element=H,
-                         atom_type=AtomType(name="at1",
-                                            mass=H.mass)
-                         )
             for i in range(sites):
-                top.add_site(site1)
+                site = Site(name='site{}'.format(i+1),
+                        element=H,
+                        atom_type=AtomType(name="at1",
+                            mass=H.mass))
+                top.add_site(site)
 
             return top
 

@@ -24,3 +24,10 @@ class TestLammpsWriter(BaseTest):
         read = read_lammpsdata('data.lammps')
 
         assert read.box == Box(lengths=[1, 1, 1])
+
+    def test_read_n_sites(self, topology_site):
+        top = topology_site(sites=4)
+        write_lammpsdata(top, filename='data.lammps')
+        read = read_lammpsdata('data.lammps')
+
+        assert read.n_sites == 4

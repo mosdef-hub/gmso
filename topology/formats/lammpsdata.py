@@ -71,12 +71,14 @@ def read_lammpsdata(filename, atom_style='full'):
                     'epsilon': epsilon_dict[k]}
                 )
         for i in range(v):
-            site = Site(name="atom",
+            site = Site(name="atom{}".format(i), # probably change
                 position=coords_dict[k][i],
                 atom_type=atomtype
                 )
             top.add_site(site, update_types=False)
+
             print('{}:{}'.format(k, i))
+    top.update_top()    
 
     return top
 
