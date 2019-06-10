@@ -67,12 +67,9 @@ def read_lammpsdata(filename, atom_style='full'):
                 mass=unique_types[k],
                 charge=charge_dict[k],
                 parameters={
-                    'sigma': 2*u.angstrom,
-                    'epsilon':2*u.kcal/u.mol})
-                #parameters={
-                #    'sigma': sigma_dict[k],
-                #    'epsilon': epsilon_dict[k]}
-                #)
+                    'sigma': sigma_dict[k],
+                    'epsilon': epsilon_dict[k]}
+                )
         for i in range(v):
             site = Site(name="atom",
                 position=coords_dict[k][i],
