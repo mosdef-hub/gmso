@@ -37,12 +37,13 @@ def write_metadata(top, filename, unitsystem={'distance': u.nm, 'energy': u.Unit
     # First update the topology in its entirety
     top.update_top()
 
-    metadata = {}
+    metadata = {'objects':[]}
     # Check for supported functions and print to metadata
     _check_supported_bondtypes(top)
     _check_supported_angletypes(top)
     _check_supported_nonbonded(top)
 
+    _write_defaults(top, metadata)
     _write_bondtypes(top, metadata, unitsystem)
     _write_angletypes(top, metadata, unitsystem)
     _write_nonbonded(top, metadata, unitsystem)
@@ -77,8 +78,11 @@ def _check_supported_nonbonded(top):
             raise NotYetImplementedWarning("Nonbonded function <{}> not implemented "
                 "or not supported in HOOMD".format(nb_function))
 
+def _write_defaults(top, metadata):
+    metadata['objects'].append({'hoomd.md.nlist.cell':{}})
+
 def _write_bondtypes(top, metadata, unitsystem):
-    key = "{},{}"
+    key = "{}-{}"
 
     for bondtype in top.bond_types:
         possible_hoomd_funcs = [hoomd_func for top_func, hoomd_func in 
@@ -100,12 +104,24 @@ def _write_bondtypes(top, metadata, unitsystem):
 
             bond_key = key.format(bondtype.member_types[0], 
                 bondtype.member_types[1])
-            metadata[hoomd_func][bond_key] = {
-                        'k': _reduce_units(bondtype.parameters['k'], unitsystem),
-                        'r0': _reduce_units(bondtype.parameters['r_eq'], unitsystem)}
+            metadata['objects'].append({
+                hoomd_func: {
+                    "tracked_fields": {
+                        'log': True, 
+                        'parameters': {
+                            bond_key: {
+                                'k': _reduce_units(bondtype.parameters['k'], 
+                                    unitsystem),
+                                'r0': _reduce_units(bondtype.parameters['r_eq'], 
+                                    unitsystem)
+                                        }
+                                        }
+                                    }
+                        }
+                })
 
 def _write_angletypes(top, metadata, unitsystem):
-    key = "{},{},{}"
+    key = "{}-{}-{}"
 
     for angletype in top.angle_types:
         possible_hoomd_funcs = [hoomd_func for top_func, hoomd_func in 
@@ -127,11 +143,24 @@ def _write_angletypes(top, metadata, unitsystem):
 
             angle_key = key.format(angletype.member_types[0], 
                 angletype.member_types[1], angletype.member_types[2])
-            metadata[hoomd_func][angle_key] = {
-                        'k': _reduce_units(angletype.parameters['k'], unitsystem),
-                        't0': _reduce_units(angletype.parameters['theta_eq'], unitsystem)}
+            
+            metadata['objects'].append({
+                hoomd_func: {
+                    "tracked_fields": {
+                        'log': True, 
+                        'parameters': {
+                            angle_key: {
+                                'k': _reduce_units(angletype.parameters['k'], 
+                                    unitsystem),
+                                't0': _reduce_units(angletype.parameters['theta_eq'], 
+                                    unitsystem)
+                                        }
+                                        }
+                                    }
+                        }
+                })
 
-def _write_nonbonded(top, metadata, unitsystem):
+def _write_nonbonded(top, metadata, unitsystem, r_cut_default=1.2):
     key = "{},{}"
 
     for first, second in it.combinations_with_replacement(top.atom_types, 2):
@@ -160,10 +189,25 @@ def _write_nonbonded(top, metadata, unitsystem):
                 sigma, epsilon = (first.parameters['sigma'], 
                         first.parameters['epsilon'])
             nb_key = key.format(first.name, second.name)
-            metadata[hoomd_nb_func][nb_key.format(first.name, second.name)] = {
-                    'sigma': _reduce_units(sigma, unitsystem),
-                    'epsilon': _reduce_units(epsilon, unitsystem)
-                    }
+
+            metadata['objects'].append({
+                hoomd_nb_func: {
+                    "arguments": {
+                        'r_cut': r_cut_default,
+                        'nlist': "Object #0"
+                                },
+                    "tracked_fields": {
+                        'log': True, 
+                        'parameters': {
+                            nb_key: {
+                                'sigma': _reduce_units(sigma, unitsystem),
+                                'epsilon': _reduce_units(epsilon, unitsystem),
+                                'r_cut': first.parameters.get('r_cut', r_cut_default)
+                                    }
+                                    }
+                                    }
+                        }
+                })
 
 def _apply_combining_rule(rule, first, second):
     """ Apply combining rule to atomtypes first and second """
