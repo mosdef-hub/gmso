@@ -84,6 +84,23 @@ def _write_defaults(top, metadata):
 def _write_bondtypes(top, metadata, unitsystem):
     key = "{}-{}"
 
+    # First "initialize" each hoomd class here in the metadata dict
+    # Then we fill in the parameters for each hoomd class
+    expressions = list(set(top.bond_type_expressions))
+    all_hoomd_funcs = [hoomd_func for top_func, hoomd_func in supported_bondtypes.items() 
+            if top_func.expression in expressions]
+    hoomd_func_address = {}
+    for hoomd_func in all_hoomd_funcs:
+        metadata['objects'].append({
+                hoomd_func: {
+                    "tracked_fields": { 
+                        'log': True , 
+                        'parameters':{}
+                                        }
+                            }
+                })
+        hoomd_func_address[hoomd_func] = len(metadata['objects']) - 1
+
     for bondtype in top.bond_types:
         possible_hoomd_funcs = [hoomd_func for top_func, hoomd_func in 
                 supported_bondtypes.items() 
@@ -99,29 +116,36 @@ def _write_bondtypes(top, metadata, unitsystem):
                     + " not implemented or not supported in HOOMD")
         else:
             hoomd_func = possible_hoomd_funcs[0]
-            if hoomd_func not in metadata:
-                metadata[hoomd_func] = {}
 
             bond_key = key.format(bondtype.member_types[0], 
                 bondtype.member_types[1])
-            metadata['objects'].append({
-                hoomd_func: {
-                    "tracked_fields": {
-                        'log': True, 
-                        'parameters': {
-                            bond_key: {
+
+            metadata['objects'][hoomd_func_address[hoomd_func]][hoomd_func]['tracked_fields']['parameters'][bond_key] = {
                                 'k': _reduce_units(bondtype.parameters['k'], 
                                     unitsystem),
                                 'r0': _reduce_units(bondtype.parameters['r_eq'], 
                                     unitsystem)
                                         }
-                                        }
-                                    }
-                        }
-                })
 
 def _write_angletypes(top, metadata, unitsystem):
     key = "{}-{}-{}"
+
+    # First "initialize" each hoomd class here in the metadata dict
+    # Then we fill in the parameters for each hoomd class
+    expressions = list(set(top.angle_type_expressions))
+    all_hoomd_funcs = [hoomd_func for top_func, hoomd_func in supported_angletypes.items() 
+            if top_func.expression in expressions]
+    hoomd_func_address = {}
+    for hoomd_func in all_hoomd_funcs:
+        metadata['objects'].append({
+                hoomd_func: {
+                    "tracked_fields": { 
+                        'log': True , 
+                        'parameters':{}
+                                        }
+                            }
+                })
+        hoomd_func_address[hoomd_func] = len(metadata['objects']) - 1
 
     for angletype in top.angle_types:
         possible_hoomd_funcs = [hoomd_func for top_func, hoomd_func in 
@@ -138,30 +162,42 @@ def _write_angletypes(top, metadata, unitsystem):
                     + " not implemented or not supported in HOOMD")
         else:
             hoomd_func = possible_hoomd_funcs[0]
-            if hoomd_func not in metadata:
-                metadata[hoomd_func] = {}
 
             angle_key = key.format(angletype.member_types[0], 
                 angletype.member_types[1], angletype.member_types[2])
             
-            metadata['objects'].append({
-                hoomd_func: {
-                    "tracked_fields": {
-                        'log': True, 
-                        'parameters': {
-                            angle_key: {
-                                'k': _reduce_units(angletype.parameters['k'], 
+            metadata['objects'][hoomd_func_address[hoomd_func]][hoomd_func]['tracked_fields']['parameters'][angle_key] = {
+                                'k': _reduce_units(
+                                    angletype.parameters['k'], 
                                     unitsystem),
-                                't0': _reduce_units(angletype.parameters['theta_eq'], 
+                                't0': _reduce_units(
+                                    angletype.parameters['theta_eq'], 
                                     unitsystem)
-                                        }
-                                        }
                                     }
-                        }
-                })
 
 def _write_nonbonded(top, metadata, unitsystem, r_cut_default=1.2):
     key = "{},{}"
+
+    # First "initialize" each hoomd class here in the metadata dict
+    # Then we fill in the parameters for each hoomd class
+    nb_expressions = list(set(top.atom_type_expressions))
+    all_hoomd_funcs = [hoomd_func for top_func, hoomd_func in supported_nonbonded.items() 
+            if top_func.expression in nb_expressions]
+    hoomd_func_address = {}
+    for hoomd_func in all_hoomd_funcs:
+        metadata['objects'].append({
+                hoomd_func: {
+                    "arguments": {
+                        'r_cut': r_cut_default,
+                        'nlist': "Object #0"
+                                },
+                    "tracked_fields": { 
+                        'log': True , 
+                        'parameters':{}
+                                        }
+                            }
+                })
+        hoomd_func_address[hoomd_func] = len(metadata['objects']) - 1
 
     for first, second in it.combinations_with_replacement(top.atom_types, 2):
         possible_hoomd_nb_funcs = [hoomd_func for top_func, hoomd_func 
@@ -180,8 +216,6 @@ def _write_nonbonded(top, metadata, unitsystem, r_cut_default=1.2):
                 + " not implemented or not supported in HOOMD")
         else:
             hoomd_nb_func = possible_hoomd_nb_funcs[0] 
-            if hoomd_nb_func not in metadata:
-                metadata[hoomd_nb_func] = {}
             if first != second :
                 sigma, epsilon = _apply_combining_rule(
                         top.combining_rule, first, second)
@@ -190,24 +224,11 @@ def _write_nonbonded(top, metadata, unitsystem, r_cut_default=1.2):
                         first.parameters['epsilon'])
             nb_key = key.format(first.name, second.name)
 
-            metadata['objects'].append({
-                hoomd_nb_func: {
-                    "arguments": {
-                        'r_cut': r_cut_default,
-                        'nlist': "Object #0"
-                                },
-                    "tracked_fields": {
-                        'log': True, 
-                        'parameters': {
-                            nb_key: {
+            metadata['objects'][hoomd_func_address[hoomd_nb_func]][hoomd_nb_func]['tracked_fields']['parameters'][nb_key] = {
                                 'sigma': _reduce_units(sigma, unitsystem),
                                 'epsilon': _reduce_units(epsilon, unitsystem),
                                 'r_cut': first.parameters.get('r_cut', r_cut_default)
-                                    }
-                                    }
-                                    }
-                        }
-                })
+                }
 
 def _apply_combining_rule(rule, first, second):
     """ Apply combining rule to atomtypes first and second """
