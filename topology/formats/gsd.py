@@ -92,8 +92,8 @@ def write_gsd(top,
     #    _write_pair_information(gsd_file, top)
     if top.n_bonds > 0:
         _write_bond_information(gsd_file, top)
-    #if structure.angles:
-    #    _write_angle_information(gsd_file, top)
+    if top.n_angles > 0:
+        _write_angle_information(gsd_file, top)
     #if structure.rb_torsions:
     #    _write_dihedral_information(gsd_file, top)
 
@@ -191,15 +191,14 @@ def _write_bond_information(gsd_file, top):
     warnings.warn("{} bonds detected".format(top.n_bonds))
 
     unique_bond_types = set()
-    for bond in top.connections:
-        if isinstance(bond, Bond):
-            t1, t2 = bond.connection_members[0].atom_type, bond.connection_members[1].atom_type
-            if t1 is None or t2 is None:
-                t1, t2 = bond.connection_members[0].name, bond.connection_members[1].name
-            t1, t2 = sorted([t1, t2], key=lambda x: x.name)
-            bond_type = ('-'.join((t1.name, t2.name)))
+    for bond in top.bonds:
+        t1, t2 = bond.connection_members[0].atom_type, bond.connection_members[1].atom_type
+        if t1 is None or t2 is None:
+            t1, t2 = bond.connection_members[0], bond.connection_members[1]
+        t1, t2 = sorted([t1, t2], key=lambda x: x.name)
+        bond_type = ('-'.join((t1.name, t2.name)))
 
-            unique_bond_types.add(bond_type)
+        unique_bond_types.add(bond_type)
     unique_bond_types = sorted(list(unique_bond_types))
     gsd_file.bonds.types = unique_bond_types
     warnings.warn("{} unique bond types detected".format(
@@ -208,58 +207,65 @@ def _write_bond_information(gsd_file, top):
     bond_typeids = []
     bond_groups = []
     for bond in top.bonds:
-        if isinstance(bond, Bond):
-            t1, t2 = bond.connection_members[0].atom_type, bond.connection_members[1].atom_type
-            if t1 is None or t2 is None:
-                t1, t2 = bond.connection_members[0].name, bond.connection_members[1].name
-            t1, t2 = sorted([t1, t2], key=lambda x: x.name)
+        t1, t2 = bond.connection_members[0].atom_type, bond.connection_members[1].atom_type
+        if t1 is None or t2 is None:
+            t1, t2 = bond.connection_members[0].name, bond.connection_members[1].name
+        t1, t2 = sorted([t1, t2], key=lambda x: x.name)
 
-            bond_type = ('-'.join((t1.name, t2.name)))
-            bond_typeids.append(unique_bond_types.index(bond_type))
-            bond_groups.append((top.sites.index(bond.connection_members[0]),
-                                top.sites.index(bond.connection_members[1])))
+        bond_type = ('-'.join((t1.name, t2.name)))
+        bond_typeids.append(unique_bond_types.index(bond_type))
+        bond_groups.append((top.sites.index(bond.connection_members[0]),
+                            top.sites.index(bond.connection_members[1])))
 
     gsd_file.bonds.typeid = bond_typeids
     gsd_file.bonds.group = bond_groups
 
 
-def _write_angle_information(gsd_file, structure):
-    """[NOT IMPLEMENTED] Write the angles in the system.
+def _write_angle_information(gsd_file, top):
+    """ Write the angles in the system.
 
     Parameters
     ----------
     gsd_file :
         The file object of the GSD file being written
-    structure : parmed.Structure
-        Parmed structure object holding system information
+    top : topology.Topology
+        Topology object holding system information
+
 
     """
+    gsd_file.angles.N = top.n_angles
+    warnings.warn("{} angles detected".format(top.n_angles))
 
-    #gsd_file.angles.N = len(structure.angles)
+    unique_angle_types = set()
+    for angle in top.angles:
+        t1, t2, t3 = [a.atom_type for a in angle.connection_members]
+        if t1 is None or t2 is None or t3 is None:
+            t1, t2, t3 = [a.name for a in angle.connection_members]
+        t1, t2, t3 = sorted([t1, t2, t3], key=lambda x: x.name)
+        angle_type = ('-'.join((t1.name, t2.name, t3.name)))
 
-    #unique_angle_types = set()
-    #for angle in structure.angles:
-    #    t1, t2, t3 = angle.atom1.type, angle.atom2.type, angle.atom3.type
-    #    t1, t3 = sorted([t1, t3], key=natural_sort)
-    #    angle_type = ('-'.join((t1, t2, t3)))
-    #    unique_angle_types.add(angle_type)
-    #unique_angle_types = sorted(list(unique_angle_types), key=natural_sort)
-    #gsd_file.angles.types = unique_angle_types
+        unique_angle_types.add(angle_type)
+    unique_angle_types = sorted(list(unique_angle_types))
+    gsd_file.angles.types = unique_angle_types
+    warnings.warn("{} unique angle types detected".format(
+        len(unique_angle_types)))
 
-    #angle_typeids = []
-    #angle_groups = []
-    #for angle in structure.angles:
-    #    t1, t2, t3 = angle.atom1.type, angle.atom2.type, angle.atom3.type
-    #    t1, t3 = sorted([t1, t3], key=natural_sort)
-    #    angle_type = ('-'.join((t1, t2, t3)))
-    #    angle_typeids.append(unique_angle_types.index(angle_type))
-    #    angle_groups.append((angle.atom1.idx, angle.atom2.idx,
-    #                         angle.atom3.idx))
+    angle_typeids = []
+    angle_groups = []
+    for angle in top.angles:
+        t1, t2, t3 = [a.atom_type for a in angle.connection_members]
+        if t1 is None or t2 is None or t3 is None:
+            t1, t2, t3 = [a for a in angle.connection_members]
+        t1, t2, t3= sorted([t1, t2, t3], key=lambda x: x.name)
 
-    #gsd_file.angles.typeid = angle_typeids
-    #gsd_file.angles.group = angle_groups
-    pass
+        angle_type = ('-'.join((t1.name, t2.name, t3.name)))
+        angle_typeids.append(unique_angle_types.index(angle_type))
+        angle_groups.append((top.sites.index(angle.connection_members[0]),
+                            top.sites.index(angle.connection_members[1]),
+                            top.sites.index(angle.connection_members[2])))
 
+    gsd_file.angles.typeid = angle_typeids
+    gsd_file.angles.group = angle_groups
 
 def _write_dihedral_information(gsd_file, structure):
     """[NOT IMPLEMENTED] Write the dihedrals in the system.
