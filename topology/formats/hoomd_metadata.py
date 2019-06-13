@@ -19,8 +19,8 @@ supported_angletypes = {
         potential_templates.HarmonicAnglePotential(): 'hoomd.md.angle.harmonic'}
 
 
-def write_metadata(top, filename, unitsystem={'distance': u.nm, 'energy': u.Unit('kJ/mol'),
-                                    'mass': u.amu}):
+def write_metadata(top, filename, 
+        unitsystem={'distance': u.nm, 'energy': u.Unit('kJ/mol'), 'mass': u.amu}):
     """ Routine to write hoomdmeta data given a topology
 
     Parameters
@@ -34,10 +34,8 @@ def write_metadata(top, filename, unitsystem={'distance': u.nm, 'energy': u.Unit
         For more information, see 
         https://hoomd-blue.readthedocs.io/en/stable/units.html
         """
-    # First update the topology in its entirety
-    top.update_top()
-
     metadata = {'objects':[]}
+
     # Check for supported functions and print to metadata
     _check_supported_bondtypes(top)
     _check_supported_angletypes(top)
