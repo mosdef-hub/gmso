@@ -2,3 +2,5 @@ numpy
 mbuild
 unyt
 boltons
+gsd
+pytest
