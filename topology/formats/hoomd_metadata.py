@@ -120,6 +120,9 @@ def _write_bondtypes(top, metadata, hoomd_unytsystem):
             bond_key = key.format(bondtype.member_types[0], 
                 bondtype.member_types[1])
 
+            # This is where the metadata dictionary is actually modified
+            # If more hoomd functions were to be supported/written, 
+            # the code could follow this logic
             if hoomd_func == 'hoomd.md.bond.harmonic':
                 metadata['objects'][hoomd_func_address[hoomd_func]][hoomd_func]['tracked_fields']['parameters'][bond_key] = {
                                 'k': _reduce_units(bondtype.parameters['k'] * 
@@ -167,7 +170,10 @@ def _write_angletypes(top, metadata, hoomd_unytsystem):
 
             angle_key = key.format(angletype.member_types[0], 
                 angletype.member_types[1], angletype.member_types[2])
-            
+
+            # This is where the metadata dictionary is actually modified
+            # If more hoomd functions were to be supported/written, 
+            # the code could follow this logic
             if hoomd_func == 'hoomd.md.angle.harmonic':
                 metadata['objects'][hoomd_func_address[hoomd_func]][hoomd_func]['tracked_fields']['parameters'][angle_key] = {
                                 'k': _reduce_units(
@@ -227,7 +233,10 @@ def _write_nonbonded(top, metadata, hoomd_unytsystem, r_cut_default=1.2):
                 sigma, epsilon = (first.parameters['sigma'], 
                         first.parameters['epsilon'])
             nb_key = key.format(first.name, second.name)
-
+            
+            # This is where the metadata dictionary is actually modified
+            # If more hoomd functions were to be supported/written, 
+            # the code could follow this logic
             if hoomd_nb_func == 'hoomd.md.pair.lj':
                 metadata['objects'][hoomd_func_address[hoomd_nb_func]][hoomd_nb_func]['tracked_fields']['parameters'][nb_key] = {
                                 'sigma': _reduce_units(sigma, hoomd_unytsystem),
