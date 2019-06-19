@@ -12,7 +12,7 @@ class TestHoomdMetaData(BaseTest):
     def test_lj(self):
         top = topo.Topology()
         atype = topo.AtomType(name='A', 
-                parameters={'sigma':2 * u.nm, 'epsilon':2 * u.Unit('kJ')})
+                parameters={'sigma':2 * u.nm, 'epsilon':2 * u.Unit('kJ/mol')})
         top.add_site(topo.Site(name='a',
             atom_type=atype))
         write_metadata(top, 'out.json')
@@ -24,10 +24,10 @@ class TestHoomdMetaData(BaseTest):
         top = topo.Topology()
         top.combining_rule = 'lorentz'
         atype = topo.AtomType(name='A', 
-                parameters={'sigma':2 * u.nm, 'epsilon':2 * u.Unit('kJ')})
+                parameters={'sigma':2 * u.nm, 'epsilon':2 * u.Unit('kJ/mol')})
 
         btype = topo.AtomType(name='B', 
-                parameters={'sigma':4 * u.nm, 'epsilon':4 * u.Unit('kJ')})
+                parameters={'sigma':4 * u.nm, 'epsilon':4 * u.Unit('kJ/mol')})
 
         top.add_site(topo.Site(name='a',
             atom_type=atype))
@@ -43,10 +43,10 @@ class TestHoomdMetaData(BaseTest):
         top = topo.Topology()
         top.combining_rule = 'lorentz'
         atype = topo.AtomType(name='A', 
-                parameters={'sigma':2 * u.nm, 'epsilon':2 * u.Unit('kJ')})
+                parameters={'sigma':2 * u.nm, 'epsilon':2 * u.Unit('kJ/mol')})
 
         btype = topo.AtomType(name='B', 
-                parameters={'sigma':4 * u.nm, 'epsilon':4 * u.Unit('kJ')})
+                parameters={'sigma':4 * u.nm, 'epsilon':4 * u.Unit('kJ/mol')})
 
         asite = topo.Site(name='a',
             atom_type=atype)
@@ -55,7 +55,7 @@ class TestHoomdMetaData(BaseTest):
 
 
         bondtype = topo.BondType(parameters={'r_eq': 0.14 * u.nm,
-                                            'k': 3.0 * u.Unit('kJ')},
+                                            'k': 3.0 * u.Unit('kJ/mol/nm**2')},
                                 member_types=['A', 'B'])
         bond = topo.Bond(connection_members=[asite, bsite], 
                 connection_type=bondtype)
@@ -72,11 +72,11 @@ class TestHoomdMetaData(BaseTest):
         top = topo.Topology()
         top.combining_rule = 'lorentz'
         atype = topo.AtomType(name='A', 
-                parameters={'sigma':2 * u.nm, 'epsilon':2 * u.Unit('kJ')})
+                parameters={'sigma':2 * u.nm, 'epsilon':2 * u.Unit('kJ/mol')})
         btype = topo.AtomType(name='B', 
-                parameters={'sigma':4 * u.nm, 'epsilon':4 * u.Unit('kJ')})
+                parameters={'sigma':4 * u.nm, 'epsilon':4 * u.Unit('kJ/mol')})
         ctype = topo.AtomType(name='C', 
-                parameters={'sigma':4 * u.nm, 'epsilon':4 * u.Unit('kJ')})
+                parameters={'sigma':4 * u.nm, 'epsilon':4 * u.Unit('kJ/mol')})
 
 
         asite = topo.Site(name='a',
@@ -88,7 +88,7 @@ class TestHoomdMetaData(BaseTest):
 
 
         angletype = topo.AngleType(parameters={'theta_eq': 3.14 * u.rad,
-                                            'k': 3.0 * u.Unit('kJ')},
+                                            'k': 3.0 * u.Unit('kJ/mol/rad**2')},
                                 member_types=['A', 'B', 'C'])
         angle = topo.Angle(connection_members=[asite, bsite, csite], 
                 connection_type=angletype)
