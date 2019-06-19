@@ -1,6 +1,7 @@
 import warnings 
 import unyt as u
 import json
+import numpy as np
 import itertools as it
 
 from topology.exceptions import NotYetImplementedWarning, TopologyError
@@ -35,6 +36,7 @@ def write_metadata(top, filename,
         https://hoomd-blue.readthedocs.io/en/stable/units.html
         """
     metadata = {'objects':[]}
+    hoomd_unytsystem = _construct_unytsystem(unitsystem)
 
     # Check for supported functions and print to metadata
     _check_supported_bondtypes(top)
@@ -42,9 +44,9 @@ def write_metadata(top, filename,
     _check_supported_nonbonded(top)
 
     _write_defaults(top, metadata)
-    _write_bondtypes(top, metadata, unitsystem)
-    _write_angletypes(top, metadata, unitsystem)
-    _write_nonbonded(top, metadata, unitsystem)
+    _write_bondtypes(top, metadata, hoomd_unytsystem)
+    _write_angletypes(top, metadata, hoomd_unytsystem)
+    _write_nonbonded(top, metadata, hoomd_unytsystem)
     with open(filename, 'w') as f:
         json.dump(metadata, f, indent=4)
 
@@ -79,7 +81,7 @@ def _check_supported_nonbonded(top):
 def _write_defaults(top, metadata):
     metadata['objects'].append({'hoomd.md.nlist.cell':{}})
 
-def _write_bondtypes(top, metadata, unitsystem):
+def _write_bondtypes(top, metadata, hoomd_unytsystem):
     key = "{}-{}"
 
     # First "initialize" each hoomd class here in the metadata dict
@@ -118,14 +120,16 @@ def _write_bondtypes(top, metadata, unitsystem):
             bond_key = key.format(bondtype.member_types[0], 
                 bondtype.member_types[1])
 
-            metadata['objects'][hoomd_func_address[hoomd_func]][hoomd_func]['tracked_fields']['parameters'][bond_key] = {
-                                'k': _reduce_units(bondtype.parameters['k'], 
-                                    unitsystem),
+            if hoomd_func == 'hoomd.md.bond.harmonic':
+                metadata['objects'][hoomd_func_address[hoomd_func]][hoomd_func]['tracked_fields']['parameters'][bond_key] = {
+                                'k': _reduce_units(bondtype.parameters['k'] * 
+                                    bondtype.parameters['r_eq'].units**2, 
+                                    hoomd_unytsystem),
                                 'r0': _reduce_units(bondtype.parameters['r_eq'], 
-                                    unitsystem)
+                                    hoomd_unytsystem)
                                         }
 
-def _write_angletypes(top, metadata, unitsystem):
+def _write_angletypes(top, metadata, hoomd_unytsystem):
     key = "{}-{}-{}"
 
     # First "initialize" each hoomd class here in the metadata dict
@@ -164,16 +168,18 @@ def _write_angletypes(top, metadata, unitsystem):
             angle_key = key.format(angletype.member_types[0], 
                 angletype.member_types[1], angletype.member_types[2])
             
-            metadata['objects'][hoomd_func_address[hoomd_func]][hoomd_func]['tracked_fields']['parameters'][angle_key] = {
+            if hoomd_func == 'hoomd.md.angle.harmonic':
+                metadata['objects'][hoomd_func_address[hoomd_func]][hoomd_func]['tracked_fields']['parameters'][angle_key] = {
                                 'k': _reduce_units(
-                                    angletype.parameters['k'], 
-                                    unitsystem),
+                                    angletype.parameters['k'] * 
+                                    angletype.parameters['theta_eq'].units**2, 
+                                    hoomd_unytsystem),
                                 't0': _reduce_units(
                                     angletype.parameters['theta_eq'], 
-                                    unitsystem)
+                                    hoomd_unytsystem)
                                     }
 
-def _write_nonbonded(top, metadata, unitsystem, r_cut_default=1.2):
+def _write_nonbonded(top, metadata, hoomd_unytsystem, r_cut_default=1.2):
     key = "{},{}"
 
     # First "initialize" each hoomd class here in the metadata dict
@@ -222,9 +228,10 @@ def _write_nonbonded(top, metadata, unitsystem, r_cut_default=1.2):
                         first.parameters['epsilon'])
             nb_key = key.format(first.name, second.name)
 
-            metadata['objects'][hoomd_func_address[hoomd_nb_func]][hoomd_nb_func]['tracked_fields']['parameters'][nb_key] = {
-                                'sigma': _reduce_units(sigma, unitsystem),
-                                'epsilon': _reduce_units(epsilon, unitsystem),
+            if hoomd_nb_func == 'hoomd.md.pair.lj':
+                metadata['objects'][hoomd_func_address[hoomd_nb_func]][hoomd_nb_func]['tracked_fields']['parameters'][nb_key] = {
+                                'sigma': _reduce_units(sigma, hoomd_unytsystem),
+                                'epsilon': _reduce_units(epsilon, hoomd_unytsystem),
                                 'r_cut': first.parameters.get('r_cut', r_cut_default)
                 }
 
@@ -241,15 +248,54 @@ def _apply_combining_rule(rule, first, second):
 
     return (sigma, epsilon)
 
+def _construct_unytsystem(unitsystem):
+    """ Given a unitsytem dictionary, create a unyt.unit_system.UnitSystem 
 
-def _reduce_units(quantity, unitsystem):
-    """ Reduce the units of quantity according to unitsystem """
+    Parameters
+    ---------
+    unitsystem : dict
+        (str : u.Unit)
+        Required keys: 'distance', 'mass', 'energy'
 
-    # Okay honestly I don't know the best way to handle this
-    # But i DO know we want to parse the quantity,
-    # figure out its dimensions (is it distance, distance**3/mass, energy/mass, etc)
-    # And then divide out by the associated unitsystem quantities
-    # There might be some unyt functionality (unyt.unit_registry)? 
+    Returns
+    -------
+    hoomd_unytsystem : u.unit_systems.UnitSystem
 
-    # For now, just strip out the units, and convert to float
-    return float(quantity.value)
+    Notes
+    -----
+    hoomd fundamental units: distance, mass, energy
+    unyt unitsystem fundamental units: distance, mass, time
+    To construct the unyt unitsystem, derive time from (distance, mass, energy)
+    But distance and mass can be used as-is
+    """
+
+    if 'hoomd_distance' not in u.unit_registry.default_unit_registry:
+        u.define_unit('hoomd_distance', 1 * unitsystem['distance'])
+    if 'hoomd_time' not in u.unit_registry.default_unit_registry:
+        u.define_unit('hoomd_time', np.sqrt(1 * unitsystem['mass'] 
+            * ((1 * unitsystem['distance'])**2)/(1* unitsystem['energy'])))
+    if 'hoomd_mass' not in u.unit_registry.default_unit_registry:
+        u.define_unit('hoomd_mass', 1*unitsystem['mass'])
+
+    hoomd_unytsystem = u.unit_systems.UnitSystem('hoomd_unytsystem', 
+            u.hoomd_distance, u.hoomd_mass, u.hoomd_time, 
+            registry=u.unit_registry.default_unit_registry)
+    
+    return hoomd_unytsystem
+
+def _reduce_units(quantity, hoomd_unytsystem):
+    """ Reduce the units of quantity according to unitsystem 
+    
+    Parameters
+    ----------
+    quantity : u.Unyt_quantity
+    hoomd_unytsystem: u.UnitSystem
+
+    Returns
+    ------
+    float
+    
+    """
+        
+    return float(quantity.in_base(hoomd_unytsystem).value)
+    
