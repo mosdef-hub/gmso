@@ -15,6 +15,7 @@ def from_mbuild(compound, box=None):
     assert isinstance(compound, mb.Compound), msg
 
     top = Topology()
+    top.typed = False
 
     # Keep the name if it is not the default mbuild Compound name
     if compound.name != mb.Compound().name:
@@ -26,13 +27,12 @@ def from_mbuild(compound, box=None):
         site = Site(name=particle.name, position=pos)
         site_map[particle] = site
         top.add_site(site, update_types=False)
-    top.update_top()
 
     for b1, b2 in compound.bonds():
         new_bond = Bond(connection_members=[site_map[b1], site_map[b2]],
                 connection_type=None)
         top.add_connection(new_bond, update_types=False)
-    top.update_top()
+    top.update_top(update_types=False)
 
     if box:
         top.box = Box(box)
