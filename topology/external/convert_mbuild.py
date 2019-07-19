@@ -41,7 +41,9 @@ def from_mbuild(compound, box=None):
     elif compound.periodicity is not None and np.greater(compound.periodicity, 0).all():
         top.box = Box(lengths=compound.periodicity)
     else:
-        top.box = from_mbuild_box(compound.boundingbox)
+        box = from_mbuild_box(compound.boundingbox)
+        box.lengths += [0.5, 0.5, 0.5] * u.nm
+        top.box = box
 
     return top
 
