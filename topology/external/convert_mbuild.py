@@ -1,3 +1,4 @@
+import numpy as np
 import unyt as u
 
 from topology.core.topology import Topology
@@ -35,9 +36,12 @@ def from_mbuild(compound, box=None):
     top.update_top(update_types=False)
 
     if box:
-        top.box = Box(box)
-    elif compound.periodicity is not None:
-        top.box = Box(compound.periodicity)
+        top.box = from_mbuild_box(box)
+    # Assumes 2-D systems are not supported in mBuild
+    elif compound.periodicity is not None and np.greater(compound.periodicity, 0).all():
+        top.box = Box(lengths=compound.periodicity)
+    else:
+        top.box = from_mbuild_box(compound.boundingbox)
 
     return top
 
@@ -64,3 +68,17 @@ def to_mbuild(topology):
                 particle_map[connect.connection_members[1]]))
 
     return compound
+
+def from_mbuild_box(mb_box):
+    """Convert an mBuild box to a topology.box.Box"""
+    # TODO: Unit tests
+
+    if not isinstance(mb_box, mb.Box):
+        raise ValueError('Argument mb_box is not an mBuild Box')
+
+    box = Box(
+        lengths=mb_box.lengths*u.nm,
+        angles=mb_box.angles*u.degree,
+    )
+
+    return box
