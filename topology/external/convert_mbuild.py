@@ -3,13 +3,14 @@ import unyt as u
 from topology.core.topology import Topology
 from topology.core.site import Site
 from topology.core.bond import Bond
+from topology.core.box import Box
 from topology.utils.io import has_mbuild
 
 
 if has_mbuild:
     import mbuild as mb
 
-def from_mbuild(compound):
+def from_mbuild(compound, box=None):
     msg = ("Provided argument that is not an mbuild Compound")
     assert isinstance(compound, mb.Compound), msg
 
@@ -32,6 +33,11 @@ def from_mbuild(compound):
                 connection_type=None)
         top.add_connection(new_bond, update_types=False)
     top.update_top()
+
+    if box:
+        top.box = Box(box)
+    elif compound.periodicity is not None:
+        top.box = Box(compound.periodicity)
 
     return top
 
