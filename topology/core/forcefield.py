@@ -180,9 +180,7 @@ class Forcefield(object):
                 Validator(ff_file_name, debug)
         for xml in preprocessed_files:
             self._generate_potential_terms_from_xml(xml)
-        #super(Forcefield, self).__init__(*preprocessed_files)
         self.parser = smarts.SMARTS(self.non_element_types)
-        #self._SystemData = self._SystemData()
 
     def _generate_potential_terms_from_xml(self, xml):
         """ From a given xml file, create the topology.Potential objects """
@@ -200,12 +198,12 @@ class Forcefield(object):
             ivars = atype_ele.get('independent_variables', default=None)
             mass = atype_ele.get('mass', default="0")
             charge = atype_ele.get('charge', default=None)
-            name = atype_ele.get('name', default=None)
-            aclass = atype_ele.get('class', default=None) #This doesn't get used in constructing the AtomType, and seems the same as the name attribute, but we'll parse it just in case
-            definition = atype_ele.get('def', default=None)
-            overrides = atype_ele.get('overrides', default=None)
-            doi = atype_ele.get('doi', default=None)
-            desc = atype_ele.get('desc', default=None)
+            name = atype_ele.get('name', default='')
+            aclass = atype_ele.get('class', default='') #This doesn't get used in constructing the AtomType, and seems the same as the name attribute, but we'll parse it just in case
+            definition = atype_ele.get('def', default='')
+            overrides = atype_ele.get('overrides', default='')
+            doi = atype_ele.get('doi', default='')
+            desc = atype_ele.get('desc', default='')
 
             if aclass in self._atomClasses:
                 type_set = self._atomClasses[aclass]
@@ -238,7 +236,7 @@ class Forcefield(object):
                                         parameters=parameters,
                                         independent_variables=ivars,
                                         mass=_parse_unyt(mass),
-                                        charge=charge,
+                                        charge=float(charge),
                                         atomclass=aclass)
             all_atypes.append(new_atype)
         return all_atypes
@@ -277,13 +275,13 @@ class Forcefield(object):
                     new_btype = topology.BondType(expression=expression, 
                                             parameters=copy.copy(parameters), 
                                             independent_variables=ivars,
-                                            types=[type1, type2])
+                                            member_types=[type1, type2])
                     all_btypes.append(new_btype)
             else:
                 new_btype = topology.BondType(expression=expression, 
                                         parameters=parameters,
                                         independent_variables=ivars,
-                                        types=[type1, type2])
+                                        member_types=[type1, type2])
                 all_btypes.append(new_btype)
         return all_btypes
 
@@ -324,13 +322,13 @@ class Forcefield(object):
                     new_angtype = topology.AngleType(expression=expression, 
                                             parameters=copy.copy(parameters), 
                                             independent_variables=ivars,
-                                            types=[type1, type2, type3])
+                                            member_types=[type1, type2, type3])
                     all_angtypes.append(new_angtype)
             else:
                 new_angtype = topology.AngleType(expression=expression, 
                                         parameters=parameters,
                                         independent_variables=ivars,
-                                        types=[type1, type2, type3])
+                                        member_types=[type1, type2, type3])
                 all_angtypes.append(new_angtype)
         return all_angtypes
 
@@ -595,7 +593,7 @@ def _matching_constituents(connection, connectiontype):
             for a in connection.connection_members]
 
     # This is a list of strings based on the connectiontype types
-    ctype_member_types = [a for a in connectiontype.types]
+    ctype_member_types = [a for a in connectiontype.member_types]
 
     # Check forward and reverse
     # I think we can just do __eq__ on the list because
