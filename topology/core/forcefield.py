@@ -17,7 +17,6 @@ import re
 
 import numpy as np
 import parmed as pmd
-import simtk.openmm.app.element as elem
 import foyer.element as custom_elem
 import topology 
 import unyt as u
@@ -367,42 +366,6 @@ class Forcefield(object):
 
         return element, True
 
-    #def registerAtomType(self, parameters):
-    #    """Register a new atom type. """
-    #    name = parameters['name']
-    #    if name in self._atomTypes:
-    #        raise ValueError('Found multiple definitions for atom type: ' + name)
-    #    atom_class = parameters['class']
-    #    #mass = _convertParameterToNumber(parameters['mass'])
-    #    #element = None
-    #    #if 'element' in parameters:
-    #    #    element, custom = self._create_element(parameters['element'], mass)
-    #    #    if custom:
-    #    #        self.non_element_types[element.symbol] = element
-
-    #    #self._atomTypes[name] = self.__class__._AtomType(name, atom_class, mass, element)
-    #    if atom_class in self._atomClasses:
-    #        type_set = self._atomClasses[atom_class]
-    #    else:
-    #        type_set = set()
-    #        self._atomClasses[atom_class] = type_set
-    #    type_set.add(name)
-    #    self._atomClasses[''].add(name)
-
-    #    name = parameters['name']
-    #    if 'def' in parameters:
-    #        self.atomTypeDefinitions[name] = parameters['def']
-    #    if 'overrides' in parameters:
-    #        overrides = set(atype.strip() for atype
-    #                        in parameters['overrides'].split(","))
-    #        if overrides:
-    #            self.atomTypeOverrides[name] = overrides
-    #    if 'des' in parameters:
-    #        self.atomTypeDesc[name] = parameters['desc']
-    #    if 'doi' in parameters:
-    #        dois = set(doi.strip() for doi in parameters['doi'].split(','))
-    #        self.atomTypeRefs[name] = dois
-
     def apply(self, top, references_file=None, use_residue_map=True,
               assert_bond_params=True, assert_angle_params=True,
               assert_dihedral_params=True, assert_improper_params=False,
@@ -451,10 +414,7 @@ class Forcefield(object):
                 #residues = kwargs.get('residues')
                 #topology, positions = generate_topology(topology,
                 #        self.non_element_types, residues=residues)
-        #else:
-            #positions = np.empty(shape=(topology.getNumAtoms(), 3))
-            #positions[:] = np.nan
-        #box_vectors = top.box.get_vectors()
+
         top = self.run_atomtyping(top, use_residue_map=use_residue_map)
         # After we determine atomtypes, we need to apply parameters to ever
         # Connection in our topology. However, this will only
@@ -463,9 +423,6 @@ class Forcefield(object):
         # We would need an extra call to enumerate the angles/dihedrals
         # unless the topology has already enuemrated them
         top = self.parametrize_topology(top)
-        #system = self.createSystem(topology, *args, **kwargs)
-
-        #structure = pmd.openmm.load_topology(topology=topology, system=system)
 
         '''
         Check that all topology objects (angles, dihedrals, and impropers)
@@ -514,12 +471,8 @@ class Forcefield(object):
         #           len(improper_dihedrals) + len(structure.impropers)))
         #    _error_or_warn(assert_improper_params, msg)
 
-        #structure.bonds.sort(key=lambda x: x.atom1.idx)
-        #structure.positions = positions
-        #if box_vectors is not None:
-        #    structure.box_vectors = box_vectors
+        
         if references_file:
-            #atom_types = set(atom.type for atom in structure.atoms)
             atom_types = set(site.atom_type for site in top.sites)
             self._write_references_to_file(atom_types, references_file)
 
