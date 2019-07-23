@@ -38,12 +38,19 @@ def from_mbuild(compound, box=None):
     if box:
         top.box = from_mbuild_box(box)
     # Assumes 2-D systems are not supported in mBuild
-    elif compound.periodicity is not None and np.greater(compound.periodicity, 0).all():
-        top.box = Box(lengths=compound.periodicity)
+    #if compound.periodicity is None and not box:
     else:
-        box = from_mbuild_box(compound.boundingbox)
-        box.lengths += [0.5, 0.5, 0.5] * u.nm
-        top.box = box
+        if np.allclose(compound.periodicity, np.zeros(3)):
+            box = from_mbuild_box(compound.boundingbox)
+            box.lengths += [0.5, 0.5, 0.5] * u.nm
+            top.box = box
+        else: 
+            top.box = Box(lengths=compound.periodicity)
+    #np.greater(compound.periodicity, 0).all():
+    #else:
+    #    box = from_mbuild_box(compound.boundingbox)
+    #    box.lengths += [0.5, 0.5, 0.5] * u.nm
+    #    top.box = box
 
     return top
 
