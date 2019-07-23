@@ -16,7 +16,6 @@ import warnings
 import re
 
 import numpy as np
-import parmed as pmd
 import foyer.element as custom_elem
 import topology 
 import unyt as u
