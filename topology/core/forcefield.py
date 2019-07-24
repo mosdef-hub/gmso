@@ -83,6 +83,7 @@ def preprocess_forcefield_files(forcefield_files=None):
 
 def _check_independent_residues(topology):
     """Check to see if residues will constitute independent graphs."""
+    # TODO: Update for frank.topology
     for res in topology.residues():
         atoms_in_residue = set([atom for atom in res.atoms()])
         bond_partners_in_residue = [item for sublist in [atom.bond_partners for atom in res.atoms()] for item in sublist]
@@ -107,6 +108,7 @@ def _update_atomtypes(unatomtyped_topology, res_name, prototype):
         Prototype topology with atomtypes defined by `find_atomtypes`.
 
     """
+    # TODO: Update for frank.topology
     for res in unatomtyped_topology.residues():
         if res.name == res_name:
             for old_atom, new_atom_id in zip([atom for atom in res.atoms()], [atom.id for atom in prototype.atoms()]):
@@ -152,7 +154,8 @@ class Forcefield(object):
         self._atomTypes = dict()
         self._atomClasses = {'':set()}
         self._included_forcefields = dict()
-        self.non_element_types = dict()
+        #self.non_element_types = dict()
+        self.non_element_types = set()
         self.atomtypes = list()
         self.bondtypes = list()
         self.angletypes = list()
@@ -189,12 +192,23 @@ class Forcefield(object):
         self.bondtypes.extend(self._generate_bondtypes(root))
         self.angletypes.extend(self._generate_angletypes(root))
 
+    def _register_atomtype(self, params):
+        """ As we iterate through each atomtype in an ffxml,
+        identify any "new elements" we need to make?"""
+        def not_element(symbol):
+            return symbol not in ['H', 'He', "Li", 'Be', 'B', 
+                        'C', 'N', 'O', 'F', "Ne"]
+
+        if not_element(params['name']):
+            self.non_element_types.add(params['name'])
+
     def _generate_atomtypes(self, root):
         """ From an ET, generate topology.AtomType terms"""
         all_atypes =[]
         for atype_ele in root.findall('AtomType'):
-            expression = atype_ele.get('expression', default=None)
-            ivars = atype_ele.get('independent_variables', default=None)
+            self._register_atomtype(atype_ele.attrib)
+            expression = atype_ele.get('expression', default='')
+            ivars = atype_ele.get('independent_variables', default='')
             mass = atype_ele.get('mass', default="0")
             charge = atype_ele.get('charge', default=None)
             name = atype_ele.get('name', default='')
@@ -345,23 +359,6 @@ class Forcefield(object):
             self._included_forcefields[basename] = ff_filepath
         return self._included_forcefields
 
-    def _create_element(self, element, mass):
-        if not isinstance(element, elem.Element):
-            try:
-                element = elem.get_by_symbol(element)
-            except KeyError:
-                # Enables support for non-atomistic "element types"
-                if element not in self.non_element_types:
-                    warnings.warn('Non-atomistic element type detected. '
-                                  'Creating custom element for {}'.format(element))
-                element = custom_elem.Element(number=0,
-                                       mass=mass,
-                                       name=element,
-                                       symbol=element)
-            else:
-                return element, False
-
-        return element, True
 
     def apply(self, top, references_file=None, use_residue_map=True,
               assert_bond_params=True, assert_angle_params=True,
