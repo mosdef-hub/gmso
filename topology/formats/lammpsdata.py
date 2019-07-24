@@ -282,66 +282,58 @@ def write_lammpsdata(topology, filename, atom_style='full'):
 def _get_masses(filename, n_atomtypes):
     with open(filename, 'r') as lammps_file:
         types = dict()
-        for line in lammps_file:
+        for i, line in enumerate(lammps_file):
             if 'Masses' in line:
-                lammps_file.readline()
-                for i in range(n_atomtypes):
-                    type_line = lammps_file.readline().split()
-                    types[type_line[0]] = float(type_line[1]) * u.g
+                break
+    mass_lines = open(filename, 'r').readlines()[i+2:i+n_atomtypes+2]
+    for line in mass_lines:
+        line = line.split()
+        types[line[0]] = float(line[1]) * u.g
     
     return types
 
 
 def _get_atoms(filename, n_atoms, coords):
-    #types = list()
-    #charges = list()
-    #coord_list = list()
     type_dict = dict()
     charge_dict = dict()
     coord_dict = dict()
     with open(filename, 'r') as lammps_file:
-        for line in lammps_file:
+        for i, line in enumerate(lammps_file):
             if 'Atoms' in line:
-                lammps_file.readline()
-                for i in range(n_atoms):
-                    atom = lammps_file.readline().split()
-                    atom_type = atom[2]
-                    charge = u.unyt_quantity(float(atom[3]), u.elementary_charge)
-                    coords[i] = u.angstrom * np.array([
-                        float(atom[4]),
-                        float(atom[5]),
-                        float(atom[6])])
-
-                    if atom_type in type_dict:
-                        type_dict[atom_type] += 1
-                    else:
-                        charge_dict[atom_type] = charge
-                        coord_dict[atom_type] = coords
-                        type_dict[atom_type] = 1
+                break
+    atom_lines = open(filename, 'r').readlines()[i+2:i+n_atoms+2]
+    for j, line in enumerate(atom_lines):
+        atom = line.split()
+        atom_type = atom[2]
+        charge = u.unyt_quantity(float(atom[3]), u.elementary_charge)
+        coords[j] = u.angstrom * u.unyt_array([
+            float(atom[4]),
+            float(atom[5]),
+            float(atom[6])])
+        if atom_type in type_dict:
+            type_dict[atom_type] += 1
+        else:
+            charge_dict[atom_type] = charge
+            coord_dict[atom_type] = coords
+            type_dict[atom_type] = 1
 
     #return types, charges, coord_list
     return charge_dict, coord_dict, type_dict
 
 
 def _get_pairs(filename, n_atomtypes):
-    #types = list()
-    #epsilon_list = list()
-    #sigma_list = list()
     sigma_dict = dict()
     epsilon_dict = dict()
     with open(filename, 'r') as lammps_file:
-        for line in lammps_file:
+        for i, line in enumerate(lammps_file):
             if 'Pair' in line:
-                lammps_file.readline()
-                for i in range(n_atomtypes):
-                    atom_type = lammps_file.readline().split()
-                    epsilon = float(atom_type[1]) * u.kcal / u.mol
-                    sigma = float(atom_type[2]) * u.angstrom
-
-                    sigma_dict[atom_type[0]] = sigma
-                    epsilon_dict[atom_type[0]] = epsilon
-                    #types.append(atom_type[0])
-                    #epsilon_list.append(epsilon)
-                    #sigma_list.append(sigma)
+                break
+    pair_lines = open(filename, 'r').readlines()[i+2:i+n_atomtypes+2]
+    for line in pair_lines:
+        atom_type = line.split()
+        epsilon = float(atom_type[1]) * u.kcal / u.mol
+        sigma = float(atom_type[2]) * u.angstrom
+        sigma_dict[atom_type[0]] = sigma
+        epsilon_dict[atom_type[0]] = epsilon
 
     return sigma_dict, epsilon_dict
