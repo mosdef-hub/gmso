@@ -182,7 +182,7 @@ class Forcefield(object):
                 Validator(ff_file_name, debug)
         for xml in preprocessed_files:
             self._generate_potential_terms_from_xml(xml)
-        self.parser = smarts.SMARTS(self.non_element_types)
+        self.parser = smarts.SMARTS(optional_names=self.non_element_types)
 
     def _generate_potential_terms_from_xml(self, xml):
         """ From a given xml file, create the topology.Potential objects """
