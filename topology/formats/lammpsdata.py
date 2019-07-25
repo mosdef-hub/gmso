@@ -15,30 +15,38 @@ from topology.core.box import Box
 
 def read_lammpsdata(filename, atom_style='full'):
     top = Topology()
+    # The idea is to get the number of types to read in
+    with open(filename, 'r') as lammps_file:
+        for i,line in enumerate(lammps_file):
+            if 'xlo' in line.split():
+                break
+    typelines = open(filename, 'r').readlines()[2:i]
+    # TODO: Rewrite the logic to read in all type information
+    for line in typelines:
+        if 'atoms' in line:
+            n_atoms = int(line.split()[0])
+        elif 'bonds' in line:
+            n_bonds = int(line.split()[0])
+        elif 'angles' in line:
+            n_angles = int(line.split()[0])
+        elif 'dihedrals' in line:
+            n_dihedrals = int(line.split()[0])
+        elif 'impropers' in line:
+            n_impropers = int(line.split()[0])
+        elif 'atom' in line:
+            n_atomtypes = int(line.split()[0])
+        elif 'bond' in line:
+            n_bondtypes = int(line.split()[0])
+        elif 'angle' in line:
+            n_angletypes = int(line.split()[0])
+        elif 'dihedral' in line:
+            n_dihedraltypes = int(line.split()[0])
 
     with open(filename, 'r') as lammps_file:
         top.name = str(lammps_file.readline().strip())
         lammps_file.readline()
-        n_atoms = int(lammps_file.readline().split()[0])
-        coords = u.angstrom * np.zeros(shape=(n_atoms, 3))
-        n_bonds = int(lammps_file.readline().split()[0])
-        n_angles = int(lammps_file.readline().split()[0])
-        n_dihedrals = int(lammps_file.readline().split()[0])
-        lammps_file.readline()
-        n_atomtypes = int(lammps_file.readline().split()[0])
-
-        for i in range(4):
-            n_gen_types = lammps_file.readline()
-            if n_gen_types == '\n':
-                print("No more types to track")
-                break
-            elif n_gen_types.split()[1] == 'bond':
-                n_bondtypes = int(n_gen_types.split()[0])
-            elif n_gen_types.split()[1] == 'angle':
-                n_angletypes = int(n_gen_types.split()[0])
-            elif n_gen_types.split()[1] == 'dihedral':
-                n_dihedraltypes = int(n_gen_types.split()[0])
-
+        for j in range(i-2): # looping through to skip through all of the type lines
+            lammps_file.readline()
         x_line = lammps_file.readline().split()
         y_line = lammps_file.readline().split()
         z_line = lammps_file.readline().split()
@@ -52,6 +60,7 @@ def read_lammpsdata(filename, atom_style='full'):
         top.box = Box(lengths)
 
 
+    coords = u.angstrom * np.zeros(shape=(n_atoms, 3))
     unique_types = _get_masses(filename,n_atomtypes)
     #atoms = _get_atoms(filename, n_atoms, coords)
     charge_dict, coords_dict, type_dict = _get_atoms(filename, n_atoms, coords)
