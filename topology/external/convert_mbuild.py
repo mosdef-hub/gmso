@@ -46,11 +46,6 @@ def from_mbuild(compound, box=None):
             top.box = box
         else: 
             top.box = Box(lengths=compound.periodicity)
-    #np.greater(compound.periodicity, 0).all():
-    #else:
-    #    box = from_mbuild_box(compound.boundingbox)
-    #    box.lengths += [0.5, 0.5, 0.5] * u.nm
-    #    top.box = box
 
     return top
 
