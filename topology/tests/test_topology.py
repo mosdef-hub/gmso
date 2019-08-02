@@ -360,3 +360,22 @@ class TestTopology(BaseTest):
         assert top.n_subtops == 0
         top.add_subtopology(subtop)
         assert top.n_subtops == 1
+
+    def test_parametrization(self):
+        top = Topology()
+
+        assert top.typed == False
+        top.add_site(Site(atom_type=AtomType()))
+
+        assert top.typed == True
+        assert top.is_typed() == True
+        assert top.typed == True
+
+    def test_parametrization_setter(self):
+        top = Topology()
+
+        assert top.typed == False
+        assert top.is_typed() == False
+        top.typed = True
+        assert top.typed == True
+        assert top.is_typed() == False

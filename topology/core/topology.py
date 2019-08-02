@@ -31,6 +31,7 @@ class Topology(object):
 
         self._subtops = IndexedSet()
 
+        self._typed = False
         self._atom_types = IndexedSet()
         self._connection_types = IndexedSet()
         self._bond_types = IndexedSet()
@@ -55,6 +56,26 @@ class Topology(object):
         self._box = box
 
     @property
+    def typed(self):
+        return self._typed
+
+    @typed.setter
+    def typed(self, typed):
+        self._typed = typed
+
+    def is_typed(self):
+        self.update_atom_types()
+        self.update_connection_types()
+        self.update_bond_types()
+        self.update_angle_types()
+
+        if len(self.atom_types) > 0 or len(self.connection_types) > 0:
+            self._typed = True
+        else:
+            self._typed = False
+        return self.typed
+
+    @property
     def combining_rule(self):
         return self._combining_rule
 
@@ -71,34 +92,42 @@ class Topology(object):
         return xyz
 
     def add_site(self, site, update_types=True):
+        # Might be a more elegant way of handling this, see PR #128
         if site in self.sites:
             warnings.warn("Redundantly adding Site {}".format(site))
         self._sites.add(site)
         if update_types:
+            if not self.typed:
+                self.typed = True
             self.update_atom_types()
 
     def add_connection(self, connection, update_types=True):
+        # Might be a more elegant way of handling this, see PR #128
         if connection in self.connections:
             warnings.warn("Redundantly adding Connection {}".format(connection))
 
-        if connection.connection_members[0] not in self.sites:
-            self.add_site(connection.connection_members[0])
-        if connection.connection_members[1] not in self.sites:
-            self.add_site(connection.connection_members[1])
+        for conn_member in connection.connection_members:
+            if conn_member not in self.sites:
+                self.add_site(conn_member)
+
+        if update_types and not self.typed:
+            self.typed = True
 
         self._connections.add(connection)
-
-        #self.update_connections() Do we need to call this? Code should work either way
-        if update_types:
-            self.update_connection_types()
         if isinstance(connection, Bond):
             self.update_bonds()
-            if update_types:
-                self.update_bond_types()
         elif isinstance(connection, Angle):
             self.update_angles()
-            if update_types:
+        self.update_connections()
+
+        if update_types:
+            if not self.typed:
+                self.typed = True
+            if isinstance(connection, Bond):
+                self.update_bond_types()
+            elif isinstance(connection, Angle):
                 self.update_angle_types()
+            self.update_connection_types()
 
     def add_subtopology(self, subtop):
         self._subtops.add(subtop)
@@ -195,6 +224,7 @@ class Topology(object):
         self.update_connection_types()
         self.update_bond_types()
         self.update_angle_types()
+        self.is_typed()
 
     def update_sites(self):
         """ (Is this necessary?)
