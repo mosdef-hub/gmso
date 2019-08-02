@@ -29,6 +29,8 @@ class Topology(object):
         self._bonds = IndexedSet()
         self._angles = IndexedSet()
 
+        self._subtops = IndexedSet()
+
         self._typed = False
         self._atom_types = IndexedSet()
         self._connection_types = IndexedSet()
@@ -127,6 +129,12 @@ class Topology(object):
                 self.update_angle_types()
             self.update_connection_types()
 
+    def add_subtopology(self, subtop):
+        self._subtops.add(subtop)
+        subtop.parent = self
+        # Note: would remove duplicates but there should be none
+        self._sites.union(subtop.sites)
+
     @property
     def n_sites(self):
         return len(self.sites)
@@ -142,6 +150,14 @@ class Topology(object):
     @property
     def n_angles(self):
         return len(self.angles)
+
+    @property
+    def subtops(self):
+        return self._subtops
+
+    @property
+    def n_subtops(self):
+        return len(self._subtops)
 
     @property
     def sites(self):
