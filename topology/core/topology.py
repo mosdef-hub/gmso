@@ -207,7 +207,7 @@ class Topology(object):
     def angle_type_expressions(self):
         return list(set([atype.expression for atype in self.angle_types]))
 
-    def update_top(self):
+    def update_top(self, update_types=True):
         """ Update the entire topology's attributes
 
         Notes
@@ -220,11 +220,12 @@ class Topology(object):
         self.update_bonds()
         self.update_angles()
 
-        self.update_atom_types()
-        self.update_connection_types()
-        self.update_bond_types()
-        self.update_angle_types()
-        self.is_typed()
+        if update_types:
+            self.update_atom_types()
+            self.update_connection_types()
+            self.update_bond_types()
+            self.update_angle_types()
+            self.is_typed()
 
     def update_sites(self):
         """ (Is this necessary?)
