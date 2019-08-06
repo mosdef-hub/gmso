@@ -7,9 +7,12 @@ from topology.utils.testing import allclose
 
 def _validate_lengths(lengths):
     if not isinstance(lengths, u.unyt_array):
-        warnings.warn('Lengths are assumed to be in nm')
-        lengths *= u.nm
-
+        if all(isinstance(length, u.unyt_quantity) for length in lengths):
+            print("Converting list of unyt quantities to a unyt array")
+            lengths = u.unyt_array([l for l in lengths], str(lengths[0].units))
+        else:
+            warnings.warn('Lengths are assumed to be in nm')
+            lengths *= u.nm
     input_unit = lengths.units
 
     lengths = np.asarray(lengths, dtype=float, order='C')
