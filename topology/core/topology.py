@@ -207,6 +207,13 @@ class Topology(object):
     def angle_type_expressions(self):
         return list(set([atype.expression for atype in self.angle_types]))
 
+    def enumerate_connectivity(self):
+        """ Enumerate connectivity within a topology 
+        
+        Assumes bonds are provided, will infer angles, dihedrals, impropers"""
+        from topology.core.connectivity import identify_connections
+        identify_connections(self)
+
     def update_top(self, update_types=True):
         """ Update the entire topology's attributes
 
