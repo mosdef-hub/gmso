@@ -41,17 +41,17 @@ def _detect_angles(compound_line_graph):
 def _add_angles(top, angle_matches):
     for angle_tuple in angle_matches:
         to_add_angle = Angle(connection_members=[*angle_tuple])
-        top.add_connection(to_add_angle)
+        top.add_connection(to_add_angle, update_types=False)
 
 def _add_dihedrals(top, dihedral_matches):
     for dihedral_tuple in dihedral_matches:
         to_add_dihedral = Dihedral(connection_members=[*dihedral_tuple])
-        top.add_connection(to_add_dihedral)
+        top.add_connection(to_add_dihedral, update_types=False)
 
 def _add_impropers(top, improper_matches):
     for improper_tuple in improper_matches:
         to_add_improper = Improper(connection_members=[*improper_tuple])
-        top.add_connection(to_add_improper)
+        top.add_connection(to_add_improper, update_types=False)
 
 def _detect_dihedrals(compound_line_graph):
     dihedral = nx.Graph()
