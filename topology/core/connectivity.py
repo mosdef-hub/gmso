@@ -5,7 +5,18 @@ from topology.core.angle import Angle
 
 
 def identify_connections(top):
-    """ Identify all possible connections within a topology """
+    """ Identify all possible connections within a topology 
+    
+    Notes: We are using networkx graph matching to match 
+    the topology's bonding graph to smaller sub-graphs that 
+    correspond to an angle, dihedral, improper etc. 
+    The matching is actually done via the line-graph of the 
+    topology bonding graph.
+    [ahy]: IIRC we chose to use line-graph as opposed the actual graph
+    because the graph-matching (on the actual graph) would miss certain
+    angles/dihedrals/impropers if there were cycles or bridge bonds
+    that would effectively hide the angle/dihedral/dihedral"""
+
     compound = nx.Graph()
 
     for b in top.bonds:
