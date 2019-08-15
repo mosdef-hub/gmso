@@ -1,11 +1,60 @@
 import unyt as u
+from collections import OrderedDict
 class Element(object):
     """An element."""
     def __init__(self, atomic_number=None,name=None, symbol=None, mass=None):
-	self.atomic_number = atomic_number
+        self.atomic_number = atomic_number
         self.name = name
         self.symbol = symbol
         self.mass = mass
+
+
+
+def element_by_symbol(symbols):
+    # In: symbol or list of symbol (str or list of str)
+    # Out: Element or list of Element
+    # Search by symbol of the element
+    # First trial: create dict to map symbol (key) to element (value)
+    symbol_dict = {element.symbol:element for element in Periodict}
+    element_list = []
+    if isinstance(symbols, str):
+        symbols = list(symbols)
+    for symbol in symbols:
+        element_list.append(symbol_dict[symbol])
+    return element_list
+
+def element_by_name(names):
+    # In: name or list of name (str or list of str)
+    # Out: Element or list of Element
+    # Search by name of the element
+    name_dict = {element.name:element for element in Periodict}
+    element_list = []
+    if isinstance(names, str):
+        names = list(names)
+    for name in names:
+        name = name.lower()
+        element_list.append(name_dict[name])
+    return element_list
+
+def element_by_atomic_number(atomic_numbers):
+    # In: atomic number or list of atomic number (int or list of int)
+    # Out: Element or list of Element
+    # Search by atomic number of the element
+    atomic_dict = {element.atomic_number:element for element in Periodict}
+    element_list = []
+    if isinstance(atomic_numbers, int):
+        atomic_numbers = list(atomic_numbers)
+    for number in atomic_numbers:
+        element_list.append(atomic_dict[number])
+    return element_list
+
+def element_by_mass(masses):
+    # In: mass or list of mass (int/float or list of int/float)
+    # Out: Element or list of Element
+    # Search by mass
+    return None
+
+
 
 Hydrogen = 	Element(atomic_number=1, name='hydrogen', symbol='H', mass=1.0079 * u.amu)
 Helium = 	Element(atomic_number=2, name='helium', symbol='He', mass=4.0026 * u.amu)
@@ -125,4 +174,26 @@ Ununpentium = 	Element(atomic_number=115, name='ununpentium', symbol='Uup', mass
 Ununhexium = 	Element(atomic_number=116, name='ununhexium', symbol='Uuh', mass=292.0 * u.amu)
 Ununseptium = 	Element(atomic_number=117, name='ununseptium', symbol='Uus', mass=291.0 * u.amu)
 Ununoctium = 	Element(atomic_number=118, name='ununoctium', symbol='Uuo', mass=294.0 * u.amu)
+
+Periodict = {  Hydrogen:None, Helium:None, Lithium:None, Beryllium:None, Boron:None,
+	       Carbon:None, Nitrogen:None, Oxygen:None, Fluorine:None, Neon:None,
+               Sodium:None, Magnesium:None, Aluminum:None, Silicon:None, Phosphorus:None,
+               Sulfur:None, Chlorine:None, Argon:None, Potassium:None, Calcium:None,
+               Scandium:None, Titanium:None, Vanadium:None, Chromium:None, Manganese:None,
+               Iron:None, Cobalt:None, Nickel:None, Copper:None, Zinc:None, Gallium:None,
+               Germanium:None, Arsenic:None, Selenium:None, Bromine:None, Krypton:None,
+               Rubidium:None, Strontium:None, Yttrium:None, Zirconium:None, Niobium:None,
+               Molybdenum:None, Technetium:None, Ruthenium:None, Rhodium:None, Palladium:None,
+               Silver:None, Cadmium:None, Indium:None, Tin:None, Antimony:None, Tellurium:None,
+               Iodine:None, Xenon:None, Cesium:None, Barium:None, Lanthanum:None, Cerium:None,
+               Praseodymium:None, Neodymium:None, Promethium:None, Samarium:None, Europium:None,
+               Gadolinium:None, Terbium:None, Dysprosium:None, Holmium:None, Erbium:None, Thulium:None,
+               Ytterbium:None, Lutetium:None, Hafnium:None, Tantalum:None, Tungsten:None, Rhenium:None,
+               Osmium:None, Iridium:None, Platinum:None, Gold:None, Mercury:None, Thallium:None, Lead:None,
+               Bismuth:None, Polonium:None, Astatine:None, Radon:None, Francium:None, Radium:None, Actinium:None,
+               Thorium:None, Proactinium:None, Uranium:None, Neptunium:None, Plutonium:None, Americium:None,
+               Curium:None, Berkelium:None, Californium:None, Einsteinium:None, Fermium:None, Mendelevium:None,
+               Nobelium:None, Lawrencium:None, Rutherfordium:None, Dubnium:None, Seaborgium:None, Bohrium:None,
+               Hassium:None, Meitnerium:None, Darmstadtium:None, Roentgenium:None, Copernicium:None, Ununtrium:None,
+               Ununquadium:None, Ununpentium:None, Ununhexium:None, Ununseptium:None, Ununoctium:None}
 
