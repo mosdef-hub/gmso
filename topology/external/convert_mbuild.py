@@ -24,10 +24,10 @@ def from_mbuild(compound):
     for particle in compound.particles():
         pos = particle.xyz[0] * u.nanometer
         try:
-            element = element.element_by_name(particle.name)
+            ele = element.element_by_symbol(particle.name)
         except KeyError:
-            element = None
-        site = Site(name=particle.name, position=pos, element=element)
+            ele = None
+        site = Site(name=particle.name, position=pos, element=ele)
         site_map[particle] = site
         top.add_site(site, update_types=False)
     top.update_top()
