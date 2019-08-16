@@ -4,6 +4,7 @@ from topology.core.topology import Topology
 from topology.core.site import Site
 from topology.core.bond import Bond
 from topology.utils.io import has_mbuild
+from topology.core import element
 
 
 if has_mbuild:
@@ -22,7 +23,11 @@ def from_mbuild(compound):
     site_map = dict()
     for particle in compound.particles():
         pos = particle.xyz[0] * u.nanometer
-        site = Site(name=particle.name, position=pos)
+        try:
+            element = element.element_by_name(particle.name)
+        except KeyError:
+            element = None
+        site = Site(name=particle.name, position=pos, element=element)
         site_map[particle] = site
         top.add_site(site, update_types=False)
     top.update_top()
