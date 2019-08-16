@@ -15,7 +15,14 @@ def identify_connections(top):
     [ahy]: IIRC we chose to use line-graph as opposed the actual graph
     because the graph-matching (on the actual graph) would miss certain
     angles/dihedrals/impropers if there were cycles or bridge bonds
-    that would effectively hide the angle/dihedral/dihedral"""
+    that would effectively hide the angle/dihedral/dihedral
+    [ahy]: In the event of virtual sites/drude particles, the matching 
+    process may have to change in the _detect, _format, or _add methods. 
+    Personally, I think modifying the _add methods to exclude angles/dihedrals
+    with virtual sites would be be the best approach. I 
+    don't think we would want to change how we construct any of the 
+    NetworkX graphs.
+    """
 
     compound = nx.Graph()
 
