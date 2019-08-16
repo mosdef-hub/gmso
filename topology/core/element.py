@@ -159,27 +159,20 @@ Ununhexium = 	Element(atomic_number=116, name='ununhexium', symbol='Uuh', mass=2
 Ununseptium = 	Element(atomic_number=117, name='ununseptium', symbol='Uus', mass=291.0 * u.amu)
 Ununoctium = 	Element(atomic_number=118, name='ununoctium', symbol='Uuo', mass=294.0 * u.amu)
 
-Periodict = {  Hydrogen:None, Helium:None, Lithium:None, Beryllium:None, Boron:None,
-	       Carbon:None, Nitrogen:None, Oxygen:None, Fluorine:None, Neon:None,
-               Sodium:None, Magnesium:None, Aluminum:None, Silicon:None, Phosphorus:None,
-               Sulfur:None, Chlorine:None, Argon:None, Potassium:None, Calcium:None,
-               Scandium:None, Titanium:None, Vanadium:None, Chromium:None, Manganese:None,
-               Iron:None, Cobalt:None, Nickel:None, Copper:None, Zinc:None, Gallium:None,
-               Germanium:None, Arsenic:None, Selenium:None, Bromine:None, Krypton:None,
-               Rubidium:None, Strontium:None, Yttrium:None, Zirconium:None, Niobium:None,
-               Molybdenum:None, Technetium:None, Ruthenium:None, Rhodium:None, Palladium:None,
-               Silver:None, Cadmium:None, Indium:None, Tin:None, Antimony:None, Tellurium:None,
-               Iodine:None, Xenon:None, Cesium:None, Barium:None, Lanthanum:None, Cerium:None,
-               Praseodymium:None, Neodymium:None, Promethium:None, Samarium:None, Europium:None,
-               Gadolinium:None, Terbium:None, Dysprosium:None, Holmium:None, Erbium:None, Thulium:None,
-               Ytterbium:None, Lutetium:None, Hafnium:None, Tantalum:None, Tungsten:None, Rhenium:None,
-               Osmium:None, Iridium:None, Platinum:None, Gold:None, Mercury:None, Thallium:None, Lead:None,
-               Bismuth:None, Polonium:None, Astatine:None, Radon:None, Francium:None, Radium:None, Actinium:None,
-               Thorium:None, Proactinium:None, Uranium:None, Neptunium:None, Plutonium:None, Americium:None,
-               Curium:None, Berkelium:None, Californium:None, Einsteinium:None, Fermium:None, Mendelevium:None,
-               Nobelium:None, Lawrencium:None, Rutherfordium:None, Dubnium:None, Seaborgium:None, Bohrium:None,
-               Hassium:None, Meitnerium:None, Darmstadtium:None, Roentgenium:None, Copernicium:None, Ununtrium:None,
-               Ununquadium:None, Ununpentium:None, Ununhexium:None, Ununseptium:None, Ununoctium:None}
+Periodict = [Hydrogen, Helium, Lithium, Beryllium, Boron, Carbon, Nitrogen, Oxygen, Fluorine, Neon,
+             Sodium, Magnesium, Aluminum, Silicon, Phosphorus, Sulfur, Chlorine, Argon,
+             Potassium, Calcium, Scandium, Titanium, Vanadium, Chromium, Manganese, Iron,
+             Cobalt, Nickel, Copper, Zinc, Gallium, Germanium, Arsenic, Selenium, Bromine, Krypton,
+             Rubidium, Strontium, Yttrium, Zirconium, Niobium, Molybdenum, Technetium, Ruthenium,
+             Rhodium, Palladium, Silver, Cadmium, Indium, Tin, Antimony, Tellurium, Iodine,
+             Xenon, Cesium, Barium, Lanthanum, Cerium, Praseodymium, Neodymium, Promethium, Samarium,
+             Europium, Gadolinium, Terbium, Dysprosium, Holmium, Erbium, Thulium, Ytterbium, Lutetium,
+             Hafnium, Tantalum, Tungsten, Rhenium, Osmium, Iridium, Platinum, Gold, Mercury, Thallium, 
+             Lead, Bismuth, Polonium, Astatine, Radon, Francium, Radium, Actinium, Thorium, Proactinium,
+             Uranium, Neptunium, Plutonium, Americium, Curium, Berkelium, Californium, Einsteinium,
+             Fermium, Mendelevium, Nobelium, Lawrencium, Rutherfordium, Dubnium, Seaborgium, Bohrium,
+             Hassium, Meitnerium, Darmstadtium, Roentgenium, Copernicium, Ununtrium, Ununquadium,
+             Ununpentium, Ununhexium, Ununseptium, Ununoctium]
 
 symbol_dict = {element.symbol:element for element in Periodict}
 name_dict = {element.name:element for element in Periodict}
