@@ -1,5 +1,6 @@
 import unyt as u
 from collections import OrderedDict
+from re import sub
 class Element(object):
     """An element."""
     def __init__(self, atomic_number=None,name=None, symbol=None, mass=None):
@@ -10,43 +11,26 @@ class Element(object):
 
 
 
-def element_by_symbol(symbols):
-    # In: symbol or list of symbol (str or list of str)
-    # Out: Element or list of Element
+def element_by_symbol(symbol):
+    # In: symbol (str)
+    # Out: Element
     # Search by symbol of the element
     # First trial: create dict to map symbol (key) to element (value)
-    symbol_dict = {element.symbol:element for element in Periodict}
-    element_list = []
-    if isinstance(symbols, str):
-        symbols = list(symbols)
-    for symbol in symbols:
-        element_list.append(symbol_dict[symbol])
-    return element_list
+    symbol = sub('[01234566789]','',symbol).capitalize()
+    return symbol_dict[symbol]
 
-def element_by_name(names):
-    # In: name or list of name (str or list of str)
-    # Out: Element or list of Element
+def element_by_name(name):
+    # In: name (str)
+    # Out: Element
     # Search by name of the element
-    name_dict = {element.name:element for element in Periodict}
-    element_list = []
-    if isinstance(names, str):
-        names = list(names)
-    for name in names:
-        name = name.lower()
-        element_list.append(name_dict[name])
-    return element_list
+    name = sub('[0123456789]','',name).lower()
+    return name_dict[name]
 
-def element_by_atomic_number(atomic_numbers):
-    # In: atomic number or list of atomic number (int or list of int)
-    # Out: Element or list of Element
+def element_by_atomic_number(atomic_number):
+    # In: atomic number (int)
+    # Out: Element
     # Search by atomic number of the element
-    atomic_dict = {element.atomic_number:element for element in Periodict}
-    element_list = []
-    if isinstance(atomic_numbers, int):
-        atomic_numbers = list(atomic_numbers)
-    for number in atomic_numbers:
-        element_list.append(atomic_dict[number])
-    return element_list
+    return atomic_dict[atomic_number]
 
 def element_by_mass(masses):
     # In: mass or list of mass (int/float or list of int/float)
@@ -197,3 +181,6 @@ Periodict = {  Hydrogen:None, Helium:None, Lithium:None, Beryllium:None, Boron:N
                Hassium:None, Meitnerium:None, Darmstadtium:None, Roentgenium:None, Copernicium:None, Ununtrium:None,
                Ununquadium:None, Ununpentium:None, Ununhexium:None, Ununseptium:None, Ununoctium:None}
 
+symbol_dict = {element.symbol:element for element in Periodict}
+name_dict = {element.name:element for element in Periodict}
+atomic_dict = {element.atomic_number:element for element in Periodict}
