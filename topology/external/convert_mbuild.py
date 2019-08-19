@@ -8,12 +8,12 @@ from topology.core.bond import Bond
 from topology.core.box import Box
 from topology.utils.io import has_mbuild
 from topology.core import element
-
+from topology.core.element import element_by_symbol, element_by_name, element_by_atomic_number
 
 if has_mbuild:
     import mbuild as mb
 
-def from_mbuild(compound, box=None):
+def from_mbuild(compound, box=None, search_method=element_by_symbol):
     msg = ("Provided argument that is not an mbuild Compound")
     assert isinstance(compound, mb.Compound), msg
 
@@ -29,7 +29,7 @@ def from_mbuild(compound, box=None):
     for child in compound.children:
         if child.children is None:
             pos = child.xyz[0] * u.nanometer
-            ele = element.element_by_symbol(child.name)
+            ele = search_method(child.name)
             site = Site(name=child.name, position=pos, element=ele)
             site_map[child] = site
         else:
@@ -37,7 +37,7 @@ def from_mbuild(compound, box=None):
             top.add_subtopology(subtop)
             for childchild in child.children:
                 pos = childchild.xyz[0] * u.nanometer
-                ele = element.element_by_symbol(childchild.name)
+                ele = search_method(childchild.name)
                 site = Site(name=childchild.name, position=pos, element=ele)
                 site_map[childchild] = site
                 subtop.add_site(site)
@@ -45,7 +45,7 @@ def from_mbuild(compound, box=None):
 
     for particle in compound.particles():
         pos = particle.xyz[0] * u.nanometer
-        ele = element.element_by_symbol(particle.name)
+        ele = search_method(particle.name)
         site = Site(name=particle.name, position=pos, element=ele)
         site_map[particle] = site
         top.add_site(site, update_types=False)
