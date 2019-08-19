@@ -16,12 +16,12 @@ def from_mbuild(compound, box=None):
     """Convert an mbuild.Compound to a topology.Topology
 
     Parameters
-    ---------- 
+    ----------
     compound : mbuild.Compound
     mbuild.Compound instance that need to be converted
     box : mb.Box, optional, default=None
     Box information to be loaded to a topology.Topology
-    """ 
+    """
     msg = ("Provided argument that is not an mbuild Compound")
     assert isinstance(compound, mb.Compound), msg
 
