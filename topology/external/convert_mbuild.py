@@ -10,6 +10,17 @@ if has_mbuild:
     import mbuild as mb
 
 def from_mbuild(compound):
+    """Convert an mbuild.Compound to a topology.Topology
+
+    Parameters
+    ----------
+    compound : mb.Compound
+    mb.Compound instance that need to be converted
+
+    Returns
+    -------
+    top: topology.Topology
+    """
     msg = ("Provided argument that is not an mbuild Compound")
     assert isinstance(compound, mb.Compound), msg
 
@@ -36,6 +47,17 @@ def from_mbuild(compound):
     return top
 
 def to_mbuild(topology):
+    """ Convert a topology.Topology to mbuild.Compound
+
+    Parameters
+    ----------
+    topology : topology.Topology
+    topology instance that need to be converted
+
+    Returns:
+    --------
+    compound : mb.Compound
+    """
     msg = ("Provided argument that is not a topology")
     assert isinstance(topology, Topology), msg
 
