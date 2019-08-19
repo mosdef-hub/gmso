@@ -1,5 +1,6 @@
 import pytest
 
+import topology
 from topology.external.convert_mbuild import from_mbuild, to_mbuild
 from topology.tests.base_test import BaseTest
 from topology.utils.io import has_mbuild
@@ -16,6 +17,9 @@ class TestConvertMBuild(BaseTest):
 
         assert top.n_sites == 8
         assert top.n_connections == 7
+        for i in range(top.n_sites):
+            assert isinstance(top.sites[i].element, topology.Element)
+            assert top.sites[i].name == top.sites[i].element.symbol
 
     def test_full_conversion(self):
         ethane = Ethane()
