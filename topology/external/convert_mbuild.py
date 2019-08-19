@@ -29,24 +29,23 @@ def from_mbuild(compound, box=None):
     for child in compound.children:
         if child.children is None:
             pos = child.xyz[0] * u.nanometer
-            site = Site(name=child.name, position=pos)
+            ele = element.element_by_symbol(child.name)
+            site = Site(name=child.name, position=pos, element=ele)
             site_map[child] = site
         else:
             subtop = SubTopology(name=child.name)
             top.add_subtopology(subtop)
             for childchild in child.children:
                 pos = childchild.xyz[0] * u.nanometer
-                site = Site(name=childchild.name, position=pos)
+                ele = element.element_by_symbol(childchild.name)
+                site = Site(name=childchild.name, position=pos, element=ele)
                 site_map[childchild] = site
                 subtop.add_site(site)
     top.update_top()
 
     for particle in compound.particles():
         pos = particle.xyz[0] * u.nanometer
-        try:
-            ele = element.element_by_symbol(particle.name)
-        except KeyError:
-            ele = None
+        ele = element.element_by_symbol(particle.name)
         site = Site(name=particle.name, position=pos, element=ele)
         site_map[particle] = site
         top.add_site(site, update_types=False)

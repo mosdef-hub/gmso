@@ -1,6 +1,8 @@
 import unyt as u
+import warnings
 from collections import OrderedDict
 from re import sub
+
 class Element(object):
     """An element."""
     def __init__(self, atomic_number=None,name=None, symbol=None, mass=None):
@@ -9,28 +11,28 @@ class Element(object):
         self.symbol = symbol
         self.mass = mass
 
-
-
 def element_by_symbol(symbol):
     # In: symbol (str)
     # Out: Element
     # Search by symbol of the element
     # First trial: create dict to map symbol (key) to element (value)
-    symbol = sub('[01234566789]','',symbol).capitalize()
-    return symbol_dict[symbol]
+    warnings.warn('Numbers and spaces are not considered when searching by element symbol')
+    symbol = sub('[01234566789 ]','',symbol).capitalize()
+    return symbol_dict.get(symbol)
 
 def element_by_name(name):
     # In: name (str)
     # Out: Element
     # Search by name of the element
-    name = sub('[0123456789]','',name).lower()
-    return name_dict[name]
+    warnings.warn('Numbers and spaces are not considered when searching by element name')
+    name = sub('[0123456789 ]','',name).lower()
+    return name_dict.get(name)
 
 def element_by_atomic_number(atomic_number):
     # In: atomic number (int)
     # Out: Element
     # Search by atomic number of the element
-    return atomic_dict[atomic_number]
+    return atomic_dict.get(atomic_number)
 
 def element_by_mass(masses):
     # In: mass or list of mass (int/float or list of int/float)
