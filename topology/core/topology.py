@@ -29,6 +29,8 @@ class Topology(object):
         self._bonds = IndexedSet()
         self._angles = IndexedSet()
 
+        self._subtops = IndexedSet()
+
         self._typed = False
         self._atom_types = IndexedSet()
         self._connection_types = IndexedSet()
@@ -127,6 +129,12 @@ class Topology(object):
                 self.update_angle_types()
             self.update_connection_types()
 
+    def add_subtopology(self, subtop):
+        self._subtops.add(subtop)
+        subtop.parent = self
+        # Note: would remove duplicates but there should be none
+        self._sites.union(subtop.sites)
+
     @property
     def n_sites(self):
         return len(self.sites)
@@ -142,6 +150,14 @@ class Topology(object):
     @property
     def n_angles(self):
         return len(self.angles)
+
+    @property
+    def subtops(self):
+        return self._subtops
+
+    @property
+    def n_subtops(self):
+        return len(self._subtops)
 
     @property
     def sites(self):
@@ -191,7 +207,7 @@ class Topology(object):
     def angle_type_expressions(self):
         return list(set([atype.expression for atype in self.angle_types]))
 
-    def update_top(self):
+    def update_top(self, update_types=True):
         """ Update the entire topology's attributes
 
         Notes
@@ -204,11 +220,12 @@ class Topology(object):
         self.update_bonds()
         self.update_angles()
 
-        self.update_atom_types()
-        self.update_connection_types()
-        self.update_bond_types()
-        self.update_angle_types()
-        self.is_typed()
+        if update_types:
+            self.update_atom_types()
+            self.update_connection_types()
+            self.update_bond_types()
+            self.update_angle_types()
+            self.is_typed()
 
     def update_sites(self):
         """ (Is this necessary?)
