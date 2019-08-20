@@ -12,26 +12,55 @@ class Element(object):
         self.mass = mass
 
 def element_by_symbol(symbol):
-    # In: symbol (str)
-    # Out: Element
-    # Search by symbol of the element
-    # First trial: create dict to map symbol (key) to element (value)
+    """Search for an element by its symbol
+
+    Parameters
+    ----------
+    symbol : str
+    Element symbol to look for, digits and spaces are removed before search
+
+    Returns
+    -------
+    symbol_dict.get(symbol) : element.Element or None
+    Return an element from the periodic table if the symbol is found, otherwise return None
+    """
     warnings.warn('Numbers and spaces are not considered when searching by element symbol')
-    symbol = sub('[01234566789 ]','',symbol).capitalize()
+    symbol = sub(r'[0-9 ]','',symbol).capitalize()
     return symbol_dict.get(symbol)
 
 def element_by_name(name):
-    # In: name (str)
-    # Out: Element
-    # Search by name of the element
+    """Search for an element by its name
+
+    Parameters
+    ----------
+    name : str
+    Element name to look for. digits and spaces are removed before search
+
+    Returns
+    -------
+    name_dict.get(name) : element.Element or None
+    Return an element from the periodic table if the name is found, otherwise return None
+    """
     warnings.warn('Numbers and spaces are not considered when searching by element name')
-    name = sub('[0123456789 ]','',name).lower()
+    name = sub(r'[0-9 ]','',name).lower()
     return name_dict.get(name)
 
 def element_by_atomic_number(atomic_number):
-    # In: atomic number (int)
-    # Out: Element
-    # Search by atomic number of the element
+    """Search for an element by its atomic number
+
+    Parameters
+    ----------
+    atomic_number : int
+    Element atomic number that need to look for, only numbers are considered during the search
+
+    Returns
+    -------
+    atomic_dict.get(atomic_number) : element.Element or None
+    Return an element from the periodic table if we find a match, otherwise return None
+    """
+    warnings.warn('Letters and spaces are not considered when searching by atomic number')
+    if isinstance(atomic_number, str):
+        atomic_number = int(sub(r'[a-z ]','',atomic_number.lower()).lstrip('0'))
     return atomic_dict.get(atomic_number)
 
 def element_by_mass(masses):
