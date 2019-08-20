@@ -29,8 +29,7 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
     for child in compound.children:
         if child.children is None:
             pos = child.xyz[0] * u.nanometer
-            ele = search_method(child.name)
-            site = Site(name=child.name, position=pos, element=ele)
+            site = Site(name=child.name, position=pos)
             site_map[child] = site
         else:
             subtop = SubTopology(name=child.name)
