@@ -21,12 +21,13 @@ def element_by_symbol(symbol):
 
     Returns
     -------
-    symbol_dict.get(symbol) : element.Element or None
+    symbol_dict.get(symbol_trimmed) : element.Element or None
     Return an element from the periodic table if the symbol is found, otherwise return None
     """
-    warnings.warn('Numbers and spaces are not considered when searching by element symbol')
-    symbol = sub(r'[0-9 ]','',symbol).capitalize()
-    return symbol_dict.get(symbol)
+    symbol_trimmed = sub(r'[0-9 ]','',symbol).capitalize()
+    msg = 'Numbers and spaces are not considered when searching by element symbol.\n{} became {}'.format(symbol,symbol_trimmed)
+    warnings.warn(msg)
+    return symbol_dict.get(symbol_trimmed)
 
 def element_by_name(name):
     """Search for an element by its name
@@ -38,12 +39,13 @@ def element_by_name(name):
 
     Returns
     -------
-    name_dict.get(name) : element.Element or None
+    name_dict.get(name_trimmed) : element.Element or None
     Return an element from the periodic table if the name is found, otherwise return None
     """
-    warnings.warn('Numbers and spaces are not considered when searching by element name')
-    name = sub(r'[0-9 ]','',name).lower()
-    return name_dict.get(name)
+    name_trimmed = sub(r'[0-9 ]','',name).lower()
+    msg = 'Numbers and spaces are not considered when searching by element name.\n{} became {}'.format(name,name_trimmed)
+    warnings.warn(msg)
+    return name_dict.get(name_trimmed)
 
 def element_by_atomic_number(atomic_number):
     """Search for an element by its atomic number
@@ -55,13 +57,16 @@ def element_by_atomic_number(atomic_number):
 
     Returns
     -------
-    atomic_dict.get(atomic_number) : element.Element or None
+    atomic_dict.get(atomic_number_trimmed) : element.Element or None
     Return an element from the periodic table if we find a match, otherwise return None
     """
-    warnings.warn('Letters and spaces are not considered when searching by atomic number')
     if isinstance(atomic_number, str):
-        atomic_number = int(sub(r'[a-z ]','',atomic_number.lower()).lstrip('0'))
-    return atomic_dict.get(atomic_number)
+        atomic_number_trimmed = int(sub(r'[a-z ]','',atomic_number.lower()).lstrip('0'))
+        msg = 'Letters and spaces are not considered when searching by element atomic number.\n{} became {}'.format(atomic_number, atomic_number_trimmed)
+        warnings.warn(msg)
+    else:
+        atomic_number_trimmed = atomic_number
+    return atomic_dict.get(atomic_number_trimmed)
 
 def element_by_mass(masses):
     # In: mass or list of mass (int/float or list of int/float)
