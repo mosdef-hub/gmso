@@ -2,6 +2,7 @@ import unyt as u
 import warnings
 from collections import OrderedDict
 from re import sub
+import numpy as np
 
 class Element(object):
     """An element."""
@@ -24,7 +25,7 @@ def element_by_symbol(symbol):
     symbol_dict.get(symbol_trimmed) : element.Element or None
     Return an element from the periodic table if the symbol is found, otherwise return None
     """
-    symbol_trimmed = sub(r'[0-9 ]','',symbol).capitalize()
+    symbol_trimmed = sub(r'[0-9 -_]','',symbol).capitalize()
     msg = 'Numbers and spaces are not considered when searching by element symbol.\n{} became {}'.format(symbol,symbol_trimmed)
     warnings.warn(msg)
     return symbol_dict.get(symbol_trimmed)
@@ -35,14 +36,14 @@ def element_by_name(name):
     Parameters
     ----------
     name : str
-    Element name to look for. digits and spaces are removed before search
+    Element name to look for, digits and spaces are removed before search
 
     Returns
     -------
     name_dict.get(name_trimmed) : element.Element or None
     Return an element from the periodic table if the name is found, otherwise return None
     """
-    name_trimmed = sub(r'[0-9 ]','',name).lower()
+    name_trimmed = sub(r'[0-9 -_]','',name).lower()
     msg = 'Numbers and spaces are not considered when searching by element name.\n{} became {}'.format(name,name_trimmed)
     warnings.warn(msg)
     return name_dict.get(name_trimmed)
@@ -61,20 +62,34 @@ def element_by_atomic_number(atomic_number):
     Return an element from the periodic table if we find a match, otherwise return None
     """
     if isinstance(atomic_number, str):
-        atomic_number_trimmed = int(sub(r'[a-z ]','',atomic_number.lower()).lstrip('0'))
+        atomic_number_trimmed = int(sub('[a-z ]','',atomic_number.lower()).lstrip('0'))
         msg = 'Letters and spaces are not considered when searching by element atomic number.\n{} became {}'.format(atomic_number, atomic_number_trimmed)
         warnings.warn(msg)
     else:
         atomic_number_trimmed = atomic_number
     return atomic_dict.get(atomic_number_trimmed)
 
-def element_by_mass(masses):
-    # In: mass or list of mass (int/float or list of int/float)
+def element_by_mass(mass, exact=True):
+    # In: mass (int, float)
     # Out: Element or list of Element
-    # Search by mass
-    return None
+    # Exact to the first decimal - faster option
+    # Search by mass, assume unyt to be amu if not specified
+    if isinstance(mass, str):
+         mass_trimmed = np.round(float(sub(r'[a-z ]','',mass.lower())))
+         msg1 = 'Letters and spaces are not considered when searching by element mass.\n{} became {}'.format(mass, mass_trimmed)
+         warnings.warn(msg1)
+    elif isinstance(mass, u.unyt_quantity):
+         mass_trimmed = np.round(float(mass.to('amu')),1)
+    else:
+        mass_trimmed = np.round(mass, 1)
 
-
+    if exact:
+        return mass_dict.get(mass_trimmed)
+    else:
+        mass_closest = min(mass_dict.keys(), key=lambda k: abs(k-mass_trimmed))
+        msg2 = 'Closest mass to {}: {}'.format(mass_trimmed,mass_closest)
+        warnings.warn(msg2)
+        return mass_dict.get(mass_closest)
 
 Hydrogen = 	Element(atomic_number=1, name='hydrogen', symbol='H', mass=1.0079 * u.amu)
 Helium = 	Element(atomic_number=2, name='helium', symbol='He', mass=4.0026 * u.amu)
@@ -213,3 +228,4 @@ Periodict = [Hydrogen, Helium, Lithium, Beryllium, Boron, Carbon, Nitrogen, Oxyg
 symbol_dict = {element.symbol:element for element in Periodict}
 name_dict = {element.name:element for element in Periodict}
 atomic_dict = {element.atomic_number:element for element in Periodict}
+mass_dict = {np.round(float(element.mass.to('amu')),1):element for element in Periodict} 

@@ -37,3 +37,11 @@ class TestElement(BaseTest):
             assert oxygen.name == element.Oxygen.name
             assert oxygen.symbol == element.Oxygen.symbol
             assert oxygen.mass == element.Oxygen.mass
+
+        #Test element_by_mass
+        for mass in [19, 19.1, 19 * u.amu]:
+            fluorine = element.element_by_mass(mass)
+
+            assert fluorine.name == element.Fluorine.name
+            assert fluorine.symbol == element.Fluorine.symbol
+            assert fluorine.mass == element.Fluorine.mass 
