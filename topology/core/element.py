@@ -18,12 +18,12 @@ def element_by_symbol(symbol):
     Parameters
     ----------
     symbol : str
-    Element symbol to look for, digits and spaces are removed before search
+        Element symbol to look for, digits and spaces are removed before search
 
     Returns
     -------
     symbol_dict.get(symbol_trimmed) : element.Element or None
-    Return an element from the periodic table if the symbol is found, otherwise return None
+        Return an element from the periodic table if the symbol is found, otherwise return None
     """
     symbol_trimmed = sub(r'[0-9 -_]','',symbol).capitalize()
     msg = 'Numbers and spaces are not considered when searching by element symbol.\n{} became {}'.format(symbol,symbol_trimmed)
@@ -36,12 +36,12 @@ def element_by_name(name):
     Parameters
     ----------
     name : str
-    Element name to look for, digits and spaces are removed before search
+        Element name to look for, digits and spaces are removed before search
 
     Returns
     -------
     name_dict.get(name_trimmed) : element.Element or None
-    Return an element from the periodic table if the name is found, otherwise return None
+        Return an element from the periodic table if the name is found, otherwise return None
     """
     name_trimmed = sub(r'[0-9 -_]','',name).lower()
     msg = 'Numbers and spaces are not considered when searching by element name.\n{} became {}'.format(name,name_trimmed)
@@ -54,12 +54,12 @@ def element_by_atomic_number(atomic_number):
     Parameters
     ----------
     atomic_number : int
-    Element atomic number that need to look for, only numbers are considered during the search
+        Element atomic number that need to look for, only numbers are considered during the search
 
     Returns
     -------
     atomic_dict.get(atomic_number_trimmed) : element.Element or None
-    Return an element from the periodic table if we find a match, otherwise return None
+        Return an element from the periodic table if we find a match, otherwise return None
     """
     if isinstance(atomic_number, str):
         atomic_number_trimmed = int(sub('[a-z ]','',atomic_number.lower()).lstrip('0'))
@@ -70,22 +70,34 @@ def element_by_atomic_number(atomic_number):
     return atomic_dict.get(atomic_number_trimmed)
 
 def element_by_mass(mass, exact=True):
-    # In: mass (int, float)
-    # Out: Element or list of Element
-    # Exact to the first decimal - faster option
-    # Search by mass, assume unyt to be amu if not specified
+    """Search for an element by its mass
+
+    Parameters
+    ----------
+    mass : int, float
+        Element mass that need to look for, if a string is provided, only a string is considered during the search.
+        Mass unyt is assumed to be u.amu, unless specfied (which will be converted to u.amu)
+    exact : bool, optional,  default=True
+        This method can be used to search for an exact mass (up to the first decimal place) or search for an element  mass
+        closest to the mass entered
+    """
+
     if isinstance(mass, str):
+         #Convert to float if a string is provided
          mass_trimmed = np.round(float(sub(r'[a-z ]','',mass.lower())))
          msg1 = 'Letters and spaces are not considered when searching by element mass.\n{} became {}'.format(mass, mass_trimmed)
          warnings.warn(msg1)
     elif isinstance(mass, u.unyt_quantity):
+         #Convert to u.amu if a unyt_quantity is provided
          mass_trimmed = np.round(float(mass.to('amu')),1)
     else:
         mass_trimmed = np.round(mass, 1)
 
     if exact:
+        #Exact search mode
         return mass_dict.get(mass_trimmed)
     else:
+        #Closest match mode
         mass_closest = min(mass_dict.keys(), key=lambda k: abs(k-mass_trimmed))
         msg2 = 'Closest mass to {}: {}'.format(mass_trimmed,mass_closest)
         warnings.warn(msg2)
