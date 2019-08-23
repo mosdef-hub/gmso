@@ -8,7 +8,7 @@ from topology.core.bond import Bond
 from topology.core.box import Box
 from topology.utils.io import has_mbuild
 from topology.core import element
-from topology.core.element import element_by_symbol, element_by_name, element_by_atomic_number
+from topology.core.element import element_by_symbol, element_by_name, element_by_atomic_number, element_by_mass
 
 if has_mbuild:
     import mbuild as mb

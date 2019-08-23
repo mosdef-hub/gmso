@@ -31,7 +31,7 @@ class TestElement(BaseTest):
             assert nitrogen.mass ==  element.Nitrogen.mass
 
         #Test element_by_atomic_number
-        for number in [8, '8', '08', 'Oxygen08']:
+        for number in [8, '8', '08', 'Oxygen-08']:
             oxygen = element.element_by_atomic_number(number)
 
             assert oxygen.name == element.Oxygen.name
@@ -39,9 +39,17 @@ class TestElement(BaseTest):
             assert oxygen.mass == element.Oxygen.mass
 
         #Test element_by_mass
-        for mass in [19, 19.1, 19 * u.amu]:
+        for mass in ['Fluorine-19', 19, 19 * u.amu]:
             fluorine = element.element_by_mass(mass)
 
             assert fluorine.name == element.Fluorine.name
             assert fluorine.symbol == element.Fluorine.symbol
             assert fluorine.mass == element.Fluorine.mass 
+        #Additional element_by_mass test
+        cobalt = element.element_by_mass(58.9)
+        nickel = element.element_by_mass(58.7)
+        chlorine = element.element_by_mass(35, exact=False)
+
+        assert cobalt == element.Cobalt
+        assert nickel == element.Nickel
+        assert chlorine == element.Chlorine

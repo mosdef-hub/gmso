@@ -25,7 +25,7 @@ def element_by_symbol(symbol):
     symbol_dict.get(symbol_trimmed) : element.Element or None
         Return an element from the periodic table if the symbol is found, otherwise return None
     """
-    symbol_trimmed = sub(r'[0-9 -_]','',symbol).capitalize()
+    symbol_trimmed = sub(r'[0-9 -]','',symbol).capitalize()
     msg = 'Numbers and spaces are not considered when searching by element symbol.\n{} became {}'.format(symbol,symbol_trimmed)
     warnings.warn(msg)
     return symbol_dict.get(symbol_trimmed)
@@ -43,7 +43,7 @@ def element_by_name(name):
     name_dict.get(name_trimmed) : element.Element or None
         Return an element from the periodic table if the name is found, otherwise return None
     """
-    name_trimmed = sub(r'[0-9 -_]','',name).lower()
+    name_trimmed = sub(r'[0-9 -]','',name).lower()
     msg = 'Numbers and spaces are not considered when searching by element name.\n{} became {}'.format(name,name_trimmed)
     warnings.warn(msg)
     return name_dict.get(name_trimmed)
@@ -62,7 +62,7 @@ def element_by_atomic_number(atomic_number):
         Return an element from the periodic table if we find a match, otherwise return None
     """
     if isinstance(atomic_number, str):
-        atomic_number_trimmed = int(sub('[a-z ]','',atomic_number.lower()).lstrip('0'))
+        atomic_number_trimmed = int(sub('[a-z -]','',atomic_number.lower()).lstrip('0'))
         msg = 'Letters and spaces are not considered when searching by element atomic number.\n{} became {}'.format(atomic_number, atomic_number_trimmed)
         warnings.warn(msg)
     else:
@@ -84,7 +84,7 @@ def element_by_mass(mass, exact=True):
 
     if isinstance(mass, str):
          #Convert to float if a string is provided
-         mass_trimmed = np.round(float(sub(r'[a-z ]','',mass.lower())))
+         mass_trimmed = np.round(float(sub(r'[a-z -]','',mass.lower())))
          msg1 = 'Letters and spaces are not considered when searching by element mass.\n{} became {}'.format(mass, mass_trimmed)
          warnings.warn(msg1)
     elif isinstance(mass, u.unyt_quantity):
