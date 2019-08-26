@@ -1,16 +1,17 @@
 import unyt as u
 import warnings
-from collections import OrderedDict
 from re import sub
 import numpy as np
 
+
 class Element(object):
     """An element."""
-    def __init__(self, atomic_number=None,name=None, symbol=None, mass=None):
+    def __init__(self, atomic_number=None, name=None, symbol=None, mass=None):
         self.atomic_number = atomic_number
         self.name = name
         self.symbol = symbol
         self.mass = mass
+
 
 def element_by_symbol(symbol):
     """Search for an element by its symbol
@@ -22,13 +23,17 @@ def element_by_symbol(symbol):
 
     Returns
     -------
-    symbol_dict.get(symbol_trimmed) : element.Element or None
-        Return an element from the periodic table if the symbol is found, otherwise return None
+    matched_element : element.Element or None
+        Return an element from the periodic table if the symbol is found,
+        otherwise return None
     """
-    symbol_trimmed = sub(r'[0-9 -]','',symbol).capitalize()
-    msg = 'Numbers and spaces are not considered when searching by element symbol.\n{} became {}'.format(symbol,symbol_trimmed)
+    symbol_trimmed = sub(r'[0-9 -]', '', symbol).capitalize()
+    msg = '''Numbers and spaces are not considered when searching by element symbol. \n
+             {} became {}'.format(symbol, symbol_trimmed)'''
     warnings.warn(msg)
-    return symbol_dict.get(symbol_trimmed)
+    matched_element = symbol_dict.get(symbol_trimmed)
+    return matched_element
+
 
 def element_by_name(name):
     """Search for an element by its name
@@ -40,13 +45,17 @@ def element_by_name(name):
 
     Returns
     -------
-    name_dict.get(name_trimmed) : element.Element or None
-        Return an element from the periodic table if the name is found, otherwise return None
+    matched_element : element.Element or None
+        Return an element from the periodic table if the name is found,
+        otherwise return None
     """
-    name_trimmed = sub(r'[0-9 -]','',name).lower()
-    msg = 'Numbers and spaces are not considered when searching by element name.\n{} became {}'.format(name,name_trimmed)
+    name_trimmed = sub(r'[0-9 -]', '', name).lower()
+    msg = '''Numbers and spaces are not considered when searching by element name. \n
+             {} became {}'.format(name, name_trimmed)'''
     warnings.warn(msg)
-    return name_dict.get(name_trimmed)
+    matched_element = name_dict.get(name_trimmed)
+    return matched_element
+
 
 def element_by_atomic_number(atomic_number):
     """Search for an element by its atomic number
@@ -54,20 +63,25 @@ def element_by_atomic_number(atomic_number):
     Parameters
     ----------
     atomic_number : int
-        Element atomic number that need to look for, only numbers are considered during the search
+        Element atomic number that need to look for,
+        if a string is provided, only numbers are considered during the search
 
     Returns
     -------
-    atomic_dict.get(atomic_number_trimmed) : element.Element or None
-        Return an element from the periodic table if we find a match, otherwise return None
+    matched_element : element.Element or None
+        Return an element from the periodic table if we find a match,
+        otherwise return None
     """
     if isinstance(atomic_number, str):
-        atomic_number_trimmed = int(sub('[a-z -]','',atomic_number.lower()).lstrip('0'))
-        msg = 'Letters and spaces are not considered when searching by element atomic number.\n{} became {}'.format(atomic_number, atomic_number_trimmed)
+        atomic_number_trimmed = int(sub('[a-z -]', '', atomic_number.lower()).lstrip('0'))
+        msg = '''Letters and spaces are not considered when searching by element atomic number. \n
+                 {} became {}'.format(atomic_number, atomic_number_trimmed)'''
         warnings.warn(msg)
     else:
         atomic_number_trimmed = atomic_number
-    return atomic_dict.get(atomic_number_trimmed)
+    matched_element = atomic_dict.get(atomic_number_trimmed)
+    return matched_element
+
 
 def element_by_mass(mass, exact=True):
     """Search for an element by its mass
@@ -75,33 +89,43 @@ def element_by_mass(mass, exact=True):
     Parameters
     ----------
     mass : int, float
-        Element mass that need to look for, if a string is provided, only a string is considered during the search.
+        Element mass that need to look for, if a string is provided,
+        only numbers are considered during the search
         Mass unyt is assumed to be u.amu, unless specfied (which will be converted to u.amu)
     exact : bool, optional,  default=True
-        This method can be used to search for an exact mass (up to the first decimal place) or search for an element  mass
-        closest to the mass entered
+        This method can be used to search for an exact mass (up to the first decimal place)
+        or search for an element  mass closest to the mass entered
+
+    Returns
+    -------
+    matched_element : element.Element or None
+        Return an element from the periodict table if we find a match,
+        otherwise return None
     """
 
     if isinstance(mass, str):
-         #Convert to float if a string is provided
-         mass_trimmed = np.round(float(sub(r'[a-z -]','',mass.lower())))
-         msg1 = 'Letters and spaces are not considered when searching by element mass.\n{} became {}'.format(mass, mass_trimmed)
-         warnings.warn(msg1)
+        # Convert to float if a string is provided
+        mass_trimmed = np.round(float(sub(r'[a-z -]', '', mass.lower())))
+        msg1 = '''Letters and spaces are not considered when searching by element mass. \n
+                  {} became {}'.format(mass, mass_trimmed)'''
+        warnings.warn(msg1)
     elif isinstance(mass, u.unyt_quantity):
-         #Convert to u.amu if a unyt_quantity is provided
-         mass_trimmed = np.round(float(mass.to('amu')),1)
+        # Convert to u.amu if a unyt_quantity is provided
+        mass_trimmed = np.round(float(mass.to('amu')), 1)
     else:
         mass_trimmed = np.round(mass, 1)
 
     if exact:
-        #Exact search mode
-        return mass_dict.get(mass_trimmed)
+        # Exact search mode
+        matched_element = mass_dict.get(mass_trimmed)
     else:
-        #Closest match mode
+        # Closest match mode
         mass_closest = min(mass_dict.keys(), key=lambda k: abs(k-mass_trimmed))
-        msg2 = 'Closest mass to {}: {}'.format(mass_trimmed,mass_closest)
+        msg2 = 'Closest mass to {}: {}'.format(mass_trimmed, mass_closest)
         warnings.warn(msg2)
-        return mass_dict.get(mass_closest)
+        matched_element = mass_dict.get(mass_closest)
+    return matched_element
+
 
 Hydrogen = 	Element(atomic_number=1, name='hydrogen', symbol='H', mass=1.0079 * u.amu)
 Helium = 	Element(atomic_number=2, name='helium', symbol='He', mass=4.0026 * u.amu)
@@ -222,22 +246,22 @@ Ununhexium = 	Element(atomic_number=116, name='ununhexium', symbol='Uuh', mass=2
 Ununseptium = 	Element(atomic_number=117, name='ununseptium', symbol='Uus', mass=291.0 * u.amu)
 Ununoctium = 	Element(atomic_number=118, name='ununoctium', symbol='Uuo', mass=294.0 * u.amu)
 
-Periodict = [Hydrogen, Helium, Lithium, Beryllium, Boron, Carbon, Nitrogen, Oxygen, Fluorine, Neon,
-             Sodium, Magnesium, Aluminum, Silicon, Phosphorus, Sulfur, Chlorine, Argon,
-             Potassium, Calcium, Scandium, Titanium, Vanadium, Chromium, Manganese, Iron,
-             Cobalt, Nickel, Copper, Zinc, Gallium, Germanium, Arsenic, Selenium, Bromine, Krypton,
-             Rubidium, Strontium, Yttrium, Zirconium, Niobium, Molybdenum, Technetium, Ruthenium,
-             Rhodium, Palladium, Silver, Cadmium, Indium, Tin, Antimony, Tellurium, Iodine,
-             Xenon, Cesium, Barium, Lanthanum, Cerium, Praseodymium, Neodymium, Promethium, Samarium,
-             Europium, Gadolinium, Terbium, Dysprosium, Holmium, Erbium, Thulium, Ytterbium, Lutetium,
-             Hafnium, Tantalum, Tungsten, Rhenium, Osmium, Iridium, Platinum, Gold, Mercury, Thallium, 
-             Lead, Bismuth, Polonium, Astatine, Radon, Francium, Radium, Actinium, Thorium, Proactinium,
-             Uranium, Neptunium, Plutonium, Americium, Curium, Berkelium, Californium, Einsteinium,
-             Fermium, Mendelevium, Nobelium, Lawrencium, Rutherfordium, Dubnium, Seaborgium, Bohrium,
-             Hassium, Meitnerium, Darmstadtium, Roentgenium, Copernicium, Ununtrium, Ununquadium,
-             Ununpentium, Ununhexium, Ununseptium, Ununoctium]
+elements = [Hydrogen, Helium, Lithium, Beryllium, Boron, Carbon, Nitrogen, Oxygen, Fluorine, Neon,
+            Sodium, Magnesium, Aluminum, Silicon, Phosphorus, Sulfur, Chlorine, Argon,
+            Potassium, Calcium, Scandium, Titanium, Vanadium, Chromium, Manganese, Iron,
+            Cobalt, Nickel, Copper, Zinc, Gallium, Germanium, Arsenic, Selenium, Bromine, Krypton,
+            Rubidium, Strontium, Yttrium, Zirconium, Niobium, Molybdenum, Technetium, Ruthenium,
+            Rhodium, Palladium, Silver, Cadmium, Indium, Tin, Antimony, Tellurium, Iodine,
+            Xenon, Cesium, Barium, Lanthanum, Cerium, Praseodymium, Neodymium, Promethium, Samarium,
+            Europium, Gadolinium, Terbium, Dysprosium, Holmium, Erbium, Thulium, Ytterbium, Lutetium,
+            Hafnium, Tantalum, Tungsten, Rhenium, Osmium, Iridium, Platinum, Gold, Mercury, Thallium,
+            Lead, Bismuth, Polonium, Astatine, Radon, Francium, Radium, Actinium, Thorium, Proactinium,
+            Uranium, Neptunium, Plutonium, Americium, Curium, Berkelium, Californium, Einsteinium,
+            Fermium, Mendelevium, Nobelium, Lawrencium, Rutherfordium, Dubnium, Seaborgium, Bohrium,
+            Hassium, Meitnerium, Darmstadtium, Roentgenium, Copernicium, Ununtrium, Ununquadium,
+            Ununpentium, Ununhexium, Ununseptium, Ununoctium]
 
-symbol_dict = {element.symbol:element for element in Periodict}
-name_dict = {element.name:element for element in Periodict}
-atomic_dict = {element.atomic_number:element for element in Periodict}
-mass_dict = {np.round(float(element.mass.to('amu')),1):element for element in Periodict} 
+symbol_dict = {element.symbol: element for element in elements}
+name_dict = {element.name: element for element in elements}
+atomic_dict = {element.atomic_number: element for element in elements}
+mass_dict = {np.round(float(element.mass.to('amu')), 1): element for element in elements}
