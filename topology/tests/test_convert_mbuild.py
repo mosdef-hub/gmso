@@ -1,6 +1,7 @@
 import pytest
 import unyt as u
 
+import topology
 from topology.core.topology import Topology as Top
 from topology.core.subtopology import SubTopology as SubTop
 from topology.core.site import Site
@@ -23,6 +24,9 @@ class TestConvertMBuild(BaseTest):
 
         assert top.n_sites == 8
         assert top.n_connections == 7
+        for i in range(top.n_sites):
+            assert isinstance(top.sites[i].element, topology.Element)
+            assert top.sites[i].name == top.sites[i].element.symbol
 
     def test_full_conversion(self):
         ethane = Ethane()

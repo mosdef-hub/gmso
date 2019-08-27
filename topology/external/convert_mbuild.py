@@ -7,20 +7,26 @@ from topology.core.site import Site
 from topology.core.bond import Bond
 from topology.core.box import Box
 from topology.utils.io import has_mbuild
-
+from topology.core.element import element_by_symbol, element_by_name
+from topology.core.element import element_by_atomic_number, element_by_mass
 
 if has_mbuild:
     import mbuild as mb
 
-def from_mbuild(compound, box=None):
+
+def from_mbuild(compound, box=None, search_method=element_by_symbol):
     """Convert an mbuild.Compound to a topology.Topology
 
     Parameters
     ----------
     compound : mbuild.Compound
-    mbuild.Compound instance that need to be converted
+        mbuild.Compound instance that need to be converted
     box : mb.Box, optional, default=None
-    Box information to be loaded to a topology.Topologly
+        Box information to be loaded to a topology.Topologly
+    search_method : element_by_symbol, element_by_name,
+                    element_by_atomic_number, element_by_mass,
+                    optional, default=element_by_symbol
+        Searching method used to assign element from periodic table to particle site
 
     Returns
     -------
@@ -48,14 +54,16 @@ def from_mbuild(compound, box=None):
             top.add_subtopology(subtop)
             for childchild in child.children:
                 pos = childchild.xyz[0] * u.nanometer
-                site = Site(name=childchild.name, position=pos)
+                ele = search_method(childchild.name)
+                site = Site(name=childchild.name, position=pos, element=ele)
                 site_map[childchild] = site
                 subtop.add_site(site)
     top.update_top()
 
     for particle in compound.particles():
         pos = particle.xyz[0] * u.nanometer
-        site = Site(name=particle.name, position=pos)
+        ele = search_method(particle.name)
+        site = Site(name=particle.name, position=pos, element=ele)
         site_map[particle] = site
         top.add_site(site, update_types=False)
 
@@ -68,7 +76,7 @@ def from_mbuild(compound, box=None):
     if box:
         top.box = from_mbuild_box(box)
     # Assumes 2-D systems are not supported in mBuild
-    #if compound.periodicity is None and not box:
+    # if compound.periodicity is None and not box:
     else:
         if np.allclose(compound.periodicity, np.zeros(3)):
             box = from_mbuild_box(compound.boundingbox)
@@ -85,7 +93,7 @@ def to_mbuild(topology):
     Parameters
     ----------
     topology : topology.Topology
-    topology instance that need to be converted
+        topology instance that need to be converted
 
     Returns:
     --------

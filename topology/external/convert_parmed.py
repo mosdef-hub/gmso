@@ -14,7 +14,7 @@ def from_parmed(structure):
     Parameters
     ----------
     structure : parmed.Structure
-    parmed.Structure instance that need to be converted
+        parmed.Structure instance that need to be converted
 
     Returns
     -------
