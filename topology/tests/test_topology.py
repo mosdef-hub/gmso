@@ -5,6 +5,7 @@ import unyt as u
 import pytest
 
 from topology.core.topology import Topology
+from topology.core.subtopology import SubTopology
 from topology.core.box import Box
 from topology.core.site import Site
 from topology.core.bond import Bond
@@ -401,6 +402,14 @@ class TestTopology(BaseTest):
         assert len(top.dihedral_types) == 1
         assert len(top.dihedral_type_expressions) == 1
         assert len(top.atom_type_expressions) == 2
+        
+    def test_add_subtopology(self):
+        top = Topology()
+        subtop = SubTopology()
+
+        assert top.n_subtops == 0
+        top.add_subtopology(subtop)
+        assert top.n_subtops == 1
 
     def test_parametrization(self):
         top = Topology()
