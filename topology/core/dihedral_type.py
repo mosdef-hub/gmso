@@ -1,6 +1,8 @@
+import warnings
 import unyt as u
 
 from topology.core.potential import Potential
+from topology.exceptions import TopologyError
 
 
 class DihedralType(Potential):
@@ -37,7 +39,7 @@ class DihedralType(Potential):
         super(DihedralType, self).__init__(name=name, expression=expression,
                 parameters=parameters, independent_variables=independent_variables)
 
-        self._member_types = _validate_three_member_type_names(member_types)
+        self._member_types = _validate_four_member_type_names(member_types)
 
     @property
     def member_types(self):
