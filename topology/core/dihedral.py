@@ -13,6 +13,8 @@ class Dihedral(Connection):
     connection_members: list of topology.Site
         Should be length 4
     connection_type : topology.DihedralType
+    name : name of the dihedral
+        inherits the name attribute from Connection
 
     Notes
     -----
@@ -21,12 +23,12 @@ class Dihedral(Connection):
     Addiitonal _validate methods are presented
     """
 
-    def __init__(self, connection_members=[], connection_type=None):
+    def __init__(self, connection_members=[], connection_type=None, name="Dihedral"):
         connection_members = _validate_four_partners(connection_members)
         connection_type = _validate_dihedraltype(connection_type)
 
         super(Dihedral, self).__init__(connection_members=connection_members,
-                connection_type=connection_type)
+                connection_type=connection_type, name=name)
 
     def __eq__(self, other):
         return hash(self) == hash(other)
