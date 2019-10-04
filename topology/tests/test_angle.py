@@ -44,7 +44,7 @@ class TestAngle(BaseTest):
         assert site3.n_connections == 1
         assert len(connect.connection_members) == 3
         assert connect.connection_type is not None
-        assert connect.name == "angle_name"
+        assert connect.name == 'angle_name'
 
     def test_angle_fake(self):
         site1 = Site(name='site1')
