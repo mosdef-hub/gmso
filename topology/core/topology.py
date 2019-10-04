@@ -120,6 +120,8 @@ class Topology(object):
             self.update_bonds()
         elif isinstance(connection, Angle):
             self.update_angles()
+        elif isinstance(connection, Dihedral):
+            self.update_dihedrals()
 
         self.update_connections()
 
@@ -275,7 +277,7 @@ class Topology(object):
 
     def update_dihedrals(self):
         """ Rebuild the dihedral list by filtering through connection list """
-        self._dihedrals = [a for a in self.connections if isinstance(a, Dihedral)]
+        self._dihedrals = [d for d in self.connections if isinstance(d, Dihedral)]
 
     def update_atom_types(self):
         """ Update the atom types based on the site list """
@@ -325,14 +327,14 @@ class Topology(object):
     def update_dihedral_types(self):
         """ Update the dihedral types based on the dihedral list """
         #self._dihedral_types = []
-        for a in self.dihedrals:
-            if a.connection_type is None:
-                warnings.warn("Non-parametrized Dihedral {} detected".format(a))
-            elif not isinstance(a.connection_type, DihedralType):
+        for d in self.dihedrals:
+            if d.connection_type is None:
+                warnings.warn("Non-parametrized Dihedral {} detected".format(d))
+            elif not isinstance(d.connection_type, DihedralType):
                 raise TopologyError("Non-DihedralType {} found in Dihedral {}".format(
-                    a.connection_type, a))
-            elif a.connection_type not in self.dihedral_types:
-                self.dihedral_types.append(a.connection_type)
+                    d.connection_type, d))
+            elif d.connection_type not in self.dihedral_types:
+                self.dihedral_types.add(d.connection_type)
 
     def __repr__(self):
         descr = list('<')
