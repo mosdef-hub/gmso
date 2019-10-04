@@ -162,6 +162,7 @@ class Topology(object):
     def n_dihedrals(self):
         return len(self.dihedrals)
 
+    @property
     def subtops(self):
         return self._subtops
 
