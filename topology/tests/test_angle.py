@@ -67,7 +67,7 @@ class TestAngle(BaseTest):
         site3 = Site(name='site3', position=[1,1,0], atom_type=AtomType(name='C'))
         angtype = AngleType(member_types=[site1.atom_type.name, site2.atom_type.name,
             site3.atom_type.name])
-        ang = Angle(connection_members=[site1, site2,site3], 
+        ang = Angle(connection_members=[site1, site2, site3], 
                 connection_type=angtype)
         assert 'A' in ang.connection_type.member_types
         assert 'B' in ang.connection_type.member_types
