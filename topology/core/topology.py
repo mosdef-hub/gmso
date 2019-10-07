@@ -315,48 +315,6 @@ class Topology(object):
             elif a.connection_type not in self.angle_types:
                 self.angle_types.add(a.connection_type)
 
-    def add_ff(self, ff):
-        """ Atomtype and parametrize topology
-        This is largely based on foyer.forcefield.apply
-
-        Parameters
-        ---------
-        ff: topology.Forcefield
-        
-        """
-        from foyer.atomtyper import find_atomtypes
-        # Excluding residue functionality, this is the main function
-        # that gets called in foyer.run_atomtyping() in forcefield.py
-        typemap = find_atomtypes(self, ff)
-        self.apply_typemap(typemap, ff)
-        self.parametrize_topology(ff)
-
-    def apply_typemap(self, typemap, ff): 
-        """ Take the foyer  typemap to specify atomtypes """
-        for site in self.sites:
-            valid_type_string = typemap[site]['atomtype']
-            valid_atomtype = [a for a in ff.atomtypes 
-                    if a.name == valid_type_string]
-            if len(valid_atomtype) > 1:
-                raise Error("Too many atomtypes with the same name in FFXML?")
-            site.atom_type = valid_atomtype[0]
-
-    def parametrize_topology(self, ff):
-        """ Parametrize topology according to force field 
-        Assumes atomtype have been found for topology 
-        This is a semantic difference, do we want:
-        topology.parametrize_topology(ff)
-        or
-        ff.parametrize_topology(topology)
-        
-        
-        """
-        ff.parametrize_topology(self)
-        #for bond in top.bonds:
-        #    bond.connection_type = ff.parametrize_bondtype(bond)
-        #for angle in top.angles:
-        #    angle.connection_type = ff.parametrize_angletype(angle)
-
     def __repr__(self):
         descr = list('<')
         descr.append(self.name + ' ')
