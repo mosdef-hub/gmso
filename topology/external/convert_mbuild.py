@@ -7,8 +7,10 @@ from topology.core.site import Site
 from topology.core.bond import Bond
 from topology.core.box import Box
 from topology.utils.io import has_mbuild
-from topology.core.element import element_by_symbol, element_by_name
-from topology.core.element import element_by_atomic_number, element_by_mass
+from topology.core.element import (element_by_symbol, 
+                                   element_by_name,
+                                   element_by_atomic_number, 
+                                   element_by_mass)
 
 if has_mbuild:
     import mbuild as mb
@@ -21,7 +23,7 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
     ----------
     compound : mbuild.Compound
         mbuild.Compound instance that need to be converted
-    box : mb.Box, optional, default=None
+    box : mbuild.Box, optional, default=None
         Box information to be loaded to a topology.Topologly
     search_method : element_by_symbol, element_by_name,
                     element_by_atomic_number, element_by_mass,
@@ -97,7 +99,7 @@ def to_mbuild(topology):
 
     Returns:
     --------
-    compound : mb.Compound
+    compound : mbuild.Compound
     """
     msg = ("Provided argument that is not a topology")
     assert isinstance(topology, Topology), msg
