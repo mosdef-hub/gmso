@@ -112,7 +112,6 @@ class Topology(object):
         Adding a site to a set depends on the hash methods
         """
         # Might be a more elegant way of handling this, see PR #128
-        to_return = None
         if site in self.sites:
             # If the site is in the topology, we probably don't want to add it
             if redundant:
@@ -124,9 +123,8 @@ class Topology(object):
                 self._sites.add(cloned_site)
                 to_return = cloned_site
             else:
-                TopologyError("The Site: {} already exists in the topology. "
-                              "Please Specify use redundant=True to force add".format(site))
-                to_return = None
+                raise TopologyError("The Site: {} already exists in the topology. "
+                                    "Please use redundant=True to force add".format(site))
 
         else:
             # If the site is not already in the topology, add it

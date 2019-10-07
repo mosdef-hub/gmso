@@ -45,6 +45,16 @@ class TestTopology(BaseTest):
         top.add_site(site)
         assert top.n_sites == 1
 
+    def test_add_site_redundant(self):
+        top = Topology()
+        site = Site(name='MySite1')
+        top.add_site(site, redundant=False)
+        site.name = 'MySite2'
+        new_site = top.add_site(site, redundant=True)
+        assert new_site.name == 'MySite2'
+        assert top.n_sites == 2
+        assert top.sites[1] == new_site
+
     def test_add_connection(self):
         top = Topology()
         site1 = Site(name='site1')
