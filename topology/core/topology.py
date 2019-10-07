@@ -102,12 +102,18 @@ class Topology(object):
             add the site by creating a deepcopy, and add
             the deepcopy
 
+        Returns
+        ------
+        to_return : top.Site
+            The site that was addeed
+
         Notes
         -----
         Adding a site to a set depends on the hash methods
         """
         # Might be a more elegant way of handling this, see PR #128
         if site in self.sites:
+            # If the site is in the topology, we probably don't want to add it
             warnings.warn("Redundantly adding Site {}".format(site))
             if redundant:
                 # Forcibly add a reundant site by creating a new Site
@@ -115,13 +121,19 @@ class Topology(object):
                 from copy import deepcopy
                 cloned_site = deepcopy(site)
                 self._sites.add(cloned_site)
+                to_return = cloned_site
 
-        self._sites.add(site)
+        else:
+            # If the site is not already in the topology, add it
+            self._sites.add(site)
+            to_return = site
 
         if update_types:
             if not self.typed:
                 self.typed = True
             self.update_atom_types()
+
+        return to_return
 
     def add_connection(self, connection, update_types=True):
         # Might be a more elegant way of handling this, see PR #128
