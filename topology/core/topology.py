@@ -89,11 +89,35 @@ class Topology(object):
             xyz[i, :] = site.position
         return xyz
 
-    def add_site(self, site, update_types=True):
+    def add_site(self, site, update_types=True, redundant=False):
+        """ Add a site to a topology
+
+        Parameters
+        ---------
+        site : top.Site
+        update_types : bool, default True
+            Update the list of atomtypes within the topology
+        redundant : bool, default False
+            If the site is already in top.sites, forcibly
+            add the site by creating a deepcopy, and add
+            the deepcopy
+
+        Notes
+        -----
+        Adding a site to a set depends on the hash methods
+        """
         # Might be a more elegant way of handling this, see PR #128
         if site in self.sites:
             warnings.warn("Redundantly adding Site {}".format(site))
+            if redundant:
+                # Forcibly add a reundant site by creating a new Site
+                # For now, using deepcopy, but could be streamlined
+                from copy import deepcopy
+                cloned_site = deepcopy(site)
+                self._sites.add(cloned_site)
+
         self._sites.add(site)
+
         if update_types:
             if not self.typed:
                 self.typed = True
@@ -279,6 +303,48 @@ class Topology(object):
             elif a.connection_type not in self.angle_types:
                 self.angle_types.add(a.connection_type)
 
+    def add_ff(self, ff):
+        """ Atomtype and parametrize topology
+        This is largely based on foyer.forcefield.apply
+
+        Parameters
+        ---------
+        ff: topology.Forcefield
+        
+        """
+        from foyer.atomtyper import find_atomtypes
+        # Excluding residue functionality, this is the main function
+        # that gets called in foyer.run_atomtyping() in forcefield.py
+        typemap = find_atomtypes(self, ff)
+        self.apply_typemap(typemap, ff)
+        self.parametrize_topology(ff)
+
+    def apply_typemap(self, typemap, ff): 
+        """ Take the foyer  typemap to specify atomtypes """
+        for site in self.sites:
+            valid_type_string = typemap[site]['atomtype']
+            valid_atomtype = [a for a in ff.atomtypes 
+                    if a.name == valid_type_string]
+            if len(valid_atomtype) > 1:
+                raise Error("Too many atomtypes with the same name in FFXML?")
+            site.atom_type = valid_atomtype[0]
+
+    def parametrize_topology(self, ff):
+        """ Parametrize topology according to force field 
+        Assumes atomtype have been found for topology 
+        This is a semantic difference, do we want:
+        topology.parametrize_topology(ff)
+        or
+        ff.parametrize_topology(topology)
+        
+        
+        """
+        ff.parametrize_topology(self)
+        #for bond in top.bonds:
+        #    bond.connection_type = ff.parametrize_bondtype(bond)
+        #for angle in top.angles:
+        #    angle.connection_type = ff.parametrize_angletype(angle)
+
     def __repr__(self):
         descr = list('<')
         descr.append(self.name + ' ')
@@ -318,3 +384,4 @@ class Topology(object):
             return False
 
         return True
+

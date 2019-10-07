@@ -86,22 +86,24 @@ class Site(object):
         val = _validate_atom_type(val)
         self._atom_type = val
 
-    def __eq__(self, other):
-        return hash(self) == hash(other)
-
     def __hash__(self):
-        return hash(
-            tuple(
-                (
-                    self.name,
-                    unyt_to_hashable(self.position),
-                    unyt_to_hashable(self.charge),
-                    unyt_to_hashable(self.mass),
-                    self.atom_type,
-                    self.element,
-                )
-            )
-        )
+        return id(self) 
+
+    def __eq__(self, other):
+        if self.name != other.name:
+            return False
+        if unyt_to_hashable(self.position) != unyt_to_hashable(other.position):
+            return False
+        if unyt_to_hashable(self.charge) != unyt_to_hashable(other.charge):
+            return False
+        if unyt_to_hashable(self.mass) != unyt_to_hashable(other.mass):
+            return False
+        if self.atom_type != other.atom_type:
+            return False
+        if self.element != other.element:
+            return False
+        
+        return True
 
     def __repr__(self):
         return "<Site {}, id {}>".format(self.name, id(self))
