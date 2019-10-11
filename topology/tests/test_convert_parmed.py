@@ -34,7 +34,8 @@ class TestConvertParmEd(BaseTest):
         assert top.n_sites == 8
         assert top.n_bonds == 7
         assert top.n_angles == 12
-        assert top.n_connections == 19
+        assert top.n_dihedrals == 9
+        assert top.n_connections == 28 
 
         for site in top.sites:
             assert site.atom_type is not None
