@@ -241,14 +241,8 @@ class TestTopology(BaseTest):
         top.add_site(site1)
         site2 = Site(name='site2', atom_type=atomtype)
         top.add_site(site2)
+
         assert top.n_sites == 2
-        #assert len(top.atom_types) == 0
-        #assert len(top.atom_type_expressions) == 0
-        #assert top.n_connections == 0
-        #assert len(top.connection_types) == 0
-        #assert len(top.connection_type_expressions) == 0
-        #top.update_atom_types()
-        #assert top.n_sites == 2
         assert len(top.atom_types) == 1
         assert len(top.atom_type_expressions) == 1
         assert top.n_connections == 0
@@ -260,13 +254,7 @@ class TestTopology(BaseTest):
         connection_12 = Bond(connection_members=[site1, site2],
                              connection_type=ctype)
         top.add_connection(connection_12)
-        #assert top.n_sites == 2
-        #assert len(top.atom_types) == 1
-        #assert len(top.atom_type_expressions) == 1
-        #assert top.n_connections == 1
-        #assert len(top.connection_types) == 0
-        #assert len(top.connection_type_expressions) == 0
-        #top.update_connection_types()
+
         assert top.n_sites == 2
         assert len(top.atom_types) == 1
         assert len(top.atom_type_expressions) == 1
@@ -302,11 +290,7 @@ class TestTopology(BaseTest):
         site2 = Site('b', atom_type=atype2)
         top.add_site(site1)
         top.add_site(site2)
-        #assert top.n_sites == 2
-        #assert len(top.atom_types) == 0
-        #assert len(top.atom_type_expressions) == 0
 
-        #top.update_atom_types()
         assert top.n_sites == 2
         assert len(top.atom_types) == 2
         assert len(top.atom_type_expressions) == 2
@@ -324,17 +308,6 @@ class TestTopology(BaseTest):
         top.add_site(site2)
         top.add_connection(bond)
 
-        #assert top.n_connections == 1
-        #assert top.n_bonds == 0
-        #assert len(top.bond_types) == 0
-        #assert len(top.bond_type_expressions) == 0
-
-        #top.update_bond_list()
-        #assert top.n_bonds == 1
-        #assert len(top.bond_types) == 0
-        #assert len(top.bond_type_expressions) == 0
-
-        #top.update_bond_types()
         assert top.n_bonds == 1
         assert len(top.bond_types) == 1
         assert len(top.bond_type_expressions) == 1
@@ -354,17 +327,6 @@ class TestTopology(BaseTest):
         top.add_site(site3)
         top.add_connection(angle)
 
-        #assert top.n_connections == 1
-        #assert top.n_angles == 0
-        #assert len(top.angle_types) == 0
-        #assert len(top.angle_type_expressions) == 0
-
-        #top.update_angle_list()
-        #assert top.n_angles == 1
-        #assert len(top.angle_types) == 0
-        #assert len(top.angle_type_expressions) == 0
-
-        #top.update_angle_types()
         assert top.n_angles == 1
         assert len(top.angle_types) == 1
         assert len(top.angle_type_expressions) == 1
@@ -387,17 +349,6 @@ class TestTopology(BaseTest):
         top.add_site(site4)
         top.add_connection(dihedral)
 
-        #assert top.n_connections == 1
-        #assert top.n_dihedrals == 0
-        #assert len(top.dihedral_types) == 0
-        #assert len(top.dihedral_type_expressions) == 0
-
-        #top.update_dihedral_list()
-        #assert top.n_dihedrals == 1
-        #assert len(top.dihedral_types) == 0
-        #assert len(top.dihedral_type_expressions) == 0
-
-        #top.update_dihedral_types()
         assert top.n_dihedrals == 1
         assert len(top.dihedral_types) == 1
         assert len(top.dihedral_type_expressions) == 1
