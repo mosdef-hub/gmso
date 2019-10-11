@@ -40,3 +40,58 @@ class BuckinghamPotential(PotentialTemplate):
             independent_variables=independent_variables,
             template=True,
         )
+
+class HarmonicBondPotential(PotentialTemplate):
+    def __init__(self,
+                 name='HarmonicBondPotential',
+                 expression='0.5 * k * (r-r_eq)**2',
+                 independent_variables={'r'}):
+
+        super(PotentialTemplate, self).__init__(
+            name=name,
+            expression=expression,
+            independent_variables=independent_variables,
+            template=True,
+        )
+
+class HarmonicAnglePotential(PotentialTemplate):
+    def __init__(self,
+                 name='HarmonicAnglePotential',
+                 expression='0.5 * k * (theta-theta_eq)**2',
+                 independent_variables={'theta'}):
+
+        super(PotentialTemplate, self).__init__(
+            name=name,
+            expression=expression,
+            independent_variables=independent_variables,
+            template=True,
+        )
+
+class PeriodicTorsionPotential(PotentialTemplate):
+    def __init__(self,
+                 name='PeriodicTorsionPotential',
+                 expression='k * (1 + cos(n * phi - phi_eq))**2',
+                 independent_variables={'phi'}):
+
+        super(PotentialTemplate, self).__init__(
+                name=name,
+                expression=expression,
+                independent_variables=independent_variables,
+                template=True
+        )
+
+class RyckaertBellemansTorsionPotential(PotentialTemplate):
+    def __init__(self,
+                 name='RyckaertBellemansTorsionPotential',
+                 expression='c0 * cos(phi)**0 + c1 * cos(phi)**1 + ' +
+                    'c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + ' +
+                    'c5 * cos(phi)**5',
+                 independent_variables={'phi'}):
+
+        super(PotentialTemplate, self).__init__(
+                name=name,
+                expression=expression,
+                independent_variables=independent_variables,
+                template=True
+        )
+
