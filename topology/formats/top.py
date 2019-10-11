@@ -60,11 +60,11 @@ def write_top(top, filename):
                 '{6}\n'.format(
                     atom_type.name,
                     1.0, # TODO: Use an atomic number here
-                    atom_type.mass,
-                    atom_type.charge,
+                    atom_type.mass.in_units(u.amu).value,
+                    atom_type.charge.in_units(u.charge_electron).value,
                     'A',
-                    atom_type.parameters['sigma'].in_units(u.nanometer),
-                    atom_type.parameters['epsilon'].in_units(u.Unit('kJ')),
+                    atom_type.parameters['sigma'].in_units(u.nanometer).value,
+                    atom_type.parameters['epsilon'].in_units(u.Unit('kJ/mol')).value,
                 )
             )
 
@@ -100,8 +100,8 @@ def write_top(top, filename):
                     top.name, # TODO: subtop.name
                     site.element,
                     site_idx, # TODO: care about charge groups
-                    site.charge,
-                    site.mass,
+                    site.charge.in_units(u.charge_electron).value,
+                    site.mass.in_units(u.amu).value,
                 )
             )
 
@@ -120,8 +120,9 @@ def write_top(top, filename):
                     bond.connection_members[0].idx,
                     bond.connection_members[1].idx,
                     '1',
-                    bond.bond_type.parameters['k'],
-                    bond.bond_type.parameters['theta'],
+                    bond.connection_type.parameters['r_eq'].in_units(u.nm).value,
+                    bond.connection_type.parameters['k'].in_units(
+                        u.Unit('kJ / (mol*nm**2)')).value,
                 )
             )
 
@@ -142,8 +143,9 @@ def write_top(top, filename):
                     angle.connection_members[1].angle_idx,
                     angle.connection_members[2].angle_idx,
                     '1',
-                    angle.angle_type.parameters['k'],
-                    angle.angle_type.parameters['theta'],
+                    angle.connection_type.parameters['theta_eq'].in_units(u.degree).value,
+                    angle.connection_type.parameters['k'].in_units(
+                        u.Unit('kJ/(mol*rad**2)')).value,
                 )
             )
 
