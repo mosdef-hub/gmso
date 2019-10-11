@@ -6,9 +6,11 @@ from boltons.setutils import IndexedSet
 
 from topology.core.bond import Bond
 from topology.core.angle import Angle
+from topology.core.dihedral import Dihedral
 from topology.core.potential import Potential
 from topology.core.bond_type import BondType
 from topology.core.angle_type import AngleType
+from topology.core.dihedral_type import DihedralType
 from topology.exceptions import TopologyError
 
 
@@ -25,18 +27,18 @@ class Topology(object):
             self._name = name
         self._box = box
         self._sites = IndexedSet()
+        self._typed = False
         self._connections = IndexedSet()
         self._bonds = IndexedSet()
         self._angles = IndexedSet()
-
+        self._dihedrals = IndexedSet()
         self._subtops = IndexedSet()
-
         self._typed = False
         self._atom_types = IndexedSet()
         self._connection_types = IndexedSet()
         self._bond_types = IndexedSet()
         self._angle_types = IndexedSet()
-
+        self._dihedral_types = IndexedSet()
         self._combining_rule = 'lorentz'
 
     @property
@@ -118,6 +120,9 @@ class Topology(object):
             self.update_bonds()
         elif isinstance(connection, Angle):
             self.update_angles()
+        elif isinstance(connection, Dihedral):
+            self.update_dihedrals()
+
         self.update_connections()
 
         if update_types:
@@ -127,6 +132,8 @@ class Topology(object):
                 self.update_bond_types()
             elif isinstance(connection, Angle):
                 self.update_angle_types()
+            elif isinstance(connection, Dihedral):
+                self.update_dihedral_types()
             self.update_connection_types()
 
     def add_subtopology(self, subtop):
@@ -150,6 +157,10 @@ class Topology(object):
     @property
     def n_angles(self):
         return len(self.angles)
+
+    @property
+    def n_dihedrals(self):
+        return len(self.dihedrals)
 
     @property
     def subtops(self):
@@ -176,6 +187,10 @@ class Topology(object):
         return self._angles
 
     @property
+    def dihedrals(self):
+        return self._dihedrals
+
+    @property
     def atom_types(self):
         return self._atom_types
 
@@ -190,6 +205,10 @@ class Topology(object):
     @property
     def angle_types(self):
         return self._angle_types
+
+    @property
+    def dihedral_types(self):
+        return self._dihedral_types
 
     @property
     def atom_type_expressions(self):
@@ -213,25 +232,30 @@ class Topology(object):
         Assumes bonds are provided, will infer angles, dihedrals, impropers"""
         from topology.core.connectivity import identify_connections
         identify_connections(self)
+    @property
+    def dihedral_type_expressions(self):
+        return list(set([atype.expression for atype in self.dihedral_types]))
 
     def update_top(self, update_types=True):
         """ Update the entire topology's attributes
 
         Notes
         -----
-        Will update: sites, connections, bonds, angles,
-        atom_types, connectiontypes, bondtypes, angletypes
+        Will update: sites, connections, bonds, angles, dihedrals
+        atom_types, connectiontypes, bondtypes, angletypes, dihedral_types
         """
         self.update_sites()
         self.update_connections()
         self.update_bonds()
         self.update_angles()
+        self.update_dihedrals()
 
         if update_types:
             self.update_atom_types()
             self.update_connection_types()
             self.update_bond_types()
             self.update_angle_types()
+            self.update_dihedral_types()
             self.is_typed()
 
     def update_sites(self):
@@ -257,6 +281,10 @@ class Topology(object):
     def update_angles(self):
         """ Rebuild the angle list by filtering through connection list """
         self._angles = [a for a in self.connections if isinstance(a, Angle)]
+
+    def update_dihedrals(self):
+        """ Rebuild the dihedral list by filtering through connection list """
+        self._dihedrals = [d for d in self.connections if isinstance(d, Dihedral)]
 
     def update_atom_types(self):
         """ Update the atom types based on the site list """
@@ -302,6 +330,18 @@ class Topology(object):
                     a.connection_type, a))
             elif a.connection_type not in self.angle_types:
                 self.angle_types.add(a.connection_type)
+
+    def update_dihedral_types(self):
+        """ Update the dihedral types based on the dihedral list """
+        #self._dihedral_types = []
+        for d in self.dihedrals:
+            if d.connection_type is None:
+                warnings.warn("Non-parametrized Dihedral {} detected".format(d))
+            elif not isinstance(d.connection_type, DihedralType):
+                raise TopologyError("Non-DihedralType {} found in Dihedral {}".format(
+                    d.connection_type, d))
+            elif d.connection_type not in self.dihedral_types:
+                self.dihedral_types.add(d.connection_type)
 
     def __repr__(self):
         descr = list('<')
