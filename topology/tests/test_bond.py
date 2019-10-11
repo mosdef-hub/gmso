@@ -38,7 +38,7 @@ class TestBond(BaseTest):
         assert site2.n_connections == 1
         assert len(connect.connection_members) == 2
         assert connect.connection_type is not None
-        assert connect.name == "bond_name"
+        assert connect.name == 'bond_name'
 
     def test_bond_fake(self):
         site1 = Site(name='site1')
