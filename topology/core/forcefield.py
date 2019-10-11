@@ -75,15 +75,18 @@ class Forcefield(object):
 
     def __getitem__(self, key):
         types = key.split('-')
+        has_wildcard = '*' in key
         if len(types) == 1:
-            to_return = None
-            return self.atom_types.get(key, to_return)
+            if not has_wildcard:
+                to_return = None
+                return self.atom_types.get(key, to_return)
+            else: 
+                return(v for _,v in self.atom_types.items())
         elif len(types) == 2:
             to_return = None
-            permutations = ['{first}-{second}'.format(first=types[0],
-                                                        second=types[1]),
-                            '{second}-{first}'.format(first=types[0],
-                                                        second=types[1])]
+            slots = {'first':types[0], 'second':types[1]}
+            permutations  = ['{first}-{second}'.format(**slots),
+                            '{second}-{first}'.format(**slots)]
             for permutation in permutations:
                 to_return = self.bond_types.get(permutation, to_return)
 
