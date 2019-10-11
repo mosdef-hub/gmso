@@ -14,21 +14,83 @@ def from_parmed(structure):
 
     top = topo.Topology(name=structure.title)
     site_map = dict()
+    # simple check if our pmd.Structure is fully parametrized
+    is_parametrized = True if isinstance(structure.atoms[0].atom_type,
+            pmd.AtomType) else False
+
+    # Consolidate parmed atomtypes and relate topology atomtypes
+    if is_parametrized:
+        unique_atom_types = list(set([a.atom_type for a in structure.atoms]))
+        pmd_top_atomtypes = {}
+        for atom_type in unique_atom_types:
+            top_atomtype = topo.AtomType(
+                    name=atom_type.name,
+                    charge=atom_type.charge * u.elementary_charge,
+                    parameters={
+                        'sigma': (atom_type.sigma * u.angstrom).in_units(u.nm),
+                        'epsilon': atom_type.epsilon * u.Unit('kcal / mol')
+                        })
+            pmd_top_atomtypes[atom_type] = top_atomtype
+
+        # Consolidate parmed bondtypes and relate to topology bondtypes
+        pmd_top_bondtypes = {}
+        for btype in structure.bond_types:
+            bond_params = {
+                    'k': (2 * btype.k * u.Unit('kcal / (nm**2 * mol)')),
+                    'r_eq': (btype.req * u.angstrom).in_units(u.nm)
+                    }
+
+            top_bondtype = topo.BondType(parameters=bond_params)
+            pmd_top_bondtypes[btype] = top_bondtype
+
+        # Consolidate parmed angletypes and relate to topology angletypes
+        pmd_top_angletypes = {}
+        for angletype in structure.angle_types:
+            angle_params = {
+                    'k': (2 * angletype.k * u.Unit('kcal / (rad**2 * mol)')),
+                    'theta_eq': (angletype.theteq * u.degree)
+                }
+                 
+            top_angletype = topo.AngleType(parameters=angle_params)
+            pmd_top_angletypes[angletype] = top_angletype
+
+        # Consolidate parmed dihedraltypes and relate to topology dihedraltypes
+        pmd_top_dihedraltypes = {}
+        for dihedraltype in structure.dihedral_types:
+            dihedral_params = {
+                    'k': (dihedraltype.phi_k * u.Unit('kcal / mol')),
+                    'phi_eq': (dihedraltype.phase * u.degree),
+                    'n': dihedraltype.per * u.dimensionless
+                }
+                 
+            top_dihedraltype = topo.DihedralType(parameters=dihedral_params)
+            pmd_top_dihedraltypes[dihedraltype] = top_dihedraltype
+        for dihedraltype in structure.rb_torsion_types:
+            dihedral_params = {
+                    'c0': (dihedraltype.c0 * u.Unit('kcal/mol')),
+                    'c1': (dihedraltype.c1 * u.Unit('kcal/mol')),
+                    'c2': (dihedraltype.c2 * u.Unit('kcal/mol')),
+                    'c3': (dihedraltype.c3 * u.Unit('kcal/mol')),
+                    'c4': (dihedraltype.c4 * u.Unit('kcal/mol')),
+                    'c5': (dihedraltype.c5 * u.Unit('kcal/mol')),
+                }
+                 
+            top_dihedraltype = topo.DihedralType(parameters=dihedral_params,
+                    expression='c0 * cos(phi)**0 + c1 * cos(phi)**1 + ' +
+                    'c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + ' +
+                    'c5 * cos(phi)**5',
+                    independent_variables='phi'
+                    )
+            pmd_top_dihedraltypes[dihedraltype] = top_dihedraltype
+
     for atom in structure.atoms:
-        if isinstance(atom.atom_type, pmd.AtomType):
-            atom_type = topo.AtomType(
-                name=atom.atom_type.name,
-                charge=atom.atom_type.charge * u.elementary_charge,
-                parameters={
-                    'sigma': (atom.sigma * u.angstrom).in_units(u.nm),
-                    'epsilon': atom.epsilon * u.Unit('kcal / mol')
-                })
+        if is_parametrized:
             site = topo.Site(
                 name=atom.name,
                 charge=atom.charge * u.elementary_charge,
                 position=([atom.xx, atom.xy, atom.xz] * u.angstrom).in_units(
                     u.nm),
-                atom_type=atom_type)
+                atom_type=pmd_top_atomtypes[atom.atom_type])
         else:
             site = topo.Site(
                 name=atom.name,
@@ -49,16 +111,10 @@ def from_parmed(structure):
     for bond in structure.bonds:
         # Generate bond parameters for BondType that gets passed
         # to Bond
-        if isinstance(bond.type, pmd.BondType):
-            bond_params = {
-                'k': (2 * bond.type.k * u.Unit('kcal / (nm**2 * mol)')),
-                'r_eq': (bond.type.req * u.angstrom).in_units(u.nm)
-            }
-            new_connection_type = topo.BondType(parameters=bond_params,
-                    member_types=[bond.atom1.type, bond.atom2.type])
+        if is_parametrized:
             top_connection = topo.Bond(connection_members=[site_map[bond.atom1],
                 site_map[bond.atom2]],
-                connection_type=new_connection_type)
+                connection_type=pmd_top_bondtypes[bond.type])
 
         # No bond parameters, make Connection with no connection_type
         else:
@@ -72,17 +128,10 @@ def from_parmed(structure):
     for angle in structure.angles:
         # Generate angle parameters for AngleType that gets passed
         # to Angle
-        if isinstance(angle.type, pmd.AngleType):
-            angle_params = {
-                'k': (2 * angle.type.k * u.Unit('kcal / (rad**2 * mol)')),
-                'theta_eq': (angle.type.theteq * u.degree)
-            }
-            new_connection_type = topo.AngleType(parameters=angle_params,
-                    member_types=[angle.atom1.type, angle.atom2.type, 
-                                angle.atom3.type])
+        if is_parametrized:
             top_connection = topo.Angle(connection_members=[site_map[angle.atom1],
                 site_map[angle.atom2], site_map[angle.atom3]],
-                connection_type=new_connection_type)
+                connection_type=pmd_top_angletypes[angle.type])
 
         # No bond parameters, make Connection with no connection_type
         else:
@@ -105,19 +154,11 @@ def from_parmed(structure):
                     "following periodic torsion " +
                     "expression detected, currently accounted for as " +
                     "topology.Dihedral with a periodic torsion expression")
-        if isinstance(dihedral.type, pmd.DihedralType):
-            dihedral_params = {
-                'k': (dihedral.type.phi_k * u.Unit('kcal / mol')),
-                'phi_eq': (dihedral.type.phase * u.degree),
-                'n': dihedral.type.per * u.dimensionless
-            }
-            new_connection_type = topo.DihedralType(parameters=dihedral_params,
-                    member_types=[dihedral.atom1.type, dihedral.atom2.type,
-                                dihedral.atom3.type, dihedral.atom4.type])
+        if is_parametrized:
             top_connection = topo.Dihedral(connection_members=
                     [site_map[dihedral.atom1], site_map[dihedral.atom2], 
                         site_map[dihedral.atom3], site_map[dihedral.atom4]],
-                connection_type=new_connection_type)
+                    connection_type=pmd_top_dihedraltypes[dihedral.type])
 
         # No bond parameters, make Connection with no connection_type
         else:
@@ -138,26 +179,11 @@ def from_parmed(structure):
                     "following RB torsion " +
                     "expression detected, currently accounted for as " +
                     "topology.Dihedral with a RB torsion expression")
-        if isinstance(rb_torsion.type, pmd.RBTorsionType):
-            dihedral_params = {
-                'c0': (rb_torsion.type.c0 * u.Unit('kcal/mol')),
-                'c1': (rb_torsion.type.c1 * u.Unit('kcal/mol')),
-                'c2': (rb_torsion.type.c2 * u.Unit('kcal/mol')),
-                'c3': (rb_torsion.type.c3 * u.Unit('kcal/mol')),
-                'c4': (rb_torsion.type.c4 * u.Unit('kcal/mol')),
-                'c5': (rb_torsion.type.c5 * u.Unit('kcal/mol')),
-            }
-            new_connection_type = topo.DihedralType(parameters=dihedral_params,
-                    expression='c0 * cos(phi)**0 + c1 * cos(phi)**1 + ' +
-                    'c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + ' +
-                    'c5 * cos(phi)**5',
-                    independent_variables='phi',
-                    member_types=[rb_torsion.atom1.type, rb_torsion.atom2.type,
-                                rb_torsion.atom3.type, rb_torsion.atom4.type])
+        if is_parametrized:
             top_connection = topo.Dihedral(connection_members=
                     [site_map[rb_torsion.atom1], site_map[rb_torsion.atom2], 
                         site_map[rb_torsion.atom3], site_map[rb_torsion.atom4]],
-                connection_type=new_connection_type)
+                    connection_type=pmd_top_dihedraltypes[rb_torsion.type])
 
         # No bond parameters, make Connection with no connection_type
         else:
