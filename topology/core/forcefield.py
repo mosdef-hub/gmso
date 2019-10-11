@@ -15,10 +15,22 @@ class Forcefield(object):
     -----
     While each set of parameters can be accessed via ff.atom_types,
     ff.bond_types, etc., they can also be accessed via
-    ff['atomtype'], ff['bondtype'] for convenience
+    ff['atomtype'], ff['bondtype'] for convenience and safer lookups
+
+    Attributes
+    ---------
+    atom_type_definitions : dict
+        'string':'AtomType'
+    atom_types : dict
+        'A':topology.AtomType
+    bond_types : dict
+        'A-B':topology.BondType
+    angle_types : dict
+        'A-B-C':topology.AngleType
     """
     def __init__(self, name='Forcefield'):
         self.name = name
+        self.atom_type_definitions = {}
         self.atom_types = {}
         self.bond_types = {} 
         self.angle_types = {} 
