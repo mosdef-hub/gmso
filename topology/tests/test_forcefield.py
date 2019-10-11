@@ -84,16 +84,3 @@ class TestForcefield(BaseTest):
         assert ff['B-A'] == mybondtype
         assert ff['C-B-A'] == myangletype
 
-
-    def test_atomtype_wildcards(self):
-        ff = Forcefield(name='TestFF')
-        typea = AtomType(name='Atype')
-        typeb = AtomType(name='Btype')
-        typec = AtomType(name="Ctype")
-
-        ff['A'] = typea 
-        ff['B'] = typeb
-        ff['C'] = typec
-
-        assert len([*ff['*']]) == 3
-
