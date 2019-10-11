@@ -54,7 +54,8 @@ def from_parmed(structure):
                 'k': (2 * bond.type.k * u.Unit('kcal / (nm**2 * mol)')),
                 'r_eq': (bond.type.req * u.angstrom).in_units(u.nm)
             }
-            new_connection_type = topo.BondType(parameters=bond_params)
+            new_connection_type = topo.BondType(parameters=bond_params,
+                    member_types=[bond.atom1.type, bond.atom2.type])
             top_connection = topo.Bond(connection_members=[site_map[bond.atom1],
                 site_map[bond.atom2]],
                 connection_type=new_connection_type)
@@ -76,7 +77,9 @@ def from_parmed(structure):
                 'k': (2 * angle.type.k * u.Unit('kcal / (rad**2 * mol)')),
                 'theta_eq': (angle.type.theteq * u.degree)
             }
-            new_connection_type = topo.AngleType(parameters=angle_params)
+            new_connection_type = topo.AngleType(parameters=angle_params,
+                    member_types=[angle.atom1.type, angle.atom2.type, 
+                                angle.atom3.type])
             top_connection = topo.Angle(connection_members=[site_map[angle.atom1],
                 site_map[angle.atom2], site_map[angle.atom3]],
                 connection_type=new_connection_type)
@@ -108,7 +111,9 @@ def from_parmed(structure):
                 'phi_eq': (dihedral.type.phase * u.degree),
                 'n': dihedral.type.per * u.dimensionless
             }
-            new_connection_type = topo.DihedralType(parameters=dihedral_params)
+            new_connection_type = topo.DihedralType(parameters=dihedral_params,
+                    member_types=[dihedral.atom1.type, dihedral.atom2.type,
+                                dihedral.atom3.type, dihedral.atom4.type])
             top_connection = topo.Dihedral(connection_members=
                     [site_map[dihedral.atom1], site_map[dihedral.atom2], 
                         site_map[dihedral.atom3], site_map[dihedral.atom4]],
@@ -146,7 +151,9 @@ def from_parmed(structure):
                     expression='c0 * cos(phi)**0 + c1 * cos(phi)**1 + ' +
                     'c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + ' +
                     'c5 * cos(phi)**5',
-                    independent_variables='phi')
+                    independent_variables='phi',
+                    member_types=[rb_torsion.atom1.type, rb_torsion.atom2.type,
+                                rb_torsion.atom3.type, rb_torsion.atom4.type])
             top_connection = topo.Dihedral(connection_members=
                     [site_map[rb_torsion.atom1], site_map[rb_torsion.atom2], 
                         site_map[rb_torsion.atom3], site_map[rb_torsion.atom4]],
