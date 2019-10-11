@@ -1,11 +1,14 @@
 import datetime
 
+import unyt as u
+
 
 def write_top(top, filename):
     """Write a topology to a GROMACS .TOP file"""
 
     _validate_compatibility(top)
     top_vars = _get_top_vars(top)
+    _assign_indices(top)
 
     with open(filename, 'w') as out_file:
         out_file.write(
@@ -69,7 +72,7 @@ def write_top(top, filename):
         # TODO: for subtop in top.subtops ...
         out_file.write(
             '[ moleculetype ]\n'
-            '; name\t\t\tnrexcl
+            '; name\t\t\tnrexcl'
             '{0}\t'
             '{1}\n\n'.format(
                 top.name, # TODO: subtop.name
@@ -91,12 +94,12 @@ def write_top(top, filename):
                 '\t{5}'
                 '\t{6}'
                 '\t{7}'.format(
-                    idx,
+                    site_idx,
                     site.atom_type.name,
                     1, # TODO: subtop idx
                     top.name, # TODO: subtop.name
                     site.element,
-                    idx, # TODO: care about charge groups
+                    site_idx, # TODO: care about charge groups
                     site.charge,
                     site.mass,
                 )
@@ -150,6 +153,7 @@ def write_top(top, filename):
             '{0}\n\n'.format(
                 top.name
             )
+        )
 
         out_file.write(
             '[ molecules ]\n'
@@ -174,3 +178,7 @@ def _get_top_vars(top):
     top_vars['fudgeQQ'] = 1
 
     return top_vars
+
+def _assign_indices(top):
+    for idx, site in enumerate(top.sites):
+        site.idx = idx
