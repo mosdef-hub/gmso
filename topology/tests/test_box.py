@@ -96,3 +96,9 @@ class TestBox(BaseTest):
         diff_angles = deepcopy(box)
         diff_angles.angles = u.degree * [90, 90, 120]
         assert box != diff_angles
+
+    def test_list_to_unyt_array(self):
+        length = 5 * u.nm
+        box = Box([length, length, length])
+
+        assert isinstance(box.lengths, u.unyt_array)

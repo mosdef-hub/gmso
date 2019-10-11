@@ -2,6 +2,7 @@ import warnings
 import sympy
 import unyt as u
 
+from topology.utils.misc import unyt_to_hashable
 
 class Potential(object):
     """An abstract potential class.
@@ -39,14 +40,18 @@ class Potential(object):
                      'a': 1.0*u.dimensionless,
                      'b': 1.0*u.dimensionless},
                  independent_variables={'x'},
+                 template=False,
                  ):
 
         self._name = name
-        self._parameters = _validate_parameters(parameters)
+        if not template:
+            self._parameters = _validate_parameters(parameters)
         self._independent_variables = _validate_independent_variables(independent_variables)
         self._expression = _validate_expression(expression)
+        self._template = template
 
-        self._validate_expression_parameters()
+        if not template:
+            self._validate_expression_parameters()
 
     @property
     def name(self):
@@ -74,6 +79,10 @@ class Potential(object):
     @independent_variables.setter
     def independent_variables(self, indep_vars):
         self._independent_variables = _validate_independent_variables(indep_vars)
+
+    @property
+    def template(self):
+        return self._template
 
     @property
     def expression(self):
@@ -152,14 +161,20 @@ class Potential(object):
                               " {}".format(extra_syms))
 
     def __eq__(self, other):
-        name_match = (self.name == other.name)
-        parameter_match = (self.parameters == other.parameters)
-        expression_match = (self.expression == other.expression)
+        return hash(self) == hash(other)
 
-        return all([
-            name_match, parameter_match,
-            expression_match
-        ])
+    def __hash__(self):
+        return hash(
+            tuple(
+                (
+                    self.name,
+                    self.expression,
+                    tuple(self.independent_variables),
+                    tuple(self.parameters.keys()),
+                    tuple(unyt_to_hashable(val) for val in self.parameters.values())
+                )
+            )
+        )
 
     def __repr__(self):
         desc = "<Potential {}, id {}>".format(self._name, id(self))

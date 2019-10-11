@@ -1,11 +1,12 @@
+import warnings
 import unyt as u
 
 from topology.core.potential import Potential
 from topology.exceptions import TopologyError
 
 
-class BondType(Potential):
-    """A Potential between 2-bonded partners.
+class DihedralType(Potential):
+    """A Potential between 4-bonded partners.
 
     Parameters
     ----------
@@ -15,29 +16,30 @@ class BondType(Potential):
     parameters : dict {str, unyt.unyt_quantity}
         See `Potential` documentation for more information
     independent vars : set of str
-        see `Potential` documentation for more information
+        See `Potential` documentation for more information
     member_types : list of topology.AtomType.name (str)
 
     Notes
     ----
     Inherits many functions from topology.Potential:
         __eq__, _validate functions
-        """
+    """
 
     def __init__(self,
-                 name='BondType',
-                 expression='0.5 * k * (r-r_eq)**2',
+                 name='DihedralType',
+                 expression='k * (1 + cos(n * phi - phi_eq))**2',
                  parameters={
-                     'k': 1000 * u.Unit('kJ / (nm**2)'),
-                     'r_eq': 0.14 * u.nm
+                     'k': 1000 * u.Unit('kJ / (deg**2)'),
+                     'phi_eq': 180 * u.deg,
+                     'n': 1*u.dimensionless
                  },
-                 independent_variables={'r'},
+                 independent_variables={'phi'},
                  member_types=[]):
 
-        super(BondType, self).__init__(name=name, expression=expression,
+        super(DihedralType, self).__init__(name=name, expression=expression,
                 parameters=parameters, independent_variables=independent_variables)
 
-        self._member_types = _validate_two_member_type_names(member_types)
+        self._member_types = _validate_four_member_type_names(member_types)
 
     @property
     def member_types(self):
@@ -46,21 +48,20 @@ class BondType(Potential):
     @member_types.setter
     def member_types(self, val):
         if self.member_types != val:
-            warnings.warn("Changing a BondType's constituent "
+            warnings.warn("Changing an DihedralType's constituent "
                     "member types: {} to {}".format(self.member_types, val))
-        self._member_types = _validate_two_member_type_names(val)
+        self._member_types = _validate_four_member_type_names(val)
 
     def __repr__(self):
-        return "<BondType {}, id {}>".format(self.name, id(self))
+        return "<DihedralType {}, id {}>".format(self.name, id(self))
 
-def _validate_two_member_type_names(types):
-    """Ensure 2 partners are involved in BondType"""
-    if len(types) != 2 and len(types) != 0:
-        raise TopologyError("Trying to create a BondType "
+def _validate_four_member_type_names(types):
+    """Ensure 4 partners are involved in DihedralType"""
+    if len(types) != 4 and len(types) != 0:
+        raise TopologyError("Trying to create an DihedralType "
                 "with {} constituent types". format(len(types)))
     if not all([isinstance(t, str) for t in types]):
-        raise TopologyError("Types passed to BondType "
+        raise TopologyError("Types passed to DihedralType "
                             "need to be strings corresponding to AtomType names")
 
     return types
-
