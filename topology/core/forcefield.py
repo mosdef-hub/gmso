@@ -75,13 +75,9 @@ class Forcefield(object):
 
     def __getitem__(self, key):
         types = key.split('-')
-        has_wildcard = '*' in key
         if len(types) == 1:
-            if not has_wildcard:
-                to_return = None
-                return self.atom_types.get(key, to_return)
-            else: 
-                return(v for _,v in self.atom_types.items())
+            to_return = None
+            return self.atom_types.get(key, to_return)
         elif len(types) == 2:
             to_return = None
             slots = {'first':types[0], 'second':types[1]}
