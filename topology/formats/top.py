@@ -120,8 +120,8 @@ def write_top(top, filename):
                     bond.connection_members[0].idx,
                     bond.connection_members[1].idx,
                     '1',
-                    bond.parameters['k'],
-                    bond.parameters['theta'],
+                    bond.bond_type.parameters['k'],
+                    bond.bond_type.parameters['theta'],
                 )
             )
 
@@ -138,12 +138,39 @@ def write_top(top, filename):
                 '\t{3}'
                 '\t{4}'
                 '\t{5}'.format(
-                    angle.connection_members[0].idx,
-                    angle.connection_members[1].idx,
-                    angle.connection_members[2].idx,
+                    angle.connection_members[0].angle_idx,
+                    angle.connection_members[1].angle_idx,
+                    angle.connection_members[2].angle_idx,
                     '1',
-                    angle.parameters['k'],
-                    angle.parameters['theta'],
+                    angle.angle_type.parameters['k'],
+                    angle.angle_type.parameters['theta'],
+                )
+            )
+
+        for dihedral_idx, dihedral in enumerate(top.dihedral):
+            out_file.write(
+                '\t{0}'
+                '\t{1}'
+                '\t{2}'
+                '\t{3}'
+                '\t{4}'
+                '\t{5}'
+                '\t{6}'
+                '\t{7}'
+                '\t{8}'
+                '\t{9}'
+                '\t{10}'.format(
+                    dihedral.connection_members[0].dihedral_idx,
+                    dihderal.connection_members[1].dihedral_idx,
+                    dihedral.connection_members[2].dihedral_idx,
+                    dihedral.connection_members[3].dihedral_idx,
+                    '3',
+                    dihedral.dihedral_type.parameters['c0'],
+                    dihedral.dihedral_type.parameters['c1'],
+                    dihedral.dihedral_type.parameters['c2'],
+                    dihedral.dihedral_type.parameters['c3'],
+                    0,
+                    0,
                 )
             )
 
