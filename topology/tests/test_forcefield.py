@@ -84,3 +84,37 @@ class TestForcefield(BaseTest):
         assert ff['B-A'] == mybondtype
         assert ff['C-B-A'] == myangletype
 
+    def test_getters_wildcards(self):
+        ff = Forcefield(name='TestFF')
+        atomtype1 = AtomType(name='atomtype1')
+        atomtype2 = AtomType(name='atomtype2')
+        bondtype1 = BondType(name='bondtype1')
+        bondtype2 = BondType(name='bondtype2')
+        angletype1 = AngleType(name='angletype1')
+        angletype2 = AngleType(name='angletype2')
+
+        ff['A'] = atomtype1
+        ff['*'] = atomtype2
+        ff['A-B'] = bondtype1
+        ff['*-B'] = bondtype2
+        ff['A-B-C'] = angletype1
+        ff['*-B-C'] = angletype2
+
+        assert ff['Z'] == atomtype2
+        assert ff['B-A'] == bondtype1
+        assert ff['Z-B'] == bondtype2
+        assert ff['C-B-A'] == angletype1
+        assert ff['Z-B-C'] == angletype2
+
+    def test_getters_wildcards_conflict(self):
+        ff = Forcefield(name='TestFF')
+        bondtype1 = BondType(name='bondtype1')
+        bondtype2 = BondType(name='bondtype2')
+
+        ff['*-A'] = bondtype1
+        ff['*-B'] = bondtype2
+        ff['*-C'] = bondtype2
+        with pytest.raises(TopologyError):
+            ff['A-B']
+
+        assert ff['B-C'] == bondtype2

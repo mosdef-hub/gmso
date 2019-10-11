@@ -74,10 +74,16 @@ class Forcefield(object):
                     "parameter key {}".format(key))
 
     def __getitem__(self, key):
+        """ Return a subclass of Potential object"""
         types = key.split('-')
         if len(types) == 1:
             to_return = None
-            return self.atom_types.get(key, to_return)
+            to_return = self.atom_types.get(key, to_return)
+
+            # If no match yet, look at wildcards
+            if to_return is None:
+                to_return = self.atom_types.get("*", to_return)
+                return to_return
         elif len(types) == 2:
             to_return = None
             slots = {'first':types[0], 'second':types[1]}
@@ -86,7 +92,23 @@ class Forcefield(object):
             for permutation in permutations:
                 to_return = self.bond_types.get(permutation, to_return)
 
-            return to_return
+            # If no match, look at wildcards
+            if to_return is None:
+                wild_card_combos = ['*-{second}'.format(**slots),
+                                    '{second}-*'.format(**slots),
+                                    '{first}-*'.format(**slots),
+                                    '*-{first}'.format(**slots)]
+                to_return = [self.bond_types.get(combo) for combo in 
+                        wild_card_combos]
+                to_return = list(set([a for a in to_return if a is not None]))
+                if len(to_return) > 1:
+                    raise TopologyError("Wildcard conflicts found in forcefield" +
+                             "for key {}".format(key))
+                elif len(to_return) == 0:
+                    to_return = None
+                else:
+                    to_return = to_return[0]
+
         elif len(types)  == 3:
             to_return = None
             slots = {'first':types[0], 'second':types[1],
@@ -96,8 +118,27 @@ class Forcefield(object):
             for permutation in permutations:
                 to_return = self.angle_types.get(permutation, to_return)
 
-            return to_return
+            # If no match, look at wildcards
+            if to_return is None:
+                wild_card_combos = ['*-{second}-{third}'.format(**slots),
+                                    '*-{second}-{first}'.format(**slots),
+                                    '{first}-{second}-*'.format(**slots),
+                                    '{third}-{second}-*'.format(**slots),
+                                    '{first}-*-{third}'.format(**slots) ]
+                to_return = [self.angle_types.get(combo) for combo in 
+                        wild_card_combos]
+                to_return = list(set([a for a in to_return if a is not None]))
+                if len(to_return) > 1:
+                    raise TopologyError("Wildcard conflicts found in forcefield" +
+                            + "for key {}".format(key))
+                elif len(to_return) == 0:
+                    to_return = None
+                else:
+                    to_return = to_return[0]
+
         else:
             raise TopologyError("Forcefield does not understand " + 
                     "parameter key {}".format(key))
+        
 
+        return to_return
