@@ -10,6 +10,12 @@ class Forcefield(object):
     Parameters
     ---------
     name : str, optional, default 'Forcefield'
+
+    Notes
+    -----
+    While each set of parameters can be accessed via ff.atom_types,
+    ff.bond_types, etc., they can also be accessed via
+    ff['atomtype'], ff['bondtype'] for convenience
     """
     def __init__(self, name='Forcefield'):
         self.name = name
@@ -56,13 +62,30 @@ class Forcefield(object):
                     "parameter key {}".format(key))
 
     def __getitem__(self, key):
-        n_types = len(key.split('-'))
-        if n_types == 1:
-            return self.atom_types.get(key, None)
-        elif n_types == 2:
-            return self.bond_types.get(key, None)
-        elif n_types == 3:
-            return self.angle_types.get(key, None)
+        types = key.split('-')
+        if len(types) == 1:
+            to_return = None
+            return self.atom_types.get(key, to_return)
+        elif len(types) == 2:
+            to_return = None
+            permutations = ['{first}-{second}'.format(first=types[0],
+                                                        second=types[1]),
+                            '{second}-{first}'.format(first=types[0],
+                                                        second=types[1])]
+            for permutation in permutations:
+                to_return = self.bond_types.get(permutation, to_return)
+
+            return to_return
+        elif len(types)  == 3:
+            to_return = None
+            slots = {'first':types[0], 'second':types[1],
+                    'third':types[2]}
+            permutations  = ['{first}-{second}-{third}'.format(**slots),
+                            '{third}-{second}-{first}'.format(**slots)]
+            for permutation in permutations:
+                to_return = self.angle_types.get(permutation, to_return)
+
+            return to_return
         else:
             raise TopologyError("Forcefield does not understand " + 
                     "parameter key {}".format(key))
