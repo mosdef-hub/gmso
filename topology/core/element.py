@@ -73,7 +73,7 @@ def element_by_atomic_number(atomic_number):
     -------
     matched_element : element.Element
         Return an element from the periodic table if we find a match,
-        otherwise riase TopologyError
+        otherwise raise TopologyError
     """
     if isinstance(atomic_number, str):
         atomic_number_trimmed = int(sub('[a-z -]', '', atomic_number.lower()).lstrip('0'))
