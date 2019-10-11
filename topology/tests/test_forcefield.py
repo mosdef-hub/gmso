@@ -71,3 +71,16 @@ class TestForcefield(BaseTest):
         with pytest.raises(TopologyError):
             ff['A-B-C-D-E-F']
 
+    def test_getters_diff_order(self):
+        ff = Forcefield(name='TestFF')
+        myatomtype = AtomType()
+        mybondtype = BondType()
+        myangletype = AngleType()
+
+        ff['A'] = myatomtype
+        ff['A-B'] = mybondtype
+        ff['A-B-C'] = myangletype
+
+        assert ff['B-A'] == mybondtype
+        assert ff['C-B-A'] == myangletype
+
