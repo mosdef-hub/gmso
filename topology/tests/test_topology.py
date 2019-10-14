@@ -59,13 +59,12 @@ class TestTopology(BaseTest):
         top = Topology()
         site1 = Site(name='site1')
         site2 = Site(name='site2')
-        connect = Bond(connection_members=[site1,site2])
+        connect = Bond(connection_members=[site1, site2])
 
         top.add_connection(connect)
-        top.add_site(site1)
-        top.add_site(site2)
-
-
+        # The sites are already added when adding a connection
+        # top.add_site(site1)
+        # top.add_site(site2)
         assert len(top.connections) == 1
 
     def test_add_box(self):
@@ -182,7 +181,7 @@ class TestTopology(BaseTest):
         top.add_site(typed_site, update_types=False)
         assert len(top.atom_types) == 0
 
-        top= Topology()
+        top = Topology()
         assert len(top.atom_types) == 0
         top.add_site(typed_site, update_types=True)
         assert len(top.atom_types) == 1

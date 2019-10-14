@@ -161,9 +161,9 @@ class Potential(object):
                               " {}".format(extra_syms))
 
     def __eq__(self, other):
-        return hash(self) == hash(other)
+        return self._pot_eq_hash() == other._pot_eq_hash()
 
-    def __hash__(self):
+    def _pot_eq_hash(self):
         return hash(
             tuple(
                 (
@@ -175,6 +175,9 @@ class Potential(object):
                 )
             )
         )
+
+    def __hash__(self):
+        return id(self)
 
     def __repr__(self):
         desc = "<Potential {}, id {}>".format(self._name, id(self))
