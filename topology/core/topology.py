@@ -358,3 +358,7 @@ class Topology(object):
 
         return True
 
+    def __hash__(self):
+        """Return hash of the current topology"""
+        return id(self)
+
