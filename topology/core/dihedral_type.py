@@ -28,13 +28,20 @@ class DihedralType(Potential):
     def __init__(self,
                  name='DihedralType',
                  expression='k * (1 + cos(n * phi - phi_eq))**2',
-                 parameters={
+                 parameters=None,
+                 independent_variables=None,
+                 member_types=None):
+        if parameters is None:
+            parameters = {
                      'k': 1000 * u.Unit('kJ / (deg**2)'),
                      'phi_eq': 180 * u.deg,
                      'n': 1*u.dimensionless
-                 },
-                 independent_variables={'phi'},
-                 member_types=[]):
+                 }
+        if independent_variables is None:
+            independent_variables = {'phi'}
+
+        if member_types is None:
+            member_types = list()
 
         super(DihedralType, self).__init__(name=name, expression=expression,
                 parameters=parameters, independent_variables=independent_variables)

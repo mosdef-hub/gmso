@@ -27,12 +27,19 @@ class BondType(Potential):
     def __init__(self,
                  name='BondType',
                  expression='0.5 * k * (r-r_eq)**2',
-                 parameters={
+                 parameters=None,
+                 independent_variables=None,
+                 member_types=None):
+        if parameters is None:
+            parameters = {
                      'k': 1000 * u.Unit('kJ / (nm**2)'),
                      'r_eq': 0.14 * u.nm
-                 },
-                 independent_variables={'r'},
-                 member_types=[]):
+                 }
+        if independent_variables is None:
+            independent_variables = {'r'}
+
+        if member_types is None:
+            member_types = list()
 
         super(BondType, self).__init__(name=name, expression=expression,
                 parameters=parameters, independent_variables=independent_variables)

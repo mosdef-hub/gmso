@@ -53,12 +53,18 @@ class AtomType(Potential):
                  mass=0.0 * u.gram / u.mol,
                  charge=0.0 * u.elementary_charge,
                  expression='4*epsilon*((sigma/r)**12 - (sigma/r)**6)',
-                 parameters={
-                    'sigma': 0.3 * u.nm,
-                    'epsilon': 0.3 * u.Unit('kJ')},
-                 independent_variables={'r'},
-                 atomclass='', doi='', overrides=set(), definition='',
+                 parameters=None,
+                 independent_variables=None,
+                 atomclass='', doi='', overrides=None, definition='',
                  description=''):
+        if parameters is None:
+            parameters = {'sigma': 0.3 * u.nm,
+                          'epsilon': 0.3 * u.Unit('kJ')}
+        if independent_variables is None:
+            independent_variables = {'r'}
+
+        if overrides is None:
+            overrides = set()
 
         super(AtomType, self).__init__(
             name=name,

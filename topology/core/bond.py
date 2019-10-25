@@ -21,7 +21,9 @@ class Bond(Connection):
     Addiitonal _validate methods are presented
     """
 
-    def __init__(self, connection_members=[], connection_type=None, name="Bond"):
+    def __init__(self, connection_members=None, connection_type=None, name="Bond"):
+        if connection_members is None:
+            connection_members = list()
         connection_members = _validate_two_partners(connection_members)
         connection_type = _validate_bondtype(connection_type)
 
