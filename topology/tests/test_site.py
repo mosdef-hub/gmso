@@ -21,7 +21,7 @@ class TestSite(BaseTest):
         [0.0, 0.0, 0.0, 0.0, 0.0], [[0.0, 0.0], [0.0, 0.0]],
         ['a', 'b', 'c'], ['a', 1, 1]])
     def test_bad_pos_input(self, position):
-        with pytest.raises((u.exceptions.UnitDtypeError, ValueError)):
+        with pytest.raises((u.exceptions.InvalidUnitOperation, ValueError)):
             Site(name='site', position=u.nm*position)
 
     def test_equivalence(self):
