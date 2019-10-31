@@ -1,4 +1,6 @@
 import warnings
+from functools import reduce
+
 
 import numpy as np
 import unyt as u
@@ -6,6 +8,7 @@ import unyt as u
 from topology.core.atom_type import AtomType
 from topology.utils.testing import allclose
 from topology.utils.misc import unyt_to_hashable
+from topology.exceptions import TopologyError, TYPE_ERROR_STRING
 
 
 class Site(object):
@@ -32,8 +35,9 @@ class Site(object):
         self._connections = list()
 
     def add_connection(self, connection):
-        connection = _validate_connection(connection)
-        self._connections.append(connection)
+        connection = _validate_connection(self, connection)
+        if connection:
+            self._connections.append(connection)
 
     @property
     def element(self):
@@ -87,9 +91,14 @@ class Site(object):
         self._atom_type = val
 
     def __eq__(self, other):
-        return hash(self) == hash(other)
+        if not isinstance(other, Site):
+            raise TypeError(TYPE_ERROR_STRING.format(other, type(self).__name__, type(other).__name__))
+        return self._equality_check_hash() == other._equality_check_hash()
 
     def __hash__(self):
+        return id(self)
+
+    def _equality_check_hash(self):
         return hash(
             tuple(
                 (
@@ -102,7 +111,6 @@ class Site(object):
                 )
             )
         )
-
     def __repr__(self):
         return "<Site {}, id {}>".format(self.name, id(self))
 
@@ -157,8 +165,17 @@ def _validate_atom_type(val):
     else:
         return val
 
-def _validate_connection(connection):
+def _validate_connection(site, connection):
+    if not isinstance(site, Site):
+        raise ValueError("Passed value {} is not a site".format(site))
+    print(site)
     from topology.core.connection import Connection
     if not isinstance(connection, Connection):
         raise ValueError("Passed value {} is not a Connection".format(connection))
+    # Can't check for equality.
+    if not list(filter(lambda member: member is site, connection.connection_members)):
+        raise TopologyError("Error: Connection {}'s members list does not contain the site {}."
+                            .format(connection, site))
+    if connection in site.connections:
+        return None
     return connection
