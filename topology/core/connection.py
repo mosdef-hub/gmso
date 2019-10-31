@@ -88,6 +88,9 @@ def _validate_connection_members(connection_members):
     for partner in connection_members:
         if not isinstance(partner, Site):
             raise TopologyError("Supplied non-Site {}".format(partner))
+
+    if len(set(connection_members)) != len(connection_members):
+        raise TopologyError("Error, cannot add connection between sites.")
     return connection_members
 
 def _validate_connection_type(c_type):

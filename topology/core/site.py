@@ -168,7 +168,6 @@ def _validate_atom_type(val):
 def _validate_connection(site, connection):
     if not isinstance(site, Site):
         raise ValueError("Passed value {} is not a site".format(site))
-    print(site)
     from topology.core.connection import Connection
     if not isinstance(connection, Connection):
         raise ValueError("Passed value {} is not a Connection".format(connection))
