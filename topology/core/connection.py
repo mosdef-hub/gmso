@@ -20,7 +20,10 @@ class Connection(object):
         A unique name for the connection. Used for writing hoomdxml
         bonds/angles/dihedrals
         """
-    def __init__(self, connection_members=[], connection_type=None, name="Connection"):
+    def __init__(self, connection_members=None, connection_type=None, name="Connection"):
+        if connection_members is None:
+            connection_members = list()
+
         self._connection_members = _validate_connection_members(connection_members)
         self._connection_type = _validate_connection_type(connection_type)
         self._name = _validate_name(name)

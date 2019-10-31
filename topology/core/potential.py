@@ -36,12 +36,16 @@ class Potential(object):
     def __init__(self,
                  name="Potential",
                  expression='a*x+b',
-                 parameters={
-                     'a': 1.0*u.dimensionless,
-                     'b': 1.0*u.dimensionless},
-                 independent_variables={'x'},
+                 parameters=None,
+                 independent_variables=None,
                  template=False,
                  ):
+        if parameters is None:
+            parameters = {'a': 1.0*u.dimensionless,
+                          'b': 1.0*u.dimensionless}
+
+        if independent_variables is None:
+            independent_variables = {'x'}
 
         self._name = name
         if not template:

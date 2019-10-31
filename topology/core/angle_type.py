@@ -28,12 +28,19 @@ class AngleType(Potential):
     def __init__(self,
                  name='AngleType',
                  expression='0.5 * k * (theta-theta_eq)**2',
-                 parameters={
+                 parameters=None,
+                 independent_variables=None,
+                 member_types=None):
+        if parameters is None:
+            parameters = {
                      'k': 1000 * u.Unit('kJ / (deg**2)'),
                      'theta_eq': 180 * u.deg
-                 },
-                 independent_variables={'theta'},
-                 member_types=[]):
+                 }
+        if independent_variables is None:
+            independent_variables = {'theta'}
+
+        if member_types is None:
+            member_types = list()
 
         super(AngleType, self).__init__(name=name, expression=expression,
                 parameters=parameters, independent_variables=independent_variables)
