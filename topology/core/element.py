@@ -10,10 +10,26 @@ from topology.exceptions import TopologyError
 class Element(object):
     """An element."""
     def __init__(self, atomic_number=None, name=None, symbol=None, mass=None):
-        self.atomic_number = atomic_number
-        self.name = name
-        self.symbol = symbol
-        self.mass = mass
+        self._atomic_number = atomic_number
+        self._name = name
+        self._symbol = symbol
+        self._mass = mass
+
+    @property
+    def atomic_number(self):
+        return self._atomic_number
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def symbol(self):
+        return self._symbol
+
+    @property
+    def mass(self):
+        return self._mass
 
 
 def element_by_symbol(symbol):
