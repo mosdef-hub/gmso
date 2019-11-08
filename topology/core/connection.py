@@ -22,7 +22,7 @@ class Connection(object):
         """
     def __init__(self, connection_members=None, connection_type=None, name="Connection"):
         if connection_members is None:
-            connection_members = list()
+            connection_members = set()
 
         self._connection_members = _validate_connection_members(connection_members)
         self._connection_type = _validate_connection_type(connection_type)
@@ -68,21 +68,6 @@ class Connection(object):
 
         return descr
 
-    def __eq__(self, other):
-        return hash(self) == hash(other)
-
-    def __hash__(self):
-        if self.connection_type:
-            return hash(
-                tuple(
-                    (
-                        self.name,
-                        self.connection_type,
-                        tuple(self.connection_members),
-                    )
-                )
-            )
-        return hash(tuple(self.connection_members))
 
 def _validate_connection_members(connection_members):
     for partner in connection_members:
@@ -93,12 +78,14 @@ def _validate_connection_members(connection_members):
         raise TopologyError("Error, cannot add connection between sites.")
     return connection_members
 
+
 def _validate_connection_type(c_type):
     if c_type is None:
         warnings.warn("Non-parametrized Connection detected")
     elif not isinstance(c_type, Potential):
         raise TopologyError("Supplied non-Potential {}".format(c_type))
     return c_type
+
 
 def _validate_name(conname):
     if not isinstance(conname, str):

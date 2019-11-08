@@ -6,8 +6,6 @@ import numpy as np
 import unyt as u
 
 from topology.core.atom_type import AtomType
-from topology.utils.testing import allclose
-from topology.utils.misc import unyt_to_hashable
 from topology.exceptions import TopologyError, TYPE_ERROR_STRING
 
 
@@ -23,6 +21,8 @@ class Site(object):
                  atom_type=None):
         if name is not None:
             self.name = str(name)
+        if name is None:  # Guardrail against checking deliberate None
+            self.name = 'Site'
         if position is None:
             self.position = u.nm * np.zeros(3)
         else:
@@ -32,12 +32,12 @@ class Site(object):
         self._atom_type = _validate_atom_type(atom_type)
         self._charge = _validate_charge(charge)
         self._mass = _validate_mass(mass)
-        self._connections = list()
+        self._connections = set()
 
     def add_connection(self, connection):
         connection = _validate_connection(self, connection)
         if connection:
-            self._connections.append(connection)
+            self._connections.add(connection)
 
     @property
     def element(self):
@@ -90,29 +90,9 @@ class Site(object):
         val = _validate_atom_type(val)
         self._atom_type = val
 
-    def __eq__(self, other):
-        if not isinstance(other, Site):
-            raise TypeError(TYPE_ERROR_STRING.format(other, type(self).__name__, type(other).__name__))
-        return self._equality_check_hash() == other._equality_check_hash()
-
-    def __hash__(self):
-        return id(self)
-
-    def _equality_check_hash(self):
-        return hash(
-            tuple(
-                (
-                    self.name,
-                    unyt_to_hashable(self.position),
-                    unyt_to_hashable(self.charge),
-                    unyt_to_hashable(self.mass),
-                    self.atom_type,
-                    self.element,
-                )
-            )
-        )
     def __repr__(self):
         return "<Site {}, id {}>".format(self.name, id(self))
+
 
 def _validate_position(position):
     if not isinstance(position, u.unyt_array):
@@ -126,8 +106,8 @@ def _validate_position(position):
 
     position *= input_unit
     position.convert_to_units(u.nm)
-
     return position
+
 
 def _validate_charge(charge):
     if charge is None:
@@ -143,6 +123,7 @@ def _validate_charge(charge):
 
     return charge
 
+
 def _validate_mass(mass):
     if mass is None:
         return None
@@ -157,6 +138,7 @@ def _validate_mass(mass):
 
     return mass
 
+
 def _validate_atom_type(val):
     if val is None:
         return None
@@ -165,16 +147,15 @@ def _validate_atom_type(val):
     else:
         return val
 
+
 def _validate_connection(site, connection):
     if not isinstance(site, Site):
         raise ValueError("Passed value {} is not a site".format(site))
     from topology.core.connection import Connection
     if not isinstance(connection, Connection):
         raise ValueError("Passed value {} is not a Connection".format(connection))
-    # Can't check for equality.
-    if not list(filter(lambda member: member is site, connection.connection_members)):
-        raise TopologyError("Error: Connection {}'s members list does not contain the site {}."
-                            .format(connection, site))
+    if site not in connection.connection_members:
+        raise TopologyError("Error: Site not in connection members. Cannot add the connection.")
     if connection in site.connections:
         return None
     return connection
