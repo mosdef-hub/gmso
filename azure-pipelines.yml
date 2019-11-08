@@ -4,7 +4,7 @@ pr:
   - master
 
 jobs:
-  - job: Run Tests
+  - job: TestsForTopology
     pool:
       vmImage: 'ubuntu-latest'
     steps:
