@@ -1,0 +1,35 @@
+trigger:
+  - master
+pr:
+  - master
+
+jobs:
+  - job: Run Tests
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+      - bash: echo "##vso[task.prependpath]$CONDA/bin"
+        displayName: Add conta to path
+
+      - bash: |
+          conda config --set always_yes yes --set changeps1 no
+          conda config --add channels omina
+          conda config --add channels janschulz
+          conda config --add channels conda-forge
+          conda config --add channels mosdef
+        displayName: Add relavent channels
+
+      - bash: |
+          conda create -n test-environment
+          source activate test-environment
+          conda install --yes --file requirements.txt
+          conda install pytest
+          pip install -e .
+        displayName: Install requirements, Install branch
+
+      - bash: |
+          source activate test-environment
+          python -m pytest -v topology
+        displayName: Run Tests
+
+
