@@ -25,6 +25,9 @@ class Topology(object):
     def __init__(self, name="Topology", box=None):
         if name is not None:
             self._name = name
+        else:
+            self._name = "Topology"
+
         self._box = box
         self._sites = IndexedSet()
         self._typed = False
@@ -33,7 +36,6 @@ class Topology(object):
         self._angles = IndexedSet()
         self._dihedrals = IndexedSet()
         self._subtops = IndexedSet()
-        self._typed = False
         self._atom_types = IndexedSet()
         self._connection_types = IndexedSet()
         self._bond_types = IndexedSet()
@@ -94,9 +96,6 @@ class Topology(object):
         return xyz
 
     def add_site(self, site, update_types=True):
-        # Might be a more elegant way of handling this, see PR #128
-        if site in self.sites:
-            warnings.warn("Redundantly adding Site {}".format(site))
         self._sites.add(site)
         if update_types:
             if not self.typed:
@@ -104,10 +103,6 @@ class Topology(object):
             self.update_atom_types()
 
     def add_connection(self, connection, update_types=True):
-        # Might be a more elegant way of handling this, see PR #128
-        if connection in self.connections:
-            warnings.warn("Redundantly adding Connection {}".format(connection))
-
         for conn_member in connection.connection_members:
             if conn_member not in self.sites:
                 self.add_site(conn_member)
@@ -117,13 +112,11 @@ class Topology(object):
 
         self._connections.add(connection)
         if isinstance(connection, Bond):
-            self.update_bonds()
+            self._bonds.add(connection)
         elif isinstance(connection, Angle):
-            self.update_angles()
+            self._angles.add(connection)
         elif isinstance(connection, Dihedral):
-            self.update_dihedrals()
-
-        self.update_connections()
+            self._dihedrals.add(connection)
 
         if update_types:
             if not self.typed:
@@ -240,9 +233,6 @@ class Topology(object):
         """
         self.update_sites()
         self.update_connections()
-        self.update_bonds()
-        self.update_angles()
-        self.update_dihedrals()
 
         if update_types:
             self.update_atom_types()
@@ -262,23 +252,10 @@ class Topology(object):
 
     def update_connections(self):
         """ Update connection list based on the site list """
-        #self._connections = []
         for site in self.sites:
             for connection in site.connections:
                 if connection not in self.connections:
                     self.add_connection(connection)
-
-    def update_bonds(self):
-        """ Rebuild the bond list by filtering through connection list """
-        self._bonds = [b for b in self.connections if isinstance(b, Bond)]
-
-    def update_angles(self):
-        """ Rebuild the angle list by filtering through connection list """
-        self._angles = [a for a in self.connections if isinstance(a, Angle)]
-
-    def update_dihedrals(self):
-        """ Rebuild the dihedral list by filtering through connection list """
-        self._dihedrals = [d for d in self.connections if isinstance(d, Dihedral)]
 
     def update_atom_types(self):
         """ Update the atom types based on the site list """
@@ -345,34 +322,3 @@ class Topology(object):
         descr.append('id: {}>'.format(id(self)))
 
         return ''.join(descr)
-
-    def __eq__(self, other):
-        """Compare a topology for equivalence."""
-
-        if self is other:
-            return True
-
-        if not isinstance(other, Topology):
-            return False
-
-        if self.name != other.name:
-            return False
-
-        if self.n_sites != other.n_sites:
-            return False
-
-        if self.combining_rule != other.combining_rule:
-            return False
-
-        for (con1, con2) in zip(self.connections, other.connections):
-            if con1 != con2:
-                return False
-
-        for (site1, site2) in zip(self.sites, other.sites):
-            if site1 != site2:
-                return False
-
-        if self.box != other.box:
-            return False
-
-        return True

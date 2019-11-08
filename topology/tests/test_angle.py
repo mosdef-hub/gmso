@@ -90,5 +90,5 @@ class TestAngle(BaseTest):
             connection_members=[site2, site2, site1],
         )
 
-        assert ref_angle == same_angle
+        assert ref_angle != same_angle
         assert ref_angle != diff_angle

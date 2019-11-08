@@ -23,7 +23,7 @@ class Bond(Connection):
 
     def __init__(self, connection_members=None, connection_type=None, name="Bond"):
         if connection_members is None:
-            connection_members = list()
+            connection_members = tuple()
         connection_members = _validate_two_partners(connection_members)
         connection_type = _validate_bondtype(connection_type)
 

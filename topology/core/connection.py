@@ -22,7 +22,7 @@ class Connection(object):
         """
     def __init__(self, connection_members=None, connection_type=None, name="Connection"):
         if connection_members is None:
-            connection_members = set()
+            connection_members = tuple()
 
         self._connection_members = _validate_connection_members(connection_members)
         self._connection_type = _validate_connection_type(connection_type)
@@ -75,8 +75,8 @@ def _validate_connection_members(connection_members):
             raise TopologyError("Supplied non-Site {}".format(partner))
 
     if len(set(connection_members)) != len(connection_members):
-        raise TopologyError("Error, cannot add connection between sites.")
-    return connection_members
+        raise TopologyError("Error, cannot add connection between same sites.")
+    return tuple(connection_members)
 
 
 def _validate_connection_type(c_type):

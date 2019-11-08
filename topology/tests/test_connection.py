@@ -65,8 +65,8 @@ class TestConnection(BaseTest):
         same_connection = Connection(
             connection_members=[site1, site2],
         )
-
-        assert ref_connection == same_connection
+        # Two connections are never equal
+        assert ref_connection != same_connection
 
     def test_add_connection_same_sites(self):
         site1 = Site()

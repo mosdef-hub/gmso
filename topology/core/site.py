@@ -4,9 +4,10 @@ from functools import reduce
 
 import numpy as np
 import unyt as u
+from boltons.setutils import IndexedSet
 
 from topology.core.atom_type import AtomType
-from topology.exceptions import TopologyError, TYPE_ERROR_STRING
+from topology.exceptions import TopologyError
 
 
 class Site(object):
@@ -32,7 +33,7 @@ class Site(object):
         self._atom_type = _validate_atom_type(atom_type)
         self._charge = _validate_charge(charge)
         self._mass = _validate_mass(mass)
-        self._connections = set()
+        self._connections = IndexedSet()
 
     def add_connection(self, connection):
         connection = _validate_connection(self, connection)

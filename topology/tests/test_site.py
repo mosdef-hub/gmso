@@ -31,8 +31,8 @@ class TestSite(BaseTest):
         same_site = Site(name='site', position=u.nm*np.zeros(3))
         other_pos = Site(name='site', position=u.nm*np.ones(3))
         other_name = Site(name='site', position=u.nm*np.ones(3))
-
-        assert ref == same_site
+        # Two sites are never equivalent
+        assert ref != same_site
         assert ref != other_pos
         assert ref != other_name
 
