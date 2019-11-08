@@ -58,7 +58,6 @@ class TestTopology(BaseTest):
         top.add_site(site1)
         top.add_site(site2)
 
-
         assert len(top.connections) == 1
 
     def test_add_box(self):
@@ -92,7 +91,7 @@ class TestTopology(BaseTest):
     def test_eq_sites(self, top, charge):
         ref = deepcopy(top)
         wrong_n_sites = deepcopy(top)
-        assert top == wrong_n_sites
+        assert top != wrong_n_sites
         ref.add_site(Site())
         assert ref != wrong_n_sites
 
@@ -167,7 +166,7 @@ class TestTopology(BaseTest):
         top1 = from_parmed(ref)
         top2 = from_parmed(ref)
 
-        assert top1 == top2
+        assert top1 != top2
 
     def test_add_untyped_site_update(self):
         untyped_site = Site(atom_type=None)
