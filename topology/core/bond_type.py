@@ -1,6 +1,8 @@
 import unyt as u
+import warnings
 
 from topology.core.potential import Potential
+from topology.utils.decorators import confirm_set_existence
 from topology.exceptions import TopologyError
 
 
@@ -29,12 +31,14 @@ class BondType(Potential):
                  expression='0.5 * k * (r-r_eq)**2',
                  parameters=None,
                  independent_variables=None,
-                 member_types=None):
+                 member_types=None,
+                 topology=None,
+                 set_ref='bond_type_set'):
         if parameters is None:
             parameters = {
-                     'k': 1000 * u.Unit('kJ / (nm**2)'),
-                     'r_eq': 0.14 * u.nm
-                 }
+                'k': 1000 * u.Unit('kJ / (nm**2)'),
+                'r_eq': 0.14 * u.nm
+            }
         if independent_variables is None:
             independent_variables = {'r'}
 
@@ -42,7 +46,8 @@ class BondType(Potential):
             member_types = list()
 
         super(BondType, self).__init__(name=name, expression=expression,
-                parameters=parameters, independent_variables=independent_variables)
+                                       parameters=parameters, independent_variables=independent_variables,
+                                       topology=topology, set_ref=set_ref)
 
         self._member_types = _validate_two_member_type_names(member_types)
 
@@ -51,23 +56,33 @@ class BondType(Potential):
         return self._member_types
 
     @member_types.setter
+    @confirm_set_existence
     def member_types(self, val):
         if self.member_types != val:
             warnings.warn("Changing a BondType's constituent "
-                    "member types: {} to {}".format(self.member_types, val))
+                          "member types: {} to {}".format(self.member_types, val))
         self._member_types = _validate_two_member_type_names(val)
+
+    @property
+    def topology(self):
+        return self._topology
+
+    @topology.setter
+    def topology(self, top):
+        self._topology = top
+        self._set_ref = 'bond_type_set'
 
     def __repr__(self):
         return "<BondType {}, id {}>".format(self.name, id(self))
+
 
 def _validate_two_member_type_names(types):
     """Ensure 2 partners are involved in BondType"""
     if len(types) != 2 and len(types) != 0:
         raise TopologyError("Trying to create a BondType "
-                "with {} constituent types". format(len(types)))
+                            "with {} constituent types".format(len(types)))
     if not all([isinstance(t, str) for t in types]):
         raise TopologyError("Types passed to BondType "
                             "need to be strings corresponding to AtomType names")
 
     return types
-

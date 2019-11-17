@@ -3,6 +3,7 @@ import unyt as u
 
 from topology.core.potential import Potential
 from topology.utils.misc import unyt_to_hashable
+from topology.utils.decorators import confirm_set_existence
 
 
 class AtomType(Potential):
@@ -44,6 +45,8 @@ class AtomType(Potential):
         Set of other atom types that this atom type overrides
     definition : str
         SMARTS string defining this atom type
+    topology: topology.core.Topology, the topology of which this atom_type is a part of, default=None
+    set_ref: (str), the string name of the bookkeeping set in topology class.
 
     """
 
@@ -55,7 +58,9 @@ class AtomType(Potential):
                  parameters=None,
                  independent_variables=None,
                  atomclass='', doi='', overrides=None, definition='',
-                 description=''):
+                 description='',
+                 topology=None,
+                 set_ref='atom_type_set'):
         if parameters is None:
             parameters = {'sigma': 0.3 * u.nm,
                           'epsilon': 0.3 * u.Unit('kJ')}
@@ -69,7 +74,9 @@ class AtomType(Potential):
             name=name,
             expression=expression,
             parameters=parameters,
-            independent_variables=independent_variables)
+            independent_variables=independent_variables,
+            topology=topology,
+            set_ref=set_ref)
         self._mass = _validate_mass(mass)
         self._charge = _validate_charge(charge)
         self._atomclass = _validate_str(atomclass)
@@ -85,6 +92,7 @@ class AtomType(Potential):
         return self._charge
 
     @charge.setter
+    @confirm_set_existence
     def charge(self, val):
         self._charge = _validate_charge(val)
 
@@ -93,6 +101,7 @@ class AtomType(Potential):
         return self._mass
 
     @mass.setter
+    @confirm_set_existence
     def mass(self, val):
         self._mass = _validate_mass(val)
 
@@ -101,6 +110,7 @@ class AtomType(Potential):
         return self._atomclass
 
     @atomclass.setter
+    @confirm_set_existence
     def atomclass(self, val):
         self._atomclass = val
 
@@ -109,6 +119,7 @@ class AtomType(Potential):
         return self._doi
 
     @doi.setter
+    @confirm_set_existence
     def doi(self, doi):
         self._doi = _validate_str(doi)
 
@@ -117,6 +128,7 @@ class AtomType(Potential):
         return self._overrides
 
     @overrides.setter
+    @confirm_set_existence
     def overrides(self, overrides):
         self._overrides = _validate_set(overrides)
 
@@ -125,6 +137,7 @@ class AtomType(Potential):
         return self._description
 
     @description.setter
+    @confirm_set_existence
     def description(self, description):
         self._description = _validate_str(description)
 
@@ -133,8 +146,18 @@ class AtomType(Potential):
         return self._definition
 
     @definition.setter
+    @confirm_set_existence
     def definition(self, definition):
         self._definition = _validate_str(definition)
+
+    @property
+    def topology(self):
+        return self._topology
+
+    @topology.setter
+    def topology(self, top):
+        self._topology = top
+        self._set_ref = 'atom_type_set'
 
     def __eq__(self, other):
         return hash(self) == hash(other)

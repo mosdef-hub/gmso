@@ -4,6 +4,7 @@ import unyt as u
 
 from topology.utils.misc import unyt_to_hashable
 from topology.utils.decorators import confirm_set_existence
+from topology.exceptions import TopologyError
 
 
 class Potential(object):
@@ -32,6 +33,8 @@ class Potential(object):
         `unyt.unyt_quantity`, which combine both value and unit information.
     independent_variables : str or sympy.Symbol or list or set thereof
         The independent variables in the expression of the potential.
+    topology: topology.core.Topology, the topology of which this potential is a part of, default=None
+    set_ref: (str), the string name of the bookkeeping set in topology class.
 
     """
 
@@ -59,9 +62,13 @@ class Potential(object):
         self._template = template
 
         if topology is not None:
+            if set_ref is None:
+                raise TopologyError('Please specify the set_ref argument, when setting topology')
             self._topology = topology
             self._set_ref = set_ref
         else:
+            if set_ref is not None:
+                warnings.warn('Cannot set the set_ref without a topology')
             self._topology = None
             self._set_ref = None
 
@@ -112,6 +119,10 @@ class Potential(object):
         self._expression = _validate_expression(expression)
 
         self._validate_expression_parameters()
+
+    @property
+    def topology(self):
+        return self._topology
 
     @confirm_set_existence
     def set_expression(self, expression=None, parameters=None, independent_variables=None):
