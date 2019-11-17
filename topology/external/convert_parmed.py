@@ -37,7 +37,7 @@ def from_parmed(structure):
                     u.nm),
                 atom_type=None)
         site_map[atom] = site
-        top.add_site(site, update_types=False)
+        top.add_site(site)
     top.update_top()
 
     if np.all(structure.box):

@@ -77,9 +77,9 @@ class TestTopology(BaseTest):
         assert set([type(site.position) for site in top.sites]) == {u.unyt_array}
         assert set([site.position.units for site in top.sites]) == {u.nm}
 
-        assert top.positions().dtype == float
-        assert top.positions().units == u.nm
-        assert isinstance(top.positions(), u.unyt_array)
+        assert top.positions.dtype == float
+        assert top.positions.units == u.nm
+        assert isinstance(top.positions, u.unyt_array)
 
     def test_eq_types(self, top, box):
         assert top != box
@@ -227,7 +227,7 @@ class TestTopology(BaseTest):
 
     def test_top_update(self):
         top = Topology()
-        top.update_top()
+        top.update_topology()
         assert top.n_sites == 0
         assert len(top.atom_types) == 0
         assert len(top.atom_type_expressions) == 0

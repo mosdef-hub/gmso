@@ -3,6 +3,8 @@ import sympy
 import pytest
 
 from topology.core.atom_type import AtomType
+from topology.core.site import Site
+from topology.core.topology import Topology
 from topology.tests.base_test import BaseTest
 from topology.utils.testing import allclose
 
@@ -170,6 +172,19 @@ class TestAtomType(BaseTest):
             valid_type.overrides=['123']
             valid_type.description=123
 
-
+    def test_atom_type_with_topology_and_site(self):
+        site1 = Site()
+        site2 = Site()
+        top = Topology()
+        atom_type1 = AtomType()
+        atom_type2 = AtomType()
+        site1.atom_type = atom_type1
+        site2.atom_type = atom_type2
+        top.add_site(site1)
+        top.add_site(site2)
+        assert id(site1.atom_type) == id(site2.atom_type)
+        assert len(top.atom_types) == 1
+        assert site1.atom_type.topology == top
+        assert site2.atom_type.topology == top
 
 

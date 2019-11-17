@@ -179,7 +179,7 @@ class Topology(object):
     def dihedral_type_expressions(self):
         return list(set([atype.expression for atype in self.dihedral_types]))
 
-    def add_site(self, site):
+    def add_site(self, site, update_types=False):
         """Add the site to the topology
         Parameters
         -----------
@@ -189,13 +189,20 @@ class Topology(object):
         -------
         None
         """
-        if site.atom_type:
+        self.sites.add(site)
+        if update_types and site.atom_type:
             self.atom_types.add(site.atom_type)
             site.atom_type = self.atom_types[self.atom_types.index(site.atom_type)]
             site.atom_type.topology = self
-        self.sites.add(site)
+            self.update_atom_types()
 
-    def add_connection(self, connection):
+    def update_sites(self):
+        for connection in self.connections:
+            for member in connection.connection_members:
+                if member not in self.sites:
+                    self.add_site(member)
+
+    def add_connection(self, connection, update=True):
         for conn_member in connection.connection_members:
             if conn_member not in self.sites:
                 self.add_site(conn_member)
@@ -206,7 +213,25 @@ class Topology(object):
             self._angles.add(connection)
         if isinstance(connection, Dihedral):
             self._dihedrals.add(connection)
+        if update:
+            self.update_connection_types()
+
+    def update_connections(self):
+        for site in self.sites:
+            for conn in site.connections:
+                if conn not in self.connections:
+                    self.add_connection(conn, update=False)
         self.update_connection_types()
+        self.is_typed()
+
+    def update_bonds(self):
+        pass
+
+    def update_angles(self):
+        pass
+
+    def update_dihedrals(self):
+        pass
 
     def update_connection_types(self):
         """Update the connection types based on the connection set"""
@@ -218,16 +243,18 @@ class Topology(object):
                                     'in Connection {}'.format(c.connection_type, c))
             elif c.connection_type not in self.connection_types:
                 c.connection_type.topology = self
-                self.connection_types.add(c)
-                if isinstance(c, BondType):
-                    self.bond_types.add(c)
-                if isinstance(c, AngleType):
-                    self.bond_types.add(c)
-                if isinstance(c, DihedralType):
-                    self.dihedral_types.add(c)
+                self.connection_types.add(c.connection_type)
+                if isinstance(c.connection_type, BondType):
+                    self._bond_types.add(c.connection_type)
+                if isinstance(c.connection_type, AngleType):
+                    self._angle_types.add(c.connection_type)
+                if isinstance(c.connection_type, DihedralType):
+                    self._dihedral_types.add(c.connection_type)
 
     def update_atom_types(self):
         """Update atom types in the topology"""
+        if not self._typed:
+            self._typed = True
         for site in self.sites:
             if site.atom_type is None:
                 warnings.warn('Non-parametrized site detected {}'.format(site))
@@ -262,6 +289,14 @@ class Topology(object):
     def update_dihedral_types(self):
         pass
 
+    def update_topology(self):
+        """Update the entire topology"""
+        self.update_sites()
+        self.update_connections()
+        self.update_atom_types()
+        self.update_connection_types()
+        self.is_typed()
+
     def __repr__(self):
         descr = list('<')
         descr.append(self.name + ' ')
@@ -274,3 +309,4 @@ class Topology(object):
     update_angle_types = update_connection_types
     update_bond_types = update_connection_types
     update_dihedral_types = update_connection_types
+    update_angles = update_bonds = update_angles = update_connections

@@ -25,8 +25,8 @@ def to_openmm(topology, openmm_object='topology'):
 
     # Get topology.positions into OpenMM form
     openmm_unit = 1 * simtk_unit.nanometer
-    topology.positions().convert_to_units(openmm_unit.unit.get_symbol())
-    value = [i.value for i in topology.positions()]
+    topology.positions.convert_to_units(openmm_unit.unit.get_symbol())
+    value = [i.value for i in topology.positions]
     openmm_pos = simtk_unit.Quantity(value=value,
             unit=openmm_unit.unit)
 
