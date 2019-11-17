@@ -42,6 +42,12 @@ class Topology(object):
         self._angle_types = IndexedSet()
         self._dihedral_types = IndexedSet()
         self._combining_rule = 'lorentz'
+        self._set_refs = {
+            'atom_type_set': self._atom_types,
+            'bond_type_set': self._bond_types,
+            'angle_type_set': self._angle_types,
+            'dihedral_type_set': self._dihedral_types,
+        }
 
     @property
     def name(self):

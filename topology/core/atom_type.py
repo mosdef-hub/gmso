@@ -1,7 +1,6 @@
 import warnings
 import unyt as u
 
-from topology.utils.testing import allclose
 from topology.core.potential import Potential
 from topology.utils.misc import unyt_to_hashable
 
@@ -185,10 +184,12 @@ def _validate_mass(mass):
 
     return mass
 
+
 def _validate_str(val):
     if not isinstance(val, str):
         raise ValueError("Passed value {} is not a string".format(val))
     return val
+
 
 def _validate_set(val):
     if not isinstance(val, set):
