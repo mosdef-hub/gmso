@@ -179,12 +179,12 @@ class Topology(object):
     def dihedral_type_expressions(self):
         return list(set([atype.expression for atype in self.dihedral_types]))
 
-    def add_site(self, site, update_types=False):
+    def add_site(self, site, update_types=True):
         """Add the site to the topology
         Parameters
         -----------
         site: (topology.core.Site), site to be added to this topology
-
+        update_types: (bool), default(true), If true, update atom types for the site
         Returns
         -------
         None
@@ -202,25 +202,25 @@ class Topology(object):
                 if member not in self.sites:
                     self.add_site(member)
 
-    def add_connection(self, connection, update=True):
+    def add_connection(self, connection, update_types=True):
         for conn_member in connection.connection_members:
             if conn_member not in self.sites:
                 self.add_site(conn_member)
         self._connections.add(connection)
         if isinstance(connection, Bond):
-            self._bonds.add(Bond)
+            self._bonds.add(connection)
         if isinstance(connection, Angle):
             self._angles.add(connection)
         if isinstance(connection, Dihedral):
             self._dihedrals.add(connection)
-        if update:
+        if update_types:
             self.update_connection_types()
 
     def update_connections(self):
         for site in self.sites:
             for conn in site.connections:
                 if conn not in self.connections:
-                    self.add_connection(conn, update=False)
+                    self.add_connection(conn, update_types=False)
         self.update_connection_types()
         self.is_typed()
 
