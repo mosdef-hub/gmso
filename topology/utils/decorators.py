@@ -9,9 +9,9 @@ def confirm_set_existence(setter_function):
     @wraps(setter_function)
     def setter_function_with_set_removal(self, *args, **kwargs):
         if self._topology:
-            self._topology[self._set_ref].discard(self)
+            self._topology._set_refs[self._set_ref].discard(self)
             setter_function(self, *args, **kwargs)
-            self._topology[self._set_ref].add(self)
+            self._topology._set_refs[self._set_ref].add(self)
         else:
             setter_function(self, *args, **kwargs)
     return setter_function_with_set_removal

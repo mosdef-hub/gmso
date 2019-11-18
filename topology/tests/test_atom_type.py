@@ -188,4 +188,28 @@ class TestAtomType(BaseTest):
         assert site1.atom_type.topology == top
         assert site2.atom_type.topology == top
 
+    def test_atom_type_with_topology_and_site_change_properties(self):
+        site1 = Site()
+        site2 = Site()
+        top = Topology()
+        atom_type1 = AtomType()
+        atom_type2 = AtomType()
+        site1.atom_type = atom_type1
+        site2.atom_type = atom_type2
+        top.add_site(site1)
+        top.add_site(site2)
+        site1.atom_type.mass = 250
+        assert site2.atom_type.mass == 250
+        assert top.atom_types[0].mass == 250
+
+    def test_with_1000_atom_types(self):
+        top = Topology()
+        for i in range(1000):
+            site = Site()
+            atom_type = AtomType()
+            site.atom_type = atom_type
+            top.add_site(site, update_types=False)
+        top.update_topology()
+        assert len(top.atom_types) == 1
+        assert top.n_sites == 1000
 
