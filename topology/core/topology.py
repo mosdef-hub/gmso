@@ -87,7 +87,7 @@ class Topology(object):
     @property
     def positions(self):
         xyz = np.empty(shape=(self.n_sites, 3)) * u.nm
-        for i, site in enumerate(self.sites):
+        for i, site in enumerate(self._sites):
             xyz[i, :] = site.position
         return xyz
 
@@ -121,43 +121,43 @@ class Topology(object):
 
     @property
     def sites(self):
-        return self._sites
+        return tuple(self._sites)
 
     @property
     def connections(self):
-        return self._connections
+        return tuple(self._connections)
 
     @property
     def bonds(self):
-        return self._bonds
+        return tuple(self._bonds)
 
     @property
     def angles(self):
-        return self._angles
+        return tuple(self._angles)
 
     @property
     def dihedrals(self):
-        return self._dihedrals
+        return tuple(self._dihedrals)
 
     @property
     def atom_types(self):
-        return self._atom_types
+        return tuple(self._atom_types)
 
     @property
     def connection_types(self):
-        return self._connection_types
+        return tuple(self._connection_types)
 
     @property
     def bond_types(self):
-        return self._bond_types
+        return tuple(self._bond_types)
 
     @property
     def angle_types(self):
-        return self._angle_types
+        return tuple(self._angle_types)
 
     @property
     def dihedral_types(self):
-        return self._dihedral_types
+        return tuple(self._dihedral_types)
 
     @property
     def atom_type_expressions(self):
@@ -189,9 +189,9 @@ class Topology(object):
         -------
         None
         """
-        self.sites.add(site)
+        self._sites.add(site)
         if update_types and site.atom_type:
-            self.atom_types.add(site.atom_type)
+            self._atom_types.add(site.atom_type)
             site.atom_type = self.atom_types[self.atom_types.index(site.atom_type)]
             site.atom_type.topology = self
             self.update_atom_types()
@@ -199,7 +199,7 @@ class Topology(object):
     def update_sites(self):
         for connection in self.connections:
             for member in connection.connection_members:
-                if member not in self.sites:
+                if member not in self._sites:
                     self.add_site(member)
 
     def add_connection(self, connection, update_types=True):
@@ -243,7 +243,7 @@ class Topology(object):
                                     'in Connection {}'.format(c.connection_type, c))
             elif c.connection_type not in self.connection_types:
                 c.connection_type.topology = self
-                self.connection_types.add(c.connection_type)
+                self._connection_types.add(c.connection_type)
                 if isinstance(c.connection_type, BondType):
                     self._bond_types.add(c.connection_type)
                 if isinstance(c.connection_type, AngleType):
@@ -255,15 +255,15 @@ class Topology(object):
         """Update atom types in the topology"""
         if not self._typed:
             self._typed = True
-        for site in self.sites:
+        for site in self._sites:
             if site.atom_type is None:
                 warnings.warn('Non-parametrized site detected {}'.format(site))
             elif not isinstance(site.atom_type, AtomType):
                 raise TopologyError('Non AtomType instance found in site {}'.format(site))
             elif site.atom_type not in self.atom_types:
                 site.atom_type.topology = self
-                self.atom_types.add(site.atom_type)
-                site.atom_type = self.atom_types[self.atom_types.index(site.atom_type)]
+                self._atom_types.add(site.atom_type)
+                site.atom_type = self._atom_types[self.atom_types.index(site.atom_type)]
 
     def add_subtopology(self, subtop):
         self._subtops.add(subtop)
@@ -278,7 +278,7 @@ class Topology(object):
             self._typed = True
         else:
             self._typed = False
-        return self.typed
+        return self._typed
 
     def update_angle_types(self):
         pass

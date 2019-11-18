@@ -183,6 +183,7 @@ class TestAtomType(BaseTest):
         top.add_site(site1)
         top.add_site(site2)
         assert id(site1.atom_type) == id(site2.atom_type)
+        assert site1.atom_type is not None
         assert len(top.atom_types) == 1
         assert site1.atom_type.topology == top
         assert site2.atom_type.topology == top
