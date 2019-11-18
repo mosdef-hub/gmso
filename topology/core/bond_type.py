@@ -4,6 +4,7 @@ import warnings
 from topology.core.potential import Potential
 from topology.utils.decorators import confirm_set_existence
 from topology.exceptions import TopologyError
+from topology.utils._constants import BOND_TYPE_SET
 
 
 class BondType(Potential):
@@ -47,9 +48,13 @@ class BondType(Potential):
 
         super(BondType, self).__init__(name=name, expression=expression,
                                        parameters=parameters, independent_variables=independent_variables,
-                                       topology=topology, set_ref=set_ref)
-
+                                       topology=topology)
+        self._set_ref = BOND_TYPE_SET
         self._member_types = _validate_two_member_type_names(member_types)
+
+    @property
+    def set_ref(self):
+        return self._set_ref
 
     @property
     def member_types(self):
@@ -62,15 +67,6 @@ class BondType(Potential):
             warnings.warn("Changing a BondType's constituent "
                           "member types: {} to {}".format(self.member_types, val))
         self._member_types = _validate_two_member_type_names(val)
-
-    @property
-    def topology(self):
-        return self._topology
-
-    @topology.setter
-    def topology(self, top):
-        self._topology = top
-        self._set_ref = 'bond_type_set'
 
     def __repr__(self):
         return "<BondType {}, id {}>".format(self.name, id(self))

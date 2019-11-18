@@ -4,6 +4,7 @@ import unyt as u
 from topology.core.potential import Potential
 from topology.exceptions import TopologyError
 from topology.utils.decorators import confirm_set_existence
+from topology.utils._constants import ANGLE_TYPE_SET
 
 
 class AngleType(Potential):
@@ -34,8 +35,7 @@ class AngleType(Potential):
                  parameters=None,
                  independent_variables=None,
                  member_types=None,
-                 topology=None,
-                 set_ref='angle_type_set'):
+                 topology=None):
         if parameters is None:
             parameters = {
                 'k': 1000 * u.Unit('kJ / (deg**2)'),
@@ -46,12 +46,15 @@ class AngleType(Potential):
 
         if member_types is None:
             member_types = list()
-
         super(AngleType, self).__init__(name=name, expression=expression,
                                         parameters=parameters, independent_variables=independent_variables,
-                                        topology=topology, set_ref=set_ref)
-
+                                        topology=topology)
         self._member_types = _validate_three_member_type_names(member_types)
+        self._set_ref = ANGLE_TYPE_SET
+
+    @property
+    def set_ref(self):
+        return self._set_ref
 
     @property
     def member_types(self):
@@ -64,15 +67,6 @@ class AngleType(Potential):
             warnings.warn("Changing an AngleType's constituent "
                           "member types: {} to {}".format(self.member_types, val))
         self._member_types = _validate_three_member_type_names(val)
-
-    @property
-    def topology(self):
-        return self._topology
-
-    @topology.setter
-    def topology(self, top):
-        self._topology = top
-        self._set_ref = 'angle_type_set'
 
     def __repr__(self):
         return "<AngleType {}, id {}>".format(self.name, id(self))

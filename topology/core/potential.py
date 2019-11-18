@@ -44,8 +44,7 @@ class Potential(object):
                  parameters=None,
                  independent_variables=None,
                  template=False,
-                 topology=None,
-                 set_ref="potential_type"
+                 topology=None
                  ):
         if parameters is None:
             parameters = {'a': 1.0*u.dimensionless,
@@ -62,15 +61,9 @@ class Potential(object):
         self._template = template
 
         if topology is not None:
-            if set_ref is None:
-                raise TopologyError('Please specify the set_ref argument, when setting topology')
             self._topology = topology
-            self._set_ref = set_ref
         else:
-            if set_ref is not None:
-                warnings.warn('Cannot set the set_ref without a topology')
             self._topology = None
-            self._set_ref = None
 
         if not template:
             self._validate_expression_parameters()
@@ -123,6 +116,10 @@ class Potential(object):
     @property
     def topology(self):
         return self._topology
+
+    @topology.setter
+    def topology(self, top):
+        self._topology = top
 
     @confirm_set_existence
     def set_expression(self, expression=None, parameters=None, independent_variables=None):

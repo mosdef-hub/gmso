@@ -4,6 +4,7 @@ import unyt as u
 from topology.core.potential import Potential
 from topology.utils.misc import unyt_to_hashable
 from topology.utils.decorators import confirm_set_existence
+from topology.utils._constants import ATOM_TYPE_SET
 
 
 class AtomType(Potential):
@@ -59,8 +60,7 @@ class AtomType(Potential):
                  independent_variables=None,
                  atomclass='', doi='', overrides=None, definition='',
                  description='',
-                 topology=None,
-                 set_ref='atom_type_set'):
+                 topology=None):
         if parameters is None:
             parameters = {'sigma': 0.3 * u.nm,
                           'epsilon': 0.3 * u.Unit('kJ')}
@@ -75,8 +75,7 @@ class AtomType(Potential):
             expression=expression,
             parameters=parameters,
             independent_variables=independent_variables,
-            topology=topology,
-            set_ref=set_ref)
+            topology=topology)
         self._mass = _validate_mass(mass)
         self._charge = _validate_charge(charge)
         self._atomclass = _validate_str(atomclass)
@@ -84,8 +83,12 @@ class AtomType(Potential):
         self._overrides = _validate_set(overrides)
         self._description = _validate_str(description)
         self._definition = _validate_str(definition)
-
+        self._set_ref = ATOM_TYPE_SET
         self._validate_expression_parameters()
+
+    @property
+    def set_ref(self):
+        return self._set_ref
 
     @property
     def charge(self):
@@ -149,15 +152,6 @@ class AtomType(Potential):
     @confirm_set_existence
     def definition(self, definition):
         self._definition = _validate_str(definition)
-
-    @property
-    def topology(self):
-        return self._topology
-
-    @topology.setter
-    def topology(self, top):
-        self._topology = top
-        self._set_ref = 'atom_type_set'
 
     def __eq__(self, other):
         return hash(self) == hash(other)

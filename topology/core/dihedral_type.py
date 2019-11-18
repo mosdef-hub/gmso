@@ -3,7 +3,7 @@ import unyt as u
 
 from topology.core.potential import Potential
 from topology.exceptions import TopologyError
-
+from topology.utils._constants import DIHEDRAL_TYPE_SET
 
 class DihedralType(Potential):
     """A Potential between 4-bonded partners.
@@ -49,9 +49,13 @@ class DihedralType(Potential):
 
         super(DihedralType, self).__init__(name=name, expression=expression,
                                            parameters=parameters, independent_variables=independent_variables,
-                                           topology=topology, set_ref=set_ref)
-
+                                           topology=topology)
+        self._set_ref = DIHEDRAL_TYPE_SET
         self._member_types = _validate_four_member_type_names(member_types)
+
+    @property
+    def set_ref(self):
+        return self._set_ref
 
     @property
     def member_types(self):

@@ -379,3 +379,18 @@ class TestTopology(BaseTest):
         top.typed = True
         assert top.typed == True
         assert top.is_typed() == False
+
+    def test_topology_atom_type_changes(self):
+        top = Topology()
+        for i in range(100):
+            site = Site(name='site{}'.format(i))
+            atom_type = AtomType(name='atom_type{}'.format(i%10))
+            site.atom_type = atom_type
+            top.add_site(site, update_types=False)
+        top.update_topology()
+        assert len(top.atom_types) == 10
+        top.sites[0].atom_type.name = 'atom_type_changed'
+        assert id(top.sites[0].atom_type) == id(top.sites[10].atom_type)
+        assert top.sites[10].atom_type.name == 'atom_type_changed'
+
+

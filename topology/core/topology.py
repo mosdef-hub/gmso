@@ -12,6 +12,7 @@ from topology.core.atom_type import AtomType
 from topology.core.bond_type import BondType
 from topology.core.angle_type import AngleType
 from topology.core.dihedral_type import DihedralType
+from topology.utils._constants import ATOM_TYPE_SET, BOND_TYPE_SET, ANGLE_TYPE_SET, DIHEDRAL_TYPE_SET
 from topology.exceptions import TopologyError
 
 
@@ -44,10 +45,10 @@ class Topology(object):
         self._dihedral_types = IndexedSet()
         self._combining_rule = 'lorentz'
         self._set_refs = {
-            'atom_type_set': self._atom_types,
-            'bond_type_set': self._bond_types,
-            'angle_type_set': self._angle_types,
-            'dihedral_type_set': self._dihedral_types,
+            ATOM_TYPE_SET: self._atom_types,
+            BOND_TYPE_SET: self._bond_types,
+            ANGLE_TYPE_SET: self._angle_types,
+            DIHEDRAL_TYPE_SET: self._dihedral_types,
         }
 
     @property
@@ -250,6 +251,13 @@ class Topology(object):
                     self._angle_types.add(c.connection_type)
                 if isinstance(c.connection_type, DihedralType):
                     self._dihedral_types.add(c.connection_type)
+            elif c.connection_type in self.connection_types:
+                if isinstance(c.connection_type, BondType):
+                    c.connection_type = self._bond_types[self._bond_types.index(c.connection_type)]
+                if isinstance(c.connection_type, AngleType):
+                    c.connection_type = self._angle_types[self._angle_types.index(c.connection_type)]
+                if isinstance(c.connection_type, DihedralType):
+                    c.connection_type = self._dihedral_types[self._dihedral_types.index(c.connection_type)]
 
     def update_atom_types(self):
         """Update atom types in the topology"""
@@ -263,6 +271,8 @@ class Topology(object):
             elif site.atom_type not in self.atom_types:
                 site.atom_type.topology = self
                 self._atom_types.add(site.atom_type)
+                site.atom_type = self._atom_types[self.atom_types.index(site.atom_type)]
+            elif site.atom_type in self.atom_types:
                 site.atom_type = self._atom_types[self.atom_types.index(site.atom_type)]
 
     def add_subtopology(self, subtop):
