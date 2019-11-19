@@ -12,9 +12,9 @@ class Element(namedtuple('Element', 'atomic_number, name, symbol, mass')):
     
     def __str__(self):
         return 'Element: {}, symbol: {}, atomic number: {}, mass: {}'.format(
-                                                                      name, symbol,
-                                                                      atomic_number,
-                                                                       mass)
+                                                                      self.name, self.symbol,
+                                                                      self.atomic_number,
+                                                                      self.mass)
 
 
 def element_by_symbol(symbol):
