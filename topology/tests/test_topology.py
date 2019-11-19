@@ -392,5 +392,6 @@ class TestTopology(BaseTest):
         top.sites[0].atom_type.name = 'atom_type_changed'
         assert id(top.sites[0].atom_type) == id(top.sites[10].atom_type)
         assert top.sites[10].atom_type.name == 'atom_type_changed'
+        assert top.is_typed()
 
 

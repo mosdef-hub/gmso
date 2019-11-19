@@ -1,4 +1,4 @@
-ATOM_TYPE_SET = 'atom_type_set'
-BOND_TYPE_SET = 'bond_type_set'
-ANGLE_TYPE_SET = 'angle_type_set'
-DIHEDRAL_TYPE_SET = 'dihedral_type_set'
+ATOM_TYPE_DICT = 'atom_type_dict'
+BOND_TYPE_DICT = 'bond_type_dict'
+ANGLE_TYPE_DICT = 'angle_type_dict'
+DIHEDRAL_TYPE_DICT = 'dihedral_type_dict'

@@ -3,8 +3,8 @@ import unyt as u
 
 from topology.core.potential import Potential
 from topology.exceptions import TopologyError
-from topology.utils.decorators import confirm_set_existence
-from topology.utils._constants import ANGLE_TYPE_SET
+from topology.utils.decorators import confirm_dict_existence
+from topology.utils._constants import ANGLE_TYPE_DICT
 
 
 class AngleType(Potential):
@@ -50,7 +50,7 @@ class AngleType(Potential):
                                         parameters=parameters, independent_variables=independent_variables,
                                         topology=topology)
         self._member_types = _validate_three_member_type_names(member_types)
-        self._set_ref = ANGLE_TYPE_SET
+        self._set_ref = ANGLE_TYPE_DICT
 
     @property
     def set_ref(self):
@@ -61,7 +61,7 @@ class AngleType(Potential):
         return self._member_types
 
     @member_types.setter
-    @confirm_set_existence
+    @confirm_dict_existence
     def member_types(self, val):
         if self.member_types != val:
             warnings.warn("Changing an AngleType's constituent "

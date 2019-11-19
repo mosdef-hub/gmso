@@ -3,7 +3,7 @@ import sympy
 import unyt as u
 
 from topology.utils.misc import unyt_to_hashable
-from topology.utils.decorators import confirm_set_existence
+from topology.utils.decorators import confirm_dict_existence
 from topology.exceptions import TopologyError
 
 
@@ -73,7 +73,7 @@ class Potential(object):
         return self._name
 
     @name.setter
-    @confirm_set_existence
+    @confirm_dict_existence
     def name(self, val):
         self._name = val
 
@@ -82,7 +82,7 @@ class Potential(object):
         return self._parameters
 
     @parameters.setter
-    @confirm_set_existence
+    @confirm_dict_existence
     def parameters(self, newparams):
         newparams = _validate_parameters(newparams)
 
@@ -94,7 +94,7 @@ class Potential(object):
         return self._independent_variables
 
     @independent_variables.setter
-    @confirm_set_existence
+    @confirm_dict_existence
     def independent_variables(self, indep_vars):
         self._independent_variables = _validate_independent_variables(indep_vars)
 
@@ -107,7 +107,7 @@ class Potential(object):
         return self._expression
 
     @expression.setter
-    @confirm_set_existence
+    @confirm_dict_existence
     def expression(self, expression):
         self._expression = _validate_expression(expression)
 
@@ -121,7 +121,7 @@ class Potential(object):
     def topology(self, top):
         self._topology = top
 
-    @confirm_set_existence
+    @confirm_dict_existence
     def set_expression(self, expression=None, parameters=None, independent_variables=None):
         """Set the expression, parameters, and independent variables for this potential.
 

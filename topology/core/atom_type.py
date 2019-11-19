@@ -3,8 +3,8 @@ import unyt as u
 
 from topology.core.potential import Potential
 from topology.utils.misc import unyt_to_hashable
-from topology.utils.decorators import confirm_set_existence
-from topology.utils._constants import ATOM_TYPE_SET
+from topology.utils.decorators import confirm_dict_existence
+from topology.utils._constants import ATOM_TYPE_DICT
 
 
 class AtomType(Potential):
@@ -83,7 +83,7 @@ class AtomType(Potential):
         self._overrides = _validate_set(overrides)
         self._description = _validate_str(description)
         self._definition = _validate_str(definition)
-        self._set_ref = ATOM_TYPE_SET
+        self._set_ref = ATOM_TYPE_DICT
         self._validate_expression_parameters()
 
     @property
@@ -95,7 +95,7 @@ class AtomType(Potential):
         return self._charge
 
     @charge.setter
-    @confirm_set_existence
+    @confirm_dict_existence
     def charge(self, val):
         self._charge = _validate_charge(val)
 
@@ -104,7 +104,7 @@ class AtomType(Potential):
         return self._mass
 
     @mass.setter
-    @confirm_set_existence
+    @confirm_dict_existence
     def mass(self, val):
         self._mass = _validate_mass(val)
 
@@ -113,7 +113,7 @@ class AtomType(Potential):
         return self._atomclass
 
     @atomclass.setter
-    @confirm_set_existence
+    @confirm_dict_existence
     def atomclass(self, val):
         self._atomclass = val
 
@@ -122,7 +122,7 @@ class AtomType(Potential):
         return self._doi
 
     @doi.setter
-    @confirm_set_existence
+    @confirm_dict_existence
     def doi(self, doi):
         self._doi = _validate_str(doi)
 
@@ -131,7 +131,7 @@ class AtomType(Potential):
         return self._overrides
 
     @overrides.setter
-    @confirm_set_existence
+    @confirm_dict_existence
     def overrides(self, overrides):
         self._overrides = _validate_set(overrides)
 
@@ -140,7 +140,7 @@ class AtomType(Potential):
         return self._description
 
     @description.setter
-    @confirm_set_existence
+    @confirm_dict_existence
     def description(self, description):
         self._description = _validate_str(description)
 
@@ -149,7 +149,7 @@ class AtomType(Potential):
         return self._definition
 
     @definition.setter
-    @confirm_set_existence
+    @confirm_dict_existence
     def definition(self, definition):
         self._definition = _validate_str(definition)
 

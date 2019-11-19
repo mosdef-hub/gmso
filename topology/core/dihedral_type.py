@@ -3,7 +3,7 @@ import unyt as u
 
 from topology.core.potential import Potential
 from topology.exceptions import TopologyError
-from topology.utils._constants import DIHEDRAL_TYPE_SET
+from topology.utils._constants import DIHEDRAL_TYPE_DICT
 
 class DihedralType(Potential):
     """A Potential between 4-bonded partners.
@@ -50,7 +50,7 @@ class DihedralType(Potential):
         super(DihedralType, self).__init__(name=name, expression=expression,
                                            parameters=parameters, independent_variables=independent_variables,
                                            topology=topology)
-        self._set_ref = DIHEDRAL_TYPE_SET
+        self._set_ref = DIHEDRAL_TYPE_DICT
         self._member_types = _validate_four_member_type_names(member_types)
 
     @property
@@ -67,15 +67,6 @@ class DihedralType(Potential):
             warnings.warn("Changing an DihedralType's constituent "
                           "member types: {} to {}".format(self.member_types, val))
         self._member_types = _validate_four_member_type_names(val)
-
-    @property
-    def topology(self):
-        return self._topology
-
-    @topology.setter
-    def topology(self, top):
-        self._topology = top
-        self._set_ref = 'dihedral_type_set'
 
     def __repr__(self):
         return "<DihedralType {}, id {}>".format(self.name, id(self))

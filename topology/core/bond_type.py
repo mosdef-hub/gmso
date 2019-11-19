@@ -2,9 +2,9 @@ import unyt as u
 import warnings
 
 from topology.core.potential import Potential
-from topology.utils.decorators import confirm_set_existence
+from topology.utils.decorators import confirm_dict_existence
 from topology.exceptions import TopologyError
-from topology.utils._constants import BOND_TYPE_SET
+from topology.utils._constants import BOND_TYPE_DICT
 
 
 class BondType(Potential):
@@ -49,7 +49,7 @@ class BondType(Potential):
         super(BondType, self).__init__(name=name, expression=expression,
                                        parameters=parameters, independent_variables=independent_variables,
                                        topology=topology)
-        self._set_ref = BOND_TYPE_SET
+        self._set_ref = BOND_TYPE_DICT
         self._member_types = _validate_two_member_type_names(member_types)
 
     @property
@@ -61,7 +61,7 @@ class BondType(Potential):
         return self._member_types
 
     @member_types.setter
-    @confirm_set_existence
+    @confirm_dict_existence
     def member_types(self, val):
         if self.member_types != val:
             warnings.warn("Changing a BondType's constituent "
