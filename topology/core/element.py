@@ -2,34 +2,19 @@ import warnings
 from re import sub
 
 import numpy as np
+from collections import namedtuple
 import unyt as u
 
 from topology.exceptions import TopologyError
 
-
-class Element(object):
+class Element(namedtuple('Element', 'atomic_number, name, symbol, mass')):
     """An element."""
-    def __init__(self, atomic_number=None, name=None, symbol=None, mass=None):
-        self._atomic_number = atomic_number
-        self._name = name
-        self._symbol = symbol
-        self._mass = mass
-
-    @property
-    def atomic_number(self):
-        return self._atomic_number
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def symbol(self):
-        return self._symbol
-
-    @property
-    def mass(self):
-        return self._mass
+    
+    def __str__(self):
+        return 'Element: {}, symbol: {}, atomic number: {}, mass: {}'.format(
+                                                                      self.name, self.symbol,
+                                                                      self.atomic_number,
+                                                                      self.mass)
 
 
 def element_by_symbol(symbol):
