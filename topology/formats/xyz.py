@@ -24,8 +24,8 @@ def read_xyz(filename):
             tmp = np.array(line[1:4], dtype=np.float) * u.angstrom
             coords[row] = tmp.in_units(u.nanometer)
             site = Site(name=line[0], position=coords[row])
-            top.add_site(site, update_types=False)
-        top.update_top()
+            top.add_site(site)
+        top.update_topology()
 
         # Verify we have read the last line by ensuring the next line in blank
         line = xyz_file.readline().split()
