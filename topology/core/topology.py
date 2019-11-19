@@ -262,10 +262,6 @@ class Topology(object):
 
     def update_atom_types(self):
         """Update atom types in the topology"""
-        from datetime import datetime
-        if not self._typed:
-            self._typed = True
-        start = datetime.now()
         for site in self._sites:
             if site.atom_type is None:
                 warnings.warn('Non-parametrized site detected {}'.format(site))
@@ -276,9 +272,7 @@ class Topology(object):
                 self._atom_types[site.atom_type] = site.atom_type
             elif site.atom_type in self._atom_types:
                 site.atom_type = self._atom_types[site.atom_type]
-        end = datetime.now()
-        total_time = end - start
-        print('Total Time for update_atomtypes operation', total_time)
+        self.is_typed(updated=True)
 
     def add_subtopology(self, subtop):
         self._subtops.add(subtop)
