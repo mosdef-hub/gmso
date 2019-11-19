@@ -25,7 +25,6 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
         top.name = compound.name
 
     site_map = dict()
-
     for child in compound.children:
         if child.children is None:
             pos = child.xyz[0] * u.nanometer
@@ -40,20 +39,23 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
                 site = Site(name=childchild.name, position=pos, element=ele)
                 site_map[childchild] = site
                 subtop.add_site(site)
-    top.update_top()
+    top.update_topology()
 
     for particle in compound.particles():
+        already_added_site = site_map.get(particle, None)
+        if already_added_site:
+            continue
         pos = particle.xyz[0] * u.nanometer
         ele = search_method(particle.name)
         site = Site(name=particle.name, position=pos, element=ele)
         site_map[particle] = site
-        top.add_site(site, update_types=False)
+        top.add_site(site)
 
     for b1, b2 in compound.bonds():
         new_bond = Bond(connection_members=[site_map[b1], site_map[b2]],
                 connection_type=None)
-        top.add_connection(new_bond, update_types=False)
-    top.update_top(update_types=False)
+        top.add_connection(new_bond)
+    top.update_topology()
 
     if box:
         top.box = from_mbuild_box(box)
@@ -68,6 +70,7 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
             top.box = Box(lengths=compound.periodicity)
 
     return top
+
 
 def to_mbuild(topology):
     msg = ("Provided argument that is not a topology")

@@ -87,8 +87,8 @@ class TestAngle(BaseTest):
         )
 
         diff_angle = Angle(
-            connection_members=[site2, site2, site1],
+            connection_members=[site3, site2, site1],
         )
 
-        assert ref_angle == same_angle
+        assert ref_angle != same_angle
         assert ref_angle != diff_angle

@@ -37,7 +37,7 @@ def read_gro(filename):
             ])
             site = Site(name=atom_name, position=coords[row])
             top.add_site(site, update_types=False)
-        top.update_top()
+        top.update_topology()
 
         # Box information
         line = gro_file.readline().split()
@@ -110,7 +110,7 @@ def write_gro(top, filename):
 
 def _prepare_topology_to_gro(top):
     """Modify topology, as necessary, to fit limitations of the GRO format."""
-    if np.min(top.positions()) < 0:
+    if np.min(top.positions) < 0:
         warnings.warn('Topology contains some negative positions. Translating '
                       'in order to ensure all coordinates are non-negative.')
 

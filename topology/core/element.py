@@ -8,12 +8,14 @@ import unyt as u
 from topology.exceptions import TopologyError
 
 class Element(namedtuple('Element', 'atomic_number, name, symbol, mass')):
-    """An element."""
+    """An element.""
+    
     def __str__(self):
         return 'Element: {}, symbol: {}, atomic number: {}, mass: {}'.format(
                                                                       name, symbol,
                                                                       atomic_number,
                                                                        mass)
+
 
 def element_by_symbol(symbol):
     """Search for an element by its symbol

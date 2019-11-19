@@ -74,8 +74,8 @@ class TestBond(BaseTest):
         )
 
         diff_connection = Bond(
-            connection_members=[site2, site2],
+            connection_members=[site1, site2],
         )
 
-        assert ref_connection == same_connection
+        assert ref_connection != same_connection
         assert ref_connection != diff_connection

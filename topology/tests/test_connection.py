@@ -65,10 +65,12 @@ class TestConnection(BaseTest):
         same_connection = Connection(
             connection_members=[site1, site2],
         )
+        # Two connections are never equal
+        assert ref_connection != same_connection
 
-        diff_connection = Connection(
-            connection_members=[site2, site2],
-        )
-
-        assert ref_connection == same_connection
-        assert ref_connection != diff_connection
+    def test_add_connection_same_sites(self):
+        site1 = Site()
+        site2 = Site()
+        with pytest.raises(TopologyError):
+            bond1 = Connection([site1, site1])
+            angle1 = Connection([site1, site2, site1])
