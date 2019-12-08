@@ -2,3 +2,4 @@ numpy
 mbuild
 unyt >= 2.4
 boltons
+lxml

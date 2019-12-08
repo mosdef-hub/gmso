@@ -1,0 +1,68 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" attributeFormDefault="unqualified"
+            elementFormDefault="qualified">
+    <xsd:annotation>
+        <xsd:documentation xml:lang="en">
+            This schema defines the data object model to create a topology Force-field class.
+            This schema is designed to be flexible, meaning this can be taken and extended to
+            create your custom Force-field objects.
+        </xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexType name="Type">
+        <xsd:sequence>
+            <xsd:element name="charge" type="AtomicCharge" minOccurs="0" maxOccurs="1"/>
+            <xsd:element name="mass" type="AtomicMass" maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="parameters" type="AtomicCharge" maxOccurs="1" minOccurs="0"/>
+        </xsd:sequence>
+        <xsd:attribute name="name" type="xsd:string" use="optional"/>
+        <xsd:attribute name="expression" type="xsd:string" use="optional"/>
+        <xsd:attribute name="atomclass" type="xsd:string" use="optional"/>
+        <xsd:attribute name="doi" type="xsd:string" use="optional"/>
+        <xsd:attribute name="overrides" type="xsd:string" use="optional"/>
+        <xsd:attribute name="definition" type="xsd:string" use="optional"/>
+        <xsd:attribute name="description" type="xsd:string" use="optional"/>
+        <xsd:attribute name="independent_variables" type="xsd:string" use="optional"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="AtomicMass">
+        <xsd:attribute name="mass" type="xsd:float"/>
+        <xsd:attribute name="unit" type="xsd:string"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="AtomicCharge">
+        <xsd:attribute name="charge" type="xsd:float"/>
+        <xsd:attribute name="unit" type="xsd:string"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="Parameters">
+        <xsd:attribute name="sigma" type="xsd:float"/>
+        <xsd:attribute name="epsilon" type="xsd:float"/>
+    </xsd:complexType>
+
+
+    <xsd:element name="AtomType" type="Type"/>
+
+    <xsd:element name="AtomTypes">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element ref="AtomType" maxOccurs="unbounded" minOccurs="0"/>
+            </xsd:sequence>
+        </xsd:complexType>
+        <xsd:unique name="nonUniqueAtomTypeName">
+            <xsd:selector xpath="AtomType"></xsd:selector>
+            <xsd:field xpath="@name"></xsd:field>
+        </xsd:unique>
+    </xsd:element>
+
+    <xsd:element name="ForceField">
+        <xsd:complexType>
+            <xsd:all>
+                <xsd:element ref="AtomTypes" minOccurs="0"/>
+            </xsd:all>
+        </xsd:complexType>
+        <xsd:key name="atomtype_name_key">
+            <xsd:selector xpath="AtomTypes/AtomType"/>
+            <xsd:field xpath="@name"/>
+        </xsd:key>
+    </xsd:element>
+
+</xsd:schema>
