@@ -1,7 +1,8 @@
-import xml.etree.ElementTree as ET
+from lxml import etree
 
+from topology.forcefield.ff_utils import validate
 from topology.core.atom_type import AtomType
-from .ff_utils import mass_to_unyt
+
 class ForceField(object):
     """A Generic implementation of the forcefield class
     A forcefield class contains different collection of
@@ -46,15 +47,8 @@ class ForceField(object):
         if isinstance(xml_locs, str):
             xml_locs = [xml_locs]
         for loc in xml_locs:
-            ff_tree = ET.parse(loc)
-            for atom_types in ff_tree.findall('AtomTypes'):
-                for atom_type in atom_types:
-                    atom_type_props = atom_type.attrib
-                    this_atom_type = AtomType(
-                        name=atom_type_props['name'],
-                        mass=mass_to_unyt(atom_type_props['mass'])
-                    )
-                    if this_atom_type in atom_type_map:
-                        atom_types[atom_type_props['name']] = atom_type_map[this_atom_type]
-                    else:
-                        atom_type_map[this_atom_type] = this_atom_type
+            validate(loc)
+            element_tree = etree.parse(loc)
+            atom_types = element_tree.findall('AtomTypes')
+            for types in atom_types:
+                all_atom_types = types.findall('AtomType')

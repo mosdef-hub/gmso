@@ -9,9 +9,9 @@
     </xsd:annotation>
     <xsd:complexType name="Type">
         <xsd:sequence>
-            <xsd:element name="charge" type="AtomicCharge" minOccurs="0" maxOccurs="1"/>
-            <xsd:element name="mass" type="AtomicMass" maxOccurs="1" minOccurs="0"/>
-            <xsd:element name="parameters" type="AtomicCharge" maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="Charge" type="AtomicCharge" minOccurs="0" maxOccurs="1"/>
+            <xsd:element name="Mass" type="AtomicMass" maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="Parameters" type="Parameters" maxOccurs="1" minOccurs="0"/>
         </xsd:sequence>
         <xsd:attribute name="name" type="xsd:string" use="optional"/>
         <xsd:attribute name="expression" type="xsd:string" use="optional"/>
