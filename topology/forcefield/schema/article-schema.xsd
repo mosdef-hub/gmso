@@ -7,57 +7,77 @@
             create your custom Force-field objects.
         </xsd:documentation>
     </xsd:annotation>
+
+    <!-- Start: AtomTypes Tags and Attributes -->
     <xsd:complexType name="Type">
         <xsd:sequence>
-            <xsd:element name="Charge" type="AtomicCharge" minOccurs="0" maxOccurs="1"/>
-            <xsd:element name="Mass" type="AtomicMass" maxOccurs="1" minOccurs="0"/>
-            <xsd:element name="Parameters" type="Parameters" maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="Parameters" type="Parameters" minOccurs="0" maxOccurs="unbounded"/>
         </xsd:sequence>
         <xsd:attribute name="name" type="xsd:string" use="optional"/>
+        <xsd:attribute name="mass" type="xsd:float" use="optional"/>
+        <xsd:attribute name="element" type="xsd:string" use="optional"/>
+        <xsd:attribute name="charge" type="xsd:float" use="optional"/>
         <xsd:attribute name="expression" type="xsd:string" use="optional"/>
+        <xsd:attribute name="independent_variables" type="xsd:string" use="optional"/>
         <xsd:attribute name="atomclass" type="xsd:string" use="optional"/>
         <xsd:attribute name="doi" type="xsd:string" use="optional"/>
         <xsd:attribute name="overrides" type="xsd:string" use="optional"/>
         <xsd:attribute name="definition" type="xsd:string" use="optional"/>
         <xsd:attribute name="description" type="xsd:string" use="optional"/>
-        <xsd:attribute name="independent_variables" type="xsd:string" use="optional"/>
-    </xsd:complexType>
-
-    <xsd:complexType name="AtomicMass">
-        <xsd:attribute name="mass" type="xsd:float"/>
-        <xsd:attribute name="unit" type="xsd:string"/>
-    </xsd:complexType>
-
-    <xsd:complexType name="AtomicCharge">
-        <xsd:attribute name="charge" type="xsd:float"/>
-        <xsd:attribute name="unit" type="xsd:string"/>
     </xsd:complexType>
 
     <xsd:complexType name="Parameters">
-        <xsd:attribute name="sigma" type="xsd:float"/>
-        <xsd:attribute name="epsilon" type="xsd:float"/>
+        <xsd:sequence>
+            <xsd:element name="Parameter" minOccurs="0" maxOccurs="unbounded">
+                <xsd:complexType>
+                    <xsd:attribute name="name" use="required" type="xsd:string"/>
+                    <xsd:attribute name="value" use="required" type="xsd:float"/>
+                </xsd:complexType>
+            </xsd:element>
+        </xsd:sequence>
     </xsd:complexType>
-
-
-    <xsd:element name="AtomType" type="Type"/>
 
     <xsd:element name="AtomTypes">
         <xsd:complexType>
             <xsd:sequence>
-                <xsd:element ref="AtomType" maxOccurs="unbounded" minOccurs="0"/>
+                <xsd:element name="ParametersUnitDef" type="ParametersUnitDef" minOccurs="0" maxOccurs="unbounded"/>
+                <xsd:element name="AtomType" type="Type" minOccurs="0" maxOccurs="unbounded"/>
+            </xsd:sequence>
+            <xsd:attribute name="expression" type="xsd:string" use="optional"/>
+        </xsd:complexType>
+    </xsd:element>
+    
+    <xsd:complexType name="ParametersUnitDef">
+        <xsd:attribute name="parameter" type="xsd:string"/>
+        <xsd:attribute name="unit" type="xsd:string"/>
+    </xsd:complexType>
+    <!-- End: AtomTypes Tags and Attributes  -->
+
+    <!-- These define the units and other elements in the FFMetaData -->
+    <xsd:element name="FFMetaData">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="Units" type="Units" minOccurs="0" maxOccurs="1"/>
             </xsd:sequence>
         </xsd:complexType>
-        <xsd:unique name="nonUniqueAtomTypeName">
-            <xsd:selector xpath="AtomType"></xsd:selector>
-            <xsd:field xpath="@name"></xsd:field>
-        </xsd:unique>
     </xsd:element>
 
+    <xsd:complexType name="Units">
+        <xsd:attribute name="energy" type="xsd:string" use="optional"/>
+        <xsd:attribute name="distance" type="xsd:string" use="optional"/>
+        <xsd:attribute name="mass" type="xsd:string" use="optional"/>
+        <xsd:attribute name="charge" type="xsd:string" use="optional"/>
+    </xsd:complexType>
+
+    <!-- This consolidates the whole information about a force-field and creates the complete definition -->
     <xsd:element name="ForceField">
         <xsd:complexType>
             <xsd:all>
+                <xsd:element ref="FFMetaData" minOccurs="0"/>
                 <xsd:element ref="AtomTypes" minOccurs="0"/>
             </xsd:all>
+            <xsd:attribute name="version" use="optional" type="xsd:string"/>
+            <xsd:attribute name="name" use="optional" type="xsd:string"/>
         </xsd:complexType>
         <xsd:key name="atomtype_name_key">
             <xsd:selector xpath="AtomTypes/AtomType"/>

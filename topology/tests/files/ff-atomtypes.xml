@@ -1,9 +1,0 @@
-<ForceField>
-    <AtomTypes>
-        <AtomType name="opls_135" class="CT" element="C" mass="12.01100" desc="alkane CH3" doi="10.1021/ja9621760"
-              overrides="dummy_001">
-            <Charge charge="1.0" units="columb"/>
-            <Mass mass="1.0" units="amu"/>
-        </AtomType>
-    </AtomTypes>
-</ForceField>
