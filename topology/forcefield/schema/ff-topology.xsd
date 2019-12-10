@@ -9,9 +9,9 @@
     </xsd:annotation>
 
     <!-- Start: AtomTypes Tags and Attributes -->
-    <xsd:complexType name="Type">
+    <xsd:complexType name="AtomType">
         <xsd:sequence>
-            <xsd:element name="Parameters" type="Parameters" minOccurs="0" maxOccurs="unbounded"/>
+            <xsd:element name="Parameters" type="Parameters" minOccurs="0" maxOccurs="1"/>
         </xsd:sequence>
         <xsd:attribute name="name" type="xsd:string" use="optional"/>
         <xsd:attribute name="mass" type="xsd:float" use="optional"/>
@@ -26,6 +26,48 @@
         <xsd:attribute name="description" type="xsd:string" use="optional"/>
     </xsd:complexType>
 
+    <xsd:element name="AtomTypes">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="ParametersUnitDef" type="ParametersUnitDef" minOccurs="0" maxOccurs="unbounded"/>
+                <xsd:element name="AtomType" type="AtomType" minOccurs="0" maxOccurs="unbounded"/>
+            </xsd:sequence>
+            <xsd:attribute name="expression" type="xsd:string" use="optional"/>
+        </xsd:complexType>
+    </xsd:element>
+    <!-- End: AtomTypes Tags and Attributes  -->
+
+    <!-- Begin: BondTypes Tags and Attributes -->
+    <xsd:complexType name="BondType">
+        <xsd:sequence>
+            <xsd:element name="Parameters" type="Parameters" minOccurs="0" maxOccurs="1"/>
+        </xsd:sequence>
+        <xsd:attribute name="name" type="xsd:string" use="optional"/>
+        <xsd:attribute name="type1" type="xsd:string" use="required"/>
+        <xsd:attribute name="type2" type="xsd:string" use="required"/>
+        <xsd:attribute name="expression" type="xsd:string" use="optional"/>
+    </xsd:complexType>
+
+    <xsd:element name="BondTypes">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="ParametersUnitDef" type="ParametersUnitDef" minOccurs="0" maxOccurs="unbounded"/>
+                <xsd:element name="BondType" type="BondType" maxOccurs="unbounded" minOccurs="0"/>
+            </xsd:sequence>
+            <xsd:attribute name="expression" type="xsd:string"/>
+        </xsd:complexType>
+        <xsd:key name="bondtype_name_key">
+            <xsd:selector xpath="BondType"/>
+            <xsd:field xpath="@name"/>
+        </xsd:key>
+    </xsd:element>
+
+    <!-- Reusable ComplexTypes Tags -->
+    <xsd:complexType name="ParametersUnitDef">
+        <xsd:attribute name="parameter" type="xsd:string"/>
+        <xsd:attribute name="unit" type="xsd:string"/>
+    </xsd:complexType>
+
     <xsd:complexType name="Parameters">
         <xsd:sequence>
             <xsd:element name="Parameter" minOccurs="0" maxOccurs="unbounded">
@@ -36,22 +78,6 @@
             </xsd:element>
         </xsd:sequence>
     </xsd:complexType>
-
-    <xsd:element name="AtomTypes">
-        <xsd:complexType>
-            <xsd:sequence>
-                <xsd:element name="ParametersUnitDef" type="ParametersUnitDef" minOccurs="0" maxOccurs="unbounded"/>
-                <xsd:element name="AtomType" type="Type" minOccurs="0" maxOccurs="unbounded"/>
-            </xsd:sequence>
-            <xsd:attribute name="expression" type="xsd:string" use="optional"/>
-        </xsd:complexType>
-    </xsd:element>
-    
-    <xsd:complexType name="ParametersUnitDef">
-        <xsd:attribute name="parameter" type="xsd:string"/>
-        <xsd:attribute name="unit" type="xsd:string"/>
-    </xsd:complexType>
-    <!-- End: AtomTypes Tags and Attributes  -->
 
     <!-- These define the units and other elements in the FFMetaData -->
     <xsd:element name="FFMetaData">
@@ -75,6 +101,7 @@
             <xsd:all>
                 <xsd:element ref="FFMetaData" minOccurs="0"/>
                 <xsd:element ref="AtomTypes" minOccurs="0"/>
+                <xsd:element ref="BondTypes" minOccurs="0"/>
             </xsd:all>
             <xsd:attribute name="version" use="optional" type="xsd:string"/>
             <xsd:attribute name="name" use="optional" type="xsd:string"/>

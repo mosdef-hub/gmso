@@ -1,4 +1,4 @@
-<ForceField version="0.4.1" name="Ar">
+<ForceField version="0.4.1" name="ForceFieldOne">
     <FFMetaData>
         <Units energy="kcal/mol" distance="nm" mass="amu" charge="coulomb"/>
     </FFMetaData>
@@ -21,4 +21,20 @@
             </Parameters>
         </AtomType>
     </AtomTypes>
+    <BondTypes expression="0.5 * k * (r-r_eq)**2">
+        <ParametersUnitDef parameter="r_eq" unit="nm"/>
+        <ParametersUnitDef parameter="k" unit="kJ/mol"/>
+        <BondType name="BondType1" type1='Ar' type2='Ar'>
+            <Parameters>
+                <Parameter name='r_eq' value="10.0"/>
+                <Parameter name='k' value="10000"/>
+            </Parameters>
+        </BondType>
+        <BondType name="BondType2" type1='Xe' type2="Xe">
+            <Parameters>
+                <Parameter name='r_eq' value="10"/> <!-- is this doable? -->
+                <Parameter name='k' value="20000"/>
+            </Parameters>
+        </BondType>
+    </BondTypes>
 </ForceField>

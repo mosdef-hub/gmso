@@ -1,6 +1,9 @@
 from lxml import etree
 
-from topology.forcefield.ff_utils import validate, parse_ff_metadata, parse_ff_atomtype
+from topology.forcefield.ff_utils import (validate,
+                                          parse_ff_metadata,
+                                          parse_ff_atomtypes,
+                                          parse_ff_bondtypes)
 
 
 class ForceField(object):
@@ -9,10 +12,23 @@ class ForceField(object):
     core type members.
     Parameters:
     ----------
+    name: (str), Name of the forcefield, default 'ForceField'
+    version: (str), a cannonical semantic version of the forcefield, default 1.0.0
+
+    Attributes:
+    -----------
+    name: (str), Name of the forcefield
+    version: (str), Version of the forcefield
+    atom_types: (dict), A collection of atom types in the forcefield
+    bond_types: (dict), A collection of bond types in the forcefield
+    angle_types: (dict), A collection of angle types in the forcefield
+    dihedral_types: (dict), A collection of dihedral types in the forcefield
+
     """
-    def __init__(self, name='ForceField'):
+    def __init__(self, name='ForceField', version='1.0.0'):
         """Initialize a new ForceField"""
         self.name = name
+        self.version = version
         self.atom_types = {}
         self.bond_types = {}
         self.angle_types = {}
@@ -45,16 +61,32 @@ class ForceField(object):
             xml_locs = [].append(xml_locs)
         if isinstance(xml_locs, str):
             xml_locs = [xml_locs]
+
+        versions = []
+        names = []
+
         for loc in xml_locs:
             validate(loc)
             ff_tree = etree.parse(loc)
+            ff_el = ff_tree.getroot()
+            versions.append(ff_el.attrib['version'])
+            names.append(ff_el.attrib['name'])
             ff_meta_tree = ff_tree.find('FFMetaData')
             ff_meta_map = parse_ff_metadata(ff_meta_tree)
             ff_atomtypes_list = ff_tree.findall('AtomTypes')
+            ff_bondtypes_list = ff_tree.findall('BondTypes')
             atom_types_dict = {}
-            for atom_types in ff_atomtypes_list:
-                atom_types_dict.update(parse_ff_atomtype(atom_types, ff_meta_map))
+            bond_types_dict = {}
 
-        ff = cls()
+            # Consolidate AtomTypes
+            for atom_types in ff_atomtypes_list:
+                atom_types_dict.update(parse_ff_atomtypes(atom_types, ff_meta_map))
+
+            # Consolidate BondTypes
+            for bond_types in ff_bondtypes_list:
+                bond_types_dict.update(parse_ff_bondtypes(bond_types, atom_types_dict))
+
+        ff = cls(version=versions[0], name=names[0])
         ff.atom_types = atom_types_dict
+        ff.bond_types = bond_types_dict
         return ff
