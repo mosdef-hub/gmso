@@ -6,9 +6,11 @@ from lxml import etree
 
 from topology.core.atom_type import AtomType
 from topology.core.bond_type import BondType
+from topology.core.angle_type import AngleType
+from topology.core.dihedral_type import DihedralType
 from topology.exceptions import ForceFieldParseError
 
-__all__ = ['validate', 'parse_ff_metadata', 'parse_ff_atomtypes', 'parse_ff_bondtypes']
+__all__ = ['validate', 'parse_ff_metadata', 'parse_ff_atomtypes', 'parse_ff_connection_types']
 
 
 def _parse_param_units(parent_tag):
@@ -30,6 +32,21 @@ def _parse_params_values(parent_tag, units_dict):
         param_value = u.unyt_quantity(float(param.attrib['value']), param_unit)
         params_dict[param_name] = param_value
     return params_dict
+
+
+def _check_valid_atomtype_names(tag, ref_dict):
+    at1 = tag.attrib.get('type1', None)
+    at2 = tag.attrib.get('type2', None)
+    at3 = tag.attrib.get('type3', None)
+    at4 = tag.attrib.get('type4', None)
+
+    member_types = list(filter(lambda x: x is not None, [at1, at2, at3, at4]))
+
+    for member in member_types:
+        if member not in ref_dict:
+            raise ForceFieldParseError('AtomTypes {} not present in AtomTypes reference in the xml'.format(member))
+
+    return member_types
 
 
 def _parse_units(unit_tag):
@@ -111,38 +128,40 @@ def parse_ff_atomtypes(atomtypes_el, ff_meta):
     return atomtypes_dict
 
 
-def parse_ff_bondtypes(bondtypes_el, atomtypes_dict):
-    """Given an XML etree Element rooted at BondTypes, parse the XML to create topology.core.BondTypeObjects"""
-    bondtypes_dict = {}
-    bondtypes_expression = bondtypes_el.attrib['expression']
-    param_unit_dict = _parse_param_units(bondtypes_el)
+TAG_TO_CLASS_MAP = {
+    'BondType': BondType,
+    'AngleType': AngleType,
+    'DihedralType': DihedralType
+}
+
+
+def parse_ff_connection_types(connectiontypes_el, atomtypes_dict, child_tag='BondType'):
+    """Given an XML etree Element rooted at BondTypes, parse the XML to create topology.core.AtomTypes,"""
+    connectiontypes_dict = {}
+    connectiontype_expression = connectiontypes_el.attrib['expression']
+    param_unit_dict = _parse_param_units(connectiontypes_el)
 
     # Parse all the bondTypes and create a new BondType
-    for bond_type in bondtypes_el.getiterator('BondType'):
+    for connection_type in connectiontypes_el.getiterator(child_tag):
         ctor_kwargs = {
-            'name': 'BondType',
+            'name': child_tag,
             'expression': '0.5 * k * (r-r_eq)**2',
             'parameters': None,
             'independent_variables': None,
             'member_types': None
         }
-        if bondtypes_expression:
-            ctor_kwargs['expression'] = bondtypes_expression
+        if connectiontype_expression:
+            ctor_kwargs['expression'] = connectiontype_expression
 
         for kwarg in ctor_kwargs.keys():
-            ctor_kwargs[kwarg] = bond_type.attrib.get(kwarg, ctor_kwargs[kwarg])
-        at1 = bond_type.attrib['type1']
-        at2 = bond_type.attrib['type2']
-        if at1 not in atomtypes_dict:
-            raise ForceFieldParseError('AtomTypes {} not present in AtomTypes reference in the xml'.format(at1))
-        if at2 not in atomtypes_dict:
-            raise ForceFieldParseError('AtomTypes {} not present in AtomTypes reference in the xml'.format(at2))
-        ctor_kwargs['member_types'] = [at1, at2]
-        if not ctor_kwargs['parameters']:
-            ctor_kwargs['parameters'] = _parse_params_values(bond_type, param_unit_dict)
-        valued_param_vars = set(sympify(param) for param in ctor_kwargs['parameters'].keys())
-        ctor_kwargs['independent_variables'] = sympify(bondtypes_expression).free_symbols - valued_param_vars
+            ctor_kwargs[kwarg] = connection_type.attrib.get(kwarg, ctor_kwargs[kwarg])
 
-        this_bond_type = BondType(**ctor_kwargs)
-        bondtypes_dict[this_bond_type.name] = this_bond_type
-    return bondtypes_dict
+        ctor_kwargs['member_types'] = _check_valid_atomtype_names(connection_type, atomtypes_dict)
+        if not ctor_kwargs['parameters']:
+            ctor_kwargs['parameters'] = _parse_params_values(connection_type, param_unit_dict)
+        valued_param_vars = set(sympify(param) for param in ctor_kwargs['parameters'].keys())
+        ctor_kwargs['independent_variables'] = sympify(connectiontype_expression).free_symbols - valued_param_vars
+
+        this_conn_type = TAG_TO_CLASS_MAP[child_tag](**ctor_kwargs)
+        connectiontypes_dict[this_conn_type.name] = this_conn_type
+    return connectiontypes_dict

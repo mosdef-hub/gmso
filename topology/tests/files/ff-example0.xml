@@ -32,9 +32,44 @@
         </BondType>
         <BondType name="BondType2" type1='Xe' type2="Xe">
             <Parameters>
-                <Parameter name='r_eq' value="10"/> <!-- is this doable? -->
+                <Parameter name='r_eq' value="10"/>
                 <Parameter name='k' value="20000"/>
             </Parameters>
         </BondType>
     </BondTypes>
+
+    <AngleTypes expression="0.5 * z * (r-r_eq)**2">
+        <ParametersUnitDef parameter="r_eq" unit="nm"/>
+        <ParametersUnitDef parameter="z" unit="kJ/mol"/>
+        <AngleType name="AngleType1" type1='Ar' type2='Ar' type3="Ar">
+            <Parameters>
+                <Parameter name='r_eq' value="10.0"/>
+                <Parameter name='z' value="100"/>
+            </Parameters>
+        </AngleType>
+        <AngleType name="AngleType2" type1='Xe' type2="Xe" type3="Xe">
+            <Parameters>
+                <Parameter name='r_eq' value="10"/>
+                <Parameter name='z' value="20"/>
+            </Parameters>
+        </AngleType>
+    </AngleTypes>
+
+    <DihedralTypes expression="0.5 * z * (r-r_eq)**2">
+        <ParametersUnitDef parameter="r_eq" unit="nm"/>
+        <ParametersUnitDef parameter="z" unit="kJ/mol"/>
+        <DihedralType name="DihedralType1" type1='Ar' type2='Ar' type3="Ar" type4="Ar">
+            <Parameters>
+                <Parameter name='r_eq' value="10.0"/>
+                <Parameter name='z' value="100"/>
+            </Parameters>
+        </DihedralType>
+        <DihedralType name="DihedralType2" type1='Xe' type2="Xe" type3="Xe" type4="Xe">
+            <Parameters>
+                <Parameter name='r_eq' value="10"/>
+                <Parameter name='z' value="20"/>
+            </Parameters>
+        </DihedralType>
+    </DihedralTypes>
+
 </ForceField>
