@@ -57,3 +57,33 @@ class TestForceFieldFromXML(BaseTest):
         assert ff.bond_types['BondType2'].parameters['r_eq'] == u.unyt_quantity(10.0, u.nm)
         assert ff.bond_types['BondType2'].parameters['k'] == u.unyt_quantity(20000, u.kJ / u.mol)
         assert ff.bond_types['BondType2'].member_types == ['Xe', 'Xe']
+
+    def test_ff_angletypes_from_xml(self, ff):
+        assert len(ff.angle_types) == 2
+        assert 'AngleType1' in ff.angle_types
+        assert 'AngleType2' in ff.angle_types
+
+        assert sympify('r') in ff.angle_types['AngleType1'].independent_variables
+        assert ff.angle_types['AngleType1'].parameters['r_eq'] == u.unyt_quantity(10.0, u.nm)
+        assert ff.angle_types['AngleType1'].parameters['z'] == u.unyt_quantity(100, u.kJ / u.mol)
+        assert ff.angle_types['AngleType1'].member_types == ['Ar', 'Ar', 'Ar']
+
+        assert sympify('r') in ff.angle_types['AngleType2'].independent_variables
+        assert ff.angle_types['AngleType2'].parameters['r_eq'] == u.unyt_quantity(10.0, u.nm)
+        assert ff.angle_types['AngleType2'].parameters['z'] == u.unyt_quantity(20, u.kJ / u.mol)
+        assert ff.angle_types['AngleType2'].member_types == ['Xe', 'Xe', 'Xe']
+
+    def test_ff_dihedraltypes_from_xml(self, ff):
+        assert len(ff.dihedral_types) == 2
+        assert 'DihedralType1' in ff.dihedral_types
+        assert 'DihedralType2' in ff.dihedral_types
+
+        assert sympify('r') in ff.dihedral_types['DihedralType1'].independent_variables
+        assert ff.dihedral_types['DihedralType1'].parameters['r_eq'] == u.unyt_quantity(10.0, u.nm)
+        assert ff.dihedral_types['DihedralType1'].parameters['z'] == u.unyt_quantity(100, u.kJ / u.mol)
+        assert ff.dihedral_types['DihedralType1'].member_types == ['Ar', 'Ar', 'Ar', 'Ar']
+
+        assert sympify('r') in ff.dihedral_types['DihedralType2'].independent_variables
+        assert ff.dihedral_types['DihedralType2'].parameters['r_eq'] == u.unyt_quantity(10.0, u.nm)
+        assert ff.dihedral_types['DihedralType2'].parameters['z'] == u.unyt_quantity(20, u.kJ / u.mol)
+        assert ff.dihedral_types['DihedralType2'].member_types == ['Xe', 'Xe', 'Xe', 'Xe']
