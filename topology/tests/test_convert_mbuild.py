@@ -13,13 +13,12 @@ from topology.utils.testing import allclose
 
 if has_mbuild:
     import mbuild as mb
-    from mbuild.examples import Ethane
     from mbuild.box import Box
 
 @pytest.mark.skipif(not has_mbuild, reason="mBuild is not installed")
 class TestConvertMBuild(BaseTest):
     def test_from_mbuild(self):
-        ethane = Ethane()
+        ethane = mb.load('CC', smiles=True)
         top = from_mbuild(ethane)
 
         assert top.n_sites == 8
@@ -29,7 +28,7 @@ class TestConvertMBuild(BaseTest):
             assert top.sites[i].name == top.sites[i].element.symbol
 
     def test_full_conversion(self):
-        ethane = Ethane()
+        ethane = mb.load('CC', smiles=True)
         top = from_mbuild(ethane)
 
         new = to_mbuild(top)
@@ -68,7 +67,7 @@ class TestConvertMBuild(BaseTest):
         assert compound.n_particles == 1
 
     def test_pass_box(self):
-        ethane = Ethane()
+        ethane = mb.load('CC', smiles=True)
         mb_box = Box(lengths=[3,3,3])
 
         top = from_mbuild(ethane, box=mb_box)
@@ -76,19 +75,19 @@ class TestConvertMBuild(BaseTest):
 
 
     def test_pass_failed_box(self):
-        ethane = Ethane()
+        ethane = mb.load('CC', smiles=True)
 
         with pytest.raises(ValueError):
             top = from_mbuild(ethane, box=[3,3,3])
 
     def test_pass_box_periodicity(self):
-        ethane = Ethane()
+        ethane = mb.load('CC', smiles=True)
         ethane.periodicity = [2,2,2]
         top = from_mbuild(ethane)
         assert allclose(top.box.lengths, [2,2,2]*u.nm)
 
     def test_pass_box_bounding(self):
-        ethane = Ethane()
+        ethane = mb.load('CC', smiles=True)
         ethane.periodicity = [0,0,0]
         top = from_mbuild(ethane)
         assert allclose(top.box.lengths, 
