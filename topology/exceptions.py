@@ -11,5 +11,9 @@ class TopologyError(Exception):
     """Base class for all non-trivial errors raised by `topology`."""
 
 
+class ForceFieldError(Exception):
+    """Base class for forcefiled related error"""
+
+
 class ForceFieldParseError(Exception):
     """Base class for forcefield parsing errors"""
