@@ -198,4 +198,5 @@ def parse_ff_connection_types(connectiontypes_el, atomtypes_dict, child_tag='Bon
         this_conn_type_key = DICT_KEY_SEPARATOR.join(ctor_kwargs['member_types'])
         this_conn_type = TAG_TO_CLASS_MAP[child_tag](**ctor_kwargs)
         connectiontypes_dict[this_conn_type_key] = this_conn_type
+
     return connectiontypes_dict

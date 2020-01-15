@@ -99,6 +99,11 @@ class ForceField(object):
         angle_types_dict = {}
         dihedral_types_dict = {}
 
+        atom_types_dict = {}
+        bond_types_dict = {}
+        angle_types_dict = {}
+        dihedral_types_dict = {}
+
         for loc in xml_locs:
             validate(loc)
             ff_tree = etree.parse(loc)
@@ -106,6 +111,7 @@ class ForceField(object):
             versions.append(ff_el.attrib['version'])
             names.append(ff_el.attrib['name'])
             ff_meta_tree = ff_tree.find('FFMetaData')
+
             if ff_meta_tree is not None:
                 ff_meta_map = parse_ff_metadata(ff_meta_tree)
 
