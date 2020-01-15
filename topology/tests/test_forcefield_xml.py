@@ -95,3 +95,8 @@ class TestForceFieldFromXML(BaseTest):
     def test_ff_charmm_xml(self, charm_ff):
         assert charm_ff.name == 'topologyCharmm'
         assert "*~CS~SS~*" in charm_ff.dihedral_types
+        # Test Correct Parameters
+        assert isinstance(charm_ff.dihedral_types["*~CE1~CE1~*"].parameters['k'], list)
+        assert len(charm_ff.dihedral_types["*~CE1~CE1~*"].parameters['k']) == 2
+        assert charm_ff.dihedral_types["*~CE1~CE1~*"].parameters['k'] == \
+               [u.unyt_quantity(0.6276, u.kJ), u.unyt_quantity(35.564, u.kJ)]
