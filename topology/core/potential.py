@@ -213,8 +213,13 @@ def _validate_parameters(parameters):
     if not isinstance(parameters, dict):
         raise ValueError("Please enter dictionary for parameters")
     for key, val in parameters.items():
-        if not isinstance(val, u.unyt_array):
-            raise ValueError('Parameter value {} lacks a unyt'.format(val))
+        if isinstance(val, list):
+            for params in val:
+                if not isinstance(params, u.unyt_array):
+                    raise ValueError('Parameter value {} lacks a unyt'.format(val))
+        else:
+            if not isinstance(val, u.unyt_array):
+                raise ValueError('Parameter value {} lacks a unyt'.format(val))
         if not isinstance(key, str):
             raise ValueError('Parameter key {} is not a str'.format(key))
 

@@ -2,6 +2,7 @@ import unyt as u
 
 from topology.utils.misc import unyt_to_hashable
 
+
 def test_unyt_to_hashable():
     hash(unyt_to_hashable(None))
     hash(unyt_to_hashable(1 * u.nm))
