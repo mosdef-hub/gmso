@@ -72,13 +72,16 @@ class ForceField(object):
             3: self.angle_types,
             4: self.dihedral_types
         }
+        ordinals = ['1st', '2nd', '3rd', '4th']
+
         if len(splitted_items) > 4:
             raise ForceFieldError('Error: You provided a key of length {}. Keys longer than 4 items are not supported '
                                   'by the forcefield class.')
+
         # Pass 1: Direct Lookup
         try:
             return keys_map[len(splitted_items)][item]
-        # Pass 2: WildCard Map
+        # Pass 3: WildCard Map
         except KeyError:
             class_names = ['AtomType', 'BondType', 'AngleType', 'DihedralType']
             wildcard_idxes = []
@@ -86,12 +89,20 @@ class ForceField(object):
 
             for idx, item in enumerate(splitted_items):
                 if item == wildcard:
+                    if idx != 0 and idx != len(splitted_items) - 1:
+                        print(idx, len(splitted_items))
+                        raise ForceFieldError('Error. Wildcard for {} to replace {} element is not supported.'
+                                              .format(class_names[len(splitted_items) - 1], ordinals[idx]))
                     wildcard_idxes.append(idx)
 
             if len(wildcard_idxes) == 0:
-                raise KeyError('No Matching {0} for {1} found in the Forcefield.'
-                               .format(class_names[len(splitted_items) - 1],
-                                       DICT_KEY_SEPARATOR.join(splitted_items)))
+                # Try a reverse lookup
+                try:
+                    return keys_map[len(splitted_items)][DICT_KEY_SEPARATOR.join(reversed(splitted_items))]
+                except KeyError:
+                    raise KeyError('No Matching {0} for {1} found in the Forcefield.'
+                                   .format(class_names[len(splitted_items) - 1],
+                                           DICT_KEY_SEPARATOR.join(splitted_items)))
             possible_keys = keys_map[len(splitted_items)].keys()
 
             pattern_list = []
@@ -103,9 +114,10 @@ class ForceField(object):
             for key in possible_keys:
                 if re.match(DICT_KEY_SEPARATOR.join(pattern_list), key):
                     return self.__getitem__(key)
+                if re.match(DICT_KEY_SEPARATOR.join(reversed(pattern_list)), key):
+                    return self.__getitem__(key)
             raise KeyError("{0} {1} doesn't exist in this ForceField".format(class_names[len(splitted_items) - 1],
                                                                              DICT_KEY_SEPARATOR.join(splitted_items)))
-
 
     @property
     def atom_class_groups(self):

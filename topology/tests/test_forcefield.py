@@ -9,6 +9,7 @@ from topology.core.angle_type import AngleType
 from topology.core.dihedral_type import DihedralType
 from topology.tests.utils import get_path
 from topology.tests.base_test import BaseTest
+from topology.exceptions import ForceFieldError
 
 
 class TestForceFieldFromXML(BaseTest):
@@ -17,7 +18,7 @@ class TestForceFieldFromXML(BaseTest):
     def ff(self):
         return ForceField(get_path('ff-example0.xml'))
 
-    @pytest.fixture
+    @pytest.fixture(scope='module')
     def charm_ff(self):
         return ForceField(get_path('topology-charmm.xml'))
 
@@ -108,5 +109,20 @@ class TestForceFieldFromXML(BaseTest):
     def test_forcefield_patterns(self, charm_ff):
         assert isinstance(charm_ff['*'], AtomType)
         assert isinstance(charm_ff['*~*'], BondType)
-        assert isinstance(charm_ff['*~*~*'], AngleType)
-        assert isinstance(charm_ff['*~*~*~*'], DihedralType)
+
+    def test_forcefield_reverse_patterns(self, charm_ff):
+        assert id(charm_ff['AL~OAL']) == id(charm_ff['OAL~AL'])
+        assert id(charm_ff['H~NH2~CT1']) == id(charm_ff['CT1~NH2~H'])
+        assert id(charm_ff['NH2~CT1~C~O']) == id(charm_ff['O~C~CT1~NH2'])
+
+    def test_forcefield_invalid_patterns(self, charm_ff):
+        with pytest.raises(ForceFieldError):
+            assert charm_ff['*~*~*']
+            assert charm_ff['*~*~*~*']
+        with pytest.raises(KeyError):
+            assert charm_ff['avbdhfu~gonza']
+
+    def test_forcefield_wild_cards(self, charm_ff):
+        assert charm_ff['*~CT1~C~NH1'].name == 'DihedralType-Proper-3'
+        assert isinstance(charm_ff['*~CT1~*'], AngleType)
+        assert isinstance(charm_ff['*~CT1~C~*'], DihedralType)
