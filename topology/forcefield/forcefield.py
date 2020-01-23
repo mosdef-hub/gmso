@@ -1,9 +1,13 @@
+import re
+
 from lxml import etree
 
 from topology.forcefield.ff_utils import (validate,
                                           parse_ff_metadata,
                                           parse_ff_atomtypes,
-                                          parse_ff_connection_types)
+                                          parse_ff_connection_types,
+                                          DICT_KEY_SEPARATOR)
+from topology.exceptions import ForceFieldError
 
 
 class ForceField(object):
@@ -24,6 +28,7 @@ class ForceField(object):
     angle_types: (dict), A collection of angle types in the forcefield
     dihedral_types: (dict), A collection of dihedral types in the forcefield
     """
+
     def __init__(self, xml_loc=None):
         """Initialize a new ForceField
         Parameters:
@@ -57,6 +62,50 @@ class ForceField(object):
         descr.append('{:d} DihedralTypes, '.format(len(self.dihedral_types)))
         descr.append('id: {}>'.format(id(self)))
         return ''.join(descr)
+
+    def __getitem__(self, item=''):
+        """Get AtomType, BondType, AngleType or DihedralType in a ForceField with support for wildcards"""
+        splitted_items = item.split(DICT_KEY_SEPARATOR)
+        keys_map = {
+            1: self.atom_types,
+            2: self.bond_types,
+            3: self.angle_types,
+            4: self.dihedral_types
+        }
+        if len(splitted_items) > 4:
+            raise ForceFieldError('Error: You provided a key of length {}. Keys longer than 4 items are not supported '
+                                  'by the forcefield class.')
+        # Pass 1: Direct Lookup
+        try:
+            return keys_map[len(splitted_items)][item]
+        # Pass 2: WildCard Map
+        except KeyError:
+            class_names = ['AtomType', 'BondType', 'AngleType', 'DihedralType']
+            wildcard_idxes = []
+            wildcard = '*'
+
+            for idx, item in enumerate(splitted_items):
+                if item == wildcard:
+                    wildcard_idxes.append(idx)
+
+            if len(wildcard_idxes) == 0:
+                raise KeyError('No Matching {0} for {1} found in the Forcefield.'
+                               .format(class_names[len(splitted_items) - 1],
+                                       DICT_KEY_SEPARATOR.join(splitted_items)))
+            possible_keys = keys_map[len(splitted_items)].keys()
+
+            pattern_list = []
+            for item in splitted_items:
+                if item == wildcard:
+                    pattern_list.append('.*')
+                else:
+                    pattern_list.append(item)
+            for key in possible_keys:
+                if re.match(DICT_KEY_SEPARATOR.join(pattern_list), key):
+                    return self.__getitem__(key)
+            raise KeyError("{0} {1} doesn't exist in this ForceField".format(class_names[len(splitted_items) - 1],
+                                                                             DICT_KEY_SEPARATOR.join(splitted_items)))
+
 
     @property
     def atom_class_groups(self):
@@ -94,10 +143,6 @@ class ForceField(object):
         ff_bondtypes_list = []
         ff_angletypes_list = []
         ff_dihedraltypes_list = []
-        atom_types_dict = {}
-        bond_types_dict = {}
-        angle_types_dict = {}
-        dihedral_types_dict = {}
 
         atom_types_dict = {}
         bond_types_dict = {}

@@ -3,6 +3,10 @@ from sympy import sympify
 import unyt as u
 
 from topology.forcefield import ForceField
+from topology.core.atom_type import AtomType
+from topology.core.bond_type import BondType
+from topology.core.angle_type import AngleType
+from topology.core.dihedral_type import DihedralType
 from topology.tests.utils import get_path
 from topology.tests.base_test import BaseTest
 
@@ -99,4 +103,10 @@ class TestForceFieldFromXML(BaseTest):
         assert isinstance(charm_ff.dihedral_types["*~CE1~CE1~*"].parameters['k'], list)
         assert len(charm_ff.dihedral_types["*~CE1~CE1~*"].parameters['k']) == 2
         assert charm_ff.dihedral_types["*~CE1~CE1~*"].parameters['k'] == \
-               [u.unyt_quantity(0.6276, u.kJ), u.unyt_quantity(35.564, u.kJ)]
+            [u.unyt_quantity(0.6276, u.kJ), u.unyt_quantity(35.564, u.kJ)]
+
+    def test_forcefield_patterns(self, charm_ff):
+        assert isinstance(charm_ff['*'], AtomType)
+        assert isinstance(charm_ff['*~*'], BondType)
+        assert isinstance(charm_ff['*~*~*'], AngleType)
+        assert isinstance(charm_ff['*~*~*~*'], DihedralType)
