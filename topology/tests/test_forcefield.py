@@ -114,6 +114,7 @@ class TestForceFieldFromXML(BaseTest):
         assert id(charm_ff['AL~OAL']) == id(charm_ff['OAL~AL'])
         assert id(charm_ff['H~NH2~CT1']) == id(charm_ff['CT1~NH2~H'])
         assert id(charm_ff['NH2~CT1~C~O']) == id(charm_ff['O~C~CT1~NH2'])
+        assert id(charm_ff['*~CT1~C~*']) == id(charm_ff['*~C~CT1~*'])
 
     def test_forcefield_invalid_patterns(self, charm_ff):
         with pytest.raises(ForceFieldError):
