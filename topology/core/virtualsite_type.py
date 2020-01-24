@@ -18,7 +18,7 @@ class VirtualSiteType(Potential):
     independent vars : set of str
         See `Potential` documentation for more information
     member_types : list of topology.AtomType.name (str)
-    topology: topology.core.Topology, the topology of which this dihedral type is a part of, default=None
+    topology: topology.core.Topology, the topology of which this virtual site type is a part of, default=None
     set_ref: (str), the string name of the bookkeeping set in topology class.
 
     Notes
@@ -29,18 +29,16 @@ class VirtualSiteType(Potential):
 
     def __init__(self,
                  name='VirtualSiteType',
-                 expression='k * (1 + cos(n * phi - phi_eq))**2',
+                 expression='1 - a',
                  parameters=None,
                  independent_variables=None,
                  member_types=None,
                  topology=None,
-                 set_ref='dihedral_type_set'):
+                 set_ref='virtualsite_type_set'):
         if parameters is None:
             parameters = {
                 'a': 0.35 * u.dimensionless
             }
-        if independent_variables is None:
-            independent_variables = {'phi'}
 
         if member_types is None:
             member_types = list()
@@ -48,8 +46,8 @@ class VirtualSiteType(Potential):
         super(VirtualSiteType, self).__init__(name=name, expression=expression,
                                            parameters=parameters, independent_variables=independent_variables,
                                            topology=topology)
-        self._set_ref = VIRTUALSITE_TYPE_DICT
-        self._member_types = _validate_four_member_type_names(member_types)
+        #self._set_ref = VIRTUALSITE_TYPE_DICT
+        self._member_types = member_types
 
     @property
     def set_ref(self):
