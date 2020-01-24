@@ -1,5 +1,6 @@
 import warnings
 from topology.core.site import Site
+from topology.core.potential import Potential
 
 
 class VirtualSite(object):
@@ -7,25 +8,32 @@ class VirtualSite(object):
 
     Partners
     --------
-    vs_type: topology.Potential
-        An instance of topology.Potential that describes
-        the virtual site function and parameters of this interaction
+    virtual_site: topology.site
+        An instance of topology.site that is the virtual site
     virtual_site_members: list of topology.Site
         Should be length 2 or 3
+    virtual_site_type: topology.Potential
+        An instance of topology.Potential that describes
+        the virtual site function and parameters of this interaction
     name: name of the virtual site
     """
 
-    def __init__(self, virtual_site_members=[], virtual_site_type=None, name="VirtualSite"):
+    def __init__(self, virtual_site, virtual_site_members=[], virtual_site_type=None, name="VirtualSite"):
         if virtual_site_members is None:
             virtual_site_members = tuple()
         
         # TODO: validate virtual site members
         #self._virtual_site_members = _validate_virtual_site_members(virtual_site_members)
+        self._virtual_site = virtual_site
         self._virtual_site_members = virtual_site_members
         self._virtual_site_type = _validate_vs_type(virtual_site_type)
         self._name = _validate_name(name)
         # TODO: update members
         #self._update_members()
+
+    @property
+    def virtual_site(self):
+        return self._virtual_site
 
     @property
     def virtual_site_members(self):
