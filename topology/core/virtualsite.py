@@ -1,49 +1,65 @@
 import warnings
-
-from topology.core.connection import Connection
-from topology.core.dihedral_type import DihedralType
-from topology.exceptions import TopologyError
+from topology.core.site import Site
 
 
-class VirtualSite(Connection):
+class VirtualSite(object):
     """A virtual site construction
 
     Partners
     --------
-    connection_members: list of topology.Site
-        Should be length 4
-    connection_type : topology.DihedralType
-    name : name of the virtual site
-        inherits the name attribute from Connection
-
-    Notes
-    -----
-    Inherits some methods from Connection:
-        __eq__, __repr__, _validate methods
-    Addiitonal _validate methods are presented
+    vs_type: topology.Potential
+        An instance of topology.Potential that describes
+        the virtual site function and parameters of this interaction
+    virtual_site_members: list of topology.Site
+        Should be length 2 or 3
+    name: name of the virtual site
     """
 
-    def __init__(self, connection_members=[], connection_type=None, name="Dihedral"):
-        connection_members = _validate_four_partners(connection_members)
-        connection_type = _validate_dihedraltype(connection_type)
+    def __init__(self, virtual_site_members=[], virtual_site_type=None, name="VirtualSite"):
+        if virtual_site_members is None:
+            virtual_site_members = tuple()
+        
+        # TODO: validate virtual site members
+        #self._virtual_site_members = _validate_virtual_site_members(virtual_site_members)
+        self._virtual_site_members = virtual_site_members
+        self._virtual_site_type = _validate_vs_type(virtual_site_type)
+        self._name = _validate_name(name)
+        # TODO: update members
+        #self._update_members()
 
-        super(Dihedral, self).__init__(connection_members=connection_members,
-                connection_type=connection_type, name=name)
+    @property
+    def virtual_site_members(self):
+        return self._virtual_site_members
 
+    @property
+    def virtual_site_type(self):
+        return self._virtual_site_type
 
-def _validate_four_partners(connection_members):
-    """Ensure 4 partners are involved in Dihedral"""
-    if len(connection_members) != 4:
-        raise TopologyError("Trying to create an Dihedral "
-                "with {} connection members". format(len(connection_members)))
+    @property
+    def name(self):
+        return self._name
 
-    return connection_members
+    @name.setter
+    def name(self, vsname):
+        self._name = _validate_name(vsname)
 
+    def __repr__(self):
+        descr = '<{} Virtual Site, id {}'.format(
+                self.virtual_site_type, id(self))
+        if self.name:
+            descr += ', name {}'.format(self.name)
+        descr += '>'
 
-def _validate_dihedraltype(contype):
-    """Ensure connection_type is a DihedralType """
-    if contype is None:
-        warnings.warn("Non-parametrized Dihedral detected")
-    elif not isinstance(contype, DihedralType):
-        raise TopologyError("Supplied non-DihedralType {}".format(contype))
-    return contype
+        return descr
+
+def _validate_vs_type(c_type):
+    if c_type is None:
+        warnings.warn("Non-parametrized virtual site detected")
+    elif not isinstance(c_type, Potential):
+        raise TopologyError("Supplied non-Potential {}".format(c_type))
+    return c_type
+
+def _validate_name(conname):
+    if not isinstance(conname, str):
+        raise TopologyError("Supplied name {} is not a string".format(conname))
+    return conname
