@@ -1,16 +1,20 @@
-import unyt as u
 import warnings
 from re import sub
+
 import numpy as np
+from collections import namedtuple
+import unyt as u
 
+from topology.exceptions import TopologyError
 
-class Element(object):
+class Element(namedtuple('Element', 'atomic_number, name, symbol, mass')):
     """An element."""
-    def __init__(self, atomic_number=None, name=None, symbol=None, mass=None):
-        self.atomic_number = atomic_number
-        self.name = name
-        self.symbol = symbol
-        self.mass = mass
+    
+    def __str__(self):
+        return 'Element: {}, symbol: {}, atomic number: {}, mass: {}'.format(
+                                                                      self.name, self.symbol,
+                                                                      self.atomic_number,
+                                                                      self.mass)
 
 
 def element_by_symbol(symbol):
@@ -68,9 +72,9 @@ def element_by_atomic_number(atomic_number):
 
     Returns
     -------
-    matched_element : element.Element or None
+    matched_element : element.Element
         Return an element from the periodic table if we find a match,
-        otherwise return None
+        otherwise raise TopologyError
     """
     if isinstance(atomic_number, str):
         atomic_number_trimmed = int(sub('[a-z -]', '', atomic_number.lower()).lstrip('0'))
@@ -80,8 +84,9 @@ def element_by_atomic_number(atomic_number):
     else:
         atomic_number_trimmed = atomic_number
     matched_element = atomic_dict.get(atomic_number_trimmed)
+    if matched_element is None:
+        raise TopologyError(f'Failed to find an element with atomic number {atomic_number_trimmed}')
     return matched_element
-
 
 def element_by_mass(mass, exact=True):
     """Search for an element by its mass

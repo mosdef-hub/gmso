@@ -4,7 +4,7 @@ import unyt as u
 
 from topology.core.box import Box
 from topology.core.topology import Topology
-from topology.core.element import Element
+from topology.core.element import Hydrogen
 from topology.core.site import Site
 from topology.core.atom_type import AtomType
 
@@ -43,11 +43,11 @@ class BaseTest:
         def _topology(sites=1):
             top = Topology()
             top.box = Box(lengths=[1, 1, 1])
-            H = Element(name='H', symbol='H', mass=1)
+            H = Hydrogen
             site1 = Site(name='site1',
                          element=H,
                          atom_type=AtomType(name="at1",
-                                            mass=H.mass)
+                                            mass=H.mass),
                          )
             for i in range(sites):
                 top.add_site(site1)

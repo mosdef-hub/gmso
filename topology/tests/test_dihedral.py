@@ -100,8 +100,8 @@ class TestDihedral(BaseTest):
         )
 
         diff_dihedral = Dihedral(
-            connection_members=[site1, site2, site4, site3],
+            connection_members=[site1, site2, site3, site4],
         )
 
-        assert ref_dihedral == same_dihedral
+        assert ref_dihedral != same_dihedral
         assert ref_dihedral != diff_dihedral

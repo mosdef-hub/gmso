@@ -3,6 +3,9 @@ import sympy
 import unyt as u
 
 from topology.utils.misc import unyt_to_hashable
+from topology.utils.decorators import confirm_dict_existence
+from topology.exceptions import TopologyError
+
 
 class Potential(object):
     """An abstract potential class.
@@ -30,18 +33,25 @@ class Potential(object):
         `unyt.unyt_quantity`, which combine both value and unit information.
     independent_variables : str or sympy.Symbol or list or set thereof
         The independent variables in the expression of the potential.
+    topology: topology.core.Topology, the topology of which this potential is a part of, default=None
+    set_ref: (str), the string name of the bookkeeping set in topology class.
 
     """
 
     def __init__(self,
                  name="Potential",
                  expression='a*x+b',
-                 parameters={
-                     'a': 1.0*u.dimensionless,
-                     'b': 1.0*u.dimensionless},
-                 independent_variables={'x'},
+                 parameters=None,
+                 independent_variables=None,
                  template=False,
+                 topology=None
                  ):
+        if parameters is None:
+            parameters = {'a': 1.0*u.dimensionless,
+                          'b': 1.0*u.dimensionless}
+
+        if independent_variables is None:
+            independent_variables = {'x'}
 
         self._name = name
         if not template:
@@ -49,6 +59,11 @@ class Potential(object):
         self._independent_variables = _validate_independent_variables(independent_variables)
         self._expression = _validate_expression(expression)
         self._template = template
+
+        if topology is not None:
+            self._topology = topology
+        else:
+            self._topology = None
 
         if not template:
             self._validate_expression_parameters()
@@ -58,6 +73,7 @@ class Potential(object):
         return self._name
 
     @name.setter
+    @confirm_dict_existence
     def name(self, val):
         self._name = val
 
@@ -66,6 +82,7 @@ class Potential(object):
         return self._parameters
 
     @parameters.setter
+    @confirm_dict_existence
     def parameters(self, newparams):
         newparams = _validate_parameters(newparams)
 
@@ -77,6 +94,7 @@ class Potential(object):
         return self._independent_variables
 
     @independent_variables.setter
+    @confirm_dict_existence
     def independent_variables(self, indep_vars):
         self._independent_variables = _validate_independent_variables(indep_vars)
 
@@ -89,11 +107,21 @@ class Potential(object):
         return self._expression
 
     @expression.setter
+    @confirm_dict_existence
     def expression(self, expression):
         self._expression = _validate_expression(expression)
 
         self._validate_expression_parameters()
 
+    @property
+    def topology(self):
+        return self._topology
+
+    @topology.setter
+    def topology(self, top):
+        self._topology = top
+
+    @confirm_dict_existence
     def set_expression(self, expression=None, parameters=None, independent_variables=None):
         """Set the expression, parameters, and independent variables for this potential.
 
@@ -185,8 +213,13 @@ def _validate_parameters(parameters):
     if not isinstance(parameters, dict):
         raise ValueError("Please enter dictionary for parameters")
     for key, val in parameters.items():
-        if not isinstance(val, u.unyt_array):
-            raise ValueError('Parameter value {} lacks a unyt'.format(val))
+        if isinstance(val, list):
+            for params in val:
+                if not isinstance(params, u.unyt_array):
+                    raise ValueError('Parameter value {} lacks a unyt'.format(val))
+        else:
+            if not isinstance(val, u.unyt_array):
+                raise ValueError('Parameter value {} lacks a unyt'.format(val))
         if not isinstance(key, str):
             raise ValueError('Parameter key {} is not a str'.format(key))
 

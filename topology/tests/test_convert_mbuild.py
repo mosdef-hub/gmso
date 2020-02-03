@@ -7,19 +7,22 @@ from topology.core.subtopology import SubTopology as SubTop
 from topology.core.site import Site
 from topology.external.convert_mbuild import from_mbuild, to_mbuild
 from topology.tests.base_test import BaseTest
-from topology.utils.io import has_mbuild
+from topology.utils.io import get_fn, has_mbuild
 from topology.utils.testing import allclose
 
 
 if has_mbuild:
     import mbuild as mb
-    from mbuild.examples import Ethane
     from mbuild.box import Box
 
 @pytest.mark.skipif(not has_mbuild, reason="mBuild is not installed")
 class TestConvertMBuild(BaseTest):
-    def test_from_mbuild(self):
-        ethane = Ethane()
+    @pytest.fixture
+    def ethane(self):
+        return mb.load(get_fn('ethane.mol2'))
+
+    def test_from_mbuild(self, ethane):
+        import mbuild as mb
         top = from_mbuild(ethane)
 
         assert top.n_sites == 8
@@ -28,8 +31,7 @@ class TestConvertMBuild(BaseTest):
             assert isinstance(top.sites[i].element, topology.Element)
             assert top.sites[i].name == top.sites[i].element.symbol
 
-    def test_full_conversion(self):
-        ethane = Ethane()
+    def test_full_conversion(self, ethane):
         top = from_mbuild(ethane)
 
         new = to_mbuild(top)
@@ -67,28 +69,23 @@ class TestConvertMBuild(BaseTest):
         assert compound.children[0].n_particles == 1
         assert compound.n_particles == 1
 
-    def test_pass_box(self):
-        ethane = Ethane()
+    def test_pass_box(self, ethane):
         mb_box = Box(lengths=[3,3,3])
 
         top = from_mbuild(ethane, box=mb_box)
         assert allclose(top.box.lengths, [3,3,3]*u.nm)
 
 
-    def test_pass_failed_box(self):
-        ethane = Ethane()
-
+    def test_pass_failed_box(self, ethane):
         with pytest.raises(ValueError):
             top = from_mbuild(ethane, box=[3,3,3])
 
-    def test_pass_box_periodicity(self):
-        ethane = Ethane()
+    def test_pass_box_periodicity(self, ethane):
         ethane.periodicity = [2,2,2]
         top = from_mbuild(ethane)
         assert allclose(top.box.lengths, [2,2,2]*u.nm)
 
-    def test_pass_box_bounding(self):
-        ethane = Ethane()
+    def test_pass_box_bounding(self, ethane):
         ethane.periodicity = [0,0,0]
         top = from_mbuild(ethane)
         assert allclose(top.box.lengths, 

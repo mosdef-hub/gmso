@@ -8,9 +8,11 @@ from topology.core.bond import Bond
 from topology.core.angle import Angle
 from topology.core.dihedral import Dihedral
 from topology.core.potential import Potential
+from topology.core.atom_type import AtomType
 from topology.core.bond_type import BondType
 from topology.core.angle_type import AngleType
 from topology.core.dihedral_type import DihedralType
+from topology.utils._constants import ATOM_TYPE_DICT, BOND_TYPE_DICT, ANGLE_TYPE_DICT, DIHEDRAL_TYPE_DICT
 from topology.exceptions import TopologyError
 
 
@@ -25,6 +27,9 @@ class Topology(object):
     def __init__(self, name="Topology", box=None):
         if name is not None:
             self._name = name
+        else:
+            self._name = "Topology"
+
         self._box = box
         self._sites = IndexedSet()
         self._typed = False
@@ -33,13 +38,18 @@ class Topology(object):
         self._angles = IndexedSet()
         self._dihedrals = IndexedSet()
         self._subtops = IndexedSet()
-        self._typed = False
-        self._atom_types = IndexedSet()
-        self._connection_types = IndexedSet()
-        self._bond_types = IndexedSet()
-        self._angle_types = IndexedSet()
-        self._dihedral_types = IndexedSet()
+        self._atom_types = {}
+        self._connection_types = {}
+        self._bond_types = {}
+        self._angle_types = {}
+        self._dihedral_types = {}
         self._combining_rule = 'lorentz'
+        self._set_refs = {
+            ATOM_TYPE_DICT: self._atom_types,
+            BOND_TYPE_DICT: self._bond_types,
+            ANGLE_TYPE_DICT: self._angle_types,
+            DIHEDRAL_TYPE_DICT: self._dihedral_types,
+        }
 
     @property
     def name(self):
@@ -65,18 +75,6 @@ class Topology(object):
     def typed(self, typed):
         self._typed = typed
 
-    def is_typed(self):
-        self.update_atom_types()
-        self.update_connection_types()
-        self.update_bond_types()
-        self.update_angle_types()
-
-        if len(self.atom_types) > 0 or len(self.connection_types) > 0:
-            self._typed = True
-        else:
-            self._typed = False
-        return self.typed
-
     @property
     def combining_rule(self):
         return self._combining_rule
@@ -87,60 +85,12 @@ class Topology(object):
             raise TopologyError('Combining rule must be `lorentz` or `geometric`')
         self._combining_rule = rule
 
+    @property
     def positions(self):
         xyz = np.empty(shape=(self.n_sites, 3)) * u.nm
-        for i, site in enumerate(self.sites):
+        for i, site in enumerate(self._sites):
             xyz[i, :] = site.position
         return xyz
-
-    def add_site(self, site, update_types=True):
-        # Might be a more elegant way of handling this, see PR #128
-        if site in self.sites:
-            warnings.warn("Redundantly adding Site {}".format(site))
-        self._sites.add(site)
-        if update_types:
-            if not self.typed:
-                self.typed = True
-            self.update_atom_types()
-
-    def add_connection(self, connection, update_types=True):
-        # Might be a more elegant way of handling this, see PR #128
-        if connection in self.connections:
-            warnings.warn("Redundantly adding Connection {}".format(connection))
-
-        for conn_member in connection.connection_members:
-            if conn_member not in self.sites:
-                self.add_site(conn_member)
-
-        if update_types and not self.typed:
-            self.typed = True
-
-        self._connections.add(connection)
-        if isinstance(connection, Bond):
-            self.update_bonds()
-        elif isinstance(connection, Angle):
-            self.update_angles()
-        elif isinstance(connection, Dihedral):
-            self.update_dihedrals()
-
-        self.update_connections()
-
-        if update_types:
-            if not self.typed:
-                self.typed = True
-            if isinstance(connection, Bond):
-                self.update_bond_types()
-            elif isinstance(connection, Angle):
-                self.update_angle_types()
-            elif isinstance(connection, Dihedral):
-                self.update_dihedral_types()
-            self.update_connection_types()
-
-    def add_subtopology(self, subtop):
-        self._subtops.add(subtop)
-        subtop.parent = self
-        # Note: would remove duplicates but there should be none
-        self._sites.union(subtop.sites)
 
     @property
     def n_sites(self):
@@ -172,43 +122,43 @@ class Topology(object):
 
     @property
     def sites(self):
-        return self._sites
+        return tuple(self._sites)
 
     @property
     def connections(self):
-        return self._connections
+        return tuple(self._connections)
 
     @property
     def bonds(self):
-        return self._bonds
+        return tuple(self._bonds)
 
     @property
     def angles(self):
-        return self._angles
+        return tuple(self._angles)
 
     @property
     def dihedrals(self):
-        return self._dihedrals
+        return tuple(self._dihedrals)
 
     @property
     def atom_types(self):
-        return self._atom_types
+        return tuple(self._atom_types.values())
 
     @property
     def connection_types(self):
-        return self._connection_types
+        return tuple(self._connection_types.values())
 
     @property
     def bond_types(self):
-        return self._bond_types
+        return tuple(self._bond_types.values())
 
     @property
     def angle_types(self):
-        return self._angle_types
+        return tuple(self._angle_types.values())
 
     @property
     def dihedral_types(self):
-        return self._dihedral_types
+        return tuple(self._dihedral_types.values())
 
     @property
     def atom_type_expressions(self):
@@ -230,112 +180,132 @@ class Topology(object):
     def dihedral_type_expressions(self):
         return list(set([atype.expression for atype in self.dihedral_types]))
 
-    def update_top(self, update_types=True):
-        """ Update the entire topology's attributes
-
-        Notes
-        -----
-        Will update: sites, connections, bonds, angles, dihedrals
-        atom_types, connectiontypes, bondtypes, angletypes, dihedral_types
+    def add_site(self, site, update_types=True):
+        """Add the site to the topology
+        Parameters
+        -----------
+        site: (topology.core.Site), site to be added to this topology
+        update_types: (bool), default(true), If true, update atom types for the site
+        Returns
+        -------
+        None
         """
-        self.update_sites()
-        self.update_connections()
-        self.update_bonds()
-        self.update_angles()
-        self.update_dihedrals()
-
-        if update_types:
-            self.update_atom_types()
-            self.update_connection_types()
-            self.update_bond_types()
-            self.update_angle_types()
-            self.update_dihedral_types()
-            self.is_typed()
+        self._sites.add(site)
+        if update_types and site.atom_type:
+            site.atom_type.topology = self
+            site.atom_type = self._atom_types.get(site.atom_type, site.atom_type)
+            self._atom_types[site.atom_type] = site.atom_type
+            self.is_typed(updated=False)
 
     def update_sites(self):
-        """ (Is this necessary?)
-        Update site list based on the connection members """
         for connection in self.connections:
-            for con_member in connection.connection_members:
-                if con_member not in self.sites:
-                    self.add_site(con_member)
+            for member in connection.connection_members:
+                if member not in self._sites:
+                    self.add_site(member)
 
-    def update_connections(self):
-        """ Update connection list based on the site list """
-        #self._connections = []
+    def add_connection(self, connection, update_types=True):
+        for conn_member in connection.connection_members:
+            if conn_member not in self.sites:
+                self.add_site(conn_member)
+        self._connections.add(connection)
+        if isinstance(connection, Bond):
+            self._bonds.add(connection)
+        if isinstance(connection, Angle):
+            self._angles.add(connection)
+        if isinstance(connection, Dihedral):
+            self._dihedrals.add(connection)
+        if update_types:
+            self.update_connection_types()
+
+    def update_connections(self, update_types=False):
         for site in self.sites:
-            for connection in site.connections:
-                if connection not in self.connections:
-                    self.add_connection(connection)
+            for conn in site.connections:
+                if conn not in self.connections:
+                    self.add_connection(conn, update_types=False)
+        if update_types:
+            self.update_connection_types()
+            self.is_typed()
 
     def update_bonds(self):
-        """ Rebuild the bond list by filtering through connection list """
-        self._bonds = [b for b in self.connections if isinstance(b, Bond)]
+        pass
 
     def update_angles(self):
-        """ Rebuild the angle list by filtering through connection list """
-        self._angles = [a for a in self.connections if isinstance(a, Angle)]
+        pass
 
     def update_dihedrals(self):
-        """ Rebuild the dihedral list by filtering through connection list """
-        self._dihedrals = [d for d in self.connections if isinstance(d, Dihedral)]
-
-    def update_atom_types(self):
-        """ Update the atom types based on the site list """
-        #self._atom_types = []
-        for site in self.sites:
-            if site.atom_type is None:
-                warnings.warn("Site {} detected with no AtomType".format(site))
-            elif site.atom_type not in self.atom_types:
-                self.atom_types.add(site.atom_type)
+        pass
 
     def update_connection_types(self):
-        """ Update the connection types based on the connection list """
-        #self._connection_types = []
+        """Update the connection types based on the connection set"""
         for c in self.connections:
             if c.connection_type is None:
-                warnings.warn("Non-parametrized Connection {} detected".format(c))
+                warnings.warn('Non-parametrized Connection {} detected'.format(c))
             elif not isinstance(c.connection_type, Potential):
-                raise TopologyError("Non-Potential {} found "
-                        "in Connection {}".format(c.connection_type, c))
-            elif c.connection_type not in self.connection_types:
-                self.connection_types.add(c.connection_type)
+                raise TopologyError('Non-Potential {} found'
+                                    'in Connection {}'.format(c.connection_type, c))
+            elif c.connection_type not in self._connection_types:
+                c.connection_type.topology = self
+                self._connection_types[c.connection_type] = c.connection_type
+                if isinstance(c.connection_type, BondType):
+                    self._bond_types[c.connection_type] = c.connection_type
+                if isinstance(c.connection_type, AngleType):
+                    self._angle_types[c.connection_type] = c.connection_type
+                if isinstance(c.connection_type, DihedralType):
+                    self._dihedral_types[c.connection_type] = c.connection_type
+            elif c.connection_type in self.connection_types:
+                if isinstance(c.connection_type, BondType):
+                    c.connection_type = self._bond_types[c.connection_type]
+                if isinstance(c.connection_type, AngleType):
+                    c.connection_type = self._angle_types[c.connection_type]
+                if isinstance(c.connection_type, DihedralType):
+                    c.connection_type = self._dihedral_types[c.connection_type]
 
-    def update_bond_types(self):
-        """ Update the bond types based on the bond list """
-        #self._bond_types = []
-        for b in self.bonds:
-            if b.connection_type is None:
-                warnings.warn("Non-parametrized Bond {} detected".format(b))
-            elif not isinstance(b.connection_type, BondType):
-                raise TopologyError("Non-BondType {} found in Bond {}".format(
-                    b.connection_type, b))
-            elif b.connection_type not in self.bond_types:
-                self.bond_types.add(b.connection_type)
+    def update_atom_types(self):
+        """Update atom types in the topology"""
+        for site in self._sites:
+            if site.atom_type is None:
+                warnings.warn('Non-parametrized site detected {}'.format(site))
+            elif not isinstance(site.atom_type, AtomType):
+                raise TopologyError('Non AtomType instance found in site {}'.format(site))
+            elif site.atom_type not in self._atom_types:
+                site.atom_type.topology = self
+                self._atom_types[site.atom_type] = site.atom_type
+            elif site.atom_type in self._atom_types:
+                site.atom_type = self._atom_types[site.atom_type]
+        self.is_typed(updated=True)
+
+    def add_subtopology(self, subtop):
+        self._subtops.add(subtop)
+        subtop.parent = self
+        self._sites.union(subtop.sites)
+
+    def is_typed(self, updated=False):
+        if not updated:
+            self.update_connection_types()
+            self.update_atom_types()
+
+        if len(self.atom_types) > 0 or len(self.connection_types) > 0:
+            self._typed = True
+        else:
+            self._typed = False
+        return self._typed
 
     def update_angle_types(self):
-        """ Update the angle types based on the angle list """
-        #self._angle_types = []
-        for a in self.angles:
-            if a.connection_type is None:
-                warnings.warn("Non-parametrized Angle {} detected".format(a))
-            elif not isinstance(a.connection_type, AngleType):
-                raise TopologyError("Non-AngleType {} found in Angle {}".format(
-                    a.connection_type, a))
-            elif a.connection_type not in self.angle_types:
-                self.angle_types.add(a.connection_type)
+        pass
+
+    def update_bond_types(self):
+        pass
 
     def update_dihedral_types(self):
-        """ Update the dihedral types based on the dihedral list """
-        #self._dihedral_types = []
-        for d in self.dihedrals:
-            if d.connection_type is None:
-                warnings.warn("Non-parametrized Dihedral {} detected".format(d))
-            elif not isinstance(d.connection_type, DihedralType):
-                raise TopologyError("Non-DihedralType {} found in Dihedral {}".format(
-                    d.connection_type, d))
-            elif d.connection_type not in self.dihedral_types:
-                self.dihedral_types.add(d.connection_type)
+        pass
+
+    def update_topology(self):
+        """Update the entire topology"""
+        self.update_sites()
+        self.update_connections()
+        self.update_atom_types()
+        self.update_connection_types()
+        self.is_typed(updated=True)
 
     def __repr__(self):
         descr = list('<')
@@ -346,33 +316,9 @@ class Topology(object):
 
         return ''.join(descr)
 
-    def __eq__(self, other):
-        """Compare a topology for equivalence."""
+    update_angle_types = update_connection_types
+    update_bond_types = update_connection_types
+    update_dihedral_types = update_connection_types
+    update_angles = update_bonds = update_angles = update_connections
 
-        if self is other:
-            return True
 
-        if not isinstance(other, Topology):
-            return False
-
-        if self.name != other.name:
-            return False
-
-        if self.n_sites != other.n_sites:
-            return False
-
-        if self.combining_rule != other.combining_rule:
-            return False
-
-        for (con1, con2) in zip(self.connections, other.connections):
-            if con1 != con2:
-                return False
-
-        for (site1, site2) in zip(self.sites, other.sites):
-            if site1 != site2:
-                return False
-
-        if self.box != other.box:
-            return False
-
-        return True

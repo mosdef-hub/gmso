@@ -1,9 +1,12 @@
+import pytest
 import numpy as np
+import unyt as u
 
 from topology.core import element
 from topology.core.element import Carbon
 from topology.tests.base_test import BaseTest
-import unyt as u
+from topology.exceptions import TopologyError
+
 
 class TestElement(BaseTest):
     def test_element(self):
@@ -53,3 +56,13 @@ class TestElement(BaseTest):
         assert cobalt == element.Cobalt
         assert nickel == element.Nickel
         assert chlorine == element.Chlorine
+
+    def test_all_elements(self):
+        for num in range(1, 119):
+            elem = element.element_by_atomic_number(num)
+            assert elem.atomic_number == num
+
+    @pytest.mark.parametrize('atomic_number', [0, -1, 1000, 17.02])
+    def test_bad_atomic_number(self, atomic_number):
+        with pytest.raises(TopologyError):
+            element.element_by_atomic_number(atomic_number)
