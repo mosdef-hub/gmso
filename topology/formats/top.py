@@ -19,17 +19,17 @@ def write_top(top, filename):
         )
         out_file.write(
             '[ defaults ]\n'
-            '; nbfunc\t\t'
-            'comb-rule\t\t'
-            'gen-pairs\t\t'
-            'fudgeLJ\t\t'
+            '; nbfunc\t'
+            'comb-rule\t'
+            'gen-pairs\t'
+            'fudgeLJ\t'
             'fudgeQQ\n'
         )
         out_file.write(
-            '{0}\t\t\t\t'
-            '{1}\t\t\t\t'
-            '{2}\t\t\t\t'
-            '{3}\t\t\t\t'
+            '{0}\t\t'
+            '{1}\t\t'
+            '{2}\t\t'
+            '{3}\t\t'
             '{4}\n\n'.format(
                 top_vars['nbfunc'],
                 top_vars['comb_rule'],
@@ -51,15 +51,15 @@ def write_top(top, filename):
         )
         for atom_type in top.atom_types:
             out_file.write(
-                '{0}\t\t\t\t'
-                '{1}\t\t\t\t'
-                '{2}\t\t\t\t'
-                '{3}\t\t\t\t'
-                '{4}\t\t\t\t'
-                '{5}\t\t\t\t'
+                '{0}\t\t'
+                '{1:d}\t\t'
+                '{2}\t\t'
+                '{3}\t\t'
+                '{4}\t\t'
+                '{5}\t\t'
                 '{6}\n'.format(
                     atom_type.name,
-                    1.0, # TODO: Use an atomic number here
+                    int(1), # TODO: Use an atomic number here
                     atom_type.mass.in_units(u.amu).value,
                     atom_type.charge.in_units(u.charge_electron).value,
                     'A',
@@ -72,7 +72,7 @@ def write_top(top, filename):
         # TODO: for subtop in top.subtops ...
         out_file.write(
             '[ moleculetype ]\n'
-            '; name\t\t\tnrexcl'
+            '; name\t\t\tnrexcl\n'
             '{0}\t'
             '{1}\n\n'.format(
                 top.name, # TODO: subtop.name
@@ -84,9 +84,9 @@ def write_top(top, filename):
             '[ atoms ]\n'
             ';   nr       type  resnr residue  atom   cgnr    charge       mass\n'
         )
-        for site_idx, site in enumerate(top.sites):
+        for idx, atom_type in enumerate(top.atom_types):
             out_file.write(
-                '\t{0}'
+                '{0}'
                 '\t{1}'
                 '\t{2}'
                 '\t{3}'
@@ -94,14 +94,14 @@ def write_top(top, filename):
                 '\t{5}'
                 '\t{6}'
                 '\t{7}\n'.format(
-                    site_idx,
-                    site.atom_type.name,
+                    idx+1,
+                    atom_type.name,
                     1, # TODO: subtop idx
                     top.name, # TODO: subtop.name
-                    site.element,
-                    site_idx, # TODO: care about charge groups
-                    site.charge.in_units(u.charge_electron).value,
-                    site.mass.in_units(u.amu).value,
+                    'X', # TODO: establish relationship between atom_type and site ...
+                    1, # TODO: care about charge groups
+                    atom_type.charge.in_units(u.charge_electron).value,
+                    atom_type.mass.in_units(u.amu).value,
                 )
             )
 
@@ -184,11 +184,13 @@ def write_top(top, filename):
             )
         )
 
+        if len(set([s.name for s in top.subtops])) > 1:
+            raise NotImplementedError
+
         out_file.write(
             '[ molecules ]\n'
-            '; molecule     nmols\n'.format(
-                'RES            1'
-            )
+            '; molecule     nmols\n'
+            '{0}\t{1}'.format(top.subtops[0].name, top.n_subtops)
         )
 
 
