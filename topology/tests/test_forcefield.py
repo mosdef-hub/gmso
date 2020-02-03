@@ -104,17 +104,19 @@ class TestForceFieldFromXML(BaseTest):
         assert isinstance(charm_ff.dihedral_types["*~CE1~CE1~*"].parameters['k'], list)
         assert len(charm_ff.dihedral_types["*~CE1~CE1~*"].parameters['k']) == 2
         assert charm_ff.dihedral_types["*~CE1~CE1~*"].parameters['k'] == \
-            [u.unyt_quantity(0.6276, u.kJ), u.unyt_quantity(35.564, u.kJ)]
+               [u.unyt_quantity(0.6276, u.kJ), u.unyt_quantity(35.564, u.kJ)]
 
     def test_forcefield_patterns(self, charm_ff):
         assert isinstance(charm_ff['*'], AtomType)
         assert isinstance(charm_ff['*~*'], BondType)
 
-    def test_forcefield_reverse_patterns(self, charm_ff):
-        assert id(charm_ff['AL~OAL']) == id(charm_ff['OAL~AL'])
-        assert id(charm_ff['H~NH2~CT1']) == id(charm_ff['CT1~NH2~H'])
-        assert id(charm_ff['NH2~CT1~C~O']) == id(charm_ff['O~C~CT1~NH2'])
-        assert id(charm_ff['*~CT1~C~*']) == id(charm_ff['*~C~CT1~*'])
+    @pytest.mark.parametrize('forward, reverse',
+                             [('AL~OAL', 'OAL~AL'),
+                              ('H~NH2~CT1', 'CT1~NH2~H'),
+                              ('NH2~CT1~C~O', 'O~C~CT1~NH2'),
+                              ('*~CT1~C~*', '*~C~CT1~*')])
+    def test_forcefield_reverse_patterns(self, charm_ff, forward, reverse):
+        assert id(charm_ff[forward]) == id(charm_ff[reverse])
 
     def test_forcefield_invalid_patterns(self, charm_ff):
         with pytest.raises(ForceFieldError):
@@ -122,6 +124,8 @@ class TestForceFieldFromXML(BaseTest):
             assert charm_ff['*~*~*~*']
         with pytest.raises(KeyError):
             assert charm_ff['avbdhfu~gonza']
+        with pytest.raises(ForceFieldError):
+            assert charm_ff['A~B~C~D~E']
 
     def test_forcefield_wild_cards(self, charm_ff):
         assert charm_ff['*~CT1~C~NH1'].name == 'DihedralType-Proper-3'
