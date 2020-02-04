@@ -75,16 +75,20 @@ def write_top(top, filename):
             )
 
 
-        # TODO: for subtop in top.subtops ...
         out_file.write(
             '[ moleculetype ]\n'
             '; name\t\t\tnrexcl\n'
-            '{0}\t'
-            '{1}\n\n'.format(
-                top.name, # TODO: subtop.name
-                3 # TODO: This should be the nrexcl
-            )
         )
+
+        # TODO: Lookup and join nrexcl from each subtop object
+        for subtop_name in set([s.name for s in top.subtops]):
+            out_file.write(
+                '{0}\t'
+                '{1}\n\n'.format(
+                    subtop_name,
+                    3
+                )
+            )
 
         out_file.write(
             '[ atoms ]\n'
