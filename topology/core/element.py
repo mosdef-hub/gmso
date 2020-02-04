@@ -156,6 +156,7 @@ def element_by_smarts_string(smarts_string):
     PARSER = SMARTS()
 
     symbol = next(PARSER.parse(smarts_string).find_data('atom_symbol')).children[0]
+    print(symbol)
     matched_element = element_by_symbol(symbol)
     
     if matched_element is None:
@@ -167,6 +168,42 @@ def element_by_smarts_string(smarts_string):
     return matched_element
 
 
+def element_by_atom_type(atom_type):
+    """Search for an element by a given a topology AtomType object
+
+    Parameters
+    ----------
+    atom_type : topology.core.atom_type.AtomType
+        AtomType object to be parsed for element information. Attributes are
+        looked up in the order of mass, name, and finally definition (the
+        SMARTS string).  Because of the loose structure of this class, a
+        successful lookup is not guaranteed.
+
+    Returns
+    -------
+    matched_element : element.Element or None
+        Return an element from the periodict table if we find a match,
+        otherwise return None
+
+    """
+    matched_element = None
+
+    if matched_element is None and atom_type.mass:
+        matched_element = element_by_mass(atom_type.mass, exact=False)
+    if matched_element is None and atom_type.name:
+        matched_element = element_by_symbol(atom_type.name)
+    if matched_element is None and atom_type.definition:
+        matched_element = element_by_smarts_string(atom_type.definition)
+
+    if matched_element is None:
+        import pdb; pdb.set_trace()
+        raise TopologyError(f'Failed to find an element from atom type'
+                '{atom_type} with ' 'properties mass: {atom_type.mass}, name:'
+                '{atom_type.name}, and ' 'definition: {atom_type.definition}'
+        )
+
+    return matched_element
+    return elem
 
 
 Hydrogen = 	Element(atomic_number=1, name='hydrogen', symbol='H', mass=1.0079 * u.amu)

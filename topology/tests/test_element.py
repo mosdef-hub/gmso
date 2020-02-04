@@ -4,6 +4,7 @@ import unyt as u
 
 from topology.core import element
 from topology.core.element import Carbon
+from topology.core.atom_type import AtomType
 from topology.tests.base_test import BaseTest
 from topology.exceptions import TopologyError
 
@@ -64,6 +65,19 @@ class TestElement(BaseTest):
 
         for smarts in SMARTS:
             carbon = element.element_by_smarts_string(smarts)
+
+            assert carbon.name == element.Carbon.name
+            assert carbon.symbol == element.Carbon.symbol
+            assert carbon.mass == element.Carbon.mass
+
+    def test_element_by_atom_type(self):
+        carbon_type = AtomType(mass=12.011, definition='C', name='C')
+        mass_only = AtomType(mass=12.011)
+        def_only = AtomType(definition='C')
+        name_only = AtomType(name='C')
+
+        for atom_type in [carbon_type, mass_only, def_only, name_only]:
+            carbon = element.element_by_atom_type(atom_type)
 
             assert carbon.name == element.Carbon.name
             assert carbon.symbol == element.Carbon.symbol
