@@ -7,13 +7,33 @@ from topology.core.site import Site
 from topology.core.bond import Bond
 from topology.core.box import Box
 from topology.utils.io import has_mbuild
-from topology.core import element
-from topology.core.element import element_by_symbol, element_by_name, element_by_atomic_number, element_by_mass
+from topology.core.element import (element_by_symbol, 
+                                   element_by_name,
+                                   element_by_atomic_number, 
+                                   element_by_mass)
 
 if has_mbuild:
     import mbuild as mb
 
+
 def from_mbuild(compound, box=None, search_method=element_by_symbol):
+    """Convert an mbuild.Compound to a topology.Topology
+
+    Parameters
+    ----------
+    compound : mbuild.Compound
+        mbuild.Compound instance that need to be converted
+    box : mbuild.Box, optional, default=None
+        Box information to be loaded to a topology.Topologly
+    search_method : element_by_symbol, element_by_name,
+                    element_by_atomic_number, element_by_mass,
+                    optional, default=element_by_symbol
+        Searching method used to assign element from periodic table to particle site
+
+    Returns
+    -------
+    top : topology.Topology
+    """
     msg = ("Provided argument that is not an mbuild Compound")
     assert isinstance(compound, mb.Compound), msg
 
@@ -60,7 +80,7 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
     if box:
         top.box = from_mbuild_box(box)
     # Assumes 2-D systems are not supported in mBuild
-    #if compound.periodicity is None and not box:
+    # if compound.periodicity is None and not box:
     else:
         if np.allclose(compound.periodicity, np.zeros(3)):
             box = from_mbuild_box(compound.boundingbox)
@@ -73,6 +93,17 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
 
 
 def to_mbuild(topology):
+    """ Convert a topology.Topology to mbuild.Compound
+
+    Parameters
+    ----------
+    topology : topology.Topology
+        topology instance that need to be converted
+
+    Returns:
+    --------
+    compound : mbuild.Compound
+    """
     msg = ("Provided argument that is not a topology")
     assert isinstance(topology, Topology), msg
 
