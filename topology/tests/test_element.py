@@ -48,6 +48,14 @@ class TestElement(BaseTest):
             assert fluorine.name == element.Fluorine.name
             assert fluorine.symbol == element.Fluorine.symbol
             assert fluorine.mass == element.Fluorine.mass 
+
+        for smarts in ['C', '[C;X3](C)(O)C', '[C;X4](C)(C)(C)H']:
+            carbon = element.element_by_smarts_string(smarts)
+
+            assert carbon.name == element.Carbon.name
+            assert carbon.symbol == element.Carbon.symbol
+            assert carbon.mass == element.Carbon.mass
+
         #Additional element_by_mass test
         cobalt = element.element_by_mass(58.9)
         nickel = element.element_by_mass(58.7)
