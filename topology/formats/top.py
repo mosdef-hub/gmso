@@ -1,6 +1,12 @@
 import datetime
 
 import unyt as u
+from foyer.smarts import SMARTS
+
+from topology.core.element import element_by_mass, element_by_symbol
+
+
+PARSER = SMARTS()
 
 
 def write_top(top, filename):
@@ -52,14 +58,14 @@ def write_top(top, filename):
         for atom_type in top.atom_types:
             out_file.write(
                 '{0}\t\t'
-                '{1:d}\t\t'
+                '{1}\t\t'
                 '{2}\t\t'
                 '{3}\t\t'
                 '{4}\t\t'
                 '{5}\t\t'
                 '{6}\n'.format(
                     atom_type.name,
-                    int(1), # TODO: Use an atomic number here
+                    _lookup_element(atom_type),
                     atom_type.mass.in_units(u.amu).value,
                     atom_type.charge.in_units(u.charge_electron).value,
                     'A',
@@ -210,6 +216,27 @@ def _get_top_vars(top):
 
     return top_vars
 
+
 def _assign_indices(top):
     for idx, site in enumerate(top.sites):
         site.idx = idx + 1
+
+
+def _lookup_element(atom_type):
+    """Attempt to look up an element based on atom type information"""
+    elem = None
+    while elem is None:
+        if atom_type.mass is not None:
+            elem = element_by_mass(atom_type.mass)
+        if atom_type.name is not None:
+            elem = element_by_symbol(atom_type.name)
+            elem = element_by_symbol(atom_type.name)
+        if atom_type.definition is not None:
+            elem = _element_from_smarts_string(atom_type.definition)
+        elem = 'X'
+    return elem
+
+
+def _element_from_smarts_string(smarts_string):
+    symbol = next(PARSER.parse(smarts_string).find_data('atom_symbol')).children[0]
+    return element_by_symbol(symbol)
