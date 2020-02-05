@@ -4,7 +4,8 @@ import unyt as u
 from foyer.smarts import SMARTS
 
 from topology.core.element import element_by_mass, element_by_symbol
-
+from topology.lib.potential_templates import *
+from topology.exceptions import EngineIncompatibilityError
 
 PARSER = SMARTS()
 
@@ -206,7 +207,15 @@ def write_top(top, filename):
 
 def _validate_compatibility(top):
     """Check compatability of topology object with GROMACS TOP format"""
-    pass
+    compatability = True
+    accepted_potentials = [LennardJonesPotential()]
+    for atom_type in top.atom_types:
+        if not ((atom_type.expression in [pot.expression for pot in accepted_potentials]) and
+                (atom_type.independent_variables in [pot.independent_variables for pot in accepted_potentials])):
+            raise EngineIncompatibilityError
+            compatibility = False
+
+
 
 def _get_top_vars(top):
     """Generate a dictionary of values for the defaults directive."""
