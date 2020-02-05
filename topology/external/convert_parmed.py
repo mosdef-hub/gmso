@@ -9,6 +9,17 @@ if has_parmed:
     pmd = import_('parmed')
 
 def from_parmed(structure):
+    """Convert a parmed.Structure to a topology.Topology
+
+    Parameters
+    ----------
+    structure : parmed.Structure
+        parmed.Structure instance that need to be converted
+
+    Returns
+    -------
+    top : topology.Topology
+    """
     msg = ("Provided argument that is not a Parmed Structure")
     assert isinstance(structure, pmd.Structure), msg
 
