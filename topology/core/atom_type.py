@@ -1,9 +1,10 @@
 import warnings
 import unyt as u
 
-from topology.utils.testing import allclose
 from topology.core.potential import Potential
 from topology.utils.misc import unyt_to_hashable
+from topology.utils.decorators import confirm_dict_existence
+from topology.utils._constants import ATOM_TYPE_DICT
 
 
 class AtomType(Potential):
@@ -45,6 +46,8 @@ class AtomType(Potential):
         Set of other atom types that this atom type overrides
     definition : str
         SMARTS string defining this atom type
+    topology: topology.core.Topology, the topology of which this atom_type is a part of, default=None
+    set_ref: (str), the string name of the bookkeeping set in topology class.
 
     """
 
@@ -53,18 +56,26 @@ class AtomType(Potential):
                  mass=0.0 * u.gram / u.mol,
                  charge=0.0 * u.elementary_charge,
                  expression='4*epsilon*((sigma/r)**12 - (sigma/r)**6)',
-                 parameters={
-                    'sigma': 0.3 * u.nm,
-                    'epsilon': 0.3 * u.Unit('kJ')},
-                 independent_variables={'r'},
-                 atomclass='', doi='', overrides=set(), definition='',
-                 description=''):
+                 parameters=None,
+                 independent_variables=None,
+                 atomclass='', doi='', overrides=None, definition='',
+                 description='',
+                 topology=None):
+        if parameters is None:
+            parameters = {'sigma': 0.3 * u.nm,
+                          'epsilon': 0.3 * u.Unit('kJ')}
+        if independent_variables is None:
+            independent_variables = {'r'}
+
+        if overrides is None:
+            overrides = set()
 
         super(AtomType, self).__init__(
             name=name,
             expression=expression,
             parameters=parameters,
-            independent_variables=independent_variables)
+            independent_variables=independent_variables,
+            topology=topology)
         self._mass = _validate_mass(mass)
         self._charge = _validate_charge(charge)
         self._atomclass = _validate_str(atomclass)
@@ -72,14 +83,19 @@ class AtomType(Potential):
         self._overrides = _validate_set(overrides)
         self._description = _validate_str(description)
         self._definition = _validate_str(definition)
-
+        self._set_ref = ATOM_TYPE_DICT
         self._validate_expression_parameters()
+
+    @property
+    def set_ref(self):
+        return self._set_ref
 
     @property
     def charge(self):
         return self._charge
 
     @charge.setter
+    @confirm_dict_existence
     def charge(self, val):
         self._charge = _validate_charge(val)
 
@@ -88,6 +104,7 @@ class AtomType(Potential):
         return self._mass
 
     @mass.setter
+    @confirm_dict_existence
     def mass(self, val):
         self._mass = _validate_mass(val)
 
@@ -96,6 +113,7 @@ class AtomType(Potential):
         return self._atomclass
 
     @atomclass.setter
+    @confirm_dict_existence
     def atomclass(self, val):
         self._atomclass = val
 
@@ -104,6 +122,7 @@ class AtomType(Potential):
         return self._doi
 
     @doi.setter
+    @confirm_dict_existence
     def doi(self, doi):
         self._doi = _validate_str(doi)
 
@@ -112,6 +131,7 @@ class AtomType(Potential):
         return self._overrides
 
     @overrides.setter
+    @confirm_dict_existence
     def overrides(self, overrides):
         self._overrides = _validate_set(overrides)
 
@@ -120,6 +140,7 @@ class AtomType(Potential):
         return self._description
 
     @description.setter
+    @confirm_dict_existence
     def description(self, description):
         self._description = _validate_str(description)
 
@@ -128,6 +149,7 @@ class AtomType(Potential):
         return self._definition
 
     @definition.setter
+    @confirm_dict_existence
     def definition(self, definition):
         self._definition = _validate_str(definition)
 
@@ -179,10 +201,12 @@ def _validate_mass(mass):
 
     return mass
 
+
 def _validate_str(val):
     if not isinstance(val, str):
         raise ValueError("Passed value {} is not a string".format(val))
     return val
+
 
 def _validate_set(val):
     if not isinstance(val, set):

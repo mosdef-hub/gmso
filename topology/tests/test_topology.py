@@ -58,7 +58,6 @@ class TestTopology(BaseTest):
         top.add_site(site1)
         top.add_site(site2)
 
-
         assert len(top.connections) == 1
 
     def test_add_box(self):
@@ -78,9 +77,9 @@ class TestTopology(BaseTest):
         assert set([type(site.position) for site in top.sites]) == {u.unyt_array}
         assert set([site.position.units for site in top.sites]) == {u.nm}
 
-        assert top.positions().dtype == float
-        assert top.positions().units == u.nm
-        assert isinstance(top.positions(), u.unyt_array)
+        assert top.positions.dtype == float
+        assert top.positions.units == u.nm
+        assert isinstance(top.positions, u.unyt_array)
 
     def test_eq_types(self, top, box):
         assert top != box
@@ -92,7 +91,7 @@ class TestTopology(BaseTest):
     def test_eq_sites(self, top, charge):
         ref = deepcopy(top)
         wrong_n_sites = deepcopy(top)
-        assert top == wrong_n_sites
+        assert top != wrong_n_sites
         ref.add_site(Site())
         assert ref != wrong_n_sites
 
@@ -167,7 +166,7 @@ class TestTopology(BaseTest):
         top1 = from_parmed(ref)
         top2 = from_parmed(ref)
 
-        assert top1 == top2
+        assert top1 != top2
 
     def test_add_untyped_site_update(self):
         untyped_site = Site(atom_type=None)
@@ -228,7 +227,7 @@ class TestTopology(BaseTest):
 
     def test_top_update(self):
         top = Topology()
-        top.update_top()
+        top.update_topology()
         assert top.n_sites == 0
         assert len(top.atom_types) == 0
         assert len(top.atom_type_expressions) == 0
@@ -380,3 +379,19 @@ class TestTopology(BaseTest):
         top.typed = True
         assert top.typed == True
         assert top.is_typed() == False
+
+    def test_topology_atom_type_changes(self):
+        top = Topology()
+        for i in range(100):
+            site = Site(name='site{}'.format(i))
+            atom_type = AtomType(name='atom_type{}'.format(i%10))
+            site.atom_type = atom_type
+            top.add_site(site, update_types=False)
+        top.update_topology()
+        assert len(top.atom_types) == 10
+        top.sites[0].atom_type.name = 'atom_type_changed'
+        assert id(top.sites[0].atom_type) == id(top.sites[10].atom_type)
+        assert top.sites[10].atom_type.name == 'atom_type_changed'
+        assert top.is_typed()
+
+
