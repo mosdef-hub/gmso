@@ -5,10 +5,10 @@ from foyer.smarts import SMARTS
 
 from topology.core.element import element_by_atom_type
 from topology.lib.potential_templates import *
-from topology.exceptions import EngineIncompatibilityError
+from topology.utils.compatibility import check_compatibility
+
 
 PARSER = SMARTS()
-
 
 def write_top(top, filename):
     """Write a topology to a GROMACS .TOP file"""
@@ -207,14 +207,8 @@ def write_top(top, filename):
 
 def _validate_compatibility(top):
     """Check compatability of topology object with GROMACS TOP format"""
-    compatability = True
     accepted_potentials = [LennardJonesPotential()]
-    for atom_type in top.atom_types:
-        if not ((atom_type.expression in [pot.expression for pot in accepted_potentials]) and
-                (atom_type.independent_variables in [pot.independent_variables for pot in accepted_potentials])):
-            raise EngineIncompatibilityError
-            compatibility = False
-
+    check_compatibility(top, accepted_potentials)
 
 
 def _get_top_vars(top):
@@ -241,4 +235,4 @@ def _lookup_atomic_number(atom_type):
     if element is None:
         return 0
     else:
-        return element.atomic_number
+        return element
