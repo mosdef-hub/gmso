@@ -81,12 +81,25 @@ def write_top(top, filename):
             '; name\t\t\tnrexcl\n'
         )
 
-        # TODO: Lookup and join nrexcl from each subtop object
-        for subtop_name in set([s.name for s in top.subtops]):
+        # TODO: Better parsing of subtops into residues/molecules
+        n_unique_subtops = len(set([s.name for s in top.subtops]))
+        if n_unique_subtops > 1:
+            raise NotImplementedError
+        # Treat top without subtops as one residue-like "molecule"
+        elif n_unique_subtops == 0:
             out_file.write(
                 '{0}\t'
                 '{1}\n\n'.format(
-                    subtop_name,
+                    top.name,
+                    3
+                )
+            )
+        # TODO: Lookup and join nrexcl from each subtop object
+        elif n_unique_subtops == 1:
+            out_file.write(
+                '{0}\t'
+                '{1}\n\n'.format(
+                    top.subtops[0].name,
                     3
                 )
             )
@@ -235,4 +248,4 @@ def _lookup_atomic_number(atom_type):
     if element is None:
         return 0
     else:
-        return element
+        return element.atomic_number
