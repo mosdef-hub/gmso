@@ -1,25 +1,15 @@
-import mbuild as mb
 import pytest
 
 import topology as topo
 from topology.formats.top import write_top
-from topology.external.convert_mbuild import from_mbuild
 from topology.tests.base_test import BaseTest
 from topology.utils.io import get_fn
 from topology.exceptions import EngineIncompatibilityError
 
 
 class TestTop(BaseTest):
-    def test_write_top(self):
-        ar = mb.Compound(name='Ar')
-
-        packed_system = mb.fill_box(
-            compound=ar,
-            n_compounds=200,
-            box=mb.Box([3, 3, 3]),
-        )
-
-        top = from_mbuild(packed_system)
+    def test_write_top(self, ar_system):
+        top = ar_system
 
         ff = topo.ForceField(get_fn('ar.xml'))
 
@@ -30,16 +20,9 @@ class TestTop(BaseTest):
 
         write_top(top, 'ar.top')
 
-    def test_bad_potential(self):
-        ar = mb.Compound(name='Ar')
 
-        packed_system = mb.fill_box(
-            compound=ar,
-            n_compounds=200,
-            box=mb.Box([3, 3, 3]),
-        )
-
-        top = from_mbuild(packed_system)
+    def test_modified_potentials(self, ar_system):
+        top = ar_system
 
         ff = topo.ForceField(get_fn('ar.xml'))
 
