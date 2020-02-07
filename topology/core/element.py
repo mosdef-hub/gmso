@@ -10,7 +10,7 @@ from topology.exceptions import TopologyError
 class Element(namedtuple('Element', 'atomic_number, name, symbol, mass')):
     """An element."""
     
-    def __str__(self):
+    def __repr__(self):
         return 'Element: {}, symbol: {}, atomic number: {}, mass: {}'.format(
                                                                       self.name, self.symbol,
                                                                       self.atomic_number,
