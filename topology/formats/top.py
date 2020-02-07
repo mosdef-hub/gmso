@@ -6,6 +6,7 @@ from foyer.smarts import SMARTS
 from topology.core.element import element_by_atom_type
 from topology.lib.potential_templates import *
 from topology.utils.compatibility import check_compatibility
+from topology.exceptions import TopologyError
 
 
 PARSER = SMARTS()
@@ -211,11 +212,18 @@ def write_top(top, filename):
         if len(set([s.name for s in top.subtops])) > 1:
             raise NotImplementedError
 
-        out_file.write(
-            '[ molecules ]\n'
-            '; molecule     nmols\n'
-            '{0}\t{1}'.format(top.subtops[0].name, top.n_subtops)
-        )
+        if len(top.subtops) == 0:
+            out_file.write(
+                '[ molecules ]\n'
+                '; molecule     nmols\n'
+                '{0}\t{1}'.format(top.name, 1)
+            )
+        elif len(top.subtops) > 0:
+            out_file.write(
+                '[ molecules ]\n'
+                '; molecule     nmols\n'
+                '{0}\t{1}'.format(top.subtops[0].name, top.n_subtops)
+            )
 
 
 def _validate_compatibility(top):
@@ -244,8 +252,8 @@ def _assign_indices(top):
 
 def _lookup_atomic_number(atom_type):
     """Attempt to look up an atomic_number based on atom type information, 0 if non-element type"""
-    element = element_by_atom_type(atom_type)
-    if element is None:
-        return 0
-    else:
+    try:
+        element = element_by_atom_type(atom_type)
         return element.atomic_number
+    except TopologyError:
+        return 0
