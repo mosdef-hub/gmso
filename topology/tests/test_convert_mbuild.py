@@ -46,8 +46,7 @@ class TestConvertMBuild(BaseTest):
 
         assert compound.name == 'Compound'
 
-    def test_full_conversion(self):
-        ethane = Ethane()
+    def test_full_conversion(self, ethane):
         top = from_mbuild(ethane)
 
         new = to_mbuild(top)
