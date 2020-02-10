@@ -20,7 +20,10 @@ class Connection(object):
         A unique name for the connection. Used for writing hoomdxml
         bonds/angles/dihedrals
         """
-    def __init__(self, connection_members=[], connection_type=None, name="Connection"):
+    def __init__(self, connection_members=None, connection_type=None, name="Connection"):
+        if connection_members is None:
+            connection_members = tuple()
+
         self._connection_members = _validate_connection_members(connection_members)
         self._connection_type = _validate_connection_type(connection_type)
         self._name = _validate_name(name)
@@ -65,27 +68,16 @@ class Connection(object):
 
         return descr
 
-    def __eq__(self, other):
-        return hash(self) == hash(other)
-
-    def __hash__(self):
-        if self.connection_type:
-            return hash(
-                tuple(
-                    (
-                        self.name,
-                        self.connection_type,
-                        tuple(self.connection_members),
-                    )
-                )
-            )
-        return hash(tuple(self.connection_members))
 
 def _validate_connection_members(connection_members):
     for partner in connection_members:
         if not isinstance(partner, Site):
             raise TopologyError("Supplied non-Site {}".format(partner))
-    return connection_members
+
+    if len(set(connection_members)) != len(connection_members):
+        raise TopologyError("Error, cannot add connection between same sites.")
+    return tuple(connection_members)
+
 
 def _validate_connection_type(c_type):
     if c_type is None:
@@ -93,6 +85,7 @@ def _validate_connection_type(c_type):
     elif not isinstance(c_type, Potential):
         raise TopologyError("Supplied non-Potential {}".format(c_type))
     return c_type
+
 
 def _validate_name(conname):
     if not isinstance(conname, str):

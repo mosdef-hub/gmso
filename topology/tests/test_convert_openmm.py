@@ -42,7 +42,7 @@ class TestOpenMM(BaseTest):
         top.sites[0].position = (1,1,1) * u.nanometer
         omm_top = to_openmm(top, openmm_object='modeller')
 
-        assert np.allclose(omm_top.positions._value, top.positions().value)
+        assert np.allclose(omm_top.positions._value, top.positions.value)
 
     def test_position_units(self, topology_site):
         top = topology_site(sites=10)

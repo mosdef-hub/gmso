@@ -39,4 +39,4 @@ class TestXYZ(BaseTest):
 
         assert original_top.n_sites == new_top.n_sites
         assert original_top.n_connections == new_top.n_connections
-        assert allclose(original_top.positions(), new_top.positions())
+        assert allclose(original_top.positions, new_top.positions)

@@ -44,7 +44,7 @@ class TestAngle(BaseTest):
         assert site3.n_connections == 1
         assert len(connect.connection_members) == 3
         assert connect.connection_type is not None
-        assert connect.name == "angle_name"
+        assert connect.name == 'angle_name'
 
     def test_angle_fake(self):
         site1 = Site(name='site1')
@@ -67,7 +67,7 @@ class TestAngle(BaseTest):
         site3 = Site(name='site3', position=[1,1,0], atom_type=AtomType(name='C'))
         angtype = AngleType(member_types=[site1.atom_type.name, site2.atom_type.name,
             site3.atom_type.name])
-        ang = Angle(connection_members=[site1, site2,site3], 
+        ang = Angle(connection_members=[site1, site2, site3], 
                 connection_type=angtype)
         assert 'A' in ang.connection_type.member_types
         assert 'B' in ang.connection_type.member_types
@@ -87,8 +87,8 @@ class TestAngle(BaseTest):
         )
 
         diff_angle = Angle(
-            connection_members=[site2, site2, site1],
+            connection_members=[site3, site2, site1],
         )
 
-        assert ref_angle == same_angle
+        assert ref_angle != same_angle
         assert ref_angle != diff_angle

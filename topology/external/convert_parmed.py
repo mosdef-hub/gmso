@@ -9,6 +9,17 @@ if has_parmed:
     pmd = import_('parmed')
 
 def from_parmed(structure):
+    """Convert a parmed.Structure to a topology.Topology
+
+    Parameters
+    ----------
+    structure : parmed.Structure
+        parmed.Structure instance that need to be converted
+
+    Returns
+    -------
+    top : topology.Topology
+    """
     msg = ("Provided argument that is not a Parmed Structure")
     assert isinstance(structure, pmd.Structure), msg
 
@@ -37,8 +48,8 @@ def from_parmed(structure):
                     u.nm),
                 atom_type=None)
         site_map[atom] = site
-        top.add_site(site, update_types=False)
-    top.update_top()
+        top.add_site(site)
+    top.update_topology()
 
     if np.all(structure.box):
         # This is if we choose for topology to have abox
@@ -66,7 +77,8 @@ def from_parmed(structure):
                 connection_type=None)
 
         top.add_connection(top_connection, update_types=False)
-    top.update_top()
+    top.update_topology()
+    print(top.n_bonds)
 
     for angle in structure.angles:
         # Generate angle parameters for AngleType that gets passed
@@ -88,7 +100,7 @@ def from_parmed(structure):
                 connection_type=None)
 
         top.add_connection(top_connection, update_types=False)
-    top.update_top()
+    top.update_topology()
 
     # TODO: Dihedrals
 
