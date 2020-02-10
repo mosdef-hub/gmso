@@ -70,7 +70,6 @@ def read_lammpsdata(filename, atom_style='full'):
     #charges = [charge for charge in atoms[1]]
     #coordinates = [coord for coord in atoms[2]]
 
-    #for type_id, charge, coord, ep, sigma in zip(type_ids, charges,coordinates,epsilons,sigmas):
     for k, v in type_dict.items():
         atomtype = AtomType(name=k,
                 mass=unique_types[k],
@@ -87,7 +86,7 @@ def read_lammpsdata(filename, atom_style='full'):
             top.add_site(site, update_types=False)
 
             print('{}:{}'.format(k, i))
-    top.update_top()    
+    top.update_topology()    
 
     return top
 
