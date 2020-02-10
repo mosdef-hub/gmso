@@ -62,13 +62,8 @@ def read_lammpsdata(filename, atom_style='full'):
 
     coords = u.angstrom * np.zeros(shape=(n_atoms, 3))
     unique_types = _get_masses(filename,n_atomtypes)
-    #atoms = _get_atoms(filename, n_atoms, coords)
     charge_dict, coords_dict, type_dict = _get_atoms(filename, n_atoms, coords)
     sigma_dict, epsilon_dict = _get_pairs(filename, n_atomtypes)
-
-    #type_ids = [typ for typ in atoms[0]]
-    #charges = [charge for charge in atoms[1]]
-    #coordinates = [coord for coord in atoms[2]]
 
     for k, v in type_dict.items():
         atomtype = AtomType(name=k,
@@ -325,7 +320,6 @@ def _get_atoms(filename, n_atoms, coords):
             coord_dict[atom_type] = coords
             type_dict[atom_type] = 1
 
-    #return types, charges, coord_list
     return charge_dict, coord_dict, type_dict
 
 
