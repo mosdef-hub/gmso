@@ -1,3 +1,5 @@
+from warnings import warn
+
 import numpy as np
 import unyt as u
 
@@ -84,7 +86,8 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
     else:
         if np.allclose(compound.periodicity, np.zeros(3)):
             box = from_mbuild_box(compound.boundingbox)
-            box.lengths += [0.5, 0.5, 0.5] * u.nm
+            if box:
+                box.lengths += [0.5, 0.5, 0.5] * u.nm
             top.box = box
         else: 
             top.box = Box(lengths=compound.periodicity)
@@ -133,6 +136,12 @@ def from_mbuild_box(mb_box):
 
     if not isinstance(mb_box, mb.Box):
         raise ValueError('Argument mb_box is not an mBuild Box')
+
+    if np.allclose(mb_box.lengths, [0, 0, 0]):
+        warn(
+            'No box or boundingbox information detected, setting box to None'
+        )
+        return None
 
     box = Box(
         lengths=mb_box.lengths*u.nm,
