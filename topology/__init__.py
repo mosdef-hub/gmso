@@ -16,3 +16,4 @@ from .core.atom_type import AtomType
 from .core.bond_type import BondType
 from .core.angle_type import AngleType
 from .core.dihedral_type import DihedralType
+from .core.tabulated_potential import TabulatedPotential

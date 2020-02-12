@@ -7,6 +7,7 @@ from topology.core.topology import Topology
 from topology.core.element import Hydrogen
 from topology.core.site import Site
 from topology.core.atom_type import AtomType
+from topology.core.tabulated_potential import TabulatedPotential
 
 
 class BaseTest:
@@ -55,3 +56,12 @@ class BaseTest:
             return top
 
         return _topology
+
+    @pytest.fixture
+    def tab_pot(self):
+        pot = TabulatedPotential(
+            r = np.linspace(0, 1),
+            v = np.linspace(5, 0),
+        )
+
+        return pot
