@@ -97,14 +97,17 @@ def _parse_units(unit_tag):
     return units_map
 
 
-def validate(xml_path, schema=None):
+def validate(xml_path_or_etree, schema=None):
     """Validate a given xml file with a reference schema"""
     if schema is None:
         schema_path = os.path.join(os.path.split(os.path.abspath(__file__))[0], 'schema', 'ff-topology.xsd')
 
     xml_doc = etree.parse(schema_path)
     xmlschema = etree.XMLSchema(xml_doc)
-    ff_xml = etree.parse(xml_path)
+    if not isinstance(xml_path_or_etree, etree._ElementTree):
+        ff_xml = etree.parse(xml_path_or_etree)
+    else:
+        ff_xml = xml_path_or_etree
     xmlschema.assertValid(ff_xml)
 
 
