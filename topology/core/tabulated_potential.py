@@ -5,7 +5,7 @@ from topology.exceptions import TopologyError
 
 
 class TabulatedPotential(object):
-    """A class representing an potential represented by vabulated values."""
+    """A class representing an potential represented by tabulated values."""
 
     def __init__(self, name="Potential", r=None, v=None, topology=None):
         self._name = name
