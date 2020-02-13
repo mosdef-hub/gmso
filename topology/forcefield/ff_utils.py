@@ -111,8 +111,8 @@ def validate(xml_path, schema=None):
 def _parse_scaling_factors(meta_tag):
     """Parse the scaling factors from the schema"""
     assert meta_tag.tag == 'FFMetaData', 'Can only parse metadata from FFMetaData tag'
-    scaling_factors = {'coulomb14Scale': meta_tag.get('coulomb14Scale', 1.0),
-                       'lj14Scale': meta_tag.get('lj14Scale', 1.0)}
+    scaling_factors = {'electrostatics14Scale': meta_tag.get('electrostatics14Scale', 1.0),
+                       'nonBonded14Scale': meta_tag.get('nonBonded14Scale', 1.0)}
     for key in scaling_factors:
         if type(scaling_factors[key]) != float:
             scaling_factors[key] = float(scaling_factors[key])

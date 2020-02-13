@@ -138,8 +138,8 @@
             <xsd:sequence>
                 <xsd:element name="Units" type="Units" minOccurs="0" maxOccurs="1"/>
             </xsd:sequence>
-            <xsd:attribute name="coulomb14Scale" type="xsd:float" use="optional"/>
-            <xsd:attribute name="lj14Scale" type="xsd:float" use="optional"/>
+            <xsd:attribute name="electrostatics14Scale" type="xsd:float" use="optional"/>
+            <xsd:attribute name="nonBonded14Scale" type="xsd:float" use="optional"/>
         </xsd:complexType>
 
     </xsd:element>

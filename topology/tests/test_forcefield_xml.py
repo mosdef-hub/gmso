@@ -22,8 +22,8 @@ class TestForceFieldFromXML(BaseTest):
         assert ff.version == '0.4.1'
 
     def test_scaling_factors_from_xml(self, ff):
-        assert ff.scaling_factors['lj14Scale'] == 0.67
-        assert ff.scaling_factors['coulomb14Scale'] == 0.5
+        assert ff.scaling_factors['nonBonded14Scale'] == 0.67
+        assert ff.scaling_factors['electrostatics14Scale'] == 0.5
 
     @pytest.mark.parametrize('unit_name,unit_value', [('energy', u.kcal/u.mol),
                                                       ('mass', u.gram/u.mol), ('temperature', u.K),
