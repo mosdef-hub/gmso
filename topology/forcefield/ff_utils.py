@@ -87,7 +87,10 @@ def _parse_units(unit_tag):
         'energy': u.kcal / u.mol,
         'distance': u.nm,
         'mass': u.gram / u.mol,
-        'charge': u.coulomb
+        'charge': u.coulomb,
+        'time': u.ps,
+        'temperature': u.K,
+        'angle': u.rad
     }
     for attrib, val in unit_tag.items():
         units_map[attrib] = u.Unit(val)
@@ -105,13 +108,25 @@ def validate(xml_path, schema=None):
     xmlschema.assertValid(ff_xml)
 
 
+def _parse_scaling_factors(meta_tag):
+    """Parse the scaling factors from the schema"""
+    assert meta_tag.tag == 'FFMetaData', 'Can only parse metadata from FFMetaData tag'
+    scaling_factors = {'coulomb14Scale': meta_tag.get('coulomb14Scale', 1.0),
+                       'lj14Scale': meta_tag.get('lj14Scale', 1.0)}
+    for key in scaling_factors:
+        if type(scaling_factors[key]) != float:
+            scaling_factors[key] = float(scaling_factors[key])
+    return scaling_factors
+
+
 def parse_ff_metadata(element):
     """Parse the metadata (units, quantities etc...) from the forcefield XML"""
     metatypes = ['Units']
     parsers = {
-        'Units': _parse_units
+        'Units': _parse_units,
+        'ScalingFactors': _parse_scaling_factors
     }
-    ff_meta = {}
+    ff_meta = {'scaling_factors': parsers['ScalingFactors'](element)}
     for metatype in element:
         if metatype.tag in metatypes:
             ff_meta[metatype.tag] = parsers[metatype.tag](metatype)

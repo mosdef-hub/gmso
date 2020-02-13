@@ -21,6 +21,18 @@ class TestForceFieldFromXML(BaseTest):
         assert ff.name == 'ForceFieldOne'
         assert ff.version == '0.4.1'
 
+    def test_scaling_factors_from_xml(self, ff):
+        assert ff.scaling_factors['lj14Scale'] == 0.67
+        assert ff.scaling_factors['coulomb14Scale'] == 0.5
+
+    @pytest.mark.parametrize('unit_name,unit_value', [('energy', u.kcal/u.mol),
+                                                      ('mass', u.gram/u.mol), ('temperature', u.K),
+                                                      ('charge', u.coulomb), ('angle', u.rad),
+                                                      ('time', u.ps), ('distance', u.nm)])
+    def test_units_from_xml(self, ff, unit_name, unit_value):
+        assert len(ff.units.keys()) == 7
+        assert ff.units[unit_name] == unit_value
+
     def test_ff_atomtypes_from_xml(self, ff):
         assert len(ff.atom_types) == 2
         assert 'Ar' in ff.atom_types

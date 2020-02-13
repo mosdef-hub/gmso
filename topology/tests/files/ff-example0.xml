@@ -1,5 +1,5 @@
 <ForceField version="0.4.1" name="ForceFieldOne">
-    <FFMetaData>
+    <FFMetaData coulomb14Scale="0.5" lj14Scale="0.67">
         <Units energy="kcal/mol" distance="nm" mass="amu" charge="coulomb"/>
     </FFMetaData>
     <AtomTypes expression="(A*exp(-B/r) - C/r**6)">
