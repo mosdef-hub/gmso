@@ -34,9 +34,9 @@ def write_top(top, filename):
             'fudgeQQ\n'
         )
         out_file.write(
-            '{0}\t\t'
-            '{1}\t\t'
-            '{2}\t\t'
+            '{0}\t\t\t'
+            '{1}\t\t\t'
+            '{2}\t\t\t'
             '{3}\t\t'
             '{4}\n\n'.format(
                 top_vars['nbfunc'],
@@ -59,12 +59,12 @@ def write_top(top, filename):
         )
         for atom_type in top.atom_types:
             out_file.write(
-                '{0}\t\t'
-                '{1}\t\t'
+                '{0}\t\t\t'
+                '{1}\t\t\t'
                 '{2}\t\t'
                 '{3}\t\t'
-                '{4}\t\t'
-                '{5}\t\t'
+                '{4}\t\t\t'
+                '{5}\t\t\t'
                 '{6}\n'.format(
                     atom_type.name,
                     _lookup_atomic_number(atom_type),
@@ -78,8 +78,8 @@ def write_top(top, filename):
 
 
         out_file.write(
-            '[ moleculetype ]\n'
-            '; name\t\t\tnrexcl\n'
+            '\n[ moleculetype ]\n'
+            '; name\t\tnrexcl\n'
         )
 
         # TODO: Better parsing of subtops into residues/molecules
@@ -89,7 +89,7 @@ def write_top(top, filename):
         # Treat top without subtops as one residue-like "molecule"
         elif n_unique_subtops == 0:
             out_file.write(
-                '{0}\t'
+                '{0}\t\t\t'
                 '{1}\n\n'.format(
                     top.name,
                     3, # Typically exclude 3 nearest neighbors
@@ -98,7 +98,7 @@ def write_top(top, filename):
         # TODO: Lookup and join nrexcl from each subtop object
         elif n_unique_subtops == 1:
             out_file.write(
-                '{0}\t'
+                '{0}\t\t\t'
                 '{1}\n\n'.format(
                     top.subtops[0].name,
                     3
@@ -107,18 +107,18 @@ def write_top(top, filename):
 
         out_file.write(
             '[ atoms ]\n'
-            ';   nr       type  resnr residue  atom   cgnr    charge       mass\n'
+            '; nr\t\ttype\tresnr\tresidue\t\tatom\tcgnr\tcharge\t\tmass\n'
         )
         for idx, atom_type in enumerate(top.atom_types):
             out_file.write(
-                '{0}'
-                '\t{1}'
-                '\t{2}'
-                '\t{3}'
-                '\t{4}'
-                '\t{5}'
-                '\t{6}'
-                '\t{7}\n'.format(
+                '{0}\t\t\t'
+                '{1}\t\t'
+                '{2}\t\t'
+                '{3}\t'
+                '{4}\t\t'
+                '{5}\t\t'
+                '{6}\t\t'
+                '{7}\n'.format(
                     idx+1,
                     atom_type.name,
                     1, # TODO: subtop idx
@@ -132,8 +132,7 @@ def write_top(top, filename):
 
         out_file.write(
             '\n[ bonds ]\n'
-            ';   nr       type  resnr residue  atom   cgnr    charge       mass\n'
-            ';   ai     aj  funct   c0      c1      c2      c3\n'
+            ';   ai     aj  funct   c0      c1\n'
         )
         for bond_idx, bond in enumerate(top.bonds):
             out_file.write(
@@ -153,8 +152,7 @@ def write_top(top, filename):
 
         out_file.write(
             '\n[ angles ]\n'
-            ';   nr       type  resnr residue  atom   cgnr    charge       mass\n'
-            ';   ai     aj      ak      funct   c0      c1      c2      c3\n'
+            ';   ai     aj      ak      funct   c0      c1\n'
         )
         for angle_idx, angle in enumerate(top.angles):
             out_file.write(
@@ -174,6 +172,10 @@ def write_top(top, filename):
                 )
             )
 
+        out_file.write(
+            '\n[ dihedrals ]\n'
+            ';   ai     aj      ak      al  funct   c0      c1      c2\n'
+        )
         for dihedral_idx, dihedral in enumerate(top.dihedrals):
             out_file.write(
                 '\t{0}'
@@ -202,7 +204,7 @@ def write_top(top, filename):
             )
 
         out_file.write(
-            '[ system ]\n'
+            '\n[ system ]\n'
             '; name\n'
             '{0}\n\n'.format(
                 top.name
@@ -215,14 +217,14 @@ def write_top(top, filename):
         if len(top.subtops) == 0:
             out_file.write(
                 '[ molecules ]\n'
-                '; molecule     nmols\n'
-                '{0}\t{1}'.format(top.name, 1)
+                '; molecule\tnmols\n'
+                '{0}\t\t{1}'.format(top.name, 1)
             )
         elif len(top.subtops) > 0:
             out_file.write(
                 '[ molecules ]\n'
-                '; molecule     nmols\n'
-                '{0}\t{1}'.format(top.subtops[0].name, top.n_subtops)
+                '; molecule\tnmols\n'
+                '{0}\t\t{1}'.format(top.subtops[0].name, top.n_subtops)
             )
 
 
