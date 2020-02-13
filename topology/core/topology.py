@@ -57,7 +57,7 @@ class Topology(object):
 
     @name.setter
     def name(self, name):
-        self._name = str(name)
+        self._name = str(name) if name else None
 
     @property
     def box(self):

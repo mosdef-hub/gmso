@@ -138,7 +138,10 @@
             <xsd:sequence>
                 <xsd:element name="Units" type="Units" minOccurs="0" maxOccurs="1"/>
             </xsd:sequence>
+            <xsd:attribute name="electrostatics14Scale" type="xsd:float" use="optional"/>
+            <xsd:attribute name="nonBonded14Scale" type="xsd:float" use="optional"/>
         </xsd:complexType>
+
     </xsd:element>
 
     <xsd:complexType name="Units">
@@ -146,6 +149,9 @@
         <xsd:attribute name="distance" type="xsd:string" use="optional"/>
         <xsd:attribute name="mass" type="xsd:string" use="optional"/>
         <xsd:attribute name="charge" type="xsd:string" use="optional"/>
+        <xsd:attribute name="temperature" type="xsd:string" use="optional"/>
+        <xsd:attribute name="angle" type="xsd:string" use="optional"/>
+        <xsd:attribute name="time" type="xsd:string" use="optional"/>
     </xsd:complexType>
 
     <!-- This consolidates the whole information about a force-field and creates the complete definition -->

@@ -31,6 +31,21 @@ class TestConvertMBuild(BaseTest):
             assert isinstance(top.sites[i].element, topology.Element)
             assert top.sites[i].name == top.sites[i].element.symbol
 
+    def test_from_mbuild_single_particle(self):
+        compound = mb.Compound()
+        top = from_mbuild(compound)
+
+        assert top.n_sites == 1
+        assert top.n_connections == 0
+
+    def test_to_mbuild_name_none(self):
+        top = Top()
+        top.add_site(Site())
+        top.name = None
+        compound = to_mbuild(top)
+
+        assert compound.name == 'Compound'
+
     def test_full_conversion(self, ethane):
         top = from_mbuild(ethane)
 

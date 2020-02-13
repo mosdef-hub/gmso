@@ -40,6 +40,8 @@ class ForceField(object):
             self.bond_types = ff.bond_types
             self.angle_types = ff.angle_types
             self.dihedral_types = ff.dihedral_types
+            self.scaling_factors = ff.scaling_factors
+            self.units = ff.units
         else:
             self.name = 'ForceField'
             self.version = '1.0.0'
@@ -47,6 +49,8 @@ class ForceField(object):
             self.bond_types = {}
             self.angle_types = {}
             self.dihedral_types = {}
+            self.scaling_factors = {}
+            self.units = {}
 
     def __repr__(self):
         descr = list('<Forcefield ')
@@ -94,10 +98,6 @@ class ForceField(object):
         ff_bondtypes_list = []
         ff_angletypes_list = []
         ff_dihedraltypes_list = []
-        atom_types_dict = {}
-        bond_types_dict = {}
-        angle_types_dict = {}
-        dihedral_types_dict = {}
 
         atom_types_dict = {}
         bond_types_dict = {}
@@ -145,6 +145,8 @@ class ForceField(object):
         ff = cls()
         ff.name = names[0]
         ff.version = versions[0]
+        ff.scaling_factors = ff_meta_map['scaling_factors']
+        ff.units = ff_meta_map['Units']
         ff.atom_types = atom_types_dict
         ff.bond_types = bond_types_dict
         ff.angle_types = angle_types_dict
