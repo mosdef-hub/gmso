@@ -12,10 +12,10 @@ from topology.exceptions import TopologyError
 PARSER = SMARTS()
 
 def write_top(top, filename):
-    """Write a topology to a GROMACS .TOP file"""
+    """Write a topology.core.Topology object to a GROMACS topology (.TOP) file"""
 
     _validate_compatibility(top)
-    top_vars = _get_top_vars(top)
+    top_vars = _get_top_vars()
     _assign_indices(top)
 
     with open(filename, 'w') as out_file:
@@ -92,7 +92,7 @@ def write_top(top, filename):
                 '{0}\t'
                 '{1}\n\n'.format(
                     top.name,
-                    3
+                    3, # Typically exclude 3 nearest neighbors
                 )
             )
         # TODO: Lookup and join nrexcl from each subtop object
@@ -232,7 +232,7 @@ def _validate_compatibility(top):
     check_compatibility(top, accepted_potentials)
 
 
-def _get_top_vars(top):
+def _get_top_vars():
     """Generate a dictionary of values for the defaults directive."""
     top_vars = dict()
 
