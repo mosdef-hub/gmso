@@ -3,25 +3,19 @@
   <FFMetaData>
     <Units energy="kcal/mol" mass="amu" charge="coulomb" distance="nm"/>
   </FFMetaData>
-  <AtomTypes expression="ep * ((sigma/r)**12 - (sigma/r)**6) + q / (e0 * r)">
+  <AtomTypes expression="ep * ((sigma/r)**12 - (sigma/r)**6)">
     <ParametersUnitDef parameter="ep" unit="kJ/mol"/>
     <ParametersUnitDef parameter="sigma" unit="nm"/>
-    <ParametersUnitDef parameter="e0" unit="A**2*s**4/(kg*m**3)"/>
-    <ParametersUnitDef parameter="q" unit="coulomb"/>
-    <AtomType name="opls_111" atomclass="OW" element="O" charge="1.0" definition="O">
+    <AtomType name="opls_111" element="O" charge="-0.834" mass="16" definition="O">
       <Parameters>
         <Parameter name="ep" value="0.636386"/>
         <Parameter name="sigma" value="0.315061"/>
-        <Parameter name="e0" value="8.8542e-12"/>
-        <Parameter name="q" value="-0.834"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_112" atomclass="HW" element="H" charge="1.0" definition="H">
+    <AtomType name="opls_112" element="H" charge="0.417" mass="1.011" definition="H">
       <Parameters>
         <Parameter name="ep" value="0.0"/>
         <Parameter name="sigma" value="1.0"/>
-        <Parameter name="e0" value="8.8542e-12"/>
-        <Parameter name="q" value="0.417"/>
       </Parameters>
     </AtomType>
   </AtomTypes>
