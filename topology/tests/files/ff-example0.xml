@@ -13,7 +13,7 @@
                 <Parameter name="C" value="0.5"/>
             </Parameters>
         </AtomType>
-        <AtomType name="Xe" element="Xe" charge="0.0" mass="131.293" definition="Xe" description="Xenon atom">
+        <AtomType name="Xe" element="Xe" charge="1.0" mass="131.293" definition="Xe" description="Xenon atom">
             <Parameters>
                 <Parameter name="A" value="0.2"/>
                 <Parameter name="B" value="5.0"/>
