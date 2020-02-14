@@ -10,7 +10,7 @@ def check_compatibility(topology, accepted_potentials):
             raise EngineIncompatibilityError
 
     for connection_type in topology.connection_types:
-        if not _check_single_potential(atom_type, accepted_potentials):
+        if not _check_single_potential(connection_type, accepted_potentials):
             raise EngineIncompatibilityError
 
 
