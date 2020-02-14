@@ -3,23 +3,23 @@
   <FFMetaData>
     <Units energy="kcal/mol" mass="amu" charge="coulomb" distance="nm"/>
   </FFMetaData>
-  <AtomTypes expression="ep * ((sigma/r)**12 - (sigma/r)**6)">
-    <ParametersUnitDef parameter="ep" unit="kJ/mol"/>
+  <AtomTypes expression="4*epsilon * ((sigma/r)**12 - (sigma/r)**6)">
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
     <ParametersUnitDef parameter="sigma" unit="nm"/>
-    <AtomType name="opls_111" element="O" charge="-0.834" mass="16" definition="O">
+    <AtomType name="opls_111" element="O" charge="-0.834" mass="16" definition="O" description="water O">
       <Parameters>
-        <Parameter name="ep" value="0.636386"/>
+        <Parameter name="epsilon" value="0.636386"/>
         <Parameter name="sigma" value="0.315061"/>
       </Parameters>
     </AtomType>
     <AtomType name="opls_112" element="H" charge="0.417" mass="1.011" definition="H">
       <Parameters>
-        <Parameter name="ep" value="0.0"/>
+        <Parameter name="epsilon" value="0.0"/>
         <Parameter name="sigma" value="1.0"/>
       </Parameters>
     </AtomType>
   </AtomTypes>
-  <BondTypes expression="k * (r-r_eq)**2">
+  <BondTypes expression="0.5 * k * (r-r_eq)**2">
     <ParametersUnitDef parameter="k" unit="kJ/mol/nm**2"/>
     <ParametersUnitDef parameter="r_eq" unit="nm"/>
     <BondType name="BondType-Harmonic-1" type1="opls_111" type2="opls_112">
@@ -29,7 +29,7 @@
       </Parameters>
     </BondType>
   </BondTypes>
-  <AngleTypes expression="k * (theta - theta_eq)**2">
+  <AngleTypes expression="0.5 * k * (theta - theta_eq)**2">
     <ParametersUnitDef parameter="k" unit="kJ/degree**2"/>
     <ParametersUnitDef parameter="theta_eq" unit="degree"/>
     <AngleType name="AngleType-Harmonic-1" type1="opls_112" type2="opls_111" type3="opls_112">

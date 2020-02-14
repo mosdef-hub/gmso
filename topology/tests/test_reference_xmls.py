@@ -45,3 +45,26 @@ class TestForceFieldFromXML(BaseTest):
         assert allclose(carbon.dihedral_types['*~C~C~*'].parameters['k'], 27.8236 * u.Unit('kJ/mol'))
         assert allclose(carbon.dihedral_types['*~C~C~*'].parameters['n'], 2 * u.dimensionless)
         assert allclose(carbon.dihedral_types['*~C~C~*'].parameters['theta_0'], np.pi * u.radian)
+
+    def test_tip3p_force_field(self):
+        water = ForceField(get_path('topology-tip3p.xml'))
+        assert len(water.atom_types) == 2
+        assert len(water.bond_types) == 1
+        assert len(water.angle_types) == 1
+        assert len(water.dihedral_types) == 0
+
+        # Store expected expressions in list
+        ref_exprs = [sympy.sympify(expr) for expr in [
+            "4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
+            "0.5 * k * (r-r_eq)**2",
+            "0.5 * k * (theta-theta_eq)**2",
+            "k * (1 + cos(n * theta - theta_0))",
+            ]
+        ]
+
+        #assert water.atom_types['opls_111'].charge.value == -0.834
+        #assert water.atom_types['opls_112'].charge.value == 0.417
+
+        assert sympy.simplify(water.atom_types['opls_111'].expression - ref_exprs[0]) == 0
+        assert sympy.simplify(water.atom_types['opls_112'].expression - ref_exprs[0]) == 0
+        assert sympy.simplify(water.bond_types['opls_111~opls_112'].expression - ref_exprs[1]) == 0
