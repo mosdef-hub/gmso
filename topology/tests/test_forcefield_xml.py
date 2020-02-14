@@ -54,10 +54,12 @@ class TestForceFieldFromXML(BaseTest):
         assert ff.atom_types['Xe'].parameters['B'] == u.unyt_quantity(5.0, u.nm)
         assert ff.atom_types['Xe'].parameters['C'] == u.unyt_quantity(0.3, u.kcal / u.mol * u.nm ** 6)
         assert ff.atom_types['Xe'].mass == u.unyt_quantity(131.293, u.amu)
-        assert ff.atom_types['Xe'].charge == u.unyt_quantity(1.0, u.coulomb)
+        assert ff.atom_types['Xe'].charge == u.unyt_quantity(0.0, u.coulomb)
         assert ff.atom_types['Xe'].description == 'Xenon atom'
         assert ff.atom_types['Xe'].definition == 'Xe'
         assert ff.atom_types['Xe'].expression == sympify('(A*exp(-B/r) - C/r**6)')
+
+        assert ff.atom_types['Li'].charge == u.unyt_quantity(1.0, u.coulomb)
 
     def test_ff_bondtypes_from_xml(self, ff):
         assert len(ff.bond_types) == 2
