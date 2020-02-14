@@ -21,12 +21,33 @@ class TestConvertMBuild(BaseTest):
     def ethane(self):
         return mb.load(get_fn('ethane.mol2'))
 
-    def test_from_mbuild(self, ethane):
+    @pytest.fixture
+    def argon_box(self):
+        argon = mb.Compound(name="Ar")
+        argon_box = mb.fill_box(argon,
+                n_compounds=10,
+                box=Box(lengths=[1, 1, 1]))
+        return argon_box
+
+    def test_from_mbuild_ethane(self, ethane):
         import mbuild as mb
         top = from_mbuild(ethane)
 
         assert top.n_sites == 8
+        assert top.n_subtops == 1
+        assert top.subtops[0].n_sites == 8
         assert top.n_connections == 7
+        for i in range(top.n_sites):
+            assert isinstance(top.sites[i].element, topology.Element)
+            assert top.sites[i].name == top.sites[i].element.symbol
+
+    def test_from_mbuild_argon(self, argon_box):
+        import mbuild as mb
+        top = from_mbuild(argon_box)
+
+        assert top.n_sites == 10
+        assert top.n_subtops == 0
+        assert top.n_connections == 0
         for i in range(top.n_sites):
             assert isinstance(top.sites[i].element, topology.Element)
             assert top.sites[i].name == top.sites[i].element.symbol
@@ -36,6 +57,7 @@ class TestConvertMBuild(BaseTest):
         top = from_mbuild(compound)
 
         assert top.n_sites == 1
+        assert top.n_subtops == 0
         assert top.n_connections == 0
 
     def test_to_mbuild_name_none(self):
@@ -103,5 +125,5 @@ class TestConvertMBuild(BaseTest):
     def test_pass_box_bounding(self, ethane):
         ethane.periodicity = [0,0,0]
         top = from_mbuild(ethane)
-        assert allclose(top.box.lengths, 
+        assert allclose(top.box.lengths,
                 (ethane.boundingbox.lengths + [0.5, 0.5, 0.5]) * u.nm)
