@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+import mbuild as mb
 import unyt as u
 
 from topology.core.box import Box
@@ -7,6 +8,7 @@ from topology.core.topology import Topology
 from topology.core.element import Hydrogen
 from topology.core.site import Site
 from topology.core.atom_type import AtomType
+from topology.external.convert_mbuild import from_mbuild
 
 
 class BaseTest:
@@ -55,3 +57,16 @@ class BaseTest:
             return top
 
         return _topology
+
+
+    @pytest.fixture
+    def ar_system(self):
+        ar = mb.Compound(name='Ar')
+
+        packed_system = mb.fill_box(
+            compound=ar,
+            n_compounds=100,
+            box=mb.Box([3, 3, 3]),
+        )
+
+        return from_mbuild(packed_system)
