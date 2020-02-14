@@ -1,0 +1,53 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ForceField name="topologyCharmm" version="0.0.1">
+  <FFMetaData>
+    <Units energy="kcal/mol" mass="amu" charge="coulomb" distance="nm"/>
+  </FFMetaData>
+  <AtomTypes expression="ep * ((sigma/r)**12 - (sigma/r)**6) + q / (e0 * r)">
+    <ParametersUnitDef parameter="ep" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <ParametersUnitDef parameter="e0" unit="A**2*s**4/(kg*m**3)"/>
+    <ParametersUnitDef parameter="q" unit="coulomb"/>
+    <AtomType name="opls_111" atomclass="OW" element="O" charge="1.0" definition="O">
+      <Parameters>
+        <Parameter name="ep" value="0.636386"/>
+        <Parameter name="sigma" value="0.315061"/>
+        <Parameter name="e0" value="8.8542e-12"/>
+        <Parameter name="q" value="-0.834"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="opls_112" atomclass="HW" element="H" charge="1.0" definition="H">
+      <Parameters>
+        <Parameter name="ep" value="0.0"/>
+        <Parameter name="sigma" value="1.0"/>
+        <Parameter name="e0" value="8.8542e-12"/>
+        <Parameter name="q" value="0.417"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+  <BondTypes expression="k * (r-r_eq)**2">
+    <ParametersUnitDef parameter="k" unit="kJ/mol/nm**2"/>
+    <ParametersUnitDef parameter="r_eq" unit="nm"/>
+    <BondType name="BondType-Harmonic-1" type1="t1" type2="t2">
+      <Parameters>
+        <Parameter name="k" value="502416.0"/>
+        <Parameter name="r_eq" value="0.09572"/>
+      </Parameters>
+    </BondType>
+  </BondTypes>
+  <AngleTypes expression="k * (theta - theta_eq)**2">
+    <ParametersUnitDef parameter="k" unit="kJ/degree**2"/>
+    <ParametersUnitDef parameter="theta_eq" unit="degree"/>
+    <AngleType name="AngleType-Harmonic-1" type1="t1" type2="t2" type3="t2">
+      <Parameters>
+        <Parameter name="k" value="682.02"/>
+        <Parameter name="theta_eq" value="1.824218134"/>
+      </Parameters>
+    </AngleType>
+  </AngleTypes>
+  <AngleTypes expression="k * (w - w_0) ** 2">
+    <ParametersUnitDef parameter="k" unit="kJ/degree**2"/>
+    <ParametersUnitDef parameter="w_0" unit="nm"/>
+  </AngleTypes>
+  <DihedralTypes expression="k * (1 + cos(n * shi - delta))"/>
+</ForceField>
