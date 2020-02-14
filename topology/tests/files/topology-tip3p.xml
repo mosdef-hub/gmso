@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<ForceField name="topologyCharmm" version="0.0.1">
+<ForceField name="TIP3P" version="0.0.1">
   <FFMetaData>
     <Units energy="kcal/mol" mass="amu" charge="coulomb" distance="nm"/>
   </FFMetaData>
@@ -28,7 +28,7 @@
   <BondTypes expression="k * (r-r_eq)**2">
     <ParametersUnitDef parameter="k" unit="kJ/mol/nm**2"/>
     <ParametersUnitDef parameter="r_eq" unit="nm"/>
-    <BondType name="BondType-Harmonic-1" type1="t1" type2="t2">
+    <BondType name="BondType-Harmonic-1" type1="opls_111" type2="opls_112">
       <Parameters>
         <Parameter name="k" value="502416.0"/>
         <Parameter name="r_eq" value="0.09572"/>
@@ -38,7 +38,7 @@
   <AngleTypes expression="k * (theta - theta_eq)**2">
     <ParametersUnitDef parameter="k" unit="kJ/degree**2"/>
     <ParametersUnitDef parameter="theta_eq" unit="degree"/>
-    <AngleType name="AngleType-Harmonic-1" type1="t1" type2="t2" type3="t2">
+    <AngleType name="AngleType-Harmonic-1" type1="opls_112" type2="opls_111" type3="opls_112">
       <Parameters>
         <Parameter name="k" value="682.02"/>
         <Parameter name="theta_eq" value="1.824218134"/>
