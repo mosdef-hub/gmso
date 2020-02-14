@@ -34,7 +34,7 @@ class TestForceFieldFromXML(BaseTest):
         assert ff.units[unit_name] == unit_value
 
     def test_ff_atomtypes_from_xml(self, ff):
-        assert len(ff.atom_types) == 2
+        assert len(ff.atom_types) == 3
         assert 'Ar' in ff.atom_types
         assert 'Xe' in ff.atom_types
 
