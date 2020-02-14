@@ -2,6 +2,8 @@ import pytest
 from sympy import sympify
 import unyt as u
 
+from lxml.etree import DocumentInvalid
+
 from topology.forcefield import ForceField
 from topology.tests.utils import get_path
 from topology.tests.base_test import BaseTest
@@ -118,4 +120,9 @@ class TestForceFieldFromXML(BaseTest):
         # Test Correct Parameter Values
         assert charm_ff.dihedral_types["*~CE1~CE1~*"].parameters['k'] == \
                [u.unyt_quantity(0.6276, u.kJ), u.unyt_quantity(35.564, u.kJ)]
+
+    def test_non_unique_params(self):
+        with pytest.raises(DocumentInvalid):
+            ForceField(get_path('ff-example-nonunique-params.xml'))
+
 
