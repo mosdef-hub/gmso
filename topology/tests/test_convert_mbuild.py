@@ -100,6 +100,25 @@ class TestConvertMBuild(BaseTest):
         assert compound.children[0].n_particles == 1
         assert compound.n_particles == 1
 
+    def test_4_layer_compound(self):
+        l0_cmpnd = mb.Compound()
+        l1_cmpnd = mb.Compound()
+        l2_cmpnd = mb.Compound()
+        particle = mb.Compound()
+
+        l0_cmpnd.add(l1_cmpnd)
+        l1_cmpnd.add(l2_cmpnd)
+        l2_cmpnd.add(particle)
+
+        l0_cmpnd.periodicity = [1, 1, 1]
+
+        top = from_mbuild(l0_cmpnd)
+
+        assert top.n_sites == 1
+        assert top.n_subtops == 1
+        assert top.subtops[0].n_sites == 1
+        assert top.subtops[0].sites[0] == top.sites[0]
+
     def test_pass_box(self, ethane):
         mb_box = Box(lengths=[3,3,3])
 
