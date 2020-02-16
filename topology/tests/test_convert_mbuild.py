@@ -119,6 +119,28 @@ class TestConvertMBuild(BaseTest):
         assert top.subtops[0].n_sites == 1
         assert top.subtops[0].sites[0] == top.sites[0]
 
+    def test_uneven_hierarchy(self):
+        top_cmpnd = mb.Compound()
+        mid_cmpnd = mb.Compound()
+        particle1 = mb.Compound()
+        particle2 = mb.Compound()
+
+        top_cmpnd.add(mid_cmpnd)
+        top_cmpnd.add(particle1)
+        mid_cmpnd.add(particle2)
+
+        top_cmpnd.periodicity = [1, 1, 1]
+
+        top = from_mbuild(top_cmpnd)
+
+        assert top.n_sites == 2
+        assert top.n_subtops == 2
+        # Check that all sites belong to a subtop
+        site_counter = 0
+        for subtop in top.subtops:
+            site_counter += subtop.n_sites
+        assert site_counter == top.n_sites
+
     def test_pass_box(self, ethane):
         mb_box = Box(lengths=[3,3,3])
 
