@@ -1,6 +1,7 @@
 
 import topology as topo
 from topology.lib.potential_templates import RyckaertBellemansTorsionPotential
+from topology.lib.potential_templates import OPLSTorsionPotential
 from topology.exceptions import TopologyError
 
 def convert_opls_to_ryckaert(connection):
@@ -33,12 +34,45 @@ def convert_opls_to_ryckaert(connection):
     expression = RyckaertBellemansTorsionPotential().expression
     variables = RyckaertBellemansTorsionPotential().independent_variables
 
-    new_connection_type = topo.DihedralType(
+    updated_connection_type = topo.DihedralType(
             name=name,
             expression=expression,
             independent_variables=variables,
             parameters=new_params)
 
-    connection.connection_type = new_connection_type
+    connection.connection_type = updated_connection_type
 
+def convert_ryckaert_to_opls(connection):
+    """Convert Ryckaert-Bellemans dihedrals to OPLS"""
+
+    c0 = connection.connection_type.parameters['c0']
+    c1 = connection.connection_type.parameters['c1']
+    c2 = connection.connection_type.parameters['c2']
+    c3 = connection.connection_type.parameters['c3']
+    c4 = connection.connection_type.parameters['c4']
+    c5 = connection.connection_type.parameters['c5']
+
+    if c4 != 0.0 or c5 != 0.0:
+        raise TopologyError('Cannot convert Ryckaert-Bellemans dihedral '
+                'to OPLS dihedral if c5 is not equal to zero.')
+
+    new_params = {
+            'k0' : (c0 + c1 + c2 + c3 + c4),
+            'k1' : (-2 * c1 - (3./2.) * c3),
+            'k2' : (-c2 - c4),
+            'k3' : ((-1./2.) * c3)
+            'k4' : ((-1./4.) * c4)
+    }
+
+    name = OPLSTorsionPotential().name
+    expression = OPLSTorsionPotential().expression
+    variables = OPLSTorsionPotential().independent_variables
+
+    updated_connection_type = topo.DihedralType(
+            name=name,
+            expression=expression,
+            independent_variables=variables,
+            parameters=new_params)
+
+    connection.connection_type = updated_connection_type
 
