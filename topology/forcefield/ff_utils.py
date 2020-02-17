@@ -19,6 +19,7 @@ __all__ = ['validate',
 
 DICT_KEY_SEPARATOR = '~'
 
+u.define_unit('elementary_charge', u.elementary_charge)
 
 def _check_valid_string(type_str):
     if DICT_KEY_SEPARATOR in type_str:
