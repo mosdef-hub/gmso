@@ -73,6 +73,28 @@ class ForceField(object):
                 this_atomtype_class_group.append(atom_type)
         return atomclass_dict
 
+    def group_by_expression(self):
+        """Create ForceField member groups having same expressions"""
+        atom_type_groups = self._group_by_expression(_type='AtomType')
+        bond_type_groups = self._group_by_expression(_type='BondType')
+        angle_type_groups = self._group_by_expression(_type='AngleType')
+        dihedral_type_groups = self._group_by_expression(_type='DihedralType')
+
+    def _group_by_expression(self, _type):
+        type_groups = {
+                       'AtomType': self.atom_types,
+                       'BondType': self.bond_types,
+                       'AngleType': self.angle_types,
+                       'DihedralType': self.dihedral_types
+                    }
+        grouped_coll = {}
+        this_type = type_groups.get(_type, [])
+        for type_name in this_type:
+            this_expression = this_type.expression
+            grouped_coll[this_expression] = grouped_coll.get(this_expression, [])
+            grouped_coll[this_expression].append(self.atom_types[type_name])
+        return grouped_coll
+
     @classmethod
     def from_xml(cls, xml_locs):
         """Create a forcefield object from a XML File
