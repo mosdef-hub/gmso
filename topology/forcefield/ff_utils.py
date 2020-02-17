@@ -46,12 +46,19 @@ def _parse_params_values(parent_tag, units_dict, child_tag):
         param_unit = units_dict[param_name]
         param_value = u.unyt_quantity(float(param.attrib['value']), param_unit)
         params_dict[param_name] = param_value
+    param_ref_dict = units_dict
     if child_tag == 'DihedralType':
         _consolidate_params(params_dict)
+        param_ref_dict = _consolidate_params(units_dict, update_orig=False)
+
+    for param in param_ref_dict:
+        if param not in params_dict:
+            raise ForceFieldParseError(
+                'Parameter {} is in units but cannot be found in parameters list'.format(param))
     return params_dict
 
 
-def _consolidate_params(params_dict):
+def _consolidate_params(params_dict, update_orig=True):
     to_del = []
     new_dict = {}
     for param in params_dict:
@@ -60,9 +67,12 @@ def _consolidate_params(params_dict):
             new_dict[match.groups()[0]] = new_dict.get(match.groups()[0], [])
             new_dict[match.groups()[0]].append(params_dict[param])
             to_del.append(param)
-    for key in to_del:
-        del params_dict[key]
-    params_dict.update(new_dict)
+    if update_orig:
+        for key in to_del:
+            del params_dict[key]
+        params_dict.update(new_dict)
+    else:
+        return new_dict
 
 
 def _check_valid_atomtype_names(tag, ref_dict):

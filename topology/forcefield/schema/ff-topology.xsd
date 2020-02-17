@@ -11,7 +11,7 @@
     <!-- Start: AtomTypes Tags and Attributes -->
     <xsd:complexType name="AtomType">
         <xsd:sequence>
-            <xsd:element name="Parameters" type="Parameters" minOccurs="0" maxOccurs="1"/>
+            <xsd:element ref="Parameters" minOccurs="0" maxOccurs="1"/>
         </xsd:sequence>
         <xsd:attribute name="name" type="xsd:string" use="optional"/>
         <xsd:attribute name="mass" type="xsd:float" use="optional"/>
@@ -40,7 +40,7 @@
     <!-- Begin: BondTypes Tags and Attributes -->
     <xsd:complexType name="BondType">
         <xsd:sequence>
-            <xsd:element name="Parameters" type="Parameters" minOccurs="0" maxOccurs="1"/>
+            <xsd:element ref="Parameters" minOccurs="0" maxOccurs="1"/>
         </xsd:sequence>
         <xsd:attribute name="name" type="xsd:string" use="optional"/>
         <xsd:attribute name="type1" type="xsd:string" use="required"/>
@@ -65,7 +65,7 @@
     <!-- Begin ForceField AngleTypes Tags and Attributes -->
     <xsd:complexType name="AngleType">
         <xsd:sequence>
-            <xsd:element name="Parameters" type="Parameters" minOccurs="0" maxOccurs="1"/>
+            <xsd:element ref="Parameters" minOccurs="0" maxOccurs="1"/>
         </xsd:sequence>
         <xsd:attribute name="name" type="xsd:string" use="optional"/>
         <xsd:attribute name="type1" type="xsd:string" use="required"/>
@@ -91,7 +91,7 @@
     <!-- Begin ForceField DihedralType Tags and Attributes -->
     <xsd:complexType name="DihedralType">
         <xsd:sequence>
-            <xsd:element name="Parameters" type="Parameters" minOccurs="0" maxOccurs="1"/>
+            <xsd:element ref="Parameters" minOccurs="0" maxOccurs="1"/>
         </xsd:sequence>
         <xsd:attribute name="name" type="xsd:string" use="optional"/>
         <xsd:attribute name="type1" type="xsd:string" use="required"/>
@@ -121,16 +121,22 @@
         <xsd:attribute name="unit" type="xsd:string"/>
     </xsd:complexType>
 
-    <xsd:complexType name="Parameters">
-        <xsd:sequence>
-            <xsd:element name="Parameter" minOccurs="0" maxOccurs="unbounded">
-                <xsd:complexType>
-                    <xsd:attribute name="name" use="required" type="xsd:string"/>
-                    <xsd:attribute name="value" use="required" type="xsd:float"/>
-                </xsd:complexType>
-            </xsd:element>
-        </xsd:sequence>
-    </xsd:complexType>
+    <xsd:element name="Parameters">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="Parameter" minOccurs="0" maxOccurs="unbounded">
+                    <xsd:complexType>
+                        <xsd:attribute name="name" use="required" type="xsd:string"/>
+                        <xsd:attribute name="value" use="required" type="xsd:float"/>
+                    </xsd:complexType>
+                </xsd:element>
+            </xsd:sequence>
+        </xsd:complexType>
+        <xsd:unique name="params_name_key">
+            <xsd:selector xpath="Parameter"/>
+            <xsd:field xpath="@name"/>
+        </xsd:unique>
+    </xsd:element>
 
     <!-- These define the units and other elements in the FFMetaData -->
     <xsd:element name="FFMetaData">

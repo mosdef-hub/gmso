@@ -1,0 +1,23 @@
+<ForceField version="0.4.1" name="ForceFieldTwo">
+    <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.67">
+        <Units energy="kcal/mol" distance="nm" mass="amu" charge="coulomb"/>
+    </FFMetaData>
+    <AtomTypes expression="(A*exp(-B/r) - C/r**6)">
+        <ParametersUnitDef parameter="A" unit="kcal/mol"/>
+        <ParametersUnitDef parameter="B" unit="nm"/>
+        <ParametersUnitDef parameter="C" unit="kcal/mol*nm**6"/>
+        <AtomType name="Ar" element="Ar" charge="0.0" mass="39.948" definition="Ar" description="Argon atom">
+            <Parameters>
+                <Parameter name="A" value="0.1"/>
+                <Parameter name="C" value="0.5"/>
+            </Parameters>
+        </AtomType>
+        <AtomType name="Xe" element="Xe" charge="0.0" mass="131.293" definition="Xe" description="Xenon atom">
+            <Parameters>
+                <Parameter name="A" value="0.2"/>
+                <Parameter name="B" value="5.0"/>
+                <Parameter name="C" value="0.3"/>
+            </Parameters>
+        </AtomType>
+    </AtomTypes>
+</ForceField>
