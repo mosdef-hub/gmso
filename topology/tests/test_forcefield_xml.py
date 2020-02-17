@@ -34,7 +34,7 @@ class TestForceFieldFromXML(BaseTest):
         assert ff.units[unit_name] == unit_value
 
     def test_ff_atomtypes_from_xml(self, ff):
-        assert len(ff.atom_types) == 2
+        assert len(ff.atom_types) == 3
         assert 'Ar' in ff.atom_types
         assert 'Xe' in ff.atom_types
 
@@ -58,6 +58,8 @@ class TestForceFieldFromXML(BaseTest):
         assert ff.atom_types['Xe'].description == 'Xenon atom'
         assert ff.atom_types['Xe'].definition == 'Xe'
         assert ff.atom_types['Xe'].expression == sympify('(A*exp(-B/r) - C/r**6)')
+
+        assert ff.atom_types['Li'].charge == u.unyt_quantity(1.0, u.coulomb)
 
     def test_ff_bondtypes_from_xml(self, ff):
         assert len(ff.bond_types) == 2

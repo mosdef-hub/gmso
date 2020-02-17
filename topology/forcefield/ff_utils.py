@@ -147,6 +147,7 @@ def parse_ff_atomtypes(atomtypes_el, ff_meta):
             'mass': 0.0 * u.g / u.mol,
             'expression': '4*epsilon*((sigma/r)**12 - (sigma/r)**6)',
             'parameters': None,
+            'charge': 0.0 * u.elementary_charge,
             'independent_variables': None,
             'atomclass': '',
             'doi': '',
@@ -165,6 +166,8 @@ def parse_ff_atomtypes(atomtypes_el, ff_meta):
             ctor_kwargs['mass'] = u.unyt_quantity(float(ctor_kwargs['mass']), units_dict['mass'])
         if isinstance(ctor_kwargs['overrides'], str):
             ctor_kwargs['overrides'] = set(ctor_kwargs['overrides'].split(','))
+        if isinstance(ctor_kwargs['charge'], str):
+            ctor_kwargs['charge'] = u.unyt_quantity(float(ctor_kwargs['charge']), units_dict['charge'])
         params_dict = _parse_params_values(atom_type, param_unit_dict, 'AtomType')
         if not ctor_kwargs['parameters'] and params_dict:
             ctor_kwargs['parameters'] = params_dict
