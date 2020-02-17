@@ -40,3 +40,15 @@ class TestTop(BaseTest):
         top.atom_types[0].set_expression(alternate_lj)
 
         write_top(top, 'ar.top')
+
+    def test_water_top(self, water_system):
+        top = water_system
+
+        ff = topo.ForceField(get_fn('topology-tip3p.xml'))
+
+        for site in top.sites:
+            site.atom_type = ff.atom_types[site.name]
+
+        top.dupate_topology()
+
+        write_top(top, 'water.top')
