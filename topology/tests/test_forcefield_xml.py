@@ -121,3 +121,6 @@ class TestForceFieldFromXML(BaseTest):
         assert charm_ff.dihedral_types["*~CE1~CE1~*"].parameters['k'] == \
                [u.unyt_quantity(0.6276, u.kJ), u.unyt_quantity(35.564, u.kJ)]
 
+    def test_elementary_charge_to_coulomb(self, ff):
+        elementary_charge = ff.atom_types['Li'].charge.to(u.elementary_charge)
+        assert elementary_charge.units == u.elementary_charge
