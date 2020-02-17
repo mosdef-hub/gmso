@@ -79,3 +79,4 @@ class TestForceFieldFromXML(BaseTest):
         assert allclose(spce.bond_types['opls_116~opls_117'].parameters['k'], 345000.0 * u.Unit('kJ/(mol*nm**2)'))
 
         assert allclose(spce.angle_types['opls_117~opls_116~opls_117'].parameters['theta_eq'], 109.47 * u.degree)
+        assert allclose(spce.angle_types['opls_117~opls_116~opls_117'].parameters['k'], 383.0 * u.Unit('kJ/mol/rad**2'))

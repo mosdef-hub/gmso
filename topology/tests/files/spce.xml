@@ -30,7 +30,7 @@
     </BondType>
   </BondTypes>
   <AngleTypes expression="0.5 * k * (theta - theta_eq)**2">
-    <ParametersUnitDef parameter="k" unit="kJ/mol/degree**2"/>
+    <ParametersUnitDef parameter="k" unit="kJ/mol/rad**2"/>
     <ParametersUnitDef parameter="theta_eq" unit="degree"/>
     <AngleType name="AngleType1" type1="opls_117" type2="opls_116" type3="opls_117">
       <Parameters>
