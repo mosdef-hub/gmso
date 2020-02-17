@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <ForceField name="TIP3P" version="0.0.1">
   <FFMetaData>
-    <Units energy="kcal/mol" mass="amu" charge="coulomb" distance="nm"/>
+    <Units energy="kJ/mol" mass="amu" charge="elementary_charge" distance="nm"/>
   </FFMetaData>
   <AtomTypes expression="4*epsilon * ((sigma/r)**12 - (sigma/r)**6)">
     <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
