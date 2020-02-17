@@ -21,7 +21,7 @@ def convert_opls_to_ryckaert(connection):
     f3 = connection.connection_type.parameters['k3']
     f4 = connection.connection_type.parameters['k4']
 
-    new_params = {
+    converted_params = {
             'c0' : (f2 + 0.5 * (f1 + f3)),
             'c1' : (0.5 * (-f1 + 3 * f3)),
             'c2' : (-f2 + 4 * f4),
@@ -38,7 +38,7 @@ def convert_opls_to_ryckaert(connection):
             name=name,
             expression=expression,
             independent_variables=variables,
-            parameters=new_params)
+            parameters=converted_params)
 
     connection.connection_type = updated_connection_type
 
@@ -56,7 +56,7 @@ def convert_ryckaert_to_opls(connection):
         raise TopologyError('Cannot convert Ryckaert-Bellemans dihedral '
                 'to OPLS dihedral if c5 is not equal to zero.')
 
-    new_params = {
+    converted_params = {
             'k0' : (c0 + c1 + c2 + c3 + c4),
             'k1' : (-2 * c1 - (3./2.) * c3),
             'k2' : (-c2 - c4),
@@ -72,7 +72,7 @@ def convert_ryckaert_to_opls(connection):
             name=name,
             expression=expression,
             independent_variables=variables,
-            parameters=new_params)
+            parameters=converted_params)
 
     connection.connection_type = updated_connection_type
 
