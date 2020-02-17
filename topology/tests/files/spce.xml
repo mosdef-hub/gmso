@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <ForceField name="spce" version="0.0.1">
   <FFMetaData>
-    <Units energy="kcal/mol" mass="amu" charge="coulomb" distance="nm"/>
+    <Units energy="kJ/mol" mass="amu" charge="elementary_charge" distance="nm"/>
   </FFMetaData>
   <AtomTypes expression="4 * epsilon * ((sigma/r)**12 - (sigma/r)**6)">
     <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
@@ -22,7 +22,7 @@
   <BondTypes expression="0.5 * k * (r-r_eq)**2">
     <ParametersUnitDef parameter="k" unit="kJ/mol/nm**2"/>
     <ParametersUnitDef parameter="r_eq" unit="nm"/>
-    <BondType name="BondType-Harmonic-1" type1="opls_116" type2="opls_117">
+    <BondType name="BondType1" type1="opls_116" type2="opls_117">
       <Parameters>
         <Parameter name="k" value="345000.0"/>
         <Parameter name="r_eq" value="0.1"/>
@@ -32,7 +32,7 @@
   <AngleTypes expression="0.5 * k * (theta - theta_eq)**2">
     <ParametersUnitDef parameter="k" unit="kJ/mol/degree**2"/>
     <ParametersUnitDef parameter="theta_eq" unit="degree"/>
-    <AngleType name="AngleType-Harmonic-1" type1="opls_116" type2="opls_117" type3="opls_117">
+    <AngleType name="AngleType1" type1="opls_116" type2="opls_117" type3="opls_117">
       <Parameters>
         <Parameter name="k" value="383.0"/>
         <Parameter name="theta_eq" value="109.47"/>
