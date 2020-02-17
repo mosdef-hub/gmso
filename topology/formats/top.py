@@ -109,6 +109,7 @@ def write_top(top, filename):
             '[ atoms ]\n'
             '; nr\t\ttype\tresnr\tresidue\t\tatom\tcgnr\tcharge\t\tmass\n'
         )
+        import pdb; pdb.set_trace()
         for idx, site in enumerate(top.sites):
             out_file.write(
                 '{0}\t\t\t'
@@ -214,18 +215,18 @@ def write_top(top, filename):
         if len(set([s.name for s in top.subtops])) > 1:
             raise NotImplementedError
 
-        if len(top.subtops) == 0:
-            out_file.write(
-                '[ molecules ]\n'
-                '; molecule\tnmols\n'
-                '{0}\t\t{1}'.format(top.name, 1)
-            )
-        elif len(top.subtops) > 0:
-            out_file.write(
-                '[ molecules ]\n'
-                '; molecule\tnmols\n'
-                '{0}\t\t{1}'.format(top.subtops[0].name, top.n_subtops)
-            )
+        #if len(top.subtops) == 0:
+        out_file.write(
+            '[ molecules ]\n'
+            '; molecule\tnmols\n'
+            '{0}\t\t{1}'.format(top.name, 1)
+        )
+        #elif len(top.subtops) > 0:
+        #    out_file.write(
+        #        '[ molecules ]\n'
+        #        '; molecule\tnmols\n'
+        #        '{0}\t\t{1}'.format(top.subtops[0].name, top.n_subtops)
+        #    )
 
 
 def _validate_compatibility(top):
