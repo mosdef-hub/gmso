@@ -109,7 +109,7 @@ def write_top(top, filename):
             '[ atoms ]\n'
             '; nr\t\ttype\tresnr\tresidue\t\tatom\tcgnr\tcharge\t\tmass\n'
         )
-        for idx, atom_type in enumerate(top.atom_types):
+        for idx, site in enumerate(top.sites):
             out_file.write(
                 '{0}\t\t\t'
                 '{1}\t\t'
@@ -120,13 +120,13 @@ def write_top(top, filename):
                 '{6}\t\t'
                 '{7}\n'.format(
                     idx+1,
-                    atom_type.name,
+                    site.atom_type.name,
                     1, # TODO: subtop idx
                     top.name, # TODO: subtop.name
                     'X', # TODO: establish relationship between atom_type and site ...
                     1, # TODO: care about charge groups
-                    atom_type.charge.in_units(u.charge_electron).value,
-                    atom_type.mass.in_units(u.amu).value,
+                    site.charge.in_units(u.charge_electron).value,
+                    site.atom_type.mass.in_units(u.amu).value,
                 )
             )
 
