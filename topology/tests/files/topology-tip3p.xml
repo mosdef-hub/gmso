@@ -30,8 +30,8 @@
     </BondType>
   </BondTypes>
   <AngleTypes expression="0.5 * k * (theta - theta_eq)**2">
-    <ParametersUnitDef parameter="k" unit="kJ/degree**2"/>
-    <ParametersUnitDef parameter="theta_eq" unit="degree"/>
+    <ParametersUnitDef parameter="k" unit="kJ/radian**2"/>
+    <ParametersUnitDef parameter="theta_eq" unit="radian"/>
     <AngleType name="AngleType-Harmonic-1" type1="opls_112" type2="opls_111" type3="opls_112">
       <Parameters>
         <Parameter name="k" value="682.02"/>
@@ -39,9 +39,4 @@
       </Parameters>
     </AngleType>
   </AngleTypes>
-  <AngleTypes expression="k * (w - w_0) ** 2">
-    <ParametersUnitDef parameter="k" unit="kJ/degree**2"/>
-    <ParametersUnitDef parameter="w_0" unit="nm"/>
-  </AngleTypes>
-  <DihedralTypes expression="k * (1 + cos(n * shi - delta))"/>
 </ForceField>
