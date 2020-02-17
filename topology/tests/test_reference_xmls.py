@@ -47,7 +47,7 @@ class TestForceFieldFromXML(BaseTest):
         assert allclose(carbon.dihedral_types['*~C~C~*'].parameters['theta_0'], np.pi * u.radian)
 
     def test_tip3p_force_field(self):
-        water = ForceField(get_path('topology-tip3p.xml'))
+        water = ForceField(get_path('tip3p.xml'))
         assert len(water.atom_types) == 2
         assert len(water.bond_types) == 1
         assert len(water.angle_types) == 1
