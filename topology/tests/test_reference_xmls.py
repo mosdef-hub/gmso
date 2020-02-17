@@ -72,11 +72,10 @@ class TestForceFieldFromXML(BaseTest):
 
         assert allclose(spce.atom_types['opls_116'].parameters['sigma'], 0.316557 * u.nm)
         assert allclose(spce.atom_types['opls_116'].parameters['epsilon'], 0.650194 * u.Unit('kJ/mol'))
-        assert allclose(spce.atom_types['opls_117'].parameters['sigma'], 0.0 * u.nm)
+        assert allclose(spce.atom_types['opls_117'].parameters['sigma'], 0.1 * u.nm)
         assert allclose(spce.atom_types['opls_117'].parameters['epsilon'], 0.0 * u.Unit('kJ/mol'))
 
         assert allclose(spce.bond_types['opls_116~opls_117'].parameters['r_eq'], 0.1 * u.nm)
         assert allclose(spce.bond_types['opls_116~opls_117'].parameters['k'], 345000.0 * u.Unit('kJ/(mol*nm**2)'))
 
-        assert allclose(spce.angle_types['opls_117~opls116~opls_117'].parameters['theta_eq'], 109.47 * u.degree)
-        assert allclose(spce.angle_types['C~C~C'].parameters['k'], 383.0 * u.Unit('kJ/(mol*degree**2)'))
+        assert allclose(spce.angle_types['opls_117~opls_116~opls_117'].parameters['theta_eq'], 109.47 * u.degree)
