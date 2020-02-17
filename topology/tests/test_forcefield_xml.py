@@ -7,6 +7,7 @@ from lxml.etree import DocumentInvalid
 from topology.forcefield import ForceField
 from topology.tests.utils import get_path
 from topology.tests.base_test import BaseTest
+from topology.exceptions import ForceFieldParseError
 
 
 class TestForceFieldFromXML(BaseTest):
@@ -124,5 +125,10 @@ class TestForceFieldFromXML(BaseTest):
     def test_non_unique_params(self):
         with pytest.raises(DocumentInvalid):
             ForceField(get_path('ff-example-nonunique-params.xml'))
+
+    def test_missing_params(self):
+        with pytest.raises(ForceFieldParseError):
+            ForceField(get_path('ff-example-missing-parameter.xml'))
+
 
 
