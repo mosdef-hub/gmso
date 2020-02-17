@@ -109,7 +109,6 @@ def write_top(top, filename):
             '[ atoms ]\n'
             '; nr\t\ttype\tresnr\tresidue\t\tatom\tcgnr\tcharge\t\tmass\n'
         )
-        import pdb; pdb.set_trace()
         for idx, site in enumerate(top.sites):
             out_file.write(
                 '{0}\t\t\t'
