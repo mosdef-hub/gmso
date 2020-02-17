@@ -69,8 +69,8 @@ class TestForceFieldFromXML(BaseTest):
         assert sympy.simplify(water.bond_types['opls_111~opls_112'].expression - ref_exprs[1]) == 0
         assert sympy.simplify(water.angle_types['opls_112~opls_111~opls_112'].expression - ref_exprs[2]) == 0
 
-        assert allclose(water.atom_types['opls_111'].parameters['sigma'], 0.636386 * u.nm)
-        assert allclose(water.atom_types['opls_111'].parameters['epsilon'], 0.315061 * u.Unit('kJ/mol'))
+        assert allclose(water.atom_types['opls_111'].parameters['sigma'], 0.315061 * u.nm)
+        assert allclose(water.atom_types['opls_111'].parameters['epsilon'], 0.636386 * u.Unit('kJ/mol'))
         assert allclose(water.atom_types['opls_112'].parameters['sigma'], 1.0 * u.nm)
         assert allclose(water.atom_types['opls_112'].parameters['epsilon'], 0.0 * u.Unit('kJ/mol'))
 
