@@ -21,14 +21,6 @@ class TestConvertMBuild(BaseTest):
     def ethane(self):
         return mb.load(get_fn('ethane.mol2'))
 
-    @pytest.fixture
-    def argon_box(self):
-        argon = mb.Compound(name="Ar")
-        argon_box = mb.fill_box(argon,
-                n_compounds=10,
-                box=Box(lengths=[1, 1, 1]))
-        return argon_box
-
     def test_from_mbuild_ethane(self, ethane):
         import mbuild as mb
         top = from_mbuild(ethane)
@@ -41,11 +33,13 @@ class TestConvertMBuild(BaseTest):
             assert isinstance(top.sites[i].element, topology.Element)
             assert top.sites[i].name == top.sites[i].element.symbol
 
-    def test_from_mbuild_argon(self, argon_box):
-        import mbuild as mb
-        top = from_mbuild(argon_box)
+    def test_from_mbuild_argon(self, ar_system):
+        # ar_system is a 3x3x3nm box filled with 100 argon sites using
+        # mBuild, and then converted to topology via from_mbuild.
 
-        assert top.n_sites == 10
+        top = ar_system
+
+        assert top.n_sites == 100
         assert top.n_subtops == 0
         assert top.n_connections == 0
         for i in range(top.n_sites):
