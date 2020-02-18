@@ -34,7 +34,7 @@ def _parse_param_units(parent_tag):
     param_unit_dict = {}
     params_iter = parent_tag.getiterator('ParametersUnitDef')
     for param_unit in params_iter:
-        param_unit_dict[param_unit.attrib['parameter']] = param_unit.attrib['unit']
+        param_unit_dict[param_unit.attrib['parameter']] = _parse_unit_string(param_unit.attrib['unit'])
     return param_unit_dict
 
 
@@ -108,7 +108,7 @@ def _parse_default_units(unit_tag):
         'angle': u.rad
     }
     for attrib, val in unit_tag.items():
-        units_map[attrib] = u.Unit(val)
+        units_map[attrib] = _parse_unit_string(val)
     return units_map
 
 
@@ -239,7 +239,7 @@ def _parse_unit_string(string):
     Converts a string with unyt units and physical constants to a taggable unit value
     """
 
-    expr = sympy.sympify(string)
+    expr = sympify(str(string))
 
     sympy_subs = []
     unyt_subs = []
@@ -249,13 +249,14 @@ def _parse_unit_string(string):
             symbol_unit = _unyt_dictionary[symbol.name]
         except KeyError:
             raise u.exceptions.UnitParseError(
-                    "Could not find unit symbol '{}' in the provided
-                    symbols.".format(symbol.name)
+                    "Could not find unit symbol",
+                    "'{}' in the provided symbols.".format(symbol.name)
+                    )
         if isinstance(symbol_unit, u.Unit):
             sympy_subs.append((symbol.name, symbol_unit.base_value))
         elif isinstance(symbol_unit, u.unyt_quantity):
             sympy_subs.append((symbol.name, float(symbol_unit.in_base().value)))
         unyt_subs.append((symbol.name, str(symbol_unit.units)))
 
-    return float(expr.subs(sympy_subs)) * u.Unit(str(expr.subs(unyt_subs)))
+    return u.Unit(float(expr.subs(sympy_subs)) * u.Unit(str(expr.subs(unyt_subs))))
 
