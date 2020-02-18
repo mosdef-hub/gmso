@@ -1,5 +1,6 @@
 trigger:
-  - 175-core-equality-checks
+  - master 
+
 pr:
   - master
 
@@ -9,7 +10,7 @@ jobs:
       vmImage: 'ubuntu-latest'
     steps:
       - bash: echo "##vso[task.prependpath]$CONDA/bin"
-        displayName: Add conta to path
+        displayName: Add conda to path
 
       - bash: |
           conda config --set always_yes yes --set changeps1 no
@@ -22,7 +23,7 @@ jobs:
       - bash: |
           conda create -n test-environment
           source activate test-environment
-          conda install --yes --file requirements.txt
+          conda install --yes --file requirements-test.txt
           conda install pytest
           pip install -e .
         displayName: Install requirements, Install branch

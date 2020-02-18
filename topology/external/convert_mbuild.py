@@ -9,9 +9,9 @@ from topology.core.site import Site
 from topology.core.bond import Bond
 from topology.core.box import Box
 from topology.utils.io import has_mbuild
-from topology.core.element import (element_by_symbol, 
+from topology.core.element import (element_by_symbol,
                                    element_by_name,
-                                   element_by_atomic_number, 
+                                   element_by_atomic_number,
                                    element_by_mass)
 
 if has_mbuild:
@@ -48,10 +48,8 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
 
     site_map = dict()
     for child in compound.children:
-        if child.children is None:
-            pos = child.xyz[0] * u.nanometer
-            site = Site(name=child.name, position=pos)
-            site_map[child] = site
+        if len(child.children) == 0:
+            continue
         else:
             subtop = SubTopology(name=child.name)
             top.add_subtopology(subtop)
@@ -89,7 +87,7 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
             if box:
                 box.lengths += [0.5, 0.5, 0.5] * u.nm
             top.box = box
-        else: 
+        else:
             top.box = Box(lengths=compound.periodicity)
 
     return top
