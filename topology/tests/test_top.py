@@ -60,7 +60,6 @@ class TestTop(BaseTest):
         top.update_bond_types()
 
         for subtop in top.subtops:
-            import pdb; pdb.set_trace()
             angle = topo.core.angle.Angle(
                 connection_members=[site for site in subtop.sites],
                 name="opls_112~opls_111~opls_112",
