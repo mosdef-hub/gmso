@@ -28,9 +28,10 @@ jobs:
           pip install -e .
         displayName: Install requirements, Install branch
 
-      - bash: source activate test-environment && python -m pytest -v topology
-        env:
-          SKIP: 1
+      - bash: |
+          export SKIP=1
+          source activate test-environment
+          python -m pytest -v topology
         displayName: Run Tests
 
 
