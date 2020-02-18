@@ -132,5 +132,6 @@ class TestForceFieldFromXML(BaseTest):
         with pytest.raises(ForceFieldParseError):
             ForceField(get_path('ff-example-missing-parameter.xml'))
 
-
-
+    def test_elementary_charge_to_coulomb(self, ff):
+        elementary_charge = ff.atom_types['Li'].charge.to(u.elementary_charge)
+        assert elementary_charge.units == u.elementary_charge
