@@ -20,6 +20,13 @@
                 <Parameter name="C" value="0.3"/>
             </Parameters>
         </AtomType>
+        <AtomType name="Li" element="Li" charge="1.0" mass="6.941" definition="Li" description="Lithium atom">
+            <Parameters>
+                <Parameter name="A" value="0.2"/>
+                <Parameter name="B" value="5.0"/>
+                <Parameter name="C" value="0.3"/>
+            </Parameters>
+        </AtomType>
     </AtomTypes>
     <BondTypes expression="0.5 * k * (r-r_eq)**2">
         <ParametersUnitDef parameter="r_eq" unit="nm"/>
