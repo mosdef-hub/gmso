@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from sympy import sympify
 import unyt as u
@@ -16,7 +18,7 @@ class TestForceFieldFromXML(BaseTest):
     def ff(self):
         return ForceField(get_path('ff-example0.xml'))
 
-    @pytest.fixture
+    @pytest.fixture(scope='module')
     def charm_ff(self):
         return ForceField(get_path('topology-charmm.xml'))
 
@@ -109,6 +111,7 @@ class TestForceFieldFromXML(BaseTest):
         assert ff.dihedral_types['Xe~Xe~Xe~Xe'].parameters['z'] == u.unyt_quantity(20, u.kJ / u.mol)
         assert ff.dihedral_types['Xe~Xe~Xe~Xe'].member_types == ['Xe', 'Xe', 'Xe', 'Xe']
 
+    @pytest.mark.skipif(int(os.environ.get('SKIP', 0)) == 1, reason='not testing in azure pipelines')
     def test_ff_charmm_xml(self, charm_ff):
         assert charm_ff.name == 'topologyCharmm'
         assert "*~CS~SS~*" in charm_ff.dihedral_types
