@@ -45,12 +45,19 @@ def _parse_params_values(parent_tag, units_dict, child_tag):
         param_unit = units_dict[param_name]
         param_value = u.unyt_quantity(float(param.attrib['value']), param_unit)
         params_dict[param_name] = param_value
+    param_ref_dict = units_dict
     if child_tag == 'DihedralType':
         _consolidate_params(params_dict)
+        param_ref_dict = _consolidate_params(units_dict, update_orig=False)
+
+    for param in param_ref_dict:
+        if param not in params_dict:
+            raise ForceFieldParseError(
+                'Parameter {} is in units but cannot be found in parameters list'.format(param))
     return params_dict
 
 
-def _consolidate_params(params_dict):
+def _consolidate_params(params_dict, update_orig=True):
     to_del = []
     new_dict = {}
     for param in params_dict:
@@ -59,9 +66,12 @@ def _consolidate_params(params_dict):
             new_dict[match.groups()[0]] = new_dict.get(match.groups()[0], [])
             new_dict[match.groups()[0]].append(params_dict[param])
             to_del.append(param)
-    for key in to_del:
-        del params_dict[key]
-    params_dict.update(new_dict)
+    if update_orig:
+        for key in to_del:
+            del params_dict[key]
+        params_dict.update(new_dict)
+    else:
+        return new_dict
 
 
 def _check_valid_atomtype_names(tag, ref_dict):
@@ -87,7 +97,10 @@ def _parse_units(unit_tag):
         'energy': u.kcal / u.mol,
         'distance': u.nm,
         'mass': u.gram / u.mol,
-        'charge': u.coulomb
+        'charge': u.coulomb,
+        'time': u.ps,
+        'temperature': u.K,
+        'angle': u.rad
     }
     for attrib, val in unit_tag.items():
         units_map[attrib] = u.Unit(val)
@@ -105,13 +118,25 @@ def validate(xml_path, schema=None):
     xmlschema.assertValid(ff_xml)
 
 
+def _parse_scaling_factors(meta_tag):
+    """Parse the scaling factors from the schema"""
+    assert meta_tag.tag == 'FFMetaData', 'Can only parse metadata from FFMetaData tag'
+    scaling_factors = {'electrostatics14Scale': meta_tag.get('electrostatics14Scale', 1.0),
+                       'nonBonded14Scale': meta_tag.get('nonBonded14Scale', 1.0)}
+    for key in scaling_factors:
+        if type(scaling_factors[key]) != float:
+            scaling_factors[key] = float(scaling_factors[key])
+    return scaling_factors
+
+
 def parse_ff_metadata(element):
     """Parse the metadata (units, quantities etc...) from the forcefield XML"""
     metatypes = ['Units']
     parsers = {
-        'Units': _parse_units
+        'Units': _parse_units,
+        'ScalingFactors': _parse_scaling_factors
     }
-    ff_meta = {}
+    ff_meta = {'scaling_factors': parsers['ScalingFactors'](element)}
     for metatype in element:
         if metatype.tag in metatypes:
             ff_meta[metatype.tag] = parsers[metatype.tag](metatype)
@@ -132,6 +157,7 @@ def parse_ff_atomtypes(atomtypes_el, ff_meta):
             'mass': 0.0 * u.g / u.mol,
             'expression': '4*epsilon*((sigma/r)**12 - (sigma/r)**6)',
             'parameters': None,
+            'charge': 0.0 * u.elementary_charge,
             'independent_variables': None,
             'atomclass': '',
             'doi': '',
@@ -150,6 +176,8 @@ def parse_ff_atomtypes(atomtypes_el, ff_meta):
             ctor_kwargs['mass'] = u.unyt_quantity(float(ctor_kwargs['mass']), units_dict['mass'])
         if isinstance(ctor_kwargs['overrides'], str):
             ctor_kwargs['overrides'] = set(ctor_kwargs['overrides'].split(','))
+        if isinstance(ctor_kwargs['charge'], str):
+            ctor_kwargs['charge'] = u.unyt_quantity(float(ctor_kwargs['charge']), units_dict['charge'])
         params_dict = _parse_params_values(atom_type, param_unit_dict, 'AtomType')
         if not ctor_kwargs['parameters'] and params_dict:
             ctor_kwargs['parameters'] = params_dict

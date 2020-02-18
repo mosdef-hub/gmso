@@ -196,14 +196,12 @@ def element_by_atom_type(atom_type):
         matched_element = element_by_smarts_string(atom_type.definition)
 
     if matched_element is None:
-        import pdb; pdb.set_trace()
         raise TopologyError(f'Failed to find an element from atom type'
                 '{atom_type} with ' 'properties mass: {atom_type.mass}, name:'
                 '{atom_type.name}, and ' 'definition: {atom_type.definition}'
         )
 
     return matched_element
-    return elem
 
 
 Hydrogen = 	Element(atomic_number=1, name='hydrogen', symbol='H', mass=1.0079 * u.amu)
