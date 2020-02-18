@@ -19,7 +19,11 @@ __all__ = ['validate',
 
 DICT_KEY_SEPARATOR = '~'
 
-u.define_unit('elementary_charge', u.elementary_charge)
+# Create a dictionary of units
+_unyt_dictionary = {}
+for name, item in vars(u).items():
+    if isinstance(item, u.Unit) or isinstance(item, u.unyt_quantity):
+        _unyt_dictionary.update({name: item})
 
 def _check_valid_string(type_str):
     if DICT_KEY_SEPARATOR in type_str:
@@ -91,7 +95,7 @@ def _check_valid_atomtype_names(tag, ref_dict):
     return member_types
 
 
-def _parse_units(unit_tag):
+def _parse_default_units(unit_tag):
     if unit_tag is None:
         unit_tag = {}
     units_map = {
@@ -134,7 +138,7 @@ def parse_ff_metadata(element):
     """Parse the metadata (units, quantities etc...) from the forcefield XML"""
     metatypes = ['Units']
     parsers = {
-        'Units': _parse_units,
+        'Units': _parse_default_units,
         'ScalingFactors': _parse_scaling_factors
     }
     ff_meta = {'scaling_factors': parsers['ScalingFactors'](element)}
@@ -229,3 +233,29 @@ def parse_ff_connection_types(connectiontypes_el, atomtypes_dict, child_tag='Bon
         connectiontypes_dict[this_conn_type_key] = this_conn_type
 
     return connectiontypes_dict
+
+def _parse_unit_string(string):
+    """
+    Converts a string with unyt units and physical constants to a taggable unit value
+    """
+
+    expr = sympy.sympify(string)
+
+    sympy_subs = []
+    unyt_subs = []
+
+    for symbol in expr.free_symbols:
+        try:
+            symbol_unit = _unyt_dictionary[symbol.name]
+        except KeyError:
+            raise u.exceptions.UnitParseError(
+                    "Could not find unit symbol '{}' in the provided
+                    symbols.".format(symbol.name)
+        if isinstance(symbol_unit, u.Unit):
+            sympy_subs.append((symbol.name, symbol_unit.base_value))
+        elif isinstance(symbol_unit, u.unyt_quantity):
+            sympy_subs.append((symbol.name, float(symbol_unit.in_base().value)))
+        unyt_subs.append((symbol.name, str(symbol_unit.units)))
+
+    return float(expr.subs(sympy_subs)) * u.Unit(str(expr.subs(unyt_subs)))
+
