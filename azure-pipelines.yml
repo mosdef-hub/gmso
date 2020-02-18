@@ -29,8 +29,8 @@ jobs:
         displayName: Install requirements, Install branch
 
       - bash: source activate test-environment && python -m pytest -v topology
-         env:
-           SKIP: 1
+        env:
+          SKIP: 1
         displayName: Run Tests
 
 
