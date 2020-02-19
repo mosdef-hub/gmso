@@ -12,6 +12,10 @@ def convert_opls_to_ryckaert(connection):
     Equations taken/modified from:
         http://manual.gromacs.org/documentation/2019/
         reference-manual/functions/bonded-interactions.html
+
+    NOTE: the conventions defining the dihedral angle are different
+    for OPLS and RB torsions. OPLS torsions are defined with
+    phi_cis = 0 while RB torsions are defined as phi_trans = 0.
     """
 
     f0 = connection.connection_type.parameters['k0']
@@ -42,7 +46,12 @@ def convert_opls_to_ryckaert(connection):
     connection.connection_type = updated_connection_type
 
 def convert_ryckaert_to_opls(connection):
-    """Convert Ryckaert-Bellemans dihedrals to OPLS"""
+    """Convert Ryckaert-Bellemans dihedrals to OPLS
+
+    NOTE: the conventions defining the dihedral angle are different
+    for OPLS and RB torsions. OPLS torsions are defined with
+    phi_cis = 0 while RB torsions are defined as phi_trans = 0.
+    """
 
     c0 = connection.connection_type.parameters['c0']
     c1 = connection.connection_type.parameters['c1']
