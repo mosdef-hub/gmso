@@ -28,7 +28,7 @@ class TestForceFieldFromXML(BaseTest):
         assert ff.scaling_factors['nonBonded14Scale'] == 0.67
         assert ff.scaling_factors['electrostatics14Scale'] == 0.5
 
-    @pytest.mark.parametrize('unit_name,unit_value', [('energy', u.kcal/u.mol),
+    @pytest.mark.parametrize('unit_name,unit_value', [('energy', u.Unit(u.K/u.kb)),
                                                       ('mass', u.gram/u.mol), ('temperature', u.K),
                                                       ('charge', u.coulomb), ('angle', u.rad),
                                                       ('time', u.ps), ('distance', u.nm)])
