@@ -12,9 +12,30 @@ from topology.utils.conversions import convert_opls_to_ryckaert
 import unyt as u
 import numpy as np
 
+def eval_rb(connection,angle):
+    """Evaluate the RB torsion at a given angle (radians)"""
+
+    params = connection.connection_type.parameters
+    rb = 0.0
+    for n in range(6):
+        rb += params['c'+str(n)]*np.cos(angle-np.pi)**n
+    return rb
+
+def eval_opls(connection,angle):
+    """Evaluate the OPLS torsion at a given angle (radians)"""
+
+    params = connection.connection_type.parameters
+    opls = (1./2. * params['k0'] +
+            1./2. * params['k1'] * (1. + np.cos(angle)) +
+            1./2. * params['k2'] * (1. - np.cos(2.*angle)) +
+            1./2. * params['k3'] * (1. + np.cos(3.*angle)) +
+            1./2. * params['k4'] * (1. - np.cos(4.*angle)))
+    return opls
+
 class TestInternalConversions(BaseTest):
     def test_rb_to_opls(self):
 
+        # Pick some RB parameters at random
         params = { 'c0' : 1.53  * u.Unit('kJ/mol'),
                    'c1' : 0.76  * u.Unit('kJ/mol'),
                    'c2' : -0.22 * u.Unit('kJ/mol'),
@@ -61,6 +82,7 @@ class TestInternalConversions(BaseTest):
 
     def test_opls_to_rb(self):
 
+        # Pick some OPLS parameters at random
         params = { 'k0' : 1.38   * u.Unit('kJ/mol'),
                    'k1' : -0.51  * u.Unit('kJ/mol'),
                    'k2' : 2.2    * u.Unit('kJ/mol'),
@@ -104,25 +126,5 @@ class TestInternalConversions(BaseTest):
             assert np.isclose(rb_val.value,
                               opls_val.value)
 
-
-    def eval_rb(connection,angle):
-        """Evaluate the RB torsion at a given angle (radians)"""
-
-        params = connection.connection_type.parameters
-        rb = 0.0
-        for n in range(6):
-            rb += params['c'+str(n)]*np.cos(angle-np.pi)**n
-        return rb
-
-    def eval_opls(connection,angle):
-        """Evaluate the OPLS torsion at a given angle (radians)"""
-
-        params = connection.connection_type.parameters
-        opls = (1./2. * params['k0'] +
-                1./2. * params['k1'] * (1. + np.cos(angle)) +
-                1./2. * params['k2'] * (1. - np.cos(2.*angle)) +
-                1./2. * params['k3'] * (1. + np.cos(3.*angle)) +
-                1./2. * params['k4'] * (1. - np.cos(4.*angle)))
-        return opls
 
 
