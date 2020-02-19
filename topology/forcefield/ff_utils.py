@@ -238,7 +238,8 @@ def _parse_unit_string(string):
     """
     Converts a string with unyt units and physical constants to a taggable unit value
     """
-
+    string = string.replace("deg", "__deg")
+    string = string.replace("rad", "__rad")
     expr = sympify(str(string))
 
     sympy_subs = []
@@ -246,7 +247,7 @@ def _parse_unit_string(string):
 
     for symbol in expr.free_symbols:
         try:
-            symbol_unit = _unyt_dictionary[symbol.name]
+            symbol_unit = _unyt_dictionary[symbol.name.strip('_')]
         except KeyError:
             raise u.exceptions.UnitParseError(
                     "Could not find unit symbol",
@@ -254,9 +255,10 @@ def _parse_unit_string(string):
                     )
         if isinstance(symbol_unit, u.Unit):
             sympy_subs.append((symbol.name, symbol_unit.base_value))
+            unyt_subs.append((symbol.name, symbol_unit.get_base_equivalent().expr))
         elif isinstance(symbol_unit, u.unyt_quantity):
             sympy_subs.append((symbol.name, float(symbol_unit.in_base().value)))
-        unyt_subs.append((symbol.name, str(symbol_unit.units)))
+            unyt_subs.append((symbol.name, symbol_unit.units.get_base_equivalent().expr))
 
     return u.Unit(float(expr.subs(sympy_subs)) * u.Unit(str(expr.subs(unyt_subs))))
 
