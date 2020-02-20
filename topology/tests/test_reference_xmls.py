@@ -114,3 +114,37 @@ class TestForceFieldFromXML(BaseTest):
 
         assert allclose(spce.angle_types['opls_117~opls_116~opls_117'].parameters['theta_eq'], 109.47 * u.degree)
         assert allclose(spce.angle_types['opls_117~opls_116~opls_117'].parameters['k'], 383.0 * u.Unit('kJ/mol/rad**2'))
+
+    def test_noble_mie_xml(self):
+        ff = ForceField(get_path('noble_mie.xml'))
+
+        assert len(ff.atom_types) == 4
+        assert len(ff.bond_types) == 0
+        assert len(ff.angle_types) == 0
+        assert len(ff.dihedral_types) == 0
+
+        assert allclose(ff.atom_types['Ne'].parameters['epsilon'], 0.26855713 * u.Unit('kJ/mol'))
+        assert allclose(ff.atom_types['Ne'].parameters['sigma'], 3.964 * u.Angstrom)
+        assert allclose(ff.atom_types['Ne'].parameters['n'], 11 * u.dimensionless)
+        assert allclose(ff.atom_types['Ne'].parameters['m'], 6 * u.dimensionless)
+        assert ff.atom_types['Ne'].charge.value == 0
+
+        assert allclose(ff.atom_types['Ar'].parameters['epsilon'], 1.01519583 * u.Unit('kJ/mol'))
+        assert allclose(ff.atom_types['Ar'].parameters['sigma'], 3.964 * u.Angstrom)
+        assert allclose(ff.atom_types['Ar'].parameters['n'], 13 * u.dimensionless)
+        assert allclose(ff.atom_types['Ar'].parameters['m'], 6 * u.dimensionless)
+        assert ff.atom_types['Ar'].charge.value == 0
+
+        assert allclose(ff.atom_types['Kr'].parameters['epsilon'], 1.46417678 * u.Unit('kJ/mol'))
+        assert allclose(ff.atom_types['Kr'].parameters['sigma'], 3.964 * u.Angstrom)
+        assert allclose(ff.atom_types['Kr'].parameters['n'], 14 * u.dimensionless)
+        assert allclose(ff.atom_types['Kr'].parameters['m'], 6 * u.dimensionless)
+        assert ff.atom_types['Kr'].charge.value == 0
+
+        assert allclose(ff.atom_types['Xe'].parameters['epsilon'], 2.02706587 * u.Unit('kJ/mol'))
+        assert allclose(ff.atom_types['Xe'].parameters['sigma'], 3.964 * u.Angstrom)
+        assert allclose(ff.atom_types['Xe'].parameters['n'], 14 * u.dimensionless)
+        assert allclose(ff.atom_types['Xe'].parameters['m'], 6 * u.dimensionless)
+        assert ff.atom_types['Xe'].charge.value == 0
+
+
