@@ -1,39 +1,89 @@
 import pytest
 
 from topology.tests.base_test import BaseTest
-from topology.core.site import Site
-from topology.core.dihedral import Dihedral
 from topology.core.dihedral_type import DihedralType
 from topology.lib.potential_templates import RyckaertBellemansTorsionPotential
 from topology.lib.potential_templates import OPLSTorsionPotential
 from topology.utils.conversions import convert_ryckaert_to_opls
 from topology.utils.conversions import convert_opls_to_ryckaert
+from topology.exceptions import TopologyError
 
 import unyt as u
 import numpy as np
 
-def eval_rb(connection,angle):
-    """Evaluate the RB torsion at a given angle (radians)"""
-
-    params = connection.connection_type.parameters
-    rb = 0.0
-    for n in range(6):
-        rb += params['c'+str(n)]*np.cos(angle-np.pi)**n
-    return rb
-
-def eval_opls(connection,angle):
-    """Evaluate the OPLS torsion at a given angle (radians)"""
-
-    params = connection.connection_type.parameters
-    opls = (1./2. * params['k0'] +
-            1./2. * params['k1'] * (1. + np.cos(angle)) +
-            1./2. * params['k2'] * (1. - np.cos(2.*angle)) +
-            1./2. * params['k3'] * (1. + np.cos(3.*angle)) +
-            1./2. * params['k4'] * (1. - np.cos(4.*angle)))
-    return opls
-
 class TestInternalConversions(BaseTest):
-    def test_rb_to_opls(self):
+
+    def test_invalid_connection_type(self):
+        params = { 'c0' : 1.53  * u.Unit('kJ/mol'),
+                   'c1' : 0.76  * u.Unit('kJ/mol'),
+                   'c2' : -0.22 * u.Unit('kJ/mol'),
+                   'c3' : 3.55  * u.Unit('kJ/mol'),
+                   'c4' : 0.94  * u.Unit('kJ/mol'),
+                   'c5' : 0.0   * u.Unit('kJ/mol')
+                 }
+
+        name = RyckaertBellemansTorsionPotential().name
+        expression = RyckaertBellemansTorsionPotential().expression
+        variables = ['phi','psi']
+
+        ryckaert_connection_type = DihedralType(
+                name=name,
+                expression=expression,
+                independent_variables=variables,
+                parameters=params)
+
+        with pytest.raises(TopologyError,match='Cannot use'):
+            opls_connection_type = convert_ryckaert_to_opls(
+                    ryckaert_connection_type)
+
+        expression = 'c0+c1+c2+c3+c4+c5+phi'
+        variables = RyckaertBellemansTorsionPotential().independent_variables
+        ryckaert_connection_type = DihedralType(
+                name=name,
+                expression=expression,
+                independent_variables=variables,
+                parameters=params)
+
+        with pytest.raises(TopologyError,match='Cannot use'):
+            opls_connection_type = convert_ryckaert_to_opls(
+                    ryckaert_connection_type)
+
+        # Pick some OPLS parameters at random
+        params = { 'k0' : 1.38   * u.Unit('kJ/mol'),
+                   'k1' : -0.51  * u.Unit('kJ/mol'),
+                   'k2' : 2.2    * u.Unit('kJ/mol'),
+                   'k3' : -0.25  * u.Unit('kJ/mol'),
+                   'k4' : 1.44   * u.Unit('kJ/mol')
+                 }
+
+        name = OPLSTorsionPotential().name
+        expression = OPLSTorsionPotential().expression
+        variables = ['phi','psi']
+
+        opls_connection_type = DihedralType(
+                name=name,
+                expression=expression,
+                independent_variables=variables,
+                parameters=params)
+
+        with pytest.raises(TopologyError,match=''):
+            ryckaert_connection_type = convert_opls_to_ryckaert(
+                    opls_connection_type)
+
+        variables = OPLSTorsionPotential().independent_variables
+        expression = 'k0+k1+k2+k3+k4+phi'
+        opls_connection_type = DihedralType(
+                name=name,
+                expression=expression,
+                independent_variables=variables,
+                parameters=params)
+
+        with pytest.raises(TopologyError,match=''):
+            ryckaert_connection_type = convert_opls_to_ryckaert(
+                    opls_connection_type)
+
+
+    def test_ryckaert_to_opls(self):
 
         # Pick some RB parameters at random
         params = { 'c0' : 1.53  * u.Unit('kJ/mol'),
@@ -48,39 +98,32 @@ class TestInternalConversions(BaseTest):
         expression = RyckaertBellemansTorsionPotential().expression
         variables = RyckaertBellemansTorsionPotential().independent_variables
 
-        connection_type = DihedralType(
-            name=name,
-            expression=expression,
-            independent_variables=variables,
-            parameters=params)
-
-        connection_members = [Site(),Site(),Site(),Site()]
-
-        # Create connections
-        rb_connection = Dihedral(
-                connection_members=connection_members,
-                connection_type=connection_type)
-
-        # The connection type for this dihedral will be replaced
-        # upon the call to convert_ryckaert_to_opls
-        opls_connection = Dihedral(
-                connection_members=connection_members,
-                connection_type=connection_type)
+        ryckaert_connection_type = DihedralType(
+                name=name,
+                expression=expression,
+                independent_variables=variables,
+                parameters=params)
 
         # Convert connection to OPLS
-        convert_ryckaert_to_opls(opls_connection)
+        opls_connection_type = convert_ryckaert_to_opls(
+                ryckaert_connection_type)
 
         # Pick some angles to check
         angles = [ -2.38, -1.31, -0.44, 0.0, 0.26, 0.92, 1.84, 3.10 ]
 
         for angle in angles:
-            rb_val = eval_rb(rb_connection,angle)
-            opls_val = eval_opls(opls_connection,angle)
-            assert np.isclose(rb_val.value,
-                              opls_val.value)
+            assert np.isclose(
+                    float(ryckaert_connection_type.expression.subs(
+                        [(param, val) for param, val in
+                            {**ryckaert_connection_type.parameters,
+                                'phi':angle-np.pi}.items()])),
+                    float(opls_connection_type.expression.subs(
+                        [(param, val) for param, val in
+                            {**opls_connection_type.parameters,
+                                'phi':angle}.items()])),
+            )
 
-
-    def test_opls_to_rb(self):
+    def test_opls_to_ryckaert(self):
 
         # Pick some OPLS parameters at random
         params = { 'k0' : 1.38   * u.Unit('kJ/mol'),
@@ -94,37 +137,58 @@ class TestInternalConversions(BaseTest):
         expression = OPLSTorsionPotential().expression
         variables = OPLSTorsionPotential().independent_variables
 
-        connection_type = DihedralType(
-            name=name,
-            expression=expression,
-            independent_variables=variables,
-            parameters=params)
+        opls_connection_type = DihedralType(
+                name=name,
+                expression=expression,
+                independent_variables=variables,
+                parameters=params)
 
-        connection_members = [Site(),Site(),Site(),Site()]
-
-        # Create connections
-        opls_connection = Dihedral(
-                connection_members=connection_members,
-                connection_type=connection_type)
-
-
-        # The connection type for this dihedral will be replaced
-        # upon the call to convert_opls_to_ryckaert
-        rb_connection = Dihedral(
-                connection_members=connection_members,
-                connection_type=connection_type)
-
-        # Convert connection to OPLS
-        convert_opls_to_ryckaert(rb_connection)
+        # Convert connection to RB
+        ryckaert_connection_type = convert_opls_to_ryckaert(
+                opls_connection_type)
 
         # Pick some angles to check
         angles = [ -2.38, -1.31, -0.44, 0.0, 0.26, 0.92, 1.84, 3.10 ]
 
         for angle in angles:
-            rb_val = eval_rb(rb_connection,angle)
-            opls_val = eval_opls(opls_connection,angle)
-            assert np.isclose(rb_val.value,
-                              opls_val.value)
+            assert np.isclose(
+                    float(ryckaert_connection_type.expression.subs(
+                        [(param, val) for param, val in
+                            {**ryckaert_connection_type.parameters,
+                                'phi':angle-np.pi}.items()])),
+                    float(opls_connection_type.expression.subs(
+                        [(param, val) for param, val in
+                            {**opls_connection_type.parameters,
+                                'phi':angle}.items()])),
+            )
 
+    def test_double_conversion(self):
 
+        # Pick some OPLS parameters at random
+        params = { 'k0' : 1.38   * u.Unit('kJ/mol'),
+                   'k1' : -0.51  * u.Unit('kJ/mol'),
+                   'k2' : 2.2    * u.Unit('kJ/mol'),
+                   'k3' : -0.25  * u.Unit('kJ/mol'),
+                   'k4' : 1.44   * u.Unit('kJ/mol')
+                 }
 
+        name = OPLSTorsionPotential().name
+        expression = OPLSTorsionPotential().expression
+        variables = OPLSTorsionPotential().independent_variables
+
+        opls_connection_type = DihedralType(
+                name=name,
+                expression=expression,
+                independent_variables=variables,
+                parameters=params)
+
+        # Convert connection to RB
+        ryckaert_connection_type = convert_opls_to_ryckaert(
+                opls_connection_type)
+
+        # Convert connection back to OPLS
+        final_connection_type = convert_ryckaert_to_opls(
+                ryckaert_connection_type)
+
+        assert np.allclose([*opls_connection_type.parameters.values()],
+                           [*final_connection_type.parameters.values()])
