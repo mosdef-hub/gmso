@@ -1,3 +1,5 @@
+from warnings import warn
+
 import numpy as np
 import unyt as u
 
@@ -7,9 +9,9 @@ from topology.core.site import Site
 from topology.core.bond import Bond
 from topology.core.box import Box
 from topology.utils.io import has_mbuild
-from topology.core.element import (element_by_symbol, 
+from topology.core.element import (element_by_symbol,
                                    element_by_name,
-                                   element_by_atomic_number, 
+                                   element_by_atomic_number,
                                    element_by_mass)
 
 if has_mbuild:
@@ -46,10 +48,8 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
 
     site_map = dict()
     for child in compound.children:
-        if child.children is None:
-            pos = child.xyz[0] * u.nanometer
-            site = Site(name=child.name, position=pos)
-            site_map[child] = site
+        if len(child.children) == 0:
+            continue
         else:
             subtop = SubTopology(name=child.name)
             top.add_subtopology(subtop)
@@ -84,9 +84,10 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
     else:
         if np.allclose(compound.periodicity, np.zeros(3)):
             box = from_mbuild_box(compound.boundingbox)
-            box.lengths += [0.5, 0.5, 0.5] * u.nm
+            if box:
+                box.lengths += [0.5, 0.5, 0.5] * u.nm
             top.box = box
-        else: 
+        else:
             top.box = Box(lengths=compound.periodicity)
 
     return top
@@ -133,6 +134,12 @@ def from_mbuild_box(mb_box):
 
     if not isinstance(mb_box, mb.Box):
         raise ValueError('Argument mb_box is not an mBuild Box')
+
+    if np.allclose(mb_box.lengths, [0, 0, 0]):
+        warn(
+            'No box or boundingbox information detected, setting box to None'
+        )
+        return None
 
     box = Box(
         lengths=np.asarray(mb_box.lengths)*u.nm,
