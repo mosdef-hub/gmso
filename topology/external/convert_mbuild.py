@@ -142,8 +142,8 @@ def from_mbuild_box(mb_box):
         return None
 
     box = Box(
-        lengths=mb_box.lengths*u.nm,
-        angles=mb_box.angles*u.degree,
+        lengths=np.asarray(mb_box.lengths)*u.nm,
+        angles=np.asarray(mb_box.angles)*u.degree,
     )
 
     return box

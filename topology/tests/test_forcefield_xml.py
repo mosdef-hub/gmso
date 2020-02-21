@@ -28,7 +28,7 @@ class TestForceFieldFromXML(BaseTest):
         assert ff.scaling_factors['nonBonded14Scale'] == 0.67
         assert ff.scaling_factors['electrostatics14Scale'] == 0.5
 
-    @pytest.mark.parametrize('unit_name,unit_value', [('energy', u.kcal/u.mol),
+    @pytest.mark.parametrize('unit_name,unit_value', [('energy', u.Unit(u.K*u.kb)),
                                                       ('mass', u.gram/u.mol), ('temperature', u.K),
                                                       ('charge', u.coulomb), ('angle', u.rad),
                                                       ('time', u.ps), ('distance', u.nm)])
@@ -134,4 +134,4 @@ class TestForceFieldFromXML(BaseTest):
 
     def test_elementary_charge_to_coulomb(self, ff):
         elementary_charge = ff.atom_types['Li'].charge.to(u.elementary_charge)
-        assert elementary_charge.units == u.elementary_charge
+        assert elementary_charge.units == u.Unit(u.elementary_charge)
