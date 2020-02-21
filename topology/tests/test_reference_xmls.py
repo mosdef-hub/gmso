@@ -114,3 +114,42 @@ class TestForceFieldFromXML(BaseTest):
 
         assert allclose(spce.angle_types['opls_117~opls_116~opls_117'].parameters['theta_eq'], 109.47 * u.degree)
         assert allclose(spce.angle_types['opls_117~opls_116~opls_117'].parameters['k'], 383.0 * u.Unit('kJ/mol/rad**2'))
+    def test_ethylene_forcefield(self):
+        ethylene = ForceField(get_path('ethylene.xml'))
+
+        assert len(ethylene.atom_types) == 2
+        assert len(ethylene.bond_types) == 2
+        assert len(ethylene.angle_types) == 2
+        assert len(ethylene.dihedral_types) == 1
+
+        # Store expected expressions in list
+        ref_exprs = [sympy.sympify(expr) for expr in [
+            "4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
+            "0.5 * k * (r-r_eq)**2",
+            "0.5 * k * (theta-theta_eq)**2",
+            "c_0 + c_1 * cos(psi) + c_2 * cos(psi)**2 + c_3 * cos(psi)**3 + c_4 * cos(psi)**4 + c_5 * cos(psi)**5"
+            ]   
+        ]   
+
+        assert allclose(ethylene.atom_types['opls_143'].charge, -0.23 * u.elementary_charge)
+        assert allclose(ethylene.atom_types['opls_144'].charge, 0.115 * u.elementary_charge)
+
+        assert sympy.simplify(ethylene.atom_types['opls_143'].expression - ref_exprs[0]) == 0
+        assert sympy.simplify(ethylene.atom_types['opls_144'].expression - ref_exprs[0]) == 0
+        assert sympy.simplify(ethylene.bond_types['opls_143~opls_144'].expression - ref_exprs[1]) == 0
+        assert sympy.simplify(ethylene.angle_types['opls_144~opls_143~opls_144'].expression - ref_exprs[2]) == 0
+        assert sympy.simplify(ethylene.dihedral_types['opls_144~opls_143~opls_143~opls_144'].expression - ref_exprs[3]) == 0
+        assert allclose(ethylene.atom_types['opls_143'].parameters['sigma'], 0.317984 * u.nm)
+        assert allclose(ethylene.atom_types['opls_143'].parameters['epsilon'], 0.355 * u.Unit('kJ/mol'))
+        assert allclose(ethylene.atom_types['opls_144'].parameters['sigma'], 0.12552 * u.nm)
+        assert allclose(ethylene.atom_types['opls_144'].parameters['epsilon'], 0.242 * u.Unit('kJ/mol'))
+
+        assert allclose(ethylene.bond_types['opls_143~opls_143'].parameters['r_eq'], 0.134 * u.nm)
+        assert allclose(ethylene.bond_types['opls_143~opls_144'].parameters['k'], 284512.0 * u.Unit('kJ/(mol*nm**2)'))
+
+        assert allclose(ethylene.angle_types['opls_143~opls_143~opls_144'].parameters['theta_eq'], 2.0943951 * u.rad)
+        assert allclose(ethylene.angle_types['opls_144~opls_143~opls_144'].parameters['k'], 292.88 * u.Unit('kJ/mol/rad**2'))
+        assert allclose(ethylene.dihedral_types['opls_144~opls_143~opls_143~opls_144'].parameters['c_0'], 58.576 * u.Unit('kJ/mol'))
+        assert allclose(ethylene.dihedral_types['opls_144~opls_143~opls_143~opls_144'].parameters['c_2'], -58.576 * u.Unit('kJ/mol'))
+        assert allclose(ethylene.dihedral_types['opls_144~opls_143~opls_143~opls_144'].parameters['c_5'], 0.0 * u.Unit('kJ/mol'))
+
