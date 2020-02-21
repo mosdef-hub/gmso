@@ -79,6 +79,12 @@ class ForceField(object):
         bond_type_groups = self._group_by_expression(_type='BondType')
         angle_type_groups = self._group_by_expression(_type='AngleType')
         dihedral_type_groups = self._group_by_expression(_type='DihedralType')
+        return {
+            'atom_types': atom_type_groups,
+            'bond_types': bond_type_groups,
+            'angle_types': angle_type_groups,
+            'dihedral_types': dihedral_type_groups
+        }
 
     def _group_by_expression(self, _type):
         type_groups = {
@@ -173,4 +179,10 @@ class ForceField(object):
         ff.bond_types = bond_types_dict
         ff.angle_types = angle_types_dict
         ff.dihedral_types = dihedral_types_dict
+
         return ff
+
+
+if __name__ == '__main__':
+    ff = ForceField()
+    ff.
