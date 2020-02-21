@@ -1,9 +1,16 @@
+import os
+import warnings
+
+from sympy import sympify
+
 from lxml import etree
 
 from topology.forcefield.ff_utils import (validate,
+                                          _parse_default_units,
                                           parse_ff_metadata,
                                           parse_ff_atomtypes,
                                           parse_ff_connection_types)
+from topology.forcefield.topology_writer import TopologyXMLWriter
 
 
 class ForceField(object):
@@ -49,8 +56,8 @@ class ForceField(object):
             self.bond_types = {}
             self.angle_types = {}
             self.dihedral_types = {}
-            self.scaling_factors = {}
-            self.units = {}
+            self.scaling_factors = {'electrostatics14Scale': 1.0, 'nonBonded14Scale':  1.0}
+            self.units = _parse_default_units()
 
     def __repr__(self):
         descr = list('<Forcefield ')
@@ -96,10 +103,45 @@ class ForceField(object):
         grouped_coll = {}
         this_type = type_groups.get(_type, [])
         for type_name in this_type:
-            this_expression = this_type.expression
+            this_expression = str(this_type[type_name].expression)
             grouped_coll[this_expression] = grouped_coll.get(this_expression, [])
-            grouped_coll[this_expression].append(self.atom_types[type_name])
+            grouped_coll[this_expression].append(this_type[type_name])
         return grouped_coll
+
+    def to_xml(self, filename=None, overwrite=True):
+        """Save this forcefield as a topology XML file
+
+        This method groups the forcefield core types(topology.core.AtomType, topology.core.BondType,
+        topology.core.AngleType and topology.core.DihedralType) into a topology XML file compatible with
+        the topology XML schema
+
+        Parameters
+        ----------
+        filename: (str), default: self.name, name of the file(including relative paths) to save the forcefield XML in
+        overwrite: (bool), default: True, whether or not to overwrite if the file exists
+        """
+        if filename is None:
+            filename = self.name + '.xml'
+        ext = filename.split('.')[-1]
+        if ext != 'xml':
+            filename = filename + '.xml'
+            warnings.warn('This method saves the file in an XML format. '
+                          'However, the extension you provided is {0}. '
+                          'The xml file will be saved as {1}'.format(ext, filename))
+
+        if not overwrite and os.path.exists(filename):
+            raise FileExistsError('The file {} already exists. '
+                                  'Please set overwrite=True to overwrite existing file'.format(filename))
+
+        ff_data = {
+            'name': self.name,
+            'version': self.version,
+            'units': self.units,
+            'scaling_factors': self.scaling_factors,
+            'filename': filename
+        }
+        ff_data.update(self.group_by_expression())
+        TopologyXMLWriter.write(**ff_data)
 
     @classmethod
     def from_xml(cls, xml_locs):
@@ -179,10 +221,5 @@ class ForceField(object):
         ff.bond_types = bond_types_dict
         ff.angle_types = angle_types_dict
         ff.dihedral_types = dihedral_types_dict
-
         return ff
 
-
-if __name__ == '__main__':
-    ff = ForceField()
-    ff.

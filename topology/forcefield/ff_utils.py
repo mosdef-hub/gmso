@@ -12,6 +12,7 @@ from topology.core.dihedral_type import DihedralType
 from topology.exceptions import ForceFieldParseError, ForceFieldError
 
 __all__ = ['validate',
+           '_parse_default_units',
            'parse_ff_metadata',
            'parse_ff_atomtypes',
            'parse_ff_connection_types',
@@ -24,6 +25,7 @@ _unyt_dictionary = {}
 for name, item in vars(u).items():
     if isinstance(item, u.Unit) or isinstance(item, u.unyt_quantity):
         _unyt_dictionary.update({name: item})
+
 
 def _check_valid_string(type_str):
     if DICT_KEY_SEPARATOR in type_str:
@@ -95,7 +97,7 @@ def _check_valid_atomtype_names(tag, ref_dict):
     return member_types
 
 
-def _parse_default_units(unit_tag):
+def _parse_default_units(unit_tag=None):
     if unit_tag is None:
         unit_tag = {}
     units_map = {
@@ -112,14 +114,17 @@ def _parse_default_units(unit_tag):
     return units_map
 
 
-def validate(xml_path, schema=None):
+def validate(xml_path_or_etree, schema=None):
     """Validate a given xml file with a reference schema"""
     if schema is None:
         schema_path = os.path.join(os.path.split(os.path.abspath(__file__))[0], 'schema', 'ff-topology.xsd')
 
     xml_doc = etree.parse(schema_path)
     xmlschema = etree.XMLSchema(xml_doc)
-    ff_xml = etree.parse(xml_path)
+    if not isinstance(xml_path_or_etree, etree._ElementTree):
+        ff_xml = etree.parse(xml_path_or_etree)
+    else:
+        ff_xml = xml_path_or_etree
     xmlschema.assertValid(ff_xml)
 
 
