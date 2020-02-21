@@ -115,7 +115,7 @@ class TestForceFieldFromXML(BaseTest):
         assert allclose(spce.angle_types['opls_117~opls_116~opls_117'].parameters['theta_eq'], 109.47 * u.degree)
         assert allclose(spce.angle_types['opls_117~opls_116~opls_117'].parameters['k'], 383.0 * u.Unit('kJ/mol/rad**2'))
     def test_ethylene_forcefield(self):
-        ethylene = ForceField(get_path('ethylene_snippet.xml'))
+        ethylene = ForceField(get_path('ethylene.xml'))
 
         assert len(ethylene.atom_types) == 2
         assert len(ethylene.bond_types) == 2
