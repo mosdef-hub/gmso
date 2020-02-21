@@ -124,19 +124,19 @@ class TestForceFieldFromXML(BaseTest):
         assert len(ff.dihedral_types) == 0
 
         assert allclose(ff.atom_types['Ne'].parameters['epsilon'], 0.26855713 * u.Unit('kJ/mol'))
-        assert allclose(ff.atom_types['Ne'].parameters['sigma'], 3.964 * u.Angstrom)
+        assert allclose(ff.atom_types['Ne'].parameters['sigma'], 2.794 * u.Angstrom)
         assert allclose(ff.atom_types['Ne'].parameters['n'], 11 * u.dimensionless)
         assert allclose(ff.atom_types['Ne'].parameters['m'], 6 * u.dimensionless)
         assert ff.atom_types['Ne'].charge.value == 0
 
         assert allclose(ff.atom_types['Ar'].parameters['epsilon'], 1.01519583 * u.Unit('kJ/mol'))
-        assert allclose(ff.atom_types['Ar'].parameters['sigma'], 3.964 * u.Angstrom)
+        assert allclose(ff.atom_types['Ar'].parameters['sigma'], 3.405 * u.Angstrom)
         assert allclose(ff.atom_types['Ar'].parameters['n'], 13 * u.dimensionless)
         assert allclose(ff.atom_types['Ar'].parameters['m'], 6 * u.dimensionless)
         assert ff.atom_types['Ar'].charge.value == 0
 
         assert allclose(ff.atom_types['Kr'].parameters['epsilon'], 1.46417678 * u.Unit('kJ/mol'))
-        assert allclose(ff.atom_types['Kr'].parameters['sigma'], 3.964 * u.Angstrom)
+        assert allclose(ff.atom_types['Kr'].parameters['sigma'], 3.645 * u.Angstrom)
         assert allclose(ff.atom_types['Kr'].parameters['n'], 14 * u.dimensionless)
         assert allclose(ff.atom_types['Kr'].parameters['m'], 6 * u.dimensionless)
         assert ff.atom_types['Kr'].charge.value == 0
