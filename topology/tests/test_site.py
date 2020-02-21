@@ -4,6 +4,8 @@ import pytest
 
 from topology.core.site import Site
 from topology.core.bond import Bond
+from topology.core.element import Lithium, Sulfur
+from topology.core.atom_type import AtomType
 from topology.tests.base_test import BaseTest
 from topology.exceptions import TopologyError
 
@@ -18,6 +20,41 @@ class TestSite(BaseTest):
         assert site.position.dtype == float
         assert isinstance(site.position, u.unyt_array)
         assert isinstance(site.position, np.ndarray)
+
+    def test_name_none(self):
+        site = Site(name=None)
+        assert site.name == 'Site'
+
+    def test_setters_and_getters(self):
+        site = Site(name='Lithium', element=Lithium, charge=1, mass=6.941)
+
+        assert site.name == 'Lithium'
+        assert site.element == Lithium
+        assert site.charge == 1*u.elementary_charge
+        assert site.mass == 6.941*u.gram/u.mol
+
+        site.name = 'Sulfur'
+        site.element = Sulfur
+        site.charge = -1
+        site.mass=32.065
+
+        assert site.name == 'Sulfur'
+        assert site.element == Sulfur
+        assert site.charge == -1*u.elementary_charge
+        assert site.mass == 32.065*u.gram/u.mol
+
+        site.element, site.charge, site.mass = None, None, None
+        assert site.element is None
+        assert site.charge is None
+        assert site.mass is None
+
+    def test_set_with_atom_type(self):
+        lithium_type = AtomType(mass=6.941, charge=1)
+        site = Site(name='Lithium')
+        site.atom_type = lithium_type
+
+        assert site.charge == 1*u.elementary_charge
+        assert site.mass == 6.941*u.gram/u.mol
 
     @pytest.mark.parametrize('position', [[0.0, 0.0],
         [0.0, 0.0, 0.0, 0.0, 0.0], [[0.0, 0.0], [0.0, 0.0]],

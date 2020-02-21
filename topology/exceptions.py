@@ -17,3 +17,7 @@ class ForceFieldError(Exception):
 
 class ForceFieldParseError(Exception):
     """Base class for forcefield parsing errors"""
+
+
+class EngineIncompatibilityError(TopologyError):
+    """Error for engine incompatibility when writing or converting"""
