@@ -1,4 +1,6 @@
 import pytest
+import unyt as u
+import numpy as np
 
 from topology.tests.base_test import BaseTest
 from topology.core.dihedral_type import DihedralType
@@ -7,9 +9,6 @@ from topology.lib.potential_templates import OPLSTorsionPotential
 from topology.utils.conversions import convert_ryckaert_to_opls
 from topology.utils.conversions import convert_opls_to_ryckaert
 from topology.exceptions import TopologyError
-
-import unyt as u
-import numpy as np
 
 class TestInternalConversions(BaseTest):
 

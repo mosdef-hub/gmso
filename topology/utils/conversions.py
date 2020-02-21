@@ -1,11 +1,11 @@
 
+import sympy
+import unyt as u
+
 import topology as topo
 from topology.lib.potential_templates import RyckaertBellemansTorsionPotential
 from topology.lib.potential_templates import OPLSTorsionPotential
 from topology.exceptions import TopologyError
-
-import sympy
-import unyt as u
 
 def convert_opls_to_ryckaert(opls_connection_type):
     """Convert an OPLS dihedral to Ryckaert-Bellemans dihedral
