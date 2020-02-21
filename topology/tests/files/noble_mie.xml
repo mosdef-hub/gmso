@@ -13,7 +13,8 @@
 				<Parameter name="epsilon" value="32.30"/>
 				<Parameter name="n" value="11"/>
 				<Parameter name="m" value="6"/>
-			</Parameters>
+            </Parameters>
+        </AtomType>
 		<AtomType name="Ar" element="Ar" charge="0.0" mass="39.948" definition="Ar" description="Argon atom" doi="10.1063/1.4930138">
             <Parameters>
                 <Parameter name="sigma" value="3.405"/>
@@ -21,6 +22,7 @@
 				<Parameter name="n" value="13"/>
 				<Parameter name="m" value="6"/>
 			</Parameters>
+        </AtomType>
 		<AtomType name="Kr" element="Kr" charge="0.0" mass="83.798" definition="Kr" description="Krypton atom" doi="10.1063/1.4930138">
             <Parameters>
                 <Parameter name="sigma" value="3.645"/>
@@ -28,6 +30,7 @@
 				<Parameter name="n" value="14"/>
 				<Parameter name="m" value="6"/>
             </Parameters>
+        </AtomType>
 		<AtomType name="Xe" element="Xe" charge="0.0" mass="131.293" definition="Xe" description="Xenon atom" doi="10.1063/1.4930138">
             <Parameters>
                 <Parameter name="sigma" value="3.964"/>
