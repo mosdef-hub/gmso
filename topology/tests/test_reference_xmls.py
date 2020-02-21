@@ -6,6 +6,7 @@ from topology.forcefield import ForceField
 from topology.utils.testing import allclose
 from topology.tests.utils import get_path
 from topology.tests.base_test import BaseTest
+from topology.lib.potential_templates import MiePotential
 
 
 class TestForceFieldFromXML(BaseTest):
@@ -118,10 +119,15 @@ class TestForceFieldFromXML(BaseTest):
     def test_noble_mie_xml(self):
         ff = ForceField(get_path('noble_mie.xml'))
 
+        ref_expr = MiePotential().expression
+
         assert len(ff.atom_types) == 4
         assert len(ff.bond_types) == 0
         assert len(ff.angle_types) == 0
         assert len(ff.dihedral_types) == 0
+
+        for (name, atom_type) in ff.atom_types.items():
+            assert sympy.simplify(atom_type.expression - ref_expr) == 0
 
         assert allclose(ff.atom_types['Ne'].parameters['epsilon'], 0.26855713 * u.Unit('kJ/mol'))
         assert allclose(ff.atom_types['Ne'].parameters['sigma'], 2.794 * u.Angstrom)
