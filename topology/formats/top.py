@@ -214,6 +214,8 @@ def write_top(top, filename):
         if len(set([s.name for s in top.subtops])) > 1:
             raise NotImplementedError
 
+        # TODO: Write out atom types for each unique `subtop` in `atoms` section
+        # and write out number of molecules in `molecules` section
         #if len(top.subtops) == 0:
         out_file.write(
             '[ molecules ]\n'
