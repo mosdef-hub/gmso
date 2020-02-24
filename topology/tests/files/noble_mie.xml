@@ -1,0 +1,43 @@
+<ForceField version="0.4.1" name="MieNobleGases">
+    <FFMetaData>
+	 	<Units energy="kJ/mol" distance="nm" mass="amu" charge="coulomb"/>
+    </FFMetaData>
+    <AtomTypes expression="(n/(n-m)) * (n/m)**(m/(n-m)) * epsilon * ((sigma/r)**n - (sigma/r)**m)">
+        <ParametersUnitDef parameter="sigma" unit="Angstrom"/>
+		<ParametersUnitDef parameter="epsilon" unit="K*kb"/>
+		<ParametersUnitDef parameter="n" unit="dimensionless"/>
+		<ParametersUnitDef parameter="m" unit="dimensionless"/>
+		<AtomType name="Ne" element="Ne" charge="0.0" mass="20.1797" definition="Ne" description="Neon atom" doi="10.1063/1.4930138">
+            <Parameters>
+                <Parameter name="sigma" value="2.794"/>
+				<Parameter name="epsilon" value="32.30"/>
+				<Parameter name="n" value="11"/>
+				<Parameter name="m" value="6"/>
+            </Parameters>
+        </AtomType>
+		<AtomType name="Ar" element="Ar" charge="0.0" mass="39.948" definition="Ar" description="Argon atom" doi="10.1063/1.4930138">
+            <Parameters>
+                <Parameter name="sigma" value="3.405"/>
+				<Parameter name="epsilon" value="122.10"/>
+				<Parameter name="n" value="13"/>
+				<Parameter name="m" value="6"/>
+			</Parameters>
+        </AtomType>
+		<AtomType name="Kr" element="Kr" charge="0.0" mass="83.798" definition="Kr" description="Krypton atom" doi="10.1063/1.4930138">
+            <Parameters>
+                <Parameter name="sigma" value="3.645"/>
+				<Parameter name="epsilon" value="176.10"/>
+				<Parameter name="n" value="14"/>
+				<Parameter name="m" value="6"/>
+            </Parameters>
+        </AtomType>
+		<AtomType name="Xe" element="Xe" charge="0.0" mass="131.293" definition="Xe" description="Xenon atom" doi="10.1063/1.4930138">
+            <Parameters>
+                <Parameter name="sigma" value="3.964"/>
+				<Parameter name="epsilon" value="243.80"/>
+				<Parameter name="n" value="14"/>
+				<Parameter name="m" value="6"/>
+            </Parameters>
+        </AtomType>
+    </AtomTypes>
+</ForceField>
