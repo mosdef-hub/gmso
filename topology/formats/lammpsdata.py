@@ -165,7 +165,7 @@ def write_lammpsdata(topology, filename, atom_style='full'):
             for idx,epsilon in epsilon_dict.items():
                 data.write('{}\t{:.5f}\t{:.5f}\n'.format(
                     idx,
-                    epsilon.in_units(u.Unit('kcal')).value,
+                    epsilon.in_units(u.Unit('kcal/mol')).value,
                     sigma_dict[idx].in_units(u.angstrom).value))
 
         # TODO: Write out bond coefficients
