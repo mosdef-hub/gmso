@@ -218,7 +218,7 @@ def write_top(top, filename):
             out_file.write(
                 '[ molecules ]\n'
                 '; molecule\tnmols\n'
-                '{0}\t\t{1}'.format(top.name, top.n_sites)
+                '{0}\t\t{1}'.format(top.name, 1)
             )
         elif len(top.subtops) > 0:
             out_file.write(
