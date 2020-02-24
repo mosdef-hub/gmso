@@ -20,6 +20,10 @@ class TestForceFieldFromXML(BaseTest):
     def charm_ff(self):
         return ForceField(get_path('topology-charmm.xml'))
 
+    @pytest.fixture
+    def pdihedrals_alphanum_ff(self):
+        return ForceField(get_path('ff-example-alphanumsymb-pdihedrals.xml'))
+
     def test_ff_name_version_from_xml(self, ff):
         assert ff.name == 'ForceFieldOne'
         assert ff.version == '0.4.1'
@@ -135,3 +139,7 @@ class TestForceFieldFromXML(BaseTest):
     def test_elementary_charge_to_coulomb(self, ff):
         elementary_charge = ff.atom_types['Li'].charge.to(u.elementary_charge)
         assert elementary_charge.units == u.Unit(u.elementary_charge)
+
+    def test_ff_periodic_dihedrals_from_alphanumeric_symbols(self, pdihedrals_alphanum_ff):
+        ff = pdihedrals_alphanum_ff
+        assert 'A1' in ff.atom_types['Ar'].parameters
