@@ -4,7 +4,7 @@ import unyt as u
 from foyer.smarts import SMARTS
 
 from topology.core.element import element_by_atom_type
-from topology.lib.potential_templates import LennardJonesPotential, HarmonicBondPotential
+from topology.lib.potential_templates import LennardJonesPotential, HarmonicBondPotential, HarmonicAnglePotential
 from topology.utils.compatibility import check_compatibility
 from topology.exceptions import TopologyError
 
@@ -230,7 +230,7 @@ def write_top(top, filename):
 
 def _validate_compatibility(top):
     """Check compatability of topology object with GROMACS TOP format"""
-    accepted_potentials = [LennardJonesPotential(), HarmonicBondPotential()]
+    accepted_potentials = [LennardJonesPotential(), HarmonicBondPotential(), HarmonicAnglePotential()]
     check_compatibility(top, accepted_potentials)
 
 
