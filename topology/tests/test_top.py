@@ -1,6 +1,7 @@
 import pytest
 
 import topology as topo
+import parmed as pmd
 from topology.formats.top import write_top
 from topology.tests.base_test import BaseTest
 from topology.utils.io import get_fn
@@ -71,3 +72,6 @@ class TestTop(BaseTest):
         top.update_angle_types()
 
         write_top(top, 'water.top')
+
+    def test_read_argon_top(self):
+        pmd.load_file(get_path('ar.top'), parametrize=False)

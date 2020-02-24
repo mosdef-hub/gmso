@@ -1,0 +1,133 @@
+; File Topology written by topology at 2020-02-24 13:40:44.447527
+
+[ defaults ]
+; nbfunc	comb-rule	gen-pairs	fudgeLJ	fudgeQQ
+1			2			no			1		1
+
+[ atomtypes ]
+; name		at.num		mass		charge		ptype		sigma		epsilon
+Ar			18			39.948		-0.0		A			0.3			0.1
+
+[ moleculetype ]
+; name		nrexcl
+Topology			3
+
+[ atoms ]
+; nr		type	resnr	residue		atom	cgnr	charge		mass
+1			Ar		1		Topology	X		1		-0.0		39.948
+2			Ar		1		Topology	X		1		-0.0		39.948
+3			Ar		1		Topology	X		1		-0.0		39.948
+4			Ar		1		Topology	X		1		-0.0		39.948
+5			Ar		1		Topology	X		1		-0.0		39.948
+6			Ar		1		Topology	X		1		-0.0		39.948
+7			Ar		1		Topology	X		1		-0.0		39.948
+8			Ar		1		Topology	X		1		-0.0		39.948
+9			Ar		1		Topology	X		1		-0.0		39.948
+10			Ar		1		Topology	X		1		-0.0		39.948
+11			Ar		1		Topology	X		1		-0.0		39.948
+12			Ar		1		Topology	X		1		-0.0		39.948
+13			Ar		1		Topology	X		1		-0.0		39.948
+14			Ar		1		Topology	X		1		-0.0		39.948
+15			Ar		1		Topology	X		1		-0.0		39.948
+16			Ar		1		Topology	X		1		-0.0		39.948
+17			Ar		1		Topology	X		1		-0.0		39.948
+18			Ar		1		Topology	X		1		-0.0		39.948
+19			Ar		1		Topology	X		1		-0.0		39.948
+20			Ar		1		Topology	X		1		-0.0		39.948
+21			Ar		1		Topology	X		1		-0.0		39.948
+22			Ar		1		Topology	X		1		-0.0		39.948
+23			Ar		1		Topology	X		1		-0.0		39.948
+24			Ar		1		Topology	X		1		-0.0		39.948
+25			Ar		1		Topology	X		1		-0.0		39.948
+26			Ar		1		Topology	X		1		-0.0		39.948
+27			Ar		1		Topology	X		1		-0.0		39.948
+28			Ar		1		Topology	X		1		-0.0		39.948
+29			Ar		1		Topology	X		1		-0.0		39.948
+30			Ar		1		Topology	X		1		-0.0		39.948
+31			Ar		1		Topology	X		1		-0.0		39.948
+32			Ar		1		Topology	X		1		-0.0		39.948
+33			Ar		1		Topology	X		1		-0.0		39.948
+34			Ar		1		Topology	X		1		-0.0		39.948
+35			Ar		1		Topology	X		1		-0.0		39.948
+36			Ar		1		Topology	X		1		-0.0		39.948
+37			Ar		1		Topology	X		1		-0.0		39.948
+38			Ar		1		Topology	X		1		-0.0		39.948
+39			Ar		1		Topology	X		1		-0.0		39.948
+40			Ar		1		Topology	X		1		-0.0		39.948
+41			Ar		1		Topology	X		1		-0.0		39.948
+42			Ar		1		Topology	X		1		-0.0		39.948
+43			Ar		1		Topology	X		1		-0.0		39.948
+44			Ar		1		Topology	X		1		-0.0		39.948
+45			Ar		1		Topology	X		1		-0.0		39.948
+46			Ar		1		Topology	X		1		-0.0		39.948
+47			Ar		1		Topology	X		1		-0.0		39.948
+48			Ar		1		Topology	X		1		-0.0		39.948
+49			Ar		1		Topology	X		1		-0.0		39.948
+50			Ar		1		Topology	X		1		-0.0		39.948
+51			Ar		1		Topology	X		1		-0.0		39.948
+52			Ar		1		Topology	X		1		-0.0		39.948
+53			Ar		1		Topology	X		1		-0.0		39.948
+54			Ar		1		Topology	X		1		-0.0		39.948
+55			Ar		1		Topology	X		1		-0.0		39.948
+56			Ar		1		Topology	X		1		-0.0		39.948
+57			Ar		1		Topology	X		1		-0.0		39.948
+58			Ar		1		Topology	X		1		-0.0		39.948
+59			Ar		1		Topology	X		1		-0.0		39.948
+60			Ar		1		Topology	X		1		-0.0		39.948
+61			Ar		1		Topology	X		1		-0.0		39.948
+62			Ar		1		Topology	X		1		-0.0		39.948
+63			Ar		1		Topology	X		1		-0.0		39.948
+64			Ar		1		Topology	X		1		-0.0		39.948
+65			Ar		1		Topology	X		1		-0.0		39.948
+66			Ar		1		Topology	X		1		-0.0		39.948
+67			Ar		1		Topology	X		1		-0.0		39.948
+68			Ar		1		Topology	X		1		-0.0		39.948
+69			Ar		1		Topology	X		1		-0.0		39.948
+70			Ar		1		Topology	X		1		-0.0		39.948
+71			Ar		1		Topology	X		1		-0.0		39.948
+72			Ar		1		Topology	X		1		-0.0		39.948
+73			Ar		1		Topology	X		1		-0.0		39.948
+74			Ar		1		Topology	X		1		-0.0		39.948
+75			Ar		1		Topology	X		1		-0.0		39.948
+76			Ar		1		Topology	X		1		-0.0		39.948
+77			Ar		1		Topology	X		1		-0.0		39.948
+78			Ar		1		Topology	X		1		-0.0		39.948
+79			Ar		1		Topology	X		1		-0.0		39.948
+80			Ar		1		Topology	X		1		-0.0		39.948
+81			Ar		1		Topology	X		1		-0.0		39.948
+82			Ar		1		Topology	X		1		-0.0		39.948
+83			Ar		1		Topology	X		1		-0.0		39.948
+84			Ar		1		Topology	X		1		-0.0		39.948
+85			Ar		1		Topology	X		1		-0.0		39.948
+86			Ar		1		Topology	X		1		-0.0		39.948
+87			Ar		1		Topology	X		1		-0.0		39.948
+88			Ar		1		Topology	X		1		-0.0		39.948
+89			Ar		1		Topology	X		1		-0.0		39.948
+90			Ar		1		Topology	X		1		-0.0		39.948
+91			Ar		1		Topology	X		1		-0.0		39.948
+92			Ar		1		Topology	X		1		-0.0		39.948
+93			Ar		1		Topology	X		1		-0.0		39.948
+94			Ar		1		Topology	X		1		-0.0		39.948
+95			Ar		1		Topology	X		1		-0.0		39.948
+96			Ar		1		Topology	X		1		-0.0		39.948
+97			Ar		1		Topology	X		1		-0.0		39.948
+98			Ar		1		Topology	X		1		-0.0		39.948
+99			Ar		1		Topology	X		1		-0.0		39.948
+100			Ar		1		Topology	X		1		-0.0		39.948
+
+[ bonds ]
+;   ai     aj  funct   c0      c1
+
+[ angles ]
+;   ai     aj      ak      funct   c0      c1
+
+[ dihedrals ]
+;   ai     aj      ak      al  funct   c0      c1      c2
+
+[ system ]
+; name
+Topology
+
+[ molecules ]
+; molecule	nmols
+Topology		1
