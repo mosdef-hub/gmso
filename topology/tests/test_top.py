@@ -10,17 +10,15 @@ from topology.exceptions import EngineIncompatibilityError
 
 
 class TestTop(BaseTest):
-    def test_write_top(self, ar_system):
-        top = ar_system
-
-        ff = topo.ForceField(get_fn('ar.xml'))
-
-        for site in top.sites:
-            site.atom_type = ff.atom_types['Ar']
-
-        top.update_topology()
-
+    def test_write_top(self, typed_ar_system):
+        top = typed_ar_system
         write_top(top, 'ar.top')
+
+
+    def test_pmd_loop(self, typed_ar_system):
+        top = typed_ar_system
+        write_top(top, 'ar.top')
+        pmd.load_file('ar.top')
 
 
     def test_modified_potentials(self, ar_system):
@@ -42,6 +40,7 @@ class TestTop(BaseTest):
         top.atom_types[0].set_expression(alternate_lj)
 
         write_top(top, 'ar.top')
+
 
     def test_water_top(self, water_system):
         top = water_system
@@ -72,6 +71,3 @@ class TestTop(BaseTest):
         top.update_angle_types()
 
         write_top(top, 'water.top')
-
-    def test_read_argon_top(self):
-        pmd.load_file(get_path('ar.top'), parametrize=False)
