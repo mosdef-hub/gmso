@@ -180,7 +180,7 @@ def from_parmed(structure):
 
         top.add_connection(top_connection, update_types=False)
 
-    top.update_top()
+    top.update_topology()
 
 
     return top
