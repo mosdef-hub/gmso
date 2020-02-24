@@ -6,6 +6,7 @@ from topology.forcefield import ForceField
 from topology.utils.testing import allclose
 from topology.tests.utils import get_path
 from topology.tests.base_test import BaseTest
+from topology.lib.potential_templates import MiePotential
 
 
 class TestForceFieldFromXML(BaseTest):
@@ -114,6 +115,44 @@ class TestForceFieldFromXML(BaseTest):
 
         assert allclose(spce.angle_types['opls_117~opls_116~opls_117'].parameters['theta_eq'], 109.47 * u.degree)
         assert allclose(spce.angle_types['opls_117~opls_116~opls_117'].parameters['k'], 383.0 * u.Unit('kJ/mol/rad**2'))
+
+    def test_noble_mie_xml(self):
+        ff = ForceField(get_path('noble_mie.xml'))
+
+        ref_expr = MiePotential().expression
+
+        assert len(ff.atom_types) == 4
+        assert len(ff.bond_types) == 0
+        assert len(ff.angle_types) == 0
+        assert len(ff.dihedral_types) == 0
+
+        for (name, atom_type) in ff.atom_types.items():
+            assert sympy.simplify(atom_type.expression - ref_expr) == 0
+
+        assert allclose(ff.atom_types['Ne'].parameters['epsilon'], 0.26855713 * u.Unit('kJ/mol'))
+        assert allclose(ff.atom_types['Ne'].parameters['sigma'], 2.794 * u.Angstrom)
+        assert allclose(ff.atom_types['Ne'].parameters['n'], 11 * u.dimensionless)
+        assert allclose(ff.atom_types['Ne'].parameters['m'], 6 * u.dimensionless)
+        assert ff.atom_types['Ne'].charge.value == 0
+
+        assert allclose(ff.atom_types['Ar'].parameters['epsilon'], 1.01519583 * u.Unit('kJ/mol'))
+        assert allclose(ff.atom_types['Ar'].parameters['sigma'], 3.405 * u.Angstrom)
+        assert allclose(ff.atom_types['Ar'].parameters['n'], 13 * u.dimensionless)
+        assert allclose(ff.atom_types['Ar'].parameters['m'], 6 * u.dimensionless)
+        assert ff.atom_types['Ar'].charge.value == 0
+
+        assert allclose(ff.atom_types['Kr'].parameters['epsilon'], 1.46417678 * u.Unit('kJ/mol'))
+        assert allclose(ff.atom_types['Kr'].parameters['sigma'], 3.645 * u.Angstrom)
+        assert allclose(ff.atom_types['Kr'].parameters['n'], 14 * u.dimensionless)
+        assert allclose(ff.atom_types['Kr'].parameters['m'], 6 * u.dimensionless)
+        assert ff.atom_types['Kr'].charge.value == 0
+
+        assert allclose(ff.atom_types['Xe'].parameters['epsilon'], 2.02706587 * u.Unit('kJ/mol'))
+        assert allclose(ff.atom_types['Xe'].parameters['sigma'], 3.964 * u.Angstrom)
+        assert allclose(ff.atom_types['Xe'].parameters['n'], 14 * u.dimensionless)
+        assert allclose(ff.atom_types['Xe'].parameters['m'], 6 * u.dimensionless)
+        assert ff.atom_types['Xe'].charge.value == 0
+
     def test_ethylene_forcefield(self):
         ethylene = ForceField(get_path('ethylene.xml'))
 
@@ -128,8 +167,8 @@ class TestForceFieldFromXML(BaseTest):
             "0.5 * k * (r-r_eq)**2",
             "0.5 * k * (theta-theta_eq)**2",
             "c_0 + c_1 * cos(psi) + c_2 * cos(psi)**2 + c_3 * cos(psi)**3 + c_4 * cos(psi)**4 + c_5 * cos(psi)**5"
-            ]   
-        ]   
+            ]
+        ]
 
         assert allclose(ethylene.atom_types['opls_143'].charge, -0.23 * u.elementary_charge)
         assert allclose(ethylene.atom_types['opls_144'].charge, 0.115 * u.elementary_charge)
