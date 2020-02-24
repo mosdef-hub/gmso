@@ -9,6 +9,7 @@ from topology.core.element import Hydrogen
 from topology.core.site import Site
 from topology.core.atom_type import AtomType
 from topology.external.convert_mbuild import from_mbuild
+from topology.tests.utils import get_path
 
 
 class BaseTest:
@@ -70,3 +71,18 @@ class BaseTest:
         )
 
         return from_mbuild(packed_system)
+
+    @pytest.fixture
+    def water_system(self):
+        water = mb.load(get_path('tip3p.mol2'))
+        water.name = 'water'
+        water[0].name = 'opls_111'
+        water[1].name = water[2].name = 'opls_112'
+
+        packed_system = mb.fill_box(
+                compound=water,
+                n_compounds=10,
+                box=mb.Box([2, 2, 2])
+                )
+
+        return  from_mbuild(packed_system)

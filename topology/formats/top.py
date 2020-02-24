@@ -4,7 +4,7 @@ import unyt as u
 from foyer.smarts import SMARTS
 
 from topology.core.element import element_by_atom_type
-from topology.lib.potential_templates import LennardJonesPotential
+from topology.lib.potential_templates import LennardJonesPotential, HarmonicBondPotential, HarmonicAnglePotential
 from topology.utils.compatibility import check_compatibility
 from topology.exceptions import TopologyError
 
@@ -109,7 +109,7 @@ def write_top(top, filename):
             '[ atoms ]\n'
             '; nr\t\ttype\tresnr\tresidue\t\tatom\tcgnr\tcharge\t\tmass\n'
         )
-        for idx, atom_type in enumerate(top.atom_types):
+        for idx, site in enumerate(top.sites):
             out_file.write(
                 '{0}\t\t\t'
                 '{1}\t\t'
@@ -120,13 +120,13 @@ def write_top(top, filename):
                 '{6}\t\t'
                 '{7}\n'.format(
                     idx+1,
-                    atom_type.name,
+                    site.atom_type.name,
                     1, # TODO: subtop idx
                     top.name, # TODO: subtop.name
                     'X', # TODO: establish relationship between atom_type and site ...
                     1, # TODO: care about charge groups
-                    atom_type.charge.in_units(u.charge_electron).value,
-                    atom_type.mass.in_units(u.amu).value,
+                    site.charge.in_units(u.charge_electron).value,
+                    site.atom_type.mass.in_units(u.amu).value,
                 )
             )
 
@@ -214,23 +214,25 @@ def write_top(top, filename):
         if len(set([s.name for s in top.subtops])) > 1:
             raise NotImplementedError
 
-        if len(top.subtops) == 0:
-            out_file.write(
-                '[ molecules ]\n'
-                '; molecule\tnmols\n'
-                '{0}\t\t{1}'.format(top.name, 1)
-            )
-        elif len(top.subtops) > 0:
-            out_file.write(
-                '[ molecules ]\n'
-                '; molecule\tnmols\n'
-                '{0}\t\t{1}'.format(top.subtops[0].name, top.n_subtops)
-            )
+        # TODO: Write out atom types for each unique `subtop` in `atoms` section
+        # and write out number of molecules in `molecules` section
+        #if len(top.subtops) == 0:
+        out_file.write(
+            '[ molecules ]\n'
+            '; molecule\tnmols\n'
+            '{0}\t\t{1}'.format(top.name, 1)
+        )
+        #elif len(top.subtops) > 0:
+        #    out_file.write(
+        #        '[ molecules ]\n'
+        #        '; molecule\tnmols\n'
+        #        '{0}\t\t{1}'.format(top.subtops[0].name, top.n_subtops)
+        #    )
 
 
 def _validate_compatibility(top):
     """Check compatability of topology object with GROMACS TOP format"""
-    accepted_potentials = [LennardJonesPotential()]
+    accepted_potentials = [LennardJonesPotential(), HarmonicBondPotential(), HarmonicAnglePotential()]
     check_compatibility(top, accepted_potentials)
 
 
