@@ -1,0 +1,22 @@
+dimension           3
+units               real
+boundary            p p p
+
+atom_style          full
+pair_style          lj/cut/coul/long 1.2
+kspace_style        pppm 1.0e-4
+kspace_modify       gewald 1.2
+box                 tilt large
+
+read_data           data.ar
+
+velocity            all create 298.15 4928549
+
+timestep            1
+thermo              100
+
+fix                 MyNVE all nve 
+
+dump                NVEdump all atom 100 ar_nve.lammpstrj
+
+run                 100000
