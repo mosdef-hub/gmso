@@ -143,3 +143,5 @@ class TestForceFieldFromXML(BaseTest):
     def test_ff_periodic_dihedrals_from_alphanumeric_symbols(self, pdihedrals_alphanum_ff):
         ff = pdihedrals_alphanum_ff
         assert 'A1' in ff.atom_types['Ar'].parameters
+        assert len(ff.dihedral_types['Xe2~Xe2~Xe2~Xe2'].parameters['r_eq']) == 3
+        assert len(ff.dihedral_types['Xe2~Xe2~Xe2~Xe2'].parameters['z']) == 3
