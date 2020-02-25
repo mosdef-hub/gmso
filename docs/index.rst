@@ -9,9 +9,8 @@ Topology: Flexible storage of chemical topology for molecular simulation
 .. toctree::
    :hidden:
 
+   design_principles
    data_structures
    forcefield
-
-
-
-
+   installation
+   contributing
