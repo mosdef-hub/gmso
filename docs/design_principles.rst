@@ -1,6 +1,6 @@
 =================
-Design Principles 
-================= 
+Design Principles
+=================
 
 Scope and Features of ``Topology``
 ----------------------------------
