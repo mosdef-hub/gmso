@@ -1,7 +1,5 @@
 =================
-Design Principles
-=================
-
+Design Principles ================= 
 Scope and Features of ``Topology``
 ----------------------------------
 
@@ -58,4 +56,4 @@ There are three main modules within the Python package:
 
 * ``topology.core`` stores the classes that constitute the core data structures.
 * ``topology.formats`` stores readers and writers for (on-disk) file formats.
-* ``topology.extermal`` includes functions that convert core data structures between external libraries and their internal representation.
+* ``topology.external`` includes functions that convert core data structures between external libraries and their internal representation.

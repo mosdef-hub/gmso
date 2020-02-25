@@ -8,8 +8,10 @@ from topology.forcefield.ff_utils import (validate,
 
 class ForceField(object):
     """A Generic implementation of the forcefield class
+    
     A forcefield class contains different collection of
     core type members.
+
     Parameters:
     ----------
     name: (str), Name of the forcefield, default 'ForceField'
