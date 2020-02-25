@@ -8,7 +8,10 @@ from topology.core.topology import Topology
 from topology.core.element import Hydrogen
 from topology.core.site import Site
 from topology.core.atom_type import AtomType
+from topology.forcefield import ForceField
 from topology.external.convert_mbuild import from_mbuild
+from topology.tests.utils import get_path
+from topology.utils.io import get_fn
 
 
 class BaseTest:
@@ -70,3 +73,32 @@ class BaseTest:
         )
 
         return from_mbuild(packed_system)
+
+
+    @pytest.fixture
+    def typed_ar_system(self, ar_system):
+        top = ar_system
+
+        ff = ForceField(get_fn('ar.xml'))
+
+        for site in top.sites:
+            site.atom_type = ff.atom_types['Ar']
+
+        top.update_topology()
+
+        return top
+
+    @pytest.fixture
+    def water_system(self):
+        water = mb.load(get_path('tip3p.mol2'))
+        water.name = 'water'
+        water[0].name = 'opls_111'
+        water[1].name = water[2].name = 'opls_112'
+
+        packed_system = mb.fill_box(
+                compound=water,
+                n_compounds=10,
+                box=mb.Box([2, 2, 2])
+                )
+
+        return  from_mbuild(packed_system)

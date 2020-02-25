@@ -9,9 +9,9 @@ from topology.core.site import Site
 from topology.core.bond import Bond
 from topology.core.box import Box
 from topology.utils.io import has_mbuild
-from topology.core.element import (element_by_symbol, 
+from topology.core.element import (element_by_symbol,
                                    element_by_name,
-                                   element_by_atomic_number, 
+                                   element_by_atomic_number,
                                    element_by_mass)
 
 if has_mbuild:
@@ -48,18 +48,16 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
 
     site_map = dict()
     for child in compound.children:
-        if child.children is None:
-            pos = child.xyz[0] * u.nanometer
-            site = Site(name=child.name, position=pos)
-            site_map[child] = site
+        if len(child.children) == 0:
+            continue
         else:
             subtop = SubTopology(name=child.name)
             top.add_subtopology(subtop)
-            for childchild in child.children:
-                pos = childchild.xyz[0] * u.nanometer
-                ele = search_method(childchild.name)
-                site = Site(name=childchild.name, position=pos, element=ele)
-                site_map[childchild] = site
+            for particle in child.particles():
+                pos = particle.xyz[0] * u.nanometer
+                ele = search_method(particle.name)
+                site = Site(name=particle.name, position=pos, element=ele)
+                site_map[particle] = site
                 subtop.add_site(site)
     top.update_topology()
 
@@ -67,11 +65,21 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
         already_added_site = site_map.get(particle, None)
         if already_added_site:
             continue
+
         pos = particle.xyz[0] * u.nanometer
         ele = search_method(particle.name)
         site = Site(name=particle.name, position=pos, element=ele)
         site_map[particle] = site
-        top.add_site(site)
+
+        # If the top has subtopologies, then place this particle into
+        # a single-site subtopology -- ensures that all sites are in the
+        # same level of hierarchy.
+        if len(top.subtops) > 0:
+            subtop = SubTopology(name=particle.name)
+            top.add_subtopology(subtop)
+            subtop.add_site(site)
+        else:
+            top.add_site(site)
 
     for b1, b2 in compound.bonds():
         new_bond = Bond(connection_members=[site_map[b1], site_map[b2]],
@@ -89,7 +97,7 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
             if box:
                 box.lengths += [0.5, 0.5, 0.5] * u.nm
             top.box = box
-        else: 
+        else:
             top.box = Box(lengths=compound.periodicity)
 
     return top
@@ -144,8 +152,8 @@ def from_mbuild_box(mb_box):
         return None
 
     box = Box(
-        lengths=mb_box.lengths*u.nm,
-        angles=mb_box.angles*u.degree,
+        lengths=np.asarray(mb_box.lengths)*u.nm,
+        angles=np.asarray(mb_box.angles)*u.degree,
     )
 
     return box

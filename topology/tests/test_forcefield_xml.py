@@ -2,9 +2,12 @@ import pytest
 from sympy import sympify
 import unyt as u
 
+from lxml.etree import DocumentInvalid
+
 from topology.forcefield import ForceField
 from topology.tests.utils import get_path
 from topology.tests.base_test import BaseTest
+from topology.exceptions import ForceFieldParseError
 
 
 class TestForceFieldFromXML(BaseTest):
@@ -25,7 +28,7 @@ class TestForceFieldFromXML(BaseTest):
         assert ff.scaling_factors['nonBonded14Scale'] == 0.67
         assert ff.scaling_factors['electrostatics14Scale'] == 0.5
 
-    @pytest.mark.parametrize('unit_name,unit_value', [('energy', u.kcal/u.mol),
+    @pytest.mark.parametrize('unit_name,unit_value', [('energy', u.Unit(u.K*u.kb)),
                                                       ('mass', u.gram/u.mol), ('temperature', u.K),
                                                       ('charge', u.coulomb), ('angle', u.rad),
                                                       ('time', u.ps), ('distance', u.nm)])
@@ -34,7 +37,7 @@ class TestForceFieldFromXML(BaseTest):
         assert ff.units[unit_name] == unit_value
 
     def test_ff_atomtypes_from_xml(self, ff):
-        assert len(ff.atom_types) == 2
+        assert len(ff.atom_types) == 3
         assert 'Ar' in ff.atom_types
         assert 'Xe' in ff.atom_types
 
@@ -58,6 +61,8 @@ class TestForceFieldFromXML(BaseTest):
         assert ff.atom_types['Xe'].description == 'Xenon atom'
         assert ff.atom_types['Xe'].definition == 'Xe'
         assert ff.atom_types['Xe'].expression == sympify('(A*exp(-B/r) - C/r**6)')
+
+        assert ff.atom_types['Li'].charge == u.unyt_quantity(1.0, u.coulomb)
 
     def test_ff_bondtypes_from_xml(self, ff):
         assert len(ff.bond_types) == 2
@@ -119,3 +124,14 @@ class TestForceFieldFromXML(BaseTest):
         assert charm_ff.dihedral_types["*~CE1~CE1~*"].parameters['k'] == \
                [u.unyt_quantity(0.6276, u.kJ), u.unyt_quantity(35.564, u.kJ)]
 
+    def test_non_unique_params(self):
+        with pytest.raises(DocumentInvalid):
+            ForceField(get_path('ff-example-nonunique-params.xml'))
+
+    def test_missing_params(self):
+        with pytest.raises(ForceFieldParseError):
+            ForceField(get_path('ff-example-missing-parameter.xml'))
+
+    def test_elementary_charge_to_coulomb(self, ff):
+        elementary_charge = ff.atom_types['Li'].charge.to(u.elementary_charge)
+        assert elementary_charge.units == u.Unit(u.elementary_charge)

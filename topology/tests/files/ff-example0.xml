@@ -1,6 +1,6 @@
 <ForceField version="0.4.1" name="ForceFieldOne">
     <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.67">
-        <Units energy="kcal/mol" distance="nm" mass="amu" charge="coulomb"/>
+        <Units energy="K*kb" distance="nm" mass="amu" charge="coulomb"/>
     </FFMetaData>
     <AtomTypes expression="(A*exp(-B/r) - C/r**6)">
         <ParametersUnitDef parameter="A" unit="kcal/mol"/>
@@ -14,6 +14,13 @@
             </Parameters>
         </AtomType>
         <AtomType name="Xe" element="Xe" charge="0.0" mass="131.293" definition="Xe" description="Xenon atom">
+            <Parameters>
+                <Parameter name="A" value="0.2"/>
+                <Parameter name="B" value="5.0"/>
+                <Parameter name="C" value="0.3"/>
+            </Parameters>
+        </AtomType>
+        <AtomType name="Li" element="Li" charge="1.0" mass="6.941" definition="Li" description="Lithium atom">
             <Parameters>
                 <Parameter name="A" value="0.2"/>
                 <Parameter name="B" value="5.0"/>
