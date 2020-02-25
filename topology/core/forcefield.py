@@ -1,9 +1,9 @@
 from lxml import etree
 
-from topology.forcefield.ff_utils import (validate,
-                                          parse_ff_metadata,
-                                          parse_ff_atomtypes,
-                                          parse_ff_connection_types)
+from topology.utils.ff_utils import (validate,
+                                     parse_ff_metadata,
+                                     parse_ff_atomtypes,
+                                     parse_ff_connection_types)
 
 
 class ForceField(object):

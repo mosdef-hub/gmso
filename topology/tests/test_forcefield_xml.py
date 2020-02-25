@@ -4,7 +4,7 @@ import unyt as u
 
 from lxml.etree import DocumentInvalid
 
-from topology.forcefield import ForceField
+from topology.core.forcefield import ForceField
 from topology.tests.utils import get_path
 from topology.tests.base_test import BaseTest
 from topology.exceptions import ForceFieldParseError

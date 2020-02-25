@@ -8,7 +8,7 @@ from topology.core.topology import Topology
 from topology.core.element import Hydrogen
 from topology.core.site import Site
 from topology.core.atom_type import AtomType
-from topology.forcefield import ForceField
+from topology.core.forcefield import ForceField
 from topology.external.convert_mbuild import from_mbuild
 from topology.tests.utils import get_path
 from topology.utils.io import get_fn

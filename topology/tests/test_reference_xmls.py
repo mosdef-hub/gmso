@@ -2,7 +2,7 @@ import numpy as np
 import sympy
 import unyt as u
 
-from topology.forcefield import ForceField
+from topology.core.forcefield import ForceField
 from topology.utils.testing import allclose
 from topology.tests.utils import get_path
 from topology.tests.base_test import BaseTest
