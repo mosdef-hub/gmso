@@ -7,15 +7,17 @@ from topology.forcefield.ff_utils import (validate,
 
 
 class ForceField(object):
-    """A Generic implementation of the forcefield class
+    """A generic implementation of the forcefield class.
+
     A forcefield class contains different collection of
     core type members.
-    Parameters:
+
+    Parameters
     ----------
     name: (str), Name of the forcefield, default 'ForceField'
     version: (str), a cannonical semantic version of the forcefield, default 1.0.0
 
-    Attributes:
+    Attributes
     -----------
     name: (str), Name of the forcefield
     version: (str), Version of the forcefield
@@ -26,8 +28,9 @@ class ForceField(object):
     """
     def __init__(self, xml_loc=None):
         """Initialize a new ForceField
-        Parameters:
-        ------------
+
+        Parameters
+        ----------
         name: str, name of the forcefield, default 'ForceField', usage optional
         version: str, version of the forcefield, default 'ForceField', usage optional
         xml_locs: iterable, list of topology's Forcefield XML Files, default None, usage optional
