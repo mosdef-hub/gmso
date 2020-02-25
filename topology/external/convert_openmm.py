@@ -12,14 +12,19 @@ def to_openmm(topology, openmm_object='topology'):
     """
     Convert an untyped topology object to an untyped OpenMM modeller or
     topology. This is useful if it's preferred to atom-type a system within
-    OpenMM.
+    OpenMM. See http://openmm.org for more information.
 
     Parameters
     ----------
-    topology: topology object
+    topology : `Topology` object
         An untyped topology object
-    open_mm_object: 'topology' or 'modeller', default='topology'
+    open_mm_object : 'topology' or 'modeller' OpenMM object, default='topology'
         Untyped OpenMM object to convert to
+
+    Returns
+    -------
+    OpenMM object : Untyped `topology` or `modeller` object
+
     """
     openmm_top = app.Topology()
 
@@ -78,20 +83,20 @@ def to_system(topology,
               verbose=False,
               splitDihedrals=False):
     """
-    Convert a typed topology object to a typed OpenMM System.
+    Convert a typed topology object to a typed OpenMM System.  See http://openmm.org for more information.
 
     Parameters
     ----------
-    topology: topology object, default=None
+    topology: `Topology` object, default=None
         An untyped topology object.
-    nonbondedMethod: cutoff method
+    nonbondedMethod: cutoff method, optional, default=None
         Cutoff method specified for OpenMM system.  Options supported
         are 'NoCutoff', 'CutoffNonPeriodic', 'CutoffPeriodic', 'PME',
         or Ewald objects from simtk.openmm.app.
-    nonbondedCutoff: unyt array or float
+    nonbondedCutoff: unyt array or float, default=0.8*u.nm
         The nonbonded cutoff must either be a float or
         a unyt array.  Float interpreted in units of nm
-    switchDistance: unyt array or float
+    switchDistance: unyt array or float, default=0.6*u.nm
         The distance at which the switching function is turned on for
         van der waals interactions.  This is ignored when no cutoff is
         used, and no switch is used if switchDistance is 0, negative,
@@ -99,7 +104,7 @@ def to_system(topology,
         of nm
     constraints: 'None', 'app.HBonds', 'app.HAngles', or 'app.AllBonds'
         Type of constraints to add to the System (e.g., SHAKE).
-    rigidWater: boolean, default=True
+    rigidWater: boolean, optional, default=True
         If True, water is kept rigid regardless of constraint values.
         False value is overriden if constraints is not None
     implicitSolvent: 'None', 'app.HCT', 'app.OBC1', 'app.OBC2',
@@ -116,7 +121,7 @@ def to_system(topology,
         from salt concentration.  Units should be compatible with
         mol/L.
     temperature: temperature unyt array or flow,
-                 default=300 Kelvin
+                 default=300*u.K 
         This is only used to compute kappa from
         implicitySolventSaltConc.  If not unit given, temperature will be
         interpreted in units of Kelvin.
@@ -137,17 +142,22 @@ def to_system(topology,
     ewaldErrorTolerance: float, default=0.0005
         When using PME or Ewald, the Ewald parameters will be
         calculated from this value.
-    flexibleConstraints: boolean, default=True
+    flexibleConstraints: boolean, optional, default=True
         If False, the energies and forces from the constrained degrees
         of freedom will NOT be computed.  If True, they will but those
         degrees of freedom will *still* be constrained).
-    verbose: boolean, default=False
+    verbose: boolean, optional, default=False
         If True, the progress of this subroutine will be printed to
         stdout.
-    splitDihedrals: boolean, default=False
+    splitDihedrals: boolean, optional, default=False
         If True, the dihedrals will be split into two forces --
         propers and impropers.  This is primarily useful for debugging
         torsion parameter assignments.
+
+    Returns
+    -------
+    OpenMM System: A typed OpenMM System object
+
     """
 
     # TODO: Everything

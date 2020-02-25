@@ -17,11 +17,11 @@ def write_lammpsdata(topology, filename, atom_style='full'):
 
     Parameters
     ----------
-    Topology : Topology
-        Topology Object
+    Topology : `Topology`
+        A Topology Object
     filename : str
         Path of the output file
-    atom_style: str
+    atom_style: str, optional, default='full'
         Defines the style of atoms to be saved in a LAMMPS data file. The following atom
         styles are currently supported: 'full', 'atomic', 'charge', 'molecular'
         see http://lammps.sandia.gov/doc/atom_style.html for more
@@ -30,11 +30,10 @@ def write_lammpsdata(topology, filename, atom_style='full'):
     Notes
     -----
     See http://lammps.sandia.gov/doc/2001/data_format.html for a full description
-    of the LAMMPS data format. Currently the following sections are supported (in
-    addition to the header): *Masses*, *Nonbond Coeffs*, *Bond Coeffs*, *Angle
-    Coeffs*, *Dihedral Coeffs*, *Atoms*, *Bonds*, *Angles*, *Dihedrals*
+    of the LAMMPS data format.  This is a work in progress, as only atoms, masses, and atom_type information can be
+    written out.
 
-    Some of this function has beed adopted from `mdtraj`'s support of the LAMMPSTRJ
+    Some of this function has been adopted from `mdtraj`'s support of the LAMMPSTRJ
     trajectory format. See https://github.com/mdtraj/mdtraj/blob/master/mdtraj/formats/lammpstrj.py for details.
 
     """
