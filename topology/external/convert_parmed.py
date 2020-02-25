@@ -3,7 +3,7 @@ import unyt as u
 
 import topology as topo
 from topology.utils.io import import_, has_parmed
-
+from topology.core.element import element_by_name
 
 if has_parmed:
     pmd = import_('parmed')
@@ -20,7 +20,7 @@ def from_parmed(structure):
     -------
     top : topology.Topology
     """
-    msg = ("Provided argument that is not a Parmed Structure")
+    msg = ("Provided argument is not a Parmed Structure")
     assert isinstance(structure, pmd.Structure), msg
 
     top = topo.Topology(name=structure.title)
@@ -79,7 +79,6 @@ def from_parmed(structure):
 
         top.add_connection(top_connection, update_types=False)
     top.update_topology()
-    print(top.n_bonds)
 
     for angle in structure.angles:
         # Generate angle parameters for AngleType that gets passed
@@ -182,5 +181,74 @@ def from_parmed(structure):
 
     top.update_topology()
 
-
     return top
+
+def to_parmed(top):
+    """Convert a topology.Topology to a parmed.Structure
+
+    At this point we only assume a three level structure for topology
+    Topology - Subtopology - Sites, which transform to three level of 
+    Parmed Structure - Residue - Atoms.
+    If we decide to support multiple level Subtopology in the future,
+    this method will need some re-work. Tentative plan is to have the
+    Parmed Residue to be equivalent to the Subtopology right above Site.
+    Parameters
+    ----------
+    top : topology.Topology
+        topology.Topology instance that need to be converted
+
+    Returns
+    -------
+    structure : parmed.Structure
+    """
+    msg = "Provided argument is not a topology.Topology."
+    assert isinstance(top, topo.Topology)
+
+    structure = pmd.Structure()
+    structure.title = top.name
+    default_residue = pmd.Residue('RES') 
+    residue_map = dict()
+    atom_mapping = dict()
+
+    # Assume we can have at most three level structure
+    # Top - Subtop - Site --> Structure - Residue - Atom
+    # May change in the future if we dicide to support more level of SubTop
+
+    # Map residue
+    for subtop in top.subtops:
+        for site in subtop.sites:
+            residue_map[site] = subtop
+
+    for site in top.sites:
+        if site in residue_map:
+            residue = residue_map[site]
+        else:
+            residue = default_residue
+        # Convert atom_type, this appear to be a bit complicated than expected
+        if site.atom_type:
+            atom_type = site.atom_type
+        
+        # Build up atom
+        pmd_atom = pmd.Atom(atomic_number=atomic_number, name=site.name,
+                   mass=mass, charge=atom.charge)
+        pmd_atom.xx, pmd_atom.xy, pmd_atom.xz = site.position.to('nm').value * 10 # cannot find Angstrong in unyt
+
+        # Add atom to structure
+        structure.add_atom(pmd_atom, resname=residue.name, resnum=residue.idx)
+        atom_mapping[atom] = pmd_atom
+
+    # "Claim" all of the items it contains and subsequently index all of its items
+    # Honestly not sure what this does (seems like a Parmed side)
+    # Will look into this later
+    structure.residues.claim()
+
+    # Create and add bonds to Parmed structure
+    for bond in top.bonds:
+        atom1, atom2 = bond.connection_members
+        bond = pmd.Bond(atom_mapping[atom1], atom_mapping[atom2])
+        structure.bonds.append(bond)
+
+    # Translate box information
+
+    # Translate atomtype, bondtype, angletype, dihedraltype information
+    return None
