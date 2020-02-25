@@ -21,12 +21,27 @@ class TestConvertMBuild(BaseTest):
     def ethane(self):
         return mb.load(get_fn('ethane.mol2'))
 
-    def test_from_mbuild(self, ethane):
+    def test_from_mbuild_ethane(self, ethane):
         import mbuild as mb
         top = from_mbuild(ethane)
 
         assert top.n_sites == 8
+        assert top.n_subtops == 1
+        assert top.subtops[0].n_sites == 8
         assert top.n_connections == 7
+        for i in range(top.n_sites):
+            assert isinstance(top.sites[i].element, topology.Element)
+            assert top.sites[i].name == top.sites[i].element.symbol
+
+    def test_from_mbuild_argon(self, ar_system):
+        # ar_system is a 3x3x3nm box filled with 100 argon sites using
+        # mBuild, and then converted to topology via from_mbuild.
+
+        top = ar_system
+
+        assert top.n_sites == 100
+        assert top.n_subtops == 0
+        assert top.n_connections == 0
         for i in range(top.n_sites):
             assert isinstance(top.sites[i].element, topology.Element)
             assert top.sites[i].name == top.sites[i].element.symbol
@@ -36,6 +51,7 @@ class TestConvertMBuild(BaseTest):
         top = from_mbuild(compound)
 
         assert top.n_sites == 1
+        assert top.n_subtops == 0
         assert top.n_connections == 0
 
     def test_to_mbuild_name_none(self):
@@ -84,6 +100,47 @@ class TestConvertMBuild(BaseTest):
         assert compound.children[0].n_particles == 1
         assert compound.n_particles == 1
 
+    def test_4_layer_compound(self):
+        l0_cmpnd = mb.Compound()
+        l1_cmpnd = mb.Compound()
+        l2_cmpnd = mb.Compound()
+        particle = mb.Compound()
+
+        l0_cmpnd.add(l1_cmpnd)
+        l1_cmpnd.add(l2_cmpnd)
+        l2_cmpnd.add(particle)
+
+        l0_cmpnd.periodicity = [1, 1, 1]
+
+        top = from_mbuild(l0_cmpnd)
+
+        assert top.n_sites == 1
+        assert top.n_subtops == 1
+        assert top.subtops[0].n_sites == 1
+        assert top.subtops[0].sites[0] == top.sites[0]
+
+    def test_uneven_hierarchy(self):
+        top_cmpnd = mb.Compound()
+        mid_cmpnd = mb.Compound()
+        particle1 = mb.Compound()
+        particle2 = mb.Compound()
+
+        top_cmpnd.add(mid_cmpnd)
+        top_cmpnd.add(particle1)
+        mid_cmpnd.add(particle2)
+
+        top_cmpnd.periodicity = [1, 1, 1]
+
+        top = from_mbuild(top_cmpnd)
+
+        assert top.n_sites == 2
+        assert top.n_subtops == 2
+        # Check that all sites belong to a subtop
+        site_counter = 0
+        for subtop in top.subtops:
+            site_counter += subtop.n_sites
+        assert site_counter == top.n_sites
+
     def test_pass_box(self, ethane):
         mb_box = Box(lengths=[3,3,3])
 
@@ -103,5 +160,5 @@ class TestConvertMBuild(BaseTest):
     def test_pass_box_bounding(self, ethane):
         ethane.periodicity = [0,0,0]
         top = from_mbuild(ethane)
-        assert allclose(top.box.lengths, 
+        assert allclose(top.box.lengths,
                 (ethane.boundingbox.lengths + [0.5, 0.5, 0.5]) * u.nm)
