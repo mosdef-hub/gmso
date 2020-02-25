@@ -91,22 +91,28 @@
               <Parameter name='k' value="284512.0"/>
           </Parameters>
       </BondType>
-      <BondType name="charmm-1" type1="NH2" type2="CT1">
+      <BondType name="charmm-bond-1" type1="NH2" type2="CT1">
         <Parameters>
           <Parameter name="r_eq" value="0.1455"/>
           <Parameter name="k" value="200831.99999999994"/>
         </Parameters>
       </BondType>
-      <BondType name="charmm-30" type1="CT1" type2="C">
+      <BondType name="charmm-bond-30" type1="CT1" type2="C">
         <Parameters>
           <Parameter name="r_eq" value="0.149"/>
           <Parameter name="k" value="209199.9999999999"/>
         </Parameters>
       </BondType>
-      <BondType name="charmm-102" type1="O" type2="C">
+      <BondType name="charmm-bond-102" type1="O" type2="C">
         <Parameters>
           <Parameter name="r_eq" value="0.123"/>
           <Parameter name="k" value="518815.9999999998"/>
+        </Parameters>
+      </BondType>
+      <BondType name="water-bond-1" type1="buck_O" type2="buck_H">
+        <Parameters>
+          <Parameter name="r_eq" value="0.09572"/>
+          <Parameter name="k" value="502416.0"/>
         </Parameters>
       </BondType>
   </BondTypes>
@@ -131,10 +137,16 @@
           <Parameter name="k" value="418.4"/>
         </Parameters>
       </AngleType>
-      <AngleType name="AngleType-Harmonic-278" type1="O" type2="C" type3="CT1">
+      <AngleType name="charmm-angle-278" type1="O" type2="C" type3="CT1">
         <Parameters>
           <Parameter name="r_eq" value="2.111848394913139"/>
           <Parameter name="k" value="669.44"/>
+        </Parameters>
+      </AngleType>
+      <AngleType name="water-angle-1" type1="buck_H" type2="buck_O" type3="buck_H">
+        <Parameters>
+          <Parameter name="r_eq" value="1.824218134"/>
+          <Parameter name="k" value="682.02"/>
         </Parameters>
       </AngleType>
   </AngleTypes>
