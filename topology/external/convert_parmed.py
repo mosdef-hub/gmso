@@ -265,7 +265,7 @@ def to_parmed(top):
             charge = 0
 
         pmd_atom = pmd.Atom(atomic_number=atomic_number, name=site.name,
-                            mass=site.massm charge=site.charge)
+                            mass=site.mass, charge=site.charge)
         pmd_atom.xx, pmd_atom.xy, pmd_atom.xz = site.position.to('angstrom').value
 
         # Add atom to structure
