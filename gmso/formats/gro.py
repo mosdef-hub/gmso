@@ -11,6 +11,33 @@ from gmso.exceptions import NotYetImplementedWarning
 from gmso.utils.testing import allclose
 
 def read_gro(filename):
+    """Provided a filepath to a gro file, generate a topology.
+
+    The Gromos87 (gro) format is a common plain text structure file used commonly with the GROMACS simulation engine.
+    This file contains the simulation box parameters, number of atoms, the residue and atom number for each atom, as well as their positions and velocities (velocity is optional).
+    This method will receive a filepath representation either as a string, or a file object and return a `topology`.
+
+    Parameters
+    ----------
+    filename : str or file object
+        The path to the gro file either as a string, or a file object that points to the gro file.
+
+    Returns
+    -------
+    gmso.core.topology
+        A `topology` object containing site information
+
+
+    Notes
+    -----
+    Gro files do not specify connections between atoms, the returned topology will not have connections between sites either.
+
+    Currently this implementation does not support a gro file with more than 1 frame.
+
+    All residues and resid information from the gro file are currently lost when converting to `topology`.
+
+    """
+
     top = Topology()
 
     with open(filename, 'r') as gro_file:
@@ -56,7 +83,25 @@ def read_gro(filename):
     return top
 
 def write_gro(top, filename):
-    """Write a topology to a gro file."""
+    """Write a topology to a gro file.
+
+    The Gromos87 (gro) format is a common plain text structure file used commonly with the GROMACS simulation engine.
+    This file contains the simulation box parameters, number of atoms, the residue and atom number for each atom, as well as their positions and velocities (velocity is optional).
+    This method takes a topology object and a filepath string or file object and saves a Gromos87 (gro) to disk.
+
+    Parameters
+    ----------
+    top : gmso.core.topology
+        The `topology` to write out to the gro file.
+    filename : str or file object
+        The location and name of file to save to disk.
+
+
+    Notes
+    -----
+    Multiple residue assignment has not been added, each `site` will belong to the same resid of 1 currently.
+
+    """
 
     top = _prepare_topology_to_gro(top)
 
