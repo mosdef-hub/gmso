@@ -115,7 +115,7 @@ def _parse_default_units(unit_tag):
 def validate(xml_path, schema=None):
     """Validate a given xml file with a reference schema"""
     if schema is None:
-        schema_path = os.path.join(os.path.split(os.path.abspath(__file__))[0], 'schema', 'ff-topology.xsd')
+        schema_path = os.path.join(os.path.split(os.path.abspath(__file__))[0], 'schema', 'ff-gmso.xsd')
 
     xml_doc = etree.parse(schema_path)
     xmlschema = etree.XMLSchema(xml_doc)
