@@ -192,7 +192,7 @@ class Topology(object):
         """
         self._sites.add(site)
         if update_types and site.atom_type:
-            site.atom_type.gmso = self
+            site.atom_type.topology = self
             site.atom_type = self._atom_types.get(site.atom_type, site.atom_type)
             self._atom_types[site.atom_type] = site.atom_type
             self.is_typed(updated=False)
