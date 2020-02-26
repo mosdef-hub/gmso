@@ -5,20 +5,20 @@ from gmso.exceptions import GMSOError
 
 
 class Connection(object):
-    """ An abstract object that lists connected partners and their type
-    This functions as a super-class for any connected groups (bonds,
-    angles, dihedrals, etc), with a property for the conection_type
+    """An abstract class that stores data about connections between sites.
+
+    This class functions as a super-class for any connected groups (bonds, angles, dihedrals, etc).
+    Each instance will have a property for the conection_type (bond_type, angle_type, dihedral_type)
 
     Parameters
     ----------
+
     connection_members : list of gmso.Site
-        A list of constituents in this connection. Should be in order
+        A list of constituents in this connection, in order.
     connection_type : gmso.Potential
-        An instance of gmso.Potential that describes
-        the potential function and parameters of this interaction
-    name : string
-        A unique name for the connection. Used for writing hoomdxml
-        bonds/angles/dihedrals
+        An instance of gmso.Potential that describes the potential, function and parameters of this interaction
+    name : str, optional, default="Connection"
+        A unique name for the connection. Used for writing hoomdxml bonds/angles/dihedrals.
         """
     def __init__(self, connection_members=None, connection_type=None, name="Connection"):
         if connection_members is None:
@@ -70,6 +70,7 @@ class Connection(object):
 
 
 def _validate_connection_members(connection_members):
+    """Ensure all elements of entered connection_members are gmso.Site"""
     for partner in connection_members:
         if not isinstance(partner, Site):
             raise GMSOError("Supplied non-Site {}".format(partner))
@@ -80,6 +81,7 @@ def _validate_connection_members(connection_members):
 
 
 def _validate_connection_type(c_type):
+    """Ensure given connection_type is the gmso.Potential"""
     if c_type is None:
         warnings.warn("Non-parametrized Connection detected")
     elif not isinstance(c_type, Potential):
@@ -88,6 +90,7 @@ def _validate_connection_type(c_type):
 
 
 def _validate_name(conname):
+    """Ensure given name is a string"""
     if not isinstance(conname, str):
         raise GMSOError("Supplied name {} is not a string".format(conname))
     return conname

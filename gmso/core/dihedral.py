@@ -8,13 +8,18 @@ from gmso.exceptions import GMSOError
 class Dihedral(Connection):
     """A 4-partner connection between sites.
 
-    Partners
+    This is a subclass of the gmso.Connection superclass.
+    This class has strictly 3 members in its connection_members.
+    The connection_type in this class corresponds to gmso.DihedralType
+
+    Parameters
     --------
     connection_members: list of gmso.Site
-        Should be length 4
-    connection_type : gmso.DihedralType
-    name : name of the dihedral
-        inherits the name attribute from Connection
+        4 sites of a dihedral.
+    connection_type : gmso.DihedralType, optional, default=None
+        DihedralType of this dihedral.
+    name : str, optional, default=Dihedral
+        Name of the dihedral.
 
     Notes
     -----
@@ -33,10 +38,10 @@ class Dihedral(Connection):
 
 def _validate_four_partners(connection_members):
     """Ensure 4 partners are involved in Dihedral"""
+    assert connection_members is not None, "connection_members is not given"
     if len(connection_members) != 4:
         raise GMSOError("Trying to create an Dihedral "
                 "with {} connection members". format(len(connection_members)))
-
     return connection_members
 
 
