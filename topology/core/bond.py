@@ -8,22 +8,27 @@ from topology.exceptions import TopologyError
 class Bond(Connection):
     """A 2-partner connection between sites.
 
-    Partners
-    --------
+    This is a subclass of the topology.Connection superclass.
+    This class has strictly 2 members in its connection_members.
+    The connection_type in this class corresponds to topology.BondType.
+
+    Paramters
+    ---------
     connection_members: list of topology.Site
-        Should be length 2
-    connection_type : topology.BondType
+        2 sites of a bond.
+    connection_type : topology.BondType, optional, default=None
+        BondType of this bond.
+    name : str, optional, default="Bond"
+        Name of the bond.
 
     Notes
     -----
     Inherits some methods from Connection:
-        __eq__, __repr__, _validate methods
-    Addiitonal _validate methods are presented
+        __eq__, __repr__, _validate methods.
+    Addiitonal _validate methods are presented.
     """
 
     def __init__(self, connection_members=None, connection_type=None, name="Bond"):
-        if connection_members is None:
-            connection_members = tuple()
         connection_members = _validate_two_partners(connection_members)
         connection_type = _validate_bondtype(connection_type)
 

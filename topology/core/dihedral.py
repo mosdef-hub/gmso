@@ -8,13 +8,18 @@ from topology.exceptions import TopologyError
 class Dihedral(Connection):
     """A 4-partner connection between sites.
 
+    This is a subclass of the topology.Connection superclass.
+    This class has strictly 3 members in its connection_members.
+    The connection_type in this class corresponds to topology.DihedralType
+
     Partners
     --------
     connection_members: list of topology.Site
-        Should be length 4
-    connection_type : topology.DihedralType
-    name : name of the dihedral
-        inherits the name attribute from Connection
+        4 sites of a dihedral.
+    connection_type : topology.DihedralType, optional, default=None
+        DihedralType of this dihedral.
+    name : str, optional, default=Dihedral
+        Name of the dihedral.
 
     Notes
     -----
@@ -36,7 +41,6 @@ def _validate_four_partners(connection_members):
     if len(connection_members) != 4:
         raise TopologyError("Trying to create an Dihedral "
                 "with {} connection members". format(len(connection_members)))
-
     return connection_members
 
 

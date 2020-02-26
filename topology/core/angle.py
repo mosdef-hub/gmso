@@ -8,13 +8,18 @@ from topology.exceptions import TopologyError
 class Angle(Connection):
     """A 3-partner connection between sites.
 
-    Partners
-    --------
+    This is a subclass of the topology.Connection superclass.
+    This class has strictly 3 members in its connection members.
+    The connection_type in this class corresponds to topology.AngleType.
+
+    Parameters
+    ----------
     connection_members: list of topology.Site
-        Should be length 3
-    connection_type : topology.AngleType
-    name : name of the angle
-        inherits the name attribute from Connection
+        3 sites of an angle.
+    connection_type : topology.AngleType, optional, default=None
+        AngleType of this angle.
+    name : str, optional, default="Angle"
+        Name of the angle. 
 
     Notes
     -----
