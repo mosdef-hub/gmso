@@ -212,3 +212,12 @@ def _validate_str(val):
     if not isinstance(val, str):
         raise ValueError("Passed value {} is not a string".format(val))
     return val
+
+
+def _validate_set(val):
+    """Check to see that a set is a set type"""
+    if not isinstance(val, set):
+        raise ValueError("Passed value {} is not a set".format(val))
+    if not all([isinstance(char, str) for char in val]):
+        raise ValueError("Passed overrides of non-string to overrides")
+    return val
