@@ -6,7 +6,15 @@ from gmso.exceptions import GMSOError
 from gmso.utils._constants import DIHEDRAL_TYPE_DICT
 
 class DihedralType(Potential):
-    """A Potential between 4-bonded partners.
+    """A descripton of the interaction between 4 bonded partners.
+
+    This is a subclass of the gmso.core.Potential superclass.
+
+    DihedralType represents a dihedral type and includes the functional form
+    describing its interactions. The functional form of the potential is stored
+    as a `sympy` expression and the parameters, with units, are stored
+    explicitly.  The AtomTypes that are used to define the dihedral type are
+    stored as `member_types`.
 
     Parameters
     ----------
@@ -73,7 +81,7 @@ class DihedralType(Potential):
 
 
 def _validate_four_member_type_names(types):
-    """Ensure 4 partners are involved in DihedralType"""
+    """Ensure exactly 4 partners are involved in DihedralType"""
     if len(types) != 4 and len(types) != 0:
         raise GMSOError("Trying to create an DihedralType "
                             "with {} constituent types".format(len(types)))

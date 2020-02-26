@@ -1,4 +1,5 @@
 import warnings
+
 import unyt as u
 
 from gmso.core.potential import Potential
@@ -8,7 +9,9 @@ from gmso.utils._constants import ATOM_TYPE_DICT
 
 
 class AtomType(Potential):
-    """An atom type, inheriting from the Potential class.
+    """A description of non-bonded interacitons between sites.
+
+    This is a subclass of the gmso.core.Potential superclass.
 
     AtomType represents an atom type and includes the functional form
     describing its interactions and, optionally, other properties such as mass
@@ -177,6 +180,7 @@ class AtomType(Potential):
 
 
 def _validate_charge(charge):
+    """Check to see that a charge is a unyt array of the right dimension"""
     if not isinstance(charge, u.unyt_array):
         warnings.warn("Charges are assumed to be elementary charge")
         charge *= u.elementary_charge
@@ -190,6 +194,7 @@ def _validate_charge(charge):
 
 
 def _validate_mass(mass):
+    """Check to see that a mass is a unyt array of the right dimension"""
     if not isinstance(mass, u.unyt_array):
         warnings.warn("Masses are assumed to be g/mol")
         mass *= u.gram / u.mol
@@ -203,14 +208,7 @@ def _validate_mass(mass):
 
 
 def _validate_str(val):
+    """Check to see that a string is a str type"""
     if not isinstance(val, str):
         raise ValueError("Passed value {} is not a string".format(val))
-    return val
-
-
-def _validate_set(val):
-    if not isinstance(val, set):
-        raise ValueError("Passed value {} is not a set".format(val))
-    if not all([isinstance(char, str) for char in val]):
-        raise ValueError("Passed overrides of non-string to overrides")
     return val

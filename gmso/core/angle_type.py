@@ -8,7 +8,15 @@ from gmso.utils._constants import ANGLE_TYPE_DICT
 
 
 class AngleType(Potential):
-    """A Potential between 3-bonded partners.
+    """A descripton of the interaction between 3 bonded partners.
+
+    This is a subclass of the gmso.core.Potential superclass.
+
+    AngleType represents an angle type and includes the functional form
+    describing its interactions. The functional form of the potential is stored
+    as a `sympy` expression and the parameters, with units, are stored
+    explicitly.  The AtomTypes that are used to define the angle type are
+    stored as `member_types`.
 
     Parameters
     ----------
@@ -73,7 +81,7 @@ class AngleType(Potential):
 
 
 def _validate_three_member_type_names(types):
-    """Ensure 3 partners are involved in AngleType"""
+    """Ensure exactly 3 partners are involved in AngleType"""
     if len(types) != 3 and len(types) != 0:
         raise GMSOError("Trying to create an AngleType "
                             "with {} constituent types".format(len(types)))
