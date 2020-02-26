@@ -1,40 +1,52 @@
 from lxml import etree
 
 from gmso.forcefield.ff_utils import (validate,
-                                          parse_ff_metadata,
-                                          parse_ff_atomtypes,
-                                          parse_ff_connection_types)
+                                      parse_ff_metadata,
+                                      parse_ff_atomtypes,
+                                      parse_ff_connection_types)
 
 
 class ForceField(object):
     """A generic implementation of the forcefield class.
 
-    A forcefield class contains different collection of
-    core type members.
+    The ForceField class is one of the core data-structures in gmso, which is
+    used to hold a collection of gmso.core.Potential objects along with some
+    metadata like units and scaling factors to represent a class of forcefield.
+    The forcefiled object can be applied to any gmso.Topology which has effects
+    on its Sites, Bonds, Angles and Dihedrals.
 
     Parameters
     ----------
-    name: (str), Name of the forcefield, default 'ForceField'
-    version: (str), a cannonical semantic version of the forcefield, default 1.0.0
+    name: str
+        Name of the forcefield, default 'ForceField'
+    version: str
+        a cannonical semantic version of the forcefield, default 1.0.0
 
     Attributes
-    -----------
-    name: (str), Name of the forcefield
-    version: (str), Version of the forcefield
-    atom_types: (dict), A collection of atom types in the forcefield
-    bond_types: (dict), A collection of bond types in the forcefield
-    angle_types: (dict), A collection of angle types in the forcefield
-    dihedral_types: (dict), A collection of dihedral types in the forcefield
+    ----------
+    name: str
+        Name of the forcefield
+    version: str
+        Version of the forcefield
+    atom_types: dict
+        A collection of atom types in the forcefield
+    bond_types: dict
+        A collection of bond types in the forcefield
+    angle_types: dict
+        A collection of angle types in the forcefield
+    dihedral_types: dict
+        A collection of dihedral types in the forcefield
+    units: dict
+        A collection of unyt.Unit objects used in the forcefield
+    scaling_factors: dict
+        A collection of scaling factors used in the forcefield
+
+    See Also
+    --------
+    gmso.ForceField.from_xml: A class method to create forcefield object from XML files
+
     """
     def __init__(self, xml_loc=None):
-        """Initialize a new ForceField
-
-        Parameters
-        ----------
-        name: str, name of the forcefield, default 'ForceField', usage optional
-        version: str, version of the forcefield, default 'ForceField', usage optional
-        xml_locs: iterable, list of GMSO's Forcefield XML Files, default None, usage optional
-        """
         if xml_loc is not None:
             ff = ForceField.from_xml(xml_loc)
             self.name = ff.name
@@ -78,16 +90,23 @@ class ForceField(object):
 
     @classmethod
     def from_xml(cls, xml_locs):
-        """Create a forcefield object from a XML File
-        Parameters:
-        -----------
-        xml_locs: (str) or iter(str), string or iterable of strings
-                  containing the forcefield XML locations
+        """Create a gmso.Forcefield object from XML File(s)
 
-        Returns:
-        --------
-        gmso.forcefield.ForceField object, containing all the information
-            from the ForceField File
+        This class method creates a ForceFiled object from the reference
+        XML file. This method takes in a single or collection of XML files
+        with information about gmso.AtomTypes, gmso.BondTypes, gmso.AngleTypes
+        and gmso.DihedralTypes to create the ForceField object.
+
+        Parameters
+        ----------
+        xml_locs: str or iterable of str,
+            string or iterable of strings containing the forcefield XML locations
+
+        Returns
+        -------
+        gmso.ForceField
+            A gmso forcefield object with a collection of Potential objects
+            created using the information in the XML file
         """
 
         if not hasattr(xml_locs, '__iter__'):

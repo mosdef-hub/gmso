@@ -45,7 +45,7 @@ autodoc_default_flags = ['members', 'inherited-members']
 napoleon_numpy_docstring = True
 napoleon_use_admonition_for_notes = True
 napoleon_use_param = False
-
+napoleon_use_ivar = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
