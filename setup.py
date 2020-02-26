@@ -11,16 +11,16 @@ else:
 
 
 setup(
-    name='topology',
+    name='gmso',
     version=__version__,
     author='Matthew W Thompson, Justin Gilmer',
     author_email='matt.thompson@vanderbilt.edu, justin.b.gilmer@vanderbilt.edu',
     url='https://github.com/mattwthompson/topology',
     download_url='https://github.com/mattwthompson/topology/tarball/{}'.format(__version__),
-    package_dir={'topology': 'topology'},
+    package_dir={'gmso': 'gmso'},
     license="MIT",
     zip_safe=False,
-    keywords='topology',
+    keywords='gmso',
     classifiers=[
         'Development Status :: 1 - Planning',
         'Intended Audience :: Science/Research',
