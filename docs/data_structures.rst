@@ -1,53 +1,53 @@
-Data Structures in topology
+Data Structures in GMSO 
 ---------------------------
-Following data structures are available within topology, which are generally referred to  `CoreMembers` and `CoreTypes`.
+Following data structures are available within GMSO, which are generally referred to  `CoreMembers` and `CoreTypes`.
 
 Core Members
 =============
 
 Site
 ****
-    .. autoclass:: topology.Site
+    .. autoclass:: gmso.Site
         :members:
 
 Bond
 ****
-    .. autoclass:: topology.Bond
+    .. autoclass:: gmso.Bond
         :members:
 
 Angle
 *****
-    .. autoclass:: topology.Angle
+    .. autoclass:: gmso.Angle
         :members:
 
 Dihedral
 ********
-    .. autoclass:: topology.Dihedral
+    .. autoclass:: gmso.Dihedral
         :members:
 
 Potential Classes(CoreTypes)
 ============================
-    .. autoclass:: topology.Potential
+    .. autoclass:: gmso.Potential
         :members:
 
 AtomType
 ********
-    .. autoclass:: topology.AtomType
+    .. autoclass:: gmso.AtomType
         :members:
 
 BondType
 ********
-    .. autoclass:: topology.BondType
+    .. autoclass:: gmso.BondType
         :members:
 
 AngleType
 **********
-    .. autoclass:: topology.AngleType
+    .. autoclass:: gmso.AngleType
         :members:
 
 DihedralType
 ************
-    .. autoclass:: topology.DihedralType
+    .. autoclass:: gmso.DihedralType
         :members:
 
 
