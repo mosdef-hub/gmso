@@ -6,6 +6,8 @@ from gmso.utils.testing import allclose
 
 
 def _validate_lengths(lengths):
+    """Ensure the lengths of the box are positive and check dimension."""
+
     if not isinstance(lengths, u.unyt_array):
         if all(isinstance(length, u.unyt_quantity) for length in lengths):
             print("Converting list of unyt quantities to a unyt array")
@@ -37,6 +39,8 @@ def _validate_lengths(lengths):
 
 
 def _validate_angles(angles):
+    """Convert angles to degree units and reshape to expected input."""
+
     if angles is None:
         angles = np.asarray([90, 90, 90], dtype=float, order='C')
         angles *= u.degree
@@ -59,6 +63,17 @@ def _validate_angles(angles):
 class Box(object):
     """A box that bounds a `Topology`.
 
+    The `Box` data structure contains the relevant information to fully
+    describe a simulation box in three dimensions, including lengths, angles,
+    and vectors
+
+    It is based on the Bravais lattice concept. A 3-dimensional
+    prism can be fully described with 6 parameters, the lengths of the 3
+    edges of the prism (`a`,`b`,`c`); and the 3 interplanar angles that
+    describe the tilt of the prism edges (alpha, beta, gamma). For example,
+    the Bravais parameters where a=b=c, and alpha=beta=gamma=90 define a
+    cubic prism (cube).
+
     Parameters
     ----------
     lengths : array-like, shape(3,), dtype=float
@@ -68,7 +83,7 @@ class Box(object):
     angles : array-like, optional, shape(3,), dtype=float
         Interplanar angles, [alpha, beta, gamma], that describe the box shape.
         Units are assumed to be in degrees; if passed in as a `unyt_array` it
-        will be converted to degrees; if passed in as floats, degrees is
+        will be converted to degrees; if passed in as floats, degrees are
         assumed.
 
     Attributes
@@ -80,13 +95,15 @@ class Box(object):
 
     Methods
     -------
-    vectors()
+    get_vectors()
+        Output the vectors describing the shape of the `Box`.
+    get_unit_vectors()
         Output the unit vectors describing the shape of the `Box`.
 
     """
 
     def __init__(self, lengths, angles=None):
-        """Constructs a `Box`."""
+        """Construct a `Box` based on lengths and angles."""
 
         self._lengths = _validate_lengths(lengths)
         self._angles = _validate_angles(angles)
@@ -108,6 +125,8 @@ class Box(object):
         self._angles = _validate_angles(angles)
 
     def _unit_vectors_from_angles(self):
+        """From the `Box` parameters, return unit vectors describing prism."""
+
         (alpha, beta, gamma) = self.angles
 
         cosa = np.cos(alpha)
@@ -126,6 +145,8 @@ class Box(object):
                           'do not generate a box with the z-vector in the'
                           'positive z direction'.format(self._angles))
 
+        # Note that our box vectors are always aligned along the x-axis
+        #    and then the xy plane, with the z-axis
         box_vec = [[1, 0, 0],
                    [cosg, sing, 0],
                    [cosb, mat_coef_y, mat_coef_z]]
