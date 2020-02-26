@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath('..'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'topology'
+project = 'gmso'
 copyright = '2020, mosdef-hub, Vanderbilt University'
 author = 'Matt Thompson, Alex Yang, Ray Matsumoto, Parashara Shamaprasad, Umesh Timalsina, Co Quach, Ryan S. DeFever, Justin Gilmer'
 
