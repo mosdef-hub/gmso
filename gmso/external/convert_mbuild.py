@@ -21,28 +21,40 @@ if has_mbuild:
 def from_mbuild(compound, box=None, search_method=element_by_symbol):
     """Convert an mbuild.Compound to a gmso.Topology
 
+    This conversion makes the following assumptions about the inputted `Compound`:
+    * All positional and box dimension values in compound are in nanometers
+    * If the `Compound` has 4 or more levels of hierarchy, these are compressed to 3 levels of hierarchy in the resulting `Topology`.
+    The top level `Compound` becomes the `Topology`, the second level Compounds become `SubTopologies`, and each particle becomes a `Site`, which are added to their corresponding `SubTopologies`.
+    * Furthermore, `Sites` that do not belong to a sub-`Compound` are added to a single-`Site` `SubTopology`.
+    * The box dimension are extracted from `compound.periodicity`.
+    If the `compound.periodicity` is `None`, the box lengths are the lengths of the bounding box + a 0.5 nm buffer.
+    * Only `Bonds` are added for each bond in the `Compound`.
+    If `Angles` and `Dihedrals` are desired in the resulting `Topology`, they must be added separately from this function.
+
     Parameters
     ----------
     compound : mbuild.Compound
         mbuild.Compound instance that need to be converted
     box : mbuild.Box, optional, default=None
         Box information to be loaded to a gmso.Topologly
-    search_method : element_by_symbol, element_by_name,
-                    element_by_atomic_number, element_by_mass,
-                    optional, default=element_by_symbol
-        Searching method used to assign element from periodic table to particle site
+    search_method : function, optional, default=element_by_symbol
+        Searching method used to assign element from periodic table to particle site.
+        The information specified in the `search_method` argument is extracted from each `Particle`'s `name` attribute.
+        Valid functions are element_by_symbol, element_by_name, element_by_atomic_number, and element_by_mass.
+
 
     Returns
     -------
     top : gmso.Topology
     """
+
     msg = ("Provided argument that is not an mbuild Compound")
     assert isinstance(compound, mb.Compound), msg
 
     top = Topology()
     top.typed = False
 
-    # Keep the name if it is not the default mbuild Compound name
+    # Keep the name if it is not the default mBuild Compound name
     if compound.name != mb.Compound().name:
         top.name = compound.name
 
@@ -115,6 +127,7 @@ def to_mbuild(topology):
     --------
     compound : mbuild.Compound
     """
+
     msg = ("Provided argument that is not a topology")
     assert isinstance(topology, Topology), msg
 
@@ -139,7 +152,18 @@ def to_mbuild(topology):
     return compound
 
 def from_mbuild_box(mb_box):
-    """Convert an mBuild box to a gmso.box.Box"""
+    """Convert an mBuild box to a gmso.core.Box
+    Assumes that the mBuild box dimensions are in nanometers
+
+    Parameters
+    ----------
+    mb_box : mbuild.Box
+        mBuild box object to be converted to a gmso.core.Box object
+
+    Returns:
+    --------
+    box : gmso.core.Box
+    """
     # TODO: Unit tests
 
     if not isinstance(mb_box, mb.Box):
