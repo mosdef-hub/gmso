@@ -5,7 +5,7 @@ Installation
 Installing dependencies with `conda <http://continuum.io/downloads>`_
 ---------------------------------------------------------------------
 
-Dependencies of ``Topology`` are listed in the file ``requirements.txt``. They
+Dependencies of ``GMSO`` are listed in the file ``requirements.txt``. They
 can be installed in one line:
 ::
 
@@ -40,7 +40,7 @@ Installing dependencies with `pip <https://pypi.org/project/pip/>`_
 Install an editable version from source
 ---------------------------------------
 
-Once all dependencies are installed, the ``Topology`` itself can be installed.
+Once all dependencies are installed, the ``GMSO`` itself can be installed.
 It is currently only available through its source code. It will be available
 through ``pip`` and ``conda`` in the future.
 ::
@@ -62,7 +62,7 @@ is made to support Python 2 because it is considered obsolete as of early 2020.
 Testing your installation
 -------------------------
 
-``Topology`` uses ``py.test`` to execute its unit tests. To run them, first install some extra depdencies:
+``GMSO`` uses ``py.test`` to execute its unit tests. To run them, first install some extra depdencies:
 ::
     $ conda install --file requirements-test.txt
 
