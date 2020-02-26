@@ -6,7 +6,7 @@ from gmso.utils.testing import allclose
 
 
 def _validate_lengths(lengths):
-    """Insure the lengths of the box are positive and check dimension."""
+    """Ensure the lengths of the box are positive and check dimension."""
 
     if not isinstance(lengths, u.unyt_array):
         if all(isinstance(length, u.unyt_quantity) for length in lengths):
@@ -39,7 +39,7 @@ def _validate_lengths(lengths):
 
 
 def _validate_angles(angles):
-    """Convert angles to degree units, and reshape to expected input."""
+    """Convert angles to degree units and reshape to expected input."""
 
     if angles is None:
         angles = np.asarray([90, 90, 90], dtype=float, order='C')
@@ -64,7 +64,10 @@ class Box(object):
     """A box that bounds a `Topology`.
 
     The `Box` data structure contains the relevant information to fully
-    describe a box based on the Bravais lattice concept. A 3-dimensional
+    describe a simulation box in three dimensions, including lengths, angles,
+    and vectors
+
+    It is based on the Bravais lattice concept. A 3-dimensional
     prism can be fully described with 6 parameters, the lengths of the 3
     edges of the prism (`a`,`b`,`c`); and the 3 interplanar angles that
     describe the tilt of the prism edges (alpha, beta, gamma). For example,
