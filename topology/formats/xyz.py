@@ -8,6 +8,20 @@ from topology.core.site import Site
 
 
 def read_xyz(filename):
+    """Reader for xyz file format.
+
+    Read in an xyz file at the given path and return a Topology object.
+
+    Parameter
+    ----------
+    filename : str
+        Path to .xyz file that need to be read.
+
+    Return
+    ------
+    top : topology.Topology
+        Topology object
+    """
     top = Topology()
 
     with open(filename, 'r') as xyz_file:
@@ -38,6 +52,17 @@ def read_xyz(filename):
     return top
 
 def write_xyz(top, filename):
+    """Writer for xyz file format.
+
+    Write a Topology object to an xyz file at the given path.
+
+    Paramters
+    ---------
+    top : topology.Topology
+        Topology object that needs to be written out.
+    filename : str
+        Path to file location.
+    """
     with open(filename, 'w') as out_file:
         out_file.write('{:d}\n'.format(top.n_sites))
         out_file.write('{} {} written by topology at {}\n'.format(
