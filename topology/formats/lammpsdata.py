@@ -11,9 +11,9 @@ from topology.utils.testing import allclose
 def write_lammpsdata(topology, filename, atom_style='full'):
     """Output a LAMMPS data file.
 
-    Outputs a LAMMPS data file in the 'full' atom style format. Assumes use
-    of 'real' units. See http://lammps.sandia.gov/doc/atom_style.html for
-    more information on atom styles.
+    Outputs a LAMMPS data file in the 'full' atom style format.
+    Assumes use of 'real' units.
+    See http://lammps.sandia.gov/doc/atom_style.html for more information on atom styles.
 
     Parameters
     ----------
@@ -22,19 +22,17 @@ def write_lammpsdata(topology, filename, atom_style='full'):
     filename : str
         Path of the output file
     atom_style: str, optional, default='full'
-        Defines the style of atoms to be saved in a LAMMPS data file. The following atom
-        styles are currently supported: 'full', 'atomic', 'charge', 'molecular'
-        see http://lammps.sandia.gov/doc/atom_style.html for more
-        information on atom styles.
+        Defines the style of atoms to be saved in a LAMMPS data file.
+        The following atom styles are currently supported: 'full', 'atomic', 'charge', 'molecular'
+        see http://lammps.sandia.gov/doc/atom_style.html for more information on atom styles.
 
     Notes
     -----
-    See http://lammps.sandia.gov/doc/2001/data_format.html for a full description
-    of the LAMMPS data format.  This is a work in progress, as only atoms, masses, and atom_type information can be
-    written out.
+    See http://lammps.sandia.gov/doc/2001/data_format.html for a full description of the LAMMPS data format.  
+    This is a work in progress, as only atoms, masses, and atom_type information can be written out.
 
-    Some of this function has been adopted from `mdtraj`'s support of the LAMMPSTRJ
-    trajectory format. See https://github.com/mdtraj/mdtraj/blob/master/mdtraj/formats/lammpstrj.py for details.
+    Some of this function has been adopted from `mdtraj`'s support of the LAMMPSTRJ trajectory format. 
+    See https://github.com/mdtraj/mdtraj/blob/master/mdtraj/formats/lammpstrj.py for details.
 
     """
     if atom_style not in ['atomic', 'charge', 'molecular', 'full']:
