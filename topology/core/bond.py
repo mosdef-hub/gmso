@@ -12,7 +12,7 @@ class Bond(Connection):
     This class has strictly 2 members in its connection_members.
     The connection_type in this class corresponds to topology.BondType.
 
-    Paramters
+    Parameters
     ---------
     connection_members: list of topology.Site
         2 sites of a bond.
@@ -38,6 +38,7 @@ class Bond(Connection):
 
 def _validate_two_partners(connection_members):
     """Ensure 2 partners are involved in Bond"""
+    assert connection_members is not None, "connection_members is not given"
     if len(connection_members) != 2:
         raise TopologyError("Trying to create a Bond "
                 "with {} connection members". format(len(connection_members)))

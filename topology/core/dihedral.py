@@ -38,6 +38,7 @@ class Dihedral(Connection):
 
 def _validate_four_partners(connection_members):
     """Ensure 4 partners are involved in Dihedral"""
+    assert connection_members is not None, "connection_members is not given"
     if len(connection_members) != 4:
         raise TopologyError("Trying to create an Dihedral "
                 "with {} connection members". format(len(connection_members)))

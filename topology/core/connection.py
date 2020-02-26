@@ -5,7 +5,7 @@ from topology.exceptions import TopologyError
 
 
 class Connection(object):
-    """ An abstract object that lists connected partners and their type
+    """An abstract class that stores data about connections between sites.
 
     This class functions as a super-class for any connected groups (bonds, angles, dihedrals, etc).
     Each instance will have a property for the conection_type (bond_type, angle_type, dihedral_type)
@@ -15,9 +15,8 @@ class Connection(object):
     connection_members : list of topology.Site
         A list of constituents in this connection, in order.
     connection_type : topology.Potential
-        An instance of topology.Potential that describes the potential.
-         function and parameters of this interaction
-    name : string
+        An instance of topology.ConnectionType that describes the potential, function and parameters of this interaction
+    name : str, optional, default="Connection"
         A unique name for the connection. Used for writing hoomdxml bonds/angles/dihedrals.
         """
     def __init__(self, connection_members=None, connection_type=None, name="Connection"):
