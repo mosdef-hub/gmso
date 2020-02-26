@@ -280,6 +280,80 @@ def to_parmed(top):
         atom1, atom2 = bond.connection_members
         bond = pmd.Bond(atom_mapping[atom1], atom_mapping[atom2])
         structure.bonds.append(bond)
-    # For now only have unatom_typed, unparametrized version
-    # Still need to work on mapping all the those information over
+
+    # Set up structure for Connection Type conversion
+    # Will need to work on these helper function later
+    if top.atom_types:
+        _convert_atom_types(top, structure)
+    if top.bond_types:
+        _convert_bond_types(top, structure)
+    if top.angle_types:
+        _convert_angle_types(top, structure)
+    if top.dihedral_types:
+        _convert_dihedral_types(top, structure)
+
     return structure
+
+
+def _convert_atom_types(top, structure):
+    """Helper function to convert Topology AtomType to Structure AtomType
+
+    This function will first check the AtomType expression of Topology and make sure it match with the one default in Parmed.
+    After that, it would start atomtyping and parametrizing this part of the structure.
+
+    Parameters
+    ----------
+    top : topology.Topology
+        The topology that need to be converted
+    structure: parmed.Structure
+        The destination parmed Structure
+    """
+    pass
+
+
+def _convert_bond_types(top, structure):
+    """Helper function to convert Topology BondType to Structure BondType
+
+    This function will first check the BondType expression of Topology and make sure it match with the one default in Parmed.
+    After that, it would start atomtyping and parametrizing this part of the structure.
+
+    Parameters
+    ----------
+    top : topology.Topology
+        The topology that need to be converted
+    structure: parmed.Structure
+        The destination parmed Structure
+    """
+    pass
+
+
+def _convert_atom_types(top, structure):
+    """Helper function to convert Topology AngleType to Structure AngleType
+
+    This function will first check the AngleType expression of Topology and make sure it match with the one default in Parmed.
+    After that, it would start atomtyping and parametrizing the structure.
+
+    Parameters
+    ----------
+    top : topology.Topology
+        The topology that need to be converted
+    structure: parmed.Structure
+        The destination parmed Structure
+    """
+    pass
+
+
+def _convert_atom_types(top, structure):
+    """Helper function to convert Topology DihedralType to Structure DihedralType
+
+    This function will first check the DihedralType expression of Topology and make sure it match with the one default in Parmed.
+    After that, it would start atomtyping and parametrizing the structure.
+
+    Parameters
+    ----------
+    top : topology.Topology
+        The topology that need to be converted
+    structure: parmed.Structure
+        The destination parmed Structure
+    """
+    pass
