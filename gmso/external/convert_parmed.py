@@ -11,10 +11,15 @@ if has_parmed:
 def from_parmed(structure):
     """Convert a parmed.Structure to a gmso.Topology
 
+    Convert a parametrized or un-parametrized parmed.Structure object to a topology.Topology.
+    Specifically, this method maps Structure to Topology and Atom to Site.
+    At this point, this method can only convert AtomType, BondType and AngleType.
+    Conversion of DihedralType will be implement in the near future.
+
     Parameters
     ----------
     structure : parmed.Structure
-        parmed.Structure instance that need to be converted
+        parmed.Structure instance that need to be converted.
 
     Returns
     -------
