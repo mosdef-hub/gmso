@@ -69,7 +69,7 @@ class Connection(object):
 
 
 def _validate_connection_members(connection_members):
-    """Ensure all element of entered connection_members are topology.Site"""
+    """Ensure all elements of entered connection_members are topology.Site"""
     for partner in connection_members:
         if not isinstance(partner, Site):
             raise TopologyError("Supplied non-Site {}".format(partner))
