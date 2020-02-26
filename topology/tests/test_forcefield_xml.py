@@ -16,10 +16,6 @@ class TestForceFieldFromXML(BaseTest):
     def ff(self):
         return ForceField(get_path('ff-example0.xml'))
 
-    @pytest.fixture
-    def charm_ff(self):
-        return ForceField(get_path('topology-charmm.xml'))
-
     def test_ff_name_version_from_xml(self, ff):
         assert ff.name == 'ForceFieldOne'
         assert ff.version == '0.4.1'
@@ -109,7 +105,8 @@ class TestForceFieldFromXML(BaseTest):
         assert ff.dihedral_types['Xe~Xe~Xe~Xe'].parameters['z'] == u.unyt_quantity(20, u.kJ / u.mol)
         assert ff.dihedral_types['Xe~Xe~Xe~Xe'].member_types == ['Xe', 'Xe', 'Xe', 'Xe']
 
-    def test_ff_charmm_xml(self, charm_ff):
+    def test_ff_charmm_xml(self):
+        charm_ff = ForceField(get_path('trimmed_charmm.xml'))
         assert charm_ff.name == 'topologyCharmm'
         assert "*~CS~SS~*" in charm_ff.dihedral_types
 
