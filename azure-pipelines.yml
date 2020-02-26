@@ -30,7 +30,7 @@ jobs:
 
       - bash: |
           source activate test-environment
-          python -m pytest -v topology
+          python -m pytest -v gmso/tests/ 
         displayName: Run Tests
 
 
