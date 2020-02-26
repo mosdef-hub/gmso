@@ -1,0 +1,15 @@
+<ForceField version="0.4.1" name="ForceFieldOne">
+    <FFMetaData>
+        <Units energy="kcal/mol" distance="nm" mass="amu" charge="coulomb"/>
+    </FFMetaData>
+    <AtomTypes expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)">
+        <ParametersUnitDef parameter="sigma" unit="nm"/>
+	<ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+        <AtomType name="Ar" element="Ar" charge="0.0" mass="39.948" definition="Ar" description="Argon atom">
+            <Parameters>
+                <Parameter name="sigma" value="0.3"/>
+                <Parameter name="epsilon" value="0.1"/>
+            </Parameters>
+        </AtomType>
+    </AtomTypes>
+</ForceField>
