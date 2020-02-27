@@ -135,7 +135,7 @@ def to_system(topology,
         If True, they will but those degrees of freedom will *still* be constrained).
     verbose : boolean, optional, default=False
         If True, the progress of this subroutine will be printed to stdout.
-    splitDihedrals: boolean, optional, default=False
+    splitDihedrals : boolean, optional, default=False
         If True, the dihedrals will be split into two forces -- propers and impropers.  
         This is primarily useful for debugging torsion parameter assignments.
 
