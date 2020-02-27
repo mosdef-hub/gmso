@@ -6,7 +6,7 @@ import warnings
 
 import gmso
 from gmso.utils.io import import_, has_parmed
-from topology.core.element import element_by_name, element_by_symbol, element_by_atom_type
+from gmso.core.element import element_by_name, element_by_symbol, element_by_atom_type
 
 if has_parmed:
     pmd = import_('parmed')
@@ -37,7 +37,7 @@ def from_parmed(structure):
         unique_atom_types = list(set([a.atom_type for a in structure.atoms]))
         pmd_top_atomtypes = {}
         for atom_type in unique_atom_types:
-            top_atomtype = topo.AtomType(
+            top_atomtype = gmso.AtomType(
                     name=atom_type.name,
                     charge=atom_type.charge * u.elementary_charge,
                     parameters={
@@ -54,7 +54,7 @@ def from_parmed(structure):
                     'r_eq': (btype.req * u.angstrom).in_units(u.nm)
                     }
 
-            top_bondtype = topo.BondType(parameters=bond_params)
+            top_bondtype = gmso.BondType(parameters=bond_params)
             pmd_top_bondtypes[btype] = top_bondtype
 
         # Consolidate parmed angletypes and relate to topology angletypes
@@ -65,7 +65,7 @@ def from_parmed(structure):
                     'theta_eq': (angletype.theteq * u.degree)
                 }
                  
-            top_angletype = topo.AngleType(parameters=angle_params)
+            top_angletype = gmso.AngleType(parameters=angle_params)
             pmd_top_angletypes[angletype] = top_angletype
 
         # Consolidate parmed dihedraltypes and relate to topology dihedraltypes
@@ -77,7 +77,7 @@ def from_parmed(structure):
                     'n': dihedraltype.per * u.dimensionless
                 }
                  
-            top_dihedraltype = topo.DihedralType(parameters=dihedral_params)
+            top_dihedraltype = gmso.DihedralType(parameters=dihedral_params)
             pmd_top_dihedraltypes[dihedraltype] = top_dihedraltype
         for dihedraltype in structure.rb_torsion_types:
             dihedral_params = {
@@ -89,7 +89,7 @@ def from_parmed(structure):
                     'c5': (dihedraltype.c5 * u.Unit('kcal/mol')),
                 }
                  
-            top_dihedraltype = topo.DihedralType(parameters=dihedral_params,
+            top_dihedraltype = gmso.DihedralType(parameters=dihedral_params,
                     expression='c0 * cos(phi)**0 + c1 * cos(phi)**1 + ' +
                     'c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + ' +
                     'c5 * cos(phi)**5',
@@ -99,7 +99,7 @@ def from_parmed(structure):
 
     for atom in structure.atoms:
         if is_parametrized:
-            site = topo.Site(
+            site = gmso.Site(
                 name=atom.name,
                 charge=atom.charge * u.elementary_charge,
                 position=([atom.xx, atom.xy, atom.xz] * u.angstrom).in_units(
@@ -170,14 +170,14 @@ def from_parmed(structure):
                     "expression detected, currently accounted for as " +
                     "topology.Dihedral with a periodic torsion expression")
         if is_parametrized:
-            top_connection = topo.Dihedral(connection_members=
+            top_connection = gmso.Dihedral(connection_members=
                     [site_map[dihedral.atom1], site_map[dihedral.atom2], 
                         site_map[dihedral.atom3], site_map[dihedral.atom4]],
                     connection_type=pmd_top_dihedraltypes[dihedral.type])
 
         # No bond parameters, make Connection with no connection_type
         else:
-            top_connection = topo.Dihedral(connection_members=
+            top_connection = gmso.Dihedral(connection_members=
                     [site_map[dihedral.atom1], site_map[dihedral.atom2], 
                         site_map[dihedral.atom3], site_map[dihedral.atom4]],
                 connection_type=None)
@@ -195,14 +195,14 @@ def from_parmed(structure):
                     "expression detected, currently accounted for as " +
                     "topology.Dihedral with a RB torsion expression")
         if is_parametrized:
-            top_connection = topo.Dihedral(connection_members=
+            top_connection = gmso.Dihedral(connection_members=
                     [site_map[rb_torsion.atom1], site_map[rb_torsion.atom2], 
                         site_map[rb_torsion.atom3], site_map[rb_torsion.atom4]],
                     connection_type=pmd_top_dihedraltypes[rb_torsion.type])
 
         # No bond parameters, make Connection with no connection_type
         else:
-            top_connection = topo.Dihedral(connection_members=
+            top_connection = gmso.Dihedral(connection_members=
                     [site_map[rb_torsion.atom1], site_map[rb_torsion.atom2], 
                         site_map[rb_torsion.atom3], site_map[rb_torsion.atom4]],
                 connection_type=None)
@@ -234,7 +234,7 @@ def to_parmed(top):
     """
     # Sanity check
     msg = "Provided argument is not a topology.Topology."
-    assert isinstance(top, topo.Topology)
+    assert isinstance(top, gmso.Topology)
 
     # Set up Parmed structure and define general properties
     structure = pmd.Structure()
@@ -242,19 +242,21 @@ def to_parmed(top):
     structure.box = np.concatenate((top.box.lengths.to('angstrom').value,
                                     top.box.angles.to('degree').value))
 
+    # Maps
+    subtop_map = dict() # Map site to subtop
+    atom_map = dict() # Map site to atom
+
     # Set up unparametrized system
-    # Build residue-atom map
-    residue_map = dict()
+    # Build subtop_map (site -> top)
     default_residue = pmd.Residue('RES')
     for subtop in top.subtops:
         for site in subtop.sites:
-            residue_map[site] = subtop
+            subtop_map[site] = subtop
 
     # Build up atom
-    atom_mapping = dict()
     for site in top.sites:
-        if site in residue_map:
-            residue = residue_map[site]
+        if site in subtop_map:
+            residue = subtop_map[site] #since subtop contains information needed to build residue
         else:
             residue = default_residue
         # Check element
@@ -271,32 +273,33 @@ def to_parmed(top):
 
         # Add atom to structure
         structure.add_atom(pmd_atom, resname=residue.name, resnum=residue.idx)
-        atom_mapping[atom] = pmd_atom
+        atom_map[site] = pmd_atom
 
     # "Claim" all of the item it contains and subsequently index all of its item
     structure.residues.claim()
 
     # Create and add bonds to Parmed structure
     for bond in top.bonds:
-        atom1, atom2 = bond.connection_members
-        bond = pmd.Bond(atom_mapping[atom1], atom_mapping[atom2])
+        site1, site2 = bond.connection_members
+        bond = pmd.Bond(atom_map[site1], atom_map[site2])
         structure.bonds.append(bond)
 
     # Set up structure for Connection Type conversion
     # Will need to work on these helper function later
+    """
     if top.atom_types:
-        _convert_atom_types(top, structure)
+        _convert_atom_types(top, structure, atom_map)
     if top.bond_types:
         _convert_bond_types(top, structure)
     if top.angle_types:
         _convert_angle_types(top, structure)
     if top.dihedral_types:
         _convert_dihedral_types(top, structure)
-
+    """
     return structure
 
 
-def _convert_atom_types(top, structure):
+def _convert_atom_types(top, structure, atom_map):
     """Helper function to convert Topology AtomType to Structure AtomType
 
     This function will first check the AtomType expression of Topology and make sure it match with the one default in Parmed.
@@ -309,7 +312,30 @@ def _convert_atom_types(top, structure):
     structure: parmed.Structure
         The destination parmed Structure
     """
-    pass
+    # Maps
+    type_map = dict()
+    for atom_type in top.atom_types:
+        msg = "Atom type {} expression does not match Parmed AtomType default expression".format(atom_type.name)
+        assert site.atom_type.expression == parse_expr("4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)"), msg
+        #Extract site's atom type information
+        atype_name = site.atom_type.name
+        atype_charge = site.atom_type.charge.to("elementary_charge").value
+        atype_sigma = site.atom_type.parameters[sigma].to("nm")
+        atype_epsilon = site.atom_type.parameters[epsilon].to("kcal/mol")
+        atype_element = element_by_atom_type(atype_name)
+        atype_rmin = atype_sigma * 2**(1/6) / 2 # to rmin/2
+        # Create unique Parmed AtomType object
+        atype = pmd.AtomType(atype_name, None, atype_element.mass,
+                             atype_element.atomic_number, atype_charge)
+        atype.set_lj_params(atype_epsilon, atype_rmin)
+        # Type map to match AtomType to its name
+        type_map[atype_name] = atype
+        
+    for site in top.sites:
+        #Assign atom_type to atom
+        atom = atom_map[site]
+        atom.type = site.atom_type.name
+        atom.atom_type = type_map[atom.type]
 
 
 def _convert_bond_types(top, structure):
@@ -325,10 +351,11 @@ def _convert_bond_types(top, structure):
     structure: parmed.Structure
         The destination parmed Structure
     """
+    
     pass
 
 
-def _convert_atom_types(top, structure):
+def _convert_angle_types(top, structure):
     """Helper function to convert Topology AngleType to Structure AngleType
 
     This function will first check the AngleType expression of Topology and make sure it match with the one default in Parmed.
@@ -344,7 +371,7 @@ def _convert_atom_types(top, structure):
     pass
 
 
-def _convert_atom_types(top, structure):
+def _convert_dihedral_types(top, structure):
     """Helper function to convert Topology DihedralType to Structure DihedralType
 
     This function will first check the DihedralType expression of Topology and make sure it match with the one default in Parmed.
