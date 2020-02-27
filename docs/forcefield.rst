@@ -1,7 +1,7 @@
 ForceField
 ==========
-A force field class implemented for topology core objects
+A force field class implemented for GMSO core objects
 
-.. autoclass:: topology.ForceField
+.. autoclass:: gmso.ForceField
     :members:
 
