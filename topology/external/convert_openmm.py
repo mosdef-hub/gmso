@@ -87,7 +87,7 @@ def to_system(topology,
 
     Parameters
     ----------
-    topology: `Topology` object, default=None
+    topology : `Topology` object, default=None
         An untyped topology object.
     nonbondedMethod: cutoff method, optional, default=None
         Cutoff method specified for OpenMM system.  
