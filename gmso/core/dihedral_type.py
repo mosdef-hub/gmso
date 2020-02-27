@@ -25,9 +25,13 @@ class DihedralType(Potential):
         See `Potential` documentation for more information
     independent vars : set of str
         See `Potential` documentation for more information
-    member_types : list of gmso.AtomType.name (str)
-    topology: gmso.core.Topology, the topology of which this dihedral type is a part of, default=None
-    set_ref: (str), the string name of the bookkeeping set in topology class.
+    member_types : list-like of str
+        List-like of of gmso.AtomType.name defining the members of this
+        dihedral type
+    topology: gmso.core.Topology, default=None
+        The topology of which this dihedral type is a part of
+    set_ref: str
+        The string name of the bookkeeping set in topology class.
 
     Notes
     ----

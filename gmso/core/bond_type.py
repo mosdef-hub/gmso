@@ -21,13 +21,16 @@ class BondType(Potential):
     Parameters
     ----------
     name : str
+        The name of the potential.
     expression : str or sympy.Expression
         See `Potential` documentation for more information
     parameters : dict {str, unyt.unyt_quantity}
         See `Potential` documentation for more information
     independent vars : set of str
         see `Potential` documentation for more information
-    member_types : list of gmso.AtomType.name (str)
+    member_types : list-like of str
+        List-like of of gmso.AtomType.name defining the members of this
+        bond type
 
     Notes
     ----

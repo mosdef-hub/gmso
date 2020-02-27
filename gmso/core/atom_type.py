@@ -42,15 +42,18 @@ class AtomType(Potential):
     atomclass : str, default=''
         The class of the atomtype
     doi : str
-        Digital Object Identifier of publication where this atom type was specified
+        Digital Object Identifier of publication where this atom type was
+        specified
     desc : str
         Simple description of the atom type
     overrides : set of str
         Set of other atom types that this atom type overrides
     definition : str
         SMARTS string defining this atom type
-    topology: gmso.core.Topology, the topology of which this atom_type is a part of, default=None
-    set_ref: (str), the string name of the bookkeeping set in topology class.
+    topology: gmso.core.Topology, default=None
+        The topology of which this atom_type is a part of, default=None
+    set_ref: str
+        The string name of the bookkeeping set in gmso class.
 
     """
 

@@ -20,16 +20,21 @@ class AngleType(Potential):
 
     Parameters
     ----------
-    name : str
+    name : str, optional
+        A name uniquely representing the angle type
     expression : str or sympy.Expression
         See `Potential` documentation for more information
     parameters : dict {str, unyt.unyt_quantity}
         See `Potential` documentation for more information
     independent vars : set of str
         See `Potential` documentation for more information
-    member_types : list of gmso.AtomType.name (str)
-    gmso: gmso.core.Topology, the gmso of which this angle_type is a part of, default=None
-    set_ref: (str), the string name of the bookkeeping set in gmso class.
+    member_types : list-like of str
+        List-like of of gmso.AtomType.name defining the members of this
+        angle type
+    gmso: gmso.core.Topology, default=None
+        The Topology of which this angle_type is a part of
+    set_ref: str
+        The string name of the bookkeeping set in gmso class.
 
     Notes
     ----
