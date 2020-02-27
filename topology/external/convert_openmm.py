@@ -99,7 +99,7 @@ def to_system(topology,
         The distance at which the switching function is turned on for van der waals interactions.  
         This is ignored when no cutoff is used, and no switch is used if switchDistance is 0, negative, or greater than the cutoff. 
         Float point interpreted in units of nm.
-    constraints: 'None', 'app.HBonds', 'app.HAngles', or 'app.AllBonds'
+    constraints : 'None', 'app.HBonds', 'app.HAngles', or 'app.AllBonds'
         Type of constraints to add to the System (e.g., SHAKE).
     rigidWater: boolean, optional, default=True
         If True, water is kept rigid regardless of constraint values.
