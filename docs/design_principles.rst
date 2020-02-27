@@ -2,16 +2,16 @@
 Design Principles
 =================
 
-Scope and Features of ``Topology``
+Scope and Features of ``GMSO``
 ----------------------------------
 
-``Topology`` is designed to enable the flexible, general representation of
+``GMSO`` is designed to enable the flexible, general representation of
 chemical topologies for molecular simulation. Efforts are made to enable
 lossless, bias-free storage of data, without assuming particular chemistries,
 models, or using any particular engine's ecosystem as a starting point. The
 scope is generally restrained to the preparation, manipulation, and conversion
 of and of input files for molecular simulation, i.e. before engines are called
-to execute the simulations themselves. ``Topology`` currently does not support
+to execute the simulations themselves. ``GMSO`` currently does not support
 conversions between trajectory file formats for analysis codes. In the scope of
 molecular simulation, we loosely define a chemical topology as everything
 needed to reproducibly prepare a chemical system for simulation. This includes
@@ -20,7 +20,7 @@ particle coordinates and connectivity, box information, force field data
 some optional information that may not apply to all systems (i.e. specification
 of elements with each particle).
 
-``Topology`` enables the following features:
+``GMSO`` enables the following features:
 
 * Supporting a variety of models in the molecular simulation/computational
   chemistry community: No assumptions are made about an interaciton site
@@ -40,7 +40,7 @@ of elements with each particle).
 
 
 * Compatibility with existing community tools: No single molecular simulation
-  tool will be a silver bullet, so ``Topology`` includes functions to convert
+  tool will be a silver bullet, so ``GMSO`` includes functions to convert
   objects. These can be used in their own right to convert between objects in
   memory and also to support conversion to file formats not natively support at
   any given time. Currently supported conversions include ``ParmEd``,
@@ -52,10 +52,10 @@ of elements with each particle).
   libraries, for many more!
 
 
-Structure of ``Topology``
+Structure of ``GMSO``
 -------------------------
 There are three main modules within the Python package:
 
-* ``topology.core`` stores the classes that constitute the core data structures.
-* ``topology.formats`` stores readers and writers for (on-disk) file formats.
-* ``topology.external`` includes functions that convert core data structures between external libraries and their internal representation.
+* ``gmso.core`` stores the classes that constitute the core data structures.
+* ``gmso.formats`` stores readers and writers for (on-disk) file formats.
+* ``gmso.external`` includes functions that convert core data structures between external libraries and their internal representation.
