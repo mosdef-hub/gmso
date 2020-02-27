@@ -130,7 +130,7 @@ def to_system(topology,
         If not None, hydrogen masses will be changed to this mass and the difference subtracted from the attached heavy atom (hydrogen mass repartitioning).
     ewaldErrorTolerance: float, default=0.0005
         When using PME or Ewald, the Ewald parameters will be calculated from this value.
-    flexibleConstraints: boolean, optional, default=True
+    flexibleConstraints : boolean, optional, default=True
         If False, the energies and forces from the constrained degrees of freedom will NOT be computed.  
         If True, they will but those degrees of freedom will *still* be constrained).
     verbose: boolean, optional, default=False
