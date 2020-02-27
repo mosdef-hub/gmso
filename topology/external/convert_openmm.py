@@ -110,7 +110,7 @@ def to_system(topology,
         Debye kappa property related to modeling saltware conditions in GB.  
         It should have units of 1/distance (interpreted as 1/nanometers if no units reported).  
         A value of 'None' means that kappa will be calculated from implicitSolventSaltConc.
-    implicitSolventSaltConc: amount/volume unyt array or float, default=0 moles/Liter (moles/dm^3)
+    implicitSolventSaltConc : amount/volume unyt array or float, default=0 moles/Liter (moles/dm^3)
         if implicitSolventKappa is 'None', the kappa will be computed from salt concentration.  
         Units should be compatible with mol/L.
     temperature: temperature unyt array or flow, default=300*u.K 
