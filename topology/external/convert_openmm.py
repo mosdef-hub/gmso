@@ -95,7 +95,7 @@ def to_system(topology,
     nonbondedCutoff : unyt array or float, default=0.8*u.nm
         The nonbonded cutoff must either be a float or a unyt array.  
         Float interpreted in units of nm.
-    switchDistance: unyt array or float, default=0.6*u.nm
+    switchDistance : unyt array or float, default=0.6*u.nm
         The distance at which the switching function is turned on for van der waals interactions.  
         This is ignored when no cutoff is used, and no switch is used if switchDistance is 0, negative, or greater than the cutoff. 
         Float point interpreted in units of nm.
