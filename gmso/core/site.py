@@ -11,8 +11,42 @@ from gmso.exceptions import GMSOError
 
 
 class Site(object):
-    """A general site."""
+    """An interaction site object in the topology hierarchy.
 
+    Site is the object that represents any general interaction site in a molecular simulation.
+    Sites have been designed to be as general as possible, making no assumptions about representing atoms or beads, or having mass or charge.
+    That is, a Site can represent an atom in an atomistic system, a bead in a coarse-grained system, and much more.
+
+    Parameters
+    ----------
+    name : str, optional, default='Site'
+       Name of the site
+    position : unyt array or numpy array or list, optional, default=None
+       The position of the site in Cartesian space.
+       If a unyt array is not passed, units are assumed to be in 'nm'.
+    charge : unyt quantity or float, optional, default=None
+       The charge of the site.
+       Unyt quantities are converted to units of elementary charge, float values are assumed to be in units of elementary charge.  
+       If no value is passed, site attempts to grab a charge from site.atom_type.
+    mass : unyt quantity or float, optional, default=None
+       The mass of the site.  
+       Unyt quantities are converted to units of g/mol, float values are assumed to be in units of g/mol.  
+       If no value is passed, site attempts to grab a mass from site.atom_type.
+    element : 'Element' object, optional, default=None
+       The element of the site represented by the `Element` object.  
+       See `element.py` for more information.
+    atom_type : 'AtomType' object, optional, default=None
+       The atom type of the site containing functional forms, interaction parameters, and other properties such as mass and charge.  
+       See `atom_type.py` for more information.
+
+    Attributes
+    ----------
+    connections : IndexedSet
+       Set that contains connection information for the site
+    n_connections : int
+       Number of connections for the site
+
+    """
     def __init__(self,
                  name='Site',
                  position=None,
