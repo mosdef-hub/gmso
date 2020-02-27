@@ -25,6 +25,7 @@ for name, item in vars(u).items():
     if isinstance(item, u.Unit) or isinstance(item, u.unyt_quantity):
         _unyt_dictionary.update({name: item})
 
+
 def _check_valid_string(type_str):
     if DICT_KEY_SEPARATOR in type_str:
         raise ForceFieldError('Please do not use {} in type string'.format(DICT_KEY_SEPARATOR))
@@ -38,7 +39,7 @@ def _parse_param_units(parent_tag):
     return param_unit_dict
 
 
-def _parse_params_values(parent_tag, units_dict, child_tag):
+def _parse_params_values(parent_tag, units_dict, child_tag, expression=None):
     # Tag of type Parameters can exist atmost once
     params_dict = {}
     if parent_tag.find('Parameters') is None:
@@ -52,8 +53,10 @@ def _parse_params_values(parent_tag, units_dict, child_tag):
         params_dict[param_name] = param_value
     param_ref_dict = units_dict
     if child_tag == 'DihedralType':
-        _consolidate_params(params_dict)
-        param_ref_dict = _consolidate_params(units_dict, update_orig=False)
+        if not expression:
+            raise ForceFieldError('Cannot consolidate parameters without an expression')
+        _consolidate_params(params_dict, expression)
+        param_ref_dict = _consolidate_params(units_dict, expression, update_orig=False)
 
     for param in param_ref_dict:
         if param not in params_dict:
@@ -62,11 +65,12 @@ def _parse_params_values(parent_tag, units_dict, child_tag):
     return params_dict
 
 
-def _consolidate_params(params_dict, update_orig=True):
+def _consolidate_params(params_dict, expression, update_orig=True):
     to_del = []
     new_dict = {}
+    match_string = '|'.join(str(symbol) for symbol in sympify(expression).free_symbols)
     for param in params_dict:
-        match = re.match(r"([a-z]+)([0-9]+)", param, re.IGNORECASE)
+        match = re.match(r"({0})([0-9]+)".format(match_string), param)
         if match:
             new_dict[match.groups()[0]] = new_dict.get(match.groups()[0], [])
             new_dict[match.groups()[0]].append(params_dict[param])
@@ -225,7 +229,11 @@ def parse_ff_connection_types(connectiontypes_el, atomtypes_dict, child_tag='Bon
 
         ctor_kwargs['member_types'] = _check_valid_atomtype_names(connection_type, atomtypes_dict)
         if not ctor_kwargs['parameters']:
-            ctor_kwargs['parameters'] = _parse_params_values(connection_type, param_unit_dict, child_tag)
+            ctor_kwargs['parameters'] = _parse_params_values(connection_type,
+                                                             param_unit_dict,
+                                                             child_tag,
+                                                             ctor_kwargs['expression'])
+
         valued_param_vars = set(sympify(param) for param in ctor_kwargs['parameters'].keys())
         ctor_kwargs['independent_variables'] = sympify(connectiontype_expression).free_symbols - valued_param_vars
         this_conn_type_key = DICT_KEY_SEPARATOR.join(ctor_kwargs['member_types'])
@@ -233,6 +241,7 @@ def parse_ff_connection_types(connectiontypes_el, atomtypes_dict, child_tag='Bon
         connectiontypes_dict[this_conn_type_key] = this_conn_type
 
     return connectiontypes_dict
+
 
 def _parse_unit_string(string):
     """
@@ -261,4 +270,3 @@ def _parse_unit_string(string):
             unyt_subs.append((symbol.name, symbol_unit.units.get_base_equivalent().expr))
 
     return u.Unit(float(expr.subs(sympy_subs)) * u.Unit(str(expr.subs(unyt_subs))))
-
