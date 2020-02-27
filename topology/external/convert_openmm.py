@@ -141,7 +141,7 @@ def to_system(topology,
 
     Returns
     -------
-    openmm_system: A typed OpenMM System object
+    openmm_system : A typed OpenMM System object
 
     """
 
