@@ -86,3 +86,13 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
+
+# GROMACS files
+*.cpt
+*.edr
+*.xtc
+*.trr
+*.tpr
+
+# LAMMPS files
+*.lammpstrj
