@@ -92,7 +92,7 @@ def to_system(topology,
     nonbondedMethod : cutoff method, optional, default=None
         Cutoff method specified for OpenMM system.  
         Options supported are 'NoCutoff', 'CutoffNonPeriodic', 'CutoffPeriodic', 'PME', or Ewald objects from simtk.openmm.app.
-    nonbondedCutoff: unyt array or float, default=0.8*u.nm
+    nonbondedCutoff : unyt array or float, default=0.8*u.nm
         The nonbonded cutoff must either be a float or a unyt array.  
         Float interpreted in units of nm.
     switchDistance: unyt array or float, default=0.6*u.nm
