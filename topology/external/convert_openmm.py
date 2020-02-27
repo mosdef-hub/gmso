@@ -106,7 +106,7 @@ def to_system(topology,
         False value is overriden if constraints is not None
     implicitSolvent : 'None', 'app.HCT', 'app.OBC1', 'app.OBC2', 'app.GBn', 'app.GBn2'. Default=None
         The Generalized Born implicit solvent model to use.
-    implicitSolventKappa: 1/distance unyt array or float, default=None
+    implicitSolventKappa : 1/distance unyt array or float, default=None
         Debye kappa property related to modeling saltware conditions in GB.  
         It should have units of 1/distance (interpreted as 1/nanometers if no units reported).  
         A value of 'None' means that kappa will be calculated from implicitSolventSaltConc.
