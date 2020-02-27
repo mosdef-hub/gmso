@@ -1,0 +1,114 @@
+<ForceField version="0.4.1" name="ForceFieldOne">
+    <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.67">
+        <Units energy="K*kb" distance="nm" mass="amu" charge="coulomb"/>
+    </FFMetaData>
+    <AtomTypes expression="(A1*exp(-B/r) - C/r**6)">
+        <ParametersUnitDef parameter="A1" unit="kcal/mol"/>
+        <ParametersUnitDef parameter="B" unit="nm"/>
+        <ParametersUnitDef parameter="C" unit="kcal/mol*nm**6"/>
+        <AtomType name="Ar" element="Ar" charge="0.0" mass="39.948" definition="Ar" description="Argon atom">
+            <Parameters>
+                <Parameter name="A1" value="0.1"/>
+                <Parameter name="B" value="4.0"/>
+                <Parameter name="C" value="0.5"/>
+            </Parameters>
+        </AtomType>
+        <AtomType name="Xe" element="Xe" charge="0.0" mass="131.293" definition="Xe" description="Xenon atom">
+            <Parameters>
+                <Parameter name="A1" value="0.2"/>
+                <Parameter name="B" value="5.0"/>
+                <Parameter name="C" value="0.3"/>
+            </Parameters>
+        </AtomType>
+        <AtomType name="Li" element="Li" charge="1.0" mass="6.941" definition="Li" description="Lithium atom">
+            <Parameters>
+                <Parameter name="A1" value="0.2"/>
+                <Parameter name="B" value="5.0"/>
+                <Parameter name="C" value="0.3"/>
+            </Parameters>
+        </AtomType>
+    </AtomTypes>
+        <AtomTypes expression="(K*exp(K*r) - L2*r**25)">
+        <ParametersUnitDef parameter="K" unit="kcal/mol"/>
+        <ParametersUnitDef parameter="L2" unit="nm"/>
+        <AtomType name="Ar2" element="Ar" charge="0.0" mass="39.948" definition="Ar" description="Argon atom">
+            <Parameters>
+                <Parameter name="K" value="0.1"/>
+                <Parameter name="L2" value="4.0"/>
+            </Parameters>
+        </AtomType>
+        <AtomType name="Xe2" element="Xe" charge="0.0" mass="131.293" definition="Xe" description="Xenon atom">
+            <Parameters>
+                <Parameter name="K" value="0.2"/>
+                <Parameter name="L2" value="5.0"/>
+            </Parameters>
+        </AtomType>
+        <AtomType name="Li2" element="Li" charge="1.0" mass="6.941" definition="Li" description="Lithium atom">
+            <Parameters>
+                <Parameter name="K" value="0.2"/>
+                <Parameter name="L2" value="5.0"/>
+            </Parameters>
+        </AtomType>
+    </AtomTypes>
+    <BondTypes expression="0.5 * k * (r-r_eq)**2">
+        <ParametersUnitDef parameter="r_eq" unit="nm"/>
+        <ParametersUnitDef parameter="k" unit="kJ/mol"/>
+        <BondType name="BondType1" type1='Ar' type2='Ar'>
+            <Parameters>
+                <Parameter name='r_eq' value="10.0"/>
+                <Parameter name='k' value="10000"/>
+            </Parameters>
+        </BondType>
+        <BondType name="BondType2" type1='Xe2' type2="Li2">
+            <Parameters>
+                <Parameter name='r_eq' value="10"/>
+                <Parameter name='k' value="20000"/>
+            </Parameters>
+        </BondType>
+    </BondTypes>
+
+    <AngleTypes expression="0.5 * z * (r-r_eq)**2">
+        <ParametersUnitDef parameter="r_eq" unit="nm"/>
+        <ParametersUnitDef parameter="z" unit="kJ/mol"/>
+        <AngleType name="AngleType1" type1='Ar' type2='Ar' type3="Ar">
+            <Parameters>
+                <Parameter name='r_eq' value="10.0"/>
+                <Parameter name='z' value="100"/>
+            </Parameters>
+        </AngleType>
+        <AngleType name="AngleType2" type1='Xe' type2="Xe" type3="Xe">
+            <Parameters>
+                <Parameter name='r_eq' value="10"/>
+                <Parameter name='z' value="20"/>
+            </Parameters>
+        </AngleType>
+    </AngleTypes>
+
+    <DihedralTypes expression="0.5 * z * (r-r_eq)**2">
+        <ParametersUnitDef parameter="r_eq" unit="nm"/>
+        <ParametersUnitDef parameter="z" unit="kJ/mol"/>
+        <ParametersUnitDef parameter="r_eq1" unit="nm"/>
+        <ParametersUnitDef parameter="z1" unit="kJ/mol"/>
+        <ParametersUnitDef parameter="r_eq2" unit="nm"/>
+        <ParametersUnitDef parameter="z2" unit="kJ/mol"/>
+        <ParametersUnitDef parameter="r_eq3" unit="nm"/>
+        <ParametersUnitDef parameter="z3" unit="kJ/mol"/>
+        <DihedralType name="DihedralType1" type1='Ar' type2='Ar' type3="Ar" type4="Ar">
+            <Parameters>
+                <Parameter name='r_eq' value="10.0"/>
+                <Parameter name='z' value="100"/>
+            </Parameters>
+        </DihedralType>
+        <DihedralType name="DihedralType2" type1='Xe2' type2="Xe2" type3="Xe2" type4="Xe2">
+            <Parameters>
+                <Parameter name='r_eq1' value="10"/>
+                <Parameter name='z1' value="20"/>
+                <Parameter name='r_eq2' value="10"/>
+                <Parameter name='z2' value="20"/>
+                <Parameter name='r_eq3' value="10"/>
+                <Parameter name='z3' value="20"/>
+            </Parameters>
+        </DihedralType>
+    </DihedralTypes>
+
+</ForceField>
