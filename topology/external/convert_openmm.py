@@ -116,7 +116,7 @@ def to_system(topology,
     temperature : temperature unyt array or flow, default=300*u.K 
         This is only used to compute kappa from implicitySolventSaltConc.  
         If not unit given, temperature will be interpreted in units of Kelvin.
-    soluteDielectric: float, default=1.0
+    soluteDielectric : float, default=1.0
         The dielectric constant of protein interior used in GB.
     solventDielectric: float, default=78.5
         The dielectric constant of water used in GB
