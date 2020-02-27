@@ -36,11 +36,11 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
     compound : mbuild.Compound
         mbuild.Compound instance that need to be converted
     box : mbuild.Box, optional, default=None
-        Box information to be loaded to a gmso.Topologly
+        Box information to be loaded to a gmso.Topology
     search_method : function, optional, default=element_by_symbol
         Searching method used to assign element from periodic table to particle site.
         The information specified in the `search_method` argument is extracted from each `Particle`'s `name` attribute.
-        Valid functions are element_by_symbol, element_by_name, element_by_atomic_number, and element_by_mass.
+        Valid functions are element_by_symbol, element_by_name, element_by_atomic_number, and element_by_mass, which can be imported from `gmso.core.element'
 
 
     Returns
@@ -48,7 +48,7 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
     top : gmso.Topology
     """
 
-    msg = ("Provided argument that is not an mbuild Compound")
+    msg = ("Argument compound is not an mbuild.Compound")
     assert isinstance(compound, mb.Compound), msg
 
     top = Topology()
@@ -128,7 +128,7 @@ def to_mbuild(topology):
     compound : mbuild.Compound
     """
 
-    msg = ("Provided argument that is not a topology")
+    msg = ("Argument topology is not a Topology")
     assert isinstance(topology, Topology), msg
 
     compound = mb.Compound()
@@ -152,7 +152,7 @@ def to_mbuild(topology):
     return compound
 
 def from_mbuild_box(mb_box):
-    """Convert an mBuild box to a gmso.core.Box
+    """Convert an mBuild box to a GMSO box
     Assumes that the mBuild box dimensions are in nanometers
 
     Parameters
@@ -164,6 +164,7 @@ def from_mbuild_box(mb_box):
     --------
     box : gmso.core.Box
     """
+
     # TODO: Unit tests
 
     if not isinstance(mb_box, mb.Box):
