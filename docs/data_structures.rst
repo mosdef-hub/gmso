@@ -1,9 +1,19 @@
 Data Structures in GMSO 
 ---------------------------
-Following data structures are available within GMSO, which are generally referred to  `CoreMembers` and `CoreTypes`.
+Following data structures are available within GMSO.
 
-Core Members
-=============
+Core Classes
+============
+
+Topology
+********
+    .. autoclass:: gmso.Topology
+        :members:
+
+SubTopology
+***********
+    .. autoclass:: gmso.SubTopology
+        :members:
 
 Site
 ****
@@ -25,8 +35,9 @@ Dihedral
     .. autoclass:: gmso.Dihedral
         :members:
 
-Potential Classes(CoreTypes)
-============================
+
+Potential Classes
+=================
     .. autoclass:: gmso.Potential
         :members:
 
@@ -55,3 +66,5 @@ ForceField
 ==========
     .. autoclass:: gmso.ForceField
         :members:
+
+:

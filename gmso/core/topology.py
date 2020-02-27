@@ -19,10 +19,79 @@ from gmso.exceptions import GMSOError
 class Topology(object):
     """A topology.
 
+    A topology represents a chemical structure wherein lie the collection
+    of sites(associated with an atom/residue) which
+    together form a chemical structure containing gmso.Bond, gmso.Angle
+    and gmso.Dihedral (along with the associated types). A topology
+    is the fundamental data-structure in GMSO, from which we can gather
+    various information about the chemical structure and apply a forcefield
+    before converting the structure into a format familiar to various simulation
+    engines.
+
     Parameters
     ----------
-    name : str, optional
+    name : str, optional, default='Topology'
         A name for the Topology.
+    box: gmso.Box, optional, default=None
+        A gmso.Box object bounding the topology
+
+    Attributes
+    ----------
+    typed: bool
+        True if the topology is typed
+
+    combining_rule: str,     ['lorentz', 'geometric']
+        The combining rule for the topology, can be either 'lorentz' or 'geometric'
+
+    n_sites: int
+        Number of sites in the topology
+
+    n_connections: int
+        Number of connections in the topology (Atoms, Bonds, Angles, Dihedrals)
+
+    n_bonds: int
+        Number of bonds in the topology
+
+    n_angles: int
+        Number of angles in the topology
+
+    n_dihedrals: int
+        Number of dihedrals in the topology
+
+    n_subtops: int
+        Number of subtopolgies in the topology
+
+    connections: tuple of gmso.Connection objects
+        A collection of bonds, angles and dihedrals in the topology
+
+    bonds: tuple of gmso.Bond objects
+        A collection of bonds in the topology
+
+    dihedrals: tuple of gmso.Dihedral objects
+        A collection of dihedrals in the topology
+
+    connection_types: tuple of gmso.Potential objects
+        A collection of AtomTypes, BondTypes, AngleTypes and DihedralTypes in the topology
+
+    atom_types: tuple of gmso.AtomType objects
+        A collection of AtomTypes in the topology
+
+    bond_types: tuple of gmso.BondType objects
+        A collection of BondTypes in the topology
+
+    angle_types: tuple of gmso.AngleType objects
+        A collection go AngleTypes in the topology
+
+    dihedral_types: tuple of gmso.DihedralType objects
+        A collection of DihedralTypes in the topology
+
+
+
+
+    See Also
+    --------
+    gmso.SubTopology:
+        A topology within a topology
     """
     def __init__(self, name="Topology", box=None):
         if name is not None:
@@ -181,14 +250,14 @@ class Topology(object):
         return list(set([atype.expression for atype in self.dihedral_types]))
 
     def add_site(self, site, update_types=True):
-        """Add the site to the topology
+        """Add a site to the topology
+
         Parameters
         -----------
-        site: (gmso.core.Site), site to be added to this topology
-        update_types: (bool), default(true), If true, update atom types for the site
-        Returns
-        -------
-        None
+        site: gmso.core.Site
+            Site to be added to this topology
+        update_types: (bool), default=True
+            If true, update atom types for the site
         """
         self._sites.add(site)
         if update_types and site.atom_type:

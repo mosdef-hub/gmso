@@ -8,6 +8,7 @@ from gmso.core.site import Site
 
 class SubTopology(object):
     """A sub-topology."""
+
     def __init__(self, name="Sub-Topology", parent=None):
         if name is not None:
             self._name = str(name)
