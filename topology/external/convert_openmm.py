@@ -133,7 +133,7 @@ def to_system(topology,
     flexibleConstraints : boolean, optional, default=True
         If False, the energies and forces from the constrained degrees of freedom will NOT be computed.  
         If True, they will but those degrees of freedom will *still* be constrained).
-    verbose: boolean, optional, default=False
+    verbose : boolean, optional, default=False
         If True, the progress of this subroutine will be printed to stdout.
     splitDihedrals: boolean, optional, default=False
         If True, the dihedrals will be split into two forces -- propers and impropers.  
