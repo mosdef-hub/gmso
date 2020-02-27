@@ -8,24 +8,36 @@ from gmso.utils._constants import BOND_TYPE_DICT
 
 
 class BondType(Potential):
-    """A Potential between 2-bonded partners.
+    """A descripton of the interaction between 2 bonded partners.
+
+    This is a subclass of the gmso.core.Potential superclass.
+
+    BondType represents a bond type and includes the functional form describing
+    its interactions. The functional form of the potential is stored as a
+    `sympy` expression and the parameters, with units, are stored explicitly.
+    The AtomTypes that are used to define the bond type are stored as
+    `member_types`.
 
     Parameters
     ----------
     name : str
+        The name of the potential.
     expression : str or sympy.Expression
         See `Potential` documentation for more information
     parameters : dict {str, unyt.unyt_quantity}
         See `Potential` documentation for more information
     independent vars : set of str
         see `Potential` documentation for more information
-    member_types : list of gmso.AtomType.name (str)
+    member_types : list-like of str
+        List-like of of gmso.AtomType.name defining the members of this
+        bond type
 
     Notes
     ----
     Inherits many functions from gmso.Potential:
         __eq__, _validate functions
-        """
+
+    """
 
     def __init__(self,
                  name='BondType',
@@ -73,7 +85,7 @@ class BondType(Potential):
 
 
 def _validate_two_member_type_names(types):
-    """Ensure 2 partners are involved in BondType"""
+    """Ensure exactly 2 partners are involved in BondType"""
     if len(types) != 2 and len(types) != 0:
         raise GMSOError("Trying to create a BondType "
                             "with {} constituent types".format(len(types)))

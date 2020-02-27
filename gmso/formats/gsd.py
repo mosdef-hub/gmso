@@ -27,6 +27,10 @@ def write_gsd(top,
               write_special_pairs=True):
     """Output a GSD file (HOOMD v2 default data format).
 
+    The `GSD` binary file format is the native format of HOOMD-Blue. This file
+    can be used as a starting point for a HOOMD-Blue simulation, for analysis,
+    and for visualization in various tools.
+
     Parameters
     ----------
     top : gmso.Topology
@@ -40,20 +44,20 @@ def write_gsd(top,
     ref_energy : float, optional, default=1.0
         Reference energy for conversion to reduced units
     rigid_bodies : list of int, optional, default=None
-        List of rigid body information. An integer value is required for
-        each atom corresponding to the index of the rigid body the particle
-        is to be associated with. A value of None indicates the atom is not
-        part of a rigid body.
+        List of rigid body information. An integer value is required for each
+        atom corresponding to the index of the rigid body the particle is to be
+        associated with. A value of None indicates the atom is not part of a
+        rigid body.
     shift_coords : bool, optional, default=True
         Shift coordinates from (0, L) to (-L/2, L/2) if necessary.
     write_special_pairs : bool, optional, default=True
-        Writes out special pair information necessary to correctly use the OPLS fudged 1,4 interactions
-        in HOOMD.
+        Writes out special pair information necessary to correctly use the OPLS
+        fudged 1,4 interactions in HOOMD.
 
     Notes
     -----
     Force field parameters are not written to the GSD file and must be included
-    manually into a HOOMD input script. Work on a HOOMD plugin is underway to
+    manually in a HOOMD input script. Work on a HOOMD plugin is underway to
     read force field parameters from a Foyer XML file.
 
     """
@@ -103,9 +107,7 @@ def write_gsd(top,
 
 def _write_particle_information(gsd_snapshot, top, xyz, ref_distance, ref_mass,
                                 ref_energy, rigid_bodies):
-    """Write out the particle information.
-
-    """
+    """Write out the particle information."""
 
     gsd_snapshot.particles.N = top.n_sites
     warnings.warn("{} particles detected".format(top.n_sites))
@@ -149,7 +151,7 @@ def _write_particle_information(gsd_snapshot, top, xyz, ref_distance, ref_mass,
 
 
 def _write_pair_information(gsd_snapshot, top):
-    """[NOT IMPLEMENTED FOR TOPOLOGY YET] Write the special pairs in the system.
+    """Write the special pairs in the system.
 
         Parameters
     ----------
@@ -157,6 +159,11 @@ def _write_pair_information(gsd_snapshot, top):
         The file object of the GSD file being written
     structure : parmed.Structure
         Parmed structure object holding system information
+
+    Warnings
+    --------
+    Not yet implemented for `gmso.core.topology` objects.
+
     """
     #pair_types = []
     #pair_typeid = []
@@ -225,7 +232,7 @@ def _write_bond_information(gsd_snapshot, top):
 
 
 def _write_angle_information(gsd_snapshot, structure):
-    """[NOT IMPLEMENTED] Write the angles in the system.
+    """Write the angles in the system.
 
     Parameters
     ----------
@@ -233,6 +240,10 @@ def _write_angle_information(gsd_snapshot, structure):
         The file object of the GSD file being written
     structure : parmed.Structure
         Parmed structure object holding system information
+
+    Warnings
+    --------
+    Not yet implemented for gmso.core.topology objects
 
     """
 
@@ -263,7 +274,7 @@ def _write_angle_information(gsd_snapshot, structure):
 
 
 def _write_dihedral_information(gsd_snapshot, structure):
-    """[NOT IMPLEMENTED] Write the dihedrals in the system.
+    """Write the dihedrals in the system.
 
     Parameters
     ----------
@@ -271,6 +282,10 @@ def _write_dihedral_information(gsd_snapshot, structure):
         The file object of the GSD file being written
     structure : parmed.Structure
         Parmed structure object holding system information
+
+    Warnings
+    --------
+    Not yet implemented for gmso.core.topology objects
 
     """
 

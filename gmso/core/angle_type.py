@@ -8,25 +8,39 @@ from gmso.utils._constants import ANGLE_TYPE_DICT
 
 
 class AngleType(Potential):
-    """A Potential between 3-bonded partners.
+    """A descripton of the interaction between 3 bonded partners.
+
+    This is a subclass of the gmso.core.Potential superclass.
+
+    AngleType represents an angle type and includes the functional form
+    describing its interactions. The functional form of the potential is stored
+    as a `sympy` expression and the parameters, with units, are stored
+    explicitly.  The AtomTypes that are used to define the angle type are
+    stored as `member_types`.
 
     Parameters
     ----------
-    name : str
+    name : str, optional
+        A name uniquely representing the angle type
     expression : str or sympy.Expression
         See `Potential` documentation for more information
     parameters : dict {str, unyt.unyt_quantity}
         See `Potential` documentation for more information
     independent vars : set of str
         See `Potential` documentation for more information
-    member_types : list of gmso.AtomType.name (str)
-    gmso: gmso.core.Topology, the gmso of which this angle_type is a part of, default=None
-    set_ref: (str), the string name of the bookkeeping set in gmso class.
+    member_types : list-like of str
+        List-like of of gmso.AtomType.name defining the members of this
+        angle type
+    gmso: gmso.core.Topology, default=None
+        The Topology of which this angle_type is a part of
+    set_ref: str
+        The string name of the bookkeeping set in gmso class.
 
     Notes
     ----
     Inherits many functions from gmso.Potential:
         __eq__, _validate functions
+
     """
 
     def __init__(self,
@@ -73,7 +87,7 @@ class AngleType(Potential):
 
 
 def _validate_three_member_type_names(types):
-    """Ensure 3 partners are involved in AngleType"""
+    """Ensure exactly 3 partners are involved in AngleType"""
     if len(types) != 3 and len(types) != 0:
         raise GMSOError("Trying to create an AngleType "
                             "with {} constituent types".format(len(types)))
