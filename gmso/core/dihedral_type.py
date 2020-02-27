@@ -33,6 +33,7 @@ class DihedralType(Potential):
     ----
     Inherits many functions from gmso.Potential:
         __eq__, _validate functions
+
     """
 
     def __init__(self,
