@@ -104,7 +104,7 @@ def to_system(topology,
     rigidWater : boolean, optional, default=True
         If True, water is kept rigid regardless of constraint values.
         False value is overriden if constraints is not None
-    implicitSolvent: 'None', 'app.HCT', 'app.OBC1', 'app.OBC2', 'app.GBn', 'app.GBn2'. Default=None
+    implicitSolvent : 'None', 'app.HCT', 'app.OBC1', 'app.OBC2', 'app.GBn', 'app.GBn2'. Default=None
         The Generalized Born implicit solvent model to use.
     implicitSolventKappa: 1/distance unyt array or float, default=None
         Debye kappa property related to modeling saltware conditions in GB.  
