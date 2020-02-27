@@ -120,7 +120,7 @@ def to_system(topology,
         The dielectric constant of protein interior used in GB.
     solventDielectric : float, default=78.5
         The dielectric constant of water used in GB
-    useSASA: boolean, default=False
+    useSASA : boolean, default=False
         If True, use the ACE non-polar solvation model.  
         Otherwise, no SASA-based nonpolar solvation model is used.
     removeCMMotion: boolean, default=True
