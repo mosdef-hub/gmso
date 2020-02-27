@@ -27,8 +27,9 @@ def write_gsd(top,
               write_special_pairs=True):
     """Output a GSD file (HOOMD v2 default data format).
 
-    The `GSD` binary file format is the native format of HOOMD-Blue.
-    This file can be used as a starting point for a HOOMD-Blue simulation, for analysis, and for visualization in various tools.
+    The `GSD` binary file format is the native format of HOOMD-Blue. This file
+    can be used as a starting point for a HOOMD-Blue simulation, for analysis,
+    and for visualization in various tools.
 
     Parameters
     ----------
@@ -43,15 +44,15 @@ def write_gsd(top,
     ref_energy : float, optional, default=1.0
         Reference energy for conversion to reduced units
     rigid_bodies : list of int, optional, default=None
-        List of rigid body information. An integer value is required for
-        each atom corresponding to the index of the rigid body the particle
-        is to be associated with. A value of None indicates the atom is not
-        part of a rigid body.
+        List of rigid body information. An integer value is required for each
+        atom corresponding to the index of the rigid body the particle is to be
+        associated with. A value of None indicates the atom is not part of a
+        rigid body.
     shift_coords : bool, optional, default=True
         Shift coordinates from (0, L) to (-L/2, L/2) if necessary.
     write_special_pairs : bool, optional, default=True
-        Writes out special pair information necessary to correctly use the OPLS fudged 1,4 interactions
-        in HOOMD.
+        Writes out special pair information necessary to correctly use the OPLS
+        fudged 1,4 interactions in HOOMD.
 
     Notes
     -----
@@ -106,9 +107,7 @@ def write_gsd(top,
 
 def _write_particle_information(gsd_snapshot, top, xyz, ref_distance, ref_mass,
                                 ref_energy, rigid_bodies):
-    """Write out the particle information.
-
-    """
+    """Write out the particle information."""
 
     gsd_snapshot.particles.N = top.n_sites
     warnings.warn("{} particles detected".format(top.n_sites))
