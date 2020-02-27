@@ -113,7 +113,7 @@ def to_system(topology,
     implicitSolventSaltConc : amount/volume unyt array or float, default=0 moles/Liter (moles/dm^3)
         if implicitSolventKappa is 'None', the kappa will be computed from salt concentration.  
         Units should be compatible with mol/L.
-    temperature: temperature unyt array or flow, default=300*u.K 
+    temperature : temperature unyt array or flow, default=300*u.K 
         This is only used to compute kappa from implicitySolventSaltConc.  
         If not unit given, temperature will be interpreted in units of Kelvin.
     soluteDielectric: float, default=1.0
