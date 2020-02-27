@@ -118,7 +118,7 @@ def to_system(topology,
         If not unit given, temperature will be interpreted in units of Kelvin.
     soluteDielectric : float, default=1.0
         The dielectric constant of protein interior used in GB.
-    solventDielectric: float, default=78.5
+    solventDielectric : float, default=78.5
         The dielectric constant of water used in GB
     useSASA: boolean, default=False
         If True, use the ACE non-polar solvation model.  
