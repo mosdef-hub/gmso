@@ -1,4 +1,5 @@
 import warnings
+
 import sympy
 import unyt as u
 
@@ -210,6 +211,7 @@ class Potential(object):
 
 
 def _validate_parameters(parameters):
+    """Check to see that parameters is a valid dictionary with units"""
     if not isinstance(parameters, dict):
         raise ValueError("Please enter dictionary for parameters")
     for key, val in parameters.items():
@@ -227,6 +229,7 @@ def _validate_parameters(parameters):
 
 
 def _validate_independent_variables(indep_vars):
+    """Check to see that independent_variables is a set of valid sympy symbols"""
     if isinstance(indep_vars, str):
         indep_vars = {sympy.symbols(indep_vars)}
     elif isinstance(indep_vars, sympy.symbol.Symbol):
@@ -249,6 +252,7 @@ def _validate_independent_variables(indep_vars):
 
 
 def _validate_expression(expression):
+    """Check to see that an expression is a valid sympy expression"""
     if expression is None or isinstance(expression, sympy.Expr):
         pass
     elif isinstance(expression, str):
