@@ -101,7 +101,7 @@ def to_system(topology,
         Float point interpreted in units of nm.
     constraints : 'None', 'app.HBonds', 'app.HAngles', or 'app.AllBonds'
         Type of constraints to add to the System (e.g., SHAKE).
-    rigidWater: boolean, optional, default=True
+    rigidWater : boolean, optional, default=True
         If True, water is kept rigid regardless of constraint values.
         False value is overriden if constraints is not None
     implicitSolvent: 'None', 'app.HCT', 'app.OBC1', 'app.OBC2', 'app.GBn', 'app.GBn2'. Default=None
