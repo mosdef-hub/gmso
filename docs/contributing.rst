@@ -8,7 +8,7 @@ Features
 --------
 Implement functionality in a general and flexible fashion
 *********************************************************
-gmso is designed to be general and flexible, not limited to single chemistries, file formats, simulation engines, or
+GMSO is designed to be general and flexible, not limited to single chemistries, file formats, simulation engines, or
 simulation methods. Additions to core features should attempt to provide something that is applicable to a variety of
 use-cases and not targeted at only the focus area of your research. However, some specific features targeted toward
 a limited use case may be appropriate. Speak to the developers before writing your code and they will help you make design
@@ -37,7 +37,7 @@ It is important to have a consistent style throughout the source code. The follo
 * Lines do not end with whitespace
 * For other details, refer to `PEP8 <https://www.python.org/dev/peps/pep-0008>`_
 
-To help with the above, there are tools such as `flake8 <https://pypi.org/project/flake8/>`_ and `Black <https://github.com/ambv/black>`_.
+To help with the above, there are tools such as `flake8 <https://pypi.org/project/flake8/>`_ and `Black <https://github.com/psf/black>`_.
 
 Document code with comments
 ****************************
@@ -50,7 +50,7 @@ Tests
 -----
 Write unit tests
 ****************
-All new functionality in gmso should be tested with automatic unit tests that execute in a few seconds. These tests
+All new functionality in GMSO should be tested with automatic unit tests that execute in a few seconds. These tests
 should attempt to cover all options that the user can select. All or most of the added lines of source code should be
 covered by unit test(s). We currently use `pytest <https://docs.pytest.org/en/latest/>`_, which can be executed simply by calling
 `pytest` from the root directory of the package.
