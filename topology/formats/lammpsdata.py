@@ -21,7 +21,7 @@ def write_lammpsdata(topology, filename, atom_style='full'):
         A Topology Object
     filename : str
         Path of the output file
-    atom_style: str, optional, default='full'
+    atom_style : str, optional, default='full'
         Defines the style of atoms to be saved in a LAMMPS data file.
         The following atom styles are currently supported: 'full', 'atomic', 'charge', 'molecular'
         see http://lammps.sandia.gov/doc/atom_style.html for more information on atom styles.
