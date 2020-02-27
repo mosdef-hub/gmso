@@ -72,8 +72,9 @@ class ForceField(object):
         atomclass_dict = {}
         for atom_type in atom_types:
             if atom_type.atomclass is not None:
-                this_atomtype_class_group = atomclass_dict.get(atom_type.atomclass, [])
-                this_atomtype_class_group.append(atom_type)
+                atomclass_group = atomclass_dict.get(atom_type.atomclass, [])
+                atomclass_group.append(atom_type)
+                atomclass_dict[atom_type.atomclass] = atomclass_group
         return atomclass_dict
 
     @classmethod
