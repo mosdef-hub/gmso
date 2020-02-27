@@ -25,6 +25,7 @@ for name, item in vars(u).items():
     if isinstance(item, u.Unit) or isinstance(item, u.unyt_quantity):
         _unyt_dictionary.update({name: item})
 
+
 def _check_valid_string(type_str):
     if DICT_KEY_SEPARATOR in type_str:
         raise ForceFieldError('Please do not use {} in type string'.format(DICT_KEY_SEPARATOR))
@@ -69,7 +70,7 @@ def _consolidate_params(params_dict, expression, update_orig=True):
     new_dict = {}
     match_string = '|'.join(str(symbol) for symbol in sympify(expression).free_symbols)
     for param in params_dict:
-        match = re.match(r"({0})([0-9]+)".format(match_string), param, re.IGNORECASE)
+        match = re.match(r"({0})([0-9]+)".format(match_string), param)
         if match:
             new_dict[match.groups()[0]] = new_dict.get(match.groups()[0], [])
             new_dict[match.groups()[0]].append(params_dict[param])

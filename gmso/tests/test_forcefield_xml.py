@@ -21,8 +21,8 @@ class TestForceFieldFromXML(BaseTest):
         return ForceField(get_path('topology-charmm.xml'))
 
     @pytest.fixture
-    def pdihedrals_alphanum_ff(self):
-        return ForceField(get_path('ff-example-alphanumsymb-pdihedrals.xml'))
+    def opls_charm_buck_ff(self):
+        return ForceField(get_path('opls_charmm_buck.xml'))
 
     def test_ff_name_version_from_xml(self, ff):
         assert ff.name == 'ForceFieldOne'
@@ -140,8 +140,9 @@ class TestForceFieldFromXML(BaseTest):
         elementary_charge = ff.atom_types['Li'].charge.to(u.elementary_charge)
         assert elementary_charge.units == u.Unit(u.elementary_charge)
 
-    def test_ff_periodic_dihedrals_from_alphanumeric_symbols(self, pdihedrals_alphanum_ff):
-        ff = pdihedrals_alphanum_ff
-        assert 'A1' in ff.atom_types['Ar'].parameters
-        assert len(ff.dihedral_types['Xe2~Xe2~Xe2~Xe2'].parameters['r_eq']) == 3
-        assert len(ff.dihedral_types['Xe2~Xe2~Xe2~Xe2'].parameters['z']) == 3
+    def test_ff_periodic_dihedrals_from_alphanumeric_symbols(self, opls_charm_buck_ff):
+        ff = opls_charm_buck_ff
+        assert 'A' in ff.atom_types['buck_O'].parameters
+        with pytest.raises(TypeError):
+            assert len(ff.dihedral_types['opls_140~*~*~opls_140'].parameters['c0'])
+        assert len(ff.dihedral_types['NH2~CT1~C~O'].parameters['delta']) == 1
