@@ -89,7 +89,7 @@ def to_system(topology,
     ----------
     topology : `Topology` object, default=None
         An untyped topology object.
-    nonbondedMethod: cutoff method, optional, default=None
+    nonbondedMethod : cutoff method, optional, default=None
         Cutoff method specified for OpenMM system.  
         Options supported are 'NoCutoff', 'CutoffNonPeriodic', 'CutoffPeriodic', 'PME', or Ewald objects from simtk.openmm.app.
     nonbondedCutoff: unyt array or float, default=0.8*u.nm
