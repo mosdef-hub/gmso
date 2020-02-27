@@ -1,5 +1,5 @@
 from .core.topology import Topology
-from .core.topology import SubTopology
+from .core.subtopology import SubTopology
 from .core.element import Element
 from .core.box import Box
 
