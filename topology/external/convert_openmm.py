@@ -126,7 +126,7 @@ def to_system(topology,
     removeCMMotion : boolean, default=True
         If True, the center-of-mass motion will be removed periodically during the simulation.  
         If False, it will not.
-    hydrogenMass: mass unyt array or float, default=None
+    hydrogenMass : mass unyt array or float, default=None
         If not None, hydrogen masses will be changed to this mass and the difference subtracted from the attached heavy atom (hydrogen mass repartitioning).
     ewaldErrorTolerance: float, default=0.0005
         When using PME or Ewald, the Ewald parameters will be calculated from this value.
