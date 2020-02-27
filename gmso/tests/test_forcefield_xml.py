@@ -136,12 +136,12 @@ class TestForceFieldFromXML(BaseTest):
         elementary_charge = ff.atom_types['Li'].charge.to(u.elementary_charge)
         assert elementary_charge.units == u.Unit(u.elementary_charge)
 
-    def test_atomclass_groups_charm_buck_ff(self, opls_charm_buck_ff):
-        ff = opls_charm_buck_ff
+    def test_atomclass_groups_charm_buck_ff(self):
+        ff = ForceField(get_path('opls_charmm_buck.xml'))
         assert len(ff.atom_class_groups['CT']) == 2
 
-    def test_ff_periodic_dihedrals_from_alphanumeric_symbols(self, opls_charm_buck_ff):
-        ff = opls_charm_buck_ff
+    def test_ff_periodic_dihedrals_from_alphanumeric_symbols(self):
+        ff = ForceField(get_path('opls_charmm_buck.xml'))
         assert 'A' in ff.atom_types['buck_O'].parameters
         with pytest.raises(TypeError):
             assert len(ff.dihedral_types['opls_140~*~*~opls_140'].parameters['c0'])
