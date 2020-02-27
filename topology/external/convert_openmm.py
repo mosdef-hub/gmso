@@ -123,7 +123,7 @@ def to_system(topology,
     useSASA : boolean, default=False
         If True, use the ACE non-polar solvation model.  
         Otherwise, no SASA-based nonpolar solvation model is used.
-    removeCMMotion: boolean, default=True
+    removeCMMotion : boolean, default=True
         If True, the center-of-mass motion will be removed periodically during the simulation.  
         If False, it will not.
     hydrogenMass: mass unyt array or float, default=None
