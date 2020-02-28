@@ -1,7 +1,7 @@
 External
 =========
 
-This subpackage includes functions that convert core data structures between external libraries and their internal representation.
+This submodule includes functions that convert core data structures between external libraries and their internal representation.
 
 mBuild
 -------

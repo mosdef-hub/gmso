@@ -1,7 +1,7 @@
 Formats
 =======
 
-This subpackage provides readers and writers for (on-disk) file formats.
+This submodule provides readers and writers for (on-disk) file formats.
 
 GROMACS
 -------
@@ -25,9 +25,6 @@ The following methods are available for reading and writing xyz files.
 
 LAMMPS DATA
 -----------
-The following methods are available for reading and writing lammps data.
+The following methods are available for reading and writing LAMMPS data.
 
     .. autofunction:: gmso.formats.write_lammpsdata
-
-
-
