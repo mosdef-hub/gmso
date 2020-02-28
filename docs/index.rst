@@ -15,7 +15,6 @@ Design Framework.
 
    design_principles
    data_structures
-   forcefield
    formats
    external
    installation
