@@ -16,16 +16,16 @@ class SubTopology(object):
 
     Parameters
     ----------
-    name: str, optional, default='Sub-Topology'
+    name : str, optional, default='Sub-Topology'
         Name of the sub-topology
-    parent: gmso.Topology, optional, default=None
+    parent : gmso.Topology, optional, default=None
         The parent topology of this SubTopology
 
     Attributes
     ----------
-    sites: IndexedSet of gmso.Site objects
+    sites : IndexedSet of gmso.Site objects
         Collection of sites within this sub-topology
-    n_sites: int
+    n_sites : int
         Number of sites withing this sub-topology
     """
 
@@ -79,12 +79,12 @@ class SubTopology(object):
 
         Parameters
         ----------
-        site: gmso.Site
+        site : gmso.Site
             The site to be added to this sub-topology
 
         Raises
         ------
-        TypeError:
+        TypeError
             If the parameter site is not of type topology.Site
         """
 

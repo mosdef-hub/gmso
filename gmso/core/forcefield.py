@@ -16,33 +16,33 @@ class ForceField(object):
 
     Parameters
     ----------
-    name: str
+    name : str
         Name of the forcefield, default 'ForceField'
-    version: str
+    version : str
         a cannonical semantic version of the forcefield, default 1.0.0
 
     Attributes
     ----------
-    name: str
+    name : str
         Name of the forcefield
-    version: str
+    version : str
         Version of the forcefield
-    atom_types: dict
+    atom_types : dict
         A collection of atom types in the forcefield
-    bond_types: dict
+    bond_types : dict
         A collection of bond types in the forcefield
-    angle_types: dict
+    angle_types : dict
         A collection of angle types in the forcefield
-    dihedral_types: dict
+    dihedral_types : dict
         A collection of dihedral types in the forcefield
-    units: dict
+    units : dict
         A collection of unyt.Unit objects used in the forcefield
-    scaling_factors: dict
+    scaling_factors : dict
         A collection of scaling factors used in the forcefield
 
     See Also
     --------
-    gmso.ForceField.from_xml: A class method to create forcefield object from XML files
+    gmso.ForceField.from_xml : A class method to create forcefield object from XML files
 
     """
     def __init__(self, xml_loc=None):
@@ -99,12 +99,12 @@ class ForceField(object):
 
         Parameters
         ----------
-        xml_locs: str or iterable of str
+        xml_locs : str or iterable of str
             string or iterable of strings containing the forcefield XML locations
 
         Returns
         --------
-        gmso.ForceField:
+        forcefield : gmso.ForceField
             A gmso.Forcefield object with a collection of Potential objects
             created using the information in the XML file
         """

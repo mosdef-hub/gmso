@@ -31,77 +31,77 @@ class Topology(object):
     ----------
     name : str, optional, default='Topology'
         A name for the Topology.
-    box: gmso.Box, optional, default=None
+    box : gmso.Box, optional, default=None
         A gmso.Box object bounding the topology
 
     Attributes
     ----------
-    typed: bool
+    typed : bool
         True if the topology is typed
 
-    combining_rule: str, ['lorentz', 'geometric']
+    combining_rule : str, ['lorentz', 'geometric']
         The combining rule for the topology, can be either 'lorentz' or 'geometric'
 
-    n_sites: int
+    n_sites : int
         Number of sites in the topology
 
-    n_connections: int
+    n_connections : int
         Number of connections in the topology (Bonds, Angles, Dihedrals)
 
-    n_bonds: int
+    n_bonds : int
         Number of bonds in the topology
 
     n_angles: int
         Number of angles in the topology
 
-    n_dihedrals: int
+    n_dihedrals : int
         Number of dihedrals in the topology
 
-    n_subtops: int
+    n_subtops : int
         Number of subtopolgies in the topology
 
-    connections: tuple of gmso.Connection objects
+    connections : tuple of gmso.Connection objects
         A collection of bonds, angles and dihedrals in the topology
 
-    bonds: tuple of gmso.Bond objects
+    bonds : tuple of gmso.Bond objects
         A collection of bonds in the topology
 
-    dihedrals: tuple of gmso.Dihedral objects
+    dihedrals : tuple of gmso.Dihedral objects
         A collection of dihedrals in the topology
 
-    connection_types: tuple of gmso.Potential objects
+    connection_types : tuple of gmso.Potential objects
         A collection of BondTypes, AngleTypes and DihedralTypes in the topology
 
-    atom_types: tuple of gmso.AtomType objects
+    atom_types : tuple of gmso.AtomType objects
         A collection of AtomTypes in the topology
 
-    bond_types: tuple of gmso.BondType objects
+    bond_types : tuple of gmso.BondType objects
         A collection of BondTypes in the topology
 
-    angle_types: tuple of gmso.AngleType objects
+    angle_types : tuple of gmso.AngleType objects
         A collection go AngleTypes in the topology
 
-    dihedral_types: tuple of gmso.DihedralType objects
+    dihedral_types : tuple of gmso.DihedralType objects
         A collection of DihedralTypes in the topology
 
-    atom_type_expressions: list of gmso.AtomType.expression objects
+    atom_type_expressions : list of gmso.AtomType.expression objects
         A collection of all the expressions for the AtomTypes in topology
 
-    connection_type_expressions: list of gmso.Potential.expression objects
+    connection_type_expressions : list of gmso.Potential.expression objects
         A collection of all the expressions for the Potential objects in the topology that represent a connection type
 
-    bond_type_expressions: list of gmso.BondType.expression objects
+    bond_type_expressions : list of gmso.BondType.expression objects
         A collection of all the expressions for the BondTypes in topology
 
-    angle_type_expressions: list of gmso.AngleType.expression objects
+    angle_type_expressions : list of gmso.AngleType.expression objects
         A collection of all the expressions for the AngleTypes in topology
 
-    dihedral_type_expressions: list of gmso.DihedralType.expression objects
+    dihedral_type_expressions : list of gmso.DihedralType.expression objects
         A collection of all the expression for the DihedralTypes in the topology
 
     See Also
     --------
-    gmso.SubTopology:
+    gmso.SubTopology :
         A topology within a topology
     """
     def __init__(self, name="Topology", box=None):
@@ -272,9 +272,9 @@ class Topology(object):
 
         Parameters
         -----------
-        site: gmso.core.Site
+        site : gmso.core.Site
             Site to be added to this topology
-        update_types: (bool), default=True
+        update_types : (bool), default=True
             If true, add this site's atom type to the topology's set of AtomTypes
         """
         self._sites.add(site)
@@ -303,11 +303,11 @@ class Topology(object):
 
         See Also
         --------
-        gmso.Topology.update_connections:
+        gmso.Topology.update_connections :
             Update the connections in the topology to reflect any added sites connections
-        gmso.Topology.add_site: Add a site to the topology.
-        gmso.Topology.add_connection: Add a Bond, an Angle or a Dihedral to the topology.
-        gmso.Topology.update_topology: Update the entire topology.
+        gmso.Topology.add_site : Add a site to the topology.
+        gmso.Topology.add_connection : Add a Bond, an Angle or a Dihedral to the topology.
+        gmso.Topology.update_topology : Update the entire topology.
         """
         for connection in self.connections:
             for member in connection.connection_members:
@@ -329,8 +329,8 @@ class Topology(object):
 
         Parameters
         ----------
-        connection: one of gmso.Connection, gmso.Bond, gmso.Angle or gmso.Dihedral object
-        update_types: bool, default=True
+        connection : one of gmso.Connection, gmso.Bond, gmso.Angle or gmso.Dihedral object
+        update_types : bool, default=True
             If True also add any Potential object associated with connection to the
             topology.
         """
@@ -358,17 +358,17 @@ class Topology(object):
 
         Parameters
         ----------
-        update_types: bool, default=False
+        update_types : bool, default=False
 
         See Also
         --------
-        gmso.Topology.update_sites:
+        gmso.Topology.update_sites :
             Update the sites in the topology to reflect any added connection's sites
-        gmso.Topology.add_connection: Add a Bond, an Angle or a Dihedral to the topology.
-        gmso.Topology.add_site: Add a site to the topology.
-        gmso.Topology.update_connection_types:
+        gmso.Topology.add_connection : Add a Bond, an Angle or a Dihedral to the topology.
+        gmso.Topology.add_site : Add a site to the topology.
+        gmso.Topology.update_connection_types :
             Update the connection types based on the connection collection in the topology.
-        gmso.Topology.update_topology: Update the entire topology.
+        gmso.Topology.update_topology : Update the entire topology.
 
         """
         for site in self.sites:
@@ -386,7 +386,7 @@ class Topology(object):
 
         See Also
         --------
-        gmso.Topology.update_connections: Update all the Bonds, Angles and Dihedrals in the topology.
+        gmso.Topology.update_connections : Update all the Bonds, Angles and Dihedrals in the topology.
         """
         self.update_connections(update_types)
 
@@ -397,7 +397,7 @@ class Topology(object):
 
         See Also
         --------
-        gmso.Topology.update_connections: Update all the Bonds, Angles and Dihedrals in the topology.
+        gmso.Topology.update_connections : Update all the Bonds, Angles and Dihedrals in the topology.
         """
         self.update_connections(update_types)
 
@@ -408,7 +408,7 @@ class Topology(object):
 
         See Also
         --------
-        gmso.Topology.update_connections: Update all the Bonds, Angles and Dihedrals in the topology.
+        gmso.Topology.update_connections : Update all the Bonds, Angles and Dihedrals in the topology.
         """
         self.update_connections(update_types)
 
@@ -421,7 +421,7 @@ class Topology(object):
 
         See Also
         --------
-        gmso.Topology.update_atom_types: Update atom types in the topology.
+        gmso.Topology.update_atom_types : Update atom types in the topology.
         """
         for c in self.connections:
             if c.connection_type is None:
@@ -455,7 +455,7 @@ class Topology(object):
 
         See Also:
         ---------
-        gmso.Topology.update_connection_types:
+        gmso.Topology.update_connection_types :
             Update the connection types based on the connection collection in the topology
         """
         for site in self._sites:
@@ -479,12 +479,12 @@ class Topology(object):
 
         Parameters
         ----------
-        subtop: gmso.SubTopology
+        subtop : gmso.SubTopology
             The sub-topology object to be added.
 
         See Also
         --------
-        gmso.SubTopology: A topology within a topology
+        gmso.SubTopology : A topology within a topology
         """
         self._subtops.add(subtop)
         subtop.parent = self
@@ -508,7 +508,7 @@ class Topology(object):
 
         See Also
         --------
-        gmso.Topology.update_connection_types:
+        gmso.Topology.update_connection_types :
             Update the connection types based on the connection collection in the topology.
         """
         self.update_connection_types()
@@ -520,7 +520,7 @@ class Topology(object):
 
         See Also
         --------
-        gmso.Topology.update_connection_types:
+        gmso.Topology.update_connection_types :
             Update the connection types based on the connection collection in the topology.
         """
         self.update_connection_types()
@@ -532,7 +532,7 @@ class Topology(object):
 
         See Also
         --------
-        gmso.Topology.update_connection_types:
+        gmso.Topology.update_connection_types :
             Update the connection types based on the connection collection in the topology.
         """
         self.update_connection_types()
