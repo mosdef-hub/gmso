@@ -47,6 +47,7 @@ napoleon_use_admonition_for_notes = True
 napoleon_use_param = False
 napoleon_use_ivar = True
 
+intersphinx_mapping = {'python': ('https://docs.python.org/3.7', None)}
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 

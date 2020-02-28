@@ -100,13 +100,13 @@ class ForceField(object):
 
         Parameters
         ----------
-        xml_locs: str or iterable of str,
+        xml_locs: str or iterable of str
             string or iterable of strings containing the forcefield XML locations
 
         Returns
-        -------
-        gmso.ForceField
-            A gmso forcefield object with a collection of Potential objects
+        --------
+        gmso.ForceField:
+            A gmso.Forcefield object with a collection of Potential objects
             created using the information in the XML file
         """
 
