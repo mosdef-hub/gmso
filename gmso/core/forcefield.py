@@ -1,19 +1,18 @@
 from lxml import etree
 
-from gmso.forcefield.ff_utils import (validate,
-                                      parse_ff_metadata,
-                                      parse_ff_atomtypes,
-                                      parse_ff_connection_types)
+from gmso.utils.ff_utils import (validate,
+                                 parse_ff_metadata,
+                                 parse_ff_atomtypes,
+                                 parse_ff_connection_types)
 
 
 class ForceField(object):
     """A generic implementation of the forcefield class.
 
-    The ForceField class is one of the core data-structures in gmso, which is
-    used to hold a collection of gmso.core.Potential objects along with some
-    metadata like units and scaling factors to represent a class of forcefield.
-    The forcefiled object can be applied to any gmso.Topology which has effects
-    on its Sites, Bonds, Angles and Dihedrals.
+    The ForceField class is one of the core data structures in gmso, which is
+    used to hold a collection of gmso.core.Potential subclass objects along with some
+    metadata to represent a forcefield. The forcefield object can be applied
+    to any gmso.Topology which has effects on its Sites, Bonds, Angles and Dihedrals.
 
     Parameters
     ----------

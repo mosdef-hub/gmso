@@ -9,7 +9,7 @@ from .core.bond import Bond
 from .core.angle import Angle
 from .core.dihedral import Dihedral
 
-from .forcefield import ForceField
+from .core.forcefield import ForceField
 
 
 from .core.potential import Potential

@@ -140,7 +140,7 @@ class Potential(object):
         Be aware of the symbols used in the `expression` and `parameters`.
         If unnecessary parameters are supplied, an error is thrown.
         If only a subset of the parameters are supplied, they are updated
-            while the non-passed parameters default to the existing values
+        while the non-passed parameters default to the existing values
        """
         if expression is not None:
             self._expression = _validate_expression(expression)

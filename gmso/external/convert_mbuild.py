@@ -23,21 +23,25 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
 
     This conversion makes the following assumptions about the inputted
     `Compound`:
-        * All positional and box dimension values in compound are in
-        nanometers
-        * If the `Compound` has 4 or more levels of hierarchy, these are
-        compressed to 3 levels of hierarchy in the resulting `Topology`. The
-        top level `Compound` becomes the `Topology`, the second level
-        Compounds become `SubTopologies`, and each particle becomes a `Site`,
-        which are added to their corresponding `SubTopologies`.
-        * Furthermore, `Sites` that do not belong to a sub-`Compound` are
-        added to a single-`Site` `SubTopology`.
-        * The box dimension are extracted from `compound.periodicity`. If the
-        `compound.periodicity` is `None`, the box lengths are the lengths of
-        the bounding box + a 0.5 nm buffer.
-        * Only `Bonds` are added for each bond in the `Compound`. If `Angles`
-        and `Dihedrals` are desired in the resulting `Topology`, they must be
+        * All positional and box dimension values in compound are in nanometers
+
+        * If the `Compound` has 4 or more levels of hierarchy, these are\
+            compressed to 3 levels of hierarchy in the resulting `Topology`. The\
+            top level `Compound` becomes the `Topology`, the second level\
+            Compounds become `SubTopologies`, and each particle becomes a `Site`,\
+            which are added to their corresponding `SubTopologies`.\
+
+        * Furthermore, `Sites` that do not belong to a sub-`Compound` are\
+            added to a single-`Site` `SubTopology`.
+
+        * The box dimension are extracted from `compound.periodicity`. If the\
+            `compound.periodicity` is `None`, the box lengths are the lengths of\
+            the bounding box + a 0.5 nm buffer.
+
+        * Only `Bonds` are added for each bond in the `Compound`. If `Angles`\
+        and `Dihedrals` are desired in the resulting `Topology`, they must be\
         added separately from this function.
+
 
     Parameters
     ----------
@@ -136,8 +140,8 @@ def to_mbuild(topology):
     topology : gmso.Topology
         topology instance that need to be converted
 
-    Returns:
-    --------
+    Returns
+    -------
     compound : mbuild.Compound
 
     """

@@ -11,5 +11,7 @@ GMSO: Flexible storage of chemical topology for molecular simulation
 
    design_principles
    data_structures
+   formats
+   external
    installation
    contributing

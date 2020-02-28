@@ -20,10 +20,9 @@ class Topology(object):
     """A topology.
 
     A topology represents a chemical structure wherein lie the collection
-    of sites(associated with an atom/residue) which
-    together form a chemical structure containing gmso.Bond, gmso.Angle
-    and gmso.Dihedral (along with the associated types). A topology
-    is the fundamental data-structure in GMSO, from which we can gather
+    of sites which together form a chemical structure containing connections
+    (gmso.Bond, gmso.Angle and gmso.Dihedral (along with their associated types).
+    A topology is the fundamental data structure in GMSO, from which we can gather
     various information about the chemical structure and apply a forcefield
     before converting the structure into a format familiar to various simulation
     engines.
@@ -40,14 +39,14 @@ class Topology(object):
     typed: bool
         True if the topology is typed
 
-    combining_rule: str,     ['lorentz', 'geometric']
+    combining_rule: str, ['lorentz', 'geometric']
         The combining rule for the topology, can be either 'lorentz' or 'geometric'
 
     n_sites: int
         Number of sites in the topology
 
     n_connections: int
-        Number of connections in the topology (Atoms, Bonds, Angles, Dihedrals)
+        Number of connections in the topology (Bonds, Angles, Dihedrals)
 
     n_bonds: int
         Number of bonds in the topology
@@ -71,7 +70,7 @@ class Topology(object):
         A collection of dihedrals in the topology
 
     connection_types: tuple of gmso.Potential objects
-        A collection of AtomTypes, BondTypes, AngleTypes and DihedralTypes in the topology
+        A collection of BondTypes, AngleTypes and DihedralTypes in the topology
 
     atom_types: tuple of gmso.AtomType objects
         A collection of AtomTypes in the topology
@@ -89,7 +88,7 @@ class Topology(object):
         A collection of all the expressions for the AtomTypes in topology
 
     connection_type_expressions: list of gmso.Potential.expression objects
-        A collection of all the expressions for the Potential objects in the topology
+        A collection of all the expressions for the Potential objects in the topology that represent a connection type
 
     bond_type_expressions: list of gmso.BondType.expression objects
         A collection of all the expressions for the BondTypes in topology
@@ -267,7 +266,7 @@ class Topology(object):
         This method will add a site to the existing topology, since
         sites are stored in an indexed set, adding redundant site
         will have no effect. If the update_types parameter is set to
-        true(default behavior), this method will also check if there
+        true (default behavior), this method will also check if there
         is an gmso.AtomType associated with the site and it to the
         topology's AtomTypes collection.
 
@@ -276,7 +275,7 @@ class Topology(object):
         site: gmso.core.Site
             Site to be added to this topology
         update_types: (bool), default=True
-            If true, update atom types for the site
+            If true, add this site's atom type to the topology's set of AtomTypes
         """
         self._sites.add(site)
         if update_types and site.atom_type:
@@ -325,7 +324,7 @@ class Topology(object):
         the equivalent collection in the topology is updated.
         For example- If you add a Bond, this method will update
         topology.connections and topology.bonds object. Additionally,
-        if update_types is True(default behavior), it will also
+        if update_types is True (default behavior), it will also
         update any Potential objects associated with the connection.
 
         Parameters
