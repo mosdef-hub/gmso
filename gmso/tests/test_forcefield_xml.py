@@ -4,7 +4,7 @@ import unyt as u
 
 from lxml.etree import DocumentInvalid
 
-from gmso.forcefield import ForceField
+from gmso.core.forcefield import ForceField
 from gmso.tests.utils import get_path
 from gmso.tests.base_test import BaseTest
 from gmso.exceptions import ForceFieldParseError
