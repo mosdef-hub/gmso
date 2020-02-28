@@ -6,6 +6,10 @@
 GMSO: Flexible storage of chemical topology for molecular simulation
 ====================================================================
 
+This is the documentation for ``GMSO``, the General Molecular Simulation Object.
+It is a part of the `MoSDeF <http://mosdef.org>`_, the Molecular Simulation
+Design Framework.
+
 .. toctree::
    :hidden:
 
