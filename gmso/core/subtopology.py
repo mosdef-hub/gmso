@@ -7,7 +7,27 @@ from gmso.core.site import Site
 
 
 class SubTopology(object):
-    """A sub-topology."""
+    """A sub-topology i.e. topology within a topology
+
+    This class provides a hierarchical topological representation to
+    the topology as it imperative with many chemical structures to have
+    separation of layers/ boundaries. A sub-topology can be added to a
+    gmso.Topology object which will be the parent of the sub-topology.
+
+    Parameters
+    ----------
+    name: str, optional, default='Sub-Topology'
+        Name of the sub-topology
+    parent: gmso.Topology, optional, default=None
+        The parent topology of this SubTopology
+
+    Attributes
+    ----------
+    sites: IndexedSet of gmso.Site objects
+        Collection of sites within this sub-topology
+    n_sites: int
+        Number of sites withing this sub-topology
+    """
 
     def __init__(self, name="Sub-Topology", parent=None):
         if name is not None:
@@ -51,6 +71,23 @@ class SubTopology(object):
         self._parent = _validate_parent(parent)
 
     def add_site(self, site):
+        """Add a site to this sub-topology
+
+        This method adds a site to the sub-topology.
+        If the sub-topology has a parent, the site will
+        also be added to the parent topology.
+
+        Parameters
+        ----------
+        site: gmso.Site
+            The site to be added to this sub-topology
+
+        Raises
+        ------
+        TypeError:
+            If the parameter site is not of type topology.Site
+        """
+
         site = _validate_site_addability(site)
         if site in self.sites:
             warnings.warn("Redundantly adding Site {}".format(site))
