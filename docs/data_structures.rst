@@ -8,7 +8,7 @@ Core Classes
 Topology
 ********
     .. autoclass:: gmso.Topology
-        :members:
+        :members: add_site, add_bond, add_angle
 
 SubTopology
 ***********
@@ -66,5 +66,3 @@ ForceField
 ==========
     .. autoclass:: gmso.ForceField
         :members:
-
-:
