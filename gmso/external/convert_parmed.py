@@ -347,10 +347,10 @@ def _convert_atom_types(top, structure, atom_map):
         msg = "Atom type {} expression does not match Parmed AtomType default expression".format(atom_type.name)
         assert atom_type.expression == parse_expr("4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)"), msg
         #Extract Topology atom type information
-        atype_name = site.atom_type.name
-        atype_charge = site.atom_type.charge.to("elementary_charge").value
-        atype_sigma = site.atom_type.parameters[sigma].to("nm")
-        atype_epsilon = site.atom_type.parameters[epsilon].to("kcal/mol")
+        atype_name = atom_type.name
+        atype_charge = atom_type.charge.to("elementary_charge").value
+        atype_sigma = atom_type.parameters[sigma].to("nm")
+        atype_epsilon = atom_type.parameters[epsilon].to("kcal/mol")
         atype_element = element_by_atom_type(atype_name)
         atype_rmin = atype_sigma * 2**(1/6) / 2 # to rmin/2
         # Create unique Parmed AtomType object
