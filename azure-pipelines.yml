@@ -16,7 +16,7 @@ schedules:
 
 
 jobs:
-- job: MacAndUbuntu
+  - job: MacAndUbuntu
     strategy:
       matrix:
         Python36Ubuntu:
