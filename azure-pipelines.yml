@@ -4,24 +4,54 @@ trigger:
 pr:
   - master
 
+
+schedules:
+- cron: "0 0 * * *"
+  displayName: Daily midnight build for master
+  branches:
+    include:
+    - master
+  always: true
+
+
+
 jobs:
-  - job: TestsForTopology
+- job: MacAndUbuntu
+    strategy:
+      matrix:
+        Python36Ubuntu:
+          imageName: 'ubuntu-latest'
+          python.version: 3.6
+        Python37Ubuntu:
+          imageName: 'ubuntu-latest'
+          python.version: 3.7
+        Python36macOS:
+          imageName: 'macOS-latest'
+          python.version: 3.6
+        Python37macOS:
+          imageName: 'macOS-latest'
+          python.version: 3.7
+
     pool:
-      vmImage: 'ubuntu-latest'
+      vmImage: $(imageName)
+
     steps:
       - bash: echo "##vso[task.prependpath]$CONDA/bin"
         displayName: Add conda to path
 
+      - bash: sudo chown -R $USER $CONDA
+          condition: eq( variables['Agent.OS'], 'Darwin' )
+          displayName: Take ownership of conda installation
+
       - bash: |
           conda config --set always_yes yes --set changeps1 no
           conda config --add channels omnia
-          conda config --add channels janschulz
           conda config --add channels conda-forge
           conda config --add channels mosdef
         displayName: Add relavent channels
 
       - bash: |
-          conda create -n test-environment
+          conda install --yes python=$(python.version) --file requirements-dev.txt
           source activate test-environment
           conda install --yes --file requirements-test.txt
           conda install pytest
