@@ -53,7 +53,12 @@ def write_lammpsdata(topology, filename, atom_style='full'):
     unique_types = list(set(types))
     unique_types.sort(key=natural_sort)
 
-    # TODO: charges
+    # Grab charge from site.charge
+    charges = [site.charge for site in topology.sites]
+    # Convert charges to u.elementary_charge
+    charges = np.array([charge.to(u.elementary_charge) for charge in
+        charges])
+
     # TODO: bonds
     # TODO: Angles
     # TODO: Dihedrals
@@ -180,18 +185,10 @@ def write_lammpsdata(topology, filename, atom_style='full'):
         elif atom_style == 'full':
             atom_line ='{index:d}\t{zero:d}\t{type_index:d}\t{charge:.6f}\t{x:.6f}\t{y:.6f}\t{z:.6f}\n'
 
-
-        # TODO: Add back in correct 'type_index' and 'charge'
-        #for i,coords in enumerate(xyz):
-        #    data.write(atom_line.format(
-        #        index=i+1,type_index=unique_types.index(types[i])+1,
-        #        zero=0,charge=charges[i],
-        #        x=coords[0],y=coords[1],z=coords[2]))
-
-        for i,coords in enumerate(xyz):
+        for i, (coords, charge) in enumerate(zip(xyz,charges)):
             data.write(atom_line.format(
                 index=i+1,type_index=unique_types.index(types[i])+1,
-                zero=0,charge=0, # TODO: handle charges from atomtype and/or site
+                zero=0,charge=charge, # TODO: handle charges from atomtype and/or site
                 x=coords[0].in_units(u.angstrom).value,
                 y=coords[1].in_units(u.angstrom).value,
                 z=coords[2].in_units(u.angstrom).value))
