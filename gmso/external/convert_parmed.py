@@ -47,8 +47,9 @@ def from_parmed(structure):
                     charge=atom_type.charge * u.elementary_charge,
                     parameters={
                         'sigma': (atom_type.sigma * u.angstrom).in_units(u.nm),
-                        'epsilon': atom_type.epsilon * u.Unit('kcal / mol')
-                        })
+                        'epsilon': atom_type.epsilon * u.Unit('kcal / mol')},
+                        mass = atom_type.mass
+                        )
             pmd_top_atomtypes[atom_type] = top_atomtype
 
         # Consolidate parmed bondtypes and relate to topology bondtypes
@@ -307,18 +308,27 @@ def to_parmed(top, refer_type=True):
         angle_map[angle] = pmd_angle
 
     # Create and add dihedrals to Parmed structure
+
     for dihedral in top.dihedrals:
         site1, site2, site3, site4 = dihedral.connection_members
         pmd_dihedral = pmd.Dihedral(atom_map[site1],
-                                    atom_map[site2],
-                                    atom_map[site3],
-                                    atom_map[site4])
-        structure.dihedrals.append(pmd_dihedral)
-
+                                      atom_map[site2],
+                                      atom_map[site3],
+                                      atom_map[site4])
+        if (dihedral.connection_type and
+         dihedral.connection_type.expression == parse_expr(
+                                        'c0 * cos(phi)**0 + ' +
+                                        'c1 * cos(phi)**1 + ' +
+                                        'c2 * cos(phi)**2 + ' +
+                                        'c3 * cos(phi)**3 + ' +
+                                        'c4 * cos(phi)**4 + ' +
+                                        'c5 * cos(phi)**5')):
+            structure.rb_torsions.append(pmd_dihedral)
+        else:
+            structure.dihedrals.append(pmd_dihedral)
+        dihedral_map[dihedral] = pmd_dihedral
 
     # Set up structure for Connection Type conversion
-    # Will need to work on these helper function later
-
     if refer_type:
     # Need to add a warning if Topology does not have types information
         if top.atom_types:
@@ -326,9 +336,9 @@ def to_parmed(top, refer_type=True):
         if top.bond_types:
             _convert_bond_types(top, structure, bond_map)
         if top.angle_types:
-            _convert_angle_types(top, structure)
+            _convert_angle_types(top, structure, angle_map)
         if top.dihedral_types:
-            _convert_dihedral_types(top, structure)
+            _convert_dihedral_types(top, structure, dihedral_map)
 
     return structure
 
@@ -353,10 +363,10 @@ def _convert_atom_types(top, structure, atom_map):
         assert atom_type.expression == parse_expr("4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)"), msg
         #Extract Topology atom type information
         atype_name = atom_type.name
-        atype_charge = atom_type.charge.to("elementary_charge").value
-        atype_sigma = atom_type.parameters[sigma].to("nm")
-        atype_epsilon = atom_type.parameters[epsilon].to("kcal/mol")
-        atype_element = element_by_atom_type(atype_name)
+        atype_charge = float(atom_type.charge.to("Coulomb").value)
+        atype_sigma = float(atom_type.parameters['sigma'].to("angstrom").value)
+        atype_epsilon = float(atom_type.parameters['epsilon'].to("kcal/mol").value)
+        atype_element = element_by_atom_type(atom_type)
         atype_rmin = atype_sigma * 2**(1/6) / 2 # to rmin/2
         # Create unique Parmed AtomType object
         atype = pmd.AtomType(atype_name, None, atype_element.mass,
@@ -369,7 +379,7 @@ def _convert_atom_types(top, structure, atom_map):
         #Assign atom_type to atom
         pmd_atom = atom_map[site]
         pmd_atom.type = site.atom_type.name
-        pmd_atom.atom_type = atype_map[atom.type]
+        pmd_atom.atom_type = atype_map[site.atom_type.name]
 
 
 def _convert_bond_types(top, structure, bond_map):
@@ -387,24 +397,24 @@ def _convert_bond_types(top, structure, bond_map):
     """
     btype_map = dict()
     for bond_type in top.bond_types:
-        msg = "Bond type {} expression does not match Parmed BondType default expression".format(atom_type.name)
+        msg = "Bond type {} expression does not match Parmed BondType default expression".format(bond_type.name)
         assert bond_type.expression == parse_expr("0.5 * k * (r-r_eq)**2"), msg
         # Extract Topology bond_type information
-        btype_k =  0.5 * bond_type.parameters['k']
-        btype_r_eq = bond_type.parameters['r_eq']
+        btype_k =  0.5 * float(bond_type.parameters['k'].value)
+        btype_r_eq = float(bond_type.parameters['r_eq'].value)
         # Create unique Parmed BondType object
         btype = pmd.BondType(btype_k, btype_r_eq)
         # Type map to match Topology BondType with Parmed BondType
         btype_map[bond_type] = btype
         
-    for bond in structure.bonds:
+    for bond in top.bonds:
         #Assign bond_type to bond
         pmd_bond = bond_map[bond]
-        pmd_bond.type = btype_map[bond.bond_type]
+        pmd_bond.type = btype_map[bond.connection_type]
     structure.bond_types.claim()
 
 
-def _convert_angle_types(top, structure):
+def _convert_angle_types(top, structure, angle_map):
     """Helper function to convert Topology AngleType to Structure AngleType
 
     This function will first check the AngleType expression of Topology and make sure it match with the one default in Parmed.
@@ -419,27 +429,28 @@ def _convert_angle_types(top, structure):
     """
     agltype_map = dict()
     for angle_type in top.angle_types:
-        msg = "Angle type {} expression does not match Parmed AngleType default expression".format(atom_type.name)
-        assert bond.bond_type.expression == parse_expr("0.5 * k * (theta-theta_eq)**2"), msg
+        msg = "Angle type {} expression does not match Parmed AngleType default expression".format(angle_type.name)
+        assert angle_type.expression == parse_expr("0.5 * k * (theta-theta_eq)**2"), msg
         # Extract Topology angle_type information
-        agltype_k = 0.5 * angle_type.parameters['k']
-        agltype_theta_eq = angle_type.parameters['theta_eq']
+        agltype_k = 0.5 * float(angle_type.parameters['k'].value)
+        agltype_theta_eq = float(angle_type.parameters['theta_eq'].value)
         # Create unique Parmed AngleType object
         agltype = pmd.AngleType(agltype_k, agltype_theta_eq)
         # Type map to match Topology AngleType with Parmed AngleType
         agltype_map[angle_type] = agltype
 
-    for angle in structure.angles:
+    for angle in top.angles:
         #Assign angle_type to angle
-        pmd_angle = bond_map[angle]
-        pmd_angle.type = agltype_map[angle.angle_type]
+        pmd_angle = angle_map[angle]
+        pmd_angle.type = agltype_map[angle.connection_type]
     structure.angle_types.claim()
 
 
-def _convert_dihedral_types(top, structure):
+def _convert_dihedral_types(top, structure, dihedral_map):
     """Helper function to convert Topology DihedralType to Structure DihedralType
 
-    This function will first check the DihedralType expression of Topology and make sure it match with the one default in Parmed.
+    This function will first check the DihedralType expression of Topology and
+    make sure it match with the one default in Parmed.
     After that, it would start atomtyping and parametrizing the structure.
 
     Parameters
@@ -449,4 +460,37 @@ def _convert_dihedral_types(top, structure):
     structure: parmed.Structure
         The destination parmed Structure
     """
-    pass
+    dtype_map = dict()
+    for dihedral_type in top.dihedral_types:
+        msg = "Dihedral type expression does not match Parmed DihedralType default expressions (Dihedrals, RBTorsions)"
+        if dihedral_type.expression == parse_expr('k * (1 + cos(n * phi - phi_eq))**2'):
+            dtype_k = float(dihedral_type.parameters['k'].value)
+            dtype_phi_eq = float(dihedral_type.parameters['phi_eq'].value)
+            dtype_n = float(dihedral_type.parameters['n'].value)
+            # Create unique Parmed DihedralType object
+            dtype = pmd.DihedralType(dtype_k, dtype_n, dtype_phi_eq)
+        elif (dihedral_type.expression == parse_expr(
+                                                  'c0 * cos(phi)**0 + ' +
+                                                  'c1 * cos(phi)**1 + ' +
+                                                  'c2 * cos(phi)**2 + ' +
+                                                  'c3 * cos(phi)**3 + ' +
+                                                  'c4 * cos(phi)**4 + ' +
+                                                  'c5 * cos(phi)**5')):
+            dtype_c0 = float(dihedral_type.parameters['c0'].value)
+            dtype_c1 = float(dihedral_type.parameters['c1'].value)
+            dtype_c2 = float(dihedral_type.parameters['c2'].value)
+            dtype_c3 = float(dihedral_type.parameters['c3'].value)
+            dtype_c4 = float(dihedral_type.parameters['c4'].value)
+            dtype_c5 = float(dihedral_type.parameters['c5'].value)
+            # Create unique DihedralType object
+            dtype = pmd.RBTorsionType(dtype_c0, dtype_c1, dtype_c2,
+                                      dtype_c3, dtype_c4, dtype_c5)
+        else:
+            raise GMSOException('msg')
+        dtype_map[dihedral_type] = dtype
+
+        for dihedral in top.dihedrals:
+            pmd_dihedral = dihedral_map[dihedral]
+            pmd_dihedral.type = dtype_map[dihedral.connection_type]
+        structure.dihedral_types.claim()
+        structure.rb_torsions.claim()
