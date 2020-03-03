@@ -45,8 +45,8 @@ It is currently only available through its source code. It will be available
 through ``pip`` and ``conda`` in the future.
 ::
 
-    $ git clone https://github.com/mattwthompson/topology
-    $ cd topology
+    $ git clone https://github.com/modef-hub/gmso.git
+    $ cd gmso
     $ pip install -e .
 
 
