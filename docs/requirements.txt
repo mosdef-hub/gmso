@@ -1,4 +1,5 @@
 sphinx
 boltons
 lxml
+unyt
 sphinx_rtd_theme
