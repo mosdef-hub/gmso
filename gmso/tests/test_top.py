@@ -15,10 +15,10 @@ class TestTop(BaseTest):
         write_top(top, 'ar.top')
 
 
-    def test_pmd_loop(self, typed_ar_system):
-        top = typed_ar_system
-        write_top(top, 'ar.top')
-        pmd.load_file('ar.top')
+    def test_pmd_loop(self, typed_ar_system, typed_water_system):
+        for top in [typed_ar_system, typed_water_system]:
+            write_top(top, 'system.top')
+            pmd.load_file('system.top')
 
 
     def test_modified_potentials(self, ar_system):

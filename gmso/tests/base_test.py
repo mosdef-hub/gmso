@@ -5,8 +5,9 @@ import unyt as u
 
 from gmso.core.box import Box
 from gmso.core.topology import Topology
-from gmso.core.element import Hydrogen
+from gmso.core.element import Hydrogen, Oxygen
 from gmso.core.site import Site
+from gmso.core.angle import Angle
 from gmso.core.atom_type import AtomType
 from gmso.core.forcefield import ForceField
 from gmso.external.convert_mbuild import from_mbuild
@@ -97,8 +98,34 @@ class BaseTest:
 
         packed_system = mb.fill_box(
                 compound=water,
-                n_compounds=10,
+                n_compounds=2,
                 box=mb.Box([2, 2, 2])
                 )
 
         return  from_mbuild(packed_system)
+
+    @pytest.fixture
+    def typed_water_system(self, water_system):
+        top = water_system
+
+        ff = ForceField(get_path('tip3p.xml'))
+
+        element_map = {"O": "opls_111", "H": "opls_112"}
+
+        for atom in top.sites:
+            atom.atom_type = ff.atom_types[atom.name]
+
+        for bond in top.bonds:
+            bond.bond_type = ff.bond_types["opls_111~opls_112"]
+
+        for subtop in top.subtops:
+            angle = Angle(
+                connection_members=[site for site in subtop.sites],
+                name="opls_112~opls_111~opls_112",
+                connection_type=ff.angle_types["opls_112~opls_111~opls_112"]
+            )
+            top.add_connection(angle)
+
+        top.update_topology()
+
+        return top
