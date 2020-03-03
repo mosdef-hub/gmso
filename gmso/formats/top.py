@@ -1,15 +1,12 @@
 import datetime
 
 import unyt as u
-from foyer.smarts import SMARTS
 
 from gmso.core.element import element_by_atom_type
 from gmso.lib.potential_templates import LennardJonesPotential, HarmonicBondPotential, HarmonicAnglePotential
 from gmso.utils.compatibility import check_compatibility
 from gmso.exceptions import GMSOError
 
-
-PARSER = SMARTS()
 
 def write_top(top, filename):
     """Write a gmso.core.Topology object to a GROMACS topology (.TOP) file"""
