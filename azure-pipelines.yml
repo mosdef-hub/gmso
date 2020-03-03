@@ -40,8 +40,8 @@ jobs:
         displayName: Add conda to path
 
       - bash: sudo chown -R $USER $CONDA
-          condition: eq( variables['Agent.OS'], 'Darwin' )
-          displayName: Take ownership of conda installation
+        condition: eq( variables['Agent.OS'], 'Darwin' )
+        displayName: Take ownership of conda installation
 
       - bash: |
           conda config --set always_yes yes --set changeps1 no
