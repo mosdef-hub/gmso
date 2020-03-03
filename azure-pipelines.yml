@@ -5,7 +5,7 @@ pr:
   - master
 
 jobs:
-  - job: TestsForTopology
+  - job: TestsForGMSO
     pool:
       vmImage: 'ubuntu-latest'
     steps:
@@ -33,4 +33,16 @@ jobs:
           python -m pytest -v gmso/tests/ 
         displayName: Run Tests
 
-
+      - bash: |
+          source activate test-environment
+          coverage xml
+          codecov --file ./coverage.xml --token 4020cb2c-5787-485a-92f2-5d106dff85a1
+          coverage html
+        displayName: Upload Coverage Report
+      
+      - task: PublishCodeCoverageResults@1
+        inputs: 
+          codeCoverageTool: Cobertura
+          summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
+          reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
+        displayName: Publish Coverage Report
