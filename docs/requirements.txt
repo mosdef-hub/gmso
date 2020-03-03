@@ -1,2 +1,4 @@
 sphinx
+boltons
+lxml
 sphinx_rtd_theme
