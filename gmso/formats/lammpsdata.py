@@ -56,8 +56,8 @@ def write_lammpsdata(topology, filename, atom_style='full'):
     # Grab charge from site.charge
     charges = [site.charge for site in topology.sites]
     # Convert charges to u.elementary_charge
-    charges = np.array([charge.to(u.elementary_charge) for charge in
-        charges])
+    charges = [charge.to(u.elementary_charge) for charge in
+        charges]
 
     # TODO: bonds
     # TODO: Angles
@@ -188,7 +188,7 @@ def write_lammpsdata(topology, filename, atom_style='full'):
         for i, (coords, charge) in enumerate(zip(xyz,charges)):
             data.write(atom_line.format(
                 index=i+1,type_index=unique_types.index(types[i])+1,
-                zero=0,charge=charge, # TODO: handle charges from atomtype and/or site
+                zero=0,charge=charge.value,
                 x=coords[0].in_units(u.angstrom).value,
                 y=coords[1].in_units(u.angstrom).value,
                 z=coords[2].in_units(u.angstrom).value))
