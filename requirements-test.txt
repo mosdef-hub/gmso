@@ -8,3 +8,5 @@ mbuild >= 0.10.4
 foyer
 gsd >= 2.0
 parmed
+pytest-cov
+codecov

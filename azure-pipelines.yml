@@ -2,15 +2,52 @@ trigger:
   - master 
 
 pr:
-  - master
+  autoCancel: true
+  branches:
+    include:
+      - master
+
+schedules:
+- cron: "0 0 * * *"
+  displayName: Daily midnight build for master
+  branches:
+    include:
+    - master
+  always: true
 
 jobs:
-  - job: TestsForTopology
+  - job: TestsForGMSO
+    strategy:
+      matrix:
+        Python36Ubuntu:
+          imageName: 'ubuntu-latest'
+          python.version: 3.6
+        Python37Ubuntu:
+          imageName: 'ubuntu-latest'
+          python.version: 3.7
+        Python38Ubuntu:
+          imageName: 'ubuntu-latest'
+          python.version: 3.8
+        Python36macOS:
+          imageName: 'macOS-latest'
+          python.version: 3.6
+        Python37macOS:
+          imageName: 'macOS-latest'
+          python.version: 3.7
+        Python38macOS:
+          imageName: 'macOS-latest'
+          python.version: 3.8
+
     pool:
-      vmImage: 'ubuntu-latest'
+      vmImage: $(imageName)
+
     steps:
       - bash: echo "##vso[task.prependpath]$CONDA/bin"
         displayName: Add conda to path
+
+      - bash: sudo chown -R $USER $CONDA
+        condition: eq( variables['Agent.OS'], 'Darwin' )
+        displayName: Take ownership of conda installation
 
       - bash: |
           conda config --set always_yes yes --set changeps1 no
@@ -31,6 +68,19 @@ jobs:
       - bash: |
           source activate test-environment
           python -m pytest -v gmso/tests/ 
+          python -m pytest -v --cov=gmso --cov-report=html --pyargs gmso
         displayName: Run Tests
 
-
+      - bash: |
+          source activate test-environment
+          coverage xml
+          codecov --file ./coverage.xml --token 4020cb2c-5787-485a-92f2-5d106dff85a1
+          coverage html
+        displayName: Upload Coverage Report
+      
+      - task: PublishCodeCoverageResults@1
+        inputs: 
+          codeCoverageTool: Cobertura
+          summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
+          reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
+        displayName: Publish Coverage Report
