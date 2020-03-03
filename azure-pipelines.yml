@@ -31,7 +31,7 @@ jobs:
       - bash: |
           source activate test-environment
           python -m pytest -v gmso/tests/ 
-          python -m pytest -v --cov=gmso --cov-report=html --pyargs gmso --no-coverage-upload
+          python -m pytest -v --cov=gmso --cov-report=html --pyargs gmso
         displayName: Run Tests
 
       - bash: |
