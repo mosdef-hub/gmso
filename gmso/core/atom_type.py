@@ -1,4 +1,5 @@
 import warnings
+
 import unyt as u
 
 from gmso.core.potential import Potential
@@ -8,7 +9,9 @@ from gmso.utils._constants import ATOM_TYPE_DICT
 
 
 class AtomType(Potential):
-    """An atom type, inheriting from the Potential class.
+    """A description of non-bonded interacitons between sites.
+
+    This is a subclass of the gmso.core.Potential superclass.
 
     AtomType represents an atom type and includes the functional form
     describing its interactions and, optionally, other properties such as mass
@@ -39,15 +42,18 @@ class AtomType(Potential):
     atomclass : str, default=''
         The class of the atomtype
     doi : str
-        Digital Object Identifier of publication where this atom type was specified
+        Digital Object Identifier of publication where this atom type was
+        specified
     desc : str
         Simple description of the atom type
     overrides : set of str
         Set of other atom types that this atom type overrides
     definition : str
         SMARTS string defining this atom type
-    topology: gmso.core.Topology, the topology of which this atom_type is a part of, default=None
-    set_ref: (str), the string name of the bookkeeping set in topology class.
+    topology: gmso.core.Topology, default=None
+        The topology of which this atom_type is a part of, default=None
+    set_ref: str
+        The string name of the bookkeeping set in gmso class.
 
     """
 
@@ -177,6 +183,7 @@ class AtomType(Potential):
 
 
 def _validate_charge(charge):
+    """Check to see that a charge is a unyt array of the right dimension"""
     if not isinstance(charge, u.unyt_array):
         warnings.warn("Charges are assumed to be elementary charge")
         charge *= u.elementary_charge
@@ -190,6 +197,7 @@ def _validate_charge(charge):
 
 
 def _validate_mass(mass):
+    """Check to see that a mass is a unyt array of the right dimension"""
     if not isinstance(mass, u.unyt_array):
         warnings.warn("Masses are assumed to be g/mol")
         mass *= u.gram / u.mol
@@ -203,12 +211,14 @@ def _validate_mass(mass):
 
 
 def _validate_str(val):
+    """Check to see that a string is a str type"""
     if not isinstance(val, str):
         raise ValueError("Passed value {} is not a string".format(val))
     return val
 
 
 def _validate_set(val):
+    """Check to see that a set is a set type"""
     if not isinstance(val, set):
         raise ValueError("Passed value {} is not a set".format(val))
     if not all([isinstance(char, str) for char in val]):

@@ -2,7 +2,7 @@ import numpy as np
 import sympy
 import unyt as u
 
-from gmso.forcefield import ForceField
+from gmso.core.forcefield import ForceField
 from gmso.utils.testing import allclose
 from gmso.tests.utils import get_path
 from gmso.tests.base_test import BaseTest

@@ -8,13 +8,18 @@ from gmso.exceptions import GMSOError
 class Angle(Connection):
     """A 3-partner connection between sites.
 
-    Partners
-    --------
+    This is a subclass of the gmso.Connection superclass.
+    This class has strictly 3 members in its connection members.
+    The connection_type in this class corresponds to gmso.AngleType.
+
+    Parameters
+    ----------
     connection_members: list of gmso.Site
-        Should be length 3
-    connection_type : gmso.AngleType
-    name : name of the angle
-        inherits the name attribute from Connection
+        3 sites of an angle.
+    connection_type : gmso.AngleType, optional, default=None
+        AngleType of this angle.
+    name : str, optional, default="Angle"
+        Name of the angle. 
 
     Notes
     -----
@@ -33,6 +38,7 @@ class Angle(Connection):
 
 def _validate_three_partners(connection_members):
     """Ensure 3 partners are involved in Angle"""
+    assert connection_members is not None, "connection_members is not given"
     if len(connection_members) != 3:
         raise GMSOError("Trying to create an Angle "
                 "with {} connection members". format(len(connection_members)))

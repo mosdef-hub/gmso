@@ -8,8 +8,28 @@ import unyt as u
 from gmso.exceptions import GMSOError
 
 class Element(namedtuple('Element', 'atomic_number, name, symbol, mass')):
-    """An element."""
-    
+    """Chemical element object
+
+    Template to create a chemical element.
+    Properties of the element instance are immutable.
+    All known elements are pre-built and stored internally.
+
+    Parameters
+    ---------
+    name : str
+        Name of the element.
+    symbol : str
+        Chemical symbol of the element.
+    atom_number : int
+        Atomic number of the element.
+    mass : unyt quantity
+        Mass of the element.
+
+    Return
+    ------
+    Element instance
+        An immutable instance of this class.
+    """
     def __repr__(self):
         return 'Element: {}, symbol: {}, atomic number: {}, mass: {}'.format(
                                                                       self.name, self.symbol,
@@ -19,6 +39,9 @@ class Element(namedtuple('Element', 'atomic_number, name, symbol, mass')):
 
 def element_by_symbol(symbol):
     """Search for an element by its symbol
+
+    Look up an element from a list of known elements by symbol.
+    Return None if no match found.
 
     Parameters
     ----------
@@ -42,6 +65,9 @@ def element_by_symbol(symbol):
 def element_by_name(name):
     """Search for an element by its name
 
+    Look up an element from a list of known elements by name.
+    Return None if no match found.
+
     Parameters
     ----------
     name : str
@@ -64,10 +90,13 @@ def element_by_name(name):
 def element_by_atomic_number(atomic_number):
     """Search for an element by its atomic number
 
+    Look up an element from a list of known elements by atomic number.
+    Return None if no match found.
+
     Parameters
     ----------
     atomic_number : int
-        Element atomic number that need to look for,
+        Element atomic number that need to look for
         if a string is provided, only numbers are considered during the search
 
     Returns
@@ -90,6 +119,10 @@ def element_by_atomic_number(atomic_number):
 
 def element_by_mass(mass, exact=True):
     """Search for an element by its mass
+
+    Look up an element from a list of known elements by mass.
+    If given mass is an int or a float, it will be convert to a unyt quantity (u.amu).
+    Return None if no match found.
 
     Parameters
     ----------
@@ -135,6 +168,9 @@ def element_by_mass(mass, exact=True):
 def element_by_smarts_string(smarts_string):
     """Search for an element by a given SMARTS string
 
+    Look up an element from a list of known elements by SMARTS string.
+    Return None if no match found.
+
     Parameters
     ----------
     smarts_string : str
@@ -170,6 +206,9 @@ def element_by_smarts_string(smarts_string):
 
 def element_by_atom_type(atom_type):
     """Search for an element by a given a gmso AtomType object
+
+    Look up an element from a list of known elements by atom type.
+    Return None if no match is found.
 
     Parameters
     ----------

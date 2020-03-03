@@ -8,7 +8,7 @@ from gmso.core.topology import Topology
 from gmso.core.element import Hydrogen
 from gmso.core.site import Site
 from gmso.core.atom_type import AtomType
-from gmso.forcefield import ForceField
+from gmso.core.forcefield import ForceField
 from gmso.external.convert_mbuild import from_mbuild
 from gmso.tests.utils import get_path
 from gmso.utils.io import get_fn
