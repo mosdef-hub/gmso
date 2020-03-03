@@ -2,7 +2,7 @@ from setuptools import setup
 
 #####################################
 VERSION = "0.0.0"
-ISRELEASED = False 
+ISRELEASED = False
 if ISRELEASED:
     __version__ = VERSION
 else:
@@ -10,13 +10,23 @@ else:
 #####################################
 
 
+requirements = [
+    'numpy',
+    'scipy',
+    'mbuild>=0.10.4',
+    'unyt>=2.4',
+    'boltons',
+    'lxml',
+]
+
+
 setup(
     name='gmso',
     version=__version__,
     author='Matthew W Thompson, Justin Gilmer',
     author_email='matt.thompson@vanderbilt.edu, justin.b.gilmer@vanderbilt.edu',
-    url='https://github.com/mattwthompson/topology',
-    download_url='https://github.com/mattwthompson/topology/tarball/{}'.format(__version__),
+    url='https://github.com/mosdef-hub/gmso',
+    download_url='https://github.com/mosdef-hub/gmso/tarball/{}'.format(__version__),
     package_dir={'gmso': 'gmso'},
     license="MIT",
     zip_safe=False,
@@ -35,5 +45,6 @@ setup(
         'Operating System :: Unix',
         'Operating System :: MacOS',
     ],
+    install_requires=requirements,
+    python_requires='>=3.6, <4',
 )
-
