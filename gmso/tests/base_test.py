@@ -116,7 +116,7 @@ class BaseTest:
             atom.atom_type = ff.atom_types[atom.name]
 
         for bond in top.bonds:
-            bond.bond_type = ff.bond_types["opls_111~opls_112"]
+            bond.connection_type = ff.bond_types["opls_111~opls_112"]
 
         for subtop in top.subtops:
             angle = Angle(
