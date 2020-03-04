@@ -11,7 +11,7 @@ from gmso.core.element import element_by_name, element_by_symbol, element_by_ato
 if has_parmed:
     pmd = import_('parmed')
 
-def from_parmed(structure):
+def from_parmed(structure, refer_type=True):
     """Convert a parmed.Structure to a gmso.Topology
 
     Convert a parametrized or un-parametrized parmed.Structure object to a topology.Topology.
@@ -23,6 +23,9 @@ def from_parmed(structure):
     ----------
     structure : parmed.Structure
         parmed.Structure instance that need to be converted.
+    refer_type : bool, optional, default=True
+        Whether or not to transfer AtomType, BondType, AngleType,
+        and DihedralType information
 
     Returns
     -------
@@ -33,78 +36,24 @@ def from_parmed(structure):
 
     top = gmso.Topology(name=structure.title)
     site_map = dict()
+    # TO DO: come up with a solution to deal with partially parametrized
+    # Parmed Structure
     # simple check if our pmd.Structure is fully parametrized
-    is_parametrized = True if isinstance(structure.atoms[0].atom_type,
-            pmd.AtomType) else False
+    # is_parametrized = True if (isinstance(structure.atoms[i].atom_type,
+    #        pmd.AtomType) for i in range(len(structure.atoms))) else False
 
     # Consolidate parmed atomtypes and relate topology atomtypes
-    if is_parametrized:
-        unique_atom_types = list(set([a.atom_type for a in structure.atoms]))
-        pmd_top_atomtypes = {}
-        for atom_type in unique_atom_types:
-            top_atomtype = gmso.AtomType(
-                    name=atom_type.name,
-                    charge=atom_type.charge * u.elementary_charge,
-                    parameters={
-                        'sigma': (atom_type.sigma * u.angstrom).in_units(u.nm),
-                        'epsilon': atom_type.epsilon * u.Unit('kcal / mol')},
-                        mass = atom_type.mass
-                        )
-            pmd_top_atomtypes[atom_type] = top_atomtype
-
+    if refer_type:
+        pmd_top_atomtypes = _atom_types_from_pmd(structure)
         # Consolidate parmed bondtypes and relate to topology bondtypes
-        pmd_top_bondtypes = {}
-        for btype in structure.bond_types:
-            bond_params = {
-                    'k': (2 * btype.k * u.Unit('kcal / (nm**2 * mol)')),
-                    'r_eq': (btype.req * u.angstrom).in_units(u.nm)
-                    }
-
-            top_bondtype = gmso.BondType(parameters=bond_params)
-            pmd_top_bondtypes[btype] = top_bondtype
-
+        pmd_top_bondtypes = _bond_types_from_pmd(structure)
         # Consolidate parmed angletypes and relate to topology angletypes
-        pmd_top_angletypes = {}
-        for angletype in structure.angle_types:
-            angle_params = {
-                    'k': (2 * angletype.k * u.Unit('kcal / (rad**2 * mol)')),
-                    'theta_eq': (angletype.theteq * u.degree)
-                }
-                 
-            top_angletype = gmso.AngleType(parameters=angle_params)
-            pmd_top_angletypes[angletype] = top_angletype
-
+        pmd_top_angletypes = _angle_types_from_pmd(structure)
         # Consolidate parmed dihedraltypes and relate to topology dihedraltypes
-        pmd_top_dihedraltypes = {}
-        for dihedraltype in structure.dihedral_types:
-            dihedral_params = {
-                    'k': (dihedraltype.phi_k * u.Unit('kcal / mol')),
-                    'phi_eq': (dihedraltype.phase * u.degree),
-                    'n': dihedraltype.per * u.dimensionless
-                }
-                 
-            top_dihedraltype = gmso.DihedralType(parameters=dihedral_params)
-            pmd_top_dihedraltypes[dihedraltype] = top_dihedraltype
-        for dihedraltype in structure.rb_torsion_types:
-            dihedral_params = {
-                    'c0': (dihedraltype.c0 * u.Unit('kcal/mol')),
-                    'c1': (dihedraltype.c1 * u.Unit('kcal/mol')),
-                    'c2': (dihedraltype.c2 * u.Unit('kcal/mol')),
-                    'c3': (dihedraltype.c3 * u.Unit('kcal/mol')),
-                    'c4': (dihedraltype.c4 * u.Unit('kcal/mol')),
-                    'c5': (dihedraltype.c5 * u.Unit('kcal/mol')),
-                }
-                 
-            top_dihedraltype = gmso.DihedralType(parameters=dihedral_params,
-                    expression='c0 * cos(phi)**0 + c1 * cos(phi)**1 + ' +
-                    'c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + ' +
-                    'c5 * cos(phi)**5',
-                    independent_variables='phi'
-                    )
-            pmd_top_dihedraltypes[dihedraltype] = top_dihedraltype
+        pmd_top_dihedraltypes = _dihedral_types_from_pmd(structure)
 
     for atom in structure.atoms:
-        if is_parametrized:
+        if refer_type:
             site = gmso.Site(
                 name=atom.name,
                 charge=atom.charge * u.elementary_charge,
@@ -131,7 +80,7 @@ def from_parmed(structure):
     for bond in structure.bonds:
         # Generate bond parameters for BondType that gets passed
         # to Bond
-        if is_parametrized:
+        if refer_type:
             top_connection = gmso.Bond(connection_members=[site_map[bond.atom1],
 
                 site_map[bond.atom2]],
@@ -149,7 +98,7 @@ def from_parmed(structure):
     for angle in structure.angles:
         # Generate angle parameters for AngleType that gets passed
         # to Angle
-        if is_parametrized:
+        if refer_type:
             top_connection = gmso.Angle(connection_members=[site_map[angle.atom1],
                 site_map[angle.atom2], site_map[angle.atom3]],
                 connection_type=pmd_top_angletypes[angle.type])
@@ -175,7 +124,7 @@ def from_parmed(structure):
                     "following periodic torsion " +
                     "expression detected, currently accounted for as " +
                     "topology.Dihedral with a periodic torsion expression")
-        if is_parametrized:
+        if refer_type:
             top_connection = gmso.Dihedral(connection_members=
                     [site_map[dihedral.atom1], site_map[dihedral.atom2], 
                         site_map[dihedral.atom3], site_map[dihedral.atom4]],
@@ -200,7 +149,7 @@ def from_parmed(structure):
                     "following RB torsion " +
                     "expression detected, currently accounted for as " +
                     "topology.Dihedral with a RB torsion expression")
-        if is_parametrized:
+        if refer_type:
             top_connection = gmso.Dihedral(connection_members=
                     [site_map[rb_torsion.atom1], site_map[rb_torsion.atom2], 
                         site_map[rb_torsion.atom3], site_map[rb_torsion.atom4]],
@@ -218,6 +167,148 @@ def from_parmed(structure):
     top.update_topology()
 
     return top
+
+# Helper function to convert Parmed Type to GMSO Type
+def _atom_types_from_pmd(structure):
+    """ Helper function to convert GMSO AtomType
+
+    This function take in a Parmed Structure, iterate through its
+    atom's atom_type, create a corresponding GMSO.AtomType, and
+    finally return a dictionary containing all pairs of pmd.AtomType
+    and GMSO.AtomType
+
+    Parameter
+    ----------
+        structure: pmd.Structure
+            Parmed Structure that needed to be converted.
+
+    Return
+    ------
+        pmd_top_atomtypes : dict
+            A dictionary linking a pmd.AtomType object to its
+            corresponding GMSO.AtomType object.
+    """
+    unique_atom_types = list(set([a.atom_type for a in structure.atoms]))
+    pmd_top_atomtypes = {}
+    for atom_type in unique_atom_types:
+        top_atomtype = gmso.AtomType(
+                name=atom_type.name,
+                charge=atom_type.charge * u.elementary_charge,
+                parameters={
+                    'sigma': (atom_type.sigma * u.angstrom).in_units(u.nm),
+                    'epsilon': atom_type.epsilon * u.Unit('kcal / mol')},
+                    mass = atom_type.mass
+                    )
+        pmd_top_atomtypes[atom_type] = top_atomtype
+    return pmd_top_atomtypes
+
+def _bond_types_from_pmd(structure):
+    """ Helper function to convert GMSO BondType
+
+    This function take in a Parmed Structure, iterate through its
+    bond_types, create a corresponding GMSO.BondType, and finally
+    return a dictionary containing all pairs of pmd.BondType
+    and GMSO.BondType
+
+    Parameter
+    ----------
+        structure: pmd.Structure
+            Parmed Structure that needed to be converted.
+
+    Return
+    ------
+        pmd_top_bondtypes : dict
+            A dictionary linking a pmd.BondType object to its
+            corresponding GMSO.BondType object.
+    """
+    pmd_top_bondtypes = {}
+    for btype in structure.bond_types:
+        bond_params = {
+                'k': (2 * btype.k * u.Unit('kcal / (nm**2 * mol)')),
+                'r_eq': (btype.req * u.angstrom).in_units(u.nm)
+                }
+
+        top_bondtype = gmso.BondType(parameters=bond_params)
+        pmd_top_bondtypes[btype] = top_bondtype
+    return pmd_top_bondtypes
+
+def _angle_types_from_pmd(structure):
+    """ Helper function to convert GMSO AngleType
+
+    This function take in a Parmed Structure, iterate through its
+    angle_types, create a corresponding GMSO.AngleType, and finally
+    return a dictionary containing all pairs of pmd.AngleType
+    and GMSO.AngleType
+
+    Parameter
+    ----------
+        structure: pmd.Structure
+            Parmed Structure that needed to be converted.
+
+    Return
+    ------
+        pmd_top_angletypes : dict
+            A dictionary linking a pmd.AngleType object to its
+            corresponding GMSO.AngleType object.
+    """
+    pmd_top_angletypes = {}
+    for angletype in structure.angle_types:
+        angle_params = {
+                'k': (2 * angletype.k * u.Unit('kcal / (rad**2 * mol)')),
+                'theta_eq': (angletype.theteq * u.degree)
+            }
+
+        top_angletype = gmso.AngleType(parameters=angle_params)
+        pmd_top_angletypes[angletype] = top_angletype
+    return pmd_top_angletypes
+
+def _dihedral_types_from_pmd(structure):
+    """ Helper function to convert GMSO DihedralType
+
+    This function take in a Parmed Structure, iterate through its
+    dihedral_types and rb_torsion_types, create a corresponding
+    GMSO.DihedralType, and finally return a dictionary containing all
+    pairs of pmd.Dihedraltype (or pmd.RBTorsionType) and GMSO.DihedralType
+
+    Parameter
+    ----------
+        structure: pmd.Structure
+            Parmed Structure that needed to be converted.
+
+    Return
+    ------
+        pmd_top_dihedraltypes : dict
+            A dictionary linking a pmd.DihedralType or pmd.RBTorsionType
+            object to its corresponding GMSO.DihedralType object.
+    """
+    pmd_top_dihedraltypes = {}
+    for dihedraltype in structure.dihedral_types:
+        dihedral_params = {
+                'k': (dihedraltype.phi_k * u.Unit('kcal / mol')),
+                'phi_eq': (dihedraltype.phase * u.degree),
+                'n': dihedraltype.per * u.dimensionless
+            }
+
+        top_dihedraltype = gmso.DihedralType(parameters=dihedral_params)
+        pmd_top_dihedraltypes[dihedraltype] = top_dihedraltype
+    for dihedraltype in structure.rb_torsion_types:
+        dihedral_params = {
+                'c0': (dihedraltype.c0 * u.Unit('kcal/mol')),
+                'c1': (dihedraltype.c1 * u.Unit('kcal/mol')),
+                'c2': (dihedraltype.c2 * u.Unit('kcal/mol')),
+                'c3': (dihedraltype.c3 * u.Unit('kcal/mol')),
+                'c4': (dihedraltype.c4 * u.Unit('kcal/mol')),
+                'c5': (dihedraltype.c5 * u.Unit('kcal/mol')),
+            }
+
+        top_dihedraltype = gmso.DihedralType(parameters=dihedral_params,
+                expression='c0 * cos(phi)**0 + c1 * cos(phi)**1 + ' +
+                'c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + ' +
+                'c5 * cos(phi)**5',
+                independent_variables='phi'
+                )
+        pmd_top_dihedraltypes[dihedraltype] = top_dihedraltype
+    return pmd_top_dihedraltypes
 
 
 def to_parmed(top, refer_type=True):
@@ -332,18 +423,18 @@ def to_parmed(top, refer_type=True):
     if refer_type:
     # Need to add a warning if Topology does not have types information
         if top.atom_types:
-            _convert_atom_types(top, structure, atom_map)
+            _atom_types_from_gmso(top, structure, atom_map)
         if top.bond_types:
-            _convert_bond_types(top, structure, bond_map)
+            _bond_types_from_gmso(top, structure, bond_map)
         if top.angle_types:
-            _convert_angle_types(top, structure, angle_map)
+            _angle_types_from_gmso(top, structure, angle_map)
         if top.dihedral_types:
-            _convert_dihedral_types(top, structure, dihedral_map)
+            _dihedral_types_from_gmso(top, structure, dihedral_map)
 
     return structure
 
 
-def _convert_atom_types(top, structure, atom_map):
+def _atom_types_from_gmso(top, structure, atom_map):
     """Helper function to convert Topology AtomType to Structure AtomType
 
     This function will first check the AtomType expression of Topology and make sure it match with the one default in Parmed.
@@ -382,7 +473,7 @@ def _convert_atom_types(top, structure, atom_map):
         pmd_atom.atom_type = atype_map[site.atom_type.name]
 
 
-def _convert_bond_types(top, structure, bond_map):
+def _bond_types_from_gmso(top, structure, bond_map):
     """Helper function to convert Topology BondType to Structure BondType
 
     This function will first check the BondType expression of Topology and make sure it match with the one default in Parmed.
@@ -416,7 +507,7 @@ def _convert_bond_types(top, structure, bond_map):
     structure.bond_types.claim()
 
 
-def _convert_angle_types(top, structure, angle_map):
+def _angle_types_from_gmso(top, structure, angle_map):
     """Helper function to convert Topology AngleType to Structure AngleType
 
     This function will first check the AngleType expression of Topology and make sure it match with the one default in Parmed.
@@ -450,7 +541,7 @@ def _convert_angle_types(top, structure, angle_map):
     structure.angle_types.claim()
 
 
-def _convert_dihedral_types(top, structure, dihedral_map):
+def _dihedral_types_from_gmso(top, structure, dihedral_map):
     """Helper function to convert Topology DihedralType to Structure DihedralType
 
     This function will first check the DihedralType expression of Topology and
@@ -497,8 +588,8 @@ def _convert_dihedral_types(top, structure, dihedral_map):
             raise GMSOException('msg')
         dtype_map[dihedral_type] = dtype
 
-        for dihedral in top.dihedrals:
-            pmd_dihedral = dihedral_map[dihedral]
-            pmd_dihedral.type = dtype_map[dihedral.connection_type]
-        structure.dihedral_types.claim()
-        structure.rb_torsions.claim()
+    for dihedral in top.dihedrals:
+        pmd_dihedral = dihedral_map[dihedral]
+        pmd_dihedral.type = dtype_map[dihedral.connection_type]
+    structure.dihedral_types.claim()
+    structure.rb_torsions.claim()

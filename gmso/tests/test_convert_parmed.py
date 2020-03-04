@@ -1,6 +1,9 @@
 import unyt as u
 import pytest
 
+import mbuild as mb
+import foyer
+
 from gmso.external.convert_parmed import from_parmed, to_parmed
 from gmso.tests.base_test import BaseTest
 from gmso.utils.testing import allclose
@@ -14,7 +17,7 @@ if has_parmed:
 class TestConvertParmEd(BaseTest):
     def test_from_parmed_basic(self, angles):
         struc = pmd.load_file(get_fn('ethane.mol2'), structure=True)
-        top = from_parmed(struc)
+        top = from_parmed(struc, refer_type=False)
         for site in top.sites:
             assert site.atom_type is None
         for connection in top.connections:
@@ -63,7 +66,6 @@ class TestConvertParmEd(BaseTest):
         top = from_parmed(struc)
         struc_from_top = to_parmed(top)
 
-        #assert struc.atom_types == struc_from_top.atom_types
         assert struc.bond_types == struc_from_top.bond_types
         assert struc.angle_types == struc_from_top.angle_types
         assert struc.dihedral_types == struc_from_top.dihedral_types
@@ -111,3 +113,39 @@ class TestConvertParmEd(BaseTest):
         with pytest.raises(Exception):
             top.dihedral_types[0] = "c0 - c1 + c2 - c3 + c4 - c5"
             struc_from_top = to_parmed(top)
+
+    def test_to_parmed_loop(self, parmed_methylnitroaniline,
+                                  parmed_chloroethanol):
+        for struc in [parmed_methylnitroaniline, parmed_chloroethanol]:
+            top_from_struc = from_parmed(struc)
+
+            struc_from_top = to_parmed(top_from_struc)
+
+            assert set(struc.bond_types) == set(struc_from_top.bond_types)
+            assert set(struc.angle_types) == set(struc_from_top.angle_types)
+            assert set(struc.dihedral_types) == set(struc_from_top.dihedral_types)
+            assert set(struc.rb_torsion_types) == set(struc_from_top.rb_torsion_types)
+
+            # Detail comparisions
+            for i in range(len(struc.atoms)):
+                assert struc_from_top.atoms[i].name == struc.atoms[i].name
+                assert struc_from_top.atoms[i].atom_type == struc.atoms[i].atom_type
+
+            for i in range(len(struc.bonds)):
+                assert struc_from_top.bonds[i].atom1.name == struc.bonds[i].atom1.name
+                assert struc_from_top.bonds[i].atom2.name == struc.bonds[i].atom2.name
+                assert struc_from_top.bonds[i].type == struc.bonds[i].type
+
+            for i in range(len(struc.angles)):
+                assert struc_from_top.angles[i].atom1.name == struc.angles[i].atom1.name
+                assert struc_from_top.angles[i].atom2.name == struc.angles[i].atom2.name
+                assert struc_from_top.angles[i].atom3.name == struc.angles[i].atom3.name
+                assert struc_from_top.angles[i].type == struc.angles[i].type
+
+            for i in range(len(struc.dihedrals)):
+                assert struc_from_top.dihedrals[i].atom1.name == struc.dihedrals[i].atom1.name
+                assert struc_from_top.dihedrals[i].atom2.name == struc.dihedrals[i].atom2.name
+                assert struc_from_top.dihedrals[i].atom3.name == struc.dihedrals[i].atom3.name
+                assert struc_from_top.dihedrals[i].atom4.name == struc.dihedrals[i].atom4.name
+                assert struc_from_top.dihedrals[i].type == struc.dihedrals[i].type
+
