@@ -401,12 +401,14 @@ def _convert_bond_types(top, structure, bond_map):
         assert bond_type.expression == parse_expr("0.5 * k * (r-r_eq)**2"), msg
         # Extract Topology bond_type information
         btype_k =  0.5 * float(bond_type.parameters['k'].value)
-        btype_r_eq = float(bond_type.parameters['r_eq'].value)
+        btype_r_eq = float(bond_type.parameters['r_eq'].to("angstrom").value)
         # Create unique Parmed BondType object
         btype = pmd.BondType(btype_k, btype_r_eq)
         # Type map to match Topology BondType with Parmed BondType
         btype_map[bond_type] = btype
-        
+        # Add BondType to structure.bond_types
+        structure.bond_types.append(btype)
+
     for bond in top.bonds:
         #Assign bond_type to bond
         pmd_bond = bond_map[bond]
@@ -438,6 +440,8 @@ def _convert_angle_types(top, structure, angle_map):
         agltype = pmd.AngleType(agltype_k, agltype_theta_eq)
         # Type map to match Topology AngleType with Parmed AngleType
         agltype_map[angle_type] = agltype
+        # Add AngleType to structure.angle_types
+        structure.angle_types.append(agltype)
 
     for angle in top.angles:
         #Assign angle_type to angle
@@ -462,13 +466,15 @@ def _convert_dihedral_types(top, structure, dihedral_map):
     """
     dtype_map = dict()
     for dihedral_type in top.dihedral_types:
-        msg = "Dihedral type expression does not match Parmed DihedralType default expressions (Dihedrals, RBTorsions)"
+        msg = "Dihedral type {} expression does not match Parmed DihedralType default expressions (Periodics, RBTorsions)".format(dihedral_type.name)
         if dihedral_type.expression == parse_expr('k * (1 + cos(n * phi - phi_eq))**2'):
             dtype_k = float(dihedral_type.parameters['k'].value)
             dtype_phi_eq = float(dihedral_type.parameters['phi_eq'].value)
             dtype_n = float(dihedral_type.parameters['n'].value)
             # Create unique Parmed DihedralType object
             dtype = pmd.DihedralType(dtype_k, dtype_n, dtype_phi_eq)
+            # Add DihedralType to structure.dihedral_types
+            structure.dihedral_types.append(dtype)
         elif (dihedral_type.expression == parse_expr(
                                                   'c0 * cos(phi)**0 + ' +
                                                   'c1 * cos(phi)**1 + ' +
@@ -485,6 +491,8 @@ def _convert_dihedral_types(top, structure, dihedral_map):
             # Create unique DihedralType object
             dtype = pmd.RBTorsionType(dtype_c0, dtype_c1, dtype_c2,
                                       dtype_c3, dtype_c4, dtype_c5)
+            # Add RBTorsionType to structure.rb_torsion_types
+            structure.rb_torsion_types.append(dtype)
         else:
             raise GMSOException('msg')
         dtype_map[dihedral_type] = dtype

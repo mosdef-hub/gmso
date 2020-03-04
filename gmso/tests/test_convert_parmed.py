@@ -1,9 +1,8 @@
 import unyt as u
 import pytest
 
-from gmso.external.convert_parmed import from_parmed
+from gmso.external.convert_parmed import from_parmed, to_parmed
 from gmso.tests.base_test import BaseTest
-from gmso.utils.io import get_fn
 from gmso.utils.testing import allclose
 from gmso.utils.io import get_fn, import_, has_parmed
 
@@ -48,3 +47,67 @@ class TestConvertParmEd(BaseTest):
         lengths = u.nm * [0.714, 0.7938, 0.6646]
         assert allclose(top.box.lengths, lengths)
         assert allclose(top.box.angles, angles)
+
+    def test_to_parmed_simple(self):
+        struc = pmd.load_file(get_fn('ethane.top'), xyz=get_fn('ethane.gro'))
+        top = from_parmed(struc)
+        struc_from_top = to_parmed(top, refer_type=False)
+
+        assert len(struc.atoms) == len(struc_from_top.atoms)
+        assert len(struc.bonds) == len(struc_from_top.bonds)
+        assert len(struc.angles) == len(struc_from_top.angles)
+        assert len(struc.dihedrals) == len(struc.dihedrals)
+
+    def test_to_parmed_full(self):
+        struc = pmd.load_file(get_fn('ethane.top'), xyz=get_fn('ethane.gro'))
+        top = from_parmed(struc)
+        struc_from_top = to_parmed(top)
+
+        #assert struc.atom_types == struc_from_top.atom_types
+        assert struc.bond_types == struc_from_top.bond_types
+        assert struc.angle_types == struc_from_top.angle_types
+        assert struc.dihedral_types == struc_from_top.dihedral_types
+        assert struc.rb_torsion_types == struc_from_top.rb_torsion_types
+
+        # Detail comparisions
+        for i in range(len(struc.atoms)):
+            assert struc_from_top.atoms[i].name == struc.atoms[i].name
+            assert struc_from_top.atoms[i].atom_type == struc.atoms[i].atom_type
+
+        for i in range(len(struc.bonds)):
+            assert struc_from_top.bonds[i].atom1.name == struc.bonds[i].atom1.name
+            assert struc_from_top.bonds[i].atom2.name == struc.bonds[i].atom2.name
+            assert struc_from_top.bonds[i].type == struc.bonds[i].type
+
+        for i in range(len(struc.angles)):
+            assert struc_from_top.angles[i].atom1.name == struc.angles[i].atom1.name
+            assert struc_from_top.angles[i].atom2.name == struc.angles[i].atom2.name
+            assert struc_from_top.angles[i].atom3.name == struc.angles[i].atom3.name
+            assert struc_from_top.angles[i].type == struc.angles[i].type
+
+        for i in range(len(struc.dihedrals)):
+            assert struc_from_top.dihedrals[i].atom1.name == struc.dihedrals[i].atom1.name
+            assert struc_from_top.dihedrals[i].atom2.name == struc.dihedrals[i].atom2.name
+            assert struc_from_top.dihedrals[i].atom3.name == struc.dihedrals[i].atom3.name
+            assert struc_from_top.dihedrals[i].atom4.name == struc.dihedrals[i].atom4.name
+            assert struc_from_top.dihedrals[i].type == struc.dihedrals[i].type
+
+    def test_to_parmed_incompatible_expression(self):
+        struc = pmd.load_file(get_fn('ethane.top'), xyz=get_fn('ethane.gro'))
+        top = from_parmed(struc)
+
+        with pytest.raises(Exception):
+            top.atom_types[0] = "sigma + epsilon"
+            struc_from_top = to_parmed(top)
+
+        with pytest.raises(Exception):
+            top.bond_types[0] = "k * r_eq"
+            struc_from_top = to_parmed(top)
+
+        with pytest.raises(Exception):
+            top.angle_types[0] = "k - theta_eq"
+            struc_from_top = to_parmed(top)
+
+        with pytest.raises(Exception):
+            top.dihedral_types[0] = "c0 - c1 + c2 - c3 + c4 - c5"
+            struc_from_top = to_parmed(top)
