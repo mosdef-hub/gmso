@@ -55,14 +55,16 @@ def write_lammpsdata(topology, filename, atom_style='full'):
 
     # TODO: charges
     # TODO: bonds
+    bonds = [bond for bond in topology.bonds]
+    bond_types = list(set([bond.connection_type for bond in topology.bonds]))
     # TODO: Angles
+    angles = [angle for angle in topology.angles]
+    angle_types = list(set([angle.connection_type for angle in topology.angles]))
     # TODO: Dihedrals
 
     # TODO: Figure out handling bond, angle, and dihedral indices
 
     # placeholder; change later
-    bonds = 0
-    angles = 0
     dihedrals = 0
 
     with open(filename, 'w') as data:
@@ -71,11 +73,11 @@ def write_lammpsdata(topology, filename, atom_style='full'):
             str(datetime.datetime.now())))
         data.write('{:d} atoms\n'.format(len(topology.sites)))
         if atom_style in ['full', 'molecular']:
-            if bonds != 0:
+            if len(bonds) != 0:
                 data.write('{:} bonds\n'.format(len(bonds)))
             else:
                 data.write('0 bonds\n')
-            if angles != 0:
+            if len(angles) != 0:
                 data.write('{:} angles\n'.format(len(angles)))
             else:
                 data.write('0 angles\n')
@@ -165,9 +167,25 @@ def write_lammpsdata(topology, filename, atom_style='full'):
                     epsilon.in_units(u.Unit('kcal/mol')).value,
                     sigma_dict[idx].in_units(u.angstrom).value))
 
-        # TODO: Write out bond coefficients
-        # TODO: Write out angle coefficients
-        # TODO: Write out dihedral coefficients
+            # TODO: Check sympy expression
+            data.write('\nBond Coeffs\n\n')
+            for idx, bond_type in enumerate(bond_types):
+                data.write('{}\t{:.5f}\t{:.5f}\n'.format(
+                    idx,
+                    bond_type.parameters['k'].in_units(u.Unit('kcal/mol/angstrom**2')).value,
+                    bond_type.parameters['r_eq'].in_units(u.Unit('angstrom')).value
+                    ))
+
+            # TODO: Write out angle coefficients
+            data.write('\nAngle Coeffs\n\n')
+            for idx, angle_type in enumerate(angle_types):
+                data.write('{}\t{:.5f}\t{:.5f}\n'.format(
+                    idx,
+                    angle_type.parameters['k'].in_units(u.Unit('kcal/mol/degree**2')).value,
+                    angle_type.parameters['theta_eq'].in_units(u.Unit('degree')).value
+                    ))
+
+            # TODO: Write out dihedral coefficients
 
         # Atom data
         data.write('\nAtoms\n\n')
