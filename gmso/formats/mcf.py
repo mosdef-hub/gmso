@@ -1,33 +1,34 @@
 from __future__ import division
 
 import warnings
-import numpy as np
 import datetime
-import networkx as nx
+from math import sqrt
 
+import numpy as np
+import networkx as nx
 import unyt as u
 
-from topology.core.topology import Topology
-from topology.lib.potential_templates import LennardJonesPotential
-from topology.lib.potential_templates import MiePotential
-from topology.lib.potential_templates import HarmonicAnglePotential
-from topology.lib.potential_templates import HarmonicTorsionPotential
-from topology.lib.potential_templates import PeriodicTorsionPotential
-from topology.lib.potential_templates import RyckaertBellemansTorsionPotential
-from topology.lib.potential_templates import HarmonicImproperPotential
-from topology.utils.compatibility import check_compatability
-from topology.exceptions import TopologyError
+from gmso.core.topology import Topology
+from gmso.lib.potential_templates import LennardJonesPotential
+from gmso.lib.potential_templates import MiePotential
+from gmso.lib.potential_templates import HarmonicAnglePotential
+from gmso.lib.potential_templates import HarmonicTorsionPotential
+from gmso.lib.potential_templates import PeriodicTorsionPotential
+from gmso.lib.potential_templates import RyckaertBellemansTorsionPotential
+from gmso.lib.potential_templates import HarmonicImproperPotential
+from gmso.utils.compatibility import check_compatability
+from gmso.utils.conversions import convert_ryckaert_to_opls
+from gmso.exceptions import GMSOError
 
-from math import sqrt
 
 __all__ = ['write_mcf']
 
 def write_mcf(top, filename):
-    """Generate a Cassandra MCF from a topology.core.Topology object.
+    """Generate a Cassandra MCF from a gmso.core.Topology object.
 
     Parameters
     ----------
-    top : topology.core.Topology
+    top : gmso.core.Topology
         Topology object
     filename : str
         Path of the output file
@@ -39,7 +40,7 @@ def write_mcf(top, filename):
 
     """
 
-    _validate_compatibility(top)
+    _check_compatibility(top)
 
     # Identify atoms in rings and Cassandra 'fragments'
     in_ring,frag_list,frag_conn = _id_rings_fragments(top)
@@ -50,8 +51,12 @@ def write_mcf(top, filename):
     coul14 = 0.0
 
     # TODO: What oh what to do about subtops?
-    # Refuse topologies with subtops as MCF writer is for single molecules?
-    # Or write single MCF for each unique molecule?
+    # For now refuse topologies with subtops as MCF writer is for
+    # single molecules
+    if n_subtops > 0:
+        raise GMSOError("MCF writer does not support subtopologies. "
+                "Please provide a single molecule as an gmso.Topology "
+                "object to the MCF writer.")
 
     # Now we write the MCF file
     with open(filename, 'w') as mcf:
@@ -61,7 +66,7 @@ def write_mcf(top, filename):
                    '!Molecular connectivity file\n'
                    '!***************************************'
                    '****************************************\n'
-                   '!File {} written by topology at {}\n\n'.format(
+                   '!File {} written by gmso at {}\n\n'.format(
                    top.name if top.name is not None else '',
                    str(datetime.datetime.now()))
                  )
@@ -84,7 +89,7 @@ def _id_rings_fragments(top):
 
     Parameters
     ----------
-    top : topology.core.Topology
+    top : gmso.core.Topology
         Topology object
 
     Returns
@@ -228,18 +233,16 @@ def _write_atom_information(mcf, top, in_ring):
               "reduced due to shortening the atomtype name to six "
               "characters.")
 
-    # TODO: How do I confirm the functional form?
-    # TODO: How to detect Mie vs. LJ? We can support both now :)
-    # For now just assume/support LJ
+    # Detect VDW style
     vdw_styles = set()
     for site in top.sites:
         vdw_styles.add(get_vdw_style(site.atom_type))
     if len(vdw_styles) > 1:
-        raise TopologyError('More than one vdw_style detected. '
+        raise GMSOError('More than one vdw_style detected. '
                 'Cassandra only supports MCF files with a single '
                 'vdw_style')
     if False in vdw_styles:
-        raise TopologyError('Unsupported vdw_style detected.')
+        raise GMSOError('Unsupported vdw_style detected.')
 
     vdw_style = vdw_styles.pop()
 
@@ -286,7 +289,9 @@ def _write_atom_information(mcf, top, in_ring):
                 '{:8.3f}'.format(
                     vdw_style,
                     (site.atom_type.parameters['epsilon']/u.kb).in_units('K').value,
-                    site.atom_type.parameters['sigma'].in_units('Angstrom').value
+                    site.atom_type.parameters['sigma'].in_units('Angstrom').value,
+                    site.atom_type.parameters['m'].value,
+                    site.atom_type.parameters['n'].value
                 )
             )
         if in_ring[idx] == True:
@@ -321,7 +326,7 @@ def _write_bond_information(mcf, top):
                 bond.connection_members[0].idx+1, #TODO: Confirm the +1 here
                 bond.connection_members[1].idx+1,
                 'fixed',
-                bond.connection_type.parameters['r_eq'].in_units(u.Angstrom).value
+                2.*bond.connection_type.parameters['r_eq'].in_units(u.Angstrom).value #TODO: Confirm conversion
             )
         )
 
@@ -360,7 +365,7 @@ def _write_angle_information(mcf, top):
                 angle.connection_members[1].idx+1, # TODO: Confirm order for angles i-j-k
                 angle.connection_members[2].idx+1,
                 angle_style,
-                (0.5*angle.connection_type.parameters['k']/u.kb).in_units('K/rad**2').value, # TODO: k vs. k/2. conversion
+                (2.*angle.connection_type.parameters['k']/u.kb).in_units('K/rad**2').value, # TODO: k vs. k/2. conversion
                 angle.connection_type.parameters['theta_eq'].in_units(u.degree).value
             )
         )
@@ -391,9 +396,6 @@ def _write_dihedral_information(mcf, top):
 
     mcf.write(header)
 
-    # TODO: Check and convert RB to OPLS dihedrals here
-    # _convert_rb_to_opls()
-
     # TODO: Are impropers buried in dihedrals?
     mcf.write('{:d}\n'.format(len(top.dihedrals)))
     for (idx, dihedral) in enumerate(top.dihedrals):
@@ -411,6 +413,11 @@ def _write_dihedral_information(mcf, top):
             )
         )
         dihedral_style = _get_dihedral_style(dihedral)
+        # If ryckaert, convert to opls
+        if dihedral_style == 'ryckaert':
+            dihedral.connection_type = convert_ryckaert_to_opls(
+                    dihedral.connection_type)
+            dihedral_style = 'opls'
         if dihedral_style == 'opls':
             mcf.write(
                 '{:s}  '
@@ -450,7 +457,7 @@ def _write_dihedral_information(mcf, top):
             )
 
         else:
-            raise TopologyError('Unsupported dihedral style for '
+            raise GMSOError('Unsupported dihedral style for '
                 'Cassandra MCF writer')
 
 def _write_improper_information(mcf, top):
@@ -489,7 +496,7 @@ def _write_fragment_information(mcf, top, frag_list, frag_conn):
     ----------
     mcf : file object
         The file object of the Cassandra mcf being written
-    top : topology.core.Topology
+    top : gmso.core.Topology
         Topology object
     frag_list : list
         Atom ids belonging to each fragment
@@ -554,17 +561,18 @@ def _write_intrascaling_information(mcf, lj14, coul14):
     mcf.write('0. 0. {:.4f} 1.\n'.format(lj14))
     mcf.write('0. 0. {:.4f} 1.\n'.format(coul14))
 
-def _validate_compatibility(top):
-    """Check topology object for compatibility with Cassandra MCF format"""
+def _check_compatibility(top):
+    """Check Topology object for compatibility with Cassandra MCF format"""
 
     if not isinstance(top, Topology):
-        raise TopologyError("MCF writer requires a Topology object.")
+        raise GMSOError("MCF writer requires a Topology object.")
     if not all ([site.atom_type.name for site in top.sites]):
-        raise TopologyError("MCF writing not supported without "
+        raise GMSOError("MCF writing not supported without "
             "parameterized forcefield.")
 
     accepted_potentials = [
                            LennardJonesPotential(),
+                           MiePotential(),
                            HarmonicAnglePotential(),
                            PeriodicTorsionPotential(),
                            RyckaertBellemansTorsionPotential()
@@ -588,6 +596,7 @@ def _get_dihedral_style(dihedral_type):
         'charmm'   : PeriodicTorsionPotential(),
         'harmonic' : HarmonicTorsionPotential(),
         'opls'     : OPLSTorsionPotential()
+        'ryckaert' : RyckaertBellemansTorsionPotential()
     }
 
     return _get_potential_style(dihedral_styles,dihedral_type)
