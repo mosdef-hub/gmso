@@ -6,6 +6,7 @@ from math import sqrt
 
 import numpy as np
 import networkx as nx
+import sympy
 import unyt as u
 
 from gmso.core.topology import Topology
@@ -16,7 +17,7 @@ from gmso.lib.potential_templates import HarmonicTorsionPotential
 from gmso.lib.potential_templates import PeriodicTorsionPotential
 from gmso.lib.potential_templates import RyckaertBellemansTorsionPotential
 from gmso.lib.potential_templates import HarmonicImproperPotential
-from gmso.utils.compatibility import check_compatability
+from gmso.utils.compatibility import check_compatibility
 from gmso.utils.conversions import convert_ryckaert_to_opls
 from gmso.exceptions import GMSOError
 
@@ -53,7 +54,7 @@ def write_mcf(top, filename):
     # TODO: What oh what to do about subtops?
     # For now refuse topologies with subtops as MCF writer is for
     # single molecules
-    if n_subtops > 0:
+    if top.n_subtops > 0:
         raise GMSOError("MCF writer does not support subtopologies. "
                 "Please provide a single molecule as an gmso.Topology "
                 "object to the MCF writer.")
@@ -67,8 +68,7 @@ def write_mcf(top, filename):
                    '!***************************************'
                    '****************************************\n'
                    '!File {} written by gmso at {}\n\n'.format(
-                   top.name if top.name is not None else '',
-                   str(datetime.datetime.now()))
+                   filename, str(datetime.datetime.now()))
                  )
 
         mcf.write(header)
@@ -76,7 +76,8 @@ def write_mcf(top, filename):
         _write_bond_information(mcf, top)
         _write_angle_information(mcf, top)
         _write_dihedral_information(mcf, top)
-        _write_improper_information(mcf, top)
+        # TODO: Add improper information
+        #_write_improper_information(mcf, top)
         _write_fragment_information(mcf, top, frag_list, frag_conn)
         _write_intrascaling_information(mcf, lj14, coul14)
 
@@ -236,7 +237,7 @@ def _write_atom_information(mcf, top, in_ring):
     # Detect VDW style
     vdw_styles = set()
     for site in top.sites:
-        vdw_styles.add(get_vdw_style(site.atom_type))
+        vdw_styles.add(_get_vdw_style(site.atom_type))
     if len(vdw_styles) > 1:
         raise GMSOError('More than one vdw_style detected. '
                 'Cassandra only supports MCF files with a single '
@@ -290,8 +291,8 @@ def _write_atom_information(mcf, top, in_ring):
                     vdw_style,
                     (site.atom_type.parameters['epsilon']/u.kb).in_units('K').value,
                     site.atom_type.parameters['sigma'].in_units('Angstrom').value,
-                    site.atom_type.parameters['m'].value,
-                    site.atom_type.parameters['n'].value
+                    site.atom_type.parameters['n'].value,
+                    site.atom_type.parameters['m'].value
                 )
             )
         if in_ring[idx] == True:
@@ -444,7 +445,7 @@ def _write_dihedral_information(mcf, top):
                     dihedral.connection_type.parameters['phi_eq'].in_units(u.degrees).value
                 )
             )
-         elif dihedral_style == 'harmonic':
+        elif dihedral_style == 'harmonic':
             mcf.write(
                 '{:s}  '
                 '{:8.3f}  '
@@ -595,7 +596,7 @@ def _get_dihedral_style(dihedral_type):
     dihedral_styles = {
         'charmm'   : PeriodicTorsionPotential(),
         'harmonic' : HarmonicTorsionPotential(),
-        'opls'     : OPLSTorsionPotential()
+        'opls'     : OPLSTorsionPotential(),
         'ryckaert' : RyckaertBellemansTorsionPotential()
     }
 
