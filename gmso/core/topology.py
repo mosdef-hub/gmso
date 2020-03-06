@@ -48,7 +48,7 @@ class Topology(object):
         Number of sites in the topology
 
     n_connections : int
-        Number of connections in the topology (Bonds, Angles, Dihedrals)
+        Number of connections in the topology (Bonds, Angles, Dihedrals, Impropers)
 
     n_bonds : int
         Number of bonds in the topology
@@ -66,10 +66,13 @@ class Topology(object):
         Number of subtopolgies in the topology
 
     connections : tuple of gmso.Connection objects
-        A collection of bonds, angles and dihedrals in the topology
+        A collection of bonds, angles, dihedrals, and impropers in the topology
 
     bonds : tuple of gmso.Bond objects
         A collection of bonds in the topology
+
+    angles : tuple of gmso.Angle objects
+        A collection of angles in the topology
 
     dihedrals : tuple of gmso.Dihedral objects
         A collection of dihedrals in the topology
@@ -78,7 +81,7 @@ class Topology(object):
         A collection of impropers in the topology
 
     connection_types : tuple of gmso.Potential objects
-        A collection of BondTypes, AngleTypes and DihedralTypes in the topology
+        A collection of BondTypes, AngleTypes, DihedralTypes, and ImproperTypes in the topology
 
     atom_types : tuple of gmso.AtomType objects
         A collection of AtomTypes in the topology

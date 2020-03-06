@@ -9,7 +9,7 @@ class Improper(Connection):
     """A 4-partner connection between sites.
 
     This is a subclass of the gmso.Connection superclass.
-    This class has strictly 3 members in its connection_members.
+    This class has strictly 4 members in its connection_members.
     The connection_type in this class corresponds to gmso.ImproperType
 
     Parameters
@@ -26,7 +26,7 @@ class Improper(Connection):
     -----
     Inherits some methods from Connection:
         __eq__, __repr__, _validate methods
-    Addiitonal _validate methods are presented
+    Additional _validate methods are presented
     """
 
     def __init__(self, connection_members=[], connection_type=None, name="Improper"):
