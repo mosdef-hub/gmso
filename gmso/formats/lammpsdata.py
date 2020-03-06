@@ -38,6 +38,8 @@ def write_lammpsdata(topology, filename, atom_style='full'):
     if atom_style not in ['atomic', 'charge', 'molecular', 'full']:
         raise ValueError('Atom style "{}" is invalid or is not currently supported'.format(atom_style))
 
+    # TODO: Support various unit styles
+
     types = list()
     idx_dict = dict()
     for idx, site in enumerate(topology.sites):
@@ -220,7 +222,7 @@ def write_lammpsdata(topology, filename, atom_style='full'):
         if topology.angles:
             data.write('\nAngles\n\n')
             for i, angle in enumerate(topology.angles):
-                data.write('{:d}\t{:d}\t{:d}\t{:d}\n'.format(
+                data.write('{:d}\t{:d}\t{:d}\t{:d}\t{:d}\n'.format(
                 i+1,
                 angle_dict[angle.connection_type],
                 idx_dict[angle.connection_members[0]],
