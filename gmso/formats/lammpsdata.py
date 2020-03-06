@@ -38,11 +38,9 @@ def write_lammpsdata(topology, filename, atom_style='full'):
     if atom_style not in ['atomic', 'charge', 'molecular', 'full']:
         raise ValueError('Atom style "{}" is invalid or is not currently supported'.format(atom_style))
 
-    xyz = list()
     types = list()
     idx_dict = dict()
     for idx, site in enumerate(topology.sites):
-        xyz.append([site.position[0],site.position[1],site.position[2]])
         types.append(site.atom_type.name)
         idx_dict[site] = idx
 
@@ -57,12 +55,6 @@ def write_lammpsdata(topology, filename, atom_style='full'):
     unique_types.sort(key=natural_sort)
 
     # TODO: charges
-    # TODO: bonds
-    bonds = [bond for bond in topology.bonds]
-    bond_types = list(set([bond.connection_type for bond in topology.bonds]))
-    # TODO: Angles
-    angles = [angle for angle in topology.angles]
-    angle_types = list(set([angle.connection_type for angle in topology.angles]))
     # TODO: Dihedrals
 
     # placeholder; change later
@@ -74,12 +66,12 @@ def write_lammpsdata(topology, filename, atom_style='full'):
             str(datetime.datetime.now())))
         data.write('{:d} atoms\n'.format(len(topology.sites)))
         if atom_style in ['full', 'molecular']:
-            if len(bonds) != 0:
-                data.write('{:} bonds\n'.format(len(bonds)))
+            if len(topology.bonds) != 0:
+                data.write('{:} bonds\n'.format(len(topology.bonds)))
             else:
                 data.write('0 bonds\n')
-            if len(angles) != 0:
-                data.write('{:} angles\n'.format(len(angles)))
+            if len(topology.angles) != 0:
+                data.write('{:} angles\n'.format(len(topology.angles)))
             else:
                 data.write('0 angles\n')
             if dihedrals != 0:
@@ -214,9 +206,9 @@ def write_lammpsdata(topology, filename, atom_style='full'):
                 z=site.position[2].in_units(u.angstrom).value))
 
         # TODO: Write out bonds
-        if bonds:
+        if topology.bonds:
             data.write('\nBonds\n\n')
-            for i, bond in enumerate(bonds):
+            for i, bond in enumerate(topology.bonds):
                 data.write('{:d}\t{:d}\t{:d}\t{:d}\n'.format(
                 i+1,
                 bond_dict[bond.connection_type],
@@ -225,9 +217,9 @@ def write_lammpsdata(topology, filename, atom_style='full'):
                 ))
 
         # TODO: Write out angles
-        if angles:
+        if topology.angles:
             data.write('\nAngles\n\n')
-            for i, angle in enumerate(angles):
+            for i, angle in enumerate(topology.angles):
                 data.write('{:d}\t{:d}\t{:d}\t{:d}\n'.format(
                 i+1,
                 angle_dict[angle.connection_type],
