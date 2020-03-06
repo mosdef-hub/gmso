@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 import mbuild as mb
+import mbuild.recipes
 import unyt as u
 import foyer
 
@@ -116,4 +117,13 @@ class BaseTest:
         compound = mb.load('C(CCl)O', smiles=True)
         oplsaa = foyer.Forcefield(name='oplsaa')
         pmd_structure = oplsaa.apply(compound)
+        return pmd_structure
+
+    @pytest.fixture
+    def parmed_hexane_box(self):
+        compound = mb.recipes.Alkane(6)
+        compound.name = "HEX"
+        compound_box = mb.fill_box(compound, n_compounds=6, box=[6,6,6])
+        oplsaa = foyer.Forcefield(name='oplsaa')
+        pmd_structure = oplsaa.apply(compound_box, residues="HEX")
         return pmd_structure

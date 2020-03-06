@@ -1,5 +1,6 @@
 import unyt as u
 import pytest
+import numpy as np
 
 import mbuild as mb
 import foyer
@@ -149,3 +150,28 @@ class TestConvertParmEd(BaseTest):
                 assert struc_from_top.dihedrals[i].atom4.name == struc.dihedrals[i].atom4.name
                 assert struc_from_top.dihedrals[i].type == struc.dihedrals[i].type
 
+    def test_residues_info(self, parmed_hexane_box):
+        struc = parmed_hexane_box
+
+        top_from_struc = from_parmed(struc)
+        assert len(top_from_struc.subtops) == len(struc.residues)
+        for i in range(len(top_from_struc.subtops)):
+            assert len(top_from_struc.subtops[i].sites) == 20
+            assert top_from_struc.subtops[i].name == "HEX[{}]".format(i)
+
+        struc_from_top = to_parmed(top_from_struc)
+        assert len(struc_from_top.residues) == len(struc.residues)
+        for i in range(len(top_from_struc.subtops)):
+            assert len(struc_from_top.residues[i].atoms) == 20
+            assert struc_from_top.residues[i].name == "HEX"
+            assert struc_from_top.residues[i].idx == i
+
+    def test_box_info(self, parmed_hexane_box):
+        struc = parmed_hexane_box
+
+        top_from_struc = from_parmed(struc)
+        assert np.allclose(top_from_struc.box.lengths.to("nm").value, [6., 6., 6.])
+        assert np.allclose(top_from_struc.box.angles.to("degree").value, [90., 90., 90.])
+
+        struc_from_top = to_parmed(top_from_struc)
+        assert np.allclose(struc_from_top.box, [60, 60, 60, 90, 90, 90])
