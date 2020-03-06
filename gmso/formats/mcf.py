@@ -15,6 +15,7 @@ from gmso.lib.potential_templates import MiePotential
 from gmso.lib.potential_templates import HarmonicAnglePotential
 from gmso.lib.potential_templates import HarmonicTorsionPotential
 from gmso.lib.potential_templates import PeriodicTorsionPotential
+from gmso.lib.potential_templates import OPLSTorsionPotential
 from gmso.lib.potential_templates import RyckaertBellemansTorsionPotential
 from gmso.lib.potential_templates import HarmonicImproperPotential
 from gmso.utils.compatibility import check_compatibility
@@ -274,8 +275,8 @@ def _write_atom_information(mcf, top, in_ring):
         if vdw_style == 'LJ':
             mcf.write(
                 '{:3s}  '
-                '{:8.3f}  '
-                '{:8.3f}'.format(
+                '{:10.5f}  '
+                '{:10.5f}'.format(
                     vdw_style,
                     (site.atom_type.parameters['epsilon']/u.kb).in_units('K').value,
                     site.atom_type.parameters['sigma'].in_units('Angstrom').value
@@ -284,8 +285,8 @@ def _write_atom_information(mcf, top, in_ring):
         elif vdw_style == 'Mie':
             mcf.write(
                 '{:3s}  '
-                '{:8.3f}  '
-                '{:8.3f}  '
+                '{:10.5f}  '
+                '{:10.5f}  '
                 '{:8.3f}  '
                 '{:8.3f}'.format(
                     vdw_style,
@@ -322,12 +323,12 @@ def _write_bond_information(mcf, top):
             '{:<4d}  '
             '{:<4d}  '
             '{:s}  '
-            '{:8.3f}\n'.format(
+            '{:10.5f}\n'.format(
                 idx+1,
                 bond.connection_members[0].idx+1, #TODO: Confirm the +1 here
                 bond.connection_members[1].idx+1,
                 'fixed',
-                2.*bond.connection_type.parameters['r_eq'].in_units(u.Angstrom).value #TODO: Confirm conversion
+                bond.connection_type.parameters['r_eq'].in_units(u.Angstrom).value
             )
         )
 
@@ -359,14 +360,14 @@ def _write_angle_information(mcf, top):
             '{:<4d}  '
             '{:<4d}  '
             '{:s}  '
-            '{:8.3f} '
-            '{:8.3f}\n'.format(
+            '{:10.5f} '
+            '{:10.5f}\n'.format(
                 idx+1,
                 angle.connection_members[0].idx+1,
                 angle.connection_members[1].idx+1, # TODO: Confirm order for angles i-j-k
                 angle.connection_members[2].idx+1,
                 angle_style,
-                (2.*angle.connection_type.parameters['k']/u.kb).in_units('K/rad**2').value, # TODO: k vs. k/2. conversion
+                (0.5*angle.connection_type.parameters['k']/u.kb).in_units('K/rad**2').value, # TODO: k vs. k/2. conversion
                 angle.connection_type.parameters['theta_eq'].in_units(u.degree).value
             )
         )
@@ -422,23 +423,23 @@ def _write_dihedral_information(mcf, top):
         if dihedral_style == 'opls':
             mcf.write(
                 '{:s}  '
-                '{:8.3f}  '
-                '{:8.3f}  '
-                '{:8.3f}  '
-                '{:8.3f}\n'.format(
+                '{:10.5f}  '
+                '{:10.5f}  '
+                '{:10.5f}  '
+                '{:10.5f}\n'.format(
                     dihedral_style,
-                    dihedral.connection_type.parameters['k0'].in_units('kJ/mol').value,
-                    dihedral.connection_type.parameters['k1'].in_units('kJ/mol').value,
-                    dihedral.connection_type.parameters['k2'].in_units('kJ/mol').value,
-                    dihedral.connection_type.parameters['k3'].in_units('kJ/mol').value
+                    0.5*dihedral.connection_type.parameters['k0'].in_units('kJ/mol').value,
+                    0.5*dihedral.connection_type.parameters['k1'].in_units('kJ/mol').value,
+                    0.5*dihedral.connection_type.parameters['k2'].in_units('kJ/mol').value,
+                    0.5*dihedral.connection_type.parameters['k3'].in_units('kJ/mol').value
                 )
             )
         elif dihedral_style == 'charmm':
             mcf.write(
                 '{:s}  '
-                '{:8.3f}  '
-                '{:8.3f}  '
-                '{:8.3f}\n'.format(
+                '{:10.5f}  '
+                '{:10.5f}  '
+                '{:10.5f}\n'.format(
                     dihedral_style,
                     dihedral.connection_type.parameters['k'].in_units('kJ/mol').value,
                     dihedral.connection_type.parameters['n'],
@@ -448,11 +449,10 @@ def _write_dihedral_information(mcf, top):
         elif dihedral_style == 'harmonic':
             mcf.write(
                 '{:s}  '
-                '{:8.3f}  '
-                '{:8.3f}  '
-                '{:8.3f}\n'.format(
+                '{:10.5f}  '
+                '{:10.5f}\n'.format(
                     dihedral_style,
-                    dihedral.connection_type.parameters['k'].in_units('kJ/mol').value,
+                    0.5*dihedral.connection_type.parameters['k'].in_units('kJ/mol').value,
                     dihedral.connection_type.parameters['phi_eq'].in_units(u.degrees).value
                 )
             )
@@ -576,6 +576,7 @@ def _check_compatibility(top):
                            MiePotential(),
                            HarmonicAnglePotential(),
                            PeriodicTorsionPotential(),
+                           OPLSTorsionPotential(),
                            RyckaertBellemansTorsionPotential()
                           ]
     check_compatibility(top, accepted_potentials)

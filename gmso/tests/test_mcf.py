@@ -1,17 +1,21 @@
 import pytest
+import mbuild
+import numpy as np
+import unyt as u
 
-import topology as topo
-from topology.formats.mcf import write_mcf
-from topology.tests.base_test import BaseTest
-from topology.utils.io import get_fn
-from topology.exceptions import EngineIncompatibilityError
-from topology.external.convert_mbuild import from_mbuild
+import gmso 
+from gmso.formats.mcf import write_mcf
+from gmso.tests.base_test import BaseTest
+from gmso.tests.utils import get_path
+from gmso.utils.io import get_fn
+from gmso.exceptions import EngineIncompatibilityError
+from gmso.external.convert_mbuild import from_mbuild
 
-class TestTop(BaseTest):
-    def test_write_lj_mcf(self, single_ar):
-        top = single_ar
+class TestMCF(BaseTest):
+    def test_write_lj_mcf(self):
+        top = from_mbuild(mbuild.Compound(name='Ar'))
 
-        ff = topo.ForceField(get_fn('ar.xml'))
+        ff = gmso.ForceField(get_fn('ar.xml'))
 
         for site in top.sites:
             site.atom_type = ff.atom_types['Ar']
@@ -20,10 +24,46 @@ class TestTop(BaseTest):
 
         write_mcf(top, 'ar.mcf')
 
-    def test_write_mie_mcf(self, single_xe):
-        top = single_xe
+        mcf_data = []
+        with open('ar.mcf') as f:
+            for line in f:
+                mcf_data.append(line.strip().split())
 
-        ff = topo.ForceField(get_fn('xe_mie.xml'))
+        for idx,line in enumerate(mcf_data):
+            if len(line) > 1:
+                if line[1] == 'Atom_Info':
+                    atom_section_start = idx
+                elif line[1] == 'Bond_Info':
+                    bond_section_start = idx
+                elif line[1] == 'Angle_Info':
+                    angle_section_start = idx
+                elif line[1] == 'Dihedral_Info':
+                    dihedral_section_start = idx
+                elif line[1] == 'Improper_Info':
+                    improper_section_start = idx
+                elif line[1] == 'Fragment_Info':
+                    fragment_section_start = idx
+                elif line[1] == 'Fragment_Connectivity':
+                    fragment_conn_start = idx
+
+        assert mcf_data[atom_section_start+1][0] == '1'
+        assert mcf_data[atom_section_start+2][1] == 'Ar'
+        assert mcf_data[atom_section_start+2][2] == 'Ar'
+        assert mcf_data[atom_section_start+2][5] == 'LJ'
+        assert np.isclose(float(mcf_data[atom_section_start+2][3]),
+                          ff.atom_types['Ar'].mass.in_units(u.amu).value)
+        assert np.isclose(float(mcf_data[atom_section_start+2][4]),
+                          ff.atom_types['Ar'].charge.in_units(u.elementary_charge).value)
+        assert np.isclose(float(mcf_data[atom_section_start+2][6]),
+                          (ff.atom_types['Ar'].parameters['epsilon'] / u.kb).in_units(u.K).value)
+        assert np.isclose(float(mcf_data[atom_section_start+2][7]),
+                          ff.atom_types['Ar'].parameters['sigma'].in_units(u.Angstrom).value)
+
+
+    def test_write_mie_mcf(self):
+        top = from_mbuild(mbuild.Compound(name='Xe'))
+
+        ff = gmso.ForceField(get_path('noble_mie.xml'))
 
         for site in top.sites:
             site.atom_type = ff.atom_types['Xe']
@@ -57,19 +97,26 @@ class TestTop(BaseTest):
         # Check a some atom info
         assert mcf_data[atom_section_start+1][0] == '1'
         assert mcf_data[atom_section_start+2][1] == 'Xe'
-        assert mcf_data[atom_section_start+2][3] == ''
-        assert mcf_data[atom_section_start+2][4] == '0.0'
+        assert mcf_data[atom_section_start+2][2] == 'Xe'
         assert mcf_data[atom_section_start+2][5] == 'Mie'
-        assert np.isclose(float(mcf_data[atom_section_start+2][6]),)
-        assert np.isclose(float(mcf_data[atom_section_start+2][7]),)
-        assert np.isclose(float(mcf_data[atom_section_start+2][8]),)
-        assert np.isclose(float(mcf_data[atom_section_start+2][9]),)
+        assert np.isclose(float(mcf_data[atom_section_start+2][3]),
+                          ff.atom_types['Xe'].mass.in_units(u.amu).value)
+        assert np.isclose(float(mcf_data[atom_section_start+2][4]),
+                          ff.atom_types['Xe'].charge.in_units(u.elementary_charge).value)
+        assert np.isclose(float(mcf_data[atom_section_start+2][6]),
+                          (ff.atom_types['Xe'].parameters['epsilon'] / u.kb).in_units(u.K).value)
+        assert np.isclose(float(mcf_data[atom_section_start+2][7]),
+                          ff.atom_types['Xe'].parameters['sigma'].in_units(u.Angstrom).value)
+        assert np.isclose(float(mcf_data[atom_section_start+2][8]),
+                          ff.atom_types['Xe'].parameters['n'])
+        assert np.isclose(float(mcf_data[atom_section_start+2][9]),
+                          ff.atom_types['Xe'].parameters['m'])
 
  
-    def test_modified_potentials(self, single_ar):
-        top = single_ar
+    def test_modified_potentials(self):
+        top = from_mbuild(mbuild.Compound(name='Ar'))
 
-        ff = topo.ForceField(get_fn('ar.xml'))
+        ff = gmso.ForceField(get_fn('ar.xml'))
 
         for site in top.sites:
             site.atom_type = ff.atom_types['Ar']
