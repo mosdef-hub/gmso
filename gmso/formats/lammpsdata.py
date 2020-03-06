@@ -40,11 +40,14 @@ def write_lammpsdata(topology, filename, atom_style='full'):
 
     xyz = list()
     types = list()
-    for site in topology.sites:
+    idx_dict = dict()
+    for idx, site in enumerate(topology.sites):
         xyz.append([site.position[0],site.position[1],site.position[2]])
         types.append(site.atom_type.name)
+        idx_dict[site] = idx
 
     forcefield = True
+    # Not sure if this is the best way to check if a FF exists
     if topology.sites[0].atom_type.name in ['', None]:
         forcefield = False
 
@@ -61,8 +64,6 @@ def write_lammpsdata(topology, filename, atom_style='full'):
     angles = [angle for angle in topology.angles]
     angle_types = list(set([angle.connection_type for angle in topology.angles]))
     # TODO: Dihedrals
-
-    # TODO: Figure out handling bond, angle, and dihedral indices
 
     # placeholder; change later
     dihedrals = 0
@@ -152,9 +153,15 @@ def write_lammpsdata(topology, filename, atom_style='full'):
                 atom_type,
                 mass.in_units(u.g/u.mol).value,
                 unique_types[atom_type-1]))
+
+        # TODO: Get a dictionary of indices and atom types
         if forcefield:
             sigmas = [site.atom_type.parameters['sigma'] for site in topology.sites]
             epsilons = [site.atom_type.parameters['epsilon'] for site in topology.sites]
+            bond_types = list(set([bond.connection_type for bond in topology.bonds]))
+            angle_types = list(set([angle.connection_type for angle in topology.angles]))
+            bond_dict = dict([(bond_type,unique_types.index(atom_type)+1) for bond_type, atom_type in zip(bond_types,types)])
+            angle_dict = dict([(angle_type,unique_types.index(atom_type)+1) for angle_type, atom_type in zip(angle_types,types)])
             sigma_dict = dict([(unique_types.index(atom_type)+1,sigma) for atom_type,sigma in zip(types,sigmas)])
             epsilon_dict = dict([(unique_types.index(atom_type)+1,epsilon) for atom_type,epsilon in zip(types,epsilons)])
 
@@ -198,22 +205,34 @@ def write_lammpsdata(topology, filename, atom_style='full'):
         elif atom_style == 'full':
             atom_line ='{index:d}\t{zero:d}\t{type_index:d}\t{charge:.6f}\t{x:.6f}\t{y:.6f}\t{z:.6f}\n'
 
-
-        # TODO: Add back in correct 'type_index' and 'charge'
-        #for i,coords in enumerate(xyz):
-        #    data.write(atom_line.format(
-        #        index=i+1,type_index=unique_types.index(types[i])+1,
-        #        zero=0,charge=charges[i],
-        #        x=coords[0],y=coords[1],z=coords[2]))
-
-        for i,coords in enumerate(xyz):
+        for i, site in enumerate(topology.sites):
             data.write(atom_line.format(
-                index=i+1,type_index=unique_types.index(types[i])+1,
+                index=idx_dict[site]+1,type_index=unique_types.index(types[i])+1,
                 zero=0,charge=0, # TODO: handle charges from atomtype and/or site
-                x=coords[0].in_units(u.angstrom).value,
-                y=coords[1].in_units(u.angstrom).value,
-                z=coords[2].in_units(u.angstrom).value))
+                x=site.position[0].in_units(u.angstrom).value,
+                y=site.position[1].in_units(u.angstrom).value,
+                z=site.position[2].in_units(u.angstrom).value))
 
         # TODO: Write out bonds
+        if bonds:
+            data.write('\nBonds\n\n')
+            for i, bond in enumerate(bonds):
+                data.write('{:d}\t{:d}\t{:d}\t{:d}\n'.format(
+                i+1,
+                bond_dict[bond.connection_type],
+                idx_dict[bond.connection_members[0]],
+                idx_dict[bond.connection_members[1]]
+                ))
+
         # TODO: Write out angles
+        if angles:
+            data.write('\nAngles\n\n')
+            for i, angle in enumerate(angles):
+                data.write('{:d}\t{:d}\t{:d}\t{:d}\n'.format(
+                i+1,
+                angle_dict[angle.connection_type],
+                idx_dict[angle.connection_members[0]],
+                idx_dict[angle.connection_members[1]],
+                idx_dict[angle.connection_members[2]]
+                ))
         # TODO: Write out dihedrals
