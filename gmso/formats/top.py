@@ -97,7 +97,7 @@ def write_top(top, filename):
             out_file.write(
                 '{0}\t\t\t'
                 '{1}\n\n'.format(
-                    top.subtops[0].name,
+                    top.name,
                     3
                 )
             )
