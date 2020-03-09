@@ -5,7 +5,6 @@ import numpy as np
 import unyt as u
 import datetime
 
-from gmso.utils.sorting import natural_sort
 from gmso.utils.testing import allclose
 
 def write_lammpsdata(topology, filename, atom_style='full'):
