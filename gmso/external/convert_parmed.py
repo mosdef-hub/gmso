@@ -31,13 +31,11 @@ def from_parmed(structure, refer_type=True):
     -------
     top : gmso.Topology
     """
-    # Create a clone of parmed structure so the original is intact
     msg = ("Provided argument is not a Parmed Structure")
     assert isinstance(structure, pmd.Structure), msg
 
     top = gmso.Topology(name=structure.title)
     site_map = dict()
-
 
     if np.all(structure.box):
         # This is if we choose for topology to have abox
@@ -208,7 +206,7 @@ def _atom_types_from_pmd(structure):
                 name=atom_type.name,
                 charge=atom_type.charge * u.elementary_charge,
                 parameters={
-                    'sigma': (atom_type.sigma * u.angstrom).in_units(u.nm),
+                    'sigma': atom_type.sigma * u.angstrom,
                     'epsilon': atom_type.epsilon * u.Unit('kcal / mol')},
                     mass = atom_type.mass
                     )
@@ -237,8 +235,8 @@ def _bond_types_from_pmd(structure):
     pmd_top_bondtypes = dict()
     for btype in structure.bond_types:
         bond_params = {
-                'k': (2 * btype.k * u.Unit('kcal / (nm**2 * mol)')),
-                'r_eq': (btype.req * u.angstrom).in_units(u.nm)
+                'k': (2 * btype.k * u.Unit('kcal / (angstrom**2 * mol)')),
+                'r_eq': btype.req * u.angstrom
                 }
 
         top_bondtype = gmso.BondType(parameters=bond_params)
@@ -270,7 +268,10 @@ def _angle_types_from_pmd(structure):
                 'k': (2 * angletype.k * u.Unit('kcal / (rad**2 * mol)')),
                 'theta_eq': (angletype.theteq * u.degree)
             }
-
+        # Do we need to worry about Urey Bradley terms
+        # For Urey Bradley:
+        # k in (kcal/(angstrom**2 * mol))
+        # r_eq in angstrom
         top_angletype = gmso.AngleType(parameters=angle_params)
         pmd_top_angletypes[angletype] = top_angletype
     return pmd_top_angletypes
@@ -467,11 +468,12 @@ def _atom_types_from_gmso(top, structure, atom_map):
     for atom_type in top.atom_types:
         msg = "Atom type {} expression does not match Parmed AtomType default expression".format(atom_type.name)
         assert atom_type.expression == parse_expr("4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)"), msg
-        #Extract Topology atom type information
+        # Extract Topology atom type information
         atype_name = atom_type.name
-        atype_charge = float(atom_type.charge.to("Coulomb").value)
-        atype_sigma = float(atom_type.parameters['sigma'].to("angstrom").value)
-        atype_epsilon = float(atom_type.parameters['epsilon'].to("kcal/mol").value)
+        # Convert charge to elementary_charge
+        atype_charge = float(atom_type.charge.to('Coulomb').value) / (1.6 * 10**(-19))
+        atype_sigma = float(atom_type.parameters['sigma'].to('angstrom').value)
+        atype_epsilon = float(atom_type.parameters['epsilon'].to('kcal/mol').value)
         atype_element = element_by_atom_type(atom_type)
         atype_rmin = atype_sigma * 2**(1/6) / 2 # to rmin/2
         # Create unique Parmed AtomType object
@@ -505,8 +507,8 @@ def _bond_types_from_gmso(top, structure, bond_map):
         msg = "Bond type {} expression does not match Parmed BondType default expression".format(bond_type.name)
         assert bond_type.expression == parse_expr("0.5 * k * (r-r_eq)**2"), msg
         # Extract Topology bond_type information
-        btype_k =  0.5 * float(bond_type.parameters['k'].value)
-        btype_r_eq = float(bond_type.parameters['r_eq'].to("angstrom").value)
+        btype_k =  0.5 * float(bond_type.parameters['k'].to('kcal / (angstrom**2 * mol)').value)
+        btype_r_eq = float(bond_type.parameters['r_eq'].to('angstrom').value)
         # Create unique Parmed BondType object
         btype = pmd.BondType(btype_k, btype_r_eq)
         # Type map to match Topology BondType with Parmed BondType
@@ -538,8 +540,8 @@ def _angle_types_from_gmso(top, structure, angle_map):
         msg = "Angle type {} expression does not match Parmed AngleType default expression".format(angle_type.name)
         assert angle_type.expression == parse_expr("0.5 * k * (theta-theta_eq)**2"), msg
         # Extract Topology angle_type information
-        agltype_k = 0.5 * float(angle_type.parameters['k'].value)
-        agltype_theta_eq = float(angle_type.parameters['theta_eq'].value)
+        agltype_k = 0.5 * float(angle_type.parameters['k'].to('kcal / (rad**2 * mol)').value)
+        agltype_theta_eq = float(angle_type.parameters['theta_eq'].to('degree').value)
         # Create unique Parmed AngleType object
         agltype = pmd.AngleType(agltype_k, agltype_theta_eq)
         # Type map to match Topology AngleType with Parmed AngleType
@@ -571,8 +573,8 @@ def _dihedral_types_from_gmso(top, structure, dihedral_map):
     for dihedral_type in top.dihedral_types:
         msg = "Dihedral type {} expression does not match Parmed DihedralType default expressions (Periodics, RBTorsions)".format(dihedral_type.name)
         if dihedral_type.expression == parse_expr('k * (1 + cos(n * phi - phi_eq))**2'):
-            dtype_k = float(dihedral_type.parameters['k'].value)
-            dtype_phi_eq = float(dihedral_type.parameters['phi_eq'].value)
+            dtype_k = float(dihedral_type.parameters['k'].to('kcal/mol').value)
+            dtype_phi_eq = float(dihedral_type.parameters['phi_eq'].to('degrees').value)
             dtype_n = float(dihedral_type.parameters['n'].value)
             # Create unique Parmed DihedralType object
             dtype = pmd.DihedralType(dtype_k, dtype_n, dtype_phi_eq)
@@ -585,12 +587,12 @@ def _dihedral_types_from_gmso(top, structure, dihedral_map):
                                                   'c3 * cos(phi)**3 + ' +
                                                   'c4 * cos(phi)**4 + ' +
                                                   'c5 * cos(phi)**5')):
-            dtype_c0 = float(dihedral_type.parameters['c0'].value)
-            dtype_c1 = float(dihedral_type.parameters['c1'].value)
-            dtype_c2 = float(dihedral_type.parameters['c2'].value)
-            dtype_c3 = float(dihedral_type.parameters['c3'].value)
-            dtype_c4 = float(dihedral_type.parameters['c4'].value)
-            dtype_c5 = float(dihedral_type.parameters['c5'].value)
+            dtype_c0 = float(dihedral_type.parameters['c0'].to('kcal/mol').value)
+            dtype_c1 = float(dihedral_type.parameters['c1'].to('kcal/mol').value)
+            dtype_c2 = float(dihedral_type.parameters['c2'].to('kcal/mol').value)
+            dtype_c3 = float(dihedral_type.parameters['c3'].to('kcal/mol').value)
+            dtype_c4 = float(dihedral_type.parameters['c4'].to('kcal/mol').value)
+            dtype_c5 = float(dihedral_type.parameters['c5'].to('kcal/mol').value)
             # Create unique DihedralType object
             dtype = pmd.RBTorsionType(dtype_c0, dtype_c1, dtype_c2,
                                       dtype_c3, dtype_c4, dtype_c5)
