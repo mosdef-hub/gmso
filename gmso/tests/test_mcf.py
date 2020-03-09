@@ -13,16 +13,16 @@ from gmso.external.convert_mbuild import from_mbuild
 
 
 class TestMCF(BaseTest):
-    def test_write_lj_mcf(self):
-        top = from_mbuild(mbuild.Compound(name="Ar"))
+    def test_write_lj_simple(self, typed_single_ar):
+        top = typed_single_ar
+        write_mcf(top, "ar.mcf")
 
-        ff = gmso.ForceField(get_fn("ar.xml"))
+    def test_write_mie_simple(self, typed_single_xe_mie):
+        top = typed_single_xe_mie
+        write_mcf(top, "xe.mcf")
 
-        for site in top.sites:
-            site.atom_type = ff.atom_types["Ar"]
-
-        top.update_topology()
-
+    def test_write_lj_full(self, typed_single_ar):
+        top = typed_single_ar
         write_mcf(top, "ar.mcf")
 
         mcf_data = []
@@ -53,33 +53,25 @@ class TestMCF(BaseTest):
         assert mcf_data[atom_section_start + 2][5] == "LJ"
         assert np.isclose(
             float(mcf_data[atom_section_start + 2][3]),
-            ff.atom_types["Ar"].mass.in_units(u.amu).value,
+            top.sites[0].mass.in_units(u.amu).value,
         )
         assert np.isclose(
             float(mcf_data[atom_section_start + 2][4]),
-            ff.atom_types["Ar"].charge.in_units(u.elementary_charge).value,
+            top.sites[0].charge.in_units(u.elementary_charge).value,
         )
         assert np.isclose(
             float(mcf_data[atom_section_start + 2][6]),
-            (ff.atom_types["Ar"].parameters["epsilon"] / u.kb)
+            (top.sites[0].atom_type.parameters["epsilon"] / u.kb)
             .in_units(u.K)
             .value,
         )
         assert np.isclose(
             float(mcf_data[atom_section_start + 2][7]),
-            ff.atom_types["Ar"].parameters["sigma"].in_units(u.Angstrom).value,
+            top.sites[0].atom_type.parameters["sigma"].in_units(u.Angstrom).value,
         )
 
-    def test_write_mie_mcf(self):
-        top = from_mbuild(mbuild.Compound(name="Xe"))
-
-        ff = gmso.ForceField(get_path("noble_mie.xml"))
-
-        for site in top.sites:
-            site.atom_type = ff.atom_types["Xe"]
-
-        top.update_topology()
-
+    def test_write_mie_full(self, typed_single_xe_mie):
+        top = typed_single_xe_mie
         write_mcf(top, "xe.mcf")
 
         mcf_data = []
@@ -111,40 +103,33 @@ class TestMCF(BaseTest):
         assert mcf_data[atom_section_start + 2][5] == "Mie"
         assert np.isclose(
             float(mcf_data[atom_section_start + 2][3]),
-            ff.atom_types["Xe"].mass.in_units(u.amu).value,
+            top.sites[0].mass.in_units(u.amu).value,
         )
         assert np.isclose(
             float(mcf_data[atom_section_start + 2][4]),
-            ff.atom_types["Xe"].charge.in_units(u.elementary_charge).value,
+            top.sites[0].charge.in_units(u.elementary_charge).value,
         )
         assert np.isclose(
             float(mcf_data[atom_section_start + 2][6]),
-            (ff.atom_types["Xe"].parameters["epsilon"] / u.kb)
+            (top.sites[0].atom_type.parameters["epsilon"] / u.kb)
             .in_units(u.K)
             .value,
         )
         assert np.isclose(
             float(mcf_data[atom_section_start + 2][7]),
-            ff.atom_types["Xe"].parameters["sigma"].in_units(u.Angstrom).value,
+            top.sites[0].atom_type.parameters["sigma"].in_units(u.Angstrom).value,
         )
         assert np.isclose(
             float(mcf_data[atom_section_start + 2][8]),
-            ff.atom_types["Xe"].parameters["n"],
+            top.sites[0].atom_type.parameters["n"],
         )
         assert np.isclose(
             float(mcf_data[atom_section_start + 2][9]),
-            ff.atom_types["Xe"].parameters["m"],
+            top.sites[0].atom_type.parameters["m"],
         )
 
-    def test_modified_potentials(self):
-        top = from_mbuild(mbuild.Compound(name="Ar"))
-
-        ff = gmso.ForceField(get_fn("ar.xml"))
-
-        for site in top.sites:
-            site.atom_type = ff.atom_types["Ar"]
-
-        top.update_topology()
+    def test_modified_potentials(self, typed_single_ar):
+        top = typed_single_ar
 
         top.atom_types[0].set_expression("sigma + epsilon")
 
