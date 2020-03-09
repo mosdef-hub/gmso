@@ -40,12 +40,6 @@ def write_lammpsdata(topology, filename, atom_style='full'):
 
     # TODO: Support various unit styles
 
-    types = list()
-    idx_dict = dict()
-    for idx, site in enumerate(topology.sites):
-        types.append(site.atom_type.name)
-        idx_dict[site] = idx
-
     forcefield = True
     # Not sure if this is the best way to check if a FF exists
     if topology.sites[0].atom_type.name in ['', None]:
@@ -53,6 +47,7 @@ def write_lammpsdata(topology, filename, atom_style='full'):
 
     box = topology.box
 
+    types = [site.atom_type.name for site in topology.sites]
     unique_types = list(set(types))
     unique_types.sort(key=natural_sort)
 
@@ -65,7 +60,7 @@ def write_lammpsdata(topology, filename, atom_style='full'):
         data.write('{:d} atoms\n'.format(len(topology.sites)))
         if atom_style in ['full', 'molecular']:
             if len(topology.bonds) != 0:
-                data.write('{:} bonds\n'.format(len(topology.bonds)))
+                data.write('{:d} bonds\n'.format(len(topology.bonds)))
             else:
                 data.write('0 bonds\n')
             if len(topology.angles) != 0:
@@ -208,7 +203,8 @@ def write_lammpsdata(topology, filename, atom_style='full'):
 
         for i, site in enumerate(topology.sites):
             data.write(atom_line.format(
-                index=idx_dict[site]+1,type_index=unique_types.index(types[i])+1,
+                index=topology.sites.index(site),
+                type_index=unique_types.index(types[i])+1,
                 zero=0,charge=0, # TODO: handle charges from atomtype and/or site
                 x=site.position[0].in_units(u.angstrom).value,
                 y=site.position[1].in_units(u.angstrom).value,
@@ -220,8 +216,8 @@ def write_lammpsdata(topology, filename, atom_style='full'):
                 data.write('{:d}\t{:d}\t{:d}\t{:d}\n'.format(
                 i+1,
                 bond_dict[bond.connection_type],
-                idx_dict[bond.connection_members[0]],
-                idx_dict[bond.connection_members[1]]
+                topology.sites.index(bond.connection_members[0]),
+                topology.sites.index(bond.connection_members[1])
                 ))
 
         if topology.angles:
@@ -230,9 +226,9 @@ def write_lammpsdata(topology, filename, atom_style='full'):
                 data.write('{:d}\t{:d}\t{:d}\t{:d}\t{:d}\n'.format(
                 i+1,
                 angle_dict[angle.connection_type],
-                idx_dict[angle.connection_members[0]],
-                idx_dict[angle.connection_members[1]],
-                idx_dict[angle.connection_members[2]]
+                topology.sites.index(angle.connection_members[0]),
+                topology.sites.index(angle.connection_members[1]),
+                topology.sites.index(angle.connection_members[2])
                 ))
 
         if topology.dihedrals:
@@ -241,8 +237,8 @@ def write_lammpsdata(topology, filename, atom_style='full'):
                 data.write('{:d}\t{:d}\t{:d}\t{:d}\t{:d}\t{:d}\n'.format(
                 i+1,
                 dihedral_dict[dihedral.connection_type],
-                idx_dict[dihedral.connection_members[0]],
-                idx_dict[dihedral.connection_members[1]],
-                idx_dict[dihedral.connection_members[2]],
-                idx_dict[dihedral.connection_members[3]]
+                topology.sites.index(dihedral.connection_members[0]),
+                topology.sites.index(dihedral.connection_members[1]),
+                topology.sites.index(dihedral.connection_members[2]),
+                topology.sites.index(dihedral.connection_members[3])
                 ))
