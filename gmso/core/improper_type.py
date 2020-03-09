@@ -16,6 +16,17 @@ class ImproperType(Potential):
     explicitly.  The AtomTypes that are used to define the improper type are
     stored as `member_types`.
 
+    The connectivity of an improper is:
+
+                   m2
+                   |
+                   m1
+                  / \
+                 m3  m4
+
+    where m1, m2, m3, and m4 are connection members 1-4, respectively.
+
+
     Parameters
     ----------
     name : str

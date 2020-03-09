@@ -16,6 +16,12 @@ class DihedralType(Potential):
     explicitly.  The AtomTypes that are used to define the dihedral type are
     stored as `member_types`.
 
+    The connectivity of a dihedral is:
+
+           m1–m2–m3–m4
+
+    where m1, m2, m3, and m4 are connection members 1-4, respectively.
+
     Parameters
     ----------
     name : str

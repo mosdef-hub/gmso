@@ -10,7 +10,12 @@ class Dihedral(Connection):
 
     This is a subclass of the gmso.Connection superclass.
     This class has strictly 4 members in its connection_members.
-    The connection_type in this class corresponds to gmso.DihedralType
+    The connection_type in this class corresponds to gmso.DihedralType.
+    The connectivity of a dihedral is:
+
+           m1–m2–m3–m4
+
+    where m1, m2, m3, and m4 are connection members 1-4, respectively.
 
     Parameters
     --------
