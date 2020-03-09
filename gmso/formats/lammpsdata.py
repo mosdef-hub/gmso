@@ -39,11 +39,6 @@ def write_lammpsdata(topology, filename, atom_style='full'):
 
     # TODO: Support various unit styles
 
-    forcefield = True
-    # Not sure if this is the best way to check if a FF exists
-    if topology.sites[0].atom_type.name in ['', None]:
-        forcefield = False
-
     box = topology.box
 
     # TODO: charges
@@ -131,7 +126,7 @@ def write_lammpsdata(topology, filename, atom_style='full'):
                 ))
 
         # TODO: Get a dictionary of indices and atom types
-        if forcefield:
+        if topology.is_typed():
             # TODO: Modified cross-interactions
             # Pair coefficients
             data.write('\nPair Coeffs # lj\n\n')
