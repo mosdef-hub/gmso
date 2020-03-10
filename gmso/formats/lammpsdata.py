@@ -47,18 +47,18 @@ def write_lammpsdata(topology, filename, atom_style='full'):
         data.write('{} written by topology at {}\n\n'.format(
             topology.name if topology.name is not None else '',
             str(datetime.datetime.now())))
-        data.write('{:d} atoms\n'.format(len(topology.sites)))
+        data.write('{:d} atoms\n'.format(topology.n_sites))
         if atom_style in ['full', 'molecular']:
-            if len(topology.bonds) != 0:
-                data.write('{:d} bonds\n'.format(len(topology.bonds)))
+            if topology.n_bonds != 0:
+                data.write('{:d} bonds\n'.format(topology.n_bonds))
             else:
                 data.write('0 bonds\n')
-            if len(topology.angles) != 0:
-                data.write('{:d} angles\n'.format(len(topology.angles)))
+            if topology.n_angles != 0:
+                data.write('{:d} angles\n'.format(topology.n_angles))
             else:
                 data.write('0 angles\n')
-            if topology.dihedrals != 0:
-                data.write('{:d} dihedrals\n\n'.format(len(topology.dihedrals)))
+            if topology.n_dihedrals != 0:
+                data.write('{:d} dihedrals\n\n'.format(topology.n_dihedrals))
             else:
                 data.write('0 dihedrals\n')
 
@@ -192,8 +192,8 @@ def write_lammpsdata(topology, filename, atom_style='full'):
                 data.write('{:d}\t{:d}\t{:d}\t{:d}\n'.format(
                 i+1,
                 topology.bond_types.index(bond.connection_type)+1,
-                topology.sites.index(bond.connection_members[0]),
-                topology.sites.index(bond.connection_members[1])
+                topology.sites.index(bond.connection_members[0])+1,
+                topology.sites.index(bond.connection_members[1]+1)
                 ))
 
         if topology.angles:
@@ -202,9 +202,9 @@ def write_lammpsdata(topology, filename, atom_style='full'):
                 data.write('{:d}\t{:d}\t{:d}\t{:d}\t{:d}\n'.format(
                 i+1,
                 topology.angle_types.index(angle.connection_type)+1,
-                topology.sites.index(angle.connection_members[0]),
-                topology.sites.index(angle.connection_members[1]),
-                topology.sites.index(angle.connection_members[2])
+                topology.sites.index(angle.connection_members[0])+1,
+                topology.sites.index(angle.connection_members[1])+1,
+                topology.sites.index(angle.connection_members[2])+1
                 ))
 
         if topology.dihedrals:
@@ -213,8 +213,8 @@ def write_lammpsdata(topology, filename, atom_style='full'):
                 data.write('{:d}\t{:d}\t{:d}\t{:d}\t{:d}\t{:d}\n'.format(
                 i+1,
                 topology.dihedral_types.index(dihedral.connection_type)+1,
-                topology.sites.index(dihedral.connection_members[0]),
-                topology.sites.index(dihedral.connection_members[1]),
-                topology.sites.index(dihedral.connection_members[2]),
-                topology.sites.index(dihedral.connection_members[3])
+                topology.sites.index(dihedral.connection_members[0])+1,
+                topology.sites.index(dihedral.connection_members[1])+1,
+                topology.sites.index(dihedral.connection_members[2])+1,
+                topology.sites.index(dihedral.connection_members[3])+1
                 ))
