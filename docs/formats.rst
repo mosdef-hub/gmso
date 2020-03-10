@@ -7,7 +7,7 @@ GROMACS
 -------
 The following methods are available for reading and writing GROMACS files.
 
-    .. autofunction:: gmso.external.read_gro
+    .. autofunction:: gmso.formats.read_gro
     .. autofunction:: gmso.formats.write_gro
 
 GSD
