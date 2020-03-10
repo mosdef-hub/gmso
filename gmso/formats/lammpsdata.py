@@ -153,16 +153,17 @@ def write_lammpsdata(topology, filename, atom_style='full'):
                     angle_type.parameters['theta_eq'].in_units(u.Unit('degree')).value
                     ))
 
+            # TODO: Write out multiple dihedral styles
             data.write('\nDihedral Coeffs\n')
             for idx, dihedral_type in enumerate(topology.dihedral_types):
-                data.write('{}\t{:.5f}\t{:5f}\t{:5f}\t{:.5f}\t{:d}\t{:d}\n'.format(
+                if dihedral_type.name == 'RyckaertBellemansTorsionPotential':
+                    dihedral_type = convert_ryckaert_to_opls(dihedral_type)
+                data.write('{}\t{:.5f}\t{:5f}\t{:5f}\t{:.5f}\n'.format(
                     idx+1,
-                    dihedral_type.parameters['c0'],
-                    dihedral_type.parameters['c1'],
-                    dihedral_type.parameters['c2'],
-                    dihedral_type.parameters['c3'],
-                    0,
-                    0
+                    dihedral_type.parameters['k1']/2,
+                    dihedral_type.parameters['k2']/2,
+                    dihedral_type.parameters['k3']/2,
+                    dihedral_type.parameters['k4']/2
                     ))
 
 
