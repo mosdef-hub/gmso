@@ -116,17 +116,17 @@ def write_lammpsdata(topology, filename, atom_style='full'):
             data.write('{0:.6f} {1:.6f} {2:.6f} xy xz yz\n'.format(
                 xy.value, xz.value, yz.value))
 
-        # Write out mass data
-        data.write('\nMasses\n\n')
-        for atom_type in topology.atom_types:
-            data.write('{:d}\t{:.6f}\t# {}\n'.format(
-                topology.atom_types.index(atom_type)+1,
-                atom_type.mass.in_units(u.g/u.mol).value,
-                atom_type.name
-                ))
-
         # TODO: Get a dictionary of indices and atom types
         if topology.is_typed():
+            # Write out mass data
+            data.write('\nMasses\n\n')
+            for atom_type in topology.atom_types:
+                data.write('{:d}\t{:.6f}\t# {}\n'.format(
+                    topology.atom_types.index(atom_type)+1,
+                    atom_type.mass.in_units(u.g/u.mol).value,
+                    atom_type.name
+                    ))
+
             # TODO: Modified cross-interactions
             # Pair coefficients
             data.write('\nPair Coeffs # lj\n\n')
@@ -141,7 +141,7 @@ def write_lammpsdata(topology, filename, atom_style='full'):
             for idx, bond_type in enumerate(topology.bond_types):
                 data.write('{}\t{:.5f}\t{:.5f}\n'.format(
                     idx+1,
-                    bond_type.parameters['k'].in_units(u.Unit('kcal/mol/angstrom**2')).value,
+                    bond_type.parameters['k'].in_units(u.Unit('kcal/mol/angstrom**2')).value/2,
                     bond_type.parameters['r_eq'].in_units(u.Unit('angstrom')).value
                     ))
 
@@ -149,7 +149,7 @@ def write_lammpsdata(topology, filename, atom_style='full'):
             for idx, angle_type in enumerate(topology.angle_types):
                 data.write('{}\t{:.5f}\t{:.5f}\n'.format(
                     idx+1,
-                    angle_type.parameters['k'].in_units(u.Unit('kcal/mol/degree**2')).value,
+                    angle_type.parameters['k'].in_units(u.Unit('kcal/mol/degree**2')).value/2,
                     angle_type.parameters['theta_eq'].in_units(u.Unit('degree')).value
                     ))
 
@@ -193,7 +193,7 @@ def write_lammpsdata(topology, filename, atom_style='full'):
                 i+1,
                 topology.bond_types.index(bond.connection_type)+1,
                 topology.sites.index(bond.connection_members[0])+1,
-                topology.sites.index(bond.connection_members[1]+1)
+                topology.sites.index(bond.connection_members[1])+1
                 ))
 
         if topology.angles:
