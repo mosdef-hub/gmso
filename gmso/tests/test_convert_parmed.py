@@ -54,13 +54,17 @@ class TestConvertParmEd(BaseTest):
 
     def test_to_parmed_simple(self):
         struc = pmd.load_file(get_fn('ethane.top'), xyz=get_fn('ethane.gro'))
+        struc.title = "Ethane"
         top = from_parmed(struc)
+        assert top.name == "Ethane"
         struc_from_top = to_parmed(top, refer_type=False)
+        assert struc_from_top.title == "Ethane"
 
         assert len(struc.atoms) == len(struc_from_top.atoms)
         assert len(struc.bonds) == len(struc_from_top.bonds)
         assert len(struc.angles) == len(struc_from_top.angles)
-        assert len(struc.dihedrals) == len(struc.dihedrals)
+        assert len(struc.dihedrals) == len(struc_from_top.dihedrals)
+        assert len(struc.rb_torsions) == len(struc_from_top.rb_torsions)
 
     def test_to_parmed_full(self):
         struc = pmd.load_file(get_fn('ethane.top'), xyz=get_fn('ethane.gro'))
@@ -94,6 +98,13 @@ class TestConvertParmEd(BaseTest):
             assert struc_from_top.dihedrals[i].atom3.name == struc.dihedrals[i].atom3.name
             assert struc_from_top.dihedrals[i].atom4.name == struc.dihedrals[i].atom4.name
             assert struc_from_top.dihedrals[i].type == struc.dihedrals[i].type
+
+        for i in range(len(struc.rb_torsions)):
+            assert struc_from_top.rb_torsions[i].atom1.name == struc.rb_torsions[i].atom1.name
+            assert struc_from_top.rb_torsions[i].atom2.name == struc.rb_torsions[i].atom2.name
+            assert struc_from_top.rb_torsions[i].atom3.name == struc.rb_torsions[i].atom3.name
+            assert struc_from_top.rb_torsions[i].atom4.name == struc.rb_torsions[i].atom4.name
+            assert struc_from_top.rb_torsions[i].type == struc.rb_torsions[i].type
 
     def test_to_parmed_incompatible_expression(self):
         struc = pmd.load_file(get_fn('ethane.top'), xyz=get_fn('ethane.gro'))
@@ -149,6 +160,13 @@ class TestConvertParmEd(BaseTest):
                 assert struc_from_top.dihedrals[i].atom3.name == struc.dihedrals[i].atom3.name
                 assert struc_from_top.dihedrals[i].atom4.name == struc.dihedrals[i].atom4.name
                 assert struc_from_top.dihedrals[i].type == struc.dihedrals[i].type
+
+            for i in range(len(struc.rb_torsions)):
+                assert struc_from_top.rb_torsions[i].atom1.name == struc.rb_torsions[i].atom1.name
+                assert struc_from_top.rb_torsions[i].atom2.name == struc.rb_torsions[i].atom2.name
+                assert struc_from_top.rb_torsions[i].atom3.name == struc.rb_torsions[i].atom3.name
+                assert struc_from_top.rb_torsions[i].atom4.name == struc.rb_torsions[i].atom4.name
+                assert struc_from_top.rb_torsions[i].type == struc.rb_torsions[i].type
 
     def test_residues_info(self, parmed_hexane_box):
         struc = parmed_hexane_box
