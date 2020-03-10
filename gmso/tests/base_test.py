@@ -152,5 +152,4 @@ class BaseTest:
             top.add_connection(angle)
 
         top.update_topology()
-
         return top
