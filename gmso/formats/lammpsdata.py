@@ -18,25 +18,51 @@ def read_lammpsdata(filename, atom_style='full'):
 
     _get_box_coordinates(filename, top)
     top, type_list = _get_ff_information(filename, top)
+    _get_atoms(filename, top, type_list)
 
+def _get_atoms(filename, topology, type_list):
+    # TODO: Get element information
+    with open(filename, 'r') as lammps_file:
+        for i, line in enumerate(lammps_file):
+            if 'atoms' in line.split():
+                n_atoms = int(line.split()[0])
+            if 'Atoms' in line.split():
+                break
+    atom_lines = open(filename, 'r').readlines()[i+2:i+n_atoms+2]
+    for line in atom_lines:
+        atom = line.split()
+        atom_type = atom[2]
+        charge = u.unyt_quantity(float(atom[3]), u.elementary_charge)
+        coord = u.angstrom * u.unyt_array([
+            float(atom[4]),
+            float(atom[5]),
+            float(atom[6])])
+        topology.add_site(Site(name=atom[2],
+            charge=charge,
+            position=coord,
+            atom_type=type_list[int(atom[2])-1]
+            ))
+
+    return topology
 
 def _get_box_coordinates(filename, topology):
     with open(filename, 'r') as lammps_file:
         for line in lammps_file:
             if 'xlo' in line.split():
-                x_line = lammps_file.readline().split()
-                y_line = lammps_file.readline().split()
-                z_line = lammps_file.readline().split()
+                break
+        x_line = line.split()
+        y_line = lammps_file.readline().split()
+        z_line = lammps_file.readline().split()
 
-                x =  float(x_line[1])-float(x_line[0])
-                y =  float(y_line[1])-float(y_line[0])
-                z =  float(z_line[1])-float(z_line[0])
+        x =  float(x_line[1])-float(x_line[0])
+        y =  float(y_line[1])-float(y_line[0])
+        z =  float(z_line[1])-float(z_line[0])
 
-                # Box Information
-                lengths = u.unyt_array([x,y,z], u.angstrom)
-                topology.box = Box(lengths)
+        # Box Information
+        lengths = u.unyt_array([x,y,z], u.angstrom)
+        topology.box = Box(lengths)
 
-                return topology
+        return topology
 
 def _get_ff_information(filename, topology):
     with open(filename, 'r') as lammps_file:
@@ -49,7 +75,8 @@ def _get_ff_information(filename, topology):
     type_list = list()
     for line in mass_lines:
         atom_type = AtomType(name=line.split()[0],
-                             mass=line.split()[1])
+                             mass=float(line.split()[1])
+                             )
         type_list.append(atom_type)
 
     with open(filename, 'r') as lammps_file:
@@ -57,8 +84,18 @@ def _get_ff_information(filename, topology):
             if 'Pair' in line:
                 break
     # Need to figure out if we're going have mixing rules printed out
+    # Currently only reading in LJ params
     pair_lines = open(filename, 'r').readlines()[i+2:i+n_atomtypes+2]
+    for i, pair in enumerate(pair_lines):
+        if len(pair.split()) == 3:
+            type_list[i].parameters['sigma'] = float(
+                    pair.split()[2]) * u.angstrom
+            type_list[i].parameters['epsilon'] = float(
+                    pair.split()[1]) * (u.kcal/u.mol)
+        elif len(pair.split()) == 4:
+            raise warnings.warn('Currently not reading in mixing rules')
 
+    return topology, type_list
 
 
     """
@@ -341,7 +378,7 @@ def _get_masses(filename, n_atomtypes):
     return types
 
 
-def _get_atoms(filename, n_atoms, coords):
+"""def _get_atoms(filename, n_atoms, coords):
     type_dict = dict()
     charge_dict = dict()
     coord_dict = dict()
@@ -366,6 +403,7 @@ def _get_atoms(filename, n_atoms, coords):
             type_dict[atom_type] = 1
 
     return charge_dict, coord_dict, type_dict
+"""
 
 
 def _get_pairs(filename, n_atomtypes):
