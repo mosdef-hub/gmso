@@ -11,9 +11,29 @@ from gmso.core.site import Site
 from gmso.core.atom_type import AtomType
 from gmso.core.topology import Topology
 from gmso.core.box import Box
+from gmso.core.element import element_by_mass
 
 
 def read_lammpsdata(filename, atom_style='full'):
+    """
+    Read in a lammps data file as a GMSO topology
+
+    Parameters
+    ----------
+    filename : str
+        LAMMPS data file
+    atom_style : str, optional, default='full'
+        Inferred atom style defined by LAMMPS
+
+    Returns
+    -------
+    top : GMSO Topology
+        A GMSO Topology object
+
+    Notes
+    -----
+    Currently only supporting atom_style='full', LJ parameters
+    """
     top = Topology()
 
     _get_box_coordinates(filename, top)
@@ -21,7 +41,6 @@ def read_lammpsdata(filename, atom_style='full'):
     _get_atoms(filename, top, type_list)
 
 def _get_atoms(filename, topology, type_list):
-    # TODO: Get element information
     with open(filename, 'r') as lammps_file:
         for i, line in enumerate(lammps_file):
             if 'atoms' in line.split():
@@ -37,11 +56,15 @@ def _get_atoms(filename, topology, type_list):
             float(atom[4]),
             float(atom[5]),
             float(atom[6])])
-        topology.add_site(Site(name=atom[2],
+        site = Site(
             charge=charge,
             position=coord,
             atom_type=type_list[int(atom[2])-1]
-            ))
+            )
+        element = element_by_mass(site.atom_type.mass)
+        site.name = element.name
+        site.element = element
+        topology.add_site(site)
 
     return topology
 
