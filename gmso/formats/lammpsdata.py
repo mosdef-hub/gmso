@@ -15,6 +15,53 @@ from gmso.core.box import Box
 
 def read_lammpsdata(filename, atom_style='full'):
     top = Topology()
+
+    _get_box_coordinates(filename, top)
+    top, type_list = _get_ff_information(filename, top)
+
+
+def _get_box_coordinates(filename, topology):
+    with open(filename, 'r') as lammps_file:
+        for line in lammps_file:
+            if 'xlo' in line.split():
+                x_line = lammps_file.readline().split()
+                y_line = lammps_file.readline().split()
+                z_line = lammps_file.readline().split()
+
+                x =  float(x_line[1])-float(x_line[0])
+                y =  float(y_line[1])-float(y_line[0])
+                z =  float(z_line[1])-float(z_line[0])
+
+                # Box Information
+                lengths = u.unyt_array([x,y,z], u.angstrom)
+                topology.box = Box(lengths)
+
+                return topology
+
+def _get_ff_information(filename, topology):
+    with open(filename, 'r') as lammps_file:
+        for i, line in enumerate(lammps_file):
+            if 'atom' in line:
+                n_atomtypes = int(line.split()[0])
+            elif 'Masses' in line:
+                break
+    mass_lines = open(filename, 'r').readlines()[i+2:i+n_atomtypes+2]
+    type_list = list()
+    for line in mass_lines:
+        atom_type = AtomType(name=line.split()[0],
+                             mass=line.split()[1])
+        type_list.append(atom_type)
+
+    with open(filename, 'r') as lammps_file:
+        for i, line in enumerate(lammps_file):
+            if 'Pair' in line:
+                break
+    # Need to figure out if we're going have mixing rules printed out
+    pair_lines = open(filename, 'r').readlines()[i+2:i+n_atomtypes+2]
+
+
+
+    """
     # The idea is to get the number of types to read in
     with open(filename, 'r') as lammps_file:
         for i,line in enumerate(lammps_file):
@@ -84,6 +131,7 @@ def read_lammpsdata(filename, atom_style='full'):
     top.update_topology()    
 
     return top
+    """
 
 
 def write_lammpsdata(topology, filename, atom_style='full'):
