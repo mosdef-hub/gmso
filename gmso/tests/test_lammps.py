@@ -3,6 +3,7 @@ from gmso.formats.lammpsdata import write_lammpsdata, read_lammpsdata
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
 import unyt as u
+import numpy as np
 
 
 class TestLammpsWriter(BaseTest):
@@ -44,10 +45,12 @@ class TestLammpsWriter(BaseTest):
         read = read_lammpsdata(filename)
         lj = [i.parameters for i in read.atom_types][0]
 
-        assert lj['sigma'] == u.unyt_array(3, u.angstrom)
+        assert np.allclose(lj['sigma'].value,
+                u.unyt_array(3, u.angstrom).value)
 
     def test_read_epsilon(self, filename=get_path('data.lammps')):
         read = read_lammpsdata(filename)
         lj = [i.parameters for i in read.atom_types][0]
 
-        assert lj['epsilon'] == u.unyt_array(0.0717, (u.kcal/u.mol))
+        assert np.allclose(lj['epsilon'].value,
+                u.unyt_array(0.0717, (u.kcal/u.mol)).value)

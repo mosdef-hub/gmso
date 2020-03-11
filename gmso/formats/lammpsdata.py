@@ -13,7 +13,26 @@ from gmso.core.topology import Topology
 from gmso.core.box import Box
 
 
-def read_lammpsdata(filename, atom_style='full'):
+def read_lammpsdata(filename):
+    """
+    Read in a LAMMPS data file as a GMSO Topology object.
+
+    Parameters
+    ----------
+    filename : str
+        Path of LAMMPS data file
+
+    Returns
+    -------
+    top : GMSO Topology
+        A GSMO Topology object
+
+    Notes
+    -----
+    See http://lammps.sandia.gov/doc/2001/data_format.html for a full description of the LAMMPS data format.
+    This is a work in progress, as only atoms, masses, and atom_type information can be written out.
+
+    """
     top = Topology()
     # The idea is to get the number of types to read in
     with open(filename, 'r') as lammps_file:
@@ -66,6 +85,8 @@ def read_lammpsdata(filename, atom_style='full'):
     sigma_dict, epsilon_dict = _get_pairs(filename, n_atomtypes)
 
     for k, v in type_dict.items():
+        # Currently only supporting LJ 12-6 parameters
+        # Additional potentials coming soon
         atomtype = AtomType(name=k,
                 mass=unique_types[k],
                 charge=charge_dict[k],
@@ -74,13 +95,12 @@ def read_lammpsdata(filename, atom_style='full'):
                     'epsilon': epsilon_dict[k]}
                 )
         for i in range(v):
-            site = Site(name="atom{}".format(i), # probably change
+            site = Site(name="atom[$]", # probably change
                 position=coords_dict[k][i],
                 atom_type=atomtype
                 )
             top.add_site(site, update_types=False)
 
-            print('{}:{}'.format(k, i))
     top.update_topology()    
 
     return top
