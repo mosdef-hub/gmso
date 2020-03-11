@@ -62,7 +62,10 @@ def write_lammpsdata(topology, filename, atom_style='full'):
             else:
                 data.write('0 dihedrals\n')
 
-        data.write('{:d} atom types\n'.format(len(topology.atom_types)))
+        data.write('\n{:d} atom types\n'.format(len(topology.atom_types)))
+        data.write('{:d} bond types\n'.format(len(topology.bond_types)))
+        data.write('{:d} angle types\n'.format(len(topology.angle_types)))
+        data.write('{:d} dihedral types\n'.format(len(topology.dihedral_types)))
 
         data.write('\n')
 
