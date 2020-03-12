@@ -18,182 +18,6 @@ from gmso.core.box import Box
 from gmso.core.element import element_by_mass
 
 
-def read_lammpsdata(filename, atom_style='full', potential='lj'):
-    """
-    Read in a lammps data file as a GMSO topology
-
-    Parameters
-    ----------
-    filename : str
-        LAMMPS data file
-    atom_style : str, optional, default='full'
-        Inferred atom style defined by LAMMPS
-    potential: str, optional, default='lj'
-        Potential type defined in data file
-
-    Returns
-    -------
-    top : GMSO Topology
-        A GMSO Topology object
-
-    Notes
-    -----
-    See http://lammps.sandia.gov/doc/2001/data_format.html for a full description of the LAMMPS data format.  
-    Currently only supporting the 'full' atom style.  
-    Currently only supporting LJ potential parameters.
-    """
-    # TODO: Add argument to ask if user wants to infer bond type
-    top = Topology()
-
-    _get_box_coordinates(filename, top)
-    top, type_list = _get_ff_information(filename, top)
-    _get_atoms(filename, top, type_list)
-    _get_connection(filename,top, connection_type='bond')
-    _get_connection(filename, top, connection_type='angle')
-
-def _get_connection(filename, topology, connection_type):
-    """
-    General function to parse connection types
-    """
-    with open(filename, 'r') as lammps_file:
-        for i, line in enumerate(lammps_file):
-            if connection_type in line.split():
-                n_connection_types = int(line.split()[0])
-            if connection_type.capitalize() in line.split():
-                break
-    connection_type_lines = open(filename, 'r').readlines()[i+2:i+n_connection_types+2]
-    connection_type_list = list()
-    for line in connection_type_lines:
-        if connection_type == 'bond':
-            c_type = BondType(name=line.split()[0]
-                    )
-            c_type.parameters['k']=float(line.split()[1])*u.Unit(
-                                     'kcal/mol/angstrom**2')*2
-            c_type.parameters['r_eq']=float(line.split()[2])*u.angstrom
-        elif connection_type == 'angle':
-            c_type = AngleType(name=line.split()[0]
-                    )
-            c_type.parameters['k']=float(line.split()[1])*u.Unit(
-                                     'kcal/mol/radian**2')*2
-            c_type.parameters['theta_eq']=float(line.split()[2])*u.radian
-
-        connection_type_list.append(c_type)
-
-    with open(filename, 'r') as lammps_file:
-        for i, line in enumerate(lammps_file):
-            if connection_type + 's' in line.split():
-                n_connections = int(line.split()[0])
-            if connection_type.capitalize() + 's' in line.split():
-                break
-    connection_lines = open(filename, 'r').readlines()[i+2:i+n_connections+2]
-    # Determine number of sites to generate
-    if connection_type == 'bond':
-        n_sites = 2
-    elif connection_type == 'angle':
-        n_sites = 3
-    else:
-        n_sites = 4
-    for i, line in enumerate(connection_lines):
-        site_list = list()
-        for j in range(n_sites):
-            site = topology.sites[int(line.split()[j+2])-1]
-            site_list.append(site)
-        if connection_type == 'bond':
-            connection = Bond(
-                connection_members=site_list,
-                connection_type=connection_type_list[int(line.split()[1])-1],
-                    )
-        elif connection_type == 'angle':
-            connection = Angle(
-                connection_members=site_list,
-                connection_type=connection_type_list[int(line.split()[1])-1],
-                    )
-        topology.add_connection(connection)
-
-    return topology
-
-def _get_atoms(filename, topology, type_list):
-    with open(filename, 'r') as lammps_file:
-        for i, line in enumerate(lammps_file):
-            if 'atoms' in line.split():
-                n_atoms = int(line.split()[0])
-            if 'Atoms' in line.split():
-                break
-    atom_lines = open(filename, 'r').readlines()[i+2:i+n_atoms+2]
-    for line in atom_lines:
-        atom = line.split()
-        atom_type = atom[2]
-        charge = u.unyt_quantity(float(atom[3]), u.elementary_charge)
-        coord = u.angstrom * u.unyt_array([
-            float(atom[4]),
-            float(atom[5]),
-            float(atom[6])])
-        site = Site(
-            charge=charge,
-            position=coord,
-            atom_type=type_list[int(atom[2])-1]
-            )
-        element = element_by_mass(site.atom_type.mass)
-        site.name = element.name
-        site.element = element
-        topology.add_site(site)
-
-    topology.update_sites()
-
-    return topology
-
-def _get_box_coordinates(filename, topology):
-    with open(filename, 'r') as lammps_file:
-        for line in lammps_file:
-            if 'xlo' in line.split():
-                break
-        x_line = line.split()
-        y_line = lammps_file.readline().split()
-        z_line = lammps_file.readline().split()
-
-        x =  float(x_line[1])-float(x_line[0])
-        y =  float(y_line[1])-float(y_line[0])
-        z =  float(z_line[1])-float(z_line[0])
-
-        # Box Information
-        lengths = u.unyt_array([x,y,z], u.angstrom)
-        topology.box = Box(lengths)
-
-        return topology
-
-def _get_ff_information(filename, topology):
-    with open(filename, 'r') as lammps_file:
-        for i, line in enumerate(lammps_file):
-            if 'atom' in line:
-                n_atomtypes = int(line.split()[0])
-            elif 'Masses' in line:
-                break
-    mass_lines = open(filename, 'r').readlines()[i+2:i+n_atomtypes+2]
-    type_list = list()
-    for line in mass_lines:
-        atom_type = AtomType(name=line.split()[0],
-                             mass=float(line.split()[1])
-                             )
-        type_list.append(atom_type)
-
-    with open(filename, 'r') as lammps_file:
-        for i, line in enumerate(lammps_file):
-            if 'Pair' in line:
-                break
-    # Need to figure out if we're going have mixing rules printed out
-    # Currently only reading in LJ params
-    pair_lines = open(filename, 'r').readlines()[i+2:i+n_atomtypes+2]
-    for i, pair in enumerate(pair_lines):
-        if len(pair.split()) == 3:
-            type_list[i].parameters['sigma'] = float(
-                    pair.split()[2]) * u.angstrom
-            type_list[i].parameters['epsilon'] = float(
-                    pair.split()[1]) * (u.kcal/u.mol)
-        elif len(pair.split()) == 4:
-            raise warnings.warn('Currently not reading in mixing rules')
-
-    return topology, type_list
-
 def write_lammpsdata(topology, filename, atom_style='full'):
     """Output a LAMMPS data file.
 
@@ -385,3 +209,189 @@ def write_lammpsdata(topology, filename, atom_style='full'):
         # TODO: Write out bonds
         # TODO: Write out angles
         # TODO: Write out dihedrals
+
+
+def read_lammpsdata(filename, atom_style='full', potential='lj'):
+    """
+    Read in a lammps data file as a GMSO topology
+
+    Parameters
+    ----------
+    filename : str
+        LAMMPS data file
+    atom_style : str, optional, default='full'
+        Inferred atom style defined by LAMMPS
+    potential: str, optional, default='lj'
+        Potential type defined in data file
+
+    Returns
+    -------
+    top : GMSO Topology
+        A GMSO Topology object
+
+    Notes
+    -----
+    See http://lammps.sandia.gov/doc/2001/data_format.html for a full description of the LAMMPS data format.  
+    Currently only supporting the 'full' atom style.  
+    Currently only supporting LJ potential parameters.
+    """
+    # TODO: Add argument to ask if user wants to infer bond type
+    top = Topology()
+
+    _get_box_coordinates(filename, top)
+    top, type_list = _get_ff_information(filename, top)
+    _get_atoms(filename, top, type_list)
+    _get_connection(filename,top, connection_type='bond')
+    _get_connection(filename, top, connection_type='angle')
+
+def _get_connection(filename, topology, connection_type):
+    """
+    General function to parse connection types
+    """
+    with open(filename, 'r') as lammps_file:
+        for i, line in enumerate(lammps_file):
+            if connection_type in line.split():
+                n_connection_types = int(line.split()[0])
+            if connection_type.capitalize() in line.split():
+                break
+    connection_type_lines = open(filename, 'r').readlines()[i+2:i+n_connection_types+2]
+    connection_type_list = list()
+    for line in connection_type_lines:
+        if connection_type == 'bond':
+            c_type = BondType(name=line.split()[0]
+                    )
+            c_type.parameters['k']=float(line.split()[1])*u.Unit(
+                                     'kcal/mol/angstrom**2')*2
+            c_type.parameters['r_eq']=float(line.split()[2])*u.angstrom
+        elif connection_type == 'angle':
+            c_type = AngleType(name=line.split()[0]
+                    )
+            c_type.parameters['k']=float(line.split()[1])*u.Unit(
+                                     'kcal/mol/radian**2')*2
+            c_type.parameters['theta_eq']=float(line.split()[2])*u.radian
+
+        connection_type_list.append(c_type)
+
+    with open(filename, 'r') as lammps_file:
+        for i, line in enumerate(lammps_file):
+            if connection_type + 's' in line.split():
+                n_connections = int(line.split()[0])
+            if connection_type.capitalize() + 's' in line.split():
+                break
+    connection_lines = open(filename, 'r').readlines()[i+2:i+n_connections+2]
+    # Determine number of sites to generate
+    if connection_type == 'bond':
+        n_sites = 2
+    elif connection_type == 'angle':
+        n_sites = 3
+    else:
+        n_sites = 4
+    for i, line in enumerate(connection_lines):
+        site_list = list()
+        for j in range(n_sites):
+            site = topology.sites[int(line.split()[j+2])-1]
+            site_list.append(site)
+        if connection_type == 'bond':
+            connection = Bond(
+                connection_members=site_list,
+                connection_type=connection_type_list[int(line.split()[1])-1],
+                    )
+        elif connection_type == 'angle':
+            connection = Angle(
+                connection_members=site_list,
+                connection_type=connection_type_list[int(line.split()[1])-1],
+                    )
+        topology.add_connection(connection)
+
+    return topology
+
+def _get_atoms(filename, topology, type_list):
+    """
+    Function to parse the atom information in the LAMMPS data file
+    """
+    with open(filename, 'r') as lammps_file:
+        for i, line in enumerate(lammps_file):
+            if 'atoms' in line.split():
+                n_atoms = int(line.split()[0])
+            if 'Atoms' in line.split():
+                break
+    atom_lines = open(filename, 'r').readlines()[i+2:i+n_atoms+2]
+    for line in atom_lines:
+        atom = line.split()
+        atom_type = atom[2]
+        charge = u.unyt_quantity(float(atom[3]), u.elementary_charge)
+        coord = u.angstrom * u.unyt_array([
+            float(atom[4]),
+            float(atom[5]),
+            float(atom[6])])
+        site = Site(
+            charge=charge,
+            position=coord,
+            atom_type=type_list[int(atom[2])-1]
+            )
+        element = element_by_mass(site.atom_type.mass)
+        site.name = element.name
+        site.element = element
+        topology.add_site(site)
+
+    topology.update_sites()
+
+    return topology
+
+def _get_box_coordinates(filename, topology):
+    """
+    Function to parse box information
+    """
+    with open(filename, 'r') as lammps_file:
+        for line in lammps_file:
+            if 'xlo' in line.split():
+                break
+        x_line = line.split()
+        y_line = lammps_file.readline().split()
+        z_line = lammps_file.readline().split()
+
+        x =  float(x_line[1])-float(x_line[0])
+        y =  float(y_line[1])-float(y_line[0])
+        z =  float(z_line[1])-float(z_line[0])
+
+        # Box Information
+        lengths = u.unyt_array([x,y,z], u.angstrom)
+        topology.box = Box(lengths)
+
+        return topology
+
+def _get_ff_information(filename, topology):
+    """
+    Function to parse atom-type information
+    """
+    with open(filename, 'r') as lammps_file:
+        for i, line in enumerate(lammps_file):
+            if 'atom' in line:
+                n_atomtypes = int(line.split()[0])
+            elif 'Masses' in line:
+                break
+    mass_lines = open(filename, 'r').readlines()[i+2:i+n_atomtypes+2]
+    type_list = list()
+    for line in mass_lines:
+        atom_type = AtomType(name=line.split()[0],
+                             mass=float(line.split()[1])
+                             )
+        type_list.append(atom_type)
+
+    with open(filename, 'r') as lammps_file:
+        for i, line in enumerate(lammps_file):
+            if 'Pair' in line:
+                break
+    # Need to figure out if we're going have mixing rules printed out
+    # Currently only reading in LJ params
+    pair_lines = open(filename, 'r').readlines()[i+2:i+n_atomtypes+2]
+    for i, pair in enumerate(pair_lines):
+        if len(pair.split()) == 3:
+            type_list[i].parameters['sigma'] = float(
+                    pair.split()[2]) * u.angstrom
+            type_list[i].parameters['epsilon'] = float(
+                    pair.split()[1]) * (u.kcal/u.mol)
+        elif len(pair.split()) == 4:
+            raise warnings.warn('Currently not reading in mixing rules')
+
+    return topology, type_list
