@@ -12,7 +12,8 @@ can be installed in one line:
     $ conda install -c omnia -c mosdef -c conda-forge --file requirements.txt
 
 Alternatively you can add all the required channels to your ``.condarc`` file
-and then install dependenices.
+and then install dependencies.
+::
 
     $ conda config --add channels omnia
     $ conda config --add channels mosdef
@@ -23,14 +24,14 @@ and then install dependenices.
     These commands will likely change a configuration file on your computer and
     may affect installation of other packages in other projects you are working
     on. However, the channel priority recommended is fairly common
-    (in particle, having ``conda-forge`` having the highest priority) and should
+    (in particular, ``conda-forge`` having the highest priority) and should
     work well for most installations.
 
 Installing dependencies with `pip <https://pypi.org/project/pip/>`_
 -------------------------------------------------------------------
 ::
 
-    $ pip install --file requirements.txt
+    $ pip install -r requirements.txt
 
 .. note::
     Compared to ``conda`` installation, this is less tested. Some upstream
@@ -45,7 +46,7 @@ It is currently only available through its source code. It will be available
 through ``pip`` and ``conda`` in the future.
 ::
 
-    $ git clone https://github.com/modef-hub/gmso.git
+    $ git clone https://github.com/mosdef-hub/gmso.git
     $ cd gmso
     $ pip install -e .
 
