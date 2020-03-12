@@ -366,7 +366,7 @@ def _get_atoms(filename, topology, unit_style, type_list):
         site = Site(
             charge=charge,
             position=coord,
-            atom_type=type_list[int(atom[2])-1]
+            atom_type=type_list[int(atom_type)-1]
             )
         element = element_by_mass(site.atom_type.mass.value)
         site.name = element.name
@@ -431,6 +431,6 @@ def _get_ff_information(filename, unit_style, topology):
             type_list[i].parameters['epsilon'] = float(
                     pair.split()[1]) * get_units(unit_style)['energy']
         elif len(pair.split()) == 4:
-            raise warnings.warn('Currently not reading in mixing rules')
+            warnings.warn('Currently not reading in mixing rules')
 
     return topology, type_list
