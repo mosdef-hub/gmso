@@ -10,7 +10,9 @@ from gmso.utils.testing import allclose
 from gmso.core.site import Site
 from gmso.core.atom_type import AtomType
 from gmso.core.bond_type import BondType
+from gmso.core.angle_type import AngleType
 from gmso.core.bond import Bond
+from gmso.core.angle import Angle
 from gmso.core.topology import Topology
 from gmso.core.box import Box
 from gmso.core.element import element_by_mass
@@ -46,43 +48,69 @@ def read_lammpsdata(filename, atom_style='full', potential='lj'):
     _get_box_coordinates(filename, top)
     top, type_list = _get_ff_information(filename, top)
     _get_atoms(filename, top, type_list)
-    _get_bonds(filename, top)
+    _get_connection(filename,top, connection_type='bond')
+    _get_connection(filename, top, connection_type='angle')
 
-def _get_bonds(filename, topology):
+def _get_connection(filename, topology, connection_type):
+    """
+    General function to parse connection types
+    """
     with open(filename, 'r') as lammps_file:
         for i, line in enumerate(lammps_file):
-            if 'bond' in line.split():
-                n_bond_types = int(line.split()[0])
-            if 'Bond' in line.split():
+            if connection_type in line.split():
+                n_connection_types = int(line.split()[0])
+            if connection_type.capitalize() in line.split():
                 break
-    bond_type_lines = open(filename, 'r').readlines()[i+2:i+n_bond_types+2]
-    bond_type_list = list()
-    for line in bond_type_lines:
-        bond_type = BondType(name=line.split()[0]
-                )
-        bond_type.parameters['k']=float(line.split()[1])*u.Unit(
-                                 'kcal/mol/angstrom**2')*2
-        bond_type.parameters['r_eq']=float(line.split()[2])*u.angstrom
-        bond_type_list.append(bond_type)
+    connection_type_lines = open(filename, 'r').readlines()[i+2:i+n_connection_types+2]
+    connection_type_list = list()
+    for line in connection_type_lines:
+        if connection_type == 'bond':
+            c_type = BondType(name=line.split()[0]
+                    )
+            c_type.parameters['k']=float(line.split()[1])*u.Unit(
+                                     'kcal/mol/angstrom**2')*2
+            c_type.parameters['r_eq']=float(line.split()[2])*u.angstrom
+        elif connection_type == 'angle':
+            c_type = AngleType(name=line.split()[0]
+                    )
+            c_type.parameters['k']=float(line.split()[1])*u.Unit(
+                                     'kcal/mol/radian**2')*2
+            c_type.parameters['theta_eq']=float(line.split()[2])*u.radian
+
+        connection_type_list.append(c_type)
 
     with open(filename, 'r') as lammps_file:
         for i, line in enumerate(lammps_file):
-            if 'bonds' in line.split():
-                n_bonds = int(line.split()[0])
-            if 'Bonds' in line.split():
+            if connection_type + 's' in line.split():
+                n_connections = int(line.split()[0])
+            if connection_type.capitalize() + 's' in line.split():
                 break
-    bond_lines = open(filename, 'r').readlines()[i+2:i+n_bonds+2]
-    for i, line in enumerate(bond_lines):
-        site1 = topology.sites[int(line.split()[2])-1]
-        site2 = topology.sites[int(line.split()[3])-1]
-        bondtype = Bond(
-            connection_members=[site1, site2],
-            connection_type=bond_type_list[int(line.split()[1])-1],
-                )
-        topology.add_connection(bondtype)
+    connection_lines = open(filename, 'r').readlines()[i+2:i+n_connections+2]
+    # Determine number of sites to generate
+    if connection_type == 'bond':
+        n_sites = 2
+    elif connection_type == 'angle':
+        n_sites = 3
+    else:
+        n_sites = 4
+    for i, line in enumerate(connection_lines):
+        site_list = list()
+        for j in range(n_sites):
+            site = topology.sites[int(line.split()[j+2])-1]
+            site_list.append(site)
+        if connection_type == 'bond':
+            connection = Bond(
+                connection_members=site_list,
+                connection_type=connection_type_list[int(line.split()[1])-1],
+                    )
+        elif connection_type == 'angle':
+            connection = Angle(
+                connection_members=site_list,
+                connection_type=connection_type_list[int(line.split()[1])-1],
+                    )
+        topology.add_connection(connection)
 
     return topology
-
 
 def _get_atoms(filename, topology, type_list):
     with open(filename, 'r') as lammps_file:
