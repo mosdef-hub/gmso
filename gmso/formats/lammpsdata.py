@@ -237,6 +237,16 @@ def read_lammpsdata(filename, atom_style='full', unit_style='real', potential='l
     # TODO: Add argument to ask if user wants to infer bond type
     top = Topology()
 
+    # Validate 'atom_style'
+    if atom_style not in ['full']:
+        raise ValueError('Atom Style "{}" is invalid or is not currently supported'.format
+                atom_style)
+
+    # Validate 'unit_style'
+    if unit_style not in ['real']:
+        raiseValueError('Unit Style "{}" is invalid or is not currently supported'.format(
+            unit_style)
+
     # Parse box information
     _get_box_coordinates(filename, unit_style, top)
     # Parse atom type information
@@ -244,9 +254,10 @@ def read_lammpsdata(filename, atom_style='full', unit_style='real', potential='l
     # Parse atom information
     _get_atoms(filename, top, unit_style, type_list)
     # Parse connection (bonds, angles, dihedrals) information
-    _get_connection(filename, top, unit_style, connection_type='bond')
-    _get_connection(filename, top, unit_style, connection_type='angle')
-    import pdb; pdb.set_trace()
+    # TODO: Add more atom styles
+    if atom_style in ['full']:
+        _get_connection(filename, top, unit_style, connection_type='bond')
+        _get_connection(filename, top, unit_style, connection_type='angle')
 
     return top
 
