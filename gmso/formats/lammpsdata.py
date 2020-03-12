@@ -211,7 +211,7 @@ def write_lammpsdata(topology, filename, atom_style='full'):
         # TODO: Write out dihedrals
 
 
-def read_lammpsdata(filename, atom_style='full', potential='lj'):
+def read_lammpsdata(filename, atom_style='full', unit_style='real', potential='lj'):
     """
     Read in a lammps data file as a GMSO topology
 
@@ -232,19 +232,41 @@ def read_lammpsdata(filename, atom_style='full', potential='lj'):
     Notes
     -----
     See http://lammps.sandia.gov/doc/2001/data_format.html for a full description of the LAMMPS data format.  
-    Currently only supporting the 'full' atom style.  
     Currently only supporting LJ potential parameters.
     """
     # TODO: Add argument to ask if user wants to infer bond type
     top = Topology()
 
-    _get_box_coordinates(filename, top)
-    top, type_list = _get_ff_information(filename, top)
-    _get_atoms(filename, top, type_list)
-    _get_connection(filename,top, connection_type='bond')
-    _get_connection(filename, top, connection_type='angle')
+    # Parse box information
+    _get_box_coordinates(filename, unit_style, top)
+    # Parse atom type information
+    top, type_list = _get_ff_information(filename, unit_style, top)
+    # Parse atom information
+    _get_atoms(filename, top, unit_style, type_list)
+    # Parse connection (bonds, angles, dihedrals) information
+    _get_connection(filename, top, unit_style, connection_type='bond')
+    _get_connection(filename, top, unit_style, connection_type='angle')
+    import pdb; pdb.set_trace()
 
-def _get_connection(filename, topology, connection_type):
+    return top
+
+def get_units(unit_style):
+    """
+    Get units for specific LAMMPS unit style
+    """
+    unit_style_dict = {
+            'real': {'mass': u.g,
+                      'distance': u.angstrom,
+                      'energy': u.kcal/u.mol,
+                      'angle': u.radian,
+                      'charge': u.elementary_charge
+                      }
+            }
+
+    return unit_style_dict[unit_style]
+
+
+def _get_connection(filename, topology, unit_style, connection_type):
     """
     General function to parse connection types
     """
@@ -261,13 +283,17 @@ def _get_connection(filename, topology, connection_type):
             c_type = BondType(name=line.split()[0]
                     )
             c_type.parameters['k']=float(line.split()[1])*u.Unit(
-                                     'kcal/mol/angstrom**2')*2
-            c_type.parameters['r_eq']=float(line.split()[2])*u.angstrom
+                                     get_units(unit_style)['energy']/
+                                     get_units(unit_style)['distance']**2
+                                     )*2
+            c_type.parameters['r_eq']=float(line.split()[2])*(get_units(unit_style)['distance']**2)
         elif connection_type == 'angle':
             c_type = AngleType(name=line.split()[0]
                     )
             c_type.parameters['k']=float(line.split()[1])*u.Unit(
-                                     'kcal/mol/radian**2')*2
+                                     get_units(unit_style)['energy']/
+                                     get_units(unit_style)['angle']**2
+                                     )*2
             c_type.parameters['theta_eq']=float(line.split()[2])*u.radian
 
         connection_type_list.append(c_type)
@@ -305,7 +331,7 @@ def _get_connection(filename, topology, connection_type):
 
     return topology
 
-def _get_atoms(filename, topology, type_list):
+def _get_atoms(filename, topology, unit_style, type_list):
     """
     Function to parse the atom information in the LAMMPS data file
     """
@@ -319,7 +345,7 @@ def _get_atoms(filename, topology, type_list):
     for line in atom_lines:
         atom = line.split()
         atom_type = atom[2]
-        charge = u.unyt_quantity(float(atom[3]), u.elementary_charge)
+        charge = u.unyt_quantity(float(atom[3]), get_units(unit_style)['charge'])
         coord = u.angstrom * u.unyt_array([
             float(atom[4]),
             float(atom[5]),
@@ -329,7 +355,7 @@ def _get_atoms(filename, topology, type_list):
             position=coord,
             atom_type=type_list[int(atom[2])-1]
             )
-        element = element_by_mass(site.atom_type.mass)
+        element = element_by_mass(site.atom_type.mass.value)
         site.name = element.name
         site.element = element
         topology.add_site(site)
@@ -338,7 +364,7 @@ def _get_atoms(filename, topology, type_list):
 
     return topology
 
-def _get_box_coordinates(filename, topology):
+def _get_box_coordinates(filename, unit_style, topology):
     """
     Function to parse box information
     """
@@ -355,12 +381,12 @@ def _get_box_coordinates(filename, topology):
         z =  float(z_line[1])-float(z_line[0])
 
         # Box Information
-        lengths = u.unyt_array([x,y,z], u.angstrom)
+        lengths = u.unyt_array([x,y,z], get_units(unit_style)['distance'])
         topology.box = Box(lengths)
 
         return topology
 
-def _get_ff_information(filename, topology):
+def _get_ff_information(filename, unit_style, topology):
     """
     Function to parse atom-type information
     """
@@ -374,7 +400,7 @@ def _get_ff_information(filename, topology):
     type_list = list()
     for line in mass_lines:
         atom_type = AtomType(name=line.split()[0],
-                             mass=float(line.split()[1])
+                             mass=float(line.split()[1])*get_units(unit_style)['mass']
                              )
         type_list.append(atom_type)
 
@@ -388,9 +414,9 @@ def _get_ff_information(filename, topology):
     for i, pair in enumerate(pair_lines):
         if len(pair.split()) == 3:
             type_list[i].parameters['sigma'] = float(
-                    pair.split()[2]) * u.angstrom
+                    pair.split()[2]) * get_units(unit_style)['distance']
             type_list[i].parameters['epsilon'] = float(
-                    pair.split()[1]) * (u.kcal/u.mol)
+                    pair.split()[1]) * get_units(unit_style)['energy']
         elif len(pair.split()) == 4:
             raise warnings.warn('Currently not reading in mixing rules')
 
