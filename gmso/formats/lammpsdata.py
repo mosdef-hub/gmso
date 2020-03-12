@@ -239,13 +239,13 @@ def read_lammpsdata(filename, atom_style='full', unit_style='real', potential='l
 
     # Validate 'atom_style'
     if atom_style not in ['full']:
-        raise ValueError('Atom Style "{}" is invalid or is not currently supported'.format
-                atom_style)
+        raise ValueError('Atom Style "{}" is invalid or is not currently supported'.format(
+                atom_style))
 
     # Validate 'unit_style'
     if unit_style not in ['real']:
         raiseValueError('Unit Style "{}" is invalid or is not currently supported'.format(
-            unit_style)
+            unit_style))
 
     # Parse box information
     _get_box_coordinates(filename, unit_style, top)
@@ -285,6 +285,8 @@ def _get_connection(filename, topology, unit_style, connection_type):
         for i, line in enumerate(lammps_file):
             if connection_type in line.split():
                 n_connection_types = int(line.split()[0])
+            else:
+                return topology
             if connection_type.capitalize() in line.split():
                 break
     connection_type_lines = open(filename, 'r').readlines()[i+2:i+n_connection_types+2]

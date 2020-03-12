@@ -50,13 +50,13 @@ class BaseTest:
             top = Topology()
             top.box = Box(lengths=[1, 1, 1])
             H = Hydrogen
-            site1 = Site(name='site1',
-                         element=H,
-                         atom_type=AtomType(name="at1",
-                                            mass=H.mass),
-                         )
             for i in range(sites):
-                top.add_site(site1)
+                site = Site(name='site1',
+                             element=H,
+                             atom_type=AtomType(name="at1",
+                                                mass=H.mass),
+                             )
+                top.add_site(site)
 
             return top
 
