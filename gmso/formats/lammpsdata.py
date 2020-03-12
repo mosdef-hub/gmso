@@ -9,6 +9,8 @@ from gmso.utils.sorting import natural_sort
 from gmso.utils.testing import allclose
 from gmso.core.site import Site
 from gmso.core.atom_type import AtomType
+from gmso.core.bond_type import BondType
+from gmso.core.bond import Bond
 from gmso.core.topology import Topology
 from gmso.core.box import Box
 from gmso.core.element import element_by_mass
@@ -44,6 +46,43 @@ def read_lammpsdata(filename, atom_style='full', potential='lj'):
     _get_box_coordinates(filename, top)
     top, type_list = _get_ff_information(filename, top)
     _get_atoms(filename, top, type_list)
+    _get_bonds(filename, top)
+
+def _get_bonds(filename, topology):
+    with open(filename, 'r') as lammps_file:
+        for i, line in enumerate(lammps_file):
+            if 'bond' in line.split():
+                n_bond_types = int(line.split()[0])
+            if 'Bond' in line.split():
+                break
+    bond_type_lines = open(filename, 'r').readlines()[i+2:i+n_bond_types+2]
+    bond_type_list = list()
+    for line in bond_type_lines:
+        bond_type = BondType(name=line.split()[0]
+                )
+        bond_type.parameters['k']=float(line.split()[1])*u.Unit(
+                                 'kcal/mol/angstrom**2')*2
+        bond_type.parameters['r_eq']=float(line.split()[2])*u.angstrom
+        bond_type_list.append(bond_type)
+
+    with open(filename, 'r') as lammps_file:
+        for i, line in enumerate(lammps_file):
+            if 'bonds' in line.split():
+                n_bonds = int(line.split()[0])
+            if 'Bonds' in line.split():
+                break
+    bond_lines = open(filename, 'r').readlines()[i+2:i+n_bonds+2]
+    for i, line in enumerate(bond_lines):
+        site1 = topology.sites[int(line.split()[2])-1]
+        site2 = topology.sites[int(line.split()[3])-1]
+        bondtype = Bond(
+            connection_members=[site1, site2],
+            connection_type=bond_type_list[int(line.split()[1])-1],
+                )
+        topology.add_connection(bondtype)
+
+    return topology
+
 
 def _get_atoms(filename, topology, type_list):
     with open(filename, 'r') as lammps_file:
@@ -70,7 +109,8 @@ def _get_atoms(filename, topology, type_list):
         site.name = element.name
         site.element = element
         topology.add_site(site)
-        # TODO: Get bonds, angles, dihedrals
+
+    topology.update_sites()
 
     return topology
 
