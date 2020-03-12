@@ -15,32 +15,5 @@ class TestLammpsWriter(BaseTest):
         top.box = Box(lengths=[1,1,1], angles=[60,90,120])
         write_lammpsdata(top, filename='data.triclinic')
 
-    def test_water_lammps(self, water_system):
-        top = water_system
-
-        ff = gmso.ForceField(get_path('tip3p.xml'))
-
-        for site in top.sites:
-            site.atom_type = ff.atom_types[site.name]
-
-        top.update_sites()
-        top.update_atom_types()
-
-        for bond in top.bonds:
-            bond.bond_type = bond.connection_type = ff.bond_types['opls_111~opls_112']
-
-        top.update_bonds()
-        top.update_bond_types()
-
-        for subtop in top.subtops:
-            angle = gmso.core.angle.Angle(
-                connection_members=[site for site in subtop.sites],
-                name="opls_112~opls_111~opls_112",
-                connection_type=ff.angle_types["opls_112~opls_111~opls_112"]
-            )
-            top.add_connection(angle)
-
-        top.update_angles()
-        top.update_angle_types()
-
-        write_lammpsdata(top, 'data.water')
+    def test_water_lammps(self, typed_water_system):
+        write_lammpsdata(typed_water_system, 'data.water')
