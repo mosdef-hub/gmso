@@ -21,12 +21,12 @@ class TestLammpsWriter(BaseTest):
 
         assert read.box == Box(lengths=[1, 1, 1])
 
-    def test_read_n_sites(self, topology_site):
-        write_lammpsdata(topology_site(sites=4),
-                filename='data.four_sites')
-        read = read_lammpsdata('data.four_sites')
+    def test_read_n_sites(self, typed_ar_system):
+        write_lammpsdata(typed_ar_system,
+                filename='data.ar')
+        read = read_lammpsdata('data.ar')
 
-        assert read.n_sites == 4
+        assert read.n_sites == 100
 
     def test_read_mass(self, filename=get_path('data.lammps')):
         read = read_lammpsdata(filename)

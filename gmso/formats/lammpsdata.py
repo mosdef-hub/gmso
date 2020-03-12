@@ -212,8 +212,7 @@ def write_lammpsdata(topology, filename, atom_style='full'):
 
 
 def read_lammpsdata(filename, atom_style='full', unit_style='real', potential='lj'):
-    """
-    Read in a lammps data file as a GMSO topology
+    """Read in a lammps data file as a GMSO topology
 
     Parameters
     ----------
@@ -262,8 +261,7 @@ def read_lammpsdata(filename, atom_style='full', unit_style='real', potential='l
     return top
 
 def get_units(unit_style):
-    """
-    Get units for specific LAMMPS unit style
+    """Get units for specific LAMMPS unit style
     """
     unit_style_dict = {
             'real': {'mass': u.g,
@@ -278,8 +276,7 @@ def get_units(unit_style):
 
 
 def _get_connection(filename, topology, unit_style, connection_type):
-    """
-    General function to parse connection types
+    """General function to parse connection types
     """
     with open(filename, 'r') as lammps_file:
         for i, line in enumerate(lammps_file):
@@ -295,6 +292,7 @@ def _get_connection(filename, topology, unit_style, connection_type):
         if connection_type == 'bond':
             c_type = BondType(name=line.split()[0]
                     )
+            # Multiply 'k' by 2 since LAMMPS includes 1/2 in the term
             c_type.parameters['k']=float(line.split()[1])*u.Unit(
                                      get_units(unit_style)['energy']/
                                      get_units(unit_style)['distance']**2
@@ -345,8 +343,7 @@ def _get_connection(filename, topology, unit_style, connection_type):
     return topology
 
 def _get_atoms(filename, topology, unit_style, type_list):
-    """
-    Function to parse the atom information in the LAMMPS data file
+    """Function to parse the atom information in the LAMMPS data file
     """
     with open(filename, 'r') as lammps_file:
         for i, line in enumerate(lammps_file):
@@ -378,8 +375,7 @@ def _get_atoms(filename, topology, unit_style, type_list):
     return topology
 
 def _get_box_coordinates(filename, unit_style, topology):
-    """
-    Function to parse box information
+    """Function to parse box information
     """
     with open(filename, 'r') as lammps_file:
         for line in lammps_file:
@@ -400,8 +396,7 @@ def _get_box_coordinates(filename, unit_style, topology):
         return topology
 
 def _get_ff_information(filename, unit_style, topology):
-    """
-    Function to parse atom-type information
+    """Function to parse atom-type information
     """
     with open(filename, 'r') as lammps_file:
         for i, line in enumerate(lammps_file):

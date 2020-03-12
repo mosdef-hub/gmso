@@ -7,7 +7,7 @@ from gmso.core.box import Box
 from gmso.core.topology import Topology
 from gmso.core.element import Hydrogen, Oxygen
 from gmso.core.site import Site
-from gmso.core.angle import Angle 
+from gmso.core.angle import Angle
 from gmso.core.atom_type import AtomType
 from gmso.core.forcefield import ForceField
 from gmso.external.convert_mbuild import from_mbuild
@@ -50,13 +50,13 @@ class BaseTest:
             top = Topology()
             top.box = Box(lengths=[1, 1, 1])
             H = Hydrogen
+            site1 = Site(name='site1',
+                         element=H,
+                         atom_type=AtomType(name="at1",
+                                            mass=H.mass),
+                         )
             for i in range(sites):
-                site = Site(name='site1',
-                             element=H,
-                             atom_type=AtomType(name="at1",
-                                                mass=H.mass),
-                             )
-                top.add_site(site)
+                top.add_site(site1)
 
             return top
 
