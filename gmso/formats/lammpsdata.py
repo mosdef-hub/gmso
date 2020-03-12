@@ -389,9 +389,40 @@ def _get_box_coordinates(filename, unit_style, topology):
         y =  float(y_line[1])-float(y_line[0])
         z =  float(z_line[1])-float(z_line[0])
 
-        # Box Information
-        lengths = u.unyt_array([x,y,z], get_units(unit_style)['distance'])
-        topology.box = Box(lengths)
+        # Check if box is triclinic
+        tilts = lammps_file.readline().split()
+        if 'xy' in tilts:
+            xy = float(tilts[0])
+            xz = float(tilts[1])
+            yz = float(tilts[2])
+           
+            xhi = float(x_line[1]) - np.max([0.0, xy, xz, xy+xz])
+            xlo = float(x_line[0]) - np.min([0.0, xy, xz, xy+xz])
+            yhi = float(y_line[1]) - np.max([0.0, yz])
+            ylo = float(y_line[0]) - np.min([0.0, yz])
+            zhi = float(z_line[1])
+            zlo = float(z_line[0])
+
+            lx = xhi - xlo
+            ly = yhi - ylo
+            lz = zhi - zlo
+
+            c = np.sqrt(lz**2 + xz**2 - yz**2)
+            b = np.sqrt(ly**2 + xy**2)
+            a = lx
+
+            alpha = np.arccos((yz*ly+xy*xz)/(b*c))
+            beta = np.arccos(xz/c)
+            gamma = np.arccos(xy/b)
+
+            # Box Information
+            lengths = u.unyt_array([a, b, c], get_units(unit_style)['distance'])
+            angles = u.unyt_array([alpha, beta, gamma], get_units(unit_style)['angle'])
+            topology.box=Box(lengths, angles)
+        else:
+            # Box Information
+            lengths = u.unyt_array([x,y,z], get_units(unit_style)['distance'])
+            topology.box = Box(lengths)
 
         return topology
 
