@@ -1,5 +1,4 @@
 import gmso
-import unyt as u
 from gmso.core.box import Box
 from gmso.formats.lammpsdata import write_lammpsdata
 from gmso.tests.base_test import BaseTest
