@@ -1,7 +1,9 @@
+import gmso
+import unyt as u
 from gmso.core.box import Box
 from gmso.formats.lammpsdata import write_lammpsdata
 from gmso.tests.base_test import BaseTest
-import unyt as u
+from gmso.tests.utils import get_path
 
 
 class TestLammpsWriter(BaseTest):
@@ -14,9 +16,5 @@ class TestLammpsWriter(BaseTest):
         top.box = Box(lengths=[1,1,1], angles=[60,90,120])
         write_lammpsdata(top, filename='data.triclinic')
 
-    def test_write_lammps_charges(self, topology_site):
-        top = topology_site()
-        for site in top.sites:
-            site.charge = 1 * u.elementary_charge
-
-        write_lammpsdata(top, filename='data.lammps')
+    def test_water_lammps(self, typed_water_system):
+        write_lammpsdata(typed_water_system, 'data.water')

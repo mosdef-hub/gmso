@@ -1,7 +1,6 @@
 import datetime
 
 import unyt as u
-from foyer.smarts import SMARTS
 
 from gmso.core.element import element_by_atom_type
 from gmso.lib.potential_templates import LennardJonesPotential, HarmonicBondPotential, HarmonicAnglePotential
@@ -9,14 +8,11 @@ from gmso.utils.compatibility import check_compatibility
 from gmso.exceptions import GMSOError
 
 
-PARSER = SMARTS()
-
 def write_top(top, filename):
     """Write a gmso.core.Topology object to a GROMACS topology (.TOP) file"""
 
     _validate_compatibility(top)
     top_vars = _get_top_vars()
-    _assign_indices(top)
 
     with open(filename, 'w') as out_file:
         out_file.write(
@@ -100,7 +96,7 @@ def write_top(top, filename):
             out_file.write(
                 '{0}\t\t\t'
                 '{1}\n\n'.format(
-                    top.subtops[0].name,
+                    top.name,
                     3
                 )
             )
@@ -134,15 +130,15 @@ def write_top(top, filename):
             '\n[ bonds ]\n'
             ';   ai     aj  funct   c0      c1\n'
         )
-        for bond_idx, bond in enumerate(top.bonds):
+        for bond in top.bonds:
             out_file.write(
                 '\t{0}'
                 '\t{1}'
                 '\t{2}'
                 '\t{3}'
                 '\t{4}\n'.format(
-                    bond.connection_members[0].idx,
-                    bond.connection_members[1].idx,
+                    top.sites.index(bond.connection_members[0]),
+                    top.sites.index(bond.connection_members[1]),
                     '1',
                     bond.connection_type.parameters['r_eq'].in_units(u.nm).value,
                     bond.connection_type.parameters['k'].in_units(
@@ -154,7 +150,7 @@ def write_top(top, filename):
             '\n[ angles ]\n'
             ';   ai     aj      ak      funct   c0      c1\n'
         )
-        for angle_idx, angle in enumerate(top.angles):
+        for angle in top.angles:
             out_file.write(
                 '\t{0}'
                 '\t{1}'
@@ -162,9 +158,9 @@ def write_top(top, filename):
                 '\t{3}'
                 '\t{4}'
                 '\t{5}\n'.format(
-                    angle.connection_members[0].idx,
-                    angle.connection_members[1].idx,
-                    angle.connection_members[2].idx,
+                    top.sites.index(angle.connection_members[0]),
+                    top.sites.index(angle.connection_members[1]),
+                    top.sites.index(angle.connection_members[2]),
                     '1',
                     angle.connection_type.parameters['theta_eq'].in_units(u.degree).value,
                     angle.connection_type.parameters['k'].in_units(
@@ -176,7 +172,7 @@ def write_top(top, filename):
             '\n[ dihedrals ]\n'
             ';   ai     aj      ak      al  funct   c0      c1      c2\n'
         )
-        for dihedral_idx, dihedral in enumerate(top.dihedrals):
+        for dihedral in top.dihedrals:
             out_file.write(
                 '\t{0}'
                 '\t{1}'
@@ -189,10 +185,10 @@ def write_top(top, filename):
                 '\t{8}'
                 '\t{9}'
                 '\t{10}\n'.format(
-                    dihedral.connection_members[0].idx,
-                    dihderal.connection_members[1].idx,
-                    dihedral.connection_members[2].idx,
-                    dihedral.connection_members[3].idx,
+                    top.sites.index(dihedral.connection_members[0]),
+                    top.sites.index(dihedral.connection_members[1]),
+                    top.sites.index(dihedral.connection_members[2]),
+                    top.sites.index(dihedral.connection_members[3]),
                     '3',
                     dihedral.connection_type.parameters['c0'],
                     dihedral.connection_type.parameters['c1'],
@@ -247,11 +243,6 @@ def _get_top_vars():
     top_vars['fudgeQQ'] = 1
 
     return top_vars
-
-
-def _assign_indices(top):
-    for idx, site in enumerate(top.sites):
-        site.idx = idx + 1
 
 
 def _lookup_atomic_number(atom_type):
