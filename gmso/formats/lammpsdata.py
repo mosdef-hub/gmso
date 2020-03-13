@@ -439,7 +439,7 @@ def _get_box_coordinates(filename, unit_style, topology):
             ly = yhi - ylo
             lz = zhi - zlo
 
-            c = np.sqrt(lz**2 + xz**2 - yz**2)
+            c = np.sqrt(lz**2 + xz**2 + yz**2)
             b = np.sqrt(ly**2 + xy**2)
             a = lx
 
@@ -449,7 +449,8 @@ def _get_box_coordinates(filename, unit_style, topology):
 
             # Box Information
             lengths = u.unyt_array([a, b, c], get_units(unit_style)['distance'])
-            angles = u.unyt_array([alpha, beta, gamma], get_units(unit_style)['angle'])
+            angles = u.unyt_array([alpha, beta, gamma], u.radian)
+            angles.to(get_units(unit_style)['angle'])
             topology.box=Box(lengths, angles)
         else:
             # Box Information
@@ -462,11 +463,15 @@ def _get_ff_information(filename, unit_style, topology):
     """Function to parse atom-type information
     """
     with open(filename, 'r') as lammps_file:
+        types = False
         for i, line in enumerate(lammps_file):
             if 'atom' in line:
                 n_atomtypes = int(line.split()[0])
+                types = True
             elif 'Masses' in line:
                 break
+    if types == False:
+        return topology
     mass_lines = open(filename, 'r').readlines()[i+2:i+n_atomtypes+2]
     type_list = list()
     for line in mass_lines:

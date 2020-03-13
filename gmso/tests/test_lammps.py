@@ -10,8 +10,9 @@ class TestLammpsWriter(BaseTest):
         write_lammpsdata(topology_site(), filename='data.lammps')
 
     def test_write_lammps_triclinic(self, topology_site):
-        topology_site().box = Box(lengths=[1,1,1], angles=[60,90,120])
-        write_lammpsdata(topology_site(), filename='data.triclinic')
+        top = topology_site()
+        top.box = Box(lengths=[1,1,1], angles=[60,90,120])
+        write_lammpsdata(top, filename='data.triclinic')
 
     def test_water_lammps(self, typed_water_system):
         write_lammpsdata(typed_water_system, 'data.water')
@@ -65,3 +66,14 @@ class TestLammpsWriter(BaseTest):
         #        u.unyt_array(-0.834, u.elementary_charge))
         assert water.n_sites == 6
         assert water.n_connections == 6
+
+    def test_read_lammps_triclinic(self, topology_site):
+        top = topology_site()
+        top.box = Box(lengths=[1,1,1], angles=[60,90,120])
+        write_lammpsdata(top, filename='data.triclinic')
+
+        read = read_lammpsdata('data.triclinic')
+        assert u.array.allclose_units(read.box.lengths,
+                u.unyt_array([1,1,1], u.nm))
+        assert u.array.allclose_units(read.box.angles,
+                u.unyt_array([60, 90, 120], u.degree))
