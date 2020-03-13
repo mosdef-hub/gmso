@@ -25,7 +25,7 @@ class Angle(Connection):
     -----
     Inherits some methods from Connection:
         __eq__, __repr__, _validate methods
-    Addiitonal _validate methods are presented
+    Additional _validate methods are presented
     """
 
     def __init__(self, connection_members=[], connection_type=None, name="Angle"):

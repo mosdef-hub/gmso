@@ -1,9 +1,9 @@
+import gmso
 from gmso.core.box import Box
 from gmso.formats.lammpsdata import write_lammpsdata, read_lammpsdata
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
 import unyt as u
-
 
 class TestLammpsWriter(BaseTest):
     def test_write_lammps(self, topology_site):
@@ -12,6 +12,9 @@ class TestLammpsWriter(BaseTest):
     def test_write_lammps_triclinic(self, topology_site):
         topology_site().box = Box(lengths=[1,1,1], angles=[60,90,120])
         write_lammpsdata(topology_site(), filename='data.triclinic')
+
+    def test_water_lammps(self, typed_water_system):
+        write_lammpsdata(typed_water_system, 'data.water')
 
     def test_read_lammps(self, filename=get_path('data.lammps')):
         read_lammpsdata(filename)

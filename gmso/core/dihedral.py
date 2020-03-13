@@ -9,8 +9,13 @@ class Dihedral(Connection):
     """A 4-partner connection between sites.
 
     This is a subclass of the gmso.Connection superclass.
-    This class has strictly 3 members in its connection_members.
-    The connection_type in this class corresponds to gmso.DihedralType
+    This class has strictly 4 members in its connection_members.
+    The connection_type in this class corresponds to gmso.DihedralType.
+    The connectivity of a dihedral is:
+
+           m1–m2–m3–m4
+
+    where m1, m2, m3, and m4 are connection members 1-4, respectively.
 
     Parameters
     --------
@@ -25,7 +30,7 @@ class Dihedral(Connection):
     -----
     Inherits some methods from Connection:
         __eq__, __repr__, _validate methods
-    Addiitonal _validate methods are presented
+    Additional _validate methods are presented
     """
 
     def __init__(self, connection_members=[], connection_type=None, name="Dihedral"):
