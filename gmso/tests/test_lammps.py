@@ -36,25 +36,27 @@ class TestLammpsWriter(BaseTest):
         read = read_lammpsdata(filename)
         masses = [i.mass for i in read.atom_types]
 
-        assert masses == u.unyt_array(1, u.g)
+        assert u.array.allclose_units(masses, u.unyt_array(1.0079, u.g))
 
-    def test_read_mass(self, filename=get_path('data.lammps')):
+    def test_read_charge(self, filename=get_path('data.lammps')):
         read = read_lammpsdata(filename)
         charge = [i.charge for i in read.atom_types]
 
-        assert charge == u.unyt_array(0, u.C)
+        assert u.array.allclose_units(charge, u.unyt_array(0, u.C))
 
     def test_read_sigma(self, filename=get_path('data.lammps')):
         read = read_lammpsdata(filename)
         lj = [i.parameters for i in read.atom_types][0]
 
-        assert lj['sigma'] == u.unyt_array(3, u.angstrom)
+        assert u.array.allclose_units(lj['sigma'], 
+                u.unyt_array(3, u.angstrom))
 
     def test_read_epsilon(self, filename=get_path('data.lammps')):
         read = read_lammpsdata(filename)
         lj = [i.parameters for i in read.atom_types][0]
 
-        assert lj['epsilon'] == u.unyt_array(0.0717, (u.kcal/u.mol))
+        assert u.array.allclose_units(lj['epsilon'],
+                u.unyt_array(0.0717, (u.kcal/u.mol)))
 
     def test_read_water(self, typed_water_system):
         write_lammpsdata(typed_water_system,
