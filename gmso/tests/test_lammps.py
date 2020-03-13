@@ -54,3 +54,14 @@ class TestLammpsWriter(BaseTest):
         lj = [i.parameters for i in read.atom_types][0]
 
         assert lj['epsilon'] == u.unyt_array(0.0717, (u.kcal/u.mol))
+
+    def test_read_water(self, typed_water_system):
+        write_lammpsdata(typed_water_system,
+                filename='data.water')
+        water = read_lammpsdata('data.water')
+
+        # Add once charges are added
+        #assert u.array.allclose_units(water.sites[0].charge,
+        #        u.unyt_array(-0.834, u.elementary_charge))
+        assert water.n_sites == 6
+        assert water.n_connections == 6

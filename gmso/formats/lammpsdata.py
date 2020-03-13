@@ -307,13 +307,15 @@ def _get_connection(filename, topology, unit_style, connection_type):
     """General function to parse connection types
     """
     with open(filename, 'r') as lammps_file:
+        types = False
         for i, line in enumerate(lammps_file):
             if connection_type in line.split():
                 n_connection_types = int(line.split()[0])
-            else:
-                return topology
+                types = True
             if connection_type.capitalize() in line.split():
                 break
+    if types == False:
+        return topology
     connection_type_lines = open(filename, 'r').readlines()[i+2:i+n_connection_types+2]
     connection_type_list = list()
     for line in connection_type_lines:
