@@ -289,11 +289,13 @@ def read_lammpsdata(filename, atom_style='full', unit_style='real', potential='l
 def get_units(unit_style):
     """Get units for specific LAMMPS unit style
     """
+    # Need separate angle units for harmonic force constant and angle
     unit_style_dict = {
             'real': {'mass': u.g,
                       'distance': u.angstrom,
                       'energy': u.kcal/u.mol,
-                      'angle': u.radian,
+                      'angle_k': u.radian,
+                      'angle': u.degree,
                       'charge': u.elementary_charge
                       }
             }
@@ -327,11 +329,13 @@ def _get_connection(filename, topology, unit_style, connection_type):
         elif connection_type == 'angle':
             c_type = AngleType(name=line.split()[0]
                     )
+            # Multiply 'k' by 2 since LAMMPS includes 1/2 in the term
             c_type.parameters['k']=float(line.split()[1])*u.Unit(
                                      get_units(unit_style)['energy']/
-                                     get_units(unit_style)['angle']**2
+                                     get_units(unit_style)['angle_k']**2
                                      )*2
-            c_type.parameters['theta_eq']=float(line.split()[2])*u.radian
+            c_type.parameters['theta_eq']=float(line.split()[2])*u.Unit(
+                                     get_units(unit_style)['angle'])
 
         connection_type_list.append(c_type)
 
