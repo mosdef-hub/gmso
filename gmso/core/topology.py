@@ -12,9 +12,9 @@ from gmso.core.potential import Potential
 from gmso.core.atom_type import AtomType
 from gmso.core.bond_type import BondType
 from gmso.core.angle_type import AngleType
-from gmso.core.dihedral_type import DihedralType
+from gmso.core.dihedral_type import DihedralType 
 from gmso.core.improper_type import ImproperType
-from gmso.utils._constants import ATOM_TYPE_DICT, BOND_TYPE_DICT, ANGLE_TYPE_DICT, DIHEDRAL_TYPE_DICT, IMPROPER_TYPE_DICT
+from gmso.utils._constants import ATOM_TYPE_DICT, BOND_TYPE_DICT, ANGLE_TYPE_DICT, PROPER_TYPE_DICT, IMPROPER_TYPE_DICT
 from gmso.exceptions import GMSOError
 
 
@@ -57,10 +57,13 @@ class Topology(object):
         Number of angles in the topology
 
     n_dihedrals : int
-        Number of dihedrals in the topology
+        Number of dihedrals in the topology, including propers and impropers
+
+    n_propers : int
+        Number of proper dihedrals in the topology
 
     n_impropers : int
-        Number of impropers in the topology
+        Number of improper dihedrals in the topology
 
     n_subtops : int
         Number of subtopolgies in the topology
@@ -75,7 +78,10 @@ class Topology(object):
         A collection of angles in the topology
 
     dihedrals : tuple of gmso.Dihedral objects
-        A collection of dihedrals in the topology
+        A collection of proper and improper dihedrals in the topology
+
+    propers : tuple of gmso.Dihedral objects
+        A collection of proper dihedrals in the topology
 
     impropers : tuple of gmso.Improper objects
         A collection of impropers in the topology
@@ -95,6 +101,9 @@ class Topology(object):
     dihedral_types : tuple of gmso.DihedralType objects
         A collection of DihedralTypes in the topology
 
+    proper_types : tuple of gmso.DihedralType objects
+        A collection of DihedralTypes in the topology
+
     improper_types : tuple of gmso.ImproperType objects
         A collection of ImproperTypes in the topology
 
@@ -112,6 +121,9 @@ class Topology(object):
 
     dihedral_type_expressions : list of gmso.DihedralType.expression objects
         A collection of all the expression for the DihedralTypes in the topology
+
+    proper_type_expressions : list of gmso.DihedralType.expression objects
+        A collection of all the expression for the DihedralType in the topology
 
     improper_type_expressions : list of gmso.ImproperType.expression objects
         A collection of all the expression for the ImproperTypes in the topology
@@ -133,21 +145,21 @@ class Topology(object):
         self._connections = IndexedSet()
         self._bonds = IndexedSet()
         self._angles = IndexedSet()
-        self._dihedrals = IndexedSet()
+        self._propers = IndexedSet()
         self._impropers = IndexedSet()
         self._subtops = IndexedSet()
         self._atom_types = {}
         self._connection_types = {}
         self._bond_types = {}
         self._angle_types = {}
-        self._dihedral_types = {}
+        self._proper_types = {}
         self._improper_types = {}
         self._combining_rule = 'lorentz'
         self._set_refs = {
             ATOM_TYPE_DICT: self._atom_types,
             BOND_TYPE_DICT: self._bond_types,
             ANGLE_TYPE_DICT: self._angle_types,
-            DIHEDRAL_TYPE_DICT: self._dihedral_types,
+            PROPER_TYPE_DICT: self._proper_types,
             IMPROPER_TYPE_DICT: self._improper_types,
         }
 
@@ -213,6 +225,10 @@ class Topology(object):
         return len(self.dihedrals)
 
     @property
+    def n_propers(self):
+        return len(self.propers)
+
+    @property
     def n_impropers(self):
         return len(self.impropers)
 
@@ -242,7 +258,11 @@ class Topology(object):
 
     @property
     def dihedrals(self):
-        return tuple(self._dihedrals)
+        return tuple(self._propers | self._impropers)
+
+    @property
+    def propers(self):
+        return tuple(self._propers)
 
     @property
     def impropers(self):
@@ -266,7 +286,11 @@ class Topology(object):
 
     @property
     def dihedral_types(self):
-        return tuple(self._dihedral_types.values())
+        return tuple(list(self._proper_types.values()) + list(self._improper_types.values()))
+
+    @property
+    def proper_types(self):
+        return tuple(self._proper_types.values())
 
     @property
     def improper_types(self):
@@ -290,7 +314,11 @@ class Topology(object):
 
     @property
     def dihedral_type_expressions(self):
-        return list(set([atype.expression for atype in self.dihedral_types]))
+        return self.proper_type_expressions + self.improper_type_expressions
+
+    @property
+    def proper_type_expressions(self):
+        return list(set([atype.expression for atype in self.proper_types]))
 
     @property
     def improper_type_expressions(self):
@@ -379,14 +407,14 @@ class Topology(object):
         if isinstance(connection, Angle):
             self._angles.add(connection)
         if isinstance(connection, Dihedral):
-            self._dihedrals.add(connection)
+            self._propers.add(connection)
         if isinstance(connection, Improper):
             self._impropers.add(connection)
         if update_types:
             self.update_connection_types()
 
     def update_connections(self, update_types=False):
-        """Update the topology's connections(bonds, angles, dihedrals, impropers) from its sites.
+        """Update the topology's connections(bonds, angles, propers, impropers) from its sites.
 
         This method takes all the sites in the current topology and if any connection
         (Bond, Angle, Dihedral) is present in the site but not in the topology's connection
@@ -486,7 +514,7 @@ class Topology(object):
                 if isinstance(c.connection_type, AngleType):
                     self._angle_types[c.connection_type] = c.connection_type
                 if isinstance(c.connection_type, DihedralType):
-                    self._dihedral_types[c.connection_type] = c.connection_type
+                    self._proper_types[c.connection_type] = c.connection_type
                 if isinstance(c.connection_type, ImproperType):
                     self._improper_types[c.connection_type] = c.connection_type
             elif c.connection_type in self.connection_types:
@@ -495,7 +523,7 @@ class Topology(object):
                 if isinstance(c.connection_type, AngleType):
                     c.connection_type = self._angle_types[c.connection_type]
                 if isinstance(c.connection_type, DihedralType):
-                    c.connection_type = self._dihedral_types[c.connection_type]
+                    c.connection_type = self._proper_types[c.connection_type]
                 if isinstance(c.connection_type, ImproperType):
                     c.connection_type = self._improper_types[c.connection_type]
 

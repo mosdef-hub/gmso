@@ -3,7 +3,7 @@ import unyt as u
 
 from gmso.core.potential import Potential
 from gmso.exceptions import GMSOError
-from gmso.utils._constants import DIHEDRAL_TYPE_DICT
+from gmso.utils._constants import PROPER_TYPE_DICT
 
 class DihedralType(Potential):
     """A descripton of the interaction between 4 bonded partners.
@@ -69,7 +69,7 @@ class DihedralType(Potential):
         super(DihedralType, self).__init__(name=name, expression=expression,
                                            parameters=parameters, independent_variables=independent_variables,
                                            topology=topology)
-        self._set_ref = DIHEDRAL_TYPE_DICT
+        self._set_ref = PROPER_TYPE_DICT
         self._member_types = _validate_four_member_type_names(member_types)
 
     @property
