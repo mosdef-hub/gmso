@@ -1,0 +1,5 @@
+{
+  "name": "BuckinghamPotential",
+  "expression": "a*exp(-b*r) - c*r**-6",
+  "independent_variables": "r"
+}

@@ -1,0 +1,5 @@
+{
+  "name": "HarmonicBondPotential",
+  "expression": "0.5 * k * (r-r_eq)**2",
+  "independent_variables": "r"
+}

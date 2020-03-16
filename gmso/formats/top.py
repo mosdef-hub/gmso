@@ -3,7 +3,7 @@ import datetime
 import unyt as u
 
 from gmso.core.element import element_by_atom_type
-from gmso.lib.potential_templates import LennardJonesPotential, HarmonicBondPotential, HarmonicAnglePotential
+from gmso.lib.potential_templates import PotentialTemplates
 from gmso.utils.compatibility import check_compatibility
 from gmso.exceptions import GMSOError
 
@@ -228,7 +228,11 @@ def write_top(top, filename):
 
 def _validate_compatibility(top):
     """Check compatability of topology object with GROMACS TOP format"""
-    accepted_potentials = [LennardJonesPotential(), HarmonicBondPotential(), HarmonicAnglePotential()]
+    templates = PotentialTemplates()
+    lennard_jones_potential = templates['LennardJonesPotential']
+    harmonic_bond_potential = templates['HarmonicBondPotential']
+    harmonic_angle_potential = templates['HarmonicAnglePotential']
+    accepted_potentials = [lennard_jones_potential, harmonic_bond_potential, harmonic_angle_potential]
     check_compatibility(top, accepted_potentials)
 
 
