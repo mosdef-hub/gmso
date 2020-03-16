@@ -1,7 +1,9 @@
 import pytest
 import numpy as np
 import mbuild as mb
+import mbuild.recipes
 import unyt as u
+import foyer
 
 from gmso.core.box import Box
 from gmso.core.topology import Topology
@@ -105,6 +107,29 @@ class BaseTest:
         return  from_mbuild(packed_system)
 
     @pytest.fixture
+    def parmed_methylnitroaniline(self):
+        compound = mb.load('CC1=C(C=CC(=C1)[N+](=O)[O-])N', smiles=True)
+        oplsaa = foyer.Forcefield(name='oplsaa')
+        pmd_structure = oplsaa.apply(compound)
+        return pmd_structure
+
+    @pytest.fixture
+    def parmed_chloroethanol(self):
+        compound = mb.load('C(CCl)O', smiles=True)
+        oplsaa = foyer.Forcefield(name='oplsaa')
+        pmd_structure = oplsaa.apply(compound)
+        return pmd_structure
+
+    @pytest.fixture
+    def parmed_hexane_box(self):
+        compound = mb.recipes.Alkane(6)
+        compound.name = "HEX"
+        compound_box = mb.fill_box(compound, n_compounds=6, box=[6,6,6])
+        oplsaa = foyer.Forcefield(name='oplsaa')
+        pmd_structure = oplsaa.apply(compound_box, residues="HEX")
+        return pmd_structure
+
+    @pytest.fixture
     def typed_water_system(self, water_system):
         top = water_system
 
@@ -127,5 +152,4 @@ class BaseTest:
             top.add_connection(angle)
 
         top.update_topology()
-
         return top
