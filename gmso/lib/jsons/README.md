@@ -45,3 +45,5 @@ abcTemplate_dict = {
         }       
 templates.save_potential_template('ABCTemplate', abcTemplate_dict, True)
 ```
+
+After you are satisfied with your template, add a test to verify that it is actually created [here](../../tests/test_potential_templates.py).
