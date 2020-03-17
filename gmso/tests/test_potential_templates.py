@@ -107,8 +107,23 @@ class TestPotentialTemplates(BaseTest):
         wrong_ref_dict = {
                 'name': 'NameMismatchTemplate',
                 'expression': 'a+b+c',
-                'independent_variables': 'c, a'
+                'independent_variables': 'c,a'
             }
         with pytest.raises(GMSOError):
             PotentialTemplates.save_potential_template('NameMismatch_Template', wrong_ref_dict, update=False)
 
+    def test_user_defined_potential(self, templates):
+        user_potential_dict = {
+            'name': 'UserTemplate',
+            'expression': 'a*b*c',
+            'independent_variables': 'b'
+        }
+        PotentialTemplates.save_potential_template('UserTemplate', user_potential_dict, update=True, user_template=True)
+        assert os.path.exists(os.path.join(os.path.expanduser('~'),
+                                           '.gmso',
+                                           'potential_templates',
+                                           'UserTemplate.json'))
+        templates.load_user_templates()
+        assert templates['UserTemplate'].name == 'UserTemplate'
+        assert templates['UserTemplate'].expression == sympy.sympify('a*b*c')
+        assert templates['UserTemplate'].independent_variables == {sympy.sympify('b')}

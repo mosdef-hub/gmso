@@ -13,13 +13,14 @@ USER_TEMPLATE_PREFIX = 'potential_templates'
 
 def _create_hidden_dir(new_dir=None):
     gmso_dir = os.path.join(os.path.expanduser('~'), '.gmso')
-    if os.path.exists(gmso_dir) and os.path.isdir(gmso_dir):
-        return
+    if new_dir is None:
+        if os.path.exists(gmso_dir) and os.path.isdir(gmso_dir):
+            return gmso_dir
+        else:
+            os.makedirs(gmso_dir)
     else:
-        os.makedirs(gmso_dir)
-    if new_dir is not None:
         dir_loc = os.path.join(gmso_dir, new_dir)
-        if os.path.exists(dir_loc) and os.path.isdir(dir_loc):
+        if not os.path.exists(dir_loc) and not os.path.isdir(dir_loc):
             os.makedirs(dir_loc)
         return dir_loc
     return gmso_dir
@@ -76,7 +77,8 @@ class PotentialTemplates(Singleton):
     def load_user_templates(self):
         gmso_dir = _create_hidden_dir(USER_TEMPLATE_PREFIX)
         user_jsons = glob.glob(os.path.join(gmso_dir, '*.json'))
-        self.user_jsons = list(set(self.user_jsons.extend(user_jsons)))
+        self.user_jsons.extend(user_jsons)
+        self.user_jsons = list(set(self.user_jsons))
         user_potential_names = [(os.path.split(filename)[-1]).replace('.json', '') for filename in user_jsons]
         self._user_ref_dict.update({potential.replace('.json', ''): self._user_ref_dict.get(potential, None)
                                     for potential in user_potential_names})
