@@ -60,6 +60,9 @@ class PotentialTemplates(Singleton):
             potential_names = [(os.path.split(filename)[-1]).replace('.json', '') for filename in POTENTIAL_JSONS]
             self._ref_dict = {potential.replace('.json', ''): None for potential in potential_names}
 
+    def get_available_template_names(self):
+        return tuple(self._ref_dict.keys())
+
     def __getitem__(self, item):
         if item not in self._ref_dict:
             raise KeyError(f'No Potential named {item} found in the library')
@@ -83,7 +86,7 @@ class PotentialTemplates(Singleton):
             parent_dir = _create_hidden_dir('potential_templates')
 
         _verify_potential_template_keys(template_dict, name)
-        with open(os.path.join(parent_dir, f'{name}.json')) as json_file:
+        with open(os.path.join(parent_dir, f'{name}.json'), 'w') as json_file:
             json.dump(template_dict, json_file)
 
         if update:
