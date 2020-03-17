@@ -23,6 +23,7 @@ requirements = [
 setup(
     name='gmso',
     version=__version__,
+    include_package_data=True,
     packages=find_packages(),
     zip_safe=True,
     author='Matthew W Thompson, Justin Gilmer',

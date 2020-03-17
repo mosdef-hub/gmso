@@ -5,6 +5,7 @@ import pytest
 import sympy
 
 from gmso.lib.potential_templates import PotentialTemplates, JSON_DIR
+from gmso.exceptions import GMSOError
 from gmso.tests.base_test import BaseTest
 
 
@@ -101,3 +102,13 @@ class TestPotentialTemplates(BaseTest):
         names = templates.get_available_template_names()
         assert isinstance(names, tuple)
         assert len(names) == len(glob.glob(os.path.join(JSON_DIR, '*.json')))
+
+    def test_name_mismatch_in_templates(self):
+        wrong_ref_dict = {
+                'name': 'NameMismatchTemplate',
+                'expression': 'a+b+c',
+                'independent_variables': 'c, a'
+            }
+        with pytest.raises(GMSOError):
+            PotentialTemplates.save_potential_template('NameMismatch_Template', wrong_ref_dict, update=False)
+
