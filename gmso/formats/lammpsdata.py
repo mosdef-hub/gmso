@@ -41,8 +41,6 @@ def write_lammpsdata(topology, filename, atom_style='full'):
 
     box = topology.box
 
-    # TODO: charges
-
     with open(filename, 'w') as data:
         data.write('{} written by topology at {}\n\n'.format(
             topology.name if topology.name is not None else '',
@@ -188,7 +186,7 @@ def write_lammpsdata(topology, filename, atom_style='full'):
             data.write(atom_line.format(
                 index=topology.sites.index(site)+1,
                 type_index=topology.atom_types.index(site.atom_type)+1,
-                zero=0,charge=0, # TODO: handle charges from atomtype and/or site
+                zero=0,charge=site.charge.to(u.elementary_charge).value,
                 x=site.position[0].in_units(u.angstrom).value,
                 y=site.position[1].in_units(u.angstrom).value,
                 z=site.position[2].in_units(u.angstrom).value))
