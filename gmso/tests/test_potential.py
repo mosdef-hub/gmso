@@ -5,6 +5,7 @@ import pytest
 from gmso.core.potential import Potential
 from gmso.tests.base_test import BaseTest
 from gmso.utils.testing import allclose
+from gmso.lib.potential_templates import HarmonicBondPotential
 
 
 class TestPotential(BaseTest):
@@ -222,3 +223,8 @@ class TestPotential(BaseTest):
                     'u': 1.0*u.g,
                     'v': 1.0*u.m},
             )
+
+    def test_class_method(self):
+        template = HarmonicBondPotential()
+        assert Potential.from_template(template, {'k': 1.0 * u.dimensionless,
+                                                  'r_eq': 1.0 * u.dimensionless})
