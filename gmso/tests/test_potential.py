@@ -6,6 +6,7 @@ from gmso.core.potential import Potential
 from gmso.tests.base_test import BaseTest
 from gmso.utils.testing import allclose
 from gmso.lib.potential_templates import HarmonicBondPotential
+from gmso.exceptions import GMSOError
 
 
 class TestPotential(BaseTest):
@@ -228,3 +229,8 @@ class TestPotential(BaseTest):
         template = HarmonicBondPotential()
         assert Potential.from_template(template, {'k': 1.0 * u.dimensionless,
                                                   'r_eq': 1.0 * u.dimensionless})
+
+    def test_class_method_with_error(self):
+        template = object()
+        with pytest.raises(GMSOError):
+            Potential.from_template(template, parameters=None)
