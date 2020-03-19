@@ -255,7 +255,19 @@ def read_lammpsdata(filename, atom_style='full', unit_style='real', potential='l
     Notes
     -----
     See http://lammps.sandia.gov/doc/2001/data_format.html for a full description of the LAMMPS data format.  
-    Currently only supporting LJ potential parameters.
+
+    This is a work in progress, as only several atom styles, potential styles, and unit styes are currently supported.
+
+    Currently supporting the following atom styles: 'full'
+
+    Currently supporting the following unit styles: 'real'
+
+    Currently supporting the following potential styles: 'lj'
+
+    Proper dihedrals can be read in but is currently not tested.
+
+    Currently not supporting improper dihedrals.
+
     """
     # TODO: Add argument to ask if user wants to infer bond type
     top = Topology()
@@ -281,6 +293,8 @@ def read_lammpsdata(filename, atom_style='full', unit_style='real', potential='l
     if atom_style in ['full']:
         _get_connection(filename, top, unit_style, connection_type='bond')
         _get_connection(filename, top, unit_style, connection_type='angle')
+
+    top.update_topology()
 
     return top
 
@@ -383,13 +397,13 @@ def _get_atoms(filename, topology, unit_style, type_list):
                 break
     atom_lines = open(filename, 'r').readlines()[i+2:i+n_atoms+2]
     for line in atom_lines:
-        atom = line.split()
-        atom_type = atom[2]
-        charge = u.unyt_quantity(float(atom[3]), get_units(unit_style)['charge'])
+        atom_line = line.split()
+        atom_type = atom_line[2]
+        charge = u.unyt_quantity(float(atom_line[3]), get_units(unit_style)['charge'])
         coord = u.angstrom * u.unyt_array([
-            float(atom[4]),
-            float(atom[5]),
-            float(atom[6])])
+            float(atom_line[4]),
+            float(atom_line[5]),
+            float(atom_line[6])])
         site = Site(
             charge=charge,
             position=coord,
