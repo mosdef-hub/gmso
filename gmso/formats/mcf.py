@@ -1,5 +1,3 @@
-from __future__ import division
-
 import warnings
 import datetime
 from math import sqrt
@@ -29,6 +27,13 @@ __all__ = ["write_mcf"]
 def write_mcf(top, filename):
     """Generate a Cassandra MCF from a gmso.core.Topology object.
 
+    The MCF file stores the topology information for a single
+    species (i.e., compound) in the Cassandra Monte Carlo software
+    (https://cassandra.nd.edu). The gmso.Topology object provided to
+    this function should therefore be for a single molecule with the
+    relevant forcefield parameters. One MCF file will be required
+    for each unique species in the system.
+
     Parameters
     ----------
     top : gmso.core.Topology
@@ -38,8 +43,9 @@ def write_mcf(top, filename):
 
     Notes
     -----
-    See https://cassandra.nd.edu/index.php/documentation for
-    a complete description of the MCF format.
+    Atom indexing begins at 1. See
+    https://cassandra.nd.edu/index.php/documentation for a complete
+    description of the MCF format.
 
     """
 
@@ -167,14 +173,14 @@ def _id_rings_fragments(top):
     all_rings = all_rings + fused_rings
     # ID fragments which contain a ring
     for ring in all_rings:
-        adjacentatoms = []
+        adjacent_atoms = []
         for idx in ring:
             if len(neigh_dict[idx]) > 2:
-                adjacentatoms.append(list(set(neigh_dict[idx]) - set(ring)))
-        tmp = filter(None, adjacentatoms)
-        adjacentatoms = [x for sublist in tmp for x in sublist]
-        frag_list.append(ring + adjacentatoms)
-        for idx in adjacentatoms:
+                adjacent_atoms.append(list(set(neigh_dict[idx]) - set(ring)))
+        tmp = filter(None, adjacent_atoms)
+        adjacent_atoms = [x for sublist in tmp for x in sublist]
+        frag_list.append(ring + adjacent_atoms)
+        for idx in adjacent_atoms:
             adj_to_ring[idx] = True
     # Now ID the other fragments
     for idx in neigh_dict:
@@ -234,6 +240,8 @@ def _write_atom_information(mcf, top, in_ring):
                 "MCF.".format(name)
             )
 
+    # Confirm that shortening names to two characters does not
+    # cause two previously unique atom names to become identical.
     names = [name[:2] for name in names]
     if len(set(names)) < n_unique_names:
         warnings.warn(
@@ -528,7 +536,7 @@ def _write_dihedral_information(mcf, top):
 
         else:
             raise GMSOError(
-                "Unsupported dihedral style for " "Cassandra MCF writer"
+                "Unsupported dihedral style for Cassandra MCF writer"
             )
 
 
@@ -604,7 +612,7 @@ def _write_fragment_information(mcf, top, frag_list, frag_conn):
             mcf.write("1 2 1 2\n")
         else:
             warnings.warn(
-                "More than two atoms present but " "no fragments identified."
+                "More than two atoms present but no fragments identified."
             )
             mcf.write("0\n")
     else:
@@ -656,7 +664,7 @@ def _check_compatibility(top):
         raise GMSOError("MCF writer requires a Topology object.")
     if not all([site.atom_type.name for site in top.sites]):
         raise GMSOError(
-            "MCF writing not supported without " "parameterized forcefield."
+            "MCF writing not supported without parameterized forcefield."
         )
 
     accepted_potentials = [
