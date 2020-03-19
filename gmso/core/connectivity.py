@@ -1,7 +1,20 @@
 import networkx as nx
 
-from gmso.core.bond import Bond
 from gmso.core.angle import Angle
+from gmso.core.dihedral import Dihedral
+from gmso.core.improper import Improper
+
+CONNS = {
+    'angle': Angle,
+    'dihedral': Dihedral,
+    'improper': Improper
+}
+
+EDGES = {
+    'angle': ((0, 1),),
+    'dihedral': ((0, 1), (1, 2)),
+    'improper': ((0, 1), (0, 2), (1, 2))
+}
 
 
 def identify_connections(top):
@@ -31,77 +44,53 @@ def identify_connections(top):
 
     compound_line_graph = nx.line_graph(compound)
 
-    angle_matches = _detect_angles(compound_line_graph)
-    # Todo: Uncomment when dihedral and improper class get implemented
-    #dihedral_matches = _detect_dihedrals(compound_line_graph)
-    #improper_matches = _detect_impropers(compound_line_graph)
+    angle_matches = _detect_connections(compound_line_graph, type_='angle')
+    dihedral_matches = _detect_connections(compound_line_graph, type_='dihedral')
+    # improper_matches = _detect_connections(compound_line_graph, type_='improper')
 
-    _add_angles(top, angle_matches)
-    #_add_dihedral(top, dihedral_matches)
-    #_add_impropers(top, improper_matches)
-
+    _add_connections(top, angle_matches, conn_type='angle')
+    _add_connections(top, dihedral_matches, conn_type='dihedral')
+    # _add_connections(top, improper_matches, conn_type='improper')
     return top
 
-def _detect_angles(compound_line_graph):
-    angle = nx.Graph()
-    angle.add_edge(0, 1)
 
-    matcher = nx.algorithms.isomorphism.GraphMatcher(compound_line_graph, angle)
+def _add_connections(top, matches, conn_type):
+    for tuple_ in matches:
+        to_add_conn = CONNS[conn_type](connection_members=[*tuple_])
+        top.add_connection(to_add_conn, update_types=False)
 
-    angle_matches = []
+
+def _detect_connections(compound_line_graph, type_='angle'):
+    connection = nx.Graph()
+    for edge in EDGES[type_]:
+        assert len(edge) == 2, 'Edges should be of length 2'
+        connection.add_edge(edge[0], edge[1])
+
+    matcher = nx.algorithms.isomorphism.GraphMatcher(compound_line_graph, connection)
+
+    formatter_fns = {
+        'angle': _format_subgraph_angle,
+        'dihedral': _format_subgraph_dihedral,
+        'improper': _format_subgraph_improper,
+    }
+
+    conn_matches = []
     for m in matcher.subgraph_isomorphisms_iter():
-        new_connection = _format_subgraph_angle(m)
-        angle_matches.append(new_connection)
-    angle_matches = _trim_duplicates(angle_matches)
+        new_connection = formatter_fns[type_](m)
+        conn_matches.append(new_connection)
 
-    return angle_matches
+    conn_matches = _trim_duplicates(conn_matches)
 
-def _add_angles(top, angle_matches):
-    for angle_tuple in angle_matches:
-        to_add_angle = Angle(connection_members=[*angle_tuple])
-        top.add_connection(to_add_angle, update_types=False)
+    return conn_matches
 
-def _add_dihedrals(top, dihedral_matches):
-    for dihedral_tuple in dihedral_matches:
-        to_add_dihedral = Dihedral(connection_members=[*dihedral_tuple])
-        top.add_connection(to_add_dihedral, update_types=False)
 
-def _add_impropers(top, improper_matches):
-    for improper_tuple in improper_matches:
-        to_add_improper = Improper(connection_members=[*improper_tuple])
-        top.add_connection(to_add_improper, update_types=False)
+def _get_sorted_by_n_connections(m):
+    """get sorted by n connections for the matching graph"""
+    small = nx.Graph()
+    for k, v in m.items():
+        small.add_edge(k[0], k[1])
+    return sorted(small.adj, key=lambda x: len(small[x])), small
 
-def _detect_dihedrals(compound_line_graph):
-    dihedral = nx.Graph()
-    dihedral.add_edge(0,1)
-    dihedral.add_edge(1,2)
-
-    matcher = nx.algorithms.isomorphism.GraphMatcher(compound_line_graph, dihedral)
-
-    dihedral_matches = []
-    for m in matcher.subgraph_isomorphisms_iter():
-        new_connection = _format_subgraph_dihedral(m)
-        dihedral_matches.append(new_connection)
-    dihedral_matches = _trim_duplicates(dihedral_matches)
-
-    return dihedral_matches
-
-def _detect_impropers(compound_line_graph):
-    improper = nx.Graph()
-    improper.add_edge(0,1)
-    improper.add_edge(1,2)
-    improper.add_edge(0,2)
-
-    matcher = nx.algorithms.isomorphism.GraphMatcher(compound_line_graph, improper)
-
-    improper_matches = []
-    for m in matcher.subgraph_isomorphisms_iter():
-        new_connection = _format_subgraph_improper(m)
-        if new_connection is not None:
-            improper_matches.append(new_connection)
-    improper_matches = _trim_duplicates(improper_matches)
-
-    return improper_matches
 
 def _format_subgraph_angle(m):
     """ Format the angle subgraph
@@ -120,15 +109,12 @@ def _format_subgraph_angle(m):
     connection : list of nodes, in order of bonding
         (start, middle, end) """
 
-    small = nx.Graph()
-    for k, v in m.items():
-        small.add_edge(k[0],k[1])
-    sort_by_n_connections = sorted(small.adj, key=lambda x:len(small[x]))
+    (sort_by_n_connections, _) = _get_sorted_by_n_connections(m)
     start = sort_by_n_connections[0]
     end = sort_by_n_connections[1]
     middle = sort_by_n_connections[2]
-
     return [start, middle, end]
+
 
 def _format_subgraph_dihedral(m):
     """ Format the dihedral subgraph
@@ -146,11 +132,8 @@ def _format_subgraph_dihedral(m):
     ------
     connection : list of nodes, in order of bonding
         (start, mid1, mid2, end)
-        """
-    small = nx.Graph()
-    for k,v in m.items():
-        small.add_edge(k[0], k[1])
-    sort_by_n_connections = sorted(small.adj, key=lambda x:len(small[x]))
+    """
+    (sort_by_n_connections, small) = _get_sorted_by_n_connections(m)
     start = sort_by_n_connections[0]
     if sort_by_n_connections[2] in small.neighbors(start):
         mid1 = sort_by_n_connections[2]
@@ -160,7 +143,8 @@ def _format_subgraph_dihedral(m):
         mid2 = sort_by_n_connections[2]
 
     end = sort_by_n_connections[1]
-    return [start,mid1, mid2, end]
+    return [start, mid1, mid2, end]
+
 
 def _format_subgraph_improper(m):
     """ Format the dihedral subgraph
@@ -183,15 +167,13 @@ def _format_subgraph_improper(m):
     ------
     Given the way impropers are matched, sometimes a cyclic 3-ring system gets returned
     """
-    small = nx.Graph()
-    for k,v in m.items():
-        small.add_edge(k[0], k[1])
-    sort_by_n_connections = sorted(small.adj, key=lambda x:len(small[x]))
+    (sort_by_n_connections, _) = _get_sorted_by_n_connections(m)
     if len(sort_by_n_connections) == 4:
         central = sort_by_n_connections[3]
         branch1, branch2, branch3 = sorted(sort_by_n_connections[:3])
         return [central, branch1, branch2, branch3]
     return None
+
 
 def _trim_duplicates(all_matches):
     """ Remove redundant sub-graph matches

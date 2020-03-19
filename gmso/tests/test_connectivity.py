@@ -7,6 +7,7 @@ from gmso.tests.base_test import BaseTest
 
 
 class TestConnectivity(BaseTest):
+
     def test_methane_connectivity(self, methane):
         assert methane.n_bonds == 4
         assert methane.n_angles == 0
@@ -36,15 +37,11 @@ class TestConnectivity(BaseTest):
         c34 = Bond(connection_members=[s3, s4])
         c41 = Bond(connection_members=[s4, s1])
 
-        mytop.add_site(s1, update_types=False)
-        mytop.add_site(s2, update_types=False)
-        mytop.add_site(s3, update_types=False)
-        mytop.add_site(s4, update_types=False)
+        for site in [s1, s2, s3, s4]:
+            mytop.add_site(site, update_types=False)
 
-        mytop.add_connection(c12, update_types=False)
-        mytop.add_connection(c23, update_types=False)
-        mytop.add_connection(c34, update_types=False)
-        mytop.add_connection(c41, update_types=False)
+        for conn in [c12, c23, c34, c41]:
+            mytop.add_connection(conn, update_types=False)
 
         assert mytop.n_bonds == 4
         assert mytop.n_angles == 0
