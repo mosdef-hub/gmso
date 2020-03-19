@@ -5,7 +5,6 @@ import numpy as np
 import unyt as u
 import datetime
 
-from gmso.utils.sorting import natural_sort
 from gmso.utils.testing import allclose
 
 def write_lammpsdata(topology, filename, atom_style='full'):
@@ -38,55 +37,33 @@ def write_lammpsdata(topology, filename, atom_style='full'):
     if atom_style not in ['atomic', 'charge', 'molecular', 'full']:
         raise ValueError('Atom style "{}" is invalid or is not currently supported'.format(atom_style))
 
-    xyz = list()
-    types = list()
-    for site in topology.sites:
-        xyz.append([site.position[0],site.position[1],site.position[2]])
-        types.append(site.atom_type.name)
-
-    forcefield = True
-    if topology.sites[0].atom_type.name in ['', None]:
-        forcefield = False
+    # TODO: Support various unit styles
 
     box = topology.box
-
-    unique_types = list(set(types))
-    unique_types.sort(key=natural_sort)
-
-    # TODO: charges
-    # TODO: bonds
-    # TODO: Angles
-    # TODO: Dihedrals
-
-    # TODO: Figure out handling bond, angle, and dihedral indices
-
-    # placeholder; change later
-    bonds = 0
-    angles = 0
-    dihedrals = 0
 
     with open(filename, 'w') as data:
         data.write('{} written by topology at {}\n\n'.format(
             topology.name if topology.name is not None else '',
             str(datetime.datetime.now())))
-        data.write('{:d} atoms\n'.format(len(topology.sites)))
+        data.write('{:d} atoms\n'.format(topology.n_sites))
         if atom_style in ['full', 'molecular']:
-            if bonds != 0:
-                data.write('{:} bonds\n'.format(len(bonds)))
+            if topology.n_bonds != 0:
+                data.write('{:d} bonds\n'.format(topology.n_bonds))
             else:
                 data.write('0 bonds\n')
-            if angles != 0:
-                data.write('{:} angles\n'.format(len(angles)))
+            if topology.n_angles != 0:
+                data.write('{:d} angles\n'.format(topology.n_angles))
             else:
                 data.write('0 angles\n')
-            if dihedrals != 0:
-                data.write('{:} dihedrals\n\n'.format(len(dihedrals)))
+            if topology.n_dihedrals != 0:
+                data.write('{:d} dihedrals\n\n'.format(topology.n_dihedrals))
             else:
                 data.write('0 dihedrals\n')
 
-        data.write('{:d} atom types\n'.format(len(set(types))))
-
-        # TODO: Write out bonds, angles, and dihedrals
+        data.write('\n{:d} atom types\n'.format(len(topology.atom_types)))
+        data.write('{:d} bond types\n'.format(len(topology.bond_types)))
+        data.write('{:d} angle types\n'.format(len(topology.angle_types)))
+        data.write('{:d} dihedral types\n'.format(len(topology.dihedral_types)))
 
         data.write('\n')
 
@@ -140,34 +117,59 @@ def write_lammpsdata(topology, filename, atom_style='full'):
             data.write('{0:.6f} {1:.6f} {2:.6f} xy xz yz\n'.format(
                 xy.value, xz.value, yz.value))
 
-        # Mass data
-        masses = [site.atom_type.mass for site in topology.sites]
-        mass_dict = dict([(unique_types.index(atom_type)+1,mass) for atom_type,mass in zip(types,masses)])
-
-        data.write('\nMasses\n\n')
-        for atom_type,mass in mass_dict.items():
-            data.write('{:d}\t{:.6f}\t# {}\n'.format(
-                atom_type,
-                mass.in_units(u.g/u.mol).value,
-                unique_types[atom_type-1]))
-        if forcefield:
-            sigmas = [site.atom_type.parameters['sigma'] for site in topology.sites]
-            epsilons = [site.atom_type.parameters['epsilon'] for site in topology.sites]
-            sigma_dict = dict([(unique_types.index(atom_type)+1,sigma) for atom_type,sigma in zip(types,sigmas)])
-            epsilon_dict = dict([(unique_types.index(atom_type)+1,epsilon) for atom_type,epsilon in zip(types,epsilons)])
+        # TODO: Get a dictionary of indices and atom types
+        if topology.is_typed():
+            # Write out mass data
+            data.write('\nMasses\n\n')
+            for atom_type in topology.atom_types:
+                data.write('{:d}\t{:.6f}\t# {}\n'.format(
+                    topology.atom_types.index(atom_type)+1,
+                    atom_type.mass.in_units(u.g/u.mol).value,
+                    atom_type.name
+                    ))
 
             # TODO: Modified cross-interactions
             # Pair coefficients
             data.write('\nPair Coeffs # lj\n\n')
-            for idx,epsilon in epsilon_dict.items():
+            for idx, param in enumerate(topology.atom_types):
                 data.write('{}\t{:.5f}\t{:.5f}\n'.format(
-                    idx,
-                    epsilon.in_units(u.Unit('kcal/mol')).value,
-                    sigma_dict[idx].in_units(u.angstrom).value))
+                    idx+1,
+                    param.parameters['epsilon'].in_units(u.Unit('kcal/mol')).value,
+                    param.parameters['sigma'].in_units(u.angstrom).value
+                    ))
 
-        # TODO: Write out bond coefficients
-        # TODO: Write out angle coefficients
-        # TODO: Write out dihedral coefficients
+            if topology.bonds:
+                data.write('\nBond Coeffs\n\n')
+                for idx, bond_type in enumerate(topology.bond_types):
+                    data.write('{}\t{:.5f}\t{:.5f}\n'.format(
+                        idx+1,
+                        bond_type.parameters['k'].in_units(u.Unit('kcal/mol/angstrom**2')).value/2,
+                        bond_type.parameters['r_eq'].in_units(u.Unit('angstrom')).value
+                        ))
+
+            if topology.angles: 
+                data.write('\nAngle Coeffs\n\n')
+                for idx, angle_type in enumerate(topology.angle_types):
+                    data.write('{}\t{:.5f}\t{:.5f}\n'.format(
+                        idx+1,
+                        angle_type.parameters['k'].in_units(u.Unit('kcal/mol/radian**2')).value/2,
+                        angle_type.parameters['theta_eq'].in_units(u.Unit('degree')).value
+                        ))
+
+            # TODO: Write out multiple dihedral styles
+            if topology.dihedrals:
+                data.write('\nDihedral Coeffs\n')
+                for idx, dihedral_type in enumerate(topology.dihedral_types):
+                    if dihedral_type.name == 'RyckaertBellemansTorsionPotential':
+                        dihedral_type = convert_ryckaert_to_opls(dihedral_type)
+                    data.write('{}\t{:.5f}\t{:5f}\t{:5f}\t{:.5f}\n'.format(
+                        idx+1,
+                        dihedral_type.parameters['k1']/2,
+                        dihedral_type.parameters['k2']/2,
+                        dihedral_type.parameters['k3']/2,
+                        dihedral_type.parameters['k4']/2
+                        ))
+
 
         # Atom data
         data.write('\nAtoms\n\n')
@@ -180,22 +182,44 @@ def write_lammpsdata(topology, filename, atom_style='full'):
         elif atom_style == 'full':
             atom_line ='{index:d}\t{zero:d}\t{type_index:d}\t{charge:.6f}\t{x:.6f}\t{y:.6f}\t{z:.6f}\n'
 
-
-        # TODO: Add back in correct 'type_index' and 'charge'
-        #for i,coords in enumerate(xyz):
-        #    data.write(atom_line.format(
-        #        index=i+1,type_index=unique_types.index(types[i])+1,
-        #        zero=0,charge=charges[i],
-        #        x=coords[0],y=coords[1],z=coords[2]))
-
-        for i,coords in enumerate(xyz):
+        for i, site in enumerate(topology.sites):
             data.write(atom_line.format(
-                index=i+1,type_index=unique_types.index(types[i])+1,
-                zero=0,charge=0, # TODO: handle charges from atomtype and/or site
-                x=coords[0].in_units(u.angstrom).value,
-                y=coords[1].in_units(u.angstrom).value,
-                z=coords[2].in_units(u.angstrom).value))
+                index=topology.sites.index(site)+1,
+                type_index=topology.atom_types.index(site.atom_type)+1,
+                zero=0,charge=site.charge.to(u.elementary_charge).value,
+                x=site.position[0].in_units(u.angstrom).value,
+                y=site.position[1].in_units(u.angstrom).value,
+                z=site.position[2].in_units(u.angstrom).value))
 
-        # TODO: Write out bonds
-        # TODO: Write out angles
-        # TODO: Write out dihedrals
+        if topology.bonds:
+            data.write('\nBonds\n\n')
+            for i, bond in enumerate(topology.bonds):
+                data.write('{:d}\t{:d}\t{:d}\t{:d}\n'.format(
+                i+1,
+                topology.bond_types.index(bond.connection_type)+1,
+                topology.sites.index(bond.connection_members[0])+1,
+                topology.sites.index(bond.connection_members[1])+1
+                ))
+
+        if topology.angles:
+            data.write('\nAngles\n\n')
+            for i, angle in enumerate(topology.angles):
+                data.write('{:d}\t{:d}\t{:d}\t{:d}\t{:d}\n'.format(
+                i+1,
+                topology.angle_types.index(angle.connection_type)+1,
+                topology.sites.index(angle.connection_members[0])+1,
+                topology.sites.index(angle.connection_members[1])+1,
+                topology.sites.index(angle.connection_members[2])+1
+                ))
+
+        if topology.dihedrals:
+            data.write('\nDihedrals\n\n')
+            for i, dihedral in enumerate(topology.dihedrals):
+                data.write('{:d}\t{:d}\t{:d}\t{:d}\t{:d}\t{:d}\n'.format(
+                i+1,
+                topology.dihedral_types.index(dihedral.connection_type)+1,
+                topology.sites.index(dihedral.connection_members[0])+1,
+                topology.sites.index(dihedral.connection_members[1])+1,
+                topology.sites.index(dihedral.connection_members[2])+1,
+                topology.sites.index(dihedral.connection_members[3])+1
+                ))
