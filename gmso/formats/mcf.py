@@ -1,8 +1,6 @@
 import warnings
 import datetime
-from math import sqrt
 
-import numpy as np
 import networkx as nx
 import sympy
 import unyt as u
@@ -15,7 +13,6 @@ from gmso.lib.potential_templates import HarmonicTorsionPotential
 from gmso.lib.potential_templates import PeriodicTorsionPotential
 from gmso.lib.potential_templates import OPLSTorsionPotential
 from gmso.lib.potential_templates import RyckaertBellemansTorsionPotential
-from gmso.lib.potential_templates import HarmonicImproperPotential
 from gmso.utils.compatibility import check_compatibility
 from gmso.utils.conversions import convert_ryckaert_to_opls
 from gmso.exceptions import GMSOError

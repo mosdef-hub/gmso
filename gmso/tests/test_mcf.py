@@ -1,15 +1,10 @@
 import pytest
-import mbuild
 import numpy as np
 import unyt as u
 
-import gmso
 from gmso.formats.mcf import write_mcf
 from gmso.tests.base_test import BaseTest
-from gmso.tests.utils import get_path
-from gmso.utils.io import get_fn
 from gmso.exceptions import EngineIncompatibilityError
-from gmso.external.convert_mbuild import from_mbuild
 
 
 class TestMCF(BaseTest):
@@ -34,18 +29,6 @@ class TestMCF(BaseTest):
             if len(line) > 1:
                 if line[1] == "Atom_Info":
                     atom_section_start = idx
-                elif line[1] == "Bond_Info":
-                    bond_section_start = idx
-                elif line[1] == "Angle_Info":
-                    angle_section_start = idx
-                elif line[1] == "Dihedral_Info":
-                    dihedral_section_start = idx
-                elif line[1] == "Improper_Info":
-                    improper_section_start = idx
-                elif line[1] == "Fragment_Info":
-                    fragment_section_start = idx
-                elif line[1] == "Fragment_Connectivity":
-                    fragment_conn_start = idx
 
         assert mcf_data[atom_section_start + 1][0] == "1"
         assert mcf_data[atom_section_start + 2][1] == "Ar"
@@ -83,18 +66,6 @@ class TestMCF(BaseTest):
             if len(line) > 1:
                 if line[1] == "Atom_Info":
                     atom_section_start = idx
-                elif line[1] == "Bond_Info":
-                    bond_section_start = idx
-                elif line[1] == "Angle_Info":
-                    angle_section_start = idx
-                elif line[1] == "Dihedral_Info":
-                    dihedral_section_start = idx
-                elif line[1] == "Improper_Info":
-                    improper_section_start = idx
-                elif line[1] == "Fragment_Info":
-                    fragment_section_start = idx
-                elif line[1] == "Fragment_Connectivity":
-                    fragment_conn_start = idx
 
         # Check a some atom info
         assert mcf_data[atom_section_start + 1][0] == "1"
