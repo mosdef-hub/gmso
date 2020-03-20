@@ -224,19 +224,20 @@ class Potential(object):
 
         Returns
         -------
-        gmso.Potential,
+        gmso.Potential
             The potential object created
 
         Raises
         ------
-        GMSOError :
+        GMSOError
             If potential_template is not of instance PotentialTemplate
         """
         from gmso.lib.potential_templates import PotentialTemplate
         if not isinstance(potential_template, PotentialTemplate):
             raise GMSOError(f'Object {type(potential_template)} is not an instance of PotentialTemplate.')
 
-        return cls(expression=potential_template.expression,
+        return cls(name=potential_template.name,
+                   expression=potential_template.expression,
                    independent_variables=potential_template.independent_variables,
                    parameters=parameters,
                    topology=topology,
