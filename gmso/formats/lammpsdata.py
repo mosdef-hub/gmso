@@ -128,7 +128,7 @@ def write_lammpsdata(topology, filename, atom_style='full'):
                 xy.value, xz.value, yz.value))
 
         # TODO: Get a dictionary of indices and atom types
-        if topology.is_typed():
+        if topology.is_typed(updated=True):
             # Write out mass data
             data.write('\nMasses\n\n')
             for atom_type in topology.atom_types:
