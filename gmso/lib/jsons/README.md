@@ -11,7 +11,7 @@ A potential template object requires the following attributes:
 
 
 ## For Developers
-To add/contribute a new `PotentialTemplate` there are two ways:
+To add/contribute a new `PotentialTemplate` there are the following ways:
 
 1. **Add JSON File**: The example below shows the content of an example json file(OPLSTorsionPotential):
 ```json
@@ -25,25 +25,6 @@ If you want to add a template named `ABCTemplate`. Create a file called
 `ABCTemplate.json` in this directory. Using the json reference above, 
 name the template `ABCTemplate` and change the `expression` and `independent_variables`.
 
-If there are more than one  `independent_variables` in your template, simply separate them by a comma(,).
-
-2. **Use a python script**:
-Let's say you want to create a new PotentialTemplate. There's a static method 
-in `PotentialTemplates` that let's you add a new one.
-
-Use the following script to generate potential template(in your dev branch):
-
-**Warning: Do not use this script on conda/pip installed version or master branch**
-
-```python
-from gmso.lib.potential_templates import PotentialTemplates
-templates = PotentialTemplates()
-abcTemplate_dict = {
-            'name': 'ABCTemplate', 
-            'expression': 'expression', 
-            'independent_variables': 'variables'
-        }       
-templates.save_potential_template('ABCTemplate', abcTemplate_dict, True)
-```
+If there are more than one  `independent_variables` in your template, simply separate them with a comma(,).
 
 After you are satisfied with your template, add a test to verify that it is actually created [here](../../tests/test_potential_templates.py).

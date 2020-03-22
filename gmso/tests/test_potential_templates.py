@@ -5,7 +5,6 @@ import pytest
 import sympy
 
 from gmso.lib.potential_templates import PotentialTemplates, JSON_DIR
-from gmso.exceptions import GMSOError
 from gmso.tests.base_test import BaseTest
 
 
@@ -34,10 +33,10 @@ class TestPotentialTemplates(BaseTest):
     def test_opls_torsion_potential(self, templates):
         opls_torsion_potential = templates['OPLSTorsionPotential']
         assert opls_torsion_potential.name == 'OPLSTorsionPotential'
-        assert opls_torsion_potential.expression == sympy.sympify('0.5 * k0 + 0.5 * k1 * (1 + cos(phi)) + '
+        assert opls_torsion_potential.expression == sympy.sympify('0.5 * k0 + 0.5 * k1 * (1 + cos(phi)) +'
                                                                   '0.5 * k2 * (1 - cos(2*phi)) +'
-                                                                  ' 0.5 * k3 * (1 + cos(3*phi))'
-                                                                  ' + 0.5 * k4 * (1 - cos(4*phi))')
+                                                                  '0.5 * k3 * (1 + cos(3*phi)) +'
+                                                                  '0.5 * k4 * (1 - cos(4*phi))')
         assert opls_torsion_potential.independent_variables == {sympy.sympify('phi')}
 
     def test_periodic_torsion_potential(self, templates):
@@ -84,46 +83,7 @@ class TestPotentialTemplates(BaseTest):
         assert buckingham_potential.expression == sympy.sympify('a*exp(-b*r) - c*r**-6')
         assert buckingham_potential.independent_variables == sympy.sympify({'r'})
 
-    def test_save_templates(self, templates):
-        PotentialTemplates.save_potential_template('TestTemplate',
-                                                   {
-                                                       'name': 'TestTemplate',
-                                                       'expression': 'a+b+c',
-                                                       'independent_variables': 'c,a'
-                                                   },
-                                                   update=True,
-                                                   user_template=False
-                                                   )
-
-        assert os.path.exists(os.path.join(JSON_DIR, 'TestTemplate.json'))
-        assert templates['TestTemplate']
-
     def test_available_template(self, templates):
         names = templates.get_available_template_names()
         assert isinstance(names, tuple)
         assert len(names) == len(glob.glob(os.path.join(JSON_DIR, '*.json')))
-
-    def test_name_mismatch_in_templates(self):
-        wrong_ref_dict = {
-                'name': 'NameMismatchTemplate',
-                'expression': 'a+b+c',
-                'independent_variables': 'c,a'
-            }
-        with pytest.raises(GMSOError):
-            PotentialTemplates.save_potential_template('NameMismatch_Template', wrong_ref_dict, update=False)
-
-    def test_user_defined_potential(self, templates):
-        user_potential_dict = {
-            'name': 'UserTemplate',
-            'expression': 'a*b*c',
-            'independent_variables': 'b'
-        }
-        PotentialTemplates.save_potential_template('UserTemplate', user_potential_dict, update=True, user_template=True)
-        assert os.path.exists(os.path.join(os.path.expanduser('~'),
-                                           '.gmso',
-                                           'potential_templates',
-                                           'UserTemplate.json'))
-        templates.load_user_templates()
-        assert templates['UserTemplate'].name == 'UserTemplate'
-        assert templates['UserTemplate'].expression == sympy.sympify('a*b*c')
-        assert templates['UserTemplate'].independent_variables == {sympy.sympify('b')}
