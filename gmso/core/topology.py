@@ -4,6 +4,7 @@ import numpy as np
 import unyt as u
 from boltons.setutils import IndexedSet
 
+from gmso.core.site import Site
 from gmso.core.bond import Bond
 from gmso.core.angle import Angle
 from gmso.core.dihedral import Dihedral
@@ -609,6 +610,34 @@ class Topology(object):
         self.update_atom_types()
         self.update_connection_types()
         self.is_typed(updated=True)
+
+    def get_index(self, member):
+        """Get index of a member in the topology
+
+        Parameters
+        ----------
+        member : one of {gmso.Site, gmso.Bond, gmso.Angle, gmso.Dihedral, gmso.Improper, gmso.Connection}
+            The member to for which to return index for
+
+        Returns
+        -------
+        int
+            The index of the member in the topology collection of member
+        """
+        refs = {
+            Site: self._sites,
+            Bond: self._bonds,
+            Angle: self._angles,
+            Dihedral: self._dihedrals,
+            Improper: self._impropers
+        }
+
+        member_type = type(member)
+
+        if member_type not in refs.keys():
+            raise TypeError(f'Cannot index member of type {member_type.__name__}')
+
+        return refs[member_type].index(member)
 
     def __repr__(self):
         descr = list('<')

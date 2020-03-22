@@ -418,4 +418,45 @@ class TestTopology(BaseTest):
         assert top.sites[10].atom_type.name == 'atom_type_changed'
         assert top.is_typed()
 
+    def test_topology_get_index(self):
+        top = Topology()
+        conn_members = [Site(), Site(), Site(), Site()]
+        for i in range(5):
+            top.add_site(Site())
+            top.add_connection(Bond(
+                connection_members=[conn_members[0], conn_members[1]]))
+            top.add_connection(Angle(
+                connection_members=[conn_members[0], conn_members[1], conn_members[2]]))
+            top.add_connection(Dihedral(
+                connection_members=[conn_members[0], conn_members[1], conn_members[2], conn_members[3]]))
+            top.add_connection(Improper(
+                connection_members=[conn_members[0], conn_members[1], conn_members[2], conn_members[3]]))
+        a_bond = Bond(connection_members=[conn_members[0], conn_members[1]])
+        an_angle = Angle(connection_members=[conn_members[0], conn_members[1], conn_members[2]])
+        a_site = Site()
+        a_dihedral = Dihedral(connection_members=[conn_members[0], conn_members[1], conn_members[2], conn_members[3]])
+        an_improper = Improper(connection_members=[conn_members[0], conn_members[1], conn_members[2], conn_members[3]])
+
+        top.add_site(a_site)
+        top.add_connection(a_bond)
+        top.add_connection(an_angle)
+        top.add_connection(a_dihedral)
+        top.add_connection(an_improper)
+
+        assert top.get_index(a_site) == 9
+        assert top.get_index(a_bond) == 5
+        assert top.get_index(an_angle) == 5
+        assert top.get_index(a_dihedral) == 5
+        assert top.get_index(an_improper) == 5
+
+    def test_topology_get_index_wrong_member_type(self):
+        top = Topology()
+        with pytest.raises(TypeError):
+            top.get_index(object())
+
+    def test_topology_get_index_non_existing_member(self):
+        top = Topology()
+        site = Site()
+        with pytest.raises(ValueError):
+            top.get_index(site)
 
