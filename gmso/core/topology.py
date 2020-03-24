@@ -150,6 +150,20 @@ class Topology(object):
             DIHEDRAL_TYPE_DICT: self._dihedral_types,
             IMPROPER_TYPE_DICT: self._improper_types,
         }
+        self._dead_sites = set()
+        self._dead_connections = set()
+        self._dead_bonds = set()
+        self._dead_angles = set()
+        self._dead_dihedrals = set()
+        self._dead_impropers = set()
+        self._del_ref_sets = {
+            'sites': (self._dead_sites, self._sites),
+            'bonds': (self._dead_bonds, self._bonds),
+            'connections': (self._dead_connections, self._connections),
+            'angles': (self._dead_angles, self._angles),
+            'dihedrals': (self._dead_dihedrals, self._dihedrals),
+            'impropers': (self._dead_impropers, self._impropers)
+        }
 
     @property
     def name(self):
@@ -313,6 +327,8 @@ class Topology(object):
         update_types : (bool), default=True
             If true, add this site's atom type to the topology's set of AtomTypes
         """
+        self._compact_set(site, member_type='sites')
+
         self._sites.add(site)
         if update_types and site.atom_type:
             site.atom_type.topology = self
@@ -373,14 +389,19 @@ class Topology(object):
         for conn_member in connection.connection_members:
             if conn_member not in self.sites:
                 self.add_site(conn_member)
+        self._compact_set(connection, member_type='connections')
         self._connections.add(connection)
         if isinstance(connection, Bond):
+            self._compact_set(connection, member_type='bonds')
             self._bonds.add(connection)
         if isinstance(connection, Angle):
+            self._compact_set(connection, member_type='angles')
             self._angles.add(connection)
         if isinstance(connection, Dihedral):
+            self._compact_set(connection, member_type='dihedrals')
             self._dihedrals.add(connection)
         if isinstance(connection, Improper):
+            self._compact_set(connection, member_type='impropers')
             self._impropers.add(connection)
         if update_types:
             self.update_connection_types()
@@ -609,6 +630,57 @@ class Topology(object):
         self.update_atom_types()
         self.update_connection_types()
         self.is_typed(updated=True)
+
+    def delete_site(self, site):
+        """Remove `site` from the topology
+
+        This method takes a gmso.Site object `site` and
+        removes the site if it exists in the topology.
+
+        Parameters
+        ----------
+        site : gmso.Site
+            A Site object that exists on the topology.
+
+        Returns
+        -------
+        gmso.Site
+            The site object removed from the topology.
+
+        Notes
+        -----
+        Removing a site from the topology removes any bond,
+        angles, dihedrals and impropers associated with the site.
+        """
+        if site in self._sites:
+            self._sites.discard(site)
+            self._dead_sites.add(site)
+            for connection in site.connections:
+                if connection in self._connections:
+                    self._connections.discard(connection)
+                    self._dead_connections.add(connection)
+                    if isinstance(connection, Bond):
+                        self._bonds.discard(connection)
+                        self._dead_bonds.add(connection)
+                    if isinstance(connection, Angle):
+                        self._angles.discard(connection)
+                        self._dead_angles.add(connection)
+                    if isinstance(connection, Dihedral):
+                        self._dihedrals.discard(connection)
+                        self._dead_dihedrals.add(connection)
+                    if isinstance(connection, Improper):
+                        self._dihedrals.discard(connection)
+                        self._dead_impropers.add(connection)
+                    for partner in connection.connection_members:
+                        if partner is not site:
+                            partner.connections.discard(connection)
+        site.connections.clear()
+
+    def _compact_set(self, member, member_type='sites'):
+        current_dead, current_set = self._del_ref_sets[member_type]
+        if (member in current_dead) and (member in current_set.item_index_map):
+            current_set._compact()
+            current_dead.discard(member)
 
     def __repr__(self):
         descr = list('<')

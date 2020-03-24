@@ -418,4 +418,13 @@ class TestTopology(BaseTest):
         assert top.sites[10].atom_type.name == 'atom_type_changed'
         assert top.is_typed()
 
-
+    def test_topology_delete_site(self):
+        top = Topology()
+        site1 = Site()
+        site2 = Site()
+        bond1 = Bond(connection_members=[site1, site2])
+        top.add_connection(bond1)
+        top.delete_site(site1)
+        assert site2.n_connections == 0
+        assert site1.n_connections == 0
+        assert top.n_bonds == 0
