@@ -11,20 +11,28 @@ class TestConnectivity(BaseTest):
     def test_methane_connectivity(self, methane):
         assert methane.n_bonds == 4
         assert methane.n_angles == 0
+        assert methane.n_dihedrals == 0
+        assert methane.n_impropers == 0
 
         methane.identify_connections()
 
         assert methane.n_bonds == 4
         assert methane.n_angles == 6
+        assert methane.n_dihedrals == 0
+        assert methane.n_impropers == 4
 
     def test_ethane_connectivity(self, ethane):
         assert ethane.n_bonds == 7
         assert ethane.n_angles == 0
+        assert ethane.n_dihedrals == 0
+        assert ethane.n_impropers == 0
 
         ethane.identify_connections()
 
         assert ethane.n_bonds == 7
         assert ethane.n_angles == 12
+        assert ethane.n_dihedrals == 9
+        assert ethane.n_impropers == 8
 
     def test_square(self):
         mytop = Topology()
@@ -45,11 +53,15 @@ class TestConnectivity(BaseTest):
 
         assert mytop.n_bonds == 4
         assert mytop.n_angles == 0
+        assert mytop.n_dihedrals == 0
+        assert mytop.n_impropers == 0
 
         mytop.identify_connections()
 
         assert mytop.n_bonds == 4
         assert mytop.n_angles == 4
+        assert mytop.n_dihedrals == 4
+        assert mytop.n_impropers == 0
 
     def test_square_with_bridge(self):
         mytop = Topology()
@@ -76,8 +88,12 @@ class TestConnectivity(BaseTest):
 
         assert mytop.n_bonds == 5
         assert mytop.n_angles == 0
+        assert mytop.n_dihedrals == 0
+        assert mytop.n_impropers == 0
 
         mytop.identify_connections()
 
         assert mytop.n_bonds == 5
         assert mytop.n_angles == 8
+        assert mytop.n_dihedrals == 6
+        assert mytop.n_impropers == 2

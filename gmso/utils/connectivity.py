@@ -46,11 +46,14 @@ def identify_connections(top):
 
     angle_matches = _detect_connections(compound_line_graph, type_='angle')
     dihedral_matches = _detect_connections(compound_line_graph, type_='dihedral')
-    # improper_matches = _detect_connections(compound_line_graph, type_='improper')
+    improper_matches = _detect_connections(compound_line_graph, type_='improper')
 
-    _add_connections(top, angle_matches, conn_type='angle')
-    _add_connections(top, dihedral_matches, conn_type='dihedral')
-    # _add_connections(top, improper_matches, conn_type='improper')
+    for conn_matches, conn_type in zip(
+            (angle_matches, dihedral_matches, improper_matches),
+            ('angle', 'dihedral', 'improper')):
+        if conn_matches:
+            _add_connections(top, conn_matches, conn_type=conn_type)
+
     return top
 
 
@@ -79,7 +82,8 @@ def _detect_connections(compound_line_graph, type_='angle'):
         new_connection = formatter_fns[type_](m)
         conn_matches.append(new_connection)
 
-    conn_matches = _trim_duplicates(conn_matches)
+    if conn_matches:
+        conn_matches = _trim_duplicates(conn_matches)
 
     return conn_matches
 
@@ -183,7 +187,7 @@ def _trim_duplicates(all_matches):
     """
     trimmed_list = []
     for match in all_matches:
-        if match not in trimmed_list and match[::-1] not in trimmed_list:
+        if match and match not in trimmed_list and match[::-1] not in trimmed_list:
             trimmed_list.append(match)
     return trimmed_list
 

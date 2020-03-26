@@ -15,7 +15,7 @@ from gmso.core.bond_type import BondType
 from gmso.core.angle_type import AngleType
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper_type import ImproperType
-from gmso.core.connectivity import identify_connections as _identify_connections
+from gmso.utils.connectivity import identify_connections as _identify_connections
 from gmso.utils._constants import ATOM_TYPE_DICT, BOND_TYPE_DICT, ANGLE_TYPE_DICT, DIHEDRAL_TYPE_DICT, IMPROPER_TYPE_DICT
 from gmso.exceptions import GMSOError
 
