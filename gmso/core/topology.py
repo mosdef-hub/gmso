@@ -646,7 +646,7 @@ class Topology(object):
         Returns
         -------
         int
-            The index of the member in the topology collection of the member
+            The index of the member in the topology's collection objects
         """
         refs = {
             Site: self._sites,
