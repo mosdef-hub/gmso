@@ -41,7 +41,7 @@ class PotentialTemplate(Potential):
         )
 
 
-class PotentialTemplates(Singleton):
+class PotentialTemplateLibrary(Singleton):
     """A singleton collection of all the potential templates"""
 
     def __init__(self):

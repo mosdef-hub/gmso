@@ -4,18 +4,18 @@ import pytest
 
 import sympy
 
-from gmso.lib.potential_templates import PotentialTemplates, JSON_DIR
+from gmso.lib.potential_templates import PotentialTemplateLibrary, JSON_DIR
 from gmso.tests.base_test import BaseTest
 
 
 class TestPotentialTemplates(BaseTest):
     @pytest.fixture
     def templates(self):
-        return PotentialTemplates()
+        return PotentialTemplateLibrary()
 
     def test_singleton_behavior(self, templates):
-        assert id(templates) == id(PotentialTemplates())
-        assert id(PotentialTemplates()) == id(PotentialTemplates())
+        assert id(templates) == id(PotentialTemplateLibrary())
+        assert id(PotentialTemplateLibrary()) == id(PotentialTemplateLibrary())
 
     def test_lennard_jones_potential(self, templates):
         lennard_jones_potential = templates['LennardJonesPotential']

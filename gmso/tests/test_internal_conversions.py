@@ -4,7 +4,7 @@ import numpy as np
 
 from gmso.tests.base_test import BaseTest
 from gmso.core.dihedral_type import DihedralType
-from gmso.lib.potential_templates import PotentialTemplates
+from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.conversions import convert_ryckaert_to_opls
 from gmso.utils.conversions import convert_opls_to_ryckaert
 from gmso.exceptions import GMSOError
@@ -13,7 +13,7 @@ class TestInternalConversions(BaseTest):
 
     @pytest.fixture
     def templates(self):
-        return PotentialTemplates()
+        return PotentialTemplateLibrary()
 
     def test_invalid_connection_type(self, templates):
         params = { 'c0' : 1.53  * u.Unit('kJ/mol'),

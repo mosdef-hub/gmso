@@ -3,7 +3,7 @@ import sympy
 import unyt as u
 
 import gmso
-from gmso.lib.potential_templates import PotentialTemplates
+from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.exceptions import GMSOError 
 
 def convert_opls_to_ryckaert(opls_connection_type):
@@ -17,7 +17,7 @@ def convert_opls_to_ryckaert(opls_connection_type):
     for OPLS and RB torsions. OPLS torsions are defined with
     phi_cis = 0 while RB torsions are defined as phi_trans = 0.
     """
-    templates = PotentialTemplates()
+    templates = PotentialTemplateLibrary()
     opls_torsion_potential = templates['OPLSTorsionPotential']
     valid_connection_type = False
     if ( opls_connection_type.independent_variables ==
@@ -64,7 +64,7 @@ def convert_ryckaert_to_opls(ryckaert_connection_type):
     for OPLS and RB torsions. OPLS torsions are defined with
     phi_cis = 0 while RB torsions are defined as phi_trans = 0.
     """
-    templates = PotentialTemplates()
+    templates = PotentialTemplateLibrary()
     ryckaert_bellemans_torsion_potential = templates['RyckaertBellemansTorsionPotential']
     opls_torsion_potential = templates['OPLSTorsionPotential']
 
