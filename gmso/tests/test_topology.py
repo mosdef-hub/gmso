@@ -469,3 +469,21 @@ class TestTopology(BaseTest):
         typed_water_system.sites[0].atom_type.name = 'atom_type_changed_name'
         assert typed_water_system.get_index(typed_water_system.sites[0].atom_type) == 1
         assert typed_water_system.get_index(typed_water_system.sites[1].atom_type) == 0
+
+    def test_topology_get_index_bond_type(self, typed_methylnitroaniline):
+        assert typed_methylnitroaniline.get_index(typed_methylnitroaniline.bonds[0].connection_type) == 0
+        assert typed_methylnitroaniline.get_index(typed_methylnitroaniline.bonds[-1].connection_type)
+
+    def test_topology_get_index_bond_type_after_change(self, typed_methylnitroaniline):
+        typed_methylnitroaniline.bonds[0].connection_type.name = 'changed name'
+        assert typed_methylnitroaniline.get_index(typed_methylnitroaniline.bonds[0].connection_type) != 0
+
+    def test_topology_get_index_angle_type(self, typed_chloroethanol):
+        assert typed_chloroethanol.get_index(typed_chloroethanol.angles[0].connection_type)
+        assert typed_chloroethanol.get_index(typed_chloroethanol.angles[5].connection_type)
+
+    def test_topology_get_index_angle_type_after_change(self, typed_methylnitroaniline):
+        angle_type_to_test = typed_methylnitroaniline.angles[0].connection_type
+        prev_idx = typed_methylnitroaniline.get_index(angle_type_to_test)
+        typed_methylnitroaniline.angles[0].connection_type.name = 'changed name'
+        assert typed_methylnitroaniline.get_index(angle_type_to_test) != prev_idx
