@@ -642,17 +642,19 @@ class Topology(object):
         site : gmso.Site
             A Site object that exists on the topology.
 
-        Returns
+        Raises
         -------
-        gmso.Site
-            The site object removed from the topology.
+        GMSOError
+            If `site` doesn't exist in the topology's sites.
 
         Notes
         -----
         Removing a site from the topology removes any bond,
         angles, dihedrals and impropers associated with the site.
         """
-        if site in self._sites:
+        if site not in self._sites:
+            raise GMSOError(f"Site {site} does not exist in the topology")
+        else:
             self._sites.discard(site)
             self._dead_sites.add(site)
             for connection in site.connections:
@@ -678,7 +680,7 @@ class Topology(object):
 
     def _compact_set(self, member, member_type='sites'):
         current_dead, current_set = self._del_ref_sets[member_type]
-        if (member in current_dead) and (member in current_set.item_index_map):
+        if member in current_dead:
             current_set._compact()
             current_dead.discard(member)
 

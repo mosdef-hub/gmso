@@ -428,3 +428,48 @@ class TestTopology(BaseTest):
         assert site2.n_connections == 0
         assert site1.n_connections == 0
         assert top.n_bonds == 0
+
+    def test_topology_delete_non_exsiting_site(self):
+        top = Topology()
+        site1 = Site()
+        with pytest.raises(GMSOError):
+            assert top.delete_site(site1)
+
+    def test_topology_random_site_bond_deletion(self, random_topology):
+        top = random_topology['top']
+        sites = random_topology['sites']
+        (bond_idx, angle_idx, dihedral_idx) = random_topology['idxes']
+        prev_connections_for_a_bonded_site = sites[bond_idx[1]].n_connections
+        print(prev_connections_for_a_bonded_site)
+        top.delete_site(sites[bond_idx[0]])
+        assert top.n_bonds == 0
+        assert sites[bond_idx[1]].n_connections == prev_connections_for_a_bonded_site - 1
+
+    def test_topology_random_site_deletion_angle(self, random_topology):
+        top = random_topology['top']
+        sites = random_topology['sites']
+        (bond_idx, angle_idx, dihedral_idx) = random_topology['idxes']
+        prev_connections_for_a_angle_site = sites[angle_idx[1]].n_connections
+        print(prev_connections_for_a_angle_site)
+        top.delete_site(sites[angle_idx[0]])
+        assert top.n_angles == 0
+        assert sites[angle_idx[1]].n_connections == prev_connections_for_a_angle_site - 1
+
+    def test_topology_random_site_deletion_dihedral(self, random_topology):
+        top = random_topology['top']
+        sites = random_topology['sites']
+        (bond_idx, angle_idx, dihedral_idx) = random_topology['idxes']
+        prev_connections_for_a_dihedral_site = sites[dihedral_idx[1]].n_connections
+        top.delete_site(sites[dihedral_idx[0]])
+        print(prev_connections_for_a_dihedral_site, sites[dihedral_idx[1]].n_connections)
+        assert top.n_dihedrals == 0
+        assert sites[dihedral_idx[1]].n_connections == (prev_connections_for_a_dihedral_site - 1)
+
+    def test_topology_site_deletion_and_addition(self, random_topology):
+        top = random_topology['top']
+        sites = random_topology['sites']
+        top.delete_site(sites[0])
+        assert sites[0] in top._dead_sites
+        sites[0].name = 'Changed Site'
+        top.add_site(sites[0])
+        assert top._sites[top._sites.index(sites[0])]

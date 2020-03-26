@@ -9,7 +9,9 @@ from gmso.core.box import Box
 from gmso.core.topology import Topology
 from gmso.core.element import Hydrogen, Oxygen
 from gmso.core.site import Site
+from gmso.core.bond import Bond
 from gmso.core.angle import Angle
+from gmso.core.dihedral import Dihedral
 from gmso.core.atom_type import AtomType
 from gmso.core.forcefield import ForceField
 from gmso.external.convert_mbuild import from_mbuild
@@ -153,3 +155,30 @@ class BaseTest:
 
         top.update_topology()
         return top
+
+    @pytest.fixture(scope='function')
+    def random_topology(self):
+        top = Topology()
+        sites = [Site() for i in range(10)]
+        bond_idx = [1, 4]
+        angle_idx = [1, 6, 8]
+        dihedral_idx = [2, 1, 9, 5]
+        bond = Bond(connection_members=[sites[bond_idx[0]],
+                                        sites[bond_idx[1]]])
+        angle = Angle(connection_members=[sites[angle_idx[0]],
+                                          sites[angle_idx[1]],
+                                          sites[angle_idx[2]]])
+        dihedral = Dihedral(connection_members=[sites[dihedral_idx[0]],
+                                                sites[dihedral_idx[1]],
+                                                sites[dihedral_idx[2]],
+                                                sites[dihedral_idx[3]]])
+        top.add_connection(bond)
+        top.add_connection(angle)
+        top.add_connection(dihedral)
+        for site in sites:
+            top.add_site(site)
+        return {
+            'top': top,
+            'sites': sites,
+            'idxes': (bond_idx, angle_idx, dihedral_idx)
+        }
