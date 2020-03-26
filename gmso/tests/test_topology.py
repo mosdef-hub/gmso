@@ -30,6 +30,7 @@ if has_parmed:
     pmd = import_('parmed')
 
 class TestTopology(BaseTest):
+
     def test_new_topology(self):
         top = Topology(name='mytop')
         assert top.name == 'mytop'
@@ -460,3 +461,11 @@ class TestTopology(BaseTest):
         with pytest.raises(ValueError):
             top.get_index(site)
 
+    def test_topology_get_index_atom_type(self, typed_water_system):
+        assert typed_water_system.get_index(typed_water_system.sites[0].atom_type) == 0
+        assert typed_water_system.get_index(typed_water_system.sites[1].atom_type) == 1
+
+    def test_topology_get_index_atom_type_after_change(self, typed_water_system):
+        typed_water_system.sites[0].atom_type.name = 'atom_type_changed_name'
+        assert typed_water_system.get_index(typed_water_system.sites[0].atom_type) == 1
+        assert typed_water_system.get_index(typed_water_system.sites[1].atom_type) == 0
