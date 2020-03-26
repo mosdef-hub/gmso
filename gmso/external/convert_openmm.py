@@ -1,5 +1,8 @@
+from warnings import warn
 import unyt as u
+import numpy as np
 
+import gmso
 from gmso.utils.io import import_, has_openmm, has_simtk_unit
 
 
@@ -7,6 +10,111 @@ if has_openmm & has_simtk_unit:
     simtk_unit = import_('simtk.unit')
     from simtk.openmm.app import *
     from simtk.openmm import *
+
+def from_openmm(openmm_object, refer_type=True):
+    """Convert an openmm Topology into a gmso.Topology
+
+    Convert an OpenMM object, either Topology or Modeller, to a
+    gmso.Topology. User has the option to either refer the types
+    information or not.
+    Mapping plan:
+    OpenMM: Topology - Chains - Residues - Atoms
+    GMSO: Topology - SubTopology - SubTopology - Sites
+
+    Parameters
+    ----------
+    openmm_object : 'simtk.openmm.app.Topology'
+        OpenMM Topology object that need to be converted.
+    refer_type : bool, optional, default=True
+        Whether or not to refer types information.
+    Return
+    ------
+    top : gmso.Topology
+        Typed or untyped GMSO Topology object.
+    """
+
+def from_openmm_topology(openmm_topology):
+    """Convert an openmm Topology to a gmso Topology
+
+    Helper function for the main from_openmm method.
+    Specifically handle openmm Topology. Mapping:
+    GMSO Topology: Top - Chain_Subtop -
+
+    Parameters
+    ----------
+    openmm_topology : 'simtk.openmm.app.Topology'
+        OpenMM Topology object that need to be converted.
+
+    Return
+    ------
+    top : gmso.Topology
+        Typed or untyped GMSO Topology object.
+    """
+    msg = 'Given object is not an OpenMM Topology'
+    assert istype(openmm_topology, openmm.Topology), msg
+
+    # Initialize GMSO Topology object
+    top = gmso.Topology()
+    top.name = 'Topology'
+
+    # Convert box information
+    lengths = openmm_topology.getPeriodicBoxVectors()[0] * u.nm
+    angles = openmm_topology.getPeriodicBoxVectors()[1] * u.nm
+    top.box = gmso.Box(lengths=lengths, angles=angles)
+
+    # Convert chains-residues-atoms information
+    for chain in enumerate(openmm_topology.chains():
+        chain_name = chain.name + chain.id
+        gmso_chain = gmso.SubTopology(name=chain_name,
+                                parent=top)
+        for residue in chain.residues():
+            residue_name = residue.name + residue.id
+            gmso_residue = gmso.SubTopology(name=res_name,
+                                        parent=gmso_chain)
+            for atom in residue.atoms():
+                site = gmso.Site(name=gmso.name)
+                gmso_residue.add_site(site)
+    top.add_subtop(chain)
+
+    # Still need to add connection information
+    return top
+
+def from_openmm_modeller(openmm_modeller):
+    """Convert an openmm Modeller to a gmso Topology
+
+    Helper function for the main from_openmm method.
+    Specifically handle openmm Modeller.
+
+    Parameters
+    ----------
+    openmm_modeller : 'simtk.openmm.app.Modeller'
+        OpenMM Modeller object that need to be converted.
+
+    Return
+    ------
+    top : gmso.Topology
+        Typed or untyped GMSO Topology object.
+    """
+
+    def from_openmm_system(openmm_system, refer_type=True):
+    """Convert an openmm System to a gmso Topology
+
+    Helper function for the main from_openmm method.
+    Specifically handle openmm System.
+
+    Parameters
+    ----------
+    openmm_system : 'simtk.openmm.app.System'
+        OpenMM Topology object that need to be converted.
+    refer_type : bool, optional, default=True
+        Whether to refer types information
+
+    Return
+    ------
+    top : gmso.Topology
+        Typed or untyped GMSO Topology object.
+    """
+
 
 def to_openmm(topology, openmm_object='topology'):
     """
