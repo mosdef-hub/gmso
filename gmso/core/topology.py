@@ -638,13 +638,15 @@ class Topology(object):
 
         Parameters
         ----------
-        member : one of {gmso.Site, gmso.Bond, gmso.Angle, gmso.Dihedral, gmso.Improper, gmso.Connection}
-            The member to for which to return index for
+        member : gmso Topology objects
+            The member to for which to return index for.
+            `member` can be of type gmso.Site, gmso.Bond, gmso.Angle, gmso.Dihedral, gmso.Improper,
+            gmso.AtomType, gmso.BondType, gmso.AngleType, gmso.DihedralType or gmso.ImproperType.
 
         Returns
         -------
         int
-            The index of the member in the topology collection of member
+            The index of the member in the topology collection of the member
         """
         refs = {
             Site: self._sites,
