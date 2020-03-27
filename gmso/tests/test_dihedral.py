@@ -95,13 +95,16 @@ class TestDihedral(BaseTest):
             connection_members=[site1, site2, site3, site4],
         )
 
-        same_dihedral = Dihedral(
+        with pytest.raises(GMSOError):
+            Dihedral(connection_members=[site4, site3, site2, site1])
+
+    def test_dihedral_get_equivalent_partners(self):
+        site1 = Site(name='site1', position=[0, 0, 0])
+        site2 = Site(name='site2', position=[1, 0, 0])
+        site3 = Site(name='site3', position=[1, 1, 0])
+        site4 = Site(name='site4', position=[1, 1, 1])
+
+        ref_dihedral = Dihedral(
             connection_members=[site1, site2, site3, site4],
         )
-
-        diff_dihedral = Dihedral(
-            connection_members=[site1, site2, site3, site4],
-        )
-
-        assert ref_dihedral != same_dihedral
-        assert ref_dihedral != diff_dihedral
+        assert (site4, site3, site2, site1) in ref_dihedral.get_equivalent_partners()

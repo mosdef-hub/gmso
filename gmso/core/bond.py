@@ -35,6 +35,10 @@ class Bond(Connection):
         super(Bond, self).__init__(connection_members=connection_members,
                 connection_type=connection_type, name=name)
 
+    def get_equivalent_partners(self):
+        # ToDo: Add Proper Docstrings
+        return frozenset({tuple(self.connection_members), tuple(reversed(self.connection_members))})
+
 
 def _validate_two_partners(connection_members):
     """Ensure 2 partners are involved in Bond"""

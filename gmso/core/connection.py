@@ -23,8 +23,8 @@ class Connection(object):
     def __init__(self, connection_members=None, connection_type=None, name="Connection"):
         if connection_members is None:
             connection_members = tuple()
-
         self._connection_members = _validate_connection_members(connection_members)
+        _validate_equivalency(connection_members)
         self._connection_type = _validate_connection_type(connection_type)
         self._name = _validate_name(name)
         self._update_members()
@@ -58,6 +58,9 @@ class Connection(object):
             if self not in partner.connections:
                 partner.add_connection(self)
 
+    def get_equivalent_partners(self):
+        return frozenset(self.connection_members)
+
     def __repr__(self):
         descr = '<{}-partner Connection, id {}, '.format(
                 len(self.connection_members), id(self))
@@ -88,6 +91,12 @@ def _validate_connection_type(c_type):
         raise GMSOError("Supplied non-Potential {}".format(c_type))
     return c_type
 
+
+def _validate_equivalency(connection_members):
+    for member in connection_members:
+        for connection in member.connections:
+            if tuple(connection_members) in connection.get_equivalent_partners():
+                raise GMSOError(f'A connection between the sites({connection_members}) already exists.')
 
 def _validate_name(conname):
     """Ensure given name is a string"""

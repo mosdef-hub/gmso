@@ -45,6 +45,14 @@ class Improper(Connection):
         super(Improper, self).__init__(connection_members=connection_members,
                 connection_type=connection_type, name=name)
 
+    def get_equivalent_partners(self):
+        # ToDo: Add proper doc-string
+        equivalent = (self.connection_members[0],
+                      self.connection_members[2],
+                      self.connection_members[1],
+                      self.connection_members[3])
+        return frozenset({tuple(self.connection_members), equivalent})
+
 
 def _validate_four_partners(connection_members):
     """Ensure 4 partners are involved in Improper"""

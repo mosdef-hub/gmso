@@ -40,6 +40,10 @@ class Dihedral(Connection):
         super(Dihedral, self).__init__(connection_members=connection_members,
                 connection_type=connection_type, name=name)
 
+    def get_equivalent_partners(self):
+        # ToDo: Add proper docstring
+        return frozenset({tuple(self.connection_members), tuple(reversed(self.connection_members))})
+
 
 def _validate_four_partners(connection_members):
     """Ensure 4 partners are involved in Dihedral"""

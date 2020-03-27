@@ -95,13 +95,19 @@ class TestImproper(BaseTest):
             connection_members=[site1, site2, site3, site4],
         )
 
-        same_improper = Improper(
+        with pytest.raises(GMSOError):
+            same_improper = Improper(
+                connection_members=[site1, site3, site2, site4],
+            )
+
+    def test_improver_equivalency(self):
+        site1 = Site(name='site1', position=[0, 0, 0])
+        site2 = Site(name='site2', position=[1, 0, 0])
+        site3 = Site(name='site3', position=[1, 1, 0])
+        site4 = Site(name='site4', position=[1, 1, 1])
+
+        ref_improper = Improper(
             connection_members=[site1, site2, site3, site4],
         )
 
-        diff_improper = Improper(
-            connection_members=[site1, site2, site3, site4],
-        )
-
-        assert ref_improper != same_improper
-        assert ref_improper != diff_improper
+        assert (site1, site3, site2, site4) in ref_improper.get_equivalent_partners()

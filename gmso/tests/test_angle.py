@@ -81,14 +81,19 @@ class TestAngle(BaseTest):
         ref_angle = Angle(
             connection_members=[site1, site2, site3],
         )
+        different_angle = Angle(
+            connection_members=[site2, site1, site3]
+        )
+        with pytest.raises(GMSOError):
+            Angle(connection_members=[site3, site2, site1])
 
-        same_angle = Angle(
+    def test_angle_equivalency(self):
+        site1 = Site(name='site1', position=[0, 0, 0])
+        site2 = Site(name='site2', position=[1, 1, 1])
+        site3 = Site(name='site3', position=[1, 1, 1])
+
+        ref_angle = Angle(
             connection_members=[site1, site2, site3],
         )
+        assert (site3, site2, site1) in ref_angle.get_equivalent_partners()
 
-        diff_angle = Angle(
-            connection_members=[site3, site2, site1],
-        )
-
-        assert ref_angle != same_angle
-        assert ref_angle != diff_angle

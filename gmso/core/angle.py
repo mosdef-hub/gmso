@@ -35,6 +35,10 @@ class Angle(Connection):
         super(Angle, self).__init__(connection_members=connection_members,
                 connection_type=connection_type, name=name)
 
+    def get_equivalent_partners(self):
+        # ToDO: Add proper docstring
+        return frozenset({tuple(self.connection_members), tuple(reversed(self.connection_members))})
+
 
 def _validate_three_partners(connection_members):
     """Ensure 3 partners are involved in Angle"""
