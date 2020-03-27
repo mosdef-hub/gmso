@@ -137,11 +137,16 @@ class Topology(object):
         self._impropers = IndexedSet()
         self._subtops = IndexedSet()
         self._atom_types = {}
+        self._atom_types_associations = {}
         self._connection_types = {}
         self._bond_types = {}
+        self._bond_types_associations = {}
         self._angle_types = {}
+        self._angle_type_associations = {}
         self._dihedral_types = {}
+        self._dihedral_types_associations = {}
         self._improper_types = {}
+        self._improper_types_associations = {}
         self._combining_rule = 'lorentz'
         self._set_refs = {
             ATOM_TYPE_DICT: self._atom_types,
@@ -149,6 +154,13 @@ class Topology(object):
             ANGLE_TYPE_DICT: self._angle_types,
             DIHEDRAL_TYPE_DICT: self._dihedral_types,
             IMPROPER_TYPE_DICT: self._improper_types,
+        }
+        self._association_refs = {
+            ATOM_TYPE_DICT: self._atom_types_associations,
+            BOND_TYPE_DICT: self._bond_types_associations,
+            ANGLE_TYPE_DICT: self._angle_type_associations,
+            DIHEDRAL_TYPE_DICT: self._dihedral_types_associations,
+            IMPROPER_TYPE_DICT: self._improper_types_associations
         }
 
     @property
@@ -317,7 +329,10 @@ class Topology(object):
         if update_types and site.atom_type:
             site.atom_type.topology = self
             site.atom_type = self._atom_types.get(site.atom_type, site.atom_type)
+            conns = self._atom_types_associations.get(site.atom_type, set())
             self._atom_types[site.atom_type] = site.atom_type
+            conns.add(site)
+            self._atom_types_associations[site.atom_type] = conns
             self.is_typed(updated=False)
 
     def update_sites(self):
@@ -483,21 +498,29 @@ class Topology(object):
                 self._connection_types[c.connection_type] = c.connection_type
                 if isinstance(c.connection_type, BondType):
                     self._bond_types[c.connection_type] = c.connection_type
+                    self._bond_types_associations[c.connection_type] = {c}
                 if isinstance(c.connection_type, AngleType):
                     self._angle_types[c.connection_type] = c.connection_type
+                    self._angle_type_associations[c.connection_type] = {c}
                 if isinstance(c.connection_type, DihedralType):
                     self._dihedral_types[c.connection_type] = c.connection_type
+                    self._dihedral_types_associations[c.connection_type] = {c}
                 if isinstance(c.connection_type, ImproperType):
                     self._improper_types[c.connection_type] = c.connection_type
-            elif c.connection_type in self.connection_types:
+                    self._improper_types_associations[c.connection_type] = {c}
+            elif c.connection_type in self._connection_types:
                 if isinstance(c.connection_type, BondType):
                     c.connection_type = self._bond_types[c.connection_type]
+                    self._bond_types_associations[c.connection_type].add(c)
                 if isinstance(c.connection_type, AngleType):
                     c.connection_type = self._angle_types[c.connection_type]
+                    self._angle_type_associations[c.connection_type].add(c)
                 if isinstance(c.connection_type, DihedralType):
                     c.connection_type = self._dihedral_types[c.connection_type]
+                    self._dihedral_types_associations[c.connection_type].add(c)
                 if isinstance(c.connection_type, ImproperType):
                     c.connection_type = self._improper_types[c.connection_type]
+                    self._improper_types_associations[c.connection_type].add(c)
 
     def update_atom_types(self):
         """Update atom types in the topology
@@ -519,8 +542,10 @@ class Topology(object):
             elif site.atom_type not in self._atom_types:
                 site.atom_type.topology = self
                 self._atom_types[site.atom_type] = site.atom_type
+                self._atom_types_associations[site.atom_type] = {site}
             elif site.atom_type in self._atom_types:
                 site.atom_type = self._atom_types[site.atom_type]
+                self._atom_types_associations[site.atom_type].add(site)
         self.is_typed(updated=True)
 
     def add_subtopology(self, subtop):
@@ -543,7 +568,7 @@ class Topology(object):
         subtop.parent = self
         self._sites.union(subtop.sites)
 
-    def is_typed(self, updated=False):
+    def is_typed(self, updated=False, ):
         if not updated:
             self.update_connection_types()
             self.update_atom_types()
@@ -609,6 +634,48 @@ class Topology(object):
         self.update_atom_types()
         self.update_connection_types()
         self.is_typed(updated=True)
+
+    def get_associations(self, conn_or_atom_type):
+        """ Return objects associated with a connection or atom type in the topology
+
+        This method takes `conn_or_atom_type` and returns the number of
+        sites(if `conn_or_atom_type` is of type GMSO.AtomType) or connections
+        (i.e. bonds, angles, dihedrals or impropers (if `conn_or_atom_type`
+        is one of gmso.BondType, gmso.AngleType,
+        gmso.DihedralType gmso.ImproperType respectively)) associated with it.
+
+        Parameters
+        ----------
+        conn_or_atom_type : gmso.AtomType or gmso.BondType or gmso.AngleType or gmso.DihedralType or gmso.ImproperType
+            The connection_type for which to return the association for
+
+        Returns
+        -------
+        set
+            A set of sites or connections associated with `conn_or_atom_type`
+
+        """
+        if conn_or_atom_type not in self._get_ref(conn_or_atom_type, type_='items'):
+            raise GMSOError(f'{conn_or_atom_type} is not associated with any items in the topology')
+        association_dict = self._get_ref(conn_or_atom_type, type_='associations')
+        return set(association_dict[conn_or_atom_type])
+
+    def _get_ref(self, conn_or_atom_type, type_='items'):
+        """Get book keeping reference dictionary for the object"""
+        assert type_ in ('items', 'associations')
+        ref_dict = {
+            AtomType: ATOM_TYPE_DICT,
+            BondType: BOND_TYPE_DICT,
+            AngleType: ATOM_TYPE_DICT,
+            DihedralType: DIHEDRAL_TYPE_DICT,
+            ImproperType: IMPROPER_TYPE_DICT
+        }
+        if type_ == 'items':
+            _container_dict = self._set_refs
+        elif type_ == 'associations':
+            _container_dict = self._association_refs
+
+        return _container_dict[ref_dict[type(conn_or_atom_type)]]
 
     def __repr__(self):
         descr = list('<')

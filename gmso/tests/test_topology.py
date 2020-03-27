@@ -418,4 +418,23 @@ class TestTopology(BaseTest):
         assert top.sites[10].atom_type.name == 'atom_type_changed'
         assert top.is_typed()
 
+    def test_get_associations_atom_types(self):
+        top = Topology()
+        atom_type = AtomType(name='test_atomtype')
+        for i in range(10):
+            top.add_site(Site(name=f'site{i+1}', atom_type=atom_type), update_types=True)
+        assert len(top.get_associations(atom_type)) == 10
+
+    def test_get_association_atom_types_after_changes(self, typed_ar_system):
+        typed_ar_system.atom_types[0].name = 'Typed Ar System'
+        assert typed_ar_system.get_associations(typed_ar_system.atom_types[0]) == set(typed_ar_system.sites)
+
+    def test_get_association_bond_types(self, typed_water_system):
+        bond_type = typed_water_system.bond_types[0]
+        assert len(typed_water_system.get_associations(bond_type)) == 4
+
+    def test_get_association_bond_types_after_changes(self, typed_water_system):
+        bond_type = typed_water_system.bond_types[0]
+        bond_type.name = 'Typed water system'
+        assert type(typed_water_system.get_associations(bond_type)) == set
 
