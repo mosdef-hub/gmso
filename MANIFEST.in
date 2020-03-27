@@ -1,2 +1,5 @@
 include LICENCE.rst
-global-include *.gro *.xml *.xsd *.top
+include gmso/utils/log_config.json
+graft gmso/tests/files
+graft gmso/utils/files
+graft gmso/utils/schema
