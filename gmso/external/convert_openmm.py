@@ -51,7 +51,7 @@ def from_openmm_topology(openmm_topology):
         Typed or untyped GMSO Topology object.
     """
     msg = 'Given object is not an OpenMM Topology'
-    assert istype(openmm_topology, openmm.Topology), msg
+    assert isinstance(openmm_topology, openmm.Topology), msg
 
     # Initialize GMSO Topology object
     top = gmso.Topology()
@@ -59,11 +59,12 @@ def from_openmm_topology(openmm_topology):
 
     # Convert box information
     lengths = openmm_topology.getPeriodicBoxVectors()[0] * u.nm
-    angles = openmm_topology.getPeriodicBoxVectors()[1] * u.nm
+    angles = openmm_topology.getPeriodicBoxVectors()[1] * u.degree
     top.box = gmso.Box(lengths=lengths, angles=angles)
 
     # Convert chains-residues-atoms information
-    for chain in enumerate(openmm_topology.chains():
+    site_map = dict() # mapping atom -> site
+    for chain in openmm_topology.chains():
         chain_name = chain.name + chain.id
         gmso_chain = gmso.SubTopology(name=chain_name,
                                 parent=top)
@@ -74,9 +75,16 @@ def from_openmm_topology(openmm_topology):
             for atom in residue.atoms():
                 site = gmso.Site(name=gmso.name)
                 gmso_residue.add_site(site)
-    top.add_subtop(chain)
+                site_map[atom] = site
+        top.add_subtop(chain)
 
-    # Still need to add connection information
+    # Convert bonds information
+    for bond in openmm_topology.bonds():
+        top_connection = gmso.Bond(
+        connection_members=[site_map[bond.atom1],
+                            site_map[bond.atom2]])
+        top.add(top_connection)
+
     return top
 
 def from_openmm_modeller(openmm_modeller):
@@ -95,8 +103,52 @@ def from_openmm_modeller(openmm_modeller):
     top : gmso.Topology
         Typed or untyped GMSO Topology object.
     """
+    msg = 'Given object is not an OpenMM Modeller'
+    assert isinstance(openmm_modeller, openmm.Modeller), msg
 
-    def from_openmm_system(openmm_system, refer_type=True):
+    # Initialize GMSO Topology
+    top = gmso.Topology()
+    top.name = 'Topology'
+
+    # Separate Top and positions information
+    mm_top = openmm_modeller.topology
+    mm_pos = openmm_modeller.position
+
+    # Convert box information
+    lengths = mm_top.getPeriodicBoxVectors()[0] * u.nm
+    angles = mm_top.getPeriodicBoxVectors()[1] * u.degree
+    top.box = gmso.Box(lengths=lengths, angles=angles)
+
+    # Convert topology information
+    site_map = dict() # mapping atom -> site
+    for chain in mm_top.chains():
+        chain_name = chain.name + chain.id
+        gmso_chain = gmso.SubTopology(name=chain_name,
+                                parent=top)
+        for residue in chain.residues():
+            residue_name = residue.name + residue.id
+            gmso_residue = gmso.SubTopology(name=res_name,
+                                        parent=gmso_chain)
+            for atom in residue.atoms():
+                # Assume things are in nm now, will need
+                # to actually read from the openmm position
+                # itself to determine the unit
+                pos = mm_pos.pop(0)._value * u.nm
+                site = gmso.Site(name=gmso.name)
+                gmso_residue.add_site(site)
+                site_map[atom] = site
+        top.add_subtop(chain)
+
+    # Convert bonds information
+    for bond in openmm_topology.bonds():
+        top_connection = gmso.Bond(
+        connection_members=[site_map[bond.atom1],
+                            site_map[bond.atom2]])
+        top.add(top_connection)
+
+    return top
+
+def from_openmm_system(openmm_system, refer_type=True):
     """Convert an openmm System to a gmso Topology
 
     Helper function for the main from_openmm method.
@@ -143,24 +195,34 @@ def to_openmm(topology, openmm_object='topology'):
     openmm_pos = simtk_unit.Quantity(value=value,
             unit=openmm_unit.unit)
 
-    # Adding a default chain and residue temporarily
-    chain = openmm_top.addChain()
-    residue = openmm_top.addResidue(name='RES',
-                                    chain=chain)
-
-    for site in topology.sites:
-        openmm_top.addAtom(name=site.name,
-                           element=site.element.name,
-                           residue=residue)
-
-    # Set box
+    # Convert bonx information
     box = topology.box
     box.lengths.convert_to_units(u.nanometer)
     lengths = box.lengths.value
     openmm_top.setUnitCellDimensions(lengths)
 
+    # Adding a default chain and residue temporarily
+    chain = openmm_top.addChain()
+    residue = openmm_top.addResidue(name='RES',
+                                    chain=chain)
+    # Convert toplogy information
+    atom_map = dict()
+    for site in topology.sites:
+        name = site.name
+        element = site.element.name if site.element else None
+        # addAtom would add an atom to the openmm Topology
+        # AND return that atom
+        atom_map[site] = openmm_top.addAtom(name=site.name,
+                                            element=element,
+                                            residue=residue)
+
+    # Convert bonds information
+    for bond in topology.bonds:
+        openmm_top.addBond(
+            atom1=atom_map[bond.connection_members[0]],
+            atom2=atom_map[bond.connection_members[1]])
+
     # TODO: Figure out how to add residues
-    # TODO: Convert connections to OpenMM Bonds
 
     if openmm_object == 'topology':
 
