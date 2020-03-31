@@ -209,6 +209,40 @@ class Potential(object):
         desc = "<Potential {}, id {}>".format(self._name, id(self))
         return desc
 
+    @classmethod
+    def from_template(cls, potential_template, parameters, topology=None):
+        """Create a potential object from the potential_template
+
+        Parameters
+        ----------
+        potential_template : gmso.lib.potential_templates.PotentialTemplate,
+                            The potential template object
+        parameters : dict,
+                    The parameters of the potential object to create
+        topology : gmso.Topology, default=None
+                   The topology to which the created potential object belongs to
+
+        Returns
+        -------
+        gmso.Potential
+            The potential object created
+
+        Raises
+        ------
+        GMSOError
+            If potential_template is not of instance PotentialTemplate
+        """
+        from gmso.lib.potential_templates import PotentialTemplate
+        if not isinstance(potential_template, PotentialTemplate):
+            raise GMSOError(f'Object {type(potential_template)} is not an instance of PotentialTemplate.')
+
+        return cls(name=potential_template.name,
+                   expression=potential_template.expression,
+                   independent_variables=potential_template.independent_variables,
+                   parameters=parameters,
+                   topology=topology,
+                   template=False)
+
 
 def _validate_parameters(parameters):
     """Check to see that parameters is a valid dictionary with units"""
