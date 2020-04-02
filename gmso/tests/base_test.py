@@ -12,7 +12,7 @@ from gmso.core.site import Site
 from gmso.core.angle import Angle
 from gmso.core.atom_type import AtomType
 from gmso.core.forcefield import ForceField
-from gmso.external.convert_mbuild import from_mbuild
+from gmso.external import from_mbuild, from_parmed
 from gmso.tests.utils import get_path
 from gmso.utils.io import get_fn
 
@@ -105,6 +105,24 @@ class BaseTest:
                 )
 
         return  from_mbuild(packed_system)
+
+    @pytest.fixture
+    def ethane(self):
+        from mbuild.lib.molecules import Ethane
+        top = from_mbuild(Ethane())
+        return top
+
+    @pytest.fixture
+    def typed_ethane(self):
+        from mbuid.lib.molecules import Ethane
+        mb_ethane = Ethane()
+        oplsaa = foyer.Forcefield(name='oplsaa')
+        # At this point, we still need to go through
+        # parmed Structure, until foyer can perform
+        # atomtyping on gmso Topology
+        pmd_ethane = oplsaa.apply(mb_ethane)
+        top = from_parmed(pmd_ethane)
+        return top
 
     @pytest.fixture
     def parmed_methylnitroaniline(self):
