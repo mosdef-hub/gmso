@@ -15,7 +15,7 @@ from gmso.core.forcefield import ForceField
 from gmso.external.convert_mbuild import from_mbuild
 from gmso.tests.utils import get_path
 from gmso.utils.io import get_fn
-
+from gmso.external import from_parmed
 
 class BaseTest:
     @pytest.fixture(autouse=True)
@@ -137,11 +137,27 @@ class BaseTest:
         return pmd_structure
 
     @pytest.fixture
+    def typed_methylnitroaniline(self):
+        compound = mb.load('CC1=C(C=CC(=C1)[N+](=O)[O-])N', smiles=True)
+        oplsaa = foyer.Forcefield(name='oplsaa')
+        pmd_structure = oplsaa.apply(compound)
+        top = from_parmed(pmd_structure)
+        return top
+
+    @pytest.fixture
     def parmed_chloroethanol(self):
         compound = mb.load('C(CCl)O', smiles=True)
         oplsaa = foyer.Forcefield(name='oplsaa')
         pmd_structure = oplsaa.apply(compound)
         return pmd_structure
+
+    @pytest.fixture
+    def typed_chloroethanol(self):
+        compound = mb.load('C(CCl)O', smiles=True)
+        oplsaa = foyer.Forcefield(name='oplsaa')
+        pmd_structure = oplsaa.apply(compound)
+        top = from_parmed(pmd_structure)
+        return top
 
     @pytest.fixture
     def parmed_hexane_box(self):
