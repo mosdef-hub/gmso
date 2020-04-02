@@ -418,4 +418,17 @@ class TestTopology(BaseTest):
         assert top.sites[10].atom_type.name == 'atom_type_changed'
         assert top.is_typed()
 
+    def test_add_duplicate_connected_site(self):
+        top = Topology()
+        site1 = Site(name="SiteA")
+        site2 = Site(name="SiteB")
+        bond = Bond([site1, site2])
+        bond_eq = Bond([site1, site2])
+        assert site1.n_connections == 1
+        assert site2.n_connections == 1
 
+        top.add_site(site1)
+        top.add_site(site2)
+        top.update_topology()
+        assert top.n_connections == 1
+        assert top.connections[0] == site1.connections[0]

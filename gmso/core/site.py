@@ -26,17 +26,17 @@ class Site(object):
        If a unyt array is not passed, units are assumed to be in 'nm'.
     charge : unyt quantity or float, optional, default=None
        The charge of the site.
-       Unyt quantities are converted to units of elementary charge, float values are assumed to be in units of elementary charge.  
+       Unyt quantities are converted to units of elementary charge, float values are assumed to be in units of elementary charge.
        If no value is passed, site attempts to grab a charge from site.atom_type.
     mass : unyt quantity or float, optional, default=None
-       The mass of the site.  
-       Unyt quantities are converted to units of g/mol, float values are assumed to be in units of g/mol.  
+       The mass of the site.
+       Unyt quantities are converted to units of g/mol, float values are assumed to be in units of g/mol.
        If no value is passed, site attempts to grab a mass from site.atom_type.
     element : 'Element' object, optional, default=None
-       The element of the site represented by the `Element` object.  
+       The element of the site represented by the `Element` object.
        See `element.py` for more information.
     atom_type : 'AtomType' object, optional, default=None
-       The atom type of the site containing functional forms, interaction parameters, and other properties such as mass and charge.  
+       The atom type of the site containing functional forms, interaction parameters, and other properties such as mass and charge.
        See `atom_type.py` for more information.
 
     Attributes
@@ -68,11 +68,17 @@ class Site(object):
         self._charge = _validate_charge(charge)
         self._mass = _validate_mass(mass)
         self._connections = IndexedSet()
+        self._unique_connections = {}
 
     def add_connection(self, connection):
         connection = _validate_connection(self, connection)
+
         if connection:
+            equivalent_members = connection.get_equivalent_members()
+            self._unique_connections.update(
+                {equivalent_members : connection})
             self._connections.add(connection)
+
 
     @property
     def element(self):
@@ -184,13 +190,20 @@ def _validate_atom_type(val):
 
 
 def _validate_connection(site, connection):
+    from gmso.core.connection import Connection
     if not isinstance(site, Site):
         raise ValueError("Passed value {} is not a site".format(site))
-    from gmso.core.connection import Connection
+
     if not isinstance(connection, Connection):
         raise ValueError("Passed value {} is not a Connection".format(connection))
+
     if site not in connection.connection_members:
         raise GMSOError("Error: Site not in connection members. Cannot add the connection.")
-    if connection in site.connections:
-        return None
+
+    # Check if an equivalent connection is in the topology
+    equivalent_members = connection.get_equivalent_members()
+    if equivalent_members in site._unique_connections:
+        warnings.warn('An equivalent connection already exists.')
+        return site._unique_connections[equivalent_members]
+
     return connection
