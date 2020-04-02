@@ -8,119 +8,70 @@ from gmso.utils.io import import_, has_openmm, has_simtk_unit
 
 if has_openmm & has_simtk_unit:
     simtk_unit = import_('simtk.unit')
+    from simtk import openmm as mm
     from simtk.openmm.app import *
     from simtk.openmm import *
 
-def from_openmm(openmm_object, refer_type=True):
-    """Convert an openmm Topology into a gmso.Topology
+def from_openmm(openmm_object, system=None):
+    """Convert an openmm topology object into a gmso.Topology
 
-    Convert an OpenMM object, either Topology or Modeller, to a
-    gmso.Topology. User has the option to either refer the types
-    information or not.
+    Convert an OpenMM object, either Topology or Modeller,
+    to a gmso.Topology. User has the option to refer types
+    information from a openmm System.
     Mapping plan:
     OpenMM: Topology - Chains - Residues - Atoms
     GMSO: Topology - SubTopology - SubTopology - Sites
 
     Parameters
     ----------
-    openmm_object : 'simtk.openmm.app.Topology'
-        OpenMM Topology object that need to be converted.
-    refer_type : bool, optional, default=True
-        Whether or not to refer types information.
-    Return
-    ------
-    top : gmso.Topology
-        Typed or untyped GMSO Topology object.
-    """
-
-def from_openmm_topology(openmm_topology):
-    """Convert an openmm Topology to a gmso Topology
-
-    Helper function for the main from_openmm method.
-    Specifically handle openmm Topology. Mapping:
-    GMSO Topology: Top - Chain_Subtop -
-
-    Parameters
-    ----------
-    openmm_topology : 'simtk.openmm.app.Topology'
-        OpenMM Topology object that need to be converted.
+    openmm_object : simtk.openmm.app.Topology or
+                    simtk.openmm.app.Modeller
+        OpenMM Topology or Modeller object
+        that need to be converted.
+    system : 'simtk.openmm.System', optional, default=None
+        Referenced OpenMM system, if none is supplied,
+        the topology will be returned untyped.
 
     Return
     ------
     top : gmso.Topology
         Typed or untyped GMSO Topology object.
     """
-    msg = 'Given object is not an OpenMM Topology'
-    assert isinstance(openmm_topology, openmm.Topology), msg
+    msg = 'Given object is not an OpenMM Topology or \
+           OpenMM Modeller'
 
-    # Initialize GMSO Topology object
-    top = gmso.Topology()
-    top.name = 'Topology'
+    # Separate Top and positions information
+    # Assuming positions unit to be nm, may need to actually
+    # parse the unit from OpenMM Modeller
+    if isinstance(openmm_object, openmm.Modeller):
+        mm_top = openmm_object.topology
+        mm_pos = openmm_object.positions._value * u.nm
+    elif isinstance(openmm_object, openmm.Topology):
+        # If this is a Topology, all position is set to 0
+        mm_top = openmm_object
+        mm_pos = [np.zeros(3) for i in
+                  range(len(mm_top.getNumAtoms))]
+    else:
+        raise TypeError(msg)
 
-    # Convert box information
-    lengths = openmm_topology.getPeriodicBoxVectors()[0] * u.nm
-    angles = openmm_topology.getPeriodicBoxVectors()[1] * u.degree
-    top.box = gmso.Box(lengths=lengths, angles=angles)
-
-    # Convert chains-residues-atoms information
-    site_map = dict() # mapping atom -> site
-    for chain in openmm_topology.chains():
-        chain_name = chain.name + chain.id
-        gmso_chain = gmso.SubTopology(name=chain_name,
-                                parent=top)
-        for residue in chain.residues():
-            residue_name = residue.name + residue.id
-            gmso_residue = gmso.SubTopology(name=res_name,
-                                        parent=gmso_chain)
-            for atom in residue.atoms():
-                site = gmso.Site(name=gmso.name)
-                gmso_residue.add_site(site)
-                site_map[atom] = site
-        top.add_subtop(chain)
-
-    # Convert bonds information
-    for bond in openmm_topology.bonds():
-        top_connection = gmso.Bond(
-        connection_members=[site_map[bond.atom1],
-                            site_map[bond.atom2]])
-        top.add(top_connection)
-
-    return top
-
-def from_openmm_modeller(openmm_modeller):
-    """Convert an openmm Modeller to a gmso Topology
-
-    Helper function for the main from_openmm method.
-    Specifically handle openmm Modeller.
-
-    Parameters
-    ----------
-    openmm_modeller : 'simtk.openmm.app.Modeller'
-        OpenMM Modeller object that need to be converted.
-
-    Return
-    ------
-    top : gmso.Topology
-        Typed or untyped GMSO Topology object.
-    """
-    msg = 'Given object is not an OpenMM Modeller'
-    assert isinstance(openmm_modeller, openmm.Modeller), msg
 
     # Initialize GMSO Topology
     top = gmso.Topology()
     top.name = 'Topology'
 
-    # Separate Top and positions information
-    mm_top = openmm_modeller.topology
-    mm_pos = openmm_modeller.position
-
     # Convert box information
-    lengths = mm_top.getPeriodicBoxVectors()[0] * u.nm
-    angles = mm_top.getPeriodicBoxVectors()[1] * u.degree
+    if not system:
+        lengths = mm_top.getPeriodicBoxVectors()[0] * u.nm
+        angles = mm_top.getPeriodicBoxVectors()[1] * u.degree
+    else:
+        lenghts = # from system
+        angles = # from system
+        # Give a warning about the system override the
+        # box informatoin from Topology/Modeller
     top.box = gmso.Box(lengths=lengths, angles=angles)
 
     # Convert topology information
-    site_map = dict() # mapping atom -> site
+    site_map = dict() # mapping atom id-> site
     for chain in mm_top.chains():
         chain_name = chain.name + chain.id
         gmso_chain = gmso.SubTopology(name=chain_name,
@@ -130,43 +81,122 @@ def from_openmm_modeller(openmm_modeller):
             gmso_residue = gmso.SubTopology(name=res_name,
                                         parent=gmso_chain)
             for atom in residue.atoms():
-                # Assume things are in nm now, will need
-                # to actually read from the openmm position
-                # itself to determine the unit
-                pos = mm_pos.pop(0)._value * u.nm
-                site = gmso.Site(name=gmso.name)
+                pos = mm_pos.pop(0)._value
+                name = atom.name + '_' + atom.id
+                site = gmso.Site(name=name, pos= pos)
                 gmso_residue.add_site(site)
-                site_map[atom] = site
+                site_map[atom.id] = site
         top.add_subtop(chain)
 
     # Convert bonds information
     for bond in openmm_topology.bonds():
         top_connection = gmso.Bond(
-        connection_members=[site_map[bond.atom1],
-                            site_map[bond.atom2]])
+        connection_members=[site_map[bond.atom1.id],
+                            site_map[bond.atom2.id]])
         top.add(top_connection)
+
+    # Checkpoint for barebone, untyped GMSO Top
+    if not system:
+        pass
+    else:
+        # Call helper function to apply forces system to top
+        top = apply_system(top, system, site_map)
 
     return top
 
-def from_openmm_system(openmm_system, refer_type=True):
-    """Convert an openmm System to a gmso Topology
+def apply_system(top, system, site_map=None):
+    """ Helper function to apply OpenMM System to GMSO Topology
 
-    Helper function for the main from_openmm method.
-    Specifically handle openmm System.
+    Applying System information to relevant Topology object.
+    Only Non-bonded, Bond, Angle, and Dihedral Forces will
+    be considered/translated, why information about
+    Thermometers and Barometers in OpenMM System will be
+    discarded. The Thermometers and Barometers are still
+    stored in a set, so this can still be translate to
+    relevant GMSO Topology variable in the future.
 
-    Parameters
-    ----------
-    openmm_system : 'simtk.openmm.app.System'
-        OpenMM Topology object that need to be converted.
-    refer_type : bool, optional, default=True
-        Whether to refer types information
-
+    Paramters
+    ---------
+    top : gmso.Topology
+        Host GMSO Topology object. If site_dict is not
+        provided, site's name must follow specific convention,
+        `element_id` (element name separated by OpenMM id).
+    system : 'simtk.openmm.System'
+        The System from which we want to translated the
+        forces information.
+    site_map : dict, optional, default=None
+        Dictionary of sites with key is OpenMM atom index.
     Return
     ------
     top : gmso.Topology
-        Typed or untyped GMSO Topology object.
+        Typed GMSO Topology object
     """
+    # Sanity checks
+    # May add method to load system from file
+    # (Meaning system can be str=path/to/file)
+    msg1 = 'Given system is not an OpenMM System'
+    assert isinstance(system, mm.System), msg
+    msg2 = 'Topology and System have different \
+            number of atoms'
+    assert len(struc.atomts) == system.getNumAtoms(), msg3
 
+    # At this point, GMSO Topology only support potential
+    # forces for atoms (non-bonded force), bond, angle,
+    # and dihedrals (torsion). Other forces of the
+    # OpenMM System will be disregarded.
+    # Forces include information about bonds forces,
+    # angle forces, dihedral forces, and non-bonded forces
+    atom_forces = list()
+    bond_forces = list()
+    angle_forces = list()
+    dihedral_forces = list()
+
+    for force in system.getForces():
+        if 'Nonbonded' in str(force):
+            atom_forces.append(force):
+        elif 'Bond' in str(force):
+            bond_forces.append(force)
+        elif 'Angle' in str(force):
+            angle_forces.append(force)
+        elif 'Torsion' in str(force):
+            dihedral_forces.append(force)
+        else:
+            warn('OpenMM System {} will be \
+                  disregarded').format(str(force))
+
+    # Rebuild site_map
+    if site_map:
+        pass
+    else:
+        site_map = dict()
+        for site in top.sites:
+            id = int(site.name.split('_')[1)]
+            # Probably need to add a check here
+            # and gives better error if id is not int
+            site_map[id] = site
+
+    for atom_force in atom_forces:
+        # To do
+    for bond_force in bond_forces:
+        # To do
+    for angle_force in angle_forces:
+        # To do
+    for dihedral_force in dihedral_forces:
+        # To do, to do, to do, to doooooo
+        '''
+                                  .--.            .--.
+                                 ( (`\\."--``--".//`) )
+                                  '-.   __   __    .-'
+                                   /   /__\ /__\   \
+                                  |    \ 0/ \ 0/    |
+                                  \     `/   \`     /
+                                   `-.  /-"""-\  .-`
+                                     /  '.___.'  \
+                                     \     I     /
+                                      `;--'`'--;`
+                                jgs     '.___.'
+        '''
+    return top
 
 def to_openmm(topology, openmm_object='topology'):
     """
@@ -225,12 +255,9 @@ def to_openmm(topology, openmm_object='topology'):
     # TODO: Figure out how to add residues
 
     if openmm_object == 'topology':
-
         return openmm_top
-
     else:
         modeller = app.Modeller(openmm_top, openmm_pos)
-
         return modeller
 
 
