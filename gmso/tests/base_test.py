@@ -114,7 +114,7 @@ class BaseTest:
 
     @pytest.fixture
     def typed_ethane(self):
-        from mbuid.lib.molecules import Ethane
+        from mbuild.lib.molecules import Ethane
         mb_ethane = Ethane()
         oplsaa = foyer.Forcefield(name='oplsaa')
         # At this point, we still need to go through
@@ -123,6 +123,14 @@ class BaseTest:
         pmd_ethane = oplsaa.apply(mb_ethane)
         top = from_parmed(pmd_ethane)
         return top
+
+    @pytest.fixture
+    def parmed_ethane(self):
+        from mbuild.lib.molecules import Ethane
+        compound = Ethane()
+        oplsaa = foyer.Forcefield(name='oplsaa')
+        pmd_structure = oplsaa.apply(compound)
+        return pmd_structure
 
     @pytest.fixture
     def parmed_methylnitroaniline(self):
