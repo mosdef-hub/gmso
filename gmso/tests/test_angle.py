@@ -1,5 +1,6 @@
 import pytest
 
+from gmso.core.topology import Topology
 from gmso.core.angle import Angle
 from gmso.core.angle_type import AngleType
 from gmso.core.atom_type import AtomType
@@ -67,7 +68,7 @@ class TestAngle(BaseTest):
         site3 = Site(name='site3', position=[1,1,0], atom_type=AtomType(name='C'))
         angtype = AngleType(member_types=[site1.atom_type.name, site2.atom_type.name,
             site3.atom_type.name])
-        ang = Angle(connection_members=[site1, site2, site3], 
+        ang = Angle(connection_members=[site1, site2, site3],
                 connection_type=angtype)
         assert 'A' in ang.connection_type.member_types
         assert 'B' in ang.connection_type.member_types
@@ -92,3 +93,20 @@ class TestAngle(BaseTest):
 
         assert ref_angle != same_angle
         assert ref_angle != diff_angle
+
+    def test_add_equivalent_connections(self):
+        site1 = Site(name="SiteA")
+        site2 = Site(name="SiteB")
+        site3 = Site(name="SiteC")
+
+        angle = Angle([site1, site2, site3])
+        angle_eq = Angle([site3, site2, site1])
+        angle_not_eq = Angle([site1, site3, site2])
+
+        top = Topology()
+        top.add_connection(angle)
+        top.add_connection(angle_eq)
+        assert top.n_angles == 1
+
+        top.add_connection(angle_not_eq)
+        assert top.n_angles == 2

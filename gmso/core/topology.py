@@ -150,6 +150,7 @@ class Topology(object):
             DIHEDRAL_TYPE_DICT: self._dihedral_types,
             IMPROPER_TYPE_DICT: self._improper_types,
         }
+        self._unique_connections = {}
 
     @property
     def name(self):
@@ -369,11 +370,25 @@ class Topology(object):
         update_types : bool, default=True
             If True also add any Potential object associated with connection to the
             topology.
+
+        Returns
+        _______
+        Connection
+            The Connection object or equivalent Connection object that
+            is in the topology
         """
+        # Check if an equivalent connection is in the topology
+        equivalent_members = connection.get_equivalent_members()
+        if equivalent_members in self._unique_connections:
+            warnings.warn('An equivalent connection already exists.')
+            return self._unique_connections[equivalent_members]
+
         for conn_member in connection.connection_members:
             if conn_member not in self.sites:
                 self.add_site(conn_member)
         self._connections.add(connection)
+        self._unique_connections.update(
+                {equivalent_members : connection})
         if isinstance(connection, Bond):
             self._bonds.add(connection)
         if isinstance(connection, Angle):
@@ -384,6 +399,8 @@ class Topology(object):
             self._impropers.add(connection)
         if update_types:
             self.update_connection_types()
+
+        return connection
 
     def update_connections(self, update_types=False):
         """Update the topology's connections(bonds, angles, dihedrals, impropers) from its sites.

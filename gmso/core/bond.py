@@ -35,6 +35,25 @@ class Bond(Connection):
         super(Bond, self).__init__(connection_members=connection_members,
                 connection_type=connection_type, name=name)
 
+    def get_equivalent_members(self):
+        """Get a unique dataset representing the connection
+
+        Returns
+        _______
+        tuple
+            A unique tuple to represent the connection members
+
+        Notes
+        _____
+        For a bond:
+            i, j == j, i
+        where i and j are the connection members.
+        """
+
+        return tuple([
+            frozenset([self.connection_members[0],
+                      self.connection_members[1]])
+            ])
 
 def _validate_two_partners(connection_members):
     """Ensure 2 partners are involved in Bond"""

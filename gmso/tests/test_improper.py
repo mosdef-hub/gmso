@@ -1,5 +1,6 @@
 import pytest
 
+from gmso.core.topology import Topology
 from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
 from gmso.core.atom_type import AtomType
@@ -74,11 +75,11 @@ class TestImproper(BaseTest):
         site2 = Site(name='site2', position=[1,0,0], atom_type=AtomType(name='B'))
         site3 = Site(name='site3', position=[1,1,0], atom_type=AtomType(name='C'))
         site4 = Site(name='site4', position=[1,1,4], atom_type=AtomType(name='D'))
-        imptype = ImproperType(member_types=[site1.atom_type.name, 
+        imptype = ImproperType(member_types=[site1.atom_type.name,
                                              site2.atom_type.name,
                                              site3.atom_type.name,
                                              site4.atom_type.name])
-        imp = Improper(connection_members=[site1, site2, site3, site4], 
+        imp = Improper(connection_members=[site1, site2, site3, site4],
                 connection_type=imptype)
         assert 'A' in imp.connection_type.member_types
         assert 'B' in imp.connection_type.member_types
@@ -105,3 +106,20 @@ class TestImproper(BaseTest):
 
         assert ref_improper != same_improper
         assert ref_improper != diff_improper
+
+    def test_add_equivalent_connections(self):
+        site1 = Site(name="SiteA")
+        site2 = Site(name="SiteB")
+        site3 = Site(name="SiteC")
+        site4 = Site(name="SiteD")
+
+        improper = Improper([site1, site2, site3, site4])
+        improper_eq = Improper([site1, site3, site2, site4])
+        improper_not_eq = Improper([site2, site3, site1, site4])
+
+        top = Topology()
+        top.add_connection(improper)
+        top.add_connection(improper_eq)
+        assert top.n_impropers == 1
+        top.add_connection(improper_not_eq)
+        assert top.n_impropers == 2

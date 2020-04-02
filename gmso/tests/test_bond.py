@@ -1,5 +1,6 @@
 import pytest
 
+from gmso.core.topology import Topology
 from gmso.core.bond import Bond
 from gmso.core.atom_type import AtomType
 from gmso.core.bond_type import BondType
@@ -79,3 +80,15 @@ class TestBond(BaseTest):
 
         assert ref_connection != same_connection
         assert ref_connection != diff_connection
+
+    def test_add_equivalent_connections(self):
+        site1 = Site(name="SiteA")
+        site2 = Site(name="SiteB")
+
+        bond = Bond([site1, site2])
+        bond_eq = Bond([site2, site1])
+
+        top = Topology()
+        top.add_connection(bond)
+        top.add_connection(bond_eq)
+        assert top.n_bonds == 1

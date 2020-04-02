@@ -19,7 +19,7 @@ class Angle(Connection):
     connection_type : gmso.AngleType, optional, default=None
         AngleType of this angle.
     name : str, optional, default="Angle"
-        Name of the angle. 
+        Name of the angle.
 
     Notes
     -----
@@ -35,6 +35,26 @@ class Angle(Connection):
         super(Angle, self).__init__(connection_members=connection_members,
                 connection_type=connection_type, name=name)
 
+    def get_equivalent_members(self):
+        """Get a unique dataset representing the connection
+
+        Returns
+        _______
+        tuple
+            A unique tuple to represent the connection members
+
+        Notes
+        _____
+        For an angle:
+            i, j, k == k, j, i
+        where i, j, and k are the connection members.
+        """
+
+        return tuple([
+            self.connection_members[1],
+            frozenset([self.connection_members[0],
+                       self.connection_members[2]])
+            ])
 
 def _validate_three_partners(connection_members):
     """Ensure 3 partners are involved in Angle"""

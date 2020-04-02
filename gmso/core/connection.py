@@ -53,6 +53,23 @@ class Connection(object):
     def name(self, conname):
         self._name = _validate_name(conname)
 
+    def get_equivalent_members(self):
+        """Get a unique dataset representing the connection
+
+        Returns
+        _______
+        tuple
+            A unique tuple to represent the connection members
+
+        Notes
+        _____
+        Generalized for all connections, this is just a tuple of
+        the members. For specific connections (i.e. Bonds, Angles,
+        Dihedrals, and Impropers), this function is overridden.
+        """
+
+        return tuple(self.connection_members)
+
     def _update_members(self):
         for partner in self.connection_members:
             if self not in partner.connections:

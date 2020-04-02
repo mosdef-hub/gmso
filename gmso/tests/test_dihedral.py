@@ -1,5 +1,6 @@
 import pytest
 
+from gmso.core.topology import Topology
 from gmso.core.dihedral import Dihedral
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.atom_type import AtomType
@@ -74,11 +75,11 @@ class TestDihedral(BaseTest):
         site2 = Site(name='site2', position=[1,0,0], atom_type=AtomType(name='B'))
         site3 = Site(name='site3', position=[1,1,0], atom_type=AtomType(name='C'))
         site4 = Site(name='site4', position=[1,1,4], atom_type=AtomType(name='D'))
-        dihtype = DihedralType(member_types=[site1.atom_type.name, 
+        dihtype = DihedralType(member_types=[site1.atom_type.name,
                                              site2.atom_type.name,
                                              site3.atom_type.name,
                                              site4.atom_type.name])
-        dih = Dihedral(connection_members=[site1, site2, site3, site4], 
+        dih = Dihedral(connection_members=[site1, site2, site3, site4],
                 connection_type=dihtype)
         assert 'A' in dih.connection_type.member_types
         assert 'B' in dih.connection_type.member_types
@@ -105,3 +106,21 @@ class TestDihedral(BaseTest):
 
         assert ref_dihedral != same_dihedral
         assert ref_dihedral != diff_dihedral
+
+    def test_add_equivalent_connections(self):
+        site1 = Site(name="SiteA")
+        site2 = Site(name="SiteB")
+        site3 = Site(name="SiteC")
+        site4 = Site(name="SiteD")
+
+        dihedral = Dihedral([site1, site2, site3, site4])
+        dihedral_eq = Dihedral([site4, site3, site2, site1])
+        dihedral_not_eq = Dihedral([site4, site2, site3, site1])
+
+        top = Topology()
+        top.add_connection(dihedral)
+        top.add_connection(dihedral_eq)
+        assert top.n_dihedrals == 1
+
+        top.add_connection(dihedral_not_eq)
+        assert top.n_dihedrals == 2

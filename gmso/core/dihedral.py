@@ -40,6 +40,29 @@ class Dihedral(Connection):
         super(Dihedral, self).__init__(connection_members=connection_members,
                 connection_type=connection_type, name=name)
 
+    def get_equivalent_members(self):
+        """Get a unique dataset representing the connection
+
+        Returns
+        _______
+        tuple
+            A unique tuple to represent the connection members
+
+        Notes
+        _____
+        For an dihedral:
+            i, j, k, l == l, k, j, i
+        where i, j, k, and l are the connection members.
+        """
+
+        return tuple([frozenset([
+            frozenset([self.connection_members[0],
+                       self.connection_members[1]]),
+            frozenset([self.connection_members[1],
+                       self.connection_members[2]]),
+            frozenset([self.connection_members[2],
+                       self.connection_members[3]])
+            ])])
 
 def _validate_four_partners(connection_members):
     """Ensure 4 partners are involved in Dihedral"""
