@@ -77,6 +77,29 @@ class BaseTest:
 
         return from_mbuild(packed_system)
 
+    @pytest.fixture
+    def typed_single_ar(self):
+        top = from_mbuild(mb.Compound(name="Ar"))
+
+        ff = ForceField(get_fn("ar.xml"))
+
+        for site in top.sites:
+            site.atom_type = ff.atom_types["Ar"]
+
+        top.update_topology()
+        return top
+
+    @pytest.fixture
+    def typed_single_xe_mie(self):
+        top = from_mbuild(mb.Compound(name="Xe"))
+
+        ff = ForceField(get_path("noble_mie.xml"))
+
+        for site in top.sites:
+            site.atom_type = ff.atom_types["Xe"]
+
+        top.update_topology()
+        return top
 
     @pytest.fixture
     def typed_ar_system(self, ar_system):
