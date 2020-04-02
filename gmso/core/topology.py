@@ -12,7 +12,8 @@ from gmso.core.atom_type import AtomType
 from gmso.core.bond_type import BondType
 from gmso.core.angle_type import AngleType
 from gmso.core.dihedral_type import DihedralType
-from gmso.utils._constants import ATOM_TYPE_DICT, BOND_TYPE_DICT, ANGLE_TYPE_DICT, DIHEDRAL_TYPE_DICT
+from gmso.core.pairpotential_type import PairPotentialType
+from gmso.utils._constants import ATOM_TYPE_DICT, BOND_TYPE_DICT, ANGLE_TYPE_DICT, DIHEDRAL_TYPE_DICT, PAIRPOTENTIAL_TYPE_DICT
 from gmso.exceptions import GMSOError
 
 
@@ -84,6 +85,9 @@ class Topology(object):
     dihedral_types : tuple of gmso.DihedralType objects
         A collection of DihedralTypes in the topology
 
+    pairpotential_types: tuple of gmso.PairpotentialType objects
+        A collection of PairpotentialTypes in the topology
+        
     atom_type_expressions : list of gmso.AtomType.expression objects
         A collection of all the expressions for the AtomTypes in topology
 
@@ -98,12 +102,16 @@ class Topology(object):
 
     dihedral_type_expressions : list of gmso.DihedralType.expression objects
         A collection of all the expression for the DihedralTypes in the topology
+    
+    pairpotential_type_expressions : list of gmso.PairpotentialType.expression objects
+        A collection of all the expression for the DihedralTypes in the topology
 
     See Also
     --------
     gmso.SubTopology :
         A topology within a topology
     """
+
     def __init__(self, name="Topology", box=None):
         if name is not None:
             self._name = name
@@ -123,12 +131,15 @@ class Topology(object):
         self._bond_types = {}
         self._angle_types = {}
         self._dihedral_types = {}
+        self._pairpotential_types = {}
         self._combining_rule = 'lorentz'
         self._set_refs = {
             ATOM_TYPE_DICT: self._atom_types,
             BOND_TYPE_DICT: self._bond_types,
             ANGLE_TYPE_DICT: self._angle_types,
             DIHEDRAL_TYPE_DICT: self._dihedral_types,
+            PAIRPOTENTIAL_TYPE_DICT: self._pairpotential_types,
+
         }
 
     @property
@@ -191,6 +202,10 @@ class Topology(object):
     @property
     def n_dihedrals(self):
         return len(self.dihedrals)
+    
+    @property
+    def n_pairpotentials(self):
+        return len(self.pairpotentials)
 
     @property
     def subtops(self):
@@ -220,6 +235,7 @@ class Topology(object):
     def dihedrals(self):
         return tuple(self._dihedrals)
 
+
     @property
     def atom_types(self):
         return tuple(self._atom_types.values())
@@ -241,6 +257,11 @@ class Topology(object):
         return tuple(self._dihedral_types.values())
 
     @property
+    def pairpotential_types(self):
+        return tuple(self._pairpotential_types.values())
+
+
+    @property
     def atom_type_expressions(self):
         return list(set([atype.expression for atype in self.atom_types]))
 
@@ -259,6 +280,11 @@ class Topology(object):
     @property
     def dihedral_type_expressions(self):
         return list(set([atype.expression for atype in self.dihedral_types]))
+    
+    @property
+    def pairpotential_type_expressions(self):
+        return list(set([atype.expression for atype in self.pairpotential_types]))
+
 
     def add_site(self, site, update_types=True):
         """Add a site to the topology
@@ -280,7 +306,8 @@ class Topology(object):
         self._sites.add(site)
         if update_types and site.atom_type:
             site.atom_type.topology = self
-            site.atom_type = self._atom_types.get(site.atom_type, site.atom_type)
+            site.atom_type = self._atom_types.get(
+                site.atom_type, site.atom_type)
             self._atom_types[site.atom_type] = site.atom_type
             self.is_typed(updated=False)
 
@@ -425,10 +452,11 @@ class Topology(object):
         """
         for c in self.connections:
             if c.connection_type is None:
-                warnings.warn('Non-parametrized Connection {} detected'.format(c))
+                warnings.warn(
+                    'Non-parametrized Connection {} detected'.format(c))
             elif not isinstance(c.connection_type, Potential):
                 raise GMSOError('Non-Potential {} found'
-                                    'in Connection {}'.format(c.connection_type, c))
+                                'in Connection {}'.format(c.connection_type, c))
             elif c.connection_type not in self._connection_types:
                 c.connection_type.topology = self
                 self._connection_types[c.connection_type] = c.connection_type
@@ -462,14 +490,27 @@ class Topology(object):
             if site.atom_type is None:
                 warnings.warn('Non-parametrized site detected {}'.format(site))
             elif not isinstance(site.atom_type, AtomType):
-                raise GMSOError('Non AtomType instance found in site {}'.format(site))
+                raise GMSOError(
+                    'Non AtomType instance found in site {}'.format(site))
             elif site.atom_type not in self._atom_types:
                 site.atom_type.topology = self
                 self._atom_types[site.atom_type] = site.atom_type
             elif site.atom_type in self._atom_types:
                 site.atom_type = self._atom_types[site.atom_type]
         self.is_typed(updated=True)
+    def add_pairpotential(self,pairpotentialtype):
+        """Add a new pair potential into the topology that overrides the combin        ation rule.
 
+        See Also:
+        ---------
+        gmso.PairPotentialType: A description of nonbonded interaction between 2        atomtypes
+        """
+        if not isinstance(pairpotentialtype,PairPotentialType):
+            raise GMSOerror(
+                'Non pairpotential type {}'.format(pairpotentialtype))
+        elif pairpotentialtype not in self._pairpotential_types:
+            pairpotentialtype.topology = self
+            self._pairpotential_types[frozenset(pairpotentialtype.member_types)] = pairpotentialtype
     def add_subtopology(self, subtop):
         """Add a sub-topology to this topology
 
@@ -553,5 +594,3 @@ class Topology(object):
         descr.append('id: {}>'.format(id(self)))
 
         return ''.join(descr)
-
-

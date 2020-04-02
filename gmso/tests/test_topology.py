@@ -15,6 +15,7 @@ from gmso.core.atom_type import AtomType
 from gmso.core.bond_type import BondType
 from gmso.core.angle_type import AngleType
 from gmso.core.dihedral_type import DihedralType
+from gmso.core.pairpotential_type import PairPotentialType
 from gmso.external.convert_parmed import from_parmed
 
 from gmso.tests.base_test import BaseTest
@@ -26,6 +27,7 @@ from gmso.utils.io import get_fn, import_, has_parmed
 
 if has_parmed:
     pmd = import_('parmed')
+
 
 class TestTopology(BaseTest):
     def test_new_topology(self):
@@ -52,7 +54,7 @@ class TestTopology(BaseTest):
         top = Topology()
         site1 = Site(name='site1')
         site2 = Site(name='site2')
-        connect = Bond(connection_members=[site1,site2])
+        connect = Bond(connection_members=[site1, site2])
 
         top.add_connection(connect)
         top.add_site(site1)
@@ -74,7 +76,8 @@ class TestTopology(BaseTest):
         site1 = Site(name='site1')
         top.add_site(site1)
 
-        assert set([type(site.position) for site in top.sites]) == {u.unyt_array}
+        assert set([type(site.position)
+                    for site in top.sites]) == {u.unyt_array}
         assert set([site.position.units for site in top.sites]) == {u.nm}
 
         assert top.positions.dtype == float
@@ -189,7 +192,7 @@ class TestTopology(BaseTest):
         top.add_site(typed_site, update_types=False)
         assert len(top.atom_types) == 0
 
-        top= Topology()
+        top = Topology()
         assert len(top.atom_types) == 0
         top.add_site(typed_site, update_types=True)
         assert len(top.atom_types) == 1
@@ -247,7 +250,6 @@ class TestTopology(BaseTest):
         assert top.n_connections == 0
         assert len(top.connection_types) == 0
         assert len(top.connection_type_expressions) == 0
-
 
         ctype = BondType()
         connection_12 = Bond(connection_members=[site1, site2],
@@ -320,7 +322,8 @@ class TestTopology(BaseTest):
         site2 = Site('b', atom_type=atype2)
         site3 = Site('c', atom_type=atype2)
         atype = AngleType()
-        angle = Angle(connection_members=[site1, site2, site3], connection_type=atype, name='angle_name')
+        angle = Angle(connection_members=[
+                      site1, site2, site3], connection_type=atype, name='angle_name')
         top.add_site(site1)
         top.add_site(site2)
         top.add_site(site3)
@@ -341,7 +344,8 @@ class TestTopology(BaseTest):
         site3 = Site('c', atom_type=atype2)
         site4 = Site('d', atom_type=atype1)
         atype = DihedralType()
-        dihedral = Dihedral(connection_members=[site1, site2, site3, site4], connection_type=atype)
+        dihedral = Dihedral(connection_members=[
+                            site1, site2, site3, site4], connection_type=atype)
         top.add_site(site1)
         top.add_site(site2)
         top.add_site(site3)
@@ -352,7 +356,20 @@ class TestTopology(BaseTest):
         assert len(top.dihedral_types) == 1
         assert len(top.dihedral_type_expressions) == 1
         assert len(top.atom_type_expressions) == 2
-        
+    def test_add_pairpotentialtype(self):
+        top = Topology()
+        pptype12 = PairPotentialType(member_types=['a','b'])
+        pptype13 = PairPotentialType(member_types=['a','c'])
+        anotherpp13 = PairPotentialType(expression='sigma/r*epsilon',member_types=['a','c'])
+
+        top.add_pairpotential(pptype12)
+        top.add_pairpotential(pptype13)
+        assert len(top.pairpotential_types) == 2
+        assert len(top.pairpotential_type_expressions) == 1
+        #The following line should replace the original pptype13
+        top.add_pairpotential(anotherpp13)
+        assert len(top.pairpotential_types) == 2
+        assert len(top.pairpotential_type_expressions) == 2 
     def test_add_subtopology(self):
         top = Topology()
         subtop = SubTopology()
@@ -384,7 +401,7 @@ class TestTopology(BaseTest):
         top = Topology()
         for i in range(100):
             site = Site(name='site{}'.format(i))
-            atom_type = AtomType(name='atom_type{}'.format(i%10))
+            atom_type = AtomType(name='atom_type{}'.format(i % 10))
             site.atom_type = atom_type
             top.add_site(site, update_types=False)
         top.update_topology()
@@ -393,5 +410,3 @@ class TestTopology(BaseTest):
         assert id(top.sites[0].atom_type) == id(top.sites[10].atom_type)
         assert top.sites[10].atom_type.name == 'atom_type_changed'
         assert top.is_typed()
-
-
