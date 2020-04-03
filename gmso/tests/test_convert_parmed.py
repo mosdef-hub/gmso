@@ -127,7 +127,9 @@ class TestConvertParmEd(BaseTest):
             struc_from_top = to_parmed(top)
 
     def test_to_parmed_loop(self, parmed_methylnitroaniline,
-                                  parmed_chloroethanol):
+                                  parmed_chloroethanol,
+                                  parmed_ethane
+                                  ):
         for struc in [parmed_methylnitroaniline, parmed_chloroethanol]:
             top_from_struc = from_parmed(struc)
 
