@@ -181,3 +181,83 @@ class Box(object):
             return False
 
         return True
+
+def convert_box_vectors(box_vectors):
+    """ Convert Box vectors to lengths and angles
+
+    Convert Box vectors to corresponding lengths and
+    angles. Allow the creation of box vectors from
+    box vectors.
+
+    Parameters
+    ----------
+    box_vectors : list of np.array
+        Box vectors that need to return
+
+    Return
+    ------
+    lengths : unyt_quantity array
+        Lengths of the box.
+    angles :  unyt_quantity array
+
+        Angles of the box.
+    """
+    msg = 'box_vectors must be a list with exactly \
+           three members'
+    assert len(box_vectors) == 3
+    for i in range(3):
+        if isinstance(box_vectors[i], unyt_quantity):
+            continue
+        else:
+            # At the moment this is specific for OpenMM
+            # box vectors, I will try to make it more general
+            # by the end of this PR
+            box_vectors[i] = np.asarray(
+                        box_vectors[i]._value()) * u.nm
+
+    lengths = list()
+    # Calculate lengths
+    for i in range(3):
+        lenghts[i] = np.sqrt(box_vectors[0]**2 +
+                             box_vectors[1]**2 +
+                             box_vectors[2]**2) * u.nm
+
+    angles = list()
+    # Calculate angles
+    angles[0] = np.acos(
+                (box_vectors[1][0] * box_vectors[2][0] +
+                box_vectors[1][1] * box_vectors[2][1] +
+                box_vectors[1][2] * box_vectors[2][2])
+                /(lengths[1]*lengths[2])) * u.rad
+    angles[1] = np.acos(
+                (box_vectors[1][0] * box_vectors[3][0] +
+                box_vectors[1][1] * box_vectors[3][1] +
+                box_vectors[1][2] * box_vectors[3][2])
+                /(lengths[1]*lengths[3])) * u.rad
+    angles[2] = np.acos(
+                (box_vectors[1][0] * box_vectors[0][0] +
+                box_vectors[1][1] * box_vectors[0][1] +
+                box_vectors[1][2] * box_vectors[0][2])
+                /(lengths[1]*lengths[0])) * u.rad
+
+    return lengths, angles
+
+def convert_box_lengths_angles(lengths, angles):
+    """ Convert Box lengths and angles to vectors
+
+    Convert Box lengths and angles to corresponding
+    vectors. Used for openmm System conversion
+
+    Parameters
+    ----------
+    lenghts : np.array
+        Lengths of the box.
+    angles : np.array
+        Angles of the box.
+
+    Return
+    ------
+    box_vectors : np.array
+        Set of box vectors.
+    """
+    return None

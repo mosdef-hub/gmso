@@ -4,7 +4,8 @@ import numpy as np
 
 import gmso
 from gmso.utils.io import import_, has_openmm, has_simtk_unit
-
+from gmso.box import convert_box_vectors
+from gmso.box import convert_box_lengths_angles
 
 if has_openmm & has_simtk_unit:
     simtk_unit = import_('simtk.unit')
@@ -64,8 +65,8 @@ def from_openmm(openmm_object, system=None):
         lengths = mm_top.getPeriodicBoxVectors()[0] * u.nm
         angles = mm_top.getPeriodicBoxVectors()[1] * u.degree
     else:
-        lenghts = # from system
-        angles = # from system
+        lenghts = convert_box_vectors( system.getDefaultPeriodicBoxVectors())[0]
+        angles = convert_box_vectors( system.getDefaultPeriodicBoxVectors())[1]
         # Give a warning about the system override the
         # box informatoin from Topology/Modeller
     top.box = gmso.Box(lengths=lengths, angles=angles)
