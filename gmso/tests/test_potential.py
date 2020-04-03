@@ -5,6 +5,8 @@ import pytest
 from gmso.core.potential import Potential
 from gmso.tests.base_test import BaseTest
 from gmso.utils.testing import allclose
+from gmso.lib.potential_templates import HarmonicBondPotential
+from gmso.exceptions import GMSOError
 
 
 class TestPotential(BaseTest):
@@ -222,3 +224,22 @@ class TestPotential(BaseTest):
                     'u': 1.0*u.g,
                     'v': 1.0*u.m},
             )
+
+    def test_class_method(self):
+        template = HarmonicBondPotential()
+        params = {'k': 1.0 * u.dimensionless,
+                  'r_eq': 1.0 * u.dimensionless}
+        harmonic_potential_from_template = Potential.from_template(template, params)
+        harmonic_potential = Potential(name='HarmonicBondPotential',
+                                       expression='0.5 * k * (r-r_eq)**2',
+                                       independent_variables={'r'},
+                                       parameters=params,
+                                       template=False)
+        assert harmonic_potential.name == harmonic_potential_from_template.name
+        assert harmonic_potential.expression == harmonic_potential_from_template.expression
+        assert harmonic_potential.independent_variables == harmonic_potential_from_template.independent_variables
+
+    def test_class_method_with_error(self):
+        template = object()
+        with pytest.raises(GMSOError):
+            Potential.from_template(template, parameters=None)

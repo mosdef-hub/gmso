@@ -12,10 +12,10 @@ from gmso.core.site import Site
 from gmso.core.angle import Angle
 from gmso.core.atom_type import AtomType
 from gmso.core.forcefield import ForceField
-from gmso.external.convert_mbuild import from_mbuild
+from gmso.external import from_mbuild, from_parmed
 from gmso.tests.utils import get_path
 from gmso.utils.io import get_fn
-
+from gmso.external import from_parmed
 
 class BaseTest:
     @pytest.fixture(autouse=True)
@@ -59,6 +59,29 @@ class BaseTest:
 
         return from_mbuild(packed_system)
 
+    @pytest.fixture
+    def typed_single_ar(self):
+        top = from_mbuild(mb.Compound(name="Ar"))
+
+        ff = ForceField(get_fn("ar.xml"))
+
+        for site in top.sites:
+            site.atom_type = ff.atom_types["Ar"]
+
+        top.update_topology()
+        return top
+
+    @pytest.fixture
+    def typed_single_xe_mie(self):
+        top = from_mbuild(mb.Compound(name="Xe"))
+
+        ff = ForceField(get_path("noble_mie.xml"))
+
+        for site in top.sites:
+            site.atom_type = ff.atom_types["Xe"]
+
+        top.update_topology()
+        return top
 
     @pytest.fixture
     def typed_ar_system(self, ar_system):
@@ -89,6 +112,32 @@ class BaseTest:
         return  from_mbuild(packed_system)
 
     @pytest.fixture
+    def ethane(self):
+        from mbuild.lib.molecules import Ethane
+        top = from_mbuild(Ethane())
+        return top
+
+    @pytest.fixture
+    def typed_ethane(self):
+        from mbuild.lib.molecules import Ethane
+        mb_ethane = Ethane()
+        oplsaa = foyer.Forcefield(name='oplsaa')
+        # At this point, we still need to go through
+        # parmed Structure, until foyer can perform
+        # atomtyping on gmso Topology
+        pmd_ethane = oplsaa.apply(mb_ethane)
+        top = from_parmed(pmd_ethane)
+        return top
+
+    @pytest.fixture
+    def parmed_ethane(self):
+        from mbuild.lib.molecules import Ethane
+        compound = Ethane()
+        oplsaa = foyer.Forcefield(name='oplsaa')
+        pmd_structure = oplsaa.apply(compound)
+        return pmd_structure
+
+    @pytest.fixture
     def parmed_methylnitroaniline(self):
         compound = mb.load('CC1=C(C=CC(=C1)[N+](=O)[O-])N', smiles=True)
         oplsaa = foyer.Forcefield(name='oplsaa')
@@ -96,11 +145,27 @@ class BaseTest:
         return pmd_structure
 
     @pytest.fixture
+    def typed_methylnitroaniline(self):
+        compound = mb.load('CC1=C(C=CC(=C1)[N+](=O)[O-])N', smiles=True)
+        oplsaa = foyer.Forcefield(name='oplsaa')
+        pmd_structure = oplsaa.apply(compound)
+        top = from_parmed(pmd_structure)
+        return top
+
+    @pytest.fixture
     def parmed_chloroethanol(self):
         compound = mb.load('C(CCl)O', smiles=True)
         oplsaa = foyer.Forcefield(name='oplsaa')
         pmd_structure = oplsaa.apply(compound)
         return pmd_structure
+
+    @pytest.fixture
+    def typed_chloroethanol(self):
+        compound = mb.load('C(CCl)O', smiles=True)
+        oplsaa = foyer.Forcefield(name='oplsaa')
+        pmd_structure = oplsaa.apply(compound)
+        top = from_parmed(pmd_structure)
+        return top
 
     @pytest.fixture
     def parmed_hexane_box(self):
