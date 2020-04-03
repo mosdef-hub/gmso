@@ -48,7 +48,19 @@ class BaseTest:
 
 
     @pytest.fixture
-    def ar_system(self):
+    def ar_system(self, n_ar_system):
+        #ar = mb.Compound(name='Ar')
+
+        #packed_system = mb.fill_box(
+        #    compound=ar,
+        #    n_compounds=10,
+        #    box=mb.Box([3, 3, 3]),
+        #)
+
+        return from_mbuild(n_ar_system(n_sites=100))
+
+    @pytest.fixture
+    def n_ar_system(self):
         def _topology(n_sites=100):
             ar = mb.Compound(name='Ar')
 
@@ -63,41 +75,57 @@ class BaseTest:
         return _topology
 
     @pytest.fixture
-    def typed_single_ar(self):
-        top = from_mbuild(mb.Compound(name="Ar"))
+    def n_typed_xe_mie(self):
+        def _typed_topology(n_sites=1):
+            xe = mb.Compound(name="Xe")
 
-        ff = ForceField(get_fn("ar.xml"))
+            packed_system = mb.fill_box(
+                compound=xe,
+                n_compounds=n_sites,
+                box=mb.Box([3, 3, 3]),
+            )
 
-        for site in top.sites:
-            site.atom_type = ff.atom_types["Ar"]
+            top = from_mbuild(packed_system)
 
-        top.update_topology()
-        return top
+            ff = ForceField(get_path("noble_mie.xml"))
+
+            for site in top.sites:
+                site.atom_type = ff.atom_types["Xe"]
+
+            top.update_topology()
+
+            return top
+
+        return _typed_topology
 
     @pytest.fixture
-    def typed_single_xe_mie(self):
-        top = from_mbuild(mb.Compound(name="Xe"))
+    def typed_ar_system(self, n_typed_ar_system):
+        #@top = ar_system
 
-        ff = ForceField(get_path("noble_mie.xml"))
+        #@ff = ForceField(get_fn('ar.xml'))
 
-        for site in top.sites:
-            site.atom_type = ff.atom_types["Xe"]
+        #@for site in top.sites:
+        #@    site.atom_type = ff.atom_types['Ar']
 
-        top.update_topology()
-        return top
+        #@top.update_topology()
+
+        return n_typed_ar_system(n_sites=100)
 
     @pytest.fixture
-    def typed_ar_system(self, ar_system):
-        top = from_mbuild(ar_system())
+    def n_typed_ar_system(self, n_ar_system):
+        def _typed_topology(n_sites=100):
+            top = from_mbuild(n_ar_system(n_sites=n_sites))
 
-        ff = ForceField(get_fn('ar.xml'))
+            ff = ForceField(get_fn('ar.xml'))
 
-        for site in top.sites:
-            site.atom_type = ff.atom_types['Ar']
+            for site in top.sites:
+                site.atom_type = ff.atom_types['Ar']
 
-        top.update_topology()
+            top.update_topology()
 
-        return top
+            return top
+
+        return _typed_topology
 
     @pytest.fixture
     def water_system(self):

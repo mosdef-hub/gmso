@@ -24,7 +24,7 @@ class TestTop(BaseTest):
 
 
     def test_modified_potentials(self, ar_system):
-        top = from_mbuild(ar_system())
+        top = ar_system
 
         ff = gmso.ForceField(get_fn('ar.xml'))
 
