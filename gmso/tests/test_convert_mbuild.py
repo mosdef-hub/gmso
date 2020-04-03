@@ -18,12 +18,12 @@ if has_mbuild:
 @pytest.mark.skipif(not has_mbuild, reason="mBuild is not installed")
 class TestConvertMBuild(BaseTest):
     @pytest.fixture
-    def ethane(self):
+    def mb_ethane(self):
         return mb.load(get_fn('ethane.mol2'))
 
-    def test_from_mbuild_ethane(self, ethane):
+    def test_from_mbuild_ethane(self, mb_ethane):
         import mbuild as mb
-        top = from_mbuild(ethane)
+        top = from_mbuild(mb_ethane)
 
         assert top.n_sites == 8
         assert top.n_subtops == 1
@@ -63,7 +63,7 @@ class TestConvertMBuild(BaseTest):
         assert compound.name == 'Compound'
 
     def test_full_conversion(self, ethane):
-        top = from_mbuild(ethane)
+        top = ethane
 
         new = to_mbuild(top)
 
@@ -141,24 +141,24 @@ class TestConvertMBuild(BaseTest):
             site_counter += subtop.n_sites
         assert site_counter == top.n_sites
 
-    def test_pass_box(self, ethane):
+    def test_pass_box(self, mb_ethane):
         mb_box = Box(lengths=[3,3,3])
 
-        top = from_mbuild(ethane, box=mb_box)
+        top = from_mbuild(mb_ethane, box=mb_box)
         assert allclose(top.box.lengths, [3,3,3]*u.nm)
 
 
-    def test_pass_failed_box(self, ethane):
+    def test_pass_failed_box(self, mb_ethane):
         with pytest.raises(ValueError):
-            top = from_mbuild(ethane, box=[3,3,3])
+            top = from_mbuild(mb_ethane, box=[3,3,3])
 
-    def test_pass_box_periodicity(self, ethane):
-        ethane.periodicity = [2,2,2]
-        top = from_mbuild(ethane)
+    def test_pass_box_periodicity(self, mb_ethane):
+        mb_ethane.periodicity = [2,2,2]
+        top = from_mbuild(mb_ethane)
         assert allclose(top.box.lengths, [2,2,2]*u.nm)
 
-    def test_pass_box_bounding(self, ethane):
-        ethane.periodicity = [0,0,0]
-        top = from_mbuild(ethane)
+    def test_pass_box_bounding(self, mb_ethane):
+        mb_ethane.periodicity = [0,0,0]
+        top = from_mbuild(mb_ethane)
         assert allclose(top.box.lengths,
-                (ethane.boundingbox.lengths + [0.5, 0.5, 0.5]) * u.nm)
+                (mb_ethane.boundingbox.lengths + [0.5, 0.5, 0.5]) * u.nm)
