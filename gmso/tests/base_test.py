@@ -49,15 +49,7 @@ class BaseTest:
 
     @pytest.fixture
     def ar_system(self, n_ar_system):
-        #ar = mb.Compound(name='Ar')
-
-        #packed_system = mb.fill_box(
-        #    compound=ar,
-        #    n_compounds=10,
-        #    box=mb.Box([3, 3, 3]),
-        #)
-
-        return from_mbuild(n_ar_system(n_sites=100))
+        return from_mbuild(n_ar_system())
 
     @pytest.fixture
     def n_ar_system(self):
