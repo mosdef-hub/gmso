@@ -7,6 +7,7 @@ from gmso.tests.base_test import BaseTest
 from gmso.utils.io import get_fn
 from gmso.tests.utils import get_path
 from gmso.exceptions import EngineIncompatibilityError
+from gmso.external import from_mbuild
 
 
 class TestTop(BaseTest):
@@ -23,7 +24,7 @@ class TestTop(BaseTest):
 
 
     def test_modified_potentials(self, ar_system):
-        top = ar_system
+        top = from_mbuild(ar_system())
 
         ff = gmso.ForceField(get_fn('ar.xml'))
 

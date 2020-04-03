@@ -49,15 +49,18 @@ class BaseTest:
 
     @pytest.fixture
     def ar_system(self):
-        ar = mb.Compound(name='Ar')
+        def _topology(n_sites=100):
+            ar = mb.Compound(name='Ar')
 
-        packed_system = mb.fill_box(
-            compound=ar,
-            n_compounds=100,
-            box=mb.Box([3, 3, 3]),
-        )
+            packed_system = mb.fill_box(
+                compound=ar,
+                n_compounds=n_sites,
+                box=mb.Box([3, 3, 3]),
+            )
 
-        return from_mbuild(packed_system)
+            return packed_system
+
+        return _topology
 
     @pytest.fixture
     def typed_single_ar(self):
@@ -85,7 +88,7 @@ class BaseTest:
 
     @pytest.fixture
     def typed_ar_system(self, ar_system):
-        top = ar_system
+        top = from_mbuild(ar_system())
 
         ff = ForceField(get_fn('ar.xml'))
 
