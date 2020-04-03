@@ -100,16 +100,7 @@ class BaseTest:
 
     @pytest.fixture
     def typed_ar_system(self, n_typed_ar_system):
-        #@top = ar_system
-
-        #@ff = ForceField(get_fn('ar.xml'))
-
-        #@for site in top.sites:
-        #@    site.atom_type = ff.atom_types['Ar']
-
-        #@top.update_topology()
-
-        return n_typed_ar_system(n_sites=100)
+        return n_typed_ar_system()
 
     @pytest.fixture
     def n_typed_ar_system(self, n_ar_system):
