@@ -23,7 +23,6 @@ requirements = [
 setup(
     name='gmso',
     version=__version__,
-    include_package_data=True,
     packages=find_packages(),
     include_package_data=True,
     zip_safe=True,
