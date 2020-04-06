@@ -25,6 +25,7 @@ setup(
     version=__version__,
     include_package_data=True,
     packages=find_packages(),
+    include_package_data=True,
     zip_safe=True,
     author='Matthew W Thompson, Justin Gilmer',
     author_email='matt.thompson@vanderbilt.edu, justin.b.gilmer@vanderbilt.edu',

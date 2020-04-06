@@ -1,0 +1,24 @@
+Topology written by topology at 2020-02-10 16:43:05.932281
+
+1 atoms
+0 bonds
+0 angles
+0 dihedrals
+
+1 atom types
+
+0.000000 10.000000 xlo xhi
+0.000000 10.000000 ylo yhi
+0.000000 10.000000 zlo zhi
+
+Masses
+
+1	1.007900	# at1
+
+Pair Coeffs # lj
+
+1	0.07170	3.00000
+
+Atoms
+
+1	0	1	0.000000	0.000000	0.000000	0.000000
