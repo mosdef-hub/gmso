@@ -726,7 +726,7 @@ class Topology(object):
         if ref not in self._index_refs:
             raise GMSOError(f'cannot reindex {ref}. It should be one of '
                             f'{ANGLE_TYPE_DICT}, {BOND_TYPE_DICT}, {IMPROPER_TYPE_DICT} '
-                            f'{ANGLE_TYPE_DICT}, {DIHEDRAL_TYPE_DICT}, {IMPROPER_TYPE_DICT}')
+                            f'{ANGLE_TYPE_DICT}, {DIHEDRAL_TYPE_DICT}, {PAIRPOTENTIAL_TYPE_DICT}')
         for i, ref_member in enumerate(self._set_refs[ref].keys()):
             self._index_refs[ref][ref_member] = i
 
