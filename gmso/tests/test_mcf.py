@@ -8,16 +8,16 @@ from gmso.exceptions import EngineIncompatibilityError
 
 
 class TestMCF(BaseTest):
-    def test_write_lj_simple(self, typed_single_ar):
-        top = typed_single_ar
+    def test_write_lj_simple(self, n_typed_ar_system):
+        top = n_typed_ar_system(n_sites=1)
         write_mcf(top, "ar.mcf")
 
-    def test_write_mie_simple(self, typed_single_xe_mie):
-        top = typed_single_xe_mie
+    def test_write_mie_simple(self, n_typed_xe_mie):
+        top = n_typed_xe_mie()
         write_mcf(top, "xe.mcf")
 
-    def test_write_lj_full(self, typed_single_ar):
-        top = typed_single_ar
+    def test_write_lj_full(self, n_typed_ar_system):
+        top = n_typed_ar_system(n_sites=1)
         write_mcf(top, "ar.mcf")
 
         mcf_data = []
@@ -53,8 +53,8 @@ class TestMCF(BaseTest):
             top.sites[0].atom_type.parameters["sigma"].in_units(u.Angstrom).value,
         )
 
-    def test_write_mie_full(self, typed_single_xe_mie):
-        top = typed_single_xe_mie
+    def test_write_mie_full(self, n_typed_xe_mie):
+        top = n_typed_xe_mie()
         write_mcf(top, "xe.mcf")
 
         mcf_data = []
@@ -99,8 +99,8 @@ class TestMCF(BaseTest):
             top.sites[0].atom_type.parameters["m"],
         )
 
-    def test_modified_potentials(self, typed_single_ar):
-        top = typed_single_ar
+    def test_modified_potentials(self, n_typed_ar_system):
+        top = n_typed_ar_system(n_sites=1)
 
         top.atom_types[0].set_expression("sigma + epsilon")
 
