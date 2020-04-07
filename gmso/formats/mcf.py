@@ -6,19 +6,15 @@ import sympy
 import unyt as u
 
 from gmso.core.topology import Topology
-from gmso.lib.potential_templates import LennardJonesPotential
-from gmso.lib.potential_templates import MiePotential
-from gmso.lib.potential_templates import HarmonicAnglePotential
-from gmso.lib.potential_templates import HarmonicTorsionPotential
-from gmso.lib.potential_templates import PeriodicTorsionPotential
-from gmso.lib.potential_templates import OPLSTorsionPotential
-from gmso.lib.potential_templates import RyckaertBellemansTorsionPotential
+from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.compatibility import check_compatibility
 from gmso.utils.conversions import convert_ryckaert_to_opls
 from gmso.exceptions import GMSOError
 
 
 __all__ = ["write_mcf"]
+
+potential_templates = PotentialTemplateLibrary()
 
 
 def write_mcf(top, filename):
@@ -663,14 +659,13 @@ def _check_compatibility(top):
         raise GMSOError(
             "MCF writing not supported without parameterized forcefield."
         )
-
     accepted_potentials = [
-        LennardJonesPotential(),
-        MiePotential(),
-        HarmonicAnglePotential(),
-        PeriodicTorsionPotential(),
-        OPLSTorsionPotential(),
-        RyckaertBellemansTorsionPotential(),
+        potential_templates['LennardJonesPotential'],
+        potential_templates['MiePotential'],
+        potential_templates['HarmonicAnglePotential'],
+        potential_templates['PeriodicTorsionPotential'],
+        potential_templates['OPLSTorsionPotential'],
+        potential_templates['RyckaertBellemansTorsionPotential'],
     ]
     check_compatibility(top, accepted_potentials)
 
@@ -678,7 +673,8 @@ def _check_compatibility(top):
 def _get_vdw_style(atom_type):
     """Return the vdw style"""
 
-    vdw_styles = {"LJ": LennardJonesPotential(), "Mie": MiePotential()}
+    vdw_styles = {"LJ": potential_templates['LennardJonesPotential'],
+                  "Mie": potential_templates['MiePotential']}
 
     return _get_potential_style(vdw_styles, atom_type)
 
@@ -687,10 +683,10 @@ def _get_dihedral_style(dihedral_type):
     """Return the dihedral style"""
 
     dihedral_styles = {
-        "charmm": PeriodicTorsionPotential(),
-        "harmonic": HarmonicTorsionPotential(),
-        "opls": OPLSTorsionPotential(),
-        "ryckaert": RyckaertBellemansTorsionPotential(),
+        "charmm": potential_templates['PeriodicTorsionPotential'],
+        "harmonic": potential_templates['HarmonicTorsionPotential'],
+        "opls": potential_templates['OPLSTorsionPotential'],
+        "ryckaert": potential_templates['RyckaertBellemansTorsionPotential'],
     }
 
     return _get_potential_style(dihedral_styles, dihedral_type)
