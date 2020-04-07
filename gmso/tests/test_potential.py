@@ -5,7 +5,7 @@ import pytest
 from gmso.core.potential import Potential
 from gmso.tests.base_test import BaseTest
 from gmso.utils.testing import allclose
-from gmso.lib.potential_templates import HarmonicBondPotential
+from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.exceptions import GMSOError
 
 
@@ -226,7 +226,7 @@ class TestPotential(BaseTest):
             )
 
     def test_class_method(self):
-        template = HarmonicBondPotential()
+        template = PotentialTemplateLibrary()['HarmonicBondPotential']
         params = {'k': 1.0 * u.dimensionless,
                   'r_eq': 1.0 * u.dimensionless}
         harmonic_potential_from_template = Potential.from_template(template, params)
