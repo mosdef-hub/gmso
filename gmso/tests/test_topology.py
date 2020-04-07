@@ -11,14 +11,15 @@ from gmso.core.site import Site
 from gmso.core.bond import Bond
 from gmso.core.angle import Angle
 from gmso.core.dihedral import Dihedral
+from gmso.core.improper import Improper
 from gmso.core.atom_type import AtomType
 from gmso.core.bond_type import BondType
 from gmso.core.angle_type import AngleType
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.pairpotential_type import PairPotentialType
+from gmso.core.improper_type import ImproperType
 from gmso.external.convert_parmed import from_parmed
 
-from gmso.tests.base_test import BaseTest
 from gmso.exceptions import GMSOError
 from gmso.utils.testing import allclose
 from gmso.tests.base_test import BaseTest
@@ -30,6 +31,7 @@ if has_parmed:
 
 
 class TestTopology(BaseTest):
+
     def test_new_topology(self):
         top = Topology(name='mytop')
         assert top.name == 'mytop'
@@ -356,6 +358,7 @@ class TestTopology(BaseTest):
         assert len(top.dihedral_types) == 1
         assert len(top.dihedral_type_expressions) == 1
         assert len(top.atom_type_expressions) == 2
+
     def test_add_pairpotentialtype(self):
         top = Topology()
         pptype12 = PairPotentialType(member_types=['a','b'])
@@ -366,10 +369,33 @@ class TestTopology(BaseTest):
         top.add_pairpotential(pptype13)
         assert len(top.pairpotential_types) == 2
         assert len(top.pairpotential_type_expressions) == 1
-        #The following line should replace the original pptype13
+        # The following line should replace the original pptype13
         top.add_pairpotential(anotherpp13)
         assert len(top.pairpotential_types) == 2
         assert len(top.pairpotential_type_expressions) == 2 
+
+    def test_improper_impropertype_update(self):
+        top = Topology()
+
+        atype1 = AtomType(expression='sigma + epsilon')
+        atype2 = AtomType(expression='sigma * epsilon')
+        site1 = Site('a', atom_type=atype1)
+        site2 = Site('b', atom_type=atype2)
+        site3 = Site('c', atom_type=atype2)
+        site4 = Site('d', atom_type=atype1)
+        atype = ImproperType()
+        improper = Improper(connection_members=[site1, site2, site3, site4], connection_type=atype)
+        top.add_site(site1)
+        top.add_site(site2)
+        top.add_site(site3)
+        top.add_site(site4)
+        top.add_connection(improper)
+
+        assert top.n_impropers == 1
+        assert len(top.improper_types) == 1
+        assert len(top.improper_type_expressions) == 1
+        assert len(top.atom_type_expressions) == 2
+
     def test_add_subtopology(self):
         top = Topology()
         subtop = SubTopology()
@@ -410,3 +436,72 @@ class TestTopology(BaseTest):
         assert id(top.sites[0].atom_type) == id(top.sites[10].atom_type)
         assert top.sites[10].atom_type.name == 'atom_type_changed'
         assert top.is_typed()
+
+    def test_topology_get_index(self):
+        top = Topology()
+        conn_members = [Site(), Site(), Site(), Site()]
+        for i in range(5):
+            top.add_site(Site())
+            top.add_connection(Bond(
+                connection_members=[conn_members[0], conn_members[1]]))
+            top.add_connection(Angle(
+                connection_members=[conn_members[0], conn_members[1], conn_members[2]]))
+            top.add_connection(Dihedral(
+                connection_members=[conn_members[0], conn_members[1], conn_members[2], conn_members[3]]))
+            top.add_connection(Improper(
+                connection_members=[conn_members[0], conn_members[1], conn_members[2], conn_members[3]]))
+        a_bond = Bond(connection_members=[conn_members[0], conn_members[1]])
+        an_angle = Angle(connection_members=[conn_members[0], conn_members[1], conn_members[2]])
+        a_site = Site()
+        a_dihedral = Dihedral(connection_members=[conn_members[0], conn_members[1], conn_members[2], conn_members[3]])
+        an_improper = Improper(connection_members=[conn_members[0], conn_members[1], conn_members[2], conn_members[3]])
+
+        top.add_site(a_site)
+        top.add_connection(a_bond)
+        top.add_connection(an_angle)
+        top.add_connection(a_dihedral)
+        top.add_connection(an_improper)
+
+        assert top.get_index(a_site) == 9
+        assert top.get_index(a_bond) == 5
+        assert top.get_index(an_angle) == 5
+        assert top.get_index(a_dihedral) == 5
+        assert top.get_index(an_improper) == 5
+
+    def test_topology_get_index_wrong_member_type(self):
+        top = Topology()
+        with pytest.raises(TypeError):
+            top.get_index(object())
+
+    def test_topology_get_index_non_existing_member(self):
+        top = Topology()
+        site = Site()
+        with pytest.raises(ValueError):
+            top.get_index(site)
+
+    def test_topology_get_index_atom_type(self, typed_water_system):
+        assert typed_water_system.get_index(typed_water_system.sites[0].atom_type) == 0
+        assert typed_water_system.get_index(typed_water_system.sites[1].atom_type) == 1
+
+    def test_topology_get_index_atom_type_after_change(self, typed_water_system):
+        typed_water_system.sites[0].atom_type.name = 'atom_type_changed_name'
+        assert typed_water_system.get_index(typed_water_system.sites[0].atom_type) == 1
+        assert typed_water_system.get_index(typed_water_system.sites[1].atom_type) == 0
+
+    def test_topology_get_index_bond_type(self, typed_methylnitroaniline):
+        assert typed_methylnitroaniline.get_index(typed_methylnitroaniline.bonds[0].connection_type) == 0
+        assert typed_methylnitroaniline.get_index(typed_methylnitroaniline.bonds[-1].connection_type)
+
+    def test_topology_get_index_bond_type_after_change(self, typed_methylnitroaniline):
+        typed_methylnitroaniline.bonds[0].connection_type.name = 'changed name'
+        assert typed_methylnitroaniline.get_index(typed_methylnitroaniline.bonds[0].connection_type) != 0
+
+    def test_topology_get_index_angle_type(self, typed_chloroethanol):
+        assert typed_chloroethanol.get_index(typed_chloroethanol.angles[0].connection_type)
+        assert typed_chloroethanol.get_index(typed_chloroethanol.angles[5].connection_type)
+
+    def test_topology_get_index_angle_type_after_change(self, typed_methylnitroaniline):
+        angle_type_to_test = typed_methylnitroaniline.angles[0].connection_type
+        prev_idx = typed_methylnitroaniline.get_index(angle_type_to_test)
+        typed_methylnitroaniline.angles[0].connection_type.name = 'changed name'
+        assert typed_methylnitroaniline.get_index(angle_type_to_test) != prev_idx

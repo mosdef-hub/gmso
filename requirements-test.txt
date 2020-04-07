@@ -5,6 +5,7 @@ boltons
 lxml
 pytest
 mbuild >= 0.10.4
+openbabel
 foyer
 gsd >= 2.0
 parmed

@@ -4,16 +4,24 @@ import numpy as np
 import unyt as u
 from boltons.setutils import IndexedSet
 
+from gmso.core.site import Site
 from gmso.core.bond import Bond
 from gmso.core.angle import Angle
 from gmso.core.dihedral import Dihedral
+from gmso.core.improper import Improper
 from gmso.core.potential import Potential
 from gmso.core.atom_type import AtomType
 from gmso.core.bond_type import BondType
 from gmso.core.angle_type import AngleType
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.pairpotential_type import PairPotentialType
-from gmso.utils._constants import ATOM_TYPE_DICT, BOND_TYPE_DICT, ANGLE_TYPE_DICT, DIHEDRAL_TYPE_DICT, PAIRPOTENTIAL_TYPE_DICT
+from gmso.utils._constants import (ATOM_TYPE_DICT,
+                                   BOND_TYPE_DICT,
+                                   ANGLE_TYPE_DICT,
+                                   DIHEDRAL_TYPE_DICT,
+                                   IMPROPER_TYPE_DICT,
+                                   PAIRPOTENTIAL_TYPE_DICT)
+from gmso.core.improper_type import ImproperType
 from gmso.exceptions import GMSOError
 
 
@@ -47,7 +55,7 @@ class Topology(object):
         Number of sites in the topology
 
     n_connections : int
-        Number of connections in the topology (Bonds, Angles, Dihedrals)
+        Number of connections in the topology (Bonds, Angles, Dihedrals, Impropers)
 
     n_bonds : int
         Number of bonds in the topology
@@ -58,20 +66,29 @@ class Topology(object):
     n_dihedrals : int
         Number of dihedrals in the topology
 
+    n_impropers : int
+        Number of impropers in the topology
+
     n_subtops : int
         Number of subtopolgies in the topology
 
     connections : tuple of gmso.Connection objects
-        A collection of bonds, angles and dihedrals in the topology
+        A collection of bonds, angles, dihedrals, and impropers in the topology
 
     bonds : tuple of gmso.Bond objects
         A collection of bonds in the topology
 
+    angles : tuple of gmso.Angle objects
+        A collection of angles in the topology
+
     dihedrals : tuple of gmso.Dihedral objects
         A collection of dihedrals in the topology
 
+    impropers : tuple of gmso.Improper objects
+        A collection of impropers in the topology
+
     connection_types : tuple of gmso.Potential objects
-        A collection of BondTypes, AngleTypes and DihedralTypes in the topology
+        A collection of BondTypes, AngleTypes, DihedralTypes, and ImproperTypes in the topology
 
     atom_types : tuple of gmso.AtomType objects
         A collection of AtomTypes in the topology
@@ -88,6 +105,9 @@ class Topology(object):
     pairpotential_types: tuple of gmso.PairpotentialType objects
         A collection of PairpotentialTypes in the topology
         
+    improper_types : tuple of gmso.ImproperType objects
+        A collection of ImproperTypes in the topology
+
     atom_type_expressions : list of gmso.AtomType.expression objects
         A collection of all the expressions for the AtomTypes in topology
 
@@ -105,6 +125,9 @@ class Topology(object):
     
     pairpotential_type_expressions : list of gmso.PairpotentialType.expression objects
         A collection of all the expression for the DihedralTypes in the topology
+
+    improper_type_expressions : list of gmso.ImproperType.expression objects
+        A collection of all the expression for the ImproperTypes in the topology
 
     See Also
     --------
@@ -125,13 +148,21 @@ class Topology(object):
         self._bonds = IndexedSet()
         self._angles = IndexedSet()
         self._dihedrals = IndexedSet()
+        self._impropers = IndexedSet()
         self._subtops = IndexedSet()
         self._atom_types = {}
+        self._atom_types_idx = {}
         self._connection_types = {}
         self._bond_types = {}
+        self._bond_types_idx = {}
         self._angle_types = {}
+        self._angle_types_idx = {}
         self._dihedral_types = {}
+        self._dihedral_types_idx = {}
         self._pairpotential_types = {}
+        self._pairpotential_types_idx = {}
+        self._improper_types = {}
+        self._improper_types_idx = {}
         self._combining_rule = 'lorentz'
         self._set_refs = {
             ATOM_TYPE_DICT: self._atom_types,
@@ -139,7 +170,16 @@ class Topology(object):
             ANGLE_TYPE_DICT: self._angle_types,
             DIHEDRAL_TYPE_DICT: self._dihedral_types,
             PAIRPOTENTIAL_TYPE_DICT: self._pairpotential_types,
+            IMPROPER_TYPE_DICT: self._improper_types,
+        }
 
+        self._index_refs = {
+            ATOM_TYPE_DICT: self._atom_types_idx,
+            BOND_TYPE_DICT: self._bond_types_idx,
+            ANGLE_TYPE_DICT: self._angle_types_idx,
+            DIHEDRAL_TYPE_DICT: self._dihedral_types_idx,
+            IMPROPER_TYPE_DICT: self._improper_types_idx,
+            PAIRPOTENTIAL_TYPE_DICT: self._pairpotential_types_idx,
         }
 
     @property
@@ -208,6 +248,10 @@ class Topology(object):
         return len(self.pairpotentials)
 
     @property
+    def n_impropers(self):
+        return len(self.impropers)
+
+    @property
     def subtops(self):
         return self._subtops
 
@@ -235,6 +279,9 @@ class Topology(object):
     def dihedrals(self):
         return tuple(self._dihedrals)
 
+    @property
+    def impropers(self):
+        return tuple(self._impropers)
 
     @property
     def atom_types(self):
@@ -260,6 +307,9 @@ class Topology(object):
     def pairpotential_types(self):
         return tuple(self._pairpotential_types.values())
 
+    @property
+    def improper_types(self):
+        return tuple(self._improper_types.values())
 
     @property
     def atom_type_expressions(self):
@@ -286,6 +336,10 @@ class Topology(object):
         return list(set([atype.expression for atype in self.pairpotential_types]))
 
 
+    @property
+    def improper_type_expressions(self):
+        return list(set([atype.expression for atype in self.improper_types]))
+
     def add_site(self, site, update_types=True):
         """Add a site to the topology
 
@@ -306,9 +360,12 @@ class Topology(object):
         self._sites.add(site)
         if update_types and site.atom_type:
             site.atom_type.topology = self
-            site.atom_type = self._atom_types.get(
-                site.atom_type, site.atom_type)
-            self._atom_types[site.atom_type] = site.atom_type
+            if site.atom_type in self._atom_types:
+                site.atom_type = self._atom_types[site.atom_type]
+            else:
+                self._atom_types[site.atom_type] = site.atom_type
+                self._atom_types_idx[site.atom_type] = len(self._atom_types) - 1
+
             self.is_typed(updated=False)
 
     def update_sites(self):
@@ -356,7 +413,7 @@ class Topology(object):
 
         Parameters
         ----------
-        connection : one of gmso.Connection, gmso.Bond, gmso.Angle or gmso.Dihedral object
+        connection : one of gmso.Connection, gmso.Bond, gmso.Angle, gmso.Dihedral, or gmso.Improper object
         update_types : bool, default=True
             If True also add any Potential object associated with connection to the
             topology.
@@ -371,11 +428,13 @@ class Topology(object):
             self._angles.add(connection)
         if isinstance(connection, Dihedral):
             self._dihedrals.add(connection)
+        if isinstance(connection, Improper):
+            self._impropers.add(connection)
         if update_types:
             self.update_connection_types()
 
     def update_connections(self, update_types=False):
-        """Update the topology's connections(bonds, angles, dihedrals) from its sites.
+        """Update the topology's connections(bonds, angles, dihedrals, impropers) from its sites.
 
         This method takes all the sites in the current topology and if any connection
         (Bond, Angle, Dihedral) is present in the site but not in the topology's connection
@@ -413,7 +472,7 @@ class Topology(object):
 
         See Also
         --------
-        gmso.Topology.update_connections : Update all the Bonds, Angles and Dihedrals in the topology.
+        gmso.Topology.update_connections : Update all the Bonds, Angles, Dihedrals, and Impropers in the topology.
         """
         self.update_connections(update_types)
 
@@ -424,7 +483,7 @@ class Topology(object):
 
         See Also
         --------
-        gmso.Topology.update_connections : Update all the Bonds, Angles and Dihedrals in the topology.
+        gmso.Topology.update_connections : Update all the Bonds, Angles, Dihedrals, and Impropers in the topology.
         """
         self.update_connections(update_types)
 
@@ -435,15 +494,26 @@ class Topology(object):
 
         See Also
         --------
-        gmso.Topology.update_connections : Update all the Bonds, Angles and Dihedrals in the topology.
+        gmso.Topology.update_connections : Update all the Bonds, Angles, Dihedrals, and Impropers in the topology.
+        """
+        self.update_connections(update_types)
+
+    def update_impropers(self, update_types=False):
+        """Uses gmso.Topology.update_connections to update impropers in the topology.
+
+        This method is an alias for gmso.Topology.update_connections.
+
+        See Also
+        --------
+        gmso.Topology.update_connections : Update all the Bonds, Angles, Dihedrals, and Impropers in the topology.
         """
         self.update_connections(update_types)
 
     def update_connection_types(self):
         """Update the connection types based on the connection collection in the topology.
 
-        This method looks into all the connection objects (Bonds, Angles, Dihedrals) to
-        check if any Potential object (BondType, AngleType, DihedralType) is not in the
+        This method looks into all the connection objects (Bonds, Angles, Dihedrals, Impropers) to
+        check if any Potential object (BondType, AngleType, DihedralType, ImproperType) is not in the
         topology's respective collection and will add those objects there.
 
         See Also
@@ -462,10 +532,16 @@ class Topology(object):
                 self._connection_types[c.connection_type] = c.connection_type
                 if isinstance(c.connection_type, BondType):
                     self._bond_types[c.connection_type] = c.connection_type
+                    self._bond_types_idx[c.connection_type] = len(self._bond_types) - 1
                 if isinstance(c.connection_type, AngleType):
                     self._angle_types[c.connection_type] = c.connection_type
+                    self._angle_types_idx[c.connection_type] = len(self._bond_types) - 1
                 if isinstance(c.connection_type, DihedralType):
                     self._dihedral_types[c.connection_type] = c.connection_type
+                    self._dihedral_types_idx[c.connection_type] = len(self._bond_types) - 1
+                if isinstance(c.connection_type, ImproperType):
+                    self._improper_types[c.connection_type] = c.connection_type
+                    self._improper_types_idx[c.connection_type] = len(self._bond_types) - 1
             elif c.connection_type in self.connection_types:
                 if isinstance(c.connection_type, BondType):
                     c.connection_type = self._bond_types[c.connection_type]
@@ -473,6 +549,8 @@ class Topology(object):
                     c.connection_type = self._angle_types[c.connection_type]
                 if isinstance(c.connection_type, DihedralType):
                     c.connection_type = self._dihedral_types[c.connection_type]
+                if isinstance(c.connection_type, ImproperType):
+                    c.connection_type = self._improper_types[c.connection_type]
 
     def update_atom_types(self):
         """Update atom types in the topology
@@ -495,22 +573,27 @@ class Topology(object):
             elif site.atom_type not in self._atom_types:
                 site.atom_type.topology = self
                 self._atom_types[site.atom_type] = site.atom_type
+                self._atom_types_idx[site.atom_type] = len(self._atom_types) - 1
             elif site.atom_type in self._atom_types:
                 site.atom_type = self._atom_types[site.atom_type]
         self.is_typed(updated=True)
-    def add_pairpotential(self,pairpotentialtype):
+
+    def add_pairpotential(self, pair_potential_type):
         """Add a new pair potential into the topology that overrides the combin        ation rule.
 
         See Also:
         ---------
         gmso.PairPotentialType: A description of nonbonded interaction between 2        atomtypes
         """
-        if not isinstance(pairpotentialtype,PairPotentialType):
-            raise GMSOerror(
-                'Non pairpotential type {}'.format(pairpotentialtype))
-        elif pairpotentialtype not in self._pairpotential_types:
-            pairpotentialtype.topology = self
-            self._pairpotential_types[frozenset(pairpotentialtype.member_types)] = pairpotentialtype
+        if not isinstance(pair_potential_type, PairPotentialType):
+            raise GMSOError(
+                'Non pairpotential type {}'.format(pair_potential_type))
+
+        elif pair_potential_type not in self._pairpotential_types:
+            pair_potential_type.topology = self
+            self._pairpotential_types[frozenset(pair_potential_type.member_types)] = pair_potential_type
+            self._pairpotential_types_idx[frozenset(pair_potential_type.member_types)] = len(self._pairpotential_types) - 1
+
     def add_subtopology(self, subtop):
         """Add a sub-topology to this topology
 
@@ -578,6 +661,18 @@ class Topology(object):
         """
         self.update_connection_types()
 
+    def update_improper_types(self):
+        """Uses gmso.Topology.update_connection_types to update ImproperTypes in the topology.
+
+        This method is an alias for gmso.Topology.update_connection_types.
+
+        See Also
+        --------
+        gmso.Topology.update_connection_types :
+            Update the connection types based on the connection collection in the topology.
+        """
+        self.update_connection_types()
+
     def update_topology(self):
         """Update the entire topology"""
         self.update_sites()
@@ -585,6 +680,55 @@ class Topology(object):
         self.update_atom_types()
         self.update_connection_types()
         self.is_typed(updated=True)
+
+    def get_index(self, member):
+        """Get index of a member in the topology
+
+        Parameters
+        ----------
+        member : gmso Topology objects
+            The member to for which to return index for.
+            `member` can be of type gmso.Site, gmso.Bond, gmso.Angle, gmso.Dihedral, gmso.Improper,
+            gmso.AtomType, gmso.BondType, gmso.AngleType, gmso.DihedralType or gmso.ImproperType.
+
+        Returns
+        -------
+        int
+            The index of the member in the topology's collection objects
+        """
+        refs = {
+            Site: self._sites,
+            Bond: self._bonds,
+            Angle: self._angles,
+            Dihedral: self._dihedrals,
+            Improper: self._impropers,
+            AtomType: self._atom_types_idx,
+            BondType: self._bond_types_idx,
+            AngleType: self._angle_types_idx,
+            DihedralType: self._dihedral_types_idx,
+            ImproperType: self._improper_types_idx,
+            PairPotentialType: self._pairpotential_types_idx
+        }
+
+        member_type = type(member)
+
+        if member_type not in refs.keys():
+            raise TypeError(f'Cannot index member of type {member_type.__name__}')
+
+        try:
+            index = refs[member_type].index(member)
+        except AttributeError:
+            index = refs[member_type][member]
+
+        return index
+
+    def _reindex_connection_types(self, ref):
+        if ref not in self._index_refs:
+            raise GMSOError(f'cannot reindex {ref}. It should be one of '
+                            f'{ANGLE_TYPE_DICT}, {BOND_TYPE_DICT}, {IMPROPER_TYPE_DICT} '
+                            f'{ANGLE_TYPE_DICT}, {DIHEDRAL_TYPE_DICT}, {IMPROPER_TYPE_DICT}')
+        for i, ref_member in enumerate(self._set_refs[ref].keys()):
+            self._index_refs[ref][ref_member] = i
 
     def __repr__(self):
         descr = list('<')

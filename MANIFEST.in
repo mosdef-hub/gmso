@@ -1,0 +1,5 @@
+include LICENSE.rst
+include gmso/utils/log_config.json
+graft gmso/tests/files
+graft gmso/utils/files
+graft gmso/utils/schema
