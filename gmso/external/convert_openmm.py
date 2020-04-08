@@ -4,12 +4,11 @@ import numpy as np
 
 import gmso
 from gmso.utils.io import import_, has_openmm, has_simtk_unit
-from gmso.box import convert_box_vectors
-from gmso.box import convert_box_lengths_angles
+from gmso.core import box
 
 if has_openmm & has_simtk_unit:
     simtk_unit = import_('simtk.unit')
-    from simtk import openmm as mm
+    from simtk.openmm import openmm as mm
     from simtk.openmm.app import *
     from simtk.openmm import *
 
@@ -141,63 +140,206 @@ def apply_system(top, system, site_map=None):
             number of atoms'
     assert len(struc.atomts) == system.getNumAtoms(), msg3
 
-    # At this point, GMSO Topology only support potential
-    # forces for atoms (non-bonded force), bond, angle,
-    # and dihedrals (torsion). Other forces of the
-    # OpenMM System will be disregarded.
-    # Forces include information about bonds forces,
-    # angle forces, dihedral forces, and non-bonded forces
-    atom_forces = list()
-    bond_forces = list()
-    angle_forces = list()
-    dihedral_forces = list()
-
-    for force in system.getForces():
-        if 'Nonbonded' in str(force):
-            atom_forces.append(force):
-        elif 'Bond' in str(force):
-            bond_forces.append(force)
-        elif 'Angle' in str(force):
-            angle_forces.append(force)
-        elif 'Torsion' in str(force):
-            dihedral_forces.append(force)
-        else:
-            warn('OpenMM System {} will be \
-                  disregarded').format(str(force))
-
-    # Rebuild site_map
+    # Supported Force conversion dict: {type: helper}
+    supported_force = {
+            mm.NonbondedForce: _from_nonbonded,
+            mm.HarmonicBondForce: _from_harmonic_bond,
+            mm.HarmonicAngleForces: _from_harmonic_angle,
+            mm.PeriodicTorsionForce: _from_periodic_torsion,
+            mm.RBTorsionForce: _from_rb_torsion,
+                        }
+    # Rebuild site_map if not provided
     if site_map:
         pass
     else:
         site_map = dict()
         for site in top.sites:
-            id = int(site.name.split('_')[1)]
+            id = int(site.name.split('_')[1])
             # Probably need to add a check here
             # and gives better error if id is not int
             site_map[id] = site
 
-    for atom_force in atom_forces:
-        # To do
-    for bond_force in bond_forces:
-        # To do
-    for angle_force in angle_forces:
-        # To do
-    for dihedral_force in dihedral_forces:
-        # To do, to do, to do, to doooooo
-        '''
-                                  .--.            .--.
-                                 ( (`\\."--``--".//`) )
-                                  '-.   __   __    .-'
-                                   /   /__\ /__\   \
-                                  |    \ 0/ \ 0/    |
-                                  \     `/   \`     /
-                                   `-.  /-"""-\  .-`
-                                     /  '.___.'  \
-                                     \     I     /
-                                      `;--'`'--;`
-                                jgs     '.___.'
-        '''
+    for force in system.getForces():
+        try:
+            supported_force[type(force)](top, force, site_map)
+        except KeyError:
+            warn('{} is not yet supported.'.format(force))
+
     return top
+
+def _from_nonbonded(top, nonbonded_force, site_map):
+    """ Helper function to convert nonbonded force parameters
+
+    Basic conversion of the OpenMM.NonBondedForce. Only handle
+    the basic feature (no Exception stuff), will add more
+    supports in the future.
+
+    Parameters
+    ----------
+    top : gmso.Topology
+        The host topology.
+    nonbonded_force : openmm.NonBondedForce
+        The nonbonded force that need to be converted.
+    site_map : dict
+        Dictionary mapping id -> site, specific for OpenMM
+        conversion.
+
+    Return
+    ------
+    top : gmso.Topology
+        Topology with updated atom types
+    """
+    # Sanity checks to make sure top, nonbonded force, and site_map
+    # belong to the same system
+    msg1 = 'The number of atoms in the Topology is different \
+           than that in the OpenMM Force.'
+    assert top.n_sites == nonbonded_force.getNumParticles(), msg
+    msg2 = 'The number of atoms in the Topology is different \
+            than that in site_map'
+    assert top.n_sites == len(site_map)
+
+
+    # Build up unique atom types dict, key is a tuple of
+    # {charge, sigmac, index}
+    unique_types = dict()
+    for id in site_map:
+        charge, sigma, epsilon = nonbonded_force.getParticleParameters(id)
+        # Assume unit is in openmm default, need to come up with a way to
+        # parse the unit from openmm
+        charge = charge._value * u.elementary_charge
+        sigma = sigma._value * u.nm
+        epsilon = epsilon._value * u.Unit('kJ/mol')
+        type_key = (charge, sigma, epsilon)
+        # Add atom type to the unique type dict
+        if type_key not in unique_types:
+            # Create GMSO AtomType with default LJ equation
+            unique_types[key] = gmso.AtomType(
+                name='AtomType_{}'.format(len(unique_types)),
+                charge=charge,
+                parameters={
+                        'sigma': sigma,
+                        'epsilon': epsilon}
+                        # Do we need to worry about mass info?
+                        )
+        # Add atom type to site
+        site_map[id].atom_type = unique_types[type_key]
+    # Currently not handling OpenMM Exception, need to dig into the
+    # OpenMM documentation a bit more.
+
+    top.update_topology()
+    return top
+
+def _from_harmonic_bond(top, harmonic_bond, site_map):
+    """ Helper function to convert harmonic bond force parameters
+
+    Create GMSO BondType based on OpenMM HarmonicBondForce
+    and assign it to existing bond. Right now, this method
+    only handles the most basic case.
+
+    Parameters
+    ----------
+    top : gmso.Topology
+        The host topolgy.
+    harmonic_bond : openmm.HarmonicBondForce
+        The harmonic bond force that need to be converted
+    site_map : dict
+        Dictionary mapping id -> site, specific for OpenMM
+        conversion
+
+    Return
+    ------
+    top : gmso.Topology
+        Topology with updated bond types
+    """
+    # Sanity checks, make sure the existing number of bonds
+    # match with the number of bonds in the force
+    msg = 'Number of bonds in Topology is differrent than \
+           that in the OpenMM Force.'
+    assert top.n_bonds == harmonic_bond.getNumBonds()
+
+    # Build up bond map {{site1, site2}: bonds}
+    # Where {site1, site2} is a frozen set
+    bond_map = dict()
+    for bond in top.bonds():
+        bond_key = frozenset(bond.connection_members)
+        bond_map[bond_key] = bond
+
+    # Build up unique bond types dict, key is a tuple of
+    # k (quadratic constant) and r_eq (equilibrium length)
+    unique_types = dict()
+    for idx in range(harmonic_bond.getNumBonds()):
+        id1, id2, r_eq, k = harmonic_bond.getBondParameters(idx)
+        r_eq = r_eq._value * u.nm
+        k = k._value * u.Unit('kJ/(nm**2 * mol')
+        type_key = (k, r_eq)
+        if type_key not in unique_types:
+            # Create GMSO BondType with defaul harmonic equation
+            unique_types[type_key] = gmos.BondType(
+                                parameters={'k': k,
+                                            'r_eq': r_eq}
+                                                  )
+        bond_key = frozenset([site_map[id1], site_map[id2]])
+        bond_map[bond_key].connection_type = unique_types[type_key]
+
+    top.update_topology()
+    return top
+
+def _from_harmonic_angle(top, harmonic_angle, site_map):
+    """ Helper function to convert harmonic angle force parameters
+
+    Create GMSO Angles and AngleType based on OpenMM
+    HarmonicAngleForce. Right now, this method only handles
+    the most basic case.
+
+    Parameters
+    ----------
+    top : gmso.Topolgy
+        The host topology.
+    harmonic_angle : openmm.HarmonicAngleForce
+        The harmonic angle force that need to be converted
+    site_map : dict
+        Dictionary mapping id -> site, specific for OpenMM
+        covnersion
+
+    Return
+    ------
+    top : gmso. Topology
+    """
+
+    # Build up unique angle types dict, key is a tuple of
+    # k (force constant) and theta_eq (equilibrium angle)
+    unique_types = dict()
+    for idx in range(harmonic_angle.getNumAngles()):
+        id1, id2, id3, k, theta_eq = harmonic_angle.getAngleParameters(idx)
+        k = k_value * u.Unit('kJ / (rad**2 * mol')
+        theta_eq = theta_eq._value * u.rad
+        type_key = (k, theta_eq)
+
+        # Create GMSO Angle and add it to top
+        angle = gmso.Angle(connection_members=[
+                                site_map[id1],
+                                site_map[id2],
+                                site_map[id3]])
+        top.add(angle)
+
+        # Create GMSO AngleType and add it to angle
+        if type_key not in unique_types:
+            unique_types[type_key] = gmso.AngleType(
+                            parameters={'k': k,
+                                        'theta_eq': theta_eq}
+                                                    )
+        # May need to set up a angle list if this does not
+        # work as intended
+        angle.connection_type = unique_types[type_key]
+
+    top.update_topology()
+    return top
+
+def _from_periodic_torsion(top, nonbonded_force, site_map):
+    return None
+
+def _from_rb_torsion(top, nonbonded_force, site_map):
+    return None
 
 def to_openmm(topology, openmm_object='topology'):
     """
@@ -344,3 +486,19 @@ def to_system(topology,
     """
 
     # TODO: Everything
+
+
+def _to_nonbonded():
+    return None
+
+def _to_harmonic_bond():
+    return None
+
+def _to_harmonic_angle():
+    return None
+
+def _to_periodic_torsion():
+    return None
+
+def _to_rb_torsion():
+    return None
