@@ -72,24 +72,3 @@ class TestSite(BaseTest):
         assert ref != same_site
         assert ref != other_pos
         assert ref != other_name
-
-    def test_add_connection_redundant(self):
-        site1, site2, site3 = (Site(), Site(), Site())
-        bond1, bond2, bond3 = (Bond([site1, site2]), Bond([site2, site3]), Bond([site1, site3]))
-        assert site1.n_connections == site2.n_connections == site3.n_connections == 2
-        site1.add_connection(bond1)
-        site1.add_connection(bond3)
-        site2.add_connection(bond1)
-        site2.add_connection(bond2)
-        site3.add_connection(bond3)
-        site3.add_connection(bond2)
-        assert site1.n_connections == site2.n_connections == site3.n_connections == 2
-
-    def test_add_connection_non_member(self):
-        site1, site2, site3 = (Site(), Site(), Site())
-        bond1, bond2, bond3 = (Bond([site1, site2]), Bond([site2, site3]), Bond([site1, site3]))
-        assert site1.n_connections == site2.n_connections == site3.n_connections == 2
-        with pytest.raises(GMSOError):
-            site3.add_connection(bond1)
-            site2.add_connection(bond3)
-            site1.add_connection(bond2)

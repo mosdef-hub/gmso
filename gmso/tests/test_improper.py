@@ -15,17 +15,8 @@ class TestImproper(BaseTest):
         site3 = Site(name='site3')
         site4 = Site(name='site4')
 
-        assert site1.n_connections == 0
-        assert site2.n_connections == 0
-        assert site3.n_connections == 0
-        assert site4.n_connections == 0
-
         connect = Improper(connection_members=[site1, site2, site3, site4])
 
-        assert site1.n_connections == 1
-        assert site2.n_connections == 1
-        assert site3.n_connections == 1
-        assert site4.n_connections == 1
         assert connect.connection_type is None
 
     def test_improper_parametrized(self):
@@ -34,20 +25,12 @@ class TestImproper(BaseTest):
         site3 = Site(name='site3')
         site4 = Site(name='site4')
 
-        assert site1.n_connections == 0
-        assert site2.n_connections == 0
-        assert site3.n_connections == 0
-        assert site4.n_connections == 0
         improper_type = ImproperType()
 
         connect = Improper(connection_members=[site1, site2, site3, site4],
                         connection_type=improper_type,
                         name='improper_name')
 
-        assert site1.n_connections == 1
-        assert site2.n_connections == 1
-        assert site3.n_connections == 1
-        assert site4.n_connections == 1
         assert len(connect.connection_members) == 4
         assert connect.connection_type is not None
         assert connect.name == 'improper_name'

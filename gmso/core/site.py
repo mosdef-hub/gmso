@@ -1,13 +1,9 @@
 import warnings
-from functools import reduce
-
 
 import numpy as np
 import unyt as u
-from boltons.setutils import IndexedSet
 
 from gmso.core.atom_type import AtomType
-from gmso.exceptions import GMSOError
 
 
 class Site(object):
@@ -41,8 +37,6 @@ class Site(object):
 
     Attributes
     ----------
-    connections : IndexedSet
-       Set that contains connection information for the site
     n_connections : int
        Number of connections for the site
 
@@ -67,12 +61,6 @@ class Site(object):
         self._atom_type = _validate_atom_type(atom_type)
         self._charge = _validate_charge(charge)
         self._mass = _validate_mass(mass)
-        self._connections = IndexedSet()
-
-    def add_connection(self, connection):
-        connection = _validate_connection(self, connection)
-        if connection:
-            self._connections.add(connection)
 
     @property
     def element(self):
@@ -81,14 +69,6 @@ class Site(object):
     @element.setter
     def element(self, element):
         self._element = element
-
-    @property
-    def connections(self):
-        return self._connections
-
-    @property
-    def n_connections(self):
-        return len(self._connections)
 
     @property
     def charge(self):
@@ -181,16 +161,3 @@ def _validate_atom_type(val):
         raise ValueError("Passed value {} is not an AtomType".format(val))
     else:
         return val
-
-
-def _validate_connection(site, connection):
-    if not isinstance(site, Site):
-        raise ValueError("Passed value {} is not a site".format(site))
-    from gmso.core.connection import Connection
-    if not isinstance(connection, Connection):
-        raise ValueError("Passed value {} is not a Connection".format(connection))
-    if site not in connection.connection_members:
-        raise GMSOError("Error: Site not in connection members. Cannot add the connection.")
-    if connection in site.connections:
-        return None
-    return connection

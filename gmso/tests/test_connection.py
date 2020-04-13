@@ -12,21 +12,14 @@ class TestConnection(BaseTest):
         site1 = Site(name='site1')
         site2 = Site(name='site2')
 
-        assert site1.n_connections == 0
-        assert site2.n_connections == 0
-
         connect = Connection(connection_members=[site1, site2])
 
-        assert site1.n_connections == 1
-        assert site2.n_connections == 1
         assert connect.connection_type is None
 
     def test_connection_parametrized(self):
         site1 = Site(name='site1')
         site2 = Site(name='site2')
 
-        assert site1.n_connections == 0
-        assert site2.n_connections == 0
         c_type = Potential()
         name = 'name'
 
@@ -34,15 +27,11 @@ class TestConnection(BaseTest):
                              connection_type=c_type,
                              name=name)
 
-        assert site1.n_connections == 1
-        assert site2.n_connections == 1
         assert len(connect.connection_members) == 2
         assert connect.connection_type is not None
         assert connect.name == name
 
     def test_connection_fake(self):
-        site1 = Site(name='site1')
-        site2 = Site(name='site2')
         with pytest.raises(GMSOError):
             Connection(connection_members=['fakesite1', 'fakesite2'])
 

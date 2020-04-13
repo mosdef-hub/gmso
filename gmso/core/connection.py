@@ -27,7 +27,6 @@ class Connection(object):
         self._connection_members = _validate_connection_members(connection_members)
         self._connection_type = _validate_connection_type(connection_type)
         self._name = _validate_name(name)
-        self._update_members()
 
     @property
     def connection_members(self):
@@ -52,11 +51,6 @@ class Connection(object):
     @name.setter
     def name(self, conname):
         self._name = _validate_name(conname)
-
-    def _update_members(self):
-        for partner in self.connection_members:
-            if self not in partner.connections:
-                partner.add_connection(self)
 
     def __repr__(self):
         descr = '<{}-partner Connection, id {}, '.format(
