@@ -11,7 +11,7 @@ A potential template object requires the following attributes:
 
 
 ## For Developers
-To add/contribute a new `PotentialTemplate` there are the following ways:
+To add/contribute a new `PotentialTemplate`:
 
 1. **Add JSON File**: The example below shows the content of an example json file(OPLSTorsionPotential):
 ```json
@@ -27,4 +27,4 @@ name the template `ABCTemplate` and change the `expression` and `independent_var
 
 If there are more than one  `independent_variables` in your template, simply separate them with a comma(,).
 
-After you are satisfied with your template, add a test to verify that it is actually created [here](../../tests/test_potential_templates.py).
+2. After you are satisfied with your template, add a test to verify that it is actually created [here](../../tests/test_potential_templates.py).
