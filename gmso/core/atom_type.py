@@ -6,6 +6,7 @@ from gmso.core.potential import Potential
 from gmso.utils.misc import unyt_to_hashable
 from gmso.utils.decorators import confirm_dict_existence
 from gmso.utils._constants import ATOM_TYPE_DICT
+from gmso.exceptions import GMSOError
 
 
 class AtomType(Potential):
@@ -180,6 +181,48 @@ class AtomType(Potential):
     def __repr__(self):
         desc = "<AtomType {}, id {}>".format(self._name, id(self))
         return desc
+
+    def as_dict(self):
+        props_dict = super().as_dict()
+        props_dict.update({
+            'charge': self.charge,
+            'mass': self.mass,
+            'atomclass': self.atomclass,
+            'doi': self.doi,
+            'overrides': self.overrides,
+            'description': self.description,
+            'definition': self.definition,
+        })
+        props_dict.pop('template')
+        return props_dict
+
+    @classmethod
+    def return_copy(cls, atom_type, **kwargs):
+        """Returns a new AtomType that is a copy of atom_type
+
+        This method takes in an gmso.core.AtomType object and returns a copy
+        of the `atom_type` with changed properties (provided as keyword arguments) (optional).
+
+        Parameters
+        ----------
+        atom_type : gmso.core.AtomType
+            The AtomType object to return the copy of
+        **kwargs
+            The keyword arguments to the new AtomType constructor returned
+
+        Returns
+        -------
+        gmso.core.AtomType
+                A copy of the atomType passed as input
+        """
+        if not isinstance(atom_type, cls):
+            raise TypeError(f'Object {type(atom_type).__name__} is not of type AtomType.')
+        props_dict = atom_type.as_dict()
+        for kwarg in kwargs:
+            if kwarg not in props_dict:
+                raise GMSOError(f'Cannot set property {kwarg} for an AtomType')
+        props_dict.update(kwargs)
+        return cls(**props_dict)
 
 
 def _validate_charge(charge):

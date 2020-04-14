@@ -368,6 +368,55 @@ class Topology(object):
                 if member not in self._sites:
                     self.add_site(member)
 
+    def change_atom_type_properties(self, site, should_propagate=False, **kwargs):
+        """Change the atom_type properties for a site in the topology
+
+        This method takes in a site object and changes properties for its atom type reference.
+        If should_propagate is False(default Behavior), changes are only applied to local site
+        (by creating a new AtomType).
+
+        Examples
+        ---------
+                >>> from gmso import Topology
+                >>> top = Topology()
+                >>> site1 = Site()
+                >>> site2 = Site()
+        Parameters
+        ----------
+        site : gmso.core.Site
+            The site object for which the atom_types property is to be changed
+        should_propagate: bool, default=False
+            Whether the change in the atomType property should propagate through the entire topology.
+        **kwargs
+            The keyword arguments to change gmso.Core.AtomType properties
+
+        See Also
+        --------
+        gmso.core.AtomType.as_dict
+            Return a dictionary of properties to the atom_type
+        """
+        if not isinstance(site, Site):
+            raise TypeError(f'{site} is not of type Site. Please provide a Site object')
+        if site not in self._sites:
+            raise ValueError(f'{site} is not a member of this topology')
+
+        assert site.atom_type in self._atom_types, \
+            f'{site.atom_type} is not yet added to the topology.' \
+            f' Consider updating the topology before calling this method'
+
+        if not should_propagate:
+            if len(kwargs) == 0:
+                warnings.warn('No change in properties detected.')
+            new_atom_type = AtomType.return_copy(site.atom_type, **kwargs)
+            site.atom_type = new_atom_type
+            self.add_site(site, update_types=True)
+            # TODO: After get Associations is merged, remove the old atomtype if needed
+        else:
+            for key, val in kwargs.items():
+                if not hasattr(site.atom_type, key):
+                    raise AttributeError(f'{site.atom_type} has no attribute {key}')
+                setattr(site.atom_type, key, val)
+
     def add_connection(self, connection, update_types=True):
         """Add a gmso.Connection object to the topology.
 
@@ -689,5 +738,3 @@ class Topology(object):
         descr.append('id: {}>'.format(id(self)))
 
         return ''.join(descr)
-
-

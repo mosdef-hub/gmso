@@ -209,6 +209,16 @@ class Potential(object):
         desc = "<Potential {}, id {}>".format(self._name, id(self))
         return desc
 
+    def as_dict(self):
+        return {
+            'name': self.name,
+            'parameters': self.parameters,
+            'independent_variables': self.independent_variables,
+            'template': self.template,
+            'expression': self.expression,
+            'topology': self.topology
+        }
+
     @classmethod
     def from_template(cls, potential_template, parameters, topology=None):
         """Create a potential object from the potential_template

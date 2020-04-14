@@ -7,6 +7,7 @@ from gmso.core.site import Site
 from gmso.core.topology import Topology
 from gmso.tests.base_test import BaseTest
 from gmso.utils.testing import allclose
+from gmso.exceptions import GMSOError
 
 
 class TestAtomType(BaseTest):
@@ -213,3 +214,31 @@ class TestAtomType(BaseTest):
         assert len(top.atom_types) == 1
         assert top.n_sites == 1000
 
+    def test_copy_no_change(self):
+        atom_type = AtomType()
+        atom_type_copy = AtomType.return_copy(atom_type)
+        assert atom_type == atom_type_copy
+        assert id(atom_type) != id(atom_type_copy)
+
+    def test_copy_with_change(self):
+        atom_type = AtomType('AtomType')
+        atom_type_copy = AtomType.return_copy(atom_type, name='AtomType2')
+        assert atom_type != atom_type_copy
+
+    def test_copy_non_atom_type(self):
+        a = object()
+        with pytest.raises(TypeError) as type_error:
+            assert AtomType.return_copy(a)
+        assert f'Object {type(a).__name__} is not of type AtomType.' in str(type_error)
+
+    def test_atom_type_copy_non_existent_property(self):
+        atom_type = AtomType(name='AtomType1')
+        with pytest.raises(GMSOError) as e:
+            AtomType.return_copy(atom_type, non_existent_property='1')
+        assert 'Cannot set property non_existent_property for an AtomType' in str(e)
+
+    def test_as_dict(self):
+        props_dict = AtomType().as_dict()
+        assert 'name' in props_dict
+        assert 'charge' in props_dict
+        assert 'description' in props_dict
