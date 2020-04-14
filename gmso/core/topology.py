@@ -377,10 +377,17 @@ class Topology(object):
 
         Examples
         ---------
-                >>> from gmso import Topology
-                >>> top = Topology()
-                >>> site1 = Site()
+                >>> site = Site()
                 >>> site2 = Site()
+                >>> atom_type = AtomType()
+                >>> site.atom_type = atom_type
+                >>> site2.atom_type = atom_type
+                >>> top = Topology()
+                >>> top.add_site(site)
+                >>> top.add_site(site2)
+                >>> top.change_atom_type_properties(site2, should_propagate=False, name='AtomType2', charge=2.0)
+                >>> print(site2.atom_type.charge, site.atom_type.charge)
+
         Parameters
         ----------
         site : gmso.core.Site

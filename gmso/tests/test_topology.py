@@ -1,4 +1,5 @@
 from copy import deepcopy
+import warnings
 
 import numpy as np
 import unyt as u
@@ -487,3 +488,66 @@ class TestTopology(BaseTest):
         prev_idx = typed_methylnitroaniline.get_index(angle_type_to_test)
         typed_methylnitroaniline.angles[0].connection_type.name = 'changed name'
         assert typed_methylnitroaniline.get_index(angle_type_to_test) != prev_idx
+
+    def test_topology_change_site_atom_types_propagation(self, typed_water_system):
+        num_atom_types = len(typed_water_system._atom_types)
+        target_site = typed_water_system.sites[0]
+        target_atom_type = target_site.atom_type
+        typed_water_system.change_atom_type_properties(target_site,
+                                                       should_propagate=True,
+                                                       name='changedName',
+                                                       charge=1.0)
+        assert target_atom_type.name == 'changedName'
+        assert num_atom_types == len(typed_water_system._atom_types)
+
+    def test_topology_change_site_atom_types_no_propagation(self, typed_water_system):
+        num_atom_types = len(typed_water_system._atom_types)
+        target_site = typed_water_system.sites[0]
+        target_atom_type = target_site.atom_type
+        typed_water_system.change_atom_type_properties(target_site,
+                                                       should_propagate=False,
+                                                       name='changedName',
+                                                       charge=1.0)
+        assert target_site.atom_type.name == 'changedName'
+        assert id(target_atom_type) != id(target_site.atom_type)
+        assert num_atom_types + 1 == len(typed_water_system._atom_types)
+
+    def test_topology_change_site_atom_types_no_change(self, typed_water_system):
+        num_atom_types = len(typed_water_system._atom_types)
+        target_site = typed_water_system.sites[0]
+        target_atom_type = typed_water_system.sites[0].atom_type
+
+        with pytest.warns(expected_warning=UserWarning):
+            typed_water_system.change_atom_type_properties(target_site,
+                                                           should_propagate=False)
+        assert len(typed_water_system.atom_types) == num_atom_types
+        assert id(target_site.atom_type) == id(target_atom_type)
+
+    def test_topology_change_site_atom_types_non_site(self, typed_water_system):
+        non_site = object()
+        with pytest.raises(TypeError) as e:
+            typed_water_system.change_atom_type_properties(non_site,
+                                                           should_propagate=False)
+        assert f'{non_site} is not of type Site. Please provide a Site object' in str(e)
+
+    def test_topology_change_site_atom_types_non_member_site(self, typed_water_system):
+        non_member = Site()
+        with pytest.raises(ValueError) as e:
+            typed_water_system.change_atom_type_properties(non_member,
+                                                           should_propagate=False)
+        assert f'{non_member} is not a member of this topology' in str(e)
+
+    def test_topology_change_site_atom_types_non_existent_attribute(self, typed_water_system):
+        target_site = typed_water_system.sites[0]
+        with pytest.raises(AttributeError) as e:
+            typed_water_system.change_atom_type_properties(target_site,
+                                                           should_propagate=True,
+                                                           non_existent_attribute='non_existent_attribute')
+        assert f'{target_site.atom_type} has no attribute non_existent_attribute' in str(e)
+
+    def test_topology_chage_site_atom_types_not_updated(self, typed_water_system):
+        target_atom_type = AtomType()
+        target_site = Site(atom_type=target_atom_type)
+        typed_water_system.add_site(target_site, update_types=False)
+        with pytest.raises(AssertionError):
+            typed_water_system.change_atom_type_properties(target_site)
