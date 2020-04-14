@@ -357,8 +357,6 @@ class Topology(object):
 
         See Also
         --------
-        gmso.Topology.update_connections :
-            Update the connections in the topology to reflect any added sites connections
         gmso.Topology.add_site : Add a site to the topology.
         gmso.Topology.add_connection : Add a Bond, an Angle or a Dihedral to the topology.
         gmso.Topology.update_topology : Update the entire topology.

@@ -35,11 +35,6 @@ class Site(object):
        The atom type of the site containing functional forms, interaction parameters, and other properties such as mass and charge.  
        See `atom_type.py` for more information.
 
-    Attributes
-    ----------
-    n_connections : int
-       Number of connections for the site
-
     """
     def __init__(self,
                  name='Site',

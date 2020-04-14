@@ -14,7 +14,8 @@ class TestBond(BaseTest):
         site2 = Site(name='site2')
 
         connect = Bond(connection_members=[site1, site2])
-
+        assert site1 in connect.connection_members
+        assert site2 in connect.connection_members
         assert connect.connection_type is None
 
     def test_bond_parametrized(self):
@@ -28,6 +29,8 @@ class TestBond(BaseTest):
                        name='bond_name')
 
         assert len(connect.connection_members) == 2
+        assert site1 in connect.connection_members
+        assert site2 in connect.connection_members
         assert connect.connection_type is not None
         assert connect.name == 'bond_name'
 

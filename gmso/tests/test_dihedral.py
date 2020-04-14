@@ -16,7 +16,10 @@ class TestDihedral(BaseTest):
         site4 = Site(name='site4')
 
         connect = Dihedral(connection_members=[site1, site2, site3, site4])
-
+        assert site1 in connect.connection_members
+        assert site2 in connect.connection_members
+        assert site3 in connect.connection_members
+        assert site4 in connect.connection_members
         assert connect.connection_type is None
 
     def test_dihedral_parametrized(self):
@@ -32,6 +35,10 @@ class TestDihedral(BaseTest):
                            name='dihedral_name')
 
         assert len(connect.connection_members) == 4
+        assert site1 in connect.connection_members
+        assert site2 in connect.connection_members
+        assert site3 in connect.connection_members
+        assert site4 in connect.connection_members
         assert connect.connection_type is not None
         assert connect.name == 'dihedral_name'
 

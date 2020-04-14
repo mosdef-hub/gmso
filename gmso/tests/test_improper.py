@@ -17,6 +17,11 @@ class TestImproper(BaseTest):
 
         connect = Improper(connection_members=[site1, site2, site3, site4])
 
+        assert site1 in connect.connection_members
+        assert site2 in connect.connection_members
+        assert site3 in connect.connection_members
+        assert site4 in connect.connection_members
+
         assert connect.connection_type is None
 
     def test_improper_parametrized(self):
@@ -32,6 +37,10 @@ class TestImproper(BaseTest):
                         name='improper_name')
 
         assert len(connect.connection_members) == 4
+        assert site1 in connect.connection_members
+        assert site2 in connect.connection_members
+        assert site3 in connect.connection_members
+        assert site4 in connect.connection_members
         assert connect.connection_type is not None
         assert connect.name == 'improper_name'
 

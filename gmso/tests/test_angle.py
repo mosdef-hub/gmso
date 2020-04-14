@@ -15,7 +15,9 @@ class TestAngle(BaseTest):
         site3 = Site(name='site3')
 
         connect = Angle(connection_members=[site1, site2, site3])
-
+        assert site1 in connect.connection_members
+        assert site2 in connect.connection_members
+        assert site3 in connect.connection_members
         assert connect.connection_type is None
 
     def test_angle_parametrized(self):
