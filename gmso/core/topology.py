@@ -4,6 +4,7 @@ import numpy as np
 import unyt as u
 from boltons.setutils import IndexedSet
 
+from gmso.core.site import Site
 from gmso.core.bond import Bond
 from gmso.core.angle import Angle
 from gmso.core.dihedral import Dihedral
@@ -138,15 +139,26 @@ class Topology(object):
         self._subtops = IndexedSet()
         self._atom_types = {}
         self._atom_types_associations = {}
+        self._atom_types_idx = {}
+
         self._connection_types = {}
+
         self._bond_types = {}
         self._bond_types_associations = {}
+        self._bond_types_idx = {}
+
         self._angle_types = {}
         self._angle_type_associations = {}
+        self._angle_types_idx = {}
+
         self._dihedral_types = {}
         self._dihedral_types_associations = {}
+        self._dihedral_types_idx = {}
+
         self._improper_types = {}
         self._improper_types_associations = {}
+        self._improper_types_idx = {}
+
         self._combining_rule = 'lorentz'
         self._set_refs = {
             ATOM_TYPE_DICT: self._atom_types,
@@ -162,6 +174,15 @@ class Topology(object):
             DIHEDRAL_TYPE_DICT: self._dihedral_types_associations,
             IMPROPER_TYPE_DICT: self._improper_types_associations
         }
+
+        self._index_refs = {
+            ATOM_TYPE_DICT: self._atom_types_idx,
+            BOND_TYPE_DICT: self._bond_types_idx,
+            ANGLE_TYPE_DICT: self._angle_types_idx,
+            DIHEDRAL_TYPE_DICT: self._dihedral_types_idx,
+            IMPROPER_TYPE_DICT: self._improper_types_idx
+        }
+
 
     @property
     def name(self):
@@ -331,8 +352,10 @@ class Topology(object):
             site.atom_type = self._atom_types.get(site.atom_type, site.atom_type)
             conns = self._atom_types_associations.get(site.atom_type, set())
             self._atom_types[site.atom_type] = site.atom_type
+            self._atom_types_idx[site.atom_type] = len(self._atom_types) - 1
             conns.add(site)
             self._atom_types_associations[site.atom_type] = conns
+
             self.is_typed(updated=False)
 
     def update_sites(self):
@@ -499,27 +522,31 @@ class Topology(object):
                 if isinstance(c.connection_type, BondType):
                     self._bond_types[c.connection_type] = c.connection_type
                     self._bond_types_associations[c.connection_type] = {c}
+                    self._bond_types_idx[c.connection_type] = len(self._bond_types) - 1
                 if isinstance(c.connection_type, AngleType):
                     self._angle_types[c.connection_type] = c.connection_type
                     self._angle_type_associations[c.connection_type] = {c}
+                    self._angle_types_idx[c.connection_type] = len(self._bond_types) - 1
                 if isinstance(c.connection_type, DihedralType):
                     self._dihedral_types[c.connection_type] = c.connection_type
                     self._dihedral_types_associations[c.connection_type] = {c}
+                    self._dihedral_types_idx[c.connection_type] = len(self._bond_types) - 1
                 if isinstance(c.connection_type, ImproperType):
                     self._improper_types[c.connection_type] = c.connection_type
                     self._improper_types_associations[c.connection_type] = {c}
+                    self._improper_types_idx[c.connection_type] = len(self._bond_types) - 1
+
             elif c.connection_type in self._connection_types:
                 if isinstance(c.connection_type, BondType):
-                    c.connection_type = self._bond_types[c.connection_type]
                     self._bond_types_associations[c.connection_type].add(c)
                 if isinstance(c.connection_type, AngleType):
-                    c.connection_type = self._angle_types[c.connection_type]
+                    self._angle_types[c.connection_type] = c.connection_type
                     self._angle_type_associations[c.connection_type].add(c)
                 if isinstance(c.connection_type, DihedralType):
-                    c.connection_type = self._dihedral_types[c.connection_type]
+                    self._dihedral_types[c.connection_type] = c.connection_type
                     self._dihedral_types_associations[c.connection_type].add(c)
                 if isinstance(c.connection_type, ImproperType):
-                    c.connection_type = self._improper_types[c.connection_type]
+                    self._improper_types[c.connection_type] = c.connection_type
                     self._improper_types_associations[c.connection_type].add(c)
 
     def update_atom_types(self):
@@ -543,6 +570,8 @@ class Topology(object):
                 site.atom_type.topology = self
                 self._atom_types[site.atom_type] = site.atom_type
                 self._atom_types_associations[site.atom_type] = {site}
+                self._atom_types_idx[site.atom_type] = len(self._atom_types) - 1
+
             elif site.atom_type in self._atom_types:
                 site.atom_type = self._atom_types[site.atom_type]
                 self._atom_types_associations[site.atom_type].add(site)
@@ -676,6 +705,54 @@ class Topology(object):
             _container_dict = self._association_refs
 
         return _container_dict[ref_dict[type(conn_or_atom_type)]]
+
+    def get_index(self, member):
+        """Get index of a member in the topology
+
+        Parameters
+        ----------
+        member : gmso Topology objects
+            The member to for which to return index for.
+            `member` can be of type gmso.Site, gmso.Bond, gmso.Angle, gmso.Dihedral, gmso.Improper,
+            gmso.AtomType, gmso.BondType, gmso.AngleType, gmso.DihedralType or gmso.ImproperType.
+
+        Returns
+        -------
+        int
+            The index of the member in the topology's collection objects
+        """
+        refs = {
+            Site: self._sites,
+            Bond: self._bonds,
+            Angle: self._angles,
+            Dihedral: self._dihedrals,
+            Improper: self._impropers,
+            AtomType: self._atom_types_idx,
+            BondType: self._bond_types_idx,
+            AngleType: self._angle_types_idx,
+            DihedralType: self._dihedral_types_idx,
+            ImproperType: self._improper_types_idx
+        }
+
+        member_type = type(member)
+
+        if member_type not in refs.keys():
+            raise TypeError(f'Cannot index member of type {member_type.__name__}')
+
+        try:
+            index = refs[member_type].index(member)
+        except AttributeError:
+            index = refs[member_type][member]
+
+        return index
+
+    def _reindex_connection_types(self, ref):
+        if ref not in self._index_refs:
+            raise GMSOError(f'cannot reindex {ref}. It should be one of '
+                            f'{ANGLE_TYPE_DICT}, {BOND_TYPE_DICT}, '
+                            f'{ANGLE_TYPE_DICT}, {DIHEDRAL_TYPE_DICT}, {IMPROPER_TYPE_DICT}')
+        for i, ref_member in enumerate(self._set_refs[ref].keys()):
+            self._index_refs[ref][ref_member] = i
 
     def __repr__(self):
         descr = list('<')

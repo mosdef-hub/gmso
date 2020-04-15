@@ -4,15 +4,18 @@ import numpy as np
 
 from gmso.tests.base_test import BaseTest
 from gmso.core.dihedral_type import DihedralType
-from gmso.lib.potential_templates import RyckaertBellemansTorsionPotential
-from gmso.lib.potential_templates import OPLSTorsionPotential
+from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.conversions import convert_ryckaert_to_opls
 from gmso.utils.conversions import convert_opls_to_ryckaert
 from gmso.exceptions import GMSOError
 
 class TestInternalConversions(BaseTest):
 
-    def test_invalid_connection_type(self):
+    @pytest.fixture
+    def templates(self):
+        return PotentialTemplateLibrary()
+
+    def test_invalid_connection_type(self, templates):
         params = { 'c0' : 1.53  * u.Unit('kJ/mol'),
                    'c1' : 0.76  * u.Unit('kJ/mol'),
                    'c2' : -0.22 * u.Unit('kJ/mol'),
@@ -20,9 +23,10 @@ class TestInternalConversions(BaseTest):
                    'c4' : 0.94  * u.Unit('kJ/mol'),
                    'c5' : 0.0   * u.Unit('kJ/mol')
                  }
+        ryckaert_bellemans_torsion_potential = templates['RyckaertBellemansTorsionPotential']
 
-        name = RyckaertBellemansTorsionPotential().name
-        expression = RyckaertBellemansTorsionPotential().expression
+        name = ryckaert_bellemans_torsion_potential.name
+        expression = ryckaert_bellemans_torsion_potential.expression
         variables = ['phi','psi']
 
         ryckaert_connection_type = DihedralType(
@@ -36,7 +40,7 @@ class TestInternalConversions(BaseTest):
                     ryckaert_connection_type)
 
         expression = 'c0+c1+c2+c3+c4+c5+phi'
-        variables = RyckaertBellemansTorsionPotential().independent_variables
+        variables = ryckaert_bellemans_torsion_potential.independent_variables
         ryckaert_connection_type = DihedralType(
                 name=name,
                 expression=expression,
@@ -55,8 +59,9 @@ class TestInternalConversions(BaseTest):
                    'k4' : 1.44   * u.Unit('kJ/mol')
                  }
 
-        name = OPLSTorsionPotential().name
-        expression = OPLSTorsionPotential().expression
+        opls_torsion_potential = templates['OPLSTorsionPotential']
+        name = opls_torsion_potential.name
+        expression = opls_torsion_potential.expression
         variables = ['phi','psi']
 
         opls_connection_type = DihedralType(
@@ -69,7 +74,7 @@ class TestInternalConversions(BaseTest):
             ryckaert_connection_type = convert_opls_to_ryckaert(
                     opls_connection_type)
 
-        variables = OPLSTorsionPotential().independent_variables
+        variables = opls_torsion_potential.independent_variables
         expression = 'k0+k1+k2+k3+k4+phi'
         opls_connection_type = DihedralType(
                 name=name,
@@ -82,7 +87,7 @@ class TestInternalConversions(BaseTest):
                     opls_connection_type)
 
 
-    def test_ryckaert_to_opls(self):
+    def test_ryckaert_to_opls(self, templates):
 
         # Pick some RB parameters at random
         params = { 'c0' : 1.53  * u.Unit('kJ/mol'),
@@ -93,9 +98,11 @@ class TestInternalConversions(BaseTest):
                    'c5' : 0.0   * u.Unit('kJ/mol')
                  }
 
-        name = RyckaertBellemansTorsionPotential().name
-        expression = RyckaertBellemansTorsionPotential().expression
-        variables = RyckaertBellemansTorsionPotential().independent_variables
+        ryckaert_bellemans_torsion_potential = templates['RyckaertBellemansTorsionPotential']
+
+        name = ryckaert_bellemans_torsion_potential.name
+        expression = ryckaert_bellemans_torsion_potential.expression
+        variables = ryckaert_bellemans_torsion_potential.independent_variables
 
         ryckaert_connection_type = DihedralType(
                 name=name,
@@ -122,7 +129,7 @@ class TestInternalConversions(BaseTest):
                                 'phi':angle}.items()])),
             )
 
-    def test_opls_to_ryckaert(self):
+    def test_opls_to_ryckaert(self, templates):
 
         # Pick some OPLS parameters at random
         params = { 'k0' : 1.38   * u.Unit('kJ/mol'),
@@ -132,9 +139,10 @@ class TestInternalConversions(BaseTest):
                    'k4' : 1.44   * u.Unit('kJ/mol')
                  }
 
-        name = OPLSTorsionPotential().name
-        expression = OPLSTorsionPotential().expression
-        variables = OPLSTorsionPotential().independent_variables
+        opls_torsion_potential = templates['OPLSTorsionPotential']
+        name = opls_torsion_potential.name
+        expression = opls_torsion_potential.expression
+        variables = opls_torsion_potential.independent_variables
 
         opls_connection_type = DihedralType(
                 name=name,
@@ -161,7 +169,7 @@ class TestInternalConversions(BaseTest):
                                 'phi':angle}.items()])),
             )
 
-    def test_double_conversion(self):
+    def test_double_conversion(self, templates):
 
         # Pick some OPLS parameters at random
         params = { 'k0' : 1.38   * u.Unit('kJ/mol'),
@@ -171,9 +179,11 @@ class TestInternalConversions(BaseTest):
                    'k4' : 1.44   * u.Unit('kJ/mol')
                  }
 
-        name = OPLSTorsionPotential().name
-        expression = OPLSTorsionPotential().expression
-        variables = OPLSTorsionPotential().independent_variables
+        opls_torsion_potential = templates['OPLSTorsionPotential']
+
+        name = opls_torsion_potential.name
+        expression = opls_torsion_potential.expression
+        variables = opls_torsion_potential.independent_variables
 
         opls_connection_type = DihedralType(
                 name=name,
