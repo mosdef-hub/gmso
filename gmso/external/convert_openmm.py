@@ -257,7 +257,7 @@ def _from_harmonic_bond(top, harmonic_bond, site_map):
            that in the OpenMM Force.'
     assert top.n_bonds == harmonic_bond.getNumBonds()
 
-    # Build up bond map {{site1, site2}: bonds}
+    # Build up bond map {{site1, site2}: bond}
     # Where {site1, site2} is a frozen set
     bond_map = dict()
     for bond in top.bonds():
@@ -273,11 +273,10 @@ def _from_harmonic_bond(top, harmonic_bond, site_map):
         k = k._value * u.Unit('kJ/(nm**2 * mol')
         type_key = (k, r_eq)
         if type_key not in unique_types:
-            # Create GMSO BondType with defaul harmonic equation
-            unique_types[type_key] = gmos.BondType(
+            # Create GMSO BondType with default harmonic equation
+            unique_types[type_key] = gmso.BondType(
                                 parameters={'k': k,
-                                            'r_eq': r_eq}
-                                                  )
+                                            'r_eq': r_eq})
         bond_key = frozenset([site_map[id1], site_map[id2]])
         bond_map[bond_key].connection_type = unique_types[type_key]
 
@@ -303,9 +302,13 @@ def _from_harmonic_angle(top, harmonic_angle, site_map):
 
     Return
     ------
-    top : gmso. Topology
+    top : gmso.Topology
     """
-
+    # Sanity checks, make sure the existing number of angles match with the
+    # number of angles with the number of angles in the force
+    msg = 'Number of angles in Topology is different thatn \
+           that in the OpenMM Force.'
+    # Create GMSO angles
     # Build up unique angle types dict, key is a tuple of
     # k (force constant) and theta_eq (equilibrium angle)
     unique_types = dict()
@@ -326,8 +329,7 @@ def _from_harmonic_angle(top, harmonic_angle, site_map):
         if type_key not in unique_types:
             unique_types[type_key] = gmso.AngleType(
                             parameters={'k': k,
-                                        'theta_eq': theta_eq}
-                                                    )
+                                        'theta_eq': theta_eq})
         # May need to set up a angle list if this does not
         # work as intended
         angle.connection_type = unique_types[type_key]
@@ -335,11 +337,137 @@ def _from_harmonic_angle(top, harmonic_angle, site_map):
     top.update_topology()
     return top
 
-def _from_periodic_torsion(top, nonbonded_force, site_map):
-    return None
+def _from_periodic_torsion(top, periodic_torsion_force,
+                           site_map):
+    """ Helper function to convert periodic torsion force parameters
 
-def _from_rb_torsion(top, nonbonded_force, site_map):
-    return None
+    Create GMSO Dihedral and DihedralType based on OpenMM
+    PeriodicTorsionForce. Right now, this method only handles
+    the most basic case.
+
+    Parameters
+    ----------
+    top : gmso.Topolgy
+        The host topology.
+    periodic_torsion_force : openmm.PeriodicTorsionForce
+        The harmonic angle force that need to be converted
+    site_map : dict
+        Dictionary mapping id -> site, specific for OpenMM
+        covnersion
+
+    Return
+    ------
+    top : gmso.Topology
+    """
+    # Sanity checks, make sure the existing number of
+    # dihedrals match with the number of dihedrals in the
+    # force
+    msg = 'Number of dihedrals in Topology is different than \
+           that in the OpenMM Force.'
+    assert top.n_dihedrals == periodic_torsion_force.getNumTorsions()
+
+    # Create GMSO Dihedral
+    # Build up unique torsion types dict, key is a tuple of
+    # periodicity, phase, k
+    unique_types = dict()
+    for idx in range(periodic_torsion_force.getNumTorsions()):
+        id1, id2, id3, id4, n, phi_eq, k = periodic_torsion_force.getTorsionParameters(idx)
+        n = n._value * u.dimensionless
+        phi_eq = phi_eq._value * u.rad
+        k = k._value * u.Unit('kJ/mol')
+        type_key = (n, phi_eq, k)
+
+        # Create GMSO Dihedral, will need to update when
+        # proper and improper dihedral is updated in Matt's PR
+        dihedral = gmso.Dihedral(connection_members=[
+                                    site_map[id1],
+                                    site_map[id2],
+                                    site_map[id3],
+                                    site_map[id4]])
+        top.add(dihedral)
+
+        # Create GMSO DihedralType and add it to dihedral
+        if type_key not in unique_types:
+            # Create GMOS DihedralType with default periodic
+            # torsion equation
+            unique_types[type_key] = gmso.DihedralType(
+                            parameters={'k': k,
+                                        'phi_eq': phi_eq,
+                                        'n': n})
+        # May need to set up a dihedral list if this does not work
+        dihedral.connection_type = unique_types[type_key]
+
+    top.update_topology()
+    return top
+
+def _from_rb_torsion(top, rb_torsion_foce, site_map):
+    """ Helper function to convert rb torsion force parameters
+
+    Create GMSO Dihedral and DihedralType based on OpenMM
+    RBTorsionForce. Right now, this method only handles
+    the most basic case.
+
+    Parameters
+    ----------
+    top : gmso.Topolgy
+        The host topology.
+    rb_torsion_force : openmm.RBTorsionForce
+        The harmonic angle force that need to be converted
+    site_map : dict
+        Dictionary mapping id -> site, specific for OpenMM
+        covnersion
+
+    Return
+    ------
+    top : gmso.Topology
+    """
+    # Sanity checks, make sure the existing number of
+    # dihedrals match with the number of dihedrals in the
+    # force
+    msg = 'Number of dihedrals in Topology is different than \
+           that in the OpenMM Force.'
+    assert top.n_dihedrals == rb_torsion_force.getNumTorsions()
+
+    # Create GMSO Dihedral
+    # Build up unique torsion types dict, key is a tuple of
+    # c0, c1, c2, c3, c4, and c5
+    unique_types = dict()
+    for idx in range(rb_torsion_force.getNumTorsions()):
+        id1, id2, id3, id4, c0, c1, c2, c3, c4, c5 = rb_torsion_force.getTorsionParameters(idx)
+        c0 = c0._value * u.('kJ/mol')
+        c1 = c1._value * u.('kJ/mol')
+        c2 = c2._value * u.('kJ/mol')
+        c3 = c3._value * u.('kJ/mol')
+        c4 = c4._value * u.('kJ/mol')
+        c5 = c5._value * u.('kJ/mol')
+        type_key = (c0, c1, c2, c3, c4, c5)
+
+        # Create GMSO Dihedral, will need to update when
+        # proper and improper dihedral is updated in Matt's PR
+        dihedral = gmso.Dihedral(connection_members=[
+                                    site_map[id1],
+                                    site_map[id2],
+                                    site_map[id3],
+                                    site_map[id4]])
+        top.add(dihedral)
+
+        # Create GMSO DihedralType and add it to dihedral
+        if type_key not in unique_types:
+            # Create GMOS DihedralType with default periodic
+            # torsion equation
+            expression =
+            unique_types[type_key] = gmso.DihedralType(
+                        parameters={'c0': c0, 'c1': c1, 'c2': c2, 'c3': c3,
+                                    'c4': c4, 'c5': c5},
+                        expression='c0 * cos(phi)**0 + c1 * cos(phi)**1 + ' +
+                                   'c2 * cos(phi)**2 + c3 * cos(phi)**3 + ' +
+                                   'c4 * cos(phi)**4 + c5 * cos(phi)**5',
+                        independent_variables='phi')
+        # May need to set up a dihedral list if this does not work
+        dihedral.connection_type = unique_types[type_key]
+
+    top.update_topology()
+    return top
 
 def to_openmm(topology, openmm_object='topology'):
     """
