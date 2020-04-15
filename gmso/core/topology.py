@@ -538,15 +538,16 @@ class Topology(object):
 
             elif c.connection_type in self._connection_types:
                 if isinstance(c.connection_type, BondType):
+                    c.connection_type = self._bond_types[c.connection_type]
                     self._bond_types_associations[c.connection_type].add(c)
                 if isinstance(c.connection_type, AngleType):
-                    self._angle_types[c.connection_type] = c.connection_type
+                    c.connection_type = self._angle_types[c.connection_type]
                     self._angle_type_associations[c.connection_type].add(c)
                 if isinstance(c.connection_type, DihedralType):
-                    self._dihedral_types[c.connection_type] = c.connection_type
+                    c.connection_type = self._dihedral_types[c.connection_type]
                     self._dihedral_types_associations[c.connection_type].add(c)
                 if isinstance(c.connection_type, ImproperType):
-                    self._improper_types[c.connection_type] = c.connection_type
+                    c.connection_type = self._improper_types[c.connection_type]
                     self._improper_types_associations[c.connection_type].add(c)
 
     def update_atom_types(self):
@@ -597,7 +598,7 @@ class Topology(object):
         subtop.parent = self
         self._sites.union(subtop.sites)
 
-    def is_typed(self, updated=False, ):
+    def is_typed(self, updated=False):
         if not updated:
             self.update_connection_types()
             self.update_atom_types()
