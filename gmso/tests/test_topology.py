@@ -479,8 +479,8 @@ class TestTopology(BaseTest):
         assert typed_methylnitroaniline.get_index(typed_methylnitroaniline.bonds[0].connection_type) != 0
 
     def test_topology_get_index_angle_type(self, typed_chloroethanol):
-        assert typed_chloroethanol.get_index(typed_chloroethanol.angles[0].connection_type)
-        assert typed_chloroethanol.get_index(typed_chloroethanol.angles[5].connection_type)
+        assert typed_chloroethanol.get_index(typed_chloroethanol.angles[0].connection_type) == 0
+        assert typed_chloroethanol.get_index(typed_chloroethanol.angles[5].connection_type) == 1
 
     def test_topology_get_index_angle_type_after_change(self, typed_methylnitroaniline):
         angle_type_to_test = typed_methylnitroaniline.angles[0].connection_type
