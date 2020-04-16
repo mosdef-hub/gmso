@@ -373,14 +373,15 @@ class Topology(object):
 
         Returns
         _______
-        Connection
+        gmso.Connection
             The Connection object or equivalent Connection object that
             is in the topology
         """
         # Check if an equivalent connection is in the topology
-        equivalent_members = connection.get_equivalent_members()
+        equivalent_members = connection._equivalent_member_hash()
         if equivalent_members in self._unique_connections:
-            warnings.warn('An equivalent connection already exists.')
+            warnings.warn('An equivalent connection already exists. '
+                        'Providing the existing equivalent Connection.')
             return self._unique_connections[equivalent_members]
 
         for conn_member in connection.connection_members:

@@ -110,3 +110,19 @@ class TestAngle(BaseTest):
 
         top.add_connection(angle_not_eq)
         assert top.n_angles == 2
+
+    def test_equivalent_members_set(self):
+        site1 = Site(name="SiteA")
+        site2 = Site(name="SiteB")
+        site3 = Site(name="SiteC")
+
+        angle = Angle([site1, site2, site3])
+        angle_eq = Angle([site3, site2, site1])
+        angle_not_eq = Angle([site1, site3, site2])
+
+        assert (tuple(angle_eq.connection_members)
+                in angle.equivalent_members())
+        assert (tuple(angle.connection_members)
+                in angle_eq.equivalent_members())
+        assert not (tuple(angle.connection_members)
+                in angle_not_eq.equivalent_members())

@@ -123,3 +123,20 @@ class TestImproper(BaseTest):
         assert top.n_impropers == 1
         top.add_connection(improper_not_eq)
         assert top.n_impropers == 2
+
+    def test_equivalent_members_set(self):
+        site1 = Site(name="SiteA")
+        site2 = Site(name="SiteB")
+        site3 = Site(name="SiteC")
+        site4 = Site(name="SiteD")
+
+        improper = Improper([site1, site2, site3, site4])
+        improper_eq = Improper([site1, site3, site2, site4])
+        improper_not_eq = Improper([site2, site3, site1, site4])
+
+        assert (tuple(improper_eq.connection_members)
+                in improper.equivalent_members())
+        assert (tuple(improper.connection_members)
+                in improper_eq.equivalent_members())
+        assert not (tuple(improper.connection_members)
+                in improper_not_eq.equivalent_members())

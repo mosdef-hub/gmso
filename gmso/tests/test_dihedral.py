@@ -124,3 +124,22 @@ class TestDihedral(BaseTest):
 
         top.add_connection(dihedral_not_eq)
         assert top.n_dihedrals == 2
+
+    def test_equivalent_members_set(self):
+        site1 = Site(name="SiteA")
+        site2 = Site(name="SiteB")
+        site3 = Site(name="SiteC")
+        site4 = Site(name="SiteD")
+
+        dihedral = Dihedral([site1, site2, site3, site4])
+        dihedral_eq = Dihedral([site4, site3, site2, site1])
+        dihedral_not_eq = Dihedral([site4, site2, site3, site1])
+
+
+        assert (tuple(dihedral_eq.connection_members)
+                in dihedral.equivalent_members())
+        assert (tuple(dihedral.connection_members)
+                in dihedral_eq.equivalent_members())
+        assert not (tuple(dihedral.connection_members)
+                in dihedral_not_eq.equivalent_members())
+

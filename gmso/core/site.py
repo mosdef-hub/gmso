@@ -73,11 +73,10 @@ class Site(object):
     def add_connection(self, connection):
         connection = _validate_connection(self, connection)
 
-        if connection:
-            equivalent_members = connection.get_equivalent_members()
-            self._unique_connections.update(
-                {equivalent_members : connection})
-            self._connections.add(connection)
+        equivalent_members = connection._equivalent_member_hash()
+        self._unique_connections.update(
+            {equivalent_members : connection})
+        self._connections.add(connection)
 
 
     @property
@@ -201,9 +200,10 @@ def _validate_connection(site, connection):
         raise GMSOError("Error: Site not in connection members. Cannot add the connection.")
 
     # Check if an equivalent connection is in the topology
-    equivalent_members = connection.get_equivalent_members()
+    equivalent_members = connection._equivalent_member_hash()
     if equivalent_members in site._unique_connections:
-        warnings.warn('An equivalent connection already exists.')
+        warnings.warn('An equivalent Connection already exists. '
+                        'Providing the existing equivalent Connection.')
         return site._unique_connections[equivalent_members]
 
     return connection

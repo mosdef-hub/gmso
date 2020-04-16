@@ -92,3 +92,16 @@ class TestBond(BaseTest):
         top.add_connection(bond)
         top.add_connection(bond_eq)
         assert top.n_bonds == 1
+
+    def test_equivalent_members_set(self):
+        site1 = Site(name="SiteA")
+        site2 = Site(name="SiteB")
+
+        bond = Bond([site1, site2])
+        bond_eq = Bond([site2, site1])
+
+        assert (tuple(bond_eq.connection_members)
+                in bond.equivalent_members())
+        assert (tuple(bond.connection_members)
+                in bond_eq.equivalent_members())
+

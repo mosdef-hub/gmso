@@ -45,13 +45,13 @@ class Improper(Connection):
         super(Improper, self).__init__(connection_members=connection_members,
                 connection_type=connection_type, name=name)
 
-    def get_equivalent_members(self):
-        """Get a unique dataset representing the connection
+    def equivalent_members(self):
+        """Get a set of the equivalent connection member tuples
 
         Returns
         _______
-        tuple
-            A unique tuple to represent the connection members
+        frozenset
+            A unique set of tuples of equivalent connection members
 
         Notes
         _____
@@ -59,13 +59,38 @@ class Improper(Connection):
             i, j, k, l == i, k, j, l
         where i, j, k, and l are the connection members.
         """
+        equiv_members = [self.connection_members[0],
+                         self.connection_members[2],
+                         self.connection_members[1],
+                         self.connection_members[3]]
 
-        return tuple([
+        return frozenset([
+                tuple(self.connection_members),
+                tuple(equiv_members)
+                ])
+
+    def _equivalent_member_hash(self):
+        """Get a unique hash representing the connection
+
+        Returns
+        _______
+        int
+            A unique hash to represent the connection members
+
+        Notes
+        _____
+        For an improper:
+            i, j, k, l == i, k, j, l
+        where i, j, k, and l are the connection members.
+        Here j and k are interchangeable and i and l are fixed.
+        """
+
+        return hash(tuple([
             self.connection_members[0],
             self.connection_members[3],
             frozenset([self.connection_members[1],
                        self.connection_members[2]])
-            ])
+            ]))
 
 def _validate_four_partners(connection_members):
     """Ensure 4 partners are involved in Improper"""

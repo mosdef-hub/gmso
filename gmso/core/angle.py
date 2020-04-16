@@ -35,13 +35,13 @@ class Angle(Connection):
         super(Angle, self).__init__(connection_members=connection_members,
                 connection_type=connection_type, name=name)
 
-    def get_equivalent_members(self):
-        """Get a unique dataset representing the connection
+    def equivalent_members(self):
+        """Get a set of the equivalent connection member tuples
 
         Returns
         _______
-        tuple
-            A unique tuple to represent the connection members
+        frozenset
+            A unique set of tuples of equivalent connection members
 
         Notes
         _____
@@ -49,12 +49,32 @@ class Angle(Connection):
             i, j, k == k, j, i
         where i, j, and k are the connection members.
         """
+        return frozenset([
+                tuple(self.connection_members),
+                tuple(reversed(self.connection_members))
+                ])
 
-        return tuple([
+    def _equivalent_member_hash(self):
+        """Get a hash representing the connection
+
+        Returns
+        _______
+        int (hash)
+            A unique hash to represent the connection members
+
+        Notes
+        _____
+        For an angle:
+            i, j, k == k, j, i
+        where i, j, and k are the connection members.
+        Here, j is fixed and i and k are replaceable.
+        """
+
+        return hash(tuple([
             self.connection_members[1],
             frozenset([self.connection_members[0],
                        self.connection_members[2]])
-            ])
+            ]))
 
 def _validate_three_partners(connection_members):
     """Ensure 3 partners are involved in Angle"""
