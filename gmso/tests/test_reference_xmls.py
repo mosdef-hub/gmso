@@ -6,7 +6,7 @@ from gmso.core.forcefield import ForceField
 from gmso.utils.testing import allclose
 from gmso.tests.utils import get_path
 from gmso.tests.base_test import BaseTest
-from gmso.lib.potential_templates import MiePotential
+from gmso.lib.potential_templates import PotentialTemplateLibrary
 
 
 class TestForceFieldFromXML(BaseTest):
@@ -118,8 +118,8 @@ class TestForceFieldFromXML(BaseTest):
 
     def test_noble_mie_xml(self):
         ff = ForceField(get_path('noble_mie.xml'))
-
-        ref_expr = MiePotential().expression
+        templates = PotentialTemplateLibrary()
+        ref_expr = templates['MiePotential'].expression
 
         assert len(ff.atom_types) == 4
         assert len(ff.bond_types) == 0

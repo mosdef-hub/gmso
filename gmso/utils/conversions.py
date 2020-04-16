@@ -3,8 +3,7 @@ import sympy
 import unyt as u
 
 import gmso
-from gmso.lib.potential_templates import RyckaertBellemansTorsionPotential
-from gmso.lib.potential_templates import OPLSTorsionPotential
+from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.exceptions import GMSOError 
 
 def convert_opls_to_ryckaert(opls_connection_type):
@@ -18,12 +17,13 @@ def convert_opls_to_ryckaert(opls_connection_type):
     for OPLS and RB torsions. OPLS torsions are defined with
     phi_cis = 0 while RB torsions are defined as phi_trans = 0.
     """
-
+    templates = PotentialTemplateLibrary()
+    opls_torsion_potential = templates['OPLSTorsionPotential']
     valid_connection_type = False
     if ( opls_connection_type.independent_variables ==
-         OPLSTorsionPotential().independent_variables ):
+         opls_torsion_potential.independent_variables ):
         if sympy.simplify(opls_connection_type.expression -
-                          OPLSTorsionPotential().expression) == 0:
+                          opls_torsion_potential.expression) == 0:
             valid_connection_type = True
     if not valid_connection_type:
         raise GMSOError('Cannot use convert_opls_to_ryckaert '
@@ -44,10 +44,10 @@ def convert_opls_to_ryckaert(opls_connection_type):
             'c4' : (-4. * f4),
             'c5' : 0. * u.Unit('kJ/mol')
     }
-
-    name = RyckaertBellemansTorsionPotential().name
-    expression = RyckaertBellemansTorsionPotential().expression
-    variables = RyckaertBellemansTorsionPotential().independent_variables
+    ryckaert_bellemans_torsion_potential = templates['RyckaertBellemansTorsionPotential']
+    name = ryckaert_bellemans_torsion_potential.name
+    expression = ryckaert_bellemans_torsion_potential.expression
+    variables = ryckaert_bellemans_torsion_potential.independent_variables
 
     ryckaert_connection_type = gmso.DihedralType(
             name=name,
@@ -64,12 +64,15 @@ def convert_ryckaert_to_opls(ryckaert_connection_type):
     for OPLS and RB torsions. OPLS torsions are defined with
     phi_cis = 0 while RB torsions are defined as phi_trans = 0.
     """
+    templates = PotentialTemplateLibrary()
+    ryckaert_bellemans_torsion_potential = templates['RyckaertBellemansTorsionPotential']
+    opls_torsion_potential = templates['OPLSTorsionPotential']
 
     valid_connection_type = False
     if ( ryckaert_connection_type.independent_variables ==
-         RyckaertBellemansTorsionPotential().independent_variables ):
+         ryckaert_bellemans_torsion_potential.independent_variables ):
         if sympy.simplify(ryckaert_connection_type.expression -
-                RyckaertBellemansTorsionPotential().expression) == 0:
+                ryckaert_bellemans_torsion_potential.expression) == 0:
             valid_connection_type = True
     if not valid_connection_type:
         raise GMSOError('Cannot use convert_ryckaert_to_opls '
@@ -96,9 +99,9 @@ def convert_ryckaert_to_opls(ryckaert_connection_type):
             'k4' : ((-1./4.) * c4)
     }
 
-    name = OPLSTorsionPotential().name
-    expression = OPLSTorsionPotential().expression
-    variables = OPLSTorsionPotential().independent_variables
+    name = opls_torsion_potential.name
+    expression = opls_torsion_potential.expression
+    variables = opls_torsion_potential.independent_variables
 
     opls_connection_type = gmso.DihedralType(
             name=name,

@@ -1,0 +1,5 @@
+{
+  "name": "HarmonicTorsionPotential",
+  "expression": "0.5 * k * (phi - phi_eq)**2",
+  "independent_variables": "phi"
+}

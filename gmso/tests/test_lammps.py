@@ -6,13 +6,12 @@ from gmso.tests.utils import get_path
 import unyt as u
 
 class TestLammpsWriter(BaseTest):
-    def test_write_lammps(self, topology_site):
-        write_lammpsdata(topology_site(), filename='data.lammps')
+    def test_write_lammps(self, typed_ar_system):
+        write_lammpsdata(typed_ar_system, filename='data.lammps')
 
-    def test_write_lammps_triclinic(self, topology_site):
-        top = topology_site()
-        top.box = Box(lengths=[1,1,1], angles=[60,90,120])
-        write_lammpsdata(top, filename='data.triclinic')
+    def test_write_lammps_triclinic(self, typed_ar_system):
+        typed_ar_system.box = Box(lengths=[1,1,1], angles=[60,90,120])
+        write_lammpsdata(typed_ar_system, filename='data.triclinic')
 
     def test_water_lammps(self, typed_water_system):
         write_lammpsdata(typed_water_system, 'data.water')
