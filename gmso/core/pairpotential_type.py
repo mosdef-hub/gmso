@@ -17,7 +17,7 @@ class PairPotentialType(Potential):
     its nonbonded interactions that doesn't follow usual cross-average combining rules.
     The functional form of the potential is stored as a
     `sympy` expression and the parameters, with units, are stored explicitly.
-    The AtomTypes that are used to define the pair potential type are stored as
+    The names of AtomTypes in the pair potential type are stored as strings in 
     `member_types`.
 
     Parameters
@@ -107,7 +107,7 @@ class PairPotentialType(Potential):
 
 def _validate_two_member_type_names(types):
     """Ensure exactly 2 partners are involved in PairPotentialType"""
-    if len(types) != 2 and len(types) != 0:
+    if len(types) != 2:
         raise GMSOError("Trying to create a PairPotentialType"
                         "with {} constituent types".format(len(types)))
     if not all([isinstance(t, str) for t in types]):

@@ -124,7 +124,7 @@ class Topology(object):
         A collection of all the expression for the DihedralTypes in the topology
     
     pairpotential_type_expressions : list of gmso.PairpotentialType.expression objects
-        A collection of all the expression for the DihedralTypes in the topology
+        A collection of all the expression for the PairPotentialTypes in the topology
 
     improper_type_expressions : list of gmso.ImproperType.expression objects
         A collection of all the expression for the ImproperTypes in the topology
@@ -579,11 +579,11 @@ class Topology(object):
         self.is_typed(updated=True)
 
     def add_pairpotential(self, pair_potential_type):
-        """Add a new pair potential into the topology that overrides the combin        ation rule.
+        """Add a new pair potential into the topology that overrides the combination rule.
 
         See Also:
         ---------
-        gmso.PairPotentialType: A description of nonbonded interaction between 2        atomtypes
+        gmso.PairPotentialType: A description of nonbonded interaction between 2 atomtypes
         """
         if not isinstance(pair_potential_type, PairPotentialType):
             raise GMSOError(
