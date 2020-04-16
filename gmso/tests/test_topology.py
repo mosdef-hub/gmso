@@ -487,3 +487,13 @@ class TestTopology(BaseTest):
         prev_idx = typed_methylnitroaniline.get_index(angle_type_to_test)
         typed_methylnitroaniline.angles[0].connection_type.name = 'changed name'
         assert typed_methylnitroaniline.get_index(angle_type_to_test) != prev_idx
+
+    def test_topology_get_index_dihedral_type(self, typed_chloroethanol):
+        assert typed_chloroethanol.get_index(typed_chloroethanol.dihedrals[0].connection_type) == 0
+        assert typed_chloroethanol.get_index(typed_chloroethanol.dihedrals[5].connection_type) == 3
+
+    def test_topology_get_index_dihedral_type_after_change(self, typed_methylnitroaniline):
+        dihedral_type_to_test = typed_methylnitroaniline.dihedrals[0].connection_type
+        prev_idx = typed_methylnitroaniline.get_index(dihedral_type_to_test)
+        typed_methylnitroaniline.dihedrals[0].connection_type.name = 'changed name'
+        assert typed_methylnitroaniline.get_index(dihedral_type_to_test) != prev_idx
