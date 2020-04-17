@@ -69,8 +69,8 @@ class TestConnection(BaseTest):
         assert ref_connection != same_connection
 
         # Members may be equivalent
-        assert (ref_connection._equivalent_member_hash ==
-                same_connection._equivalent_member_hash)
+        assert (ref_connection._equivalent_member_hash() ==
+                same_connection._equivalent_member_hash())
 
     def test_add_connection_same_sites(self):
         site1 = Site()
