@@ -1,6 +1,7 @@
 from warnings import warn
 import unyt as u
 import numpy as np
+from sympy.parsing.sympy_parser import parse_expr
 
 import gmso
 from gmso.utils.io import import_, has_openmm, has_simtk_unit
@@ -147,6 +148,10 @@ def apply_system(top, system, site_map=None):
             mm.HarmonicAngleForces: _from_harmonic_angle,
             mm.PeriodicTorsionForce: _from_periodic_torsion,
             mm.RBTorsionForce: _from_rb_torsion,
+            mm.CustomNonbondedForce: _from_custom_nonbonded,
+            mm.CustomBondForce: _from_custom_bond,
+            mm.CustomAngleForce: _from_custom_angle,
+            mm.CustomTosionForce: _from_custom_torsion
                         }
     # Rebuild site_map if not provided
     if site_map:
@@ -200,7 +205,7 @@ def _from_nonbonded(top, nonbonded_force, site_map):
 
 
     # Build up unique atom types dict, key is a tuple of
-    # {charge, sigmac, index}
+    # (charge, sigmac, epsilon)
     unique_types = dict()
     for id in site_map:
         charge, sigma, epsilon = nonbonded_force.getParticleParameters(id)
@@ -210,10 +215,10 @@ def _from_nonbonded(top, nonbonded_force, site_map):
         sigma = sigma._value * u.nm
         epsilon = epsilon._value * u.Unit('kJ/mol')
         type_key = (charge, sigma, epsilon)
-        # Add atom type to the unique type dict
+        # Add AtomType to the unique type dict
         if type_key not in unique_types:
             # Create GMSO AtomType with default LJ equation
-            unique_types[key] = gmso.AtomType(
+            unique_types[type_key] = gmso.AtomType(
                 name='AtomType_{}'.format(len(unique_types)),
                 charge=charge,
                 parameters={
@@ -229,7 +234,7 @@ def _from_nonbonded(top, nonbonded_force, site_map):
     top.update_topology()
     return top
 
-def _from_harmonic_bond(top, harmonic_bond, site_map):
+def _from_harmonic_bond(top, harmonic_bond_force, site_map):
     """ Helper function to convert harmonic bond force parameters
 
     Create GMSO BondType based on OpenMM HarmonicBondForce
@@ -240,7 +245,7 @@ def _from_harmonic_bond(top, harmonic_bond, site_map):
     ----------
     top : gmso.Topology
         The host topolgy.
-    harmonic_bond : openmm.HarmonicBondForce
+    harmonic_bond_force : openmm.HarmonicBondForce
         The harmonic bond force that need to be converted
     site_map : dict
         Dictionary mapping id -> site, specific for OpenMM
@@ -255,7 +260,7 @@ def _from_harmonic_bond(top, harmonic_bond, site_map):
     # match with the number of bonds in the force
     msg = 'Number of bonds in Topology is differrent than \
            that in the OpenMM Force.'
-    assert top.n_bonds == harmonic_bond.getNumBonds()
+    assert top.n_bonds == harmonic_bond_force.getNumBonds()
 
     # Build up bond map {{site1, site2}: bond}
     # Where {site1, site2} is a frozen set
@@ -267,8 +272,8 @@ def _from_harmonic_bond(top, harmonic_bond, site_map):
     # Build up unique bond types dict, key is a tuple of
     # k (quadratic constant) and r_eq (equilibrium length)
     unique_types = dict()
-    for idx in range(harmonic_bond.getNumBonds()):
-        id1, id2, r_eq, k = harmonic_bond.getBondParameters(idx)
+    for idx in range(harmonic_bond_force.getNumBonds()):
+        id1, id2, r_eq, k = harmonic_bond_force.getBondParameters(idx)
         r_eq = r_eq._value * u.nm
         k = k._value * u.Unit('kJ/(nm**2 * mol')
         type_key = (k, r_eq)
@@ -283,7 +288,7 @@ def _from_harmonic_bond(top, harmonic_bond, site_map):
     top.update_topology()
     return top
 
-def _from_harmonic_angle(top, harmonic_angle, site_map):
+def _from_harmonic_angle(top, harmonic_angle_force, site_map):
     """ Helper function to convert harmonic angle force parameters
 
     Create GMSO Angles and AngleType based on OpenMM
@@ -294,7 +299,7 @@ def _from_harmonic_angle(top, harmonic_angle, site_map):
     ----------
     top : gmso.Topolgy
         The host topology.
-    harmonic_angle : openmm.HarmonicAngleForce
+    harmonic_angle_force : openmm.HarmonicAngleForce
         The harmonic angle force that need to be converted
     site_map : dict
         Dictionary mapping id -> site, specific for OpenMM
@@ -306,14 +311,16 @@ def _from_harmonic_angle(top, harmonic_angle, site_map):
     """
     # Sanity checks, make sure the existing number of angles match with the
     # number of angles with the number of angles in the force
-    msg = 'Number of angles in Topology is different thatn \
+    msg = 'Number of angles in Topology is different than \
            that in the OpenMM Force.'
+    assert top.n_angles == harmonic_angle_force.getNumAngles()
+
     # Create GMSO angles
     # Build up unique angle types dict, key is a tuple of
     # k (force constant) and theta_eq (equilibrium angle)
     unique_types = dict()
-    for idx in range(harmonic_angle.getNumAngles()):
-        id1, id2, id3, k, theta_eq = harmonic_angle.getAngleParameters(idx)
+    for idx in range(harmonic_angle_force.getNumAngles()):
+        id1, id2, id3, k, theta_eq = harmonic_angle_force.getAngleParameters(idx)
         k = k_value * u.Unit('kJ / (rad**2 * mol')
         theta_eq = theta_eq._value * u.rad
         type_key = (k, theta_eq)
@@ -434,12 +441,12 @@ def _from_rb_torsion(top, rb_torsion_foce, site_map):
     unique_types = dict()
     for idx in range(rb_torsion_force.getNumTorsions()):
         id1, id2, id3, id4, c0, c1, c2, c3, c4, c5 = rb_torsion_force.getTorsionParameters(idx)
-        c0 = c0._value * u.('kJ/mol')
-        c1 = c1._value * u.('kJ/mol')
-        c2 = c2._value * u.('kJ/mol')
-        c3 = c3._value * u.('kJ/mol')
-        c4 = c4._value * u.('kJ/mol')
-        c5 = c5._value * u.('kJ/mol')
+        c0 = c0._value * u.Unit('kJ/mol')
+        c1 = c1._value * u.Unit('kJ/mol')
+        c2 = c2._value * u.Unit('kJ/mol')
+        c3 = c3._value * u.Unit('kJ/mol')
+        c4 = c4._value * u.Unit('kJ/mol')
+        c5 = c5._value * u.Unit('kJ/mol')
         type_key = (c0, c1, c2, c3, c4, c5)
 
         # Create GMSO Dihedral, will need to update when
@@ -455,7 +462,6 @@ def _from_rb_torsion(top, rb_torsion_foce, site_map):
         if type_key not in unique_types:
             # Create GMOS DihedralType with default periodic
             # torsion equation
-            expression =
             unique_types[type_key] = gmso.DihedralType(
                         parameters={'c0': c0, 'c1': c1, 'c2': c2, 'c3': c3,
                                     'c4': c4, 'c5': c5},
@@ -468,6 +474,167 @@ def _from_rb_torsion(top, rb_torsion_foce, site_map):
 
     top.update_topology()
     return top
+
+def _from_custom_nonbonded(top, custom_nonbonded_force, site_map):
+    """ Helper function to convert custom nonbonded force parameters
+
+    Basic conversion of the OpenMM.CustomNonBondedForce.
+    Only handle the basic feature (no Exception stuff), will
+    add more supports in the future.
+
+    Parameters
+    ----------
+    top : gmso.Topology
+        The host topology.
+    custom_nonbonded_force : openmm.CustomNonBondedForce
+        The custom nonbonded force that need to be converted.
+    site_map : dict
+        Dictionary mapping id -> site, specific for OpenMM
+        conversion.
+
+    Return
+    ------
+    top : gmso.Topology
+        Topology with updated atom types
+    """
+    # Sanity checks to make sure, top, custom nonbonded force,
+    # and site_map belong to the same system.
+    msg1 = 'The number of atoms in the Topology is different \
+           than that in OpenMM Force.'
+    assert top.n_sites == custom_nonbonded_force.getNumParticles(), msg
+    msg2 = 'The number of atoms in the Topology is different \
+           than ithat in site_map'
+    assert top.n_sites == len(site_map)
+
+    # Handle global equation and default parameters
+    raw_expr = custom_nonbonded_force.getEnergyFunction()
+    raw_equation = raw_expr.split(';')[0].replace('^','**')
+    equation = parse_expr(raw_equation)
+
+    # Honestly, not sure if these default values are helpful,
+    # since they may have been integrated into the individual
+    # forces
+    default_values = raw_expr.split(';')[1:]
+    default_dict = {'charge': 0.0}
+    for var in default_values:
+        name, val = var.split('=')
+        default_dict[name.strip()] = float(val.strip())
+
+    var_num = custom_nonbonded_force.getNumPerParticleParameters()
+    var_name = list()
+    for i in range(var_num):
+        var_name.append(custom_nonbonded_force.getPerParticleParameterName(i))
+
+    # Build up unique atom type dict, key is tuple of
+    # (var1, var2, ...)
+
+    unique_types = dict()
+    for id in site_map:
+        params = dict()
+        type_key = list()
+        # What happens to unit? Need to figure out later
+        for i in range(var_num):
+            var_val = custom_nonbonded_force.getParticleParameters(id)[i]
+            params[var_name[i]] = var_val
+            type_key.append(var_val)
+        type_key = tuple(type_key)
+        # Add atom type to the unique type dict
+        if type_key not in unique_types:
+            # Create GMSO AtomType with custom equation
+            unique_types[type_key] = gmso.AtomType(
+                name='AtomType_{}'.format(len(unique_types)),
+                charge=params.pop('charge', None),
+                paramters=params)
+        # Add atom type to site
+        site_map[id].atom_type = unique_types[type_key]
+
+    top.update_topology()
+    return top
+
+def _from_custom_bond(top, custom_bond_force, site_map):
+    """ Helper function to convert custom bond force parameters
+
+    Create GMSO BondType based on OpenMM CustomBondForce
+    and assign it to existing bond. Right now, this method
+    only handles the most basic case.
+
+    Parameters
+    ----------
+    top : gmso.Topology
+        The host topolgy.
+    custom_bond_force : openmm.CustomBondForce
+        The harmonic bond force that need to be converted
+    site_map : dict
+        Dictionary mapping id -> site, specific for OpenMM
+        conversion
+
+    Return
+    ------
+    top : gmso.Topology
+        Topology with updated bond types
+    """
+    # Sanity checks, make sure the existing number of bonds
+    # match with the number of bonds in the force
+    msg = 'Number of bonds in Topology is different than \
+          that in the OpenMM Force.'
+    assert top.n_bonds == custom_bond_force.getNumBonds()
+
+    # Handle global equation and default parameters
+    raw_expr = custom_bond_force.getEnergyFunction()
+    raw_equation = raw_expr.split(';')[0].replace('^','**')
+    equation = parse_expr(raw_equation)
+
+    # Honestly, not sure if these default values are helpful,
+    # since they may have been integrated into the individual
+    # forces
+    default_values = raw_expr.split(';')[1:]
+    defualt_dict = dict()
+    for var in default_values:
+        name, val = var.split('=')
+        default_dict[name.strip()] = float(val.strip())
+
+    var_num = custom_bond_force.getNumPerBondParameters()
+    var_name = list()
+    for i in range(var_num):
+        var_name.append(custom_bond_force.getPerBondParameterName(i))
+
+    # Build up bond map {{site1, site2}:bond}
+    # Where {site1, site2} is a frozen set
+    bond_map = dict()
+    for bond in top.bonds():
+        bond_key = frozenset(bond.connection_members)
+        bond_map[bond_key] = bond
+
+    # Build up unique bond types dict, key is a tuple of
+    # all the variables in the custom equation
+    unique_types = dict()
+    for idx in range(custom_bond_force.getNumBonds()):
+        id1, id2 = custom_bond_force.getBondParameters(idx)[0:2]
+        params = dict()
+        type_key = list()
+        # What happens to unit? Need to figure out latrer
+        for i in range(var_num):
+            var_val = custom_bond_foce.getBondParameters(idx)[i]
+            params[var_name[i]] = var_val
+            type_key.append(var_val)
+        type_key = tuple(type_key)
+        # Add bond type to the unique type dict
+        if type_key not in unique_types:
+            # Create GMSO BondType with custom equation
+            unique_types[type_key] = gmso.BondType(
+                                        parameters=params)
+        bond_key = frozenset([site_map[id1], site_map[id2]])
+        bond_map[bond_key].connection_type = unique_types[type_key]
+
+    top.update_topology()
+    return top
+
+def _from_custom_angle(top, custom_angle_force, site_map):
+    return None
+
+def _from_custom_torsion(top, custom_torsion_force, site_map):
+    return None
+
 
 def to_openmm(topology, openmm_object='topology'):
     """
