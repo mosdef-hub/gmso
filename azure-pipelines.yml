@@ -55,7 +55,7 @@ jobs:
           conda config --add channels janschulz
           conda config --add channels conda-forge
           conda config --add channels mosdef
-        displayName: Add relavent channels
+        displayName: Add relevant channels
 
       - bash: |
           conda create -n test-environment
@@ -63,21 +63,19 @@ jobs:
           conda install --yes --file requirements-test.txt
           conda install pytest
           pip install -e .
-        displayName: Install requirements, Install branch
+        displayName: Install requirements and testing branch
 
       - bash: |
           source activate test-environment
-          python -m pytest -v gmso/tests/ 
-          python -m pytest -v --cov=gmso --cov-report=html --pyargs gmso
-        displayName: Run Tests
+          pip install pytest-azurepipelines
+          python -m pytest -v --cov=gmso --cov-report=html --pyargs gmso --no-coverage-upload
+        displayName: Run tests
 
       - bash: |
           source activate test-environment
-          coverage xml
-          codecov --file ./coverage.xml --token 4020cb2c-5787-485a-92f2-5d106dff85a1
-          coverage html
+          bash <(curl -s https://codecov.io/bash) -C $(Build.SourceVersion)
         condition: and( eq( variables['Agent.OS'], 'Linux' ), eq( variables['python.version'], '3.7' ) )
-        displayName: Upload Coverage Report
+        displayName: Upload coverage report to codecov.io
       
       - task: PublishCodeCoverageResults@1
         inputs: 
@@ -85,4 +83,4 @@ jobs:
           summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
           reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
         condition: and( eq( variables['Agent.OS'], 'Linux' ), eq( variables['python.version'], '3.7' ) )
-        displayName: Publish Coverage Report
+        displayName: Publish coverage report to Azure dashboard
