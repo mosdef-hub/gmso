@@ -357,7 +357,7 @@ def _from_periodic_torsion(top, periodic_torsion_force,
     top : gmso.Topolgy
         The host topology.
     periodic_torsion_force : openmm.PeriodicTorsionForce
-        The harmonic angle force that need to be converted
+        The harmonic torsion force that need to be converted
     site_map : dict
         Dictionary mapping id -> site, specific for OpenMM
         covnersion
@@ -507,6 +507,7 @@ def _from_custom_nonbonded(top, custom_nonbonded_force, site_map):
     assert top.n_sites == len(site_map)
 
     # Handle global equation and default parameters
+    # (Currently do not handle global parameters)
     raw_expr = custom_nonbonded_force.getEnergyFunction()
     raw_equation = raw_expr.split(';')[0].replace('^','**')
     equation = parse_expr(raw_equation)
@@ -544,6 +545,7 @@ def _from_custom_nonbonded(top, custom_nonbonded_force, site_map):
             unique_types[type_key] = gmso.AtomType(
                 name='AtomType_{}'.format(len(unique_types)),
                 charge=params.pop('charge', None),
+                expression=raw_equation,
                 paramters=params)
         # Add atom type to site
         site_map[id].atom_type = unique_types[type_key]
@@ -580,6 +582,7 @@ def _from_custom_bond(top, custom_bond_force, site_map):
     assert top.n_bonds == custom_bond_force.getNumBonds()
 
     # Handle global equation and default parameters
+    # (Currently do not support global parameters)
     raw_expr = custom_bond_force.getEnergyFunction()
     raw_equation = raw_expr.split(';')[0].replace('^','**')
     equation = parse_expr(raw_equation)
@@ -612,9 +615,9 @@ def _from_custom_bond(top, custom_bond_force, site_map):
         id1, id2 = custom_bond_force.getBondParameters(idx)[0:2]
         params = dict()
         type_key = list()
-        # What happens to unit? Need to figure out latrer
+        # What happens to unit? Need to figure out later
         for i in range(var_num):
-            var_val = custom_bond_foce.getBondParameters(idx)[i]
+            var_val = custom_bond_foce.getBondParameters(idx)[i+2]
             params[var_name[i]] = var_val
             type_key.append(var_val)
         type_key = tuple(type_key)
@@ -622,7 +625,9 @@ def _from_custom_bond(top, custom_bond_force, site_map):
         if type_key not in unique_types:
             # Create GMSO BondType with custom equation
             unique_types[type_key] = gmso.BondType(
-                                        parameters=params)
+                name='BondType_{}'.format(len(unique_types)),
+                expression=raw_equation,
+                parameters=params)
         bond_key = frozenset([site_map[id1], site_map[id2]])
         bond_map[bond_key].connection_type = unique_types[type_key]
 
@@ -630,10 +635,166 @@ def _from_custom_bond(top, custom_bond_force, site_map):
     return top
 
 def _from_custom_angle(top, custom_angle_force, site_map):
-    return None
+    """ Helper function to convert custom angle force parameters
+
+    Create GMSO Angles and AngleType based on OpenMM
+    CustomAngleForce. Right now, this method only handles
+    the most basic case.
+
+    Parameters
+    ----------
+    top : gmso.Topolgy
+        The host topology.
+    custom_angle_force : openmm.CustomAngleForce
+        The custom angle force that need to be converted
+    site_map : dict
+        Dictionary mapping id -> site, specific for OpenMM
+        covnersion
+
+    Return
+    ------
+    top : gmso.Topology
+    """
+    # Sanity checks, make sure the existing angles match with the
+    # number of angles with the number of angles in the force
+    msg = 'Number of angles in Topology is different than \
+           that in the OpenMM Force.'
+    assert top.n_angles == custom_angle_force.getNumAngles()
+
+    # Handle global equation and default parameters
+    # (Currently do not support global parameters)
+    raw_expr = custom_angle_force.getEnergyFunction()
+    raw_equation = raw_expr.split(';')[0].replaces('^','**')
+    equation = parse_expr(raw_equation)
+
+    # Honestly, not sure if these default values are helpful
+    # since they may have been integrated into the individual
+    # forces
+    default_values = raw_expr.split(';')[1:]
+    default_dict = dict()
+    for var in default_values:
+        name, val = var.split('=')
+        default_dict[name.strip()] = float(val.strip())
+
+    var_num = custom_angle_force.getNumPerAngleParameters()
+    var_name = list()
+    for i in range(var_num):
+        var_name.append(custom_angle_force.getPerAngleParameterName(i))
+
+    # Create GMSO angles
+    # Build up unique angle types dict, key is a tuple of
+    # all the variables in the custom equation
+    unique_types = dict()
+    for idx in range(custom_angle_force.getNumAngles()):
+        id1, id2, id3 = custom_angle_force.getAngleParameters(idx)[0:3]
+        params = dict()
+        type_key = list()
+
+        # Create GMSO Angle and add it to top
+        angle = gmso.Angle(connection_members=[
+                                site_map[id1],
+                                site_map[id2],
+                                site_map[id3]])
+        top.add(angle)
+
+        # What happens to unit? Need to figure out later
+        for i in range(var_num):
+            var_val = custom_angle_force.getAngleParameters(idx)[i+3]
+            params[var_name[i]] = var_val
+            type_key.append(var_val)
+        type_key = tuple(type_key)
+        # Add angle type to the unique type dict
+        if type_key not in unique_types:
+            # Create GMSO AngleType with custom equation
+            unique_types[type_key] = gmso.AngleType(
+                name='AngleType_{}'.format(len(unique_types)),
+                expression=raw_equation,
+                parameters=params)
+
+    top.update_topology()
+    return top
 
 def _from_custom_torsion(top, custom_torsion_force, site_map):
-    return None
+    """ Helper function to convert custom torsion force parameters
+
+    Create GMSO Dihedral and DihedralType based on OpenMM
+    CustomTorsionForce. Right now, this method only handles
+    the most basic case.
+
+    Parameters
+    ----------
+    top : gmso.Topolgy
+        The host topology.
+    custom_torsion_force : openmm.CustomTorsionForce
+        The custom torsion force that need to be converted
+    site_map : dict
+        Dictionary mapping id -> site, specific for OpenMM
+        covnersion
+
+    Return
+    ------
+    top : gmso.Topology
+    """
+    # Sanity checks, make sure the existing number of
+    # dihedrals match with the number of dihedrals in the
+    # force
+    msg = 'Number of dihedrals in Topology is different than \
+           that in the OpenMM Force.'
+    assert top.n_dihedrals == periodic_torsion_force.getNumTorsions()
+
+    # Handle global equation and default parameters
+    # (Currently do not support global parameters)
+    raw_expr = custom_torsion_force.getEnergyFunction()
+    raw_equation = raw_expr.split(';')[0].replaces('^','**')
+    equation = parse_expr(raw_equation)
+
+    # Hnoestly, not sure if these default values are helpful
+    # since they may have been integrated into the individual
+    # forces
+    default_values = raw_expr.split(';')[1:]
+    default_dict = dict()
+    for var in default_values:
+        name, val = var.split('=')
+        default_dict[name.strip()] = float(val.strip())
+
+    var_num = custom_torsion_force.getNumPerTorsionParameters()
+    var_name = list()
+    for i in range(var_num):
+        var_name.append(custom_torsion_force.getPerTorsionParameterName(i))
+
+    # Create GMSO dihedral
+    # Build up unique dihedral types dict, key is a tuple of
+    # all the variables in the custom equation
+    unique_types = dict()
+    for idx in range(custom_torsion_force.getNumTorsions()):
+        id1, id2, id3, id4 = custom_torsion_force.getTorsionParameters(idx)[0:4]
+        params = dict()
+        type_key = list()
+
+        # Create GMSO Dihedral and add it to top
+        dihedral = gmso.Dihedral(connection_members=[
+                                        site_map[id1],
+                                        site_map[id2],
+                                        site_map[id3],
+                                        site_map[id4]])
+        top.add(dihedral)
+
+        # What happens to unit? Need to figure out later
+        for i in range(var_num):
+            var_val = custom_torsion_force.getTorsionParameteres(idx)[i+4]
+            params[var_nam[i]] = var_val
+            type_key.append(var_val)
+        type_key = tuple(type_key)
+        # Add dihedral type to the unique type dict
+        if type_key not in unique_types:
+            # Create GMSO DihedralType with custom equation
+            unique_types = gmso.DihedralType(
+                name='DihedralType_{}'.format(len(unique_types)),
+                expression=raw_equation,
+                parameters=params)
+
+    top.update_topology()
+    return top
 
 
 def to_openmm(topology, openmm_object='topology'):
