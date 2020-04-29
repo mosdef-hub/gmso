@@ -72,13 +72,9 @@ class ImproperType(ParametricPotential):
 
         super(ImproperType, self).__init__(name=name, expression=expression,
                                            parameters=parameters, independent_variables=independent_variables,
-                                           topology=topology)
-        self._set_ref = IMPROPER_TYPE_DICT
+                                           topology=topology,
+                                           dict_ref=IMPROPER_TYPE_DICT)
         self._member_types = _validate_four_member_type_names(member_types)
-
-    @property
-    def set_ref(self):
-        return self._set_ref
 
     @property
     def member_types(self):

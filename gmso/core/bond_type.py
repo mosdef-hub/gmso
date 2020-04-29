@@ -45,8 +45,7 @@ class BondType(ParametricPotential):
                  parameters=None,
                  independent_variables=None,
                  member_types=None,
-                 topology=None,
-                 set_ref='bond_type_set'):
+                 topology=None):
         if parameters is None:
             parameters = {
                 'k': 1000 * u.Unit('kJ / (nm**2)'),
@@ -60,13 +59,9 @@ class BondType(ParametricPotential):
 
         super(BondType, self).__init__(name=name, expression=expression,
                                        parameters=parameters, independent_variables=independent_variables,
-                                       topology=topology)
-        self._set_ref = BOND_TYPE_DICT
+                                       topology=topology,
+                                       dict_ref=BOND_TYPE_DICT)
         self._member_types = _validate_two_member_type_names(member_types)
-
-    @property
-    def set_ref(self):
-        return self._set_ref
 
     @property
     def member_types(self):

@@ -62,13 +62,9 @@ class AngleType(ParametricPotential):
             member_types = list()
         super(AngleType, self).__init__(name=name, expression=expression,
                                         parameters=parameters, independent_variables=independent_variables,
-                                        topology=topology)
+                                        topology=topology,
+                                        dict_ref=ANGLE_TYPE_DICT)
         self._member_types = _validate_three_member_type_names(member_types)
-        self._set_ref = ANGLE_TYPE_DICT
-
-    @property
-    def set_ref(self):
-        return self._set_ref
 
     @property
     def member_types(self):

@@ -50,10 +50,8 @@ class AtomType(ParametricPotential):
         Set of other atom types that this atom type overrides
     definition : str
         SMARTS string defining this atom type
-    topology: gmso.core.Topology, default=None
+    topology : gmso.core.Topology, default=None
         The topology of which this atom_type is a part of, default=None
-    set_ref: str
-        The string name of the bookkeeping set in gmso class.
 
     """
 
@@ -81,7 +79,8 @@ class AtomType(ParametricPotential):
             expression=expression,
             parameters=parameters,
             independent_variables=independent_variables,
-            topology=topology)
+            topology=topology,
+            dict_ref=ATOM_TYPE_DICT)
         self._mass = _validate_mass(mass)
         self._charge = _validate_charge(charge)
         self._atomclass = _validate_str(atomclass)
@@ -89,12 +88,7 @@ class AtomType(ParametricPotential):
         self._overrides = _validate_set(overrides)
         self._description = _validate_str(description)
         self._definition = _validate_str(definition)
-        self._set_ref = ATOM_TYPE_DICT
         self._validate_expression_parameters()
-
-    @property
-    def set_ref(self):
-        return self._set_ref
 
     @property
     def charge(self):

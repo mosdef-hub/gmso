@@ -52,8 +52,7 @@ class DihedralType(ParametricPotential):
                  parameters=None,
                  independent_variables=None,
                  member_types=None,
-                 topology=None,
-                 set_ref='dihedral_type_set'):
+                 topology=None):
         if parameters is None:
             parameters = {
                 'k': 1000 * u.Unit('kJ / (deg**2)'),
@@ -67,9 +66,10 @@ class DihedralType(ParametricPotential):
             member_types = list()
 
         super(DihedralType, self).__init__(name=name, expression=expression,
-                                           parameters=parameters, independent_variables=independent_variables,
-                                           topology=topology)
-        self._set_ref = DIHEDRAL_TYPE_DICT
+                                           parameters=parameters,
+                                           independent_variables=independent_variables,
+                                           topology=topology,
+                                           dict_ref=DIHEDRAL_TYPE_DICT)
         self._member_types = _validate_four_member_type_names(member_types)
 
     @property

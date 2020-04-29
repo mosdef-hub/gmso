@@ -47,7 +47,7 @@ class ParametricPotential(AbstractPotential):
                  parameters=None,
                  independent_variables=None,
                  topology=None,
-                 set_ref=None
+                 dict_ref=None
                  ):
         super(ParametricPotential, self).__init__(
             name=name,
@@ -61,13 +61,8 @@ class ParametricPotential(AbstractPotential):
 
         self._parameters = _validate_parameters(parameters)
         self._validate_expression_parameters()
-
-        if topology is not None:
-            self._topology = topology
-            self._dict_ref = set_ref
-        else:
-            self._topology = None
-            self._dict_ref = None
+        self._topology = topology
+        self._dict_ref = dict_ref
 
     @AbstractPotential.name.setter
     @confirm_dict_existence
@@ -104,6 +99,10 @@ class ParametricPotential(AbstractPotential):
     @topology.setter
     def topology(self, top):
         self._topology = top
+
+    @property
+    def dict_ref(self):
+        return self._dict_ref
 
     @confirm_dict_existence
     def set_expression(self,

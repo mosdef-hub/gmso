@@ -149,7 +149,7 @@ class Topology(object):
         self._improper_types = {}
         self._improper_types_idx = {}
         self._combining_rule = 'lorentz'
-        self._set_refs = {
+        self._dict_refs = {
             ATOM_TYPE_DICT: self._atom_types,
             BOND_TYPE_DICT: self._bond_types,
             ANGLE_TYPE_DICT: self._angle_types,
@@ -678,7 +678,7 @@ class Topology(object):
             raise GMSOError(f'cannot reindex {ref}. It should be one of '
                             f'{ANGLE_TYPE_DICT}, {BOND_TYPE_DICT}, '
                             f'{ANGLE_TYPE_DICT}, {DIHEDRAL_TYPE_DICT}, {IMPROPER_TYPE_DICT}')
-        for i, ref_member in enumerate(self._set_refs[ref].keys()):
+        for i, ref_member in enumerate(self._dict_refs[ref].keys()):
             self._index_refs[ref][ref_member] = i
 
     def __repr__(self):
