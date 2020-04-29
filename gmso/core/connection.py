@@ -1,5 +1,5 @@
 import warnings
-from gmso.core.potential import Potential
+from gmso.core.potential import ParametricPotential
 from gmso.core.site import Site
 from gmso.exceptions import GMSOError
 
@@ -15,7 +15,7 @@ class Connection(object):
 
     connection_members : list of gmso.Site
         A list of constituents in this connection, in order.
-    connection_type : gmso.Potential
+    connection_type : gmso.ParametricPotential
         An instance of gmso.Potential that describes the potential, function and parameters of this interaction
     name : str, optional, default="Connection"
         A unique name for the connection. Used for writing hoomdxml bonds/angles/dihedrals.
@@ -84,7 +84,7 @@ def _validate_connection_type(c_type):
     """Ensure given connection_type is the gmso.Potential"""
     if c_type is None:
         warnings.warn("Non-parametrized Connection detected")
-    elif not isinstance(c_type, Potential):
+    elif not isinstance(c_type, ParametricPotential):
         raise GMSOError("Supplied non-Potential {}".format(c_type))
     return c_type
 

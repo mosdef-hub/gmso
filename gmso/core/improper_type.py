@@ -1,11 +1,11 @@
 import warnings
 import unyt as u
 
-from gmso.core.potential import Potential
+from gmso.core.potential import ParametricPotential
 from gmso.exceptions import GMSOError
 from gmso.utils._constants import IMPROPER_TYPE_DICT
 
-class ImproperType(Potential):
+class ImproperType(ParametricPotential):
     """A descripton of the interaction between 4 bonded partners.
 
     This is a subclass of the gmso.core.Potential superclass.

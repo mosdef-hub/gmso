@@ -9,7 +9,7 @@ from gmso.core.bond import Bond
 from gmso.core.angle import Angle
 from gmso.core.dihedral import Dihedral
 from gmso.core.improper import Improper
-from gmso.core.potential import Potential
+from gmso.core.potential import ParametricPotential
 from gmso.core.atom_type import AtomType
 from gmso.core.bond_type import BondType
 from gmso.core.angle_type import AngleType
@@ -493,7 +493,7 @@ class Topology(object):
         for c in self.connections:
             if c.connection_type is None:
                 warnings.warn('Non-parametrized Connection {} detected'.format(c))
-            elif not isinstance(c.connection_type, Potential):
+            elif not isinstance(c.connection_type, ParametricPotential):
                 raise GMSOError('Non-Potential {} found'
                                     'in Connection {}'.format(c.connection_type, c))
             elif c.connection_type not in self._connection_types:

@@ -3,21 +3,19 @@ import warnings
 import sympy
 import unyt as u
 
+from gmso.abc.abstract_potential import AbstractPotential
 from gmso.utils.misc import unyt_to_hashable
 from gmso.utils.decorators import confirm_dict_existence
 from gmso.exceptions import GMSOError
 
 
-class Potential(object):
-    """An abstract potential class.
+class ParametricPotential(AbstractPotential):
+    """A parametric potential class
 
-    Potential stores a general interaction between components of a chemical
-    topology that can be specified by a mathematical expression. The functional
-    form of the potential is stored as a `sympy` expression and the parameters
-    are stored explicitly. This class is agnostic to the instantiation of the
-    potential, which can be e.g. a non-bonded potential, a bonded potential, an
-    angle potential, a dihedral potential, etc. and is designed to be inherited
-    by classes that represent these potentials.
+    In addition to the attributes from the parent class, a ParametricPotential class
+    has parameters, which are values for the dependent variables in its expression.
+    Generally, a parametric potential is stored in topology which is the container for
+    the potential.
 
     Parameters
     ----------
@@ -35,48 +33,57 @@ class Potential(object):
     independent_variables : str or sympy.Symbol or list or set thereof
         The independent variables in the expression of the potential.
     topology: gmso.core.Topology, the topology of which this potential is a part of, default=None
-    set_ref: (str), the string name of the bookkeeping set in topology class.
-
     """
+
+    __slots__ = (
+        '_parameters',
+        '_topology',
+        '_dict_ref',
+    )
 
     def __init__(self,
                  name="Potential",
-                 expression='a*x+b',
+                 expression=None,
                  parameters=None,
                  independent_variables=None,
-                 template=False,
-                 topology=None
+                 topology=None,
+                 set_ref=None
                  ):
+        super(ParametricPotential, self).__init__(
+            name=name,
+            expression=expression,
+            independent_variables=independent_variables
+        )
+
         if parameters is None:
-            parameters = {'a': 1.0*u.dimensionless,
-                          'b': 1.0*u.dimensionless}
+            parameters = {'a': 1.0 * u.dimensionless,
+                          'b': 1.0 * u.dimensionless}
 
-        if independent_variables is None:
-            independent_variables = {'x'}
-
-        self._name = name
-        if not template:
-            self._parameters = _validate_parameters(parameters)
-        self._independent_variables = _validate_independent_variables(independent_variables)
-        self._expression = _validate_expression(expression)
-        self._template = template
+        self._parameters = _validate_parameters(parameters)
+        self._validate_expression_parameters()
 
         if topology is not None:
             self._topology = topology
+            self._dict_ref = set_ref
         else:
             self._topology = None
+            self._dict_ref = None
 
-        if not template:
-            self._validate_expression_parameters()
-
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
+    @AbstractPotential.name.setter
     @confirm_dict_existence
     def name(self, val):
         self._name = val
+
+    @AbstractPotential.independent_variables.setter
+    @confirm_dict_existence
+    def independent_variables(self, indep_vars):
+        self._independent_variables = self._validate_independent_variables(indep_vars)
+
+    @AbstractPotential.expression.setter
+    @confirm_dict_existence
+    def expression(self, expression):
+        self._expression = self._validate_expression(expression)
+        self._validate_expression_parameters()
 
     @property
     def parameters(self):
@@ -91,30 +98,6 @@ class Potential(object):
         self._validate_expression_parameters()
 
     @property
-    def independent_variables(self):
-        return self._independent_variables
-
-    @independent_variables.setter
-    @confirm_dict_existence
-    def independent_variables(self, indep_vars):
-        self._independent_variables = _validate_independent_variables(indep_vars)
-
-    @property
-    def template(self):
-        return self._template
-
-    @property
-    def expression(self):
-        return self._expression
-
-    @expression.setter
-    @confirm_dict_existence
-    def expression(self, expression):
-        self._expression = _validate_expression(expression)
-
-        self._validate_expression_parameters()
-
-    @property
     def topology(self):
         return self._topology
 
@@ -123,7 +106,10 @@ class Potential(object):
         self._topology = top
 
     @confirm_dict_existence
-    def set_expression(self, expression=None, parameters=None, independent_variables=None):
+    def set_expression(self,
+                       expression=None,
+                       parameters=None,
+                       independent_variables=None):
         """Set the expression, parameters, and independent variables for this potential.
 
         Parameters
@@ -143,7 +129,7 @@ class Potential(object):
         while the non-passed parameters default to the existing values
        """
         if expression is not None:
-            self._expression = _validate_expression(expression)
+            self._expression = self._validate_expression(expression)
 
         if parameters is None:
             parameters = self._parameters
@@ -158,7 +144,7 @@ class Potential(object):
             self._parameters.update(parameters)
 
         if independent_variables is not None:
-            self._independent_variables = _validate_independent_variables(independent_variables)
+            self._independent_variables = self._validate_independent_variables(independent_variables)
 
         if not set(parameters.keys()).isdisjoint(self._expression.free_symbols):
             raise ValueError('Mismatch between parameters and expression symbols')
@@ -170,15 +156,15 @@ class Potential(object):
         parameter_symbols = sympy.symbols(set(self._parameters.keys()))
         independent_variable_symbols = self._independent_variables
         used_symbols = parameter_symbols.union(independent_variable_symbols)
-        unused_symbols = self.expression.free_symbols - used_symbols
+        unused_symbols = self._expression.free_symbols - used_symbols
         if len(unused_symbols) > 0:
             warnings.warn('You supplied parameters with '
                           'unused symbols {}'.format(unused_symbols))
 
-        if used_symbols != self.expression.free_symbols:
+        if used_symbols != self._expression.free_symbols:
             symbols = sympy.symbols(set(self.parameters.keys()))
-            if symbols != self.expression.free_symbols:
-                missing_syms = self.expression.free_symbols - symbols - self._independent_variables
+            if symbols != self._expression.free_symbols:
+                missing_syms = self._expression.free_symbols - symbols - self._independent_variables
                 if missing_syms:
                     raise ValueError("Missing necessary parameters to evaluate "
                                      "potential expression. Missing symbols: {}"
@@ -206,7 +192,7 @@ class Potential(object):
         )
 
     def __repr__(self):
-        desc = "<Potential {}, id {}>".format(self._name, id(self))
+        desc = "<ParametricPotential {}, id {}>".format(self._name, id(self))
         return desc
 
     @classmethod
@@ -224,7 +210,7 @@ class Potential(object):
 
         Returns
         -------
-        gmso.Potential
+        gmso.ParametricPotential
             The potential object created
 
         Raises
@@ -240,8 +226,7 @@ class Potential(object):
                    expression=potential_template.expression,
                    independent_variables=potential_template.independent_variables,
                    parameters=parameters,
-                   topology=topology,
-                   template=False)
+                   topology=topology)
 
 
 def _validate_parameters(parameters):
@@ -262,37 +247,3 @@ def _validate_parameters(parameters):
     return parameters
 
 
-def _validate_independent_variables(indep_vars):
-    """Check to see that independent_variables is a set of valid sympy symbols"""
-    if isinstance(indep_vars, str):
-        indep_vars = {sympy.symbols(indep_vars)}
-    elif isinstance(indep_vars, sympy.symbol.Symbol):
-        indep_vars = {indep_vars}
-    elif isinstance(indep_vars, (list, set)):
-        if all([isinstance(val, sympy.symbol.Symbol) for val in indep_vars]):
-            pass
-        elif all([isinstance(val, str) for val in indep_vars]):
-            indep_vars = set([sympy.symbols(val) for val in indep_vars])
-        else:
-            raise ValueError('`independent_variables` argument was a list '
-                             'or set of mixed variables. Please enter a '
-                             'list or set of either only strings or only '
-                             'sympy symbols')
-    else:
-        raise ValueError("Please enter a string, sympy expression, "
-                         "or list or set thereof for independent_variables")
-
-    return indep_vars
-
-
-def _validate_expression(expression):
-    """Check to see that an expression is a valid sympy expression"""
-    if expression is None or isinstance(expression, sympy.Expr):
-        pass
-    elif isinstance(expression, str):
-        expression = sympy.sympify(expression)
-    else:
-        raise ValueError("Please enter a string, sympy expression, "
-                         "or None for expression")
-
-    return expression

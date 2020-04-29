@@ -1,13 +1,13 @@
 import unyt as u
 import warnings
 
-from gmso.core.potential import Potential
+from gmso.core.potential import ParametricPotential
 from gmso.utils.decorators import confirm_dict_existence
 from gmso.exceptions import GMSOError
 from gmso.utils._constants import BOND_TYPE_DICT
 
 
-class BondType(Potential):
+class BondType(ParametricPotential):
     """A descripton of the interaction between 2 bonded partners.
 
     This is a subclass of the gmso.core.Potential superclass.

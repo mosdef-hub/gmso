@@ -1,7 +1,8 @@
 import json
 from pathlib import Path
+from collections import namedtuple
 
-from gmso.core.potential import Potential
+from gmso.abc.abstract_potential import AbstractPotential
 from gmso.utils.singleton import Singleton
 from gmso.exceptions import GMSOError
 
@@ -24,21 +25,44 @@ def _load_template_json(item, json_dir=JSON_DIR):
         return potential_dict
 
 
-class PotentialTemplate(Potential):
+class PotentialTemplate(AbstractPotential):
+    """A Template Potential class
+
+    This class inherits from the abstract Potential class and is an immutable,
+    readonly container for storing expressions and independent variables for a
+    potential. `ParametricPotential.from_template`, this can be used to form a
+    meaningful parametric Potential Type using objects from this instance.
+    """
     def __init__(self,
                  name='PotentialTemplate',
                  expression='4*epsilon*((sigma/r)**12 - (sigma/r)**6)',
-                 independent_variables='r',
-                 template=True):
+                 independent_variables='r'):
         if not isinstance(independent_variables, set):
             independent_variables = set(independent_variables.split(','))
 
         super(PotentialTemplate, self).__init__(
             name=name,
             expression=expression,
-            independent_variables=independent_variables,
-            template=template,
-        )
+            independent_variables=independent_variables)
+
+    @AbstractPotential.name.setter
+    def name(self, name):
+        raise AttributeError('Properties for a potential template cannot be changed')
+
+    @AbstractPotential.expression.setter
+    def expression(self):
+        raise AttributeError('Properties for a potential template cannot be changed')
+
+    @AbstractPotential.independent_variables.setter
+    def independent_variables(self):
+        raise AttributeError('Properties for a potential template cannot be changed')
+
+    def set_expression(self, **kwargs):
+        raise NotImplementedError
+
+    def __repr__(self):
+        desc = "<PotentialTemplate {}, id {}>".format(self._name, id(self))
+        return desc
 
 
 class PotentialTemplateLibrary(Singleton):

@@ -1,13 +1,13 @@
 import warnings
 import unyt as u
 
-from gmso.core.potential import Potential
+from gmso.core.potential import ParametricPotential
 from gmso.exceptions import GMSOError
 from gmso.utils.decorators import confirm_dict_existence
 from gmso.utils._constants import ANGLE_TYPE_DICT
 
 
-class AngleType(Potential):
+class AngleType(ParametricPotential):
     """A descripton of the interaction between 3 bonded partners.
 
     This is a subclass of the gmso.core.Potential superclass.

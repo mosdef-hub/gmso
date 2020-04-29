@@ -12,6 +12,5 @@ class TestTemplate(BaseTest):
         )
     
         assert template.expression == sympy.sympify('a*x+b')
-        assert template.template
-    
+
         assert template.expression.free_symbols - template.independent_variables is not None

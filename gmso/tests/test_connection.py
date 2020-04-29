@@ -1,7 +1,7 @@
 import pytest
 
 from gmso.core.connection import Connection
-from gmso.core.potential import Potential
+from gmso.core.potential import ParametricPotential
 from gmso.core.site import Site
 from gmso.tests.base_test import BaseTest
 from gmso.exceptions import GMSOError
@@ -27,7 +27,7 @@ class TestConnection(BaseTest):
 
         assert site1.n_connections == 0
         assert site2.n_connections == 0
-        c_type = Potential()
+        c_type = ParametricPotential()
         name = 'name'
 
         connect = Connection(connection_members=[site1, site2],

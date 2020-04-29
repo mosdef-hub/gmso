@@ -2,13 +2,13 @@ import warnings
 
 import unyt as u
 
-from gmso.core.potential import Potential
+from gmso.core.potential import ParametricPotential
 from gmso.utils.misc import unyt_to_hashable
 from gmso.utils.decorators import confirm_dict_existence
 from gmso.utils._constants import ATOM_TYPE_DICT
 
 
-class AtomType(Potential):
+class AtomType(ParametricPotential):
     """A description of non-bonded interacitons between sites.
 
     This is a subclass of the gmso.core.Potential superclass.
