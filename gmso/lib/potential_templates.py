@@ -1,6 +1,5 @@
 import json
 from pathlib import Path
-from collections import namedtuple
 
 from gmso.abc.abstract_potential import AbstractPotential
 from gmso.utils.singleton import Singleton
