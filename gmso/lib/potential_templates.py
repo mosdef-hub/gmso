@@ -49,11 +49,11 @@ class PotentialTemplate(AbstractPotential):
         raise AttributeError('Properties for a potential template cannot be changed')
 
     @AbstractPotential.expression.setter
-    def expression(self):
+    def expression(self, expression):
         raise AttributeError('Properties for a potential template cannot be changed')
 
     @AbstractPotential.independent_variables.setter
-    def independent_variables(self):
+    def independent_variables(self, independent_variables):
         raise AttributeError('Properties for a potential template cannot be changed')
 
     def set_expression(self, **kwargs):
