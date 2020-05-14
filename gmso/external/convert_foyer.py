@@ -34,11 +34,15 @@ def from_foyer(foyer_xml, gmso_xml):
             'periodic_torsion_dihedral_types': []
             }
 
+    # Try to load in AtomType section
+    # Load in AtomTypes section otherwise
     atom_types_el = foyer_xml_tree.findall('AtomType')
+    if len(atom_types_el) == 0:
+        atom_types_el = foyer_xml_tree.findall('AtomTypes')
+
     for atom_types in atom_types_el:
         for atom_type in atom_types.getiterator('Type'):
             f_kwargs['atom_types'].append(atom_type)
-
     nonbonded_force_el = foyer_xml_tree.findall('NonbondedForce')
     for atom_types in nonbonded_force_el:
         f_kwargs['coulomb14scale'] = atom_types.attrib['coulomb14scale']
@@ -68,7 +72,7 @@ def from_foyer(foyer_xml, gmso_xml):
 
     _write_gmso_xml(gmso_xml, **f_kwargs)
 
-def to_foyer(gmso_xml):
+def to_foyer(gmso_xml, foyer_xml):
     """Convert a gmso XML to a foyer XML
 
     Parameters
@@ -81,6 +85,45 @@ def to_foyer(gmso_xml):
     foyer_xml : XML
         An XML file in the foyer format
     """
+
+    gmso_xml_tree = etree.parse(gmso_xml)
+    f_kwargs = {
+            'atom_types': [],
+            'non_bonded_forces': [],
+            'harmonic_bond_types': [],
+            'harmonic_angle_types': [],
+            'urey_bradley_angle_types': [],
+            'periodic_torsion_dihedral_types': []
+            }
+
+    # Try to load in AtomType section
+    # Load in AtomTypes section otherwise
+    atom_types_el = gmso_xml_tree.findall('AtomTypes')
+    for atom_types in atom_types_el:
+        for atom_type in atom_types.getiterator('AtomType'):
+            f_kwargs['atom_types'].append(atom_type)
+
+    harmonic_bond_force_el = gmso_xml_tree.findall('BondTypes')
+    for hbf in harmonic_bond_force_el:
+        for bond_type in hbf.getiterator('BondType'):
+            f_kwargs['harmonic_bond_types'].append(bond_type)
+
+    harmonic_angle_force_el = gmso_xml_tree.findall('AngleTypes')
+    for haf in harmonic_angle_force_el:
+        for angle_type in haf.getiterator('AngleType'):
+            f_kwargs['harmonic_angle_types'].append(angle_type)
+
+    urey_bradley_angle_el = gmso_xml_tree.findall('AmoebaUreyBradleyForce')
+    for ubf in urey_bradley_angle_el:
+        for angle_type in ubf.getiterator('UreyBradley'):
+            f_kwargs['urey_bradley_angle_types'].append(angle_type)
+
+    periodic_torsion_force_el = gmso_xml_tree.findall('DihedralTypes')
+    for ptf in periodic_torsion_force_el:
+        for dihedral_type in ptf.getiterator('Proper'):
+            f_kwargs['periodic_torsion_dihedral_types'].append(dihedral_type)
+
+    _write_foyer_xml(foyer_xml, **f_kwargs)
 
 def _write_gmso_xml(gmso_xml, **kwargs):
     """Given the set of keyword arguments, write a gmso topology's forcefield xml file"""
@@ -98,7 +141,7 @@ def _write_gmso_xml(gmso_xml, **kwargs):
 
     ffMeta = etree.SubElement(forceField, 'FFMetaData')
     units = etree.SubElement(ffMeta, 'Units')
-    units.attrib['energy'] = 'kcal/mol'
+    units.attrib['energy'] = 'kJ/mol'
     units.attrib['mass'] = 'amu'
     units.attrib['charge'] = 'coulomb'
     units.attrib['distance'] = 'nm'
@@ -159,7 +202,7 @@ def _write_gmso_xml(gmso_xml, **kwargs):
 
     # PeriodicTorsionDihedralTypes
     periodicTorsionDihedralTypes = etree.SubElement(forceField, 'DihedralTypes')
-    periodicTorsionDihedralTypes.attrib['expression'] = 'k * (1 + cos(n * shi - delta))'
+    periodicTorsionDihedralTypes.attrib['expression'] = 'k * (1 + cos(n * phi - delta))'
     
 
     for atom_type in ff_kwargs['atom_types']:
@@ -283,3 +326,74 @@ def _write_gmso_xml(gmso_xml, **kwargs):
 
     ff_tree = etree.ElementTree(forceField)
     ff_tree.write(gmso_xml, pretty_print=True, xml_declaration=True, encoding='utf-8')
+
+def _write_foyer_xml(foyer_xml, **kwargs):
+    """Given the set of keyword arguments, write a gmso topology's forcefield xml file"""
+    ff_kwargs = {
+        'atom_types': kwargs.get('atom_types', []),
+        'harmonic_bond_types': kwargs.get('harmonic_bond_types', []),
+        'harmonic_angle_types': kwargs.get('harmonic_angle_types', []),
+        'urey_bradley_angle_types': kwargs.get('urey_bradley_angle_types', []),
+        'periodic_torsion_dihedral_types': kwargs.get('periodic_torsion_dihedral_types', []),
+    }
+
+    forceField = etree.Element('ForceField')
+
+    atomtypes = etree.SubElement(forceField, 'AtomTypes')
+    nonbonded = etree.SubElement(forceField, 'NonbondedForce')
+    for atomtype in ff_kwargs['atom_types']:
+        at = etree.SubElement(atomtypes, 'Type')
+        nb = etree.SubElement(nonbonded, 'Atom')
+         
+        # Set AtomType information
+        at.attrib['name'] = atomtype.get('name')
+        at.attrib['class'] = atomtype.get('atomclass')
+        at.attrib['element'] = atomtype.get('element')
+        at.attrib['def'] = atomtype.get('definition')
+        # TODO: Get Mass from Element
+        # TODO: Get DOI info
+
+        # Set Nonbonded information
+        nb.attrib['type'] = atomtype.get('name')
+        parameters = atomtype[0]
+        parameter_dict = {}
+        for parameter in parameters:
+            parameter_dict[parameter.get('name')] = parameter.get('value')
+        nb.attrib['charge'] = parameter_dict['q']
+        nb.attrib['sigma'] = parameter_dict['sigma']
+        nb.attrib['epsilon'] = parameter_dict['ep']
+    
+    # HarmonicBondTypes
+    bondtypes = etree.SubElement(forceField, 'HarmonicBondForce')
+    for bondtype in ff_kwargs['harmonic_bond_types']:
+        bt = etree.SubElement(bondtypes, 'Bond')
+
+        # Set BondType information
+        bt.attrib['class1'] = bondtype.get('type1')
+        bt.attrib['class2'] = bondtype.get('type2')
+        parameters = bondtype[0]
+        parameter_dict = {}
+        for parameter in parameters:
+            parameter_dict[parameter.get('name')] = parameter.get('value')
+        bt.attrib['length'] = parameter_dict['r_eq']
+        bt.attrib['k'] = parameter_dict['k']
+
+    # HarmonicAngleTypes
+    angletypes = etree.SubElement(forceField, 'HarmonicAngleForce')
+    for angletype in ff_kwargs['harmonic_angle_types']:
+        angt = etree.SubElement(angletypes, 'Angle')
+
+        # Set AngleType information
+        angt.attrib['class1'] = angletype.get('type1')
+        angt.attrib['class2'] = angletype.get('type2') 
+        angt.attrib['class3'] = angletype.get('type2')
+        parameters = angletype[0]
+        parameter_dict = {}
+        for parameter in parameters:
+            parameter_dict[parameter.get('name')] = parameter.get('value')
+        bt.attrib['angle'] = parameter_dict['theta_eq']
+        bt.attrib['k'] = parameter_dict['k']
+
+
+    ff_tree = etree.ElementTree(forceField)
+    ff_tree.write(foyer_xml, pretty_print=True)
