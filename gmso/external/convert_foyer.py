@@ -31,6 +31,7 @@ def from_foyer(foyer_xml, gmso_xml):
             'harmonic_bond_types': [],
             'harmonic_angle_types': [],
             'urey_bradley_angle_types': [],
+            'rb_torsion_dihedral_types': [],
             'periodic_torsion_dihedral_types': []
             }
 
@@ -69,6 +70,11 @@ def from_foyer(foyer_xml, gmso_xml):
     for ptf in periodic_torsion_force_el:
         for dihedral_type in ptf.getiterator('Proper'):
             f_kwargs['periodic_torsion_dihedral_types'].append(dihedral_type)
+
+    rb_torsion_force_el = foyer_xml_tree.findall('RBTorsionForce')
+    for rbf in rb_torsion_force_el:
+        for dihedral_type in rbf.getiterator('Proper'):
+            f_kwargs['rb_torsion_dihedral_types'].append(dihedral_type)
 
     _write_gmso_xml(gmso_xml, **f_kwargs)
 
@@ -134,6 +140,7 @@ def _write_gmso_xml(gmso_xml, **kwargs):
         'harmonic_angle_types': kwargs.get('harmonic_angle_types', []),
         'urey_bradley_angle_types': kwargs.get('urey_bradley_angle_types', []),
         'periodic_torsion_dihedral_types': kwargs.get('periodic_torsion_dihedral_types', []),
+        'rb_torsion_dihedral_types': kwargs.get('rb_torsion_dihedral_types', []),
     }
     forceField = etree.Element('ForceField')
     forceField.attrib['name'] = os.path.splitext(gmso_xml)[0]
@@ -203,7 +210,10 @@ def _write_gmso_xml(gmso_xml, **kwargs):
     # PeriodicTorsionDihedralTypes
     periodicTorsionDihedralTypes = etree.SubElement(forceField, 'DihedralTypes')
     periodicTorsionDihedralTypes.attrib['expression'] = 'k * (1 + cos(n * phi - delta))'
-    
+
+    # RBTorsionDihedralTypes
+    rbTorsionDihedralTypes = etree.SubElement(forceField, 'DihedralTypes')
+    rbTorsionDihedralTypes.attrib['expression'] = "c0 * cos(phi)**0 + c1 * cos(phi)**1 + c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + c5 * cos(phi)**5"
 
     for atom_type in ff_kwargs['atom_types']:
         thisAtomType = etree.SubElement(atomTypes, 'AtomType')
@@ -323,6 +333,33 @@ def _write_gmso_xml(gmso_xml, **kwargs):
         periodicTorsionDihedralTypes.insert(0, periodicTorsionDihedralTypesParamsUnitsDef_del)
     
 
+    for i, dihedral_type in enumerate(ff_kwargs['rb_torsion_dihedral_types']):
+        thisDihedralType = etree.SubElement(rbTorsionDihedralTypes, 'DihedralType')
+        thisDihedralType.attrib['name'] = dihedral_type.get('name', 'DihedralType-Proper-{}'.format(i+1))
+        thisDihedralType.attrib['type1'] = dihedral_type.get('type1', 'tp1')
+        thisDihedralType.attrib['type2'] = dihedral_type.get('type2', 'tp2')
+        thisDihedralType.attrib['type3'] = dihedral_type.get('type3', 'tp3')
+        thisDihedralType.attrib['type4'] = dihedral_type.get('type4', 'tp4')
+
+        parameters = etree.SubElement(thisDihedralType, 'Parameters')
+        
+        j = 1
+        while dihedral_type.get('c{}'.format(j)):
+            parameter_c_name = 'c{}'.format(j)
+            parameter_c = etree.SubElement(parameters, 'Parameter')
+            parameter_c.attrib['name'] = parameter_c_name
+            parameter_c.attrib['value'] = dihedral_type.get(parameter_c_name)
+
+            parameter_delta = etree.SubElement(parameters, 'Parameter')
+
+            j += 1
+        if j > max_j:
+            max_j = j
+    for k in range(1, max_j):
+        rbTorsionDihedralTypesParamsUnitsDef_c = etree.Element('ParametersUnitDef')
+        rbTorsionDihedralTypesParamsUnitsDef_c.attrib['parameter'] = 'c{}'.format(k)
+        rbTorsionDihedralTypesParamsUnitsDef_c.attrib['unit'] = 'kJ/mol'
+        rbTorsionDihedralTypes.insert(0, rbTorsionDihedralTypesParamsUnitsDef_c)
 
     ff_tree = etree.ElementTree(forceField)
     ff_tree.write(gmso_xml, pretty_print=True, xml_declaration=True, encoding='utf-8')
@@ -335,6 +372,7 @@ def _write_foyer_xml(foyer_xml, **kwargs):
         'harmonic_angle_types': kwargs.get('harmonic_angle_types', []),
         'urey_bradley_angle_types': kwargs.get('urey_bradley_angle_types', []),
         'periodic_torsion_dihedral_types': kwargs.get('periodic_torsion_dihedral_types', []),
+        'rb_torsion_dihedral_types': kwargs.get('rb_torsion_dihedral_types', []),
     }
 
     forceField = etree.Element('ForceField')
@@ -393,6 +431,11 @@ def _write_foyer_xml(foyer_xml, **kwargs):
             parameter_dict[parameter.get('name')] = parameter.get('value')
         bt.attrib['angle'] = parameter_dict['theta_eq']
         bt.attrib['k'] = parameter_dict['k']
+
+    # RB Torsions
+    rbtypes = etree.SubElement(forceField, 'RBTorsionForce')
+    #for rbtype in ff_kwargs['rb_torsion_types']:
+    #    rbt = etree.SubElement(rbtypes, 
 
 
     ff_tree = etree.ElementTree(forceField)
