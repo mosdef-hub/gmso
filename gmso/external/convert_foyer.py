@@ -252,8 +252,14 @@ def _write_gmso_xml(gmso_xml, **kwargs):
     for i, bond_type in enumerate(ff_kwargs['harmonic_bond_types']):
         thisBondType = etree.SubElement(harmonicBondTypes, 'BondType')
         thisBondType.attrib['name'] = bond_type.get('name', 'BondType-Harmonic-{}'.format(i+1))
-        thisBondType.attrib['type1'] = bond_type.get('type1', 't1')
-        thisBondType.attrib['type2'] = bond_type.get('type2', 't2')
+        for j, item in enumerate(bond_type.items()):
+            if 'type' in item[0]:
+                thisBondType.attrib['type{}'.format(j+1)] = bond_type.get(
+                        'type{}'.format(j+1), 'c{}'.format(j+1))
+            elif 'class' in item[0]:
+                thisBondType.attrib['type{}'.format(j+1)] = bond_type.get(
+                        'class{}'.format(j+1), 'c{}'.format(j+1))
+
         parameters = etree.SubElement(thisBondType, 'Parameters')
         parameter_k = etree.SubElement(parameters, 'Parameter')
         parameter_k.attrib['name'] = 'k'        
@@ -265,9 +271,13 @@ def _write_gmso_xml(gmso_xml, **kwargs):
     for i, angle_type in enumerate(ff_kwargs['harmonic_angle_types']):
         thisAngleType = etree.SubElement(harmonicAngleTypes, 'AngleType')
         thisAngleType.attrib['name'] = angle_type.get('name', 'AngleType-Harmonic-{}'.format(i+1))
-        thisAngleType.attrib['type1'] = angle_type.get('type1', 't1')
-        thisAngleType.attrib['type2'] = angle_type.get('type2', 't2')
-        thisAngleType.attrib['type3'] = angle_type.get('type3', 't2')
+        for j, item in enumerate(angle_type.items()):
+            if 'type' in item[0]:
+                thisAngleType.attrib['type{}'.format(j+1)] = angle_type.get(
+                        'type{}'.format(j+1), 'c{}'.format(j+1))
+            elif 'class' in item[0]:
+                thisAngleType.attrib['type{}'.format(j+1)] = angle_type.get(
+                        'class{}'.format(j+1), 'c{}'.format(j+1))
         
         parameters = etree.SubElement(thisAngleType, 'Parameters')
         parameter_k = etree.SubElement(parameters, 'Parameter')
@@ -301,10 +311,14 @@ def _write_gmso_xml(gmso_xml, **kwargs):
                 'DihedralType')
         thisDihedralType.attrib['name'] = dihedral_type.get('name',
                 'DihedralType-Periodic-Proper-{}'.format(i+1))
-        thisDihedralType.attrib['type1'] = dihedral_type.get('type1', 'tp1')
-        thisDihedralType.attrib['type2'] = dihedral_type.get('type2', 'tp2')
-        thisDihedralType.attrib['type3'] = dihedral_type.get('type3', 'tp3')
-        thisDihedralType.attrib['type4'] = dihedral_type.get('type4', 'tp4')
+
+        for j, item in enumerate(dihedral_type.items()):
+            if 'type' in item[0]:
+                thisDihedralType.attrib['type{}'.format(j+1)] = dihedral_type.get(
+                        'type{}'.format(j+1), 'c{}'.format(j+1))
+            elif 'class' in item[0]:
+                thisDihedralType.attrib['type{}'.format(j+1)] = dihedral_type.get(
+                        'class{}'.format(j+1), 'c{}'.format(j+1))
 
         parameters = etree.SubElement(thisDihedralType, 'Parameters')
         
@@ -344,10 +358,14 @@ def _write_gmso_xml(gmso_xml, **kwargs):
     for i, dihedral_type in enumerate(ff_kwargs['rb_torsion_dihedral_types']):
         thisDihedralType = etree.SubElement(rbTorsionDihedralTypes, 'DihedralType')
         thisDihedralType.attrib['name'] = dihedral_type.get('name', 'DihedralType-RB-Proper-{}'.format(i+1))
-        thisDihedralType.attrib['type1'] = dihedral_type.get('type1', 'tp1')
-        thisDihedralType.attrib['type2'] = dihedral_type.get('type2', 'tp2')
-        thisDihedralType.attrib['type3'] = dihedral_type.get('type3', 'tp3')
-        thisDihedralType.attrib['type4'] = dihedral_type.get('type4', 'tp4')
+
+        for j, item in enumerate(dihedral_type.items()):
+            if 'type' in item[0]:
+                thisDihedralType.attrib['type{}'.format(j+1)] = dihedral_type.get(
+                        'type{}'.format(j+1), 'c{}'.format(j+1))
+            elif 'class' in item[0]:
+                thisDihedralType.attrib['type{}'.format(j+1)] = dihedral_type.get(
+                        'class{}'.format(j+1), 'c{}'.format(j+1))
 
         parameters = etree.SubElement(thisDihedralType, 'Parameters')
         
