@@ -74,7 +74,7 @@ class TestTopology(BaseTest):
 
     def test_positions_dtype(self):
         top = Topology()
-        site1 = Site(name='site1')
+        site1 = Site(name='site1', position=[0.0, 0.0, 0.0])
         top.add_site(site1)
 
         assert set([type(site.position) for site in top.sites]) == {u.unyt_array}
