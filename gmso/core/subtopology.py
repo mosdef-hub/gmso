@@ -3,7 +3,7 @@ import warnings
 from boltons.setutils import IndexedSet
 
 from gmso.core.topology import Topology
-from gmso.core.site import Site
+from gmso.core.atom import Atom
 
 
 class SubTopology(object):
@@ -79,7 +79,7 @@ class SubTopology(object):
 
         Parameters
         ----------
-        site : gmso.Site
+        site : gmso.Atom
             The site to be added to this sub-topology
 
         Raises
@@ -111,7 +111,7 @@ def _validate_parent(parent):
 
 def _validate_site_addability(site):
     """Ensure a site is a site and not already a part of a top/subtop"""
-    if not isinstance(site, Site):
+    if not isinstance(site, Atom):
         raise TypeError('Argument {} is not a Site. See gmso/core/site.py')
     # TODO: Some sort of a check on site.parent
     return site

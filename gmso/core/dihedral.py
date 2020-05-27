@@ -19,7 +19,7 @@ class Dihedral(Connection):
 
     Parameters
     --------
-    connection_members: list of gmso.Site
+    connection_members: list of gmso.Atom
         4 sites of a dihedral.
     connection_type : gmso.DihedralType, optional, default=None
         DihedralType of this dihedral.

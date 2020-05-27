@@ -8,7 +8,7 @@ import foyer
 from gmso.core.box import Box
 from gmso.core.topology import Topology
 from gmso.core.element import Hydrogen, Oxygen
-from gmso.core.site import Site
+from gmso.core.atom import Atom
 from gmso.core.angle import Angle
 from gmso.core.atom_type import AtomType
 from gmso.core.forcefield import ForceField

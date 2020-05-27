@@ -1,6 +1,6 @@
 import warnings
 from gmso.core.potential import Potential
-from gmso.core.site import Site
+from gmso.core.atom import Atom
 from gmso.exceptions import GMSOError
 
 
@@ -13,7 +13,7 @@ class Connection(object):
     Parameters
     ----------
 
-    connection_members : list of gmso.Site
+    connection_members : list of gmso.Atom
         A list of constituents in this connection, in order.
     connection_type : gmso.Potential
         An instance of gmso.Potential that describes the potential, function and parameters of this interaction
@@ -27,7 +27,6 @@ class Connection(object):
         self._connection_members = _validate_connection_members(connection_members)
         self._connection_type = _validate_connection_type(connection_type)
         self._name = _validate_name(name)
-        self._update_members()
 
     @property
     def connection_members(self):
@@ -53,11 +52,6 @@ class Connection(object):
     def name(self, conname):
         self._name = _validate_name(conname)
 
-    def _update_members(self):
-        for partner in self.connection_members:
-            if self not in partner.connections:
-                partner.add_connection(self)
-
     def __repr__(self):
         descr = '<{}-partner Connection, id {}, '.format(
                 len(self.connection_members), id(self))
@@ -72,7 +66,7 @@ class Connection(object):
 def _validate_connection_members(connection_members):
     """Ensure all elements of entered connection_members are gmso.Site"""
     for partner in connection_members:
-        if not isinstance(partner, Site):
+        if not isinstance(partner, Atom):
             raise GMSOError("Supplied non-Site {}".format(partner))
 
     if len(set(connection_members)) != len(connection_members):

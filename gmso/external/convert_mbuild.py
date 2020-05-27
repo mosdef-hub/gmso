@@ -5,7 +5,7 @@ import unyt as u
 
 from gmso.core.topology import Topology
 from gmso.core.subtopology import SubTopology
-from gmso.core.site import Site
+from gmso.core.atom import Atom
 from gmso.core.bond import Bond
 from gmso.core.box import Box
 from gmso.utils.io import has_mbuild
@@ -85,7 +85,7 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
             for particle in child.particles():
                 pos = particle.xyz[0] * u.nanometer
                 ele = search_method(particle.name)
-                site = Site(name=particle.name, position=pos, element=ele)
+                site = Atom(name=particle.name, position=pos, element=ele)
                 site_map[particle] = site
                 subtop.add_site(site)
     top.update_topology()
@@ -97,7 +97,7 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
 
         pos = particle.xyz[0] * u.nanometer
         ele = search_method(particle.name)
-        site = Site(name=particle.name, position=pos, element=ele)
+        site = Atom(name=particle.name, position=pos, element=ele)
         site_map[particle] = site
 
         # If the top has subtopologies, then place this particle into

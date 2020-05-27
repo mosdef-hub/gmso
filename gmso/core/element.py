@@ -2,12 +2,13 @@ import warnings
 from re import sub
 
 import numpy as np
-from collections import namedtuple
 import unyt as u
+from pydantic import BaseModel
 
 from gmso.exceptions import GMSOError
 
-class Element(namedtuple('Element', 'atomic_number, name, symbol, mass')):
+
+class Element(BaseModel):
     """Chemical element object
 
     Template to create a chemical element.
@@ -20,7 +21,7 @@ class Element(namedtuple('Element', 'atomic_number, name, symbol, mass')):
         Name of the element.
     symbol : str
         Chemical symbol of the element.
-    atom_number : int
+    atomic_number : int
         Atomic number of the element.
     mass : unyt quantity
         Mass of the element.
@@ -30,6 +31,15 @@ class Element(namedtuple('Element', 'atomic_number, name, symbol, mass')):
     Element instance
         An immutable instance of this class.
     """
+    name: str
+    symbol: str
+    atomic_number: int
+    mass: u.unyt_quantity
+
+    class Config:
+        arbitrary_types_allowed = True
+        allow_mutation = False
+
     def __repr__(self):
         return 'Element: {}, symbol: {}, atomic number: {}, mass: {}'.format(
                                                                       self.name, self.symbol,

@@ -23,7 +23,7 @@ class Improper(Connection):
 
     Parameters
     --------
-    connection_members: list of gmso.Site
+    connection_members: list of gmso.Atom
         4 sites of a improper. Central site first, then three
         sites connected to the central site.
     connection_type : gmso.ImproperType, optional, default=None

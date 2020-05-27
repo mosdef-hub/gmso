@@ -14,7 +14,7 @@ class Angle(Connection):
 
     Parameters
     ----------
-    connection_members: list of gmso.Site
+    connection_members: list of gmso.Atom
         3 sites of an angle.
     connection_type : gmso.AngleType, optional, default=None
         AngleType of this angle.
