@@ -8,8 +8,6 @@ import unyt as u
 
 from pydantic import BaseModel, validator, root_validator
 
-from gmso.exceptions import GMSOError
-
 PositionType = Union[Sequence[float], np.ndarray]
 SiteT = TypeVar('SiteT', bound='Site')
 
