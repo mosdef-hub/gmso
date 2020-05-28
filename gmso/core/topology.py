@@ -426,13 +426,13 @@ class Topology(object):
                     self._bond_types_idx[c.connection_type] = len(self._bond_types) - 1
                 if isinstance(c.connection_type, AngleType):
                     self._angle_types[c.connection_type] = c.connection_type
-                    self._angle_types_idx[c.connection_type] = len(self._bond_types) - 1
+                    self._angle_types_idx[c.connection_type] = len(self._angle_types) - 1
                 if isinstance(c.connection_type, DihedralType):
                     self._dihedral_types[c.connection_type] = c.connection_type
-                    self._dihedral_types_idx[c.connection_type] = len(self._bond_types) - 1
+                    self._dihedral_types_idx[c.connection_type] = len(self._dihedral_types) - 1
                 if isinstance(c.connection_type, ImproperType):
                     self._improper_types[c.connection_type] = c.connection_type
-                    self._improper_types_idx[c.connection_type] = len(self._bond_types) - 1
+                    self._improper_types_idx[c.connection_type] = len(self._improper_types) - 1
             elif c.connection_type in self.connection_types:
                 if isinstance(c.connection_type, BondType):
                     c.connection_type = self._bond_types[c.connection_type]
