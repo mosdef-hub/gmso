@@ -94,14 +94,26 @@ def to_foyer(gmso_xml, foyer_xml):
 
     gmso_xml_tree = etree.parse(gmso_xml)
     f_kwargs = {
+            'ffmetadata': [],
+            'atom_type_units': [],
             'atom_types': [],
             'non_bonded_forces': [],
+            'bond_type_units': [],
             'harmonic_bond_types': [],
+            'angle_type_units': [],
             'harmonic_angle_types': [],
             'urey_bradley_angle_types': [],
+            'dihedral_units': [],
             'periodic_torsion_dihedral_types': [],
             'rb_torsion_dihedral_types': [],
             }
+
+    # Try to load in FF Metadata
+    ff_metadata = gmso_xml_tree.findall('FFMetaData')[0]
+    ff_units = ff_metadata.findall('Units')[0]
+    units = ['energy', 'mass', 'charge', 'distance']
+    energy_dict = {typ: ff_units.get(typ) for typ in units}
+    f_kwargs['ffmetadata'] = energy_dict
 
     # Try to load in AtomType section
     # Load in AtomTypes section otherwise
@@ -110,15 +122,36 @@ def to_foyer(gmso_xml, foyer_xml):
         for atom_type in atom_types.getiterator('AtomType'):
             f_kwargs['atom_types'].append(atom_type)
 
+    for units in atom_types_el:
+        param_dict = {}
+        for unit in units.getiterator('ParametersUnitDef'):
+            param_dict[unit.get('parameter')] = unit.get('unit')
+
+    f_kwargs['atom_type_units'] = param_dict
+
     harmonic_bond_force_el = gmso_xml_tree.findall('BondTypes')
     for hbf in harmonic_bond_force_el:
         for bond_type in hbf.getiterator('BondType'):
             f_kwargs['harmonic_bond_types'].append(bond_type)
 
+    for units in harmonic_bond_force_el:
+        param_dict = {}
+        for unit in units.getiterator('ParametersUnitDef'):
+            param_dict[unit.get('parameter')] = unit.get('unit')
+
+    f_kwargs['bond_type_units'] = param_dict
+
     harmonic_angle_force_el = gmso_xml_tree.findall('AngleTypes')
     for haf in harmonic_angle_force_el:
         for angle_type in haf.getiterator('AngleType'):
             f_kwargs['harmonic_angle_types'].append(angle_type)
+
+    param_dict = {}
+    for units in harmonic_angle_force_el:
+        for unit in units.getiterator('ParametersUnitDef'):
+            param_dict[unit.get('parameter')] = unit.get('unit')
+
+    f_kwargs['angle_type_units'] = param_dict
 
     urey_bradley_angle_el = gmso_xml_tree.findall('AmoebaUreyBradleyForce')
     for ubf in urey_bradley_angle_el:
@@ -134,6 +167,13 @@ def to_foyer(gmso_xml, foyer_xml):
         elif 'c0 * cos(phi)**0' in tf.get('expression'):
             for dihedral_type in tf.getiterator('DihedralType'):
                 f_kwargs['rb_torsion_dihedral_types'].append(dihedral_type)
+
+    param_dict = {}
+    for units in dihedral_torsion_force_el:
+        for unit in units.getiterator('ParametersUnitDef'):
+            param_dict[unit.get('parameter')] = unit.get('unit')
+
+    f_kwargs['dihedral_type_units'] = param_dict
 
     _write_foyer_xml(foyer_xml, **f_kwargs)
 
@@ -393,10 +433,15 @@ def _write_gmso_xml(gmso_xml, **kwargs):
 def _write_foyer_xml(foyer_xml, **kwargs):
     """Given the set of keyword arguments, write a gmso topology's forcefield xml file"""
     ff_kwargs = {
+        'ffmetadata': kwargs.get('ffmetadata', []),
+        'atom_type_units': kwargs.get('atom_type_units', []),
         'atom_types': kwargs.get('atom_types', []),
+        'bond_type_units': kwargs.get('bond_type_units', []),
         'harmonic_bond_types': kwargs.get('harmonic_bond_types', []),
+        'angle_type_units': kwargs.get('angle_type_units', []),
         'harmonic_angle_types': kwargs.get('harmonic_angle_types', []),
         'urey_bradley_angle_types': kwargs.get('urey_bradley_angle_types', []),
+        'dihedral_type_units': kwargs.get('dihedral_type_units', []),
         'periodic_torsion_dihedral_types': kwargs.get('periodic_torsion_dihedral_types', []),
         'rb_torsion_dihedral_types': kwargs.get('rb_torsion_dihedral_types', []),
     }
@@ -423,9 +468,25 @@ def _write_foyer_xml(foyer_xml, **kwargs):
         parameter_dict = {}
         for parameter in parameters:
             parameter_dict[parameter.get('name')] = parameter.get('value')
-        nb.attrib['charge'] = parameter_dict['q']
-        nb.attrib['sigma'] = parameter_dict['sigma']
-        nb.attrib['epsilon'] = parameter_dict['ep']
+
+        # Convert atom_type values to unyt quantities
+        for parameter, value in parameter_dict.items():
+            parameter_dict[parameter] = u.unyt_quantity(float(value),
+                    ff_kwargs['atom_type_units'][parameter])
+
+        # Convert to foyer units 
+        foyer_atom_type_units = {'ep': 'kJ/mol',
+                                 'sigma': 'nm',
+                                 'q': u.elementary_charge
+                                 }
+        for parameter, value in parameter_dict.items():
+            if parameter in foyer_atom_type_units:
+                parameter_dict[parameter] = value.to(
+                        foyer_atom_type_units[parameter])
+
+        nb.attrib['charge'] = str(parameter_dict['q'].value)
+        nb.attrib['sigma'] = str(parameter_dict['sigma'].value)
+        nb.attrib['epsilon'] = str(parameter_dict['ep'].value)
     
     # HarmonicBondTypes
     bondtypes = etree.SubElement(forceField, 'HarmonicBondForce')
@@ -439,8 +500,23 @@ def _write_foyer_xml(foyer_xml, **kwargs):
         parameter_dict = {}
         for parameter in parameters:
             parameter_dict[parameter.get('name')] = parameter.get('value')
-        bt.attrib['length'] = parameter_dict['r_eq']
-        bt.attrib['k'] = parameter_dict['k']
+
+        # Convert bond_type values to unyt quantities
+        for parameter, value in parameter_dict.items():
+            parameter_dict[parameter] = u.unyt_quantity(float(value),
+                    ff_kwargs['bond_type_units'][parameter])
+
+        # Convert to foyer units 
+        foyer_bond_type_units = {'k': 'kJ/mol/nm**2',
+                                 'r_eq': 'nm',
+                                 }
+        for parameter, value in parameter_dict.items():
+            if parameter in foyer_bond_type_units:
+                parameter_dict[parameter] = value.to(
+                        foyer_bond_type_units[parameter])
+
+        bt.attrib['length'] = str(parameter_dict['r_eq'].value)
+        bt.attrib['k'] = str(parameter_dict['k'].value)
 
     # HarmonicAngleTypes
     angletypes = etree.SubElement(forceField, 'HarmonicAngleForce')
@@ -455,8 +531,24 @@ def _write_foyer_xml(foyer_xml, **kwargs):
         parameter_dict = {}
         for parameter in parameters:
             parameter_dict[parameter.get('name')] = parameter.get('value')
-        angt.attrib['angle'] = parameter_dict['theta_eq']
-        angt.attrib['k'] = parameter_dict['k']
+
+        # Convert angle_type values to unyt quantities
+        for parameter, value in parameter_dict.items():
+            parameter_dict[parameter] = u.unyt_quantity(float(value),
+                    ff_kwargs['angle_type_units'][parameter])
+
+        # Convert to foyer units 
+        foyer_angle_type_units = {'k': 'kJ/degree**2',
+                                 'w_0': 'nm',
+                                 'theta_eq': 'degree'
+                                 }
+        for parameter, value in parameter_dict.items():
+            if parameter in foyer_angle_type_units:
+                parameter_dict[parameter] = value.to(
+                        foyer_angle_type_units[parameter])
+
+        angt.attrib['angle'] = str(parameter_dict['theta_eq'].value)
+        angt.attrib['k'] = str(parameter_dict['k'].value)
 
     # RB Torsions
     rbtypes = etree.SubElement(forceField, 'RBTorsionForce')
@@ -469,10 +561,22 @@ def _write_foyer_xml(foyer_xml, **kwargs):
         rbt.attrib['type3'] = rbtype.get('type3')
         rbt.attrib['type4'] = rbtype.get('type4')
         parameters = rbtype[0]
+        parameter_dict = {}
         for parameter in parameters:
+            if parameter.get('name') is None:
+                continue
             parameter_dict[parameter.get('name')] = parameter.get('value')
+
+        # Convert rb_type values to unyt quantities
+        for parameter, value in parameter_dict.items():
+            parameter_dict[parameter] = u.unyt_quantity(float(value),
+                    ff_kwargs['dihedral_type_units'][parameter])
+
+        for parameter, value in parameter_dict.items():
+            parameter_dict[parameter] = value.to('kJ/mol')
+
         for i in range(6):
-            rbt.attrib['c{}'.format(i)] = parameter_dict['c{}'.format(i)]
+            rbt.attrib['c{}'.format(i)] = str(parameter_dict['c{}'.format(i)].value)
 
     ff_tree = etree.ElementTree(forceField)
     ff_tree.write(foyer_xml, pretty_print=True)
