@@ -60,8 +60,7 @@ jobs:
       - bash: |
           conda create -n test-environment
           source activate test-environment
-          conda install --yes --file requirements-test.txt
-          conda install pytest
+          conda install --yes python=$(python.version) --file requirements-test.txt
           pip install -e .
         displayName: Install requirements and testing branch
 
