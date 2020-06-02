@@ -107,15 +107,15 @@ except ImportError:
     has_mdtraj = False
 
 try:
-    import simtk.openmm
+    from simtk import openmm
     has_openmm = True
-    del simtk.openmm
+    del openmm
 except ImportError:
     has_openmm = False
 
 try:
-    import simtk.unit
+    from simtk import unit
     has_simtk_unit = True
-    del simtk.unit
+    del unit
 except ImportError:
     has_simtk_unit = False
