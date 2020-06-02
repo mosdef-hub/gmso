@@ -55,6 +55,7 @@ jobs:
           conda config --add channels janschulz
           conda config --add channels conda-forge
           conda config --add channels mosdef
+          conda update conda -yq
         displayName: Add relevant channels
 
       - bash: |
