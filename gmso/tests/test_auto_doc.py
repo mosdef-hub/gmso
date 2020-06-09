@@ -81,6 +81,3 @@ class TestAutoDoc(BaseTest):
         )
         assert '__init__' in InheritedBaseModelWithBaseDoc.__doc__
         assert getattr(InheritedBaseModelWithBaseDoc, '__docs_generated__')
-
-
-
