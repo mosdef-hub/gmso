@@ -1,45 +1,54 @@
 import warnings
-
-from typing import Union, Sequence, Optional, Any, TypeVar
 from abc import ABC
+from typing import Union, Sequence, Optional, Any, TypeVar, ClassVar
 
 import numpy as np
 import unyt as u
 
-from pydantic import BaseModel, validator, root_validator
+from pydantic import BaseModel, validator, root_validator, Field
+
+from gmso.abc.auto_doc import apply_docs
+
 
 PositionType = Union[Sequence[float], np.ndarray]
 SiteT = TypeVar('SiteT', bound='Site')
 
+BASE_DOC_ATTR = '__base_doc__'
+FIELDS_IN_DOCSTRING = 'alias_to_fields'
+
 
 class Site(BaseModel, ABC):
-    """
-    An interaction site object in the topology hierarchy.
 
+    __base_doc__: ClassVar[str] = """An interaction site object in the topology hierarchy.
+    
     Site is the object that represents any general interaction site in a molecular simulation.
     Sites have been designed to be as general as possible, making no assumptions about representing atoms or beads, or
     having mass or charge. That is, a Site can represent an atom in an atomistic system,
     a bead in a coarse-grained system, and much more.
-
-    Parameters
-    ----------
-    name : str, optional, default='Site'
-        Name of the site
-    label : str, optional, default=''
-        The label for this Site
-    position : unyt array or numpy array or list, optional, default=None
-       The position of the site in Cartesian space.
-       If a unyt array is not passed, units are assumed to be in 'nm'.
-
+    
     Notes
     -----
     The label attribute for a site takes its meaning when used with some sort of container (like topology)
     such that a label for a site can then be used to group sites together. The rules for defining a site label
     and their meaning is left upto the container where the sites will reside
     """
-    name_: str = ''
-    label_: str = ''
-    position_: Optional[PositionType] = None
+
+    __docs_generated__: ClassVar[bool] = False
+
+    name_: str = Field(
+        '',
+        description='Name of the site, defaults to class name',
+    )
+
+    label_: str = Field(
+        '',
+        description='Label to be assigned for the site'
+    )
+
+    position_: Optional[PositionType] = Field(
+        None,
+        description='The Cartesian coordinates of the position of the site'
+    )
 
     @property
     def name(self) -> str:
@@ -57,7 +66,7 @@ class Site(BaseModel, ABC):
         if name in self.__config__.alias_to_fields:
             name = self.__config__.alias_to_fields[name]
         else:
-            warnings.warn('Use of internal fields are discouraged. '
+            warnings.warn('Use of internal fields is discouraged. '
                           'Please use external fields to set attributes.')
 
         super().__setattr__(name, value)
@@ -103,8 +112,12 @@ class Site(BaseModel, ABC):
         else:
             return object.__new__(cls)
 
+    @classmethod
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__()
+        apply_docs(cls, map_names=True)
+
     class Config:
-        validate_assignment = True
         arbitrary_types_allowed = True
         fields = {
             'name_': 'name',

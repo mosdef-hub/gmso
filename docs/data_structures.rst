@@ -15,9 +15,9 @@ SubTopology
     .. autoclass:: gmso.SubTopology
         :members:
 
-Site
+Atom
 ****
-    .. autoclass:: gmso.Site
+    .. autoclass:: gmso.Atom
         :members:
 
 Bond

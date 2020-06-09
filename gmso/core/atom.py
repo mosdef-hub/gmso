@@ -3,7 +3,7 @@ from typing import Optional, Union
 
 import unyt as u
 
-from pydantic import validator
+from pydantic import Field, validator
 
 from gmso.core.atom_type import AtomType
 from gmso.core.element import Element
@@ -11,64 +11,72 @@ from gmso.abc.abstract_site import Site
 
 
 class Atom(Site):
-    """An interaction site object in the topology hierarchy.
-
-    Site is the object that represents any general interaction site in a molecular simulation.
-    Sites have been designed to be as general as possible, making no assumptions about representing atoms or beads, or having mass or charge.
-    That is, a Site can represent an atom in an atomistic system, a bead in a coarse-grained system, and much more.
-
-    Parameters
-    ----------
-    name : str, optional, default='Site'
-       Name of the site
-    position : unyt array or numpy array or list, optional, default=None
-       The position of the site in Cartesian space.
-       If a unyt array is not passed, units are assumed to be in 'nm'.
-    charge : unyt quantity or float, optional, default=None
-       The charge of the site.
-       Unyt quantities are converted to units of elementary charge, float values are assumed to be in units of elementary charge.  
-       If no value is passed, site attempts to grab a charge from site.atom_type.
-    mass : unyt quantity or float, optional, default=None
-       The mass of the site.  
-       Unyt quantities are converted to units of g/mol, float values are assumed to be in units of g/mol.  
-       If no value is passed, site attempts to grab a mass from site.atom_type.
-    element : 'Element' object, optional, default=None
-       The element of the site represented by the `Element` object.  
-       See `element.py` for more information.
-    atom_type : 'AtomType' object, optional, default=None
-       The atom type of the site containing functional forms, interaction parameters, and other properties such as mass and charge.  
-       See `atom_type.py` for more information.
-
+    __base_doc__ = """An atom represents a single element association in a topology.
+    Atom is the object that represents any general interaction Atom in a molecular simulation.
+    
+    Notes
+    -----
+    Atoms have all the attributes inherited from the base Site class
+    
+    Examples
+    --------
+        >>> from gmso.core.atom import Atom
+        >>> atom1 = Atom(name='lithium')
+    
+    See Also
+    --------
+    gmso.abc.AbstractSite
+        An Abstract Base class for implementing site objects in GMSO. The class Atom bases from
+        the gmso.abc.abstract site class
     """
 
-    charge_: Optional[Union[u.unyt_quantity, float]] = None
-    mass_: Optional[Union[u.unyt_quantity, float]] = None
-    element_: Optional[Element] = None
-    atom_type_: Optional[AtomType] = None
+    charge_: Optional[Union[u.unyt_quantity, float]] = Field(
+        None,
+        description='Charge of the atom',
+    )
+
+    mass_: Optional[Union[u.unyt_quantity, float]] = Field(
+        None,
+        description='Mass of the atom'
+    )
+    element_: Optional[Element] = Field(
+        None,
+        description='Element associated with the atom'
+    )
+    atom_type_: Optional[AtomType] = Field(
+        None,
+        description='AtomType associated with the atom'
+    )
 
     @property
     def charge(self) -> Union[u.unyt_quantity, None]:
-        if self.charge_:
-            return self.charge_
-        elif self.atom_type_:
-            return self.atom_type_.charge
-        return None
+        charge = self.__dict__.get('charge_', None)
+        atom_type = self.__dict__.get('atom_type_', None)
+        if charge is not None:
+            return charge
+        elif atom_type is not None:
+            return atom_type.charge
+        else:
+            return None
 
     @property
     def mass(self) -> Union[u.unyt_quantity, None]:
-        if self.mass_:
-            return self.mass_
-        elif self.atom_type:
-            return self.atom_type.mass
-        return None
+        mass = self.__dict__.get('mass_', None)
+        atom_type = self.__dict__.get('atom_type_', None)
+        if mass is not None:
+            return mass
+        elif atom_type is not None:
+            return atom_type.mass
+        else:
+            return None
 
     @property
-    def element(self):
-        return self.element_
+    def element(self) -> Union[Element, None]:
+        return self.__dict__.get('element_', None)
 
     @property
     def atom_type(self) -> Union[AtomType, None]:
-        return self.__dict__['atom_type_']
+        return self.__dict__.get('atom_type_', None)
 
     @validator('charge_')
     def is_valid_charge(cls, charge):
@@ -114,3 +122,4 @@ class Atom(Site):
             'element': 'element_',
             'atom_type': 'atom_type_'
         })
+        validate_assignment = True
