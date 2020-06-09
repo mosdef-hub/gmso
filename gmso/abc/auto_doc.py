@@ -73,6 +73,7 @@ def _base_doc_to_sections(base_doc: str) -> dict:
             'Warnings': ''
         }
 
+    summary = ''
     if len(doc_lines) > 0:
         summary = doc_lines[0]
 
@@ -90,10 +91,10 @@ def _base_doc_to_sections(base_doc: str) -> dict:
     return sections
 
 
-def inject_parameters_from_fields(fields: Dict[str, Any],
-                                  by_alias: bool = True,
-                                  name_map: Optional[Tuple[str, str]] = None,
-                                  inject_init: bool = True) -> Union[Tuple[str, str], str]:
+def _inject_parameters_from_fields(fields: Dict[str, Any],
+                                   by_alias: bool = True,
+                                   name_map: Optional[Tuple[str, str]] = None,
+                                   inject_init: bool = True) -> Union[Tuple[str, str], str]:
     """Inject the parameters name from the fields"""
     parameters = ['Parameters', '----------']
     init_signature = None
@@ -113,22 +114,28 @@ def inject_parameters_from_fields(fields: Dict[str, Any],
         parameters.append(f'{name} : '
                           f'{_infer_type(value.type_)}'
                           f', default={default}')
-        init_signature.append(f'{name} : {_infer_type(value.type_)} = {default}, ')
+        if init_signature:
+            init_signature.append(f'{name} : {_infer_type(value.type_)} = {default}, ')
 
         if value.field_info.description:
             parameters.append(f'\t{value.field_info.description}')
 
-    parameters = '\n'.join(parameters)
+    if len(parameters) > 2:
+        parameters = '\n'.join(parameters)
+    else:
+        parameters = ''
+
     if init_signature:
         init_signature[-1] = init_signature[-1].replace(',', '')
         init_signature.append(')')
         init_signature = ''.join(init_signature)
 
     # TODO: Will this always be lower? Could use `re`
-    parameters = parameters.replace(
-        name_map[1].lower(),
-        name_map[0].lower()
-    )
+    if name_map:
+        parameters = parameters.replace(
+            name_map[1].lower(),
+            name_map[0].lower()
+        )
     if init_signature:
         return parameters, init_signature
 
@@ -138,7 +145,7 @@ def inject_parameters_from_fields(fields: Dict[str, Any],
 class AutoDocGenerator:
     """Generates __doc__ attribute for pydantic base model classses and descendants
 
-    Paramaters
+    Parameters
     ----------
     target: pydantic.BaseModel or its children
         The basemodel class to generate __doc__ attribute for
@@ -149,10 +156,10 @@ class AutoDocGenerator:
         self.should_apply = True
         if target is BaseModel or issubclass(target, BaseModel):
             if hasattr(target, BASE_DOC_ATTR):
-                if hasattr(target, DOCS_GENERATED) and getattr(target, DOCS_GENERATED) is True:
+                if getattr(target, DOCS_GENERATED):
                     self.should_apply = False
             else:
-                raise ValueError(f'No mating attribute {BASE_DOC_ATTR} found in {target.__name__}')
+                raise AttributeError(f'No mating attribute {BASE_DOC_ATTR} found in {target.__name__}')
 
         else:
             raise TypeError('Cannot generate documentation for non-basemodel descendants')
@@ -199,8 +206,7 @@ class AutoDocGenerator:
                       inject_init_signature: bool = True) -> str:
         """Get the docstring names based on fields"""
         sections = _base_doc_to_sections(base_doc)
-        init_signature = None
-        params_or_params_init = inject_parameters_from_fields(
+        params_or_params_init = _inject_parameters_from_fields(
             fields,
             by_alias=True,
             name_map=name_map,
@@ -228,12 +234,14 @@ class AutoDocGenerator:
         return '\n\n'.join(docstring)
 
 
-def apply_docs(target_class: Type[BaseModel], map_names: bool = True) -> None:
+def apply_docs(target_class: Type[BaseModel],
+               map_names: bool = True,
+               silent: bool = True) -> None:
     """Apply __doc__ attribute to the BaseModel and its descendants"""
-    if getattr(target_class, DOCS_GENERATED):
+    if hasattr(target_class, DOCS_GENERATED) and getattr(target_class, DOCS_GENERATED):
         return
     try:
-        if hasattr(target_class, BASE_DOC_ATTR):
-            target_class.__doc__ = AutoDocGenerator(target_class, map_names=map_names)
-    except (TypeError, ValueError) as e:
-        pass
+        target_class.__doc__ = AutoDocGenerator(target_class, map_names=map_names)
+    except (TypeError, ValueError, AttributeError) as e:
+        if not silent:
+            raise e
