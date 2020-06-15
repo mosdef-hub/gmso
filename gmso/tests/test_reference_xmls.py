@@ -106,7 +106,7 @@ class TestForceFieldFromXML(BaseTest):
         assert sympy.simplify(spce.angle_types['opls_117~opls_116~opls_117'].expression - ref_exprs[2]) == 0
 
         assert_allclose_units(spce.atom_types['opls_116'].parameters['sigma'], 0.316557 * u.nm, rtol=1e-5, atol=1e-8)
-        assert_allclose_units(spce.atom_types['opls_116'].parameters['epsilon'], 0.650194 * u.Unit('kJ/mol')), rtol=1e-5, atol=1e-8
+        assert_allclose_units(spce.atom_types['opls_116'].parameters['epsilon'], 0.650194 * u.Unit('kJ/mol'), rtol=1e-5, atol=1e-8)
         assert_allclose_units(spce.atom_types['opls_117'].parameters['sigma'], 0.1 * u.nm, rtol=1e-5, atol=1e-8)
         assert_allclose_units(spce.atom_types['opls_117'].parameters['epsilon'], 0.0 * u.Unit('kJ/mol'), rtol=1e-5, atol=1e-8)
 
