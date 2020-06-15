@@ -17,7 +17,7 @@ class TestAtomType(BaseTest):
                 independent_variables={'r'})
         assert new_type.name == 'mytype'
         assert_allclose_units(new_type.charge, charge, rtol=1e-5, atol=1e-8)
-        assert_allclose_units(new_type.parameters['sigma'], 1 * u.nm,, rtol=1e-5, atol=1e-8)
+        assert_allclose_units(new_type.parameters['sigma'], 1 * u.nm, rtol=1e-5, atol=1e-8)
         assert_allclose_units(new_type.parameters['epsilon'], 10 * u.Unit('kcal / mol'), rtol=1e-5, atol=1e-8)
         assert_allclose_units(new_type.mass, mass, rtol=1e-5, atol=1e-8)
 
