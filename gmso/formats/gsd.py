@@ -4,7 +4,7 @@ import warnings
 import numpy as np
 import unyt as u
 import pytest
-
+from unyt.array import allclose_units
 from gmso.core.bond import Bond
 from gmso.utils.geometry import coord_shift
 from gmso.exceptions import NotYetImplementedWarning
