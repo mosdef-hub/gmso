@@ -4,7 +4,7 @@ import pytest
 from gmso.formats.xyz import read_xyz, write_xyz
 from gmso.tests.base_test import BaseTest
 from gmso.utils.io import get_fn
-from unyt.testing import assert_allclose_unit
+from unyt.testing import assert_allclose_units
 
 class TestXYZ(BaseTest):
     def test_read_xyz(self):
@@ -39,4 +39,4 @@ class TestXYZ(BaseTest):
 
         assert original_top.n_sites == new_top.n_sites
         assert original_top.n_connections == new_top.n_connections
-        assert_allclose_unit(original_top.positions, new_top.positions, rtol=1e-5, atol=1e-8)
+        assert_allclose_units(original_top.positions, new_top.positions, rtol=1e-5, atol=1e-8)
