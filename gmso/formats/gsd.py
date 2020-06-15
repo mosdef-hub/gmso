@@ -8,7 +8,6 @@ import pytest
 from gmso.core.bond import Bond
 from gmso.utils.geometry import coord_shift
 from gmso.exceptions import NotYetImplementedWarning
-from gmso.utils.testing import allclose
 from gmso.utils.io import has_gsd
 
 __all__ = ['write_gsd']
@@ -73,7 +72,7 @@ def write_gsd(top,
     gsd_snapshot.configuration.dimensions = 3
 
     # Write box information
-    if allclose(top.box.angles, np.array([90, 90, 90]) * u.degree):
+    if allclose_units(top.box.angles, np.array([90, 90, 90]) * u.degree, rtol=1e-5, atol=1e-8):
         warnings.warn("Orthorhombic box detected")
         gsd_snapshot.configuration.box = np.hstack((top.box.lengths / ref_distance,
                                                 np.zeros(3)))

@@ -8,6 +8,7 @@ from gmso.core.topology import Topology
 from gmso.core.site import Site
 from gmso.core.box import Box
 from gmso.exceptions import NotYetImplementedWarning
+from unyt.array import allclose_units
 
 def read_gro(filename):
     """Provided a filepath to a gro file, generate a topology.
@@ -140,7 +141,7 @@ def write_gro(top, filename):
                 site.position[2].in_units(u.nm).value,
             ))
 
-        if allclose(top.box.angles, u.degree * [90, 90, 90], atol=0.1*u.degree):
+        if allclose_units(top.box.angles, u.degree * [90, 90, 90], rtol= 1e-5, atol=0.1*u.degree):
             out_file.write(' {:0.5f} {:0.5f} {:0.5f} \n'.format(
                 top.box.lengths[0].in_units(u.nm).value.round(6),
                 top.box.lengths[1].in_units(u.nm).value.round(6),
