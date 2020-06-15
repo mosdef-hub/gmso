@@ -8,7 +8,6 @@ from gmso.core.topology import Topology
 from gmso.core.site import Site
 from gmso.core.box import Box
 from gmso.exceptions import NotYetImplementedWarning
-from gmso.utils.testing import allclose
 
 def read_gro(filename):
     """Provided a filepath to a gro file, generate a topology.
