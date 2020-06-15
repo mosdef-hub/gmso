@@ -2,7 +2,7 @@ import warnings
 
 import numpy as np
 import unyt as u
-
+from unyt.array import allclose_units
 
 def _validate_lengths(lengths):
     """Ensure the lengths of the box are positive and check dimension."""
@@ -173,10 +173,10 @@ class Box(object):
         if not isinstance(other, Box):
             return False
 
-        if not allclose(self.lengths, other.lengths):
+        if not allclose_units(self.lengths, other.lengths, rtol=1e-5, atol=1e-8):
             return False
 
-        if not allclose(self.angles, other.angles):
+        if not allclose_units(self.angles, other.angles, rtol=1e-5, atol=1e-8):
             return False
 
         return True
