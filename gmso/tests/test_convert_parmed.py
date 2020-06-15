@@ -7,7 +7,7 @@ import foyer
 
 from gmso.external.convert_parmed import from_parmed, to_parmed
 from gmso.tests.base_test import BaseTest
-from gmso.utils.testing import allclose
+from unyt.testing import assert_allclose_units
 from gmso.utils.io import get_fn, import_, has_parmed
 
 
@@ -28,8 +28,8 @@ class TestConvertParmEd(BaseTest):
 
         assert top.box is not None
         lengths = u.nm * [0.714, 0.7938, 0.6646]
-        assert allclose(top.box.lengths, lengths)
-        assert allclose(top.box.angles, angles)
+        assert_allclose_units(top.box.lengths, lengths, rtol=1e-5, atol=1e-8)
+        assert_allclose_units(top.box.angles, angles, rtol=1e-5, atol=1e-8)
 
     def test_from_parmed_parametrized_structure(self, angles):
         struc = pmd.load_file(get_fn('ethane.top'), xyz=get_fn('ethane.gro'))
@@ -49,8 +49,8 @@ class TestConvertParmEd(BaseTest):
 
         assert top.box is not None
         lengths = u.nm * [0.714, 0.7938, 0.6646]
-        assert allclose(top.box.lengths, lengths)
-        assert allclose(top.box.angles, angles)
+        assert_allclose_units(top.box.lengths, lengths, rtol=1e-5, atol=1e-8)
+        assert_allclose_units(top.box.angles, angles, rtol=1e-5, atol=1e-8)
 
     def test_to_parmed_simple(self):
         struc = pmd.load_file(get_fn('ethane.top'), xyz=get_fn('ethane.gro'))
