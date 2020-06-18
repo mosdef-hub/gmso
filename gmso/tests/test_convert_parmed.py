@@ -190,8 +190,8 @@ class TestConvertParmEd(BaseTest):
         struc = parmed_hexane_box
 
         top_from_struc = from_parmed(struc)
-        assert np.allclose(top_from_struc.box.lengths.to("nm").value, [6., 6., 6.])
-        assert np.allclose(top_from_struc.box.angles.to("degree").value, [90., 90., 90.])
+        assert_allclose_units(top_from_struc.box.lengths.to("nm").value, [6., 6., 6.], rtol=1e-5, atol=1e-8)
+        assert_allclose_units(top_from_struc.box.angles.to("degree").value, [90., 90., 90.], rtol=1e-5, atol=1e-8)
 
         struc_from_top = to_parmed(top_from_struc)
-        assert np.allclose(struc_from_top.box, [60, 60, 60, 90, 90, 90])
+        assert_allclose_units(struc_from_top.box, [60, 60, 60, 90, 90, 90], rtol=1e-5, atol=1e-8)
