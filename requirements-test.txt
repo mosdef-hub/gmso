@@ -1,3 +1,4 @@
+pydantic >= 1.5.1
 numpy
 sympy
 unyt >= 2.4

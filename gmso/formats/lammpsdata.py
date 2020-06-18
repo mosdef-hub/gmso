@@ -6,7 +6,7 @@ import unyt as u
 import datetime
 
 from gmso.utils.testing import allclose
-from gmso.core.site import Site
+from gmso.core.atom import Atom
 from gmso.core.atom_type import AtomType
 from gmso.core.bond_type import BondType
 from gmso.core.angle_type import AngleType
@@ -404,7 +404,7 @@ def _get_atoms(filename, topology, unit_style, type_list):
             float(atom_line[4]),
             float(atom_line[5]),
             float(atom_line[6])])
-        site = Site(
+        site = Atom(
             charge=charge,
             position=coord,
             atom_type=type_list[int(atom_type)-1]

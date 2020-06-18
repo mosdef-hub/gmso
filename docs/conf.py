@@ -41,6 +41,7 @@ extensions = [
 
 autosummary_generate = True
 autodoc_default_flags = ['members', 'inherited-members']
+autodoc_docstring_signature = True
 
 napoleon_numpy_docstring = True
 napoleon_use_admonition_for_notes = True

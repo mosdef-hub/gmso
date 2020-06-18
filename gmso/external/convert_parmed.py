@@ -65,14 +65,14 @@ def from_parmed(structure, refer_type=True):
         subtops.append(gmso.SubTopology(name=subtop_name, parent=top))
         for atom in residue.atoms:
             if refer_type and isinstance(atom.atom_type, pmd.AtomType):
-                site = gmso.Site(
+                site = gmso.Atom(
                     name=atom.name,
                     charge=atom.charge * u.elementary_charge,
                     position=([atom.xx, atom.xy, atom.xz] * u.angstrom).in_units(
                         u.nm),
                     atom_type=pmd_top_atomtypes[atom.atom_type])
             else:
-                site = gmso.Site(
+                site = gmso.Atom(
                     name=atom.name,
                     charge=atom.charge * u.elementary_charge,
                     position=([atom.xx, atom.xy, atom.xz] * u.angstrom).in_units(

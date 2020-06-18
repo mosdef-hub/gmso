@@ -3,7 +3,7 @@ import sympy
 import pytest
 
 from gmso.core.atom_type import AtomType
-from gmso.core.site import Site
+from gmso.core.atom import Atom
 from gmso.core.topology import Topology
 from gmso.tests.base_test import BaseTest
 from gmso.utils.testing import allclose
@@ -173,42 +173,42 @@ class TestAtomType(BaseTest):
             valid_type.description=123
 
     def test_atom_type_with_topology_and_site(self):
-        site1 = Site()
-        site2 = Site()
+        atom1 = Atom()
+        atom2 = Atom()
         top = Topology()
         atom_type1 = AtomType()
         atom_type2 = AtomType()
-        site1.atom_type = atom_type1
-        site2.atom_type = atom_type2
-        top.add_site(site1)
-        top.add_site(site2)
-        assert id(site1.atom_type) == id(site2.atom_type)
-        assert site1.atom_type is not None
+        atom1.atom_type = atom_type1
+        atom2.atom_type = atom_type2
+        top.add_site(atom1)
+        top.add_site(atom2)
+        assert id(atom1.atom_type) == id(atom2.atom_type)
+        assert atom1.atom_type is not None
         assert len(top.atom_types) == 1
-        assert site1.atom_type.topology == top
-        assert site2.atom_type.topology == top
+        assert atom1.atom_type.topology == top
+        assert atom2.atom_type.topology == top
 
     def test_atom_type_with_topology_and_site_change_properties(self):
-        site1 = Site()
-        site2 = Site()
+        atom1 = Atom()
+        atom2 = Atom()
         top = Topology()
         atom_type1 = AtomType()
         atom_type2 = AtomType()
-        site1.atom_type = atom_type1
-        site2.atom_type = atom_type2
-        top.add_site(site1)
-        top.add_site(site2)
-        site1.atom_type.mass = 250
-        assert site2.atom_type.mass == 250
+        atom1.atom_type = atom_type1
+        atom2.atom_type = atom_type2
+        top.add_site(atom1)
+        top.add_site(atom2)
+        atom1.atom_type.mass = 250
+        assert atom2.atom_type.mass == 250
         assert top.atom_types[0].mass == 250
 
     def test_with_1000_atom_types(self):
         top = Topology()
         for i in range(1000):
-            site = Site()
+            atom = Atom()
             atom_type = AtomType()
-            site.atom_type = atom_type
-            top.add_site(site, update_types=False)
+            atom.atom_type = atom_type
+            top.add_site(atom, update_types=False)
         top.update_topology()
         assert len(top.atom_types) == 1
         assert top.n_sites == 1000

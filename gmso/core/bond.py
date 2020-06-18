@@ -14,7 +14,7 @@ class Bond(Connection):
 
     Parameters
     ---------
-    connection_members: list of gmso.Site
+    connection_members: list of gmso.Atom
         2 sites of a bond.
     connection_type : gmso.BondType, optional, default=None
         BondType of this bond.

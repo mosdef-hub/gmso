@@ -3,82 +3,68 @@ import pytest
 from gmso.core.dihedral import Dihedral
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.atom_type import AtomType
-from gmso.core.site import Site
+from gmso.core.atom import Atom
 from gmso.tests.base_test import BaseTest
 from gmso.exceptions import GMSOError
 
 
 class TestDihedral(BaseTest):
     def test_dihedral_nonparametrized(self):
-        site1 = Site(name='site1')
-        site2 = Site(name='site2')
-        site3 = Site(name='site3')
-        site4 = Site(name='site4')
+        atom1 = Atom(name='atom1')
+        atom2 = Atom(name='atom2')
+        atom3 = Atom(name='atom3')
+        atom4 = Atom(name='atom4')
 
-        assert site1.n_connections == 0
-        assert site2.n_connections == 0
-        assert site3.n_connections == 0
-        assert site4.n_connections == 0
-
-        connect = Dihedral(connection_members=[site1, site2, site3, site4])
-
-        assert site1.n_connections == 1
-        assert site2.n_connections == 1
-        assert site3.n_connections == 1
-        assert site4.n_connections == 1
+        connect = Dihedral(connection_members=[atom1, atom2, atom3, atom4])
+        assert atom1 in connect.connection_members
+        assert atom2 in connect.connection_members
+        assert atom3 in connect.connection_members
+        assert atom4 in connect.connection_members
         assert connect.connection_type is None
 
     def test_dihedral_parametrized(self):
-        site1 = Site(name='site1')
-        site2 = Site(name='site2')
-        site3 = Site(name='site3')
-        site4 = Site(name='site4')
+        atom1 = Atom(name='atom1')
+        atom2 = Atom(name='atom2')
+        atom3 = Atom(name='atom3')
+        atom4 = Atom(name='atom4')
 
-        assert site1.n_connections == 0
-        assert site2.n_connections == 0
-        assert site3.n_connections == 0
-        assert site4.n_connections == 0
         dihedral_type = DihedralType()
 
-        connect = Dihedral(connection_members=[site1, site2, site3, site4],
-                        connection_type=dihedral_type,
-                        name='dihedral_name')
+        connect = Dihedral(connection_members=[atom1, atom2, atom3, atom4],
+                           connection_type=dihedral_type,
+                           name='dihedral_name')
 
-        assert site1.n_connections == 1
-        assert site2.n_connections == 1
-        assert site3.n_connections == 1
-        assert site4.n_connections == 1
         assert len(connect.connection_members) == 4
+        assert atom1 in connect.connection_members
+        assert atom2 in connect.connection_members
+        assert atom3 in connect.connection_members
+        assert atom4 in connect.connection_members
         assert connect.connection_type is not None
         assert connect.name == 'dihedral_name'
 
     def test_dihedral_fake(self):
-        site1 = Site(name='site1')
-        site2 = Site(name='site2')
-        site3 = Site(name='site3')
-        site4 = Site(name='site4')
         with pytest.raises(GMSOError):
             Dihedral(connection_members=['fakesite1', 'fakesite2', 4.2])
 
     def test_dihedral_fake_dihedraltype(self):
-        site1 = Site(name='site1')
-        site2 = Site(name='site2')
-        site3 = Site(name='site3')
-        site4 = Site(name='site4')
+        atom1 = Atom(name='atom1')
+        atom2 = Atom(name='atom2')
+        atom3 = Atom(name='atom3')
+        atom4 = Atom(name='atom4')
         with pytest.raises(GMSOError):
-            Dihedral(connection_members=[site1, site2, site3, site4],
+            Dihedral(connection_members=[atom1, atom2, atom3, atom4],
                   connection_type='Fake dihedraltype')
 
     def test_dihedral_constituent_types(self):
-        site1 = Site(name='site1', position=[0,0,0], atom_type=AtomType(name='A'))
-        site2 = Site(name='site2', position=[1,0,0], atom_type=AtomType(name='B'))
-        site3 = Site(name='site3', position=[1,1,0], atom_type=AtomType(name='C'))
-        site4 = Site(name='site4', position=[1,1,4], atom_type=AtomType(name='D'))
-        dihtype = DihedralType(member_types=[site1.atom_type.name, 
-                                             site2.atom_type.name,
-                                             site3.atom_type.name,
-                                             site4.atom_type.name])
-        dih = Dihedral(connection_members=[site1, site2, site3, site4], 
+        atom1 = Atom(name='atom1', position=[0, 0, 0], atom_type=AtomType(name='A'))
+        atom2 = Atom(name='atom2', position=[1, 0, 0], atom_type=AtomType(name='B'))
+        atom3 = Atom(name='atom3', position=[1, 1, 0], atom_type=AtomType(name='C'))
+        atom4 = Atom(name='atom4', position=[1, 1, 4], atom_type=AtomType(name='D'))
+        dihtype = DihedralType(member_types=[atom1.atom_type.name,
+                                             atom2.atom_type.name,
+                                             atom3.atom_type.name,
+                                             atom4.atom_type.name])
+        dih = Dihedral(connection_members=[atom1, atom2, atom3, atom4],
                 connection_type=dihtype)
         assert 'A' in dih.connection_type.member_types
         assert 'B' in dih.connection_type.member_types
@@ -86,21 +72,21 @@ class TestDihedral(BaseTest):
         assert 'D' in dih.connection_type.member_types
 
     def test_dihedral_eq(self):
-        site1 = Site(name='site1', position=[0, 0, 0])
-        site2 = Site(name='site2', position=[1, 0, 0])
-        site3 = Site(name='site3', position=[1, 1, 0])
-        site4 = Site(name='site4', position=[1, 1, 1])
+        atom1 = Atom(name='atom1', position=[0, 0, 0])
+        atom2 = Atom(name='atom2', position=[1, 0, 0])
+        atom3 = Atom(name='atom3', position=[1, 1, 0])
+        atom4 = Atom(name='atom4', position=[1, 1, 1])
 
         ref_dihedral = Dihedral(
-            connection_members=[site1, site2, site3, site4],
+            connection_members=[atom1, atom2, atom3, atom4],
         )
 
         same_dihedral = Dihedral(
-            connection_members=[site1, site2, site3, site4],
+            connection_members=[atom1, atom2, atom3, atom4],
         )
 
         diff_dihedral = Dihedral(
-            connection_members=[site1, site2, site3, site4],
+            connection_members=[atom1, atom2, atom3, atom4],
         )
 
         assert ref_dihedral != same_dihedral

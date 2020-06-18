@@ -7,7 +7,7 @@ import pytest
 from gmso.core.topology import Topology
 from gmso.core.subtopology import SubTopology
 from gmso.core.box import Box
-from gmso.core.site import Site
+from gmso.core.atom import Atom
 from gmso.core.bond import Bond
 from gmso.core.angle import Angle
 from gmso.core.dihedral import Dihedral
@@ -45,21 +45,21 @@ class TestTopology(BaseTest):
 
     def test_add_site(self):
         top = Topology()
-        site = Site(name='site')
+        atom = Atom(name='atom')
 
         assert top.n_sites == 0
-        top.add_site(site)
+        top.add_site(atom)
         assert top.n_sites == 1
 
     def test_add_connection(self):
         top = Topology()
-        site1 = Site(name='site1')
-        site2 = Site(name='site2')
-        connect = Bond(connection_members=[site1,site2])
+        atom1 = Atom(name='atom1')
+        atom2 = Atom(name='atom2')
+        connect = Bond(connection_members=[atom1,atom2])
 
         top.add_connection(connect)
-        top.add_site(site1)
-        top.add_site(site2)
+        top.add_site(atom1)
+        top.add_site(atom2)
 
         assert len(top.connections) == 1
 
@@ -74,11 +74,11 @@ class TestTopology(BaseTest):
 
     def test_positions_dtype(self):
         top = Topology()
-        site1 = Site(name='site1')
-        top.add_site(site1)
+        atom1 = Atom(name='atom1', position=np.random.rand(3))
+        top.add_site(atom1)
 
-        assert set([type(site.position) for site in top.sites]) == {u.unyt_array}
-        assert set([site.position.units for site in top.sites]) == {u.nm}
+        assert set([type(atom.position) for atom in top.sites]) == {u.unyt_array}
+        assert set([atom.position.units for atom in top.sites]) == {u.nm}
 
         assert top.positions.dtype == float
         assert top.positions.units == u.nm
@@ -95,25 +95,25 @@ class TestTopology(BaseTest):
         ref = deepcopy(top)
         wrong_n_sites = deepcopy(top)
         assert top != wrong_n_sites
-        ref.add_site(Site())
+        ref.add_site(Atom())
         assert ref != wrong_n_sites
 
         ref = deepcopy(top)
         wrong_position = deepcopy(top)
-        ref.add_site(Site(position=u.nm*[0, 0, 0]))
-        wrong_position.add_site(Site(position=u.nm*[1, 1, 1]))
+        ref.add_site(Atom(position=u.nm * [0, 0, 0]))
+        wrong_position.add_site(Atom(position=u.nm * [1, 1, 1]))
         assert top != wrong_position
 
         ref = deepcopy(top)
         wrong_charge = deepcopy(top)
-        ref.add_site(Site(charge=charge))
-        wrong_charge.add_site(Site(charge=-1*charge))
+        ref.add_site(Atom(charge=charge))
+        wrong_charge.add_site(Atom(charge=-1 * charge))
         assert ref != wrong_charge
 
         ref = deepcopy(top)
         wrong_atom_type = deepcopy(top)
-        ref.add_site(Site(atom_type=AtomType(expression='epsilon*sigma')))
-        wrong_atom_type.add_site(Site(atom_type=AtomType(expression='sigma')))
+        ref.add_site(Atom(atom_type=AtomType(expression='epsilon*sigma')))
+        wrong_atom_type.add_site(Atom(atom_type=AtomType(expression='sigma')))
         assert ref != wrong_atom_type
 
     @pytest.mark.skipif(not has_parmed, reason="ParmEd is not installed")
@@ -172,7 +172,7 @@ class TestTopology(BaseTest):
         assert top1 != top2
 
     def test_add_untyped_site_update(self):
-        untyped_site = Site(atom_type=None)
+        untyped_site = Atom(atom_type=None)
 
         top = Topology()
         assert len(top.atom_types) == 0
@@ -185,7 +185,7 @@ class TestTopology(BaseTest):
         assert len(top.atom_types) == 0
 
     def test_add_typed_site_update(self):
-        typed_site = Site(atom_type=AtomType())
+        typed_site = Atom(atom_type=AtomType())
 
         top = Topology()
         assert len(top.atom_types) == 0
@@ -198,8 +198,8 @@ class TestTopology(BaseTest):
         assert len(top.atom_types) == 1
 
     def test_add_untyped_bond_update(self):
-        site1 = Site(atom_type=None)
-        site2 = Site(atom_type=None)
+        site1 = Atom(atom_type=None)
+        site2 = Atom(atom_type=None)
         bond = Bond(connection_members=[site1, site2], connection_type=None)
 
         top = Topology()
@@ -213,8 +213,8 @@ class TestTopology(BaseTest):
         assert len(top.bond_types) == 0
 
     def test_add_typed_bond_update(self):
-        site1 = Site(atom_type=None)
-        site2 = Site(atom_type=None)
+        site1 = Atom(atom_type=None)
+        site2 = Atom(atom_type=None)
         bond = Bond(connection_members=[site1, site2],
                     connection_type=BondType())
 
@@ -239,9 +239,9 @@ class TestTopology(BaseTest):
         assert len(top.connection_type_expressions) == 0
 
         atomtype = AtomType()
-        site1 = Site(name='site1', atom_type=atomtype)
+        site1 = Atom(name='site1', atom_type=atomtype)
         top.add_site(site1)
-        site2 = Site(name='site2', atom_type=atomtype)
+        site2 = Atom(name='site2', atom_type=atomtype)
         top.add_site(site2)
 
         assert top.n_sites == 2
@@ -288,10 +288,10 @@ class TestTopology(BaseTest):
 
         atype1 = AtomType(expression='sigma + epsilon')
         atype2 = AtomType(expression='sigma * epsilon')
-        site1 = Site('a', atom_type=atype1)
-        site2 = Site('b', atom_type=atype2)
-        top.add_site(site1)
-        top.add_site(site2)
+        atom1 = Atom(name='a', atom_type=atype1)
+        atom2 = Atom(name='b', atom_type=atype2)
+        top.add_site(atom1)
+        top.add_site(atom2)
 
         assert top.n_sites == 2
         assert len(top.atom_types) == 2
@@ -302,12 +302,12 @@ class TestTopology(BaseTest):
 
         atype1 = AtomType(expression='sigma + epsilon')
         atype2 = AtomType(expression='sigma * epsilon')
-        site1 = Site('a', atom_type=atype1)
-        site2 = Site('b', atom_type=atype2)
+        atom1 = Atom(name='a', atom_type=atype1)
+        atom2 = Atom(name='b', atom_type=atype2)
         btype = BondType()
-        bond = Bond(connection_members=[site1, site2], connection_type=btype)
-        top.add_site(site1)
-        top.add_site(site2)
+        bond = Bond(connection_members=[atom1, atom2], connection_type=btype)
+        top.add_site(atom1)
+        top.add_site(atom2)
         top.add_connection(bond)
 
         assert top.n_bonds == 1
@@ -319,14 +319,14 @@ class TestTopology(BaseTest):
 
         atype1 = AtomType(expression='sigma + epsilon')
         atype2 = AtomType(expression='sigma * epsilon')
-        site1 = Site('a', atom_type=atype1)
-        site2 = Site('b', atom_type=atype2)
-        site3 = Site('c', atom_type=atype2)
+        atom1 = Atom(name='a', atom_type=atype1)
+        atom2 = Atom(name='b', atom_type=atype2)
+        atom3 = Atom(name='c', atom_type=atype2)
         atype = AngleType()
-        angle = Angle(connection_members=[site1, site2, site3], connection_type=atype, name='angle_name')
-        top.add_site(site1)
-        top.add_site(site2)
-        top.add_site(site3)
+        angle = Angle(connection_members=[atom1, atom2, atom3], connection_type=atype, name='angle_name')
+        top.add_site(atom1)
+        top.add_site(atom2)
+        top.add_site(atom3)
         top.add_connection(angle)
 
         assert top.n_angles == 1
@@ -339,16 +339,16 @@ class TestTopology(BaseTest):
 
         atype1 = AtomType(expression='sigma + epsilon')
         atype2 = AtomType(expression='sigma * epsilon')
-        site1 = Site('a', atom_type=atype1)
-        site2 = Site('b', atom_type=atype2)
-        site3 = Site('c', atom_type=atype2)
-        site4 = Site('d', atom_type=atype1)
+        atom1 = Atom(name='a', atom_type=atype1)
+        atom2 = Atom(name='b', atom_type=atype2)
+        atom3 = Atom(name='c', atom_type=atype2)
+        atom4 = Atom(name='d', atom_type=atype1)
         atype = DihedralType()
-        dihedral = Dihedral(connection_members=[site1, site2, site3, site4], connection_type=atype)
-        top.add_site(site1)
-        top.add_site(site2)
-        top.add_site(site3)
-        top.add_site(site4)
+        dihedral = Dihedral(connection_members=[atom1, atom2, atom3, atom4], connection_type=atype)
+        top.add_site(atom1)
+        top.add_site(atom2)
+        top.add_site(atom3)
+        top.add_site(atom4)
         top.add_connection(dihedral)
 
         assert top.n_dihedrals == 1
@@ -361,16 +361,16 @@ class TestTopology(BaseTest):
 
         atype1 = AtomType(expression='sigma + epsilon')
         atype2 = AtomType(expression='sigma * epsilon')
-        site1 = Site('a', atom_type=atype1)
-        site2 = Site('b', atom_type=atype2)
-        site3 = Site('c', atom_type=atype2)
-        site4 = Site('d', atom_type=atype1)
+        atom1 = Atom(name='a', atom_type=atype1)
+        atom2 = Atom(name='b', atom_type=atype2)
+        atom3 = Atom(name='c', atom_type=atype2)
+        atom4 = Atom(name='d', atom_type=atype1)
         atype = ImproperType()
-        improper = Improper(connection_members=[site1, site2, site3, site4], connection_type=atype)
-        top.add_site(site1)
-        top.add_site(site2)
-        top.add_site(site3)
-        top.add_site(site4)
+        improper = Improper(connection_members=[atom1, atom2, atom3, atom4], connection_type=atype)
+        top.add_site(atom1)
+        top.add_site(atom2)
+        top.add_site(atom3)
+        top.add_site(atom4)
         top.add_connection(improper)
 
         assert top.n_impropers == 1
@@ -390,7 +390,7 @@ class TestTopology(BaseTest):
         top = Topology()
 
         assert top.typed == False
-        top.add_site(Site(atom_type=AtomType()))
+        top.add_site(Atom(atom_type=AtomType()))
 
         assert top.typed == True
         assert top.is_typed() == True
@@ -408,7 +408,7 @@ class TestTopology(BaseTest):
     def test_topology_atom_type_changes(self):
         top = Topology()
         for i in range(100):
-            site = Site(name='site{}'.format(i))
+            site = Atom(name='site{}'.format(i))
             atom_type = AtomType(name='atom_type{}'.format(i%10))
             site.atom_type = atom_type
             top.add_site(site, update_types=False)
@@ -421,9 +421,9 @@ class TestTopology(BaseTest):
 
     def test_topology_get_index(self):
         top = Topology()
-        conn_members = [Site(), Site(), Site(), Site()]
+        conn_members = [Atom(), Atom(), Atom(), Atom()]
         for i in range(5):
-            top.add_site(Site())
+            top.add_site(Atom())
             top.add_connection(Bond(
                 connection_members=[conn_members[0], conn_members[1]]))
             top.add_connection(Angle(
@@ -434,7 +434,7 @@ class TestTopology(BaseTest):
                 connection_members=[conn_members[0], conn_members[1], conn_members[2], conn_members[3]]))
         a_bond = Bond(connection_members=[conn_members[0], conn_members[1]])
         an_angle = Angle(connection_members=[conn_members[0], conn_members[1], conn_members[2]])
-        a_site = Site()
+        a_site = Atom()
         a_dihedral = Dihedral(connection_members=[conn_members[0], conn_members[1], conn_members[2], conn_members[3]])
         an_improper = Improper(connection_members=[conn_members[0], conn_members[1], conn_members[2], conn_members[3]])
 
@@ -457,7 +457,7 @@ class TestTopology(BaseTest):
 
     def test_topology_get_index_non_existing_member(self):
         top = Topology()
-        site = Site()
+        site = Atom()
         with pytest.raises(ValueError):
             top.get_index(site)
 

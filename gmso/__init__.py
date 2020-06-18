@@ -3,7 +3,7 @@ from .core.subtopology import SubTopology
 from .core.element import Element
 from .core.box import Box
 
-from .core.site import Site
+from .core.atom import Atom
 from .core.connection import Connection
 from .core.bond import Bond
 from .core.angle import Angle

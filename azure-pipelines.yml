@@ -1,11 +1,12 @@
 trigger:
-  - master 
+  - master
 
 pr:
   autoCancel: true
   branches:
     include:
       - master
+      - release-0.3.0
 
 schedules:
 - cron: "0 0 * * *"
