@@ -1,14 +1,12 @@
 import warnings
-from abc import ABC
 from typing import Union, Sequence, Optional, Any, TypeVar, ClassVar
 
 import numpy as np
 import unyt as u
 
-from pydantic import BaseModel, validator, root_validator, Field
+from pydantic import validator, root_validator, Field
 
-from gmso.abc.auto_doc import apply_docs
-
+from gmso.abc.gmso_base import GMSOBase
 
 PositionType = Union[Sequence[float], np.ndarray]
 SiteT = TypeVar('SiteT', bound='Site')
@@ -17,23 +15,21 @@ BASE_DOC_ATTR = '__base_doc__'
 FIELDS_IN_DOCSTRING = 'alias_to_fields'
 
 
-class Site(BaseModel, ABC):
+class Site(GMSOBase):
 
     __base_doc__: ClassVar[str] = """An interaction site object in the topology hierarchy.
     
     Site is the object that represents any general interaction site in a molecular simulation.
     Sites have been designed to be as general as possible, making no assumptions about representing atoms or beads, or
     having mass or charge. That is, a Site can represent an atom in an atomistic system,
-    a bead in a coarse-grained system, and much more.
+    a bead in a coarse-grained system, and much more. 
     
     Notes
     -----
     The label attribute for a site takes its meaning when used with some sort of container (like topology)
     such that a label for a site can then be used to group sites together. The rules for defining a site label
-    and their meaning is left upto the container where the sites will reside
+    and their meaning is left upto the container where the sites will reside. 
     """
-
-    __docs_generated__: ClassVar[bool] = False
 
     name_: str = Field(
         '',
@@ -61,17 +57,6 @@ class Site(BaseModel, ABC):
     @property
     def label(self) -> str:
         return self.__dict__.get('label_')
-
-    def __setattr__(self, name, value):
-        if name in self.__config__.alias_to_fields:
-            name = self.__config__.alias_to_fields[name]
-        else:
-            warnings.warn(
-                'Use of internal fields is discouraged. '
-                'Please use external fields to set attributes.'
-            )
-
-        super().__setattr__(name, value)
 
     def __hash__(self):
         return id(self)
@@ -114,13 +99,9 @@ class Site(BaseModel, ABC):
         else:
             return object.__new__(cls)
 
-    @classmethod
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__()
-        apply_docs(cls, map_names=True)
-
     class Config:
         arbitrary_types_allowed = True
+
         fields = {
             'name_': 'name',
             'position_': 'position',

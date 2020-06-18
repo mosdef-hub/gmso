@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from gmso.core.potential import Potential
+from gmso.abc.abstract_potential import Potential
 from gmso.utils.singleton import Singleton
 from gmso.exceptions import GMSOError
 
@@ -25,20 +25,13 @@ def _load_template_json(item, json_dir=JSON_DIR):
 
 
 class PotentialTemplate(Potential):
-    def __init__(self,
-                 name='PotentialTemplate',
-                 expression='4*epsilon*((sigma/r)**12 - (sigma/r)**6)',
-                 independent_variables='r',
-                 template=True):
-        if not isinstance(independent_variables, set):
-            independent_variables = set(independent_variables.split(','))
 
-        super(PotentialTemplate, self).__init__(
-            name=name,
-            expression=expression,
-            independent_variables=independent_variables,
-            template=template,
-        )
+    def set_expression(self, **kwargs):
+        raise NotImplementedError
+
+    class Config:
+        allow_mutation = False
+        alias_to_fields = {}
 
 
 class PotentialTemplateLibrary(Singleton):

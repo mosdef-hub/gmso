@@ -109,17 +109,19 @@ class Atom(Site):
 
     class Config(Site.Config):
         extra = 'forbid'
+
         fields = {
             'charge_': 'charge',
             'mass_': 'mass',
             'element_': 'element',
             'atom_type_': 'atom_type'
         }
-        # For __setattr__
-        Site.Config.alias_to_fields.update({
+
+        alias_to_fields = {
             'charge': 'charge_',
             'mass': 'mass_',
             'element': 'element_',
             'atom_type': 'atom_type_'
-        })
+        }
+
         validate_assignment = True
