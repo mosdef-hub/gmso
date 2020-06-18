@@ -39,7 +39,7 @@ def _find_extended_summary(doc_lines: List) -> str:
 
 def _find_section_at(doc_lines: List, name: str) -> str:
     try:
-        sec_index_start =  doc_lines.index(name)
+        sec_index_start = doc_lines.index(name)
         sec_index_end = -1
         for j in range(sec_index_start+2, len(doc_lines)):
             if re.match(r'-+', doc_lines[j]):
@@ -170,9 +170,9 @@ class AutoDocGenerator:
         self.should_inject_init = self._should_inject_init()
 
     def _should_inject_init(self) -> bool:
-        immedeate_super_class = self.target.mro()[1]
+        immediate_super_class = self.target.mro()[1]
         self_init = self.target.__init__
-        super_init = immedeate_super_class.__init__
+        super_init = immediate_super_class.__init__
         return id(self_init) == id(super_init)
 
     def _name_map(self, map_names: bool = True) -> Union[Tuple[str, str], None]:

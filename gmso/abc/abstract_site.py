@@ -66,8 +66,10 @@ class Site(BaseModel, ABC):
         if name in self.__config__.alias_to_fields:
             name = self.__config__.alias_to_fields[name]
         else:
-            warnings.warn('Use of internal fields is discouraged. '
-                          'Please use external fields to set attributes.')
+            warnings.warn(
+                'Use of internal fields is discouraged. '
+                'Please use external fields to set attributes.'
+            )
 
         super().__setattr__(name, value)
 
@@ -100,7 +102,7 @@ class Site(BaseModel, ABC):
         return position
 
     @root_validator(pre=True)
-    def truncate_aliases(cls, values):
+    def inject_name(cls, values):
         if not values.get('name'):
             values['name'] = cls.__name__
         return values
