@@ -266,10 +266,10 @@ def _validate_independent_variables(indep_vars):
     """Check to see that independent_variables is a set of valid sympy symbols"""
     if isinstance(indep_vars, str):
         indep_vars = {sympy.symbols(indep_vars)}
-    elif isinstance(indep_vars, sympy.symbol.Symbol):
+    elif isinstance(indep_vars, sympy.Symbol):
         indep_vars = {indep_vars}
     elif isinstance(indep_vars, (list, set)):
-        if all([isinstance(val, sympy.symbol.Symbol) for val in indep_vars]):
+        if all([isinstance(val, sympy.Symbol) for val in indep_vars]):
             pass
         elif all([isinstance(val, str) for val in indep_vars]):
             indep_vars = set([sympy.symbols(val) for val in indep_vars])
