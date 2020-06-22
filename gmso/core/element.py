@@ -191,8 +191,11 @@ def element_by_smarts_string(smarts_string):
 
     PARSER = SMARTS()
 
-    symbol = next(PARSER.parse(smarts_string).find_data('atom_symbol')).children[0]
-    print(symbol)
+    symbols = PARSER.parse(smarts_string).iter_subtrees_topdown()
+    for symbol in symbols:
+        if symbol.data == 'atom_symbol':
+            break
+    symbol = symbol.children[0]
     matched_element = element_by_symbol(symbol)
     
     if matched_element is None:
