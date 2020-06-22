@@ -1,9 +1,5 @@
-import warnings
-
-import sympy
 import unyt as u
 
-from gmso.utils.misc import unyt_to_hashable
 from gmso.utils.expression import _PotentialExpression
 from gmso.utils.decorators import confirm_dict_existence
 from gmso.exceptions import GMSOError
