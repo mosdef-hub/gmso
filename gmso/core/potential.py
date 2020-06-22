@@ -4,6 +4,7 @@ import sympy
 import unyt as u
 
 from gmso.utils.misc import unyt_to_hashable
+from gmso.utils.expression import _PotentialExpression
 from gmso.utils.decorators import confirm_dict_existence
 from gmso.exceptions import GMSOError
 
@@ -47,27 +48,34 @@ class Potential(object):
                  template=False,
                  topology=None
                  ):
+        self._name = name
+
+        if expression is None:
+            expression = 'a*x+b'
+
         if parameters is None:
-            parameters = {'a': 1.0*u.dimensionless,
-                          'b': 1.0*u.dimensionless}
+            parameters = {
+                'a': 1.0 * u.dimensionless,
+                'b': 1.0 * u.dimensionless
+            }
 
         if independent_variables is None:
             independent_variables = {'x'}
 
-        self._name = name
-        if not template:
-            self._parameters = _validate_parameters(parameters)
-        self._independent_variables = _validate_independent_variables(independent_variables)
-        self._expression = _validate_expression(expression)
-        self._template = template
+        if template:
+            self._template = template
+            parameters = None
+
+        self._potential_expression = _PotentialExpression(
+            expression=expression,
+            independent_variables=independent_variables,
+            parameters=parameters
+        )
 
         if topology is not None:
             self._topology = topology
         else:
             self._topology = None
-
-        if not template:
-            self._validate_expression_parameters()
 
     @property
     def name(self):
@@ -80,24 +88,21 @@ class Potential(object):
 
     @property
     def parameters(self):
-        return self._parameters
+        return self._potential_expression.parameters
 
     @parameters.setter
     @confirm_dict_existence
     def parameters(self, newparams):
-        newparams = _validate_parameters(newparams)
-
-        self._parameters.update(newparams)
-        self._validate_expression_parameters()
+        self._potential_expression.parameters = newparams
 
     @property
     def independent_variables(self):
-        return self._independent_variables
+        return self._potential_expression.independent_variables
 
     @independent_variables.setter
     @confirm_dict_existence
     def independent_variables(self, indep_vars):
-        self._independent_variables = _validate_independent_variables(indep_vars)
+        self._potential_expression.independent_variables = indep_vars
 
     @property
     def template(self):
@@ -105,14 +110,12 @@ class Potential(object):
 
     @property
     def expression(self):
-        return self._expression
+        return self._potential_expression.expression
 
     @expression.setter
     @confirm_dict_existence
     def expression(self, expression):
-        self._expression = _validate_expression(expression)
-
-        self._validate_expression_parameters()
+        self._potential_expression.expression = expression
 
     @property
     def topology(self):
@@ -142,52 +145,11 @@ class Potential(object):
         If only a subset of the parameters are supplied, they are updated
         while the non-passed parameters default to the existing values
        """
-        if expression is not None:
-            self._expression = _validate_expression(expression)
-
-        if parameters is None:
-            parameters = self._parameters
-        else:
-            parameters = _validate_parameters(parameters)
-            if not set(self._parameters).intersection(set(parameters)):
-                if expression is None:
-                    raise ValueError('`parameters` argument includes no '
-                                     'variables found in expression. Expected '
-                                     'at least one of {}'.format(
-                                        self._parameters.keys()))
-            self._parameters.update(parameters)
-
-        if independent_variables is not None:
-            self._independent_variables = _validate_independent_variables(independent_variables)
-
-        if not set(parameters.keys()).isdisjoint(self._expression.free_symbols):
-            raise ValueError('Mismatch between parameters and expression symbols')
-
-        self._validate_expression_parameters()
-
-    def _validate_expression_parameters(self):
-        # Check for unused symbols
-        parameter_symbols = sympy.symbols(set(self._parameters.keys()))
-        independent_variable_symbols = self._independent_variables
-        used_symbols = parameter_symbols.union(independent_variable_symbols)
-        unused_symbols = self.expression.free_symbols - used_symbols
-        if len(unused_symbols) > 0:
-            warnings.warn('You supplied parameters with '
-                          'unused symbols {}'.format(unused_symbols))
-
-        if used_symbols != self.expression.free_symbols:
-            symbols = sympy.symbols(set(self.parameters.keys()))
-            if symbols != self.expression.free_symbols:
-                missing_syms = self.expression.free_symbols - symbols - self._independent_variables
-                if missing_syms:
-                    raise ValueError("Missing necessary parameters to evaluate "
-                                     "potential expression. Missing symbols: {}"
-                                     "".format(missing_syms))
-                extra_syms = symbols ^ self.expression.free_symbols
-                warnings.warn("Potential expression and parameter"
-                              " symbols do not agree,"
-                              " extraneous symbols:"
-                              " {}".format(extra_syms))
+        self._potential_expression.set(
+            expression=expression,
+            independent_variables=independent_variables,
+            parameters=parameters
+        )
 
     def __eq__(self, other):
         return hash(self) == hash(other)
@@ -197,10 +159,7 @@ class Potential(object):
             tuple(
                 (
                     self.name,
-                    self.expression,
-                    tuple(self.independent_variables),
-                    tuple(self.parameters.keys()),
-                    tuple(unyt_to_hashable(val) for val in self.parameters.values())
+                    self._potential_expression
                 )
             )
         )
@@ -242,57 +201,3 @@ class Potential(object):
                    parameters=parameters,
                    topology=topology,
                    template=False)
-
-
-def _validate_parameters(parameters):
-    """Check to see that parameters is a valid dictionary with units"""
-    if not isinstance(parameters, dict):
-        raise ValueError("Please enter dictionary for parameters")
-    for key, val in parameters.items():
-        if isinstance(val, list):
-            for params in val:
-                if not isinstance(params, u.unyt_array):
-                    raise ValueError('Parameter value {} lacks a unyt'.format(val))
-        else:
-            if not isinstance(val, u.unyt_array):
-                raise ValueError('Parameter value {} lacks a unyt'.format(val))
-        if not isinstance(key, str):
-            raise ValueError('Parameter key {} is not a str'.format(key))
-
-    return parameters
-
-
-def _validate_independent_variables(indep_vars):
-    """Check to see that independent_variables is a set of valid sympy symbols"""
-    if isinstance(indep_vars, str):
-        indep_vars = {sympy.symbols(indep_vars)}
-    elif isinstance(indep_vars, sympy.symbol.Symbol):
-        indep_vars = {indep_vars}
-    elif isinstance(indep_vars, (list, set)):
-        if all([isinstance(val, sympy.symbol.Symbol) for val in indep_vars]):
-            pass
-        elif all([isinstance(val, str) for val in indep_vars]):
-            indep_vars = set([sympy.symbols(val) for val in indep_vars])
-        else:
-            raise ValueError('`independent_variables` argument was a list '
-                             'or set of mixed variables. Please enter a '
-                             'list or set of either only strings or only '
-                             'sympy symbols')
-    else:
-        raise ValueError("Please enter a string, sympy expression, "
-                         "or list or set thereof for independent_variables")
-
-    return indep_vars
-
-
-def _validate_expression(expression):
-    """Check to see that an expression is a valid sympy expression"""
-    if expression is None or isinstance(expression, sympy.Expr):
-        pass
-    elif isinstance(expression, str):
-        expression = sympy.sympify(expression)
-    else:
-        raise ValueError("Please enter a string, sympy expression, "
-                         "or None for expression")
-
-    return expression

@@ -90,7 +90,6 @@ class AtomType(Potential):
         self._description = _validate_str(description)
         self._definition = _validate_str(definition)
         self._set_ref = ATOM_TYPE_DICT
-        self._validate_expression_parameters()
 
     @property
     def set_ref(self):
