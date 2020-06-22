@@ -6,7 +6,7 @@ lxml
 pytest
 mbuild >= 0.10.4
 openbabel
-foyer
+foyer <= 0.7.5
 gsd >= 2.0
 parmed
 pytest-cov
