@@ -182,10 +182,13 @@ def element_by_smarts_string(smarts_string):
 
     Returns
     -------
-    matched_element : element.Element or None
-        Return an element from the periodict table if we find a match,
-        otherwise return None
+    matched_element : element.Element
+        Return an element from the periodic table if we find a match
 
+    Raises
+    ------
+    GMSOError
+        If no matching element is found for the provided smarts string
     """
     from foyer.smarts import SMARTS
 
