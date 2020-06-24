@@ -6,7 +6,7 @@ from gmso.core.atom_type import AtomType
 from gmso.core.site import Site
 from gmso.core.topology import Topology
 from gmso.tests.base_test import BaseTest
-from gmso.utils.testing import allclose
+from unyt.testing import assert_allclose_units
 
 
 class TestAtomType(BaseTest):
@@ -16,10 +16,10 @@ class TestAtomType(BaseTest):
                     'epsilon': 10 * u.Unit('kcal / mol')},
                 independent_variables={'r'})
         assert new_type.name == 'mytype'
-        assert allclose(new_type.charge, charge)
-        assert allclose(new_type.parameters['sigma'], 1 * u.nm)
-        assert allclose(new_type.parameters['epsilon'], 10 * u.Unit('kcal / mol'))
-        assert allclose(new_type.mass, mass)
+        assert_allclose_units(new_type.charge, charge, rtol=1e-5, atol=1e-8)
+        assert_allclose_units(new_type.parameters['sigma'], 1 * u.nm, rtol=1e-5, atol=1e-8)
+        assert_allclose_units(new_type.parameters['epsilon'], 10 * u.Unit('kcal / mol'), rtol=1e-5, atol=1e-8)
+        assert_allclose_units(new_type.mass, mass, rtol=1e-5, atol=1e-8)
 
     def test_setters(self, charge, mass):
         new_type = AtomType(self)
@@ -31,8 +31,8 @@ class TestAtomType(BaseTest):
                                'epsilon': 10 * u.Unit('kcal / mol')}
         new_type.expression = 'r * sigma * epsilon'
         assert new_type.name == "SettingName"
-        assert allclose(new_type.charge, -1.0 * charge)
-        assert allclose(new_type.mass, 1 * mass)
+        assert_allclose_units(new_type.charge, -1.0 * charge, rtol=1e-5, atol=1e-8)
+        assert_allclose_units(new_type.mass, 1 * mass, rtol=1e-5, atol=1e-8)
         assert new_type.independent_variables == {sympy.symbols('r')}
         assert new_type.parameters == {'sigma': 1 * u.nm,
                                       'epsilon': 10 * u.Unit('kcal / mol')}

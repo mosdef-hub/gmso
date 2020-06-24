@@ -8,7 +8,7 @@ from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.conversions import convert_ryckaert_to_opls
 from gmso.utils.conversions import convert_opls_to_ryckaert
 from gmso.exceptions import GMSOError
-
+from unyt.testing import assert_allclose_units
 class TestInternalConversions(BaseTest):
 
     @pytest.fixture
@@ -199,5 +199,5 @@ class TestInternalConversions(BaseTest):
         final_connection_type = convert_ryckaert_to_opls(
                 ryckaert_connection_type)
 
-        assert np.allclose([*opls_connection_type.parameters.values()],
-                           [*final_connection_type.parameters.values()])
+        assert_allclose_units([*opls_connection_type.parameters.values()],
+                           [*final_connection_type.parameters.values()], rtol=1e-5, atol=1e-8)
