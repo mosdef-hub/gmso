@@ -8,7 +8,7 @@ Introduction
 
 `GMSO` is designed to be a general and flexible representation of chemical topolgies for molecular simulation.
 With an emphasis on assuming as little as possible about the chemical system, model, or engine, `GMSO` can enable support for a variety of systems.
-`GMSO` is a part of the [MoSDeF (Molecular Simulation and Design Framework)](https://mosdef.org) ecosystem, and is intended to be the backend replacement for the [`foyer` package](https://mosdef.org/foyer).
+`GMSO` is a part of the [MoSDeF (Molecular Simulation and Design Framework)](https://mosdef.org) ecosystem, and is intended to be the backend replacement for the [`foyer` package](https://foyer.mosdef.org).
 
 
 Goals and Features
@@ -67,7 +67,7 @@ With these driving goals for `GMSO`, the following features are enabled:
 
 Installation
 ------------
-For full, detailed instructions, refer to the [documentation for installation](./docs/installation.rst)
+For full, detailed instructions, refer to the [documentation for installation](https://gmso.mosdef.org/en/latest/installation.html)
 
 ### `Conda` installation quickstart
 _Note: `GMSO` is not on `conda` currently, but its dependencies are._
@@ -89,10 +89,10 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
-These two quickstarts will install `GMSO` in `editable` mode, which means that as you edit the source code of `GMSO` those edits will be reflected in your installation.
+These two quickstarts will install `GMSO` in [`editable` mode](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs), which means that as you edit the source code of `GMSO` those edits will be reflected in your installation.
 
 
 Documentation
 -------------
 
-The full documentation can be found at [mosdef.org/gmso](https://mosdef.org/gmso)
+The full documentation can be found at [gmso.mosdef.org](https://gmso.mosdef.org)
