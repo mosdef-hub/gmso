@@ -107,7 +107,6 @@ def write_top(top, filename):
             '; nr\t\ttype\tresnr\tresidue\t\tatom\tcgnr\tcharge\t\tmass\n'
         )
         for site in top.sites:
-            print(top.name)
             out_file.write(
                 '{0}\t\t\t'
                 '{1}\t\t'

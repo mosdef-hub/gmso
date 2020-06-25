@@ -1,7 +1,9 @@
 import pytest
 
-import gmso
+import unyt as u
 import parmed as pmd
+
+import gmso
 from gmso.formats.top import write_top
 from gmso.tests.base_test import BaseTest
 from gmso.utils.io import get_fn
@@ -19,7 +21,6 @@ class TestTop(BaseTest):
         'typed_water_system', 'typed_ethane'])
     def test_pmd_loop(self, top, request):
         top = request.getfixturevalue(top)
-        assert len(top.name) > 3
         write_top(top, 'system.top')
         pmd.load_file('system.top')
 
@@ -75,3 +76,19 @@ class TestTop(BaseTest):
 
         write_top(top, 'water.top')
 
+    def test_ethane_periodic(self, typed_ethane):
+        from gmso.lib.potential_templates import PotentialTemplateLibrary
+        per_torsion = PotentialTemplateLibrary()["PeriodicTorsionPotential"]
+        params = {"k" : 10 * u.Unit("kJ / mol"),
+                  "phi_eq" : 15 * u.Unit("degree"),
+                  "n" : 3 * u.Unit("dimensionless")}
+        periodic_dihedral_type = gmso.core.potential.Potential.from_template(
+                per_torsion, params)
+        for dihedral in typed_ethane.dihedrals:
+            dihedral.connection_type = periodic_dihedral_type
+
+        typed_ethane.update_connections()
+
+        write_top(typed_ethane, 'system.top')
+        struct = pmd.load_file('system.top')
+        assert len(struct.dihedrals) == 9
