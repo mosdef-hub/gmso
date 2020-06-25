@@ -188,10 +188,13 @@ def _accepted_potentials():
     harmonic_bond_potential = templates['HarmonicBondPotential']
     harmonic_angle_potential = templates['HarmonicAnglePotential']
     periodic_torsion_potential = templates['PeriodicTorsionPotential']
+    rb_torsion_potential = templates['RyckaertBellemansTorsionPotential']
     accepted_potentials = [lennard_jones_potential,
                            harmonic_bond_potential,
                            harmonic_angle_potential,
-                           periodic_torsion_potential]
+                           periodic_torsion_potential,
+                           rb_torsion_potential,
+                           ]
     return accepted_potentials
 
 def _validate_compatibility(top):
@@ -229,7 +232,7 @@ def _write_connection(top, connection):
     """
 
     accepted_potentials = _accepted_potentials()
-    for ref in _accepted_potentials():
+    for ref in accepted_potentials:
         if sympy.simplify(ref.expression - connection.connection_type.expression) == 0:
             potential_name = ref.name
             break

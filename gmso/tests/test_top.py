@@ -16,9 +16,11 @@ class TestTop(BaseTest):
 
 
     @pytest.mark.parametrize('top', ['typed_ar_system',
-        'typed_water_system'])
+        'typed_water_system', 'typed_ethane'])
     def test_pmd_loop(self, top, request):
-        write_top(request.getfixturevalue(top), 'system.top')
+        top = request.getfixturevalue(top)
+        assert len(top.name) > 3
+        write_top(top, 'system.top')
         pmd.load_file('system.top')
 
 
@@ -72,3 +74,4 @@ class TestTop(BaseTest):
         top.update_angle_types()
 
         write_top(top, 'water.top')
+
