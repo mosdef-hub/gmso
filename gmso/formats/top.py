@@ -9,15 +9,15 @@ from gmso.utils.compatibility import check_compatibility
 from gmso.exceptions import GMSOError, EngineIncompatibilityError
 
 
-def write_top(top, filename):
+def write_top(top, filename, top_vars=None):
     """Write a gmso.core.Topology object to a GROMACS topology (.TOP) file"""
 
     _validate_compatibility(top)
-    top_vars = _get_top_vars()
+    top_vars = _get_top_vars(top, top_vars)
 
     with open(filename, 'w') as out_file:
         out_file.write(
-            '; File {} written by topology at {}\n\n'.format(
+            '; File {} written by GMSO at {}\n\n'.format(
                 top.name if top.name is not None else '',
                 str(datetime.datetime.now())
             )
@@ -37,8 +37,8 @@ def write_top(top, filename):
             '{3}\t\t'
             '{4}\n\n'.format(
                 top_vars['nbfunc'],
-                top_vars['comb_rule'],
-                top_vars['gen_pairs'],
+                top_vars['comb-rule'],
+                top_vars['gen-pairs'],
                 top_vars['fudgeLJ'],
                 top_vars['fudgeQQ'],
             )
@@ -89,7 +89,7 @@ def write_top(top, filename):
                 '{0}\t\t\t'
                 '{1}\n\n'.format(
                     top.name,
-                    3, # Typically exclude 3 nearest neighbors
+                    top_vars["nrexcl"], # Typically exclude 3 nearest neighbors
                 )
             )
         # TODO: Lookup and join nrexcl from each subtop object
@@ -120,7 +120,7 @@ def write_top(top, filename):
                     site.atom_type.name,
                     1, # TODO: subtop idx
                     top.name, # TODO: subtop.name
-                    'X', # TODO: establish relationship between atom_type and site ...
+                    _lookup_element_symbol(site.atom_type),
                     1, # TODO: care about charge groups
                     site.charge.in_units(u.charge_electron).value,
                     site.atom_type.mass.in_units(u.amu).value,
@@ -201,17 +201,22 @@ def _validate_compatibility(top):
     check_compatibility(top, _accepted_potentials())
 
 
-def _get_top_vars():
+def _get_top_vars(top, top_vars):
     """Generate a dictionary of values for the defaults directive."""
-    top_vars = dict()
+    combining_rule_to_gmx = {"lorentz": 2,
+                             "geometric": 3}
+    default_top_vars = dict()
+    default_top_vars['nbfunc'] = 1
+    default_top_vars['comb-rule'] = combining_rule_to_gmx[top.combining_rule]
+    default_top_vars['gen-pairs'] = 'no'
+    default_top_vars['fudgeLJ'] = 1
+    default_top_vars['fudgeQQ'] = 1
+    default_top_vars['nrexcl'] = 3
 
-    top_vars['nbfunc'] = 1
-    top_vars['comb_rule'] = 2
-    top_vars['gen_pairs'] = 'no'
-    top_vars['fudgeLJ'] = 1
-    top_vars['fudgeQQ'] = 1
+    if isinstance(top_vars, dict):
+        default_top_vars.update(top_vars)
 
-    return top_vars
+    return default_top_vars
 
 
 def _lookup_atomic_number(atom_type):
@@ -222,6 +227,14 @@ def _lookup_atomic_number(atom_type):
     except GMSOError:
         return 0
 
+
+def _lookup_element_symbol(atom_type):
+    """Attempt to look up an atomic_number based on atom type information, 0 if non-element type"""
+    try:
+        element = element_by_atom_type(atom_type)
+        return element.symbol
+    except GMSOError:
+        return "X"
 
 def _write_connection(top, connection):
     """ Worker function to write a single dihedral

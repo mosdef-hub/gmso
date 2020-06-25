@@ -76,6 +76,7 @@ class TestTop(BaseTest):
 
         write_top(top, 'water.top')
 
+
     def test_ethane_periodic(self, typed_ethane):
         from gmso.lib.potential_templates import PotentialTemplateLibrary
         per_torsion = PotentialTemplateLibrary()["PeriodicTorsionPotential"]
@@ -92,3 +93,12 @@ class TestTop(BaseTest):
         write_top(typed_ethane, 'system.top')
         struct = pmd.load_file('system.top')
         assert len(struct.dihedrals) == 9
+
+
+    def test_custom_defaults(self, typed_ethane):
+        write_top(typed_ethane, 'system.top',
+                top_vars={"gen-pairs": "yes", "fudgeLJ": 0.5, "fudgeQQ":0.5})
+        struct = pmd.load_file('system.top')
+        assert struct.defaults.gen_pairs == "yes"
+        assert struct.defaults.fudgeLJ == 0.5
+        assert struct.defaults.fudgeQQ == 0.5
