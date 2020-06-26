@@ -12,7 +12,7 @@ from gmso.exceptions import GMSOError, EngineIncompatibilityError
 def write_top(top, filename, top_vars=None):
     """Write a gmso.core.Topology object to a GROMACS topology (.TOP) file"""
 
-    _validate_compatibility(top)
+    pot_types = _validate_compatibility(top)
     top_vars = _get_top_vars(top, top_vars)
 
     with open(filename, 'w') as out_file:
@@ -133,7 +133,7 @@ def write_top(top, filename, top_vars=None):
         )
         for bond in top.bonds:
             out_file.write(
-                _write_connection(top, bond)
+                _write_connection(top, bond, pot_types[bond.connection_type])
             )
 
         out_file.write(
@@ -142,7 +142,7 @@ def write_top(top, filename, top_vars=None):
         )
         for angle in top.angles:
             out_file.write(
-                _write_connection(top, angle)
+                _write_connection(top, angle, pot_types[angle.connection_type])
             )
 
         out_file.write(
@@ -151,7 +151,7 @@ def write_top(top, filename, top_vars=None):
         )
         for dihedral in top.dihedrals:
             out_file.write(
-                _write_connection(top, dihedral)
+                _write_connection(top, dihedral, pot_types[dihedral.connection_type])
             )
 
         out_file.write(
@@ -198,7 +198,8 @@ def _accepted_potentials():
 
 def _validate_compatibility(top):
     """Check compatability of topology object with GROMACS TOP format"""
-    check_compatibility(top, _accepted_potentials())
+    pot_types = check_compatibility(top, _accepted_potentials())
+    return pot_types
 
 
 def _get_top_vars(top, top_vars):
@@ -236,23 +237,12 @@ def _lookup_element_symbol(atom_type):
     except GMSOError:
         return "X"
 
-def _write_connection(top, connection):
+def _write_connection(top, connection, potential_name):
     """ Worker function to write a single dihedral
 
     This first gets the form of the dihedral and then sends to form-specific
     worker function to return the line to be written out
     """
-
-    accepted_potentials = _accepted_potentials()
-    for ref in accepted_potentials:
-        if sympy.simplify(ref.expression - connection.connection_type.expression) == 0:
-            potential_name = ref.name
-            break
-        else:
-            potential_name = None
-
-    if not potential_name:
-        raise EngineIncompatibilityError
 
     worker_functions = {
             "HarmonicBondPotential": _harmonic_bond_potential_writer,

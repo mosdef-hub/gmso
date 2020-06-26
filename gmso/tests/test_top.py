@@ -88,7 +88,7 @@ class TestTop(BaseTest):
         for dihedral in typed_ethane.dihedrals:
             dihedral.connection_type = periodic_dihedral_type
 
-        typed_ethane.update_connections()
+        typed_ethane.update_connection_types()
 
         write_top(typed_ethane, 'system.top')
         struct = pmd.load_file('system.top')
