@@ -141,6 +141,7 @@ class BaseTest:
         # atomtyping on gmso Topology
         pmd_ethane = oplsaa.apply(mb_ethane)
         top = from_parmed(pmd_ethane)
+        top.name = "ethane"
         return top
 
     @pytest.fixture
