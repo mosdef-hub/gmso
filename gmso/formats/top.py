@@ -1,12 +1,11 @@
 import datetime
 
 import unyt as u
-import sympy
 
 from gmso.core.element import element_by_atom_type
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.compatibility import check_compatibility
-from gmso.exceptions import GMSOError, EngineIncompatibilityError
+from gmso.exceptions import GMSOError
 
 
 def write_top(top, filename, top_vars=None):
