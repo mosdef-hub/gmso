@@ -1,0 +1,14 @@
+[run]
+omit = gmso/tests/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+
+    def __repr__
+    except ImportError
+    if 0:
+    if __name__ == .__main__.:
+
+omit =
+    gmso/tests/*

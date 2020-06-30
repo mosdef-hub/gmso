@@ -21,7 +21,7 @@ from gmso.external.convert_parmed import from_parmed
 
 from gmso.tests.base_test import BaseTest
 from gmso.exceptions import GMSOError
-from gmso.utils.testing import allclose
+from unyt.testing import assert_allclose_units
 from gmso.tests.base_test import BaseTest
 from gmso.utils.io import get_fn, import_, has_parmed
 
@@ -70,7 +70,7 @@ class TestTopology(BaseTest):
         assert top.box is None
         top.box = box
         assert top.box is not None
-        assert allclose(top.box.lengths, u.nm*2*np.ones(3))
+        assert_allclose_units(top.box.lengths, u.nm*2*np.ones(3), rtol=1e-5, atol=1e-8)
 
     def test_positions_dtype(self):
         top = Topology()

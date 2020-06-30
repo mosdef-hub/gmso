@@ -6,8 +6,7 @@ import unyt as u
 
 from gmso.core.box import Box
 from gmso.tests.base_test import BaseTest
-from gmso.utils.testing import allclose
-
+from unyt.testing import assert_allclose_units
 
 class TestBox(BaseTest):
     def test_init_lengths(self, lengths):
@@ -71,7 +70,7 @@ class TestBox(BaseTest):
 
         scaled_vectors = box.get_vectors()
 
-        assert allclose(scaled_vectors, scaled_u_vectors, atol=u.nm*1e-3)
+        assert_allclose_units(scaled_vectors, scaled_u_vectors, rtol=1e-5, atol=u.nm*1e-3)
         assert scaled_u_vectors.units == u.nm
 
     def test_scaled_vectors(self):
@@ -81,7 +80,7 @@ class TestBox(BaseTest):
                                 [0.5, 0.86603, 0],
                                 [0.64278, 0.51344, 0.56852]])
         test_vectors = (test_vectors.T * box.lengths).T
-        assert allclose(vectors, test_vectors, atol=u.nm*1e-3)
+        assert_allclose_units(vectors, test_vectors, rtol=1e-5, atol=u.nm*1e-3)
         assert vectors.units == u.nm
 
     def test_eq(self, box):
