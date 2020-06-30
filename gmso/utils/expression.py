@@ -6,8 +6,23 @@ import unyt as u
 
 from gmso.utils.misc import unyt_to_hashable
 
+__all__ = [
+    '_PotentialExpression'
+]
+
+
 class _PotentialExpression:
     """A general Expression class with parameters
+
+    This class is used by `gmso.core.potential.Potential` class and its
+    descendants to manage expression and independent variables for the
+    Potential class and meant to be used within the scope of aforementioned
+    classes. This class can be used in two forms:
+        * parametric: With expression, independent_variables and parameters
+        * non-parametric: With expression and independent_variables but no parameters
+
+    Non-Parametric form of the class is used by PotentialTemplate class while
+    parametric form is used by `gmso.core.AtomType`, `gmso.core.BondType` and so forth.
 
     Parameters
     ----------
@@ -84,7 +99,7 @@ class _PotentialExpression:
 
     @independent_variables.setter
     def independent_variables(self, indep_vars):
-        return self.set(
+        self.set(
             independent_variables=indep_vars
         )
 
@@ -187,9 +202,9 @@ class _PotentialExpression:
         return hash(self) == hash(other)
 
     def __repr__(self):
-        descr = list('<PotentialExpression')
-        descr.append(' expression, '.format(self.expression))
-        descr.append('{:d} independent variables, '.format(self.independent_variables))
+        descr = list(f'<PotentialExpression, ')
+        descr.append(f'expression: {self.expression}, ')
+        descr.append(f'{len(self.independent_variables)} independent variables>')
 
         return ''.join(descr)
 
@@ -211,7 +226,7 @@ class _PotentialExpression:
     def _validate_parameters(parameters):
         """Check to see that parameters is a valid dictionary with units"""
         if not isinstance(parameters, dict):
-            raise ValueError("Please enter dictionary for parameters")
+            raise ValueError("Please enter a dictionary for parameters")
         for key, val in parameters.items():
             if isinstance(val, list):
                 for params in val:
@@ -247,7 +262,7 @@ class _PotentialExpression:
         else:
             raise ValueError(
                 'Please enter a string, sympy expression, '
-                'or list or set thereof for independent_variables'
+                'list or set thereof for independent_variables'
             )
 
         return indep_vars
@@ -290,4 +305,3 @@ class _PotentialExpression:
                         f'Potential expression and parameter symbols do not agree, '
                         f'extraneous symbols: {extra_syms}'
                     )
-

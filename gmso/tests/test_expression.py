@@ -74,7 +74,8 @@ class TestExpression(BaseTest):
         assert expression.is_parametric is False
         with pytest.raises(AttributeError) as e:
             assert expression.parameters
-            assert 'Object of type _PotentialExpression has no attribute parameters'
+            assert 'Object of type _PotentialExpression ' \
+                   'has no attribute parameters' in e
 
     def test_set_indep_variables(self):
         expression = _PotentialExpression(
@@ -188,21 +189,21 @@ class TestExpression(BaseTest):
         assert expression.parameters['a'] == u.unyt_quantity(2.6, units='nm')
         assert expression.parameters['b'] == u.unyt_quantity(2.7, units='nm')
         assert expression.parameters['c'] == u.unyt_quantity(22.8, units='hertz')
-        assert 'w' not in expression.parameters
+        assert 'l' not in expression.parameters
 
     def test_expression_equality(self):
         expression_1 = _PotentialExpression(
-            expression='e^2+e^4+2*phi',
+            expression='exp(2)+exp(4)+2*phi',
             independent_variables={'phi'}
         )
 
         expression_2 = _PotentialExpression(
-            expression='e^4 + e^2 + phi*2',
+            expression='exp(4) + exp(2) + phi*2',
             independent_variables={'phi'}
         )
 
         expression_3 = _PotentialExpression(
-            expression='e^4 + e^2 + phi * 8',
+            expression='exp(4) + exp(2) + phi * 8',
             independent_variables={'phi'}
         )
 
