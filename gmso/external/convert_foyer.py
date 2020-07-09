@@ -12,7 +12,7 @@ from gmso.exceptions import ForceFieldParseError
 if has_foyer:
     import foyer
 
-def from_foyer(foyer_xml, gmso_xml):
+def from_foyer(foyer_xml, gmso_xml=None):
     """Convert a foyer XML to a gmso XML
 
     Parameters
@@ -22,9 +22,12 @@ def from_foyer(foyer_xml, gmso_xml):
    
     Returns
     -------
-    gmso_xml : XML
+    gmso_xml : XML, default=None
         An XML file in the gmso format
     """
+
+    if gmso_xml is None:
+        gmso_xml = os.path.splitext(foyer_xml)[0] + '_gmso.xml'
 
     foyer_xml_tree = etree.parse(foyer_xml)
     f_kwargs = {
@@ -85,7 +88,7 @@ def from_foyer(foyer_xml, gmso_xml):
 
     _write_gmso_xml(gmso_xml, **f_kwargs)
 
-def to_foyer(gmso_xml, foyer_xml):
+def to_foyer(gmso_xml, foyer_xml=None):
     """Convert a gmso XML to a foyer XML
 
     Parameters
@@ -95,9 +98,12 @@ def to_foyer(gmso_xml, foyer_xml):
    
     Returns
     -------
-    foyer_xml : XML
+    foyer_xml : XML, default=None
         An XML file in the foyer format
     """
+
+    if foyer_xml is None:
+        foyer_xml = os.path.splitext(gmso_xml)[0] + '_foyer.xml'
 
     gmso_xml_tree = etree.parse(gmso_xml)
     f_kwargs = {
