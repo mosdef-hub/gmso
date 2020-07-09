@@ -7,6 +7,7 @@ import sympy
 
 from lxml import etree
 from gmso.utils.io import has_foyer # Need for foyer
+from gmso.exceptions import ForceFieldParseError
 
 if has_foyer:
     import foyer
@@ -42,6 +43,8 @@ def from_foyer(foyer_xml, gmso_xml):
     atom_types_el = foyer_xml_tree.findall('AtomType')
     if len(atom_types_el) == 0:
         atom_types_el = foyer_xml_tree.findall('AtomTypes')
+        if len(atom_types_el) == 0:
+            raise ForceFieldParseError
 
     for atom_types in atom_types_el:
         for atom_type in atom_types.getiterator('Type'):
