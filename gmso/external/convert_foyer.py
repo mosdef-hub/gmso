@@ -3,6 +3,7 @@ from warnings import warn
 import numpy as np
 import unyt as u
 import os
+import sympy
 
 from lxml import etree
 from gmso.utils.io import has_foyer # Need for foyer
@@ -32,7 +33,8 @@ def from_foyer(foyer_xml, gmso_xml):
             'harmonic_angle_types': [],
             'urey_bradley_angle_types': [],
             'rb_torsion_dihedral_types': [],
-            'periodic_torsion_dihedral_types': []
+            'periodic_torsion_dihedral_types': [],
+            'periodic_improper_types': []
             }
 
     # Try to load in AtomType section
@@ -70,6 +72,8 @@ def from_foyer(foyer_xml, gmso_xml):
     for ptf in periodic_torsion_force_el:
         for dihedral_type in ptf.getiterator('Proper'):
             f_kwargs['periodic_torsion_dihedral_types'].append(dihedral_type)
+        for dihedral_type in ptf.getiterator('Improper'):
+            f_kwargs['periodic_improper_types'].append(dihedral_type)
 
     rb_torsion_force_el = foyer_xml_tree.findall('RBTorsionForce')
     for rbf in rb_torsion_force_el:
@@ -160,11 +164,11 @@ def to_foyer(gmso_xml, foyer_xml):
 
     dihedral_torsion_force_el = gmso_xml_tree.findall('DihedralTypes')
     for tf in dihedral_torsion_force_el:
-        if 'k * (1 + cos(n * phi - delta))' in tf.get('expression'):
+        if sympy.sympify('k * (1 + cos(n * phi - delta))') == sympy.sympify(tf.get('expression')):
             for dihedral_type in tf.getiterator('DihedralType'):
                 f_kwargs['periodic_torsion_dihedral_types'].append(dihedral_type)
             # TODO: Add support from Impropers
-        elif 'c0 * cos(phi)**0' in tf.get('expression'):
+        elif sympy.sympify('c0 * cos(phi)**0') == sympy.sympify(tf.get('expression')):
             for dihedral_type in tf.getiterator('DihedralType'):
                 f_kwargs['rb_torsion_dihedral_types'].append(dihedral_type)
 
@@ -186,6 +190,7 @@ def _write_gmso_xml(gmso_xml, **kwargs):
         'harmonic_angle_types': kwargs.get('harmonic_angle_types', []),
         'urey_bradley_angle_types': kwargs.get('urey_bradley_angle_types', []),
         'periodic_torsion_dihedral_types': kwargs.get('periodic_torsion_dihedral_types', []),
+        'periodic_improper_types': kwargs.get('periodic_improper_types', []),
         'rb_torsion_dihedral_types': kwargs.get('rb_torsion_dihedral_types', []),
     }
     forceField = etree.Element('ForceField')
@@ -256,6 +261,10 @@ def _write_gmso_xml(gmso_xml, **kwargs):
     # PeriodicTorsionDihedralTypes
     periodicTorsionDihedralTypes = etree.SubElement(forceField, 'DihedralTypes')
     periodicTorsionDihedralTypes.attrib['expression'] = 'k * (1 + cos(n * phi - delta))'
+
+    # PeriodicImproperDihedralTypes
+    periodicImproperTypes = etree.SubElement(forceField, 'DihedralTypes')
+    periodicImproperTypes.attrib['expression'] = 'k * (1 + cos(n * phi - delta))'
 
     # RBTorsionDihedralTypes
     rbTorsionDihedralTypes = etree.SubElement(forceField,
@@ -426,6 +435,54 @@ def _write_gmso_xml(gmso_xml, **kwargs):
         rbTorsionDihedralTypesParamsUnitsDef_c.attrib['parameter'] = 'c{}'.format(k)
         rbTorsionDihedralTypesParamsUnitsDef_c.attrib['unit'] = 'kJ/mol'
         rbTorsionDihedralTypes.insert(0, rbTorsionDihedralTypesParamsUnitsDef_c)
+
+    for i, dihedral_type in enumerate(ff_kwargs['periodic_improper_types']):
+        thisDihedralType = etree.SubElement(periodicImproperTypes,
+                'DihedralType')
+        thisDihedralType.attrib['name'] = dihedral_type.get('name',
+                'DihedralType-Periodic-Improper-{}'.format(i+1))
+
+        for j, item in enumerate(dihedral_type.items()):
+            if 'type' in item[0]:
+                thisDihedralType.attrib['type{}'.format(j+1)] = dihedral_type.get(
+                        'type{}'.format(j+1), 'c{}'.format(j+1))
+            elif 'class' in item[0]:
+                thisDihedralType.attrib['type{}'.format(j+1)] = dihedral_type.get(
+                        'class{}'.format(j+1), 'c{}'.format(j+1))
+
+        parameters = etree.SubElement(thisDihedralType, 'Parameters')
+        
+        j = 1
+        while dihedral_type.get('k{}'.format(j)):
+            parameter_k_name = 'k{}'.format(j)
+            parameter_k = etree.SubElement(parameters, 'Parameter')
+            parameter_k.attrib['name'] = parameter_k_name
+            parameter_k.attrib['value'] = dihedral_type.get(parameter_k_name)
+            parameter_n = etree.SubElement(parameters, 'Parameter')
+            parameter_n.attrib['name'] = 'n{}'.format(j)
+            parameter_n.attrib['value'] = dihedral_type.get('periodicity{}'.format(j))
+
+            parameter_delta = etree.SubElement(parameters, 'Parameter')
+            parameter_delta.attrib['name'] = 'delta{}'.format(j)
+            parameter_delta.attrib['value'] = dihedral_type.get('phase{}'.format(j))
+            j += 1
+        if j > max_j:
+            max_j = j
+    for k in range(1, max_j):
+        periodicImproperTypesParamsUnitsDef_k = etree.Element('ParametersUnitDef')
+        periodicImproperTypesParamsUnitsDef_k.attrib['parameter'] = 'k{}'.format(k)
+        periodicImproperTypesParamsUnitsDef_k.attrib['unit'] = 'kJ'
+        periodicImproperTypes.insert(0, periodicImproperTypesParamsUnitsDef_k)
+
+        periodicImproperTypesParamsUnitsDef_n = etree.Element('ParametersUnitDef')
+        periodicImproperTypesParamsUnitsDef_n.attrib['parameter'] = 'n{}'.format(k)
+        periodicImproperTypesParamsUnitsDef_n.attrib['unit'] = 'dimensionless'
+        periodicImproperTypes.insert(0, periodicImproperTypesParamsUnitsDef_n)
+
+        periodicImproperTypesParamsUnitsDef_del = etree.Element('ParametersUnitDef')
+        periodicImproperTypesParamsUnitsDef_del.attrib['parameter'] = 'delta{}'.format(k)
+        periodicImproperTypesParamsUnitsDef_del.attrib['unit'] = 'degree'
+        periodicImproperTypes.insert(0, periodicImproperTypesParamsUnitsDef_del)
 
     ff_tree = etree.ElementTree(forceField)
     ff_tree.write(gmso_xml, pretty_print=True, xml_declaration=True, encoding='utf-8')
