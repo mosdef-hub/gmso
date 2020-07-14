@@ -35,6 +35,17 @@ class Element(namedtuple('Element', 'atomic_number, name, symbol, mass')):
                                                                       self.name, self.symbol,
                                                                       self.atomic_number,
                                                                       self.mass)
+    def __eq__(self, other):
+        return (self.__class__ == other.__class__ and
+        self.name == other.name and
+        self.symbol == other.symbol and
+        self.atomic_number == other.atomic_number and
+        self.mass == self.mass)
+
+    def __hash__(self):
+        return hash((self.name, self.symbol,
+                     self.atomic_number,
+                float(self.mass.to('amu').value)))
 
 
 def element_by_symbol(symbol):
