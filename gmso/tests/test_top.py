@@ -35,7 +35,7 @@ class TestTop(BaseTest):
 
         top.update_topology()
 
-        top.atom_types[0].set_expression('sigma + epsilon')
+        top.atom_types[0].set_expression('sigma + epsilon*r')
 
         with pytest.raises(EngineIncompatibilityError):
             write_top(top, 'out.top')
