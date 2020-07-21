@@ -201,14 +201,22 @@ def element_by_smarts_string(smarts_string):
 
     PARSER = SMARTS()
 
-    symbol = next(PARSER.parse(smarts_string).find_data('atom_symbol')).children[0]
-    print(symbol)
-    matched_element = element_by_symbol(symbol)
-    
+    symbols = PARSER.parse(smarts_string).iter_subtrees_topdown()
+
+    first_symbol = None
+    for symbol in symbols:
+        if symbol.data == 'atom_symbol':
+            first_symbol = symbol.children[0]
+            break
+
+    matched_element = None
+    if first_symbol is not None:
+        matched_element = element_by_symbol(first_symbol)
+
     if matched_element is None:
-        raise GMSOError(f''
-            'Failed to find an element from SMARTS string {smarts_string). The'
-            'parser detected a central node with name {symbol}'
+        raise GMSOError(
+            f'Failed to find an element from SMARTS string {smarts_string}. The '
+            f'parser detected a central node with name {first_symbol}'
         )
 
     return matched_element

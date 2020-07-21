@@ -26,7 +26,7 @@ class TestInternalConversions(BaseTest):
         ryckaert_bellemans_torsion_potential = templates['RyckaertBellemansTorsionPotential']
 
         name = ryckaert_bellemans_torsion_potential.name
-        expression = ryckaert_bellemans_torsion_potential.expression
+        expression = str(ryckaert_bellemans_torsion_potential.expression) + ' + 3 * psi'
         variables = ['phi','psi']
 
         ryckaert_connection_type = DihedralType(
@@ -61,7 +61,7 @@ class TestInternalConversions(BaseTest):
 
         opls_torsion_potential = templates['OPLSTorsionPotential']
         name = opls_torsion_potential.name
-        expression = opls_torsion_potential.expression
+        expression = str(opls_torsion_potential.expression) + ' + 0.5 * k1 * (1 + cos(psi))'
         variables = ['phi','psi']
 
         opls_connection_type = DihedralType(

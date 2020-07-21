@@ -28,18 +28,18 @@ class TestPotential(BaseTest):
     def test_setters(self):
         new_potential = Potential()
         new_potential.name = "SettingName"
-        new_potential.parameters = {
-            'sigma': 1 * u.nm,
-            'epsilon': 10 * u.Unit('kcal / mol')
-        }
-        new_potential.independent_variables = sympy.symbols({'r'})
-        new_potential.expression = 'r * sigma * epsilon'
+        new_potential.set_expression(
+            independent_variables=sympy.symbols({'r'}),
+            expression='r*sigma*epsilon',
+            parameters={
+                'sigma': 1 * u.nm,
+                'epsilon': 10 * u.Unit('kcal / mol')
+            }
+        )
 
         assert new_potential.name == "SettingName"
         assert new_potential.independent_variables == {sympy.symbols('r')}
         assert new_potential.parameters == {
-            'a': 1.0*u.g,
-            'b': 1.0*u.m,
             'sigma': 1 * u.nm,
             'epsilon': 10 * u.Unit('kcal / mol')
         }
@@ -205,7 +205,7 @@ class TestPotential(BaseTest):
         )
 
         assert potential.expression == sympy.sympify('u*r+v')
-        assert potential.parameters == {'a': 1*u.g, 'b': 1*u.m, 'u': 1*u.g, 'v': 1*u.m}
+        assert potential.parameters == {'u': 1*u.g, 'v': 1*u.m}
 
     def test_set_expression_and_params_mismatch(self):
         potential = Potential(

@@ -141,7 +141,7 @@ class TestAtomType(BaseTest):
                 independent_variables='r')
         first_type.set_expression(expression='a+b*x', parameters={'a': 100*u.m, 'b': 42*u.J}, independent_variables='x')
         correct_expr = sympy.sympify('a+b*x')
-        correct_params = {'a': 100*u.m, 'b': 42*u.J, 'sigma': 1*u.m, 'epsilon': 10*u.J}
+        correct_params = {'a': 100*u.m, 'b': 42*u.J}
         assert first_type.expression == correct_expr
         assert first_type.parameters == correct_params
 
