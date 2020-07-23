@@ -4,19 +4,20 @@
     const $footer = $('footer');
     const $contentInfoDiv = $footer.find('div[role="contentinfo"]');
     if($contentInfoDiv){
-          const $paragraph = $contentInfoDiv.find('p')
-          $paragraph ? $paragraph.append(
-            `
-            |<a href="https://github.com/mosdef-hub/gmso" target="_blank">
+      const $paragraph = $contentInfoDiv.find('p');
+      if($paragraph) {
+        $paragraph.remove('.commit');
+        $paragraph.append(
+            `|<a href="https://github.com/mosdef-hub/gmso" target="_blank">
                 <i class="fa fa-github-square"></i>
                 GitHub
             </a>
             |<a href="https://mosdef.org" target="_blank">
                 <i class="fa fa-globe"></i>
                 MoSDeF Home
-            </a>|
-            `
-        ): null ;
+            </a>|`
+        );
+      }
     }
   </script>
 {{ super() }}
