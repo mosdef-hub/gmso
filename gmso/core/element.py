@@ -6,6 +6,7 @@ from collections import namedtuple
 import unyt as u
 
 from gmso.exceptions import GMSOError
+from gmso.utils.misc import unyt_to_hashable
 
 class Element(namedtuple('Element', 'atomic_number, name, symbol, mass')):
     """Chemical element object
@@ -41,7 +42,7 @@ class Element(namedtuple('Element', 'atomic_number, name, symbol, mass')):
     def __hash__(self):
         return hash((self.name, self.symbol,
                      self.atomic_number,
-                float(self.mass.to('amu').value)))
+                unyt_to_hashable(self.mass)))
 
 
 def element_by_symbol(symbol):
