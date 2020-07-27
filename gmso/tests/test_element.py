@@ -87,6 +87,7 @@ class TestElement(BaseTest):
         for num in range(1, 119):
             elem = element.element_by_atomic_number(num)
             assert elem.atomic_number == num
+            assert element.__hash__
 
     @pytest.mark.parametrize('atomic_number', [0, -1, 1000, 17.02])
     def test_bad_atomic_number(self, atomic_number):
