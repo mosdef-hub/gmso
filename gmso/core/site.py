@@ -138,7 +138,7 @@ class Site(object):
 
 def _validate_position(position):
     if position is None:
-        return None
+        return u.unyt_array([np.nan]*3, u.nm)
 
     if not isinstance(position, u.unyt_array):
         try:
@@ -151,7 +151,12 @@ def _validate_position(position):
     input_unit = position.units
 
     position = np.asarray(position, dtype=float, order='C')
-    position = np.reshape(position, newshape=(3, ), order='C')
+    try:
+        position = np.reshape(position, newshape=(3, ), order='C')
+    except ValueError:
+        raise ValueError(f'Position of shape {position.shape} is not valid. '
+                         'Accepted values: (a.) 3-tuple, (b.) list of length 3 '
+                         '(c.) np.array or unyt.unyt_array of shape (3,)')
 
     position *= input_unit
     position.convert_to_units(u.nm)
