@@ -173,6 +173,8 @@ def from_parmed(structure, refer_type=True):
         top.add_connection(top_connection, update_types=False)
 
     top.update_topology()
+
+    top.combining_rule = structure.combining_rule
     return top
 
 
@@ -482,7 +484,7 @@ def _atom_types_from_gmso(top, structure, atom_map):
         atype.set_lj_params(atype_epsilon, atype_rmin)
         # Type map to match AtomType to its name
         atype_map[atype_name] = atype
-        
+
     for site in top.sites:
         #Assign atom_type to atom
         pmd_atom = atom_map[site]

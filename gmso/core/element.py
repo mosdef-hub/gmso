@@ -6,6 +6,7 @@ from collections import namedtuple
 import unyt as u
 
 from gmso.exceptions import GMSOError
+from gmso.utils.misc import unyt_to_hashable
 
 class Element(namedtuple('Element', 'atomic_number, name, symbol, mass')):
     """Chemical element object
@@ -35,6 +36,13 @@ class Element(namedtuple('Element', 'atomic_number, name, symbol, mass')):
                                                                       self.name, self.symbol,
                                                                       self.atomic_number,
                                                                       self.mass)
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
+    def __hash__(self):
+        return hash((self.name, self.symbol,
+                     self.atomic_number,
+                unyt_to_hashable(self.mass)))
 
 
 def element_by_symbol(symbol):
@@ -182,23 +190,34 @@ def element_by_smarts_string(smarts_string):
 
     Returns
     -------
-    matched_element : element.Element or None
-        Return an element from the periodict table if we find a match,
-        otherwise return None
+    matched_element : element.Element
+        Return an element from the periodic table if we find a match
 
+    Raises
+    ------
+    GMSOError
+        If no matching element is found for the provided smarts string
     """
     from foyer.smarts import SMARTS
 
     PARSER = SMARTS()
 
-    symbol = next(PARSER.parse(smarts_string).find_data('atom_symbol')).children[0]
-    print(symbol)
-    matched_element = element_by_symbol(symbol)
+    symbols = PARSER.parse(smarts_string).iter_subtrees_topdown()
+
+    first_symbol = None
+    for symbol in symbols:
+        if symbol.data == 'atom_symbol':
+            first_symbol = symbol.children[0]
+            break
+
+    matched_element = None
+    if first_symbol is not None:
+        matched_element = element_by_symbol(first_symbol)
     
     if matched_element is None:
-        raise GMSOError(f''
-            'Failed to find an element from SMARTS string {smarts_string). The'
-            'parser detected a central node with name {symbol}'
+        raise GMSOError(
+            f'Failed to find an element from SMARTS string {smarts_string}. The '
+            f'parser detected a central node with name {first_symbol}'
         )
 
     return matched_element
