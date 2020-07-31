@@ -119,3 +119,11 @@ class TestSite(BaseTest):
             assert 'Position of shape (3,) is not valid. ' \
                    'Accepted values: (a.) 3-tuple, (b.) list of length 3 ' \
                    '(c.) np.array or unyt.unyt_array of shape (3,)' in e
+
+    def test_position_assignment_invalid(self):
+        site1 = Site(name='Site')
+
+        with pytest.raises(GMSOError) as e:
+            site1.position = 'invalid'
+            assert "Converting object of type <class 'str'> failed with error Tried to multiply a Unit " \
+                   "object with 'a' (type <class 'str'>). This behavior is undefined." in e
