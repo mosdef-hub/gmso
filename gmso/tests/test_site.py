@@ -14,6 +14,8 @@ class TestSite(BaseTest):
     def test_new_site(self):
         site = Site(name='site')
         assert site.name == 'site'
+        assert np.all(np.isnan(site.position))
+        assert site.position.units == u.nm
 
     def test_dtype(self):
         site = Site(name='site', position=u.nm*np.zeros(3))
@@ -93,3 +95,35 @@ class TestSite(BaseTest):
             site3.add_connection(bond1)
             site2.add_connection(bond3)
             site1.add_connection(bond2)
+
+    def test_site_tuple_position(self):
+        site = Site()
+        site.position = (2.0, 2.0, 2.0)
+        u.assert_allclose_units(
+            site.position,
+            [2.0, 2.0, 2.0] * u.nm
+        )
+
+    def test_site_list_position(self):
+        site = Site()
+        site.position = [2.0, 2.0, 2.0]
+        u.assert_allclose_units(
+            site.position,
+            (2.0, 2.0, 2.0) * u.nm
+        )
+
+    def test_site_invalid_position(self):
+        site = Site(name='invalidSite')
+        with pytest.raises(ValueError) as e:
+            site.position = [0, 0, 0, 0]
+            assert 'Position of shape (3,) is not valid. ' \
+                   'Accepted values: (a.) 3-tuple, (b.) list of length 3 ' \
+                   '(c.) np.array or unyt.unyt_array of shape (3,)' in e
+
+    def test_position_assignment_invalid(self):
+        site1 = Site(name='Site')
+
+        with pytest.raises(GMSOError) as e:
+            site1.position = 'invalid'
+            assert "Converting object of type <class 'str'> failed with error Tried to multiply a Unit " \
+                   "object with 'a' (type <class 'str'>). This behavior is undefined." in e

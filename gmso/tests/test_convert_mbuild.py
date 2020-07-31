@@ -55,7 +55,7 @@ class TestConvertMBuild(BaseTest):
 
     def test_to_mbuild_name_none(self):
         top = Top()
-        top.add_site(Site())
+        top.add_site(Site(position=[0.0, 0.0, 0.0]))
         top.name = None
         compound = to_mbuild(top)
 
@@ -88,7 +88,7 @@ class TestConvertMBuild(BaseTest):
     def test_3_layer_top(self):
         top_top = Top()
         mid_top = SubTop()
-        site = Site()
+        site = Site(position=[0.0, 0.0, 0.0])
 
         top_top.add_subtopology(mid_top)
         mid_top.add_site(site)
