@@ -1,26 +1,19 @@
-import warnings
+from typing import Tuple, Optional
 
-from gmso.core.connection import Connection
+from pydantic import Field
+
+from gmso.core.atom import Atom
+from gmso.abc.abstract_connection import Connection
 from gmso.core.angle_type import AngleType
-from gmso.exceptions import GMSOError
 
 
 class Angle(Connection):
-    """A 3-partner connection between sites.
+    __base_doc__ = """A 3-partner connection between Atoms.
 
     This is a subclass of the gmso.Connection superclass.
     This class has strictly 3 members in its connection members.
     The connection_type in this class corresponds to gmso.AngleType.
-
-    Parameters
-    ----------
-    connection_members: list of gmso.Site
-        3 sites of an angle.
-    connection_type : gmso.AngleType, optional, default=None
-        AngleType of this angle.
-    name : str, optional, default="Angle"
-        Name of the angle. 
-
+    
     Notes
     -----
     Inherits some methods from Connection:
@@ -28,28 +21,36 @@ class Angle(Connection):
     Additional _validate methods are presented
     """
 
-    def __init__(self, connection_members=[], connection_type=None, name="Angle"):
-        connection_members = _validate_three_partners(connection_members)
-        connection_type = _validate_angletype(connection_type)
+    connection_members_: Tuple[Atom, Atom, Atom] = Field(
+        ...,
+        description='3 Atoms of an angle.'
+    )
 
-        super(Angle, self).__init__(connection_members=connection_members,
-                connection_type=connection_type, name=name)
+    angle_type_: Optional[AngleType] = Field(
+        default=None,
+        description='AngleType of this angle.'
+    )
 
+    @property
+    def angle_type(self):
+        return self.__dict__.get('angle_type_')
 
-def _validate_three_partners(connection_members):
-    """Ensure 3 partners are involved in Angle"""
-    assert connection_members is not None, "connection_members is not given"
-    if len(connection_members) != 3:
-        raise GMSOError("Trying to create an Angle "
-                "with {} connection members". format(len(connection_members)))
+    @property
+    def connection_type(self):
+        return self.__dict__.get('angle_type_')
 
-    return connection_members
+    def __setattr__(self, key, value):
+        if key == 'connection_type':
+            super(Angle, self).__setattr__('angle_type', value)
+        else:
+            super(Angle, self).__setattr__(key, value)
 
-
-def _validate_angletype(contype):
-    """Ensure connection_type is a AngleType """
-    if contype is None:
-        warnings.warn("Non-parametrized Angle detected")
-    elif not isinstance(contype, AngleType):
-        raise GMSOError("Supplied non-AngleType {}".format(contype))
-    return contype
+    class Config:
+        fields = {
+            'connection_members_': 'connection_members',
+            'angle_type_': 'angle_type'
+        }
+        alias_to_fields = {
+            'connection_members': 'connection_members_',
+            'angle_type': 'angle_type_'
+        }

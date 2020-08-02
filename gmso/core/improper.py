@@ -1,12 +1,14 @@
-import warnings
+from typing import Tuple, Optional
 
-from gmso.core.connection import Connection
+from pydantic import Field
+
+from gmso.abc.abstract_connection import Connection
+from gmso.core.atom import Atom
 from gmso.core.improper_type import ImproperType
-from gmso.exceptions import GMSOError
 
 
 class Improper(Connection):
-    """A 4-partner connection between sites.
+    __base_doc__ = """A 4-partner connection between sites.
 
     This is a subclass of the gmso.Connection superclass.
     This class has strictly 4 members in its connection_members.
@@ -21,44 +23,44 @@ class Improper(Connection):
 
     where m1, m2, m3, and m4 are connection members 1-4, respectively.
 
-    Parameters
-    --------
-    connection_members: list of gmso.Site
-        4 sites of a improper. Central site first, then three
-        sites connected to the central site.
-    connection_type : gmso.ImproperType, optional, default=None
-        ImproperType of this improper.
-    name : str, optional, default=Improper
-        Name of the improper.
-
     Notes
     -----
     Inherits some methods from Connection:
         __eq__, __repr__, _validate methods
     Additional _validate methods are presented
     """
+    connection_members_: Tuple[Atom, Atom, Atom, Atom] = Field(
+        ...,
+        description='4 sites of a improper. Central site first, '
+                    'then three sites connected to the central site.'
+    )
 
-    def __init__(self, connection_members=[], connection_type=None, name="Improper"):
-        connection_members = _validate_four_partners(connection_members)
-        connection_type = _validate_impropertype(connection_type)
+    improper_type_: Optional[ImproperType] = Field(
+        default=None,
+        description='DihedralType of this dihedral.'
+    )
 
-        super(Improper, self).__init__(connection_members=connection_members,
-                connection_type=connection_type, name=name)
+    @property
+    def improper_type(self):
+        return self.__dict__.get('improper_type_')
 
+    @property
+    def connection_type(self):
+        # ToDo: Deprecate this?
+        return self.__dict__.get('improper_type_')
 
-def _validate_four_partners(connection_members):
-    """Ensure 4 partners are involved in Improper"""
-    assert connection_members is not None, "connection_members is not given"
-    if len(connection_members) != 4:
-        raise GMSOError("Trying to create an Improper "
-                "with {} connection members". format(len(connection_members)))
-    return connection_members
+    def __setattr__(self, key, value):
+        if key == 'connection_type':
+            super(Improper, self).__setattr__('improper_type', value)
+        else:
+            super(Improper, self).__setattr__(key, value)
 
-
-def _validate_impropertype(contype):
-    """Ensure connection_type is a ImproperType """
-    if contype is None:
-        warnings.warn("Non-parametrized Improper detected")
-    elif not isinstance(contype, ImproperType):
-        raise GMSOError("Supplied non-ImproperType {}".format(contype))
-    return contype
+    class Config:
+        fields = {
+            'improper_type_': 'improper_type',
+            'connection_members_': 'connection_members'
+        }
+        alias_to_fields = {
+            'improper_type': 'improper_type_',
+            'connection_members': 'connection_members_'
+        }

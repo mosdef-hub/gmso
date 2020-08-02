@@ -60,7 +60,6 @@ class TestTop(BaseTest):
         for bond in top.bonds:
             bond.bond_type = bond.connection_type = ff.bond_types['opls_111~opls_112']
 
-        top.update_bonds()
         top.update_bond_types()
 
         for subtop in top.subtops:
@@ -71,7 +70,6 @@ class TestTop(BaseTest):
             )
             top.add_connection(angle)
 
-        top.update_angles()
         top.update_angle_types()
 
         write_top(top, 'water.top')
