@@ -4,7 +4,6 @@ from .core.element import Element
 from .core.box import Box
 
 from .core.atom import Atom
-from .core.connection import Connection
 from .core.bond import Bond
 from .core.angle import Angle
 from .core.dihedral import Dihedral

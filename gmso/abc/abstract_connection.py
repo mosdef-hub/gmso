@@ -5,6 +5,7 @@ from pydantic import Field, validator, root_validator
 
 from gmso.abc.abstract_site import Site
 from gmso.abc.gmso_base import GMSOBase
+from gmso.exceptions import GMSOError
 
 
 class Connection(GMSOBase):
@@ -31,6 +32,9 @@ class Connection(GMSOBase):
 
     @root_validator(pre=True)
     def inject_name(cls, values):
+        connection_members = values.get('connection_members')
+        if len(set(connection_members)) != len(connection_members):
+            raise GMSOError(f'A {cls.__name__} between same {type(connection_members[0]).__name__}s is not allowed')
         if not values.get('name'):
             values['name'] = cls.__name__
         return values
