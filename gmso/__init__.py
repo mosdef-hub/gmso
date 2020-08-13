@@ -19,3 +19,5 @@ from .core.bond_type import BondType
 from .core.angle_type import AngleType
 from .core.dihedral_type import DihedralType
 from .core.improper_type import ImproperType
+
+__version__ = "0.2.0"
