@@ -5,7 +5,7 @@ import numpy as np
 import unyt as u
 import datetime
 
-from gmso.utils.testing import allclose
+from unyt.array import allclose_units
 from gmso.core.site import Site
 from gmso.core.atom_type import AtomType
 from gmso.core.bond_type import BondType
@@ -78,7 +78,7 @@ def write_lammpsdata(topology, filename, atom_style='full'):
         data.write('\n')
 
         # Box data
-        if allclose(box.angles, u.unyt_array([90,90,90],'degree')):
+        if allclose_units(box.angles, u.unyt_array([90,90,90],'degree'), rtol=1e-5, atol=1e-8):
             warnings.warn("Orthorhombic box detected")
             box.lengths.convert_to_units(u.angstrom)
             for i,dim in enumerate(['x', 'y', 'z']):

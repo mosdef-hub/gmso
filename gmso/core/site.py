@@ -4,6 +4,7 @@ from functools import reduce
 
 import numpy as np
 import unyt as u
+from unyt.exceptions import InvalidUnitOperation
 from boltons.setutils import IndexedSet
 
 from gmso.core.atom_type import AtomType
@@ -58,10 +59,8 @@ class Site(object):
             self.name = str(name)
         if name is None:  # Guardrail against checking deliberate None
             self.name = 'Site'
-        if position is None:
-            self.position = u.nm * np.zeros(3)
-        else:
-            self.position = _validate_position(position)
+
+        self._position = _validate_position(position)
 
         self._element = element
         self._atom_type = _validate_atom_type(atom_type)
@@ -125,19 +124,39 @@ class Site(object):
         val = _validate_atom_type(val)
         self._atom_type = val
 
+    @property
+    def position(self):
+        return self._position
+
+    @position.setter
+    def position(self, position):
+        self._position = _validate_position(position)
+
     def __repr__(self):
         return "<Site {}, id {}>".format(self.name, id(self))
 
 
 def _validate_position(position):
+    if position is None:
+        return u.unyt_array([np.nan]*3, u.nm)
+
     if not isinstance(position, u.unyt_array):
+        try:
+            position *= u.nm
+        except InvalidUnitOperation as e:
+            raise GMSOError('Converting object of type {0} failed with following error: {1}'
+                            .format(type(position), e))
         warnings.warn('Positions are assumed to be in nm')
-        position *= u.nm
 
     input_unit = position.units
 
     position = np.asarray(position, dtype=float, order='C')
-    position = np.reshape(position, newshape=(3, ), order='C')
+    try:
+        position = np.reshape(position, newshape=(3, ), order='C')
+    except ValueError:
+        raise ValueError(f'Position of shape {position.shape} is not valid. '
+                         'Accepted values: (a.) 3-tuple, (b.) list of length 3 '
+                         '(c.) np.array or unyt.unyt_array of shape (3,)')
 
     position *= input_unit
     position.convert_to_units(u.nm)

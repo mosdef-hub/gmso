@@ -13,7 +13,7 @@ else:
 requirements = [
     'numpy',
     'scipy',
-    'mbuild>=0.10.4',
+    'mbuild>=0.10.6',
     'unyt>=2.4',
     'boltons',
     'lxml',

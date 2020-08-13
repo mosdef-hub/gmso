@@ -8,8 +8,7 @@ from gmso.core.site import Site
 from gmso.external.convert_mbuild import from_mbuild, to_mbuild
 from gmso.tests.base_test import BaseTest
 from gmso.utils.io import get_fn, has_mbuild
-from gmso.utils.testing import allclose
-
+from unyt.testing import assert_allclose_units
 
 if has_mbuild:
     import mbuild as mb
@@ -56,7 +55,7 @@ class TestConvertMBuild(BaseTest):
 
     def test_to_mbuild_name_none(self):
         top = Top()
-        top.add_site(Site())
+        top.add_site(Site(position=[0.0, 0.0, 0.0]))
         top.name = None
         compound = to_mbuild(top)
 
@@ -89,7 +88,7 @@ class TestConvertMBuild(BaseTest):
     def test_3_layer_top(self):
         top_top = Top()
         mid_top = SubTop()
-        site = Site()
+        site = Site(position=[0.0, 0.0, 0.0])
 
         top_top.add_subtopology(mid_top)
         mid_top.add_site(site)
@@ -145,7 +144,7 @@ class TestConvertMBuild(BaseTest):
         mb_box = Box(lengths=[3,3,3])
 
         top = from_mbuild(mb_ethane, box=mb_box)
-        assert allclose(top.box.lengths, [3,3,3]*u.nm)
+        assert_allclose_units(top.box.lengths, [3,3,3]*u.nm, rtol=1e-5, atol=1e-8)
 
 
     def test_pass_failed_box(self, mb_ethane):
@@ -155,10 +154,10 @@ class TestConvertMBuild(BaseTest):
     def test_pass_box_periodicity(self, mb_ethane):
         mb_ethane.periodicity = [2,2,2]
         top = from_mbuild(mb_ethane)
-        assert allclose(top.box.lengths, [2,2,2]*u.nm)
+        assert_allclose_units(top.box.lengths, [2,2,2]*u.nm, rtol=1e-5, atol=1e-8)
 
     def test_pass_box_bounding(self, mb_ethane):
         mb_ethane.periodicity = [0,0,0]
         top = from_mbuild(mb_ethane)
-        assert allclose(top.box.lengths,
-                (mb_ethane.boundingbox.lengths + [0.5, 0.5, 0.5]) * u.nm)
+        assert_allclose_units(top.box.lengths,
+                (mb_ethane.boundingbox.lengths + [0.5, 0.5, 0.5]) * u.nm, rtol=1e-5, atol=1e-8)

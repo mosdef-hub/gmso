@@ -25,18 +25,12 @@ jobs:
         Python37Ubuntu:
           imageName: 'ubuntu-latest'
           python.version: 3.7
-        Python38Ubuntu:
-          imageName: 'ubuntu-latest'
-          python.version: 3.8
         Python36macOS:
           imageName: 'macOS-latest'
           python.version: 3.6
         Python37macOS:
           imageName: 'macOS-latest'
           python.version: 3.7
-        Python38macOS:
-          imageName: 'macOS-latest'
-          python.version: 3.8
 
     pool:
       vmImage: $(imageName)
@@ -52,16 +46,15 @@ jobs:
       - bash: |
           conda config --set always_yes yes --set changeps1 no
           conda config --add channels omnia
-          conda config --add channels janschulz
-          conda config --add channels conda-forge
           conda config --add channels mosdef
+          conda config --add channels conda-forge
+          conda update conda -yq
         displayName: Add relevant channels
 
       - bash: |
           conda create -n test-environment
           source activate test-environment
-          conda install --yes --file requirements-test.txt
-          conda install pytest
+          conda install --yes python=$(python.version) --file requirements-test.txt
           pip install -e .
         displayName: Install requirements and testing branch
 

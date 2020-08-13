@@ -21,7 +21,7 @@ from gmso.external.convert_parmed import from_parmed
 
 from gmso.tests.base_test import BaseTest
 from gmso.exceptions import GMSOError
-from gmso.utils.testing import allclose
+from unyt.testing import assert_allclose_units
 from gmso.tests.base_test import BaseTest
 from gmso.utils.io import get_fn, import_, has_parmed
 
@@ -70,11 +70,11 @@ class TestTopology(BaseTest):
         assert top.box is None
         top.box = box
         assert top.box is not None
-        assert allclose(top.box.lengths, u.nm*2*np.ones(3))
+        assert_allclose_units(top.box.lengths, u.nm*2*np.ones(3), rtol=1e-5, atol=1e-8)
 
     def test_positions_dtype(self):
         top = Topology()
-        site1 = Site(name='site1')
+        site1 = Site(name='site1', position=[0.0, 0.0, 0.0])
         top.add_site(site1)
 
         assert set([type(site.position) for site in top.sites]) == {u.unyt_array}
@@ -112,8 +112,8 @@ class TestTopology(BaseTest):
 
         ref = deepcopy(top)
         wrong_atom_type = deepcopy(top)
-        ref.add_site(Site(atom_type=AtomType(expression='epsilon*sigma')))
-        wrong_atom_type.add_site(Site(atom_type=AtomType(expression='sigma')))
+        ref.add_site(Site(atom_type=AtomType(expression='epsilon*sigma*r')))
+        wrong_atom_type.add_site(Site(atom_type=AtomType(expression='sigma*r')))
         assert ref != wrong_atom_type
 
     @pytest.mark.skipif(not has_parmed, reason="ParmEd is not installed")
@@ -264,7 +264,7 @@ class TestTopology(BaseTest):
         assert len(top.connection_types) == 1
         assert len(top.connection_type_expressions) == 1
 
-        site1.atom_type = AtomType(expression='sigma*epsilon')
+        site1.atom_type = AtomType(expression='sigma*epsilon*r')
         assert top.n_sites == 2
         assert len(top.atom_types) == 1
         assert len(top.atom_type_expressions) == 1
@@ -286,8 +286,8 @@ class TestTopology(BaseTest):
         assert top.n_bonds == 0
         assert top.n_connections == 0
 
-        atype1 = AtomType(expression='sigma + epsilon')
-        atype2 = AtomType(expression='sigma * epsilon')
+        atype1 = AtomType(expression='sigma + epsilon*r')
+        atype2 = AtomType(expression='sigma * epsilon*r')
         site1 = Site('a', atom_type=atype1)
         site2 = Site('b', atom_type=atype2)
         top.add_site(site1)
@@ -300,8 +300,8 @@ class TestTopology(BaseTest):
     def test_bond_bondtype_update(self):
         top = Topology()
 
-        atype1 = AtomType(expression='sigma + epsilon')
-        atype2 = AtomType(expression='sigma * epsilon')
+        atype1 = AtomType(expression='sigma + epsilon*r')
+        atype2 = AtomType(expression='sigma * epsilon*r')
         site1 = Site('a', atom_type=atype1)
         site2 = Site('b', atom_type=atype2)
         btype = BondType()
@@ -317,8 +317,8 @@ class TestTopology(BaseTest):
     def test_angle_angletype_update(self):
         top = Topology()
 
-        atype1 = AtomType(expression='sigma + epsilon')
-        atype2 = AtomType(expression='sigma * epsilon')
+        atype1 = AtomType(expression='sigma + epsilon*r')
+        atype2 = AtomType(expression='sigma * epsilon*r')
         site1 = Site('a', atom_type=atype1)
         site2 = Site('b', atom_type=atype2)
         site3 = Site('c', atom_type=atype2)
@@ -337,8 +337,8 @@ class TestTopology(BaseTest):
     def test_dihedral_dihedraltype_update(self):
         top = Topology()
 
-        atype1 = AtomType(expression='sigma + epsilon')
-        atype2 = AtomType(expression='sigma * epsilon')
+        atype1 = AtomType(expression='sigma + epsilon*r')
+        atype2 = AtomType(expression='sigma * epsilon*r')
         site1 = Site('a', atom_type=atype1)
         site2 = Site('b', atom_type=atype2)
         site3 = Site('c', atom_type=atype2)
@@ -359,8 +359,8 @@ class TestTopology(BaseTest):
     def test_improper_impropertype_update(self):
         top = Topology()
 
-        atype1 = AtomType(expression='sigma + epsilon')
-        atype2 = AtomType(expression='sigma * epsilon')
+        atype1 = AtomType(expression='sigma + epsilon*r')
+        atype2 = AtomType(expression='sigma * epsilon*r')
         site1 = Site('a', atom_type=atype1)
         site2 = Site('b', atom_type=atype2)
         site3 = Site('c', atom_type=atype2)
