@@ -1,5 +1,6 @@
 ARG PY_VERSION=3.7
 FROM continuumio/miniconda3:4.8.2-alpine AS builder
+ARG PY_VERSION
 
 EXPOSE 8888
 
@@ -25,14 +26,13 @@ RUN conda update conda -yq && \
 	conda install python=$PY_VERSION nomkl --file requirements-test.txt && \
         python setup.py install && \
 	echo "source activate gmso-docker" >> \
-	/home/anaconda/.proile && \
+	/home/anaconda/.profile && \
 	conda clean -afy && \
+	mkdir /home/anaconda/gmso-notebooks && \
 	chown -R anaconda:anaconda /gmso && \
 	chown -R anaconda:anaconda /opt && \
 	chown -R anaconda:anaconda /home/anaconda
 
-USER anaconda
-
 WORKDIR /home/anaconda
 
-CMD /bin/sh --login -i
+CMD /bin/su anaconda -s /bin/sh -l
