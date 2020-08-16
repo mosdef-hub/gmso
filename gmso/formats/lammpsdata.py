@@ -375,12 +375,12 @@ def _get_connection(filename, topology, unit_style, connection_type):
         if connection_type == 'bond':
             connection = Bond(
                 connection_members=site_list,
-                connection_type=connection_type_list[int(line.split()[1])-1],
+                bond_type=connection_type_list[int(line.split()[1])-1],
                     )
         elif connection_type == 'angle':
             connection = Angle(
                 connection_members=site_list,
-                connection_type=connection_type_list[int(line.split()[1])-1],
+                angle_type=connection_type_list[int(line.split()[1])-1],
                     )
         topology.add_connection(connection)
 

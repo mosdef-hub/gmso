@@ -66,7 +66,7 @@ class TestTop(BaseTest):
             angle = gmso.core.angle.Angle(
                 connection_members=[site for site in subtop.sites],
                 name="opls_112~opls_111~opls_112",
-                connection_type=ff.angle_types["opls_112~opls_111~opls_112"]
+                angle_type=ff.angle_types["opls_112~opls_111~opls_112"]
             )
             top.add_connection(angle)
 

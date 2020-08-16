@@ -3,6 +3,7 @@ from abc import ABC
 from typing import Any, ClassVar
 
 from pydantic import BaseModel
+from pydantic.validators import dict_validator
 
 from gmso.abc.auto_doc import apply_docs
 
@@ -40,6 +41,17 @@ class GMSOBase(BaseModel, ABC):
                hasattr(cls.Config, 'alias_to_fields'):
                 cls.Config.alias_to_fields.update(super_class.Config.alias_to_fields)
         apply_docs(cls, map_names=True, silent=False)
+
+    @classmethod
+    def validate(cls, value):
+        if isinstance(value, cls):
+            return value
+        else:
+            return cls(**dict_validator(value))
+
+    @classmethod
+    def __get_validators__(cls) -> 'CallableGenerator':
+        yield cls.validate
 
     class Config:
         arbitrary_types_allowed = True
