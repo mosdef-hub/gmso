@@ -1,7 +1,6 @@
-import warnings
 from typing import Sequence, Optional
 
-from pydantic import Field, validator, root_validator
+from pydantic import Field, root_validator
 
 from gmso.abc.abstract_site import Site
 from gmso.abc.gmso_base import GMSOBase

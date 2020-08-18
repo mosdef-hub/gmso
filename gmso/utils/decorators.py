@@ -8,11 +8,11 @@ def confirm_dict_existence(setter_function):
     """
     @wraps(setter_function)
     def setter_with_dict_removal(self, *args, **kwargs):
-        if self._topology:
-            self._topology._set_refs[self._set_ref].pop(self, None)
+        if self.topology:
+            self.topology._set_refs[self._set_ref].pop(self, None)
             setter_function(self, *args, **kwargs)
-            self._topology._set_refs[self._set_ref][self] = (self)
-            self._topology._reindex_connection_types(self._set_ref)
+            self.topology._set_refs[self._set_ref][self] = (self)
+            self.topology._reindex_connection_types(self._set_ref)
         else:
             setter_function(self, *args, **kwargs)
     return setter_with_dict_removal
