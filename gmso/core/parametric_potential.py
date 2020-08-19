@@ -1,12 +1,16 @@
-import unyt as u
+from typing import Optional, Any
 
+import unyt as u
+from pydantic import Field, validator
+
+from gmso.abc.abstract_potential import AbstractPotential
 from gmso.utils.expression import _PotentialExpression
 from gmso.utils.decorators import confirm_dict_existence
 from gmso.exceptions import GMSOError
 
 
-class Potential(object):
-    """An abstract potential class.
+class ParametricPotential(AbstractPotential):
+    __base_doc__ = """An abstract potential class.
 
     Potential stores a general interaction between components of a chemical
     topology that can be specified by a mathematical expression. The functional
@@ -15,36 +19,26 @@ class Potential(object):
     potential, which can be e.g. a non-bonded potential, a bonded potential, an
     angle potential, a dihedral potential, etc. and is designed to be inherited
     by classes that represent these potentials.
-
-    Parameters
-    ----------
-    name : str, default="Potential"
-        The name of the potential.
-    expression : str or sympy.Expr, default='a*x+b'
-        The mathematical expression describing the functional form of the
-        potential.
-    parameters : dict {str: unyt.unyt_quantity},
-            default={'a': 1.0*u.dimensionless, 'b': 1.0*u.dimensionless}
-        The parameters of the potential and their values, as unyt quantities.
-        The keys are names of the variables included in `expression` and values
-        are the numerical values of these parameters recorded as instances of
-        `unyt.unyt_quantity`, which combine both value and unit information.
-    independent_variables : str or sympy.Symbol or list or set thereof
-        The independent variables in the expression of the potential.
-    topology: gmso.core.Topology, the topology of which this potential is a part of, default=None
-    set_ref: (str), the string name of the bookkeeping set in topology class.
-
     """
 
+    topology_: Optional[Any] = Field(
+        None,
+        description="the topology of which this potential is a part of"
+    )
+
+    set_ref_: Optional[str] = Field(
+        None,
+        description='The string name of the bookkeeping set in gmso class.'
+    )
+
     def __init__(self,
-                 name="Potential",
+                 name="ParametricPotential",
                  expression='a*x+b',
                  parameters=None,
                  independent_variables=None,
-                 template=False,
-                 topology=None
+                 topology=None,
+                 **kwargs
                  ):
-        self._name = name
 
         if expression is None:
             expression = 'a*x+b'
@@ -58,68 +52,47 @@ class Potential(object):
         if independent_variables is None:
             independent_variables = {'x'}
 
-        if template:
-            self._template = template
-            parameters = None
-
-        self._potential_expression = _PotentialExpression(
+        _potential_expression = _PotentialExpression(
             expression=expression,
             independent_variables=independent_variables,
             parameters=parameters
         )
 
-        if topology is not None:
-            self._topology = topology
-        else:
-            self._topology = None
-
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    @confirm_dict_existence
-    def name(self, val):
-        self._name = val
+        super().__init__(
+            name=name,
+            potential_expression=_potential_expression,
+            topology=topology,
+            **kwargs
+        )
 
     @property
     def parameters(self):
-        return self._potential_expression.parameters
-
-    @parameters.setter
-    @confirm_dict_existence
-    def parameters(self, newparams):
-        self._potential_expression.parameters = newparams
-
-    @property
-    def independent_variables(self):
-        return self._potential_expression.independent_variables
-
-    @independent_variables.setter
-    @confirm_dict_existence
-    def independent_variables(self, indep_vars):
-        self._potential_expression.independent_variables = indep_vars
-
-    @property
-    def template(self):
-        return self._template
-
-    @property
-    def expression(self):
-        return self._potential_expression.expression
-
-    @expression.setter
-    @confirm_dict_existence
-    def expression(self, expression):
-        self._potential_expression.expression = expression
+        return self.potential_expression_.parameters
 
     @property
     def topology(self):
-        return self._topology
+        return self.__dict__.get('topology_')
 
-    @topology.setter
-    def topology(self, top):
-        self._topology = top
+    @property
+    def set_ref(self):
+        return self.__dict__.get('set_ref_')
+
+    @validator('topology_')
+    def is_valid_topology(cls, value):
+        if value is None:
+            return None
+        else:
+            from gmso.core.topology import Topology
+            if not isinstance(value, Topology):
+                raise ValueError(f'{type(value).__class__.__name__} is not of type Topology')
+        return value
+
+    @confirm_dict_existence
+    def __setattr__(self, key: Any, value: Any) -> None:
+        if key == 'parameters':
+            self.potential_expression_.parameters = value
+        else:
+            super().__setattr__(key, value)
 
     @confirm_dict_existence
     def set_expression(self, expression=None, parameters=None, independent_variables=None):
@@ -141,28 +114,11 @@ class Potential(object):
         If only a subset of the parameters are supplied, they are updated
         while the non-passed parameters default to the existing values
        """
-        self._potential_expression.set(
+        self.potential_expression_.set(
             expression=expression,
             independent_variables=independent_variables,
             parameters=parameters
         )
-
-    def __eq__(self, other):
-        return hash(self) == hash(other)
-
-    def __hash__(self):
-        return hash(
-            tuple(
-                (
-                    self.name,
-                    self._potential_expression
-                )
-            )
-        )
-
-    def __repr__(self):
-        desc = "<Potential {}, id {}>".format(self._name, id(self))
-        return desc
 
     @classmethod
     def from_template(cls, potential_template, parameters, topology=None):
@@ -179,7 +135,7 @@ class Potential(object):
 
         Returns
         -------
-        gmso.Potential
+        gmso.ParametricPotential
             The potential object created
 
         Raises
@@ -195,5 +151,14 @@ class Potential(object):
                    expression=potential_template.expression,
                    independent_variables=potential_template.independent_variables,
                    parameters=parameters,
-                   topology=topology,
-                   template=False)
+                   topology=topology)
+
+    class Config:
+        fields = {
+            'topology_': 'topology',
+            'set_ref_': 'set_ref'
+        }
+        alias_to_fields = {
+            'topology': 'topology_'
+        }
+        validate_assignment = True

@@ -117,3 +117,5 @@ class Site(GMSOBase):
             'position': 'position_',
             'label': 'label_'
         }
+
+        validate_assignment = True

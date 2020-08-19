@@ -1,14 +1,14 @@
-import warnings
+from typing import Tuple, Optional
 import unyt as u
 
-from gmso.core.potential import Potential
-from gmso.exceptions import GMSOError
-from gmso.utils.decorators import confirm_dict_existence
+from pydantic import Field
+
+from gmso.core.parametric_potential import ParametricPotential
 from gmso.utils._constants import ANGLE_TYPE_DICT
 
 
-class AngleType(Potential):
-    """A descripton of the interaction between 3 bonded partners.
+class AngleType(ParametricPotential):
+    __base_doc__ = """A descripton of the interaction between 3 bonded partners.
 
     This is a subclass of the gmso.core.Potential superclass.
 
@@ -18,30 +18,16 @@ class AngleType(Potential):
     explicitly.  The AtomTypes that are used to define the angle type are
     stored as `member_types`.
 
-    Parameters
-    ----------
-    name : str, optional
-        A name uniquely representing the angle type
-    expression : str or sympy.Expression
-        See `Potential` documentation for more information
-    parameters : dict {str, unyt.unyt_quantity}
-        See `Potential` documentation for more information
-    independent vars : set of str
-        See `Potential` documentation for more information
-    member_types : list-like of str
-        List-like of of gmso.AtomType.name defining the members of this
-        angle type
-    gmso: gmso.core.Topology, default=None
-        The Topology of which this angle_type is a part of
-    set_ref: str
-        The string name of the bookkeeping set in gmso class.
-
     Notes
     ----
     Inherits many functions from gmso.Potential:
         __eq__, _validate functions
-
     """
+
+    member_types_: Optional[Tuple[str, str, str]] = Field(
+        None,
+        description='List-like of of gmso.AtomType.name defining the members of this angle type'
+    )
 
     def __init__(self,
                  name='AngleType',
@@ -58,41 +44,25 @@ class AngleType(Potential):
         if independent_variables is None:
             independent_variables = {'theta'}
 
-        if member_types is None:
-            member_types = list()
-        super(AngleType, self).__init__(name=name, expression=expression,
-                                        parameters=parameters, independent_variables=independent_variables,
-                                        topology=topology)
-        self._member_types = _validate_three_member_type_names(member_types)
-        self._set_ref = ANGLE_TYPE_DICT
-
-    @property
-    def set_ref(self):
-        return self._set_ref
+        super(AngleType, self).__init__(
+            name=name,
+            expression=expression,
+            parameters=parameters,
+            independent_variables=independent_variables,
+            topology=topology,
+            member_types=member_types,
+            set_ref=ANGLE_TYPE_DICT
+        )
 
     @property
     def member_types(self):
-        return self._member_types
+        return self.__dict__.get('member_types_')
 
-    @member_types.setter
-    @confirm_dict_existence
-    def member_types(self, val):
-        if self.member_types != val:
-            warnings.warn("Changing an AngleType's constituent "
-                          "member types: {} to {}".format(self.member_types, val))
-        self._member_types = _validate_three_member_type_names(val)
+    class Config:
+        fields = {
+            'member_types_': 'member_types'
+        }
 
-    def __repr__(self):
-        return "<AngleType {}, id {}>".format(self.name, id(self))
-
-
-def _validate_three_member_type_names(types):
-    """Ensure exactly 3 partners are involved in AngleType"""
-    if len(types) != 3 and len(types) != 0:
-        raise GMSOError("Trying to create an AngleType "
-                            "with {} constituent types".format(len(types)))
-    if not all([isinstance(t, str) for t in types]):
-        raise GMSOError("Types passed to AngleType "
-                            "need to be strings corresponding to AtomType names")
-
-    return types
+        alias_to_fields = {
+            'member_types': 'member_types_'
+        }

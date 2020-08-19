@@ -11,8 +11,6 @@ from .core.improper import Improper
 
 from .core.forcefield import ForceField
 
-
-from .core.potential import Potential
 from .core.atom_type import AtomType
 from .core.bond_type import BondType
 from .core.angle_type import AngleType

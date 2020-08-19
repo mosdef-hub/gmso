@@ -3,7 +3,6 @@ from typing import Any
 from pydantic import Field
 
 from gmso.abc.gmso_base import GMSOBase
-from gmso.utils.decorators import confirm_dict_existence
 from gmso.utils.expression import _PotentialExpression
 
 
@@ -32,23 +31,26 @@ class AbstractPotential(GMSOBase):
     def __init__(self,
                  name='Potential',
                  expression='a*x+b',
-                 independent_variables=None):
+                 independent_variables=None,
+                 potential_expression=None,
+                 **kwargs):
+        if potential_expression is None:
+            if expression is None:
+                expression = 'a*x+b'
 
-        if expression is None:
-            expression = 'a*x+b'
+            if independent_variables is None:
+                independent_variables = {'x'}
 
-        if independent_variables is None:
-            independent_variables = {'x'}
-
-        potential_expression = _PotentialExpression(
-            expression=expression,
-            independent_variables=independent_variables,
-            parameters=None
-        )
+            potential_expression = _PotentialExpression(
+                expression=expression,
+                independent_variables=independent_variables,
+                parameters=None
+            )
 
         super().__init__(
             name=name,
-            potential_expression=potential_expression
+            potential_expression=potential_expression,
+            **kwargs
         )
 
     @property
@@ -60,7 +62,7 @@ class AbstractPotential(GMSOBase):
         return self.potential_expression_.independent_variables
 
     @property
-    def expression(self) -> _PotentialExpression:
+    def expression(self):
         return self.potential_expression_.expression
 
     @property
@@ -87,24 +89,23 @@ class AbstractPotential(GMSOBase):
         desc = "<{} {}, id {}>".format(self.__class__.__name__, self.name, id(self))
         return desc
 
-    @confirm_dict_existence
     def __setattr__(self, key: Any, value: Any) -> None:
         if key == 'expression':
             self.potential_expression_.expression = value
         elif key == 'independent_variables':
             self.potential_expression_.independent_variables = value
+        elif key == 'set_ref_':
+            return
         else:
             super().__setattr__(key, value)
 
     class Config:
         fields = {
             'name_': 'name',
-            'potential_expression_': 'potential_expression',
-            'topology_': 'topology'
+            'potential_expression_': 'potential_expression'
         }
 
         alias_to_fields = {
             'name': 'name_',
-            'potential_expression': 'potential_expression_',
-            'topology': 'topology_'
+            'potential_expression': 'potential_expression_'
         }

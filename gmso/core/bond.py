@@ -2,7 +2,6 @@ from typing import Tuple, Optional
 
 from pydantic import Field
 
-
 from gmso.abc.abstract_connection import Connection
 from gmso.core.atom import Atom
 from gmso.core.bond_type import BondType

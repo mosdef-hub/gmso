@@ -22,7 +22,7 @@ class TestAtomType(BaseTest):
         assert_allclose_units(new_type.mass, mass, rtol=1e-5, atol=1e-8)
 
     def test_setters(self, charge, mass):
-        new_type = AtomType(self)
+        new_type = AtomType()
         new_type.name = "SettingName"
         new_type.charge = -1.0 * charge
         new_type.mass = 1 * mass
