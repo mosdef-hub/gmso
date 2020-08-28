@@ -36,6 +36,7 @@ class TestImproper(BaseTest):
 
         assert len(connect.connection_members) == 4
         assert connect.connection_type is not None
+        assert connect.improper_type is not None
         assert connect.name == 'improper_name'
 
     def test_improper_fake(self):
@@ -68,8 +69,8 @@ class TestImproper(BaseTest):
                                              atom4.atom_type.name])
         imp = Improper(
             connection_members=[atom1, atom2, atom3, atom4],
-            improper_type=imptype
         )
+        imp.improper_type = imptype
         assert 'A' in imp.connection_type.member_types
         assert 'B' in imp.connection_type.member_types
         assert 'C' in imp.connection_type.member_types

@@ -36,6 +36,7 @@ class TestDihedral(BaseTest):
 
         assert len(connect.connection_members) == 4
         assert connect.connection_type is not None
+        assert connect.dihedral_type is not None
         assert connect.name == 'dihedral_name'
 
     def test_dihedral_fake(self):
@@ -68,8 +69,8 @@ class TestDihedral(BaseTest):
                                              atom4.atom_type.name])
         dih = Dihedral(
             connection_members=[atom1, atom2, atom3, atom4],
-            dihedral_type=dihtype
         )
+        dih.dihedral_type = dihtype
         assert 'A' in dih.connection_type.member_types
         assert 'B' in dih.connection_type.member_types
         assert 'C' in dih.connection_type.member_types

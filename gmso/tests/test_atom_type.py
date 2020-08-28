@@ -158,6 +158,9 @@ class TestAtomType(BaseTest):
     def test_metadata(self):
         valid_type = AtomType(doi='123', definition='[c]', overrides={'122'},
                 description='Some type solely for testing')
+        assert valid_type.doi
+        assert valid_type.overrides
+
         with pytest.raises(ValueError):
             bad_doi = AtomType(doi=123, definition='[c]', overrides={'122'},
                 description='Some type solely for testing')

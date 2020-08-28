@@ -2,7 +2,6 @@ import warnings
 from re import sub
 
 import numpy as np
-from collections import namedtuple
 from pydantic import Field
 import unyt as u
 
