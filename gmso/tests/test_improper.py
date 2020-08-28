@@ -70,7 +70,7 @@ class TestImproper(BaseTest):
         imp = Improper(
             connection_members=[atom1, atom2, atom3, atom4],
         )
-        imp.improper_type = imptype
+        imp.improper_type = imp.connection_type = imptype
         assert 'A' in imp.connection_type.member_types
         assert 'B' in imp.connection_type.member_types
         assert 'C' in imp.connection_type.member_types
