@@ -26,7 +26,7 @@ class AngleType(ParametricPotential):
 
     member_types_: Optional[Tuple[str, str, str]] = Field(
         None,
-        description='List-like of of gmso.AtomType.name defining the members of this angle type'
+        description='List-like of gmso.AtomType.name defining the members of this angle type'
     )
 
     def __init__(self,

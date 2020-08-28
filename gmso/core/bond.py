@@ -22,7 +22,7 @@ class Bond(Connection):
     """
     connection_members_: Tuple[Atom, Atom] = Field(
         ...,
-        description='2 sites of a bond.'
+        description='The 2 atoms involved in the bond.'
     )
 
     bond_type_: Optional[BondType] = Field(

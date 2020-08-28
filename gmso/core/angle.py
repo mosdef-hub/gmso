@@ -23,7 +23,7 @@ class Angle(Connection):
 
     connection_members_: Tuple[Atom, Atom, Atom] = Field(
         ...,
-        description='3 Atoms of an angle.'
+        description='The 3 atoms involved in the angle.'
     )
 
     angle_type_: Optional[AngleType] = Field(

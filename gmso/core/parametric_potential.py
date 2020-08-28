@@ -10,7 +10,7 @@ from gmso.exceptions import GMSOError
 
 
 class ParametricPotential(AbstractPotential):
-    __base_doc__ = """An abstract potential class.
+    __base_doc__ = """A parametric potential class.
 
     Potential stores a general interaction between components of a chemical
     topology that can be specified by a mathematical expression. The functional

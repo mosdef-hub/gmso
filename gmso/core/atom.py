@@ -8,11 +8,16 @@ from pydantic import Field, validator
 from gmso.core.element import Element
 from gmso.abc.abstract_site import Site
 from gmso.core.atom_type import AtomType
+from gmso.utils._constants import UNIT_WARNING_STRING
 
 
 class Atom(Site):
     __base_doc__ = """An atom represents a single element association in a topology.
-    Atom is the object that represents any general interaction Atom in a molecular simulation.
+    
+    Atoms are the representation of an element within `gmso` that describes any general 
+    atom in a molecular simulation. Atoms also contain information that are unique to 
+    elements vs other types of interaction sites in molecular simulations. 
+    For example, charge, mass, and periodic table information.
 
     Notes
     -----
@@ -84,11 +89,11 @@ class Atom(Site):
         if charge is None:
             return None
         if not isinstance(charge, u.unyt_array):
-            warnings.warn("Charges are assumed to be elementary charge")
+            warnings.warn(UNIT_WARNING_STRING.format('Charges', 'elementary charge'))
             charge *= u.elementary_charge
 
         elif charge.units.dimensions != u.elementary_charge.units.dimensions:
-            warnings.warn("Charges are assumed to be elementary charge")
+            warnings.warn(UNIT_WARNING_STRING.format('Charges', 'elementary charge'))
             charge = charge.value * u.elementary_charge
 
         return charge
@@ -96,7 +101,7 @@ class Atom(Site):
     @validator('element_')
     def is_valid_element(cls, element):
         if element is not None:
-            assert isinstance(element, Element), 'Attribute element must be of type element'
+            assert isinstance(element, Element), 'Attribute element must be of type gmso.core.Element'
         return element
 
     @validator('mass_')
@@ -104,11 +109,11 @@ class Atom(Site):
         if mass is None:
             return None
         if not isinstance(mass, u.unyt_array):
-            warnings.warn("Masses are assumed to be g/mol")
+            warnings.warn(UNIT_WARNING_STRING.format('Masses', 'g/mol'))
             mass *= u.gram / u.mol
 
         elif mass.units.dimensions != (u.gram / u.mol).units.dimensions:
-            warnings.warn("Masses are assumed to be g/mol")
+            warnings.warn(UNIT_WARNING_STRING.format('Masses', 'g/mol'))
             mass = mass.value * u.gram / u.mol
         return mass
 

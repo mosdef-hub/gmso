@@ -159,7 +159,7 @@ class AutoDocGenerator:
                 if getattr(target, DOCS_GENERATED):
                     self.should_apply = False
             else:
-                raise AttributeError(f'No mating attribute {BASE_DOC_ATTR} found in {target.__name__}')
+                raise AttributeError(f'No matching attribute {BASE_DOC_ATTR} found in {target.__name__}')
 
         else:
             raise TypeError('Cannot generate documentation for non-basemodel descendants')

@@ -27,7 +27,7 @@ class Dihedral(Connection):
     """
     connection_members_: Tuple[Atom, Atom, Atom, Atom] = Field(
         ...,
-        description='4 sites of this dihedral.'
+        description='The 4 atoms involved in the dihedral.'
     )
 
     dihedral_type_: Optional[DihedralType] = Field(

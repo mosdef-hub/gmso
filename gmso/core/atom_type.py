@@ -6,12 +6,11 @@ from pydantic import Field, validator
 
 from gmso.core.parametric_potential import ParametricPotential
 from gmso.utils.misc import unyt_to_hashable
-from gmso.utils.decorators import confirm_dict_existence
-from gmso.utils._constants import ATOM_TYPE_DICT
+from gmso.utils._constants import ATOM_TYPE_DICT, UNIT_WARNING_STRING
 
 
 class AtomType(ParametricPotential):
-    __base_doc__ = """A description of non-bonded interacitons between sites.
+    __base_doc__ = """A description of non-bonded interactions between sites.
 
     This is a subclass of the gmso.core.Potential superclass.
 
@@ -40,12 +39,12 @@ class AtomType(ParametricPotential):
 
     doi_: Optional[str] = Field(
         '',
-        description='Digital Object Identifier of publication where this atom type was'
+        description='Digital Object Identifier of publication where this atom type was introduced'
     )
 
     overrides_: Optional[Set[str]] = Field(
         set(),
-        description=' Set of other atom types that this atom type overrides'
+        description='Set of other atom types that this atom type overrides'
     )
 
     definition_: Optional[str] = Field(
@@ -144,10 +143,10 @@ class AtomType(ParametricPotential):
     def validate_mass(cls, mass):
         """Check to see that a mass is a unyt array of the right dimension"""
         if not isinstance(mass, u.unyt_array):
-            warnings.warn("Masses are assumed to be g/mol")
+            warnings.warn(UNIT_WARNING_STRING.format('Masses', 'g/mol'))
             mass *= u.gram / u.mol
         elif mass.units.dimensions != (u.gram / u.mol).units.dimensions:
-            warnings.warn("Masses are assumed to be g/mol")
+            warnings.warn(UNIT_WARNING_STRING.format('Masses', 'g/mol'))
             mass = mass.value * u.gram / u.mol
         else:
             pass
@@ -158,10 +157,10 @@ class AtomType(ParametricPotential):
     def validate_charge(cls, charge):
         """Check to see that a charge is a unyt array of the right dimension"""
         if not isinstance(charge, u.unyt_array):
-            warnings.warn("Charges are assumed to be elementary charge")
+            warnings.warn(UNIT_WARNING_STRING.format('Charges', 'elementary charge'))
             charge *= u.elementary_charge
         elif charge.units.dimensions != u.elementary_charge.units.dimensions:
-            warnings.warn("Charges are assumed to be elementary charge")
+            warnings.warn(UNIT_WARNING_STRING.format('Charges', 'elementary charge'))
             charge = charge.value * u.elementary_charge
         else:
             pass

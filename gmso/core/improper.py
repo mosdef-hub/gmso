@@ -31,13 +31,13 @@ class Improper(Connection):
     """
     connection_members_: Tuple[Atom, Atom, Atom, Atom] = Field(
         ...,
-        description='4 sites of a improper. Central site first, '
-                    'then three sites connected to the central site.'
+        description='The 4 atoms of this improper. Central site first, '
+                    'then the three atoms connected to the central site.'
     )
 
     improper_type_: Optional[ImproperType] = Field(
         default=None,
-        description='DihedralType of this dihedral.'
+        description='ImproperType of this improper.'
     )
 
     @property

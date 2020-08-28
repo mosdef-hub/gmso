@@ -29,7 +29,7 @@ class Site(GMSOBase):
     -----
     The label attribute for a site takes its meaning when used with some sort of container (like topology)
     such that a label for a site can then be used to group sites together. The rules for defining a site label
-    and their meaning is left upto the container where the sites will reside. 
+    and their meaning the responsibility of the container where the sites will reside. 
     """
 
     name_: str = Field(
@@ -44,7 +44,7 @@ class Site(GMSOBase):
 
     position_: PositionType = Field(
         u.unyt_array([np.nan]*3, u.nm),
-        description='The Cartesian coordinates of the position of the site'
+        description='The 3D Cartesian coordinates of the position of the site'
     )
 
     @property
@@ -72,8 +72,7 @@ class Site(GMSOBase):
             try:
                 position *= u.nm
             except InvalidUnitOperation as e:
-                raise GMSOError('Converting object of type {0} failed with following error: {1}'
-                                .format(type(position), e))
+                raise GMSOError(f'Converting object of type {type(position)} failed with following error: {e}')
             warnings.warn('Positions are assumed to be in nm')
 
         input_unit = position.units
@@ -83,8 +82,8 @@ class Site(GMSOBase):
             position = np.reshape(position, newshape=(3,), order='C')
         except ValueError:
             raise ValueError(f'Position of shape {position.shape} is not valid. '
-                             'Accepted values: (a.) 3-tuple, (b.) list of length 3 '
-                             '(c.) np.array or unyt.unyt_array of shape (3,)')
+                             'Accepted values: (a.) list-like of length 3'
+                             '(b.) np.array or unyt.unyt_array of shape (3,)')
 
         position *= input_unit
         position.convert_to_units(u.nm)
