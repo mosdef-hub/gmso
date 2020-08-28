@@ -25,7 +25,7 @@ class AbstractPotential(GMSOBase):
 
     potential_expression_: _PotentialExpression = Field(
         _PotentialExpression(expression='a*x+b', independent_variables={'x'}),
-        description='The potential expression for the potential'
+        description='The mathematical expression for the potential'
     )
 
     def __init__(self,
