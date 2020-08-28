@@ -39,7 +39,7 @@ class PotentialTemplate(AbstractPotential):
             independent_variables=independent_variables,
         )
 
-    def set_expression(self):
+    def set_expression(self, *args, **kwargs):
         raise NotImplementedError
 
     class Config:
