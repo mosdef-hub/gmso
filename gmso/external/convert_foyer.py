@@ -184,7 +184,8 @@ def _write_gmso_xml(gmso_xml, **kwargs):
         thisAtomType.attrib['name'] = atom_type.get('name', 'AtomType')
         thisAtomType.attrib['atomclass'] = atom_type.get('class', '')
         thisAtomType.attrib['element'] = atom_type.get('element', '')
-        thisAtomType.attrib['charge'] = atom_type.get('charge', '1.0')
+        thisAtomType.attrib['charge'] = atom_type.get('charge', '0.0')
+        thisAtomType.attrib['mass'] = atom_type.get('mass', '0.0')
         thisAtomType.attrib['definition'] = atom_type.get('def', '')
     
     for i, atom_type in enumerate(ff_kwargs['non_bonded_forces']):
