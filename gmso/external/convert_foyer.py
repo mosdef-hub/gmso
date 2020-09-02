@@ -367,7 +367,7 @@ def _write_gmso_xml(gmso_xml, **kwargs):
         periodicTorsionDihedralTypesParamsUnitsDef_del.attrib[
             "parameter"
         ] = "delta{}".format(k)
-        periodicTorsionDihedralTypesParamsUnitsDef_del.attrib["unit"] = "degree"
+        periodicTorsionDihedralTypesParamsUnitsDef_del.attrib["unit"] = "radian"
         periodicTorsionDihedralTypes.insert(
             0, periodicTorsionDihedralTypesParamsUnitsDef_del
         )

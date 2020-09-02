@@ -226,3 +226,13 @@ class BaseTest:
        gmso_ff = ForceField(get_fn("fullerene_gmso.xml"))
 
        return gmso_ff
+
+    @pytest.fixture
+    def foyer_periodic(self):
+       if has_foyer:
+          import foyer
+          from foyer.tests.utils import get_fn
+       from_foyer(get_fn("oplsaa-periodic.xml"))
+       gmso_ff = ForceField(get_fn("oplsaa-periodic_gmso.xml"))
+
+       return gmso_ff

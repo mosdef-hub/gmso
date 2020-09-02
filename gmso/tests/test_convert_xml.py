@@ -80,6 +80,27 @@ class TestXMLConversion(BaseTest):
             "theta_eq"
         ] == u.unyt_quantity(3.141592, u.rad)
 
+    @pytest.mark.skipif(not has_foyer, reason="Foyer is not installed")
+    def test_foyer_dihedrals(self, foyer_periodic):
+        assert len(foyer_periodic.dihedral_types) == 4
+        assert "opls_140~opls_135~opls_135~opls_140" in foyer_periodic.dihedral_types
+
+        assert (
+            sympify("phi")
+            in foyer_periodic.dihedral_types[
+                "opls_140~opls_135~opls_135~opls_140"
+            ].independent_variables
+        )
+        assert foyer_periodic.dihedral_types[
+            "opls_140~opls_135~opls_135~opls_140"
+        ].parameters["k"] == u.unyt_quantity(3.1, u.kJ)
+        assert foyer_periodic.dihedral_types[
+            "opls_140~opls_135~opls_135~opls_140"
+        ].parameters["n"] == u.unyt_quantity(1, u.dimensionless)
+        assert foyer_periodic.dihedral_types[
+            "opls_140~opls_135~opls_135~opls_140"
+        ].parameters["delta"] == u.unyt_quantity(3.14, u.rad)
+
     def test_empty_foyer_atomtype(self):
         with pytest.raises(ForceFieldParseError):
             from_foyer(get_path("empty_foyer.xml"))
