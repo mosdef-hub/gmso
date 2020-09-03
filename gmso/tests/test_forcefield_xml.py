@@ -1,3 +1,4 @@
+import lxml
 import pytest
 from sympy import sympify
 import unyt as u
@@ -146,3 +147,20 @@ class TestForceFieldFromXML(BaseTest):
         with pytest.raises(TypeError):
             assert len(ff.dihedral_types['opls_140~*~*~opls_140'].parameters['c0'])
         assert len(ff.dihedral_types['NH2~CT1~C~O'].parameters['delta']) == 1
+
+    def test_ff_from_etree(self):
+        ff_etree = lxml.etree.parse(get_path('opls_charmm_buck.xml'))
+        ff = ForceField(ff_etree)
+        assert ff
+
+    def test_ff_from_etree_iterable(self):
+        ff_etrees = [
+            lxml.etree.parse(get_path('opls_charmm_buck.xml')),
+            lxml.etree.parse(get_path('trimmed_charmm.xml'))
+        ]
+        ff = ForceField(ff_etrees)
+        assert ff
+
+    def test_ff_mixed_type_error(self):
+        with pytest.raises(TypeError):
+            ff = ForceField([5, '20'])

@@ -1,3 +1,5 @@
+import typing
+
 from lxml import etree
 
 from gmso.utils.ff_utils import (validate,
@@ -89,7 +91,7 @@ class ForceField(object):
         return atomclass_dict
 
     @classmethod
-    def from_xml(cls, xml_locs):
+    def from_xml(cls, xmls_or_etrees):
         """Create a gmso.Forcefield object from XML File(s)
 
         This class method creates a ForceFiled object from the reference
@@ -99,8 +101,8 @@ class ForceField(object):
 
         Parameters
         ----------
-        xml_locs : str or iterable of str
-            string or iterable of strings containing the forcefield XML locations
+        xmls_or_etrees : Union[str, Iterable[str], etree._ElementTree, Iterable[etree._ElementTree]]
+          The forcefield XML locations or XML Element Trees
 
         Returns
         --------
@@ -108,11 +110,18 @@ class ForceField(object):
             A gmso.Forcefield object with a collection of Potential objects
             created using the information in the XML file
         """
+        if not isinstance(xmls_or_etrees, typing.Iterable) or isinstance(xmls_or_etrees, str):
+            xmls_or_etrees = [xmls_or_etrees]
 
-        if not hasattr(xml_locs, '__iter__'):
-            xml_locs = [].append(xml_locs)
-        if isinstance(xml_locs, str):
-            xml_locs = [xml_locs]
+        should_parse_xml = False
+        if not (all(map(lambda x: isinstance(x, str), xmls_or_etrees))
+                or all(map(lambda x: isinstance(x, etree._ElementTree), xmls_or_etrees))):
+            raise TypeError('Please provide an iterable of strings '
+                            'as locations of the XML files '
+                            'or equivalent element Trees')
+
+        if all(map(lambda x: isinstance(x, str), xmls_or_etrees)):
+            should_parse_xml = True
 
         versions = []
         names = []
@@ -126,9 +135,13 @@ class ForceField(object):
         angle_types_dict = {}
         dihedral_types_dict = {}
 
-        for loc in xml_locs:
-            validate(loc)
-            ff_tree = etree.parse(loc)
+        for loc_or_etree in set(xmls_or_etrees):
+            validate(loc_or_etree)
+            ff_tree = loc_or_etree
+
+            if should_parse_xml:
+                ff_tree = etree.parse(loc_or_etree)
+
             ff_el = ff_tree.getroot()
             versions.append(ff_el.attrib['version'])
             names.append(ff_el.attrib['name'])

@@ -116,15 +116,20 @@ def _parse_default_units(unit_tag):
     return units_map
 
 
-def validate(xml_path, schema=None):
-    """Validate a given xml file with a reference schema"""
+def validate(xml_path_or_etree, schema=None):
+    """Validate a given xml file or etree.ElementTree with a reference schema"""
     if schema is None:
         schema_path = os.path.join(os.path.split(os.path.abspath(__file__))[0], 'schema', 'ff-gmso.xsd')
+        xml_doc = etree.parse(schema_path)
+        xml_schema = etree.XMLSchema(xml_doc)
+    else:
+        xml_schema = schema
 
-    xml_doc = etree.parse(schema_path)
-    xmlschema = etree.XMLSchema(xml_doc)
-    ff_xml = etree.parse(xml_path)
-    xmlschema.assertValid(ff_xml)
+    ff_xml = xml_path_or_etree
+    if not isinstance(xml_path_or_etree, etree._ElementTree):
+        ff_xml = etree.parse(xml_path_or_etree)
+
+    xml_schema.assertValid(ff_xml)
 
 
 def _parse_scaling_factors(meta_tag):
