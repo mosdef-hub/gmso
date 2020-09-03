@@ -1,4 +1,5 @@
 from typing import Any
+from abc import abstractmethod
 
 from pydantic import Field
 
@@ -69,6 +70,7 @@ class AbstractPotential(GMSOBase):
     def potential_expression(self):
         return self.__dict__.get('potential_expression_')
 
+    @abstractmethod
     def set_expression(self):
         raise NotImplementedError
 
