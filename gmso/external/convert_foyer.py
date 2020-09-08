@@ -396,9 +396,6 @@ def _write_gmso_xml(gmso_xml, **kwargs):
             parameter_c = etree.SubElement(parameters, "Parameter")
             parameter_c.attrib["name"] = parameter_c_name
             parameter_c.attrib["value"] = dihedral_type.get(parameter_c_name)
-
-            parameter_delta = etree.SubElement(parameters, "Parameter")
-
             j += 1
         if j > max_j:
             max_j = j
