@@ -108,105 +108,170 @@ def _write_gmso_xml(gmso_xml, **kwargs):
     forceField.attrib["name"] = os.path.splitext(gmso_xml)[0]
     forceField.attrib["version"] = "0.0.1"
 
-    ffMeta = etree.SubElement(forceField, "FFMetaData")
-    units = etree.SubElement(ffMeta, "Units")
-    units.attrib["energy"] = "kJ/mol"
-    units.attrib["mass"] = "amu"
-    units.attrib["charge"] = "coulomb"
-    units.attrib["distance"] = "nm"
+    ffMeta = _create_subelement(forceField, "FFMetaData")
+    units = _create_subelement(
+            ffMeta,
+            name="Units",
+            attrib_dict={
+                "energy": "kJ/mol",
+                "mass": "amu",
+                "charge": "coulomb",
+                "distance": "nm",
+                }
+            )
     # AtomTypes
-    atomTypes = etree.SubElement(forceField, "AtomTypes")
+    nonBondedAtomTypes = _create_subelement(forceField,
+            "AtomTypes",
+            attrib_dict={
+                "expression": "ep * ((sigma/r)**12 - (sigma/r)**6) + q / (e0 * r)",
+                }
+            )
+
 
     # NonBondedForces
-    nonBondedAtomTypes = atomTypes
-    nonBondedAtomTypes.attrib[
-        "expression"
-    ] = "ep * ((sigma/r)**12 - (sigma/r)**6) + q / (e0 * r)"
-
-    nonBondedAtomTypesParamsUnitsDef_ep = etree.SubElement(
-        nonBondedAtomTypes, "ParametersUnitDef"
-    )
-    nonBondedAtomTypesParamsUnitsDef_ep.attrib["parameter"] = "ep"
-    nonBondedAtomTypesParamsUnitsDef_ep.attrib["unit"] = "kJ/mol"
-    nonBondedAtomTypesParamsUnitsDef_sigma = etree.SubElement(
-        nonBondedAtomTypes, "ParametersUnitDef"
-    )
-    nonBondedAtomTypesParamsUnitsDef_sigma.attrib["parameter"] = "sigma"
-    nonBondedAtomTypesParamsUnitsDef_sigma.attrib["unit"] = "nm"
-
-    nonBondedAtomTypesParamsUnitsDef_e0 = etree.SubElement(
-        nonBondedAtomTypes, "ParametersUnitDef"
-    )
-    nonBondedAtomTypesParamsUnitsDef_e0.attrib["parameter"] = "e0"
-    nonBondedAtomTypesParamsUnitsDef_e0.attrib["unit"] = "A**2*s**4/(kg*m**3)"
-    nonBondedAtomTypesParamsUnitsDef_q = etree.SubElement(
-        nonBondedAtomTypes, "ParametersUnitDef"
-    )
-    nonBondedAtomTypesParamsUnitsDef_q.attrib["parameter"] = "q"
-    nonBondedAtomTypesParamsUnitsDef_q.attrib["unit"] = "coulomb"
+    nonBondedAtomTypesParamsUnitsDef_ep = _create_subelement(
+            nonBondedAtomTypes,
+            "ParametersUnitDef",
+            attrib_dict={
+                "parameter": "ep",
+                "unit": "kJ/mol",
+                }
+            )
+    nonBondedAtomTypesParamsUnitsDef_sigma = _create_subelement(
+            nonBondedAtomTypes,
+            "ParametersUnitDef",
+            attrib_dict={
+                "parameter": "sigma",
+                "unit": "nm",
+                }
+            )
+    nonBondedAtomTypesParamsUnitsDef_e0 = _create_subelement(
+            nonBondedAtomTypes,
+            "ParametersUnitDef",
+            attrib_dict={
+                "parameter": "e0",
+                "unit": "A**2*s**4/(kg*m**3)",
+                }
+            )
+    nonBondedAtomTypesParamsUnitsDef_q = _create_subelement(
+            nonBondedAtomTypes,
+            "ParametersUnitDef",
+            attrib_dict={
+                "parameter": "q",
+                "unit": "coulomb",
+                }
+            )
 
     # HarmonicBondTypes
-    harmonicBondTypes = etree.SubElement(forceField, "BondTypes")
-    harmonicBondTypes.attrib["expression"] = "k * (r-r_eq)**2"
-    harmonicBondTypesParamsUnitsDef_k = etree.SubElement(
-        harmonicBondTypes, "ParametersUnitDef"
-    )
-    harmonicBondTypesParamsUnitsDef_k.attrib["parameter"] = "k"
-    harmonicBondTypesParamsUnitsDef_k.attrib["unit"] = "kJ/nm**2"
-    harmonicBondTypesParamsUnitsDef_r_eq = etree.SubElement(
-        harmonicBondTypes, "ParametersUnitDef"
-    )
-    harmonicBondTypesParamsUnitsDef_r_eq.attrib["parameter"] = "r_eq"
-    harmonicBondTypesParamsUnitsDef_r_eq.attrib["unit"] = "nm"
+    harmonicBondTypes = _create_subelement(
+            forceField,
+            "BondTypes",
+            attrib_dict={
+                "expression": "k * (r-r_eq)**2",
+                }
+            )
+
+    harmonicBondTypesParamsUnitsDef_k = _create_subelement(
+            harmonicBondTypes,
+            "ParametersUnitDef",
+            attrib_dict={
+                "parameter": "k",
+                "unit": "kJ/nm**2",
+                }
+            )
+
+    harmonicBondTypesParamsUnitsDef_r_eq = _create_subelement(
+            harmonicBondTypes,
+            "ParametersUnitDef",
+            attrib_dict={
+                "parameter": "r_eq",
+                "unit": "nm"
+                }
+            )
 
     # HarmonicAngleTypes
-    harmonicAngleTypes = etree.SubElement(forceField, "AngleTypes")
-    harmonicAngleTypes.attrib["expression"] = "k * (theta - theta_eq)**2"
+    harmonicAngleTypes = _create_subelement(
+            forceField,
+            "AngleTypes",
+            attrib_dict={
+                "expression": "k * (theta - theta_eq)**2",
+                }
+            )
 
-    harmonicAngleTypesParamsUnitsDef_k = etree.SubElement(
-        harmonicAngleTypes, "ParametersUnitDef"
+    harmonicAngleTypesParamsUnitsDef_k = _create_subelement(
+            harmonicAngleTypes,
+            "ParametersUnitDef",
+            attrib_dict={
+                "parameter": "k",
+                "unit": "kJ/radian**2",
+                }
     )
-    harmonicAngleTypesParamsUnitsDef_k.attrib["parameter"] = "k"
-    harmonicAngleTypesParamsUnitsDef_k.attrib["unit"] = "kJ/radian**2"
 
-    harmonicBondTypesParamsUnitsDef_theta_eq = etree.SubElement(
-        harmonicAngleTypes, "ParametersUnitDef"
-    )
-    harmonicBondTypesParamsUnitsDef_theta_eq.attrib["parameter"] = "theta_eq"
-    harmonicBondTypesParamsUnitsDef_theta_eq.attrib["unit"] = "radian"
+    harmonicBondTypesParamsUnitsDef_theta_eq = _create_subelement(
+            harmonicAngleTypes,
+            "ParametersUnitDef",
+            attrib_dict={
+                "parameter": "theta_eq",
+                "unit": "radian",
+                }
+            )
 
     # UreyBradleyAngleTypes
-    ureybradleyAngleTypes = etree.SubElement(forceField, "AngleTypes")
-    ureybradleyAngleTypes.attrib["expression"] = "k * (w - w_0) ** 2"
+    ureybradleyAngleTypes = _create_subelement(
+            forceField,
+            "AngleTypes",
+            attrib_dict={
+                "expression": "k * (w - w_0) ** 2",
+                }
+            )
 
-    ureybradleyAngleTypesParamsUnitsDef_k = etree.SubElement(
-        ureybradleyAngleTypes, "ParametersUnitDef"
-    )
-    ureybradleyAngleTypesParamsUnitsDef_k.attrib["parameter"] = "k"
-    ureybradleyAngleTypesParamsUnitsDef_k.attrib["unit"] = "kJ/radian**2"
+    ureybradleyAngleTypesParamsUnitsDef_k = _create_subelement(
+            ureybradleyAngleTypes,
+            "ParametersUnitDef",
+            attrib_dict={
+                "parameter": "k",
+                "unit": "kJ/radian**2"
+                }
+            )
 
-    ureybradleyAngleTypesParamsUnitsDef_w_0 = etree.SubElement(
-        ureybradleyAngleTypes, "ParametersUnitDef"
-    )
-    ureybradleyAngleTypesParamsUnitsDef_w_0.attrib["parameter"] = "w_0"
-    ureybradleyAngleTypesParamsUnitsDef_w_0.attrib["unit"] = "nm"
+    ureybradleyAngleTypesParamsUnitsDef_w_0 = _create_subelement(
+            ureybradleyAngleTypes,
+            "ParametersUnitDef",
+            attrib_dict={
+                "parameter": "w_0",
+                "unit": "nm"
+                }
+            )
 
     # PeriodicTorsionDihedralTypes
-    periodicTorsionDihedralTypes = etree.SubElement(forceField, "DihedralTypes")
-    periodicTorsionDihedralTypes.attrib["expression"] = "k * (1 + cos(n * phi - delta))"
+    periodicTorsionDihedralTypes = _create_subelement(
+            forceField,
+            "DihedralTypes",
+            attrib_dict={
+                "expression": "k * (1 + cos(n * phi - delta))",
+                }
+            )
 
     # PeriodicImproperDihedralTypes
-    periodicImproperTypes = etree.SubElement(forceField, "DihedralTypes")
-    periodicImproperTypes.attrib["expression"] = "k * (1 + cos(n * phi - delta))"
+    periodicImproperTypes = _create_subelement(
+            forceField,
+            "DihedralTypes",
+            attrib_dict={
+                "expression": "k * (1 + cos(n * phi - delta))",
+                }
+            )
 
     # RBTorsionDihedralTypes
-    rbTorsionDihedralTypes = etree.SubElement(forceField, "DihedralTypes")
-    rbTorsionDihedralTypes.attrib[
-        "expression"
-    ] = "c0 * cos(phi)**0 + c1 * cos(phi)**1 + c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + c5 * cos(phi)**5"
+    rbTorsionDihedralTypes = _create_subelement(
+            forceField,
+            "DihedralTypes",
+            attrib_dict={
+                "expression": "c0 * cos(phi)**0 + c1 * cos(phi)**1 + c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + c5 * cos(phi)**5",
+                }
+            )
 
     for atom_type in ff_kwargs["atom_types"]:
-        thisAtomType = etree.SubElement(atomTypes, "AtomType")
+        thisAtomType = etree.SubElement(nonBondedAtomTypes, "AtomType")
         thisAtomType.attrib["name"] = atom_type.get("name", "AtomType")
         thisAtomType.attrib["atomclass"] = atom_type.get("class", "")
         thisAtomType.attrib["element"] = atom_type.get("element", "")
@@ -216,7 +281,7 @@ def _write_gmso_xml(gmso_xml, **kwargs):
         thisAtomType.attrib["description"] = atom_type.get("desc", "")
 
     for i, atom_type in enumerate(ff_kwargs["non_bonded_forces"]):
-        thisAtomType = atomTypes.find(
+        thisAtomType = nonBondedAtomTypes.find(
             './/AtomType[@name="{}"]'.format(atom_type.get("type"))
         )
         thisAtomType.attrib["name"] = atom_type.get("type", "AtomType")
@@ -459,3 +524,7 @@ def _write_gmso_xml(gmso_xml, **kwargs):
 
     ff_tree = etree.ElementTree(forceField)
     ff_tree.write(gmso_xml, pretty_print=True, xml_declaration=True, encoding="utf-8")
+
+def _create_subelement(root_el, name, attrib_dict=None):
+    sub_el = etree.SubElement(root_el, name, attrib_dict)
+    return sub_el
