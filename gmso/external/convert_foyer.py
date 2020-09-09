@@ -13,6 +13,7 @@ from gmso.exceptions import ForceFieldParseError
 if has_foyer:
     import foyer
 
+
 def from_foyer(foyer_xml, gmso_xml=None):
     """Convert a foyer XML to a gmso XML
 
@@ -231,14 +232,19 @@ def _write_gmso_xml(gmso_xml, **kwargs):
     )
 
     for atom_type in ff_kwargs["atom_types"]:
-        thisAtomType = etree.SubElement(nonBondedAtomTypes, "AtomType")
-        thisAtomType.attrib["name"] = atom_type.get("name", "AtomType")
-        thisAtomType.attrib["atomclass"] = atom_type.get("class", "")
-        thisAtomType.attrib["element"] = atom_type.get("element", "")
-        thisAtomType.attrib["charge"] = atom_type.get("charge", "0.0")
-        thisAtomType.attrib["mass"] = atom_type.get("mass", "0.0")
-        thisAtomType.attrib["definition"] = atom_type.get("def", "")
-        thisAtomType.attrib["description"] = atom_type.get("desc", "")
+        thisAtomType = _create_subelement(
+            nonBondedAtomTypes,
+            "AtomType",
+            attrib_dict={
+                "name": atom_type.get("name", "AtomType"),
+                "atomclass": atom_type.get("class", ""),
+                "element": atom_type.get("element", ""),
+                "charge": atom_type.get("charge", "0.0"),
+                "mass": atom_type.get("mass", "0.0"),
+                "definition": atom_type.get("def", ""),
+                "description": atom_type.get("desc", ""),
+            },
+        )
 
     for i, atom_type in enumerate(ff_kwargs["non_bonded_forces"]):
         thisAtomType = nonBondedAtomTypes.find(
@@ -246,24 +252,32 @@ def _write_gmso_xml(gmso_xml, **kwargs):
         )
         thisAtomType.attrib["name"] = atom_type.get("type", "AtomType")
         parameters = etree.SubElement(thisAtomType, "Parameters")
-        parameter_ep = etree.SubElement(parameters, "Parameter")
-        parameter_ep.attrib["name"] = "ep"
-        parameter_ep.attrib["value"] = atom_type.get("epsilon")
-        parameter_sigma = etree.SubElement(parameters, "Parameter")
-        parameter_sigma.attrib["name"] = "sigma"
-        parameter_sigma.attrib["value"] = atom_type.get("sigma")
-
-        parameter_e0 = etree.SubElement(parameters, "Parameter")
-        parameter_e0.attrib["name"] = "e0"
-        parameter_e0.attrib["value"] = "8.8542e-12"
-        parameter_q = etree.SubElement(parameters, "Parameter")
-        parameter_q.attrib["name"] = "q"
-        parameter_q.attrib["value"] = atom_type.get("charge")
+        parameter_ep = _create_subelement(
+            parameters,
+            "Parameter",
+            attrib_dict={"name": "ep", "value": atom_type.get("epsilon"),},
+        )
+        parameter_sigma = _create_subelement(
+            parameters,
+            "Parameter",
+            attrib_dict={"name": "sigma", "value": atom_type.get("sigma"),},
+        )
+        parameter_e0 = _create_subelement(
+            parameters, "Parameter", attrib_dict={"name": "e0", "value": "8.8542e-12",}
+        )
+        parameter_q = _create_subelement(
+            parameters,
+            "Parameter",
+            attrib_dict={"name": "q", "value": atom_type.get("charge"),},
+        )
 
     for i, bond_type in enumerate(ff_kwargs["harmonic_bond_types"]):
-        thisBondType = etree.SubElement(harmonicBondTypes, "BondType")
-        thisBondType.attrib["name"] = bond_type.get(
-            "name", "BondType-Harmonic-{}".format(i + 1)
+        thisBondType = _create_subelement(
+            harmonicBondTypes,
+            "BondType",
+            attrib_dict={
+                "name": bond_type.get("name", "BondType-Harmonic-{}".format(i + 1)),
+            },
         )
         for j, item in enumerate(bond_type.items()):
             if "type" in item[0]:
@@ -276,17 +290,25 @@ def _write_gmso_xml(gmso_xml, **kwargs):
                 )
 
         parameters = etree.SubElement(thisBondType, "Parameters")
-        parameter_k = etree.SubElement(parameters, "Parameter")
-        parameter_k.attrib["name"] = "k"
-        parameter_k.attrib["value"] = bond_type.get("k", "1.0")
-        parameter_r_eq = etree.SubElement(parameters, "Parameter")
-        parameter_r_eq.attrib["name"] = "r_eq"
-        parameter_r_eq.attrib["value"] = bond_type.get("length", "1.0")
+        parameters_k = _create_subelement(
+            parameters,
+            "Parameter",
+            attrib_dict={"name": "k", "value": bond_type.get("k", "1.0"),},
+        )
+
+        parameters_k = _create_subelement(
+            parameters,
+            "Parameter",
+            attrib_dict={"name": "r_eq", "value": bond_type.get("length", "1.0"),},
+        )
 
     for i, angle_type in enumerate(ff_kwargs["harmonic_angle_types"]):
-        thisAngleType = etree.SubElement(harmonicAngleTypes, "AngleType")
-        thisAngleType.attrib["name"] = angle_type.get(
-            "name", "AngleType-Harmonic-{}".format(i + 1)
+        thisAngleType = _create_subelement(
+            harmonicAngleTypes,
+            "AngleType",
+            attrib_dict={
+                "name": angle_type.get("name", "AngleType-Harmonic-{}".format(i + 1)),
+            },
         )
         for j, item in enumerate(angle_type.items()):
             if "type" in item[0]:
@@ -299,40 +321,55 @@ def _write_gmso_xml(gmso_xml, **kwargs):
                 )
 
         parameters = etree.SubElement(thisAngleType, "Parameters")
-        parameter_k = etree.SubElement(parameters, "Parameter")
-        parameter_k.attrib["name"] = "k"
-        parameter_k.attrib["value"] = angle_type.get("k", "1.0")
+        parameter_k = _create_subelement(
+            parameters,
+            "Parameter",
+            attrib_dict={"name": "k", "value": angle_type.get("k", "1.0"),},
+        )
 
-        parameter_r_eq = etree.SubElement(parameters, "Parameter")
-        parameter_r_eq.attrib["name"] = "theta_eq"
-        parameter_r_eq.attrib["value"] = angle_type.get("angle", "1.0")
+        parameter_r_eq = _create_subelement(
+            parameters,
+            "Parameter",
+            attrib_dict={"name": "theta_eq", "value": angle_type.get("angle", "1.0"),},
+        )
 
     for i, angle_type in enumerate(ff_kwargs["urey_bradley_angle_types"]):
-        thisAngleType = etree.SubElement(ureybradleyAngleTypes, "AngleType")
-        thisAngleType.attrib["name"] = angle_type.get(
-            "name", "AngleType-UreyBradley-{}".format(i + 1)
+        thisAngleType = _create_subelement(
+            ureybradleyAngleTypes,
+            "AngleType",
+            attrib_dict={
+                "name": angle_type.get(
+                    "name", "AngleType-UreyBradley-{}".format(i + 1)
+                ),
+                "type1": angle_type.get("type1", "t1"),
+                "type2": angle_type.get("type2", "t2"),
+                "type3": angle_type.get("type3", "t3"),
+            },
         )
-        thisAngleType.attrib["type1"] = angle_type.get("type1", "t1")
-        thisAngleType.attrib["type2"] = angle_type.get("type2", "t2")
-        thisAngleType.attrib["type3"] = angle_type.get("type3", "t2")
 
         parameters = etree.SubElement(thisAngleType, "Parameters")
-        parameter_k = etree.SubElement(parameters, "Parameter")
-        parameter_k.attrib["name"] = "k"
-        parameter_k.attrib["value"] = angle_type.get("k", "1.0")
-
-        parameter_r_eq = etree.SubElement(parameters, "Parameter")
-        parameter_r_eq.attrib["name"] = "w_0"
-        parameter_r_eq.attrib["value"] = angle_type.get("d", "1.0")
+        parameter_k = _create_subelement(
+            parameters,
+            "Parameter",
+            attrib_dict={"name": "k", "value": angle_type.get("k", "1.0"),},
+        )
+        parameter_r_eq = _create_subelement(
+            parameters,
+            "Parameter",
+            attrib_dict={"name": "w_0", "value": angle_type.get("d", "1.0"),},
+        )
 
     max_j = 0
 
     for i, dihedral_type in enumerate(ff_kwargs["periodic_torsion_dihedral_types"]):
-        thisDihedralType = etree.SubElement(
-            periodicTorsionDihedralTypes, "DihedralType"
-        )
-        thisDihedralType.attrib["name"] = dihedral_type.get(
-            "name", "DihedralType-Periodic-Proper-{}".format(i + 1)
+        thisDihedralType = _create_subelement(
+            periodicTorsionDihedralTypes,
+            "DihedralType",
+            attrib_dict={
+                "name": dihedral_type.get(
+                    "name", "DihedralType-Periodic-Proper-{}".format(i + 1)
+                ),
+            },
         )
 
         for j, item in enumerate(dihedral_type.items()):
@@ -528,7 +565,10 @@ def _write_gmso_xml(gmso_xml, **kwargs):
         periodicImproperTypes.insert(0, periodicImproperTypesParamsUnitsDef_del)
 
     ff_tree = etree.ElementTree(forceField)
-    ff_tree.write(str(gmso_xml), pretty_print=True, xml_declaration=True, encoding="utf-8")
+    ff_tree.write(
+        str(gmso_xml), pretty_print=True, xml_declaration=True, encoding="utf-8"
+    )
+
 
 def _create_subelement(root_el, name, attrib_dict=None):
     sub_el = etree.SubElement(root_el, name, attrib_dict)
