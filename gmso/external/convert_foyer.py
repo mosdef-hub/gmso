@@ -110,165 +110,121 @@ def _write_gmso_xml(gmso_xml, **kwargs):
 
     ffMeta = _create_subelement(forceField, "FFMetaData")
     units = _create_subelement(
-            ffMeta,
-            name="Units",
-            attrib_dict={
-                "energy": "kJ/mol",
-                "mass": "amu",
-                "charge": "coulomb",
-                "distance": "nm",
-                }
-            )
+        ffMeta,
+        name="Units",
+        attrib_dict={
+            "energy": "kJ/mol",
+            "mass": "amu",
+            "charge": "coulomb",
+            "distance": "nm",
+        },
+    )
     # AtomTypes
-    nonBondedAtomTypes = _create_subelement(forceField,
-            "AtomTypes",
-            attrib_dict={
-                "expression": "ep * ((sigma/r)**12 - (sigma/r)**6) + q / (e0 * r)",
-                }
-            )
-
+    nonBondedAtomTypes = _create_subelement(
+        forceField,
+        "AtomTypes",
+        attrib_dict={
+            "expression": "ep * ((sigma/r)**12 - (sigma/r)**6) + q / (e0 * r)",
+        },
+    )
 
     # NonBondedForces
     nonBondedAtomTypesParamsUnitsDef_ep = _create_subelement(
-            nonBondedAtomTypes,
-            "ParametersUnitDef",
-            attrib_dict={
-                "parameter": "ep",
-                "unit": "kJ/mol",
-                }
-            )
+        nonBondedAtomTypes,
+        "ParametersUnitDef",
+        attrib_dict={"parameter": "ep", "unit": "kJ/mol",},
+    )
     nonBondedAtomTypesParamsUnitsDef_sigma = _create_subelement(
-            nonBondedAtomTypes,
-            "ParametersUnitDef",
-            attrib_dict={
-                "parameter": "sigma",
-                "unit": "nm",
-                }
-            )
+        nonBondedAtomTypes,
+        "ParametersUnitDef",
+        attrib_dict={"parameter": "sigma", "unit": "nm",},
+    )
     nonBondedAtomTypesParamsUnitsDef_e0 = _create_subelement(
-            nonBondedAtomTypes,
-            "ParametersUnitDef",
-            attrib_dict={
-                "parameter": "e0",
-                "unit": "A**2*s**4/(kg*m**3)",
-                }
-            )
+        nonBondedAtomTypes,
+        "ParametersUnitDef",
+        attrib_dict={"parameter": "e0", "unit": "A**2*s**4/(kg*m**3)",},
+    )
     nonBondedAtomTypesParamsUnitsDef_q = _create_subelement(
-            nonBondedAtomTypes,
-            "ParametersUnitDef",
-            attrib_dict={
-                "parameter": "q",
-                "unit": "coulomb",
-                }
-            )
+        nonBondedAtomTypes,
+        "ParametersUnitDef",
+        attrib_dict={"parameter": "q", "unit": "coulomb",},
+    )
 
     # HarmonicBondTypes
     harmonicBondTypes = _create_subelement(
-            forceField,
-            "BondTypes",
-            attrib_dict={
-                "expression": "k * (r-r_eq)**2",
-                }
-            )
+        forceField, "BondTypes", attrib_dict={"expression": "k * (r-r_eq)**2",}
+    )
 
     harmonicBondTypesParamsUnitsDef_k = _create_subelement(
-            harmonicBondTypes,
-            "ParametersUnitDef",
-            attrib_dict={
-                "parameter": "k",
-                "unit": "kJ/nm**2",
-                }
-            )
+        harmonicBondTypes,
+        "ParametersUnitDef",
+        attrib_dict={"parameter": "k", "unit": "kJ/nm**2",},
+    )
 
     harmonicBondTypesParamsUnitsDef_r_eq = _create_subelement(
-            harmonicBondTypes,
-            "ParametersUnitDef",
-            attrib_dict={
-                "parameter": "r_eq",
-                "unit": "nm"
-                }
-            )
+        harmonicBondTypes,
+        "ParametersUnitDef",
+        attrib_dict={"parameter": "r_eq", "unit": "nm"},
+    )
 
     # HarmonicAngleTypes
     harmonicAngleTypes = _create_subelement(
-            forceField,
-            "AngleTypes",
-            attrib_dict={
-                "expression": "k * (theta - theta_eq)**2",
-                }
-            )
+        forceField,
+        "AngleTypes",
+        attrib_dict={"expression": "k * (theta - theta_eq)**2",},
+    )
 
     harmonicAngleTypesParamsUnitsDef_k = _create_subelement(
-            harmonicAngleTypes,
-            "ParametersUnitDef",
-            attrib_dict={
-                "parameter": "k",
-                "unit": "kJ/radian**2",
-                }
+        harmonicAngleTypes,
+        "ParametersUnitDef",
+        attrib_dict={"parameter": "k", "unit": "kJ/radian**2",},
     )
 
     harmonicBondTypesParamsUnitsDef_theta_eq = _create_subelement(
-            harmonicAngleTypes,
-            "ParametersUnitDef",
-            attrib_dict={
-                "parameter": "theta_eq",
-                "unit": "radian",
-                }
-            )
+        harmonicAngleTypes,
+        "ParametersUnitDef",
+        attrib_dict={"parameter": "theta_eq", "unit": "radian",},
+    )
 
     # UreyBradleyAngleTypes
     ureybradleyAngleTypes = _create_subelement(
-            forceField,
-            "AngleTypes",
-            attrib_dict={
-                "expression": "k * (w - w_0) ** 2",
-                }
-            )
+        forceField, "AngleTypes", attrib_dict={"expression": "k * (w - w_0) ** 2",}
+    )
 
     ureybradleyAngleTypesParamsUnitsDef_k = _create_subelement(
-            ureybradleyAngleTypes,
-            "ParametersUnitDef",
-            attrib_dict={
-                "parameter": "k",
-                "unit": "kJ/radian**2"
-                }
-            )
+        ureybradleyAngleTypes,
+        "ParametersUnitDef",
+        attrib_dict={"parameter": "k", "unit": "kJ/radian**2"},
+    )
 
     ureybradleyAngleTypesParamsUnitsDef_w_0 = _create_subelement(
-            ureybradleyAngleTypes,
-            "ParametersUnitDef",
-            attrib_dict={
-                "parameter": "w_0",
-                "unit": "nm"
-                }
-            )
+        ureybradleyAngleTypes,
+        "ParametersUnitDef",
+        attrib_dict={"parameter": "w_0", "unit": "nm"},
+    )
 
     # PeriodicTorsionDihedralTypes
     periodicTorsionDihedralTypes = _create_subelement(
-            forceField,
-            "DihedralTypes",
-            attrib_dict={
-                "expression": "k * (1 + cos(n * phi - delta))",
-                }
-            )
+        forceField,
+        "DihedralTypes",
+        attrib_dict={"expression": "k * (1 + cos(n * phi - delta))",},
+    )
 
     # PeriodicImproperDihedralTypes
     periodicImproperTypes = _create_subelement(
-            forceField,
-            "DihedralTypes",
-            attrib_dict={
-                "expression": "k * (1 + cos(n * phi - delta))",
-                }
-            )
+        forceField,
+        "DihedralTypes",
+        attrib_dict={"expression": "k * (1 + cos(n * phi - delta))",},
+    )
 
     # RBTorsionDihedralTypes
     rbTorsionDihedralTypes = _create_subelement(
-            forceField,
-            "DihedralTypes",
-            attrib_dict={
-                "expression": "c0 * cos(phi)**0 + c1 * cos(phi)**1 + c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + c5 * cos(phi)**5",
-                }
-            )
+        forceField,
+        "DihedralTypes",
+        attrib_dict={
+            "expression": "c0 * cos(phi)**0 + c1 * cos(phi)**1 + c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + c5 * cos(phi)**5",
+        },
+    )
 
     for atom_type in ff_kwargs["atom_types"]:
         thisAtomType = etree.SubElement(nonBondedAtomTypes, "AtomType")
@@ -390,17 +346,33 @@ def _write_gmso_xml(gmso_xml, **kwargs):
         j = 1
         while dihedral_type.get("k{}".format(j)):
             parameter_k_name = "k{}".format(j)
-            parameter_k = etree.SubElement(parameters, "Parameter")
-            parameter_k.attrib["name"] = parameter_k_name
-            parameter_k.attrib["value"] = dihedral_type.get(parameter_k_name)
-            parameter_n = etree.SubElement(parameters, "Parameter")
-            parameter_n.attrib["name"] = "n{}".format(j)
-            parameter_n.attrib["value"] = dihedral_type.get("periodicity{}".format(j))
+            parameter_k = _create_subelement(
+                parameters,
+                "Parameter",
+                attrib_dict={
+                    "name": parameter_k_name,
+                    "value": dihedral_type.get(parameter_k_name),
+                },
+            )
+            parameter_n = _create_subelement(
+                parameters,
+                "Parameter",
+                attrib_dict={
+                    "name": "n{}".format(j),
+                    "value": dihedral_type.get("periodicity{}".format(j)),
+                },
+            )
 
-            parameter_delta = etree.SubElement(parameters, "Parameter")
-            parameter_delta.attrib["name"] = "delta{}".format(j)
-            parameter_delta.attrib["value"] = dihedral_type.get("phase{}".format(j))
+            parameter_delta = _create_subelement(
+                parameters,
+                "Parameter",
+                attrib_dict={
+                    "name": "delta{}".format(j),
+                    "value": dihedral_type.get("phase{}".format(j)),
+                },
+            )
             j += 1
+
         if j > max_j:
             max_j = j
     for k in range(0, max_j):
@@ -438,9 +410,14 @@ def _write_gmso_xml(gmso_xml, **kwargs):
         )
 
     for i, dihedral_type in enumerate(ff_kwargs["rb_torsion_dihedral_types"]):
-        thisDihedralType = etree.SubElement(rbTorsionDihedralTypes, "DihedralType")
-        thisDihedralType.attrib["name"] = dihedral_type.get(
-            "name", "DihedralType-RB-Proper-{}".format(i + 1)
+        thisDihedralType = _create_subelement(
+            rbTorsionDihedralTypes,
+            "DihedralType",
+            attrib_dict={
+                "name": dihedral_type.get(
+                    "name", "DihedralType-RB-Proper-{}".format(i + 1)
+                ),
+            },
         )
 
         for j, item in enumerate(dihedral_type.items()):
@@ -458,9 +435,14 @@ def _write_gmso_xml(gmso_xml, **kwargs):
         j = 0
         while dihedral_type.get("c{}".format(j)):
             parameter_c_name = "c{}".format(j)
-            parameter_c = etree.SubElement(parameters, "Parameter")
-            parameter_c.attrib["name"] = parameter_c_name
-            parameter_c.attrib["value"] = dihedral_type.get(parameter_c_name)
+            parameter_c = _create_subelement(
+                parameters,
+                "Parameter",
+                attrib_dict={
+                    "name": parameter_c_name,
+                    "value": dihedral_type.get(parameter_c_name),
+                },
+            )
             j += 1
         if j > max_j:
             max_j = j
@@ -471,9 +453,14 @@ def _write_gmso_xml(gmso_xml, **kwargs):
         rbTorsionDihedralTypes.insert(0, rbTorsionDihedralTypesParamsUnitsDef_c)
 
     for i, dihedral_type in enumerate(ff_kwargs["periodic_improper_types"]):
-        thisDihedralType = etree.SubElement(periodicImproperTypes, "DihedralType")
-        thisDihedralType.attrib["name"] = dihedral_type.get(
-            "name", "DihedralType-Periodic-Improper-{}".format(i + 1)
+        thisDihedralType = _create_subelement(
+            periodicImproperTypes,
+            "DihedralType",
+            attrib_dict={
+                "name": dihedral_type.get(
+                    "name", "DihedralType-Periodic-Improper-{}".format(i + 1)
+                ),
+            },
         )
 
         for j, item in enumerate(dihedral_type.items()):
@@ -491,16 +478,30 @@ def _write_gmso_xml(gmso_xml, **kwargs):
         j = 1
         while dihedral_type.get("k{}".format(j)):
             parameter_k_name = "k{}".format(j)
-            parameter_k = etree.SubElement(parameters, "Parameter")
-            parameter_k.attrib["name"] = parameter_k_name
-            parameter_k.attrib["value"] = dihedral_type.get(parameter_k_name)
-            parameter_n = etree.SubElement(parameters, "Parameter")
-            parameter_n.attrib["name"] = "n{}".format(j)
-            parameter_n.attrib["value"] = dihedral_type.get("periodicity{}".format(j))
-
-            parameter_delta = etree.SubElement(parameters, "Parameter")
-            parameter_delta.attrib["name"] = "delta{}".format(j)
-            parameter_delta.attrib["value"] = dihedral_type.get("phase{}".format(j))
+            parameter_k = _create_subelement(
+                parameters,
+                "Parameter",
+                attrib_dict={
+                    "name": parameter_k_name,
+                    "value": dihedral_type.get(parameter_k_name),
+                },
+            )
+            parameter_n = _create_subelement(
+                parameters,
+                "Parameter",
+                attrib_dict={
+                    "name": "n{}".format(j),
+                    "value": dihedral_type.get("periodicity{}".format(j)),
+                },
+            )
+            parameter_delta = _create_subelement(
+                parameters,
+                "Parameter",
+                attrib_dict={
+                    "name": "delta{}".format(j),
+                    "value": dihedral_type.get("phase{}".format(j)),
+                },
+            )
             j += 1
         if j > max_j:
             max_j = j
@@ -524,6 +525,7 @@ def _write_gmso_xml(gmso_xml, **kwargs):
 
     ff_tree = etree.ElementTree(forceField)
     ff_tree.write(gmso_xml, pretty_print=True, xml_declaration=True, encoding="utf-8")
+
 
 def _create_subelement(root_el, name, attrib_dict=None):
     sub_el = etree.SubElement(root_el, name, attrib_dict)
