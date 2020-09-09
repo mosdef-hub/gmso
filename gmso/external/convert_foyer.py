@@ -338,7 +338,7 @@ def _write_gmso_xml(gmso_xml, **kwargs):
             j += 1
         if j > max_j:
             max_j = j
-    for k in range(1, max_j):
+    for k in range(0, max_j):
         periodicTorsionDihedralTypesParamsUnitsDef_k = etree.Element(
             "ParametersUnitDef"
         )
@@ -399,7 +399,7 @@ def _write_gmso_xml(gmso_xml, **kwargs):
             j += 1
         if j > max_j:
             max_j = j
-    for k in range(1, max_j):
+    for k in range(0, max_j):
         rbTorsionDihedralTypesParamsUnitsDef_c = etree.Element("ParametersUnitDef")
         rbTorsionDihedralTypesParamsUnitsDef_c.attrib["parameter"] = "c{}".format(k)
         rbTorsionDihedralTypesParamsUnitsDef_c.attrib["unit"] = "kJ/mol"
@@ -439,7 +439,7 @@ def _write_gmso_xml(gmso_xml, **kwargs):
             j += 1
         if j > max_j:
             max_j = j
-    for k in range(1, max_j):
+    for k in range(0, max_j):
         periodicImproperTypesParamsUnitsDef_k = etree.Element("ParametersUnitDef")
         periodicImproperTypesParamsUnitsDef_k.attrib["parameter"] = "k{}".format(k)
         periodicImproperTypesParamsUnitsDef_k.attrib["unit"] = "kJ"
