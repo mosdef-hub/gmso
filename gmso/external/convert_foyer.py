@@ -4,6 +4,7 @@ import numpy as np
 import unyt as u
 import os
 import sympy
+import pathlib
 
 from lxml import etree
 from gmso.utils.io import has_foyer  # Need for foyer
@@ -12,23 +13,26 @@ from gmso.exceptions import ForceFieldParseError
 if has_foyer:
     import foyer
 
-
 def from_foyer(foyer_xml, gmso_xml=None):
     """Convert a foyer XML to a gmso XML
 
     Parameters
     ----------
-    foyer_xml : XML
+    foyer_xml : XML file
         An XML file in the foyer format 
    
     Returns
     -------
-    gmso_xml : XML, default=None
+    gmso_xml : XML file, default=None
         An XML file in the gmso format
     """
 
     if gmso_xml is None:
-        gmso_xml = os.path.splitext(foyer_xml)[0] + "_gmso.xml"
+        stem_file_name = pathlib.Path(str(foyer_xml)).stem
+        suffix = "_gmso.xml"
+        gmso_xml = pathlib.Path(stem_file_name + suffix)
+    else:
+        gmso_xml = pathlib.Path(gmso_xml)
 
     foyer_xml_tree = etree.parse(foyer_xml)
     f_kwargs = {
@@ -105,7 +109,7 @@ def _write_gmso_xml(gmso_xml, **kwargs):
         "rb_torsion_dihedral_types": kwargs.get("rb_torsion_dihedral_types", []),
     }
     forceField = etree.Element("ForceField")
-    forceField.attrib["name"] = os.path.splitext(gmso_xml)[0]
+    forceField.attrib["name"] = pathlib.Path(str(gmso_xml)).stem
     forceField.attrib["version"] = "0.0.1"
 
     ffMeta = _create_subelement(forceField, "FFMetaData")
@@ -524,8 +528,7 @@ def _write_gmso_xml(gmso_xml, **kwargs):
         periodicImproperTypes.insert(0, periodicImproperTypesParamsUnitsDef_del)
 
     ff_tree = etree.ElementTree(forceField)
-    ff_tree.write(gmso_xml, pretty_print=True, xml_declaration=True, encoding="utf-8")
-
+    ff_tree.write(str(gmso_xml), pretty_print=True, xml_declaration=True, encoding="utf-8")
 
 def _create_subelement(root_el, name, attrib_dict=None):
     sub_el = etree.SubElement(root_el, name, attrib_dict)
