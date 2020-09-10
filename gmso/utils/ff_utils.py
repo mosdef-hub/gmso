@@ -9,6 +9,7 @@ from gmso.core.atom_type import AtomType
 from gmso.core.bond_type import BondType
 from gmso.core.angle_type import AngleType
 from gmso.core.dihedral_type import DihedralType
+from gmso.core.improper_type import ImproperType
 from gmso.exceptions import ForceFieldParseError, ForceFieldError
 
 __all__ = ['validate',
@@ -202,7 +203,8 @@ def parse_ff_atomtypes(atomtypes_el, ff_meta):
 TAG_TO_CLASS_MAP = {
     'BondType': BondType,
     'AngleType': AngleType,
-    'DihedralType': DihedralType
+    'DihedralType': DihedralType,
+    'ImproperType': ImproperType
 }
 
 

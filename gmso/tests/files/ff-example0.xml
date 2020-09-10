@@ -71,6 +71,12 @@
                 <Parameter name='z' value="100"/>
             </Parameters>
         </DihedralType>
+        <ImproperType name="ImproperType1" type1='Xe' type2="Xe" type3="Xe" type4="Xe">
+            <Parameters>
+                <Parameter name='r_eq' value="10"/>
+                <Parameter name='z' value="20"/>
+            </Parameters>
+        </ImproperType>
         <DihedralType name="DihedralType2" type1='Xe' type2="Xe" type3="Xe" type4="Xe">
             <Parameters>
                 <Parameter name='r_eq' value="10"/>

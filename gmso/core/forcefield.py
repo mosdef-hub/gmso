@@ -54,6 +54,7 @@ class ForceField(object):
             self.bond_types = ff.bond_types
             self.angle_types = ff.angle_types
             self.dihedral_types = ff.dihedral_types
+            self.improper_types = ff.improper_types
             self.scaling_factors = ff.scaling_factors
             self.units = ff.units
         else:
@@ -63,6 +64,7 @@ class ForceField(object):
             self.bond_types = {}
             self.angle_types = {}
             self.dihedral_types = {}
+            self.improper_types = {}
             self.scaling_factors = {}
             self.units = {}
 
@@ -125,6 +127,7 @@ class ForceField(object):
         bond_types_dict = {}
         angle_types_dict = {}
         dihedral_types_dict = {}
+        improper_types_dict = {}
 
         for loc in xml_locs:
             validate(loc)
@@ -160,9 +163,21 @@ class ForceField(object):
 
         # Consolidate DihedralTypes
         for dihedral_types in ff_dihedraltypes_list:
-            dihedral_types_dict.update(parse_ff_connection_types(dihedral_types,
-                                                                 atom_types_dict,
-                                                                 child_tag='DihedralType'))
+            dihedral_types_dict.update(
+                parse_ff_connection_types(
+                    dihedral_types,
+                    atom_types_dict,
+                    child_tag='DihedralType'
+                )
+            )
+
+            improper_types_dict.update(
+                parse_ff_connection_types(
+                    dihedral_types,
+                    atom_types_dict,
+                    child_tag='ImproperType'
+                )
+            )
 
         ff = cls()
         ff.name = names[0]
@@ -173,4 +188,5 @@ class ForceField(object):
         ff.bond_types = bond_types_dict
         ff.angle_types = angle_types_dict
         ff.dihedral_types = dihedral_types_dict
+        ff.improper_types = improper_types_dict
         return ff

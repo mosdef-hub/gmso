@@ -106,6 +106,15 @@ class TestForceFieldFromXML(BaseTest):
         assert ff.dihedral_types['Xe~Xe~Xe~Xe'].parameters['z'] == u.unyt_quantity(20, u.kJ / u.mol)
         assert ff.dihedral_types['Xe~Xe~Xe~Xe'].member_types == ['Xe', 'Xe', 'Xe', 'Xe']
 
+    def test_ff_impropertypes_from_xml(self, ff):
+        assert len(ff.improper_types) == 1
+        assert 'Xe~Xe~Xe~Xe' in ff.improper_types
+
+        assert sympify('r') in ff.improper_types['Xe~Xe~Xe~Xe'].independent_variables
+        assert ff.improper_types['Xe~Xe~Xe~Xe'].parameters['r_eq'] == u.unyt_quantity(10.0, u.nm)
+        assert ff.improper_types['Xe~Xe~Xe~Xe'].parameters['z'] == u.unyt_quantity(20, u.kJ / u.mol)
+        assert ff.improper_types['Xe~Xe~Xe~Xe'].member_types == ['Xe', 'Xe', 'Xe', 'Xe']
+
 
     def test_ff_charmm_xml(self):
         charm_ff = ForceField(get_path('trimmed_charmm.xml'))
