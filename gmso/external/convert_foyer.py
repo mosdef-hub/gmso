@@ -124,6 +124,36 @@ def _write_gmso_xml(gmso_xml, **kwargs):
             "distance": "nm",
         },
     )
+
+    # AtomTypes and NonBonded Forces
+    _write_nbforces(forceField, ff_kwargs)
+
+    # HarmonicBondTypes
+    _write_harmonic_bonds(forceField, ff_kwargs)
+
+    # HarmonicAngleTypes
+    _write_harmonic_angles(forceField, ff_kwargs)
+
+    # UreyBradleyAngleTypes
+    _write_ub_angles(forceField, ff_kwargs)
+
+    # PeriodicTorsionDihedralTypes and PeriodicImproperDihedralTypes
+    if len(ff_kwargs['periodic_torsion_dihedral_types']) > 0:
+        _write_periodic_dihedrals(forceField, ff_kwargs)
+
+    elif len(ff_kwargs['periodic_improper_types']) > 0:
+        _write_periodic_impropers(forceField, ff_kwargs)
+
+    # RBTorsionDihedralTypes
+    if len(ff_kwargs['rb_torsion_dihedral_types']) > 0:
+        _write_rb_torsions(forceField, ff_kwargs)
+
+    ff_tree = etree.ElementTree(forceField)
+    ff_tree.write(
+        str(gmso_xml), pretty_print=True, xml_declaration=True, encoding="utf-8"
+    )
+
+def _write_nbforces(forceField, ff_kwargs):
     # AtomTypes
     nonBondedAtomTypes = _create_subelement(
         forceField,
@@ -195,7 +225,7 @@ def _write_gmso_xml(gmso_xml, **kwargs):
             attrib_dict={"name": "q", "value": atom_type.get("charge"),},
         )
 
-    # HarmonicBondTypes
+def _write_harmonic_bonds(forceField, ff_kwargs):
     harmonicBondTypes = _create_subelement(
         forceField, "BondTypes", attrib_dict={"expression": "k * (r-r_eq)**2",}
     )
@@ -210,25 +240,6 @@ def _write_gmso_xml(gmso_xml, **kwargs):
         harmonicBondTypes,
         "ParametersUnitDef",
         attrib_dict={"parameter": "r_eq", "unit": "nm"},
-    )
-
-    # HarmonicAngleTypes
-    harmonicAngleTypes = _create_subelement(
-        forceField,
-        "AngleTypes",
-        attrib_dict={"expression": "k * (theta - theta_eq)**2",},
-    )
-
-    harmonicAngleTypesParamsUnitsDef_k = _create_subelement(
-        harmonicAngleTypes,
-        "ParametersUnitDef",
-        attrib_dict={"parameter": "k", "unit": "kJ/radian**2",},
-    )
-
-    harmonicBondTypesParamsUnitsDef_theta_eq = _create_subelement(
-        harmonicAngleTypes,
-        "ParametersUnitDef",
-        attrib_dict={"parameter": "theta_eq", "unit": "radian",},
     )
 
     for i, bond_type in enumerate(ff_kwargs["harmonic_bond_types"]):
@@ -262,7 +273,57 @@ def _write_gmso_xml(gmso_xml, **kwargs):
             attrib_dict={"name": "r_eq", "value": bond_type.get("length", "1.0"),},
         )
 
-    # UreyBradleyAngleTypes
+def _write_harmonic_angles(forceField, ff_kwargs):
+    harmonicAngleTypes = _create_subelement(
+        forceField,
+        "AngleTypes",
+        attrib_dict={"expression": "k * (theta - theta_eq)**2",},
+    )
+
+    harmonicAngleTypesParamsUnitsDef_k = _create_subelement(
+        harmonicAngleTypes,
+        "ParametersUnitDef",
+        attrib_dict={"parameter": "k", "unit": "kJ/radian**2",},
+    )
+
+    harmonicAngleTypesParamsUnitsDef_theta_eq = _create_subelement(
+        harmonicAngleTypes,
+        "ParametersUnitDef",
+        attrib_dict={"parameter": "theta_eq", "unit": "radian",},
+    )
+
+    for i, angle_type in enumerate(ff_kwargs["harmonic_angle_types"]):
+        thisAngleType = _create_subelement(
+            harmonicAngleTypes,
+            "AngleType",
+            attrib_dict={
+                "name": angle_type.get("name", "AngleType-Harmonic-{}".format(i + 1)),
+            },
+        )
+
+        parameters = etree.SubElement(thisAngleType, "Parameters")
+        parameter_k = _create_subelement(
+            parameters,
+            "Parameter",
+            attrib_dict={"name": "k", "value": angle_type.get("k", "1.0"),},
+        )
+
+        parameter_r_eq = _create_subelement(
+            parameters,
+            "Parameter",
+            attrib_dict={"name": "theta_eq", "value": angle_type.get("angle", "1.0"),},
+        )
+        for j, item in enumerate(angle_type.items()):
+            if "type" in item[0]:
+                thisAngleType.attrib["type{}".format(j + 1)] = angle_type.get(
+                    "type{}".format(j + 1), "c{}".format(j + 1)
+                )
+            elif "class" in item[0]:
+                thisAngleType.attrib["type{}".format(j + 1)] = angle_type.get(
+                    "class{}".format(j + 1), "c{}".format(j + 1)
+                )
+
+def _write_ub_angles(forceField, ff_kwargs):
     ureybradleyAngleTypes = _create_subelement(
         forceField, "AngleTypes", attrib_dict={"expression": "k * (w - w_0) ** 2",}
     )
@@ -278,37 +339,6 @@ def _write_gmso_xml(gmso_xml, **kwargs):
         "ParametersUnitDef",
         attrib_dict={"parameter": "w_0", "unit": "nm"},
     )
-
-    for i, angle_type in enumerate(ff_kwargs["harmonic_angle_types"]):
-        thisAngleType = _create_subelement(
-            harmonicAngleTypes,
-            "AngleType",
-            attrib_dict={
-                "name": angle_type.get("name", "AngleType-Harmonic-{}".format(i + 1)),
-            },
-        )
-        for j, item in enumerate(angle_type.items()):
-            if "type" in item[0]:
-                thisAngleType.attrib["type{}".format(j + 1)] = angle_type.get(
-                    "type{}".format(j + 1), "c{}".format(j + 1)
-                )
-            elif "class" in item[0]:
-                thisAngleType.attrib["type{}".format(j + 1)] = angle_type.get(
-                    "class{}".format(j + 1), "c{}".format(j + 1)
-                )
-
-        parameters = etree.SubElement(thisAngleType, "Parameters")
-        parameter_k = _create_subelement(
-            parameters,
-            "Parameter",
-            attrib_dict={"name": "k", "value": angle_type.get("k", "1.0"),},
-        )
-
-        parameter_r_eq = _create_subelement(
-            parameters,
-            "Parameter",
-            attrib_dict={"name": "theta_eq", "value": angle_type.get("angle", "1.0"),},
-        )
 
     for i, angle_type in enumerate(ff_kwargs["urey_bradley_angle_types"]):
         thisAngleType = _create_subelement(
@@ -336,184 +366,183 @@ def _write_gmso_xml(gmso_xml, **kwargs):
             attrib_dict={"name": "w_0", "value": angle_type.get("d", "1.0"),},
         )
 
-    # PeriodicTorsionDihedralTypes and PeriodicImproperDihedralTypes
-    if len(ff_kwargs['periodic_torsion_dihedral_types']) > 0:
-        periodicTorsionDihedralTypes = _create_subelement(
-            forceField,
-            "DihedralTypes",
-            attrib_dict={"expression": "k * (1 + cos(n * phi - delta))",},
+def _write_periodic_dihedrals(forceField, ff_kwargs):
+    periodicTorsionDihedralTypes = _create_subelement(
+        forceField,
+        "DihedralTypes",
+        attrib_dict={"expression": "k * (1 + cos(n * phi - delta))",},
+    )
+    
+    max_j = 0
+    for i, dihedral_type in enumerate(ff_kwargs["periodic_torsion_dihedral_types"]):
+        thisDihedralType = _create_subelement(
+            periodicTorsionDihedralTypes,
+            "DihedralType",
+            attrib_dict={
+                "name": dihedral_type.get(
+                    "name", "DihedralType-Periodic-Proper-{}".format(i + 1)
+                ),
+            },
         )
-
-        max_j = 0
-        for i, dihedral_type in enumerate(ff_kwargs["periodic_torsion_dihedral_types"]):
-            thisDihedralType = _create_subelement(
-                periodicTorsionDihedralTypes,
-                "DihedralType",
+    
+        for j, item in enumerate(dihedral_type.items()):
+            if "type" in item[0]:
+                thisDihedralType.attrib["type{}".format(j + 1)] = dihedral_type.get(
+                    "type{}".format(j + 1), "c{}".format(j + 1)
+                )
+            elif "class" in item[0]:
+                thisDihedralType.attrib["type{}".format(j + 1)] = dihedral_type.get(
+                    "class{}".format(j + 1), "c{}".format(j + 1)
+                )
+    
+        parameters = etree.SubElement(thisDihedralType, "Parameters")
+    
+        j = 1
+        while dihedral_type.get("k{}".format(j)):
+            parameter_k_name = "k{}".format(j)
+            parameter_k = _create_subelement(
+                parameters,
+                "Parameter",
                 attrib_dict={
-                    "name": dihedral_type.get(
-                        "name", "DihedralType-Periodic-Proper-{}".format(i + 1)
-                    ),
+                    "name": parameter_k_name,
+                    "value": dihedral_type.get(parameter_k_name),
                 },
             )
-
-            for j, item in enumerate(dihedral_type.items()):
-                if "type" in item[0]:
-                    thisDihedralType.attrib["type{}".format(j + 1)] = dihedral_type.get(
-                        "type{}".format(j + 1), "c{}".format(j + 1)
-                    )
-                elif "class" in item[0]:
-                    thisDihedralType.attrib["type{}".format(j + 1)] = dihedral_type.get(
-                        "class{}".format(j + 1), "c{}".format(j + 1)
-                    )
-
-            parameters = etree.SubElement(thisDihedralType, "Parameters")
-
-            j = 1
-            while dihedral_type.get("k{}".format(j)):
-                parameter_k_name = "k{}".format(j)
-                parameter_k = _create_subelement(
-                    parameters,
-                    "Parameter",
-                    attrib_dict={
-                        "name": parameter_k_name,
-                        "value": dihedral_type.get(parameter_k_name),
-                    },
-                )
-                parameter_n = _create_subelement(
-                    parameters,
-                    "Parameter",
-                    attrib_dict={
-                        "name": "n{}".format(j),
-                        "value": dihedral_type.get("periodicity{}".format(j)),
-                    },
-                )
-
-                parameter_delta = _create_subelement(
-                    parameters,
-                    "Parameter",
-                    attrib_dict={
-                        "name": "delta{}".format(j),
-                        "value": dihedral_type.get("phase{}".format(j)),
-                    },
-                )
-                j += 1
-
-            if j > max_j:
-                max_j = j
-        for k in range(0, max_j):
-            periodicTorsionDihedralTypesParamsUnitsDef_k = etree.Element(
-                "ParametersUnitDef"
-            )
-            periodicTorsionDihedralTypesParamsUnitsDef_k.attrib["parameter"] = "k{}".format(
-                k
-            )
-            periodicTorsionDihedralTypesParamsUnitsDef_k.attrib["unit"] = "kJ"
-            periodicTorsionDihedralTypes.insert(
-                0, periodicTorsionDihedralTypesParamsUnitsDef_k
-            )
-
-            periodicTorsionDihedralTypesParamsUnitsDef_n = etree.Element(
-                "ParametersUnitDef"
-            )
-            periodicTorsionDihedralTypesParamsUnitsDef_n.attrib["parameter"] = "n{}".format(
-                k
-            )
-            periodicTorsionDihedralTypesParamsUnitsDef_n.attrib["unit"] = "dimensionless"
-            periodicTorsionDihedralTypes.insert(
-                0, periodicTorsionDihedralTypesParamsUnitsDef_n
-            )
-
-            periodicTorsionDihedralTypesParamsUnitsDef_del = etree.Element(
-                "ParametersUnitDef"
-            )
-            periodicTorsionDihedralTypesParamsUnitsDef_del.attrib[
-                "parameter"
-            ] = "delta{}".format(k)
-            periodicTorsionDihedralTypesParamsUnitsDef_del.attrib["unit"] = "radian"
-            periodicTorsionDihedralTypes.insert(
-                0, periodicTorsionDihedralTypesParamsUnitsDef_del
-            )
-
-    elif len(ff_kwargs['periodic_improper_types']) > 0:
-        max_j = 0
-        periodicImproperTypes = _create_subelement(
-            forceField,
-            "DihedralTypes",
-            attrib_dict={"expression": "k * (1 + cos(n * phi - delta))",},
-        )
-        for i, dihedral_type in enumerate(ff_kwargs["periodic_improper_types"]):
-            thisDihedralType = _create_subelement(
-                periodicImproperTypes,
-                "DihedralType",
+            parameter_n = _create_subelement(
+                parameters,
+                "Parameter",
                 attrib_dict={
-                    "name": dihedral_type.get(
-                        "name", "DihedralType-Periodic-Improper-{}".format(i + 1)
-                    ),
+                    "name": "n{}".format(j),
+                    "value": dihedral_type.get("periodicity{}".format(j)),
                 },
             )
-
-            for j, item in enumerate(dihedral_type.items()):
-                if "type" in item[0]:
-                    thisDihedralType.attrib["type{}".format(j + 1)] = dihedral_type.get(
-                        "type{}".format(j + 1), "c{}".format(j + 1)
-                    )
-                elif "class" in item[0]:
-                    thisDihedralType.attrib["type{}".format(j + 1)] = dihedral_type.get(
-                        "class{}".format(j + 1), "c{}".format(j + 1)
-                    )
-
-            parameters = etree.SubElement(thisDihedralType, "Parameters")
-
-            j = 1
-            while dihedral_type.get("k{}".format(j)):
-                parameter_k_name = "k{}".format(j)
-                parameter_k = _create_subelement(
-                    parameters,
-                    "Parameter",
-                    attrib_dict={
-                        "name": parameter_k_name,
-                        "value": dihedral_type.get(parameter_k_name),
-                    },
-                )
-                parameter_n = _create_subelement(
-                    parameters,
-                    "Parameter",
-                    attrib_dict={
-                        "name": "n{}".format(j),
-                        "value": dihedral_type.get("periodicity{}".format(j)),
-                    },
-                )
-                parameter_delta = _create_subelement(
-                    parameters,
-                    "Parameter",
-                    attrib_dict={
-                        "name": "delta{}".format(j),
-                        "value": dihedral_type.get("phase{}".format(j)),
-                    },
-                )
-                j += 1
-            if j > max_j:
-                max_j = j
-
-        for k in range(0, max_j):
-            periodicImproperTypesParamsUnitsDef_k = etree.Element("ParametersUnitDef")
-            periodicImproperTypesParamsUnitsDef_k.attrib["parameter"] = "k{}".format(k)
-            periodicImproperTypesParamsUnitsDef_k.attrib["unit"] = "kJ"
-            periodicImproperTypes.insert(0, periodicImproperTypesParamsUnitsDef_k)
-
-            periodicImproperTypesParamsUnitsDef_n = etree.Element("ParametersUnitDef")
-            periodicImproperTypesParamsUnitsDef_n.attrib["parameter"] = "n{}".format(k)
-            periodicImproperTypesParamsUnitsDef_n.attrib["unit"] = "dimensionless"
-            periodicImproperTypes.insert(0, periodicImproperTypesParamsUnitsDef_n)
-
-            periodicImproperTypesParamsUnitsDef_del = etree.Element("ParametersUnitDef")
-            periodicImproperTypesParamsUnitsDef_del.attrib["parameter"] = "delta{}".format(
-                k
+    
+            parameter_delta = _create_subelement(
+                parameters,
+                "Parameter",
+                attrib_dict={
+                    "name": "delta{}".format(j),
+                    "value": dihedral_type.get("phase{}".format(j)),
+                },
             )
-            periodicImproperTypesParamsUnitsDef_del.attrib["unit"] = "degree"
-            periodicImproperTypes.insert(0, periodicImproperTypesParamsUnitsDef_del)
+            j += 1
+    
+        if j > max_j:
+            max_j = j
+    for k in range(0, max_j):
+        periodicTorsionDihedralTypesParamsUnitsDef_k = etree.Element(
+            "ParametersUnitDef"
+        )
+        periodicTorsionDihedralTypesParamsUnitsDef_k.attrib["parameter"] = "k{}".format(
+            k
+        )
+        periodicTorsionDihedralTypesParamsUnitsDef_k.attrib["unit"] = "kJ"
+        periodicTorsionDihedralTypes.insert(
+            0, periodicTorsionDihedralTypesParamsUnitsDef_k
+        )
+    
+        periodicTorsionDihedralTypesParamsUnitsDef_n = etree.Element(
+            "ParametersUnitDef"
+        )
+        periodicTorsionDihedralTypesParamsUnitsDef_n.attrib["parameter"] = "n{}".format(
+            k
+        )
+        periodicTorsionDihedralTypesParamsUnitsDef_n.attrib["unit"] = "dimensionless"
+        periodicTorsionDihedralTypes.insert(
+            0, periodicTorsionDihedralTypesParamsUnitsDef_n
+        )
+    
+        periodicTorsionDihedralTypesParamsUnitsDef_del = etree.Element(
+            "ParametersUnitDef"
+        )
+        periodicTorsionDihedralTypesParamsUnitsDef_del.attrib[
+            "parameter"
+        ] = "delta{}".format(k)
+        periodicTorsionDihedralTypesParamsUnitsDef_del.attrib["unit"] = "radian"
+        periodicTorsionDihedralTypes.insert(
+            0, periodicTorsionDihedralTypesParamsUnitsDef_del
+        )
 
-    # RBTorsionDihedralTypes
+def _write_periodic_impropers(forceField, ff_kwargs):
+    max_j = 0
+    periodicImproperTypes = _create_subelement(
+        forceField,
+        "DihedralTypes",
+        attrib_dict={"expression": "k * (1 + cos(n * phi - delta))",},
+    )
+    for i, dihedral_type in enumerate(ff_kwargs["periodic_improper_types"]):
+        thisDihedralType = _create_subelement(
+            periodicImproperTypes,
+            "DihedralType",
+            attrib_dict={
+                "name": dihedral_type.get(
+                    "name", "DihedralType-Periodic-Improper-{}".format(i + 1)
+                ),
+            },
+        )
+
+        for j, item in enumerate(dihedral_type.items()):
+            if "type" in item[0]:
+                thisDihedralType.attrib["type{}".format(j + 1)] = dihedral_type.get(
+                    "type{}".format(j + 1), "c{}".format(j + 1)
+                )
+            elif "class" in item[0]:
+                thisDihedralType.attrib["type{}".format(j + 1)] = dihedral_type.get(
+                    "class{}".format(j + 1), "c{}".format(j + 1)
+                )
+
+        parameters = etree.SubElement(thisDihedralType, "Parameters")
+
+        j = 1
+        while dihedral_type.get("k{}".format(j)):
+            parameter_k_name = "k{}".format(j)
+            parameter_k = _create_subelement(
+                parameters,
+                "Parameter",
+                attrib_dict={
+                    "name": parameter_k_name,
+                    "value": dihedral_type.get(parameter_k_name),
+                },
+            )
+            parameter_n = _create_subelement(
+                parameters,
+                "Parameter",
+                attrib_dict={
+                    "name": "n{}".format(j),
+                    "value": dihedral_type.get("periodicity{}".format(j)),
+                },
+            )
+            parameter_delta = _create_subelement(
+                parameters,
+                "Parameter",
+                attrib_dict={
+                    "name": "delta{}".format(j),
+                    "value": dihedral_type.get("phase{}".format(j)),
+                },
+            )
+            j += 1
+        if j > max_j:
+            max_j = j
+
+    for k in range(0, max_j):
+        periodicImproperTypesParamsUnitsDef_k = etree.Element("ParametersUnitDef")
+        periodicImproperTypesParamsUnitsDef_k.attrib["parameter"] = "k{}".format(k)
+        periodicImproperTypesParamsUnitsDef_k.attrib["unit"] = "kJ"
+        periodicImproperTypes.insert(0, periodicImproperTypesParamsUnitsDef_k)
+
+        periodicImproperTypesParamsUnitsDef_n = etree.Element("ParametersUnitDef")
+        periodicImproperTypesParamsUnitsDef_n.attrib["parameter"] = "n{}".format(k)
+        periodicImproperTypesParamsUnitsDef_n.attrib["unit"] = "dimensionless"
+        periodicImproperTypes.insert(0, periodicImproperTypesParamsUnitsDef_n)
+
+        periodicImproperTypesParamsUnitsDef_del = etree.Element("ParametersUnitDef")
+        periodicImproperTypesParamsUnitsDef_del.attrib["parameter"] = "delta{}".format(
+            k
+        )
+        periodicImproperTypesParamsUnitsDef_del.attrib["unit"] = "degree"
+        periodicImproperTypes.insert(0, periodicImproperTypesParamsUnitsDef_del)
+
+def _write_rb_torsions(forceField, ff_kwargs):
     rbTorsionDihedralTypes = _create_subelement(
         forceField,
         "DihedralTypes",
@@ -565,11 +594,6 @@ def _write_gmso_xml(gmso_xml, **kwargs):
         rbTorsionDihedralTypesParamsUnitsDef_c.attrib["parameter"] = "c{}".format(k)
         rbTorsionDihedralTypesParamsUnitsDef_c.attrib["unit"] = "kJ/mol"
         rbTorsionDihedralTypes.insert(0, rbTorsionDihedralTypesParamsUnitsDef_c)
-
-    ff_tree = etree.ElementTree(forceField)
-    ff_tree.write(
-        str(gmso_xml), pretty_print=True, xml_declaration=True, encoding="utf-8"
-    )
 
 
 def _create_subelement(root_el, name, attrib_dict=None):
