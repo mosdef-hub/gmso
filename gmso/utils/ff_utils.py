@@ -1,5 +1,6 @@
 import os
 import re
+from collections import ChainMap
 
 import unyt as u
 from sympy import sympify
@@ -155,6 +156,8 @@ def parse_ff_metadata(element):
 def parse_ff_atomtypes(atomtypes_el, ff_meta):
     """Given an xml element tree rooted at AtomType, traverse the tree to form a proper topology.core.AtomType"""
     atomtypes_dict = {}
+    atomclasses_dict = {}
+    ref_dict = ChainMap(atomtypes_dict, atomclasses_dict)
     units_dict = ff_meta['Units']
     atom_types_expression = atomtypes_el.attrib.get('expression', None)
     param_unit_dict = _parse_param_units(atomtypes_el)
@@ -196,7 +199,10 @@ def parse_ff_atomtypes(atomtypes_el, ff_meta):
         _check_valid_string(ctor_kwargs['name'])
         this_atom_type = AtomType(**ctor_kwargs)
         atomtypes_dict[this_atom_type.name] = this_atom_type
-    return atomtypes_dict
+        if this_atom_type.atomclass:
+            atomclass_atom_types = atomclasses_dict.get(this_atom_type.atomclass, [])
+            atomclass_atom_types.append(this_atom_type)
+    return ref_dict
 
 
 TAG_TO_CLASS_MAP = {
