@@ -438,7 +438,8 @@ def _write_periodic_dihedrals(forceField, ff_kwargs):
         if j > max_j:
             max_j = j
     for k in range(0, max_j):
-        periodicTorsionDihedralTypesParamsUnitsDef_k = _create_element(
+        periodicTorsionDihedralTypesParamsUnitsDef_k = _create_subelement(
+            periodicTorsionDihedralTypes,
             "ParametersUnitDef",
             attrib_dict={"parameter": "k{}".format(k), "unit": "kJ",},
         )
@@ -446,7 +447,8 @@ def _write_periodic_dihedrals(forceField, ff_kwargs):
             0, periodicTorsionDihedralTypesParamsUnitsDef_k
         )
 
-        periodicTorsionDihedralTypesParamsUnitsDef_n = _create_element(
+        periodicTorsionDihedralTypesParamsUnitsDef_n = _create_subelement(
+            periodicTorsionDihedralTypes,
             "ParametersUnitDef",
             attrib_dict={"parameter": "n{}".format(k), "unit": "dimensionless",},
         )
@@ -454,7 +456,8 @@ def _write_periodic_dihedrals(forceField, ff_kwargs):
             0, periodicTorsionDihedralTypesParamsUnitsDef_n
         )
 
-        periodicTorsionDihedralTypesParamsUnitsDef_del = _create_element(
+        periodicTorsionDihedralTypesParamsUnitsDef_del = _create_subelement(
+            periodicTorsionDihedralTypes,
             "ParametersUnitDef",
             attrib_dict={"parameter": "delta{}".format(k), "unit": "radian",},
         )
@@ -525,19 +528,22 @@ def _write_periodic_impropers(forceField, ff_kwargs):
             max_j = j
 
     for k in range(0, max_j):
-        periodicImproperTypesParamsUnitsDef_k = _create_element(
+        periodicImproperTypesParamsUnitsDef_k = _create_subelement(
+            periodicImproperTypes,
             "ParametersUnitDef",
             attrib_dict={"parameter": "k{}".format(k), "unit": "kJ",},
         )
         periodicImproperTypes.insert(0, periodicImproperTypesParamsUnitsDef_k)
 
-        periodicImproperTypesParamsUnitsDef_n = _create_element(
+        periodicImproperTypesParamsUnitsDef_n = _create_subelement(
+            periodicImproperTypes, 
             "ParametersUnitDef",
             attrib_dict={"parameter": "n{}".format(k), "unit": "dimensionless",},
         )
         periodicImproperTypes.insert(0, periodicImproperTypesParamsUnitsDef_n)
 
-        periodicImproperTypesParamsUnitsDef_del = _create_element(
+        periodicImproperTypesParamsUnitsDef_del = _create_subelement(
+            periodicImproperTypes,
             "ParametersUnitDef",
             attrib_dict={"parameter": "delta{}".format(k), "unit": "degree",},
         )
@@ -592,7 +598,8 @@ def _write_rb_torsions(forceField, ff_kwargs):
         if j > max_j:
             max_j = j
     for k in range(0, max_j):
-        rbTorsionDihedralTypesParamsUnitsDef_c = _create_element(
+        rbTorsionDihedralTypesParamsUnitsDef_c = _create_subelement(
+            rbTorsionDihedralTypes,
             "ParametersUnitDef",
             attrib_dict={"parameter": "c{}".format(k), "unit": "kJ/mol",},
         )
@@ -602,8 +609,3 @@ def _write_rb_torsions(forceField, ff_kwargs):
 def _create_subelement(root_el, name, attrib_dict=None):
     sub_el = etree.SubElement(root_el, name, attrib_dict)
     return sub_el
-
-
-def _create_element(name, attrib_dict=None):
-    el = etree.Element(name, attrib_dict)
-    return el
