@@ -39,7 +39,7 @@ class Site(GMSOBase):
 
     label_: str = Field(
         '',
-        description='Label to be assigned for the site'
+        description='Label to be assigned to the site'
     )
 
     position_: PositionType = Field(
@@ -52,7 +52,7 @@ class Site(GMSOBase):
         return self.__dict__.get('name_')
 
     @property
-    def position(self) -> PositionType:
+    def position(self) -> u.unyt_array:
         return self.__dict__.get('position_')
 
     @property
@@ -75,18 +75,14 @@ class Site(GMSOBase):
                 raise GMSOError(f'Converting object of type {type(position)} failed with following error: {e}')
             warnings.warn('Positions are assumed to be in nm')
 
-        input_unit = position.units
-
-        position = np.asarray(position, dtype=float, order='C')
         try:
             position = np.reshape(position, newshape=(3,), order='C')
+            position.convert_to_units(u.nm)
         except ValueError:
             raise ValueError(f'Position of shape {position.shape} is not valid. '
                              'Accepted values: (a.) list-like of length 3'
                              '(b.) np.array or unyt.unyt_array of shape (3,)')
 
-        position *= input_unit
-        position.convert_to_units(u.nm)
         return position
 
     @root_validator(pre=True)

@@ -5,7 +5,7 @@ import unyt as u
 from pydantic import Field, validator
 
 from gmso.core.parametric_potential import ParametricPotential
-from gmso.utils.misc import unyt_to_hashable
+from gmso.utils.misc import unyt_to_hashable, ensure_valid_dimensions
 from gmso.utils._constants import ATOM_TYPE_DICT, UNIT_WARNING_STRING
 
 
@@ -76,24 +76,20 @@ class AtomType(ParametricPotential):
         if overrides is None:
             overrides = set()
 
-        kwargs = {
-            'mass': mass,
-            'charge': charge,
-            'atomclass': atomclass,
-            'doi': doi,
-            'overrides': overrides,
-            'description': description,
-            'definition': definition,
-            'set_ref': ATOM_TYPE_DICT
-        }
-
         super(AtomType, self).__init__(
             name=name,
             expression=expression,
             parameters=parameters,
             independent_variables=independent_variables,
             topology=topology,
-            **kwargs
+            mass=mass,
+            charge=charge,
+            atomclass=atomclass,
+            doi=doi,
+            overrides=overrides,
+            description=description,
+            definition=definition,
+            set_ref=ATOM_TYPE_DICT
         )
 
     @property
@@ -142,14 +138,12 @@ class AtomType(ParametricPotential):
     @validator('mass_', pre=True)
     def validate_mass(cls, mass):
         """Check to see that a mass is a unyt array of the right dimension"""
+        default_mass_units = u.gram / u.mol
         if not isinstance(mass, u.unyt_array):
             warnings.warn(UNIT_WARNING_STRING.format('Masses', 'g/mol'))
             mass *= u.gram / u.mol
-        elif mass.units.dimensions != (u.gram / u.mol).units.dimensions:
-            warnings.warn(UNIT_WARNING_STRING.format('Masses', 'g/mol'))
-            mass = mass.value * u.gram / u.mol
         else:
-            pass
+            ensure_valid_dimensions(mass, default_mass_units)
 
         return mass
 
@@ -159,11 +153,8 @@ class AtomType(ParametricPotential):
         if not isinstance(charge, u.unyt_array):
             warnings.warn(UNIT_WARNING_STRING.format('Charges', 'elementary charge'))
             charge *= u.elementary_charge
-        elif charge.units.dimensions != u.elementary_charge.units.dimensions:
-            warnings.warn(UNIT_WARNING_STRING.format('Charges', 'elementary charge'))
-            charge = charge.value * u.elementary_charge
         else:
-            pass
+            ensure_valid_dimensions(charge, u.elementary_charge)
 
         return charge
 

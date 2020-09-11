@@ -26,7 +26,8 @@ class BondType(ParametricPotential):
 
     member_types_: Optional[Tuple[str, str]] = Field(
         None,
-        description='List-like of of gmso.AtomType.name defining the members of this bond type'
+        description='List-like of of gmso.AtomType.name or gmso.AtomType.atomclass '
+                    'defining the members of this bond type'
     )
 
     def __init__(self,

@@ -8,6 +8,7 @@ from pydantic import Field, validator
 from gmso.core.element import Element
 from gmso.abc.abstract_site import Site
 from gmso.core.atom_type import AtomType
+from gmso.utils.misc import ensure_valid_dimensions
 from gmso.utils._constants import UNIT_WARNING_STRING
 
 
@@ -21,8 +22,12 @@ class Atom(Site):
 
     Notes
     -----
-    Atoms have all the attributes inherited from the base Site class
-
+    Atoms have all the attributes inherited from the base Site class,
+    The order of precedence when attaining properties `charge` and `mass` is:
+        
+        1. atom.charge > atom.atom_type.charge 
+        2. atom.mass > atom.atom_type.mass
+        
     Examples
     --------
         >>> from gmso.core.atom import Atom
@@ -91,30 +96,21 @@ class Atom(Site):
         if not isinstance(charge, u.unyt_array):
             warnings.warn(UNIT_WARNING_STRING.format('Charges', 'elementary charge'))
             charge *= u.elementary_charge
-
-        elif charge.units.dimensions != u.elementary_charge.units.dimensions:
-            warnings.warn(UNIT_WARNING_STRING.format('Charges', 'elementary charge'))
-            charge = charge.value * u.elementary_charge
+        else:
+            ensure_valid_dimensions(charge, u.elementary_charge)
 
         return charge
-
-    @validator('element_')
-    def is_valid_element(cls, element):
-        if element is not None:
-            assert isinstance(element, Element), 'Attribute element must be of type gmso.core.Element'
-        return element
 
     @validator('mass_')
     def is_valid_mass(cls, mass):
         if mass is None:
             return None
+        default_mass_units = u.gram /u.mol
         if not isinstance(mass, u.unyt_array):
             warnings.warn(UNIT_WARNING_STRING.format('Masses', 'g/mol'))
-            mass *= u.gram / u.mol
-
-        elif mass.units.dimensions != (u.gram / u.mol).units.dimensions:
-            warnings.warn(UNIT_WARNING_STRING.format('Masses', 'g/mol'))
-            mass = mass.value * u.gram / u.mol
+            mass *= default_mass_units
+        else:
+            ensure_valid_dimensions(mass, default_mass_units)
         return mass
 
     class Config:

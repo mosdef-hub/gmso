@@ -16,10 +16,13 @@ class Connection(GMSOBase):
 
     name_: str = Field(
         default='',
-        description='A list of constituents in this connection, in order.'
+        description='Name of the connection. Defaults to class name'
     )
 
-    connection_members_: Optional[Sequence[Site]]
+    connection_members_: Optional[Sequence[Site]] = Field(
+        default=None,
+        description='A list of constituents in this connection, in order.'
+    )
 
     @property
     def connection_members(self):
@@ -30,10 +33,18 @@ class Connection(GMSOBase):
         return self.__dict__.get('name_')
 
     @root_validator(pre=True)
-    def inject_name(cls, values):
+    def validate_fields(cls, values):
         connection_members = values.get('connection_members')
+        if not all(isinstance(x, Site) for x in connection_members):
+            raise TypeError(
+                f'A non-site object provided to be a connection member'
+            )
         if len(set(connection_members)) != len(connection_members):
-            raise GMSOError(f'A {cls.__name__} between same {type(connection_members[0]).__name__}s is not allowed')
+            raise GMSOError(
+                f'Trying to create a {cls.__name__} between '
+                f'same sites. A {cls.__name__} between same '
+                f'{type(connection_members[0]).__name__}s is not allowed'
+            )
         if not values.get('name'):
             values['name'] = cls.__name__
         return values

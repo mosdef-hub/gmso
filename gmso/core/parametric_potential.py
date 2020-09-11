@@ -21,6 +21,7 @@ class ParametricPotential(AbstractPotential):
     by classes that represent these potentials.
     """
 
+    # FIXME: Use proper forward referencing??
     topology_: Optional[Any] = Field(
         None,
         description="the topology of which this potential is a part of"
@@ -28,7 +29,9 @@ class ParametricPotential(AbstractPotential):
 
     set_ref_: Optional[str] = Field(
         None,
-        description='The string name of the bookkeeping set in gmso class.'
+        description='The string name of the bookkeeping set in gmso.Topology class. '
+                    'This is used to track property based hashed object\'s '
+                    'changes so that a dictionary/set can keep track of them'
     )
 
     def __init__(self,
@@ -84,7 +87,7 @@ class ParametricPotential(AbstractPotential):
         else:
             from gmso.core.topology import Topology
             if not isinstance(value, Topology):
-                raise ValueError(f'{type(value).__class__.__name__} is not of type Topology')
+                raise TypeError(f'{type(value).__name__} is not of type Topology')
         return value
 
     @confirm_dict_existence

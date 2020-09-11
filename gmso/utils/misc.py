@@ -1,4 +1,5 @@
 import unyt as u
+from unyt.exceptions import UnitConversionError
 
 
 def unyt_to_hashable(unyt_or_unyt_iter):
@@ -22,3 +23,21 @@ def _unyt_to_hashable_single(val):
         return tuple(val.in_base().value)
     else:
         return None
+
+
+def ensure_valid_dimensions(quantity_1: u.unyt_quantity,
+                            quantity_2: u.unyt_quantity) -> None:
+    """Ensure that the quantities provided as arguments have valid dimensions
+
+    Parameters
+    ----------
+    quantity_1: u.unyt_quantity
+    quantity_2: u.unyt_quantity
+    """
+    if quantity_1.units.dimensions != quantity_2.units.dimensions:
+        raise UnitConversionError(
+            quantity_1.units,
+            quantity_1.units.dimensions,
+            quantity_2.units,
+            quantity_2.units.dimensions
+        )
