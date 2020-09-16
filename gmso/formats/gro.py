@@ -5,7 +5,7 @@ import numpy as np
 import unyt as u
 
 from gmso.core.topology import Topology
-from gmso.core.site import Site
+from gmso.core.atom import Atom
 from gmso.core.box import Box
 from gmso.exceptions import NotYetImplementedWarning
 from unyt.array import allclose_units
@@ -69,7 +69,7 @@ def read_gro(filename):
                 float(line[28:36]),
                 float(line[36:44]),
             ])
-            site = Site(name=atom_name, position=coords[row])
+            site = Atom(name=atom_name, position=coords[row])
             top.add_site(site, update_types=False)
         top.update_topology()
 

@@ -1,12 +1,14 @@
-import warnings
+from typing import Tuple, Optional
 
-from gmso.core.connection import Connection
+from pydantic import Field
+
+from gmso.abc.abstract_connection import Connection
+from gmso.core.atom import Atom
 from gmso.core.dihedral_type import DihedralType
-from gmso.exceptions import GMSOError
 
 
 class Dihedral(Connection):
-    """A 4-partner connection between sites.
+    __base_doc__ = """A 4-partner connection between sites.
 
     This is a subclass of the gmso.Connection superclass.
     This class has strictly 4 members in its connection_members.
@@ -17,43 +19,43 @@ class Dihedral(Connection):
 
     where m1, m2, m3, and m4 are connection members 1-4, respectively.
 
-    Parameters
-    --------
-    connection_members: list of gmso.Site
-        4 sites of a dihedral.
-    connection_type : gmso.DihedralType, optional, default=None
-        DihedralType of this dihedral.
-    name : str, optional, default=Dihedral
-        Name of the dihedral.
-
     Notes
     -----
     Inherits some methods from Connection:
         __eq__, __repr__, _validate methods
     Additional _validate methods are presented
     """
+    connection_members_: Tuple[Atom, Atom, Atom, Atom] = Field(
+        ...,
+        description='The 4 atoms involved in the dihedral.'
+    )
 
-    def __init__(self, connection_members=[], connection_type=None, name="Dihedral"):
-        connection_members = _validate_four_partners(connection_members)
-        connection_type = _validate_dihedraltype(connection_type)
+    dihedral_type_: Optional[DihedralType] = Field(
+        default=None,
+        description='DihedralType of this dihedral.'
+    )
 
-        super(Dihedral, self).__init__(connection_members=connection_members,
-                connection_type=connection_type, name=name)
+    @property
+    def dihedral_type(self):
+        return self.__dict__.get('dihedral_type_')
 
+    @property
+    def connection_type(self):
+        # ToDo: Deprecate this?
+        return self.__dict__.get('dihedral_type_')
 
-def _validate_four_partners(connection_members):
-    """Ensure 4 partners are involved in Dihedral"""
-    assert connection_members is not None, "connection_members is not given"
-    if len(connection_members) != 4:
-        raise GMSOError("Trying to create an Dihedral "
-                "with {} connection members". format(len(connection_members)))
-    return connection_members
+    def __setattr__(self, key, value):
+        if key == 'connection_type':
+            super(Dihedral, self).__setattr__('dihedral_type', value)
+        else:
+            super(Dihedral, self).__setattr__(key, value)
 
-
-def _validate_dihedraltype(contype):
-    """Ensure connection_type is a DihedralType """
-    if contype is None:
-        warnings.warn("Non-parametrized Dihedral detected")
-    elif not isinstance(contype, DihedralType):
-        raise GMSOError("Supplied non-DihedralType {}".format(contype))
-    return contype
+    class Config:
+        fields = {
+            'dihedral_type_': 'dihedral_type',
+            'connection_members_': 'connection_members'
+        }
+        alias_to_fields = {
+            'dihedral_type': 'dihedral_type_',
+            'connection_members': 'connection_members_'
+        }
