@@ -4,7 +4,7 @@ import unyt as u
 import gmso
 from gmso.core.topology import Topology as Top
 from gmso.core.subtopology import SubTopology as SubTop
-from gmso.core.site import Site
+from gmso.core.atom import Atom
 from gmso.external.convert_mbuild import from_mbuild, to_mbuild
 from gmso.tests.base_test import BaseTest
 from gmso.utils.io import get_fn, has_mbuild
@@ -55,7 +55,7 @@ class TestConvertMBuild(BaseTest):
 
     def test_to_mbuild_name_none(self):
         top = Top()
-        top.add_site(Site(position=[0.0, 0.0, 0.0]))
+        top.add_site(Atom(position=[0.0, 0.0, 0.0]))
         top.name = None
         compound = to_mbuild(top)
 
@@ -88,7 +88,7 @@ class TestConvertMBuild(BaseTest):
     def test_3_layer_top(self):
         top_top = Top()
         mid_top = SubTop()
-        site = Site(position=[0.0, 0.0, 0.0])
+        site = Atom(position=[0.0, 0.0, 0.0])
 
         top_top.add_subtopology(mid_top)
         mid_top.add_site(site)
