@@ -16,6 +16,9 @@ class TestForceFieldFromXML(BaseTest):
     def ff(self):
         return ForceField(get_path('ff-example0.xml'))
 
+    @pytest.fixture
+    def named_groups_ff(self):
+        return ForceField(get_path('ff-example1.xml'))
 
     def test_ff_name_version_from_xml(self, ff):
         assert ff.name == 'ForceFieldOne'
@@ -155,3 +158,12 @@ class TestForceFieldFromXML(BaseTest):
         with pytest.raises(TypeError):
             assert len(ff.dihedral_types['opls_140~*~*~opls_140'].parameters['c0'])
         assert len(ff.dihedral_types['NH2~CT1~C~O'].parameters['delta']) == 1
+
+    def test_named_potential_groups(self, named_groups_ff):
+        assert named_groups_ff.potential_groups['BuckinghamPotential']
+        assert named_groups_ff.angle_types['Xe~Xe~Xe'] in named_groups_ff.potential_groups['HarmonicAngle'].values()
+        assert len(named_groups_ff.potential_groups['BuckinghamPotential']) == 3
+        assert len(named_groups_ff.potential_groups['HarmonicBond']) == 2
+        assert len(named_groups_ff.potential_groups['HarmonicAngle']) == 2
+        assert len(named_groups_ff.potential_groups['PeriodicProper']) == 2
+        assert len(named_groups_ff.potential_groups['RBProper']) == 1

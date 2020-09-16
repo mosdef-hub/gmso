@@ -33,6 +33,7 @@
                 <xsd:element name="AtomType" type="AtomType" minOccurs="0" maxOccurs="unbounded"/>
             </xsd:sequence>
             <xsd:attribute name="expression" type="xsd:string" use="optional"/>
+            <xsd:attribute name="name" type="xsd:string" use="optional"/>
         </xsd:complexType>
     </xsd:element>
 
