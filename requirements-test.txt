@@ -11,3 +11,4 @@ gsd >= 2.0
 parmed
 pytest-cov
 codecov
+pydantic
