@@ -1,5 +1,6 @@
 import os
 import re
+from collections import ChainMap
 
 import unyt as u
 from sympy import sympify
@@ -83,11 +84,11 @@ def _consolidate_params(params_dict, expression, update_orig=True):
         return new_dict
 
 
-def _check_valid_atomtype_names(tag, ref_dict):
-    at1 = tag.attrib.get('type1', None)
-    at2 = tag.attrib.get('type2', None)
-    at3 = tag.attrib.get('type3', None)
-    at4 = tag.attrib.get('type4', None)
+def _check_atomtype_existence(tag, ref_dict):
+    at1 = tag.attrib.get('type1', tag.attrib.get('class1', None))
+    at2 = tag.attrib.get('type2', tag.attrib.get('class2', None))
+    at3 = tag.attrib.get('type3', tag.attrib.get('class3', None))
+    at4 = tag.attrib.get('type4', tag.attrib.get('class4', None))
 
     member_types = list(filter(lambda x: x is not None, [at1, at2, at3, at4]))
     member_types = ['*' if mem_type == '' else mem_type for mem_type in member_types]
@@ -155,6 +156,8 @@ def parse_ff_metadata(element):
 def parse_ff_atomtypes(atomtypes_el, ff_meta):
     """Given an xml element tree rooted at AtomType, traverse the tree to form a proper topology.core.AtomType"""
     atomtypes_dict = {}
+    atomclasses_dict = {}
+    ref_dict = ChainMap(atomtypes_dict, atomclasses_dict)
     units_dict = ff_meta['Units']
     atom_types_expression = atomtypes_el.attrib.get('expression', None)
     param_unit_dict = _parse_param_units(atomtypes_el)
@@ -196,7 +199,10 @@ def parse_ff_atomtypes(atomtypes_el, ff_meta):
         _check_valid_string(ctor_kwargs['name'])
         this_atom_type = AtomType(**ctor_kwargs)
         atomtypes_dict[this_atom_type.name] = this_atom_type
-    return atomtypes_dict
+        if this_atom_type.atomclass:
+            atomclass_atom_types = atomclasses_dict.get(this_atom_type.atomclass, [])
+            atomclass_atom_types.append(this_atom_type)
+    return ref_dict
 
 
 TAG_TO_CLASS_MAP = {
@@ -227,7 +233,7 @@ def parse_ff_connection_types(connectiontypes_el, atomtypes_dict, child_tag='Bon
         for kwarg in ctor_kwargs.keys():
             ctor_kwargs[kwarg] = connection_type.attrib.get(kwarg, ctor_kwargs[kwarg])
 
-        ctor_kwargs['member_types'] = _check_valid_atomtype_names(connection_type, atomtypes_dict)
+        ctor_kwargs['member_types'] = _check_atomtype_existence(connection_type, atomtypes_dict)
         if not ctor_kwargs['parameters']:
             ctor_kwargs['parameters'] = _parse_params_values(connection_type,
                                                              param_unit_dict,

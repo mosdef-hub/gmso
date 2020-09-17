@@ -6,14 +6,14 @@
         <ParametersUnitDef parameter="A" unit="kcal/mol"/>
         <ParametersUnitDef parameter="B" unit="nm"/>
         <ParametersUnitDef parameter="C" unit="kcal/mol*nm**6"/>
-        <AtomType name="Ar" element="Ar" charge="0.0" mass="39.948" definition="Ar" description="Argon atom">
+        <AtomType name="Ar" element="Ar" charge="0.0" atomclass="Ar" mass="39.948" definition="Ar" description="Argon atom">
             <Parameters>
                 <Parameter name="A" value="0.1"/>
                 <Parameter name="B" value="4.0"/>
                 <Parameter name="C" value="0.5"/>
             </Parameters>
         </AtomType>
-        <AtomType name="Xe" element="Xe" charge="0.0" mass="131.293" definition="Xe" description="Xenon atom">
+        <AtomType name="Xe" element="Xe" atomclass="Xe" charge="0.0" mass="131.293" definition="Xe" description="Xenon atom">
             <Parameters>
                 <Parameter name="A" value="0.2"/>
                 <Parameter name="B" value="5.0"/>
@@ -31,13 +31,13 @@
     <BondTypes expression="0.5 * k * (r-r_eq)**2">
         <ParametersUnitDef parameter="r_eq" unit="nm"/>
         <ParametersUnitDef parameter="k" unit="kJ/mol"/>
-        <BondType name="BondType1" type1='Ar' type2='Ar'>
+        <BondType name="BondType1" class1='Ar' type2='Ar'>
             <Parameters>
                 <Parameter name='r_eq' value="10.0"/>
                 <Parameter name='k' value="10000"/>
             </Parameters>
         </BondType>
-        <BondType name="BondType2" type1='Xe' type2="Xe">
+        <BondType name="BondType2" type1='Xe' class2="Xe">
             <Parameters>
                 <Parameter name='r_eq' value="10"/>
                 <Parameter name='k' value="20000"/>
@@ -54,7 +54,7 @@
                 <Parameter name='z' value="100"/>
             </Parameters>
         </AngleType>
-        <AngleType name="AngleType2" type1='Xe' type2="Xe" type3="Xe">
+        <AngleType name="AngleType2" class1='Xe' class2="Xe" class3="Xe">
             <Parameters>
                 <Parameter name='r_eq' value="10"/>
                 <Parameter name='z' value="20"/>
@@ -65,13 +65,13 @@
     <DihedralTypes expression="0.5 * z * (r-r_eq)**2">
         <ParametersUnitDef parameter="r_eq" unit="nm"/>
         <ParametersUnitDef parameter="z" unit="kJ/mol"/>
-        <DihedralType name="DihedralType1" type1='Ar' type2='Ar' type3="Ar" type4="Ar">
+        <DihedralType name="DihedralType1" class1='Ar' class2='Ar' type3="Ar" type4="Ar">
             <Parameters>
                 <Parameter name='r_eq' value="10.0"/>
                 <Parameter name='z' value="100"/>
             </Parameters>
         </DihedralType>
-        <DihedralType name="DihedralType2" type1='Xe' type2="Xe" type3="Xe" type4="Xe">
+        <DihedralType name="DihedralType2" class1='Xe' class2="Xe" class3="Xe" class4="Xe">
             <Parameters>
                 <Parameter name='r_eq' value="10"/>
                 <Parameter name='z' value="20"/>
