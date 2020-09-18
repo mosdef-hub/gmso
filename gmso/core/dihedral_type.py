@@ -1,12 +1,14 @@
-import warnings
+from typing import Tuple, Optional
 import unyt as u
 
-from gmso.core.potential import Potential
-from gmso.exceptions import GMSOError
+from pydantic import Field
+
+from gmso.core.parametric_potential import ParametricPotential
 from gmso.utils._constants import DIHEDRAL_TYPE_DICT
 
-class DihedralType(Potential):
-    """A descripton of the interaction between 4 bonded partners.
+
+class DihedralType(ParametricPotential):
+    __base_doc__ = """A descripton of the interaction between 4 bonded partners.
 
     This is a subclass of the gmso.core.Potential superclass.
 
@@ -22,29 +24,17 @@ class DihedralType(Potential):
 
     where m1, m2, m3, and m4 are connection members 1-4, respectively.
 
-    Parameters
-    ----------
-    name : str
-    expression : str or sympy.Expression
-        See `Potential` documentation for more information
-    parameters : dict {str, unyt.unyt_quantity}
-        See `Potential` documentation for more information
-    independent vars : set of str
-        See `Potential` documentation for more information
-    member_types : list-like of str
-        List-like of of gmso.AtomType.name defining the members of this
-        dihedral type
-    topology: gmso.core.Topology, default=None
-        The topology of which this dihedral type is a part of
-    set_ref: str
-        The string name of the bookkeeping set in topology class.
-
     Notes
     ----
     Inherits many functions from gmso.Potential:
         __eq__, _validate functions
-
     """
+
+    member_types_: Optional[Tuple[str, str, str, str]] = Field(
+        None,
+        description='List-like of of gmso.AtomType.name or gmso.AtomType.atomclass '
+                    'defining the members of this dihedral type'
+    )
 
     def __init__(self,
                  name='DihedralType',
@@ -52,8 +42,7 @@ class DihedralType(Potential):
                  parameters=None,
                  independent_variables=None,
                  member_types=None,
-                 topology=None,
-                 set_ref='dihedral_type_set'):
+                 topology=None):
         if parameters is None:
             parameters = {
                 'k': 1000 * u.Unit('kJ / (deg**2)'),
@@ -63,41 +52,25 @@ class DihedralType(Potential):
         if independent_variables is None:
             independent_variables = {'phi'}
 
-        if member_types is None:
-            member_types = list()
-
-        super(DihedralType, self).__init__(name=name, expression=expression,
-                                           parameters=parameters, independent_variables=independent_variables,
-                                           topology=topology)
-        self._set_ref = DIHEDRAL_TYPE_DICT
-        self._member_types = _validate_four_member_type_names(member_types)
-
-    @property
-    def set_ref(self):
-        return self._set_ref
+        super(DihedralType, self).__init__(
+            name=name,
+            expression=expression,
+            parameters=parameters,
+            independent_variables=independent_variables,
+            topology=topology,
+            member_types=member_types,
+            set_ref=DIHEDRAL_TYPE_DICT
+        )
 
     @property
     def member_types(self):
-        return self._member_types
+        return self.__dict__.get('member_types_')
 
-    @member_types.setter
-    def member_types(self, val):
-        if self.member_types != val:
-            warnings.warn("Changing an DihedralType's constituent "
-                          "member types: {} to {}".format(self.member_types, val))
-        self._member_types = _validate_four_member_type_names(val)
+    class Config:
+        fields = {
+            'member_types_': 'member_types'
+        }
 
-    def __repr__(self):
-        return "<DihedralType {}, id {}>".format(self.name, id(self))
-
-
-def _validate_four_member_type_names(types):
-    """Ensure exactly 4 partners are involved in DihedralType"""
-    if len(types) != 4 and len(types) != 0:
-        raise GMSOError("Trying to create an DihedralType "
-                            "with {} constituent types".format(len(types)))
-    if not all([isinstance(t, str) for t in types]):
-        raise GMSOError("Types passed to DihedralType "
-                            "need to be strings corresponding to AtomType names")
-
-    return types
+        alias_to_fields = {
+            'member_types': 'member_types_'
+        }

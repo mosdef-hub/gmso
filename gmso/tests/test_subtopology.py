@@ -2,7 +2,7 @@ import numpy as np
 import unyt as u
 
 from gmso.core.topology import Topology
-from gmso.core.site import Site
+from gmso.core.atom import Atom
 from gmso.core.subtopology import SubTopology
 from gmso.tests.base_test import BaseTest
 
@@ -40,7 +40,7 @@ class TestSubTopology(BaseTest):
 
     def test_subtop_add_site(self):
         subtop = SubTopology()
-        site = Site()
+        site = Atom()
 
         subtop.add_site(site)
 
@@ -57,7 +57,7 @@ class TestSubTopology(BaseTest):
     def test_subtop_add_site_parent(self):
         top = Topology()
         subtop = SubTopology(parent=top)
-        site = Site()
+        site = Atom()
 
         subtop.add_site(site)
 
@@ -68,8 +68,8 @@ class TestSubTopology(BaseTest):
     def test_add_site_parent(self):
         top = Topology()
         subtop = SubTopology()
-        site1 = Site(position=u.nm*np.zeros(3))
-        site2 = Site(position=u.nm*np.ones(3))
+        site1 = Atom(position=u.nm * np.zeros(3))
+        site2 = Atom(position=u.nm * np.ones(3))
         top.add_subtopology(subtop)
 
         assert top.n_sites == 0

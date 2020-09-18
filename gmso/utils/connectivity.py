@@ -18,7 +18,7 @@ EDGES = {
 
 
 def identify_connections(top):
-    """ Identify all possible connections within a topology
+    """Identify all possible connections within a topology
 
     Notes: We are using networkx graph matching to match
     the topology's bonding graph to smaller sub-graphs that
@@ -180,7 +180,7 @@ def _format_subgraph_improper(m):
 
 
 def _trim_duplicates(all_matches):
-    """ Remove redundant sub-graph matches
+    """Remove redundant sub-graph matches
 
     Is there a better way to do this? Like when we format the subgraphs,
     can we impose an ordering so it's easier to eliminate redundant matches?
@@ -190,4 +190,3 @@ def _trim_duplicates(all_matches):
         if match and match not in trimmed_list and match[::-1] not in trimmed_list:
             trimmed_list.append(match)
     return trimmed_list
-

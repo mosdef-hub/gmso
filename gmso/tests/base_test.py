@@ -8,7 +8,7 @@ import foyer
 from gmso.core.box import Box
 from gmso.core.topology import Topology
 from gmso.core.element import Hydrogen, Oxygen
-from gmso.core.site import Site
+from gmso.core.atom import Atom
 from gmso.core.bond import Bond
 from gmso.core.angle import Angle
 from gmso.core.atom_type import AtomType
@@ -142,6 +142,7 @@ class BaseTest:
         # atomtyping on gmso Topology
         pmd_ethane = oplsaa.apply(mb_ethane)
         top = from_parmed(pmd_ethane)
+        top.name = "ethane"
         return top
 
     @pytest.fixture
@@ -203,13 +204,13 @@ class BaseTest:
             atom.atom_type = ff.atom_types[atom.name]
 
         for bond in top.bonds:
-            bond.connection_type = ff.bond_types["opls_111~opls_112"]
+            bond.bond_type = ff.bond_types["opls_111~opls_112"]
 
         for subtop in top.subtops:
             angle = Angle(
                 connection_members=[site for site in subtop.sites],
                 name="opls_112~opls_111~opls_112",
-                connection_type=ff.angle_types["opls_112~opls_111~opls_112"]
+                angle_type=ff.angle_types["opls_112~opls_111~opls_112"]
             )
             top.add_connection(angle)
 
@@ -219,11 +220,11 @@ class BaseTest:
     @pytest.fixture
     def methane(self):
         mytop = Topology()
-        c = Site(name='c')
-        h1 = Site(name='h1')
-        h2 = Site(name='h2')
-        h3 = Site(name='h3')
-        h4 = Site(name='h4')
+        c = Atom(name='c')
+        h1 = Atom(name='h1')
+        h2 = Atom(name='h2')
+        h3 = Atom(name='h3')
+        h4 = Atom(name='h4')
         ch1 = Bond(connection_members=[c,h1])
         ch2 = Bond(connection_members=[c,h2])
         ch3 = Bond(connection_members=[c,h3])
@@ -244,15 +245,15 @@ class BaseTest:
     @pytest.fixture
     def ethane(self):
         mytop = Topology()
-        c1 = Site(name='C1')
-        h11 = Site(name='H11')
-        h12 = Site(name='H12')
-        h13 = Site(name='H13')
+        c1 = Atom(name='C1')
+        h11 = Atom(name='H11')
+        h12 = Atom(name='H12')
+        h13 = Atom(name='H13')
 
-        c2 = Site(name='C2')
-        h21 = Site(name='H21')
-        h22 = Site(name='H22')
-        h23 = Site(name='H23')
+        c2 = Atom(name='C2')
+        h21 = Atom(name='H21')
+        h22 = Atom(name='H22')
+        h23 = Atom(name='H23')
 
         c1h11 = Bond(connection_members=[c1, h11])
         c1h12 = Bond(connection_members=[c1, h12])

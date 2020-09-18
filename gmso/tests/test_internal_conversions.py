@@ -8,7 +8,7 @@ from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.conversions import convert_ryckaert_to_opls
 from gmso.utils.conversions import convert_opls_to_ryckaert
 from gmso.exceptions import GMSOError
-
+from unyt.testing import assert_allclose_units
 class TestInternalConversions(BaseTest):
 
     @pytest.fixture
@@ -26,7 +26,7 @@ class TestInternalConversions(BaseTest):
         ryckaert_bellemans_torsion_potential = templates['RyckaertBellemansTorsionPotential']
 
         name = ryckaert_bellemans_torsion_potential.name
-        expression = ryckaert_bellemans_torsion_potential.expression
+        expression = str(ryckaert_bellemans_torsion_potential.expression) + ' + 3 * psi'
         variables = ['phi','psi']
 
         ryckaert_connection_type = DihedralType(
@@ -61,7 +61,7 @@ class TestInternalConversions(BaseTest):
 
         opls_torsion_potential = templates['OPLSTorsionPotential']
         name = opls_torsion_potential.name
-        expression = opls_torsion_potential.expression
+        expression = str(opls_torsion_potential.expression) + ' + 0.5 * k1 * (1 + cos(psi))'
         variables = ['phi','psi']
 
         opls_connection_type = DihedralType(
@@ -199,5 +199,5 @@ class TestInternalConversions(BaseTest):
         final_connection_type = convert_ryckaert_to_opls(
                 ryckaert_connection_type)
 
-        assert np.allclose([*opls_connection_type.parameters.values()],
-                           [*final_connection_type.parameters.values()])
+        assert_allclose_units([*opls_connection_type.parameters.values()],
+                           [*final_connection_type.parameters.values()], rtol=1e-5, atol=1e-8)
