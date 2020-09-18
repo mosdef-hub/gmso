@@ -116,7 +116,7 @@ class TestForceFieldFromXML(BaseTest):
         assert sympify('r') in ff.improper_types['Xe~Xe~Xe~Xe'].independent_variables
         assert ff.improper_types['Xe~Xe~Xe~Xe'].parameters['r_eq'] == u.unyt_quantity(10.0, u.nm)
         assert ff.improper_types['Xe~Xe~Xe~Xe'].parameters['z'] == u.unyt_quantity(20, u.kJ / u.mol)
-        assert ff.improper_types['Xe~Xe~Xe~Xe'].member_types == ['Xe', 'Xe', 'Xe', 'Xe']
+        assert ff.improper_types['Xe~Xe~Xe~Xe'].member_types == ('Xe', 'Xe', 'Xe', 'Xe')
 
 
     def test_ff_charmm_xml(self):
