@@ -15,6 +15,7 @@ from gmso.core.bond_type import BondType
 from gmso.core.angle_type import AngleType
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper_type import ImproperType
+from gmso.utils.connectivity import identify_connections as _identify_connections
 from gmso.utils._constants import ATOM_TYPE_DICT, BOND_TYPE_DICT, ANGLE_TYPE_DICT, DIHEDRAL_TYPE_DICT, IMPROPER_TYPE_DICT
 from gmso.exceptions import GMSOError
 
@@ -400,6 +401,10 @@ class Topology(object):
             self._impropers.add(connection)
         if update_types:
             self.update_connection_types()
+
+
+    def identify_connections(self):
+        _identify_connections(self)
 
     def update_connection_types(self):
         """Update the connection types based on the connection collection in the topology.
