@@ -97,7 +97,7 @@ def _get_sorted_by_n_connections(m):
 
 
 def _format_subgraph_angle(m):
-    """ Format the angle subgraph
+    """Format the angle subgraph
 
     Since we are matching compound line graphs,
     back out the actual nodes, not just the edges
@@ -121,7 +121,7 @@ def _format_subgraph_angle(m):
 
 
 def _format_subgraph_dihedral(m):
-    """ Format the dihedral subgraph
+    """Format the dihedral subgraph
 
     Since we are matching compound line graphs,
     back out the actual nodes, not just the edges
