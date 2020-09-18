@@ -60,18 +60,16 @@ class TestTop(BaseTest):
         for bond in top.bonds:
             bond.bond_type = bond.connection_type = ff.bond_types['opls_111~opls_112']
 
-        top.update_bonds()
         top.update_bond_types()
 
         for subtop in top.subtops:
             angle = gmso.core.angle.Angle(
                 connection_members=[site for site in subtop.sites],
                 name="opls_112~opls_111~opls_112",
-                connection_type=ff.angle_types["opls_112~opls_111~opls_112"]
+                angle_type=ff.angle_types["opls_112~opls_111~opls_112"]
             )
             top.add_connection(angle)
 
-        top.update_angles()
         top.update_angle_types()
 
         write_top(top, 'water.top')
@@ -79,12 +77,15 @@ class TestTop(BaseTest):
 
     def test_ethane_periodic(self, typed_ethane):
         from gmso.lib.potential_templates import PotentialTemplateLibrary
+        from gmso.core.parametric_potential import ParametricPotential
         per_torsion = PotentialTemplateLibrary()["PeriodicTorsionPotential"]
         params = {"k" : 10 * u.Unit("kJ / mol"),
                   "phi_eq" : 15 * u.Unit("degree"),
                   "n" : 3 * u.Unit("dimensionless")}
-        periodic_dihedral_type = gmso.core.potential.Potential.from_template(
-                per_torsion, params)
+        periodic_dihedral_type = ParametricPotential.from_template(
+            potential_template=per_torsion,
+            parameters=params
+        )
         for dihedral in typed_ethane.dihedrals:
             dihedral.connection_type = periodic_dihedral_type
 

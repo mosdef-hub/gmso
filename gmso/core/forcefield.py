@@ -1,4 +1,5 @@
 import typing
+from collections import ChainMap
 
 from lxml import etree
 
@@ -130,7 +131,7 @@ class ForceField(object):
         ff_angletypes_list = []
         ff_dihedraltypes_list = []
 
-        atom_types_dict = {}
+        atom_types_dict = ChainMap()
         bond_types_dict = {}
         angle_types_dict = {}
         dihedral_types_dict = {}
@@ -182,7 +183,7 @@ class ForceField(object):
         ff.version = versions[0]
         ff.scaling_factors = ff_meta_map['scaling_factors']
         ff.units = ff_meta_map['Units']
-        ff.atom_types = atom_types_dict
+        ff.atom_types = atom_types_dict.maps[0]
         ff.bond_types = bond_types_dict
         ff.angle_types = angle_types_dict
         ff.dihedral_types = dihedral_types_dict

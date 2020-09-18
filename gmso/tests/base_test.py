@@ -8,7 +8,7 @@ import foyer
 from gmso.core.box import Box
 from gmso.core.topology import Topology
 from gmso.core.element import Hydrogen, Oxygen
-from gmso.core.site import Site
+from gmso.core.atom import Atom
 from gmso.core.angle import Angle
 from gmso.core.atom_type import AtomType
 from gmso.core.forcefield import ForceField
@@ -203,13 +203,13 @@ class BaseTest:
             atom.atom_type = ff.atom_types[atom.name]
 
         for bond in top.bonds:
-            bond.connection_type = ff.bond_types["opls_111~opls_112"]
+            bond.bond_type = ff.bond_types["opls_111~opls_112"]
 
         for subtop in top.subtops:
             angle = Angle(
                 connection_members=[site for site in subtop.sites],
                 name="opls_112~opls_111~opls_112",
-                connection_type=ff.angle_types["opls_112~opls_111~opls_112"]
+                angle_type=ff.angle_types["opls_112~opls_111~opls_112"]
             )
             top.add_connection(angle)
 

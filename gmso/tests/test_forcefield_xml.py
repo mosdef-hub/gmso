@@ -70,12 +70,12 @@ class TestForceFieldFromXML(BaseTest):
         assert sympify('r') in ff.bond_types['Ar~Ar'].independent_variables
         assert ff.bond_types['Ar~Ar'].parameters['r_eq'] == u.unyt_quantity(10.0, u.nm)
         assert ff.bond_types['Ar~Ar'].parameters['k'] == u.unyt_quantity(10000, u.kJ / u.mol)
-        assert ff.bond_types['Ar~Ar'].member_types == ['Ar', 'Ar']
+        assert ff.bond_types['Ar~Ar'].member_types == ('Ar', 'Ar')
 
         assert sympify('r') in ff.bond_types['Xe~Xe'].independent_variables
         assert ff.bond_types['Xe~Xe'].parameters['r_eq'] == u.unyt_quantity(10.0, u.nm)
         assert ff.bond_types['Xe~Xe'].parameters['k'] == u.unyt_quantity(20000, u.kJ / u.mol)
-        assert ff.bond_types['Xe~Xe'].member_types == ['Xe', 'Xe']
+        assert ff.bond_types['Xe~Xe'].member_types == ('Xe', 'Xe')
 
     def test_ff_angletypes_from_xml(self, ff):
         assert len(ff.angle_types) == 2
@@ -85,12 +85,12 @@ class TestForceFieldFromXML(BaseTest):
         assert sympify('r') in ff.angle_types['Ar~Ar~Ar'].independent_variables
         assert ff.angle_types['Ar~Ar~Ar'].parameters['r_eq'] == u.unyt_quantity(10.0, u.nm)
         assert ff.angle_types['Ar~Ar~Ar'].parameters['z'] == u.unyt_quantity(100, u.kJ / u.mol)
-        assert ff.angle_types['Ar~Ar~Ar'].member_types == ['Ar', 'Ar', 'Ar']
+        assert ff.angle_types['Ar~Ar~Ar'].member_types == ('Ar', 'Ar', 'Ar')
 
         assert sympify('r') in ff.angle_types['Xe~Xe~Xe'].independent_variables
         assert ff.angle_types['Xe~Xe~Xe'].parameters['r_eq'] == u.unyt_quantity(10.0, u.nm)
         assert ff.angle_types['Xe~Xe~Xe'].parameters['z'] == u.unyt_quantity(20, u.kJ / u.mol)
-        assert ff.angle_types['Xe~Xe~Xe'].member_types == ['Xe', 'Xe', 'Xe']
+        assert ff.angle_types['Xe~Xe~Xe'].member_types == ('Xe', 'Xe', 'Xe')
 
     def test_ff_dihedraltypes_from_xml(self, ff):
         assert len(ff.dihedral_types) == 2
@@ -100,12 +100,12 @@ class TestForceFieldFromXML(BaseTest):
         assert sympify('r') in ff.dihedral_types['Ar~Ar~Ar~Ar'].independent_variables
         assert ff.dihedral_types['Ar~Ar~Ar~Ar'].parameters['r_eq'] == u.unyt_quantity(10.0, u.nm)
         assert ff.dihedral_types['Ar~Ar~Ar~Ar'].parameters['z'] == u.unyt_quantity(100, u.kJ / u.mol)
-        assert ff.dihedral_types['Ar~Ar~Ar~Ar'].member_types == ['Ar', 'Ar', 'Ar', 'Ar']
+        assert ff.dihedral_types['Ar~Ar~Ar~Ar'].member_types == ('Ar', 'Ar', 'Ar', 'Ar')
 
         assert sympify('r') in ff.dihedral_types['Xe~Xe~Xe~Xe'].independent_variables
         assert ff.dihedral_types['Xe~Xe~Xe~Xe'].parameters['r_eq'] == u.unyt_quantity(10.0, u.nm)
         assert ff.dihedral_types['Xe~Xe~Xe~Xe'].parameters['z'] == u.unyt_quantity(20, u.kJ / u.mol)
-        assert ff.dihedral_types['Xe~Xe~Xe~Xe'].member_types == ['Xe', 'Xe', 'Xe', 'Xe']
+        assert ff.dihedral_types['Xe~Xe~Xe~Xe'].member_types == ('Xe', 'Xe', 'Xe', 'Xe')
 
 
     def test_ff_charmm_xml(self):
