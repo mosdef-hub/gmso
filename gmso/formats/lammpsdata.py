@@ -5,8 +5,8 @@ import numpy as np
 import unyt as u
 import datetime
 
-from gmso.utils.testing import allclose
-from gmso.core.site import Site
+from unyt.array import allclose_units
+from gmso.core.atom import Atom
 from gmso.core.atom_type import AtomType
 from gmso.core.bond_type import BondType
 from gmso.core.angle_type import AngleType
@@ -78,7 +78,7 @@ def write_lammpsdata(topology, filename, atom_style='full'):
         data.write('\n')
 
         # Box data
-        if allclose(box.angles, u.unyt_array([90,90,90],'degree')):
+        if allclose_units(box.angles, u.unyt_array([90,90,90],'degree'), rtol=1e-5, atol=1e-8):
             warnings.warn("Orthorhombic box detected")
             box.lengths.convert_to_units(u.angstrom)
             for i,dim in enumerate(['x', 'y', 'z']):
@@ -375,12 +375,12 @@ def _get_connection(filename, topology, unit_style, connection_type):
         if connection_type == 'bond':
             connection = Bond(
                 connection_members=site_list,
-                connection_type=connection_type_list[int(line.split()[1])-1],
+                bond_type=connection_type_list[int(line.split()[1])-1],
                     )
         elif connection_type == 'angle':
             connection = Angle(
                 connection_members=site_list,
-                connection_type=connection_type_list[int(line.split()[1])-1],
+                angle_type=connection_type_list[int(line.split()[1])-1],
                     )
         topology.add_connection(connection)
 
@@ -404,7 +404,7 @@ def _get_atoms(filename, topology, unit_style, type_list):
             float(atom_line[4]),
             float(atom_line[5]),
             float(atom_line[6])])
-        site = Site(
+        site = Atom(
             charge=charge,
             position=coord,
             atom_type=type_list[int(atom_type)-1]

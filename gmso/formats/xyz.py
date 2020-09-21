@@ -4,7 +4,7 @@ import numpy as np
 import unyt as u
 
 from gmso.core.topology import Topology
-from gmso.core.site import Site
+from gmso.core.atom import Atom
 
 
 def read_xyz(filename):
@@ -37,7 +37,7 @@ def read_xyz(filename):
                 raise ValueError(msg.format(n_atoms))
             tmp = np.array(line[1:4], dtype=np.float) * u.angstrom
             coords[row] = tmp.in_units(u.nanometer)
-            site = Site(name=line[0], position=coords[row])
+            site = Atom(name=line[0], position=coords[row])
             top.add_site(site)
         top.update_topology()
 

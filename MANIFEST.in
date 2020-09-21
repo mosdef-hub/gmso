@@ -1,3 +1,4 @@
+include gmso/lib/jsons/*.json
 include LICENSE.rst
 include gmso/utils/log_config.json
 graft gmso/tests/files

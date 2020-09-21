@@ -7,7 +7,7 @@ import foyer
 
 from gmso.external.convert_parmed import from_parmed, to_parmed
 from gmso.tests.base_test import BaseTest
-from gmso.utils.testing import allclose
+from unyt.testing import assert_allclose_units
 from gmso.utils.io import get_fn, import_, has_parmed
 
 
@@ -28,8 +28,8 @@ class TestConvertParmEd(BaseTest):
 
         assert top.box is not None
         lengths = u.nm * [0.714, 0.7938, 0.6646]
-        assert allclose(top.box.lengths, lengths)
-        assert allclose(top.box.angles, angles)
+        assert_allclose_units(top.box.lengths, lengths, rtol=1e-5, atol=1e-8)
+        assert_allclose_units(top.box.angles, angles, rtol=1e-5, atol=1e-8)
 
     def test_from_parmed_parametrized_structure(self, angles):
         struc = pmd.load_file(get_fn('ethane.top'), xyz=get_fn('ethane.gro'))
@@ -49,8 +49,8 @@ class TestConvertParmEd(BaseTest):
 
         assert top.box is not None
         lengths = u.nm * [0.714, 0.7938, 0.6646]
-        assert allclose(top.box.lengths, lengths)
-        assert allclose(top.box.angles, angles)
+        assert_allclose_units(top.box.lengths, lengths, rtol=1e-5, atol=1e-8)
+        assert_allclose_units(top.box.angles, angles, rtol=1e-5, atol=1e-8)
 
     def test_to_parmed_simple(self):
         struc = pmd.load_file(get_fn('ethane.top'), xyz=get_fn('ethane.gro'))
@@ -190,8 +190,8 @@ class TestConvertParmEd(BaseTest):
         struc = parmed_hexane_box
 
         top_from_struc = from_parmed(struc)
-        assert np.allclose(top_from_struc.box.lengths.to("nm").value, [6., 6., 6.])
-        assert np.allclose(top_from_struc.box.angles.to("degree").value, [90., 90., 90.])
+        assert_allclose_units(top_from_struc.box.lengths.to("nm").value, [6., 6., 6.], rtol=1e-5, atol=1e-8)
+        assert_allclose_units(top_from_struc.box.angles.to("degree").value, [90., 90., 90.], rtol=1e-5, atol=1e-8)
 
         struc_from_top = to_parmed(top_from_struc)
-        assert np.allclose(struc_from_top.box, [60, 60, 60, 90, 90, 90])
+        assert_allclose_units(struc_from_top.box, [60, 60, 60, 90, 90, 90], rtol=1e-5, atol=1e-8)

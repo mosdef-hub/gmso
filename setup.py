@@ -1,4 +1,5 @@
 from setuptools import setup, find_packages
+from pathlib import Path
 
 #####################################
 VERSION = "0.2.0"
@@ -10,14 +11,8 @@ else:
 #####################################
 
 
-requirements = [
-    'numpy',
-    'scipy',
-    'mbuild>=0.10.4',
-    'unyt>=2.4',
-    'boltons',
-    'lxml',
-]
+with open(Path(__file__).parent / 'requirements.txt') as req_file:
+    requirements = list(filter(None, req_file.read().split('\n')))
 
 
 setup(

@@ -65,14 +65,14 @@ def from_parmed(structure, refer_type=True):
         subtops.append(gmso.SubTopology(name=subtop_name, parent=top))
         for atom in residue.atoms:
             if refer_type and isinstance(atom.atom_type, pmd.AtomType):
-                site = gmso.Site(
+                site = gmso.Atom(
                     name=atom.name,
                     charge=atom.charge * u.elementary_charge,
                     position=([atom.xx, atom.xy, atom.xz] * u.angstrom).in_units(
                         u.nm),
                     atom_type=pmd_top_atomtypes[atom.atom_type])
             else:
-                site = gmso.Site(
+                site = gmso.Atom(
                     name=atom.name,
                     charge=atom.charge * u.elementary_charge,
                     position=([atom.xx, atom.xy, atom.xz] * u.angstrom).in_units(
@@ -88,13 +88,13 @@ def from_parmed(structure, refer_type=True):
         if refer_type and isinstance(bond.type, pmd.BondType):
             top_connection = gmso.Bond(connection_members=[site_map[bond.atom1],
                                               site_map[bond.atom2]],
-                connection_type=pmd_top_bondtypes[bond.type])
+                bond_type=pmd_top_bondtypes[bond.type])
 
         # No bond parameters, make Connection with no connection_type
         else:
             top_connection = gmso.Bond(connection_members=[site_map[bond.atom1],
                                               site_map[bond.atom2]],
-                                              connection_type=None)
+                                              bond_type=None)
 
         top.add_connection(top_connection, update_types=False)
     top.update_topology()
@@ -106,14 +106,14 @@ def from_parmed(structure, refer_type=True):
             top_connection = gmso.Angle(connection_members=[site_map[angle.atom1],
                                                site_map[angle.atom2],
                                                site_map[angle.atom3]],
-                connection_type=pmd_top_angletypes[angle.type])
+                angle_type=pmd_top_angletypes[angle.type])
         # No bond parameters, make Connection with no connection_type
         else:
             top_connection = gmso.Angle(connection_members=[
                                     site_map[angle.atom1],
                                     site_map[angle.atom2],
                                     site_map[angle.atom3]],
-                                    connection_type=None)
+                                    angle_type=None)
         top.add_connection(top_connection, update_types=False)
 
     for dihedral in structure.dihedrals:
@@ -134,7 +134,7 @@ def from_parmed(structure, refer_type=True):
                      site_map[dihedral.atom2],
                      site_map[dihedral.atom3],
                      site_map[dihedral.atom4]],
-                connection_type=pmd_top_dihedraltypes[dihedral.type])
+                dihedral_type=pmd_top_dihedraltypes[dihedral.type])
         # No bond parameters, make Connection with no connection_type
         else:
             top_connection = gmso.Dihedral(connection_members=
@@ -142,7 +142,7 @@ def from_parmed(structure, refer_type=True):
                      site_map[dihedral.atom2],
                      site_map[dihedral.atom3],
                      site_map[dihedral.atom4]],
-                connection_type=None)
+                dihedral_type=None)
         top.add_connection(top_connection, update_types=False)
 
     for rb_torsion in structure.rb_torsions:
@@ -161,7 +161,7 @@ def from_parmed(structure, refer_type=True):
                      site_map[rb_torsion.atom2],
                      site_map[rb_torsion.atom3],
                      site_map[rb_torsion.atom4]],
-                connection_type=pmd_top_dihedraltypes[rb_torsion.type])
+                dihedral_type=pmd_top_dihedraltypes[rb_torsion.type])
         # No bond parameters, make Connection with no connection_type
         else:
             top_connection = gmso.Dihedral(connection_members=
@@ -169,10 +169,12 @@ def from_parmed(structure, refer_type=True):
                      site_map[rb_torsion.atom2],
                      site_map[rb_torsion.atom3],
                      site_map[rb_torsion.atom4]],
-                connection_type=None)
+                dihedral_type=None)
         top.add_connection(top_connection, update_types=False)
 
     top.update_topology()
+
+    top.combining_rule = structure.combining_rule
     return top
 
 
@@ -482,7 +484,7 @@ def _atom_types_from_gmso(top, structure, atom_map):
         atype.set_lj_params(atype_epsilon, atype_rmin)
         # Type map to match AtomType to its name
         atype_map[atype_name] = atype
-        
+
     for site in top.sites:
         #Assign atom_type to atom
         pmd_atom = atom_map[site]
