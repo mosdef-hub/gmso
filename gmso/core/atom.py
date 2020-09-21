@@ -89,6 +89,22 @@ class Atom(Site):
     def atom_type(self) -> Union[AtomType, None]:
         return self.__dict__.get('atom_type_', None)
 
+    def __le__(self, other):
+        if isinstance(other, Atom):
+            return hash(self) <= hash(other)
+        else:
+            raise TypeError(
+                f'Cannot compare equality between {type(self)} and {type(other)}'
+            )
+
+    def __lt__(self, other):
+        if isinstance(other, Atom):
+            return hash(self) < hash(other)
+        else:
+            raise TypeError(
+                f'Cannot compare equality between {type(self)} and {type(other)}'
+            )
+
     @validator('charge_')
     def is_valid_charge(cls, charge):
         if charge is None:
