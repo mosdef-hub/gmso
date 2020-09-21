@@ -16,6 +16,9 @@ class TestForceFieldFromXML(BaseTest):
     def ff(self):
         return ForceField(get_path('ff-example0.xml'))
 
+    @pytest.fixture
+    def named_groups_ff(self):
+        return ForceField(get_path('ff-example1.xml'))
 
     def test_ff_name_version_from_xml(self, ff):
         assert ff.name == 'ForceFieldOne'
@@ -106,6 +109,15 @@ class TestForceFieldFromXML(BaseTest):
         assert ff.dihedral_types['Xe~Xe~Xe~Xe'].parameters['z'] == u.unyt_quantity(20, u.kJ / u.mol)
         assert ff.dihedral_types['Xe~Xe~Xe~Xe'].member_types == ('Xe', 'Xe', 'Xe', 'Xe')
 
+    def test_ff_impropertypes_from_xml(self, ff):
+        assert len(ff.improper_types) == 1
+        assert 'Xe~Xe~Xe~Xe' in ff.improper_types
+
+        assert sympify('r') in ff.improper_types['Xe~Xe~Xe~Xe'].independent_variables
+        assert ff.improper_types['Xe~Xe~Xe~Xe'].parameters['r_eq'] == u.unyt_quantity(10.0, u.nm)
+        assert ff.improper_types['Xe~Xe~Xe~Xe'].parameters['z'] == u.unyt_quantity(20, u.kJ / u.mol)
+        assert ff.improper_types['Xe~Xe~Xe~Xe'].member_types == ('Xe', 'Xe', 'Xe', 'Xe')
+
 
     def test_ff_charmm_xml(self):
         charm_ff = ForceField(get_path('trimmed_charmm.xml'))
@@ -146,3 +158,12 @@ class TestForceFieldFromXML(BaseTest):
         with pytest.raises(TypeError):
             assert len(ff.dihedral_types['opls_140~*~*~opls_140'].parameters['c0'])
         assert len(ff.dihedral_types['NH2~CT1~C~O'].parameters['delta']) == 1
+
+    def test_named_potential_groups(self, named_groups_ff):
+        assert named_groups_ff.potential_groups['BuckinghamPotential']
+        assert named_groups_ff.angle_types['Xe~Xe~Xe'] in named_groups_ff.potential_groups['HarmonicAngle'].values()
+        assert len(named_groups_ff.potential_groups['BuckinghamPotential']) == 3
+        assert len(named_groups_ff.potential_groups['HarmonicBond']) == 2
+        assert len(named_groups_ff.potential_groups['HarmonicAngle']) == 2
+        assert len(named_groups_ff.potential_groups['PeriodicProper']) == 2
+        assert len(named_groups_ff.potential_groups['RBProper']) == 1
