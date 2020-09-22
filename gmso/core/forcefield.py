@@ -57,6 +57,8 @@ class ForceField(object):
             self.bond_types = ff.bond_types
             self.angle_types = ff.angle_types
             self.dihedral_types = ff.dihedral_types
+            self.improper_types = ff.improper_types
+            self.potential_groups = ff.potential_groups
             self.scaling_factors = ff.scaling_factors
             self.units = ff.units
         else:
@@ -66,6 +68,8 @@ class ForceField(object):
             self.bond_types = {}
             self.angle_types = {}
             self.dihedral_types = {}
+            self.improper_types = {}
+            self.potential_groups = {}
             self.scaling_factors = {}
             self.units = {}
 
@@ -135,6 +139,8 @@ class ForceField(object):
         bond_types_dict = {}
         angle_types_dict = {}
         dihedral_types_dict = {}
+        improper_types_dict = {}
+        potential_groups = {}
 
         for loc_or_etree in set(xmls_or_etrees):
             validate(loc_or_etree)
@@ -158,25 +164,60 @@ class ForceField(object):
 
         # Consolidate AtomTypes
         for atom_types in ff_atomtypes_list:
-            atom_types_dict.update(parse_ff_atomtypes(atom_types, ff_meta_map))
+            this_atom_types_group = parse_ff_atomtypes(atom_types, ff_meta_map)
+            this_atom_group_name = atom_types.attrib.get('name', None)
+            if this_atom_group_name:
+                potential_groups[this_atom_group_name] = this_atom_types_group
+            atom_types_dict.update(this_atom_types_group)
 
         # Consolidate BondTypes
         for bond_types in ff_bondtypes_list:
-            bond_types_dict.update(parse_ff_connection_types(bond_types,
-                                                             atom_types_dict,
-                                                             child_tag='BondType'))
+            this_bond_types_group = parse_ff_connection_types(
+                bond_types,
+                atom_types_dict,
+                child_tag='BondType'
+            )
+            this_bond_types_group_name = bond_types.attrib.get('name', None)
+
+            if this_bond_types_group_name:
+                potential_groups[this_bond_types_group_name] = this_bond_types_group
+
+            bond_types_dict.update(this_bond_types_group)
 
         # Consolidate AngleTypes
         for angle_types in ff_angletypes_list:
-            angle_types_dict.update(parse_ff_connection_types(angle_types,
-                                                              atom_types_dict,
-                                                              child_tag='AngleType'))
+            this_angle_types_group = parse_ff_connection_types(
+                angle_types,
+                atom_types_dict,
+                child_tag='AngleType'
+            )
+            this_angle_types_group_name = angle_types.attrib.get('name', None)
+
+            if this_angle_types_group_name:
+                potential_groups[this_angle_types_group_name] = this_angle_types_group
+
+            angle_types_dict.update(this_angle_types_group)
 
         # Consolidate DihedralTypes
         for dihedral_types in ff_dihedraltypes_list:
-            dihedral_types_dict.update(parse_ff_connection_types(dihedral_types,
-                                                                 atom_types_dict,
-                                                                 child_tag='DihedralType'))
+            this_dihedral_types_group = parse_ff_connection_types(
+                dihedral_types,
+                atom_types_dict,
+                child_tag='DihedralType'
+            )
+            this_improper_types_group = parse_ff_connection_types(
+                dihedral_types,
+                atom_types_dict,
+                child_tag='ImproperType'
+            )
+            this_group_name = dihedral_types.attrib.get('name', None)
+
+            dihedral_types_dict.update(this_dihedral_types_group)
+            improper_types_dict.update(this_improper_types_group)
+
+            if this_group_name:
+                this_dihedral_types_group.update(this_improper_types_group)
+                potential_groups[this_group_name] = this_dihedral_types_group
 
         ff = cls()
         ff.name = names[0]
@@ -187,4 +228,6 @@ class ForceField(object):
         ff.bond_types = bond_types_dict
         ff.angle_types = angle_types_dict
         ff.dihedral_types = dihedral_types_dict
+        ff.improper_types = improper_types_dict
+        ff.potential_groups = potential_groups
         return ff
