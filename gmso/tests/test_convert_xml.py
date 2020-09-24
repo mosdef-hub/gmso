@@ -62,7 +62,7 @@ class TestXMLConversion(BaseTest):
         assert foyer_fullerene.bond_types["C~C"].parameters["k"] == u.unyt_quantity(
             1000, u.kJ / u.nm ** 2
         )
-        assert foyer_fullerene.bond_types["C~C"].member_types == ["C", "C"]
+        assert foyer_fullerene.bond_types["C~C"].member_types == ("C", "C")
 
     @pytest.mark.skipif(not has_foyer, reason="Foyer is not installed")
     def test_foyer_angles(self, foyer_fullerene):
@@ -79,6 +79,7 @@ class TestXMLConversion(BaseTest):
         assert foyer_fullerene.angle_types["C~C~C"].parameters[
             "theta_eq"
         ] == u.unyt_quantity(3.141592, u.rad)
+        assert foyer_fullerene.angle_types["C~C~C"].member_types == ("C", "C", "C")
 
     @pytest.mark.skipif(not has_foyer, reason="Foyer is not installed")
     def test_foyer_dihedrals(self, foyer_periodic):
@@ -100,6 +101,9 @@ class TestXMLConversion(BaseTest):
         assert foyer_periodic.dihedral_types[
             "opls_140~opls_135~opls_135~opls_140"
         ].parameters["delta"] == u.unyt_quantity(3.14, u.rad)
+        assert foyer_periodic.dihedral_types[
+            "opls_140~opls_135~opls_135~opls_140"
+        ].member_types == ("opls_140", "opls_135", "opls_135", "opls_140")
 
     def test_empty_foyer_atomtype(self):
         with pytest.raises(ForceFieldParseError):
