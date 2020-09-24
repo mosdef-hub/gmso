@@ -3,7 +3,7 @@ import sympy
 import pytest
 
 from gmso.core.atom_type import AtomType
-from gmso.core.site import Site
+from gmso.core.atom import Atom
 from gmso.core.topology import Topology
 from gmso.tests.base_test import BaseTest
 from unyt.testing import assert_allclose_units
@@ -22,7 +22,7 @@ class TestAtomType(BaseTest):
         assert_allclose_units(new_type.mass, mass, rtol=1e-5, atol=1e-8)
 
     def test_setters(self, charge, mass):
-        new_type = AtomType(self)
+        new_type = AtomType()
         new_type.name = "SettingName"
         new_type.charge = -1.0 * charge
         new_type.mass = 1 * mass
@@ -158,6 +158,9 @@ class TestAtomType(BaseTest):
     def test_metadata(self):
         valid_type = AtomType(doi='123', definition='[c]', overrides={'122'},
                 description='Some type solely for testing')
+        assert valid_type.doi
+        assert valid_type.overrides
+
         with pytest.raises(ValueError):
             bad_doi = AtomType(doi=123, definition='[c]', overrides={'122'},
                 description='Some type solely for testing')
@@ -173,8 +176,8 @@ class TestAtomType(BaseTest):
             valid_type.description=123
 
     def test_atom_type_with_topology_and_site(self):
-        site1 = Site()
-        site2 = Site()
+        site1 = Atom()
+        site2 = Atom()
         top = Topology()
         atom_type1 = AtomType()
         atom_type2 = AtomType()
@@ -189,8 +192,8 @@ class TestAtomType(BaseTest):
         assert site2.atom_type.topology == top
 
     def test_atom_type_with_topology_and_site_change_properties(self):
-        site1 = Site()
-        site2 = Site()
+        site1 = Atom()
+        site2 = Atom()
         top = Topology()
         atom_type1 = AtomType()
         atom_type2 = AtomType()
@@ -205,7 +208,7 @@ class TestAtomType(BaseTest):
     def test_with_1000_atom_types(self):
         top = Topology()
         for i in range(1000):
-            site = Site()
+            site = Atom()
             atom_type = AtomType()
             site.atom_type = atom_type
             top.add_site(site, update_types=False)

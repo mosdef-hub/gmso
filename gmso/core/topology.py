@@ -4,17 +4,18 @@ import numpy as np
 import unyt as u
 from boltons.setutils import IndexedSet
 
-from gmso.core.site import Site
+from gmso.core.atom import Atom
 from gmso.core.bond import Bond
 from gmso.core.angle import Angle
 from gmso.core.dihedral import Dihedral
 from gmso.core.improper import Improper
-from gmso.core.potential import Potential
+from gmso.core.parametric_potential import ParametricPotential
 from gmso.core.atom_type import AtomType
 from gmso.core.bond_type import BondType
 from gmso.core.angle_type import AngleType
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper_type import ImproperType
+from gmso.utils.connectivity import identify_connections as _identify_connections
 from gmso.utils._constants import ATOM_TYPE_DICT, BOND_TYPE_DICT, ANGLE_TYPE_DICT, DIHEDRAL_TYPE_DICT, IMPROPER_TYPE_DICT
 from gmso.exceptions import GMSOError
 
@@ -357,8 +358,6 @@ class Topology(object):
 
         See Also
         --------
-        gmso.Topology.update_connections :
-            Update the connections in the topology to reflect any added sites connections
         gmso.Topology.add_site : Add a site to the topology.
         gmso.Topology.add_connection : Add a Bond, an Angle or a Dihedral to the topology.
         gmso.Topology.update_topology : Update the entire topology.
@@ -403,81 +402,9 @@ class Topology(object):
         if update_types:
             self.update_connection_types()
 
-    def update_connections(self, update_types=False):
-        """Update the topology's connections(bonds, angles, dihedrals, impropers) from its sites.
 
-        This method takes all the sites in the current topology and if any connection
-        (Bond, Angle, Dihedral) is present in the site but not in the topology's connection
-        collection, this method will add to that collection. If update_types is True (default
-        behavior is False), this method will also add the Potential objects(AtomType, BondType,
-        AngleType, DihedralType) to the topology's respective collection.
-
-        Parameters
-        ----------
-        update_types : bool, default=False
-
-        See Also
-        --------
-        gmso.Topology.update_sites :
-            Update the sites in the topology to reflect any added connection's sites
-        gmso.Topology.add_connection : Add a Bond, an Angle or a Dihedral to the topology.
-        gmso.Topology.add_site : Add a site to the topology.
-        gmso.Topology.update_connection_types :
-            Update the connection types based on the connection collection in the topology.
-        gmso.Topology.update_topology : Update the entire topology.
-
-        """
-        for site in self.sites:
-            for conn in site.connections:
-                if conn not in self.connections:
-                    self.add_connection(conn, update_types=False)
-        if update_types:
-            self.update_connection_types()
-            self.is_typed()
-
-    def update_bonds(self, update_types=False):
-        """Uses gmso.Topology.update_connections to update bonds in the topology.
-
-        This method is an alias for gmso.Topology.update_connections.
-
-        See Also
-        --------
-        gmso.Topology.update_connections : Update all the Bonds, Angles, Dihedrals, and Impropers in the topology.
-        """
-        self.update_connections(update_types)
-
-    def update_angles(self, update_types=False):
-        """Uses gmso.Topology.update_connections to update angles in the topology.
-
-        This method is an alias for gmso.Topology.update_connections.
-
-        See Also
-        --------
-        gmso.Topology.update_connections : Update all the Bonds, Angles, Dihedrals, and Impropers in the topology.
-        """
-        self.update_connections(update_types)
-
-    def update_dihedrals(self, update_types=False):
-        """Uses gmso.Topology.update_connections to update dihedrals in the topology.
-
-        This method is an alias for gmso.Topology.update_connections.
-
-        See Also
-        --------
-        gmso.Topology.update_connections : Update all the Bonds, Angles, Dihedrals, and Impropers in the topology.
-        """
-        self.update_connections(update_types)
-
-    def update_impropers(self, update_types=False):
-        """Uses gmso.Topology.update_connections to update impropers in the topology.
-
-        This method is an alias for gmso.Topology.update_connections.
-
-        See Also
-        --------
-        gmso.Topology.update_connections : Update all the Bonds, Angles, Dihedrals, and Impropers in the topology.
-        """
-        self.update_connections(update_types)
+    def identify_connections(self):
+        _identify_connections(self)
 
     def update_connection_types(self):
         """Update the connection types based on the connection collection in the topology.
@@ -493,7 +420,7 @@ class Topology(object):
         for c in self.connections:
             if c.connection_type is None:
                 warnings.warn('Non-parametrized Connection {} detected'.format(c))
-            elif not isinstance(c.connection_type, Potential):
+            elif not isinstance(c.connection_type, ParametricPotential):
                 raise GMSOError('Non-Potential {} found'
                                     'in Connection {}'.format(c.connection_type, c))
             elif c.connection_type not in self._connection_types:
@@ -628,7 +555,6 @@ class Topology(object):
     def update_topology(self):
         """Update the entire topology"""
         self.update_sites()
-        self.update_connections()
         self.update_atom_types()
         self.update_connection_types()
         self.is_typed(updated=True)
@@ -649,7 +575,7 @@ class Topology(object):
             The index of the member in the topology's collection objects
         """
         refs = {
-            Site: self._sites,
+            Atom: self._sites,
             Bond: self._bonds,
             Angle: self._angles,
             Dihedral: self._dihedrals,

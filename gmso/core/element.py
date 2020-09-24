@@ -2,47 +2,51 @@ import warnings
 from re import sub
 
 import numpy as np
-from collections import namedtuple
+from pydantic import Field
 import unyt as u
 
+from gmso.abc.gmso_base import GMSOBase
 from gmso.exceptions import GMSOError
 from gmso.utils.misc import unyt_to_hashable
 
-class Element(namedtuple('Element', 'atomic_number, name, symbol, mass')):
-    """Chemical element object
+
+class Element(GMSOBase):
+    __base_doc__ = """Chemical element object
 
     Template to create a chemical element.
     Properties of the element instance are immutable.
     All known elements are pre-built and stored internally.
-
-    Parameters
-    ---------
-    name : str
-        Name of the element.
-    symbol : str
-        Chemical symbol of the element.
-    atom_number : int
-        Atomic number of the element.
-    mass : unyt quantity
-        Mass of the element.
-
-    Return
-    ------
-    Element instance
-        An immutable instance of this class.
     """
+    name: str = Field(..., description='Name of the element.')
+
+    symbol: str = Field(..., description='Chemical symbol of the element.')
+
+    atomic_number: int = Field(..., description='Atomic number of the element.')
+
+    mass: u.unyt_quantity = Field(..., description='Mass of the element.')
+
     def __repr__(self):
         return 'Element: {}, symbol: {}, atomic number: {}, mass: {}'.format(
                                                                       self.name, self.symbol,
                                                                       self.atomic_number,
                                                                       self.mass)
+
     def __eq__(self, other):
         return hash(self) == hash(other)
 
     def __hash__(self):
-        return hash((self.name, self.symbol,
-                     self.atomic_number,
-                unyt_to_hashable(self.mass)))
+        return hash(
+            (
+                self.name,
+                self.symbol,
+                self.atomic_number,
+                unyt_to_hashable(self.mass)
+            )
+        )
+
+    class Config:
+        arbitrary_types_allowed = True
+        allow_mutation = False
 
 
 def element_by_symbol(symbol):

@@ -8,7 +8,8 @@ import foyer
 from gmso.core.box import Box
 from gmso.core.topology import Topology
 from gmso.core.element import Hydrogen, Oxygen
-from gmso.core.site import Site
+from gmso.core.atom import Atom
+from gmso.core.bond import Bond
 from gmso.core.angle import Angle
 from gmso.core.atom_type import AtomType
 from gmso.core.forcefield import ForceField
@@ -204,13 +205,13 @@ class BaseTest:
             atom.atom_type = ff.atom_types[atom.name]
 
         for bond in top.bonds:
-            bond.connection_type = ff.bond_types["opls_111~opls_112"]
+            bond.bond_type = ff.bond_types["opls_111~opls_112"]
 
         for subtop in top.subtops:
             angle = Angle(
                 connection_members=[site for site in subtop.sites],
                 name="opls_112~opls_111~opls_112",
-                connection_type=ff.angle_types["opls_112~opls_111~opls_112"]
+                angle_type=ff.angle_types["opls_112~opls_111~opls_112"]
             )
             top.add_connection(angle)
 
@@ -236,3 +237,64 @@ class BaseTest:
        gmso_ff = ForceField(get_fn("oplsaa-periodic_gmso.xml"))
 
        return gmso_ff
+
+    @pytest.fixture
+    def methane(self):
+        mytop = Topology()
+        c = Atom(name='c')
+        h1 = Atom(name='h1')
+        h2 = Atom(name='h2')
+        h3 = Atom(name='h3')
+        h4 = Atom(name='h4')
+        ch1 = Bond(connection_members=[c,h1])
+        ch2 = Bond(connection_members=[c,h2])
+        ch3 = Bond(connection_members=[c,h3])
+        ch4 = Bond(connection_members=[c,h4])
+        mytop.add_site(c, update_types=False)
+        mytop.add_site(h1, update_types=False)
+        mytop.add_site(h2, update_types=False)
+        mytop.add_site(h3, update_types=False)
+        mytop.add_site(h4, update_types=False)
+        mytop.add_connection(ch1, update_types=False)
+        mytop.add_connection(ch2, update_types=False)
+        mytop.add_connection(ch3, update_types=False)
+        mytop.add_connection(ch4, update_types=False)
+        mytop.update_topology()
+
+        return mytop
+
+    @pytest.fixture
+    def ethane(self):
+        mytop = Topology()
+        c1 = Atom(name='C1')
+        h11 = Atom(name='H11')
+        h12 = Atom(name='H12')
+        h13 = Atom(name='H13')
+
+        c2 = Atom(name='C2')
+        h21 = Atom(name='H21')
+        h22 = Atom(name='H22')
+        h23 = Atom(name='H23')
+
+        c1h11 = Bond(connection_members=[c1, h11])
+        c1h12 = Bond(connection_members=[c1, h12])
+        c1h13 = Bond(connection_members=[c1, h13])
+
+        c2h21 = Bond(connection_members=[c2, h21])
+        c2h22 = Bond(connection_members=[c2, h22])
+        c2h23 = Bond(connection_members=[c2, h23])
+
+        c1c2 = Bond(connection_members=[c1,c2])
+
+        mytop.add_connection(c1h11, update_types=False)
+        mytop.add_connection(c1h12, update_types=False)
+        mytop.add_connection(c1h13, update_types=False)
+
+        mytop.add_connection(c2h21, update_types=False)
+        mytop.add_connection(c2h22, update_types=False)
+        mytop.add_connection(c2h23, update_types=False)
+
+        mytop.add_connection(c1c2, update_types=False)
+        mytop.update_topology()
+
+        return mytop
