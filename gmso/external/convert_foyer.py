@@ -29,9 +29,9 @@ def from_foyer(foyer_xml, gmso_xml=None):
     """
 
     if gmso_xml is None:
-        stem_file_name = pathlib.Path(str(foyer_xml)).stem
-        suffix = "_gmso.xml"
-        gmso_xml = pathlib.Path(stem_file_name + suffix)
+        file_name = pathlib.Path(str(foyer_xml))
+        stem = file_name.stem
+        gmso_xml = file_name.with_name(stem + "_gmso.xml")
     else:
         gmso_xml = pathlib.Path(gmso_xml)
 
@@ -92,7 +92,7 @@ def from_foyer(foyer_xml, gmso_xml=None):
         for dihedral_type in rbf.getiterator("Proper"):
             f_kwargs["rb_torsion_dihedral_types"].append(dihedral_type)
 
-    _write_gmso_xml(gmso_xml, **f_kwargs)
+    _write_gmso_xml(str(gmso_xml), **f_kwargs)
 
 
 def _write_gmso_xml(gmso_xml, **kwargs):
