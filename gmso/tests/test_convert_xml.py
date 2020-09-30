@@ -26,6 +26,11 @@ class TestXMLConversion(BaseTest):
         assert foyer_fullerene.version == "0.0.1"
 
     @pytest.mark.skipif(not has_foyer, reason="Foyer is not installed")
+    def test_foyer_14scale(self, foyer_fullerene):
+        assert foyer_fullerene.scaling_factors["electrostatics14Scale"] == 1.0
+        assert foyer_fullerene.scaling_factors["nonBonded14Scale"] == 1.0
+
+    @pytest.mark.skipif(not has_foyer, reason="Foyer is not installed")
     def test_foyer_scaling(self, foyer_fullerene):
         assert foyer_fullerene.scaling_factors["nonBonded14Scale"] == 1.0
         assert foyer_fullerene.scaling_factors["electrostatics14Scale"] == 1.0

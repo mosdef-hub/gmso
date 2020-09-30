@@ -37,6 +37,8 @@ def from_foyer(foyer_xml, gmso_xml=None):
 
     foyer_xml_tree = etree.parse(foyer_xml)
     f_kwargs = {
+        "coulomb14scale": [],
+        "lj14scale": [],
         "atom_types": [],
         "non_bonded_forces": [],
         "harmonic_bond_types": [],
@@ -98,6 +100,8 @@ def from_foyer(foyer_xml, gmso_xml=None):
 def _write_gmso_xml(gmso_xml, **kwargs):
     """Given the set of keyword arguments, write a gmso topology's forcefield xml file"""
     ff_kwargs = {
+        "coulomb14scale": kwargs.get("coulomb14scale", []),
+        "lj14scale": kwargs.get("lj14scale", []),
         "atom_types": kwargs.get("atom_types", []),
         "non_bonded_forces": kwargs.get("non_bonded_forces", []),
         "harmonic_bond_types": kwargs.get("harmonic_bond_types", []),
@@ -114,6 +118,8 @@ def _write_gmso_xml(gmso_xml, **kwargs):
     forceField.attrib["version"] = "0.0.1"
 
     ffMeta = _create_subelement(forceField, "FFMetaData")
+    ffMeta.attrib["electrostatics14Scale"] = ff_kwargs["coulomb14scale"]
+    ffMeta.attrib["nonBonded14Scale"] = ff_kwargs["lj14scale"]
     units = _create_subelement(
         ffMeta,
         name="Units",
