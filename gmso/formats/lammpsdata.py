@@ -179,10 +179,10 @@ def write_lammpsdata(topology, filename, atom_style='full'):
                         dihedral_type = convert_ryckaert_to_opls(dihedral_type)
                     data.write('{}\t{:.5f}\t{:5f}\t{:5f}\t{:.5f}\n'.format(
                         idx+1,
-                        dihedral_type.parameters['k1'].in_units(u.Unit('kcal/mol')).value/2,
-                        dihedral_type.parameters['k2'].in_units(u.Unit('kcal/mol')).value/2,
-                        dihedral_type.parameters['k3'].in_units(u.Unit('kcal/mol')).value/2,
-                        dihedral_type.parameters['k4'].in_units(u.Unit('kcal/mol')).value/2
+                        dihedral_type.parameters['k1'].in_units(u.Unit('kcal/mol')).value,
+                        dihedral_type.parameters['k2'].in_units(u.Unit('kcal/mol')).value,
+                        dihedral_type.parameters['k3'].in_units(u.Unit('kcal/mol')).value,
+                        dihedral_type.parameters['k4'].in_units(u.Unit('kcal/mol')).value,
                         ))
 
 
