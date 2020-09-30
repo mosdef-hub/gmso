@@ -115,7 +115,7 @@ def _inject_parameters_from_fields(fields: Dict[str, Any],
                           f'{_infer_type(value.type_)}'
                           f', default={default}')
         if init_signature:
-            init_signature.append(f'{name} : {_infer_type(value.type_)} = {default}, ')
+            init_signature.append(f'{name} : {_infer_type(value.type_)} = {repr(default)}, ')
 
         if value.field_info.description:
             parameters.append(f'\t{value.field_info.description}')
