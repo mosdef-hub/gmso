@@ -170,19 +170,19 @@ def write_lammpsdata(topology, filename, atom_style='full'):
 
             # TODO: Write out multiple dihedral styles
             if topology.dihedrals:
-                data.write('\nDihedral Coeffs\n')
+                data.write('\nDihedral Coeffs\n\n')
                 for idx, dihedral_type in enumerate(topology.dihedral_types):
                     if dihedral_type.expression == sympify('c0 * cos(phi)**0' \
                                     ' + c1 * cos(phi)**1 + c2 * cos(phi)**2' \
-                                    '+ c3 * cos(phi)**3 + c4 *     cos(phi)**4' \
+                                    '+ c3 * cos(phi)**3 + c4 * cos(phi)**4' \
                                     ' + c5 * cos(phi)**5'):
                         dihedral_type = convert_ryckaert_to_opls(dihedral_type)
                     data.write('{}\t{:.5f}\t{:5f}\t{:5f}\t{:.5f}\n'.format(
                         idx+1,
-                        dihedral_type.parameters['k1']/2,
-                        dihedral_type.parameters['k2']/2,
-                        dihedral_type.parameters['k3']/2,
-                        dihedral_type.parameters['k4']/2
+                        dihedral_type.parameters['k1'].in_units(u.Unit('kcal/mol')).value/2,
+                        dihedral_type.parameters['k2'].in_units(u.Unit('kcal/mol')).value/2,
+                        dihedral_type.parameters['k3'].in_units(u.Unit('kcal/mol')).value/2,
+                        dihedral_type.parameters['k4'].in_units(u.Unit('kcal/mol')).value/2
                         ))
 
 
