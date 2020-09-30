@@ -4,6 +4,7 @@ import warnings
 import numpy as np
 import unyt as u
 import datetime
+from sympy import sympify
 
 from unyt.array import allclose_units
 from gmso.core.atom import Atom
@@ -15,7 +16,8 @@ from gmso.core.angle import Angle
 from gmso.core.topology import Topology
 from gmso.core.box import Box
 from gmso.core.element import element_by_mass
-
+from gmso.utils.conversions import convert_opls_to_ryckaert, convert_ryckaert_to_opls
+from gmso.lib.potential_templates import PotentialTemplateLibrary
 
 def write_lammpsdata(topology, filename, atom_style='full'):
     """Output a LAMMPS data file.
@@ -168,16 +170,18 @@ def write_lammpsdata(topology, filename, atom_style='full'):
 
             # TODO: Write out multiple dihedral styles
             if topology.dihedrals:
-                data.write('\nDihedral Coeffs\n')
+                data.write('\nDihedral Coeffs\n\n')
                 for idx, dihedral_type in enumerate(topology.dihedral_types):
-                    if dihedral_type.name == 'RyckaertBellemansTorsionPotential':
+                    rbtorsion = PotentialTemplateLibrary()['RyckaertBellemansTorsionPotential']
+                    if (dihedral_type.expression == sympify(rbtorsion.expression) or
+                        dihedral_type.name == rbtorsion.name):
                         dihedral_type = convert_ryckaert_to_opls(dihedral_type)
                     data.write('{}\t{:.5f}\t{:5f}\t{:5f}\t{:.5f}\n'.format(
                         idx+1,
-                        dihedral_type.parameters['k1']/2,
-                        dihedral_type.parameters['k2']/2,
-                        dihedral_type.parameters['k3']/2,
-                        dihedral_type.parameters['k4']/2
+                        dihedral_type.parameters['k1'].in_units(u.Unit('kcal/mol')).value,
+                        dihedral_type.parameters['k2'].in_units(u.Unit('kcal/mol')).value,
+                        dihedral_type.parameters['k3'].in_units(u.Unit('kcal/mol')).value,
+                        dihedral_type.parameters['k4'].in_units(u.Unit('kcal/mol')).value,
                         ))
 
 
