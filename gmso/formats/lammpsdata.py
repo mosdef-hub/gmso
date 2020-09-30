@@ -17,7 +17,7 @@ from gmso.core.topology import Topology
 from gmso.core.box import Box
 from gmso.core.element import element_by_mass
 from gmso.utils.conversions import convert_opls_to_ryckaert, convert_ryckaert_to_opls
-
+from gmso.lib.potential_templates import PotentialTemplateLibrary
 
 def write_lammpsdata(topology, filename, atom_style='full'):
     """Output a LAMMPS data file.
@@ -172,10 +172,9 @@ def write_lammpsdata(topology, filename, atom_style='full'):
             if topology.dihedrals:
                 data.write('\nDihedral Coeffs\n\n')
                 for idx, dihedral_type in enumerate(topology.dihedral_types):
-                    if dihedral_type.expression == sympify('c0 * cos(phi)**0' \
-                                    ' + c1 * cos(phi)**1 + c2 * cos(phi)**2' \
-                                    '+ c3 * cos(phi)**3 + c4 * cos(phi)**4' \
-                                    ' + c5 * cos(phi)**5'):
+                    rbtorsion = PotentialTemplateLibrary()['RyckaertBellemansTorsionPotential']
+                    if (dihedral_type.expression == sympify(rbtorsion.expression) or
+                        dihedral_type.name == rbtorsion.name):
                         dihedral_type = convert_ryckaert_to_opls(dihedral_type)
                     data.write('{}\t{:.5f}\t{:5f}\t{:5f}\t{:.5f}\n'.format(
                         idx+1,
