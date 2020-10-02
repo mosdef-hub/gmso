@@ -4,6 +4,7 @@ import sympy
 
 import unyt as u
 
+from gmso.abc import GMSOJSONHandler
 from gmso.utils.misc import unyt_to_hashable
 
 __all__ = [
@@ -268,6 +269,22 @@ class _PotentialExpression:
         return indep_vars
 
     @staticmethod
+    def json(potential_expression):
+        if not isinstance(potential_expression, _PotentialExpression):
+            raise TypeError(
+                f'{potential_expression} is not of type _PotentialExpression'
+            )
+        else:
+            json_dict = {
+                    'expression': str(potential_expression.expression),
+                    'independent_variables': str(potential_expression.independent_variables),
+                }
+            if potential_expression.is_parametric:
+                json_dict['parameters'] = potential_expression.parameters
+
+        return json_dict
+
+    @staticmethod
     def _verify_validity(expression,
                          independent_variables_symbols,
                          parameters=None):
@@ -305,3 +322,6 @@ class _PotentialExpression:
                         f'Potential expression and parameter symbols do not agree, '
                         f'extraneous symbols: {extra_syms}'
                     )
+
+
+GMSOJSONHandler.register(_PotentialExpression, _PotentialExpression.json)

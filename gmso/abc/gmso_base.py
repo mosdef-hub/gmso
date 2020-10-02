@@ -2,10 +2,13 @@ import warnings
 from abc import ABC
 from typing import Any, ClassVar
 
+import unyt as u
+
 from pydantic import BaseModel
 from pydantic.validators import dict_validator
 
 from gmso.abc.auto_doc import apply_docs
+from gmso.abc import GMSOJSONHandler
 
 
 class GMSOBase(BaseModel, ABC):
@@ -57,3 +60,4 @@ class GMSOBase(BaseModel, ABC):
         arbitrary_types_allowed = True
         alias_to_fields = dict()
         extra = 'forbid'
+        json_encoders = GMSOJSONHandler.json_encoders
