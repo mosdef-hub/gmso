@@ -1,17 +1,17 @@
 import warnings
 
 import sympy
-
 import unyt as u
 
-from gmso.abc import GMSOJSONHandler
 from gmso.utils.misc import unyt_to_hashable
+from gmso.utils.decorators import register_pydantic_json
 
 __all__ = [
     '_PotentialExpression'
 ]
 
 
+@register_pydantic_json(method='json')
 class _PotentialExpression:
     """A general Expression class with parameters
 
@@ -322,6 +322,3 @@ class _PotentialExpression:
                         f'Potential expression and parameter symbols do not agree, '
                         f'extraneous symbols: {extra_syms}'
                     )
-
-
-GMSOJSONHandler.register(_PotentialExpression, _PotentialExpression.json)
