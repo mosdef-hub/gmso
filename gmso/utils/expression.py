@@ -277,7 +277,7 @@ class _PotentialExpression:
         else:
             json_dict = {
                     'expression': str(potential_expression.expression),
-                    'independent_variables': str(potential_expression.independent_variables),
+                    'independent_variables': list(str(idep) for idep in potential_expression.independent_variables),
                 }
             if potential_expression.is_parametric:
                 json_dict['parameters'] = potential_expression.parameters

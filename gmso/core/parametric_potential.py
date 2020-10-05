@@ -1,9 +1,10 @@
-from typing import Optional, Any
+from typing import Optional, Any, Type, Union, Callable
 
 import unyt as u
 from pydantic import Field, validator
 
 from gmso.abc.abstract_potential import AbstractPotential
+from gmso.abc.serialization_utils import dict_to_unyt
 from gmso.utils.expression import _PotentialExpression
 from gmso.utils.decorators import confirm_dict_existence
 from gmso.exceptions import GMSOError
@@ -121,6 +122,37 @@ class ParametricPotential(AbstractPotential):
             expression=expression,
             independent_variables=independent_variables,
             parameters=parameters
+        )
+
+    @classmethod
+    def parse_obj(cls: Type['Model'], obj: Any) -> 'Model':
+        if isinstance(obj, dict):
+            if 'potential_expression' in obj:
+                obj.update(obj['potential_expression'])
+                obj.pop('potential_expression')
+
+        return super(ParametricPotential, cls).parse_obj(obj)
+
+    def dict(
+        self,
+        *,
+        include: Union['AbstractSetIntStr', 'MappingIntStrAny'] = None,
+        exclude: Union['AbstractSetIntStr', 'MappingIntStrAny'] = None,
+        by_alias: bool = False,
+        skip_defaults: bool = None,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        exclude_none: bool = False
+    ) -> dict:
+        exclude = {'topology_', 'set_ref_'}
+        return super().dict(
+            include=include,
+            exclude=exclude,
+            by_alias=True,
+            skip_defaults=skip_defaults,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+            exclude_none=exclude_none
         )
 
     @classmethod

@@ -1,14 +1,14 @@
 import warnings
 from abc import ABC
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Type
 
-import unyt as u
 
 from pydantic import BaseModel
 from pydantic.validators import dict_validator
 
-from gmso.abc.auto_doc import apply_docs
 from gmso.abc import GMSOJSONHandler
+from gmso.abc.auto_doc import apply_docs
+from gmso.abc.serialization_utils import dict_to_unyt
 
 
 class GMSOBase(BaseModel, ABC):
@@ -44,6 +44,11 @@ class GMSOBase(BaseModel, ABC):
                hasattr(cls.Config, 'alias_to_fields'):
                 cls.Config.alias_to_fields.update(super_class.Config.alias_to_fields)
         apply_docs(cls, map_names=True, silent=False)
+
+    @classmethod
+    def parse_obj(cls: Type['Model'], obj: Any) -> 'Model':
+        dict_to_unyt(obj)
+        return super(GMSOBase, cls).parse_obj(obj)
 
     @classmethod
     def validate(cls, value):

@@ -1,9 +1,11 @@
 from warnings import warn
 from typing import Union
+import numpy as np
 import unyt as u
 
 __all__ = [
     'unyt_to_dict',
+    'dict_to_unyt',
     'GMSOJSONHandler'
 ]
 
@@ -20,6 +22,24 @@ def unyt_to_dict(unyt_qt: Union[u.unyt_array, u.unyt_quantity]) -> dict:
             'array': numpy_array.tolist(),
             'unit': unit
         }
+
+
+def dict_to_unyt(dict_obj):
+    for key, value in dict_obj.items():
+        if 'array' in value and 'unit' in value:
+            np_array = np.array(value['array'], dtype=float)
+            print(np_array)
+            if np_array.shape == tuple():
+                unyt_func = u.unyt_quantity
+            else:
+                unyt_func = u.unyt_array
+
+            dict_obj[key] = unyt_func(
+                np_array,
+                value['unit']
+            )
+        elif isinstance(value, dict):
+            dict_to_unyt(value)
 
 
 class JSONHandler:
