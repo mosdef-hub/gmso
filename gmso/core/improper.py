@@ -67,7 +67,7 @@ class Improper(Connection):
                          self.connection_members[3]]
 
         return frozenset([
-                tuple(self.connection_members),
+                self.connection_members,
                 tuple(equiv_members)
                 ])
 

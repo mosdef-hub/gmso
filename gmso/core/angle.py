@@ -53,7 +53,7 @@ class Angle(Connection):
         """
 
         return frozenset([
-                tuple(self.connection_members),
+                self.connection_members,
                 tuple(reversed(self.connection_members))
                 ])
 

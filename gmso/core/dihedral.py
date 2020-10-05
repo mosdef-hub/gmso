@@ -57,7 +57,7 @@ class Dihedral(Connection):
         where i, j, k, and l are the connection members.
         """
         return frozenset([
-                tuple(self.connection_members),
+                self.connection_members,
                 tuple(reversed(self.connection_members))
                 ])
 
@@ -77,14 +77,14 @@ class Dihedral(Connection):
         one another.
         """
 
-        return hash(tuple([frozenset([
+        return hash(frozenset([
             frozenset([self.connection_members[0],
                        self.connection_members[1]]),
             frozenset([self.connection_members[1],
                        self.connection_members[2]]),
             frozenset([self.connection_members[2],
                        self.connection_members[3]])
-            ])]))
+            ]))
 
     def __setattr__(self, key, value):
         if key == 'connection_type':
