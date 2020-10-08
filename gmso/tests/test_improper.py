@@ -2,6 +2,7 @@ import pytest
 
 from pydantic import ValidationError
 
+from gmso.core.topology import Topology
 from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
 from gmso.core.atom_type import AtomType
@@ -63,7 +64,7 @@ class TestImproper(BaseTest):
         atom2 = Atom(name='atom2', position=[1, 0, 0], atom_type=AtomType(name='B'))
         atom3 = Atom(name='atom3', position=[1, 1, 0], atom_type=AtomType(name='C'))
         atom4 = Atom(name='atom4', position=[1, 1, 4], atom_type=AtomType(name='D'))
-        imptype = ImproperType(member_types=[atom1.atom_type.name, 
+        imptype = ImproperType(member_types=[atom1.atom_type.name,
                                              atom2.atom_type.name,
                                              atom3.atom_type.name,
                                              atom4.atom_type.name])
@@ -96,3 +97,49 @@ class TestImproper(BaseTest):
 
         assert ref_improper != same_improper
         assert ref_improper != diff_improper
+
+    def test_add_equivalent_connections(self):
+        atom1 = Atom(name="AtomA")
+        atom2 = Atom(name="AtomB")
+        atom3 = Atom(name="AtomC")
+        atom4 = Atom(name="AtomD")
+
+        improper = Improper(
+                connection_members=[atom1, atom2, atom3, atom4]
+                )
+        improper_eq = Improper(
+                connection_members=[atom1, atom3, atom2, atom4]
+                )
+        improper_not_eq = Improper(
+                connection_members=[atom2, atom3, atom1, atom4]
+                )
+
+        top = Topology()
+        top.add_connection(improper)
+        top.add_connection(improper_eq)
+        assert top.n_impropers == 1
+        top.add_connection(improper_not_eq)
+        assert top.n_impropers == 2
+
+    def test_equivalent_members_set(self):
+        atom1 = Atom(name="AtomA")
+        atom2 = Atom(name="AtomB")
+        atom3 = Atom(name="AtomC")
+        atom4 = Atom(name="AtomD")
+
+        improper = Improper(
+                connection_members=[atom1, atom2, atom3, atom4]
+                )
+        improper_eq = Improper(
+                connection_members=[atom1, atom3, atom2, atom4]
+                )
+        improper_not_eq = Improper(
+                connection_members=[atom2, atom3, atom1, atom4]
+                )
+
+        assert (tuple(improper_eq.connection_members)
+                in improper.equivalent_members())
+        assert (tuple(improper.connection_members)
+                in improper_eq.equivalent_members())
+        assert not (tuple(improper.connection_members)
+                in improper_not_eq.equivalent_members())
