@@ -2,6 +2,7 @@ import pytest
 
 from pydantic import ValidationError
 
+from gmso.core.topology import Topology
 from gmso.core.dihedral import Dihedral
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.atom_type import AtomType
@@ -63,7 +64,7 @@ class TestDihedral(BaseTest):
         atom2 = Atom(name='atom2', position=[1, 0, 0], atom_type=AtomType(name='B'))
         atom3 = Atom(name='atom3', position=[1, 1, 0], atom_type=AtomType(name='C'))
         atom4 = Atom(name='atom4', position=[1, 1, 4], atom_type=AtomType(name='D'))
-        dihtype = DihedralType(member_types=[atom1.atom_type.name, 
+        dihtype = DihedralType(member_types=[atom1.atom_type.name,
                                              atom2.atom_type.name,
                                              atom3.atom_type.name,
                                              atom4.atom_type.name])
@@ -96,3 +97,50 @@ class TestDihedral(BaseTest):
 
         assert ref_dihedral != same_dihedral
         assert ref_dihedral != diff_dihedral
+
+    def test_add_equivalent_connections(self):
+        atom1 = Atom(name="AtomA")
+        atom2 = Atom(name="AtomB")
+        atom3 = Atom(name="AtomC")
+        atom4 = Atom(name="AtomD")
+
+        dihedral = Dihedral(
+                connection_members=[atom1, atom2, atom3, atom4]
+                )
+        dihedral_eq = Dihedral(
+                connection_members=[atom4, atom3, atom2, atom1]
+                )
+        dihedral_not_eq = Dihedral(
+                connection_members=[atom4, atom2, atom3, atom1]
+                )
+
+        top = Topology()
+        top.add_connection(dihedral)
+        top.add_connection(dihedral_eq)
+        assert top.n_dihedrals == 1
+
+        top.add_connection(dihedral_not_eq)
+        assert top.n_dihedrals == 2
+
+    def test_equivalent_members_set(self):
+        atom1 = Atom(name="AtomA")
+        atom2 = Atom(name="AtomB")
+        atom3 = Atom(name="AtomC")
+        atom4 = Atom(name="AtomD")
+
+        dihedral = Dihedral(
+                connection_members=[atom1, atom2, atom3, atom4]
+                )
+        dihedral_eq = Dihedral(
+                connection_members=[atom4, atom3, atom2, atom1]
+                )
+        dihedral_not_eq = Dihedral(
+                connection_members=[atom4, atom2, atom3, atom1]
+                )
+
+        assert (tuple(dihedral_eq.connection_members)
+                in dihedral.equivalent_members())
+        assert (tuple(dihedral.connection_members)
+                in dihedral_eq.equivalent_members())
+        assert not (tuple(dihedral.connection_members)
+                in dihedral_not_eq.equivalent_members())
