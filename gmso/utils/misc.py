@@ -1,8 +1,9 @@
+from functools import lru_cache
 import unyt as u
 from unyt.exceptions import UnitConversionError
 
 
-UNYT_CACHE = dict()
+#UNYT_CACHE = dict()
 
 def unyt_to_hashable(unyt_or_unyt_iter):
     """Convert a (list of) unyt array or quantity to a hashable tuple."""
@@ -18,14 +19,13 @@ def unyt_to_hashable(unyt_or_unyt_iter):
 
 def _unyt_to_hashable_single(val):
     if isinstance(val, u.unyt_quantity):
-        try:
-            return val.value * UNYT_CACHE[val.units]
-        except KeyError:
-            UNYT_CACHE[val.units] = val.units.base_value
-            return val.value * UNYT_CACHE[val.units]
+        return val.value * conversion_factor(val.units)
     else:
         return None
 
+@lru_cache(maxsize=128)
+def conversion_factor(unit):
+    return unit.base_value
 
 def ensure_valid_dimensions(quantity_1: u.unyt_quantity,
                             quantity_2: u.unyt_quantity) -> None:
