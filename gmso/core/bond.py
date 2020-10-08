@@ -39,6 +39,42 @@ class Bond(Connection):
         # ToDo: Deprecate this?
         return self.__dict__.get('bond_type_')
 
+    def equivalent_members(self):
+        """Get a set of the equivalent connection member tuples
+        Returns
+        _______
+        frozenset
+            A unique set of tuples of equivalent connection members
+        Notes
+        _____
+        For a bond:
+            i, j == j, i
+        where i and j are the connection members.
+        """
+        return frozenset([
+                self.connection_members,
+                tuple(reversed(self.connection_members))
+                ])
+
+    def _equivalent_members_hash(self):
+        """Returns a unique hash representing the connection
+        Returns
+        _______
+        int
+            A unique hash to represent the connection members
+        Notes
+        _____
+        For a bond:
+            i, j == j, i
+        where i and j are the connection members.
+        Here, i and j are interchangeable.
+        """
+
+        return hash(
+            frozenset([self.connection_members[0],
+                      self.connection_members[1]])
+            )
+
     def __setattr__(self, key, value):
         if key == 'connection_type':
             super(Bond, self).__setattr__('bond_type', value)
