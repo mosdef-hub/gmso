@@ -38,8 +38,6 @@ Dihedral
 
 Potential Classes
 =================
-    .. autoclass:: gmso.Potential
-        :members:
 
 AtomType
 ********
