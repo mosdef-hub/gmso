@@ -52,7 +52,7 @@ class Dihedral(Connection):
             A unique set of tuples of equivalent connection members
         Notes
         _____
-        For an dihedral:
+        For a dihedral:
             i, j, k, l == l, k, j, i
         where i, j, k, and l are the connection members.
         """
