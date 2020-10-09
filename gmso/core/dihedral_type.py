@@ -26,7 +26,7 @@ class DihedralType(ParametricPotential):
 
     Notes
     ----
-    Inherits many functions from gmso.Potential:
+    Inherits many functions from gmso.ParametricPotential:
         __eq__, _validate functions
     """
 
