@@ -69,7 +69,7 @@ class Dihedral(Connection):
             A unique hash to represent the connection members
         Notes
         _____
-        For an dihedral:
+        For a dihedral:
             i, j, k, l == l, k, j, i
         where i, j, k, and l are the connection members.
         Here i and j are interchangeable, j and k are interchangeable,
