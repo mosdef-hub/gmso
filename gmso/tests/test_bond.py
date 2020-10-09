@@ -2,6 +2,7 @@ import pytest
 
 from pydantic import ValidationError
 
+from gmso.core.topology import Topology
 from gmso.core.bond import Bond
 from gmso.core.atom_type import AtomType
 from gmso.core.bond_type import BondType
@@ -71,3 +72,35 @@ class TestBond(BaseTest):
 
         assert ref_connection != same_connection
         assert ref_connection != diff_connection
+
+    def test_add_equivalent_connections(self):
+        atom1 = Atom(name="AtomA")
+        atom2 = Atom(name="AtomB")
+
+        bond = Bond(
+                connection_members=[atom1, atom2]
+                )
+        bond_eq = Bond(
+                connection_members=[atom2, atom1]
+                )
+
+        top = Topology()
+        top.add_connection(bond)
+        top.add_connection(bond_eq)
+        assert top.n_bonds == 1
+
+    def test_equivalent_members_set(self):
+        atom1 = Atom(name="AtomA")
+        atom2 = Atom(name="AtomB")
+
+        bond = Bond(
+                connection_members=[atom1, atom2]
+                )
+        bond_eq = Bond(
+                connection_members=[atom2, atom1]
+                )
+
+        assert (tuple(bond_eq.connection_members)
+                in bond.equivalent_members())
+        assert (tuple(bond.connection_members)
+                in bond_eq.equivalent_members())
