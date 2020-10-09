@@ -2,6 +2,7 @@ import pytest
 
 from pydantic import ValidationError
 
+from gmso.core.topology import Topology
 from gmso.core.angle import Angle
 from gmso.core.angle_type import AngleType
 from gmso.core.atom_type import AtomType
@@ -79,3 +80,48 @@ class TestAngle(BaseTest):
 
         assert ref_angle != same_angle
         assert ref_angle != diff_angle
+
+    def test_add_equivalent_connections(self):
+        atom1 = Atom(name="AtomA")
+        atom2 = Atom(name="AtomB")
+        atom3 = Atom(name="AtomC")
+
+        angle = Angle(
+                connection_members=[atom1, atom2, atom3]
+                )
+        angle_eq = Angle(
+                connection_members=[atom3, atom2, atom1]
+                )
+        angle_not_eq = Angle(
+                connection_members=[atom1, atom3, atom2]
+                )
+
+        top = Topology()
+        top.add_connection(angle)
+        top.add_connection(angle_eq)
+        assert top.n_angles == 1
+
+        top.add_connection(angle_not_eq)
+        assert top.n_angles == 2
+
+    def test_equivalent_members_set(self):
+        atom1 = Atom(name="AtomA")
+        atom2 = Atom(name="AtomB")
+        atom3 = Atom(name="AtomC")
+
+        angle = Angle(
+                connection_members=[atom1, atom2, atom3]
+                )
+        angle_eq = Angle(
+                connection_members=[atom3, atom2, atom1]
+                )
+        angle_not_eq = Angle(
+                connection_members=[atom1, atom3, atom2]
+                )
+
+        assert (tuple(angle_eq.connection_members)
+                in angle.equivalent_members())
+        assert (tuple(angle.connection_members)
+                in angle_eq.equivalent_members())
+        assert not (tuple(angle.connection_members)
+                in angle_not_eq.equivalent_members())
