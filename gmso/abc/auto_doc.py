@@ -148,14 +148,18 @@ def _inject_parameters_from_fields(fields: Dict[str, Any],
     return parameters
 
 
-def _find_extra_params(fields, init_params):
+def _find_extra_params(cls, fields, init_params):
     """Find extra parameters not in the fields"""
     extra_params = []
     aliases_set = set(field.alias for field in fields.values())
     for param in init_params:
         if param not in aliases_set and param is not 'self':
-            extra_params.append(f'{param}: {type(init_params[param].default).__name__} = {init_params[param].default}')
-
+            if hasattr(cls, param) and isinstance(getattr(cls, param), property):
+                prop = getattr(cls, param)
+                [doc_main, doc_desc] = prop.__doc__.split('\n')
+                doc_main = param + ': ' + doc_main + ', default=' + str(init_params[param].default)
+                extra_params.append(doc_main)
+                extra_params.append(doc_desc)
     return extra_params
 
 
@@ -216,7 +220,7 @@ class AutoDocGenerator:
             for field_key in to_pop:
                 fields.pop(field_key)
 
-            extra_params = _find_extra_params(fields, init_params)
+            extra_params = _find_extra_params(self.target, fields, init_params)
 
         return self.get_docstring(
             fields,
