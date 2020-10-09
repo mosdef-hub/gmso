@@ -155,7 +155,6 @@ def _find_extra_params(fields, init_params):
     for param in init_params:
         if param not in aliases_set and param is not 'self':
             extra_params.append(f'{param}: {type(init_params[param].default).__name__} = {init_params[param].default}')
-            extra_params.append('\tdescription')
 
     return extra_params
 
@@ -218,7 +217,6 @@ class AutoDocGenerator:
                 fields.pop(field_key)
 
             extra_params = _find_extra_params(fields, init_params)
-            print(extra_params)
 
         return self.get_docstring(
             fields,
