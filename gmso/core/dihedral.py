@@ -44,6 +44,48 @@ class Dihedral(Connection):
         # ToDo: Deprecate this?
         return self.__dict__.get('dihedral_type_')
 
+    def equivalent_members(self):
+        """Get a set of the equivalent connection member tuples
+        Returns
+        _______
+        frozenset
+            A unique set of tuples of equivalent connection members
+        Notes
+        _____
+        For an dihedral:
+            i, j, k, l == l, k, j, i
+        where i, j, k, and l are the connection members.
+        """
+        return frozenset([
+                self.connection_members,
+                tuple(reversed(self.connection_members))
+                ])
+
+    def _equivalent_members_hash(self):
+        """Returns a unique hash representing the connection
+        Returns
+        _______
+        int
+            A unique hash to represent the connection members
+        Notes
+        _____
+        For an dihedral:
+            i, j, k, l == l, k, j, i
+        where i, j, k, and l are the connection members.
+        Here i and j are interchangeable, j and k are interchangeable,
+        and k and l are interchangeble, as long as each are adjacent to
+        one another.
+        """
+
+        return hash(frozenset([
+            frozenset([self.connection_members[0],
+                       self.connection_members[1]]),
+            frozenset([self.connection_members[1],
+                       self.connection_members[2]]),
+            frozenset([self.connection_members[2],
+                       self.connection_members[3]])
+            ]))
+
     def __setattr__(self, key, value):
         if key == 'connection_type':
             super(Dihedral, self).__setattr__('dihedral_type', value)

@@ -1,7 +1,7 @@
 numpy
 sympy
-mbuild >= 0.10.6
 unyt >= 2.4
 boltons
 lxml
 pydantic
+networkx
