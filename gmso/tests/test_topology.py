@@ -509,7 +509,9 @@ class TestTopology(BaseTest):
 
     def test_topology_get_index_bond_type(self, typed_methylnitroaniline):
         assert typed_methylnitroaniline.get_index(typed_methylnitroaniline.bonds[0].connection_type) == 0
-        assert typed_methylnitroaniline.get_index(typed_methylnitroaniline.bonds[-1].connection_type)
+        assert isinstance(
+                typed_methylnitroaniline.get_index(typed_methylnitroaniline.bonds[-1].connection_type),
+                int)
 
     def test_topology_get_index_bond_type_after_change(self, typed_methylnitroaniline):
         typed_methylnitroaniline.bonds[0].connection_type.name = 'changed name'
