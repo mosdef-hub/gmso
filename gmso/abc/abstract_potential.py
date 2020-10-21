@@ -65,7 +65,7 @@ class AbstractPotential(GMSOBase):
 
     @property
     def expression(self):
-        """Optional[Union[str, sympy.Expr]]\n\tThe mathematical expression corresponding to the potential"""
+        """Optional[Union[str, sympy.Expr]]\n\tThe mathematical expression of the functional form of the potential"""
         return self.potential_expression_.expression
 
     @property
