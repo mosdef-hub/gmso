@@ -70,7 +70,7 @@ class ParametricPotential(AbstractPotential):
 
     @property
     def parameters(self):
-        """Optional[dict]\n\tThe parameters of the potential and their values, as unyt quantities"""
+        """Optional[dict]\n\tThe parameters of the `Potential` expression and their corresponding values, as `unyt` quantities"""
         return self.potential_expression_.parameters
 
     @property
