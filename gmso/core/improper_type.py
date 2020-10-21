@@ -8,7 +8,7 @@ from gmso.utils._constants import IMPROPER_TYPE_DICT
 
 
 class ImproperType(ParametricPotential):
-    """A descripton of the interaction between 4 bonded partners.
+    __base_doc__ = """A description of the interaction between 4 bonded partners.
 
     This is a subclass of the gmso.core.Potential superclass.
 
@@ -30,7 +30,7 @@ class ImproperType(ParametricPotential):
 
     Notes
     ----
-    Inherits many functions from gmso.Potential:
+    Inherits many functions from gmso.ParametricPotential:
         __eq__, _validate functions
     """
 
