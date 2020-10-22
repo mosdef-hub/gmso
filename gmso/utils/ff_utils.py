@@ -99,7 +99,7 @@ def _check_atomtype_existence(tag, ref_dict):
         if member == '*':
             continue
         if member not in ref_dict and member not in atom_classes_set:
-            raise ForceFieldParseError('AtomTypes {} not present in AtomTypes reference in the xml'.format(member))
+            raise ForceFieldParseError('AtomType/AtomClass {} not present in AtomTypes reference in the xml'.format(member))
     return member_types
 
 
