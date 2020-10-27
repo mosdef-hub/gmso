@@ -5,7 +5,7 @@
 
 ## GMSO: General Molecular Simulation Object
 
-Flexible storage of chemical topology for molecular simulation. With few lines of `GMSO` code, toghether with [`mBuild`](https://mbuild.mosdef.org) and [`foyer`]((https://foyer.mosdef.org)), users can rapidly prototype arbitrary parameterized chemical systems and generate data files for a wide variety simulation engines. 
+Flexible storage of chemical topology for molecular simulation. With few lines of `GMSO` code, toghether with [`mBuild`](https://mbuild.mosdef.org) and [`foyer`](https://foyer.mosdef.org), users can rapidly prototype arbitrary parameterized chemical systems and generate data files for a wide variety simulation engines. 
 
 ```python
 import foyer
