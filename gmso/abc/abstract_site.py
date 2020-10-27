@@ -17,19 +17,23 @@ BASE_DOC_ATTR = '__base_doc__'
 FIELDS_IN_DOCSTRING = 'alias_to_fields'
 
 
+def default_position():
+    return u.unyt_array([np.nan] * 3, u.nm)
+
+
 class Site(GMSOBase):
     __base_doc__: ClassVar[str] = """An interaction site object in the topology hierarchy.
 
     Site is the object that represents any general interaction site in a molecular simulation.
     Sites have been designed to be as general as possible, making no assumptions about representing atoms or beads, or
     having mass or charge. That is, a Site can represent an atom in an atomistic system,
-    a bead in a coarse-grained system, and much more. 
+    a bead in a coarse-grained system, and much more.
 
     Notes
     -----
     The label attribute for a site takes its meaning when used with some sort of container (like topology)
     such that a label for a site can then be used to group sites together. The rules for defining a site label
-    and their meaning the responsibility of the container where the sites will reside. 
+    and their meaning the responsibility of the container where the sites will reside.
     """
 
     name_: str = Field(
@@ -43,7 +47,7 @@ class Site(GMSOBase):
     )
 
     position_: PositionType = Field(
-        u.unyt_array([np.nan]*3, u.nm),
+        default_factory=default_position,
         description='The 3D Cartesian coordinates of the position of the site'
     )
 
