@@ -14,6 +14,9 @@ class TestLammpsWriter(BaseTest):
         typed_ar_system.box = Box(lengths=[1,1,1], angles=[60,90,120])
         write_lammpsdata(typed_ar_system, filename='data.triclinic')
 
+    def test_ethane_lammps(self, typed_ethane):
+        write_lammpsdata(typed_ethane, 'data.ethane')
+
     def test_water_lammps(self, typed_water_system):
         write_lammpsdata(typed_water_system, 'data.water')
 
