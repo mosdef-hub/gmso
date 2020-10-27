@@ -1,3 +1,7 @@
+![](https://anaconda.org/conda-forge/gmso/badges/license.svg)
+[![](https://anaconda.org/conda-forge/gmso/badges/version.svg)](https://anaconda.org/conda-forge/gmso)
+[![Build Status](https://dev.azure.com/mosdef/mosdef/_apis/build/status/mosdef-hub.gmso?branchName=master)](https://dev.azure.com/mosdef/mosdef/_build/latest?definitionId=9&branchName=master)
+
 ## GMSO: General Molecular Simulation Object
 
 Flexible storage of chemical topology for molecular simulation
