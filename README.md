@@ -5,7 +5,22 @@
 
 ## GMSO: General Molecular Simulation Object
 
-Flexible storage of chemical topology for molecular simulation
+Flexible storage of chemical topology for molecular simulation. With few lines of `GMSO` code, toghether with [`mBuild`](https://mbuild.mosdef.org) and [`foyer`]((https://foyer.mosdef.org)), users can rapidly prototype arbitrary parameterized chemical systems and generate data files for a wide variety simulation engines. 
+
+```python
+import foyer
+from mbuild.lib.molecules import Ethane
+from gmso.external.convert_parmed import from_parmed
+from gmso.formats.lammpsdata import write_lammpsdata
+# Start with a mBuild compound
+mb_ethane = Ethane()
+oplsaa = foyer.Forcefield(name='oplsaa')
+# atomtype the system with foyer, and convert the resulting structure to a topology
+typed_ethane = from_parmed(oplsaa.apply(mb_ethane))
+typed_ethane.name = 'ethane'
+# Write out lammps datafile
+write_lammpsdata(typed_ethane, filename='ethane.lammps', atom_style='full')
+```
 
 
 Introduction
