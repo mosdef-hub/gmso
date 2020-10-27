@@ -70,14 +70,10 @@ Installation
 For full, detailed instructions, refer to the [documentation for installation](https://gmso.mosdef.org/en/latest/installation.html)
 
 ### `Conda` installation quickstart
-_Note: `GMSO` is not on `conda` currently, but its dependencies are._
-
+`GMSO` is available on `conda` and can be installed as:
 ```bash
-git clone  https://github.com/mosdef-hub/gmso.git
-cd gmso
-conda install -c omnia -c mosdef -c conda-forge --file requirements.txt
-pip install -e .
- ```
+conda install -c conda-forge gmso
+```
 
 ### `Pip` installation quickstart
 _Note: `GMSO` is not on `pypi` currently, but its dependencies are._
@@ -89,10 +85,10 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
-These two quickstarts will install `GMSO` in [`editable` mode](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs), which means that as you edit the source code of `GMSO` those edits will be reflected in your installation.
+These `pip` quickstart will install `GMSO` in [`editable` mode](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs), which means that as you edit the source code of `GMSO` those edits will be reflected in your installation.
 
 
 Documentation
 -------------
 
-The full documentation can be found at [gmso.mosdef.org](https://gmso.mosdef.org)
+The full documentation can be found at [gmso.mosdef.org](https://gmso.mosdef.org).
