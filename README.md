@@ -5,7 +5,8 @@
 
 ## GMSO: General Molecular Simulation Object
 
-Flexible storage of chemical topology for molecular simulation. With few lines of `GMSO` code, toghether with [`mBuild`](https://mbuild.mosdef.org) and [`foyer`](https://foyer.mosdef.org), users can rapidly prototype arbitrary parameterized chemical systems and generate data files for a wide variety simulation engines. 
+Flexible storage of chemical topology for molecular simulation.
+With few lines of `GMSO` code, together with [`mBuild`](https://mbuild.mosdef.org) and [`foyer`](https://foyer.mosdef.org), users can rapidly prototype arbitrary parameterized chemical systems and generate data files for a wide variety simulation engines.
 
 ```python
 import foyer
@@ -89,13 +90,13 @@ Installation
 ------------
 For full, detailed instructions, refer to the [documentation for installation](https://gmso.mosdef.org/en/latest/installation.html)
 
-### `Conda` installation quickstart
+### `conda` installation quickstart
 `GMSO` is available on `conda` and can be installed as:
 ```bash
 conda install -c conda-forge gmso
 ```
 
-### `Pip` installation quickstart
+### `pip` installation quickstart
 _Note: `GMSO` is not on `pypi` currently, but its dependencies are._
 
 ```bash
@@ -105,7 +106,7 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
-These `pip` quickstart will install `GMSO` in [`editable` mode](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs), which means that as you edit the source code of `GMSO` those edits will be reflected in your installation.
+`pip` quickstart will install `GMSO` in [`editable` mode](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs), which means that as you edit the source code of `GMSO` those edits will be reflected in your installation.
 
 
 Documentation
