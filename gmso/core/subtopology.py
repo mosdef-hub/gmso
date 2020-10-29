@@ -70,17 +70,23 @@ class SubTopology(object):
             )
         self._parent = _validate_parent(parent)
 
-    def add_site(self, site):
+    def add_site(self, site, update_types=True):
         """Add a site to this sub-topology
 
         This method adds a site to the sub-topology.
         If the sub-topology has a parent, the site will
-        also be added to the parent topology.
+        also be added to the parent topology. If the
+        update_types parameter is set to true (default
+        behavior), this method will also check if there
+        is an gmso.AtomType associated with the site and
+        it to the sub-topology's AtomTypes collection.
 
         Parameters
         ----------
         site : gmso.Atom
             The site to be added to this sub-topology
+        update_types : (bool), default=True
+            If true, add this site's atom type to the sub-topology's set of AtomTypes
 
         Raises
         ------
@@ -93,7 +99,7 @@ class SubTopology(object):
             warnings.warn("Redundantly adding Site {}".format(site))
         self._sites.add(site)
         if self.parent:
-            self.parent.add_site(site)
+            self.parent.add_site(site, update_types=update_types)
 
     def __repr__(self):
         descr = list('<')
