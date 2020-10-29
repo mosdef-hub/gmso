@@ -2,6 +2,15 @@
 Installation
 ============
 
+Installing with `conda <http://continuum.io/downloads>`_
+--------------------------------------------------------
+
+From ``GMSO`` version ``0.3.0``, you can use `conda <http://continuum.io/downloads>`_ to install ``GMSO`` in your preferred environment. This will also install the dependencies of ``GMSO``.
+::
+    (your-env) $ conda install -c conda-forge gmso
+
+
+
 Installing dependencies with `conda <http://continuum.io/downloads>`_
 ---------------------------------------------------------------------
 
