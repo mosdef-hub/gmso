@@ -60,10 +60,12 @@ class AbstractPotential(GMSOBase):
 
     @property
     def independent_variables(self):
+        """Optional[Union[set, str]]\n\tThe independent variables in the `Potential`'s expression"""
         return self.potential_expression_.independent_variables
 
     @property
     def expression(self):
+        """Optional[Union[str, sympy.Expr]]\n\tThe mathematical expression of the functional form of the potential"""
         return self.potential_expression_.expression
 
     @property

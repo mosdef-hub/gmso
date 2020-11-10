@@ -1,4 +1,6 @@
 import re
+import inspect
+from copy import deepcopy
 from typing import Type, Any, Dict, Tuple, Union, Optional, List
 from pydantic import BaseModel
 
@@ -94,7 +96,8 @@ def _base_doc_to_sections(base_doc: str) -> dict:
 def _inject_parameters_from_fields(fields: Dict[str, Any],
                                    by_alias: bool = True,
                                    name_map: Optional[Tuple[str, str]] = None,
-                                   inject_init: bool = True) -> Union[Tuple[str, str], str]:
+                                   inject_init: bool = True,
+                                   extra_params: Optional[List] = None) -> Union[Tuple[str, str], str]:
     """Inject the parameters name from the fields"""
     parameters = ['Parameters', '----------']
     init_signature = None
@@ -115,10 +118,13 @@ def _inject_parameters_from_fields(fields: Dict[str, Any],
                           f'{_infer_type(value.type_)}'
                           f', default={default}')
         if init_signature:
-            init_signature.append(f'{name} : {_infer_type(value.type_)} = {repr(default)}, ')
+            init_signature.append(f'{name}={repr(default)}, ')
 
         if value.field_info.description:
             parameters.append(f'\t{value.field_info.description}')
+
+    if extra_params:
+        parameters.extend(extra_params)
 
     if len(parameters) > 2:
         parameters = '\n'.join(parameters)
@@ -140,6 +146,21 @@ def _inject_parameters_from_fields(fields: Dict[str, Any],
         return parameters, init_signature
 
     return parameters
+
+
+def _find_extra_params(cls, fields, init_params):
+    """Find extra parameters not in the fields"""
+    extra_params = []
+    aliases_set = set(field.alias for field in fields.values())
+    for param in init_params:
+        if param not in aliases_set and param is not 'self':
+            if hasattr(cls, param) and isinstance(getattr(cls, param), property):
+                prop = getattr(cls, param)
+                [doc_main, doc_desc] = prop.__doc__.split('\n')
+                doc_main = param + ': ' + doc_main + ', default=' + str(init_params[param].default)
+                extra_params.append(doc_main)
+                extra_params.append(doc_desc)
+    return extra_params
 
 
 class AutoDocGenerator:
@@ -187,11 +208,26 @@ class AutoDocGenerator:
 
     def __get__(self, *args: Any, **kwargs: Any) -> str:
         """Return the __doc__ attribute"""
+        fields = deepcopy(getattr(self.target, FIELDS_KEY))
+        extra_params = None
+
+        if not self.should_inject_init:
+            init_params = inspect.signature(self.target.__init__).parameters
+            to_pop = []
+            for key, value in fields.items():
+                if key not in init_params and value.alias not in init_params:
+                    to_pop.append(key)
+            for field_key in to_pop:
+                fields.pop(field_key)
+
+            extra_params = _find_extra_params(self.target, fields, init_params)
+
         return self.get_docstring(
-            getattr(self.target, FIELDS_KEY),
+            fields,
             self.base_doc,
             self.name_map,
-            self.should_inject_init
+            self.should_inject_init,
+            extra_params=extra_params
         )
 
     def __del__(self) -> None:
@@ -203,14 +239,16 @@ class AutoDocGenerator:
     def get_docstring(fields: Dict[str, Any],
                       base_doc: str,
                       name_map: Tuple[str, str],
-                      inject_init_signature: bool = True) -> str:
+                      inject_init_signature: bool = True,
+                      extra_params: Optional[List] = None) -> str:
         """Get the docstring names based on fields"""
         sections = _base_doc_to_sections(base_doc)
         params_or_params_init = _inject_parameters_from_fields(
             fields,
             by_alias=True,
             name_map=name_map,
-            inject_init=inject_init_signature
+            inject_init=inject_init_signature,
+            extra_params=extra_params
         )
         docstring = []
 
