@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 from pathlib import Path
 
 #####################################
-VERSION = "0.3.0"
+VERSION = "0.3.1"
 ISRELEASED = False
 if ISRELEASED:
     __version__ = VERSION

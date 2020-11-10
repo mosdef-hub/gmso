@@ -81,14 +81,13 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
             continue
         else:
             subtop = SubTopology(name=child.name)
-            top.add_subtopology(subtop)
+            top.add_subtopology(subtop, update=False)
             for particle in child.particles():
                 pos = particle.xyz[0] * u.nanometer
                 ele = search_method(particle.name)
                 site = Atom(name=particle.name, position=pos, element=ele)
                 site_map[particle] = site
-                subtop.add_site(site)
-    top.update_topology()
+                subtop.add_site(site, update_types=False)
 
     for particle in compound.particles():
         already_added_site = site_map.get(particle, None)
@@ -106,14 +105,14 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
         if len(top.subtops) > 0:
             subtop = SubTopology(name=particle.name)
             top.add_subtopology(subtop)
-            subtop.add_site(site)
+            subtop.add_site(site, update_types=False)
         else:
-            top.add_site(site)
+            top.add_site(site, update_types=False)
 
     for b1, b2 in compound.bonds():
         new_bond = Bond(connection_members=[site_map[b1], site_map[b2]],
                 bond_type=None)
-        top.add_connection(new_bond)
+        top.add_connection(new_bond, update_types=False)
     top.update_topology()
 
     if box:
