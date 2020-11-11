@@ -91,7 +91,7 @@ def _check_atomtype_existence(tag, ref_dict):
     at3 = tag.attrib.get('type3', tag.attrib.get('class3', None))
     at4 = tag.attrib.get('type4', tag.attrib.get('class4', None))
 
-    atom_classes_set = set(value.atomclass for value in ref_dict.values())
+    atom_classes_set = set(value.atomclass for value in ref_dict.values() if value)
 
     member_types = list(filter(lambda x: x is not None, [at1, at2, at3, at4]))
     member_types = ['*' if mem_type == '' else mem_type for mem_type in member_types]
