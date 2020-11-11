@@ -4,8 +4,9 @@ unyt >= 2.4
 boltons
 lxml
 pytest
+networkx
 mbuild >= 0.10.6
-openbabel
+openbabel >= 3.0.0
 foyer
 gsd >= 2.0
 parmed

@@ -419,32 +419,69 @@ class TestTopology(BaseTest):
         assert top.sites[10].atom_type.name == 'atom_type_changed'
         assert top.is_typed()
 
+    def test_add_duplicate_connected_atom(self):
+        top = Topology()
+        atom1 = Atom(name="AtomA")
+        atom2 = Atom(name="AtomB")
+        bond = Bond(
+                connection_members=[atom1, atom2]
+                )
+        bond_eq = Bond(
+                connection_members=[atom1, atom2]
+                )
+
+        top.add_connection(bond)
+        top.add_connection(bond_eq)
+        top.update_topology()
+        assert top.n_connections == 1
+
     def test_topology_get_index(self):
         top = Topology()
-        conn_members = [Atom(), Atom(), Atom(), Atom()]
-        for i in range(5):
-            top.add_site(Atom())
-            top.add_connection(Bond(
-                connection_members=[conn_members[0], conn_members[1]]))
-            top.add_connection(Angle(
-                connection_members=[conn_members[0], conn_members[1], conn_members[2]]))
-            top.add_connection(Dihedral(
-                connection_members=[conn_members[0], conn_members[1], conn_members[2], conn_members[3]]))
-            top.add_connection(Improper(
-                connection_members=[conn_members[0], conn_members[1], conn_members[2], conn_members[3]]))
-        a_bond = Bond(connection_members=[conn_members[0], conn_members[1]])
-        an_angle = Angle(connection_members=[conn_members[0], conn_members[1], conn_members[2]])
-        a_site = Atom()
-        a_dihedral = Dihedral(connection_members=[conn_members[0], conn_members[1], conn_members[2], conn_members[3]])
-        an_improper = Improper(connection_members=[conn_members[0], conn_members[1], conn_members[2], conn_members[3]])
+        conn_members = [Atom() for _ in range(10)]
+        for atom in conn_members:
+            top.add_site(atom)
 
-        top.add_site(a_site)
+        for i in range(5):
+            top.add_connection(Bond(
+                connection_members=[conn_members[i], conn_members[i+1]]))
+            top.add_connection(Angle(
+                connection_members=[conn_members[i],
+                                    conn_members[i+1],
+                                    conn_members[i+2]]))
+            top.add_connection(Dihedral(
+                connection_members=[conn_members[i],
+                                    conn_members[i+1],
+                                    conn_members[i+2],
+                                    conn_members[i+3]]))
+            top.add_connection(Improper(
+                connection_members=[conn_members[i],
+                                    conn_members[i+1],
+                                    conn_members[i+2],
+                                    conn_members[i+3]]))
+
+
+        a_atom = Atom()
+        a_bond = Bond(connection_members=[conn_members[6],
+                                          conn_members[7]])
+        an_angle = Angle(connection_members=[conn_members[6],
+                                             conn_members[7],
+                                             conn_members[8]])
+        a_dihedral = Dihedral(connection_members=[conn_members[6],
+                                                  conn_members[7],
+                                                  conn_members[8],
+                                                  conn_members[9]])
+        an_improper = Improper(connection_members=[conn_members[6],
+                                                   conn_members[7],
+                                                   conn_members[8],
+                                                   conn_members[9]])
+
+        top.add_site(a_atom)
         top.add_connection(a_bond)
         top.add_connection(an_angle)
         top.add_connection(a_dihedral)
         top.add_connection(an_improper)
 
-        assert top.get_index(a_site) == 9
+        assert top.get_index(a_atom) == 10
         assert top.get_index(a_bond) == 5
         assert top.get_index(an_angle) == 5
         assert top.get_index(a_dihedral) == 5
@@ -472,7 +509,9 @@ class TestTopology(BaseTest):
 
     def test_topology_get_index_bond_type(self, typed_methylnitroaniline):
         assert typed_methylnitroaniline.get_index(typed_methylnitroaniline.bonds[0].connection_type) == 0
-        assert typed_methylnitroaniline.get_index(typed_methylnitroaniline.bonds[-1].connection_type)
+        assert isinstance(
+                typed_methylnitroaniline.get_index(typed_methylnitroaniline.bonds[-1].connection_type),
+                int)
 
     def test_topology_get_index_bond_type_after_change(self, typed_methylnitroaniline):
         typed_methylnitroaniline.bonds[0].connection_type.name = 'changed name'

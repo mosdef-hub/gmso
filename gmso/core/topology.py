@@ -166,6 +166,8 @@ class Topology(object):
             IMPROPER_TYPE_DICT: self._improper_types_idx
         }
 
+        self._unique_connections = {}
+
 
     @property
     def name(self):
@@ -386,11 +388,26 @@ class Topology(object):
         update_types : bool, default=True
             If True also add any Potential object associated with connection to the
             topology.
+
+        Returns
+        _______
+        gmso.Connection
+            The Connection object or equivalent Connection object that
+            is in the topology
         """
+        # Check if an equivalent connection is in the topology
+        equivalent_members = connection._equivalent_members_hash()
+        if equivalent_members in self._unique_connections:
+            warnings.warn('An equivalent connection already exists. '
+                        'Providing the existing equivalent Connection.')
+            connection = self._unique_connections[equivalent_members]
+
         for conn_member in connection.connection_members:
             if conn_member not in self.sites:
                 self.add_site(conn_member)
         self._connections.add(connection)
+        self._unique_connections.update(
+                {equivalent_members : connection})
         if isinstance(connection, Bond):
             self._bonds.add(connection)
         if isinstance(connection, Angle):
@@ -402,6 +419,7 @@ class Topology(object):
         if update_types:
             self.update_connection_types()
 
+        return connection
 
     def identify_connections(self):
         _identify_connections(self)
@@ -473,7 +491,7 @@ class Topology(object):
                 site.atom_type = self._atom_types[site.atom_type]
         self.is_typed(updated=True)
 
-    def add_subtopology(self, subtop):
+    def add_subtopology(self, subtop, update=True):
         """Add a sub-topology to this topology
 
         This methods adds a gmso.Core.SubTopology object to the topology
@@ -484,6 +502,7 @@ class Topology(object):
         ----------
         subtop : gmso.SubTopology
             The sub-topology object to be added.
+        update : bool, default=True
 
         See Also
         --------
@@ -492,6 +511,8 @@ class Topology(object):
         self._subtops.add(subtop)
         subtop.parent = self
         self._sites.union(subtop.sites)
+        if update:
+            self.update_topology()
 
     def is_typed(self, updated=False):
         if not updated:
