@@ -1,3 +1,4 @@
+import lxml
 import pytest
 from sympy import sympify
 import unyt as u
@@ -159,6 +160,23 @@ class TestForceFieldFromXML(BaseTest):
             assert len(ff.dihedral_types['opls_140~*~*~opls_140'].parameters['c0'])
         assert len(ff.dihedral_types['NH2~CT1~C~O'].parameters['delta']) == 1
 
+    def test_ff_from_etree(self):
+        ff_etree = lxml.etree.parse(get_path('opls_charmm_buck.xml'))
+        ff = ForceField(ff_etree)
+        assert ff
+
+    def test_ff_from_etree_iterable(self):
+        ff_etrees = [
+            lxml.etree.parse(get_path('opls_charmm_buck.xml')),
+            lxml.etree.parse(get_path('trimmed_charmm.xml'))
+        ]
+        ff = ForceField(ff_etrees)
+        assert ff
+
+    def test_ff_mixed_type_error(self):
+        with pytest.raises(TypeError):
+            ff = ForceField([5, '20'])
+            
     def test_named_potential_groups(self, named_groups_ff):
         assert named_groups_ff.potential_groups['BuckinghamPotential']
         assert named_groups_ff.angle_types['Xe~Xe~Xe'] in named_groups_ff.potential_groups['HarmonicAngle'].values()
@@ -167,3 +185,4 @@ class TestForceFieldFromXML(BaseTest):
         assert len(named_groups_ff.potential_groups['HarmonicAngle']) == 2
         assert len(named_groups_ff.potential_groups['PeriodicProper']) == 2
         assert len(named_groups_ff.potential_groups['RBProper']) == 1
+
