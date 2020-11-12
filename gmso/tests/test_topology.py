@@ -17,6 +17,7 @@ from gmso.core.bond_type import BondType
 from gmso.core.angle_type import AngleType
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper_type import ImproperType
+from gmso.core.pairpotential_type import PairPotentialType
 from gmso.external.convert_parmed import from_parmed
 
 from gmso.tests.base_test import BaseTest
@@ -377,6 +378,32 @@ class TestTopology(BaseTest):
         assert len(top.improper_types) == 1
         assert len(top.improper_type_expressions) == 1
         assert len(top.atom_type_expressions) == 2
+
+    def test_pairpotentialtype(self):
+        top = Topology()
+        atype1 = AtomType(expression='sigma + epsilon*r')
+        same_atype1 = AtomType(expression='sigma + epsilon*r')
+        atype2 = AtomType(expression='sigma * epsilon*r')
+        atom1 = Atom(name='a', atom_type=atype1)
+        atom2 = Atom(name='b', atom_type=atype2)
+        top.add_site(atom1)
+        top.add_site(atom2)
+        top.update_topology()
+
+        
+        top.add_site(atom1)
+        top.add_site(atom2)
+         
+        pptype12 = PairPotentialType(name='pp12',expression='r + 1',independent_variables='r',parameters={},member_types=[atype1,atype2])
+        same_pptype12 = PairPotentialType(name='pp12',expression='r + 2',independent_variables='r',parameters={},member_types=[same_atype1,atype2])
+        top.add_pairpotentialtype(pptype12)
+        assert len(top.pairpotential_types) == 1
+        top.add_pairpotentialtype(same_pptype12)
+        assert len(top.pairpotential_types) == 1
+        assert top._pairpotential_types[frozenset([atype1,atype2])] == same_pptype12 
+
+        top.remove_pairpotentialtype([atype1,atype2])
+        assert len(top.pairpotential_types) == 0
 
     def test_add_subtopology(self):
         top = Topology()
