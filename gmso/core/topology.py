@@ -15,8 +15,9 @@ from gmso.core.bond_type import BondType
 from gmso.core.angle_type import AngleType
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper_type import ImproperType
+from gmso.core.pairpotential_type import PairPotentialType
 from gmso.utils.connectivity import identify_connections as _identify_connections
-from gmso.utils._constants import ATOM_TYPE_DICT, BOND_TYPE_DICT, ANGLE_TYPE_DICT, DIHEDRAL_TYPE_DICT, IMPROPER_TYPE_DICT
+from gmso.utils._constants import ATOM_TYPE_DICT, BOND_TYPE_DICT, ANGLE_TYPE_DICT, DIHEDRAL_TYPE_DICT, IMPROPER_TYPE_DICT, PAIRPOTENTIAL_TYPE_DICT
 from gmso.exceptions import GMSOError
 
 
@@ -100,6 +101,9 @@ class Topology(object):
     improper_types : tuple of gmso.ImproperType objects
         A collection of ImproperTypes in the topology
 
+    pairpotential_types : tuple of gmso.PairPotentialType objects
+        A collection of PairPotentialTypes in the topology
+
     atom_type_expressions : list of gmso.AtomType.expression objects
         A collection of all the expressions for the AtomTypes in topology
 
@@ -117,6 +121,9 @@ class Topology(object):
 
     improper_type_expressions : list of gmso.ImproperType.expression objects
         A collection of all the expression for the ImproperTypes in the topology
+
+    pairpotential_type_expressions : list of gmso.PairPotentialType.expression objects
+        A collection of all the expression for the PairPotentialTypes in the topology
 
     See Also
     --------
@@ -150,12 +157,14 @@ class Topology(object):
         self._improper_types = {}
         self._improper_types_idx = {}
         self._combining_rule = 'lorentz'
+        self._pairpotential_types = {}
         self._set_refs = {
             ATOM_TYPE_DICT: self._atom_types,
             BOND_TYPE_DICT: self._bond_types,
             ANGLE_TYPE_DICT: self._angle_types,
             DIHEDRAL_TYPE_DICT: self._dihedral_types,
             IMPROPER_TYPE_DICT: self._improper_types,
+            PAIRPOTENTIAL_TYPE_DICT: self._pairpotential_types
         }
 
         self._index_refs = {
@@ -291,6 +300,10 @@ class Topology(object):
         return tuple(self._improper_types.values())
 
     @property
+    def pairpotential_types(self):
+        return tuple(self._pairpotential_types.values())
+
+    @property
     def atom_type_expressions(self):
         return list(set([atype.expression for atype in self.atom_types]))
 
@@ -313,6 +326,10 @@ class Topology(object):
     @property
     def improper_type_expressions(self):
         return list(set([atype.expression for atype in self.improper_types]))
+
+    @property
+    def pairpotential_type_expressions(self):
+        return list(set([atype.expression for atype in self.pairpotential_types]))
 
     def add_site(self, site, update_types=True):
         """Add a site to the topology
@@ -465,7 +482,47 @@ class Topology(object):
                     c.connection_type = self._dihedral_types[c.connection_type]
                 if isinstance(c.connection_type, ImproperType):
                     c.connection_type = self._improper_types[c.connection_type]
+    def add_pairpotentialtype(self, pairpotentialtype):
+        """add a PairPotentialType to the topology
+    
+        This method checks whether the member_type of a PairPotentialType
+        object is already stored in pairpotential_types. If so, update the
+        pair potential between the member_type, and if not, add the 
+        PairPotentialType to the topology.
 
+        Parameters
+        ----------
+        pairpotentialtype: gmso.core.PairPotentialType
+            The PairPotentialType object to be added
+
+        See Also:
+        --------
+        gmso.core.pairpotential_type: Pairwise potential that does not follow
+        combination rules
+        """
+        for atype in pairpotentialtype.member_types:
+            if not isinstance(atype, AtomType):
+                raise GMSOError('Non AtomType instance {} found in members'.format(atype.name))
+            if atype not in self.atom_types:
+                raise GMSOError('There is no instance of AtomType {} in current topology'.format(atype.name))
+        self._pairpotential_types[frozenset(pairpotentialtype.member_types)] = pairpotentialtype
+
+    def remove_pairpotentialtype(self,member_types):
+        """Remove the custom pairwise potential between two AtomTypes
+
+        Parameters
+        ----------
+        member_types: List-like object of gmso.AtomType
+            The pair (or set) of AtomTypes of which the custom pairwise potential should be removed
+        """
+        for atype in member_types:
+            if not isinstance(atype, AtomType):
+                raise GMSOError('Non AtomType instance {} found in members'.format(atype))
+        if frozenset(member_types) not in self._pairpotential_types:
+            warnings.warn('No pair potential specified for member types')
+            return
+        del self._pairpotential_types[frozenset(member_types)]
+            
     def update_atom_types(self):
         """Update atom types in the topology
 
