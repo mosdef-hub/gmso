@@ -491,7 +491,7 @@ class Topology(object):
                 site.atom_type = self._atom_types[site.atom_type]
         self.is_typed(updated=True)
 
-    def add_subtopology(self, subtop):
+    def add_subtopology(self, subtop, update=True):
         """Add a sub-topology to this topology
 
         This methods adds a gmso.Core.SubTopology object to the topology
@@ -502,6 +502,7 @@ class Topology(object):
         ----------
         subtop : gmso.SubTopology
             The sub-topology object to be added.
+        update : bool, default=True
 
         See Also
         --------
@@ -510,6 +511,8 @@ class Topology(object):
         self._subtops.add(subtop)
         subtop.parent = self
         self._sites.union(subtop.sites)
+        if update:
+            self.update_topology()
 
     def is_typed(self, updated=False):
         if not updated:

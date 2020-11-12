@@ -17,4 +17,4 @@ from .core.angle_type import AngleType
 from .core.dihedral_type import DihedralType
 from .core.improper_type import ImproperType
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
