@@ -3,16 +3,14 @@ import unyt as u
 from unyt.exceptions import UnitConversionError
 
 
-#UNYT_CACHE = dict()
-
 def unyt_to_hashable(unyt_or_unyt_iter):
     """Convert a (list of) unyt array or quantity to a hashable tuple."""
     if unyt_or_unyt_iter is None:
         return unyt_or_unyt_iter
 
     if isinstance(unyt_or_unyt_iter, list):
-        hash_coll = tuple(_unyt_to_hashable_single(val) for val in unyt_or_unyt_iter)
-        return hash_coll
+        hashes = tuple(_unyt_to_hashable_single(val) for val in unyt_or_unyt_iter)
+        return hashes
     else:
         return _unyt_to_hashable_single(unyt_or_unyt_iter)
 
@@ -23,9 +21,11 @@ def _unyt_to_hashable_single(val):
     else:
         return None
 
+
 @lru_cache(maxsize=128)
 def conversion_factor(unit):
     return unit.base_value
+
 
 def ensure_valid_dimensions(quantity_1: u.unyt_quantity,
                             quantity_2: u.unyt_quantity) -> None:
