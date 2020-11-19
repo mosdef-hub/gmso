@@ -1,6 +1,27 @@
+![](https://anaconda.org/conda-forge/gmso/badges/license.svg)
+[![](https://anaconda.org/conda-forge/gmso/badges/version.svg)](https://anaconda.org/conda-forge/gmso)
+[![Build Status](https://dev.azure.com/mosdef/mosdef/_apis/build/status/mosdef-hub.gmso?branchName=master)](https://dev.azure.com/mosdef/mosdef/_build/latest?definitionId=9&branchName=master)
+[![codecov](https://codecov.io/gh/mosdef-hub/gmso/branch/master/graph/badge.svg?token=rqPGwmXDzu)](undefined)
+
 ## GMSO: General Molecular Simulation Object
 
-Flexible storage of chemical topology for molecular simulation
+Flexible storage of chemical topology for molecular simulation.
+With few lines of `GMSO` code, together with [`mBuild`](https://mbuild.mosdef.org) and [`foyer`](https://foyer.mosdef.org), users can rapidly prototype arbitrary parameterized chemical systems and generate data files for a wide variety of simulation engines.
+
+```python
+import foyer
+from mbuild.lib.molecules import Ethane
+from gmso.external.convert_parmed import from_parmed
+from gmso.formats.lammpsdata import write_lammpsdata
+# Start with a mBuild compound
+mb_ethane = Ethane()
+oplsaa = foyer.Forcefield(name='oplsaa')
+# atomtype the system with foyer, and convert the resulting structure to a topology
+typed_ethane = from_parmed(oplsaa.apply(mb_ethane))
+typed_ethane.name = 'ethane'
+# Write out lammps datafile
+write_lammpsdata(typed_ethane, filename='ethane.lammps', atom_style='full')
+```
 
 
 Introduction
@@ -69,17 +90,13 @@ Installation
 ------------
 For full, detailed instructions, refer to the [documentation for installation](https://gmso.mosdef.org/en/latest/installation.html)
 
-### `Conda` installation quickstart
-_Note: `GMSO` is not on `conda` currently, but its dependencies are._
-
+### `conda` installation quickstart
+`GMSO` is available on `conda` and can be installed as:
 ```bash
-git clone  https://github.com/mosdef-hub/gmso.git
-cd gmso
-conda install -c omnia -c mosdef -c conda-forge --file requirements.txt
-pip install -e .
- ```
+conda install -c conda-forge gmso
+```
 
-### `Pip` installation quickstart
+### `pip` installation quickstart
 _Note: `GMSO` is not on `pypi` currently, but its dependencies are._
 
 ```bash
@@ -89,10 +106,10 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
-These two quickstarts will install `GMSO` in [`editable` mode](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs), which means that as you edit the source code of `GMSO` those edits will be reflected in your installation.
+`pip` quickstart will install `GMSO` in [`editable` mode](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs), which means that as you edit the source code of `GMSO` those edits will be reflected in your installation.
 
 
 Documentation
 -------------
 
-The full documentation can be found at [gmso.mosdef.org](https://gmso.mosdef.org)
+The full documentation can be found at [gmso.mosdef.org](https://gmso.mosdef.org).
