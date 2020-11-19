@@ -78,6 +78,9 @@ def to_networkx(top):
 
     graph = nx.Graph()
 
+    for n in top.sites:
+        graph.add_node(n)
+
     for b in top.bonds:
         graph.add_edge(b.connection_members[0], b.connection_members[1], connection=b)
 

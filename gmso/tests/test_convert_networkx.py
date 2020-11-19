@@ -1,5 +1,6 @@
 import pytest
 import unyt as u
+import networkx as nx
 
 import gmso
 from gmso.core.topology import Topology as Top
@@ -27,3 +28,27 @@ class TestConvertNetworkX(BaseTest):
         assert set(ethane.sites) == set(ethane_from_nx.sites)
         assert set(ethane.bonds) == set(ethane_from_nx.bonds)
 
+    def test_from_networkx_argon(self, ar_system):
+        ar_to_nx = to_networkx(ar_system)
+        ar_from_nx = from_networkx(ar_to_nx)
+
+        assert ar_system.n_sites == ar_from_nx.n_sites
+        assert ar_system.n_bonds == ar_from_nx.n_bonds
+
+        assert set(ar_system.sites) == set(ar_from_nx.sites)
+        assert set(ar_system.bonds) == set(ar_from_nx.bonds)
+
+    def test_from_networkx_water_box(self, water_system):
+        water_to_nx = to_networkx(water_system)
+        water_from_nx = from_networkx(water_to_nx)
+
+        assert water_system.n_sites == water_from_nx.n_sites
+        assert water_system.n_bonds == water_from_nx.n_bonds
+
+        assert set(water_system.sites) == set(water_from_nx.sites)
+        assert set(water_system.bonds) == set(water_from_nx.bonds)
+
+        # The number fragments in the networkX representation == n_subtops
+        # TODO: create subtops for each fragment in `from_networkx()`
+        assert (nx.number_connected_components(water_to_nx) ==
+                water_system.n_subtops)
