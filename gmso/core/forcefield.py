@@ -9,6 +9,19 @@ from gmso.utils.ff_utils import (validate,
                                  parse_ff_connection_types)
 
 
+def _group_by_expression(potential_types):
+    """Group a dictionary of potentials by their expression"""
+    expr_group = {}
+
+    for potential in potential_types:
+        potential_type = potential_types[potential]
+        atom_types_list = expr_group.get(str(potential_type.expression), [])
+        atom_types_list.append(potential_type)
+        expr_group[str(potential_type.expression)] = atom_types_list
+
+    return expr_group
+
+
 class ForceField(object):
     """A generic implementation of the forcefield class.
 
@@ -94,6 +107,81 @@ class ForceField(object):
                 atomclass_group.append(atom_type)
                 atomclass_dict[atom_type.atomclass] = atomclass_group
         return atomclass_dict
+
+    def group_atom_types_by_expression(self):
+        """Return all AtomTypes in this ForceField with grouped by expression
+
+        See Also
+        --------
+        _group_by_expression
+            Groups a dictionary of gmso.ParametricPotentials by their expression
+
+        Returns
+        -------
+        dict
+            A dictionary where the key, value -> expression, list of atom_types with that expression
+        """
+        return _group_by_expression(self.atom_types)
+
+    def group_bond_types_by_expression(self):
+        """Return all BondTypes in this ForceField with grouped by expression
+
+        See Also
+        --------
+        _group_by_expression
+            Groups a dictionary of gmso.ParametricPotentials by their expression
+
+        Returns
+        -------
+        dict
+            A dictionary where the key, value -> expression, list of BondTypes with that expression
+        """
+        return _group_by_expression(self.bond_types)
+
+    def group_angle_types_by_expression(self):
+        """Return all AngleTypes in this ForceField with grouped by expression
+
+        See Also
+        --------
+        _group_by_expression
+            Groups a dictionary of gmso.ParametricPotentials by their expression
+
+        Returns
+        -------
+        dict
+            A dictionary where the key, value -> expression, list of AngleTypes with that expression
+        """
+        return _group_by_expression(self.angle_types)
+
+    def group_dihedral_types_by_expression(self):
+        """Return all DihedralTypes in this ForceField with grouped by expression
+
+        See Also
+        --------
+        _group_by_expression
+            Groups a dictionary of gmso.ParametricPotentials by their expression
+
+        Returns
+        -------
+        dict
+            A dictionary where the key, value -> expression, list of DihedralTypes with that expression
+        """
+        return _group_by_expression(self.dihedral_types)
+
+    def group_improper_types_by_expression(self):
+        """Return all ImproperTypes in this ForceField with grouped by expression
+
+        See Also
+        --------
+        _group_by_expression
+            Groups a dictionary of gmso.ParametricPotentials by their expression
+
+        Returns
+        -------
+        dict
+            A dictionary where the key, value -> expression, list of ImproperTypes with that expression
+        """
+        return _group_by_expression(self.improper_types)
 
     @classmethod
     def from_xml(cls, xmls_or_etrees):
