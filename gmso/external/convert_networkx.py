@@ -41,7 +41,7 @@ def from_networkx(graph):
     node_mapping = dict()
     for node in graph.nodes:
         if not isinstance(node, Site):
-            raise GMSOError("Nodes must be gmso.core.Site objects")
+            raise GMSOError("Nodes must be instances of gmso.abc.Site")
         else:
             top.add_site(node)
 
