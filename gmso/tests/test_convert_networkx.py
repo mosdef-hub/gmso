@@ -57,3 +57,15 @@ class TestConvertNetworkX(BaseTest):
         # TODO: create subtops for each fragment in `from_networkx()`
         assert (nx.number_connected_components(water_to_nx) ==
                 water_system.n_subtops)
+
+    def test_from_networkx_without_connections(self):
+        g = nx.Graph()
+        g.add_edge(Atom(), Atom())
+        top = from_networkx(g)
+        assert top.n_connections == 1
+
+    def test_from_networkx_arbitrary_graph(self):
+        test_graph = nx.grid_2d_graph(2, 2)
+        with pytest.raises(TypeError) as e:
+            from_networkx(test_graph)
+
