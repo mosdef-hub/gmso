@@ -91,13 +91,15 @@ def _check_atomtype_existence(tag, ref_dict):
     at3 = tag.attrib.get('type3', tag.attrib.get('class3', None))
     at4 = tag.attrib.get('type4', tag.attrib.get('class4', None))
 
+    atom_classes_set = set(value.atomclass for value in ref_dict.values() if value)
+
     member_types = list(filter(lambda x: x is not None, [at1, at2, at3, at4]))
     member_types = ['*' if mem_type == '' else mem_type for mem_type in member_types]
     for member in member_types:
         if member == '*':
             continue
-        if member not in ref_dict:
-            raise ForceFieldParseError('AtomTypes {} not present in AtomTypes reference in the xml'.format(member))
+        if member not in ref_dict and member not in atom_classes_set:
+            raise ForceFieldParseError('AtomType/AtomClass {} not present in AtomTypes reference in the xml'.format(member))
     return member_types
 
 
