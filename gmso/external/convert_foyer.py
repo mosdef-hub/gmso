@@ -167,6 +167,19 @@ def _insert_parameters_units_def(root, name, unit):
     root.insert(0, params_units_def)
 
 
+def _add_parameters(root, params_dict):
+    parameters = _create_sub_element(root, "Parameters")
+    for param_name, param_value in params_dict.items():
+        _create_sub_element(
+            parameters,
+            "Parameter",
+            attrib_dict={
+                'name': param_name,
+                'value': param_value
+            }
+        )
+
+
 def _write_nbforces(forcefield, ff_kwargs):
     # AtomTypes
     nonBondedAtomTypes = _create_sub_element(
@@ -211,25 +224,13 @@ def _write_nbforces(forcefield, ff_kwargs):
             './/AtomType[@name="{}"]'.format(atom_type.get("type"))
         )
         thisAtomType.attrib["name"] = atom_type.get("type", "AtomType")
-        parameters = etree.SubElement(thisAtomType, "Parameters")
-        parameter_ep = _create_sub_element(
-            parameters,
-            "Parameter",
-            attrib_dict={"name": "ep", "value": atom_type.get("epsilon"),},
-        )
-        parameter_sigma = _create_sub_element(
-            parameters,
-            "Parameter",
-            attrib_dict={"name": "sigma", "value": atom_type.get("sigma"),},
-        )
-        parameter_e0 = _create_sub_element(
-            parameters, "Parameter", attrib_dict={"name": "e0", "value": "8.8542e-12",}
-        )
-        parameter_q = _create_sub_element(
-            parameters,
-            "Parameter",
-            attrib_dict={"name": "q", "value": atom_type.get("charge"),},
-        )
+        parameters = {
+            "ep": atom_type.get("epsilon"),
+            "sigma": atom_type.get("sigma"),
+            "e0": "8.8542e-12",
+            "q": atom_type.get("charge")
+        }
+        _add_parameters(thisAtomType, parameters)
 
 
 def _write_harmonic_bonds(forcefield, ff_kwargs):
@@ -267,18 +268,11 @@ def _write_harmonic_bonds(forcefield, ff_kwargs):
                     "class{}".format(j + 1), "c{}".format(j + 1)
                 )
 
-        parameters = etree.SubElement(thisBondType, "Parameters")
-        parameters_k = _create_sub_element(
-            parameters,
-            "Parameter",
-            attrib_dict={"name": "k", "value": bond_type.get("k", "1.0"),},
-        )
-
-        parameters_req = _create_sub_element(
-            parameters,
-            "Parameter",
-            attrib_dict={"name": "r_eq", "value": bond_type.get("length", "1.0"),},
-        )
+        parameters = {
+            "k": bond_type.get("k", "1.0"),
+            "r_eq": bond_type.get("length", "1.0")
+        }
+        _add_parameters(thisBondType, parameters)
 
 
 def _write_harmonic_angles(forcefield, ff_kwargs):
@@ -309,18 +303,12 @@ def _write_harmonic_angles(forcefield, ff_kwargs):
             },
         )
 
-        parameters = etree.SubElement(thisAngleType, "Parameters")
-        _create_sub_element(
-            parameters,
-            "Parameter",
-            attrib_dict={"name": "k", "value": angle_type.get("k", "1.0"),},
-        )
+        parameters = {
+            "k": angle_type.get("k", "1.0"),
+            "theta_eq": angle_type.get("angle", "1.0")
+        }
+        _add_parameters(thisAngleType, parameters)
 
-        _create_sub_element(
-            parameters,
-            "Parameter",
-            attrib_dict={"name": "theta_eq", "value": angle_type.get("angle", "1.0"),},
-        )
         for j, item in enumerate(angle_type.items()):
             if "type" in item[0]:
                 thisAngleType.attrib["type{}".format(j + 1)] = angle_type.get(
@@ -363,17 +351,11 @@ def _write_ub_angles(forceField, ff_kwargs):
             },
         )
 
-        parameters = etree.SubElement(thisAngleType, "Parameters")
-        _create_sub_element(
-            parameters,
-            "Parameter",
-            attrib_dict={"name": "k", "value": angle_type.get("k", "1.0"),},
-        )
-        _create_sub_element(
-            parameters,
-            "Parameter",
-            attrib_dict={"name": "w_0", "value": angle_type.get("d", "1.0"),},
-        )
+        parameters = {
+            "k": angle_type.get("k", "1.0"),
+            "w_0": angle_type.get("d", "1.0")
+        }
+        _add_parameters(thisAngleType, parameters)
 
 
 def _write_periodic_dihedrals(forceField, ff_kwargs):
@@ -405,40 +387,26 @@ def _write_periodic_dihedrals(forceField, ff_kwargs):
                     "class{}".format(j + 1), "c{}".format(j + 1)
                 )
 
-        parameters = etree.SubElement(thisDihedralType, "Parameters")
+        parameters = {}
 
         j = 1
         while dihedral_type.get("k{}".format(j)):
-            parameter_k_name = "k{}".format(j)
-            _create_sub_element(
-                parameters,
-                "Parameter",
-                attrib_dict={
-                    "name": parameter_k_name,
-                    "value": dihedral_type.get(parameter_k_name),
-                },
-            )
-            _create_sub_element(
-                parameters,
-                "Parameter",
-                attrib_dict={
-                    "name": "n{}".format(j),
-                    "value": dihedral_type.get("periodicity{}".format(j)),
-                },
-            )
-
-            _create_sub_element(
-                parameters,
-                "Parameter",
-                attrib_dict={
-                    "name": "delta{}".format(j),
-                    "value": dihedral_type.get("phase{}".format(j)),
-                },
-            )
+            param_k_name = "k{}".format(j)
+            param_k_value = dihedral_type.get(param_k_name)
+            param_n_name = "n{}".format(j)
+            param_n_value = dihedral_type.get("periodicity{}".format(j))
+            param_delta_name = "delta{}".format(j)
+            param_delta_value = dihedral_type.get("phase{}".format(j))
+            parameters[param_k_name] = param_k_value
+            parameters[param_n_name] = param_n_value
+            parameters[param_delta_name] = param_delta_value
             j += 1
+
+        _add_parameters(thisDihedralType, parameters)
 
         if j > max_j:
             max_j = j
+
     for k in range(0, max_j):
         _insert_parameters_units_def(
             periodicTorsionDihedralTypes,
@@ -455,6 +423,7 @@ def _write_periodic_dihedrals(forceField, ff_kwargs):
             'delta{}'.format(k),
             'radian'
         )
+
 
 
 def _write_periodic_impropers(forcefield, ff_kwargs):
@@ -485,38 +454,23 @@ def _write_periodic_impropers(forcefield, ff_kwargs):
                     "class{}".format(j + 1), "c{}".format(j + 1)
                 )
 
-        parameters = etree.SubElement(thisDihedralType, "Parameters")
+        parameters = {}
 
         j = 1
         while dihedral_type.get("k{}".format(j)):
-            parameter_k_name = "k{}".format(j)
-            _create_sub_element(
-                parameters,
-                "Parameter",
-                attrib_dict={
-                    "name": parameter_k_name,
-                    "value": dihedral_type.get(parameter_k_name),
-                },
-            )
-
-            _create_sub_element(
-                parameters,
-                "Parameter",
-                attrib_dict={
-                    "name": "n{}".format(j),
-                    "value": dihedral_type.get("periodicity{}".format(j)),
-                },
-            )
-
-            _create_sub_element(
-                parameters,
-                "Parameter",
-                attrib_dict={
-                    "name": "delta{}".format(j),
-                    "value": dihedral_type.get("phase{}".format(j)),
-                },
-            )
+            param_k_name = "k{}".format(j)
+            param_k_value = dihedral_type.get(param_k_name)
+            param_n_name = "n{}".format(j)
+            param_n_value = dihedral_type.get("periodicity{}".format(j))
+            param_delta_name = "delta{}".format(j)
+            param_delta_value = dihedral_type.get("phase{}".format(j))
+            parameters[param_k_name] = param_k_value
+            parameters[param_n_name] = param_n_value
+            parameters[param_delta_name] = param_delta_value
             j += 1
+
+        _add_parameters(thisDihedralType, parameters)
+
         if j > max_j:
             max_j = j
 
@@ -569,20 +523,17 @@ def _write_rb_torsions(forcefield, ff_kwargs):
                     "class{}".format(j + 1), "c{}".format(j + 1)
                 )
 
-        parameters = etree.SubElement(thisDihedralType, "Parameters")
+        parameters = {}
 
         j = 0
         while dihedral_type.get("c{}".format(j)):
-            parameter_c_name = "c{}".format(j)
-            _create_sub_element(
-                parameters,
-                "Parameter",
-                attrib_dict={
-                    "name": parameter_c_name,
-                    "value": dihedral_type.get(parameter_c_name),
-                },
-            )
+            param_c_name = "c{}".format(j)
+            param_c_value = dihedral_type.get(param_c_name)
+            parameters[param_c_name] = param_c_value
             j += 1
+
+        _add_parameters(thisDihedralType, parameters)
+
         if j > max_j:
             max_j = j
     for k in range(0, max_j):
