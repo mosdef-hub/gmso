@@ -108,14 +108,14 @@ def _write_gmso_xml(gmso_xml, **kwargs):
     forcefield.attrib["name"] = pathlib.Path(str(gmso_xml)).stem
     forcefield.attrib["version"] = "0.0.1"
 
-    ffMeta = _create_subelement(forcefield, "FFMetaData")
+    ffMeta = _create_sub_element(forcefield, "FFMetaData")
     if ff_kwargs["coulomb14scale"]:
         ffMeta.attrib["electrostatics14Scale"] = ff_kwargs["coulomb14scale"]
 
     if ff_kwargs["lj14scale"]:
         ffMeta.attrib["nonBonded14Scale"] = ff_kwargs["lj14scale"]
 
-    units = _create_subelement(
+    units = _create_sub_element(
         ffMeta,
         name="Units",
         attrib_dict={
@@ -158,40 +158,41 @@ def _write_gmso_xml(gmso_xml, **kwargs):
     )
 
 
+def _insert_parameters_units_def(root, name, unit):
+    params_units_def = _create_sub_element(
+        root,
+        "ParametersUnitDef",
+        attrib_dict={"parameter": name, "unit": unit},
+    )
+    root.insert(0, params_units_def)
+
+
 def _write_nbforces(forcefield, ff_kwargs):
     # AtomTypes
-    nonBondedAtomTypes = _create_subelement(
+    nonBondedAtomTypes = _create_sub_element(
         forcefield,
         "AtomTypes",
         attrib_dict={
             "expression": "ep * ((sigma/r)**12 - (sigma/r)**6) + q / (e0 * r)",
         },
     )
+    parameters_units = {
+        "ep": "kJ/mol",
+        "sigma": "nm",
+        "e0": "A**2*s**4/(kg*m**3)",
+        "q": "coulomb"
+    }
 
     # NonBondedForces
-    nonBondedAtomTypesParamsUnitsDef_ep = _create_subelement(
-        nonBondedAtomTypes,
-        "ParametersUnitDef",
-        attrib_dict={"parameter": "ep", "unit": "kJ/mol",},
-    )
-    nonBondedAtomTypesParamsUnitsDef_sigma = _create_subelement(
-        nonBondedAtomTypes,
-        "ParametersUnitDef",
-        attrib_dict={"parameter": "sigma", "unit": "nm",},
-    )
-    nonBondedAtomTypesParamsUnitsDef_e0 = _create_subelement(
-        nonBondedAtomTypes,
-        "ParametersUnitDef",
-        attrib_dict={"parameter": "e0", "unit": "A**2*s**4/(kg*m**3)",},
-    )
-    nonBondedAtomTypesParamsUnitsDef_q = _create_subelement(
-        nonBondedAtomTypes,
-        "ParametersUnitDef",
-        attrib_dict={"parameter": "q", "unit": "coulomb",},
-    )
+    for name, unit in parameters_units.items():
+        _insert_parameters_units_def(
+            nonBondedAtomTypes,
+            name,
+            unit
+        )
 
     for atom_type in ff_kwargs["atom_types"]:
-        thisAtomType = _create_subelement(
+        thisAtomType = _create_sub_element(
             nonBondedAtomTypes,
             "AtomType",
             attrib_dict={
@@ -211,20 +212,20 @@ def _write_nbforces(forcefield, ff_kwargs):
         )
         thisAtomType.attrib["name"] = atom_type.get("type", "AtomType")
         parameters = etree.SubElement(thisAtomType, "Parameters")
-        parameter_ep = _create_subelement(
+        parameter_ep = _create_sub_element(
             parameters,
             "Parameter",
             attrib_dict={"name": "ep", "value": atom_type.get("epsilon"),},
         )
-        parameter_sigma = _create_subelement(
+        parameter_sigma = _create_sub_element(
             parameters,
             "Parameter",
             attrib_dict={"name": "sigma", "value": atom_type.get("sigma"),},
         )
-        parameter_e0 = _create_subelement(
+        parameter_e0 = _create_sub_element(
             parameters, "Parameter", attrib_dict={"name": "e0", "value": "8.8542e-12",}
         )
-        parameter_q = _create_subelement(
+        parameter_q = _create_sub_element(
             parameters,
             "Parameter",
             attrib_dict={"name": "q", "value": atom_type.get("charge"),},
@@ -232,24 +233,24 @@ def _write_nbforces(forcefield, ff_kwargs):
 
 
 def _write_harmonic_bonds(forcefield, ff_kwargs):
-    harmonicBondTypes = _create_subelement(
+    harmonicBondTypes = _create_sub_element(
         forcefield, "BondTypes", attrib_dict={"expression": "k * (r-r_eq)**2", }
     )
 
-    harmonicBondTypesParamsUnitsDef_k = _create_subelement(
-        harmonicBondTypes,
-        "ParametersUnitDef",
-        attrib_dict={"parameter": "k", "unit": "kJ/nm**2",},
-    )
+    parameters_units = {
+        "k": "kJ/nm**2",
+        "r_eq": "nm"
+    }
 
-    harmonicBondTypesParamsUnitsDef_r_eq = _create_subelement(
-        harmonicBondTypes,
-        "ParametersUnitDef",
-        attrib_dict={"parameter": "r_eq", "unit": "nm"},
-    )
+    for name, unit in parameters_units.items():
+        _insert_parameters_units_def(
+            harmonicBondTypes,
+            name,
+            unit
+        )
 
     for i, bond_type in enumerate(ff_kwargs["harmonic_bond_types"]):
-        thisBondType = _create_subelement(
+        thisBondType = _create_sub_element(
             harmonicBondTypes,
             "BondType",
             attrib_dict={
@@ -267,13 +268,13 @@ def _write_harmonic_bonds(forcefield, ff_kwargs):
                 )
 
         parameters = etree.SubElement(thisBondType, "Parameters")
-        parameters_k = _create_subelement(
+        parameters_k = _create_sub_element(
             parameters,
             "Parameter",
             attrib_dict={"name": "k", "value": bond_type.get("k", "1.0"),},
         )
 
-        parameters_k = _create_subelement(
+        parameters_req = _create_sub_element(
             parameters,
             "Parameter",
             attrib_dict={"name": "r_eq", "value": bond_type.get("length", "1.0"),},
@@ -281,26 +282,26 @@ def _write_harmonic_bonds(forcefield, ff_kwargs):
 
 
 def _write_harmonic_angles(forcefield, ff_kwargs):
-    harmonicAngleTypes = _create_subelement(
+    harmonicAngleTypes = _create_sub_element(
         forcefield,
         "AngleTypes",
         attrib_dict={"expression": "k * (theta - theta_eq)**2",},
     )
 
-    harmonicAngleTypesParamsUnitsDef_k = _create_subelement(
-        harmonicAngleTypes,
-        "ParametersUnitDef",
-        attrib_dict={"parameter": "k", "unit": "kJ/radian**2",},
-    )
+    parameters_units = {
+        "k": "kJ/radian**2",
+        "theta_eq": "radian"
+    }
 
-    harmonicAngleTypesParamsUnitsDef_theta_eq = _create_subelement(
-        harmonicAngleTypes,
-        "ParametersUnitDef",
-        attrib_dict={"parameter": "theta_eq", "unit": "radian",},
-    )
+    for name, unit in parameters_units.items():
+        _insert_parameters_units_def(
+            harmonicAngleTypes,
+            name,
+            unit
+        )
 
     for i, angle_type in enumerate(ff_kwargs["harmonic_angle_types"]):
-        thisAngleType = _create_subelement(
+        thisAngleType = _create_sub_element(
             harmonicAngleTypes,
             "AngleType",
             attrib_dict={
@@ -309,13 +310,13 @@ def _write_harmonic_angles(forcefield, ff_kwargs):
         )
 
         parameters = etree.SubElement(thisAngleType, "Parameters")
-        parameter_k = _create_subelement(
+        _create_sub_element(
             parameters,
             "Parameter",
             attrib_dict={"name": "k", "value": angle_type.get("k", "1.0"),},
         )
 
-        parameter_r_eq = _create_subelement(
+        _create_sub_element(
             parameters,
             "Parameter",
             attrib_dict={"name": "theta_eq", "value": angle_type.get("angle", "1.0"),},
@@ -326,30 +327,30 @@ def _write_harmonic_angles(forcefield, ff_kwargs):
                     "type{}".format(j + 1), "c{}".format(j + 1)
                 )
             elif "class" in item[0]:
-                thisAngleType.attrib["type{}".format(j + 1)] = angle_type.get(
+                thisAngleType.attrib["class{}".format(j + 1)] = angle_type.get(
                     "class{}".format(j + 1), "c{}".format(j + 1)
                 )
 
 
 def _write_ub_angles(forceField, ff_kwargs):
-    ureybradleyAngleTypes = _create_subelement(
+    ureybradleyAngleTypes = _create_sub_element(
         forceField, "AngleTypes", attrib_dict={"expression": "k * (w - w_0) ** 2",}
     )
 
-    ureybradleyAngleTypesParamsUnitsDef_k = _create_subelement(
-        ureybradleyAngleTypes,
-        "ParametersUnitDef",
-        attrib_dict={"parameter": "k", "unit": "kJ/radian**2"},
-    )
+    parameters_units = {
+        "k": "kJ/radian**2",
+        "w_0": "nm"
+    }
 
-    ureybradleyAngleTypesParamsUnitsDef_w_0 = _create_subelement(
-        ureybradleyAngleTypes,
-        "ParametersUnitDef",
-        attrib_dict={"parameter": "w_0", "unit": "nm"},
-    )
+    for name, unit in parameters_units.items():
+        _insert_parameters_units_def(
+            ureybradleyAngleTypes,
+            name,
+            unit
+        )
 
     for i, angle_type in enumerate(ff_kwargs["urey_bradley_angle_types"]):
-        thisAngleType = _create_subelement(
+        thisAngleType = _create_sub_element(
             ureybradleyAngleTypes,
             "AngleType",
             attrib_dict={
@@ -363,12 +364,12 @@ def _write_ub_angles(forceField, ff_kwargs):
         )
 
         parameters = etree.SubElement(thisAngleType, "Parameters")
-        parameter_k = _create_subelement(
+        _create_sub_element(
             parameters,
             "Parameter",
             attrib_dict={"name": "k", "value": angle_type.get("k", "1.0"),},
         )
-        parameter_r_eq = _create_subelement(
+        _create_sub_element(
             parameters,
             "Parameter",
             attrib_dict={"name": "w_0", "value": angle_type.get("d", "1.0"),},
@@ -376,7 +377,7 @@ def _write_ub_angles(forceField, ff_kwargs):
 
 
 def _write_periodic_dihedrals(forceField, ff_kwargs):
-    periodicTorsionDihedralTypes = _create_subelement(
+    periodicTorsionDihedralTypes = _create_sub_element(
         forceField,
         "DihedralTypes",
         attrib_dict={"expression": "k * (1 + cos(n * phi - delta))",},
@@ -384,7 +385,7 @@ def _write_periodic_dihedrals(forceField, ff_kwargs):
 
     max_j = 0
     for i, dihedral_type in enumerate(ff_kwargs["periodic_torsion_dihedral_types"]):
-        thisDihedralType = _create_subelement(
+        thisDihedralType = _create_sub_element(
             periodicTorsionDihedralTypes,
             "DihedralType",
             attrib_dict={
@@ -409,7 +410,7 @@ def _write_periodic_dihedrals(forceField, ff_kwargs):
         j = 1
         while dihedral_type.get("k{}".format(j)):
             parameter_k_name = "k{}".format(j)
-            parameter_k = _create_subelement(
+            _create_sub_element(
                 parameters,
                 "Parameter",
                 attrib_dict={
@@ -417,7 +418,7 @@ def _write_periodic_dihedrals(forceField, ff_kwargs):
                     "value": dihedral_type.get(parameter_k_name),
                 },
             )
-            parameter_n = _create_subelement(
+            _create_sub_element(
                 parameters,
                 "Parameter",
                 attrib_dict={
@@ -426,7 +427,7 @@ def _write_periodic_dihedrals(forceField, ff_kwargs):
                 },
             )
 
-            parameter_delta = _create_subelement(
+            _create_sub_element(
                 parameters,
                 "Parameter",
                 attrib_dict={
@@ -439,43 +440,32 @@ def _write_periodic_dihedrals(forceField, ff_kwargs):
         if j > max_j:
             max_j = j
     for k in range(0, max_j):
-        periodicTorsionDihedralTypesParamsUnitsDef_k = _create_subelement(
+        _insert_parameters_units_def(
             periodicTorsionDihedralTypes,
-            "ParametersUnitDef",
-            attrib_dict={"parameter": "k{}".format(k), "unit": "kJ",},
+            'k{}'.format(k),
+            'kJ'
         )
-        periodicTorsionDihedralTypes.insert(
-            0, periodicTorsionDihedralTypesParamsUnitsDef_k
-        )
-
-        periodicTorsionDihedralTypesParamsUnitsDef_n = _create_subelement(
+        _insert_parameters_units_def(
             periodicTorsionDihedralTypes,
-            "ParametersUnitDef",
-            attrib_dict={"parameter": "n{}".format(k), "unit": "dimensionless",},
+            'n{}'.format(k),
+            'dimensionless'
         )
-        periodicTorsionDihedralTypes.insert(
-            0, periodicTorsionDihedralTypesParamsUnitsDef_n
-        )
-
-        periodicTorsionDihedralTypesParamsUnitsDef_del = _create_subelement(
+        _insert_parameters_units_def(
             periodicTorsionDihedralTypes,
-            "ParametersUnitDef",
-            attrib_dict={"parameter": "delta{}".format(k), "unit": "radian",},
-        )
-        periodicTorsionDihedralTypes.insert(
-            0, periodicTorsionDihedralTypesParamsUnitsDef_del
+            'delta{}'.format(k),
+            'radian'
         )
 
 
 def _write_periodic_impropers(forcefield, ff_kwargs):
     max_j = 0
-    periodicImproperTypes = _create_subelement(
+    periodicImproperTypes = _create_sub_element(
         forcefield,
         "DihedralTypes",
         attrib_dict={"expression": "k * (1 + cos(n * phi - delta))",},
     )
     for i, dihedral_type in enumerate(ff_kwargs["periodic_improper_types"]):
-        thisDihedralType = _create_subelement(
+        thisDihedralType = _create_sub_element(
             periodicImproperTypes,
             "DihedralType",
             attrib_dict={
@@ -500,7 +490,7 @@ def _write_periodic_impropers(forcefield, ff_kwargs):
         j = 1
         while dihedral_type.get("k{}".format(j)):
             parameter_k_name = "k{}".format(j)
-            parameter_k = _create_subelement(
+            _create_sub_element(
                 parameters,
                 "Parameter",
                 attrib_dict={
@@ -508,7 +498,8 @@ def _write_periodic_impropers(forcefield, ff_kwargs):
                     "value": dihedral_type.get(parameter_k_name),
                 },
             )
-            parameter_n = _create_subelement(
+
+            _create_sub_element(
                 parameters,
                 "Parameter",
                 attrib_dict={
@@ -516,7 +507,8 @@ def _write_periodic_impropers(forcefield, ff_kwargs):
                     "value": dihedral_type.get("periodicity{}".format(j)),
                 },
             )
-            parameter_delta = _create_subelement(
+
+            _create_sub_element(
                 parameters,
                 "Parameter",
                 attrib_dict={
@@ -529,30 +521,25 @@ def _write_periodic_impropers(forcefield, ff_kwargs):
             max_j = j
 
     for k in range(0, max_j):
-        periodicImproperTypesParamsUnitsDef_k = _create_subelement(
+        _insert_parameters_units_def(
             periodicImproperTypes,
-            "ParametersUnitDef",
-            attrib_dict={"parameter": "k{}".format(k), "unit": "kJ",},
+            'k{}'.format(k),
+            'kJ'
         )
-        periodicImproperTypes.insert(0, periodicImproperTypesParamsUnitsDef_k)
-
-        periodicImproperTypesParamsUnitsDef_n = _create_subelement(
+        _insert_parameters_units_def(
             periodicImproperTypes,
-            "ParametersUnitDef",
-            attrib_dict={"parameter": "n{}".format(k), "unit": "dimensionless",},
+            'n{}'.format(k),
+            'dimensionless'
         )
-        periodicImproperTypes.insert(0, periodicImproperTypesParamsUnitsDef_n)
-
-        periodicImproperTypesParamsUnitsDef_del = _create_subelement(
+        _insert_parameters_units_def(
             periodicImproperTypes,
-            "ParametersUnitDef",
-            attrib_dict={"parameter": "delta{}".format(k), "unit": "degree",},
+            'delta{}'.format(k),
+            'degree'
         )
-        periodicImproperTypes.insert(0, periodicImproperTypesParamsUnitsDef_del)
 
 
 def _write_rb_torsions(forcefield, ff_kwargs):
-    rbTorsionDihedralTypes = _create_subelement(
+    rbTorsionDihedralTypes = _create_sub_element(
         forcefield,
         "DihedralTypes",
         attrib_dict={
@@ -562,7 +549,7 @@ def _write_rb_torsions(forcefield, ff_kwargs):
 
     max_j = 0
     for i, dihedral_type in enumerate(ff_kwargs["rb_torsion_dihedral_types"]):
-        thisDihedralType = _create_subelement(
+        thisDihedralType = _create_sub_element(
             rbTorsionDihedralTypes,
             "DihedralType",
             attrib_dict={
@@ -587,7 +574,7 @@ def _write_rb_torsions(forcefield, ff_kwargs):
         j = 0
         while dihedral_type.get("c{}".format(j)):
             parameter_c_name = "c{}".format(j)
-            parameter_c = _create_subelement(
+            _create_sub_element(
                 parameters,
                 "Parameter",
                 attrib_dict={
@@ -599,14 +586,13 @@ def _write_rb_torsions(forcefield, ff_kwargs):
         if j > max_j:
             max_j = j
     for k in range(0, max_j):
-        rbTorsionDihedralTypesParamsUnitsDef_c = _create_subelement(
+        _insert_parameters_units_def(
             rbTorsionDihedralTypes,
-            "ParametersUnitDef",
-            attrib_dict={"parameter": "c{}".format(k), "unit": "kJ/mol",},
+            "c{}".format(k),
+            "kJ/mol"
         )
-        rbTorsionDihedralTypes.insert(0, rbTorsionDihedralTypesParamsUnitsDef_c)
 
 
-def _create_subelement(root_el, name, attrib_dict=None):
+def _create_sub_element(root_el, name, attrib_dict=None):
     sub_el = etree.SubElement(root_el, name, attrib_dict)
     return sub_el
