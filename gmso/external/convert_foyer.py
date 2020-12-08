@@ -20,8 +20,8 @@ def from_foyer(foyer_xml, gmso_xml=None):
     Parameters
     ----------
     foyer_xml : XML file
-        An XML file in the foyer format 
-   
+        An XML file in the foyer format
+
     Returns
     -------
     gmso_xml : XML file, default=None
@@ -100,8 +100,8 @@ def from_foyer(foyer_xml, gmso_xml=None):
 def _write_gmso_xml(gmso_xml, **kwargs):
     """Given the set of keyword arguments, write a gmso topology's forcefield xml file"""
     ff_kwargs = {
-        "coulomb14scale": kwargs.get("coulomb14scale", []),
-        "lj14scale": kwargs.get("lj14scale", []),
+        "coulomb14scale": kwargs.get("coulomb14scale"),
+        "lj14scale": kwargs.get("lj14scale"),
         "atom_types": kwargs.get("atom_types", []),
         "non_bonded_forces": kwargs.get("non_bonded_forces", []),
         "harmonic_bond_types": kwargs.get("harmonic_bond_types", []),
@@ -118,8 +118,12 @@ def _write_gmso_xml(gmso_xml, **kwargs):
     forceField.attrib["version"] = "0.0.1"
 
     ffMeta = _create_subelement(forceField, "FFMetaData")
-    ffMeta.attrib["electrostatics14Scale"] = ff_kwargs["coulomb14scale"]
-    ffMeta.attrib["nonBonded14Scale"] = ff_kwargs["lj14scale"]
+    if ff_kwargs["coulomb14scale"]:
+        ffMeta.attrib["electrostatics14Scale"] = ff_kwargs["coulomb14scale"]
+
+    if ff_kwargs["lj14scale"]:
+        ffMeta.attrib["nonBonded14Scale"] = ff_kwargs["lj14scale"]
+
     units = _create_subelement(
         ffMeta,
         name="Units",
@@ -542,7 +546,7 @@ def _write_periodic_impropers(forceField, ff_kwargs):
         periodicImproperTypes.insert(0, periodicImproperTypesParamsUnitsDef_k)
 
         periodicImproperTypesParamsUnitsDef_n = _create_subelement(
-            periodicImproperTypes, 
+            periodicImproperTypes,
             "ParametersUnitDef",
             attrib_dict={"parameter": "n{}".format(k), "unit": "dimensionless",},
         )
