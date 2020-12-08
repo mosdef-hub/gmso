@@ -186,3 +186,17 @@ class TestForceFieldFromXML(BaseTest):
         assert len(named_groups_ff.potential_groups['PeriodicProper']) == 2
         assert len(named_groups_ff.potential_groups['RBProper']) == 1
 
+
+    def test_potential_types_by_expression(self, named_groups_ff):
+        atom_types_grouped_by_expression = named_groups_ff.group_atom_types_by_expression()
+        bond_types_grouped_by_expression = named_groups_ff.group_bond_types_by_expression()
+        angle_types_grouped_by_expression = named_groups_ff.group_angle_types_by_expression()
+        dihedral_types_grouped_by_expression = named_groups_ff.group_dihedral_types_by_expression()
+        improper_types_gropued_by_expression = named_groups_ff.group_improper_types_by_expression()
+
+        assert len(atom_types_grouped_by_expression['A*exp(-B/r) - C/r**6']) == 3
+        assert len(bond_types_grouped_by_expression['0.5*k*(r - r_eq)**2']) == 2
+        assert len(angle_types_grouped_by_expression['0.5*z*(r - r_eq)**2']) == 2
+        assert len(dihedral_types_grouped_by_expression['0.5*z*(r - r_eq)**2']) == 2
+        assert len(improper_types_gropued_by_expression['0.5*z*(r - r_eq)**2']) == 1
+
