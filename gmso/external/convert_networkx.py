@@ -32,6 +32,10 @@ def from_networkx(graph):
     object it was created from
     """
 
+    if not isinstance(graph, nx.Graph):
+        raise TypeError("Type mismatch, graph object is expected to be "
+                        "an instance of networkx.Graph, was provided: {}"
+                        .format(type(graph)))
     top = Topology()
 
     node_mapping = dict()

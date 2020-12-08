@@ -38,6 +38,11 @@ class TestConvertNetworkX(BaseTest):
         assert set(ar_system.sites) == set(ar_from_nx.sites)
         assert set(ar_system.bonds) == set(ar_from_nx.bonds)
 
+    def test_from_networkx_not_graph_object(self):
+        fake_graph = [23, 23]
+        with pytest.raises(TypeError):
+            from_networkx(fake_graph)
+
     def test_from_networkx_water_box(self, water_system):
         water_to_nx = to_networkx(water_system)
         water_from_nx = from_networkx(water_to_nx)
