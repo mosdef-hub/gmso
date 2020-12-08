@@ -1,17 +1,7 @@
-from warnings import warn
-
-import numpy as np
-import unyt as u
-import os
-import sympy
 import pathlib
 
 from lxml import etree
-from gmso.utils.io import has_foyer  # Need for foyer
 from gmso.exceptions import ForceFieldParseError
-
-if has_foyer:
-    import foyer
 
 
 def from_foyer(foyer_xml, gmso_xml=None):
@@ -21,7 +11,8 @@ def from_foyer(foyer_xml, gmso_xml=None):
     ----------
     foyer_xml : XML file
         An XML file in the foyer format
-
+    gmso_xml: (str, pathlib.Path) default=None
+        The output GMSO xml filename
     Returns
     -------
     gmso_xml : XML file, default=None
@@ -113,11 +104,11 @@ def _write_gmso_xml(gmso_xml, **kwargs):
         "periodic_improper_types": kwargs.get("periodic_improper_types", []),
         "rb_torsion_dihedral_types": kwargs.get("rb_torsion_dihedral_types", []),
     }
-    forceField = etree.Element("ForceField")
-    forceField.attrib["name"] = pathlib.Path(str(gmso_xml)).stem
-    forceField.attrib["version"] = "0.0.1"
+    forcefield = etree.Element("ForceField")
+    forcefield.attrib["name"] = pathlib.Path(str(gmso_xml)).stem
+    forcefield.attrib["version"] = "0.0.1"
 
-    ffMeta = _create_subelement(forceField, "FFMetaData")
+    ffMeta = _create_subelement(forcefield, "FFMetaData")
     if ff_kwargs["coulomb14scale"]:
         ffMeta.attrib["electrostatics14Scale"] = ff_kwargs["coulomb14scale"]
 
@@ -136,41 +127,41 @@ def _write_gmso_xml(gmso_xml, **kwargs):
     )
 
     # AtomTypes and NonBonded Forces
-    _write_nbforces(forceField, ff_kwargs)
+    _write_nbforces(forcefield, ff_kwargs)
 
     # HarmonicBondTypes
     if len(ff_kwargs["harmonic_bond_types"]) > 0:
-        _write_harmonic_bonds(forceField, ff_kwargs)
+        _write_harmonic_bonds(forcefield, ff_kwargs)
 
     # HarmonicAngleTypes
     if len(ff_kwargs["harmonic_angle_types"]) > 0:
-        _write_harmonic_angles(forceField, ff_kwargs)
+        _write_harmonic_angles(forcefield, ff_kwargs)
 
     # UreyBradleyAngleTypes
     if len(ff_kwargs["urey_bradley_angle_types"]) > 0:
-        _write_ub_angles(forceField, ff_kwargs)
+        _write_ub_angles(forcefield, ff_kwargs)
 
     # PeriodicTorsionDihedralTypes and PeriodicImproperDihedralTypes
     if len(ff_kwargs["periodic_torsion_dihedral_types"]) > 0:
-        _write_periodic_dihedrals(forceField, ff_kwargs)
+        _write_periodic_dihedrals(forcefield, ff_kwargs)
 
     if len(ff_kwargs["periodic_improper_types"]) > 0:
-        _write_periodic_impropers(forceField, ff_kwargs)
+        _write_periodic_impropers(forcefield, ff_kwargs)
 
     # RBTorsionDihedralTypes
     if len(ff_kwargs["rb_torsion_dihedral_types"]) > 0:
-        _write_rb_torsions(forceField, ff_kwargs)
+        _write_rb_torsions(forcefield, ff_kwargs)
 
-    ff_tree = etree.ElementTree(forceField)
+    ff_tree = etree.ElementTree(forcefield)
     ff_tree.write(
         str(gmso_xml), pretty_print=True, xml_declaration=True, encoding="utf-8"
     )
 
 
-def _write_nbforces(forceField, ff_kwargs):
+def _write_nbforces(forcefield, ff_kwargs):
     # AtomTypes
     nonBondedAtomTypes = _create_subelement(
-        forceField,
+        forcefield,
         "AtomTypes",
         attrib_dict={
             "expression": "ep * ((sigma/r)**12 - (sigma/r)**6) + q / (e0 * r)",
@@ -240,9 +231,9 @@ def _write_nbforces(forceField, ff_kwargs):
         )
 
 
-def _write_harmonic_bonds(forceField, ff_kwargs):
+def _write_harmonic_bonds(forcefield, ff_kwargs):
     harmonicBondTypes = _create_subelement(
-        forceField, "BondTypes", attrib_dict={"expression": "k * (r-r_eq)**2",}
+        forcefield, "BondTypes", attrib_dict={"expression": "k * (r-r_eq)**2", }
     )
 
     harmonicBondTypesParamsUnitsDef_k = _create_subelement(
@@ -289,9 +280,9 @@ def _write_harmonic_bonds(forceField, ff_kwargs):
         )
 
 
-def _write_harmonic_angles(forceField, ff_kwargs):
+def _write_harmonic_angles(forcefield, ff_kwargs):
     harmonicAngleTypes = _create_subelement(
-        forceField,
+        forcefield,
         "AngleTypes",
         attrib_dict={"expression": "k * (theta - theta_eq)**2",},
     )
@@ -476,10 +467,10 @@ def _write_periodic_dihedrals(forceField, ff_kwargs):
         )
 
 
-def _write_periodic_impropers(forceField, ff_kwargs):
+def _write_periodic_impropers(forcefield, ff_kwargs):
     max_j = 0
     periodicImproperTypes = _create_subelement(
-        forceField,
+        forcefield,
         "DihedralTypes",
         attrib_dict={"expression": "k * (1 + cos(n * phi - delta))",},
     )
@@ -560,9 +551,9 @@ def _write_periodic_impropers(forceField, ff_kwargs):
         periodicImproperTypes.insert(0, periodicImproperTypesParamsUnitsDef_del)
 
 
-def _write_rb_torsions(forceField, ff_kwargs):
+def _write_rb_torsions(forcefield, ff_kwargs):
     rbTorsionDihedralTypes = _create_subelement(
-        forceField,
+        forcefield,
         "DihedralTypes",
         attrib_dict={
             "expression": "c0 * cos(phi)**0 + c1 * cos(phi)**1 + c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + c5 * cos(phi)**5",
