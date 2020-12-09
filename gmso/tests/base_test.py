@@ -223,10 +223,11 @@ class BaseTest:
        if has_foyer:
           import foyer
           from foyer.tests.utils import get_fn
-       from_foyer(get_fn("fullerene.xml"))
+       from_foyer(get_fn("fullerene.xml"), overwrite=True)
        gmso_ff = ForceField(get_fn("fullerene_gmso.xml"))
 
        return gmso_ff
+
 
     @pytest.fixture
     def foyer_periodic(self):
