@@ -4,7 +4,7 @@ from lxml import etree
 from gmso.exceptions import ForceFieldParseError
 
 
-def from_foyer(foyer_xml, gmso_xml=None):
+def from_foyer(foyer_xml, gmso_xml=None, overwrite=False):
     """Convert a foyer XML to a gmso XML
 
     Parameters
@@ -12,19 +12,31 @@ def from_foyer(foyer_xml, gmso_xml=None):
     foyer_xml : XML file
         An XML file in the foyer format
     gmso_xml: (str, pathlib.Path) default=None
-        The output GMSO xml filename
-    Returns
-    -------
-    gmso_xml : XML file, default=None
-        An XML file in the gmso format
-    """
+        The output GMSO xml filename. If None, the output XML
+        file's name is set by using foyer_xml file suffixed with
+        `_gmso`.
+    overwrite: bool, default=False
+        If true, overwrite the output XML file if it exists
 
+    Raises
+    ------
+    FileExistsError
+        If overwrite is False and the output file (`gmso_xml`) already
+        exists
+    """
     if gmso_xml is None:
         file_name = pathlib.Path(str(foyer_xml))
         stem = file_name.stem
         gmso_xml = file_name.with_name(stem + "_gmso.xml")
     else:
         gmso_xml = pathlib.Path(gmso_xml)
+
+    if not overwrite and gmso_xml.resolve().exists():
+        raise FileExistsError(
+            f'The file {gmso_xml.name} already exists. '
+            f'Please use a different file name or set '
+            f'overwrite=True to overwrite it'
+        )
 
     foyer_xml_tree = etree.parse(foyer_xml)
     f_kwargs = {
@@ -179,6 +191,7 @@ def _add_parameters(root, params_dict):
             }
         )
 
+
 def _get_dihedral_or_improper_parameters(dihedral_type):
     parameters = {}
     j = 1
@@ -299,7 +312,7 @@ def _write_harmonic_angles(forcefield, ff_kwargs):
     harmonicAngleTypes = _create_sub_element(
         forcefield,
         "AngleTypes",
-        attrib_dict={"expression": "k * (theta - theta_eq)**2",},
+        attrib_dict={"expression": "k * (theta - theta_eq)**2", },
     )
 
     parameters_units = {
@@ -374,7 +387,7 @@ def _write_periodic_dihedrals(forcefield, ff_kwargs):
     periodicTorsionDihedralTypes = _create_sub_element(
         forcefield,
         "DihedralTypes",
-        attrib_dict={"expression": "k * (1 + cos(n * phi - delta))",},
+        attrib_dict={"expression": "k * (1 + cos(n * phi - delta))", },
     )
     max_j = 0
     for i, dihedral_type in enumerate(ff_kwargs["periodic_torsion_dihedral_types"]):
@@ -419,7 +432,7 @@ def _write_periodic_impropers(forcefield, ff_kwargs):
     periodicImproperTypes = _create_sub_element(
         forcefield,
         "DihedralTypes",
-        attrib_dict={"expression": "k * (1 + cos(n * phi - delta))",},
+        attrib_dict={"expression": "k * (1 + cos(n * phi - delta))", },
     )
     for i, dihedral_type in enumerate(ff_kwargs["periodic_improper_types"]):
         thisDihedralType = _create_sub_element(
