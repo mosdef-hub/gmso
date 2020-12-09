@@ -50,6 +50,10 @@ class GMSOBase(BaseModel, ABC):
         dict_to_unyt(obj)
         return super(GMSOBase, cls).parse_obj(obj)
 
+    def json(self, **kwargs):
+        kwargs['by_alias'] = True
+        return super(GMSOBase, self).json(**kwargs)
+
     @classmethod
     def validate(cls, value):
         if isinstance(value, cls):
@@ -66,3 +70,4 @@ class GMSOBase(BaseModel, ABC):
         alias_to_fields = dict()
         extra = 'forbid'
         json_encoders = GMSOJSONHandler.json_encoders
+        allow_population_by_field_name = True

@@ -1,7 +1,7 @@
 from typing import Any
 from abc import abstractmethod
 
-from pydantic import Field
+from pydantic import Field, validator
 
 from gmso.abc.gmso_base import GMSOBase
 from gmso.utils.expression import _PotentialExpression
@@ -31,22 +31,8 @@ class AbstractPotential(GMSOBase):
 
     def __init__(self,
                  name='Potential',
-                 expression='a*x+b',
-                 independent_variables=None,
                  potential_expression=None,
                  **kwargs):
-        if potential_expression is None:
-            if expression is None:
-                expression = 'a*x+b'
-
-            if independent_variables is None:
-                independent_variables = {'x'}
-
-            potential_expression = _PotentialExpression(
-                expression=expression,
-                independent_variables=independent_variables,
-                parameters=None
-            )
 
         super().__init__(
             name=name,
@@ -71,6 +57,12 @@ class AbstractPotential(GMSOBase):
     @property
     def potential_expression(self):
         return self.__dict__.get('potential_expression_')
+
+    @validator('potential_expression_', pre=True)
+    def validate_potential_expression(cls, v):
+        if isinstance(v, dict):
+            v = _PotentialExpression(**v)
+        return v
 
     @abstractmethod
     def set_expression(self):

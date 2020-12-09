@@ -32,24 +32,30 @@ class BondType(ParametricPotential):
 
     def __init__(self,
                  name='BondType',
-                 expression='0.5 * k * (r-r_eq)**2',
+                 expression=None,
                  parameters=None,
                  independent_variables=None,
+                 potential_expression=None,
                  member_types=None,
                  topology=None):
-        if parameters is None:
-            parameters = {
-                'k': 1000 * u.Unit('kJ / (nm**2)'),
-                'r_eq': 0.14 * u.nm
-            }
-        if independent_variables is None:
-            independent_variables = {'r'}
+        if potential_expression is None:
+            if expression is None:
+                expression = '0.5 * k * (r-r_eq)**2'
+
+            if parameters is None:
+                parameters = {
+                    'k': 1000 * u.Unit('kJ / (nm**2)'),
+                    'r_eq': 0.14 * u.nm
+                }
+            if independent_variables is None:
+                independent_variables = {'r'}
 
         super(BondType, self).__init__(
             name=name,
             expression=expression,
             parameters=parameters,
             independent_variables=independent_variables,
+            potential_expression=potential_expression,
             topology=topology,
             member_types=member_types,
             set_ref=BOND_TYPE_DICT

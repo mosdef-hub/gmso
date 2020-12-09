@@ -61,17 +61,23 @@ class AtomType(ParametricPotential):
                  name='AtomType',
                  mass=0.0 * u.gram / u.mol,
                  charge=0.0 * u.elementary_charge,
-                 expression='4*epsilon*((sigma/r)**12 - (sigma/r)**6)',
+                 expression=None,
                  parameters=None,
+                 potential_expression=None,
                  independent_variables=None,
                  atomclass='', doi='', overrides=None, definition='',
                  description='',
                  topology=None):
-        if parameters is None:
-            parameters = {'sigma': 0.3 * u.nm,
-                          'epsilon': 0.3 * u.Unit('kJ')}
-        if independent_variables is None:
-            independent_variables = {'r'}
+        if potential_expression is None:
+            if expression is None:
+                expression = '4*epsilon*((sigma/r)**12 - (sigma/r)**6)'
+
+            if parameters is None:
+                parameters = {'sigma': 0.3 * u.nm,
+                              'epsilon': 0.3 * u.Unit('kJ')}
+
+            if independent_variables is None:
+                independent_variables = {'r'}
 
         if overrides is None:
             overrides = set()
@@ -81,6 +87,7 @@ class AtomType(ParametricPotential):
             expression=expression,
             parameters=parameters,
             independent_variables=independent_variables,
+            potential_expression=potential_expression,
             topology=topology,
             mass=mass,
             charge=charge,

@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 from gmso.abc.abstract_potential import AbstractPotential
+from gmso.utils.expression import _PotentialExpression
 from gmso.utils.singleton import Singleton
 from gmso.exceptions import GMSOError
 
@@ -29,14 +30,22 @@ class PotentialTemplate(AbstractPotential):
                  name='PotentialTemplate',
                  expression='4*epsilon*((sigma/r)**12 - (sigma/r)**6)',
                  independent_variables='r',
+                 potential_expression=None,
                  template=True):
         if not isinstance(independent_variables, set):
             independent_variables = set(independent_variables.split(','))
 
+        if potential_expression is None:
+            _potential_expression = _PotentialExpression(
+                expression=expression,
+                independent_variables=independent_variables
+            )
+        else:
+            _potential_expression = potential_expression
+
         super(PotentialTemplate, self).__init__(
             name=name,
-            expression=expression,
-            independent_variables=independent_variables,
+            potential_expression=_potential_expression
         )
 
     def set_expression(self, *args, **kwargs):
