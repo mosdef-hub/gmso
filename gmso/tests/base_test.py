@@ -234,7 +234,7 @@ class BaseTest:
        if has_foyer:
           import foyer
           from foyer.tests.utils import get_fn
-       from_foyer(get_fn("oplsaa-periodic.xml"))
+       from_foyer(get_fn("oplsaa-periodic.xml"), overwrite=True)
        gmso_ff = ForceField(get_fn("oplsaa-periodic_gmso.xml"))
 
        return gmso_ff
