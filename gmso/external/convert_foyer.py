@@ -179,6 +179,34 @@ def _add_parameters(root, params_dict):
             }
         )
 
+def _get_dihedral_or_improper_parameters(dihedral_type):
+    parameters = {}
+    j = 1
+    while dihedral_type.get("k{}".format(j)):
+        param_k_name = "k{}".format(j)
+        param_k_value = dihedral_type.get(param_k_name)
+        param_n_name = "n{}".format(j)
+        param_n_value = dihedral_type.get("periodicity{}".format(j))
+        param_delta_name = "delta{}".format(j)
+        param_delta_value = dihedral_type.get("phase{}".format(j))
+        parameters[param_k_name] = param_k_value
+        parameters[param_n_name] = param_n_value
+        parameters[param_delta_name] = param_delta_value
+        j += 1
+    return parameters, j
+
+
+def _populate_class_or_type_attrib(root, type_):
+    for j, item in enumerate(type_.items()):
+        if "type" in item[0]:
+            root.attrib["type{}".format(j + 1)] = type_.get(
+                "type{}".format(j + 1), "c{}".format(j + 1)
+            )
+        elif "class" in item[0]:
+            root.attrib["type{}".format(j + 1)] = type_.get(
+                "class{}".format(j + 1), "c{}".format(j + 1)
+            )
+
 
 def _write_nbforces(forcefield, ff_kwargs):
     # AtomTypes
@@ -258,15 +286,7 @@ def _write_harmonic_bonds(forcefield, ff_kwargs):
                 "name": bond_type.get("name", "BondType-Harmonic-{}".format(i + 1)),
             },
         )
-        for j, item in enumerate(bond_type.items()):
-            if "type" in item[0]:
-                thisBondType.attrib["type{}".format(j + 1)] = bond_type.get(
-                    "type{}".format(j + 1), "c{}".format(j + 1)
-                )
-            elif "class" in item[0]:
-                thisBondType.attrib["type{}".format(j + 1)] = bond_type.get(
-                    "class{}".format(j + 1), "c{}".format(j + 1)
-                )
+        _populate_class_or_type_attrib(thisBondType, bond_type)
 
         parameters = {
             "k": bond_type.get("k", "1.0"),
@@ -309,20 +329,12 @@ def _write_harmonic_angles(forcefield, ff_kwargs):
         }
         _add_parameters(thisAngleType, parameters)
 
-        for j, item in enumerate(angle_type.items()):
-            if "type" in item[0]:
-                thisAngleType.attrib["type{}".format(j + 1)] = angle_type.get(
-                    "type{}".format(j + 1), "c{}".format(j + 1)
-                )
-            elif "class" in item[0]:
-                thisAngleType.attrib["class{}".format(j + 1)] = angle_type.get(
-                    "class{}".format(j + 1), "c{}".format(j + 1)
-                )
+        _populate_class_or_type_attrib(thisAngleType, angle_type)
 
 
-def _write_ub_angles(forceField, ff_kwargs):
+def _write_ub_angles(forcefield, ff_kwargs):
     ureybradleyAngleTypes = _create_sub_element(
-        forceField, "AngleTypes", attrib_dict={"expression": "k * (w - w_0) ** 2",}
+        forcefield, "AngleTypes", attrib_dict={"expression": "k * (w - w_0) ** 2", }
     )
 
     parameters_units = {
@@ -358,13 +370,12 @@ def _write_ub_angles(forceField, ff_kwargs):
         _add_parameters(thisAngleType, parameters)
 
 
-def _write_periodic_dihedrals(forceField, ff_kwargs):
+def _write_periodic_dihedrals(forcefield, ff_kwargs):
     periodicTorsionDihedralTypes = _create_sub_element(
-        forceField,
+        forcefield,
         "DihedralTypes",
         attrib_dict={"expression": "k * (1 + cos(n * phi - delta))",},
     )
-
     max_j = 0
     for i, dihedral_type in enumerate(ff_kwargs["periodic_torsion_dihedral_types"]):
         thisDihedralType = _create_sub_element(
@@ -377,35 +388,13 @@ def _write_periodic_dihedrals(forceField, ff_kwargs):
             },
         )
 
-        for j, item in enumerate(dihedral_type.items()):
-            if "type" in item[0]:
-                thisDihedralType.attrib["type{}".format(j + 1)] = dihedral_type.get(
-                    "type{}".format(j + 1), "c{}".format(j + 1)
-                )
-            elif "class" in item[0]:
-                thisDihedralType.attrib["type{}".format(j + 1)] = dihedral_type.get(
-                    "class{}".format(j + 1), "c{}".format(j + 1)
-                )
+        _populate_class_or_type_attrib(thisDihedralType, dihedral_type)
 
-        parameters = {}
-
-        j = 1
-        while dihedral_type.get("k{}".format(j)):
-            param_k_name = "k{}".format(j)
-            param_k_value = dihedral_type.get(param_k_name)
-            param_n_name = "n{}".format(j)
-            param_n_value = dihedral_type.get("periodicity{}".format(j))
-            param_delta_name = "delta{}".format(j)
-            param_delta_value = dihedral_type.get("phase{}".format(j))
-            parameters[param_k_name] = param_k_value
-            parameters[param_n_name] = param_n_value
-            parameters[param_delta_name] = param_delta_value
-            j += 1
+        parameters, max_index = _get_dihedral_or_improper_parameters(dihedral_type)
+        if max_index > max_j:
+            max_j = max_index
 
         _add_parameters(thisDihedralType, parameters)
-
-        if j > max_j:
-            max_j = j
 
     for k in range(0, max_j):
         _insert_parameters_units_def(
@@ -423,7 +412,6 @@ def _write_periodic_dihedrals(forceField, ff_kwargs):
             'delta{}'.format(k),
             'radian'
         )
-
 
 
 def _write_periodic_impropers(forcefield, ff_kwargs):
@@ -444,35 +432,13 @@ def _write_periodic_impropers(forcefield, ff_kwargs):
             },
         )
 
-        for j, item in enumerate(dihedral_type.items()):
-            if "type" in item[0]:
-                thisDihedralType.attrib["type{}".format(j + 1)] = dihedral_type.get(
-                    "type{}".format(j + 1), "c{}".format(j + 1)
-                )
-            elif "class" in item[0]:
-                thisDihedralType.attrib["type{}".format(j + 1)] = dihedral_type.get(
-                    "class{}".format(j + 1), "c{}".format(j + 1)
-                )
+        _populate_class_or_type_attrib(thisDihedralType, dihedral_type)
 
-        parameters = {}
-
-        j = 1
-        while dihedral_type.get("k{}".format(j)):
-            param_k_name = "k{}".format(j)
-            param_k_value = dihedral_type.get(param_k_name)
-            param_n_name = "n{}".format(j)
-            param_n_value = dihedral_type.get("periodicity{}".format(j))
-            param_delta_name = "delta{}".format(j)
-            param_delta_value = dihedral_type.get("phase{}".format(j))
-            parameters[param_k_name] = param_k_value
-            parameters[param_n_name] = param_n_value
-            parameters[param_delta_name] = param_delta_value
-            j += 1
+        parameters, max_index = _get_dihedral_or_improper_parameters(dihedral_type)
+        if max_index > max_j:
+            max_j = max_index
 
         _add_parameters(thisDihedralType, parameters)
-
-        if j > max_j:
-            max_j = j
 
     for k in range(0, max_j):
         _insert_parameters_units_def(
@@ -497,7 +463,9 @@ def _write_rb_torsions(forcefield, ff_kwargs):
         forcefield,
         "DihedralTypes",
         attrib_dict={
-            "expression": "c0 * cos(phi)**0 + c1 * cos(phi)**1 + c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + c5 * cos(phi)**5",
+            "expression": "c0 * cos(phi)**0 + c1 * cos(phi)**1 + "
+                          "c2 * cos(phi)**2 + c3 * cos(phi)**3 + "
+                          "c4 * cos(phi)**4 + c5 * cos(phi)**5",
         },
     )
 
@@ -513,15 +481,7 @@ def _write_rb_torsions(forcefield, ff_kwargs):
             },
         )
 
-        for j, item in enumerate(dihedral_type.items()):
-            if "type" in item[0]:
-                thisDihedralType.attrib["type{}".format(j + 1)] = dihedral_type.get(
-                    "type{}".format(j + 1), "c{}".format(j + 1)
-                )
-            elif "class" in item[0]:
-                thisDihedralType.attrib["type{}".format(j + 1)] = dihedral_type.get(
-                    "class{}".format(j + 1), "c{}".format(j + 1)
-                )
+        _populate_class_or_type_attrib(thisDihedralType, dihedral_type)
 
         parameters = {}
 
