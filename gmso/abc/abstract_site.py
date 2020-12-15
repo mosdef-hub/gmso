@@ -91,7 +91,7 @@ class Site(GMSOBase):
 
     @validator('name_', pre=True, always=True)
     def inject_name(cls, value):
-        if value is None:
+        if value == '':
             return cls.__name__
         else:
             return value

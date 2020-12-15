@@ -277,3 +277,16 @@ class BaseTest:
         mytop.update_topology()
 
         return mytop
+
+    @pytest.fixture(scope='module')
+    def are_equivalent_atoms(self):
+        def test_atom_equality(atom1, atom2):
+            if not all(isinstance(x, Atom) for x in [atom1, atom2]):
+                return False
+            if atom1 is atom2:
+                return True
+            for prop in atom1.dict(by_alias=True):
+                if not atom2.dict().get(prop) == atom1.dict().get(prop):
+                    return False
+            return True
+        return test_atom_equality

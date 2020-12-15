@@ -36,9 +36,12 @@ class Connection(GMSOBase):
     def validate_fields(cls, values):
         connection_members = values.get('connection_members')
         if not all(isinstance(x, Site) for x in connection_members):
-            raise TypeError(
-                f'A non-site object provided to be a connection member'
-            )
+            try:
+                connection_members = [cls.__members_creator__(x) for x in connection_members]
+            except:
+                raise TypeError(
+                    f'A non-site object provided to be a connection member'
+                )
         if len(set(connection_members)) != len(connection_members):
             raise GMSOError(
                 f'Trying to create a {cls.__name__} between '

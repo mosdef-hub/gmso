@@ -1,4 +1,4 @@
-from typing import Tuple, Optional
+from typing import Tuple, Optional, ClassVar, Callable
 
 from pydantic import Field
 
@@ -20,6 +20,8 @@ class Bond(Connection):
         __eq__, __repr__, _validate methods.
     Additional _validate methods are presented.
     """
+    __members_creator__: ClassVar[Callable] = Atom.parse_obj
+
     connection_members_: Tuple[Atom, Atom] = Field(
         ...,
         description='The 2 atoms involved in the bond.'

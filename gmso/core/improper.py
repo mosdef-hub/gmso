@@ -1,4 +1,4 @@
-from typing import Tuple, Optional
+from typing import Tuple, Optional, ClassVar, Callable
 
 from pydantic import Field
 
@@ -29,6 +29,8 @@ class Improper(Connection):
         __eq__, __repr__, _validate methods
     Additional _validate methods are presented
     """
+    __members_creator__: ClassVar[Callable] = Atom.parse_obj
+
     connection_members_: Tuple[Atom, Atom, Atom, Atom] = Field(
         ...,
         description='The 4 atoms of this improper. Central site first, '
