@@ -89,11 +89,12 @@ class Site(GMSOBase):
 
         return position
 
-    @root_validator(pre=True)
-    def inject_name(cls, values):
-        if not values.get('name'):
-            values['name'] = cls.__name__
-        return values
+    @validator('name_', pre=True, always=True)
+    def inject_name(cls, value):
+        if value is None:
+            return cls.__name__
+        else:
+            return value
 
     @classmethod
     def __new__(cls, *args: Any, **kwargs: Any) -> SiteT:
