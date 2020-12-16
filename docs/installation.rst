@@ -18,14 +18,13 @@ Dependencies of ``GMSO`` are listed in the file ``requirements.txt``. They
 can be installed in one line:
 ::
 
-    $ conda install -c omnia -c mosdef -c conda-forge --file requirements.txt
+    $ conda install -c omnia -c conda-forge --file requirements.txt
 
 Alternatively you can add all the required channels to your ``.condarc`` file
 and then install dependencies.
 ::
 
     $ conda config --add channels omnia
-    $ conda config --add channels mosdef
     $ conda config --add channels conda-forge
     $ conda install --file requirements.txt
 
