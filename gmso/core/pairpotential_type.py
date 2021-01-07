@@ -10,7 +10,7 @@ from gmso.core.atom_type import AtomType
 class PairPotentialType(ParametricPotential):
     __base_doc__ = """A description of custom pairwise potential between 2 AtomTypes that does not follow combination rule.
 
-    This is a subclass of the gmso.core.Potential superclass.
+    This is a subclass of the gmso.core.ParametricPotential superclass.
 
     PairPotentialType represents a type of pairwise potential between two 
     Atomtypes that does not follow combination rule, and includes the functional 
