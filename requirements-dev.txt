@@ -6,9 +6,9 @@ lxml
 pydantic
 networkx
 pytest
-mbuild >= 0.10.6
+#mbuild >= 0.10.6
 openbabel >= 3.0.0
-foyer
+#foyer
 gsd >= 2.0
 parmed
 pytest-cov

@@ -482,7 +482,7 @@ class Topology(object):
                     c.connection_type = self._dihedral_types[c.connection_type]
                 if isinstance(c.connection_type, ImproperType):
                     c.connection_type = self._improper_types[c.connection_type]
-    def add_pairpotentialtype(self, pairpotentialtype):
+    def add_pairpotentialtype(self, pairpotentialtype, update=True):
         """add a PairPotentialType to the topology
     
         This method checks whether the member_type of a PairPotentialType
@@ -494,12 +494,15 @@ class Topology(object):
         ----------
         pairpotentialtype: gmso.core.PairPotentialType
             The PairPotentialType object to be added
+        update: Boolean, default=True 
 
         See Also:
         --------
         gmso.core.pairpotential_type: Pairwise potential that does not follow
         combination rules
         """
+        if update:
+            self.update_atom_types()
         for atype in pairpotentialtype.member_types:
             if not isinstance(atype, AtomType):
                 raise GMSOError('Non AtomType instance {} found in members'.format(atype.name))
