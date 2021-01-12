@@ -89,17 +89,9 @@ def to_networkx(top):
         graph.add_edge(b.connection_members[0], b.connection_members[1], connection=b)
 
     for node in graph.nodes:
-        angles = []
-        for angle in list(top.angles):
-            if node in angle.connection_members:
-                angles.append(angle)
-        graph.nodes[node]['angles'] = angles
+        graph.nodes[node]['angles'] = top._get_angles_for(node)
 
     for node in graph.nodes:
-        dihedrals = []
-        for dihedral in list(top.dihedrals):
-            if node in dihedral.connection_members:
-                dihedrals.append(dihedral)
-        graph.nodes[node]['dihedrals'] = dihedrals
+        graph.nodes[node]['dihedrals'] = top._get_dihedrals_for(node)
 
     return graph

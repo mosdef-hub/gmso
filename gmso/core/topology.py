@@ -580,6 +580,22 @@ class Topology(object):
         self.update_connection_types()
         self.is_typed(updated=True)
 
+    def _get_angles_for(self, site):
+        """return a list of the angles that contain Site"""
+        angles = []
+        for angle in self.angles:
+            if site in angle.connection_members:
+                angles.append(angle)
+        return angles
+
+    def _get_dihedrals_for(self, site):
+        """return a list of the dihedrals that contain Site"""
+        dihedrals = []
+        for dihedral in self.dihedrals:
+            if site in dihedral.connection_members:
+                dihedrals.append(dihedral)
+        return dihedrals
+
     def get_index(self, member):
         """Get index of a member in the topology
 
