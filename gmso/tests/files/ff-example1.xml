@@ -82,12 +82,12 @@
     <DihedralTypes name="PeriodicImproper" expression="0.5 * z * (r-r_eq)**2">
         <ParametersUnitDef parameter="r_eq" unit="nm"/>
         <ParametersUnitDef parameter="z" unit="kJ/mol"/>
-        <DihedralType name="ImproperType1" type1='Ar' type2='Ar' type3="Ar" type4="Ar">
+        <ImproperType name="ImproperType1" type1='Ar' type2='Ar' type3="Ar" type4="Ar">
             <Parameters>
                 <Parameter name='r_eq' value="10.0"/>
                 <Parameter name='z' value="100"/>
             </Parameters>
-        </DihedralType>
+        </ImproperType>
     </DihedralTypes>
     
     <DihedralTypes name="RBProper" expression="c0 * cos(phi)**0 + c1 * cos(phi)**1 + c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + c5 * cos(phi)**5">
@@ -97,7 +97,7 @@
         <ParametersUnitDef parameter="c2" unit="kJ/mol"/>
         <ParametersUnitDef parameter="c1" unit="kJ/mol"/>
         <ParametersUnitDef parameter="c0" unit="kJ/mol"/>
-        <DihedralType name="RB-Proper-1" type1="Ar" type2="Ar" type3="Ar" type4="Ar">
+        <DihedralType name="RB-Proper-1" type1="Ar" type2="Xe" type3="Xe" type4="Ar">
             <Parameters>
                 <Parameter name="c0" value="0.6276"/>
                 <Parameter name="c1" value="1.8828"/>
