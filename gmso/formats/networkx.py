@@ -33,37 +33,13 @@ def plot_networkx_atomtypes(topology,atom_name=None):
 
     fig,ax = plt.subplots(1,1,figsize=(8,8))
     networkx_graph = to_networkx(topology)
-
-    pos={}
-    for node in networkx_graph.nodes:
-        pos[node] = node.position.value[0:2]
-    layout = nx.drawing.layout.spring_layout(networkx_graph,k=.5,pos=pos)
-
-    node_color_dict = {'C':'grey','H':'silver','O':'red','N':'blue','Cl':'green'}
-    node_colors = []
     node_sizes = []
     for node in networkx_graph.nodes:
         if node.name == atom_name:
             node_sizes.append(900)
         else:
             node_sizes.append(300)
-        if node.name in list(node_color_dict.keys()):
-            node_colors.append(node_color_dict[node.name])
-        else:
-            node_colors.append('black')
-
-    nx.draw(networkx_graph,layout,ax,node_color=node_colors,node_size=node_sizes)
-    pos= {}
-    labels = {}
-    i=0
-    for node in list(networkx_graph.nodes()):
-        node.label = str(i) + ': ' + node.name + '\n' + node.atom_type.name
-        labels[node] = node.label
-        i+=1
-    for atom,pos in layout.items():
-        layout[atom] = pos + [0.09,0]
-    nx.draw_networkx_labels(networkx_graph,layout,labels,horizontalalignment='left')
-    ax.margins(.3,.3)
+    ax = plot_nodes(networkx_graph,ax,edge_weights=None,edge_colors=None,node_sizes = node_sizes)
 
     return(fig,ax)
 
@@ -103,16 +79,6 @@ def plot_networkx_bonds(topology,atom_name1=None,atom_name2=None):
     
     fig,ax = plt.subplots(1,1,figsize=(8,8))
     networkx_graph = to_networkx(topology)
-    pos={}
-    for node in networkx_graph.nodes:
-        pos[node] = node.position.value[0:2]
-
-    layout = nx.drawing.layout.spring_layout(networkx_graph,k=.5,pos=pos)
-
-    node_color_dict = {'C':'grey','H':'silver','O':'red','N':'blue','Cl':'green'}
-    node_colors = []
-    for node in networkx_graph.nodes:
-        node_colors.append(node_color_dict[node.name])
 
     edge_weights = {}
     edge_colors = {}
@@ -148,22 +114,8 @@ def plot_networkx_bonds(topology,atom_name1=None,atom_name2=None):
         if not mia_bond_ind:
             print('All bonds are typed')
 
-    nx.draw(networkx_graph,layout,ax,node_color=node_colors,
-            width=list(edge_weights.values()),edge_color=list(edge_colors.values()))
-
-    pos= {}
-    labels = {}
-    i=0
-    for node in list(networkx_graph.nodes()):
-        node.label = str(i) + ': ' + node.name + '\n' + node.atom_type.name
-        labels[node] = node.label 
-        i+=1
-
-    for atom,pos in layout.items():
-        layout[atom] = pos + [0.09,0]
-    nx.draw_networkx_labels(networkx_graph,layout,labels,horizontalalignment='left')
-    ax.margins(.3,.3)
-    return(fig,ax)
+    ax = plot_nodes(networkx_graph,ax,edge_weights,edge_colors)
+    return fig, ax
 
 
 def plot_networkx_angles(topology,center_atom_index = None):
@@ -188,58 +140,17 @@ def plot_networkx_angles(topology,center_atom_index = None):
         The drawn networkx plot of the topology on a matplotlib editable figures
         
     matplotlib.pyplot.axis
-        The axis information that corresponds to that figure. This output can be
+        The axis information that corresponds to a networkx drawn figure. This output can be
         shown using
         matplotlib.pyplot.show()
     """
     networkx_graph = to_networkx(topology)
     
-    pos={}
-    for node in networkx_graph.nodes:
-        pos[node] = node.position.value[0:2]
-        
-    layout = nx.drawing.layout.spring_layout(networkx_graph,k=.5,pos=pos)
     fig,ax = plt.subplots(1,1,figsize=(8,8))
     
-    node_color_dict = {'C':'grey','H':'silver','O':'red','N':'blue','Cl':'green'}
-    node_colors = []
-    for node in networkx_graph.nodes:
-        if node.name in list(node_color_dict.keys()):
-            node_colors.append(node_color_dict[node.name])
-        else:
-            node_colors.append('black')
+    edge_weights, edge_colors = highlight_bonds(networkx_graph,'angles',atom_index=center_atom_index)
 
-    edge_weights = {}
-    edge_colors = {}
-    
-    for edge in networkx_graph.edges:
-        edge_weights[edge] = 1
-        edge_colors[edge] = 'k'
-
-    node = list(networkx_graph.nodes)[center_atom_index]
-    for angle in networkx_graph.nodes[node]['angles']:
-        if node == angle.connection_members[1]:
-            for i in [0,1]:
-                node1 = list(angle.connection_members)[i+1]
-                node0 = list(angle.connection_members)[i]
-                edge = (node0,node1)
-                edge_weights[edge] = 5
-                edge_colors[edge] = 'red'
-
-    nx.draw(networkx_graph,layout,ax,node_color=node_colors,
-            width=list(edge_weights.values()),edge_color=list(edge_colors.values()))
-
-    labels = {}
-    i=0
-    for node in list(networkx_graph.nodes()):
-        node.label = str(i) + ': ' + node.name + '\n' + node.atom_type.name
-        labels[node] = node.label 
-        i+=1
-
-    for atom,pos in layout.items():
-        layout[atom] = pos + [0.09,0]
-    nx.draw_networkx_labels(networkx_graph,layout,labels,horizontalalignment='left')
-    ax.margins(.3,.3)
+    ax = plot_nodes(networkx_graph,ax,edge_weights,edge_colors)
 
     return(fig,ax)
 
@@ -272,12 +183,60 @@ def plot_networkx_dihedrals(topology,center_atom_index = None):
     """
     networkx_graph = to_networkx(topology)
     
+    fig,ax = plt.subplots(1,1,figsize=(8,8))
+    
+    edge_weights, edge_colors = highlight_bonds(networkx_graph,'dihedrals',atom_index=center_atom_index)
+    ax = plot_nodes(networkx_graph,ax,edge_weights,edge_colors)
+
+    return(fig,ax)
+
+
+def highlight_bonds(networkx_graph,attribute,atom_index=None):
+    edge_weights={};edge_colors={}
+    for edge in networkx_graph.edges:
+        edge_weights[edge] = 1; edge_colors[edge] = 'k'
+   
+    def_param = 1
+    if atom_index == None:
+        for node in networkx_graph.nodes:
+            for parameter in networkx_graph.nodes[node][attribute]:
+                var = attribute[:-1] + '_type'
+                if getattr(parameter,var) == None:
+                    def_param = 0
+                    members = list(parameter.connection_members)
+                    for i in np.arange(len(members)-1):
+                        edge_weights[(members[i],members[i+1])] = 5; edge_weights[(members[i+1],members[i])] = 5
+                        edge_colors[(members[i],members[i+1])] = 'red'; edge_colors[(members[i+1],members[i])] = 'red'
+
+        if def_param:
+            print('No {} selected, and all {} typed'.format(attribute,attribute))
+
+    elif isinstance(atom_index,int) and len(list(networkx_graph.nodes)) > atom_index:
+        node = list(networkx_graph.nodes)[atom_index]
+        for parameter in networkx_graph.nodes[node][attribute]:
+            if (node == parameter.connection_members[1] or 
+               node == parameter.connection_members[
+                            len(networkx_graph.nodes[node][attribute][0].connection_members)-2]):
+                for i in np.arange(len(networkx_graph.nodes[node][attribute][0].connection_members)-1):
+                    node1 = list(parameter.connection_members)[i+1]
+                    node0 = list(parameter.connection_members)[i]
+                    edge = (node0,node1)
+                    edge_weights[edge] = 5
+                    edge_colors[edge] = 'red'
+                    edge = (node1,node0)
+                    edge_weights[edge] = 5
+                    edge_colors[edge] = 'red'
+    else:
+        print('Invalid input for atom or node index')
+        
+    return edge_weights, edge_colors
+
+def plot_nodes(networkx_graph,ax,edge_weights=None,edge_colors=None,node_sizes = None):
     pos={}
     for node in networkx_graph.nodes:
         pos[node] = node.position.value[0:2]
-        
+
     layout = nx.drawing.layout.spring_layout(networkx_graph,k=.5,pos=pos)
-    fig,ax = plt.subplots(1,1,figsize=(8,8))
     
     node_color_dict = {'C':'grey','H':'silver','O':'red','N':'blue','Cl':'green'}
     node_colors = []
@@ -287,47 +246,21 @@ def plot_networkx_dihedrals(topology,center_atom_index = None):
         else:
             node_colors.append('black')
 
-    edge_weights = {}
-    edge_colors = {}
-
-    for edge in networkx_graph.edges:
-        edge_weights[edge] = 1
-        edge_colors[edge] = 'k'
-
-    node = list(networkx_graph.nodes)[center_atom_index]
-    for dihedral in networkx_graph.nodes[node]['dihedrals']:
-        if (node == list(dihedral.connection_members)[1] or 
-        node == list(dihedral.connection_members)[2]):
-            i=0
-            node1 = list(dihedral.connection_members)[i+1]
-            node0 = list(dihedral.connection_members)[i]
-            #order is switched around when naming edges for the first
-            #edge in the dihedral
-            edge = (node1,node0)
-            edge_weights[edge] = 5
-            edge_colors[edge] = 'red'
-            for i in [1,2]:
-                node1 = list(dihedral.connection_members)[i+1]
-                node0 = list(dihedral.connection_members)[i]
-                edge = (node0,node1)
-                edge_weights[edge] = 5
-                edge_colors[edge] = 'red'
-                
-
-    nx.draw(networkx_graph,layout,ax,node_color=node_colors,
+    if node_sizes:
+        nx.draw(networkx_graph,layout,ax,node_color=node_colors,node_size=node_sizes)
+    else:
+        nx.draw(networkx_graph,layout,ax,node_color=node_colors,
             width=list(edge_weights.values()),edge_color=list(edge_colors.values()))
-
     labels = {}
     i=0
     for node in list(networkx_graph.nodes()):
         node.label = str(i) + ': ' + node.name + '\n' + node.atom_type.name
-        labels[node] = node.label 
+        labels[node] = node.label
         i+=1
 
     for atom,pos in layout.items():
         layout[atom] = pos + [0.09,0]
     nx.draw_networkx_labels(networkx_graph,layout,labels,horizontalalignment='left')
     ax.margins(.3,.3)
-
-    return(fig,ax)
-
+    
+    return ax
