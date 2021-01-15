@@ -536,3 +536,33 @@ class TestTopology(BaseTest):
         prev_idx = typed_methylnitroaniline.get_index(dihedral_type_to_test)
         typed_methylnitroaniline.dihedrals[0].connection_type.name = 'changed name'
         assert typed_methylnitroaniline.get_index(dihedral_type_to_test) != prev_idx
+
+    def test_topology_get_bonds_for(self, typed_methylnitroaniline):
+        site = list(typed_methylnitroaniline.sites)[0]
+        converted_bonds_list = typed_methylnitroaniline._get_bonds_for(site)
+        top_bonds_containing_site = []
+        for bond in typed_methylnitroaniline.bonds:
+            if site in bond.connection_members:
+                assert bond in converted_bonds_list
+                top_bonds_containing_site.append(bond)
+        assert len(top_bonds_containing_site) == len(converted_bonds_list)
+
+    def test_topology_get_angles_for(self, typed_methylnitroaniline):
+        site = list(typed_methylnitroaniline.sites)[0]
+        converted_angles_list = typed_methylnitroaniline._get_angles_for(site)
+        top_angles_containing_site = []
+        for angle in typed_methylnitroaniline.angles:
+            if site in angle.connection_members:
+                assert angle in converted_angles_list
+                top_angles_containing_site.append(angle)
+        assert len(top_angles_containing_site) == len(converted_angles_list)
+
+    def test_topology_get_dihedrals_for(self, typed_methylnitroaniline):
+        site = list(typed_methylnitroaniline.sites)[0]
+        converted_dihedrals_list = typed_methylnitroaniline._get_dihedrals_for(site)
+        top_dihedrals_containing_site = []
+        for dihedral in typed_methylnitroaniline.dihedrals:
+            if site in dihedral.connection_members:
+                assert dihedral in converted_dihedrals_list
+                top_dihedrals_containing_site.append(dihedral)
+        assert len(top_dihedrals_containing_site) == len(converted_dihedrals_list)
