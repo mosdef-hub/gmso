@@ -4,7 +4,10 @@ from lxml import etree
 from gmso.exceptions import ForceFieldParseError
 
 
-def from_foyer(foyer_xml, gmso_xml=None, overwrite=False):
+def from_foyer(foyer_xml,
+               gmso_xml=None,
+               overwrite=False,
+               validate_foyer=False):
     """Convert a foyer XML to a gmso XML
 
     Parameters
@@ -17,6 +20,9 @@ def from_foyer(foyer_xml, gmso_xml=None, overwrite=False):
         `_gmso`.
     overwrite: bool, default=False
         If true, overwrite the output XML file if it exists
+    validate_foyer: bool, default=False
+        If True, validate whether the xml file confirms to the foyer schema
+        and can be used to instantiate a valid foyer Forcefield(provided foyer is available)
 
     Raises
     ------
@@ -37,6 +43,8 @@ def from_foyer(foyer_xml, gmso_xml=None, overwrite=False):
             f'Please use a different file name or set '
             f'overwrite=True to overwrite it'
         )
+    if validate_foyer:
+        _validate_foyer(foyer_xml)
 
     foyer_xml_tree = etree.parse(foyer_xml)
     f_kwargs = {
@@ -520,3 +528,17 @@ def _write_rb_torsions(forcefield, ff_kwargs):
 def _create_sub_element(root_el, name, attrib_dict=None):
     sub_el = etree.SubElement(root_el, name, attrib_dict)
     return sub_el
+
+
+def _validate_foyer(xml_path):
+    import warnings
+    from gmso.utils.io import has_foyer
+    if not has_foyer:
+        warnings.warn(
+            'Cannot validate the xml using foyer, since foyer is not installed.'
+            'Please install foyer using conda install -c conda-forge foyer.'
+        )
+    else:
+        from foyer.validator import Validator
+        Validator(xml_path)
+

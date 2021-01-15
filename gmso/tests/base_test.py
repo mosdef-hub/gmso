@@ -240,6 +240,16 @@ class BaseTest:
        return gmso_ff
 
     @pytest.fixture
+    def foyer_urey_bradley(self):
+        if has_foyer:
+            import foyer
+            from foyer.tests.utils import get_fn
+            from_foyer(get_fn("charmm36_cooh.xml"), overwrite=True)
+            gmso_ff = ForceField(get_fn("charmm36_cooh_gmso.xml"))
+
+            return gmso_ff
+
+    @pytest.fixture
     def methane(self):
         mytop = Topology()
         c = Atom(name='c')

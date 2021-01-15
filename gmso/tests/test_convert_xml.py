@@ -1,4 +1,4 @@
-import numpy as np
+import os
 import pytest
 import unyt as u
 
@@ -8,34 +8,54 @@ from gmso.tests.utils import get_path
 from gmso.exceptions import ForceFieldParseError
 from gmso.tests.base_test import BaseTest
 from gmso.utils.io import has_foyer
-from gmso.core.forcefield import ForceField
 
 if has_foyer:
     import foyer
     from foyer.tests.utils import get_fn
 
+parameterized_ffs = [
+    "fullerene.xml",
+    "oplsaa-periodic.xml",
+    "lj.xml"
+]
 
+
+@pytest.mark.skipif(not has_foyer, reason="Foyer is not installed")
 class TestXMLConversion(BaseTest):
-    @pytest.mark.skipif(not has_foyer, reason="Foyer is not installed")
-    @pytest.mark.parametrize("ff", ["fullerene.xml", "oplsaa-periodic.xml", "lj.xml"])
-    def test_from_foyer(self, ff):
-        from_foyer(get_fn(ff))
 
-    @pytest.mark.skipif(not has_foyer, reason="Foyer is not installed")
+    @pytest.mark.parametrize("ff", parameterized_ffs)
+    def test_from_foyer(self, ff):
+        from_foyer(get_fn(ff), overwrite=True)
+
+    @pytest.mark.parametrize("ff", parameterized_ffs)
+    def test_from_foyer_overwrite_false(self, ff):
+        with pytest.raises(FileExistsError):
+            from_foyer(get_fn(ff), overwrite=False)
+
+    @pytest.mark.parametrize("ff", parameterized_ffs)
+    def test_from_foyer_different_name(self, ff):
+        from_foyer(get_fn(ff), f'{ff}-gmso-converted.xml', overwrite=True)
+
+    @pytest.mark.parametrize("ff", parameterized_ffs)
+    def test_from_foyer_validate_foyer(self, ff):
+        from_foyer(
+            get_fn(ff),
+            f'{ff}-gmso-converted.xml',
+            overwrite=True,
+            validate_foyer=True
+        )
+
     def test_foyer_version(self, foyer_fullerene):
         assert foyer_fullerene.version == "0.0.1"
 
-    @pytest.mark.skipif(not has_foyer, reason="Foyer is not installed")
     def test_foyer_14scale(self, foyer_fullerene):
         assert foyer_fullerene.scaling_factors["electrostatics14Scale"] == 1.0
         assert foyer_fullerene.scaling_factors["nonBonded14Scale"] == 1.0
 
-    @pytest.mark.skipif(not has_foyer, reason="Foyer is not installed")
     def test_foyer_scaling(self, foyer_fullerene):
         assert foyer_fullerene.scaling_factors["nonBonded14Scale"] == 1.0
         assert foyer_fullerene.scaling_factors["electrostatics14Scale"] == 1.0
 
-    @pytest.mark.skipif(not has_foyer, reason="Foyer is not installed")
     def test_foyer_atomtypes(self, foyer_fullerene):
         assert len(foyer_fullerene.atom_types) == 1
         assert "C" in foyer_fullerene.atom_types
@@ -55,7 +75,6 @@ class TestXMLConversion(BaseTest):
             "ep*(-sigma**6/r**6 + sigma**12/r**12) + q/(e0*r)"
         )
 
-    @pytest.mark.skipif(not has_foyer, reason="Foyer is not installed")
     def test_foyer_bonds(self, foyer_fullerene):
         assert len(foyer_fullerene.bond_types) == 1
         assert "C~C" in foyer_fullerene.bond_types
@@ -69,7 +88,6 @@ class TestXMLConversion(BaseTest):
         )
         assert foyer_fullerene.bond_types["C~C"].member_types == ("C", "C")
 
-    @pytest.mark.skipif(not has_foyer, reason="Foyer is not installed")
     def test_foyer_angles(self, foyer_fullerene):
         assert len(foyer_fullerene.angle_types) == 1
         assert "C~C~C" in foyer_fullerene.angle_types
@@ -86,7 +104,6 @@ class TestXMLConversion(BaseTest):
         ] == u.unyt_quantity(3.141592, u.rad)
         assert foyer_fullerene.angle_types["C~C~C"].member_types == ("C", "C", "C")
 
-    @pytest.mark.skipif(not has_foyer, reason="Foyer is not installed")
     def test_foyer_dihedrals(self, foyer_periodic):
         assert len(foyer_periodic.dihedral_types) == 4
         assert "opls_140~opls_135~opls_135~opls_140" in foyer_periodic.dihedral_types
@@ -109,6 +126,9 @@ class TestXMLConversion(BaseTest):
         assert foyer_periodic.dihedral_types[
             "opls_140~opls_135~opls_135~opls_140"
         ].member_types == ("opls_140", "opls_135", "opls_135", "opls_140")
+
+    def test_foyer_urey_bradley(self, foyer_urey_bradley):
+        assert foyer_urey_bradley.angle_types['OBL~CL~CTL2'] is not None
 
     def test_empty_foyer_atomtype(self):
         with pytest.raises(ForceFieldParseError):
