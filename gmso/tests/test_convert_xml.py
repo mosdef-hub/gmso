@@ -130,6 +130,12 @@ class TestXMLConversion(BaseTest):
     def test_foyer_urey_bradley(self, foyer_urey_bradley):
         assert foyer_urey_bradley.angle_types['OBL~CL~CTL2'] is not None
 
+    def test_foyer_rb_torsion(self, foyer_rb_torsion):
+        assert foyer_rb_torsion.dihedral_types['HC~CT~CT~HC'] is not None
+
+    def test_foyer_periodic_impropers(self, foyer_periodic_improper):
+        assert foyer_periodic_improper.improper_types['CT~CT~CT~HC'] is not None
+
     def test_empty_foyer_atomtype(self):
         with pytest.raises(ForceFieldParseError):
             from_foyer(get_path("empty_foyer.xml"))
