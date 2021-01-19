@@ -1,10 +1,9 @@
-from typing import Optional, Any, Type, Union, Callable
+from typing import Optional, Any, Union
 
 import unyt as u
 from pydantic import Field, validator
 
 from gmso.abc.abstract_potential import AbstractPotential
-from gmso.abc.serialization_utils import dict_to_unyt
 from gmso.utils.expression import _PotentialExpression
 from gmso.utils.decorators import confirm_dict_existence
 from gmso.exceptions import GMSOError

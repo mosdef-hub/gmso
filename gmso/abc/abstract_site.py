@@ -5,7 +5,7 @@ import numpy as np
 import unyt as u
 from unyt.exceptions import InvalidUnitOperation
 
-from pydantic import validator, root_validator, Field
+from pydantic import validator, Field
 
 from gmso.abc.gmso_base import GMSOBase
 from gmso.exceptions import GMSOError
