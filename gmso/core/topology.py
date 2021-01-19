@@ -598,7 +598,7 @@ class Topology(object):
         return angles
 
     def _get_dihedrals_for(self, site):
-        """return a list of the dihedrals that contain Site"""
+        """Return a list of dihedrals in this Topology that the site is a part of"""
         dihedrals = []
         for dihedral in self.dihedrals:
             if site in dihedral.connection_members:
