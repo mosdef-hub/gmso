@@ -4,10 +4,10 @@ from lxml import etree
 from gmso.exceptions import ForceFieldParseError
 
 
-def from_foyer(foyer_xml,
-               gmso_xml=None,
-               overwrite=False,
-               validate_foyer=False):
+def from_foyer_xml(foyer_xml,
+                   gmso_xml=None,
+                   overwrite=False,
+                   validate_foyer=False):
     """Convert a foyer XML to a gmso XML
 
     Parameters
@@ -33,9 +33,9 @@ def from_foyer(foyer_xml,
     if gmso_xml is None:
         file_name = pathlib.Path(str(foyer_xml))
         stem = file_name.stem
-        gmso_xml = file_name.with_name(stem + "_gmso.xml")
+        gmso_xml = pathlib.Path(".") / f"{stem}_gmso.xml"
     else:
-        gmso_xml = pathlib.Path(gmso_xml)
+        gmso_xml = pathlib.Path(gmso_xml).resolve()
 
     if not overwrite and gmso_xml.resolve().exists():
         raise FileExistsError(
@@ -47,7 +47,12 @@ def from_foyer(foyer_xml,
         _validate_foyer(foyer_xml)
 
     foyer_xml_tree = etree.parse(foyer_xml)
+    ff_root = foyer_xml_tree.getroot()
+    name = ff_root.attrib.get("name")
+    version = ff_root.attrib.get("version")
     f_kwargs = {
+        "name": name,
+        "version": version,
         "coulomb14scale": [],
         "lj14scale": [],
         "atom_types": [],
@@ -111,6 +116,8 @@ def from_foyer(foyer_xml,
 def _write_gmso_xml(gmso_xml, **kwargs):
     """Given the set of keyword arguments, write a gmso topology's forcefield xml file"""
     ff_kwargs = {
+        "name": kwargs.get("name"),
+        "version": kwargs.get("version"),
         "coulomb14scale": kwargs.get("coulomb14scale"),
         "lj14scale": kwargs.get("lj14scale"),
         "atom_types": kwargs.get("atom_types", []),
@@ -124,9 +131,18 @@ def _write_gmso_xml(gmso_xml, **kwargs):
         "periodic_improper_types": kwargs.get("periodic_improper_types", []),
         "rb_torsion_dihedral_types": kwargs.get("rb_torsion_dihedral_types", []),
     }
+
     forcefield = etree.Element("ForceField")
-    forcefield.attrib["name"] = pathlib.Path(str(gmso_xml)).stem
-    forcefield.attrib["version"] = "0.0.1"
+
+    if ff_kwargs.get("name") is not None:
+        forcefield.attrib["name"] = ff_kwargs.get("name")
+    else:
+        forcefield.attrib["name"] = pathlib.Path(gmso_xml).stem
+
+    if ff_kwargs.get("version") is not None:
+        forcefield.attrib["version"] = ff_kwargs.get("version")
+    else:
+        forcefield.attrib["version"] = "0.0.1"
 
     ffMeta = _create_sub_element(forcefield, "FFMetaData")
     if ff_kwargs["coulomb14scale"]:
@@ -443,9 +459,9 @@ def _write_periodic_impropers(forcefield, ff_kwargs):
         attrib_dict={"expression": "k * (1 + cos(n * phi - delta))", },
     )
     for i, dihedral_type in enumerate(ff_kwargs["periodic_improper_types"]):
-        thisDihedralType = _create_sub_element(
+        thisImproperType = _create_sub_element(
             periodicImproperTypes,
-            "DihedralType",
+            "ImproperType",
             attrib_dict={
                 "name": dihedral_type.get(
                     "name", "DihedralType-Periodic-Improper-{}".format(i + 1)
@@ -453,13 +469,13 @@ def _write_periodic_impropers(forcefield, ff_kwargs):
             },
         )
 
-        _populate_class_or_type_attrib(thisDihedralType, dihedral_type)
+        _populate_class_or_type_attrib(thisImproperType, dihedral_type)
 
         parameters, max_index = _get_dihedral_or_improper_parameters(dihedral_type)
         if max_index > max_j:
             max_j = max_index
 
-        _add_parameters(thisDihedralType, parameters)
+        _add_parameters(thisImproperType, parameters)
 
     for k in range(0, max_j):
         _insert_parameters_units_def(

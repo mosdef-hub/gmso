@@ -3,7 +3,7 @@ import pytest
 import unyt as u
 
 from sympy import sympify
-from gmso.external.convert_foyer import from_foyer
+from gmso.external.convert_foyer import from_foyer_xml
 from gmso.tests.utils import get_path
 from gmso.exceptions import ForceFieldParseError
 from gmso.tests.base_test import BaseTest
@@ -25,20 +25,21 @@ class TestXMLConversion(BaseTest):
 
     @pytest.mark.parametrize("ff", parameterized_ffs)
     def test_from_foyer(self, ff):
-        from_foyer(get_fn(ff), overwrite=True)
+        from_foyer_xml(get_fn(ff), overwrite=True)
 
     @pytest.mark.parametrize("ff", parameterized_ffs)
     def test_from_foyer_overwrite_false(self, ff):
+        from_foyer_xml(get_fn(ff), overwrite=False)
         with pytest.raises(FileExistsError):
-            from_foyer(get_fn(ff), overwrite=False)
+            from_foyer_xml(get_fn(ff), overwrite=False)
 
     @pytest.mark.parametrize("ff", parameterized_ffs)
     def test_from_foyer_different_name(self, ff):
-        from_foyer(get_fn(ff), f'{ff}-gmso-converted.xml', overwrite=True)
+        from_foyer_xml(get_fn(ff), f'{ff}-gmso-converted.xml', overwrite=True)
 
     @pytest.mark.parametrize("ff", parameterized_ffs)
     def test_from_foyer_validate_foyer(self, ff):
-        from_foyer(
+        from_foyer_xml(
             get_fn(ff),
             f'{ff}-gmso-converted.xml',
             overwrite=True,
@@ -138,4 +139,4 @@ class TestXMLConversion(BaseTest):
 
     def test_empty_foyer_atomtype(self):
         with pytest.raises(ForceFieldParseError):
-            from_foyer(get_path("empty_foyer.xml"))
+            from_foyer_xml(get_path("empty_foyer.xml"))

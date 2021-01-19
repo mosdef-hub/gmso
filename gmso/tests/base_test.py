@@ -17,7 +17,7 @@ from gmso.external import from_mbuild, from_parmed
 from gmso.tests.utils import get_path
 from gmso.utils.io import get_fn, has_foyer
 from gmso.external import from_parmed
-from gmso.external.convert_foyer import from_foyer
+from gmso.external.convert_foyer import from_foyer_xml
 
 class BaseTest:
     @pytest.fixture(autouse=True)
@@ -223,7 +223,7 @@ class BaseTest:
        if has_foyer:
           import foyer
           from foyer.tests.utils import get_fn
-       from_foyer(get_fn("fullerene.xml"), overwrite=True)
+       from_foyer_xml(get_fn("fullerene.xml"), overwrite=True)
        gmso_ff = ForceField(get_fn("fullerene_gmso.xml"))
 
        return gmso_ff
@@ -234,7 +234,7 @@ class BaseTest:
        if has_foyer:
           import foyer
           from foyer.tests.utils import get_fn
-       from_foyer(get_fn("oplsaa-periodic.xml"), overwrite=True)
+       from_foyer_xml(get_fn("oplsaa-periodic.xml"), overwrite=True)
        gmso_ff = ForceField(get_fn("oplsaa-periodic_gmso.xml"))
 
        return gmso_ff
@@ -244,7 +244,7 @@ class BaseTest:
         if has_foyer:
             import foyer
             from foyer.tests.utils import get_fn
-            from_foyer(get_fn("charmm36_cooh.xml"), overwrite=True)
+            from_foyer_xml(get_fn("charmm36_cooh.xml"), overwrite=True)
             gmso_ff = ForceField(get_fn("charmm36_cooh_gmso.xml"))
 
             return gmso_ff
@@ -254,8 +254,8 @@ class BaseTest:
         if has_foyer:
             import foyer
             from foyer.tests.utils import get_fn
-            from_foyer(get_fn("refs-multi.xml"), overwrite=True)
-            gmso_ff = ForceField(get_fn("refs-multi.xml"))
+            from_foyer_xml(get_fn("refs-multi.xml"), overwrite=True, validate_foyer=True)
+            gmso_ff = ForceField(get_fn("refs-multi_gmso.xml"))
 
             return gmso_ff
 
@@ -264,8 +264,8 @@ class BaseTest:
         if has_foyer:
             import foyer
             from foyer.tests.utils import get_fn
-            from_foyer(get_fn("improper_dihedral.xml"), overwrite=True)
-            gmso_ff = ForceField(get_fn("improper_dihedral.xml"))
+            from_foyer_xml(get_fn("improper_dihedral.xml"), overwrite=True, validate_foyer=True)
+            gmso_ff = ForceField(get_fn("improper_dihedral_gmso.xml"))
 
             return gmso_ff
 
