@@ -581,7 +581,7 @@ class Topology(object):
         self.is_typed(updated=True)
 
     def _get_bonds_for(self, site):
-        """return a list of the bonds that contain Site"""
+        """Return a list of bonds in this Topology that the site is a part of"""
         bonds = []
         for bond in self.bonds:
             if site in bond.connection_members:
@@ -660,5 +660,4 @@ class Topology(object):
         descr.append('id: {}>'.format(id(self)))
 
         return ''.join(descr)
-
 
