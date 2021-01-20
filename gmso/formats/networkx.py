@@ -1,9 +1,7 @@
 import numpy as np
-import unyt as u
 import matplotlib.pyplot as plt
 import networkx as nx
 
-from gmso.core.topology import Topology
 from gmso.external.convert_networkx import to_networkx
 
 def plot_networkx_atomtypes(topology,atom_name=None):
