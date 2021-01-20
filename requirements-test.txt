@@ -13,3 +13,4 @@ parmed
 pytest-cov
 codecov
 pydantic
+matplotlib
