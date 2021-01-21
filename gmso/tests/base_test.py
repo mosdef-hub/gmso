@@ -260,16 +260,6 @@ class BaseTest:
             return gmso_ff
 
     @pytest.fixture
-    def foyer_periodic_improper(self):
-        if has_foyer:
-            import foyer
-            from foyer.tests.utils import get_fn
-            from_foyer_xml(get_fn("improper_dihedral.xml"), overwrite=True, validate_foyer=True)
-            gmso_ff = ForceField(get_fn("improper_dihedral_gmso.xml"))
-
-            return gmso_ff
-
-    @pytest.fixture
     def methane(self):
         mytop = Topology()
         c = Atom(name='c')
