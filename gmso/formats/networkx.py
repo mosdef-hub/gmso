@@ -102,7 +102,7 @@ def plot_networkx_bonds(topology,atom_name1=None,atom_name2=None):
                 edge_colors[edge] = 'k'
     else:
         for bond in list(networkx_graph.edges.items()):
-            if bond[1]['connection'].bond_type == None:
+            if bond[1]['connection'].bond_type is None:
                 edge_weights[bond[0]] = 5
                 edge_colors[bond[0]] = 'red'
                 mia_bond_ind = 1
@@ -192,7 +192,7 @@ def plot_networkx_dihedrals(topology,center_atom_index = None):
 def highlight_bonds(networkx_graph,attribute,atom_index=None):
     edge_weights, edge_colors = initialize_edge_params(networkx_graph)   
     def_param = 1
-    if atom_index == None:
+    if atom_index is None:
         edge_weights, edge_members, def_param = sel_miss_params(networkx_graph,attribute,def_param,edge_weights,edge_colors)
         if def_param:
             print('No {} selected, and all {} typed'.format(attribute,attribute))
@@ -232,7 +232,7 @@ def sel_miss_params(networkx_graph,attribute,def_param,edge_weights,edge_colors)
     for node in networkx_graph.nodes:
         for parameter in networkx_graph.nodes[node][attribute]:
             var = attribute[:-1] + '_type'
-            if getattr(parameter,var) == None:
+            if getattr(parameter,var) is None:
                 def_param = 0
                 members = list(parameter.connection_members)
                 for i in np.arange(len(members)-1):
