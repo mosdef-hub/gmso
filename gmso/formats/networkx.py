@@ -190,44 +190,56 @@ def plot_networkx_dihedrals(topology,center_atom_index = None):
 
 
 def highlight_bonds(networkx_graph,attribute,atom_index=None):
-    edge_weights={};edge_colors={}
-    for edge in networkx_graph.edges:
-        edge_weights[edge] = 1; edge_colors[edge] = 'k'
-   
+    edge_weights, edge_colors = initialize_edge_params(networkx_graph)   
     def_param = 1
     if atom_index == None:
-        for node in networkx_graph.nodes:
-            for parameter in networkx_graph.nodes[node][attribute]:
-                var = attribute[:-1] + '_type'
-                if getattr(parameter,var) == None:
-                    def_param = 0
-                    members = list(parameter.connection_members)
-                    for i in np.arange(len(members)-1):
-                        edge_weights[(members[i],members[i+1])] = 5; edge_weights[(members[i+1],members[i])] = 5
-                        edge_colors[(members[i],members[i+1])] = 'red'; edge_colors[(members[i+1],members[i])] = 'red'
-
+        edge_weights, edge_members, def_param = sel_miss_params(networkx_graph,attribute,def_param,edge_weights,edge_colors)
         if def_param:
             print('No {} selected, and all {} typed'.format(attribute,attribute))
-
     elif isinstance(atom_index,int) and len(list(networkx_graph.nodes)) > atom_index:
-        node = list(networkx_graph.nodes)[atom_index]
-        for parameter in networkx_graph.nodes[node][attribute]:
-            if (node == parameter.connection_members[1] or 
-               node == parameter.connection_members[
-                            len(networkx_graph.nodes[node][attribute][0].connection_members)-2]):
-                for i in np.arange(len(networkx_graph.nodes[node][attribute][0].connection_members)-1):
-                    node1 = list(parameter.connection_members)[i+1]
-                    node0 = list(parameter.connection_members)[i]
-                    edge = (node0,node1)
-                    edge_weights[edge] = 5
-                    edge_colors[edge] = 'red'
-                    edge = (node1,node0)
-                    edge_weights[edge] = 5
-                    edge_colors[edge] = 'red'
+        edge_weights, edge_colors = sel_input_params(networkx_graph,atom_index,attribute,edge_weights,edge_colors)
     else:
         print('Invalid input for atom or node index')
         
     return edge_weights, edge_colors
+
+def sel_input_params(networkx_graph,atom_index,attribute,edge_weights,edge_colors):
+    node = list(networkx_graph.nodes)[atom_index]
+    for parameter in networkx_graph.nodes[node][attribute]:
+        if (node == parameter.connection_members[1] or
+           node == parameter.connection_members[len(
+                   networkx_graph.nodes[node][attribute][0].connection_members)-2]):
+            for i in np.arange(len(networkx_graph.nodes[node][attribute][0].connection_members)-1):
+                node1 = list(parameter.connection_members)[i+1]
+                node0 = list(parameter.connection_members)[i]
+                edge = (node0,node1)
+                edge_weights[edge] = 5
+                edge_colors[edge] = 'red'
+                edge = (node1,node0)
+                edge_weights[edge] = 5
+                edge_colors[edge] = 'red'
+
+    return edge_weights, edge_colors
+
+def initialize_edge_params(networkx_graph):
+    edge_weights={};edge_colors={}
+    for edge in networkx_graph.edges:
+        edge_weights[edge] = 1; edge_colors[edge] = 'k'
+
+    return edge_weights, edge_colors
+
+def sel_miss_params(networkx_graph,attribute,def_param,edge_weights,edge_colors):
+    for node in networkx_graph.nodes:
+        for parameter in networkx_graph.nodes[node][attribute]:
+            var = attribute[:-1] + '_type'
+            if getattr(parameter,var) == None:
+                def_param = 0
+                members = list(parameter.connection_members)
+                for i in np.arange(len(members)-1):
+                    edge_weights[(members[i],members[i+1])] = 5; edge_weights[(members[i+1],members[i])] = 5
+                    edge_colors[(members[i],members[i+1])] = 'red'; edge_colors[(members[i+1],members[i])] = 'red'
+
+    return edge_weights, edge_colors, def_param
 
 def plot_nodes(networkx_graph,ax,edge_weights=None,edge_colors=None,node_sizes = None):
     pos={}

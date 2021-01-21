@@ -119,3 +119,17 @@ try:
     del unit
 except ImportError:
     has_simtk_unit = False
+
+try:
+    import networkx
+    has_networkx = True
+    del networkx
+except ImportError:
+    has_networkx = False
+
+try:
+    from matplotlib import pyplot
+    has_pyplot = True
+    del pyplot
+except ImportError:
+    has_pyplot = False   
