@@ -224,7 +224,7 @@ class BaseTest:
           import foyer
           from foyer.tests.utils import get_fn
        from_foyer_xml(get_fn("fullerene.xml"), overwrite=True)
-       gmso_ff = ForceField(get_fn("fullerene_gmso.xml"))
+       gmso_ff = ForceField("fullerene_gmso.xml")
 
        return gmso_ff
 
@@ -235,7 +235,7 @@ class BaseTest:
           import foyer
           from foyer.tests.utils import get_fn
        from_foyer_xml(get_fn("oplsaa-periodic.xml"), overwrite=True)
-       gmso_ff = ForceField(get_fn("oplsaa-periodic_gmso.xml"))
+       gmso_ff = ForceField("oplsaa-periodic_gmso.xml")
 
        return gmso_ff
 
@@ -245,7 +245,7 @@ class BaseTest:
             import foyer
             from foyer.tests.utils import get_fn
             from_foyer_xml(get_fn("charmm36_cooh.xml"), overwrite=True)
-            gmso_ff = ForceField(get_fn("charmm36_cooh_gmso.xml"))
+            gmso_ff = ForceField("charmm36_cooh_gmso.xml")
 
             return gmso_ff
 
@@ -255,7 +255,7 @@ class BaseTest:
             import foyer
             from foyer.tests.utils import get_fn
             from_foyer_xml(get_fn("refs-multi.xml"), overwrite=True, validate_foyer=True)
-            gmso_ff = ForceField(get_fn("refs-multi_gmso.xml"))
+            gmso_ff = ForceField("refs-multi_gmso.xml")
 
             return gmso_ff
 
