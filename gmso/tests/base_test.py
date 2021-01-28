@@ -17,7 +17,7 @@ from gmso.external import from_mbuild, from_parmed
 from gmso.tests.utils import get_path
 from gmso.utils.io import get_fn, has_foyer
 from gmso.external import from_parmed
-from gmso.external.convert_foyer import from_foyer_xml
+from gmso.external.convert_foyer_xml import from_foyer_xml
 
 class BaseTest:
     @pytest.fixture(autouse=True)

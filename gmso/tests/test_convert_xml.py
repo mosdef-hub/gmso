@@ -1,16 +1,15 @@
-import os
 import pytest
 import unyt as u
+from pathlib import Path
 
 from sympy import sympify
-from gmso.external.convert_foyer import from_foyer_xml
+from gmso.external.convert_foyer_xml import from_foyer_xml
 from gmso.tests.utils import get_path
 from gmso.exceptions import ForceFieldParseError
 from gmso.tests.base_test import BaseTest
 from gmso.utils.io import has_foyer
 
 if has_foyer:
-    import foyer
     from foyer.tests.utils import get_fn
 
 parameterized_ffs = [
@@ -45,6 +44,16 @@ class TestXMLConversion(BaseTest):
             overwrite=True,
             validate_foyer=True
         )
+
+    @pytest.mark.parametrize("ff", parameterized_ffs)
+    def test_foyer_pathlib(self, ff):
+        file_path = Path(get_fn(ff))
+        from_foyer_xml(file_path, overwrite=True)
+
+    def test_foyer_file_not_found(self):
+        file_path = 'dummy_name.xml'
+        with pytest.raises(FileNotFoundError):
+            from_foyer_xml(file_path, overwrite=True)
 
     def test_foyer_version(self, foyer_fullerene):
         assert foyer_fullerene.version == "0.0.1"

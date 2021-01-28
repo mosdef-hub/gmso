@@ -12,9 +12,9 @@ def from_foyer_xml(foyer_xml,
 
     Parameters
     ----------
-    foyer_xml : XML file
+    foyer_xml : str or pathlib.Path
         An XML file in the foyer format
-    gmso_xml: (str, pathlib.Path) default=None
+    gmso_xml: str or pathlib.Path, default=None
         The output GMSO xml filename. If None, the output XML
         file's name is set by using foyer_xml file suffixed with
         `_gmso`.
@@ -29,7 +29,21 @@ def from_foyer_xml(foyer_xml,
     FileExistsError
         If overwrite is False and the output file (`gmso_xml`) already
         exists
+    FileNotFoundError
+        If `foyer_xml` doesn't exist
     """
+    if not isinstance(foyer_xml, pathlib.Path):
+        foyer_xml = pathlib.Path(foyer_xml).resolve()
+
+    # This check is redundant but acts as a sentinel
+    if not foyer_xml.exists():
+        raise FileNotFoundError(
+            f"The file {foyer_xml} does not exist. "
+            "Please provide a valid path to a foyer XML File"
+        )
+
+    foyer_xml = str(foyer_xml)
+
     if gmso_xml is None:
         file_name = pathlib.Path(str(foyer_xml))
         stem = file_name.stem
@@ -114,42 +128,25 @@ def from_foyer_xml(foyer_xml,
 
 
 def _write_gmso_xml(gmso_xml, **kwargs):
-    """Given the set of keyword arguments, write a gmso topology's forcefield xml file"""
-    ff_kwargs = {
-        "name": kwargs.get("name"),
-        "version": kwargs.get("version"),
-        "coulomb14scale": kwargs.get("coulomb14scale"),
-        "lj14scale": kwargs.get("lj14scale"),
-        "atom_types": kwargs.get("atom_types", []),
-        "non_bonded_forces": kwargs.get("non_bonded_forces", []),
-        "harmonic_bond_types": kwargs.get("harmonic_bond_types", []),
-        "harmonic_angle_types": kwargs.get("harmonic_angle_types", []),
-        "urey_bradley_angle_types": kwargs.get("urey_bradley_angle_types", []),
-        "periodic_torsion_dihedral_types": kwargs.get(
-            "periodic_torsion_dihedral_types", []
-        ),
-        "periodic_improper_types": kwargs.get("periodic_improper_types", []),
-        "rb_torsion_dihedral_types": kwargs.get("rb_torsion_dihedral_types", []),
-    }
-
+    """Given the set of keyword arguments, write a gmso Forcefield xml file"""
     forcefield = etree.Element("ForceField")
 
-    if ff_kwargs.get("name") is not None:
-        forcefield.attrib["name"] = ff_kwargs.get("name")
+    if kwargs.get("name") is not None:
+        forcefield.attrib["name"] = kwargs.get("name")
     else:
         forcefield.attrib["name"] = pathlib.Path(gmso_xml).stem
 
-    if ff_kwargs.get("version") is not None:
-        forcefield.attrib["version"] = ff_kwargs.get("version")
+    if kwargs.get("version") is not None:
+        forcefield.attrib["version"] = kwargs.get("version")
     else:
         forcefield.attrib["version"] = "0.0.1"
 
     ffMeta = _create_sub_element(forcefield, "FFMetaData")
-    if ff_kwargs["coulomb14scale"]:
-        ffMeta.attrib["electrostatics14Scale"] = ff_kwargs["coulomb14scale"]
+    if kwargs["coulomb14scale"]:
+        ffMeta.attrib["electrostatics14Scale"] = kwargs["coulomb14scale"]
 
-    if ff_kwargs["lj14scale"]:
-        ffMeta.attrib["nonBonded14Scale"] = ff_kwargs["lj14scale"]
+    if kwargs["lj14scale"]:
+        ffMeta.attrib["nonBonded14Scale"] = kwargs["lj14scale"]
 
     units = _create_sub_element(
         ffMeta,
@@ -163,30 +160,30 @@ def _write_gmso_xml(gmso_xml, **kwargs):
     )
 
     # AtomTypes and NonBonded Forces
-    _write_nbforces(forcefield, ff_kwargs)
+    _write_nbforces(forcefield, kwargs)
 
     # HarmonicBondTypes
-    if len(ff_kwargs["harmonic_bond_types"]) > 0:
-        _write_harmonic_bonds(forcefield, ff_kwargs)
+    if len(kwargs["harmonic_bond_types"]) > 0:
+        _write_harmonic_bonds(forcefield, kwargs)
 
     # HarmonicAngleTypes
-    if len(ff_kwargs["harmonic_angle_types"]) > 0:
-        _write_harmonic_angles(forcefield, ff_kwargs)
+    if len(kwargs["harmonic_angle_types"]) > 0:
+        _write_harmonic_angles(forcefield, kwargs)
 
     # UreyBradleyAngleTypes
-    if len(ff_kwargs["urey_bradley_angle_types"]) > 0:
-        _write_ub_angles(forcefield, ff_kwargs)
+    if len(kwargs["urey_bradley_angle_types"]) > 0:
+        _write_ub_angles(forcefield, kwargs)
 
     # PeriodicTorsionDihedralTypes and PeriodicImproperDihedralTypes
-    if len(ff_kwargs["periodic_torsion_dihedral_types"]) > 0:
-        _write_periodic_dihedrals(forcefield, ff_kwargs)
+    if len(kwargs["periodic_torsion_dihedral_types"]) > 0:
+        _write_periodic_dihedrals(forcefield, kwargs)
 
-    if len(ff_kwargs["periodic_improper_types"]) > 0:
-        _write_periodic_impropers(forcefield, ff_kwargs)
+    if len(kwargs["periodic_improper_types"]) > 0:
+        _write_periodic_impropers(forcefield, kwargs)
 
     # RBTorsionDihedralTypes
-    if len(ff_kwargs["rb_torsion_dihedral_types"]) > 0:
-        _write_rb_torsions(forcefield, ff_kwargs)
+    if len(kwargs["rb_torsion_dihedral_types"]) > 0:
+        _write_rb_torsions(forcefield, kwargs)
 
     ff_tree = etree.ElementTree(forcefield)
     ff_tree.write(
@@ -269,12 +266,12 @@ def _write_nbforces(forcefield, ff_kwargs):
             unit
         )
 
-    for atom_type in ff_kwargs["atom_types"]:
+    for j, atom_type in enumerate(ff_kwargs["atom_types"]):
         thisAtomType = _create_sub_element(
             nonBondedAtomTypes,
             "AtomType",
             attrib_dict={
-                "name": atom_type.get("name", "AtomType"),
+                "name": atom_type.get("name", f"AtomType-{j+1}"),
                 "atomclass": atom_type.get("class", ""),
                 "element": atom_type.get("element", ""),
                 "charge": atom_type.get("charge", "0.0"),
