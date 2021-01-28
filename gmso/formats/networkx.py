@@ -1,7 +1,7 @@
-import matplotlib as plot
+import matplotlib.pyplot as plt
 import networkx as nx
 
-from ipywidgets import interact, fixed,
+from ipywidgets import interact, fixed
 import ipywidgets as widgets
 from IPython.display import display
 
@@ -65,10 +65,11 @@ def interactive_networkx_atomtypes(topology, list_of_labels = None):
         shown using
         matplotlib.pyplot.show()
     """
-    
+ 
+    networkx_graph = to_networkx(topology)   
     #get a unique list of site names
     site_names = []
-    for node in graph.nodes:
+    for node in networkx_graph.nodes:
         site_names.append(node.name)
     site_names = set(site_names)
 
@@ -136,7 +137,7 @@ def interactive_networkx_bonds(topology, additional_labels = None):
       
     # Create list of nodes to plot
     site_names = []
-    for node in graph.nodes:
+    for node in networkx_graph.nodes:
         site_names.append(node.name)
     site_names = set(site_names)
 
@@ -224,7 +225,7 @@ def interactive_networkx_angles(topology):
     # Call recursive interacts. The top level determines what bonds can be selected
     atom_selection = []
     descriptions = ['Central Atom1 (req)', 'Atom2 (opt)', 'Atom3 (opt)']
-    for i in np.arange(3):
+    for i in [0, 1, 2]:
         atom_selection.append(widgets.Dropdown(
                 options = names_tuple,
                 layout = widgets.Layout(width = '30%'),
@@ -311,7 +312,7 @@ def interactive_networkx_dihedrals(topology):
     # Call recursive interacts. The top level determines what bonds can be selected
     atom_selection = []
     descriptions = ['Central Atom1 (req)', 'Central Atom2 (req)', 'Atom3 (opt)', 'Atom4 (opt)']
-    for i in np.arange(4):
+    for i in [0, 1, 2, 3]:
         atom_selection.append(widgets.Dropdown(
                 options = (names_tuple),
                 layout = widgets.Layout(width = '30%'),
@@ -716,7 +717,7 @@ def plot_networkx_bonds(networkx_graph, atom_name1=None, atom_name2=None,
             edge_weights[bond] = 1
             edge_colors[bond] = 'k'
 
-    ax = plot_nodes(networkx_graph,ax,edge_weights = edge_weights,
+    ax = plot_networkx_nodes(networkx_graph,ax,edge_weights = edge_weights,
                     edge_colors = edge_colors, list_of_labels = list_of_labels, 
                     atom_name = atom_name1)
     return fig, ax
@@ -768,9 +769,27 @@ def plot_networkx_atomtypes(topology,atom_name=None,list_of_labels = ['atom_type
         else:
             node_sizes.append(300)
             
-    ax = plot_nodes(networkx_graph, ax, edge_weights = None, edge_colors = None,
+    ax = plot_networkx_nodes(networkx_graph, ax, edge_weights = None, edge_colors = None,
                     node_sizes = node_sizes, list_of_labels = list_of_labels,
                     atom_name = atom_name)
 
     return(fig,ax)
 
+def highlight_networkx_edges(networkx_graph, list_of_edges):
+    #return edge parameters for the specified networkx edge list.
+    edge_weights, edge_colors = initialize_edge_params(networkx_graph)
+    def_param = 1
+    for edge in networkx_graph.edges:
+        if edge in list_of_edges:
+            edge_weights[edge] = 5
+            edge_colors[edge] = 'r'
+
+    return edge_weights, edge_colors
+
+def initialize_edge_params(networkx_graph):
+    #create dictionaries of base values for each edge in the graph
+    edge_weights={};edge_colors={}
+    for edge in networkx_graph.edges:
+        edge_weights[edge] = 1; edge_colors[edge] = 'k'
+
+    return edge_weights, edge_colors
