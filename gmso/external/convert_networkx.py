@@ -60,9 +60,12 @@ def from_networkx(graph):
     warnings.simplefilter('once', UserWarning) 
 
     for node in graph.nodes:
-        if graph.nodes[node]['angles'] or graph.nodes[node]['dihedrals']:
+        try:
+            graph.nodes[node]['angles'] or graph.nodes[node]['dihedrals']:
             warnings.warn("Angle and Dihedral information is not converted.") 
-    
+        except KeyError:
+            pass
+
     return top
 
 def to_networkx(top):
