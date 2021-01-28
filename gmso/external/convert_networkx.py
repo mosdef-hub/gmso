@@ -1,3 +1,4 @@
+import warnings
 import networkx as nx
 
 from gmso.exceptions import GMSOError
@@ -39,6 +40,7 @@ def from_networkx(graph):
     top = Topology()
 
     node_mapping = dict()
+
     for node in graph.nodes:
         if not isinstance(node, Site):
             raise TypeError("Nodes must be instances of gmso.abc.Site")
@@ -55,6 +57,12 @@ def from_networkx(graph):
             conn = Bond(connection_members=edge)
             top.add_connection(conn)
 
+    warnings.simplefilter('once', UserWarning) 
+
+    for node in graph.nodes:
+        if graph.nodes[node]['angles'] or graph.nodes[node]['dihedrals']:
+            warnings.warn("Angle and Dihedral information is not converted.") 
+    
     return top
 
 def to_networkx(top):
