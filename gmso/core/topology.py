@@ -581,7 +581,11 @@ class Topology(object):
         self.is_typed(updated=True)
 
     def _get_bonds_for(self, site):
+<<<<<<< HEAD
         """return a list of the bonds that contain Site"""
+=======
+        """Return a list of bonds in this Topology that the site is a part of"""
+>>>>>>> cbb547d9d85488764f4b03cf2e3656b1cd36e0a0
         bonds = []
         for bond in self.bonds:
             if site in bond.connection_members:
@@ -589,7 +593,12 @@ class Topology(object):
         return bonds
 
     def _get_angles_for(self, site):
+<<<<<<< HEAD
         """return a list of the angles that contain Site"""
+=======
+        """Return a list of angles in this Topology that the site is a part of"""
+     
+>>>>>>> cbb547d9d85488764f4b03cf2e3656b1cd36e0a0
         angles = []
         for angle in self.angles:
             if site in angle.connection_members:
@@ -597,7 +606,11 @@ class Topology(object):
         return angles
 
     def _get_dihedrals_for(self, site):
+<<<<<<< HEAD
         """return a list of the dihedrals that contain Site"""
+=======
+        """Return a list of dihedrals in this Topology that the site is a part of"""
+>>>>>>> cbb547d9d85488764f4b03cf2e3656b1cd36e0a0
         dihedrals = []
         for dihedral in self.dihedrals:
             if site in dihedral.connection_members:
@@ -660,5 +673,3 @@ class Topology(object):
         descr.append('id: {}>'.format(id(self)))
 
         return ''.join(descr)
-
-
