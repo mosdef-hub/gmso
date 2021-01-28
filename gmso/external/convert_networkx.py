@@ -61,7 +61,7 @@ def from_networkx(graph):
 
     for node in graph.nodes:
         try:
-            graph.nodes[node]['angles'] or graph.nodes[node]['dihedrals']:
+            graph.nodes[node]['angles'] or graph.nodes[node]['dihedrals']
             warnings.warn("Angle and Dihedral information is not converted.") 
         except KeyError:
             pass
