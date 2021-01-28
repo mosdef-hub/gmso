@@ -1,6 +1,5 @@
 import os
 import re
-from collections import ChainMap
 
 import unyt as u
 from sympy import sympify
@@ -85,21 +84,15 @@ def _consolidate_params(params_dict, expression, update_orig=True):
         return new_dict
 
 
-def _check_atomtype_existence(tag, ref_dict):
+def _get_member_types(tag):
     at1 = tag.attrib.get('type1', tag.attrib.get('class1', None))
     at2 = tag.attrib.get('type2', tag.attrib.get('class2', None))
     at3 = tag.attrib.get('type3', tag.attrib.get('class3', None))
     at4 = tag.attrib.get('type4', tag.attrib.get('class4', None))
 
-    atom_classes_set = set(value.atomclass for value in ref_dict.values() if value)
-
-    member_types = list(filter(lambda x: x is not None, [at1, at2, at3, at4]))
+    member_types = filter(lambda x: x is not None, [at1, at2, at3, at4])
     member_types = ['*' if mem_type == '' else mem_type for mem_type in member_types]
-    for member in member_types:
-        if member == '*':
-            continue
-        if member not in ref_dict and member not in atom_classes_set:
-            raise ForceFieldParseError('AtomType/AtomClass {} not present in AtomTypes reference in the xml'.format(member))
+
     return member_types
 
 
@@ -164,8 +157,6 @@ def parse_ff_metadata(element):
 def parse_ff_atomtypes(atomtypes_el, ff_meta):
     """Given an xml element tree rooted at AtomType, traverse the tree to form a proper topology.core.AtomType"""
     atomtypes_dict = {}
-    atomclasses_dict = {}
-    ref_dict = ChainMap(atomtypes_dict, atomclasses_dict)
     units_dict = ff_meta['Units']
     atom_types_expression = atomtypes_el.attrib.get('expression', None)
     param_unit_dict = _parse_param_units(atomtypes_el)
@@ -207,10 +198,8 @@ def parse_ff_atomtypes(atomtypes_el, ff_meta):
         _check_valid_string(ctor_kwargs['name'])
         this_atom_type = AtomType(**ctor_kwargs)
         atomtypes_dict[this_atom_type.name] = this_atom_type
-        if this_atom_type.atomclass:
-            atomclass_atom_types = atomclasses_dict.get(this_atom_type.atomclass, [])
-            atomclass_atom_types.append(this_atom_type)
-    return ref_dict
+
+    return atomtypes_dict
 
 
 TAG_TO_CLASS_MAP = {
@@ -242,7 +231,7 @@ def parse_ff_connection_types(connectiontypes_el, atomtypes_dict, child_tag='Bon
         for kwarg in ctor_kwargs.keys():
             ctor_kwargs[kwarg] = connection_type.attrib.get(kwarg, ctor_kwargs[kwarg])
 
-        ctor_kwargs['member_types'] = _check_atomtype_existence(connection_type, atomtypes_dict)
+        ctor_kwargs['member_types'] = _get_member_types(connection_type)
         if not ctor_kwargs['parameters']:
             ctor_kwargs['parameters'] = _parse_params_values(connection_type,
                                                              param_unit_dict,
