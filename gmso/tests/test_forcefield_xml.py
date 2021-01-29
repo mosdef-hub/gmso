@@ -204,3 +204,6 @@ class TestForceFieldFromXML(BaseTest):
         with pytest.raises(MissingAtomTypesError):
             ff = ForceField(get_path(filename=get_path('ff_missing_atom_types.xml')))
 
+    def test_forcefield_missing_atom_types_non_strict(self):
+        ff = ForceField(get_path(filename=get_path('ff_missing_atom_types.xml')), strict=False)
+
