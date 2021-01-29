@@ -8,7 +8,7 @@ from lxml.etree import DocumentInvalid
 from gmso.core.forcefield import ForceField
 from gmso.tests.utils import get_path
 from gmso.tests.base_test import BaseTest
-from gmso.exceptions import ForceFieldParseError
+from gmso.exceptions import ForceFieldParseError, MissingAtomTypesError
 
 
 class TestForceFieldFromXML(BaseTest):
@@ -201,6 +201,6 @@ class TestForceFieldFromXML(BaseTest):
         assert len(improper_types_gropued_by_expression['0.5*z*(r - r_eq)**2']) == 1
 
     def test_forcefield_missing_atom_types(self):
-        with pytest.raises(ForceFieldParseError):
+        with pytest.raises(MissingAtomTypesError):
             ff = ForceField(get_path(filename=get_path('ff_missing_atom_types.xml')))
 
