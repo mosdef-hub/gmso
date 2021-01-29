@@ -16,7 +16,12 @@ class TestConvertNetworkX(BaseTest):
         assert ethane.n_sites == ethane_to_nx.number_of_nodes()
         assert ethane.n_bonds == ethane_to_nx.number_of_edges()
 
+
+        
         assert set(ethane.sites) == set(ethane_to_nx.nodes)
+        for site in ethane.sites:
+            assert set(ethane_to_nx.nodes[site]['angles']) == set(ethane._get_angles_for(site))
+            assert set(ethane_to_nx.nodes[site]['dihedrals']) == set(ethane._get_dihedrals_for(site))
 
     def test_from_networkx_ethane(self, ethane):
         ethane_to_nx = to_networkx(ethane)
