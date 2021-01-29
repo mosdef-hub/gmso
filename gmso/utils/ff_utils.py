@@ -133,7 +133,7 @@ def validate(gmso_xml_or_etree, strict=True, greedy=True):
 
     Notes
     -----
-    `verbose` is only used when `strict` is True.
+    `greedy` is only used when `strict` is True.
 
     See Also
     --------
