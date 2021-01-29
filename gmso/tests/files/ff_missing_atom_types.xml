@@ -1,0 +1,113 @@
+<ForceField version="0.4.1" name="ForceFieldOne">
+    <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.67">
+        <Units energy="K*kb" distance="nm" mass="amu" charge="coulomb"/>
+    </FFMetaData>
+    <AtomTypes name="BuckinghamPotential" expression="(A*exp(-B/r) - C/r**6)">
+        <ParametersUnitDef parameter="A" unit="kcal/mol"/>
+        <ParametersUnitDef parameter="B" unit="nm"/>
+        <ParametersUnitDef parameter="C" unit="kcal/mol*nm**6"/>
+        <AtomType name="Ar" element="Ar" charge="0.0" mass="39.948" definition="Ar" description="Argon atom">
+            <Parameters>
+                <Parameter name="A" value="0.1"/>
+                <Parameter name="B" value="4.0"/>
+                <Parameter name="C" value="0.5"/>
+            </Parameters>
+        </AtomType>
+        <AtomType name="Xe" element="Xe" charge="0.0" mass="131.293" definition="Xe" description="Xenon atom">
+            <Parameters>
+                <Parameter name="A" value="0.2"/>
+                <Parameter name="B" value="5.0"/>
+                <Parameter name="C" value="0.3"/>
+            </Parameters>
+        </AtomType>
+        <AtomType name="Li" element="Li" charge="1.0" mass="6.941" definition="Li" description="Lithium atom">
+            <Parameters>
+                <Parameter name="A" value="0.2"/>
+                <Parameter name="B" value="5.0"/>
+                <Parameter name="C" value="0.3"/>
+            </Parameters>
+        </AtomType>
+    </AtomTypes>
+    <BondTypes name="HarmonicBond" expression="0.5 * k * (r-r_eq)**2">
+        <ParametersUnitDef parameter="r_eq" unit="nm"/>
+        <ParametersUnitDef parameter="k" unit="kJ/mol"/>
+        <BondType name="BondType1" type1='Ar' type2='Ar'>
+            <Parameters>
+                <Parameter name='r_eq' value="10.0"/>
+                <Parameter name='k' value="10000"/>
+            </Parameters>
+        </BondType>
+        <BondType name="BondType2" type1='Xe' type2="Xe">
+            <Parameters>
+                <Parameter name='r_eq' value="10"/>
+                <Parameter name='k' value="20000"/>
+            </Parameters>
+        </BondType>
+    </BondTypes>
+
+    <AngleTypes name="HarmonicAngle" expression="0.5 * z * (r-r_eq)**2">
+        <ParametersUnitDef parameter="r_eq" unit="nm"/>
+        <ParametersUnitDef parameter="z" unit="kJ/mol"/>
+        <AngleType name="AngleType1" type1='Ar' type2='Ar' type3="Ar">
+            <Parameters>
+                <Parameter name='r_eq' value="10.0"/>
+                <Parameter name='z' value="100"/>
+            </Parameters>
+        </AngleType>
+        <AngleType name="AngleType2" type1='Xe' type2="Xe" type3="Xe">
+            <Parameters>
+                <Parameter name='r_eq' value="10"/>
+                <Parameter name='z' value="20"/>
+            </Parameters>
+        </AngleType>
+    </AngleTypes>
+
+    <DihedralTypes name="PeriodicProper" expression="0.5 * z * (r-r_eq)**2">
+        <ParametersUnitDef parameter="r_eq" unit="nm"/>
+        <ParametersUnitDef parameter="z" unit="kJ/mol"/>
+        <DihedralType name="ProperType1" type1='Ar' type2='Ar' type3="Ar" type4="Ar">
+            <Parameters>
+                <Parameter name='r_eq' value="10.0"/>
+                <Parameter name='z' value="100"/>
+            </Parameters>
+        </DihedralType>
+        <DihedralType name="ProperType2" type1='Xe' type2="Xe" type3="Xe" type4="Xe">
+            <Parameters>
+                <Parameter name='r_eq' value="10"/>
+                <Parameter name='z' value="20"/>
+            </Parameters>
+        </DihedralType>
+    </DihedralTypes>
+
+    <DihedralTypes name="PeriodicImproper" expression="0.5 * z * (r-r_eq)**2">
+        <ParametersUnitDef parameter="r_eq" unit="nm"/>
+        <ParametersUnitDef parameter="z" unit="kJ/mol"/>
+        <ImproperType name="ImproperType1" type1='Ar' type2='Ar' type3="Ar" type4="Ar">
+            <Parameters>
+                <Parameter name='r_eq' value="10.0"/>
+                <Parameter name='z' value="100"/>
+            </Parameters>
+        </ImproperType>
+    </DihedralTypes>
+
+    <DihedralTypes name="RBProper" expression="c0 * cos(phi)**0 + c1 * cos(phi)**1 + c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + c5 * cos(phi)**5">
+        <ParametersUnitDef parameter="c5" unit="kJ/mol"/>
+        <ParametersUnitDef parameter="c4" unit="kJ/mol"/>
+        <ParametersUnitDef parameter="c3" unit="kJ/mol"/>
+        <ParametersUnitDef parameter="c2" unit="kJ/mol"/>
+        <ParametersUnitDef parameter="c1" unit="kJ/mol"/>
+        <ParametersUnitDef parameter="c0" unit="kJ/mol"/>
+        <DihedralType name="RB-Proper-1" type1="ArK" type2="Xe" type3="Xe" type4="Ar">
+            <Parameters>
+                <Parameter name="c0" value="0.6276"/>
+                <Parameter name="c1" value="1.8828"/>
+                <Parameter name="c2" value="0.0"/>
+                <Parameter name="c3" value="-2.5104"/>
+                <Parameter name="c4" value="0.0"/>
+                <Parameter name="c5" value="0.0"/>
+            </Parameters>
+        </DihedralType>
+    </DihedralTypes>
+
+
+</ForceField>

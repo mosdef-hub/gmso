@@ -176,7 +176,7 @@ class TestForceFieldFromXML(BaseTest):
     def test_ff_mixed_type_error(self):
         with pytest.raises(TypeError):
             ff = ForceField([5, '20'])
-            
+
     def test_named_potential_groups(self, named_groups_ff):
         assert named_groups_ff.potential_groups['BuckinghamPotential']
         assert named_groups_ff.angle_types['Xe~Xe~Xe'] in named_groups_ff.potential_groups['HarmonicAngle'].values()
@@ -199,4 +199,8 @@ class TestForceFieldFromXML(BaseTest):
         assert len(angle_types_grouped_by_expression['0.5*z*(r - r_eq)**2']) == 2
         assert len(dihedral_types_grouped_by_expression['0.5*z*(r - r_eq)**2']) == 2
         assert len(improper_types_gropued_by_expression['0.5*z*(r - r_eq)**2']) == 1
+
+    def test_forcefield_missing_atom_types(self):
+        with pytest.raises(ForceFieldParseError):
+            ff = ForceField(get_path(filename=get_path('ff_missing_atom_types.xml')))
 
