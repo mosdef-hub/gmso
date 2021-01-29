@@ -161,20 +161,13 @@ def validate(gmso_xml_or_etree, strict=True, greedy=True):
 
 def _find_missing_atom_types_or_classes(ff_etree, greedy=False):
     atom_types_iter = ff_etree.iterfind('.//AtomType')
-    atom_types = set(
-        atom_type.attrib.get('name')
-        if atom_type.attrib.get('name') != '' else '*'
-        for atom_type in atom_types_iter
-        if atom_type.attrib.get('name') is not None
-    )
-    atom_types_and_classes = atom_types.union(
-        set(
-            atom_type.attrib.get('atomclass')
-            if atom_type.attrib.get('atomclass') != '' else '*'
-            for atom_type in atom_types_iter
-            if atom_type.attrib.get('atomclass') is not None
-        )
-    )
+    atom_types_and_classes = set()
+    for atom_type in atom_types_iter:
+        if atom_type.attrib.get('name'):
+            atom_types_and_classes.add(atom_type.attrib['name'])
+        if atom_type.attrib.get('atomclass'):
+            atom_types_and_classes.add(atom_type.attrib['atomclass'])
+
     remaining_potentials = [ff_etree.iterfind('.//BondType'),
                             ff_etree.iterfind('.//BondType'),
                             ff_etree.iterfind('.//AngleType'),
@@ -189,14 +182,13 @@ def _find_missing_atom_types_or_classes(ff_etree, greedy=False):
         for potential_type in potentials_type:
             types_or_classes = _get_member_types(potential_type)
             for type_or_class in types_or_classes:
-                print(type_or_class)
                 member_types_or_classes.add(type_or_class)
 
     missing = []
     for type_or_class in member_types_or_classes:
         if type_or_class not in atom_types_and_classes:
             missing.append(type_or_class)
-            if missing and not greedy:
+            if missing and greedy:
                 break
 
     return missing
