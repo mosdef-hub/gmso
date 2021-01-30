@@ -36,6 +36,10 @@ class ForceField(object):
         Name of the forcefield, default 'ForceField'
     version : str
         a cannonical semantic version of the forcefield, default 1.0.0
+    strict: bool, default=True
+        If true, perform a strict validation of the forcefield XML file
+    greedy: bool, default=True
+        If True, when using strict mode, fail on the first error/mismatch
 
     Attributes
     ----------
@@ -58,12 +62,18 @@ class ForceField(object):
 
     See Also
     --------
-    gmso.ForceField.from_xml : A class method to create forcefield object from XML files
+    gmso.ForceField.from_xml
+        A class method to create forcefield object from XML files
+    gmso.utils.ff_utils.validate
+        Function to validate the gmso XML file
 
     """
-    def __init__(self, xml_loc=None):
+    def __init__(self,
+                 xml_loc=None,
+                 strict=True,
+                 greedy=True):
         if xml_loc is not None:
-            ff = ForceField.from_xml(xml_loc)
+            ff = ForceField.from_xml(xml_loc, strict, greedy)
             self.name = ff.name
             self.version = ff.version
             self.atom_types = ff.atom_types
@@ -184,7 +194,7 @@ class ForceField(object):
         return _group_by_expression(self.improper_types)
 
     @classmethod
-    def from_xml(cls, xmls_or_etrees):
+    def from_xml(cls, xmls_or_etrees, strict=True, greedy=True):
         """Create a gmso.Forcefield object from XML File(s)
 
         This class method creates a ForceFiled object from the reference
@@ -195,7 +205,11 @@ class ForceField(object):
         Parameters
         ----------
         xmls_or_etrees : Union[str, Iterable[str], etree._ElementTree, Iterable[etree._ElementTree]]
-          The forcefield XML locations or XML Element Trees
+            The forcefield XML locations or XML Element Trees
+        strict: bool, default=True
+            If true, perform a strict validation of the forcefield XML file
+        greedy: bool, default=True
+            If True, when using strict mode, fail on the first error/mismatch
 
         Returns
         --------
@@ -231,7 +245,7 @@ class ForceField(object):
         potential_groups = {}
 
         for loc_or_etree in set(xmls_or_etrees):
-            validate(loc_or_etree)
+            validate(loc_or_etree, strict=strict, greedy=greedy)
             ff_tree = loc_or_etree
 
             if should_parse_xml:
@@ -262,7 +276,6 @@ class ForceField(object):
         for bond_types in ff_bondtypes_list:
             this_bond_types_group = parse_ff_connection_types(
                 bond_types,
-                atom_types_dict,
                 child_tag='BondType'
             )
             this_bond_types_group_name = bond_types.attrib.get('name', None)
@@ -276,7 +289,6 @@ class ForceField(object):
         for angle_types in ff_angletypes_list:
             this_angle_types_group = parse_ff_connection_types(
                 angle_types,
-                atom_types_dict,
                 child_tag='AngleType'
             )
             this_angle_types_group_name = angle_types.attrib.get('name', None)
@@ -290,12 +302,10 @@ class ForceField(object):
         for dihedral_types in ff_dihedraltypes_list:
             this_dihedral_types_group = parse_ff_connection_types(
                 dihedral_types,
-                atom_types_dict,
                 child_tag='DihedralType'
             )
             this_improper_types_group = parse_ff_connection_types(
                 dihedral_types,
-                atom_types_dict,
                 child_tag='ImproperType'
             )
             this_group_name = dihedral_types.attrib.get('name', None)
