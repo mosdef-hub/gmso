@@ -1,6 +1,5 @@
 import os
 import re
-from collections import ChainMap
 
 import unyt as u
 from sympy import sympify
@@ -11,7 +10,7 @@ from gmso.core.bond_type import BondType
 from gmso.core.angle_type import AngleType
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper_type import ImproperType
-from gmso.exceptions import ForceFieldParseError, ForceFieldError
+from gmso.exceptions import ForceFieldParseError, ForceFieldError, MissingAtomTypesError
 
 __all__ = ['validate',
            'parse_ff_metadata',
@@ -85,21 +84,15 @@ def _consolidate_params(params_dict, expression, update_orig=True):
         return new_dict
 
 
-def _check_atomtype_existence(tag, ref_dict):
+def _get_member_types(tag):
     at1 = tag.attrib.get('type1', tag.attrib.get('class1', None))
     at2 = tag.attrib.get('type2', tag.attrib.get('class2', None))
     at3 = tag.attrib.get('type3', tag.attrib.get('class3', None))
     at4 = tag.attrib.get('type4', tag.attrib.get('class4', None))
 
-    atom_classes_set = set(value.atomclass for value in ref_dict.values() if value)
-
-    member_types = list(filter(lambda x: x is not None, [at1, at2, at3, at4]))
+    member_types = filter(lambda x: x is not None, [at1, at2, at3, at4])
     member_types = ['*' if mem_type == '' else mem_type for mem_type in member_types]
-    for member in member_types:
-        if member == '*':
-            continue
-        if member not in ref_dict and member not in atom_classes_set:
-            raise ForceFieldParseError('AtomType/AtomClass {} not present in AtomTypes reference in the xml'.format(member))
+
     return member_types
 
 
@@ -120,7 +113,88 @@ def _parse_default_units(unit_tag):
     return units_map
 
 
-def validate(xml_path_or_etree, schema=None):
+def validate(gmso_xml_or_etree, strict=True, greedy=True):
+    """Validate the gmso XML file or etree.ElementTree
+    This function validates the given gmso XML file or etree.ElementTree object
+    against the gmso XML schema and optionally provide additional validation in
+    strict mode.
+    Parameters
+    ----------
+    gmso_xml_or_etree: str, pathlib.Path, etree.ElementTree
+        The XML file to perform validation for
+    strict: bool, default=True
+        If true, perform a strict validation which includes:
+            1. Check if all the atom_types/classes for individual entries
+             in the `BondTypes`, `AngleTypes`, `DihedralTypes` section are
+             found in the entries of the `AtomTypes` section
+    greedy: bool, default=False
+        If true, report all the mismatches that were found in the strict
+        validation else fail in the first mismatch
+
+    Notes
+    -----
+    `greedy` is only used when `strict` is True.
+
+    See Also
+    --------
+    _validate_schema
+        Validates a xml file or etree.ElementTree with a reference schema
+
+    Raises
+    ------
+    MissingAtomTypesError
+        If `strict` is True and all the atom_types/classes for individual entries
+        in the `BondTypes`, `AngleTypes`, `DihedralTypes` section are found in
+        the entries of the `AtomTypes` section
+    """
+    ff_etree = _validate_schema(xml_path_or_etree=gmso_xml_or_etree)
+    if strict:
+        missing = _find_missing_atom_types_or_classes(ff_etree, greedy=greedy)
+        if missing:
+            raise MissingAtomTypesError(
+                f'Atom types/classes {missing} are missing in the AtomTypes '
+                f'section but present in the BondTypes/AngleTypes/DihedralTypes '
+                f'section of the ForceField XML file. If this behavior is intended, '
+                f'please disable this check by setting strict=False.'
+            )
+
+
+def _find_missing_atom_types_or_classes(ff_etree, greedy=False):
+    atom_types_iter = ff_etree.iterfind('.//AtomType')
+    atom_types_and_classes = set()
+    for atom_type in atom_types_iter:
+        if atom_type.attrib.get('name'):
+            atom_types_and_classes.add(atom_type.attrib['name'])
+        if atom_type.attrib.get('atomclass'):
+            atom_types_and_classes.add(atom_type.attrib['atomclass'])
+
+    remaining_potentials = [ff_etree.iterfind('.//BondType'),
+                            ff_etree.iterfind('.//BondType'),
+                            ff_etree.iterfind('.//AngleType'),
+                            ff_etree.iterfind('.//DihedralType')]
+    member_types_or_classes = set()
+
+    # ToDo: This should be made a wildcard, stored globally
+    if '*' not in atom_types_and_classes:
+        atom_types_and_classes.add('*')
+
+    for potentials_type in remaining_potentials:
+        for potential_type in potentials_type:
+            types_or_classes = _get_member_types(potential_type)
+            for type_or_class in types_or_classes:
+                member_types_or_classes.add(type_or_class)
+
+    missing = []
+    for type_or_class in member_types_or_classes:
+        if type_or_class not in atom_types_and_classes:
+            missing.append(type_or_class)
+            if missing and greedy:
+                break
+
+    return missing
+
+
+def _validate_schema(xml_path_or_etree, schema=None):
     """Validate a given xml file or etree.ElementTree with a reference schema"""
     if schema is None:
         schema_path = os.path.join(os.path.split(os.path.abspath(__file__))[0], 'schema', 'ff-gmso.xsd')
@@ -134,6 +208,7 @@ def validate(xml_path_or_etree, schema=None):
         ff_xml = etree.parse(xml_path_or_etree)
 
     xml_schema.assertValid(ff_xml)
+    return ff_xml
 
 
 def _parse_scaling_factors(meta_tag):
@@ -164,8 +239,6 @@ def parse_ff_metadata(element):
 def parse_ff_atomtypes(atomtypes_el, ff_meta):
     """Given an xml element tree rooted at AtomType, traverse the tree to form a proper topology.core.AtomType"""
     atomtypes_dict = {}
-    atomclasses_dict = {}
-    ref_dict = ChainMap(atomtypes_dict, atomclasses_dict)
     units_dict = ff_meta['Units']
     atom_types_expression = atomtypes_el.attrib.get('expression', None)
     param_unit_dict = _parse_param_units(atomtypes_el)
@@ -207,10 +280,8 @@ def parse_ff_atomtypes(atomtypes_el, ff_meta):
         _check_valid_string(ctor_kwargs['name'])
         this_atom_type = AtomType(**ctor_kwargs)
         atomtypes_dict[this_atom_type.name] = this_atom_type
-        if this_atom_type.atomclass:
-            atomclass_atom_types = atomclasses_dict.get(this_atom_type.atomclass, [])
-            atomclass_atom_types.append(this_atom_type)
-    return ref_dict
+
+    return atomtypes_dict
 
 
 TAG_TO_CLASS_MAP = {
@@ -221,7 +292,7 @@ TAG_TO_CLASS_MAP = {
 }
 
 
-def parse_ff_connection_types(connectiontypes_el, atomtypes_dict, child_tag='BondType'):
+def parse_ff_connection_types(connectiontypes_el, child_tag='BondType'):
     """Given an XML etree Element rooted at BondTypes, parse the XML to create topology.core.AtomTypes,"""
     connectiontypes_dict = {}
     connectiontype_expression = connectiontypes_el.attrib.get('expression', None)
@@ -242,7 +313,7 @@ def parse_ff_connection_types(connectiontypes_el, atomtypes_dict, child_tag='Bon
         for kwarg in ctor_kwargs.keys():
             ctor_kwargs[kwarg] = connection_type.attrib.get(kwarg, ctor_kwargs[kwarg])
 
-        ctor_kwargs['member_types'] = _check_atomtype_existence(connection_type, atomtypes_dict)
+        ctor_kwargs['member_types'] = _get_member_types(connection_type)
         if not ctor_kwargs['parameters']:
             ctor_kwargs['parameters'] = _parse_params_values(connection_type,
                                                              param_unit_dict,
