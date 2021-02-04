@@ -15,8 +15,9 @@ from gmso.core.atom_type import AtomType
 from gmso.core.forcefield import ForceField
 from gmso.external import from_mbuild, from_parmed
 from gmso.tests.utils import get_path
-from gmso.utils.io import get_fn
+from gmso.utils.io import get_fn, has_foyer
 from gmso.external import from_parmed
+from gmso.external.convert_foyer_xml import from_foyer_xml
 
 class BaseTest:
     @pytest.fixture(autouse=True)
@@ -216,6 +217,47 @@ class BaseTest:
 
         top.update_topology()
         return top
+
+    @pytest.fixture
+    def foyer_fullerene(self):
+       if has_foyer:
+          import foyer
+          from foyer.tests.utils import get_fn
+       from_foyer_xml(get_fn("fullerene.xml"), overwrite=True)
+       gmso_ff = ForceField("fullerene_gmso.xml")
+
+       return gmso_ff
+
+
+    @pytest.fixture
+    def foyer_periodic(self):
+       if has_foyer:
+          import foyer
+          from foyer.tests.utils import get_fn
+       from_foyer_xml(get_fn("oplsaa-periodic.xml"), overwrite=True)
+       gmso_ff = ForceField("oplsaa-periodic_gmso.xml")
+
+       return gmso_ff
+
+    @pytest.fixture
+    def foyer_urey_bradley(self):
+        if has_foyer:
+            import foyer
+            from foyer.tests.utils import get_fn
+            from_foyer_xml(get_fn("charmm36_cooh.xml"), overwrite=True)
+            gmso_ff = ForceField("charmm36_cooh_gmso.xml")
+
+            return gmso_ff
+
+    @pytest.fixture
+    def foyer_rb_torsion(self):
+        if has_foyer:
+            import foyer
+            from foyer.tests.utils import get_fn
+            from_foyer_xml(get_fn("refs-multi.xml"), overwrite=True, validate_foyer=True)
+            gmso_ff = ForceField("refs-multi_gmso.xml")
+
+            return gmso_ff
 
     @pytest.fixture
     def methane(self):
