@@ -5,7 +5,7 @@ from pydantic import Field, BaseModel, validator
 
 class MetadataMixin(BaseModel):
     tags: Dict[str, Any] = Field(
-        {},
+        default={},
         description='Tags associated with the metadata'
     )
 

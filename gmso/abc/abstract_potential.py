@@ -49,7 +49,7 @@ class AbstractPotential(GMSOBase, MetadataMixin):
                 parameters=None
             )
 
-        MetadataMixin.__init__(self, tags=kwargs.pop('tags', {}))
+        MetadataMixin.__init__(self, tags=kwargs.get('tags'))
 
         GMSOBase.__init__(
             self,
