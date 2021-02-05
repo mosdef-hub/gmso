@@ -66,6 +66,7 @@ class AtomType(ParametricPotential):
                  independent_variables=None,
                  atomclass='', doi='', overrides=None, definition='',
                  description='',
+                 tags=None,
                  topology=None):
         if parameters is None:
             parameters = {'sigma': 0.3 * u.nm,
@@ -89,7 +90,8 @@ class AtomType(ParametricPotential):
             overrides=overrides,
             description=description,
             definition=definition,
-            set_ref=ATOM_TYPE_DICT
+            set_ref=ATOM_TYPE_DICT,
+            tags=tags
         )
 
     @property

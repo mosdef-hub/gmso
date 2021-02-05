@@ -4,10 +4,11 @@ from abc import abstractmethod
 from pydantic import Field
 
 from gmso.abc.gmso_base import GMSOBase
+from gmso.abc.metadata import MetadataMixin
 from gmso.utils.expression import _PotentialExpression
 
 
-class AbstractPotential(GMSOBase):
+class AbstractPotential(GMSOBase, MetadataMixin):
     __base_doc__ = """An abstract potential class.
 
     AbstractPotential stores a general interaction between components of a chemical
@@ -48,7 +49,10 @@ class AbstractPotential(GMSOBase):
                 parameters=None
             )
 
-        super().__init__(
+        MetadataMixin.__init__(self, tags=kwargs.pop('tags', {}))
+
+        GMSOBase.__init__(
+            self,
             name=name,
             potential_expression=potential_expression,
             **kwargs
