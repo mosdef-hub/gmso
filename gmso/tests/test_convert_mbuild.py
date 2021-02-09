@@ -165,5 +165,5 @@ class TestConvertMBuild(BaseTest):
     def test_empty_compound_name(self):
         compound = mb.load("CCOC", smiles=True)
         top = from_mbuild(compound)
-        print(top)
+        assert top.name is not None
 
