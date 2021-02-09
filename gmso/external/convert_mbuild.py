@@ -72,9 +72,7 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
     top.typed = False
 
     # Keep the name if it is not the default mBuild Compound name
-    if ( compound.name != mb.Compound().name and
-         compound.name != '' and
-         compound.name != None):
+    if compound.name != mb.Compound().name:
         top.name = compound.name
 
     site_map = dict()
