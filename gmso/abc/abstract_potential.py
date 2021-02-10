@@ -4,7 +4,7 @@ from abc import abstractmethod
 from pydantic import Field
 
 from gmso.abc.gmso_base import GMSOBase
-from gmso.abc.metadata import MetadataMixin
+from gmso.abc.metadata_mixin import MetadataMixin
 from gmso.utils.expression import _PotentialExpression
 
 

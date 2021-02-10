@@ -26,11 +26,18 @@ class MetadataMixin(BaseModel):
             )
         self.tags[tag] = value
 
+    def get_tag(self, tag: str, throw=False) -> Any:
+        """Get value of a particular tag"""
+        if throw:
+            return self.tags[tag]
+        else:
+            return self.tags.get(tag)
+
     def delete_tag(self, tag: str) -> None:
         del self.tags[tag]
 
     def pop_tag(self, tag: str) -> Any:
-        return self.tags.pop(tag)
+        return self.tags.pop(tag, None)
 
     @validator('tags', pre=True)
     def validate_tags(cls, value):
