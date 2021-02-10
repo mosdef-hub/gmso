@@ -46,7 +46,8 @@ class ImproperType(ParametricPotential):
                  parameters=None,
                  independent_variables=None,
                  member_types=None,
-                 topology=None):
+                 topology=None,
+                 tags=None):
         if parameters is None:
             parameters = {
                 'k': 1000 * u.Unit('kJ / (deg**2)'),
@@ -62,7 +63,8 @@ class ImproperType(ParametricPotential):
             independent_variables=independent_variables,
             topology=topology,
             member_types=member_types,
-            set_ref=IMPROPER_TYPE_DICT
+            set_ref=IMPROPER_TYPE_DICT,
+            tags=tags
         )
 
     @property
