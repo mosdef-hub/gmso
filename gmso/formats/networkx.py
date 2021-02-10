@@ -526,10 +526,7 @@ def get_networkx_edges(list_of_params):
 def plot_networkx_nodes(networkx_graph, ax, atom_name = None, edge_weights = None, 
                         edge_colors = None, node_sizes = None, list_of_labels = ['atom_type.name']):
     # Place nodes at 2D positions related to position in the topology
-    pos={}
-    for node in networkx_graph.nodes:
-        pos[node] = node.position.in_units('nm').value[0:2]
-    layout = nx.drawing.layout.spring_layout(networkx_graph,k=.5,pos=pos)
+    layout = nx.drawing.layout.kamada_kawai_layout(networkx_graph)
 
     # Use this dictionary to color specific atoms
     node_color_dict = {'C':'grey', 'H':'silver', 'O':'red', 'N':'blue', 'Cl':'green'}
