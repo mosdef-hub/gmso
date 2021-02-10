@@ -161,3 +161,9 @@ class TestConvertMBuild(BaseTest):
         top = from_mbuild(mb_ethane)
         assert_allclose_units(top.box.lengths,
                 (mb_ethane.boundingbox.lengths + [0.5, 0.5, 0.5]) * u.nm, rtol=1e-5, atol=1e-8)
+
+    def test_empty_compound_name(self):
+        compound = mb.load("CCOC", smiles=True)
+        top = from_mbuild(compound)
+        assert top.name is not None
+

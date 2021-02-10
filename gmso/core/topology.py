@@ -124,11 +124,8 @@ class Topology(object):
         A topology within a topology
     """
     def __init__(self, name="Topology", box=None):
-        if name is not None:
-            self._name = name
-        else:
-            self._name = "Topology"
 
+        self.name = name
         self._box = box
         self._sites = IndexedSet()
         self._typed = False
@@ -175,7 +172,7 @@ class Topology(object):
 
     @name.setter
     def name(self, name):
-        self._name = str(name) if name else None
+        self._name = str(name) if name else 'Topology'
 
     @property
     def box(self):
