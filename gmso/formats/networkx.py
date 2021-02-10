@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import networkx as nx
+import unyt
 
 from ipywidgets import interact, fixed
 import ipywidgets as widgets
@@ -585,11 +586,7 @@ def return_labels_for_nodes(list_of_nodes, list_of_labels):
                 label1,label2 = label.split('.')
                 node.label = node.label + '\n' + str(getattr(getattr(node, label1), label2))
             elif label == "charge":
-                label = getattr(node,label)/1.602/10**(-19)
-                if label < 0:
-                    node.label = node.label + '\n' + str(label)[0:6]
-                else:
-                    node.label = node.label + '\n' + str(label)[0:5]
+                node.label = node.label + '\n' + str((getattr(node,label)/unyt.electron_charge).round(4)*unyt.electron_charge.units)
             else:    
                 node.label = node.label + '\n' + str(getattr(node, label))
         labels[node] = node.label
