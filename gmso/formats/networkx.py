@@ -4,7 +4,6 @@ import unyt
 
 from ipywidgets import interact, fixed
 import ipywidgets as widgets
-from IPython.display import display
 
 from gmso.external.convert_networkx import to_networkx
 
