@@ -7,7 +7,6 @@ from gmso.utils.ff_utils import (validate,
                                  parse_ff_metadata,
                                  parse_ff_atomtypes,
                                  parse_ff_connection_types)
-from gmso.utils._constants import FF_TOKENS_SEPARATOR
 
 
 def _group_by_expression(potential_types):
