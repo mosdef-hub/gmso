@@ -1,3 +1,4 @@
+from functools import lru_cache
 import unyt as u
 from unyt.exceptions import UnitConversionError
 
@@ -6,23 +7,24 @@ def unyt_to_hashable(unyt_or_unyt_iter):
     """Convert a (list of) unyt array or quantity to a hashable tuple."""
     if unyt_or_unyt_iter is None:
         return unyt_or_unyt_iter
-    hash_coll = []
+
     if isinstance(unyt_or_unyt_iter, list):
-        for val in unyt_or_unyt_iter:
-            hash_coll.append(_unyt_to_hashable_single(val))
-        return tuple(hash_coll)
+        hashes = tuple(_unyt_to_hashable_single(val) for val in unyt_or_unyt_iter)
+        return hashes
     else:
         return _unyt_to_hashable_single(unyt_or_unyt_iter)
 
 
 def _unyt_to_hashable_single(val):
     if isinstance(val, u.unyt_quantity):
-        if val.units == u.elementary_charge and val.value == 0:
-            val.convert_to_units(u.coulomb)
-        val = u.unyt_array(val.reshape(-1))
-        return tuple(val.in_base().value)
+        return val.value * conversion_factor(val.units)
     else:
         return None
+
+
+@lru_cache(maxsize=128)
+def conversion_factor(unit):
+    return unit.base_value
 
 
 def ensure_valid_dimensions(quantity_1: u.unyt_quantity,

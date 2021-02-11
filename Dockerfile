@@ -19,7 +19,6 @@ RUN conda update conda -yq && \
 	conda config --set always_yes yes --set changeps1 no && \
 	conda config --add channels omnia && \
 	conda config --add channels conda-forge && \
-	conda config --add channels mosdef && \
 	conda create -n gmso-docker python=$PY_VERSION && \
 	. /opt/conda/etc/profile.d/conda.sh && \
 	conda activate gmso-docker && \
