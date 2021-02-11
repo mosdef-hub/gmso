@@ -504,23 +504,20 @@ class Topology(object):
         if update:
             self.update_atom_types()
         for atype in pairpotentialtype.member_types:
-            if not isinstance(atype, AtomType):
-                raise GMSOError('Non AtomType instance {} found in members'.format(atype.name))
-            if atype not in self.atom_types:
-                raise GMSOError('There is no instance of AtomType {} in current topology'.format(atype.name))
-        self._pairpotential_types[frozenset(pairpotentialtype.member_types)] = pairpotentialtype
+            if atype not in [t.name for t in self.atom_types]:
+                if atype not in [t.atomclass for t in self.atom_types]:
+                    raise GMSOError('There is no name/atomclass of AtomType {} in current topology'.format(atype))
+        self._pairpotential_types[pairpotentialtype.member_types] = pairpotentialtype
 
     def remove_pairpotentialtype(self,member_types):
         """Remove the custom pairwise potential between two AtomTypes
 
         Parameters
         ----------
-        member_types: List-like object of gmso.AtomType
-            The pair (or set) of AtomTypes of which the custom pairwise potential should be removed
+        member_types: list-like of strs
+            The pair (or set) of names or atomclasses of gmso.AtomTypes of which 
+            the custom pairwise potential should be removed
         """
-        for atype in member_types:
-            if not isinstance(atype, AtomType):
-                raise GMSOError('Non AtomType instance {} found in members'.format(atype))
         if frozenset(member_types) not in self._pairpotential_types:
             warnings.warn('No pair potential specified for member types')
             return
