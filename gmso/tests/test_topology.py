@@ -36,6 +36,10 @@ class TestTopology(BaseTest):
         top = Topology(name='mytop')
         assert top.name == 'mytop'
 
+    def test_empty_name(self):
+        top = Topology(name='')
+        assert top.name == 'Topology'
+
     def test_change_comb_rule(self):
         top = Topology()
         assert top.combining_rule == 'lorentz'
