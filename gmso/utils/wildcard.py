@@ -31,7 +31,6 @@ class WildCardTokenizer:
         j = 0
         yielded = set()
         for k in range(0, len(tokenizers[0].tokens_chain)):
-            print('here', k)
             while True:
                 try:
                     idx = j*step + k
