@@ -131,11 +131,8 @@ class Topology(object):
         A topology within a topology
     """
     def __init__(self, name="Topology", box=None):
-        if name is not None:
-            self._name = name
-        else:
-            self._name = "Topology"
 
+        self.name = name
         self._box = box
         self._sites = IndexedSet()
         self._typed = False
@@ -184,7 +181,7 @@ class Topology(object):
 
     @name.setter
     def name(self, name):
-        self._name = str(name) if name else None
+        self._name = str(name) if name else 'Topology'
 
     @property
     def box(self):
@@ -637,6 +634,31 @@ class Topology(object):
         self.update_connection_types()
         self.is_typed(updated=True)
 
+    def _get_bonds_for(self, site):
+        """Return a list of bonds in this Topology that the site is a part of"""
+        bonds = []
+        for bond in self.bonds:
+            if site in bond.connection_members:
+                bonds.append(bond)
+        return bonds
+
+    def _get_angles_for(self, site):
+        """Return a list of angles in this Topology that the site is a part of"""
+     
+        angles = []
+        for angle in self.angles:
+            if site in angle.connection_members:
+                angles.append(angle)
+        return angles
+
+    def _get_dihedrals_for(self, site):
+        """Return a list of dihedrals in this Topology that the site is a part of"""
+        dihedrals = []
+        for dihedral in self.dihedrals:
+            if site in dihedral.connection_members:
+                dihedrals.append(dihedral)
+        return dihedrals
+
     def get_index(self, member):
         """Get index of a member in the topology
 
@@ -693,5 +715,3 @@ class Topology(object):
         descr.append('id: {}>'.format(id(self)))
 
         return ''.join(descr)
-
-

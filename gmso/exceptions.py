@@ -21,3 +21,7 @@ class ForceFieldParseError(Exception):
 
 class EngineIncompatibilityError(GMSOError):
     """Error for engine incompatibility when writing or converting"""
+
+
+class MissingAtomTypesError(ForceFieldParseError):
+    """Error for missing AtomTypes when creating a ForceField from an XML file"""
