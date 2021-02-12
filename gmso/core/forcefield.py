@@ -7,6 +7,8 @@ from gmso.utils.ff_utils import (validate,
                                  parse_ff_metadata,
                                  parse_ff_atomtypes,
                                  parse_ff_connection_types)
+from gmso.utils.misc import mask_with
+from gmso.utils._constants import FF_TOKENS_SEPARATOR
 
 
 def _group_by_expression(potential_types):
@@ -192,6 +194,80 @@ class ForceField(object):
             A dictionary where the key, value -> expression, list of ImproperTypes with that expression
         """
         return _group_by_expression(self.improper_types)
+
+    def __getitem__(self, key):
+        """Get specefic potential instances of this ForceField."""
+        if isinstance(key, slice):
+            raise NotImplementedError('Slices are not implemented')
+
+        di_index = 0
+
+        if isinstance(key, tuple):
+            assert len(key) == 2
+            assert isinstance(key[0], int)
+            di_index = key[0]
+            assert di_index in (0, 1)
+            item = key[1]
+        else:
+            item = key
+
+        if not isinstance(item, str):
+            raise TypeError('Only string Keys are supported for searching potentials')
+
+        tokens = item.split(FF_TOKENS_SEPARATOR)
+
+        if len(tokens) == 1:
+            return self.atom_types[item]
+
+        if len(tokens) == 2:
+            try:
+                return self.bond_types[item]
+            except KeyError:
+                return self.try_wildcard_match(
+                    self.bond_types,
+                    tokens,
+                    wildcard='*'
+                )
+
+        if len(tokens) == 3:
+            try:
+                return self.angle_types[item]
+            except KeyError:
+                return self.try_wildcard_match(
+                    self.bond_types,
+                    tokens,
+                    wildcard='*'
+                )
+
+        if len(tokens) == 4:
+            try:
+                return self.dihedral_types[item] if di_index == 0 else self.improper_types[item]
+            except KeyError:
+                return self.try_wildcard_match(
+                    self.dihedral_types if di_index == 0 else self.improper_types,
+                    tokens,
+                    wildcard='*'
+                )
+
+    @staticmethod
+    def try_wildcard_match(in_dict, tokens, wildcard='*'):
+        """Try to find a key in a dictionary
+
+         with wildcards that match to items in the token by replacing items
+         in the token with
+        """
+        matched = None
+
+        for j in range(len(tokens)):
+            for masked in mask_with(tokens, window_size=j+1, mask=wildcard):
+                to_match = FF_TOKENS_SEPARATOR.join(masked)
+                if to_match in in_dict:
+                    matched = in_dict[to_match]
+
+        if matched:
+            return matched
+        else:
+            raise KeyError(FF_TOKENS_SEPARATOR.join(tokens))
 
     @classmethod
     def from_xml(cls, xmls_or_etrees, strict=True, greedy=True):

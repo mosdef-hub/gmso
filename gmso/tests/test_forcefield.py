@@ -207,3 +207,17 @@ class TestForceFieldFromXML(BaseTest):
     def test_forcefield_missing_atom_types_non_strict(self):
         ff = ForceField(get_path(filename=get_path('ff_missing_atom_types.xml')), strict=False)
 
+    def test_forcefield_get_item_slices(self, ff):
+        with pytest.raises(NotImplementedError):
+            assert ff[1:2]
+
+    def test_ff_get_item_tuple_error(self, ff):
+        with pytest.raises(AssertionError):
+            assert ff[(0, 0, 0)]
+
+    def test_forcefield_get_item_atom_types(self, ff):
+        assert ff.atom_types['Ar'] == ff['Ar']
+
+    def test_ff_get_item_improper_types(self, ff):
+        assert ff[(1, 'Xe~Xe~Xe~Xe')] == ff.improper_types['Xe~Xe~Xe~Xe']
+

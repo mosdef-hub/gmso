@@ -47,3 +47,44 @@ def ensure_valid_dimensions(quantity_1: u.unyt_quantity,
             quantity_2.units,
             quantity_2.units.dimensions
         )
+
+
+def mask_with(iterable, window_size=1, mask='*'):
+    """Mask an iterable with the `mask` in a sliding window of size `window_size`
+
+    This method masks an iterable elements with a mask object in a sliding window
+
+    Parameters
+    ----------
+    iterable: Iterable
+        The iterable to mask with
+    window_size: int, default=1
+        The window size for the mask to be applied
+    mask: Any, default='*'
+        The mask to apply
+
+    Examples
+    --------
+        >>> from gmso.utils.misc import mask_with
+        >>> list(mask_with(['Ar', 'Ar'], 2))
+        [['*', 'Ar'], ['Ar', '*']]
+        >>> for masked_list in mask_with(['Ar', 'Xe', 'Xm', 'CH'], 2, mask='_'):
+        ...     print('~'.join(masked_list))
+        *~*~Xm~CH
+        Ar~*~*~CH
+        Ar~Xe~*~*
+
+    Yields
+    ------
+    list
+        The masked iterable
+    """
+    input_list = list(iterable)
+    idx = 0
+
+    while idx + window_size <= len(input_list):
+        yield input_list[0:idx] +\
+              ['*'] * window_size +\
+              input_list[idx + window_size:]
+
+        idx += 1

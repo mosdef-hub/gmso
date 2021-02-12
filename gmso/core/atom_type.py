@@ -6,7 +6,6 @@ from pydantic import Field, validator
 
 from gmso.core.parametric_potential import ParametricPotential
 from gmso.utils.misc import unyt_to_hashable, ensure_valid_dimensions
-from gmso.utils.wildcard import WildCardTokenizer
 from gmso.utils._constants import ATOM_TYPE_DICT, UNIT_WARNING_STRING
 
 
@@ -122,21 +121,6 @@ class AtomType(ParametricPotential):
     @property
     def definition(self):
         return self.__dict__.get('definition_')
-
-    def initialize_match_tokens(self, overwrite=True) -> None:
-        """Add wildcard tokens for this atomtype's potential matches"""
-        if self.atomclass:
-            self.add_tag(
-                'class_tokens',
-                WildCardTokenizer(self.atomclass),
-                overwrite=overwrite
-            )
-        if self.name:
-            self.add_tag(
-                'type_tokens',
-                WildCardTokenizer(self.name),
-                overwrite=overwrite
-            )
 
     def __hash__(self):
         return hash(

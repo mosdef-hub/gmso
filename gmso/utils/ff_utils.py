@@ -287,7 +287,6 @@ def parse_ff_atomtypes(atomtypes_el, ff_meta):
 
         _check_valid_string(ctor_kwargs['name'])
         this_atom_type = AtomType(**ctor_kwargs)
-        this_atom_type.initialize_match_tokens()
         atomtypes_dict[this_atom_type.name] = this_atom_type
 
     return atomtypes_dict
