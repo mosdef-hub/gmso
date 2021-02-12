@@ -70,9 +70,9 @@ def mask_with(iterable, window_size=1, mask='*'):
         [['*', 'Ar'], ['Ar', '*']]
         >>> for masked_list in mask_with(['Ar', 'Xe', 'Xm', 'CH'], 2, mask='_'):
         ...     print('~'.join(masked_list))
-        *~*~Xm~CH
-        Ar~*~*~CH
-        Ar~Xe~*~*
+        _~_~Xm~CH
+        Ar~_~_~CH
+        Ar~Xe~_~_
 
     Yields
     ------
@@ -84,7 +84,7 @@ def mask_with(iterable, window_size=1, mask='*'):
 
     while idx + window_size <= len(input_list):
         yield input_list[0:idx] +\
-              ['*'] * window_size +\
+              [mask] * window_size +\
               input_list[idx + window_size:]
 
         idx += 1
