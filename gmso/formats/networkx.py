@@ -388,6 +388,9 @@ def select_params_on_networkx(networkx_graph, atoms):
                         )
         else:
             for node, angles in networkx_graph.nodes(data='angles'):
+                if not angles:
+                    print("No angle parameters have been applied to this topology")
+                    return
                 for angle in angles:
                         if angle.angle_type is None:
                             list_of_params.append(angle.connection_members)
@@ -396,7 +399,10 @@ def select_params_on_networkx(networkx_graph, atoms):
                             )
                             mia_angle_flag = 1
             if not mia_angle_flag:
-                return print('Since no sites are input, angles with missing types are shown')
+                print('All angles are typed. Select a central atom to look at the different angle_types.')
+            else: 
+                print('Since no sites are input, angles with missing types are shown.')
+
     elif len(atoms) == 4:
     #select a list of dihedrals
         if all(atoms):
@@ -435,6 +441,9 @@ def select_params_on_networkx(networkx_graph, atoms):
                         )
         else:
             for node, dihedrals in networkx_graph.nodes(data='dihedrals'):
+                if not dihedrals:
+                    print("No dihedral parameters have been applied to this topology")
+                    return
                 for dihedral in dihedrals:
                     if dihedral.dihedral_type is None:
                         list_of_params.append(dihedral.connection_members)
@@ -446,7 +455,7 @@ def select_params_on_networkx(networkx_graph, atoms):
             if not mia_angle_flag:
                 print('All dihedrals are typed. Select two central atoms to see associated dihedrals.')
             else: 
-                print('Since no sites are input, dihedrals with missing types are shown')
+                print('Since no sites are input, dihedrals with missing types are shown.')
                 
             
     else:
@@ -579,15 +588,31 @@ def return_labels_for_nodes(list_of_nodes, list_of_labels):
     # labels is a dict of each node and the labels to put there
     labels = {}
     for i,node in enumerate(list_of_nodes):
-        node.label = str(i) + ': ' + str(node.name)
+        node.label = str(i) + ':' + str(node.name)
         for label in list_of_labels:
             if '.' in label:
                 label1,label2 = label.split('.')
-                node.label = node.label + '\n' + str(getattr(getattr(node, label1), label2))
+                try:
+                    node.label = node.label + '\n' + str(getattr(getattr(node, label1), label2))
+                except AttributeError:
+                    node.label = node.label + '\nNoneType'
             elif label == "charge":
-                node.label = node.label + '\n' + str((getattr(node,label)/unyt.electron_charge).round(4)*unyt.electron_charge.units)
+                if isinstance(getattr(node,label),unyt.array.unyt_quantity):
+                    node.label = node.label + '\n' + str((getattr(node,label)/unyt.electron_charge).round(4)) + ' e'
+                else:
+                    node.label = node.label + '\nNone'
+            elif label == "position":
+                if isinstance(getattr(node,label)[0],unyt.array.unyt_quantity):
+                    node.label = node.label + '\n' + str(getattr(node,label).to('angstrom').round(2)*unyt.angstrom)
+                else:
+                    node.label = node.label + '\nNone'
             else:    
-                node.label = node.label + '\n' + str(getattr(node, label))
+                try:
+                    node.label = node.label + '\n' + str(getattr(node, label))
+                except AttributeError:
+                    node.label = node.label + '\nNoneType'
+                if len(node.label) > 12:
+                    node.label = "".join([line + '\n' for line in node.label.split()])
         labels[node] = node.label
         
     return labels
@@ -608,19 +633,25 @@ def show_parameter_values(topology, list_of_params, checkbox):
 def report_parameter_expression(topology, param):
     # return nicely printed parameters for a given edge.
     if len(param) == 4:
-        for dihedral in list(topology.dihedrals):
-            if dihedral.connection_members == (param[0], param[1], param[2], param[3]):
-                print(dihedral.dihedral_type.expression, '\n')
-                print("{:<12} {:<15}".format('Parameter','Value'))
-                for k, v in dihedral.dihedral_type.parameters.items():
-                    print("{:<12} {:<15}".format(k, v))
+        try:
+            for dihedral in list(topology.dihedrals):
+                if dihedral.connection_members == (param[0], param[1], param[2], param[3]):
+                    print(dihedral.dihedral_type.expression, '\n')
+                    print("{:<12} {:<15}".format('Parameter','Value'))
+                    for k, v in dihedral.dihedral_type.parameters.items():
+                        print("{:<12} {:<15}".format(k, v))
+        except AttributeError:
+            print("Dihedral not typed")
     elif len(param) == 3:
-        for angle in list(topology.angles):
-            if angle.connection_members == (param[0], param[1], param[2]):
-                print(angle.angle_type.expression, '\n')
-                print("{:<12} {:<15}".format('Parameter','Value'))
-                for k, v in angle.angle_type.parameters.items():
-                    print("{:<12} {:<15}".format(k, v))
+        try:
+            for angle in list(topology.angles):
+                if angle.connection_members == (param[0], param[1], param[2]):
+                    print(angle.angle_type.expression, '\n')
+                    print("{:<12} {:<15}".format('Parameter','Value'))
+                    for k, v in angle.angle_type.parameters.items():
+                        print("{:<12} {:<15}".format(k, v))
+        except AttributeError:
+            print("Angle not typed")
     else:
         raise ValueError('Parameters are not proper angles or dihedrals. Connection members are missing')
 
@@ -629,9 +660,14 @@ def report_parameter_expression(topology, param):
 def get_edges(networkx_graph, atom_name1, atom_name2):
     
     # Create a list of the edges that have been selected corresponding to the selected atom_name1
-    # and atom_name2. If both are None, then select edges that are missing bond types.
+    #and atom_name2. If both are None, then select edges that are missing bond types.
     list_of_edges = []
     list_of_bonds = []
+    # Check for whether you want to plot bonds based on the atom types, or their node labels.
+    try:
+        [node.atom_type.name for node in networkx_graph.nodes]
+    except AttributeError:
+        return print("Atomtypes are missing, so no bond types can be selected")
     mia_bond_flag = 0
     if atom_name1 and atom_name2:
         for edge in list(networkx_graph.edges):
@@ -647,8 +683,8 @@ def get_edges(networkx_graph, atom_name1, atom_name2):
     else:
         for nodes in list(networkx_graph.edges.items()):
             if nodes[1]['connection'].bond_type is None:
-                list_of_bonds.append(nodes[0].atom_type.name + ' --- ' + nodes[1].atom_type.name)
-                list_of_edges.append((nodes[0],nodes[1]))
+                list_of_bonds.append(nodes[0][0].atom_type.name + ' --- ' + nodes[0][1].atom_type.name)
+                list_of_edges.append((nodes[0][0],nodes[0][1]))
                 mia_bond_flag = 1
         if not mia_bond_flag:
             return print('All bonds are typed')
@@ -696,11 +732,14 @@ def report_bond_parameters(topology, edge):
     # return nicely printed bond parameters for a given edge.
     for bond in list(topology.bonds):
         if bond:
-            if bond.connection_members == edge[0] or bond.connection_members == (edge[0][1],edge[0][0]):
-                print(bond.bond_type.expression, '\n')
-                print("{:<12} {:<15}".format('Parameter','Value'))
-                for k, v in bond.bond_type.parameters.items():
-                    print("{:<12} {:<15}".format(k, v))
+            try:
+                if bond.connection_members == edge[0] or bond.connection_members == (edge[0][1],edge[0][0]):
+                    print(bond.bond_type.expression, '\n')
+                    print("{:<12} {:<15}".format('Parameter','Value'))
+                    for k, v in bond.bond_type.parameters.items():
+                        print("{:<12} {:<15}".format(k, v))
+            except AttributeError:
+                print("This bond has no parameters associated with it")
         else:
            print("This bond has no parameters associated with it")
 
