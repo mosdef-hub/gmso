@@ -26,11 +26,10 @@ class Element(GMSOBase):
     mass: u.unyt_quantity = Field(..., description='Mass of the element.')
 
     def __repr__(self):
-        mass_string = f"{self.mass.to(u.amu)}".split()[0] + " amu"
         return 'Element: {}, symbol: {}, atomic number: {}, mass: {}'.format(
                                                                       self.name, self.symbol,
                                                                       self.atomic_number,
-                                                                      mass_string)
+                                                                      self.mass.to("amu"))
 
     def __eq__(self, other):
         return hash(self) == hash(other)
