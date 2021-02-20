@@ -26,7 +26,7 @@ class GMSOBase(BaseModel, ABC):
     def __setattr__(self, name: Any, value: Any) -> None:
         if name in self.__config__.alias_to_fields:
             name = self.__config__.alias_to_fields[name]
-        else:
+        elif name in self.__config__.alias_to_fields.values():
             warnings.warn(
                 'Use of internal fields is discouraged. '
                 'Please use external fields to set attributes.'

@@ -153,7 +153,7 @@ def _find_extra_params(cls, fields, init_params):
     extra_params = []
     aliases_set = set(field.alias for field in fields.values())
     for param in init_params:
-        if param not in aliases_set and param is not 'self':
+        if param not in aliases_set and param != 'self':
             if hasattr(cls, param) and isinstance(getattr(cls, param), property):
                 prop = getattr(cls, param)
                 [doc_main, doc_desc] = prop.__doc__.split('\n')

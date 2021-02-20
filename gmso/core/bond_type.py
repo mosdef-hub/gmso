@@ -37,7 +37,8 @@ class BondType(ParametricPotential):
                  independent_variables=None,
                  potential_expression=None,
                  member_types=None,
-                 topology=None):
+                 topology=None,
+                 tags=None):
         if potential_expression is None:
             if expression is None:
                 expression = '0.5 * k * (r-r_eq)**2'
@@ -58,7 +59,8 @@ class BondType(ParametricPotential):
             potential_expression=potential_expression,
             topology=topology,
             member_types=member_types,
-            set_ref=BOND_TYPE_DICT
+            set_ref=BOND_TYPE_DICT,
+            tags=tags
         )
 
     @property
