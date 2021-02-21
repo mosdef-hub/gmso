@@ -5,6 +5,7 @@ import networkx as nx
 import sympy
 import unyt as u
 
+from gmso import __version__
 from gmso.core.topology import Topology
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.compatibility import check_compatibility
@@ -47,11 +48,6 @@ def write_mcf(top, filename):
     # Identify atoms in rings and Cassandra 'fragments'
     in_ring, frag_list, frag_conn = _id_rings_fragments(top)
 
-    # TODO: Figure out how to infer/get 14 scaling
-    # For now setting LJ/Coul 14 to 0.0
-    lj14 = 0.0
-    coul14 = 0.0
-
     # TODO: What oh what to do about subtops?
     # For now refuse topologies with subtops as MCF writer is for
     # single molecules
@@ -71,8 +67,8 @@ def write_mcf(top, filename):
             "!Molecular connectivity file\n"
             "!***************************************"
             "****************************************\n"
-            "!File {} written by gmso at {}\n\n".format(
-                filename, str(datetime.datetime.now())
+            "!File {} written by gmso {} at {}\n\n".format(
+                filename, __version__, str(datetime.datetime.now())
             )
         )
 
@@ -84,7 +80,7 @@ def write_mcf(top, filename):
         # TODO: Add improper information
         # _write_improper_information(mcf, top)
         _write_fragment_information(mcf, top, frag_list, frag_conn)
-        _write_intrascaling_information(mcf, lj14, coul14)
+        _write_intrascaling_information(mcf, top)
 
         # That's all, folks!
         mcf.write("\n\nEND\n")
@@ -624,7 +620,7 @@ def _write_fragment_information(mcf, top, frag_list, frag_conn):
         )
 
 
-def _write_intrascaling_information(mcf, lj14, coul14):
+def _write_intrascaling_information(mcf, top):
     """Write the intramolecular scaling in the molecule.
 
     Parameters
@@ -637,7 +633,7 @@ def _write_intrascaling_information(mcf, lj14, coul14):
         The 1-4 scaling parameter for Coulombic interactions
 
     """
-
+    sf = top.scaling_factors
     header = (
         "\n!Intra Scaling\n"
         "!vdw_scaling    1-2 1-3 1-4 1-N\n"
@@ -646,8 +642,16 @@ def _write_intrascaling_information(mcf, lj14, coul14):
     )
 
     mcf.write(header)
-    mcf.write("0. 0. {:.4f} 1.\n".format(lj14))
-    mcf.write("0. 0. {:.4f} 1.\n".format(coul14))
+    mcf.write(
+        "{:.4f} {:.4f} {:.4f} 1.0000\n".format(
+            sf["vdw_12"], sf["vdw_13"], sf["vdw_14"]
+        )
+    )
+    mcf.write(
+        "{:.4f} {:.4f} {:.4f} 1.0000\n".format(
+            sf["coul_12"], sf["coul_13"], sf["coul_14"]
+        )
+    )
 
 
 def _check_compatibility(top):
