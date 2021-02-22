@@ -409,10 +409,10 @@ def select_params_on_networkx(networkx_graph, atoms):
             for node, dihedrals in networkx_graph.nodes(data='dihedrals'):
                 for dihedral in dihedrals:
                     names = [member.name for member in dihedral.connection_members]
-                    if (atoms == names or 
-                        atoms == [names[i] for i in [0,2,1,3]] or
-                        atoms == [names[i] for i in [3,1,2,0]] or
-                        atoms == [names[i] for i in [3,2,1,0]]):
+                    if (atoms == [names[i] for i in [2,1,0,3]] or
+                        atoms == [names[i] for i in [1,2,3,0]] or
+                        atoms == [names[i] for i in [1,2,0,3]] or
+                        atoms == [names[i] for i in [2,1,3,0]]):
                         list_of_params.append(dihedral.connection_members)
                         list_of_names.append(
                         _get_formatted_atom_types_names_for(dihedral)

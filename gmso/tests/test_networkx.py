@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 from gmso.formats.networkx import *
+from gmso.formats.networkx import _get_formatted_atom_types_names_for
 from gmso.tests.base_test import BaseTest
 from unyt.testing import assert_allclose_units
 from gmso.utils.io import import_, has_networkx, has_pyplot
