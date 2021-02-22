@@ -404,7 +404,7 @@ def select_params_on_networkx(networkx_graph, atoms):
                 print('Since no sites are input, angles with missing types are shown.')
 
     elif len(atoms) == 4:
-    #select a list of dihedrals
+        #select a list of dihedrals
         if all(atoms):
             for node, dihedrals in networkx_graph.nodes(data='dihedrals'):
                 for dihedral in dihedrals:

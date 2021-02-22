@@ -24,17 +24,15 @@ class TestNetworkx(BaseTest):
         list(typed_ethane.dihedrals)[0].dihedral_type = None
         
         graph = to_networkx(typed_ethane)
-        test_edge_weights, test_edge_colors = highlight_networkx_edges(graph, 'angles')
-        nodes = list(graph.nodes)
-        assert test_edge_weights[nodes[0],nodes[4]] == 5
-        assert test_edge_weights[nodes[4],nodes[5]] == 5
-        assert test_edge_weights[nodes[0],nodes[1]] == 1
+        list_edges = list(graph.edges)[0:3] 
+        test_edge_weights, test_edge_colors = highlight_networkx_edges(graph, list_edges[0:2])
+        assert test_edge_weights[list_edges[0]] == 5
+        assert test_edge_weights[list_edges[1]] == 5
+        assert test_edge_weights[list_edges[2]] == 1
+        assert test_edge_colors[list_edges[0]] == 'r'
+        assert test_edge_colors[list_edges[1]] == 'r'
+        assert test_edge_colors[list_edges[2]] == 'k'
   
-        test_edge_weights, test_edge_colors = highlight_networkx_edges(graph, 'dihedrals')
-        assert test_edge_weights[nodes[0],nodes[4]] == 5
-        assert test_edge_weights[nodes[4],nodes[5]] == 5
-        assert test_edge_weights[nodes[0],nodes[1]] == 5
-        assert test_edge_weights[nodes[0],nodes[3]] == 1
 
     def test_plot_networkx_atomtypes(self,typed_ethane):
         graph = to_networkx(typed_ethane)
