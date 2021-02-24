@@ -52,6 +52,26 @@ class GMSOBase(BaseModel, ABC):
 
     def json(self, **kwargs):
         kwargs['by_alias'] = True
+        exclude = kwargs.get('exclude')
+        include = kwargs.get('include')
+        include_alias = set()
+        exclude_alias = set()
+        if include:
+            for included in include:
+                if included in self.Config.alias_to_fields:
+                    include_alias.add(self.Config.alias_to_fields[included])
+                else:
+                    include_alias.add(included)
+            kwargs['include'] = include_alias
+
+        if exclude:
+            for excluded in exclude:
+                if excluded in self.Config.alias_to_fields:
+                    exclude_alias.add(self.Config.alias_to_fields[excluded])
+                else:
+                    exclude_alias.add(excluded)
+            kwargs['exclude'] = exclude_alias
+
         return super(GMSOBase, self).json(**kwargs)
 
     @classmethod

@@ -11,7 +11,7 @@ __all__ = [
 
 
 def unyt_to_dict(unyt_qt: Union[u.unyt_array, u.unyt_quantity]) -> dict:
-    """Convert a unyt qunatity into json serializable dictionary"""
+    """Convert a unyt quantity into json serializable dictionary"""
     if not isinstance(unyt_qt, u.unyt_array):
         raise ValueError(
             'Please provide a value of type unyt array or unyt quantity'
@@ -49,7 +49,7 @@ class JSONHandler:
         self.json_encoders = {}
 
     def register(self, type_, callable_, override=False):
-        """Register a new JSON encoder for GMSO BaseClasses"""
+        """Register a new JSON encoder for an object for serialization in GMSO"""
         if type_ not in self.json_encoders:
             self.json_encoders[type_] = callable_
         else:
