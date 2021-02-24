@@ -1,13 +1,10 @@
-import unyt as u
-import numpy as np
-#import matplotlib.pyplot as plt
-#import networkx as nx
 import pytest
 
-from gmso.formats.networkx import *
+from gmso.formats.networkx import (highlight_networkx_edges, plot_networkx_atomtypes,
+plot_networkx_bonds, select_params_on_networkx, get_networkx_edges, identify_labels,
+show_parameter_values)
 from gmso.formats.networkx import _get_formatted_atom_types_names_for
 from gmso.tests.base_test import BaseTest
-from unyt.testing import assert_allclose_units
 from gmso.utils.io import import_, has_networkx, has_pyplot
 from gmso.external.convert_networkx import to_networkx
 
@@ -36,7 +33,6 @@ class TestNetworkx(BaseTest):
   
 
     def test_plot_networkx_atomtypes(self,typed_ethane):
-        graph = to_networkx(typed_ethane)
         fig, ax = plot_networkx_atomtypes(typed_ethane,atom_name=None)
         test_fig, test_ax = plt.subplots(1)
         

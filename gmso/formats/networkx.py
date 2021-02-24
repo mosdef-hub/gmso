@@ -792,7 +792,6 @@ def highlight_networkx_edges(networkx_graph, list_of_edges):
     edge_weights={};edge_colors={}
     for edge in networkx_graph.edges:
         edge_weights[edge] = 1; edge_colors[edge] = 'k'
-    def_param = 1
     for edge in networkx_graph.edges:
         if edge in list_of_edges:
             edge_weights[edge] = 5
