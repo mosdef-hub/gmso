@@ -26,19 +26,20 @@ def unyt_to_dict(unyt_qt: Union[u.unyt_array, u.unyt_quantity]) -> dict:
 
 def dict_to_unyt(dict_obj):
     for key, value in dict_obj.items():
-        if value and 'array' in value and 'unit' in value:
-            np_array = np.array(value['array'], dtype=float)
-            if np_array.shape == tuple():
-                unyt_func = u.unyt_quantity
+        if isinstance(value, dict):
+            if 'array' not in value and 'unit' not in value:
+                dict_to_unyt(value)
             else:
-                unyt_func = u.unyt_array
+                np_array = np.array(value['array'], dtype=float)
+                if np_array.shape == tuple():
+                    unyt_func = u.unyt_quantity
+                else:
+                    unyt_func = u.unyt_array
 
-            dict_obj[key] = unyt_func(
-                np_array,
-                value['unit']
-            )
-        elif isinstance(value, dict):
-            dict_to_unyt(value)
+                dict_obj[key] = unyt_func(
+                    np_array,
+                    value['unit']
+                )
 
 
 class JSONHandler:

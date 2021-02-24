@@ -1,3 +1,7 @@
+import pytest
+import unyt as u
+
+from gmso.core.element import element_by_symbol
 from gmso.core.atom import Atom
 from gmso.core.bond import Bond
 from gmso.core.angle import Angle
@@ -12,6 +16,31 @@ from gmso.tests.base_test import BaseTest
 
 
 class TestSerialization(BaseTest):
+
+    @pytest.fixture(scope='module')
+    def full_atom_type(self):
+        return AtomType(
+            name='test_atom_type',
+            expression='a*b+c*d+e**2',
+            independent_variables={'a'},
+            parameters={
+                'b': 2.0 * u.amu,
+                'c': 3.0 * u.nm / u.kg ** 2,
+                'd': 5.0 * u.kJ / u.mol,
+                'e': 1.0 * u.C
+            },
+            mass=1.0 * u.amu,
+            charge=1.0 * u.elementary_charge,
+            atomclass='test_atom_class',
+            doi='https://dx.doi.org/110.200.300',
+            overrides={'A', 'B', 'C'},
+            definition='CX_6',
+            description='A test AtomType object',
+            tags={
+                'tag1': 10,
+                'tag2': 10 * u.nm
+            }
+        )
 
     def test_atom_to_json_loop(self, typed_ethane, are_equivalent_atoms):
         atoms_to_test = typed_ethane.sites
@@ -92,3 +121,59 @@ class TestSerialization(BaseTest):
             improper_type_copy = ImproperType.parse_raw(improper_type_json)
             improper_type_copy.topology = improper_type.topology
             assert improper_type_copy == improper_type
+
+    def test_atom_every_field_set(self, full_atom_type, are_equivalent_atoms):
+        atom = Atom(
+            name='test_atom',
+            label='test_label',
+            position=[0.0, 0.0, 0.0],
+            charge=1.5,
+            mass=2.0,
+            element=element_by_symbol('C'),
+            atom_type=full_atom_type
+        )
+
+        atom_copy = Atom.parse_raw(atom.json())
+        assert are_equivalent_atoms(atom, atom_copy)
+
+    def test_bond_every_field_set(self, full_atom_type, are_equivalent_atoms):
+        atom1 = Atom(
+            name='test_atom1',
+            label='test_label1',
+            position=[0.0, 0.0, 0.0],
+            charge=1.5,
+            mass=2.0,
+            element=element_by_symbol('C'),
+            atom_type=full_atom_type
+        )
+
+        atom2 = Atom(
+            name='test_atom1',
+            label='test_label1',
+            position=[0.1, 0.4, 0.5],
+            charge=5,
+            mass=2.6,
+            element=element_by_symbol('H'),
+            atom_type=full_atom_type
+        )
+
+        bond = Bond(
+            name='test_bond1',
+            connection_members=(atom1, atom2)
+        )
+
+        bond_type = BondType(
+            name='test_bond_type',
+            expression='a*b+c**2',
+            parameters={
+                'a': 10 * u.nm,
+                'b': 20 * u.angstrom
+            },
+            independent_variables={'c'}
+        )
+
+        bond_copy = Bond.parse_raw(bond.json())
+        assert bond_copy.name == bond.name
+        for member1, member2 in zip(bond.connection_members, bond_copy.connection_members):
+            assert are_equivalent_atoms(member1, member2)
+        assert bond_copy.bond_type == bond.bond_type
