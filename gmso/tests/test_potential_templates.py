@@ -42,7 +42,7 @@ class TestPotentialTemplates(BaseTest):
     def test_periodic_torsion_potential(self, templates):
         periodic_torsion_potential = templates['PeriodicTorsionPotential']
         assert periodic_torsion_potential.name == 'PeriodicTorsionPotential'
-        assert periodic_torsion_potential.expression == sympy.sympify('k * (1 + cos(n * phi - phi_eq))**2')
+        assert periodic_torsion_potential.expression == sympy.sympify('k * (1 + cos(n * phi - phi_eq))')
         assert periodic_torsion_potential.independent_variables == {sympy.sympify('phi')}
 
     def test_ryckaert_bellemans_torsion_potential(self, templates):
