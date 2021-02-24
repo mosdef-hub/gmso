@@ -1,5 +1,5 @@
 {
   "name": "PeriodicTorsionPotential",
-  "expression": "k * (1 + cos(n * phi - phi_eq))**2",
+  "expression": "k * (1 + cos(n * phi - phi_eq))",
   "independent_variables": "phi"
 }

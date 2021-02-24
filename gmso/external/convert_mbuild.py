@@ -149,7 +149,7 @@ def to_mbuild(topology):
     assert isinstance(topology, Topology), msg
 
     compound = mb.Compound()
-    if topology.name is None:
+    if topology.name is Topology().name:
         compound.name = 'Compound'
     else:
         compound.name = topology.name

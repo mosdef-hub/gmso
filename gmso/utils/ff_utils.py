@@ -257,7 +257,8 @@ def parse_ff_atomtypes(atomtypes_el, ff_meta):
             'overrides': '',
             'definition': '',
             'description': '',
-            'topology': None
+            'topology': None,
+            'element': ''
         }
 
         if atom_types_expression:
@@ -265,6 +266,15 @@ def parse_ff_atomtypes(atomtypes_el, ff_meta):
 
         for kwarg in ctor_kwargs.keys():
             ctor_kwargs[kwarg] = atom_type.attrib.get(kwarg, ctor_kwargs[kwarg])
+
+        tags = {
+            'tags': {
+                'element': ctor_kwargs.pop('element', '')
+            }
+        }
+
+        ctor_kwargs.update(tags)
+
         if isinstance(ctor_kwargs['mass'], str):
             ctor_kwargs['mass'] = u.unyt_quantity(float(ctor_kwargs['mass']), units_dict['mass'])
         if isinstance(ctor_kwargs['overrides'], str):
