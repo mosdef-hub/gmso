@@ -2,8 +2,11 @@ import pytest
 
 from gmso.formats.networkx import (highlight_networkx_edges, plot_networkx_atomtypes,
 plot_networkx_bonds, select_params_on_networkx, get_networkx_edges, identify_labels,
-show_parameter_values)
+show_parameter_values, interactive_networkx_atomtypes, interactive_networkx_bonds,
+interactive_networkx_angles, interactive_networkx_dihedrals, select_dihedrals_from_sites,
+plot_networkx_nodes)
 from gmso.formats.networkx import _get_formatted_atom_types_names_for
+
 from gmso.tests.base_test import BaseTest
 from gmso.utils.io import import_, has_networkx, has_pyplot
 from gmso.external.convert_networkx import to_networkx
@@ -71,3 +74,31 @@ class TestNetworkx(BaseTest):
         parameters = list(typed_ethane.angles[0].connection_members[0:2])
         with pytest.raises(ValueError):
             show_parameter_values(typed_ethane, [parameters], True) 
+
+    def test_interactive_networkx_atomtypes(self):
+        with pytest.raises(Exception):
+            interactive_networkx_atomtypes()
+
+    def test_interactive_networkx_bonds(self):
+        with pytest.raises(Exception):
+            interactive_networkx_bonds()
+
+    def test_interactive_networkx_angles(self):
+        with pytest.raises(Exception):
+            interactive_networkx_angles()
+
+    def test_interactive_networkx_dihedrals(self):
+        with pytest.raises(Exception):
+            interactive_networkx_dihedrals()
+
+    def test_select_dihedrals_from_sites(self,typed_ethane,capsys):
+        graph = to_networkx(typed_ethane)
+        select_dihedrals_from_sites(graph,typed_ethane,'C','C')
+        captured = capsys.readouterr()
+        assert isinstance(captured.out,str)
+
+    def test_plot_networkx_nodes(self,typed_ethane):
+        graph = to_networkx(typed_ethane)
+        fig, ax = plt.subplots(1,1)
+        plot_networkx_nodes(graph,ax,edge_weights = {1:5}, 
+                            edge_colors = {1:'r'})
