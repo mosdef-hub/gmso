@@ -64,9 +64,10 @@ class Site(GMSOBase):
         return self.__dict__.get('label_')
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} {self.name}, " \
-               f"position: {self.position}, " \
-               f"label: {self.label if self.label else None} id: {id(self)}>"
+        return f"<{self.__class__.__name__} {self.name},\n " \
+               f"position: {self.position},\n " \
+               f"label: {self.label if self.label else None},\n " \
+               f"id: {id(self)}>"
 
     def __str__(self):
         return f"<{self.__class__.__name__} {self.name}, " \
