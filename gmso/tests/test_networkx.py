@@ -4,8 +4,8 @@ from gmso.formats.networkx import (highlight_networkx_edges, plot_networkx_atomt
 plot_networkx_bonds, select_params_on_networkx, get_networkx_edges, identify_labels,
 show_parameter_values, interactive_networkx_atomtypes, interactive_networkx_bonds,
 interactive_networkx_angles, interactive_networkx_dihedrals, select_dihedrals_from_sites,
-plot_networkx_nodes, plot_networkx_params, select_edges_on_networkx,
-report_parameter_expression)
+plot_networkx_nodes, plot_networkx_params, select_edges_on_networkx, get_edges,
+report_parameter_expression, report_bond_parameters)
 from gmso.formats.networkx import _get_formatted_atom_types_names_for
 
 from gmso.tests.base_test import BaseTest
@@ -138,5 +138,16 @@ class TestNetworkx(BaseTest):
     def test_report_parameter_expression(self,typed_ethane,capsys):
         report_parameter_expression(typed_ethane,list(typed_ethane.dihedrals[0].connection_members))
         report_parameter_expression(typed_ethane,list(typed_ethane.angles[0].connection_members))
+        captured, err = capsys.readouterr()
+        assert isinstance(err,str)
+
+    def test_get_edges(self,typed_ethane):
+        graph = to_networkx(typed_ethane)
+        assert len(get_edges(graph, 'C', 'C')[0][1]) == 1
+        assert len(get_edges(graph, 'H', None)[0][1]) == 6
+        assert not get_edges(graph, None, None)
+
+    def test_report_bond_parameters(self,typed_ethane,capsys):
+        report_bond_parameters(typed_ethane,[typed_ethane.bonds[0].connection_members])
         captured, err = capsys.readouterr()
         assert isinstance(err,str)
