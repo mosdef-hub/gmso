@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Optional, Any
 
 import unyt as u
@@ -123,6 +124,14 @@ class ParametricPotential(AbstractPotential):
             independent_variables=independent_variables,
             parameters=parameters
         )
+
+    def get_parameters(self, copy=False):
+        """Returns parameters for this ParametricPotential"""
+        params = self.parameters
+        if copy:
+            params = deepcopy(params)
+
+        return params
 
     @classmethod
     def from_template(cls, potential_template, parameters, topology=None):

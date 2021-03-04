@@ -60,8 +60,10 @@ def validate_type(iterator, type_):
 
 
 def mask_with(iterable, window_size=1, mask='*'):
-    """Mask an iterable with the `mask` in a sliding window of size `window_size`
-    This method masks an iterable elements with a mask object in a sliding window
+    """Mask an iterable with the `mask` in a circular sliding window of size `window_size`
+
+    This method masks an iterable elements with a mask object in a circular sliding window
+
     Parameters
     ----------
     iterable: Iterable
@@ -73,13 +75,15 @@ def mask_with(iterable, window_size=1, mask='*'):
     Examples
     --------
         >>> from gmso.utils.misc import mask_with
-        >>> list(mask_with(['Ar', 'Ar'], 2))
+        >>> list(mask_with(['Ar', 'Ar'], 1))
         [['*', 'Ar'], ['Ar', '*']]
         >>> for masked_list in mask_with(['Ar', 'Xe', 'Xm', 'CH'], 2, mask='_'):
         ...     print('~'.join(masked_list))
         _~_~Xm~CH
         Ar~_~_~CH
         Ar~Xe~_~_
+        _~Xe~Xm~_
+
     Yields
     ------
     list
@@ -87,11 +91,17 @@ def mask_with(iterable, window_size=1, mask='*'):
     """
     input_list = list(iterable)
     idx = 0
-
-    while idx <= len(input_list):
-        if idx + window_size <= len(input_list):
-            yield input_list[0:idx] +\
-                  [mask] * window_size +\
-                  input_list[idx + window_size:]
+    first = None
+    while idx < len(input_list):
+        mask_idxes = set((idx + j) % len(input_list) for j in range(window_size))
+        to_yield = [
+            mask if j in mask_idxes else input_list[j]
+            for j in range(len(input_list))
+        ]
+        if to_yield == first:
+            break
+        if idx == 0:
+            first = to_yield
 
         idx += 1
+        yield to_yield
