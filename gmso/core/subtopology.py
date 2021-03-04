@@ -102,12 +102,15 @@ class SubTopology(object):
             self.parent.add_site(site, update_types=update_types)
 
     def __repr__(self):
-        descr = list('<')
-        descr.append(self.name + ' ')
-        descr.append('{:d} sites, '.format(self.n_sites))
-        descr.append('id: {}>'.format(id(self)))
+        return f"<SubTopology {self.name},\n " \
+               f"{self.n_sites} sites,\n " \
+               f"id: {id(self)}>"
 
-        return ''.join(descr)
+    def __str__(self):
+        return f"<SubTopology {self.name}, " \
+               f"{self.n_sites} sites, " \
+               f"id: {id(self)}>"
+
 
 def _validate_parent(parent):
     if isinstance(parent, Topology):
