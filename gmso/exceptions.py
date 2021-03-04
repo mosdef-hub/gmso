@@ -25,3 +25,7 @@ class EngineIncompatibilityError(GMSOError):
 
 class MissingAtomTypesError(ForceFieldParseError):
     """Error for missing AtomTypes when creating a ForceField from an XML file"""
+
+
+class MissingPotentialError(ForceFieldError):
+    """Error for missing Potential when searching for Potentials in a ForceField"""
