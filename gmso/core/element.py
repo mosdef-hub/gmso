@@ -29,7 +29,7 @@ class Element(GMSOBase):
         return 'Element: {}, symbol: {}, atomic number: {}, mass: {}'.format(
                                                                       self.name, self.symbol,
                                                                       self.atomic_number,
-                                                                      self.mass)
+                                                                      self.mass.to("amu"))
 
     def __eq__(self, other):
         return hash(self) == hash(other)
