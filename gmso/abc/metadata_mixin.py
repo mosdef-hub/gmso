@@ -19,7 +19,7 @@ class MetadataMixin(BaseModel):
 
     def add_tag(self, tag: str, value: Any, overwrite=True) -> None:
         """Add metadata for a particular tag"""
-        if self.tags.get(tag) is None and not overwrite:
+        if self.tags.get(tag) and not overwrite:
             raise ValueError(
                 f'Tag {tag} already exists. '
                 f'Please use overwrite=True to overwrite'

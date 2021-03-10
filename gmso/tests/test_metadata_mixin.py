@@ -18,6 +18,13 @@ class TestMetadataMixin(BaseTest):
         metadata_mixin.add_tag('int_tag', 1)
         assert len(metadata_mixin.tag_names) == 3
 
+    def test_metadata_mixin_add_tags_overwrite(self, metadata_mixin):
+        with pytest.raises(ValueError):
+            metadata_mixin.add_tag('tag2', 'new_value', overwrite=False)
+        metadata_mixin.add_tag('tag2', 'new_value', overwrite=True)
+        assert metadata_mixin.get_tag('tag2') == 'new_value'
+        assert len(metadata_mixin.tag_names) == 3
+
     def test_metadata_get_tags(self, metadata_mixin):
         assert metadata_mixin.get_tag('tag1').get('tag_name_1') == 'value_1'
         assert metadata_mixin.get_tag('int_tag') == 1
