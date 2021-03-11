@@ -154,6 +154,6 @@ class TestNetworkx(BaseTest):
 
     def test_return_labels_for_nodes(self,typed_ethane):
         graph = to_networkx(typed_ethane)
-        assert len(return_labels_for_nodes(graph.nodes,['atom_type.name','charge',positions])) == 8
-        assert return_labels_for_nodes(graph.nodes,['atom_type.error'])[-8:] == 'NoneType'
-        assert return_labels_for_nodes(graph.nodes,['error'])[-8:] == 'NoneType'
+        assert len(return_labels_for_nodes(graph.nodes,['atom_type.name','charge','positions'])) == 8
+        assert list(return_labels_for_nodes(graph.nodes,['atom_type.error']).values())[0][-8:] == 'NoneType'
+        assert list(return_labels_for_nodes(graph.nodes,['error']).values())[0][-8:] == 'NoneType'
