@@ -10,12 +10,14 @@ from gmso.core.bond_type import BondType
 from gmso.core.angle_type import AngleType
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper_type import ImproperType
+from gmso.core.pairpotential_type import PairPotentialType
 from gmso.exceptions import ForceFieldParseError, ForceFieldError, MissingAtomTypesError
 
 __all__ = ['validate',
            'parse_ff_metadata',
            'parse_ff_atomtypes',
            'parse_ff_connection_types',
+           'parse_ff_pairpotential_types',
            'DICT_KEY_SEPARATOR']
 
 DICT_KEY_SEPARATOR = '~'
@@ -298,7 +300,8 @@ TAG_TO_CLASS_MAP = {
     'BondType': BondType,
     'AngleType': AngleType,
     'DihedralType': DihedralType,
-    'ImproperType': ImproperType
+    'ImproperType': ImproperType,
+    'PairPotentialType': PairPotentialType
 }
 
 
@@ -312,7 +315,7 @@ def parse_ff_connection_types(connectiontypes_el, child_tag='BondType'):
     for connection_type in connectiontypes_el.getiterator(child_tag):
         ctor_kwargs = {
             'name': child_tag,
-            'expression': '0.5 * k * (r-r_eq)**2',
+            'expression': '0.5 * k * ((r-r_e)**2',
             'parameters': None,
             'independent_variables': None,
             'member_types': None
@@ -337,6 +340,42 @@ def parse_ff_connection_types(connectiontypes_el, child_tag='BondType'):
         connectiontypes_dict[this_conn_type_key] = this_conn_type
 
     return connectiontypes_dict
+
+def parse_ff_pairpotential_types(pairpotentialtypes_el):
+    """Given an XML etree Element rooted at PairPotentialTypes, parse the XML to create topology.core.PairPotentialTypes,"""
+    pairpotentialtypes_dict = {}
+    pairpotentialtype_expression = pairpotentialtypes_el.attrib.get('expression', None)
+    param_unit_dict = _parse_param_units(pairpotentialtypes_el)
+
+    # Parse all the pairpotentialTypes and create a new PairPotentialType
+    for pairpotential_type in pairpotentialtypes_el.getiterator('PairPotentialType'):
+        ctor_kwargs = {
+            'name': PairPotentialType,
+            'expression': '4*epsilon*((sigma/r)**12 - (sigma/r)**6)',
+            'parameters': None,
+            'independent_variables': None,
+            'member_types': None
+        }
+        if pairpotentialtype_expression:
+            ctor_kwargs['expression'] = pairpotentialtype_expression
+
+        for kwarg in ctor_kwargs.keys():
+            ctor_kwargs[kwarg] = pairpotential_type.attrib.get(kwarg, ctor_kwargs[kwarg])
+
+        ctor_kwargs['member_types'] = _get_member_types(pairpotential_type)
+        if not ctor_kwargs['parameters']:
+            ctor_kwargs['parameters'] = _parse_params_values(pairpotential_type,
+                                                             param_unit_dict,
+                                                             'PairPotentialType',
+                                                             ctor_kwargs['expression'])
+
+        valued_param_vars = set(sympify(param) for param in ctor_kwargs['parameters'].keys())
+        ctor_kwargs['independent_variables'] = sympify(pairpotentialtype_expression).free_symbols - valued_param_vars
+        this_pp_type_key = DICT_KEY_SEPARATOR.join(ctor_kwargs['member_types'])
+        this_pp_type = TAG_TO_CLASS_MAP['PairPotentialType'](**ctor_kwargs)
+        pairpotentialtypes_dict[this_pp_type_key] = this_pp_type
+
+    return pairpotentialtypes_dict
 
 
 def _parse_unit_string(string):

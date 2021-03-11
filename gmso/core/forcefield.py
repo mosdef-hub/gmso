@@ -6,7 +6,8 @@ from lxml import etree
 from gmso.utils.ff_utils import (validate,
                                  parse_ff_metadata,
                                  parse_ff_atomtypes,
-                                 parse_ff_connection_types)
+                                 parse_ff_connection_types,
+                                 parse_ff_pairpotential_types)
 
 
 def _group_by_expression(potential_types):
@@ -81,6 +82,7 @@ class ForceField(object):
             self.angle_types = ff.angle_types
             self.dihedral_types = ff.dihedral_types
             self.improper_types = ff.improper_types
+            self.pairpotential_types = ff.pairpotential_types
             self.potential_groups = ff.potential_groups
             self.scaling_factors = ff.scaling_factors
             self.units = ff.units
@@ -92,6 +94,7 @@ class ForceField(object):
             self.angle_types = {}
             self.dihedral_types = {}
             self.improper_types = {}
+            self.pairpotential_types = {}
             self.potential_groups = {}
             self.scaling_factors = {}
             self.units = {}
@@ -103,6 +106,7 @@ class ForceField(object):
         descr.append('{:d} BondTypes, '.format(len(self.bond_types)))
         descr.append('{:d} AngleTypes, '.format(len(self.angle_types)))
         descr.append('{:d} DihedralTypes, '.format(len(self.dihedral_types)))
+        descr.append('{:d} PairPotentialTypes, '.format(len(self.pairpotential_types)))
         descr.append('id: {}>'.format(id(self)))
         return ''.join(descr)
 
@@ -192,6 +196,22 @@ class ForceField(object):
             A dictionary where the key, value -> expression, list of ImproperTypes with that expression
         """
         return _group_by_expression(self.improper_types)
+    
+    def group_pairpotential_types_by_expression(self):
+        """Return all PairPotentialTypes in this ForceField with grouped by expression
+
+        See Also
+        --------
+        _group_by_expression
+            Groups a dictionary of gmso.ParametricPotentials by their expression
+
+        Returns
+        -------
+        dict
+            A dictionary where the key, value -> expression, list of PairPotentialTypes with that expression
+        """
+        return _group_by_expression(self.pairpotential_types)
+    
 
     @classmethod
     def from_xml(cls, xmls_or_etrees, strict=True, greedy=True):
@@ -200,7 +220,7 @@ class ForceField(object):
         This class method creates a ForceFiled object from the reference
         XML file. This method takes in a single or collection of XML files
         with information about gmso.AtomTypes, gmso.BondTypes, gmso.AngleTypes
-        and gmso.DihedralTypes to create the ForceField object.
+        , gmso.PairPotentialTypes and gmso.DihedralTypes to create the ForceField object.
 
         Parameters
         ----------
@@ -236,12 +256,14 @@ class ForceField(object):
         ff_bondtypes_list = []
         ff_angletypes_list = []
         ff_dihedraltypes_list = []
+        ff_pairpotentialtypes_list = []
 
         atom_types_dict = ChainMap()
         bond_types_dict = {}
         angle_types_dict = {}
         dihedral_types_dict = {}
         improper_types_dict = {}
+        pairpotential_types_dict = {}
         potential_groups = {}
 
         for loc_or_etree in set(xmls_or_etrees):
@@ -263,6 +285,7 @@ class ForceField(object):
             ff_bondtypes_list.extend(ff_tree.findall('BondTypes'))
             ff_angletypes_list.extend(ff_tree.findall('AngleTypes'))
             ff_dihedraltypes_list.extend(ff_tree.findall('DihedralTypes'))
+            ff_pairpotentialtypes_list.extend(ff_tree.findall('PairPotentialTypes'))
 
         # Consolidate AtomTypes
         for atom_types in ff_atomtypes_list:
@@ -316,6 +339,19 @@ class ForceField(object):
             if this_group_name:
                 this_dihedral_types_group.update(this_improper_types_group)
                 potential_groups[this_group_name] = this_dihedral_types_group
+                
+        # Consolidate PairPotentialType
+        for pairpotential_types in ff_pairpotentialtypes_list:
+            this_pairpotential_types_group = parse_ff_pairpotential_types(
+                pairpotential_types
+            )
+            this_pairpotential_types_group_name = pairpotential_types.attrib.get('name', None)
+
+            if this_pairpotential_types_group_name:
+                potential_groups[this_pairpotential_types_group_name] = this_pairpotential_types_group
+
+            pairpotential_types_dict.update(this_pairpotential_types_group)
+
 
         ff = cls()
         ff.name = names[0]
@@ -327,5 +363,6 @@ class ForceField(object):
         ff.angle_types = angle_types_dict
         ff.dihedral_types = dihedral_types_dict
         ff.improper_types = improper_types_dict
+        ff.pairpotential_types = pairpotential_types_dict
         ff.potential_groups = potential_groups
         return ff

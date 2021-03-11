@@ -26,7 +26,7 @@ class PairPotentialType(ParametricPotential):
         __eq__, _validate functions
     """
 
-    member_types_: Optional[frozenset[str, str]] = Field(
+    member_types_: Optional[Tuple[str, str]] = Field(
         None,
         description='List-like of gmso.AtomType or gmso.AtomClass '
                     'defining the members of this pair potential type'
