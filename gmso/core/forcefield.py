@@ -96,16 +96,6 @@ class ForceField(object):
             self.scaling_factors = {}
             self.units = {}
 
-    def __repr__(self):
-        descr = list('<Forcefield ')
-        descr.append(self.name + ' ')
-        descr.append('{:d} AtomTypes, '.format(len(self.atom_types)))
-        descr.append('{:d} BondTypes, '.format(len(self.bond_types)))
-        descr.append('{:d} AngleTypes, '.format(len(self.angle_types)))
-        descr.append('{:d} DihedralTypes, '.format(len(self.dihedral_types)))
-        descr.append('id: {}>'.format(id(self)))
-        return ''.join(descr)
-
     @property
     def atom_class_groups(self):
         """Return a dictionary of atomClasses in the Forcefield"""
@@ -192,6 +182,18 @@ class ForceField(object):
             A dictionary where the key, value -> expression, list of ImproperTypes with that expression
         """
         return _group_by_expression(self.improper_types)
+
+    def __repr__(self):
+        return f"<ForceField {self.name},\n " \
+               f"{len(self.atom_types)} AtomTypes,\n " \
+               f"{len(self.bond_types)} BondTypes,\n " \
+               f"{len(self.angle_types)} AngleTypes,\n " \
+               f"{len(self.dihedral_types)} DihedralTypes,\n " \
+               f"{len(self.improper_types)} ImproperType,\n " \
+               f"id: {id(self)}>"
+
+    def __str__(self):
+        return f"<ForceField {self.name}, id: {id(self)}>"
 
     @classmethod
     def from_xml(cls, xmls_or_etrees, strict=True, greedy=True):

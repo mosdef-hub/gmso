@@ -587,6 +587,10 @@ class Topology(object):
 
     def _get_angles_for(self, site):
         """Return a list of angles in this Topology that the site is a part of"""
+<<<<<<< HEAD
+=======
+
+>>>>>>> fee3df261a74e39977a5f5d51ca4abd408aca2db
         angles = []
         for angle in self.angles:
             if site in angle.connection_members:
@@ -650,10 +654,10 @@ class Topology(object):
             self._index_refs[ref][ref_member] = i
 
     def __repr__(self):
-        descr = list('<')
-        descr.append(self.name + ' ')
-        descr.append('{:d} sites, '.format(self.n_sites))
-        descr.append('{:d} connections, '.format(self.n_connections))
-        descr.append('id: {}>'.format(id(self)))
+        return f"<Topology {self.name}, {self.n_sites} sites,\n " \
+               f"{self.n_connections} connections,\n " \
+               f"{len(self.connection_types)} potentials,\n " \
+               f"id: {id(self)}>"
 
-        return ''.join(descr)
+    def __str__(self):
+        return f"<Topology {self.name}, {self.n_sites} sites, id: {id(self)}>"

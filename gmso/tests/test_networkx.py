@@ -5,7 +5,7 @@ plot_networkx_bonds, select_params_on_networkx, get_networkx_edges, identify_lab
 show_parameter_values, interactive_networkx_atomtypes, interactive_networkx_bonds,
 interactive_networkx_angles, interactive_networkx_dihedrals, select_dihedrals_from_sites,
 plot_networkx_nodes, plot_networkx_params, select_edges_on_networkx, get_edges,
-report_parameter_expression, report_bond_parameters)
+report_parameter_expression, report_bond_parameters, return_labels_for_nodes)
 from gmso.formats.networkx import _get_formatted_atom_types_names_for
 
 from gmso.tests.base_test import BaseTest
@@ -151,3 +151,9 @@ class TestNetworkx(BaseTest):
         report_bond_parameters(typed_ethane,[typed_ethane.bonds[0].connection_members])
         captured, err = capsys.readouterr()
         assert isinstance(err,str)
+
+    def test_return_labels_for_nodes(self,typed_ethane):
+        graph = to_networkx(typed_ethane)
+        assert len(return_labels_for_nodes(graph.nodes,['atom_type.name','charge',positions])) == 8
+        assert return_labels_for_nodes(graph.nodes,['atom_type.error'])[-8:] == 'NoneType'
+        assert return_labels_for_nodes(graph.nodes,['error'])[-8:] == 'NoneType'
