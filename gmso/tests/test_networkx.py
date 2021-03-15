@@ -62,13 +62,22 @@ class TestNetworkx(BaseTest):
         assert len(select_params_on_networkx(graph,['C',None,None])) == 3
         assert len(select_params_on_networkx(graph,['C','C','H', None])) == 1
         assert len(select_params_on_networkx(graph,['C','C', None, None])) == 1
-        for node, angles in graph.nodes(data='angles'):
-            for angle in angles:
-                angle.angle_type = None
+        for angle in typed_ethane.angles:
+            angle.angle_type = None    
+        graph = to_networkx(typed_ethane)
         select_params_on_networkx(graph,['C','C','H'])   
-        for node, angles in graph.nodes(data='angles'):
-            angles = None
-        select_params_on_networkx(graph,['C','C','H'])
+        for angle in typed_ethane.angles:
+            angle = None    
+        graph = to_networkx(typed_ethane)
+        select_params_on_networkx(graph,['C','C','H'])   
+        for dihedral in typed_ethane.dihedrals:
+            dihedral.dihedral_type = None    
+        graph = to_networkx(typed_ethane)
+        select_params_on_networkx(graph,['C','C','H'])   
+        for dihedral in typed_ethane.dihedrals:
+            dihedral = None    
+        graph = to_networkx(typed_ethane)
+        select_params_on_networkx(graph,['C','C','H'])   
         captured, err = capsys.readouterr()
         assert isinstance(err,str)
 
@@ -115,6 +124,7 @@ class TestNetworkx(BaseTest):
     def test_select_dihedrals_from_sites(self,typed_ethane,capsys):
         graph = to_networkx(typed_ethane)
         select_dihedrals_from_sites(graph,typed_ethane)
+        select_dihedrals_from_sites(graph, top, 'C', 'C', 'H', 'H')
         captured,err = capsys.readouterr()
         assert isinstance(err,str)
 
