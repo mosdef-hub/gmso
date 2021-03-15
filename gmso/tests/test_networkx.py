@@ -5,7 +5,8 @@ plot_networkx_bonds, select_params_on_networkx, get_networkx_edges, identify_lab
 show_parameter_values, interactive_networkx_atomtypes, interactive_networkx_bonds,
 interactive_networkx_angles, interactive_networkx_dihedrals, select_dihedrals_from_sites,
 plot_networkx_nodes, plot_networkx_params, select_edges_on_networkx, get_edges,
-report_parameter_expression, report_bond_parameters, return_labels_for_nodes)
+report_parameter_expression, report_bond_parameters, return_labels_for_nodes,
+select_angles_from_sites)
 from gmso.formats.networkx import _get_formatted_atom_types_names_for
 
 from gmso.tests.base_test import BaseTest
@@ -51,7 +52,7 @@ class TestNetworkx(BaseTest):
         assert isinstance(fig, test_fig.__class__)
         assert isinstance(ax, test_ax.__class__)
 
-    def test_select_params_on_networkx(self,typed_ethane):
+    def test_select_params_on_networkx(self,typed_ethane,capsys):
         graph = to_networkx(typed_ethane)
         assert len(select_params_on_networkx(graph,[None,None,None,None])) == 0
         assert len(select_params_on_networkx(graph,['C','H','H'])) == 1
@@ -61,6 +62,15 @@ class TestNetworkx(BaseTest):
         assert len(select_params_on_networkx(graph,['C',None,None])) == 3
         assert len(select_params_on_networkx(graph,['C','C','H', None])) == 1
         assert len(select_params_on_networkx(graph,['C','C', None, None])) == 1
+        for node, angles in graph.nodes(data='angles'):
+            for angle in angles:
+                angle.angle_type = None
+        select_params_on_networkx(graph,['C','C','H'])   
+        for node, angles in graph.nodes(data='angles'):
+            angles = None
+        select_params_on_networkx(graph,['C','C','H'])
+        captured, err = capsys.readouterr()
+        assert isinstance(err,str)
 
     def test__get_formatted_atom_types_names_for(self,typed_ethane):
         graph = to_networkx(typed_ethane)
@@ -70,6 +80,8 @@ class TestNetworkx(BaseTest):
     def test_get_networkx_edges(self,typed_ethane,capsys):
         assert len(get_networkx_edges([list(typed_ethane.dihedrals[0].connection_members)])) == 6
         assert len(get_networkx_edges([list(typed_ethane.angles[0].connection_members)])) == 4
+        with pytest.raises(ValueError):
+            assert get_networkx_edges(['C','C'])
 
     def test_identify_labels(self,typed_ethane):
         graph = to_networkx(typed_ethane)
@@ -157,3 +169,11 @@ class TestNetworkx(BaseTest):
         assert len(return_labels_for_nodes(graph.nodes,['atom_type.name','charge','positions'])) == 8
         assert list(return_labels_for_nodes(graph.nodes,['atom_type.error']).values())[0][-8:] == 'NoneType'
         assert list(return_labels_for_nodes(graph.nodes,['error']).values())[0][-8:] == 'NoneType'
+
+    def test_select_angles_from_sites(self,typed_ethane,capsys):
+        graph = to_networkx(typed_ethane)
+        select_angles_from_sites(graph, typed_ethane, Atom1='C', Atom2='H', Atom3='C')
+        select_angles_from_sites(graph, typed_ethane, Atom1='O', Atom2='H', Atom3='C')
+        captured, err = capsys.readouterr()
+        assert isinstance(err,str)
+
