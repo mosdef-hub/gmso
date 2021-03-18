@@ -587,7 +587,6 @@ class Topology(object):
 
     def _get_angles_for(self, site):
         """Return a list of angles in this Topology that the site is a part of"""
-
         angles = []
         for angle in self.angles:
             if site in angle.connection_members:
@@ -641,6 +640,186 @@ class Topology(object):
             index = refs[member_type][member]
 
         return index
+
+    def atomtypes_to_datatables(self,labels=None,unique_id = False):
+        """Return a pandas dataframe object for the sites in a networkx_graph 
+
+        Parameters
+        ----------
+        graph : Networkx Graph object
+            The networkx graph object can be created by the `gmso.external.convert_networkx.to_networkx` 
+            functionality. This object will store the bond and connection information relevent to the system.
+        labels : List of strings that are attributes of the topology site.
+        unique_id : Whether you want the identifier of each node to be included
+        Returns
+        -------
+        Pandas Dataframe
+            A pandas.Dataframe object, see https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
+            for further information.
+        """
+        
+        graph = to_networkx(self)
+        if not labels:
+            labels = []
+        df = pd.DataFrame()
+        df['index'] = np.arange(0,len(graph.nodes),1)
+        df['atom_types'] = list(node.atom_type.name for node in graph.nodes)
+        df['names'] = list(node.name for node in graph.nodes)
+        df['charge'] = list((node.charge/unyt.electron_charge).round(4)*unyt.electron_charge.units for node in graph.nodes)
+        for label in labels:
+            df[label] = list(getattr(node,label) for node in graph.nodes)
+        if atom_objects:
+            df['atom_id'] = list(node.__hash__() for node in graph.nodes)
+        return df
+
+    def bondtypes_to_datatables(graph,topology,labels=None,atom_objects = False):
+        """Return a pandas dataframe object for the bonds in a networkx_graph 
+
+        Parameters
+        ----------
+        graph : Networkx Graph object
+            The networkx graph object can be created by the `gmso.external.convert_networkx.to_networkx` 
+            functionality. This object will store the bond and connection information relevent to the system.
+        topology : gmso.core.topology.Topology object
+            The typed topology object where bond information will be from. Should be the object you converted to a networkx 
+            graph
+        labels : List of strings that are attributes of the topology site.
+        unique_id : Whether you want the identifier of each node to be included
+        Returns
+        -------
+        Pandas Dataframe
+            A pandas.Dataframe object, see https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
+            for further information.
+        """
+
+        df = pd.DataFrame()
+        if not labels:
+            labels = []
+        list_of_nodes = list(node for node in graph.nodes)
+        df['index'] = np.arange(0,len(graph.edges),1)
+        df['Atom1'] = list(str(edge[0].name) + '(' + str(list_of_nodes.index(edge[0])) + ')' for edge in graph.edges)
+        df['Atom2'] = list(str(edge[1].name) + '(' + str(list_of_nodes.index(edge[1])) + ')' for edge in graph.edges)
+        df['Parameter 1 (k): ' + str(topology.bonds[0].bond_type.parameters['k'].units)] = (
+             list(bond.bond_type.parameters['k'].round(3) for bond in topology.bonds))
+        df['Parameter 2 (r_eq): ' + str(topology.bonds[0].bond_type.parameters['r_eq'].units)] = (
+            list(bond.bond_type.parameters['r_eq'].round(3) for bond in topology.bonds))
+        for label in labels:
+            df[label] = list(getattr(node,label) for node in graph.nodes)
+        if atom_objects:
+            df['atom1_id'] = list(edge[0].__hash__() for edge in graph.edges)
+            df['atom2_id'] = list(edge[1].__hash__() for edge in graph.edges)
+        return df
+
+    def angletypes_to_datatables(graph,topology,labels=None,atom_objects=False):
+        """Return a pandas dataframe object for the angles in the topology 
+
+        Parameters
+        ----------
+        graph : Networkx Graph object
+            The networkx graph object can be created by the `gmso.external.convert_networkx.to_networkx` 
+            functionality. This object will store the bond and connection information relevent to the system.
+        topology : gmso.core.topology.Topology object
+            The typed topology object where bond information will be from. Should be the object you converted to a networkx 
+            graph
+        labels : List of strings that are attributes of the topology site.
+        unique_id : Whether you want the identifier of each node to be included
+        Returns
+        -------
+        Pandas Dataframe
+            A pandas.Dataframe object, see https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
+            for further information.
+        """
+
+        df = pd.DataFrame()
+        if not labels:
+            labels = []
+        list_of_nodes = list(node for node in graph.nodes)
+        df['index'] = np.arange(0,len(topology.angles),1)
+        df['Atom1'] = list(str(angle.connection_members[0].name) +
+                       '(' + 
+                       str(list_of_nodes.index(angle.connection_members[0])) +
+                       ')' for angle in topology.angles)
+        df['Atom2'] = list(str(angle.connection_members[1].name) +
+                       '(' + 
+                       str(list_of_nodes.index(angle.connection_members[1])) +
+                       ')' for angle in topology.angles)
+        df['Atom3'] = list(str(angle.connection_members[2].name) +
+                       '(' + 
+                       str(list_of_nodes.index(angle.connection_members[2])) +
+                       ')' for angle in topology.angles)
+        df['Parameter 1 (k): ' + str(topology.angles[0].angle_type.parameters['k'].units)] = (
+            list(angle.angle_type.parameters['k'].round(3) for angle in topology.angles))
+        df['Parameter 2 (theta_eq): ' + str(topology.angles[0].angle_type.parameters['theta_eq'].units)] = (
+            list(angle.angle_type.parameters['theta_eq'].round(3) for angle in topology.angles))
+        for label in labels:
+            df[label] = list(getattr(node,label) for node in graph.nodes)
+        if atom_objects:
+            df['atom1_id'] = list(angle.connection_members[0].__hash__() for angle in topology.angles)
+            df['atom2_id'] = list(angle.connection_members[1].__hash__() for angle in topology.angles)
+            df['atom3_id'] = list(angle.connection_members[2].__hash__() for angle in topology.angles)
+    return df
+
+    def dihedraltypes_to_datatables(graph,topology,labels=None,atom_objects=False):
+        """Return a pandas dataframe object for the dihedrals in the topology 
+
+        Parameters
+        ----------
+        graph : Networkx Graph object
+            The networkx graph object can be created by the `gmso.external.convert_networkx.to_networkx` 
+            functionality. This object will store the bond and connection information relevent to the system.
+        topology : gmso.core.topology.Topology object
+            The typed topology object where bond information will be from. Should be the object you converted to a networkx 
+            graph
+        labels : List of strings that are attributes of the topology site.
+        unique_id : Whether you want the identifier of each node to be included
+        Returns
+        -------
+        Pandas Dataframe
+            A pandas.Dataframe object, see https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
+            for further information.
+        """
+        df = pd.DataFrame()
+        if not labels:
+            labels = []
+        list_of_nodes = list(node for node in graph.nodes)
+
+        df['index'] = np.arange(0,len(topology.dihedrals),1)
+        df['Atom1'] = list(str(dihedral.connection_members[0].name) +
+                       '(' + 
+                       str(list_of_nodes.index(dihedral.connection_members[0])) +
+                       ')' for dihedral in topology.dihedrals)
+        df['Atom2'] = list(str(dihedral.connection_members[1].name) +
+                       '(' + 
+                       str(list_of_nodes.index(dihedral.connection_members[1])) +
+                       ')' for dihedral in topology.dihedrals)
+        df['Atom3'] = list(str(dihedral.connection_members[2].name) +
+                       '(' + 
+                       str(list_of_nodes.index(dihedral.connection_members[2])) +
+                       ')' for dihedral in topology.dihedrals)
+        df['Atom4'] = list(str(dihedral.connection_members[3].name) +
+                       '(' + 
+                       str(list_of_nodes.index(dihedral.connection_members[3])) +
+                       ')' for dihedral in topology.dihedrals)
+        df['Parameter 1 (c0): ' + str(topology.dihedrals[0].dihedral_type.parameters['c0'].units)] = (
+            list(dihedral.dihedral_type.parameters['c0'].round(3) for dihedral in topology.dihedrals))
+        df['Parameter 2 (c1): ' + str(topology.dihedrals[0].dihedral_type.parameters['c1'].units)] = (
+            list(dihedral.dihedral_type.parameters['c1'].round(3) for dihedral in topology.dihedrals))
+        df['Parameter 3 (c2): ' + str(topology.dihedrals[0].dihedral_type.parameters['c2'].units)] = (
+            list(dihedral.dihedral_type.parameters['c2'].round(3) for dihedral in topology.dihedrals))
+        df['Parameter 4 (c3): ' + str(topology.dihedrals[0].dihedral_type.parameters['c3'].units)] = (
+            list(dihedral.dihedral_type.parameters['c3'].round(3) for dihedral in topology.dihedrals))
+        df['Parameter 5 (c4): ' + str(topology.dihedrals[0].dihedral_type.parameters['c4'].units)] = (
+            list(dihedral.dihedral_type.parameters['c4'].round(3) for dihedral in topology.dihedrals))
+        df['Parameter 6 (c5): ' + str(topology.dihedrals[0].dihedral_type.parameters['c5'].units)] = (
+            list(dihedral.dihedral_type.parameters['c5'].round(3) for dihedral in topology.dihedrals))
+        for label in labels:
+            df[label] = list(getattr(node,label) for node in graph.nodes)
+        if atom_objects:
+            df['atom1_id'] = list(dihedral.connection_members[0].__hash__() for dihedral in topology.dihedrals)
+            df['atom2_id'] = list(dihedral.connection_members[1].__hash__() for dihedral in topology.dihedrals)
+            df['atom3_id'] = list(dihedral.connection_members[2].__hash__() for dihedral in topology.dihedrals)
+            df['atom4_id'] = list(dihedral.connection_members[3].__hash__() for dihedral in topology.dihedrals)
+        return df
 
     def _reindex_connection_types(self, ref):
         if ref not in self._index_refs:
