@@ -146,34 +146,51 @@ def interactive_networkx_bonds(topology, additional_labels = None):
     names_tuple.append(('All Sites',None))
     for name in site_names:
         names_tuple.append((name,name))
-        
-    # Call recursive interacts. The top level determines what bonds can be selected
-    @interact
-    def call_interactive_sites(Atom1 = names_tuple, Atom2 = names_tuple):
-        list_of_edges = get_edges(networkx_graph,Atom1,Atom2)
-        if list_of_edges:
-            # Call the second level, which takes the selected bonds and shows them on the figure
-            @interact
-            def select_edges(list_of_bonds = list_of_edges):
-
-                plot_networkx_bonds(networkx_graph, list_of_labels = list_of_labels, 
-                                list_of_bonds = list_of_bonds)
-                
-                # The final level prints the parameters of the selected bond using a checkbox.
-                checkbox = widgets.Checkbox(value = False, description = 'Show parameters')
-                @interact(w=checkbox)
-                def show_bond_info(w):
-                    if w:
-                        report_bond_parameters(topology, list_of_bonds)
-                    else:
-                        #TODO: Should be able to remove this blank print statement so that deselecting the
-                        #checkbox removes the listed parameters.
-                        print('')
-
-        else:
-            plot_networkx_bonds(networkx_graph, list_of_labels = list_of_labels)
+    atom_selection = []	
+    descriptions = ["Atom1 (req)", "Atom2 (opt)"]	
+    for i in [0, 1]:
+        atom_selection.append(widgets.Dropdown(
+                options = names_tuple,
+                layout = widgets.Layout(width = '30%'),
+                style = dict(description_width='initial'),
+                description = descriptions[i])
+                )
+    interact(call_interactive_sites, 
+             Atom1 = atom_selection[0], 
+             Atom2 = atom_selection[1],
+             list_of_labels = fixed(list_of_labels), 
+             networkx_graph = fixed(networkx_graph),
+             topology = fixed(topology))
 
     return
+
+def call_interactive_sites(Atom1, Atom2, networkx_graph, topology, list_of_labels): 
+    list_of_edges = get_edges(networkx_graph,Atom1,Atom2)
+    if list_of_edges:
+        # Call the second level, which takes the selected bonds and shows them on the figure
+        interact(select_edges, list_of_bonds = list_of_edges, list_of_labels = fixed(list_of_labels), 
+                 networkx_graph = fixed(networkx_graph), topology = fixed(topology))
+    else:
+        plot_networkx_bonds(networkx_graph, list_of_labels = list_of_labels)
+
+    return
+
+
+def select_edges(networkx_graph, topology, list_of_bonds, list_of_labels):
+    plot_networkx_bonds(networkx_graph, list_of_labels = list_of_labels,
+                        list_of_bonds = list_of_bonds)
+    # The final level prints the parameters of the selected bond using a checkbox.
+    checkbox = widgets.Checkbox(value = False, description = 'Show parameters')
+    interact(show_bond_info, w=checkbox, topology = fixed(topology), list_of_bonds = fixed(list_of_bonds)) 
+
+
+def show_bond_info(w, topology, list_of_bonds):
+    if w:
+        report_bond_parameters(topology, list_of_bonds)
+    else:
+        #TODO: Should be able to remove this blank print statement so that deselecting the
+        #checkbox removes the listed parameters.
+        print('')
 
 def interactive_networkx_angles(topology):
     """Get an interactive networkx plot showing the angle types of a topology object.
