@@ -570,3 +570,39 @@ class TestTopology(BaseTest):
                 assert dihedral in converted_dihedrals_list
                 top_dihedrals_containing_site.append(dihedral)
         assert len(top_dihedrals_containing_site) == len(converted_dihedrals_list)
+
+    def test_topology_scale_factors(self, typed_methylnitroaniline):
+        sf = typed_methylnitroaniline.scaling_factors
+        assert np.allclose(sf["vdw_12"], 0.0)
+        assert np.allclose(sf["vdw_13"], 0.0)
+        assert np.allclose(sf["vdw_14"], 0.5)
+        assert np.allclose(sf["coul_12"], 0.0)
+        assert np.allclose(sf["coul_13"], 0.0)
+        assert np.allclose(sf["coul_14"], 0.5)
+
+    def test_topology_change_scale_factors(self, typed_methylnitroaniline):
+        typed_methylnitroaniline.scaling_factors = {
+            "vdw_12": 0.5,
+            "vdw_13": 0.5,
+            "vdw_14": 1.0,
+            "coul_12": 1.0,
+            "coul_13": 1.0,
+            "coul_14": 1.0,
+        }
+        sf = typed_methylnitroaniline.scaling_factors
+        assert np.allclose(sf["vdw_12"], 0.5)
+        assert np.allclose(sf["vdw_13"], 0.5)
+        assert np.allclose(sf["vdw_14"], 1.0)
+        assert np.allclose(sf["coul_12"], 1.0)
+        assert np.allclose(sf["coul_13"], 1.0)
+        assert np.allclose(sf["coul_14"], 1.0)
+        typed_methylnitroaniline.scaling_factors["vdw_12"] = 1.0
+        assert np.allclose(sf["vdw_12"], 1.0)
+
+    def test_topology_invalid_scaling_factors(self, typed_methylnitroaniline):
+        with pytest.raises(GMSOError):
+            typed_methylnitroaniline.scaling_factors = (0.5, 1.0)
+        with pytest.raises(GMSOError):
+            typed_methylnitroaniline.scaling_factors = {
+                "lj_12": 0.0
+            }
