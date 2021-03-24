@@ -111,3 +111,42 @@ class TestMCF(BaseTest):
         top.atom_types[0].set_expression(alternate_lj)
 
         write_mcf(top, "ar.mcf")
+
+    def test_scaling_factors(self, n_typed_ar_system):
+        top = n_typed_ar_system()
+        write_mcf(top, "ar.mcf")
+        mcf_data = []
+        with open("ar.mcf") as f:
+            for line in f:
+                mcf_data.append(line.strip().split())
+        assert np.allclose(float(mcf_data[-5][0]), 0.0)
+        assert np.allclose(float(mcf_data[-5][1]), 0.0)
+        assert np.allclose(float(mcf_data[-5][2]), 0.5)
+        assert np.allclose(float(mcf_data[-5][3]), 1.0)
+        assert np.allclose(float(mcf_data[-4][0]), 0.0)
+        assert np.allclose(float(mcf_data[-4][1]), 0.0)
+        assert np.allclose(float(mcf_data[-4][2]), 0.5)
+        assert np.allclose(float(mcf_data[-4][3]), 1.0)
+
+        top.scaling_factors = {
+            "vdw_12": 0.1,
+            "vdw_13": 0.2,
+            "vdw_14": 0.5,
+            "coul_12": 0.2,
+            "coul_13": 0.4,
+            "coul_14": 0.6,
+        }
+
+        write_mcf(top, "ar.mcf")
+        mcf_data = []
+        with open("ar.mcf") as f:
+            for line in f:
+                mcf_data.append(line.strip().split())
+        assert np.allclose(float(mcf_data[-5][0]), 0.1)
+        assert np.allclose(float(mcf_data[-5][1]), 0.2)
+        assert np.allclose(float(mcf_data[-5][2]), 0.5)
+        assert np.allclose(float(mcf_data[-5][3]), 1.0)
+        assert np.allclose(float(mcf_data[-4][0]), 0.2)
+        assert np.allclose(float(mcf_data[-4][1]), 0.4)
+        assert np.allclose(float(mcf_data[-4][2]), 0.6)
+        assert np.allclose(float(mcf_data[-4][3]), 1.0)
