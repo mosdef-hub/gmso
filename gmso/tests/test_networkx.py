@@ -190,6 +190,7 @@ class TestNetworkx(BaseTest):
     def test_call_interactive_sites(self,typed_ethane):
         graph = to_networkx(typed_ethane)
         assert not call_interactive_sites('C','C',graph,typed_ethane, list_of_labels = ['name'])
+        assert not call_interactive_sites('C','O',graph,typed_ethane, list_of_labels = ['name'])
 
     def test_select_edges(self,typed_ethane):
         graph = to_networkx(typed_ethane)
@@ -200,3 +201,4 @@ class TestNetworkx(BaseTest):
         graph = to_networkx(typed_ethane)
         list_of_edges = get_edges(graph,'C','C')
         assert not show_bond_info(True,typed_ethane,list_of_edges)
+        assert not show_bond_info(False, typed_ethane, list_of_edges)
