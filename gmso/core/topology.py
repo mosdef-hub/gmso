@@ -18,6 +18,7 @@ from gmso.core.improper_type import ImproperType
 from gmso.utils.connectivity import identify_connections as _identify_connections
 from gmso.utils._constants import ATOM_TYPE_DICT, BOND_TYPE_DICT, ANGLE_TYPE_DICT, DIHEDRAL_TYPE_DICT, IMPROPER_TYPE_DICT
 from gmso.exceptions import GMSOError
+from gmso.external.convert_networkx import to_networkx
 
 
 class Topology(object):
@@ -670,7 +671,7 @@ class Topology(object):
 
         return index
 
-    def atomtypes_to_datatables(self,labels=None,unique_id = False):
+    def atomtypes_to_datatables(self, labels=None, units = None):
         """Return a pandas dataframe object for the sites in a networkx_graph 
 
         Parameters
@@ -690,15 +691,25 @@ class Topology(object):
         graph = to_networkx(self)
         if not labels:
             labels = []
+        if not units:
+            units = []
         df = pd.DataFrame()
         df['index'] = np.arange(0,len(graph.nodes),1)
         df['atom_types'] = list(node.atom_type.name for node in graph.nodes)
         df['names'] = list(node.name for node in graph.nodes)
         df['charge'] = list((node.charge/unyt.electron_charge).round(4)*unyt.electron_charge.units for node in graph.nodes)
         for label in labels:
-            df[label] = list(getattr(node,label) for node in graph.nodes)
-        if atom_objects:
-            df['atom_id'] = list(node.__hash__() for node in graph.nodes)
+            if '.' in label:
+                try:
+                    label1,label2 = label.split('.')
+                    df[label] = list(gettattr(node,getattr(node,label1)) for node in graph.nodes)
+                except KeyError:
+                    raise KeyError("The label {} is not in this gmso object".format(label))
+            else:
+                try:
+                    df[label] = list(getattr(node,label) for node in graph.nodes)
+                except KeyError:
+                    raise KeyError("The label {} is not in this gmso object".format(label))
         return df
 
     def bondtypes_to_datatables(graph,topology,labels=None,atom_objects = False):
@@ -786,7 +797,7 @@ class Topology(object):
             df['atom1_id'] = list(angle.connection_members[0].__hash__() for angle in topology.angles)
             df['atom2_id'] = list(angle.connection_members[1].__hash__() for angle in topology.angles)
             df['atom3_id'] = list(angle.connection_members[2].__hash__() for angle in topology.angles)
-    return df
+        return df
 
     def dihedraltypes_to_datatables(graph,topology,labels=None,atom_objects=False):
         """Return a pandas dataframe object for the dihedrals in the topology 
