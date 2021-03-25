@@ -1,4 +1,3 @@
-import typing
 from collections import ChainMap
 from typing import Iterable
 import warnings
@@ -240,12 +239,12 @@ class ForceField(object):
     def _get_atom_type(self, atom_type, warn=True):
         """Get a particular atom_type with given `atom_type` from this ForceField"""
         if not self.atom_types.get(atom_type):
+            msg = f"AtomType {atom_type} is not present in the ForceField"
             if warn:
-                warnings.warn(f"AtomType {key} is not present in the ForceField")
+                warnings.warn(msg)
             else:
-                raise MissingPotentialError(
-                    f"AtomType {key} is not present in the ForceField"
-                )
+                raise MissingPotentialError(msg)
+
         return self.atom_types.get(atom_type)
 
     def _get_bond_type(self, atom_types, warn=True):
@@ -262,16 +261,14 @@ class ForceField(object):
             return self.bond_types[forward]
         if reverse in self.bond_types:
             return self.bond_types[reverse]
+
+        msg = f"BondType between atoms {atom_types[0]} and {atom_types[1]} " \
+              f"is missing from the ForceField"
         if warn:
-            warnings.warn(
-                f"BondType between atoms {atom_types[0]} and {atom_types[1]} "
-                f"is missing from the ForceField")
+            warnings.warn(msg)
             return None
         else:
-            raise MissingPotentialError(
-                f"BondType between atoms {atom_types[0]} and {atom_types[1]} "
-                f"is missing from the ForceField"
-        )
+            raise MissingPotentialError(msg)
 
     def _get_angle_type(self, atom_types, warn=True):
         """Get a particular angle_type between `atom_types` from this ForceField"""
@@ -289,18 +286,16 @@ class ForceField(object):
         if reverse in self.angle_types:
             match = self.angle_types[reverse]
 
+        msg = f"AngleType between atoms {atom_types[0]}, {atom_types[1]} " \
+              f"and {atom_types[2]} is missing from the ForceField"
+
         if match:
             return match
         elif warn:
-            warnings.warn(
-                f"AngleType between atoms {atom_types[0]}, {atom_types[1]} "
-                f"and {atom_types[2]} is missing from the ForceField")
+            warnings.warn(msg)
             return None
         else:
-            raise MissingPotentialError(
-                f"AngleType between atoms {atom_types[0]}, {atom_types[1]} "
-                f"and {atom_types[2]} is missing from the ForceField"
-            )
+            raise MissingPotentialError(msg)
 
     def _get_dihedral_type(self, atom_types, warn=True):
         """Get a particular dihedral_type between `atom_types` from this ForceField"""
@@ -340,18 +335,15 @@ class ForceField(object):
             if match:
                 break
 
+        msg = f"DihedralType between atoms {atom_types[0]}, {atom_types[1]}, "\
+              f"{atom_types[2]} and {atom_types[3]} is missing from the ForceField."
         if match:
             return match
         elif warn:
-            warnings.warn(
-                f"DihedralType between atoms {atom_types[0]}, {atom_types[1]}, "
-                f"{atom_types[2]} and {atom_types[3]} is missing from the ForceField.")
+            warnings.warn(msg)
             return None
         else:
-            raise MissingPotentialError(
-                f"DihedralType between atoms {atom_types[0]}, {atom_types[1]}, "
-                f"{atom_types[2]} and {atom_types[3]} is missing from the ForceField."
-            )
+            raise MissingPotentialError(msg)
 
     def _get_improper_type(self, atom_types, warn=True):
         """Get a particular dihedral_type between `atom_types` from this ForceField"""
@@ -395,18 +387,16 @@ class ForceField(object):
             if match:
                 break
 
+        msg = f"ImproperType between atoms {atom_types[0]}, {atom_types[1]}, "\
+              f"{atom_types[2]} and {atom_types[3]} is missing from the ForceField."
         if match:
             return match
         elif warn:
-            warnings.warn(
-                f"ImproperType between atoms {atom_types[0]}, {atom_types[1]}, "
-                f"{atom_types[2]} and {atom_types[3]} is missing from the ForceField.")
+            warnings.warn(msg)
             return None
         else:
-            raise MissingPotentialError(
-                f"ImproperType between atoms {atom_types[0]}, {atom_types[1]}, "
-                f"{atom_types[2]} and {atom_types[3]} is missing from the ForceField."
-            )
+            raise MissingPotentialError(msg)
+
     def __repr__(self):
         return f"<ForceField {self.name},\n " \
                f"{len(self.atom_types)} AtomTypes,\n " \
