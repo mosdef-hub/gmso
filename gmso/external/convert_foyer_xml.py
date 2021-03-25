@@ -278,7 +278,8 @@ def _write_nbforces(forcefield, ff_kwargs):
                 "mass": atom_type.get("mass", "0.0"),
                 "definition": atom_type.get("def", ""),
                 "description": atom_type.get("desc", ""),
-                "doi": atom_type.get("doi", "")
+                "doi": atom_type.get("doi", ""),
+                "overrides": atom_type.get("overrides", "")
             },
         )
 
