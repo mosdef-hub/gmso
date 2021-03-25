@@ -1,4 +1,3 @@
-import typing
 from collections import ChainMap
 from typing import Iterable
 import warnings
