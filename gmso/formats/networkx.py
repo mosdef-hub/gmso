@@ -183,6 +183,7 @@ def select_edges(networkx_graph, topology, list_of_bonds, list_of_labels):
     checkbox = widgets.Checkbox(value = False, description = 'Show parameters')
     interact(show_bond_info, w=checkbox, topology = fixed(topology), list_of_bonds = fixed(list_of_bonds)) 
 
+    return
 
 def show_bond_info(w, topology, list_of_bonds):
     if w:
@@ -191,6 +192,8 @@ def show_bond_info(w, topology, list_of_bonds):
         #TODO: Should be able to remove this blank print statement so that deselecting the
         #checkbox removes the listed parameters.
         print('')
+
+    return
 
 def interactive_networkx_angles(topology):
     """Get an interactive networkx plot showing the angle types of a topology object.

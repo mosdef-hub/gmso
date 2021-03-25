@@ -6,7 +6,7 @@ show_parameter_values, interactive_networkx_atomtypes, interactive_networkx_bond
 interactive_networkx_angles, interactive_networkx_dihedrals, select_dihedrals_from_sites,
 plot_networkx_nodes, plot_networkx_params, select_edges_on_networkx, get_edges,
 report_parameter_expression, report_bond_parameters, return_labels_for_nodes,
-select_angles_from_sites, call_interactive_sites)
+select_angles_from_sites, call_interactive_sites, select_edges, show_bond_info)
 from gmso.formats.networkx import _get_formatted_atom_types_names_for
 
 from gmso.tests.base_test import BaseTest
@@ -190,3 +190,13 @@ class TestNetworkx(BaseTest):
     def test_call_interactive_sites(self,typed_ethane):
         graph = to_networkx(typed_ethane)
         assert not call_interactive_sites('C','C',graph,typed_ethane, list_of_labels = ['name'])
+
+    def test_select_edges(self,typed_ethane):
+        graph = to_networkx(typed_ethane)
+        list_of_edges = get_edges(graph,'C','C')
+        assert not select_edges(graph, typed_ethane, list_of_edges, ['name']) 
+
+    def test_show_bond_info(self,typed_ethane):
+        graph = to_networkx(typed_ethane)
+        list_of_edges = get_edges(graph,'C','C')
+        assert not show_bond_info(True,typed_ethane,list_of_edges)
