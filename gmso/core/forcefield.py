@@ -433,7 +433,7 @@ class ForceField(object):
             A gmso.Forcefield object with a collection of Potential objects
             created using the information in the XML file
         """
-        if not isinstance(xmls_or_etrees, typing.Iterable) or isinstance(xmls_or_etrees, str):
+        if not isinstance(xmls_or_etrees, Iterable) or isinstance(xmls_or_etrees, str):
             xmls_or_etrees = [xmls_or_etrees]
 
         should_parse_xml = False
