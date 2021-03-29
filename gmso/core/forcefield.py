@@ -320,8 +320,8 @@ class ForceField(object):
                 potential_groups[this_group_name] = this_dihedral_types_group
 
         ff = cls()
-        ff.name = names[0]
-        ff.version = versions[0]
+        ff.name = names if len(names) > 1 else names[0]
+        ff.version = versions if len(versions) > 1 else versions[0]
         ff.scaling_factors = ff_meta_map['scaling_factors']
         ff.units = ff_meta_map['Units']
         ff.atom_types = atom_types_dict.maps[0]

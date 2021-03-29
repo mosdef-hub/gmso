@@ -21,6 +21,15 @@ class TestForceFieldFromXML(BaseTest):
     def named_groups_ff(self):
         return ForceField(get_path('ff-example1.xml'))
 
+    @pytest.fixture
+    def multiple_ff(self):
+        return ForceField([get_path('ff-example0.xml'),
+                           get_path('ff-example1.xml')])
+
+    def test_ff_multiple_fields(self, multiple_ff):
+        assert len(multiple_ff.name) == 2
+        assert len(multiple_ff.version) == 2
+
     def test_ff_name_version_from_xml(self, ff):
         assert ff.name == 'ForceFieldOne'
         assert ff.version == '0.4.1'
