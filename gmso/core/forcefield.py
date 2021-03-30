@@ -205,9 +205,15 @@ class ForceField(object):
 
         Returns
         -------
+        gmso.ParametricPotential or dict
+            The parametric potential requested (by key) or
+            a dictionary of its parameters when params_only=True
 
         Raises
         ------
+        MissingPotentialError
+            When the potential specified by `key` is not found in the ForceField
+            potential group `group`
         """
         group = group.lower()
 
@@ -226,18 +232,32 @@ class ForceField(object):
             [key] if isinstance(key, str) or not isinstance(key, Iterable) else key, str
         )
 
+        copy = kwargs.pop('copy', True)
         potential = potential_extractors[group](key, **kwargs)
 
         if params_only:
-            return potential.get_parameters(copy=kwargs.get("copy", True))
+            return potential.get_parameters(copy=copy)
         else:
             return potential
 
-    def get_parameters(self, group, key):
-        return self.get_potential(group, key, params_only=True)
+    def get_parameters(self, group, key, **kwargs):
+        """Returns parameters for a specific potential by key in this ForceField
+
+        This function uses the `get_potential` function to get Parameters
+
+        See Also
+        --------
+        gmso.ForceField.get_potential
+            Get specific potential/parameters from a forcefield potential group by key
+        """
+
+        return self.get_potential(group, key, params_only=True, **kwargs)
 
     def _get_atom_type(self, atom_type, warn=True):
         """Get a particular atom_type with given `atom_type` from this ForceField"""
+        if isinstance(atom_type, list):
+            atom_type = atom_type[0]
+
         if not self.atom_types.get(atom_type):
             msg = f"AtomType {atom_type} is not present in the ForceField"
             if warn:
@@ -433,7 +453,7 @@ class ForceField(object):
             A gmso.Forcefield object with a collection of Potential objects
             created using the information in the XML file
         """
-        if not isinstance(xmls_or_etrees, typing.Iterable) or isinstance(xmls_or_etrees, str):
+        if not isinstance(xmls_or_etrees, Iterable) or isinstance(xmls_or_etrees, str):
             xmls_or_etrees = [xmls_or_etrees]
 
         should_parse_xml = False

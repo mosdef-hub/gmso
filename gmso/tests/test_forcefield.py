@@ -207,3 +207,11 @@ class TestForceFieldFromXML(BaseTest):
     def test_forcefield_missing_atom_types_non_strict(self):
         ff = ForceField(get_path(filename=get_path('ff_missing_atom_types.xml')), strict=False)
 
+    def test_forcefeld_get_potential_atom_type(self):
+        ff = ForceField(get_path(filename=get_path('oplsaa-ethane_foyer.xml')))
+        at = ff.get_potential('atom_type', key=['opls_135'])
+        assert at.expression == sympify("ep * ((sigma/r)**12 - (sigma/r)**6) + q / (e0 * r)")
+        assert 'ep' in at.parameters
+        assert 'sigma' in at.parameters
+        assert 'e0' in at.parameters
+        assert 'r' in at.independent_variables

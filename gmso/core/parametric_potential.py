@@ -128,6 +128,7 @@ class ParametricPotential(AbstractPotential):
     def get_parameters(self, copy=False):
         """Returns parameters for this ParametricPotential"""
         params = self.parameters
+
         if copy:
             params = deepcopy(params)
 
