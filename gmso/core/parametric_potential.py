@@ -191,6 +191,11 @@ class ParametricPotential(AbstractPotential):
                    parameters=parameters,
                    topology=topology)
 
+    def __repr__(self):
+        desc = super().__repr__()
+        desc = desc.replace(">", f", \n parameters: {self.parameters}>")
+        return desc
+
     class Config:
         fields = {
             'topology_': 'topology',

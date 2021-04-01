@@ -53,14 +53,13 @@ class Connection(GMSOBase):
         return values
 
     def __repr__(self):
-        descr = '<{}-partner Connection, id {}, '.format(
-                len(self.connection_members), id(self))
-        descr += 'type {}'.format(self.connection_type)
-        if self.name:
-            descr += ', name {}'.format(self.name)
-        descr += '>'
+        return f"<{self.__class__.__name__} {self.name},\n " \
+               f"connection_members: {self.connection_members},\n " \
+               f"potential: {str(self.connection_type)},\n " \
+               f"id: {id(self)}>"
 
-        return descr
+    def __str__(self):
+        return f"<{self.__class__.__name__} {self.name}, id: {id(self)}> "
 
     class Config:
         fields = {

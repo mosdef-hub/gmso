@@ -85,10 +85,6 @@ class AbstractPotential(GMSOBase, MetadataMixin):
             )
         )
 
-    def __repr__(self):
-        desc = "<{} {}, id {}>".format(self.__class__.__name__, self.name, id(self))
-        return desc
-
     def __setattr__(self, key: Any, value: Any) -> None:
         if key == 'expression':
             self.potential_expression_.expression = value
@@ -98,6 +94,17 @@ class AbstractPotential(GMSOBase, MetadataMixin):
             return
         else:
             super().__setattr__(key, value)
+
+    def __repr__(self):
+        desc = f"<{self.__class__.__name__} {self.name},\n " \
+               f"expression: {self.expression},\n " \
+               f"id: {id(self)}>"
+        return desc
+
+    def __str__(self):
+        return f"<{self.__class__.__name__} {self.name}, " \
+               f"expression: {self.expression}, " \
+               f"id: {id(self)}>"
 
     class Config:
         fields = {
