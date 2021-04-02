@@ -189,7 +189,7 @@ class ForceField(object):
         """
         return _group_by_expression(self.improper_types)
 
-    def get_potential(self, group, key, params_only=False, **kwargs):
+    def get_potential(self, group, key, warn=False):
         """Returns a specific potential by key in this ForceField
 
         Parameters
@@ -199,9 +199,9 @@ class ForceField(object):
         key: str or list of str
             The key to lookup for this potential group
         params_only: bool, default=False
-            If true, return only the parameters for potential (instead of the potential itself)
-        **kwargs: dict
-            Keyword arguments for potential.get_parameters, only used when params_only=True
+            If true, return only the parameters for potential (instead of the potential itself
+        warn: bool, default=False
+            If true, raise a warning instead if no match found
 
         Returns
         -------
@@ -232,15 +232,9 @@ class ForceField(object):
             [key] if isinstance(key, str) or not isinstance(key, Iterable) else key, str
         )
 
-        copy = kwargs.pop('copy', True)
-        potential = potential_extractors[group](key, **kwargs)
+        return potential_extractors[group](key, warn=warn)
 
-        if params_only:
-            return potential.get_parameters(copy=copy)
-        else:
-            return potential
-
-    def get_parameters(self, group, key, **kwargs):
+    def get_parameters(self, group, key, warn=False, copy=False):
         """Returns parameters for a specific potential by key in this ForceField
 
         This function uses the `get_potential` function to get Parameters
@@ -250,8 +244,8 @@ class ForceField(object):
         gmso.ForceField.get_potential
             Get specific potential/parameters from a forcefield potential group by key
         """
-
-        return self.get_potential(group, key, params_only=True, **kwargs)
+        potential = self.get_potential(group, key, warn=warn)
+        return potential.get_parameters(copy=copy)
 
     def _get_atom_type(self, atom_type, warn=True):
         """Get a particular atom_type with given `atom_type` from this ForceField"""

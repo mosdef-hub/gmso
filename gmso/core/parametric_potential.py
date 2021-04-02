@@ -127,10 +127,13 @@ class ParametricPotential(AbstractPotential):
 
     def get_parameters(self, copy=False):
         """Returns parameters for this ParametricPotential"""
-        params = self.parameters
-
         if copy:
-            params = deepcopy(params)
+            params = {
+                k: u.unyt_quantity(v.value, v.units)
+                for k, v in self.parameters.items()
+            }
+        else:
+            params = self.parameters
 
         return params
 

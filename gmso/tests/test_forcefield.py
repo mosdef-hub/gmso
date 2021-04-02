@@ -1,14 +1,13 @@
 import lxml
 import pytest
-from sympy import sympify
 import unyt as u
-
 from lxml.etree import DocumentInvalid
+from sympy import sympify
 
 from gmso.core.forcefield import ForceField
-from gmso.tests.utils import get_path
-from gmso.tests.base_test import BaseTest
 from gmso.exceptions import ForceFieldParseError, MissingAtomTypesError
+from gmso.tests.base_test import BaseTest
+from gmso.tests.utils import allclose_units_mixed, get_path
 
 
 class TestForceFieldFromXML(BaseTest):
@@ -20,6 +19,10 @@ class TestForceFieldFromXML(BaseTest):
     @pytest.fixture
     def named_groups_ff(self):
         return ForceField(get_path('ff-example1.xml'))
+
+    @pytest.fixture
+    def opls_ethane_foyer(self):
+        return ForceField(get_path(filename=get_path("oplsaa-ethane_foyer.xml")))
 
     def test_ff_name_version_from_xml(self, ff):
         assert ff.name == 'ForceFieldOne'
@@ -186,7 +189,6 @@ class TestForceFieldFromXML(BaseTest):
         assert len(named_groups_ff.potential_groups['PeriodicProper']) == 2
         assert len(named_groups_ff.potential_groups['RBProper']) == 1
 
-
     def test_potential_types_by_expression(self, named_groups_ff):
         atom_types_grouped_by_expression = named_groups_ff.group_atom_types_by_expression()
         bond_types_grouped_by_expression = named_groups_ff.group_bond_types_by_expression()
@@ -207,11 +209,56 @@ class TestForceFieldFromXML(BaseTest):
     def test_forcefield_missing_atom_types_non_strict(self):
         ff = ForceField(get_path(filename=get_path('ff_missing_atom_types.xml')), strict=False)
 
-    def test_forcefeld_get_potential_atom_type(self):
-        ff = ForceField(get_path(filename=get_path('oplsaa-ethane_foyer.xml')))
-        at = ff.get_potential('atom_type', key=['opls_135'])
-        assert at.expression == sympify("ep * ((sigma/r)**12 - (sigma/r)**6) + q / (e0 * r)")
-        assert 'ep' in at.parameters
-        assert 'sigma' in at.parameters
-        assert 'e0' in at.parameters
-        assert 'r' in at.independent_variables
+    def test_forcefeld_get_potential_atom_type(self, opls_ethane_foyer):
+        at = opls_ethane_foyer.get_potential("atom_type", key=["opls_135"])
+        assert at.expression == sympify(
+            "ep * ((sigma/r)**12 - (sigma/r)**6) + q / (e0 * r)"
+        )
+
+        params = at.parameters
+        assert "ep" in params
+        assert "sigma" in params
+        assert "e0" in params
+        assert sympify("r") in at.independent_variables
+
+        assert allclose_units_mixed(
+            params.values(),
+            [
+                0.276144 * u.kJ / u.mol,
+                0.35 * u.nm,
+                8.8542e-12 * u.Unit("A**2*s**4/(kg*m**3)"),
+                -0.18 * u.C,
+            ],
+        )
+
+    def test_forcefield_get_parameters_atom_type(self, opls_ethane_foyer):
+        params = opls_ethane_foyer.get_parameters("atom_type", key=["opls_140"])
+
+        assert allclose_units_mixed(
+            params.values(),
+            [
+                0.12552 * u.kJ / u.mol,
+                0.25 * u.nm,
+                8.8542e-12 * u.Unit("A**2*s**4/(kg*m**3)"),
+                0.06 * u.C,
+            ],
+        )
+
+    def test_forcefield_get_parameters_atom_type_copy(self, opls_ethane_foyer):
+        params = opls_ethane_foyer.get_parameters("atom_type", key=["opls_140"], copy=False)
+        params_copy = opls_ethane_foyer.get_parameters("atom_type", key=["opls_140"], copy=True)
+        assert allclose_units_mixed(params.values(), params_copy.values())
+
+    def test_forcefield_get_potential_bond_type(self, opls_ethane_foyer):
+        bt = opls_ethane_foyer.get_potential("bond_type", key=["opls_135", "opls_140"])
+        assert bt.name == "BondType-Harmonic-2"
+        params = bt.parameters
+        assert "k" in params
+        assert "r_eq" in params
+
+        assert sympify("r") in bt.independent_variables
+
+        assert allclose_units_mixed(
+            params.values(),
+            [284512.0 * u.kJ / u.nm ** 2, 0.109 * u.nm]
+        )
