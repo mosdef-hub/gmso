@@ -1,4 +1,3 @@
-from copy import deepcopy
 from typing import Optional, Any
 
 import unyt as u
