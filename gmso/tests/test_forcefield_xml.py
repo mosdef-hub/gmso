@@ -27,6 +27,8 @@ class TestForceFieldFromXML(BaseTest):
                            get_path('ff-example1.xml')])
 
     def test_ff_multiple_fields(self, multiple_ff):
+        assert isinstance(multiple_ff.name, list)
+        assert isinstance(multiple_ff.version, list)
         assert len(multiple_ff.name) == 2
         assert len(multiple_ff.version) == 2
 
