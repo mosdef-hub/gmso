@@ -3,6 +3,7 @@ import warnings
 import numpy as np
 import unyt as u
 from boltons.setutils import IndexedSet
+import pandas as pd
 
 from gmso.core.atom import Atom
 from gmso.core.bond import Bond
@@ -18,7 +19,6 @@ from gmso.core.improper_type import ImproperType
 from gmso.utils.connectivity import identify_connections as _identify_connections
 from gmso.utils._constants import ATOM_TYPE_DICT, BOND_TYPE_DICT, ANGLE_TYPE_DICT, DIHEDRAL_TYPE_DICT, IMPROPER_TYPE_DICT
 from gmso.exceptions import GMSOError
-from gmso.external.convert_networkx import to_networkx
 
 
 class Topology(object):
@@ -671,14 +671,14 @@ class Topology(object):
 
         return index
 
-    def atomtypes_to_datatables(self, labels=None, units = None):
-        """Return a pandas dataframe object for the sites in a networkx_graph 
+    def to_datatables(self, parameter = 'sites', labels = None, round_to = None):
+        """Return a pandas dataframe object for the sites in a topology 
 
         Parameters
         ----------
-        graph : Networkx Graph object
-            The networkx graph object can be created by the `gmso.external.convert_networkx.to_networkx` 
-            functionality. This object will store the bond and connection information relevent to the system.
+        parameter : a string
+            A string determining what aspects of the gmso topology will be reported. Options are: 'sites','bonds','angles'
+            and 'dihedrals'. Defaults to 'sites'.
         labels : List of strings that are attributes of the topology site.
         unique_id : Whether you want the identifier of each node to be included
         Returns
@@ -687,29 +687,59 @@ class Topology(object):
             A pandas.Dataframe object, see https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
             for further information.
         """
-        
-        graph = to_networkx(self)
         if not labels:
             labels = []
-        if not units:
-            units = []
+        if not round_to:
+            round_to = []
         df = pd.DataFrame()
-        df['index'] = np.arange(0,len(graph.nodes),1)
-        df['atom_types'] = list(node.atom_type.name for node in graph.nodes)
-        df['names'] = list(node.name for node in graph.nodes)
-        df['charge'] = list((node.charge/unyt.electron_charge).round(4)*unyt.electron_charge.units for node in graph.nodes)
-        for label in labels:
-            if '.' in label:
-                try:
-                    label1,label2 = label.split('.')
-                    df[label] = list(gettattr(node,getattr(node,label1)) for node in graph.nodes)
-                except KeyError:
-                    raise KeyError("The label {} is not in this gmso object".format(label))
-            else:
-                try:
-                    df[label] = list(getattr(node,label) for node in graph.nodes)
-                except KeyError:
-                    raise KeyError("The label {} is not in this gmso object".format(label))
+        list_of_sites = list(site for site in self.sites)
+        if parameter == 'sites':
+            df['index'] = np.arange(0,len(self.sites),1)
+            df['atom_types'] = list(site.atom_type.name for site in self.sites)
+            df['names'] = list(site.name for site in self.sites)
+            df['charge'] = list((site.charge/u.electron_charge).round(round_to)*u.electron_charge.units for site in self.sites)
+            for label in labels:
+                if '.' in label:
+                    try:
+                        label1,label2 = label.split('.')
+                        df[label] = list(gettattr(site,getattr(site,label1)) for site in self.sites)
+                    except AttributeError:
+                        raise AttributeError("The label {} is not in this gmso object".format(label))
+                elif label == 'positions' or label == 'position':
+                    df['x'] = list(getattr(site,'position')[0] for site in self.sites)
+                    df['y'] = list(getattr(site,'position')[1] for site in self.sites)
+                    df['z'] = list(getattr(site,'position')[2] for site in self.sites)
+                else:
+                    try:
+                        df[label] = list(getattr(site,label) for site in self.sites)
+                    except AttributeError:
+                        raise AttributeError("The label {} is not in this gmso object".format(label))
+        elif parameter == 'bonds':
+            df = pandas_from_parameters(self, df, parameter = parameter, labels = labels)
+            df['Parameter 1 (k): ' + str(self.bonds[0].bond_type.parameters['k'].units)] = (
+                 list(bond.bond_type.parameters['k'].round(3) for bond in self.bonds))
+            df['Parameter 2 (r_eq): ' + str(self.bonds[0].bond_type.parameters['r_eq'].units)] = (
+                list(bond.bond_type.parameters['r_eq'].round(3) for bond in self.bonds))
+        elif parameter == 'angles':
+            df = pandas_from_parameters(self, df, parameter = parameter, labels = labels)
+            df['Parameter 1 (k): ' + str(self.angles[0].angle_type.parameters['k'].units)] = (
+                list(angle.angle_type.parameters['k'].round(3) for angle in self.angles))
+            df['Parameter 2 (theta_eq): ' + str(self.angles[0].angle_type.parameters['theta_eq'].units)] = (
+                list(angle.angle_type.parameters['theta_eq'].round(3) for angle in self.angles))
+        elif parameter == 'dihedrals':
+            df = pandas_from_parameters(self, df, parameter = parameter, labels = labels)
+            df['Parameter 1 (c0): ' + str(self.dihedrals[0].dihedral_type.parameters['c0'].units)] = (
+                list(dihedral.dihedral_type.parameters['c0'].round(3) for dihedral in self.dihedrals))
+            df['Parameter 2 (c1): ' + str(self.dihedrals[0].dihedral_type.parameters['c1'].units)] = (
+                list(dihedral.dihedral_type.parameters['c1'].round(3) for dihedral in self.dihedrals))
+            df['Parameter 3 (c2): ' + str(self.dihedrals[0].dihedral_type.parameters['c2'].units)] = (
+                list(dihedral.dihedral_type.parameters['c2'].round(3) for dihedral in self.dihedrals))
+            df['Parameter 4 (c3): ' + str(self.dihedrals[0].dihedral_type.parameters['c3'].units)] = (
+                list(dihedral.dihedral_type.parameters['c3'].round(3) for dihedral in self.dihedrals))
+            df['Parameter 5 (c4): ' + str(self.dihedrals[0].dihedral_type.parameters['c4'].units)] = (
+                list(dihedral.dihedral_type.parameters['c4'].round(3) for dihedral in self.dihedrals))
+            df['Parameter 6 (c5): ' + str(self.dihedrals[0].dihedral_type.parameters['c5'].units)] = (
+                list(dihedral.dihedral_type.parameters['c5'].round(3) for dihedral in self.dihedrals))
         return df
 
     def bondtypes_to_datatables(graph,topology,labels=None,atom_objects = False):
@@ -877,3 +907,33 @@ class Topology(object):
 
     def __str__(self):
         return f"<Topology {self.name}, {self.n_sites} sites, id: {id(self)}>"
+
+def pandas_from_parameters(topology, df, parameter, labels = None):
+    if labels is None:
+        labels = []
+    list_of_sites = list(site for site in topology.sites)
+    for site_index in np.arange(len(getattr(topology,parameter)[0].connection_members)):
+        df['Atom'+ str(site_index)] = list(str(connection.connection_members[site_index].name)
+             + '(' + str(list_of_sites.index(connection.connection_members[site_index])) + ')' for connection in getattr(topology,parameter))
+        for label in labels:
+            if '.' in label:
+                try:
+                    label1,label2 = label.split('.')
+                    df[label+' Atom' + str(site_index)] = list(gettattr(connection.connection_members[site_index],
+                        getattr(connection.connection_members[site_index],label1)) for connection in getattr(topology,parameter))
+                except AttributeError:
+                        raise AttributeError("The label {} is not in this gmso object".format(label))
+            elif label == 'positions' or label == 'position':
+                df['x Atom'+ str(site_index)] = list(getattr(connection.connection_members[site_index],
+                    'position')[0] for connection in getattr(topology,parameter))
+                df['y Atom'+ str(site_index)] = list(getattr(connection.connection_members[site_index],
+                    'position')[1] for connection in getattr(topology,parameter))
+                df['z Atom'+ str(site_index)] = list(getattr(connection.connection_members[site_index],
+                    'position')[2] for connection in getattr(topology,parameter))
+            else:
+                try:
+                    df[label + ' Atom'+ str(site_index)] = list(getattr(connection.connection_members[site_index],
+                        label) for connection in getattr(topology,parameter))
+                except AttributeError:
+                    raise AttributeError("The label {} is not in this gmso object".format(label))
+    return df
