@@ -1,7 +1,7 @@
+from copy import deepcopy
 import unyt as u
 import sympy
 import pytest
-from copy import deepcopy
 
 from gmso.core.atom_type import AtomType
 from gmso.core.atom import Atom
