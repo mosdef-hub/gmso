@@ -427,7 +427,7 @@ def select_params_on_networkx(networkx_graph, atoms):
                 for angle in angles:
                     names = [member.name for member in angle.connection_members]
                     if atoms == [names[i] for i in [1, 0, 2]] or atoms == [
-                        names[i] for i in [2, 0, 1]
+                        names[i] for i in [1, 2, 0]
                     ]:
                         list_of_params.append(angle.connection_members)
                         list_of_names.append(_get_formatted_atom_types_names_for(angle))
@@ -435,7 +435,8 @@ def select_params_on_networkx(networkx_graph, atoms):
             for node, angles in networkx_graph.nodes(data="angles"):
                 for angle in angles:
                     names = [member.name for member in angle.connection_members]
-                    if atoms[0:2] == names[1:3] or atoms[0:2] == reversed(names[0:2]):
+                    print(names[1:3],list(reversed(names[0:2])))
+                    if atoms[0:2] == names[1:3] or atoms[0:2] == list(reversed(names[0:2])):
                         list_of_params.append(angle.connection_members)
                         list_of_names.append(_get_formatted_atom_types_names_for(angle))
         elif atoms[0]:
@@ -801,7 +802,7 @@ def get_edges(networkx_graph, atom_name1, atom_name2):
         if not mia_bond_flag:
             return print("All bonds are typed")
     # turn the dic selectable dict into a list of tuples.
-    return tuple(selectable_dict.items())
+    return list(selectable_dict.items())
 
 def create_dict_of_labels_for_edges(selectable_dict,edge):
     label = edge[0].atom_type.name + " --- " + edge[1].atom_type.name
