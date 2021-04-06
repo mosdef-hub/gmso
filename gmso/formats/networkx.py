@@ -43,7 +43,7 @@ def interactive_networkx_atomtypes(topology, list_of_labels=None):
 
     Parameters
     ----------
-    topology : A gmso.core.topology.Topology object
+    topology : gmso.Topology
         This should be a gmso topology object that you want to visualize the atom types
         that have been parameterized.
     list_of_labels : Additional labels you would like to have on the plot.
