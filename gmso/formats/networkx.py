@@ -827,11 +827,7 @@ def get_edges(networkx_graph, atom_name1, atom_name2):
             selectable_list[label].append(bond)
 
     # turn the dic selectable list into a list of tuples.
-    list_of_edges = []
-    for key in selectable_list:
-        list_of_edges.append((key, selectable_list[key]))
-
-    return list_of_edges
+    return tuple(selectable_list.items())
 
 
 def plot_networkx_bonds(
