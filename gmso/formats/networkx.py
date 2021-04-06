@@ -777,13 +777,8 @@ def get_edges(networkx_graph, atom_name1, atom_name2):
 
     # Create a list of the edges that have been selected corresponding to the selected atom_name1
     # and atom_name2. If both are None, then select edges that are missing bond types.
-    list_of_edges = []
-    list_of_bonds = []
-    # Check for whether you want to plot bonds based on the atom types, or their node labels.
-    try:
-        [node.atom_type.name for node in networkx_graph.nodes]
-    except AttributeError:
-        return print("Atomtypes are missing, so no bond types can be selected")
+    labeled_bonds = []
+    selectable_dict = {}
     mia_bond_flag = 0
     if atom_name1 and atom_name2:
         for edge in list(networkx_graph.edges):
@@ -793,42 +788,29 @@ def get_edges(networkx_graph, atom_name1, atom_name2):
                 or edge[0].name == atom_name2
                 and edge[1].name == atom_name1
             ):
-                list_of_bonds.append(
-                    edge[0].atom_type.name + " --- " + edge[1].atom_type.name
-                )
-                list_of_edges.append(edge)
+                selectable_dict = create_dict_of_labels_for_edges(selectable_dict,edge)
     elif atom_name1:
         for edge in list(networkx_graph.edges):
             if edge[0].name == atom_name1 or edge[1].name == atom_name1:
-                list_of_bonds.append(
-                    edge[0].atom_type.name + " --- " + edge[1].atom_type.name
-                )
-                list_of_edges.append(edge)
+                selectable_dict = create_dict_of_labels_for_edges(selectable_dict,edge)
     else:
         for nodes in list(networkx_graph.edges.items()):
             if nodes[1]["connection"].bond_type is None:
-                list_of_bonds.append(
-                    nodes[0][0].atom_type.name + " --- " + nodes[0][1].atom_type.name
-                )
-                list_of_edges.append((nodes[0][0], nodes[0][1]))
+                selectable_dict = create_dict_of_labels_for_edges(selectable_dict,edge)
                 mia_bond_flag = 1
         if not mia_bond_flag:
             return print("All bonds are typed")
+    # turn the dic selectable dict into a list of tuples.
+    return tuple(selectable_dict.items())
 
-    labeled_bonds = zip(list_of_bonds, list_of_edges)
-
-    # create a dic so each selected bond selects the proper edges on the networkx.graph object.
-    selectable_list = {}
-    for label, bond in labeled_bonds:
-        if label in selectable_list.keys():
-            selectable_list[label].append(bond)
-        else:
-            selectable_list[label] = []
-            selectable_list[label].append(bond)
-
-    # turn the dic selectable list into a list of tuples.
-    return tuple(selectable_list.items())
-
+def create_dict_of_labels_for_edges(selectable_dict,edge):
+    label = edge[0].atom_type.name + " --- " + edge[1].atom_type.name
+    if label in selectable_dict.keys():
+        selectable_dict[label].append(edge)
+    else:
+        selectable_dict[label] = []
+        selectable_dict[label].append(edge)
+    return selectable_dict
 
 def plot_networkx_bonds(
     networkx_graph,
@@ -864,21 +846,18 @@ def plot_networkx_bonds(
 
 def report_bond_parameters(topology, edge):
     # return nicely printed bond parameters for a given edge.
-    for bond in list(topology.bonds):
-        if bond:
-            try:
-                if bond.connection_members == edge[0] or bond.connection_members == (
-                    edge[0][1],
-                    edge[0][0],
-                ):
-                    print(bond.bond_type.expression, "\n")
-                    print("{:<12} {:<15}".format("Parameter", "Value"))
-                    for k, v in bond.bond_type.parameters.items():
-                        print("{:<12} {:<15}".format(k, v))
-            except AttributeError:
-                print("This bond has no parameters associated with it")
-        else:
-            print("This bond has no parameters associated with it")
+    for bond in topology.bonds:
+        try:
+            if bond.connection_members == edge[0] or bond.connection_members == (
+                edge[0][1],
+                edge[0][0],
+            ):
+                print(bond.bond_type.expression, "\n")
+                print("{:<12} {:<15}".format("Parameter", "Value"))
+                for k, v in bond.bond_type.parameters.items():
+                    print("{:<12} {:<15}".format(k, v))
+        except AttributeError:
+            print("The bond between {} is missing parameters".format(edge))
 
     return
 
