@@ -198,16 +198,13 @@ class ForceField(object):
             The potential group to perform this search on
         key: str or list of str
             The key to lookup for this potential group
-        params_only: bool, default=False
-            If true, return only the parameters for potential (instead of the potential itself
         warn: bool, default=False
-            If true, raise a warning instead if no match found
+            If true, raise a warning instead of Error if no match found
 
         Returns
         -------
-        gmso.ParametricPotential or dict
-            The parametric potential requested (by key) or
-            a dictionary of its parameters when params_only=True
+        gmso.ParametricPotential
+            The parametric potential requested
 
         Raises
         ------
@@ -247,7 +244,7 @@ class ForceField(object):
         potential = self.get_potential(group, key, warn=warn)
         return potential.get_parameters(copy=copy)
 
-    def _get_atom_type(self, atom_type, warn=True):
+    def _get_atom_type(self, atom_type, warn=False):
         """Get a particular atom_type with given `atom_type` from this ForceField"""
         if isinstance(atom_type, list):
             atom_type = atom_type[0]
@@ -261,7 +258,7 @@ class ForceField(object):
 
         return self.atom_types.get(atom_type)
 
-    def _get_bond_type(self, atom_types, warn=True):
+    def _get_bond_type(self, atom_types, warn=False):
         """Get a particular bond_type between `atom_types` from this ForceField"""
         if len(atom_types) != 2:
             raise ValueError(
@@ -284,7 +281,7 @@ class ForceField(object):
         else:
             raise MissingPotentialError(msg)
 
-    def _get_angle_type(self, atom_types, warn=True):
+    def _get_angle_type(self, atom_types, warn=False):
         """Get a particular angle_type between `atom_types` from this ForceField"""
         if len(atom_types) != 3:
             raise ValueError(
@@ -311,7 +308,7 @@ class ForceField(object):
         else:
             raise MissingPotentialError(msg)
 
-    def _get_dihedral_type(self, atom_types, warn=True):
+    def _get_dihedral_type(self, atom_types, warn=False):
         """Get a particular dihedral_type between `atom_types` from this ForceField"""
         if len(atom_types) != 4:
             raise ValueError(
@@ -359,8 +356,8 @@ class ForceField(object):
         else:
             raise MissingPotentialError(msg)
 
-    def _get_improper_type(self, atom_types, warn=True):
-        """Get a particular dihedral_type between `atom_types` from this ForceField"""
+    def _get_improper_type(self, atom_types, warn=False):
+        """Get a particular improper_type between `atom_types` from this ForceField"""
         if len(atom_types) != 4:
             raise ValueError(
                 f"ImproperType potential can only "

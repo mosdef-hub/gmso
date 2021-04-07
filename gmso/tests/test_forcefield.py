@@ -5,12 +5,12 @@ from lxml.etree import DocumentInvalid
 from sympy import sympify
 
 from gmso.core.forcefield import ForceField
-from gmso.exceptions import ForceFieldParseError, MissingAtomTypesError
+from gmso.exceptions import ForceFieldParseError, MissingAtomTypesError, MissingPotentialError
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import allclose_units_mixed, get_path
 
 
-class TestForceFieldFromXML(BaseTest):
+class TestForceField(BaseTest):
 
     @pytest.fixture
     def ff(self):
@@ -339,3 +339,46 @@ class TestForceFieldFromXML(BaseTest):
         assert allclose_units_mixed(
             params.values(), [0.6276, 1.8828, 0.0, -2.5104, 0.0, 0.0] * u.kJ / u.mol
         )
+
+    def test_forcefield_get_potential_non_exisistent_group(self, opls_ethane_foyer):
+        with pytest.raises(ValueError):
+            opls_ethane_foyer.get_potential('non_group', ['a', 'b', 'c'])
+
+    def test_forcefield_get_potential_non_string_key(self, opls_ethane_foyer):
+        with pytest.raises(TypeError):
+            opls_ethane_foyer.get_potential('atom_type', key=[111])
+
+    def test_get_atom_type_missing(self, opls_ethane_foyer):
+        with pytest.raises(MissingPotentialError):
+            opls_ethane_foyer._get_atom_type('opls_359', warn=False)
+
+        with pytest.warns(UserWarning):
+            opls_ethane_foyer._get_atom_type('opls_359', warn=True)
+
+    def test_get_bond_type_missing(self, opls_ethane_foyer):
+        with pytest.raises(MissingPotentialError):
+            opls_ethane_foyer._get_bond_type(['opls_359', 'opls_600'], warn=False)
+
+        with pytest.warns(UserWarning):
+            opls_ethane_foyer._get_bond_type(['opls_359', 'opls_600'], warn=True)
+
+    def test_get_angle_type_missing(self, opls_ethane_foyer):
+        with pytest.raises(MissingPotentialError):
+            opls_ethane_foyer._get_angle_type(['opls_359', 'opls_600', 'opls_700'], warn=False)
+
+        with pytest.warns(UserWarning):
+            opls_ethane_foyer._get_angle_type(['opls_359', 'opls_600', 'opls_700'], warn=True)
+
+    def test_get_dihedral_type_missing(self, opls_ethane_foyer):
+        with pytest.raises(MissingPotentialError):
+            opls_ethane_foyer._get_dihedral_type(['opls_359', 'opls_600', 'opls_700', 'opls_800'], warn=False)
+
+        with pytest.warns(UserWarning):
+            opls_ethane_foyer._get_dihedral_type(['opls_359', 'opls_600', 'opls_700', 'opls_800'], warn=True)
+
+    def test_get_improper_type_missing(self, opls_ethane_foyer):
+        with pytest.raises(MissingPotentialError):
+            opls_ethane_foyer._get_improper_type(['opls_359', 'opls_600', 'opls_700', 'opls_800'], warn=False)
+
+        with pytest.warns(UserWarning):
+            opls_ethane_foyer._get_improper_type(['opls_359', 'opls_600', 'opls_700', 'opls_800'], warn=True)
