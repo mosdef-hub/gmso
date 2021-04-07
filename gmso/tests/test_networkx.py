@@ -58,7 +58,7 @@ class TestNetworkx(BaseTest):
         assert len(select_params_on_networkx(graph,['C','H','H'])) == 1
         assert len(select_params_on_networkx(graph,['C','C','H','H'])) == 1
         assert len(select_params_on_networkx(graph,[None,None,None])) == 0
-        assert len(select_params_on_networkx(graph,['C','H',None])) == 2
+        assert len(select_params_on_networkx(graph,['C','H',None])) == 3
         assert len(select_params_on_networkx(graph,['C',None,None])) == 3
         assert len(select_params_on_networkx(graph,['C','C','H', None])) == 1
         assert len(select_params_on_networkx(graph,['C','C', None, None])) == 1

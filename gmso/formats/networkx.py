@@ -435,7 +435,6 @@ def select_params_on_networkx(networkx_graph, atoms):
             for node, angles in networkx_graph.nodes(data="angles"):
                 for angle in angles:
                     names = [member.name for member in angle.connection_members]
-                    print(names[1:3],list(reversed(names[0:2])))
                     if atoms[0:2] == names[1:3] or atoms[0:2] == list(reversed(names[0:2])):
                         list_of_params.append(angle.connection_members)
                         list_of_names.append(_get_formatted_atom_types_names_for(angle))
@@ -547,8 +546,13 @@ def select_params_on_networkx(networkx_graph, atoms):
 
 
 def _get_formatted_atom_types_names_for(connection):
-    assert all(map(lambda atom: atom.atom_type, connection.connection_members))
-    names = (member.atom_type.name for member in connection.connection_members)
+    names = []
+    for member in connection.connection_members:
+        if not member.atom_type:
+            label = ""
+        else:
+            label = member.atom_type.name
+        names.append(label)
 
     return " --- ".join(names)
 
@@ -805,7 +809,17 @@ def get_edges(networkx_graph, atom_name1, atom_name2):
     return list(selectable_dict.items())
 
 def create_dict_of_labels_for_edges(selectable_dict,edge):
-    label = edge[0].atom_type.name + " --- " + edge[1].atom_type.name
+    label0 = ""
+    label1 = ""
+    try:
+        label0 = edge[0].atom_type.name 
+    except AttributeError:
+        print("An atomtype for {} is missing".format(edge[0].label))
+    try:
+        label1 = edge[1].atom_type.name 
+    except AttributeError:
+        print("An atomtype for {} is missing".format(edge[1].label))
+    label = label0 + " --- " + label1
     if label in selectable_dict.keys():
         selectable_dict[label].append(edge)
     else:
