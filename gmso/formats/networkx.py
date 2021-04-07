@@ -41,32 +41,32 @@ def plot_networkx_params(networkx_graph, list_of_edges):
 def interactive_networkx_atomtypes(topology, list_of_labels=None):
     """Get an interactive networkx plot showing the atom types of a topology object.
 
-    Parameters
-    ----------
-    topology : gmso.Topology
-        This should be a gmso topology object that you want to visualize the atom types
-        that have been parameterized.
-    list_of_labels : List[str]
-        Default labels are ['atom_type.name','charge','mass','element','label','position'].
-        Any additonal labels can be appended from the list of:
-        `dir(list(topology.sites)[0])` or `dir(list(topology.sites)[0].atom_type)`
+     Parameters
+     ----------
+     topology : gmso.Topology
+         This should be a gmso topology object that you want to visualize the atom types
+         that have been parameterized.
+     list_of_labels : List[str]
+         Default labels are ['atom_type.name','charge','mass','element','label','position'].
+         Any additonal labels can be appended from the list of:
+         `dir(list(topology.sites)[0])` or `dir(list(topology.sites)[0].atom_type)`
 
-    Notes
-    -------
-    This function will output interactive ipywidgets. An ipywidgets dropdown object will
-        select which atomtypes that should be shown on the networkx graph object below. This
-        graph object is a visual representation for the connections within a gmso.Topology
-        object. 
-   Select from a list of labels labels to be included on the graph.
-   See:
-        gmso.formats.networkx.interactive_networkx_bonds, gmso.formats.networkx.interactive_networkx_angles,
-        gmso.formats.networkx.interactive_networkx_dihedrals
-        for other interactive visualization methods.
+     Notes
+     -------
+     This function will output interactive ipywidgets. An ipywidgets dropdown object will
+         select which atomtypes that should be shown on the networkx graph object below. This
+         graph object is a visual representation for the connections within a gmso.Topology
+         object.
+    Select from a list of labels labels to be included on the graph.
+    See:
+         gmso.formats.networkx.interactive_networkx_bonds, gmso.formats.networkx.interactive_networkx_angles,
+         gmso.formats.networkx.interactive_networkx_dihedrals
+         for other interactive visualization methods.
 
-    ipywidgets.Dropdown()
-        Two dropdown options, corresponding to:
-            Label = What labels are shown on the networkx graph.
-            Atom_Name = Which sites will show these labels.
+     ipywidgets.Dropdown()
+         Two dropdown options, corresponding to:
+             Label = What labels are shown on the networkx graph.
+             Atom_Name = Which sites will show these labels.
     """
 
     networkx_graph = to_networkx(topology)
@@ -101,62 +101,43 @@ def interactive_networkx_atomtypes(topology, list_of_labels=None):
 def interactive_networkx_bonds(topology, additional_labels=None):
     """Get an interactive networkx plot showing the bond types of a topology object.
 
-    Parameters
-    ----------
-    topology : A gmso.core.topology.Topology object
-        This should be a gmso topology object that you want to visualize the atom types
-        that have been parameterized.
-    additonal_labels : Labels at each site to be included on the plot.
-        Default labels are ['atom_type.name'].
-        Any additonal labels can be appended from the list of:
-        `dir(list(topology.sites)[0])` or `dir(list(topology.sites)[0].atom_type)`
+     Parameters
+     ----------
+     topology : A gmso.core.topology.Topology object
+         This should be a gmso topology object that you want to visualize the atom types
+         that have been parameterized.
+     additonal_labels : Labels at each site to be included on the plot.
+         Default labels are ['atom_type.name'].
+         Any additonal labels can be appended from the list of:
+         `dir(list(topology.sites)[0])` or `dir(list(topology.sites)[0].atom_type)`
 
-    Notes
-    -------
-    This function will output interactive ipywidgets. An ipywidgets dropdown object will
-        select which atom names that will make up the bonds shown on the networkx graph object below. 
-        This graph object is a visual representation for the connections within a gmso.Topology
-        object, and the bonds that makeup that bondtype are highlighted in red.
-   Select from a list of available sites, the sites that make up bonds to be highlighted on the graph.
-   See:
-        gmso.formats.networkx.interactive_networkx_atomtypes, gmso.formats.networkx.interactive_networkx_angles,
-        gmso.formats.networkx.interactive_networkx_dihedrals
-        for other interactive visualization methods.
+     Notes
+     -------
+     This function will output interactive ipywidgets. An ipywidgets dropdown object will
+         select which atom names that will make up the bonds shown on the networkx graph object below.
+         This graph object is a visual representation for the connections within a gmso.Topology
+         object, and the bonds that makeup that bondtype are highlighted in red.
+    Select from a list of available sites, the sites that make up bonds to be highlighted on the graph.
+    See:
+         gmso.formats.networkx.interactive_networkx_atomtypes, gmso.formats.networkx.interactive_networkx_angles,
+         gmso.formats.networkx.interactive_networkx_dihedrals
+         for other interactive visualization methods.
 
-    ipywidgets.Dropdown()
-        Two dropdown options, corresponding to:
-            Atom1 (req) = Filters through all bonds to find bonds that contain this site. If not specified,
-                only bonds with missing bondtypes will be highlighted (in red).
-            Atom2 (opt) = A second site to specify which bonds can be selected on the graph.
-        A third dropdown option:
-            list_of_bonds = a list of the bonds labeled by the types that makeup the two sites.
- 
-    matplotlib.pyplot.figure()
-        A figure showing the networkx.graph object of the molecule with highlighted edges corresponding to the 
-            selected bonds
+     ipywidgets.Dropdown()
+         Two dropdown options, corresponding to:
+             Atom1 (req) = Filters through all bonds to find bonds that contain this site. If not specified,
+                 only bonds with missing bondtypes will be highlighted (in red).
+             Atom2 (opt) = A second site to specify which bonds can be selected on the graph.
+         A third dropdown option:
+             list_of_bonds = a list of the bonds labeled by the types that makeup the two sites.
 
-    ipywidgets.checkbox()
-        A checkbox that will allow you to print the parameters associated with the selected bond in the list_of_bonds
-            dropdown option.
-    """
-    -------
-    ipywidgets.Dropdown()
-        Three dropdown options, corresponding to:
-            Atom1 = The first site for which bonds will be listed. If all sites are selected for both
-                atoms, then only bonds with missing types will be shown.
-            Atom2 = A second site for which bonds will be listed. With both specified
-                only bonds between Atom1 and Atom2 will be shown.
-            list_of_bonds = The bonds that can be selected corresponding to the Atom1 and Atom2
-                selections in the two above dropdown menus.
+     matplotlib.pyplot.figure()
+         A figure showing the networkx.graph object of the molecule with highlighted edges corresponding to the
+             selected bonds
 
-    matplotlib.pyplot.figure
-        The drawn networkx plot of the topology on a matplotlib editable figures. Thick dark red lines
-        indicate which bonds have been selected.
-
-    ipywidgets.Checkbox()
-        Show parameters = True or False
-        Will determine if the necessary bond parameters for the selected bond type are shown
-        below the figure.
+     ipywidgets.checkbox()
+         A checkbox that will allow you to print the parameters associated with the selected bond in the list_of_bonds
+             dropdown option.
     """
     networkx_graph = to_networkx(topology)
 
@@ -247,40 +228,40 @@ def show_bond_info(w, topology, list_of_bonds):
 def interactive_networkx_angles(topology):
     """Get an interactive networkx plot showing the angle types of a topology object.
 
-    Parameters
-    ----------
-    topology : A gmso.core.topology.Topology object
-        This should be a gmso topology object that you want to visualize the angle types
-        that have been parameterized.
+     Parameters
+     ----------
+     topology : A gmso.core.topology.Topology object
+         This should be a gmso topology object that you want to visualize the angle types
+         that have been parameterized.
 
-    Notes
-    -------
-    This function will output interactive ipywidgets. An ipywidgets dropdown object will
-        select which atom names that will make up the angles shown on the networkx graph object below. 
-        This graph object is a visual representation for the connections within a gmso.Topology
-        object. 
-   Select from a list of available sites, the sites that make up angles to be highlighted (in red) on the graph.
-   See:
-        gmso.formats.networkx.interactive_networkx_atomtypes, gmso.formats.networkx.interactive_networkx_bonds,
-        gmso.formats.networkx.interactive_networkx_dihedrals
-        for other interactive visualization methods.
+     Notes
+     -------
+     This function will output interactive ipywidgets. An ipywidgets dropdown object will
+         select which atom names that will make up the angles shown on the networkx graph object below.
+         This graph object is a visual representation for the connections within a gmso.Topology
+         object.
+    Select from a list of available sites, the sites that make up angles to be highlighted (in red) on the graph.
+    See:
+         gmso.formats.networkx.interactive_networkx_atomtypes, gmso.formats.networkx.interactive_networkx_bonds,
+         gmso.formats.networkx.interactive_networkx_dihedrals
+         for other interactive visualization methods.
 
-    ipywidgets.Dropdown()
-        Three dropdown options, corresponding to:
-            Central Atom1 (req) = Filters through all angles to find angles that contain this site as the center of the angle. 
-                If not specified only angles with missing angletypes will be highlighted.
-            Atom2 (opt) = A second site to filter which angles can be selected on the graph.
-            Atom3 (opt) = A third site to filter which angles can be selected on the graph.
-        A fourth dropdown option:
-            Selected Edge = a list of the angles labeled by the types that makeup the three sites.
- 
-    matplotlib.pyplot.figure()
-        A figure showing the networkx.graph object of the molecule with highlighted (in red) edges corresponding to the 
-            selected angles.
+     ipywidgets.Dropdown()
+         Three dropdown options, corresponding to:
+             Central Atom1 (req) = Filters through all angles to find angles that contain this site as the center of the angle.
+                 If not specified only angles with missing angletypes will be highlighted.
+             Atom2 (opt) = A second site to filter which angles can be selected on the graph.
+             Atom3 (opt) = A third site to filter which angles can be selected on the graph.
+         A fourth dropdown option:
+             Selected Edge = a list of the angles labeled by the types that makeup the three sites.
 
-    ipywidgets.checkbox()
-        A checkbox that will allow you to print the parameters associated with the selected angle in the Selected Edge
-            dropdown option.
+     matplotlib.pyplot.figure()
+         A figure showing the networkx.graph object of the molecule with highlighted (in red) edges corresponding to the
+             selected angles.
+
+     ipywidgets.checkbox()
+         A checkbox that will allow you to print the parameters associated with the selected angle in the Selected Edge
+             dropdown option.
     """
 
     networkx_graph = to_networkx(topology)
@@ -345,42 +326,42 @@ def select_angles_from_sites(networkx_graph, top, Atom1, Atom2, Atom3):
 def interactive_networkx_dihedrals(topology):
     """Get an interactive networkx plot showing the dihedral types of a topology object.
 
-    Parameters
-    ----------
-    topology : A gmso.core.topology.Topology object
-        This should be a gmso topology object that you want to visualize the dihedral types
-        that have been parameterized.
+     Parameters
+     ----------
+     topology : A gmso.core.topology.Topology object
+         This should be a gmso topology object that you want to visualize the dihedral types
+         that have been parameterized.
 
-    Notes
-    -------
-    This function will output interactive ipywidgets. An ipywidgets dropdown object will
-        select which atom names that will make up the dihedrals shown on the networkx graph object below. 
-        This graph object is a visual representation for the connections within a gmso.Topology
-        object. 
-   Select from a list of available sites, the sites that make up dihedrals to be highlighted (in red) on the graph.
-   See:
-        gmso.formats.networkx.interactive_networkx_atomtypes, gmso.formats.networkx.interactive_networkx_bonds,
-        gmso.formats.networkx.interactive_networkx_angles
-        for other interactive visualization methods.
+     Notes
+     -------
+     This function will output interactive ipywidgets. An ipywidgets dropdown object will
+         select which atom names that will make up the dihedrals shown on the networkx graph object below.
+         This graph object is a visual representation for the connections within a gmso.Topology
+         object.
+    Select from a list of available sites, the sites that make up dihedrals to be highlighted (in red) on the graph.
+    See:
+         gmso.formats.networkx.interactive_networkx_atomtypes, gmso.formats.networkx.interactive_networkx_bonds,
+         gmso.formats.networkx.interactive_networkx_angles
+         for other interactive visualization methods.
 
-    ipywidgets.Dropdown()
-        Four dropdown options, corresponding to:
-            Central Atom1 (req) = Filters through all bonds to find dihedrals that contain this site in one of its central
-                two positions. If not specified, only dihedrals with missing dihedraltypes will be highlighted.
-            Central Atom2 (req) = Filters through all bonds to find dihedrals that contain this site in one of its central
-                two positions. If not specified, only dihedrals with missing dihedraltypes will be highlighted.
-            Atom3 (opt) = A third site to filter which dihedrals can be selected on the graph.
-            Atom4 (opt) = A fourth site to filter which dihedrals can be selected on the graph.
-        A fourth dropdown option:
-            Selected Edge = a list of the angles labeled by the types that makeup the three sites.
- 
-    matplotlib.pyplot.figure()
-        A figure showing the networkx.graph object of the molecule with highlighted (in red) edges corresponding to the 
-            selected dihedrals.
+     ipywidgets.Dropdown()
+         Four dropdown options, corresponding to:
+             Central Atom1 (req) = Filters through all bonds to find dihedrals that contain this site in one of its central
+                 two positions. If not specified, only dihedrals with missing dihedraltypes will be highlighted.
+             Central Atom2 (req) = Filters through all bonds to find dihedrals that contain this site in one of its central
+                 two positions. If not specified, only dihedrals with missing dihedraltypes will be highlighted.
+             Atom3 (opt) = A third site to filter which dihedrals can be selected on the graph.
+             Atom4 (opt) = A fourth site to filter which dihedrals can be selected on the graph.
+         A fourth dropdown option:
+             Selected Edge = a list of the angles labeled by the types that makeup the three sites.
 
-    ipywidgets.checkbox()
-        A checkbox that will allow you to print the parameters associated with the selected dihedral in the Selected Edge
-            dropdown option.
+     matplotlib.pyplot.figure()
+         A figure showing the networkx.graph object of the molecule with highlighted (in red) edges corresponding to the
+             selected dihedrals.
+
+     ipywidgets.checkbox()
+         A checkbox that will allow you to print the parameters associated with the selected dihedral in the Selected Edge
+             dropdown option.
     """
     networkx_graph = to_networkx(topology)
 
@@ -474,7 +455,9 @@ def select_params_on_networkx(networkx_graph, atoms):
             for node, angles in networkx_graph.nodes(data="angles"):
                 for angle in angles:
                     names = [member.name for member in angle.connection_members]
-                    if atoms[0:2] == names[1:3] or atoms[0:2] == list(reversed(names[0:2])):
+                    if atoms[0:2] == names[1:3] or atoms[0:2] == list(
+                        reversed(names[0:2])
+                    ):
                         list_of_params.append(angle.connection_members)
                         list_of_names.append(_get_formatted_atom_types_names_for(angle))
         elif atoms[0]:
@@ -831,30 +814,31 @@ def get_edges(networkx_graph, atom_name1, atom_name2):
                 or edge[0].name == atom_name2
                 and edge[1].name == atom_name1
             ):
-                selectable_dict = create_dict_of_labels_for_edges(selectable_dict,edge)
+                selectable_dict = create_dict_of_labels_for_edges(selectable_dict, edge)
     elif atom_name1:
         for edge in list(networkx_graph.edges):
             if edge[0].name == atom_name1 or edge[1].name == atom_name1:
-                selectable_dict = create_dict_of_labels_for_edges(selectable_dict,edge)
+                selectable_dict = create_dict_of_labels_for_edges(selectable_dict, edge)
     else:
         for nodes in list(networkx_graph.edges.items()):
             if nodes[1]["connection"].bond_type is None:
-                selectable_dict = create_dict_of_labels_for_edges(selectable_dict,edge)
+                selectable_dict = create_dict_of_labels_for_edges(selectable_dict, edge)
                 mia_bond_flag = 1
         if not mia_bond_flag:
             return print("All bonds are typed")
     # turn the dic selectable dict into a list of tuples.
     return list(selectable_dict.items())
 
-def create_dict_of_labels_for_edges(selectable_dict,edge):
+
+def create_dict_of_labels_for_edges(selectable_dict, edge):
     label0 = ""
     label1 = ""
     try:
-        label0 = edge[0].atom_type.name 
+        label0 = edge[0].atom_type.name
     except AttributeError:
         print("An atomtype for {} is missing".format(edge[0].label))
     try:
-        label1 = edge[1].atom_type.name 
+        label1 = edge[1].atom_type.name
     except AttributeError:
         print("An atomtype for {} is missing".format(edge[1].label))
     label = label0 + " --- " + label1
@@ -864,6 +848,7 @@ def create_dict_of_labels_for_edges(selectable_dict,edge):
         selectable_dict[label] = []
         selectable_dict[label].append(edge)
     return selectable_dict
+
 
 def plot_networkx_bonds(
     networkx_graph,
