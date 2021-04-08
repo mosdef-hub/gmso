@@ -809,10 +809,10 @@ def get_edges(networkx_graph, atom_name1, atom_name2):
     if atom_name1 and atom_name2:
         for edge in list(networkx_graph.edges):
             if (
-                edge[0].name == atom_name1
-                and edge[1].name == atom_name2
-                or edge[0].name == atom_name2
-                and edge[1].name == atom_name1
+                (edge[0].name == atom_name1
+                and edge[1].name == atom_name2)
+                or (edge[0].name == atom_name2
+                and edge[1].name == atom_name1)
             ):
                 selectable_dict = create_dict_of_labels_for_edges(selectable_dict, edge)
     elif atom_name1:
