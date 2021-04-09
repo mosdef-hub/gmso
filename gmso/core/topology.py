@@ -724,7 +724,6 @@ class Topology(object):
         if not labels:
             labels = []
         df = pd.DataFrame()
-        list_of_sites = list(site for site in self.sites)
         if parameter == "sites":
             df["index"] = np.arange(0, len(self.sites), 1)
             df["atom_types"] = list(site.atom_type.name for site in self.sites)
