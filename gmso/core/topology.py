@@ -707,24 +707,22 @@ class Topology(object):
 
         Examples
         ________
-        topology.to_dataframes(parameter = 'sites', labels = ['charge'])
+        >>> topology.to_dataframes(parameter = 'sites', labels = ['charge'])
             This will return a dataframe with a listing of the sites and include the charges that correspond to each site.
-        topology.to_dataframes(parameter = 'dihedrals', labels = ['positions'])
+        >>> topology.to_dataframes(parameter = 'dihedrals', labels = ['positions'])
             This will return a dataframe with a listing of the sites that make up each dihedral, the positions of each of
             those sites, and the parameters that are associated with the dihedrals.
 
         Notes
         ____
         A dataframe is easily manipulated. In order to change the rounding to two decimals places for a column named `label`:
-            df['label'] = df['label'].round(2)
+            >>> df['label'] = df['label'].round(2)
         The column labels can also be easily modified. This line can take a dataframe `df` and rename a column labeled
         `Atom0` to `newname` using a dictionary.
-            df.rename(columns = {'Atom0':'newname'})
+            >>> df.rename(columns = {'Atom0':'newname'})
         """
         if not labels:
             labels = []
-        if not round_to:
-            round_to = []
         df = pd.DataFrame()
         list_of_sites = list(site for site in self.sites)
         if parameter == "sites":
@@ -736,7 +734,7 @@ class Topology(object):
                     try:
                         label1, label2 = label.split(".")
                         df[label] = list(
-                            gettattr(site, getattr(site, label1)) for site in self.sites
+                            getattr(getattr(site, label1), label2) for site in self.sites
                         )
                     except AttributeError:
                         raise AttributeError(
@@ -876,8 +874,8 @@ def _pandas_from_parameters(topology, df, parameter, labels=None):
                         )
                         for connection in getattr(topology, parameter)
                     )
-                except AttributeError:
-                    raise AttributeError(
+                except NameError:
+                    raise NameError(
                         "The label {} is not in this gmso object".format(label)
                     )
             elif label == "positions" or label == "position":
