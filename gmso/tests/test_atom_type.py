@@ -1,3 +1,4 @@
+from copy import deepcopy
 import unyt as u
 import sympy
 import pytest
@@ -216,3 +217,7 @@ class TestAtomType(BaseTest):
         assert len(top.atom_types) == 1
         assert top.n_sites == 1000
 
+    def test_atom_type_copy(self, typed_ethane):
+        for atom_type in typed_ethane.atom_types:
+            assert atom_type.copy(deep=True) == atom_type
+            assert deepcopy(atom_type) == atom_type
