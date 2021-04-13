@@ -1,17 +1,16 @@
 import lxml
 import pytest
-from sympy import sympify
 import unyt as u
-
 from lxml.etree import DocumentInvalid
+from sympy import sympify
 
 from gmso.core.forcefield import ForceField
-from gmso.tests.utils import get_path
+from gmso.exceptions import ForceFieldParseError, MissingAtomTypesError, MissingPotentialError
 from gmso.tests.base_test import BaseTest
-from gmso.exceptions import ForceFieldParseError, MissingAtomTypesError
+from gmso.tests.utils import allclose_units_mixed, get_path
 
 
-class TestForceFieldFromXML(BaseTest):
+class TestForceField(BaseTest):
 
     @pytest.fixture
     def ff(self):
@@ -31,6 +30,10 @@ class TestForceFieldFromXML(BaseTest):
         assert isinstance(multiple_ff.version, list)
         assert len(multiple_ff.name) == 2
         assert len(multiple_ff.version) == 2
+
+    def opls_ethane_foyer(self):
+        return ForceField(get_path(filename=get_path("oplsaa-ethane_foyer.xml")))
+
 
     def test_ff_name_version_from_xml(self, ff):
         assert ff.name == 'ForceFieldOne'
@@ -218,3 +221,175 @@ class TestForceFieldFromXML(BaseTest):
     def test_forcefield_missing_atom_types_non_strict(self):
         ff = ForceField(get_path(filename=get_path('ff_missing_atom_types.xml')), strict=False)
 
+    def test_forcefeld_get_potential_atom_type(self, opls_ethane_foyer):
+        at = opls_ethane_foyer.get_potential("atom_type", key=["opls_135"])
+        assert at.expression == sympify(
+            "ep * ((sigma/r)**12 - (sigma/r)**6) + q / (e0 * r)"
+        )
+
+        params = at.parameters
+        assert "ep" in params
+        assert "sigma" in params
+        assert "e0" in params
+        assert sympify("r") in at.independent_variables
+
+        assert allclose_units_mixed(
+            params.values(),
+            [
+                0.276144 * u.kJ / u.mol,
+                0.35 * u.nm,
+                8.8542e-12 * u.Unit("A**2*s**4/(kg*m**3)"),
+                -0.18 * u.C,
+            ],
+        )
+
+    def test_forcefield_get_parameters_atom_type(self, opls_ethane_foyer):
+        params = opls_ethane_foyer.get_parameters("atom_type", key=["opls_140"])
+
+        assert allclose_units_mixed(
+            params.values(),
+            [
+                0.12552 * u.kJ / u.mol,
+                0.25 * u.nm,
+                8.8542e-12 * u.Unit("A**2*s**4/(kg*m**3)"),
+                0.06 * u.C,
+            ],
+        )
+
+    def test_forcefield_get_parameters_atom_type_copy(self, opls_ethane_foyer):
+        params = opls_ethane_foyer.get_parameters(
+            "atom_type", key=["opls_140"], copy=False
+        )
+        params_copy = opls_ethane_foyer.get_parameters(
+            "atom_type", key=["opls_140"], copy=True
+        )
+        assert allclose_units_mixed(params.values(), params_copy.values())
+
+    def test_forcefield_get_potential_bond_type(self, opls_ethane_foyer):
+        bt = opls_ethane_foyer.get_potential("bond_type", key=["opls_135", "opls_140"])
+        assert bt.name == "BondType-Harmonic-2"
+        params = bt.parameters
+        assert "k" in params
+        assert "r_eq" in params
+
+        assert sympify("r") in bt.independent_variables
+
+        assert allclose_units_mixed(
+            params.values(), [284512.0 * u.kJ / u.nm ** 2, 0.109 * u.nm]
+        )
+
+    def test_forcefield_get_potential_bond_type_reversed(self, opls_ethane_foyer):
+        assert opls_ethane_foyer.get_potential(
+            "bond_type", ["opls_135", "opls_140"]
+        ) == opls_ethane_foyer.get_potential("bond_type", ["opls_140", "opls_135"])
+
+    def test_forcefield_get_parameters_bond_type(self, opls_ethane_foyer):
+        params = opls_ethane_foyer.get_parameters(
+            "bond_type", key=["opls_135", "opls_135"]
+        )
+
+        assert allclose_units_mixed(
+            params.values(), [224262.4 * u.kJ / u.nm ** 2, 0.1529 * u.nm]
+        )
+
+    def test_forcefield_get_potential_angle_type(self, opls_ethane_foyer):
+        at = opls_ethane_foyer.get_potential(
+            "angle_type", key=["opls_135", "opls_135", "opls_140"]
+        )
+        assert at.name == "AngleType-Harmonic-1"
+        params = at.parameters
+        assert "k" in params
+        assert "theta_eq" in params
+
+        assert sympify("theta") in at.independent_variables
+
+        assert allclose_units_mixed(
+            params.values(), [313.8 * u.kJ / u.radian ** 2, 1.932079482 * u.radian]
+        )
+
+    def test_forcefield_get_potential_angle_type_reversed(self, opls_ethane_foyer):
+        assert opls_ethane_foyer.get_potential(
+            "angle_type", ["opls_135", "opls_135", "opls_140"]
+        ) == opls_ethane_foyer.get_potential(
+            "angle_type", ["opls_140", "opls_135", "opls_135"]
+        )
+
+    def test_forcefield_get_parameters_angle_type(self, opls_ethane_foyer):
+        params = opls_ethane_foyer.get_parameters(
+            "angle_type", key=["opls_140", "opls_135", "opls_140"]
+        )
+
+        assert allclose_units_mixed(
+            params.values(), [276.144 * u.kJ / u.radian ** 2, 1.8814649337 * u.radian]
+        )
+
+    def test_forcefield_get_potential_dihedral_type(self, opls_ethane_foyer):
+        dt = opls_ethane_foyer.get_potential(
+            "dihedral_type", key=["opls_140", "opls_135", "opls_135", "opls_140"]
+        )
+        assert dt.name == "DihedralType-RB-Proper-1"
+        params = dt.parameters
+        assert "c0" in params
+        assert "c1" in params
+        assert "c2" in params
+        assert "c3" in params
+        assert "c4" in params
+        assert "c5" in params
+
+        assert sympify("phi") in dt.independent_variables
+
+        assert allclose_units_mixed(
+            params.values(), [0.6276, 1.8828, 0.0, -2.5104, 0.0, 0.0] * u.kJ / u.mol
+        )
+
+    def test_forcefield_get_parameters_dihedral_type(self, opls_ethane_foyer):
+        params = opls_ethane_foyer.get_parameters(
+            "dihedral_type", key=["opls_140", "opls_135", "opls_135", "opls_140"]
+        )
+
+        assert allclose_units_mixed(
+            params.values(), [0.6276, 1.8828, 0.0, -2.5104, 0.0, 0.0] * u.kJ / u.mol
+        )
+
+    def test_forcefield_get_potential_non_exisistent_group(self, opls_ethane_foyer):
+        with pytest.raises(ValueError):
+            opls_ethane_foyer.get_potential('non_group', ['a', 'b', 'c'])
+
+    def test_forcefield_get_potential_non_string_key(self, opls_ethane_foyer):
+        with pytest.raises(TypeError):
+            opls_ethane_foyer.get_potential('atom_type', key=[111])
+
+    def test_get_atom_type_missing(self, opls_ethane_foyer):
+        with pytest.raises(MissingPotentialError):
+            opls_ethane_foyer._get_atom_type('opls_359', warn=False)
+
+        with pytest.warns(UserWarning):
+            opls_ethane_foyer._get_atom_type('opls_359', warn=True)
+
+    def test_get_bond_type_missing(self, opls_ethane_foyer):
+        with pytest.raises(MissingPotentialError):
+            opls_ethane_foyer._get_bond_type(['opls_359', 'opls_600'], warn=False)
+
+        with pytest.warns(UserWarning):
+            opls_ethane_foyer._get_bond_type(['opls_359', 'opls_600'], warn=True)
+
+    def test_get_angle_type_missing(self, opls_ethane_foyer):
+        with pytest.raises(MissingPotentialError):
+            opls_ethane_foyer._get_angle_type(['opls_359', 'opls_600', 'opls_700'], warn=False)
+
+        with pytest.warns(UserWarning):
+            opls_ethane_foyer._get_angle_type(['opls_359', 'opls_600', 'opls_700'], warn=True)
+
+    def test_get_dihedral_type_missing(self, opls_ethane_foyer):
+        with pytest.raises(MissingPotentialError):
+            opls_ethane_foyer._get_dihedral_type(['opls_359', 'opls_600', 'opls_700', 'opls_800'], warn=False)
+
+        with pytest.warns(UserWarning):
+            opls_ethane_foyer._get_dihedral_type(['opls_359', 'opls_600', 'opls_700', 'opls_800'], warn=True)
+
+    def test_get_improper_type_missing(self, opls_ethane_foyer):
+        with pytest.raises(MissingPotentialError):
+            opls_ethane_foyer._get_improper_type(['opls_359', 'opls_600', 'opls_700', 'opls_800'], warn=False)
+
+        with pytest.warns(UserWarning):
+            opls_ethane_foyer._get_improper_type(['opls_359', 'opls_600', 'opls_700', 'opls_800'], warn=True)
