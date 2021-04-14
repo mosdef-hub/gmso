@@ -616,6 +616,7 @@ class TestTopology(BaseTest):
                    float(typed_methylnitroaniline.to_datatables(labels = ['charge','position'])['charge (e)'][0]),
                    0.065
                            )
+        assert typed_methylnitroaniline.to_datatables(labels=['atom_type.name'])['atom_type.name'][0] == "opls_148"
         assert np.allclose(
                    float(typed_methylnitroaniline.to_datatables(labels = ['charge','position'])['x'][0]),
                    0.1831997
@@ -627,6 +628,9 @@ class TestTopology(BaseTest):
         with pytest.raises(AttributeError) as e:
             typed_methylnitroaniline.to_datatables(labels=['missingattr'])
         assert str(e.value) == "The label missingattr is not in this gmso object"
+        with pytest.raises(AttributeError) as e:
+            typed_methylnitroaniline.to_datatables(labels=['missingattr.missingattr'])
+        assert str(e.value) == "The label missingattr.missingattr is not in this gmso object"
         with pytest.raises(AttributeError) as e:
             typed_methylnitroaniline.to_datatables(labels=['missingattr.attr'])
         assert str(e.value) == "The label missingattr.attr is not in this gmso object"
