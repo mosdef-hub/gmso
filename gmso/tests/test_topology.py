@@ -606,3 +606,33 @@ class TestTopology(BaseTest):
             typed_methylnitroaniline.scaling_factors = {
                 "lj_12": 0.0
             }
+
+    def test_to_dataframes(self, typed_methylnitroaniline):
+        assert len(typed_methylnitroaniline.to_datatables()) == 19
+        assert len(typed_methylnitroaniline.to_datatables(parameter='bonds')) == 19
+        assert len(typed_methylnitroaniline.to_datatables(parameter='angles')) == 30
+        assert len(typed_methylnitroaniline.to_datatables(parameter='dihedrals')) == 38
+        assert np.allclose(
+                   float(typed_methylnitroaniline.to_datatables(labels = ['charge','position'])['charge (e)'][0]),
+                   0.065
+                           )
+        assert np.allclose(
+                   float(typed_methylnitroaniline.to_datatables(labels = ['charge','position'])['x'][0]),
+                   0.1831997
+                           )
+        assert np.allclose(
+                   float(typed_methylnitroaniline.to_datatables(parameter='bonds', labels=['charge','position'])['charge Atom0 (e)'][0]),
+                   0.115
+                           )
+        with pytest.raises(AttributeError) as e:
+            typed_methylnitroaniline.to_datatables(labels=['missingattr'])
+        assert str(e.value) == "The label missingattr is not in this gmso object"
+        with pytest.raises(AttributeError) as e:
+            typed_methylnitroaniline.to_datatables(labels=['missingattr.attr'])
+        assert str(e.value) == "The label missingattr.attr is not in this gmso object"
+        with pytest.raises(AttributeError) as e:
+            typed_methylnitroaniline.to_datatables(parameter='bonds', labels=['missingattr'])
+        assert str(e.value) == "The label missingattr is not in this gmso object"
+        with pytest.raises(NameError) as e:
+            typed_methylnitroaniline.to_datatables(parameter='bonds', labels=['missingattr.attr'])
+        assert str(e.value) == "The label missingattr.attr is not in this gmso object"

@@ -3,6 +3,7 @@ import warnings
 import numpy as np
 import unyt as u
 from boltons.setutils import IndexedSet
+import pandas as pd
 
 from gmso.core.atom import Atom
 from gmso.core.bond import Bond
@@ -16,7 +17,13 @@ from gmso.core.angle_type import AngleType
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper_type import ImproperType
 from gmso.utils.connectivity import identify_connections as _identify_connections
-from gmso.utils._constants import ATOM_TYPE_DICT, BOND_TYPE_DICT, ANGLE_TYPE_DICT, DIHEDRAL_TYPE_DICT, IMPROPER_TYPE_DICT
+from gmso.utils._constants import (
+    ATOM_TYPE_DICT,
+    BOND_TYPE_DICT,
+    ANGLE_TYPE_DICT,
+    DIHEDRAL_TYPE_DICT,
+    IMPROPER_TYPE_DICT,
+)
 from gmso.exceptions import GMSOError
 
 
@@ -126,6 +133,7 @@ class Topology(object):
     gmso.SubTopology :
         A topology within a topology
     """
+
     def __init__(self, name="Topology", box=None):
 
         self.name = name
@@ -149,7 +157,7 @@ class Topology(object):
         self._dihedral_types_idx = {}
         self._improper_types = {}
         self._improper_types_idx = {}
-        self._combining_rule = 'lorentz'
+        self._combining_rule = "lorentz"
         self._scaling_factors = {
             "vdw_12": 0.0,
             "vdw_13": 0.0,
@@ -171,11 +179,10 @@ class Topology(object):
             BOND_TYPE_DICT: self._bond_types_idx,
             ANGLE_TYPE_DICT: self._angle_types_idx,
             DIHEDRAL_TYPE_DICT: self._dihedral_types_idx,
-            IMPROPER_TYPE_DICT: self._improper_types_idx
+            IMPROPER_TYPE_DICT: self._improper_types_idx,
         }
 
         self._unique_connections = {}
-
 
     @property
     def name(self):
@@ -183,7 +190,7 @@ class Topology(object):
 
     @name.setter
     def name(self, name):
-        self._name = str(name) if name else 'Topology'
+        self._name = str(name) if name else "Topology"
 
     @property
     def box(self):
@@ -207,8 +214,8 @@ class Topology(object):
 
     @combining_rule.setter
     def combining_rule(self, rule):
-        if rule not in ['lorentz', 'geometric']:
-            raise GMSOError('Combining rule must be `lorentz` or `geometric`')
+        if rule not in ["lorentz", "geometric"]:
+            raise GMSOError("Combining rule must be `lorentz` or `geometric`")
         self._combining_rule = rule
 
     @property
@@ -222,7 +229,9 @@ class Topology(object):
             raise GMSOError("Scaling factors should be a dictionary")
         for item in expected_items:
             if item not in scaling_factors.keys():
-                raise GMSOError(f"Expected {expected_items} as keys in the scaling factors")
+                raise GMSOError(
+                    f"Expected {expected_items} as keys in the scaling factors"
+                )
         for val in scaling_factors.values():
             if val < 0.0 or val > 1.0:
                 raise GMSOError("Scaling factors should be between 0.0 and 1.0")
@@ -424,16 +433,17 @@ class Topology(object):
         # Check if an equivalent connection is in the topology
         equivalent_members = connection._equivalent_members_hash()
         if equivalent_members in self._unique_connections:
-            warnings.warn('An equivalent connection already exists. '
-                        'Providing the existing equivalent Connection.')
+            warnings.warn(
+                "An equivalent connection already exists. "
+                "Providing the existing equivalent Connection."
+            )
             connection = self._unique_connections[equivalent_members]
 
         for conn_member in connection.connection_members:
             if conn_member not in self.sites:
                 self.add_site(conn_member)
         self._connections.add(connection)
-        self._unique_connections.update(
-                {equivalent_members : connection})
+        self._unique_connections.update({equivalent_members: connection})
         if isinstance(connection, Bond):
             self._bonds.add(connection)
         if isinstance(connection, Angle):
@@ -463,10 +473,12 @@ class Topology(object):
         """
         for c in self.connections:
             if c.connection_type is None:
-                warnings.warn('Non-parametrized Connection {} detected'.format(c))
+                warnings.warn("Non-parametrized Connection {} detected".format(c))
             elif not isinstance(c.connection_type, ParametricPotential):
-                raise GMSOError('Non-Potential {} found'
-                                    'in Connection {}'.format(c.connection_type, c))
+                raise GMSOError(
+                    "Non-Potential {} found"
+                    "in Connection {}".format(c.connection_type, c)
+                )
             elif c.connection_type not in self._connection_types:
                 c.connection_type.topology = self
                 self._connection_types[c.connection_type] = c.connection_type
@@ -475,13 +487,19 @@ class Topology(object):
                     self._bond_types_idx[c.connection_type] = len(self._bond_types) - 1
                 if isinstance(c.connection_type, AngleType):
                     self._angle_types[c.connection_type] = c.connection_type
-                    self._angle_types_idx[c.connection_type] = len(self._angle_types) - 1
+                    self._angle_types_idx[c.connection_type] = (
+                        len(self._angle_types) - 1
+                    )
                 if isinstance(c.connection_type, DihedralType):
                     self._dihedral_types[c.connection_type] = c.connection_type
-                    self._dihedral_types_idx[c.connection_type] = len(self._dihedral_types) - 1
+                    self._dihedral_types_idx[c.connection_type] = (
+                        len(self._dihedral_types) - 1
+                    )
                 if isinstance(c.connection_type, ImproperType):
                     self._improper_types[c.connection_type] = c.connection_type
-                    self._improper_types_idx[c.connection_type] = len(self._improper_types) - 1
+                    self._improper_types_idx[c.connection_type] = (
+                        len(self._improper_types) - 1
+                    )
             elif c.connection_type in self.connection_types:
                 if isinstance(c.connection_type, BondType):
                     c.connection_type = self._bond_types[c.connection_type]
@@ -506,9 +524,9 @@ class Topology(object):
         """
         for site in self._sites:
             if site.atom_type is None:
-                warnings.warn('Non-parametrized site detected {}'.format(site))
+                warnings.warn("Non-parametrized site detected {}".format(site))
             elif not isinstance(site.atom_type, AtomType):
-                raise GMSOError('Non AtomType instance found in site {}'.format(site))
+                raise GMSOError("Non AtomType instance found in site {}".format(site))
             elif site.atom_type not in self._atom_types:
                 site.atom_type.topology = self
                 self._atom_types[site.atom_type] = site.atom_type
@@ -655,13 +673,13 @@ class Topology(object):
             BondType: self._bond_types_idx,
             AngleType: self._angle_types_idx,
             DihedralType: self._dihedral_types_idx,
-            ImproperType: self._improper_types_idx
+            ImproperType: self._improper_types_idx,
         }
 
         member_type = type(member)
 
         if member_type not in refs.keys():
-            raise TypeError(f'Cannot index member of type {member_type.__name__}')
+            raise TypeError(f"Cannot index member of type {member_type.__name__}")
 
         try:
             index = refs[member_type].index(member)
@@ -670,19 +688,237 @@ class Topology(object):
 
         return index
 
+    def to_datatables(self, parameter="sites", labels=None):
+        """Return a pandas dataframe object for the sites in a topology
+
+        Parameters
+        ----------
+        parameter : a string
+            A string determining what aspects of the gmso topology will be reported. Options are: 'sites','bonds','angles'
+            and 'dihedrals'. Defaults to 'sites'.
+        labels : List of strings that are attributes of the topology site.
+        unique_id : Whether you want the identifier of each node to be included
+
+        Returns
+        -------
+        Pandas Dataframe
+            A pandas.Dataframe object, see https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
+            for further information.
+
+        Examples
+        ________
+        >>> topology.to_dataframes(parameter = 'sites', labels = ['charge'])
+            This will return a dataframe with a listing of the sites and include the charges that correspond to each site.
+        >>> topology.to_dataframes(parameter = 'dihedrals', labels = ['positions'])
+            This will return a dataframe with a listing of the sites that make up each dihedral, the positions of each of
+            those sites, and the parameters that are associated with the dihedrals.
+
+        Notes
+        ____
+        A dataframe is easily manipulated. In order to change the rounding to two decimals places for a column named `label`:
+            >>> df['label'] = df['label'].round(2)
+        The column labels can also be easily modified. This line can take a dataframe `df` and rename a column labeled
+        `Atom0` to `newname` using a dictionary.
+            >>> df.rename(columns = {'Atom0':'newname'})
+        """
+        if not labels:
+            labels = []
+        df = pd.DataFrame()
+        if parameter == "sites":
+            df["index"] = np.arange(0, len(self.sites), 1)
+            df["atom_types"] = list(site.atom_type.name for site in self.sites)
+            df["names"] = list(site.name for site in self.sites)
+            for label in labels:
+                if "." in label:
+                    try:
+                        label1, label2 = label.split(".")
+                        df[label] = list(
+                            getattr(getattr(site, label1), label2) for site in self.sites
+                        )
+                    except AttributeError:
+                        raise AttributeError(
+                            "The label {} is not in this gmso object".format(label)
+                        )
+                elif label == "positions" or label == "position":
+                    df["x"] = list(getattr(site, "position")[0] for site in self.sites)
+                    df["y"] = list(getattr(site, "position")[1] for site in self.sites)
+                    df["z"] = list(getattr(site, "position")[2] for site in self.sites)
+                elif label == "charge" or label == "charges":
+                    df["charge (e)"] = list(
+                        (site.charge / u.electron_charge * u.electron_charge.units)
+                        for site in self.sites
+                    )
+                else:
+                    try:
+                        df[label] = list(getattr(site, label) for site in self.sites)
+                    except AttributeError:
+                        raise AttributeError(
+                            "The label {} is not in this gmso object".format(label)
+                        )
+        elif parameter == "bonds":
+            df = _pandas_from_parameters(self, df, parameter=parameter, labels=labels)
+            df[
+                "Parameter 1 (k): " + str(self.bonds[0].bond_type.parameters["k"].units)
+            ] = list(bond.bond_type.parameters["k"].round(3) for bond in self.bonds)
+            df[
+                "Parameter 2 (r_eq): "
+                + str(self.bonds[0].bond_type.parameters["r_eq"].units)
+            ] = list(bond.bond_type.parameters["r_eq"].round(3) for bond in self.bonds)
+        elif parameter == "angles":
+            df = _pandas_from_parameters(self, df, parameter=parameter, labels=labels)
+            df[
+                "Parameter 1 (k): "
+                + str(self.angles[0].angle_type.parameters["k"].units)
+            ] = list(angle.angle_type.parameters["k"].round(3) for angle in self.angles)
+            df[
+                "Parameter 2 (theta_eq): "
+                + str(self.angles[0].angle_type.parameters["theta_eq"].units)
+            ] = list(
+                angle.angle_type.parameters["theta_eq"].round(3)
+                for angle in self.angles
+            )
+        elif parameter == "dihedrals":
+            df = _pandas_from_parameters(self, df, parameter=parameter, labels=labels)
+            df[
+                "Parameter 1 (c0): "
+                + str(self.dihedrals[0].dihedral_type.parameters["c0"].units)
+            ] = list(
+                dihedral.dihedral_type.parameters["c0"].round(3)
+                for dihedral in self.dihedrals
+            )
+            df[
+                "Parameter 2 (c1): "
+                + str(self.dihedrals[0].dihedral_type.parameters["c1"].units)
+            ] = list(
+                dihedral.dihedral_type.parameters["c1"].round(3)
+                for dihedral in self.dihedrals
+            )
+            df[
+                "Parameter 3 (c2): "
+                + str(self.dihedrals[0].dihedral_type.parameters["c2"].units)
+            ] = list(
+                dihedral.dihedral_type.parameters["c2"].round(3)
+                for dihedral in self.dihedrals
+            )
+            df[
+                "Parameter 4 (c3): "
+                + str(self.dihedrals[0].dihedral_type.parameters["c3"].units)
+            ] = list(
+                dihedral.dihedral_type.parameters["c3"].round(3)
+                for dihedral in self.dihedrals
+            )
+            df[
+                "Parameter 5 (c4): "
+                + str(self.dihedrals[0].dihedral_type.parameters["c4"].units)
+            ] = list(
+                dihedral.dihedral_type.parameters["c4"].round(3)
+                for dihedral in self.dihedrals
+            )
+            df[
+                "Parameter 6 (c5): "
+                + str(self.dihedrals[0].dihedral_type.parameters["c5"].units)
+            ] = list(
+                dihedral.dihedral_type.parameters["c5"].round(3)
+                for dihedral in self.dihedrals
+            )
+        return df
+
     def _reindex_connection_types(self, ref):
         if ref not in self._index_refs:
-            raise GMSOError(f'cannot reindex {ref}. It should be one of '
-                            f'{ANGLE_TYPE_DICT}, {BOND_TYPE_DICT}, '
-                            f'{ANGLE_TYPE_DICT}, {DIHEDRAL_TYPE_DICT}, {IMPROPER_TYPE_DICT}')
+            raise GMSOError(
+                f"cannot reindex {ref}. It should be one of "
+                f"{ANGLE_TYPE_DICT}, {BOND_TYPE_DICT}, "
+                f"{ANGLE_TYPE_DICT}, {DIHEDRAL_TYPE_DICT}, {IMPROPER_TYPE_DICT}"
+            )
         for i, ref_member in enumerate(self._set_refs[ref].keys()):
             self._index_refs[ref][ref_member] = i
 
     def __repr__(self):
-        return f"<Topology {self.name}, {self.n_sites} sites,\n " \
-               f"{self.n_connections} connections,\n " \
-               f"{len(self.connection_types)} potentials,\n " \
-               f"id: {id(self)}>"
+        return (
+            f"<Topology {self.name}, {self.n_sites} sites,\n "
+            f"{self.n_connections} connections,\n "
+            f"{len(self.connection_types)} potentials,\n "
+            f"id: {id(self)}>"
+        )
 
     def __str__(self):
         return f"<Topology {self.name}, {self.n_sites} sites, id: {id(self)}>"
+
+
+def _pandas_from_parameters(topology, df, parameter, labels=None):
+    if labels is None:
+        labels = []
+    list_of_sites = list(site for site in topology.sites)
+    for site_index in np.arange(
+        len(getattr(topology, parameter)[0].connection_members)
+    ):
+        df["Atom" + str(site_index)] = list(
+            str(connection.connection_members[site_index].name)
+            + "("
+            + str(list_of_sites.index(connection.connection_members[site_index]))
+            + ")"
+            for connection in getattr(topology, parameter)
+        )
+    for label in labels:
+        for site_index in np.arange(
+            len(getattr(topology, parameter)[0].connection_members)
+        ):
+            if "." in label:
+                try:
+                    label1, label2 = label.split(".")
+                    df[label + " Atom" + str(site_index)] = list(
+                        gettattr(
+                            connection.connection_members[site_index],
+                            getattr(connection.connection_members[site_index], label1),
+                        )
+                        for connection in getattr(topology, parameter)
+                    )
+                except NameError:
+                    raise NameError(
+                        "The label {} is not in this gmso object".format(label)
+                    )
+            elif label == "positions" or label == "position":
+                df["x Atom" + str(site_index) + " (nm)"] = list(
+                    float(
+                        getattr(connection.connection_members[site_index], "position")[
+                            0
+                        ]
+                    )
+                    for connection in getattr(topology, parameter)
+                )
+                df["y Atom" + str(site_index) + " (nm)"] = list(
+                    float(
+                        getattr(connection.connection_members[site_index], "position")[
+                            1
+                        ]
+                    )
+                    for connection in getattr(topology, parameter)
+                )
+                df["z Atom" + str(site_index) + " (nm)"] = list(
+                    float(
+                        getattr(connection.connection_members[site_index], "position")[
+                            2
+                        ]
+                    )
+                    for connection in getattr(topology, parameter)
+                )
+            elif label == "charge" or label == "charges":
+                df["charge Atom" + str(site_index) + " (e)"] = list(
+                    float(
+                        getattr(connection.connection_members[site_index], "charge")
+                        / u.electron_charge
+                        * u.electron_charge.units
+                    )
+                    for connection in getattr(topology, parameter)
+                )
+            else:
+                try:
+                    df[label + " Atom" + str(site_index)] = list(
+                        getattr(connection.connection_members[site_index], label)
+                        for connection in getattr(topology, parameter)
+                    )
+                except AttributeError:
+                    raise AttributeError(
+                        "The label {} is not in this gmso object".format(label)
+                    )
+    return df
