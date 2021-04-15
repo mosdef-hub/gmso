@@ -623,7 +623,7 @@ class TestTopology(BaseTest):
                            )
         assert np.allclose(
                    float(typed_methylnitroaniline.to_datatables(parameter='bonds', labels=['charge','position'])['charge Atom0 (e)'][0]),
-                   0.115
+                   0.065
                            )
         with pytest.raises(AttributeError) as e:
             typed_methylnitroaniline.to_datatables(labels=['missingattr'])
