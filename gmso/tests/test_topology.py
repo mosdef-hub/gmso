@@ -619,7 +619,7 @@ class TestTopology(BaseTest):
         assert typed_methylnitroaniline.to_datatables(labels=['atom_type.name'])['atom_type.name'][0] == "opls_148"
         assert np.allclose(
                    float(typed_methylnitroaniline.to_datatables(labels = ['charge','position'])['x'][0]),
-                   0.1831997
+                   -0.168407
                            )
         assert np.allclose(
                    float(typed_methylnitroaniline.to_datatables(parameter='bonds', labels=['charge','position'])['charge Atom0 (e)'][0]),
