@@ -129,10 +129,7 @@ class AtomType(ParametricPotential):
                     self.name,
                     unyt_to_hashable(self.mass),
                     unyt_to_hashable(self.charge),
-                    self.expression,
-                    tuple(self.independent_variables),
-                    tuple(self.parameters.keys()),
-                    tuple(unyt_to_hashable(val) for val in self.parameters.values())
+                    self.potential_expression
                 )
             )
         )
