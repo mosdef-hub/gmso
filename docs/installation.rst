@@ -2,60 +2,34 @@
 Installation
 ============
 
-Installing with `conda <http://continuum.io/downloads>`_
+Installing with `conda <https://repo.anaconda.com/miniconda>`_
 --------------------------------------------------------
 
-From ``GMSO`` version ``0.3.0``, you can use `conda <http://continuum.io/downloads>`_ to install ``GMSO`` in your preferred environment. This will also install the dependencies of ``GMSO``.
+Starting from ``GMSO`` version ``0.3.0``, you can use `conda <https//repo.anaconda.com/miniconda>`_ to install ``GMSO`` in your preferred environment. This will also install the dependencies of ``GMSO``.
 ::
     (your-env) $ conda install -c conda-forge gmso
 
 
-
-Installing dependencies with `conda <http://continuum.io/downloads>`_
+Installing dependencies with `conda <https://repo.anaconda.com/miniconda>`_
 ---------------------------------------------------------------------
 
-Dependencies of ``GMSO`` are listed in the file ``requirements.txt``. They
-can be installed in one line:
-::
+Dependencies of ``GMSO`` are listed in the file ``environment.yml``. They
+can be installed in a ``conda`` environment named ``gmso`` with::
 
-    $ conda install -c omnia -c conda-forge --file requirements.txt
+    $ conda env create -f environment.yml
+    $ conda activate gmso
 
-Alternatively you can add all the required channels to your ``.condarc`` file
-and then install dependencies.
-::
-
-    $ conda config --add channels omnia
-    $ conda config --add channels conda-forge
-    $ conda install --file requirements.txt
-
-.. note::
-    These commands will likely change a configuration file on your computer and
-    may affect installation of other packages in other projects you are working
-    on. However, the channel priority recommended is fairly common
-    (in particular, ``conda-forge`` having the highest priority) and should
-    work well for most installations.
-
-Installing dependencies with `pip <https://pypi.org/project/pip/>`_
--------------------------------------------------------------------
-::
-
-    $ pip install -r requirements.txt
-
-.. note::
-    Compared to ``conda`` installation, this is less tested. Some upstream
-    dependencies may not be available on ``PyPI`` but can be installed via
-    source or ``conda``.
 
 Install an editable version from source
 ---------------------------------------
 
 Once all dependencies are installed, the ``GMSO`` itself can be installed.
-It is currently only available through its source code. It will be available
-through ``pip`` and ``conda`` in the future.
 ::
 
     $ git clone https://github.com/mosdef-hub/gmso.git
     $ cd gmso
+    $ conda env create -f environment-dev.yml
+    $ conda activate gmso-dev
     $ pip install -e .
 
 
@@ -71,11 +45,25 @@ is made to support Python 2 because it is considered obsolete as of early 2020.
 Testing your installation
 -------------------------
 
-``GMSO`` uses ``py.test`` to execute its unit tests. To run them, first install some extra depdencies:
+``GMSO`` uses ``py.test`` to execute its unit tests. To run them, first install the dev environment
 ::
-    $ conda install --file requirements-test.txt
 
+    $ git clone https://github.com/mosdef-hub/gmso.git
+    $ cd gmso
+    $ conda env create -f environment-dev.yml
+    $ conda activate gmso-dev
+    $ pip install -e .
 
 And then run the tests with the ``py.test`` executable:
 ::
     $ py.test -v
+
+
+Building the documentation
+--------------------------
+
+``GMSO`` uses `sphinx <https://www.sphinx-doc.org/en/master/index.html>`_ to build its documentation. To build the docs locally, run the following while in the ``docs`` directory::
+    
+    $ pip install -r requirements.txt
+    $ make html
+
