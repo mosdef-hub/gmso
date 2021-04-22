@@ -64,6 +64,7 @@ Building the documentation
 
 ``GMSO`` uses `sphinx <https://www.sphinx-doc.org/en/master/index.html>`_ to build its documentation. To build the docs locally, run the following while in the ``docs`` directory::
     
-    $ pip install -r requirements.txt
+    $ conda env create -f docs-env.yml
+    $ conda activate gmso-docs
     $ make html
 
