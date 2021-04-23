@@ -1,4 +1,4 @@
-name: gmso_dev
+name: gmso-dev
 channels:
   - conda-forge
 dependencies:
