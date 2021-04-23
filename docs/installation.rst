@@ -10,26 +10,35 @@ Starting from ``GMSO`` version ``0.3.0``, you can use `conda <https//repo.anacon
     (your-env) $ conda install -c conda-forge gmso
 
 
-Installing dependencies with `conda <https://repo.anaconda.com/miniconda>`_
+Installing from source `conda <https://repo.anaconda.com/miniconda>`_
 ---------------------------------------------------------------------
 
-Dependencies of ``GMSO`` are listed in the file ``environment.yml``. They
-can be installed in a ``conda`` environment named ``gmso`` with::
+Dependencies of GMSO are listed in the files ``environment.yml`` (lightweight environment specification containing minimal dependencies) and ``environment-dev.yml`` (comprehensive environment specification including optional and testing packages for developers).
+The ``gmso`` or ``gmso-dev`` conda environments can be created with
+::
 
+    $ git clone https://github.com/mosdef-hub/gmso.git
+    $ cd gmso
+    # for gmso conda environment
     $ conda env create -f environment.yml
     $ conda activate gmso
+
+    # for gmso-dev
+    $ conda env create -f environment-dev.yml
+    $ conda activate gmso
+
+    # install a non-editable version of gmso
+    $ pip install
+
 
 
 Install an editable version from source
 ---------------------------------------
 
-Once all dependencies are installed, the ``GMSO`` itself can be installed.
+Once all dependencies have been installed and the ``conda`` environment has been created, the ``GMSO`` itself can be installed.
 ::
-
-    $ git clone https://github.com/mosdef-hub/gmso.git
     $ cd gmso
-    $ conda env create -f environment-dev.yml
-    $ conda activate gmso-dev
+    $ conda activate gmso-dev # or gmso depending on your installation
     $ pip install -e .
 
 
@@ -45,12 +54,9 @@ is made to support Python 2 because it is considered obsolete as of early 2020.
 Testing your installation
 -------------------------
 
-``GMSO`` uses ``py.test`` to execute its unit tests. To run them, first install the dev environment
+``GMSO`` uses ``py.test`` to execute its unit tests. To run them, first install the ``gmso-dev`` environment from above as well as ``gmso`` itself
 ::
 
-    $ git clone https://github.com/mosdef-hub/gmso.git
-    $ cd gmso
-    $ conda env create -f environment-dev.yml
     $ conda activate gmso-dev
     $ pip install -e .
 
