@@ -28,7 +28,7 @@ The ``gmso`` or ``gmso-dev`` conda environments can be created with
     $ conda activate gmso
 
     # install a non-editable version of gmso
-    $ pip install
+    $ pip install .
 
 
 
@@ -73,4 +73,3 @@ Building the documentation
     $ conda env create -f docs-env.yml
     $ conda activate gmso-docs
     $ make html
-
