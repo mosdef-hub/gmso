@@ -38,6 +38,5 @@ setup(
         'Operating System :: Unix',
         'Operating System :: MacOS',
     ],
-    install_requires=requirements,
     python_requires='>=3.6, <4',
 )
