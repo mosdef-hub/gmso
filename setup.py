@@ -11,9 +11,6 @@ else:
 #####################################
 
 
-with open(Path(__file__).parent / 'requirements.txt') as req_file:
-    requirements = list(filter(None, req_file.read().split('\n')))
-
 
 setup(
     name='gmso',
