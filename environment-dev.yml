@@ -18,4 +18,4 @@ dependencies:
   - pytest-cov
   - codecov
   - bump2version
-  - ele
+  - ele >= 0.2.0
