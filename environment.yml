@@ -9,3 +9,4 @@ dependencies:
   - lxml
   - pydantic
   - networkx
+  - ele
