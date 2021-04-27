@@ -1,0 +1,11 @@
+name: gmso-docs
+channels:
+  - conda-forge
+dependencies:
+  - pip:
+    - numpydoc
+    - sphinx
+    - sphinx_rtd_theme
+    - sphinxcontrib-svg2pdfconverter
+    - nbsphinx
+    - mock
