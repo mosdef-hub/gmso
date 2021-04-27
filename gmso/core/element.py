@@ -38,8 +38,9 @@ class Element(GMSOBase):
     mass: u.unyt_quantity = Field(..., description="Mass of the element.")
 
     def __repr__(self):
-        return "Element: {}, symbol: {}, atomic number: {}, mass: {}".format(
-            self.name, self.symbol, self.atomic_number, self.mass.to("amu")
+        return (
+            f"<Element: {self.name}, symbol: {self.symbol}, "
+            f"atomic number: {self.atomic_number}, mass: {self.mass.to('amu')}>"
         )
 
     def __eq__(self, other):
@@ -73,8 +74,10 @@ def element_by_symbol(symbol):
         otherwise return None
     """
     symbol_trimmed = sub(r"[0-9 -]", "", symbol).capitalize()
-    msg = """Numbers and spaces are not considered when searching by element symbol. \n
-             {} became {}'.format(symbol, symbol_trimmed)"""
+    msg = (
+        f"Numbers and spaces are not considered when searching by element symbol.\n"
+        f"{symbol} became {symbol_trimmed}"
+    )
     warnings.warn(msg)
     matched_element = symbol_dict.get(symbol_trimmed)
     return matched_element
@@ -98,8 +101,10 @@ def element_by_name(name):
         otherwise return None
     """
     name_trimmed = sub(r"[0-9 -]", "", name).lower()
-    msg = """Numbers and spaces are not considered when searching by element name. \n
-             {} became {}'.format(name, name_trimmed)"""
+    msg = (
+        "Numbers and spaces are not considered when searching by element name. \n"
+        f"{name} became {name_trimmed}"
+    )
     warnings.warn(msg)
     matched_element = name_dict.get(name_trimmed)
     return matched_element
@@ -127,8 +132,10 @@ def element_by_atomic_number(atomic_number):
         atomic_number_trimmed = int(
             sub("[a-z -]", "", atomic_number.lower()).lstrip("0")
         )
-        msg = """Letters and spaces are not considered when searching by element atomic number. \n
-                 {} became {}'.format(atomic_number, atomic_number_trimmed)"""
+        msg = (
+            f"Letters and spaces are not considered when searching by element atomic number. \n "
+            f"{atomic_number} became {atomic_number_trimmed}"
+        )
         warnings.warn(msg)
     else:
         atomic_number_trimmed = atomic_number
@@ -167,8 +174,10 @@ def element_by_mass(mass, exact=True):
     if isinstance(mass, str):
         # Convert to float if a string is provided
         mass_trimmed = np.round(float(sub(r"[a-z -]", "", mass.lower())))
-        msg1 = """Letters and spaces are not considered when searching by element mass. \n
-                  {} became {}'.format(mass, mass_trimmed)"""
+        msg1 = (
+            f"Letters and spaces are not considered when searching by element mass.\n"
+            f"{mass} became {mass_trimmed}"
+        )
         warnings.warn(msg1)
     elif isinstance(mass, u.unyt_quantity):
         # Convert to u.amu if a unyt_quantity is provided
@@ -182,7 +191,7 @@ def element_by_mass(mass, exact=True):
     else:
         # Closest match mode
         mass_closest = min(mass_dict.keys(), key=lambda k: abs(k - mass_trimmed))
-        msg2 = "Closest mass to {}: {}".format(mass_trimmed, mass_closest)
+        msg2 = f"Closest mass to {mass_trimmed}: {mass_closest}"
         warnings.warn(msg2)
         matched_element = mass_dict.get(mass_closest)
     return matched_element
