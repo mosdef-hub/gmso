@@ -21,6 +21,7 @@ RUN conda update conda -yq && \
 	sed -i -E "s/python.*$/python="$PY_VERSION"/" environment-dev.yml && \
 	conda env create nomkl -f environment-dev.yml && \
 	conda activate gmso-dev && \
+	conda install -c conda-forge nomkl jupyter && \
         python setup.py install && \
 	echo "source activate gmso-dev" >> \
 	/home/anaconda/.profile && \
