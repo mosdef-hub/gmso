@@ -18,3 +18,5 @@ dependencies:
   - pytest-cov
   - codecov
   - bump2version
+  - matplotlib
+  - ipywidgets
