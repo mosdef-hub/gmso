@@ -383,30 +383,23 @@ class TestTopology(BaseTest):
         assert len(top.improper_type_expressions) == 1
         assert len(top.atom_type_expressions) == 2
 
-    def test_pairpotentialtype(self):
+    def test_pairpotential_pairpotentialtype_update(self):
         top = Topology()
-        atype1 = AtomType(expression='sigma + epsilon*r')
-        same_atype1 = AtomType(expression='sigma + epsilon*r')
-        atype2 = AtomType(expression='sigma * epsilon*r')
+        atype1 = AtomType(name='a1', expression='sigma + epsilon*r')
+        atype2 = AtomType(name='a2', expression='sigma * epsilon*r')
         atom1 = Atom(name='a', atom_type=atype1)
         atom2 = Atom(name='b', atom_type=atype2)
         top.add_site(atom1)
         top.add_site(atom2)
         top.update_topology()
-
-        
-        top.add_site(atom1)
-        top.add_site(atom2)
          
-        pptype12 = PairPotentialType(name='pp12',expression='r + 1',independent_variables='r',parameters={},member_types=[atype1,atype2])
-        same_pptype12 = PairPotentialType(name='pp12',expression='r + 2',independent_variables='r',parameters={},member_types=[same_atype1,atype2])
+        pptype12 = PairPotentialType(name='pp12',expression='r + 1',independent_variables='r',parameters={},member_types=tuple(["a1","a2"]))
+        
         top.add_pairpotentialtype(pptype12)
         assert len(top.pairpotential_types) == 1
-        top.add_pairpotentialtype(same_pptype12)
-        assert len(top.pairpotential_types) == 1
-        assert top._pairpotential_types[frozenset([atype1,atype2])] == same_pptype12 
+        assert top._pairpotential_types_idx[pptype12] == 0
 
-        top.remove_pairpotentialtype([atype1,atype2])
+        top.remove_pairpotentialtype(["a1","a2"])
         assert len(top.pairpotential_types) == 0
 
     def test_add_subtopology(self):
