@@ -47,6 +47,9 @@ class Topology(object):
     combining_rule : str, ['lorentz', 'geometric']
         The combining rule for the topology, can be either 'lorentz' or 'geometric'
 
+    scaling_factors : dict
+        A collection of scaling factors used in the forcefield
+
     n_sites : int
         Number of sites in the topology
 
@@ -155,6 +158,14 @@ class Topology(object):
         self._improper_types_idx = {}
         self._combining_rule = 'lorentz'
         self._pairpotential_types = {}
+        self._scaling_factors = {
+            "vdw_12": 0.0,
+            "vdw_13": 0.0,
+            "vdw_14": 0.5,
+            "coul_12": 0.0,
+            "coul_13": 0.0,
+            "coul_14": 0.5,
+        }
         self._set_refs = {
             ATOM_TYPE_DICT: self._atom_types,
             BOND_TYPE_DICT: self._bond_types,
@@ -208,6 +219,24 @@ class Topology(object):
         if rule not in ['lorentz', 'geometric']:
             raise GMSOError('Combining rule must be `lorentz` or `geometric`')
         self._combining_rule = rule
+
+    @property
+    def scaling_factors(self):
+        return self._scaling_factors
+
+    @scaling_factors.setter
+    def scaling_factors(self, scaling_factors):
+        expected_items = ["vdw_12", "vdw_13", "vdw_14", "coul_12", "coul_13", "coul_14"]
+        if not isinstance(scaling_factors, dict):
+            raise GMSOError("Scaling factors should be a dictionary")
+        for item in expected_items:
+            if item not in scaling_factors.keys():
+                raise GMSOError(f"Expected {expected_items} as keys in the scaling factors")
+        for val in scaling_factors.values():
+            if val < 0.0 or val > 1.0:
+                raise GMSOError("Scaling factors should be between 0.0 and 1.0")
+
+        self._scaling_factors = scaling_factors
 
     @property
     def positions(self):
@@ -644,7 +673,7 @@ class Topology(object):
 
     def _get_angles_for(self, site):
         """Return a list of angles in this Topology that the site is a part of"""
-     
+
         angles = []
         for angle in self.angles:
             if site in angle.connection_members:
@@ -708,10 +737,10 @@ class Topology(object):
             self._index_refs[ref][ref_member] = i
 
     def __repr__(self):
-        descr = list('<')
-        descr.append(self.name + ' ')
-        descr.append('{:d} sites, '.format(self.n_sites))
-        descr.append('{:d} connections, '.format(self.n_connections))
-        descr.append('id: {}>'.format(id(self)))
+        return f"<Topology {self.name}, {self.n_sites} sites,\n " \
+               f"{self.n_connections} connections,\n " \
+               f"{len(self.connection_types)} potentials,\n " \
+               f"id: {id(self)}>"
 
-        return ''.join(descr)
+    def __str__(self):
+        return f"<Topology {self.name}, {self.n_sites} sites, id: {id(self)}>"

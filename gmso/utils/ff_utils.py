@@ -11,16 +11,15 @@ from gmso.core.angle_type import AngleType
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper_type import ImproperType
 from gmso.core.pairpotential_type import PairPotentialType
+from gmso.utils._constants import FF_TOKENS_SEPARATOR
 from gmso.exceptions import ForceFieldParseError, ForceFieldError, MissingAtomTypesError
 
 __all__ = ['validate',
            'parse_ff_metadata',
            'parse_ff_atomtypes',
            'parse_ff_connection_types',
-           'parse_ff_pairpotential_types',
-           'DICT_KEY_SEPARATOR']
+           'parse_ff_pairpotential_types']
 
-DICT_KEY_SEPARATOR = '~'
 
 # Create a dictionary of units
 _unyt_dictionary = {}
@@ -30,8 +29,8 @@ for name, item in vars(u).items():
 
 
 def _check_valid_string(type_str):
-    if DICT_KEY_SEPARATOR in type_str:
-        raise ForceFieldError('Please do not use {} in type string'.format(DICT_KEY_SEPARATOR))
+    if FF_TOKENS_SEPARATOR in type_str:
+        raise ForceFieldError('Please do not use {} in type string'.format(FF_TOKENS_SEPARATOR))
 
 
 def _parse_param_units(parent_tag):
@@ -335,7 +334,7 @@ def parse_ff_connection_types(connectiontypes_el, child_tag='BondType'):
 
         valued_param_vars = set(sympify(param) for param in ctor_kwargs['parameters'].keys())
         ctor_kwargs['independent_variables'] = sympify(connectiontype_expression).free_symbols - valued_param_vars
-        this_conn_type_key = DICT_KEY_SEPARATOR.join(ctor_kwargs['member_types'])
+        this_conn_type_key = FF_TOKENS_SEPARATOR.join(ctor_kwargs['member_types'])
         this_conn_type = TAG_TO_CLASS_MAP[child_tag](**ctor_kwargs)
         connectiontypes_dict[this_conn_type_key] = this_conn_type
 

@@ -124,6 +124,18 @@ class ParametricPotential(AbstractPotential):
             parameters=parameters
         )
 
+    def get_parameters(self, copy=False):
+        """Returns parameters for this ParametricPotential"""
+        if copy:
+            params = {
+                k: u.unyt_quantity(v.value, v.units)
+                for k, v in self.parameters.items()
+            }
+        else:
+            params = self.parameters
+
+        return params
+
     @classmethod
     def from_template(cls, potential_template, parameters, topology=None):
         """Create a potential object from the potential_template
@@ -156,6 +168,11 @@ class ParametricPotential(AbstractPotential):
                    independent_variables=potential_template.independent_variables,
                    parameters=parameters,
                    topology=topology)
+
+    def __repr__(self):
+        desc = super().__repr__()
+        desc = desc.replace(">", f", \n parameters: {self.parameters}>")
+        return desc
 
     class Config:
         fields = {

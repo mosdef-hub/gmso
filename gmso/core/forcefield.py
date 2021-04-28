@@ -1,13 +1,19 @@
-import typing
 from collections import ChainMap
+from typing import Iterable
+import warnings
 
 from lxml import etree
 
-from gmso.utils.ff_utils import (validate,
-                                 parse_ff_metadata,
-                                 parse_ff_atomtypes,
-                                 parse_ff_connection_types,
-                                 parse_ff_pairpotential_types)
+from gmso.exceptions import MissingPotentialError
+from gmso.utils._constants import FF_TOKENS_SEPARATOR
+from gmso.utils.ff_utils import (
+    parse_ff_atomtypes,
+    parse_ff_connection_types,
+    parse_ff_metadata,
+    parse_ff_pairpotential_types,
+    validate,
+)
+from gmso.utils.misc import mask_with, validate_type
 
 
 def _group_by_expression(potential_types):
@@ -98,17 +104,6 @@ class ForceField(object):
             self.potential_groups = {}
             self.scaling_factors = {}
             self.units = {}
-
-    def __repr__(self):
-        descr = list('<Forcefield ')
-        descr.append(self.name + ' ')
-        descr.append('{:d} AtomTypes, '.format(len(self.atom_types)))
-        descr.append('{:d} BondTypes, '.format(len(self.bond_types)))
-        descr.append('{:d} AngleTypes, '.format(len(self.angle_types)))
-        descr.append('{:d} DihedralTypes, '.format(len(self.dihedral_types)))
-        descr.append('{:d} PairPotentialTypes, '.format(len(self.pairpotential_types)))
-        descr.append('id: {}>'.format(id(self)))
-        return ''.join(descr)
 
     @property
     def atom_class_groups(self):
@@ -213,6 +208,238 @@ class ForceField(object):
         return _group_by_expression(self.pairpotential_types)
     
 
+    def get_potential(self, group, key, warn=False):
+        """Returns a specific potential by key in this ForceField
+
+        Parameters
+        ----------
+        group:  {'atom_types', 'bond_types', 'angle_types', 'dihedral_types', 'improper_types'}
+            The potential group to perform this search on
+        key: str or list of str
+            The key to lookup for this potential group
+        warn: bool, default=False
+            If true, raise a warning instead of Error if no match found
+
+        Returns
+        -------
+        gmso.ParametricPotential
+            The parametric potential requested
+
+        Raises
+        ------
+        MissingPotentialError
+            When the potential specified by `key` is not found in the ForceField
+            potential group `group`
+        """
+        group = group.lower()
+
+        potential_extractors = {
+            "atom_type": self._get_atom_type,
+            "bond_type": self._get_bond_type,
+            "angle_type": self._get_angle_type,
+            "dihedral_type": self._get_dihedral_type,
+            "improper_type": self._get_improper_type,
+        }
+
+        if group not in potential_extractors:
+            raise ValueError(f"Cannot get potential for {group}")
+
+        validate_type(
+            [key] if isinstance(key, str) or not isinstance(key, Iterable) else key, str
+        )
+
+        return potential_extractors[group](key, warn=warn)
+
+    def get_parameters(self, group, key, warn=False, copy=False):
+        """Returns parameters for a specific potential by key in this ForceField
+
+        This function uses the `get_potential` function to get Parameters
+
+        See Also
+        --------
+        gmso.ForceField.get_potential
+            Get specific potential/parameters from a forcefield potential group by key
+        """
+        potential = self.get_potential(group, key, warn=warn)
+        return potential.get_parameters(copy=copy)
+
+    def _get_atom_type(self, atom_type, warn=False):
+        """Get a particular atom_type with given `atom_type` from this ForceField"""
+        if isinstance(atom_type, list):
+            atom_type = atom_type[0]
+
+        if not self.atom_types.get(atom_type):
+            msg = f"AtomType {atom_type} is not present in the ForceField"
+            if warn:
+                warnings.warn(msg)
+            else:
+                raise MissingPotentialError(msg)
+
+        return self.atom_types.get(atom_type)
+
+    def _get_bond_type(self, atom_types, warn=False):
+        """Get a particular bond_type between `atom_types` from this ForceField"""
+        if len(atom_types) != 2:
+            raise ValueError(
+                f"BondType potential can only "
+                f"be extracted for two atoms. Provided {len(atom_types)}"
+            )
+
+        forward = FF_TOKENS_SEPARATOR.join(atom_types)
+        reverse = FF_TOKENS_SEPARATOR.join(reversed(atom_types))
+        if forward in self.bond_types:
+            return self.bond_types[forward]
+        if reverse in self.bond_types:
+            return self.bond_types[reverse]
+
+        msg = f"BondType between atoms {atom_types[0]} and {atom_types[1]} " \
+              f"is missing from the ForceField"
+        if warn:
+            warnings.warn(msg)
+            return None
+        else:
+            raise MissingPotentialError(msg)
+
+    def _get_angle_type(self, atom_types, warn=False):
+        """Get a particular angle_type between `atom_types` from this ForceField"""
+        if len(atom_types) != 3:
+            raise ValueError(
+                f"AngleType potential can only "
+                f"be extracted for three atoms. Provided {len(atom_types)}"
+            )
+
+        forward = FF_TOKENS_SEPARATOR.join(atom_types)
+        reverse = FF_TOKENS_SEPARATOR.join(reversed(atom_types))
+        match = None
+        if forward in self.angle_types:
+            match = self.angle_types[forward]
+        if reverse in self.angle_types:
+            match = self.angle_types[reverse]
+
+        msg = f"AngleType between atoms {atom_types[0]}, {atom_types[1]} " \
+              f"and {atom_types[2]} is missing from the ForceField"
+
+        if match:
+            return match
+        elif warn:
+            warnings.warn(msg)
+            return None
+        else:
+            raise MissingPotentialError(msg)
+
+    def _get_dihedral_type(self, atom_types, warn=False):
+        """Get a particular dihedral_type between `atom_types` from this ForceField"""
+        if len(atom_types) != 4:
+            raise ValueError(
+                f"DihedralType potential can only "
+                f"be extracted for four atoms. Provided {len(atom_types)}"
+            )
+
+        forward = FF_TOKENS_SEPARATOR.join(atom_types)
+        reverse = FF_TOKENS_SEPARATOR.join(reversed(atom_types))
+
+        if forward is self.dihedral_types:
+            return self.dihedral_types[forward]
+        if reverse in self.dihedral_types:
+            return self.dihedral_types[reverse]
+
+        match = None
+        for i in range(1, 5):
+            forward_patterns = mask_with(atom_types, i)
+            reverse_patterns = mask_with(reversed(atom_types), i)
+
+            for forward_pattern, reverse_pattern in zip(
+                forward_patterns, reverse_patterns
+            ):
+                forward_match_key = FF_TOKENS_SEPARATOR.join(forward_pattern)
+                reverse_match_key = FF_TOKENS_SEPARATOR.join(reverse_pattern)
+
+                if forward_match_key in self.dihedral_types:
+                    match = self.dihedral_types[forward_match_key]
+                    break
+
+                if reverse_match_key in self.dihedral_types:
+                    match = self.dihedral_types[reverse_match_key]
+                    break
+
+            if match:
+                break
+
+        msg = f"DihedralType between atoms {atom_types[0]}, {atom_types[1]}, "\
+              f"{atom_types[2]} and {atom_types[3]} is missing from the ForceField."
+        if match:
+            return match
+        elif warn:
+            warnings.warn(msg)
+            return None
+        else:
+            raise MissingPotentialError(msg)
+
+    def _get_improper_type(self, atom_types, warn=False):
+        """Get a particular improper_type between `atom_types` from this ForceField"""
+        if len(atom_types) != 4:
+            raise ValueError(
+                f"ImproperType potential can only "
+                f"be extracted for four atoms. Provided {len(atom_types)}"
+            )
+
+        forward = FF_TOKENS_SEPARATOR.join(atom_types)
+        reverse = FF_TOKENS_SEPARATOR.join(
+            [atom_types[0], atom_types[2], atom_types[1], atom_types[3]]
+        )
+
+        if forward is self.improper_types:
+            return self.improper_types[forward]
+        if reverse in self.improper_types:
+            return self.improper_types[reverse]
+
+        match = None
+        for i in range(1, 5):
+            forward_patterns = mask_with(atom_types, i)
+            reverse_patterns = mask_with(
+                [atom_types[0], atom_types[2], atom_types[1], atom_types[3]], i
+            )
+
+            for forward_pattern, reverse_pattern in zip(
+                forward_patterns, reverse_patterns
+            ):
+                forward_match_key = FF_TOKENS_SEPARATOR.join(forward_pattern)
+                reverse_match_key = FF_TOKENS_SEPARATOR.join(reverse_pattern)
+
+                if forward_match_key in self.dihedral_types:
+                    match = self.dihedral_types[forward_match_key]
+                    break
+
+                if reverse_match_key in self.dihedral_types:
+                    match = self.dihedral_types[reverse_match_key]
+                    break
+
+            if match:
+                break
+
+        msg = f"ImproperType between atoms {atom_types[0]}, {atom_types[1]}, "\
+              f"{atom_types[2]} and {atom_types[3]} is missing from the ForceField."
+        if match:
+            return match
+        elif warn:
+            warnings.warn(msg)
+            return None
+        else:
+            raise MissingPotentialError(msg)
+
+    def __repr__(self):
+        return f"<ForceField {self.name},\n " \
+               f"{len(self.atom_types)} AtomTypes,\n " \
+               f"{len(self.bond_types)} BondTypes,\n " \
+               f"{len(self.angle_types)} AngleTypes,\n " \
+               f"{len(self.dihedral_types)} DihedralTypes,\n " \
+               f"{len(self.improper_types)} ImproperType,\n " \
+               f"{len(self.pairpotential_types)} PairPotentialType,\n " \
+               f"id: {id(self)}>"
+
+    def __str__(self):
+        return f"<ForceField {self.name}, id: {id(self)}>"
+
     @classmethod
     def from_xml(cls, xmls_or_etrees, strict=True, greedy=True):
         """Create a gmso.Forcefield object from XML File(s)
@@ -237,7 +464,7 @@ class ForceField(object):
             A gmso.Forcefield object with a collection of Potential objects
             created using the information in the XML file
         """
-        if not isinstance(xmls_or_etrees, typing.Iterable) or isinstance(xmls_or_etrees, str):
+        if not isinstance(xmls_or_etrees, Iterable) or isinstance(xmls_or_etrees, str):
             xmls_or_etrees = [xmls_or_etrees]
 
         should_parse_xml = False
