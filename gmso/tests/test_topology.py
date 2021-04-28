@@ -3,6 +3,7 @@ from copy import deepcopy
 import numpy as np
 import unyt as u
 import pytest
+import pandas as pd
 
 from gmso.core.topology import Topology
 from gmso.core.subtopology import SubTopology
@@ -607,36 +608,43 @@ class TestTopology(BaseTest):
                 "lj_12": 0.0
             }
 
-    def test_to_dataframes(self, typed_methylnitroaniline):
-        assert len(typed_methylnitroaniline.to_datatables()) == 19
-        assert len(typed_methylnitroaniline.to_datatables(parameter='bonds')) == 19
-        assert len(typed_methylnitroaniline.to_datatables(parameter='angles')) == 30
-        assert len(typed_methylnitroaniline.to_datatables(parameter='dihedrals')) == 38
+    def test_to_datatables(self, typed_ethane):
+        assert len(typed_ethane.to_datatables()) == 8
+        assert len(typed_ethane.to_datatables(parameter='bonds')) == 7
+        assert len(typed_ethane.to_datatables(parameter='angles')) == 12
+        assert len(typed_ethane.to_datatables(parameter='dihedrals')) == 9
         assert np.allclose(
-                   float(typed_methylnitroaniline.to_datatables(labels = ['charge','position'])['charge (e)'][0]),
-                   0.065
+                   float(typed_ethane.to_datatables(labels = ['charge','position'])['charge (e)'][0]),
+                   0.18
                            )
-        assert typed_methylnitroaniline.to_datatables(labels=['atom_type.name'])['atom_type.name'][0] == "opls_148"
+        assert typed_ethane.to_datatables(labels=['atom_type.name'])['atom_type.name'][0] == "opls_135"
         assert np.allclose(
-                   float(typed_methylnitroaniline.to_datatables(labels = ['charge','position'])['x'][0]),
-                   -0.168407
+                   float(typed_ethane.to_datatables(labels = ['charge','position'])['x'][0]),
+                   0
                            )
         assert np.allclose(
-                   float(typed_methylnitroaniline.to_datatables(parameter='bonds', labels=['charge','position'])['charge Atom0 (e)'][0]),
-                   0.065
+                   float(typed_ethane.to_datatables(parameter='bonds', labels=['charge','position'])['charge Atom0 (e)'][0]),
+                   -0.06
                            )
         with pytest.raises(AttributeError) as e:
-            typed_methylnitroaniline.to_datatables(labels=['missingattr'])
+            typed_ethane.to_datatables(labels=['missingattr'])
         assert str(e.value) == "The label missingattr is not in this gmso object"
         with pytest.raises(AttributeError) as e:
-            typed_methylnitroaniline.to_datatables(labels=['missingattr.missingattr'])
+            typed_ethane.to_datatables(labels=['missingattr.missingattr'])
         assert str(e.value) == "The label missingattr.missingattr is not in this gmso object"
         with pytest.raises(AttributeError) as e:
-            typed_methylnitroaniline.to_datatables(labels=['missingattr.attr'])
+            typed_ethane.to_datatables(labels=['missingattr.attr'])
         assert str(e.value) == "The label missingattr.attr is not in this gmso object"
         with pytest.raises(AttributeError) as e:
-            typed_methylnitroaniline.to_datatables(parameter='bonds', labels=['missingattr'])
+            typed_ethane.to_datatables(parameter='bonds', labels=['missingattr'])
         assert str(e.value) == "The label missingattr is not in this gmso object"
         with pytest.raises(NameError) as e:
-            typed_methylnitroaniline.to_datatables(parameter='bonds', labels=['missingattr.attr'])
+            typed_ethane.to_datatables(parameter='bonds', labels=['missingattr.attr'])
         assert str(e.value) == "The label missingattr.attr is not in this gmso object"
+
+    def test__pandas_from_parameters(self, typed_ethane):
+        df = pd.DataFrame()
+        assert np.allclose(
+            float(typed_ethane._pandas_from_parameters(df, 'bonds', ['positions'])['x Atom0 (nm)'][0]),
+            0.000
+                          )

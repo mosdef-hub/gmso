@@ -756,7 +756,7 @@ class Topology(object):
                             "The label {} is not in this gmso object".format(label)
                         )
         elif parameter == "bonds":
-            df = _pandas_from_parameters(self, df, parameter=parameter, labels=labels)
+            df = self._pandas_from_parameters(df, parameter=parameter, labels=labels)
             df[
                 "Parameter 1 (k): " + str(self.bonds[0].bond_type.parameters["k"].units)
             ] = list(bond.bond_type.parameters["k"].round(3) for bond in self.bonds)
@@ -765,7 +765,7 @@ class Topology(object):
                 + str(self.bonds[0].bond_type.parameters["r_eq"].units)
             ] = list(bond.bond_type.parameters["r_eq"].round(3) for bond in self.bonds)
         elif parameter == "angles":
-            df = _pandas_from_parameters(self, df, parameter=parameter, labels=labels)
+            df = self._pandas_from_parameters(df, parameter=parameter, labels=labels)
             df[
                 "Parameter 1 (k): "
                 + str(self.angles[0].angle_type.parameters["k"].units)
@@ -778,7 +778,7 @@ class Topology(object):
                 for angle in self.angles
             )
         elif parameter == "dihedrals":
-            df = _pandas_from_parameters(self, df, parameter=parameter, labels=labels)
+            df = self._pandas_from_parameters(df, parameter=parameter, labels=labels)
             df[
                 "Parameter 1 (c0): "
                 + str(self.dihedrals[0].dihedral_type.parameters["c0"].units)
@@ -845,80 +845,74 @@ class Topology(object):
         return f"<Topology {self.name}, {self.n_sites} sites, id: {id(self)}>"
 
 
-def _pandas_from_parameters(topology, df, parameter, labels=None):
-    if labels is None:
-        labels = []
-    list_of_sites = list(site for site in topology.sites)
-    for site_index in np.arange(
-        len(getattr(topology, parameter)[0].connection_members)
-    ):
-        df["Atom" + str(site_index)] = list(
-            str(connection.connection_members[site_index].name)
-            + "("
-            + str(list_of_sites.index(connection.connection_members[site_index]))
-            + ")"
-            for connection in getattr(topology, parameter)
-        )
-    for label in labels:
+    def _pandas_from_parameters(self, df, parameter, labels=None):
+        if labels is None:
+            labels = []
+        list_of_sites = list(site for site in self.sites)
         for site_index in np.arange(
-            len(getattr(topology, parameter)[0].connection_members)
+            len(getattr(self, parameter)[0].connection_members)
         ):
-            if "." in label:
-                try:
-                    label1, label2 = label.split(".")
-                    df[label + " Atom" + str(site_index)] = list(
-                        gettattr(
-                            connection.connection_members[site_index],
-                            getattr(connection.connection_members[site_index], label1),
+            df["Atom" + str(site_index)] = list(
+                str(connection.connection_members[site_index].name)
+                + "("
+                + str(list_of_sites.index(connection.connection_members[site_index]))
+                + ")"
+                for connection in getattr(self, parameter)
+            )
+        for label in labels:
+            for site_index in np.arange(
+                len(getattr(self, parameter)[0].connection_members)
+            ):
+                if "." in label:
+                    try:
+                        label1, label2 = label.split(".")
+                        df[label + " Atom" + str(site_index)] = list(
+                            gettattr(
+                                connection.connection_members[site_index],
+                                getattr(connection.connection_members[site_index], label1),
+                            )
+                            for connection in getattr(self, parameter)
                         )
-                        for connection in getattr(topology, parameter)
+                    except NameError:
+                        raise NameError(
+                            "The label {} is not in this gmso object".format(label)
+                        )
+                elif label == "positions" or label == "position":
+                    df["x Atom" + str(site_index) + " (nm)"] = list(
+                        float(
+                            getattr(connection.connection_members[site_index], "position")[0]
+                        )
+                        for connection in getattr(self, parameter)
                     )
-                except NameError:
-                    raise NameError(
-                        "The label {} is not in this gmso object".format(label)
+                    df["y Atom" + str(site_index) + " (nm)"] = list(
+                        float(
+                            getattr(connection.connection_members[site_index], "position")[1]
+                        )
+                        for connection in getattr(self, parameter)
                     )
-            elif label == "positions" or label == "position":
-                df["x Atom" + str(site_index) + " (nm)"] = list(
-                    float(
-                        getattr(connection.connection_members[site_index], "position")[
-                            0
-                        ]
+                    df["z Atom" + str(site_index) + " (nm)"] = list(
+                        float(
+                            getattr(connection.connection_members[site_index], "position")[2]
+                        )
+                        for connection in getattr(self, parameter)
                     )
-                    for connection in getattr(topology, parameter)
-                )
-                df["y Atom" + str(site_index) + " (nm)"] = list(
-                    float(
-                        getattr(connection.connection_members[site_index], "position")[
-                            1
-                        ]
+                elif label == "charge" or label == "charges":
+                    df["charge Atom" + str(site_index) + " (e)"] = list(
+                        float(
+                            getattr(connection.connection_members[site_index], "charge")
+                            / u.electron_charge
+                            * u.electron_charge.units
+                        )
+                        for connection in getattr(self, parameter)
                     )
-                    for connection in getattr(topology, parameter)
-                )
-                df["z Atom" + str(site_index) + " (nm)"] = list(
-                    float(
-                        getattr(connection.connection_members[site_index], "position")[
-                            2
-                        ]
-                    )
-                    for connection in getattr(topology, parameter)
-                )
-            elif label == "charge" or label == "charges":
-                df["charge Atom" + str(site_index) + " (e)"] = list(
-                    float(
-                        getattr(connection.connection_members[site_index], "charge")
-                        / u.electron_charge
-                        * u.electron_charge.units
-                    )
-                    for connection in getattr(topology, parameter)
-                )
-            else:
-                try:
-                    df[label + " Atom" + str(site_index)] = list(
-                        getattr(connection.connection_members[site_index], label)
-                        for connection in getattr(topology, parameter)
-                    )
-                except AttributeError:
-                    raise AttributeError(
-                        "The label {} is not in this gmso object".format(label)
-                    )
-    return df
+                else:
+                    try:
+                        df[label + " Atom" + str(site_index)] = list(
+                            getattr(connection.connection_members[site_index], label)
+                            for connection in getattr(self, parameter)
+                        )
+                    except AttributeError:
+                        raise AttributeError(
+                            "The label {} is not in this gmso object".format(label)
+                        )
+        return df
