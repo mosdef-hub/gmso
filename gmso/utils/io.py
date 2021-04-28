@@ -159,3 +159,10 @@ try:
     del matplotlib
 except ImportError:
     has_matplotlib = False   
+
+def run_from_ipython():
+    try:
+        __IPYTHON__
+        return True
+    except NameError:
+        return False

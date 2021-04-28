@@ -1,44 +1,13 @@
 import networkx as nx
 import unyt
 
-from gmso.utils.io import import_, has_ipywidgets
+from gmso.utils.io import import_, has_ipywidgets, run_from_ipython
 widgets = import_('ipywidgets')
 plt = import_('matplotlib.pyplot')
 if has_ipywidgets:
     from ipywidgets import interact, fixed
 
 from gmso.external.convert_networkx import to_networkx
-
-
-def plot_networkx_params(networkx_graph, list_of_edges):
-    """Get a networkx plot showing the specified edges in a networkx graph object.
-
-    Parameters
-    ----------
-    networkx_graph : A networkx.Graph object
-        This is a networkx graph object that can be created from a topology using the to_networkx
-        function found in gmso.external.convert_networkx
-    list_of_edges : a list of edges that should be shown on the plot
-        Will be of the shape [(node1,node2), (node2,node3), etc...]
-
-    Returns
-    -------
-    matplotlib.pyplot.figure
-        The drawn networkx plot of the topology on a matplotlib editable figures
-
-    matplotlib.pyplot.axis
-        The axis information that corresponds to a networkx drawn figure. This output can be
-        shown using
-        matplotlib.pyplot.show()
-    """
-    fig, ax = plt.subplots(1, 1, figsize=(8, 8))
-    edge_weights, edge_colors = highlight_networkx_edges(networkx_graph, list_of_edges)
-    ax = plot_networkx_nodes(
-        networkx_graph, ax, edge_weights=edge_weights, edge_colors=edge_colors
-    )
-
-    return (fig, ax)
-
 
 def interactive_networkx_atomtypes(topology, list_of_labels=None):
     """Get an interactive networkx plot showing the atom types of a topology object.
@@ -71,6 +40,8 @@ def interactive_networkx_atomtypes(topology, list_of_labels=None):
              Atom_Name = Which sites will show these labels.
     """
 
+    if not run_from_ipython():
+        raise RuntimeError("Unsupported visualization outside of jupyter notebooks.")
     networkx_graph = to_networkx(topology)
     # get a unique list of site names
     site_names = []
@@ -141,6 +112,8 @@ def interactive_networkx_bonds(topology, additional_labels=None):
          A checkbox that will allow you to print the parameters associated with the selected bond in the list_of_bonds
              dropdown option.
     """
+    if not run_from_ipython():
+        raise RuntimeError("Unsupported visualization outside of jupyter notebooks.")
     networkx_graph = to_networkx(topology)
 
     # Create a list of labels to go on the nodes
@@ -183,50 +156,6 @@ def interactive_networkx_bonds(topology, additional_labels=None):
     return
 
 
-def call_interactive_sites(Atom1, Atom2, networkx_graph, topology, list_of_labels):
-    list_of_edges = get_edges(networkx_graph, Atom1, Atom2)
-    if list_of_edges:
-        # Call the second level, which takes the selected bonds and shows them on the figure
-        interact(
-            select_edges,
-            list_of_bonds=list_of_edges,
-            list_of_labels=fixed(list_of_labels),
-            networkx_graph=fixed(networkx_graph),
-            topology=fixed(topology),
-        )
-    else:
-        plot_networkx_bonds(networkx_graph, list_of_labels=list_of_labels)
-
-    return
-
-
-def select_edges(networkx_graph, topology, list_of_bonds, list_of_labels):
-    plot_networkx_bonds(
-        networkx_graph, list_of_labels=list_of_labels, list_of_bonds=list_of_bonds
-    )
-    # The final level prints the parameters of the selected bond using a checkbox.
-    checkbox = widgets.Checkbox(value=False, description="Show parameters")
-    interact(
-        show_bond_info,
-        w=checkbox,
-        topology=fixed(topology),
-        list_of_bonds=fixed(list_of_bonds),
-    )
-
-    return
-
-
-def show_bond_info(w, topology, list_of_bonds):
-    if w:
-        report_bond_parameters(topology, list_of_bonds)
-    else:
-        # TODO: Should be able to remove this blank print statement so that deselecting the
-        # checkbox removes the listed parameters.
-        print("")
-
-    return
-
-
 def interactive_networkx_angles(topology):
     """Get an interactive networkx plot showing the angle types of a topology object.
 
@@ -265,6 +194,8 @@ def interactive_networkx_angles(topology):
          A checkbox that will allow you to print the parameters associated with the selected angle in the Selected Edge
              dropdown option.
     """
+    if not run_from_ipython():
+        raise RuntimeError("Unsupported visualization outside of jupyter notebooks.")
 
     networkx_graph = to_networkx(topology)
 
@@ -300,27 +231,6 @@ def interactive_networkx_angles(topology):
         Atom2=atom_selection[1],
         Atom3=atom_selection[2],
     )
-
-    return
-
-
-def select_angles_from_sites(networkx_graph, top, Atom1, Atom2, Atom3):
-    params_list = select_params_on_networkx(networkx_graph, [Atom1, Atom2, Atom3])
-    if params_list:
-        edges_widget = widgets.Dropdown(
-            options=params_list,
-            layout=widgets.Layout(width="60%"),
-            style=dict(description_width="initial"),
-            description="Selected Edge",
-        )
-        interact(
-            select_edges_on_networkx,
-            networkx_graph=fixed(networkx_graph),
-            top=fixed(top),
-            list_of_params=edges_widget,
-        )
-    else:
-        plot_networkx_params(networkx_graph, list_of_edges=[])
 
     return
 
@@ -365,8 +275,10 @@ def interactive_networkx_dihedrals(topology):
          A checkbox that will allow you to print the parameters associated with the selected dihedral in the Selected Edge
              dropdown option.
     """
-    networkx_graph = to_networkx(topology)
+    if not run_from_ipython():
+        raise RuntimeError("Unsupported visualization outside of jupyter notebooks.")
 
+    networkx_graph = to_networkx(topology)
     # Create list of nodes to plot
     site_names = []
     for node in networkx_graph.nodes:
@@ -405,6 +317,100 @@ def interactive_networkx_dihedrals(topology):
         Atom3=atom_selection[2],
         Atom4=atom_selection[3],
     )
+
+    return
+
+
+def plot_networkx_params(networkx_graph, list_of_edges):
+    """Get a networkx plot showing the specified edges in a networkx graph object.
+
+    Parameters
+    ----------
+    networkx_graph : A networkx.Graph object
+        This is a networkx graph object that can be created from a topology using the to_networkx
+        function found in gmso.external.convert_networkx
+    list_of_edges : a list of edges that should be shown on the plot
+        Will be of the shape [(node1,node2), (node2,node3), etc...]
+
+    Returns
+    -------
+    matplotlib.pyplot.figure
+        The drawn networkx plot of the topology on a matplotlib editable figures
+
+    matplotlib.pyplot.axis
+        The axis information that corresponds to a networkx drawn figure. This output can be
+        shown using
+        matplotlib.pyplot.show()
+    """
+    fig, ax = plt.subplots(1, 1, figsize=(8, 8))
+    edge_weights, edge_colors = highlight_networkx_edges(networkx_graph, list_of_edges)
+    ax = plot_networkx_nodes(
+        networkx_graph, ax, edge_weights=edge_weights, edge_colors=edge_colors
+    )
+
+    return (fig, ax)
+
+
+def call_interactive_sites(Atom1, Atom2, networkx_graph, topology, list_of_labels):
+    list_of_edges = get_edges(networkx_graph, Atom1, Atom2)
+    if list_of_edges:
+        # Call the second level, which takes the selected bonds and shows them on the figure
+        interact(
+            select_edges,
+            list_of_bonds=list_of_edges,
+            list_of_labels=fixed(list_of_labels),
+            networkx_graph=fixed(networkx_graph),
+            topology=fixed(topology),
+        )
+    else:
+        plot_networkx_bonds(networkx_graph, list_of_labels=list_of_labels)
+
+    return
+
+
+def select_edges(networkx_graph, topology, list_of_bonds, list_of_labels):
+    plot_networkx_bonds(
+        networkx_graph, list_of_labels=list_of_labels, list_of_bonds=list_of_bonds
+    )
+    # The final level prints the parameters of the selected bond using a checkbox.
+    checkbox = widgets.Checkbox(value=False, description="Show parameters")
+    interact(
+        show_bond_info,
+        w=checkbox,
+        topology=fixed(topology),
+        list_of_bonds=fixed(list_of_bonds),
+    )
+
+    return
+
+def show_bond_info(w, topology, list_of_bonds):
+    if w:
+        report_bond_parameters(topology, list_of_bonds)
+    else:
+        # TODO: Should be able to remove this blank print statement so that deselecting the
+        # checkbox removes the listed parameters.
+        print("")
+
+    return
+
+
+def select_angles_from_sites(networkx_graph, top, Atom1, Atom2, Atom3):
+    params_list = select_params_on_networkx(networkx_graph, [Atom1, Atom2, Atom3])
+    if params_list:
+        edges_widget = widgets.Dropdown(
+            options=params_list,
+            layout=widgets.Layout(width="60%"),
+            style=dict(description_width="initial"),
+            description="Selected Edge",
+        )
+        interact(
+            select_edges_on_networkx,
+            networkx_graph=fixed(networkx_graph),
+            top=fixed(top),
+            list_of_params=edges_widget,
+        )
+    else:
+        plot_networkx_params(networkx_graph, list_of_edges=[])
 
     return
 
