@@ -2,7 +2,7 @@ import networkx as nx
 import unyt
 
 from gmso.utils.io import import_, has_ipywidgets
-ipywidgets = import_('ipywidgets')
+widgets = import_('ipywidgets')
 plt = import_('matplotlib.pyplot')
 if has_ipywidgets:
     from ipywidgets import interact, fixed
