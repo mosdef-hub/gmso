@@ -10,13 +10,10 @@ select_angles_from_sites, call_interactive_sites, select_edges, show_bond_info)
 from gmso.formats.networkx import _get_formatted_atom_types_names_for
 
 from gmso.tests.base_test import BaseTest
-from gmso.utils.io import import_, has_networkx, has_pyplot
+from gmso.utils.io import import_, has_matplotlib
 from gmso.external.convert_networkx import to_networkx
 
-if has_networkx:
-    networkx = import_('networkx')
-
-if has_pyplot:
+if has_matplotlib:
     plt = import_('matplotlib.pyplot')
 
 @pytest.mark.skipif(not has_networkx, reason="Networkx is not installed")

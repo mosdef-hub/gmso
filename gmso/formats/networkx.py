@@ -1,9 +1,11 @@
-import matplotlib.pyplot as plt
 import networkx as nx
 import unyt
 
-from ipywidgets import interact, fixed
-import ipywidgets as widgets
+from gmso.utils.io import import_, has_ipywidgets
+ipywidgets = import_('ipywidgets')
+plt = import_('matplotlib.pyplot')
+if has_ipywidgets:
+    from ipywidgets import interact, fixed
 
 from gmso.external.convert_networkx import to_networkx
 
