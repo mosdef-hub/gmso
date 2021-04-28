@@ -32,7 +32,7 @@ Alternatively, you can also start a Bourne shell to use python from the containe
 
 .. Warning::
 
-Containers by nature are ephemeral, so filesystem changes (e.g.,m adding a new notebook) only persist until the end of the
+Containers by nature are ephemeral, so filesystem changes (e.g., adding a new notebook) only persist until the end of the
 container's lifecycle.  If the container is removed, any changes or code additions will not persist.  See the section below for
 persistent data.
 
