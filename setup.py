@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 from pathlib import Path
 
 #####################################
-VERSION = "0.4.0"
+VERSION = "0.5.0"
 ISRELEASED = False
 if ISRELEASED:
     __version__ = VERSION
@@ -10,9 +10,6 @@ else:
     __version__ = VERSION + '.dev0'
 #####################################
 
-
-with open(Path(__file__).parent / 'requirements.txt') as req_file:
-    requirements = list(filter(None, req_file.read().split('\n')))
 
 
 setup(
@@ -41,6 +38,5 @@ setup(
         'Operating System :: Unix',
         'Operating System :: MacOS',
     ],
-    install_requires=requirements,
     python_requires='>=3.6, <4',
 )
