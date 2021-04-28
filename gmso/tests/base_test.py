@@ -61,7 +61,7 @@ class BaseTest:
             packed_system = mb.fill_box(
                 compound=ar,
                 n_compounds=n_sites,
-                box=mb.Box([3, 3, 3]),
+                density=1700,
             )
 
             return packed_system
