@@ -10,7 +10,7 @@ select_angles_from_sites, call_interactive_sites, select_edges, show_bond_info)
 from gmso.formats.networkx import _get_formatted_atom_types_names_for
 
 from gmso.tests.base_test import BaseTest
-from gmso.utils.io import import_, has_matplotlib, has_ipywidgets
+from gmso.utils.io import import_, has_matplotlib, has_ipywidgets, run_from_ipython
 from gmso.external.convert_networkx import to_networkx
 
 if has_matplotlib:
@@ -100,21 +100,25 @@ class TestNetworkx(BaseTest):
         with pytest.raises(ValueError):
             show_parameter_values(typed_ethane, [parameters], True) 
 
+    @pytest.mark.skipif(not run_from_ipython(), reason="Test work in jupyter notebooks only")
     def test_interactive_networkx_atomtypes(self,typed_ethane,capsys):
         interactive_networkx_atomtypes(typed_ethane)
         captured, err = capsys.readouterr()
         assert isinstance(err,str)
 
+    @pytest.mark.skipif(not run_from_ipython(), reason="Test work in jupyter notebooks only")
     def test_interactive_networkx_bonds(self,typed_ethane,capsys):
         interactive_networkx_bonds(typed_ethane)
         captured, err = capsys.readouterr()
         assert isinstance(err,str)
 
+    @pytest.mark.skipif(not run_from_ipython(), reason="Test work in jupyter notebooks only")
     def test_interactive_networkx_angles(self,typed_ethane,capsys):
         interactive_networkx_angles(typed_ethane)
         captured, err = capsys.readouterr()
         assert isinstance(err,str)
 
+    @pytest.mark.skipif(not run_from_ipython(), reason="Test work in jupyter notebooks only")
     def test_interactive_networkx_dihedrals(self,typed_ethane,capsys):
         interactive_networkx_dihedrals(typed_ethane)
         captured, err = capsys.readouterr()
