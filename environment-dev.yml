@@ -20,3 +20,4 @@ dependencies:
   - bump2version
   - matplotlib
   - ipywidgets
+  - ele >= 0.2.0
