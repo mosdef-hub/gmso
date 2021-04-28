@@ -31,6 +31,7 @@ class TestForceField(BaseTest):
         assert len(multiple_ff.name) == 2
         assert len(multiple_ff.version) == 2
 
+    @pytest.fixture
     def opls_ethane_foyer(self):
         return ForceField(get_path(filename=get_path("oplsaa-ethane_foyer.xml")))
 
