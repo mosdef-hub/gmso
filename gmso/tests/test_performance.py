@@ -38,3 +38,10 @@ class TestPerformance(BaseTest):
         cmpd = n_ar_system(n_sites=10000)
         top = from_mbuild(cmpd) 
         write_gro(top, "ar.gro")
+
+    #TODO: Add test to check performance of loading in XML when more performant
+
+    @pytest.mark.timeout(20)
+    def test_from_mbuild_performance(self, n_ar_system):
+        cmpd = n_ar_system(n_sites=50000)
+        top = from_mbuild(cmpd) 
