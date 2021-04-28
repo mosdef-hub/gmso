@@ -10,14 +10,16 @@ select_angles_from_sites, call_interactive_sites, select_edges, show_bond_info)
 from gmso.formats.networkx import _get_formatted_atom_types_names_for
 
 from gmso.tests.base_test import BaseTest
-from gmso.utils.io import import_, has_matplotlib
+from gmso.utils.io import import_, has_matplotlib, has_ipywidgets
 from gmso.external.convert_networkx import to_networkx
 
 if has_matplotlib:
     plt = import_('matplotlib.pyplot')
+if has_ipywidgets:
+    widgets = import_('ipywidgets')
 
-@pytest.mark.skipif(not has_networkx, reason="Networkx is not installed")
-@pytest.mark.skipif(not has_pyplot, reason="Matplotlib.pyplot is not installed")
+@pytest.mark.skipif(not has_ipywidgets, reason="Ipywidgets is not installed")
+@pytest.mark.skipif(not has_matplotlib, reason="Matplotlib is not installed")
 class TestNetworkx(BaseTest):
     def test_highlight_networkx_edges(self, typed_ethane):
         list(typed_ethane.angles)[0].angle_type = None
