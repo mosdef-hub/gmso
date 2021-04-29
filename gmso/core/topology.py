@@ -158,6 +158,7 @@ class Topology(object):
         self._improper_types_idx = {}
         self._combining_rule = 'lorentz'
         self._pairpotential_types = {}
+        self._pairpotential_types_idx = {}
         self._scaling_factors = {
             "vdw_12": 0.0,
             "vdw_13": 0.0,
@@ -180,7 +181,8 @@ class Topology(object):
             BOND_TYPE_DICT: self._bond_types_idx,
             ANGLE_TYPE_DICT: self._angle_types_idx,
             DIHEDRAL_TYPE_DICT: self._dihedral_types_idx,
-            IMPROPER_TYPE_DICT: self._improper_types_idx
+            IMPROPER_TYPE_DICT: self._improper_types_idx,
+            PAIRPOTENTIAL_TYPE_DICT: self._pairpotential_types_idx
         }
 
         self._unique_connections = {}
@@ -529,25 +531,36 @@ class Topology(object):
         """
         if update:
             self.update_atom_types()
+        if not isinstance(pairpotentialtype,PairPotentialType):
+            raise GMSOError('Non-PairPotentialType {} provided'.format(pairpotentialtype))
         for atype in pairpotentialtype.member_types:
             if atype not in [t.name for t in self.atom_types]:
                 if atype not in [t.atomclass for t in self.atom_types]:
                     raise GMSOError('There is no name/atomclass of AtomType {} in current topology'.format(atype))
-        self._pairpotential_types[pairpotentialtype.member_types] = pairpotentialtype
+        self._pairpotential_types[pairpotentialtype] = pairpotentialtype
+        self._pairpotential_types_idx[pairpotentialtype] = len(self._pairpotential_types) - 1
 
-    def remove_pairpotentialtype(self,member_types):
-        """Remove the custom pairwise potential between two AtomTypes
+    def remove_pairpotentialtype(self,pair_of_types):
+        """Remove the custom pairwise potential between two AtomTypes/Atomclasses
 
         Parameters
         ----------
-        member_types: list-like of strs
+        pair_if_types: list-like of strs
             The pair (or set) of names or atomclasses of gmso.AtomTypes of which 
             the custom pairwise potential should be removed
         """
-        if frozenset(member_types) not in self._pairpotential_types:
-            warnings.warn('No pair potential specified for member types')
-            return
-        del self._pairpotential_types[frozenset(member_types)]
+        flag_found = False
+        to_delete = []
+        for t in self._pairpotential_types:
+            if t.member_types == tuple(pair_of_types):
+                to_delete.append(t)
+        if len(to_delete) > 0:
+            for t in to_delete:
+                del self._pairpotential_types[t]
+            self._reindex_connection_types(PAIRPOTENTIAL_TYPE_DICT)
+        else:
+            warnings.warn('No pair potential specified for such pair of AtomTypes/atomclasses')
+
             
     def update_atom_types(self):
         """Update atom types in the topology
@@ -713,7 +726,8 @@ class Topology(object):
             BondType: self._bond_types_idx,
             AngleType: self._angle_types_idx,
             DihedralType: self._dihedral_types_idx,
-            ImproperType: self._improper_types_idx
+            ImproperType: self._improper_types_idx,
+            PairPotentialType: self._pairpotential_types_idx
         }
 
         member_type = type(member)
@@ -732,7 +746,8 @@ class Topology(object):
         if ref not in self._index_refs:
             raise GMSOError(f'cannot reindex {ref}. It should be one of '
                             f'{ANGLE_TYPE_DICT}, {BOND_TYPE_DICT}, '
-                            f'{ANGLE_TYPE_DICT}, {DIHEDRAL_TYPE_DICT}, {IMPROPER_TYPE_DICT}')
+                            f'{ANGLE_TYPE_DICT}, {DIHEDRAL_TYPE_DICT}, {IMPROPER_TYPE_DICT},'
+                            f'{PAIRPOTENTIAL_TYPE_DICT}')
         for i, ref_member in enumerate(self._set_refs[ref].keys()):
             self._index_refs[ref][ref_member] = i
 

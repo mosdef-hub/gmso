@@ -370,7 +370,7 @@ def parse_ff_pairpotential_types(pairpotentialtypes_el):
 
         valued_param_vars = set(sympify(param) for param in ctor_kwargs['parameters'].keys())
         ctor_kwargs['independent_variables'] = sympify(pairpotentialtype_expression).free_symbols - valued_param_vars
-        this_pp_type_key = DICT_KEY_SEPARATOR.join(ctor_kwargs['member_types'])
+        this_pp_type_key = FF_TOKENS_SEPARATOR.join(ctor_kwargs['member_types'])
         this_pp_type = TAG_TO_CLASS_MAP['PairPotentialType'](**ctor_kwargs)
         pairpotentialtypes_dict[this_pp_type_key] = this_pp_type
 

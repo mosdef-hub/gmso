@@ -5,7 +5,6 @@ from pydantic import Field
 
 from gmso.core.parametric_potential import ParametricPotential
 from gmso.utils._constants import PAIRPOTENTIAL_TYPE_DICT
-from gmso.core.atom_type import AtomType
 
 class PairPotentialType(ParametricPotential):
     __base_doc__ = """A description of custom pairwise potential between 2 AtomTypes that does not follow combination rule.
@@ -28,7 +27,7 @@ class PairPotentialType(ParametricPotential):
 
     member_types_: Optional[Tuple[str, str]] = Field(
         None,
-        description='List-like of gmso.AtomType or gmso.AtomClass '
+        description='List-like of strs, referring to gmso.Atomtype.name or gmso.Atomtype.atomclass, '
                     'defining the members of this pair potential type'
     )
 

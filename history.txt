@@ -1,0 +1,479 @@
+    1  bash /mnt/c/Users/TOWUZ/Downloads/Anaconda3-2020.11-Linux-x86_64.sh 
+    2  conda create tf
+    3  conda create 
+    4  conda create -h
+    5  conda create -n tf
+    6  conda activate tf
+    7  conda install -c conda-forge keras
+    8  conda install -c conda-forge jupyter
+    9  git
+   10  ls
+   11  mkdir personal
+   12  cd personal
+   13  git clone https://github.com/zijiewu3/deep-learning-with-python-notebooks.git
+   14  cd ..
+   15  tmux attach -t op1
+   16  tmux new -s op1
+   17  conda list
+   18  tmux attach -t op1
+   19  ssh zijiewu@login.xsede.org
+   20  conda install -c conda-forge matplotlib
+   21  tmux attach -t op1
+   22  cp /mnt/e/Dropbox/.bashrc ~/.bashrc
+   23  source ~/.bashrc
+   24  vim ~/.bashrc
+   25  vim /mnt/e/Dropbox/.bashrc 
+   26  vim /mnt/e/Dropbox/config 
+   27  vim /mnt/e/Dropbox/.bashrc 
+   28  cp /mnt/e/Dropbox/.bashrc ~/.bashrc
+   29  vim ~/.bashrc
+   30  source ~/.bashrc
+   31  cp /mnt/e/Dropbox/config ~/.ssh/config
+   32  ssh xsede
+   33  ssh farber
+   34  ssh-keygen -t rsa
+   35  cat .ssh/id_rsa.pub | ssh farber 'cat >> .ssh/authorized_keys'
+   36  ssh farber
+   37  cat .ssh/id_rsa.pub | ssh caviness 'cat >> .ssh/authorized_keys'
+   38  ssh caviness
+   39  tmux attach -t op1
+   40  ssh farber
+   41  ssh xsede
+   42  ssh farber
+   43  ssh xsede
+   44  ssh farber
+   45  ls
+   46  mkdir mosdef_git
+   47  cd mosdef_git
+   48  git clone https://github.com/mosdef-hub/mbuild.git
+   49  git remote -v
+   50  cd mbuild
+   51  cd ..
+   52  rm -r mbuild
+   53  ls
+   54  git clone https://github.com/zijiewu3/mbuild.git
+   55  git clone https://github.com/zijiewu3/foyer.git
+   56  git clone https://github.com/zijiewu3/gmso.git
+   57  git clone https://github.com/zijiewu3/mbuild_ONA.git
+   58  git clone https://github.com/zijiewu3/forcefield_ona.git
+   59  git clone https://github.com/zijiewu3/mosdef_workflow.git
+   60  git clone https://github.com/zijiewu3/mosdef-workflows.git
+   61  cd mbuild
+   62  git status
+   63  git checkout lammpswriter_refactor 
+   64  git checkout master
+   65  git remote -v
+   66  git remote add upstream https://github.com/mosdef-hub/mbuild.git
+   67  git remote -v
+   68  git checkout master
+   69  git fetch upstream
+   70  git merge upstream/master
+   71  cd ../foyer
+   72  git re
+   73  git fetch upstream
+   74  git merge upstream/master
+   75  git checkout master
+   76  git config --global user.email "zijiewu3@udel.edu"
+   77  git config --global user.name "zijiewu3"
+   78  git config --global user.email "zijiewu@udel.edu"
+   79  git merge upstream/master
+   80  git push origin master
+   81  cd ../mbuild
+   82  git checkout master
+   83  git push origin master
+   84  cd ../gmso
+   85  git remote add upstream https://github.com/mosdef-hub/gmso.git
+   86  git fetch upstream
+   87  git status
+   88  git fetch upstream
+   89  git merge upstream/master
+   90  git push origin master
+   91  cd ../mbuild
+   92  ls
+   93  conda create --h
+   94  conda create -n mosdef_git
+   95  ls
+   96  vim requirements-dev.txt 
+   97  conda install -c conda-forge --file=requirements-dev.txt
+   98  conda list
+   99  jupyter notebook
+  100  conda activate mosdef_git
+  101  conda install -c conda-forge --file=requirements-dev.txt
+  102  conda install --file=requirements-dev.txt
+  103  conda install -c omnia --file=requir
+  104  conda install -c conda-forge -c omnia --file=requirements-dev.txt
+  105  ls
+  106  pip install -e .
+  107  cd ../foyer/
+  108  conda install -c conda-forge -c omnia --file=requirements-dev.txt
+  109  vim requirements-dev.txt 
+  110  conda install -c conda-forge -c omnia --file=requirements-dev.txt
+  111  conda uninstall foyer
+  112  conda install -c conda-forge -c omnia --file=requirements-dev.txt
+  113  pip install -e .
+  114  cd ../gmso
+  115  ssh farber
+  116  vim requirements-dev.txt 
+  117  conda install -c conda-forge -c omnia --file=requirements-dev.txt
+  118  python3
+  119  pip install -e .
+  120  cd ..
+  121  python3
+  122  cd mbuild_ONA
+  123  pip install -e .
+  124  cd ../gmso
+  125  git checkout pairpotential 
+  126  ls
+  127  cd gmso
+  128  ls
+  129  cd core
+  130  ls
+  131  vim pairpotential.py 
+  132  git remove pairpotential.py
+  133  git pull --h
+  134  git pull origin pairpotential 
+  135  vim pairpotential_type.py 
+  136  git rm pairpotential.py 
+  137  ls
+  138  cd ../docs
+  139  cd ..
+  140  ls
+  141  cd ..
+  142  ls
+  143  cd docs/
+  144  ls
+  145  vim data_structures.rst 
+  146  cd ..
+  147  ls
+  148  cd gmso
+  149  ls
+  150  vim __init__.py 
+  151  ls
+  152  cd core
+  153  ls
+  154  vim pairpotential_type.py 
+  155  cd ..
+  156  ls
+  157  cd core/
+  158  vi topology.py 
+  159  pip install -e .
+  160  cd ../..
+  161  pip install -e .
+  162  cp /mnt/e/Dropbox/PairPotential_Example.ipynb ../
+  163  cd ..
+  164  jupyter notebook
+  165  git add .
+  166  cd gmso/
+  167  git status
+  168  git add .
+  169  git commit -m  "Address Umesh's comments"
+  170  git push origin pairpotential
+  171  ssh farber
+  172  ssh xsede
+  173  vim ~/.bashrc
+  174  ssh xsede
+  175  ssh farber
+  176  tmux attach -t op1
+  177  tmux new -s op1
+  178  ssh farber
+  179  gsissh xsede
+  180  ssh xsede
+  181  ssh farber
+  182  cd mosdef_git/gmso/
+  183  git fetch https://github.com/rmatsum836/gmso add_foyer_to_gmso_xml
+  184  git checkout FETCH_HEAD 
+  185  pip install -e .
+  186  cd gmso/external/
+  187  ls
+  188  vim convert_foyer.py 
+  189  python3
+  190  cd ../../
+  191  cd ..
+  192  jupyter notebook
+  193  conda list
+  194  ssh xsede
+  195  ssh farber
+  196  ssh farber
+  197  ssh xsede
+  198  ssh stampede
+  199  ssh xsede
+  200  ssh farber
+  201  ssh caviness
+  202  ssh farber
+  203  ssh caviness
+  204  ssh farber
+  205  conda activate mosdef_git
+  206  cd gmso
+  207  cd mosdef_git/gmso
+  208  cd gmsp
+  209  cd gmso
+  210  pip install -e .
+  211  cd ..
+  212  pip install -e .
+  213  git status
+  214  git checkout master
+  215  git checkout pairpotential 
+  216  pip install -e .
+  217  jupyter notebook
+  218  ssh xsede
+  219  ssh caviness
+  220  ssh xsede
+  221  ssh farber
+  222  ssh zijiewu@darwin.hpc.udel.edu
+  223  vim ~/.sshrc
+  224  vim ~/.ssh/config 
+  225  ssh darwin mkdir -p .ssh
+  226  cat ~/.ssh/id_rsa.pub | ssh darwin 'cat >> .ssh/authorized_keys'
+  227  ssh caviness
+  228  ssh darwin
+  229  ssh xsede
+  230  ssh farber
+  231  qjobs
+  232  ssh caviness
+  233  ssh darwin 
+  234  ssh darwin
+  235  ssh caviness
+  236  ssh farber
+  237  ssh caviness
+  238  ssh xsede
+  239  ssh farber
+  240  ssh darwin
+  241  ssh stampede2
+  242  ssh darwin
+  243  ssh stampede
+  244  ssh xsede
+  245  ssh darwin
+  246  conda activate mosdef_git
+  247  ls
+  248  cd mosdef_git/
+  249  ls
+  250  cd gmso/
+  251  ls
+  252  git status
+  253  vim gmso/core/forcefield.py 
+  254  tmux attach -t op1
+  255  tmux new -s op1
+  256  git status
+  257  ssh caviness
+  258  cd ~
+  259  pwd
+  260  scp /mnt/c/Users/TOWUZ/Downloads/lammps-16Mar18.tar.gz darwin:/home/2036/sw/lammps 
+  261  mkdir build
+  262  ssh farber
+  263  ssh darwin
+  264  ssh farber
+  265  conda activate mosdef_git
+  266  ls
+  267  cd mosdef_git
+  268  tmux new -s op1
+  269  git status
+  270  cd gmso
+  271  git status
+  272  git add .
+  273  git commit -m "Supporting PairPotentialType in gmso-xml"
+  274  git push origin pairpotential
+  275  ssh caviness
+  276  ssh farber
+  277  ssh caviness
+  278  ssh darwin
+  279  ssh darwin
+  280  conda activate mosdef_git/
+  281  conda activate mosdef_git
+  282  cd mosdef_git/gmso
+  283  ls
+  284  cd ..
+  285  tmux attach -t op1
+  286  tmux new -s op1
+  287  ssh caviness
+  288  ssh darwin
+  289  vim ~/.bashrc
+  290  vim ~/.ssh/known_hosts 
+  291  vim ~/.ssh/id_rsa
+  292  vim ~/.ssh/id_rsa.pub 
+  293  vim ~/.ssh/config 
+  294  ssh zijiewu@darwin.hpc.udel.edu
+  295  ssh darwin
+  296  tmux attach -t op1
+  297  tmux new -s op1
+  298  ssh darwin
+  299  conda activate mosdef_git
+  300  ls
+  301  cd mosdef_git/gmso/
+  302  git status
+  303  ls
+  304  cd gmso/tests/
+  305  ls
+  306  vim test_forcefield_xml.py 
+  307  cd ..
+  308  tmux attach -t op1
+  309  tmux new -s op1
+  310  ssh farber
+  311  ssh caviness
+  312  scp /mnt/c/Users/TOWUZ/Downloads/best-pos.txt zijiewu@caviness.hpc.udel.edu:/lustre/scratch/zijiewu/cpp_analysis/best_pos.lammps
+  313  ssh caviness
+  314  ssh farber
+  315  ssh caviness
+  316  conda activate mosdef_git
+  317  tmux new -s op1
+  318  ls
+  319  cd mosdef_git/gmso/gmso
+  320  cd tests/
+  321  pytest test_forcefield_xml.py 
+  322  git add .
+  323  git commit -m "test cases added"
+  324  git status
+  325  git push origin pairpotential
+  326  ssh caviness
+  327  ssh farber
+  328  tmux new -s op1
+  329  conda activate mosdef_git
+  330  cd mosdef_git/gmso
+  331  git status
+  332  git remote -v 
+  333  git fetch --all
+  334  git branch
+  335  git merge upstream/master
+  336  git status
+  337  ls
+  338  git rm requirements-dev.txt 
+  339  git status
+  340  vim gmso/core/topology.py 
+  341  git status
+  342  git add gmso/core/topology.py 
+  343  vim gmso/core/forcefield.py 
+  344  git add gmso/core/forcefield.py 
+  345  vim gmso/utils/ff_utils.py 
+  346  git add gmso/utils/ff_utils.py 
+  347  git status
+  348  git commit -m "resolved merge conflicts"
+  349  git remote -v
+  350  git push origin
+  351  cd gmso/tests/
+  352  ls
+  353  pytest test_topology.py 
+  354  vim ../core/pairpotential_type.py 
+  355  vim ../core/topology.py 
+  356  vim test_topology.py 
+  357  vim ../core/topology.py 
+  358  vim ../core/pairpotential_type.py 
+  359  vim ../core/atom_type.py 
+  360  vim ../core/pairpotential_type.py 
+  361  vim ../core/atom_type.py 
+  362  vim ../core/pairpotential_type.py 
+  363  vim ../core/topology.py 
+  364  vim test_topology.py 
+  365  vim ../core/atom
+  366  vim ../core/atom_type.py 
+  367  vim test_topology.py 
+  368  vim ../core/pairpotential_type.py 
+  369  vim ../core/topology.py 
+  370  vim ../core/pairpotential_type.py 
+  371  vim test_topology.py 
+  372  vim ../core/pairpotential_type.py 
+  373  vim test_topology.py 
+  374  pytest test_topology.py 
+  375  vim ../core/pairpotential_type.py 
+  376  vim test_topology.py 
+  377  vim ../core/topology.py 
+  378  vim ../core/pairpotential_type.py 
+  379  vim test_topology.py 
+  380  vim ../core/topology.py 
+  381  vim test_topology.py 
+  382  pytest test_topology.py 
+  383  vim test_topology.py 
+  384  vim ../core/pairpotential_type.py 
+  385  vim test_topology.py 
+  386  pytest test_topology.py::*pairpotential*
+  387  vim test_topology.py 
+  388  pytest test_topology.py::test_pairpotential_pairpotentialtype_update
+  389  vim test_topology.py 
+  390  pytest test_topology.py
+  391  vim ../core/pairpotential_type.py 
+  392  vim ../core/topology.py 
+  393  pytest -k pairpotential test_topology.py 
+  394  vim ../core/topology.py 
+  395  pytest -k pairpotential test_topology.py 
+  396  vim ../core/topology.py 
+  397  pytest -k pairpotential test_topology.py 
+  398  vim ../core/pairpotential_type.py 
+  399  vim test_topology.py 
+  400  vim ../core/topology.py 
+  401  pytest -k pairpotential test_topology.py 
+  402  pytest test_forcefield.py 
+  403  vim ../utils/ff_utils.py 
+  404  cd ../utils/
+  405  ls
+  406  vim _constants.py 
+  407  vim ../utils/ff_utils.py 
+  408  pytest test_forcefield.py 
+  409  cd ../tests/
+  410  pytest test_forcefield.py 
+  411  vim ../utils/ff_utils.py 
+  412  pytest test_forcefield.py 
+  413  pytest
+  414  git add .
+  415  git commit -m "test cases for topology updated, ready for review"
+  416  git push origin
+  417  cd ~/mosdef_git/mbuild
+  418  git status
+  419  git fetch upstream 
+  420  git mergge
+  421  git merge
+  422  git pull upstream master
+  423  git status
+  424  git push origin master
+  425  git fetch upstream pull/825/head:philliplw
+  426  git checkout philliplw 
+  427  cd mbuild/tests/
+  428  cd ../..
+  429  git merge master
+  430  git status
+  431  rm requirements-dev.txt 
+  432  vim mbuild/formats/lammpsdata.py 
+  433  cd mbuild/tests/
+  434  pytest --disable-warnings
+  435  vim mbuild/formats/lammpsdata.py 
+  436  vim ../formats/lammpsdata.py 
+  437  pytest --disable-warnings
+  438  vim ../formats/lammpsdata.py 
+  439  pytest --disable-warnings
+  440  pytest --disable-warnings test_lammpsdata.py 
+  441  git fetch upstream pull/825/head:philliplw_unmerged
+  442  git checkout philliplw_unmerged 
+  443  cd ../..
+  444  git rm requirements-dev.txt 
+  445  gi add mbuild/formats/lammpsdata.py 
+  446  git add mbuild/formats/lammpsdata.py 
+  447  git commit "clear merge conflicts"
+  448  git status
+  449  git commit
+  450  git checkout philliplw_unmerged 
+  451  cd mbuild/tests/
+  452  pytest --disable-warnings test_lammpsdata.py 
+  453  git status
+  454  git checkout philliplw
+  455  pytest --disable-warnings test_lammpsdata.py 
+  456  vim ../formats/lammpsdata.py 
+  457  git checkout master
+  458  pytest --disable-warnings test_lammpsdata.py 
+  459  pytest --disable-warnings test_packing.py 
+  460  git status
+  461  gits status
+  462  git status
+  463  pytest --disable-warnings test_packing.py 
+  464  git fetch upstream
+  465  git merge upstream/master
+  466  conda info -e
+  467  cd ../..
+  468  ls
+  469  git log
+  470  git remote -v
+  471  git remote add phillip https://github.com/phillipt854/mbuild.git
+  472  git fetch phillip
+  473  git checkout philliplw
+  474  git push origin
+  475  git push --set-upstream origin philliplw
+  476  cd ../gmso
+  477  git status
+  478  vim gmso/core/pairpotential_type.py 
+  479  history >> history.txt
