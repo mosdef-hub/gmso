@@ -549,7 +549,6 @@ class Topology(object):
             The pair (or set) of names or atomclasses of gmso.AtomTypes of which 
             the custom pairwise potential should be removed
         """
-        flag_found = False
         to_delete = []
         for t in self._pairpotential_types:
             if t.member_types == tuple(pair_of_types):
