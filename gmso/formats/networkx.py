@@ -62,7 +62,7 @@ def interactive_networkx_atomtypes(topology, list_of_labels=None):
     @interact
     def get_interactive_sites(Label=list_of_labels, Atom_Name=names_tuple):
         # Plot atom types for the widget inputs
-        plot_networkx_atomtypes(topology, Atom_Name, [Label])
+        nx_utils.plot_networkx_atomtypes(topology, Atom_Name, [Label])
 
         return
 
@@ -143,7 +143,7 @@ def interactive_networkx_bonds(topology, additional_labels=None):
             )
         )
     interact(
-        call_interactive_sites,
+        nx_utils.call_interactive_sites,
         Atom1=atom_selection[0],
         Atom2=atom_selection[1],
         list_of_labels=fixed(list_of_labels),
@@ -222,7 +222,7 @@ def interactive_networkx_angles(topology):
             )
         )
     interact(
-        select_angles_from_sites,
+        nx_utils.select_angles_from_sites,
         networkx_graph=fixed(networkx_graph),
         top=fixed(topology),
         Atom1=atom_selection[0],
@@ -307,7 +307,7 @@ def interactive_networkx_dihedrals(topology):
             )
         )
     interact(
-        select_dihedrals_from_sites,
+        nx_utils.select_dihedrals_from_sites,
         networkx_graph=fixed(networkx_graph),
         top=fixed(topology),
         Atom1=atom_selection[0],
