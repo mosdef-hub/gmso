@@ -53,11 +53,15 @@ def from_parmed(structure, refer_type=True):
     if refer_type:
         pmd_top_atomtypes = _atom_types_from_pmd(structure)
         # Consolidate parmed bondtypes and relate to topology bondtypes
-        pmd_top_bondtypes = _bond_types_from_pmd(structure)
+        bond_types_map = _get_types_map(structure, 'bonds')
+        pmd_top_bondtypes = _bond_types_from_pmd(structure, bond_types_members_map=bond_types_map)
         # Consolidate parmed angletypes and relate to topology angletypes
-        pmd_top_angletypes = _angle_types_from_pmd(structure)
+        angle_types_map = _get_types_map(structure, 'angles')
+        pmd_top_angletypes = _angle_types_from_pmd(structure, angle_types_member_map=angle_types_map)
         # Consolidate parmed dihedraltypes and relate to topology dihedraltypes
-        pmd_top_dihedraltypes = _dihedral_types_from_pmd(structure)
+        dihedral_types_map = _get_types_map(structure, 'dihedrals')
+        dihedral_types_map.update(_get_types_map(structure, 'rb_torsions'))
+        pmd_top_dihedraltypes = _dihedral_types_from_pmd(structure, dihedral_types_member_map=dihedral_types_map)
 
     subtops = list()
     for residue in structure.residues:
@@ -215,7 +219,7 @@ def _atom_types_from_pmd(structure):
         pmd_top_atomtypes[atom_type] = top_atomtype
     return pmd_top_atomtypes
 
-def _bond_types_from_pmd(structure):
+def _bond_types_from_pmd(structure, bond_types_members_map=None):
     """ Helper function to convert GMSO BondType
 
     This function take in a Parmed Structure, iterate through its
@@ -223,29 +227,33 @@ def _bond_types_from_pmd(structure):
     return a dictionary containing all pairs of pmd.BondType
     and GMSO.BondType
 
-    Parameter
+    Parameters
     ----------
-        structure: pmd.Structure
-            Parmed Structure that needed to be converted.
+    structure: pmd.Structure
+        Parmed Structure that needed to be converted.
+    bond_types_members_map: optional, dict, default=None
+        The member types (atomtype string) for each atom associated with the bond_types the structure
 
-    Return
-    ------
-        pmd_top_bondtypes : dict
-            A dictionary linking a pmd.BondType object to its
-            corresponding GMSO.BondType object.
+    Returns
+    -------
+    pmd_top_bondtypes : dict
+        A dictionary linking a pmd.BondType object to its
+        corresponding GMSO.BondType object.
     """
     pmd_top_bondtypes = dict()
+    bond_types_members_map = _assert_dict(bond_types_members_map, 'bond_types_members_map')
     for btype in structure.bond_types:
         bond_params = {
                 'k': (2 * btype.k * u.Unit('kcal / (angstrom**2 * mol)')),
                 'r_eq': btype.req * u.angstrom
                 }
 
-        top_bondtype = gmso.BondType(parameters=bond_params)
+        member_types = bond_types_members_map.get(id(btype))
+        top_bondtype = gmso.BondType(parameters=bond_params, member_types=member_types)
         pmd_top_bondtypes[btype] = top_bondtype
     return pmd_top_bondtypes
 
-def _angle_types_from_pmd(structure):
+def _angle_types_from_pmd(structure, angle_types_member_map=None):
     """ Helper function to convert GMSO AngleType
 
     This function take in a Parmed Structure, iterate through its
@@ -253,18 +261,22 @@ def _angle_types_from_pmd(structure):
     return a dictionary containing all pairs of pmd.AngleType
     and GMSO.AngleType
 
-    Parameter
+    Parameters
     ----------
-        structure: pmd.Structure
-            Parmed Structure that needed to be converted.
+    structure: pmd.Structure
+        Parmed Structure that needed to be converted.
+    angle_types_member_map: optional, dict, default=None
+        The member types (atomtype string) for each atom associated with the angle_types the structure
 
-    Return
-    ------
-        pmd_top_angletypes : dict
-            A dictionary linking a pmd.AngleType object to its
-            corresponding GMSO.AngleType object.
+    Returns
+    -------
+    pmd_top_angletypes : dict
+        A dictionary linking a pmd.AngleType object to its
+        corresponding GMSO.AngleType object.
     """
     pmd_top_angletypes = dict()
+    angle_types_member_map = _assert_dict(angle_types_member_map, 'angle_types_member_map')
+
     for angletype in structure.angle_types:
         angle_params = {
                 'k': (2 * angletype.k * u.Unit('kcal / (rad**2 * mol)')),
@@ -274,11 +286,12 @@ def _angle_types_from_pmd(structure):
         # For Urey Bradley:
         # k in (kcal/(angstrom**2 * mol))
         # r_eq in angstrom
-        top_angletype = gmso.AngleType(parameters=angle_params)
+        member_types = angle_types_member_map.get(id(angletype))
+        top_angletype = gmso.AngleType(parameters=angle_params, member_types=member_types)
         pmd_top_angletypes[angletype] = top_angletype
     return pmd_top_angletypes
 
-def _dihedral_types_from_pmd(structure):
+def _dihedral_types_from_pmd(structure, dihedral_types_member_map=None):
     """ Helper function to convert GMSO DihedralType
 
     This function take in a Parmed Structure, iterate through its
@@ -286,27 +299,32 @@ def _dihedral_types_from_pmd(structure):
     GMSO.DihedralType, and finally return a dictionary containing all
     pairs of pmd.Dihedraltype (or pmd.RBTorsionType) and GMSO.DihedralType
 
-    Parameter
+    Parameters
     ----------
-        structure: pmd.Structure
-            Parmed Structure that needed to be converted.
+    structure: pmd.Structure
+        Parmed Structure that needed to be converted.
+    dihedral_types_member_map: optional, dict, default=None
+        The member types (atomtype string) for each atom associated with the dihedral_types the structure
 
-    Return
-    ------
-        pmd_top_dihedraltypes : dict
-            A dictionary linking a pmd.DihedralType or pmd.RBTorsionType
-            object to its corresponding GMSO.DihedralType object.
+    Returns
+    -------
+    pmd_top_dihedraltypes : dict
+        A dictionary linking a pmd.DihedralType or pmd.RBTorsionType
+        object to its corresponding GMSO.DihedralType object.
     """
     pmd_top_dihedraltypes = dict()
+    dihedral_types_member_map = _assert_dict(dihedral_types_member_map, 'dihedral_types_member_map')
+
     for dihedraltype in structure.dihedral_types:
         dihedral_params = {
                 'k': (dihedraltype.phi_k * u.Unit('kcal / mol')),
                 'phi_eq': (dihedraltype.phase * u.degree),
                 'n': dihedraltype.per * u.dimensionless
             }
-
-        top_dihedraltype = gmso.DihedralType(parameters=dihedral_params)
+        member_types = dihedral_types_member_map.get(id(dihedraltype))
+        top_dihedraltype = gmso.DihedralType(parameters=dihedral_params, member_types=member_types)
         pmd_top_dihedraltypes[dihedraltype] = top_dihedraltype
+
     for dihedraltype in structure.rb_torsion_types:
         dihedral_params = {
                 'c0': (dihedraltype.c0 * u.Unit('kcal/mol')),
@@ -317,11 +335,14 @@ def _dihedral_types_from_pmd(structure):
                 'c5': (dihedraltype.c5 * u.Unit('kcal/mol')),
             }
 
+        member_types = dihedral_types_member_map.get(id(dihedraltype))
+
         top_dihedraltype = gmso.DihedralType(parameters=dihedral_params,
                 expression='c0 * cos(phi)**0 + c1 * cos(phi)**1 + ' +
                 'c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + ' +
                 'c5 * cos(phi)**5',
-                independent_variables='phi'
+                independent_variables='phi',
+                member_types=member_types
                 )
         pmd_top_dihedraltypes[dihedraltype] = top_dihedraltype
     return pmd_top_dihedraltypes
@@ -609,3 +630,38 @@ def _dihedral_types_from_gmso(top, structure, dihedral_map):
         pmd_dihedral.type = dtype_map[dihedral.connection_type]
     structure.dihedral_types.claim()
     structure.rb_torsions.claim()
+
+
+def _get_types_map(structure, attr):
+    """Build `member_types` map for atoms, bonds, angles and dihedrals"""
+    assert attr in {'atoms', 'bonds', 'angles', 'dihedrals', 'rb_torsions'}
+    type_map = {}
+    for member in getattr(structure, attr):
+        conn_type_id, member_types = _get_member_types_map_for(member)
+        if conn_type_id not in type_map and all(member_types):
+            type_map[conn_type_id] = member_types
+    return type_map
+
+
+def _get_member_types_map_for(member):
+    if isinstance(member, pmd.Atom):
+        return id(member.atom_type), member.type
+    if isinstance(member, pmd.Bond):
+        return id(member.type), (member.atom1.type, member.atom2.type)
+    if isinstance(member, pmd.Angle):
+        return id(member.type), (member.atom1.type, member.atom2.type, member.atom3.type)
+    if isinstance(member, pmd.Dihedral):
+        return id(member.type), (member.atom1.type, member.atom2.type, member.atom3.type, member.atom4.type)
+
+
+def _assert_dict(input_dict, param):
+    """Provide default value for a dictionary and do a type check for a parameter"""
+    input_dict = {} if input_dict is None else input_dict
+
+    if not isinstance(input_dict, dict):
+        raise TypeError(
+            f"Expected `{param}` to be a dictionary. "
+            f"Got {type(input_dict)} instead."
+        )
+
+    return input_dict

@@ -38,7 +38,7 @@ class TestConvertParmEd(BaseTest):
         assert top.n_bonds == 7
         assert top.n_angles == 12
         assert top.n_dihedrals == 9
-        assert top.n_connections == 28 
+        assert top.n_connections == 28
 
         for site in top.sites:
             assert site.atom_type is not None
@@ -195,3 +195,13 @@ class TestConvertParmEd(BaseTest):
 
         struc_from_top = to_parmed(top_from_struc)
         assert_allclose_units(struc_from_top.box, [60, 60, 60, 90, 90, 90], rtol=1e-5, atol=1e-8)
+
+    def test_from_parmed_member_types(self):
+        struc = pmd.load_file(get_fn("ethane.top"), xyz=get_fn("ethane.gro"))
+        top = from_parmed(struc)
+        for potential_types in [
+            getattr(top, attr)
+            for attr in ["bond_types", "angle_types", "dihedral_types"]
+        ]:
+            for potential in potential_types:
+                assert potential.member_types
