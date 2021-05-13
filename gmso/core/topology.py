@@ -616,7 +616,6 @@ class Topology(object):
 
     def _get_angles_for(self, site):
         """Return a list of angles in this Topology that the site is a part of"""
-
         angles = []
         for angle in self.angles:
             if site in angle.connection_members:

@@ -17,21 +17,27 @@ WORKDIR /gmso
 
 RUN conda update conda -yq && \
 	conda config --set always_yes yes --set changeps1 no && \
-	conda config --add channels omnia && \
-	conda config --add channels conda-forge && \
-	conda create -n gmso-docker python=$PY_VERSION && \
 	. /opt/conda/etc/profile.d/conda.sh && \
-	conda activate gmso-docker && \
-	conda install python=$PY_VERSION nomkl --file requirements-test.txt && \
+	sed -i -E "s/python.*$/python="$PY_VERSION"/" environment-dev.yml && \
+	conda env create nomkl -f environment-dev.yml && \
+	conda activate gmso-dev && \
+	conda install -c conda-forge nomkl jupyter && \
         python setup.py install && \
-	echo "source activate gmso-docker" >> \
+	echo "source activate gmso-dev" >> \
 	/home/anaconda/.profile && \
 	conda clean -afy && \
-	mkdir /home/anaconda/gmso-notebooks && \
+	mkdir /home/anaconda/data && \
 	chown -R anaconda:anaconda /gmso && \
 	chown -R anaconda:anaconda /opt && \
 	chown -R anaconda:anaconda /home/anaconda
 
 WORKDIR /home/anaconda
 
-CMD /bin/su anaconda -s /bin/sh -l
+COPY devtools/docker-entrypoint.sh /entrypoint.sh
+
+RUN chmod a+x /entrypoint.sh
+
+USER anaconda
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["jupyter"]
