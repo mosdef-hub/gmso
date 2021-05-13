@@ -56,6 +56,8 @@ class GMSOBase(BaseModel, ABC):
         include = kwargs.get('include')
         include_alias = set()
         exclude_alias = set()
+        # FIXME: Pydantic>1.8 doesn't recognize json_encoders without this update
+        self.__config__.json_encoders.update(GMSOJSONHandler.json_encoders)
         if include:
             for included in include:
                 if included in self.Config.alias_to_fields:
