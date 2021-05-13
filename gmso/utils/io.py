@@ -6,6 +6,22 @@ import inspect
 import textwrap
 from unittest import SkipTest
 
+MESSAGES = dict()
+MESSAGES['matplotlib.pyplot'] = '''
+The code at {filename}:{line_number} requires the "matplotlib" package
+matplotlib can be installed using:
+# conda install -c conda-forge matplotlib
+or
+# pip install matplotlib
+'''
+
+MESSAGES['matplotlib'] = '''
+The code at {filename}:{line_number} requires the "matplotlib" package
+matplotlib can be installed using:
+# conda install -c conda-forge matplotlib
+or
+# pip install matplotlib
+'''
 
 class DelayImportError(ImportError, SkipTest):
     pass
@@ -60,8 +76,11 @@ def import_(module):
     try:
         return importlib.import_module(module)
     except ImportError as e:
-        message = 'The code at {filename}:{line_number} requires the ' + module + ' package'
-        e = ImportError('No module named %s' % module)
+        try:
+            message = MESSAGES[module]
+        except KeyError:
+            message = 'The code at {filename}:{line_number} requires the ' + module + ' package'
+            e = ImportError('No module named %s' % module)
 
         frame, filename, line_number, function_name, lines, index = \
             inspect.getouterframes(inspect.currentframe())[1]
@@ -126,3 +145,24 @@ try:
     del unit
 except ImportError:
     has_simtk_unit = False
+
+try:
+    import ipywidgets
+    has_ipywidgets = True
+    del ipywidgets
+except ImportError:
+    has_ipywidgets = False
+
+try:
+    import matplotlib
+    has_matplotlib = True
+    del matplotlib
+except ImportError:
+    has_matplotlib = False   
+
+def run_from_ipython():
+    try:
+        __IPYTHON__
+        return True
+    except NameError:
+        return False
