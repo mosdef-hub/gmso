@@ -1,6 +1,6 @@
 import warnings
 from abc import ABC
-from typing import Any, ClassVar, Type, Union
+from typing import Any, ClassVar, Type
 
 
 from pydantic import BaseModel
