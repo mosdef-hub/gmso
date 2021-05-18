@@ -295,3 +295,13 @@ class TestConvertParmEd(BaseTest):
         assert_allclose_units(
             struc_from_top.box, [60, 60, 60, 90, 90, 90], rtol=1e-5, atol=1e-8
         )
+
+    def test_from_parmed_member_types(self):
+        struc = pmd.load_file(get_fn("ethane.top"), xyz=get_fn("ethane.gro"))
+        top = from_parmed(struc)
+        for potential_types in [
+            getattr(top, attr)
+            for attr in ["bond_types", "angle_types", "dihedral_types"]
+        ]:
+            for potential in potential_types:
+                assert potential.member_types

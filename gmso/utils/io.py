@@ -8,6 +8,27 @@ from unittest import SkipTest
 
 from pkg_resources import resource_filename
 
+MESSAGES = dict()
+MESSAGES[
+    "matplotlib.pyplot"
+] = """
+The code at {filename}:{line_number} requires the "matplotlib" package
+matplotlib can be installed using:
+# conda install -c conda-forge matplotlib
+or
+# pip install matplotlib
+"""
+
+MESSAGES[
+    "matplotlib"
+] = """
+The code at {filename}:{line_number} requires the "matplotlib" package
+matplotlib can be installed using:
+# conda install -c conda-forge matplotlib
+or
+# pip install matplotlib
+"""
+
 
 class DelayImportError(ImportError, SkipTest):
     """Delay an import error for testing utilities."""
@@ -66,12 +87,15 @@ def import_(module):
     try:
         return importlib.import_module(module)
     except ImportError as e:
-        message = (
-            "The code at {filename}:{line_number} requires the "
-            + module
-            + " package"
-        )
-        e = ImportError("No module named %s" % module)
+        try:
+            message = MESSAGES[module]
+        except KeyError:
+            message = (
+                "The code at {filename}:{line_number} requires the "
+                + module
+                + " package"
+            )
+            e = ImportError("No module named %s" % module)
 
         (
             frame,
@@ -155,3 +179,28 @@ try:
     del unit
 except ImportError:
     has_simtk_unit = False
+
+try:
+    import ipywidgets
+
+    has_ipywidgets = True
+    del ipywidgets
+except ImportError:
+    has_ipywidgets = False
+
+try:
+    import matplotlib
+
+    has_matplotlib = True
+    del matplotlib
+except ImportError:
+    has_matplotlib = False
+
+
+def run_from_ipython():
+    """Verify that the code is running in an ipython kernel."""
+    try:
+        __IPYTHON__
+        return True
+    except NameError:
+        return False

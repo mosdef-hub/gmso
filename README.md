@@ -30,7 +30,11 @@ Introduction
 `GMSO` is designed to be a general and flexible representation of chemical topolgies for molecular simulation.
 With an emphasis on assuming as little as possible about the chemical system, model, or engine, `GMSO` can enable support for a variety of systems.
 `GMSO` is a part of the [MoSDeF (Molecular Simulation and Design Framework)](https://mosdef.org) ecosystem, and is intended to be the backend replacement for the [`foyer` package](https://foyer.mosdef.org).
-
+Libraries in the MoSDeF ecosystem are designed to provide utilities neccessary to streamline
+a researcher's simulation workflow. When setting up simulation studies,
+we also recommend users to follow the [TRUE](https://www.tandfonline.com/doi/full/10.1080/00268976.2020.1742938)
+(Transparent, Reproducible, Usable-by-others, and Extensible) standard, which is a set of common
+practices meant to improve the reproducibility of computational simulation research.
 
 Goals and Features
 ------------------

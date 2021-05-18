@@ -1,5 +1,6 @@
 import unyt as u
 
+from gmso.utils.io import run_from_ipython
 from gmso.utils.misc import unyt_to_hashable
 
 
@@ -24,3 +25,8 @@ def test_unyt_to_hashable():
     assert hash(unyt_to_hashable(1 * u.nm)) != hash(
         unyt_to_hashable([1, 1] * u.nm)
     )
+
+
+def test_has_ipython():
+    __IPYTHON__ = None
+    assert run_from_ipython() is False
