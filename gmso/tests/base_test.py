@@ -327,8 +327,9 @@ class BaseTest:
                 return False
             if atom1 is atom2:
                 return True
+            equal = lambda x1, x2: u.allclose_units(x1, x2) if isinstance(x1, u.unyt_array) and isinstance(x2, u.unyt_array) else x1 == x2
             for prop in atom1.dict(by_alias=True):
-                if not atom2.dict().get(prop) == atom1.dict().get(prop):
+                if not equal(atom2.dict().get(prop), atom1.dict().get(prop)):
                     return False
             return True
         return test_atom_equality

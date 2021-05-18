@@ -1,6 +1,6 @@
 import warnings
 from abc import ABC
-from typing import Any, ClassVar, Type
+from typing import Any, ClassVar, Type, Union
 
 
 from pydantic import BaseModel
@@ -49,6 +49,13 @@ class GMSOBase(BaseModel, ABC):
     def parse_obj(cls: Type['Model'], obj: Any) -> 'Model':
         dict_to_unyt(obj)
         return super(GMSOBase, cls).parse_obj(obj)
+
+    def dict(
+        self,
+        **kwargs
+    ) -> 'DictStrAny':
+        kwargs['by_alias'] = True
+        return super().dict(**kwargs)
 
     def json(self, **kwargs):
         kwargs['by_alias'] = True
