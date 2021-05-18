@@ -1,3 +1,4 @@
+"""Representation of the chemical elements."""
 import json
 import warnings
 from re import sub
@@ -38,26 +39,36 @@ class Element(GMSOBase):
     mass: u.unyt_quantity = Field(..., description="Mass of the element.")
 
     def __repr__(self):
+        """Representation of the element."""
         return (
             f"<Element: {self.name}, symbol: {self.symbol}, "
             f"atomic number: {self.atomic_number}, mass: {self.mass.to('amu')}>"
         )
 
     def __eq__(self, other):
+        """Return true if the element is equvalent to another element."""
         return hash(self) == hash(other)
 
     def __hash__(self):
+        """Generate an unique hash of the element for comparison."""
         return hash(
-            (self.name, self.symbol, self.atomic_number, unyt_to_hashable(self.mass))
+            (
+                self.name,
+                self.symbol,
+                self.atomic_number,
+                unyt_to_hashable(self.mass),
+            )
         )
 
     class Config:
+        """Pydantic configuration for element."""
+
         arbitrary_types_allowed = True
         allow_mutation = False
 
 
 def element_by_symbol(symbol):
-    """Search for an element by its symbol
+    """Search for an element by its symbol.
 
     Look up an element from a list of known elements by symbol.
     Return None if no match found.
@@ -84,7 +95,7 @@ def element_by_symbol(symbol):
 
 
 def element_by_name(name):
-    """Search for an element by its name
+    """Search for an element by its name.
 
     Look up an element from a list of known elements by name.
     Return None if no match found.
@@ -111,7 +122,7 @@ def element_by_name(name):
 
 
 def element_by_atomic_number(atomic_number):
-    """Search for an element by its atomic number
+    """Search for an element by its atomic number.
 
     Look up an element from a list of known elements by atomic number.
     Return None if no match found.
@@ -148,7 +159,7 @@ def element_by_atomic_number(atomic_number):
 
 
 def element_by_mass(mass, exact=True):
-    """Search for an element by its mass
+    """Search for an element by its mass.
 
     Look up an element from a list of known elements by mass.
     If given mass is an int or a float, it will be convert to a unyt quantity (u.amu).
@@ -170,7 +181,6 @@ def element_by_mass(mass, exact=True):
         Return an element from the periodict table if we find a match,
         otherwise return None
     """
-
     if isinstance(mass, str):
         # Convert to float if a string is provided
         mass_trimmed = np.round(float(sub(r"[a-z -]", "", mass.lower())))
@@ -190,7 +200,9 @@ def element_by_mass(mass, exact=True):
         matched_element = mass_dict.get(mass_trimmed)
     else:
         # Closest match mode
-        mass_closest = min(mass_dict.keys(), key=lambda k: abs(k - mass_trimmed))
+        mass_closest = min(
+            mass_dict.keys(), key=lambda k: abs(k - mass_trimmed)
+        )
         msg2 = f"Closest mass to {mass_trimmed}: {mass_closest}"
         warnings.warn(msg2)
         matched_element = mass_dict.get(mass_closest)
@@ -198,7 +210,7 @@ def element_by_mass(mass, exact=True):
 
 
 def element_by_smarts_string(smarts_string):
-    """Search for an element by a given SMARTS string
+    """Search for an element by a given SMARTS string.
 
     Look up an element from a list of known elements by SMARTS string.
     Return None if no match found.
@@ -251,7 +263,7 @@ def element_by_smarts_string(smarts_string):
 
 
 def element_by_atom_type(atom_type):
-    """Search for an element by a given a gmso AtomType object
+    """Search for an element by a given gmso AtomType object.
 
     Look up an element from a list of known elements by atom type.
     Return None if no match is found.
@@ -326,6 +338,7 @@ element_by_capitalized_names = {
 
 
 def __getattr__(name):
+    """Access an element by the object attribute."""
     if name in exported:
         return globals()[name]
     elif name in element_by_capitalized_names:

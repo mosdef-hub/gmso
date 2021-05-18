@@ -1,5 +1,5 @@
-from gmso.utils.singleton import Singleton
 from gmso.tests.base_test import BaseTest
+from gmso.utils.singleton import Singleton
 
 
 class TestSingleton(BaseTest):

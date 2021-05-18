@@ -1,13 +1,13 @@
 # GMSO Potential Templates JSON Files
 
-This directory contains json representations of GMSO potential 
-templates. 
+This directory contains json representations of GMSO potential
+templates.
 
 A potential template object requires the following attributes:
 
 1. `name`: Name of the potential template
 2. `expression`: expression for the potential template
-3. `independent_variables`: Independent variables for the template 
+3. `independent_variables`: Independent variables for the template
 
 
 ## For Developers
@@ -22,7 +22,7 @@ To add/contribute a new `PotentialTemplate`:
 }
 ```
 If you want to add a template named `ABCTemplate`. Create a file called
-`ABCTemplate.json` in this directory. Using the json reference above, 
+`ABCTemplate.json` in this directory. Using the json reference above,
 name the template `ABCTemplate` and change the `expression` and `independent_variables`.
 
 If there are more than one  `independent_variables` in your template, simply separate them with a comma(,).

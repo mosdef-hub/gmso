@@ -48,7 +48,7 @@
         </Parameters>
       </AtomType>
   </AtomTypes>
-  
+
   <AtomTypes expression="(A*exp(-B*r) - C/r**6)">
       <ParametersUnitDef parameter="A" unit="kJ/mol"/>
       <ParametersUnitDef parameter="B" unit="1/angstrom"/>
@@ -68,7 +68,7 @@
       </Parameters>
     </AtomType>
   </AtomTypes>
-  
+
   <BondTypes expression="0.5 * k * (r-r_eq)**2">
     <ParametersUnitDef parameter="r_eq" unit="nm"/>
     <ParametersUnitDef parameter="k" unit="kJ/mol"/>
@@ -127,7 +127,7 @@
       </Parameters>
       </BondType>
     </BondTypes>
-  
+
     <AngleTypes expression="0.5 * k * (r-r_eq)**2">
       <ParametersUnitDef parameter="r_eq" unit="radian"/>
       <ParametersUnitDef parameter="k" unit="kJ/(mol*radian**2)"/>
@@ -168,7 +168,7 @@
         </Parameters>
       </AngleType>
     </AngleTypes>
-  
+
     <DihedralTypes expression="c0 * cos(phi)**0 + c1 * cos(phi)**1 + c2 * cos(phi)**2 + c3 * cos(phi)**3 +c4 * cos(phi)**4 + c5 * cos(phi)**5">
       <ParametersUnitDef parameter="c0" unit="kJ/mol"/>
       <ParametersUnitDef parameter="c1" unit="kJ/mol"/>
@@ -187,7 +187,7 @@
           </Parameters>
       </DihedralType>
     </DihedralTypes>
-  
+
     <DihedralTypes expression="k * (1 + cos(n * shi - delta))">
       <ParametersUnitDef parameter="delta6" unit="degree"/>
       <ParametersUnitDef parameter="n6" unit="dimensionless"/>

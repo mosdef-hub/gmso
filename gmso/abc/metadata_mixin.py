@@ -1,28 +1,27 @@
-from typing import Dict, Any, List, Iterator
+from typing import Any, Dict, Iterator, List
 
-from pydantic import Field, BaseModel, validator
+from pydantic import BaseModel, Field, validator
 
 
 class MetadataMixin(BaseModel):
     tags: Dict[str, Any] = Field(
-        default={},
-        description='Tags associated with the metadata'
+        default={}, description="Tags associated with the metadata"
     )
 
     @property
     def tag_names(self) -> List[str]:
-        return list(self.__dict__.get('tags'))
+        return list(self.__dict__.get("tags"))
 
     @property
     def tag_names_iter(self) -> Iterator[str]:
-        return iter(self.__dict__.get('tags'))
+        return iter(self.__dict__.get("tags"))
 
     def add_tag(self, tag: str, value: Any, overwrite=True) -> None:
         """Add metadata for a particular tag"""
         if self.tags.get(tag) and not overwrite:
             raise ValueError(
-                f'Tag {tag} already exists. '
-                f'Please use overwrite=True to overwrite'
+                f"Tag {tag} already exists. "
+                f"Please use overwrite=True to overwrite"
             )
         self.tags[tag] = value
 
@@ -39,7 +38,7 @@ class MetadataMixin(BaseModel):
     def pop_tag(self, tag: str) -> Any:
         return self.tags.pop(tag, None)
 
-    @validator('tags', pre=True)
+    @validator("tags", pre=True)
     def validate_tags(cls, value):
         if value is None:
             value = dict()

@@ -20,5 +20,5 @@ repos:
   rev: '6.0.0'
   hooks:
     - id: pydocstyle
-      exclude: ^(gmso/tests/|docs/|devtools/|setup.py)
+      exclude: ^(gmso/abc|gmso/core|gmso/tests/|docs/|devtools/|setup.py)
       args: [--convention=numpy]

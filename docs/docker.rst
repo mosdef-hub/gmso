@@ -26,7 +26,7 @@ Alternatively, you can also start a Bourne shell to use python from the containe
 
 .. code-block:: bash
 
-    $ docker run -it --mount type=bind,source=$(pwd),target="/home/anaconda/data" mosdef/gmso:latest sh 
+    $ docker run -it --mount type=bind,source=$(pwd),target="/home/anaconda/data" mosdef/gmso:latest sh
     ~ $ source .profile
     (gmso-dev) ~ $
 
@@ -38,8 +38,8 @@ persistent data.
 
 Note
 
-The -it flags connect your keyboard to the terminal running in the container. 
-You may run the prior command without those flags, but be aware that the container will not respond to any keyboard input. 
+The -it flags connect your keyboard to the terminal running in the container.
+You may run the prior command without those flags, but be aware that the container will not respond to any keyboard input.
 In that case, you would need to use the docker ``ps`` and ``docker kill`` commands to shut down the container.
 
 Persisting User Volumes
@@ -117,4 +117,3 @@ You can remove the created container by using the following command:
 .. note::
 
     Instead of using `latest`, you can use the image :code:`mosdef/gmso:stable` for most recent stable release of ``GMSO`` and run the tutorials.
-

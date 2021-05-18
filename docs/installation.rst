@@ -49,7 +49,7 @@ Python 3.7 is the recommend version for users. It is the only version on which
 development and testing consistently takes place.  Older (3.6) and newer (3.8+)
 versions of Python 3 are likely to work but no guarantee is made and, in
 addition, some dependencies may not be available for other versions.  No effort
-is made to support Python 2 because it is considered obsolete as of early 2020. 
+is made to support Python 2 because it is considered obsolete as of early 2020.
 
 Testing your installation
 -------------------------
@@ -69,7 +69,7 @@ Building the documentation
 --------------------------
 
 ``GMSO`` uses `sphinx <https://www.sphinx-doc.org/en/master/index.html>`_ to build its documentation. To build the docs locally, run the following while in the ``docs`` directory::
-    
+
     $ conda env create -f docs-env.yml
     $ conda activate gmso-docs
     $ make html

@@ -1,4 +1,4 @@
-Data Structures in GMSO 
+Data Structures in GMSO
 ---------------------------
 Following data structures are available within GMSO.
 
