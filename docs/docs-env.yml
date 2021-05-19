@@ -4,6 +4,14 @@ channels:
 dependencies:
   - python=3.8
   - pip:
+    - numpy
+    - sympy
+    - unyt >= 2.4
+    - boltons
+    - lxml
+    - pydantic
+    - networkx
+    - ele >= 0.2.0
     - numpydoc
     - sphinx
     - sphinx_rtd_theme
