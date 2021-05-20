@@ -20,7 +20,7 @@ class DihedralType(ParametricPotential):
 
     The connectivity of a dihedral is:
 
-           m1–m2–m3–m4
+       m1–m2–m3–m4
 
     where m1, m2, m3, and m4 are connection members 1-4, respectively.
 
