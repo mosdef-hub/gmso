@@ -586,20 +586,20 @@ class Topology(object):
             self.update_atom_types()
 
         typed_status = {
-            'sites' : all(site.atom_type for site in self.sites),
-            'bonds' : all(bond.bond_type for bond in self.bonds),
-            'angles' : all(angle.angle_type for angle in self.angles),
-            'dihedrals' : all(dihedral.dihedral_type for dihedral in self.dihedrals),
-            'impropers' : all(improper.improper_type for improper in self.impropers)
+            'sites' : lambda top: all(site.atom_type for site in top.sites),
+            'bonds' : lambda top: all(bond.bond_type for bond in top.bonds),
+            'angles' : lambda top: all(angle.angle_type for angle in top.angles),
+            'dihedrals' : lambda top: all(dihedral.dihedral_type for dihedral in top.dihedrals),
+            'impropers' : lambda top: all(improper.improper_type for improper in top.impropers)
     }
 
         if group == 'topology':
             result = list()
             for subgroup in typed_status:
-                result.append(typed_status[subgroup])
+                result.append(typed_status[subgroup](self))
             return all(result)
         elif group in typed_status:
-            return typed_status[group]
+            return typed_status[group](self)
         else:
             raise ValueError(f"Could not check typing status of {group}. "
                              "Available options: 'topology', 'sites', 'bonds', "
