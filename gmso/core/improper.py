@@ -32,7 +32,7 @@ class Improper(Connection):
     """
     connection_members_: Tuple[Atom, Atom, Atom, Atom] = Field(
         ...,
-        description="The 4 atoms of this improper. Central site first, "
+        description="The 4 atoms of this improper. Central atom first, "
         "then the three atoms connected to the central site.",
     )
 
