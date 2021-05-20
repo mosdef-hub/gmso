@@ -5,7 +5,7 @@ As much of scientific software development happens in unix platforms, to avoid t
 
 Prerequisites
 -------------
-A docker installation in your machine. Follow this `link <https://docs.docker.com/get-docker/>`_ to get a docker installation working on your machine. If you are not familiar with docker and want to get started with docker, the Internet is full of good tutorials like the ones `here <https://docker-curriculum.com/>`_ and `here <https://www.youtube.com/watch?v=zJ6WbK9zFpI&feature=youtu.be>`_.
+A docker installation in your machine. Follow this `link <https://docs.docker.com/get-docker/>`_ to get a docker installation working on your machine. If you are not familiar with docker and want to get started with docker, the Internet is full of good tutorials like the ones `here <https://docker-curriculum.com/>`__ and `here <https://www.youtube.com/watch?v=zJ6WbK9zFpI&feature=youtu.be>`__.
 
 Quick Start
 -----------
@@ -26,21 +26,20 @@ Alternatively, you can also start a Bourne shell to use python from the containe
 
 .. code-block:: bash
 
-    $ docker run -it --mount type=bind,source=$(pwd),target="/home/anaconda/data" mosdef/gmso:latest sh 
+    $ docker run -it --mount type=bind,source=$(pwd),target="/home/anaconda/data" mosdef/gmso:latest sh
     ~ $ source .profile
     (gmso-dev) ~ $
 
 .. Warning::
+    Containers by nature are ephemeral, so filesystem changes (e.g., adding a new notebook) only persist until the end of the
+    container's lifecycle.  If the container is removed, any changes or code additions will not persist.  See the section below for
+    persistent data.
 
-Containers by nature are ephemeral, so filesystem changes (e.g., adding a new notebook) only persist until the end of the
-container's lifecycle.  If the container is removed, any changes or code additions will not persist.  See the section below for
-persistent data.
+.. Note::
 
-Note
-
-The -it flags connect your keyboard to the terminal running in the container. 
-You may run the prior command without those flags, but be aware that the container will not respond to any keyboard input. 
-In that case, you would need to use the docker ``ps`` and ``docker kill`` commands to shut down the container.
+    The ``-it`` flags connect your keyboard to the terminal running in the container.
+    You may run the prior command without those flags, but be aware that the container will not respond to any keyboard input.
+    In that case, you would need to use the docker ``ps`` and ``docker kill`` commands to shut down the container.
 
 Persisting User Volumes
 -----------------------

@@ -82,7 +82,7 @@ class TestXMLConversion(BaseTest):
         assert foyer_fullerene.atom_types["C"].description == "carbon"
         assert foyer_fullerene.atom_types["C"].definition == "[C;r5;r6]"
         assert foyer_fullerene.atom_types["C"].expression == sympify(
-            "ep*(-sigma**6/r**6 + sigma**12/r**12) + q/(e0*r)"
+            "ep*(-sigma**6/r**6 + sigma**12/r**12)"
         )
 
     def test_foyer_bonds(self, foyer_fullerene):

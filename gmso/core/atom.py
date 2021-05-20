@@ -24,9 +24,9 @@ class Atom(Site):
     -----
     Atoms have all the attributes inherited from the base Site class,
     The order of precedence when attaining properties `charge` and `mass` is:
-        
-        1. atom.charge > atom.atom_type.charge 
-        2. atom.mass > atom.atom_type.mass
+    
+        #. atom.charge > atom.atom_type.charge
+        #. atom.mass > atom.atom_type.mass
         
     Examples
     --------
