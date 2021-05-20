@@ -177,3 +177,18 @@ class TestSerialization(BaseTest):
         for member1, member2 in zip(bond.connection_members, bond_copy.connection_members):
             assert are_equivalent_atoms(member1, member2)
         assert bond_copy.bond_type == bond.bond_type
+
+    def test_include_and_exclude(self):
+        atom = Atom(
+            mass=2.0 * u.g / u.mol,
+            charge=30.0*u.C,
+            name='TestAtom'
+        )
+        atom_json = atom.json(exclude={'mass'})
+        assert 'mass' not in atom_json
+        atom_json = atom.json(exclude={'mass_'})
+        assert 'mass' not in atom_json
+        atom_json = atom.json(include={'mass'})
+        assert 'name' not in atom_json
+        atom_json = atom.json(include={'mass_'})
+        assert 'name' not in atom_json

@@ -55,16 +55,11 @@ class GMSOBase(BaseModel, ABC):
         **kwargs
     ) -> 'DictStrAny':
         kwargs['by_alias'] = True
-        return super().dict(**kwargs)
-
-    def json(self, **kwargs):
-        kwargs['by_alias'] = True
         exclude = kwargs.get('exclude')
         include = kwargs.get('include')
         include_alias = set()
         exclude_alias = set()
-        # FIXME: Pydantic>1.8 doesn't recognize json_encoders without this update
-        self.__config__.json_encoders.update(GMSOJSONHandler.json_encoders)
+
         if include:
             for included in include:
                 if included in self.Config.alias_to_fields:
@@ -80,6 +75,14 @@ class GMSOBase(BaseModel, ABC):
                 else:
                     exclude_alias.add(excluded)
             kwargs['exclude'] = exclude_alias
+        super_dict = super(GMSOBase, self).dict(**kwargs)
+        print(self.__dict__.get('mass_'), super_dict)
+        return super_dict
+
+    def json(self, **kwargs):
+        kwargs['by_alias'] = True
+        # FIXME: Pydantic>1.8 doesn't recognize json_encoders without this update
+        self.__config__.json_encoders.update(GMSOJSONHandler.json_encoders)
 
         return super(GMSOBase, self).json(**kwargs)
 
