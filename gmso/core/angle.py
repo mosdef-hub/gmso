@@ -42,14 +42,18 @@ class Angle(Connection):
 
     def equivalent_members(self):
         """Get a set of the equivalent connection member tuples
+
         Returns
         _______
         frozenset
             A unique set of tuples of equivalent connection members
+
         Notes
         _____
         For an angle:
+
             i, j, k == k, j, i
+
         where i, j and k are the connection members.
         """
 

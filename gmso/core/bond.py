@@ -43,14 +43,18 @@ class Bond(Connection):
 
     def equivalent_members(self):
         """Get a set of the equivalent connection member tuples
+
         Returns
         _______
         frozenset
             A unique set of tuples of equivalent connection members
+
         Notes
         _____
         For a bond:
+
             i, j == j, i
+
         where i and j are the connection members.
         """
         return frozenset([

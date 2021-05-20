@@ -32,6 +32,7 @@ class ImproperType(ParametricPotential):
     ----
     Inherits many functions from gmso.ParametricPotential:
         __eq__, _validate functions
+
     """
 
     member_types_: Optional[Tuple[str, str, str, str]] = Field(
