@@ -155,7 +155,7 @@ def _write_gmso_xml(gmso_xml, **kwargs):
         attrib_dict={
             "energy": "kJ/mol",
             "mass": "amu",
-            "charge": "coulomb",
+            "charge": "elementary_charge",
             "distance": "nm",
         },
     )
@@ -246,14 +246,12 @@ def _write_nbforces(forcefield, ff_kwargs):
         forcefield,
         "AtomTypes",
         attrib_dict={
-            "expression": "ep * ((sigma/r)**12 - (sigma/r)**6) + q / (e0 * r)",
+            "expression": "ep * ((sigma/r)**12 - (sigma/r)**6)",
         },
     )
     parameters_units = {
         "ep": "kJ/mol",
-        "sigma": "nm",
-        "e0": "A**2*s**4/(kg*m**3)",
-        "q": "coulomb",
+        "sigma": "nm"
     }
 
     # NonBondedForces
@@ -282,11 +280,10 @@ def _write_nbforces(forcefield, ff_kwargs):
             './/AtomType[@name="{}"]'.format(atom_type.get("type"))
         )
         thisAtomType.attrib["name"] = atom_type.get("type", "AtomType")
+        thisAtomType.attrib["charge"] = atom_type.get("charge")
         parameters = {
             "ep": atom_type.get("epsilon"),
             "sigma": atom_type.get("sigma"),
-            "e0": "8.8542e-12",
-            "q": atom_type.get("charge"),
         }
         _add_parameters(thisAtomType, parameters)
 

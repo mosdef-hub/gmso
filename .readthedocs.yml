@@ -2,11 +2,8 @@
 version: 2
 formats:
   - htmlzip
-python:
-  version: 3.7
-  install:
-    - requirements: docs/requirements.txt
-  system_packages: true
+conda:
+  environment: docs/docs-env.yml
 
 sphinx:
   builder: html

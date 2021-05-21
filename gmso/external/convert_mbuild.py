@@ -24,27 +24,26 @@ if has_mbuild:
 def from_mbuild(compound, box=None, search_method=element_by_symbol):
     """Convert an mbuild.Compound to a gmso.Topology.
 
-    This conversion makes the following assumptions about the inputted
-    `Compound`:
-        * All positional and box dimension values in compound are in nanometers
+    This conversion makes the following assumptions about the inputted `Compound`:
+
+        * All positional and box dimension values in compound are in nanometers.
 
         * If the `Compound` has 4 or more levels of hierarchy, these are\
-            compressed to 3 levels of hierarchy in the resulting `Topology`. The\
-            top level `Compound` becomes the `Topology`, the second level\
-            Compounds become `SubTopologies`, and each particle becomes a `Site`,\
-            which are added to their corresponding `SubTopologies`.\
+          compressed to 3 levels of hierarchy in the resulting `Topology`. The\
+          top level `Compound` becomes the `Topology`, the second level\
+          Compounds become `SubTopologies`, and each particle becomes a `Site`,\
+          which are added to their corresponding `SubTopologies`.
 
         * Furthermore, `Sites` that do not belong to a sub-`Compound` are\
-            added to a single-`Site` `SubTopology`.
+          added to a single-`Site` `SubTopology`.
 
-        * The box dimension are extracted from `compound.periodicity`. If the\
-            `compound.periodicity` is `None`, the box lengths are the lengths of\
-            the bounding box + a 0.5 nm buffer.
+        * The box dimension are extracted from `compound.periodicity`. If\
+          the `compound.periodicity` is `None`, the box lengths are the lengths of\
+          the bounding box + a 0.5 nm buffer.
 
         * Only `Bonds` are added for each bond in the `Compound`. If `Angles`\
-        and `Dihedrals` are desired in the resulting `Topology`, they must be\
-        added separately from this function.
-
+          and `Dihedrals` are desired in the resulting `Topology`, they must be\
+          added separately from this function.
 
     Parameters
     ----------
@@ -61,11 +60,9 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
         element_by_atomic_number, and element_by_mass, which can be imported
         from `gmso.core.element'
 
-
     Returns
     -------
     top : gmso.Topology
-
     """
     msg = "Argument compound is not an mbuild.Compound"
     assert isinstance(compound, mb.Compound), msg

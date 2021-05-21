@@ -9,18 +9,18 @@ from gmso.core.improper_type import ImproperType
 
 
 class Improper(Connection):
-    __base_doc__ = """A 4-partner connection between sites.
+    __base_doc__ = """sA 4-partner connection between sites.
 
     This is a subclass of the gmso.Connection superclass.
     This class has strictly 4 members in its connection_members.
     The connection_type in this class corresponds to gmso.ImproperType
     The connectivity of an improper is:
 
-                   m2
-                   |
-                   m1
-                  / \
-                 m3  m4
+         m2
+         |
+         m1
+        /  \
+        m3  m4
 
     where m1, m2, m3, and m4 are connection members 1-4, respectively.
 
@@ -28,6 +28,7 @@ class Improper(Connection):
     -----
     Inherits some methods from Connection:
         __eq__, __repr__, _validate methods
+            
     Additional _validate methods are presented
     """
     connection_members_: Tuple[Atom, Atom, Atom, Atom] = Field(
@@ -58,10 +59,13 @@ class Improper(Connection):
         -------
         frozenset
             A unique set of tuples of equivalent connection members
+
         Notes
         -----
         For an improper:
+
             i, j, k, l == i, k, j, l
+
         where i, j, k, and l are the connection members.
         """
         equiv_members = [

@@ -47,10 +47,13 @@ class Bond(Connection):
         -------
         frozenset
             A unique set of tuples of equivalent connection members
+
         Notes
         -----
         For a bond:
+
             i, j == j, i
+
         where i and j are the connection members.
         """
         return frozenset(

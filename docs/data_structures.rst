@@ -24,7 +24,7 @@ Core Classes
 Topology
 ********
     .. autoclass:: gmso.Topology
-        :members: add_site, add_bond, add_angle
+        :members: add_site, add_connection, update_topology
 
 SubTopology
 ***********

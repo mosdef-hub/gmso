@@ -2,16 +2,17 @@
 Installation
 ============
 
-Installing with `conda <https://repo.anaconda.com/miniconda>`_
---------------------------------------------------------
+Installing with `conda <https://repo.anaconda.com/miniconda>`__
+---------------------------------------------------------------
 
 Starting from ``GMSO`` version ``0.3.0``, you can use `conda <https//repo.anaconda.com/miniconda>`_ to install ``GMSO`` in your preferred environment. This will also install the dependencies of ``GMSO``.
+
 ::
     (your-env) $ conda install -c conda-forge gmso
 
 
-Installing from source `conda <https://repo.anaconda.com/miniconda>`_
----------------------------------------------------------------------
+Installing from source `conda <https://repo.anaconda.com/miniconda>`__
+----------------------------------------------------------------------
 
 Dependencies of GMSO are listed in the files ``environment.yml`` (lightweight environment specification containing minimal dependencies) and ``environment-dev.yml`` (comprehensive environment specification including optional and testing packages for developers).
 The ``gmso`` or ``gmso-dev`` conda environments can be created with
@@ -36,6 +37,7 @@ Install an editable version from source
 ---------------------------------------
 
 Once all dependencies have been installed and the ``conda`` environment has been created, the ``GMSO`` itself can be installed.
+
 ::
     $ cd gmso
     $ conda activate gmso-dev # or gmso depending on your installation
@@ -61,6 +63,7 @@ Testing your installation
     $ pip install -e .
 
 And then run the tests with the ``py.test`` executable:
+
 ::
     $ py.test -v
 

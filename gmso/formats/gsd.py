@@ -4,7 +4,7 @@ from __future__ import division
 import warnings
 
 import numpy as np
-import pytest
+
 import unyt as u
 from unyt.array import allclose_units
 

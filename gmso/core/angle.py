@@ -51,7 +51,9 @@ class Angle(Connection):
         Notes
         -----
         For an angle:
+
             i, j, k == k, j, i
+
         where i, j and k are the connection members.
         """
         return frozenset(
