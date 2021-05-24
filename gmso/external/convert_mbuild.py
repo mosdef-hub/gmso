@@ -118,7 +118,7 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
     # if compound.periodicity is None and not box:
     else:
         if np.allclose(compound.periodicity, np.zeros(3)):
-            box = from_mbuild_box(compound.boundingbox)
+            box = from_mbuild_box(compound.get_boundingbox())
             if box:
                 box.lengths += [0.5, 0.5, 0.5] * u.nm
             top.box = box
