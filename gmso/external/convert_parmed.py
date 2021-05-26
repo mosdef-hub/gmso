@@ -264,7 +264,7 @@ def _atom_types_from_pmd(structure):
     return pmd_top_atomtypes
 
 
-def _bond_types_from_pmd(structure):
+def _bond_types_from_pmd(structure, bond_types_members_map=None):
     """Convert ParmEd bondtypes to GMSO BondType.
 
     This function takes in a Parmed Structure, iterate through its
@@ -303,7 +303,7 @@ def _bond_types_from_pmd(structure):
     return pmd_top_bondtypes
 
 
-def _angle_types_from_pmd(structure):
+def _angle_types_from_pmd(structure, angle_types_member=None):
     """Convert ParmEd angle types to  GMSO AngleType.
 
     This function takes in a Parmed Structure, iterates through its
@@ -346,7 +346,7 @@ def _angle_types_from_pmd(structure):
     return pmd_top_angletypes
 
 
-def _dihedral_types_from_pmd(structure):
+def _dihedral_types_from_pmd(structure, dihedral_types_member_map=None):
     """Convert ParmEd dihedral types to GMSO DihedralType.
 
     This function take in a Parmed Structure, iterate through its
