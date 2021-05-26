@@ -1,21 +1,22 @@
+"""Convert to and from an OpenMM Topology or System object."""
 import unyt as u
 
-from gmso.utils.io import import_, has_openmm, has_simtk_unit
-
+from gmso.utils.io import has_openmm, has_simtk_unit, import_
 
 if has_openmm & has_simtk_unit:
-    simtk_unit = import_('simtk.unit')
-    from simtk.openmm.app import *
+    simtk_unit = import_("simtk.unit")
     from simtk.openmm import *
+    from simtk.openmm.app import *
 
-def to_openmm(topology, openmm_object='topology'):
-    """
-    Convert an untyped topology object to an untyped OpenMM modeller or topology.
+
+def to_openmm(topology, openmm_object="topology"):
+    """Convert an untyped topology object to an untyped OpenMM modeller or topology.
+
     This is useful if it's preferred to atom-type a system within OpenMM.
     See http://openmm.org for more information.
 
     Parameters
-    ---------
+    ----------
     topology : `Topology` object
         An untyped topology object
     open_mm_object : 'topology' or 'modeller' OpenMM object, default='topology'
@@ -32,18 +33,16 @@ def to_openmm(topology, openmm_object='topology'):
     openmm_unit = 1 * simtk_unit.nanometer
     topology.positions.convert_to_units(openmm_unit.unit.get_symbol())
     value = [i.value for i in topology.positions]
-    openmm_pos = simtk_unit.Quantity(value=value,
-            unit=openmm_unit.unit)
+    openmm_pos = simtk_unit.Quantity(value=value, unit=openmm_unit.unit)
 
     # Adding a default chain and residue temporarily
     chain = openmm_top.addChain()
-    residue = openmm_top.addResidue(name='RES',
-                                    chain=chain)
+    residue = openmm_top.addResidue(name="RES", chain=chain)
 
     for site in topology.sites:
-        openmm_top.addAtom(name=site.name,
-                           element=site.element.name,
-                           residue=residue)
+        openmm_top.addAtom(
+            name=site.name, element=site.element.name, residue=residue
+        )
 
     # Set box
     box = topology.box
@@ -54,7 +53,7 @@ def to_openmm(topology, openmm_object='topology'):
     # TODO: Figure out how to add residues
     # TODO: Convert connections to OpenMM Bonds
 
-    if openmm_object == 'topology':
+    if openmm_object == "topology":
 
         return openmm_top
 
@@ -64,24 +63,26 @@ def to_openmm(topology, openmm_object='topology'):
         return modeller
 
 
-def to_system(topology,
-              nonbondedMethod=None,
-              nonbondedCutoff=0.8*u.nm,
-              switchDistance=0.6*u.nm,
-              constraints=None,
-              rigidWater=True,
-              implicitSolvent=None,
-              implicitSolventKappa=None,
-              implicitSolventSaltConc=0.0*u.Unit('mol/dm**3'),
-              temperature=300*u.Kelvin,
-              soluteDielectric=1.0,
-              solventDielectric=78,
-              removeCMMotion=True,
-              hydrogenMass=None,
-              ewaldErrorTolerance=0.0005,
-              flexibleConstraints=True,
-              verbose=False,
-              splitDihedrals=False):
+def to_system(
+    topology,
+    nonbondedMethod=None,
+    nonbondedCutoff=0.8 * u.nm,
+    switchDistance=0.6 * u.nm,
+    constraints=None,
+    rigidWater=True,
+    implicitSolvent=None,
+    implicitSolventKappa=None,
+    implicitSolventSaltConc=0.0 * u.Unit("mol/dm**3"),
+    temperature=300 * u.Kelvin,
+    soluteDielectric=1.0,
+    solventDielectric=78,
+    removeCMMotion=True,
+    hydrogenMass=None,
+    ewaldErrorTolerance=0.0005,
+    flexibleConstraints=True,
+    verbose=False,
+    splitDihedrals=False,
+):
     """
     Convert a typed topology object to a typed OpenMM System.  See http://openmm.org for more information.
 

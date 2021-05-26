@@ -1,30 +1,40 @@
-import os
-import sys
-from pkg_resources import resource_filename
+"""General module for IO operations in GMSO."""
 import importlib
 import inspect
+import os
+import sys
 import textwrap
 from unittest import SkipTest
 
-MESSAGES = dict()
-MESSAGES['matplotlib.pyplot'] = '''
-The code at {filename}:{line_number} requires the "matplotlib" package
-matplotlib can be installed using:
-# conda install -c conda-forge matplotlib
-or
-# pip install matplotlib
-'''
+from pkg_resources import resource_filename
 
-MESSAGES['matplotlib'] = '''
+MESSAGES = dict()
+MESSAGES[
+    "matplotlib.pyplot"
+] = """
 The code at {filename}:{line_number} requires the "matplotlib" package
 matplotlib can be installed using:
 # conda install -c conda-forge matplotlib
 or
 # pip install matplotlib
-'''
+"""
+
+MESSAGES[
+    "matplotlib"
+] = """
+The code at {filename}:{line_number} requires the "matplotlib" package
+matplotlib can be installed using:
+# conda install -c conda-forge matplotlib
+or
+# pip install matplotlib
+"""
+
 
 class DelayImportError(ImportError, SkipTest):
+    """Delay an import error for testing utilities."""
+
     pass
+
 
 def get_fn(filename):
     """Get the full path to one of the reference files shipped for utils.
@@ -43,14 +53,15 @@ def get_fn(filename):
     fn : str
         Full path to filename
     """
-    fn = resource_filename('gmso', os.path.join('utils', 'files', filename))
+    fn = resource_filename("gmso", os.path.join("utils", "files", filename))
     if not os.path.exists(fn):
-        raise IOError('Sorry! {} does not exists.'.format(fn))
+        raise IOError("Sorry! {} does not exists.".format(fn))
     return fn
 
 
 def import_(module):
-    """
+    """Import a module.
+
     Attempt to import a module and if it isn't installed, print a message to to STDERR
     instead of erroring out. This code is copied from foyer in foyer/utils/io.py.
 
@@ -79,18 +90,34 @@ def import_(module):
         try:
             message = MESSAGES[module]
         except KeyError:
-            message = 'The code at {filename}:{line_number} requires the ' + module + ' package'
-            e = ImportError('No module named %s' % module)
+            message = (
+                "The code at {filename}:{line_number} requires the "
+                + module
+                + " package"
+            )
+            e = ImportError("No module named %s" % module)
 
-        frame, filename, line_number, function_name, lines, index = \
-            inspect.getouterframes(inspect.currentframe())[1]
+        (
+            frame,
+            filename,
+            line_number,
+            function_name,
+            lines,
+            index,
+        ) = inspect.getouterframes(inspect.currentframe())[1]
 
-        m = message.format(filename=os.path.basename(filename), line_number=line_number)
+        m = message.format(
+            filename=os.path.basename(filename), line_number=line_number
+        )
         m = textwrap.dedent(m)
 
-        bar = '\033[91m' + '#' * max(len(line) for line in m.split(os.linesep)) + '\033[0m'
+        bar = (
+            "\033[91m"
+            + "#" * max(len(line) for line in m.split(os.linesep))
+            + "\033[0m"
+        )
 
-        print('', file=sys.stderr)
+        print("", file=sys.stderr)
         print(bar, file=sys.stderr)
         print(m, file=sys.stderr)
         print(bar, file=sys.stderr)
@@ -99,6 +126,7 @@ def import_(module):
 
 try:
     import mbuild
+
     has_mbuild = True
     del mbuild
 except ImportError:
@@ -106,6 +134,7 @@ except ImportError:
 
 try:
     import foyer
+
     has_foyer = True
     del foyer
 except ImportError:
@@ -113,13 +142,15 @@ except ImportError:
 
 try:
     import gsd
+
     has_gsd = True
-    del gsd 
+    del gsd
 except ImportError:
     has_gsd = False
 
 try:
     import parmed
+
     has_parmed = True
     del parmed
 except ImportError:
@@ -127,6 +158,7 @@ except ImportError:
 
 try:
     import mdtraj
+
     has_mdtraj = True
     del mdtraj
 except ImportError:
@@ -134,6 +166,7 @@ except ImportError:
 
 try:
     from simtk import openmm
+
     has_openmm = True
     del openmm
 except ImportError:
@@ -141,6 +174,7 @@ except ImportError:
 
 try:
     from simtk import unit
+
     has_simtk_unit = True
     del unit
 except ImportError:
@@ -148,6 +182,7 @@ except ImportError:
 
 try:
     import ipywidgets
+
     has_ipywidgets = True
     del ipywidgets
 except ImportError:
@@ -155,12 +190,15 @@ except ImportError:
 
 try:
     import matplotlib
+
     has_matplotlib = True
     del matplotlib
 except ImportError:
-    has_matplotlib = False   
+    has_matplotlib = False
+
 
 def run_from_ipython():
+    """Verify that the code is running in an ipython kernel."""
     try:
         __IPYTHON__
         return True
