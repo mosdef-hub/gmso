@@ -688,16 +688,21 @@ class Topology(object):
 
         return index
 
-    def to_datatables(self, parameter="sites", labels=None):
+    def to_datatables(self, parameter="sites", labels=None, unyts_bool=True):
         """Return a pandas dataframe object for the sites in a topology
 
         Parameters
         ----------
         parameter : a string
             A string determining what aspects of the gmso topology will be reported. Options are: 'sites','bonds','angles'
-            and 'dihedrals'. Defaults to 'sites'.
+        and 'dihedrals'. Defaults to 'sites'.
         labels : List of strings that are attributes of the topology site.
-        unique_id : Whether you want the identifier of each node to be included
+            Examples of these can be found by printing `dir(topology.sites[0])`
+        unyts_bool: bool
+            Determine if numerical values are saved as unyt quantities or floats. See 
+        https://unyt.readthedocs.io/en/stable/usage.html
+        for more information about manipulating unyt quantities. 
+        Default is True.
 
         Returns
         -------
@@ -733,94 +738,70 @@ class Topology(object):
                     try:
                         label1, label2 = label.split(".")
                         df[label] = list(
-                            getattr(getattr(site, label1), label2) for site in self.sites
+                            _return_float_for_unyt(
+                            getattr(getattr(site, label1), label2), unyts_bool) 
+                            for site in self.sites
                         )
                     except AttributeError:
                         raise AttributeError(
                             "The label {} is not in this gmso object".format(label)
                         )
                 elif label == "positions" or label == "position":
-                    df["x"] = list(getattr(site, "position")[0] for site in self.sites)
-                    df["y"] = list(getattr(site, "position")[1] for site in self.sites)
-                    df["z"] = list(getattr(site, "position")[2] for site in self.sites)
+                    df["x"] = list(
+                              _return_float_for_unyt(getattr(site, "position")[0], unyts_bool)
+                              for site in self.sites
+                              )
+                    df["y"] = list(
+                              _return_float_for_unyt(getattr(site, "position")[1], unyts_bool)
+                              for site in self.sites
+                              )
+                    df["z"] = list(
+                              _return_float_for_unyt(getattr(site, "position")[2], unyts_bool)
+                              for site in self.sites
+                              )
                 elif label == "charge" or label == "charges":
                     df["charge (e)"] = list(
-                        (site.charge / u.electron_charge * u.electron_charge.units)
+                        _return_float_for_unyt(
+                        site.charge / u.electron_charge * u.electron_charge.units, unyts_bool)
                         for site in self.sites
                     )
                 else:
                     try:
-                        df[label] = list(getattr(site, label) for site in self.sites)
+                        df[label] = list(
+                                    _return_float_for_unyt(getattr(site, label), unyts_bool)
+                                    for site in self.sites
+                                    )
                     except AttributeError:
                         raise AttributeError(
                             "The label {} is not in this gmso object".format(label)
                         )
         elif parameter == "bonds":
-            df = self._pandas_from_parameters(df, parameter=parameter, labels=labels)
-            df[
-                "Parameter 1 (k): " + str(self.bonds[0].bond_type.parameters["k"].units)
-            ] = list(bond.bond_type.parameters["k"].round(3) for bond in self.bonds)
-            df[
-                "Parameter 2 (r_eq): "
-                + str(self.bonds[0].bond_type.parameters["r_eq"].units)
-            ] = list(bond.bond_type.parameters["r_eq"].round(3) for bond in self.bonds)
+            df = self._pandas_from_parameters(df, parameter=parameter, labels=labels, unyts_bool=unyts_bool)
+            for i,param in enumerate(self.bonds[0].bond_type.parameters):
+                df[
+                    "Parameter "+str(i)+" ("+str(param)+"): " + str(self.bonds[0].bond_type.parameters[param].units)
+                  ] = list(
+                      _return_float_for_unyt(bond.bond_type.parameters[param], unyts_bool)
+                      for bond in self.bonds
+                      )
         elif parameter == "angles":
-            df = self._pandas_from_parameters(df, parameter=parameter, labels=labels)
-            df[
-                "Parameter 1 (k): "
-                + str(self.angles[0].angle_type.parameters["k"].units)
-            ] = list(angle.angle_type.parameters["k"].round(3) for angle in self.angles)
-            df[
-                "Parameter 2 (theta_eq): "
-                + str(self.angles[0].angle_type.parameters["theta_eq"].units)
-            ] = list(
-                angle.angle_type.parameters["theta_eq"].round(3)
-                for angle in self.angles
-            )
+            df = self._pandas_from_parameters(df, parameter=parameter, labels=labels, unyts_bool=unyts_bool)
+            for i,param in enumerate(self.angles[0].angle_type.parameters):
+                df[
+                    "Parameter "+str(i)+" ("+str(param)+"): " + str(self.angles[0].angle_type.parameters[param].units)
+                  ] = list(
+                      _return_float_for_unyt(angle.angle_type.parameters[param], unyts_bool)
+                      for angle in self.angles
+                      )
         elif parameter == "dihedrals":
-            df = self._pandas_from_parameters(df, parameter=parameter, labels=labels)
-            df[
-                "Parameter 1 (c0): "
-                + str(self.dihedrals[0].dihedral_type.parameters["c0"].units)
-            ] = list(
-                dihedral.dihedral_type.parameters["c0"].round(3)
-                for dihedral in self.dihedrals
-            )
-            df[
-                "Parameter 2 (c1): "
-                + str(self.dihedrals[0].dihedral_type.parameters["c1"].units)
-            ] = list(
-                dihedral.dihedral_type.parameters["c1"].round(3)
-                for dihedral in self.dihedrals
-            )
-            df[
-                "Parameter 3 (c2): "
-                + str(self.dihedrals[0].dihedral_type.parameters["c2"].units)
-            ] = list(
-                dihedral.dihedral_type.parameters["c2"].round(3)
-                for dihedral in self.dihedrals
-            )
-            df[
-                "Parameter 4 (c3): "
-                + str(self.dihedrals[0].dihedral_type.parameters["c3"].units)
-            ] = list(
-                dihedral.dihedral_type.parameters["c3"].round(3)
-                for dihedral in self.dihedrals
-            )
-            df[
-                "Parameter 5 (c4): "
-                + str(self.dihedrals[0].dihedral_type.parameters["c4"].units)
-            ] = list(
-                dihedral.dihedral_type.parameters["c4"].round(3)
-                for dihedral in self.dihedrals
-            )
-            df[
-                "Parameter 6 (c5): "
-                + str(self.dihedrals[0].dihedral_type.parameters["c5"].units)
-            ] = list(
-                dihedral.dihedral_type.parameters["c5"].round(3)
-                for dihedral in self.dihedrals
-            )
+            df = self._pandas_from_parameters(df, parameter=parameter, labels=labels, unyts_bool=unyts_bool)
+            for i,param in enumerate(self.dihedrals[0].dihedral_type.parameters):
+                df[
+                    "Parameter "+str(i)+" ("+str(param)+"): " + str(self.dihedrals[0].dihedral_type.parameters[param].units)
+                  ] = list(
+                      _return_float_for_unyt(dihedral.dihedral_type.parameters[param], unyts_bool)
+                      for dihedral in self.dihedrals
+                      )
         return df
 
     def _reindex_connection_types(self, ref):
@@ -845,7 +826,7 @@ class Topology(object):
         return f"<Topology {self.name}, {self.n_sites} sites, id: {id(self)}>"
 
 
-    def _pandas_from_parameters(self, df, parameter, labels=None):
+    def _pandas_from_parameters(self, df, parameter, labels=None, unyts_bool=True):
         if labels is None:
             labels = []
         list_of_sites = list(site for site in self.sites)
@@ -867,52 +848,69 @@ class Topology(object):
                     try:
                         label1, label2 = label.split(".")
                         df[label + " Atom" + str(site_index)] = list(
-                            gettattr(
-                                connection.connection_members[site_index],
-                                getattr(connection.connection_members[site_index], label1),
-                            )
+                            _return_float_for_unyt(
+                                getattr(
+                                    getattr(connection.connection_members[site_index], label1),
+                                    label2
+                                    ),
+                                unyts_bool
+                                )
                             for connection in getattr(self, parameter)
-                        )
-                    except NameError:
-                        raise NameError(
+                            )
+                    except AttributeError:
+                        raise AttributeError(
                             "The label {} is not in this gmso object".format(label)
                         )
                 elif label == "positions" or label == "position":
                     df["x Atom" + str(site_index) + " (nm)"] = list(
-                        float(
-                            getattr(connection.connection_members[site_index], "position")[0]
-                        )
+                        _return_float_for_unyt(
+                            getattr(connection.connection_members[site_index], "position")[0],
+                            unyts_bool
+                            )
                         for connection in getattr(self, parameter)
-                    )
+                        )
                     df["y Atom" + str(site_index) + " (nm)"] = list(
-                        float(
-                            getattr(connection.connection_members[site_index], "position")[1]
-                        )
+                        _return_float_for_unyt(
+                            getattr(connection.connection_members[site_index], "position")[1],
+                            unyts_bool
+                            )
                         for connection in getattr(self, parameter)
-                    )
+                        )
                     df["z Atom" + str(site_index) + " (nm)"] = list(
-                        float(
-                            getattr(connection.connection_members[site_index], "position")[2]
-                        )
+                        _return_float_for_unyt(
+                            getattr(connection.connection_members[site_index], "position")[2],
+                            unyts_bool
+                            )
                         for connection in getattr(self, parameter)
-                    )
+                        )
                 elif label == "charge" or label == "charges":
                     df["charge Atom" + str(site_index) + " (e)"] = list(
-                        float(
+                        _return_float_for_unyt(
                             getattr(connection.connection_members[site_index], "charge")
                             / u.electron_charge
-                            * u.electron_charge.units
-                        )
+                            * u.electron_charge.units,
+                            unyts_bool
+                            )
                         for connection in getattr(self, parameter)
-                    )
+                        ) 
                 else:
                     try:
                         df[label + " Atom" + str(site_index)] = list(
-                            getattr(connection.connection_members[site_index], label)
+                            _return_float_for_unyt(
+                                getattr(connection.connection_members[site_index], label),
+                                unyts_bool
+                                )
                             for connection in getattr(self, parameter)
-                        )
+                            )
                     except AttributeError:
                         raise AttributeError(
                             "The label {} is not in this gmso object".format(label)
                         )
         return df
+
+def _return_float_for_unyt(unyt_quant, unyts_bool):
+    unyt_arr = u.A*1
+    if isinstance(unyt_quant,unyt_arr.__class__):
+        return unyt_quant if unyts_bool else float(unyt_quant.value)
+    else:
+        return unyt_quant

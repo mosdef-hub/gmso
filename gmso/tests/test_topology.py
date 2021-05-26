@@ -638,7 +638,7 @@ class TestTopology(BaseTest):
         with pytest.raises(AttributeError) as e:
             typed_ethane.to_datatables(parameter='bonds', labels=['missingattr'])
         assert str(e.value) == "The label missingattr is not in this gmso object"
-        with pytest.raises(NameError) as e:
+        with pytest.raises(AttributeError) as e:
             typed_ethane.to_datatables(parameter='bonds', labels=['missingattr.attr'])
         assert str(e.value) == "The label missingattr.attr is not in this gmso object"
 
