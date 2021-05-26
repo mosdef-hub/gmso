@@ -1,38 +1,38 @@
 import numpy as np
 import unyt as u
 
-from gmso.core.topology import Topology
 from gmso.core.atom import Atom
 from gmso.core.subtopology import SubTopology
+from gmso.core.topology import Topology
 from gmso.tests.base_test import BaseTest
 
 
 class TestSubTopology(BaseTest):
     def test_subtop_init(self):
         default = SubTopology()
-        assert default.name == 'Sub-Topology'
+        assert default.name == "Sub-Topology"
         assert default.parent is None
         assert default.n_sites == 0
 
-        named = SubTopology(name='CoolSubTopology')
-        assert named.name == 'CoolSubTopology'
+        named = SubTopology(name="CoolSubTopology")
+        assert named.name == "CoolSubTopology"
         assert named.parent is None
         assert named.n_sites == 0
 
         myparent = Topology()
         with_parent = SubTopology(parent=myparent)
-        assert with_parent.name == 'Sub-Topology'
+        assert with_parent.name == "Sub-Topology"
         assert with_parent.parent == myparent
         assert with_parent.n_sites == 0
 
     def test_subtop_setters(self):
         subtop = SubTopology()
-        assert subtop.name == 'Sub-Topology'
+        assert subtop.name == "Sub-Topology"
         assert subtop.parent is None
         assert subtop.n_sites == 0
 
-        subtop.name = 'NewSubTopology'
-        assert subtop.name == 'NewSubTopology'
+        subtop.name = "NewSubTopology"
+        assert subtop.name == "NewSubTopology"
 
         newparent = Topology()
         subtop.parent = newparent

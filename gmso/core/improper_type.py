@@ -1,6 +1,7 @@
-from typing import Tuple, Optional
-import unyt as u
+"""Defined interactions for improper-style connections."""
+from typing import Optional, Tuple
 
+import unyt as u
 from pydantic import Field
 
 from gmso.core.parametric_potential import ParametricPotential
@@ -37,25 +38,27 @@ class ImproperType(ParametricPotential):
 
     member_types_: Optional[Tuple[str, str, str, str]] = Field(
         None,
-        description='List-like of of gmso.AtomType.name or gmso.AtomType.atomclass '
-                    'defining the members of this improper type'
+        description="List-like of of gmso.AtomType.name or gmso.AtomType.atomclass "
+        "defining the members of this improper type",
     )
 
-    def __init__(self,
-                 name='ImproperType',
-                 expression='0.5 * k * ((phi - phi_eq))**2',
-                 parameters=None,
-                 independent_variables=None,
-                 member_types=None,
-                 topology=None,
-                 tags=None):
+    def __init__(
+        self,
+        name="ImproperType",
+        expression="0.5 * k * ((phi - phi_eq))**2",
+        parameters=None,
+        independent_variables=None,
+        member_types=None,
+        topology=None,
+        tags=None,
+    ):
         if parameters is None:
             parameters = {
-                'k': 1000 * u.Unit('kJ / (deg**2)'),
-                'phi_eq': 0 * u.deg,
+                "k": 1000 * u.Unit("kJ / (deg**2)"),
+                "phi_eq": 0 * u.deg,
             }
         if independent_variables is None:
-            independent_variables = {'phi'}
+            independent_variables = {"phi"}
 
         super(ImproperType, self).__init__(
             name=name,
@@ -65,18 +68,17 @@ class ImproperType(ParametricPotential):
             topology=topology,
             member_types=member_types,
             set_ref=IMPROPER_TYPE_DICT,
-            tags=tags
+            tags=tags,
         )
 
     @property
     def member_types(self):
-        return self.__dict__.get('member_types_')
+        """Return member information for this ImproperType."""
+        return self.__dict__.get("member_types_")
 
     class Config:
-        fields = {
-            'member_types_': 'member_types'
-        }
+        """Pydantic configuration for attributes."""
 
-        alias_to_fields = {
-            'member_types': 'member_types_'
-        }
+        fields = {"member_types_": "member_types"}
+
+        alias_to_fields = {"member_types": "member_types_"}

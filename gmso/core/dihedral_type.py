@@ -1,6 +1,6 @@
-from typing import Tuple, Optional
-import unyt as u
+from typing import Optional, Tuple
 
+import unyt as u
 from pydantic import Field
 
 from gmso.core.parametric_potential import ParametricPotential
@@ -32,26 +32,28 @@ class DihedralType(ParametricPotential):
 
     member_types_: Optional[Tuple[str, str, str, str]] = Field(
         None,
-        description='List-like of of gmso.AtomType.name or gmso.AtomType.atomclass '
-                    'defining the members of this dihedral type'
+        description="List-like of of gmso.AtomType.name or gmso.AtomType.atomclass "
+        "defining the members of this dihedral type",
     )
 
-    def __init__(self,
-                 name='DihedralType',
-                 expression='k * (1 + cos(n * phi - phi_eq))**2',
-                 parameters=None,
-                 independent_variables=None,
-                 member_types=None,
-                 topology=None,
-                 tags=None):
+    def __init__(
+        self,
+        name="DihedralType",
+        expression="k * (1 + cos(n * phi - phi_eq))**2",
+        parameters=None,
+        independent_variables=None,
+        member_types=None,
+        topology=None,
+        tags=None,
+    ):
         if parameters is None:
             parameters = {
-                'k': 1000 * u.Unit('kJ / (deg**2)'),
-                'phi_eq': 180 * u.deg,
-                'n': 1 * u.dimensionless
+                "k": 1000 * u.Unit("kJ / (deg**2)"),
+                "phi_eq": 180 * u.deg,
+                "n": 1 * u.dimensionless,
             }
         if independent_variables is None:
-            independent_variables = {'phi'}
+            independent_variables = {"phi"}
 
         super(DihedralType, self).__init__(
             name=name,
@@ -61,18 +63,14 @@ class DihedralType(ParametricPotential):
             topology=topology,
             member_types=member_types,
             set_ref=DIHEDRAL_TYPE_DICT,
-            tags=tags
+            tags=tags,
         )
 
     @property
     def member_types(self):
-        return self.__dict__.get('member_types_')
+        return self.__dict__.get("member_types_")
 
     class Config:
-        fields = {
-            'member_types_': 'member_types'
-        }
+        fields = {"member_types_": "member_types"}
 
-        alias_to_fields = {
-            'member_types': 'member_types_'
-        }
+        alias_to_fields = {"member_types": "member_types_"}

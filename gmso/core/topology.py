@@ -1,3 +1,4 @@
+"""Base data structure for GMSO chemical systems."""
 import warnings
 
 import numpy as np
@@ -5,16 +6,15 @@ import unyt as u
 from boltons.setutils import IndexedSet
 import pandas as pd
 
-from gmso.core.atom import Atom
-from gmso.core.bond import Bond
 from gmso.core.angle import Angle
-from gmso.core.dihedral import Dihedral
-from gmso.core.improper import Improper
-from gmso.core.parametric_potential import ParametricPotential
-from gmso.core.atom_type import AtomType
-from gmso.core.bond_type import BondType
 from gmso.core.angle_type import AngleType
+from gmso.core.atom import Atom
+from gmso.core.atom_type import AtomType
+from gmso.core.bond import Bond
+from gmso.core.bond_type import BondType
+from gmso.core.dihedral import Dihedral
 from gmso.core.dihedral_type import DihedralType
+from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
 from gmso.utils.connectivity import identify_connections as _identify_connections
 from gmso.utils._constants import (
@@ -24,7 +24,11 @@ from gmso.utils._constants import (
     DIHEDRAL_TYPE_DICT,
     IMPROPER_TYPE_DICT,
 )
+from gmso.core.parametric_potential import ParametricPotential
 from gmso.exceptions import GMSOError
+from gmso.utils.connectivity import (
+    identify_connections as _identify_connections,
+)
 
 
 class Topology(object):
@@ -186,45 +190,62 @@ class Topology(object):
 
     @property
     def name(self):
+        """Return the name of the topology."""
         return self._name
 
     @name.setter
     def name(self, name):
+        """Set the name of the topology."""
         self._name = str(name) if name else "Topology"
 
     @property
     def box(self):
+        """Return the Box of the topology."""
         return self._box
 
     @box.setter
     def box(self, box):
+        """Set the box of the topology."""
         self._box = box
 
     @property
     def typed(self):
+        """Check if the system is parametrized."""
         return self._typed
 
     @typed.setter
     def typed(self, typed):
+        """Set the status of the topology if parametrized."""
         self._typed = typed
 
     @property
     def combining_rule(self):
+        """Return the combining rule for the topology."""
         return self._combining_rule
 
     @combining_rule.setter
     def combining_rule(self, rule):
+        """Set the combining rule for the topology."""
         if rule not in ["lorentz", "geometric"]:
             raise GMSOError("Combining rule must be `lorentz` or `geometric`")
         self._combining_rule = rule
 
     @property
     def scaling_factors(self):
+        """Return the scaling factors for the topology."""
         return self._scaling_factors
 
     @scaling_factors.setter
     def scaling_factors(self, scaling_factors):
-        expected_items = ["vdw_12", "vdw_13", "vdw_14", "coul_12", "coul_13", "coul_14"]
+        """Set the scaling factors for the topology."""
+        expected_items = [
+            "vdw_12",
+            "vdw_13",
+            "vdw_14",
+            "coul_12",
+            "coul_13",
+            "coul_14",
+        ]
         if not isinstance(scaling_factors, dict):
             raise GMSOError("Scaling factors should be a dictionary")
         for item in expected_items:
@@ -240,6 +261,7 @@ class Topology(object):
 
     @property
     def positions(self):
+        """Return the positions of the sites in the topology."""
         xyz = np.empty(shape=(self.n_sites, 3)) * u.nm
         for i, site in enumerate(self._sites):
             xyz[i, :] = site.position
@@ -247,110 +269,138 @@ class Topology(object):
 
     @property
     def n_sites(self):
+        """Return the number of sites in the topology."""
         return len(self.sites)
 
     @property
     def n_connections(self):
+        """Return the number of connections in the topology."""
         return len(self.connections)
 
     @property
     def n_bonds(self):
+        """Return the number of bonds in the topology."""
         return len(self.bonds)
 
     @property
     def n_angles(self):
+        """Return the amount of angles in the topology."""
         return len(self.angles)
 
     @property
     def n_dihedrals(self):
+        """Return the amount of dihedrals in the topology."""
         return len(self.dihedrals)
 
     @property
     def n_impropers(self):
+        """Return the number of impropers in the topology."""
         return len(self.impropers)
 
     @property
     def subtops(self):
+        """Return the subtopologies in the topology."""
         return self._subtops
 
     @property
     def n_subtops(self):
+        """Return number of subtopolgies."""
         return len(self._subtops)
 
     @property
     def sites(self):
+        """Return all sites in the topology."""
         return tuple(self._sites)
 
     @property
     def connections(self):
+        """Return all connections in topology."""
         return tuple(self._connections)
 
     @property
     def bonds(self):
+        """Return all bonds in the topology."""
         return tuple(self._bonds)
 
     @property
     def angles(self):
+        """Return all angles in the topology."""
         return tuple(self._angles)
 
     @property
     def dihedrals(self):
+        """Return all dihedrals in the topology."""
         return tuple(self._dihedrals)
 
     @property
     def impropers(self):
+        """Return all impropers in the topology."""
         return tuple(self._impropers)
 
     @property
     def atom_types(self):
+        """Return all atom_types in the topology."""
         return tuple(self._atom_types.values())
 
     @property
     def connection_types(self):
+        """Return all connection_types in the topology."""
         return tuple(self._connection_types.values())
 
     @property
     def bond_types(self):
+        """Return all bond_types in the topology."""
         return tuple(self._bond_types.values())
 
     @property
     def angle_types(self):
+        """Return all angle_types in the topology."""
         return tuple(self._angle_types.values())
 
     @property
     def dihedral_types(self):
+        """Return all dihedral_types in the topology."""
         return tuple(self._dihedral_types.values())
 
     @property
     def improper_types(self):
+        """Return all improper_types in the topology."""
         return tuple(self._improper_types.values())
 
     @property
     def atom_type_expressions(self):
+        """Return all atom_type expressions in the topology."""
         return list(set([atype.expression for atype in self.atom_types]))
 
     @property
     def connection_type_expressions(self):
-        return list(set([contype.expression for contype in self.connection_types]))
+        """Return all connection_type expressions in the topology."""
+        return list(
+            set([contype.expression for contype in self.connection_types])
+        )
 
     @property
     def bond_type_expressions(self):
+        """Return all bond_type expressions in the topology."""
         return list(set([btype.expression for btype in self.bond_types]))
 
     @property
     def angle_type_expressions(self):
+        """Return all angle_type expressions in the topology."""
         return list(set([atype.expression for atype in self.angle_types]))
 
     @property
     def dihedral_type_expressions(self):
+        """Return all dihedral_type expressions in the topology."""
         return list(set([atype.expression for atype in self.dihedral_types]))
 
     @property
     def improper_type_expressions(self):
+        """Return all improper_type expressions in the topology."""
         return list(set([atype.expression for atype in self.improper_types]))
 
     def add_site(self, site, update_types=True):
-        """Add a site to the topology
+        """Add a site to the topology.
 
         This method will add a site to the existing topology, since
         sites are stored in an indexed set, adding redundant site
@@ -360,7 +410,7 @@ class Topology(object):
         topology's AtomTypes collection.
 
         Parameters
-        -----------
+        ----------
         site : gmso.core.Site
             Site to be added to this topology
         update_types : (bool), default=True
@@ -425,7 +475,7 @@ class Topology(object):
             topology.
 
         Returns
-        _______
+        -------
         gmso.Connection
             The Connection object or equivalent Connection object that
             is in the topology
@@ -458,6 +508,7 @@ class Topology(object):
         return connection
 
     def identify_connections(self):
+        """Identify all connections in the topology."""
         _identify_connections(self)
 
     def update_connection_types(self):
@@ -473,7 +524,9 @@ class Topology(object):
         """
         for c in self.connections:
             if c.connection_type is None:
-                warnings.warn("Non-parametrized Connection {} detected".format(c))
+                warnings.warn(
+                    "Non-parametrized Connection {} detected".format(c)
+                )
             elif not isinstance(c.connection_type, ParametricPotential):
                 raise GMSOError(
                     "Non-Potential {} found"
@@ -484,7 +537,9 @@ class Topology(object):
                 self._connection_types[c.connection_type] = c.connection_type
                 if isinstance(c.connection_type, BondType):
                     self._bond_types[c.connection_type] = c.connection_type
-                    self._bond_types_idx[c.connection_type] = len(self._bond_types) - 1
+                    self._bond_types_idx[c.connection_type] = (
+                        len(self._bond_types) - 1
+                    )
                 if isinstance(c.connection_type, AngleType):
                     self._angle_types[c.connection_type] = c.connection_type
                     self._angle_types_idx[c.connection_type] = (
@@ -511,14 +566,14 @@ class Topology(object):
                     c.connection_type = self._improper_types[c.connection_type]
 
     def update_atom_types(self):
-        """Update atom types in the topology
+        """Update atom types in the topology.
 
         This method checks all the sites in the topology which have an
         associated AtomType and if that AtomType is not in the topology's
         AtomTypes collection, it will add it there.
 
-        See Also:
-        ---------
+        See Also
+        --------
         gmso.Topology.update_connection_types :
             Update the connection types based on the connection collection in the topology
         """
@@ -526,7 +581,9 @@ class Topology(object):
             if site.atom_type is None:
                 warnings.warn("Non-parametrized site detected {}".format(site))
             elif not isinstance(site.atom_type, AtomType):
-                raise GMSOError("Non AtomType instance found in site {}".format(site))
+                raise GMSOError(
+                    "Non AtomType instance found in site {}".format(site)
+                )
             elif site.atom_type not in self._atom_types:
                 site.atom_type.topology = self
                 self._atom_types[site.atom_type] = site.atom_type
@@ -536,7 +593,7 @@ class Topology(object):
         self.is_typed(updated=True)
 
     def add_subtopology(self, subtop, update=True):
-        """Add a sub-topology to this topology
+        """Add a sub-topology to this topology.
 
         This methods adds a gmso.Core.SubTopology object to the topology
         All the sites in this sub-topology are added to the collection of current
@@ -559,6 +616,7 @@ class Topology(object):
             self.update_topology()
 
     def is_typed(self, updated=False):
+        """Verify if the topology is parametrized."""
         if not updated:
             self.update_connection_types()
             self.update_atom_types()
@@ -570,7 +628,7 @@ class Topology(object):
         return self._typed
 
     def update_angle_types(self):
-        """Uses gmso.Topology.update_connection_types to update AngleTypes in the topology.
+        """Use gmso.Topology.update_connection_types to update AngleTypes in the topology.
 
         This method is an alias for gmso.Topology.update_connection_types.
 
@@ -582,7 +640,7 @@ class Topology(object):
         self.update_connection_types()
 
     def update_bond_types(self):
-        """Uses gmso.Topology.update_connection_types to update BondTypes in the topology.
+        """Use gmso.Topology.update_connection_types to update BondTypes in the topology.
 
         This method is an alias for gmso.Topology.update_connection_types.
 
@@ -594,7 +652,7 @@ class Topology(object):
         self.update_connection_types()
 
     def update_dihedral_types(self):
-        """Uses gmso.Topology.update_connection_types to update DihedralTypes in the topology.
+        """Use gmso.Topology.update_connection_types to update DihedralTypes in the topology.
 
         This method is an alias for gmso.Topology.update_connection_types.
 
@@ -606,7 +664,7 @@ class Topology(object):
         self.update_connection_types()
 
     def update_improper_types(self):
-        """Uses gmso.Topology.update_connection_types to update ImproperTypes in the topology.
+        """Use gmso.Topology.update_connection_types to update ImproperTypes in the topology.
 
         This method is an alias for gmso.Topology.update_connection_types.
 
@@ -618,14 +676,14 @@ class Topology(object):
         self.update_connection_types()
 
     def update_topology(self):
-        """Update the entire topology"""
+        """Update the entire topology."""
         self.update_sites()
         self.update_atom_types()
         self.update_connection_types()
         self.is_typed(updated=True)
 
     def _get_bonds_for(self, site):
-        """Return a list of bonds in this Topology that the site is a part of"""
+        """Return a list of bonds in this Topology that the site is a part of."""
         bonds = []
         for bond in self.bonds:
             if site in bond.connection_members:
@@ -633,7 +691,7 @@ class Topology(object):
         return bonds
 
     def _get_angles_for(self, site):
-        """Return a list of angles in this Topology that the site is a part of"""
+        """Return a list of angles in this Topology that the site is a part of."""
         angles = []
         for angle in self.angles:
             if site in angle.connection_members:
@@ -641,7 +699,7 @@ class Topology(object):
         return angles
 
     def _get_dihedrals_for(self, site):
-        """Return a list of dihedrals in this Topology that the site is a part of"""
+        """Return a list of dihedrals in this Topology that the site is a part of."""
         dihedrals = []
         for dihedral in self.dihedrals:
             if site in dihedral.connection_members:
@@ -649,7 +707,7 @@ class Topology(object):
         return dihedrals
 
     def get_index(self, member):
-        """Get index of a member in the topology
+        """Get index of a member in the topology.
 
         Parameters
         ----------
@@ -679,7 +737,9 @@ class Topology(object):
         member_type = type(member)
 
         if member_type not in refs.keys():
-            raise TypeError(f"Cannot index member of type {member_type.__name__}")
+            raise TypeError(
+                f"Cannot index member of type {member_type.__name__}"
+            )
 
         try:
             index = refs[member_type].index(member)
@@ -805,6 +865,7 @@ class Topology(object):
         return df
 
     def _reindex_connection_types(self, ref):
+        """Re-generate the indices of the connection types in the topology."""
         if ref not in self._index_refs:
             raise GMSOError(
                 f"cannot reindex {ref}. It should be one of "
@@ -815,6 +876,7 @@ class Topology(object):
             self._index_refs[ref][ref_member] = i
 
     def __repr__(self):
+        """Return custom format to represent topology."""
         return (
             f"<Topology {self.name}, {self.n_sites} sites,\n "
             f"{self.n_connections} connections,\n "
@@ -823,6 +885,7 @@ class Topology(object):
         )
 
     def __str__(self):
+        """Return custom format to represent topology as a string."""
         return f"<Topology {self.name}, {self.n_sites} sites, id: {id(self)}>"
 
 

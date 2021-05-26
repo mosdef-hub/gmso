@@ -1,3 +1,4 @@
+"""Readers and writers for various file formats."""
 from gmso.utils.io import has_ipywidgets
 
 from .gro import read_gro, write_gro
