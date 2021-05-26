@@ -303,7 +303,7 @@ def _bond_types_from_pmd(structure, bond_types_members_map=None):
     return pmd_top_bondtypes
 
 
-def _angle_types_from_pmd(structure, angle_types_member=None):
+def _angle_types_from_pmd(structure, angle_types_member_map=None):
     """Convert ParmEd angle types to  GMSO AngleType.
 
     This function takes in a Parmed Structure, iterates through its
