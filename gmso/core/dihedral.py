@@ -14,8 +14,7 @@ class Dihedral(Connection):
     This class has strictly 4 members in its connection_members.
     The connection_type in this class corresponds to gmso.DihedralType.
     The connectivity of a dihedral is:
-
-           m1–m2–m3–m4
+        m1–m2–m3–m4
 
     where m1, m2, m3, and m4 are connection members 1-4, respectively.
 
@@ -23,6 +22,7 @@ class Dihedral(Connection):
     -----
     Inherits some methods from Connection:
         __eq__, __repr__, _validate methods
+        
     Additional _validate methods are presented
     """
     connection_members_: Tuple[Atom, Atom, Atom, Atom] = Field(
@@ -46,14 +46,18 @@ class Dihedral(Connection):
 
     def equivalent_members(self):
         """Get a set of the equivalent connection member tuples
+
         Returns
         _______
         frozenset
             A unique set of tuples of equivalent connection members
+
         Notes
         _____
         For a dihedral:
+
             i, j, k, l == l, k, j, i
+
         where i, j, k, and l are the connection members.
         """
         return frozenset([

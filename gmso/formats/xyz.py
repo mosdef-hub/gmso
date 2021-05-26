@@ -12,7 +12,7 @@ def read_xyz(filename):
 
     Read in an xyz file at the given path and return a Topology object.
 
-    Parameter
+    Parameters
     ----------
     filename : str
         Path to .xyz file that need to be read.
@@ -56,8 +56,8 @@ def write_xyz(top, filename):
 
     Write a Topology object to an xyz file at the given path.
 
-    Paramters
-    ---------
+    Parameters
+    ----------
     top : topology.Topology
         Topology object that needs to be written out.
     filename : str

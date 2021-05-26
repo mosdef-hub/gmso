@@ -624,7 +624,7 @@ class TestTopology(BaseTest):
                            )
         assert np.allclose(
                    float(typed_ethane.to_datatables(parameter='bonds', labels=['charge','position'])['charge Atom0 (e)'][0]),
-                   0.18
+                   -0.06
                            )
         with pytest.raises(AttributeError) as e:
             typed_ethane.to_datatables(labels=['missingattr'])
@@ -646,5 +646,5 @@ class TestTopology(BaseTest):
         df = pd.DataFrame()
         assert np.allclose(
             float(typed_ethane._pandas_from_parameters(df, 'bonds', ['positions'])['x Atom0 (nm)'][0]),
-            0.000
+            -0.10699999
                           )

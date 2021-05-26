@@ -77,7 +77,7 @@ class TestConvertMBuild(BaseTest):
         top_cmpnd.add(mid_cmpnd)
         mid_cmpnd.add(bot_cmpnd)
 
-        top_cmpnd.periodicity = [1, 1, 1]
+        top_cmpnd.periodicity = [True, True, True]
 
         top = from_mbuild(top_cmpnd)
 
@@ -109,7 +109,7 @@ class TestConvertMBuild(BaseTest):
         l1_cmpnd.add(l2_cmpnd)
         l2_cmpnd.add(particle)
 
-        l0_cmpnd.periodicity = [1, 1, 1]
+        l0_cmpnd.periodicity = [True, True, True]
 
         top = from_mbuild(l0_cmpnd)
 
@@ -128,7 +128,7 @@ class TestConvertMBuild(BaseTest):
         top_cmpnd.add(particle1)
         mid_cmpnd.add(particle2)
 
-        top_cmpnd.periodicity = [1, 1, 1]
+        top_cmpnd.periodicity = [True, True, True]
 
         top = from_mbuild(top_cmpnd)
 
@@ -151,16 +151,11 @@ class TestConvertMBuild(BaseTest):
         with pytest.raises(ValueError):
             top = from_mbuild(mb_ethane, box=[3,3,3])
 
-    def test_pass_box_periodicity(self, mb_ethane):
-        mb_ethane.periodicity = [2,2,2]
-        top = from_mbuild(mb_ethane)
-        assert_allclose_units(top.box.lengths, [2,2,2]*u.nm, rtol=1e-5, atol=1e-8)
-
     def test_pass_box_bounding(self, mb_ethane):
-        mb_ethane.periodicity = [0,0,0]
+        mb_ethane.periodicity = [False, False, False]
         top = from_mbuild(mb_ethane)
         assert_allclose_units(top.box.lengths,
-                (mb_ethane.boundingbox.lengths + [0.5, 0.5, 0.5]) * u.nm, rtol=1e-5, atol=1e-8)
+                (mb_ethane.get_boundingbox().lengths) * u.nm, rtol=1e-5, atol=1e-8)
 
     def test_empty_compound_name(self):
         compound = mb.load("CCOC", smiles=True)
