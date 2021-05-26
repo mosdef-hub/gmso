@@ -1,4 +1,4 @@
-"""Convert to and from an OpenMM system."""
+"""Convert to and from an OpenMM Topology or System object."""
 import unyt as u
 
 from gmso.utils.io import has_openmm, has_simtk_unit, import_
@@ -8,7 +8,7 @@ if has_openmm & has_simtk_unit:
     from simtk.openmm import *
     from simtk.openmm.app import *
 
-    
+
 def to_openmm(topology, openmm_object="topology"):
     """Convert an untyped topology object to an untyped OpenMM modeller or topology.
 
@@ -16,7 +16,7 @@ def to_openmm(topology, openmm_object="topology"):
     See http://openmm.org for more information.
 
     Parameters
-    ---------
+    ----------
     topology : `Topology` object
         An untyped topology object
     open_mm_object : 'topology' or 'modeller' OpenMM object, default='topology'
