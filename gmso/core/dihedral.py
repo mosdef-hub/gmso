@@ -22,7 +22,7 @@ class Dihedral(Connection):
     -----
     Inherits some methods from Connection:
         __eq__, __repr__, _validate methods
-        
+
     Additional _validate methods are presented
     """
     connection_members_: Tuple[Atom, Atom, Atom, Atom] = Field(

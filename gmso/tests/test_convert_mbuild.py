@@ -157,10 +157,11 @@ class TestConvertMBuild(BaseTest):
     def test_pass_box_bounding(self, mb_ethane):
         mb_ethane.periodicity = [False, False, False]
         top = from_mbuild(mb_ethane)
-        assert_allclose_units(top.box.lengths,
-                (mb_ethane.get_boundingbox().lengths) * u.nm, 
-                 rtol=1e-5,
-                 atol=1e-8
+        assert_allclose_units(
+            top.box.lengths,
+            (mb_ethane.get_boundingbox().lengths) * u.nm,
+            rtol=1e-5,
+            atol=1e-8,
         )
 
     def test_empty_compound_name(self):

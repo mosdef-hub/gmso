@@ -249,10 +249,7 @@ def _write_nbforces(forcefield, ff_kwargs):
             "expression": "ep * ((sigma/r)**12 - (sigma/r)**6)",
         },
     )
-    parameters_units = {
-        "ep": "kJ/mol",
-        "sigma": "nm"
-    }
+    parameters_units = {"ep": "kJ/mol", "sigma": "nm"}
 
     # NonBondedForces
     for name, unit in parameters_units.items():
