@@ -15,4 +15,4 @@ from .core.improper_type import ImproperType
 from .core.subtopology import SubTopology
 from .core.topology import Topology
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
