@@ -341,7 +341,7 @@ def parse_ff_connection_types(connectiontypes_el, child_tag='BondType'):
     return connectiontypes_dict
 
 def parse_ff_pairpotential_types(pairpotentialtypes_el):
-    """Given an XML etree Element rooted at PairPotentialTypes, parse the XML to create topology.core.PairPotentialTypes,"""
+    """Given an XML etree Element rooted at PairPotentialTypes, parse the XML to create topology.core.PairPotentialTypes."""
     pairpotentialtypes_dict = {}
     pairpotentialtype_expression = pairpotentialtypes_el.attrib.get('expression', None)
     param_unit_dict = _parse_param_units(pairpotentialtypes_el)
