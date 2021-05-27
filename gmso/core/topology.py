@@ -540,7 +540,7 @@ class Topology(object):
         self._pairpotential_types[pairpotentialtype] = pairpotentialtype
         self._pairpotential_types_idx[pairpotentialtype] = len(self._pairpotential_types) - 1
 
-    def remove_pairpotentialtype(self,pair_of_types):
+    def remove_pairpotentialtype(self, pair_of_types):
         """Remove the custom pairwise potential between two AtomTypes/Atomclasses
 
         Parameters
