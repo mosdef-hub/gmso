@@ -12,7 +12,7 @@ class PairPotentialType(ParametricPotential):
     This is a subclass of the gmso.core.ParametricPotential superclass.
 
     PairPotentialType represents a type of pairwise potential between two 
-    Atomtypes that does not follow combination rule, and includes the functional 
+    Atomtypes that does not follow a specific combination rule, and includes the functional 
     form describing its interactions. The functional form of the potential is 
     stored as a `sympy` expression and the parameters, with units, are stored
     explicitly.  The AtomTypes that are used to define the dihedral type are
