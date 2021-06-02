@@ -1,23 +1,23 @@
-import pytest
-import numpy as np
+import foyer
 import mbuild as mb
 import mbuild.recipes
+import numpy as np
+import pytest
 import unyt as u
-import foyer
 
-from gmso.core.box import Box
-from gmso.core.topology import Topology
-from gmso.core.element import Hydrogen, Oxygen
-from gmso.core.atom import Atom
-from gmso.core.bond import Bond
 from gmso.core.angle import Angle
+from gmso.core.atom import Atom
 from gmso.core.atom_type import AtomType
+from gmso.core.bond import Bond
+from gmso.core.box import Box
+from gmso.core.element import Hydrogen, Oxygen
 from gmso.core.forcefield import ForceField
+from gmso.core.topology import Topology
 from gmso.external import from_mbuild, from_parmed
+from gmso.external.convert_foyer_xml import from_foyer_xml
 from gmso.tests.utils import get_path
 from gmso.utils.io import get_fn, has_foyer
-from gmso.external import from_parmed
-from gmso.external.convert_foyer_xml import from_foyer_xml
+
 
 class BaseTest:
     @pytest.fixture(autouse=True)
@@ -38,16 +38,15 @@ class BaseTest:
 
     @pytest.fixture
     def mass(self):
-        return 1 * u.gram/u.mol
+        return 1 * u.gram / u.mol
 
     @pytest.fixture
     def box(self):
-        return Box(lengths=u.nm*np.ones(3))
+        return Box(lengths=u.nm * np.ones(3))
 
     @pytest.fixture
     def top(self):
-        return Topology(name='mytop')
-
+        return Topology(name="mytop")
 
     @pytest.fixture
     def ar_system(self, n_ar_system):
@@ -56,7 +55,7 @@ class BaseTest:
     @pytest.fixture
     def n_ar_system(self):
         def _topology(n_sites=100):
-            ar = mb.Compound(name='Ar')
+            ar = mb.Compound(name="Ar")
 
             packed_system = mb.fill_box(
                 compound=ar,
@@ -101,10 +100,10 @@ class BaseTest:
         def _typed_topology(n_sites=100):
             top = from_mbuild(n_ar_system(n_sites=n_sites))
 
-            ff = ForceField(get_fn('ar.xml'))
+            ff = ForceField(get_fn("ar.xml"))
 
             for site in top.sites:
-                site.atom_type = ff.atom_types['Ar']
+                site.atom_type = ff.atom_types["Ar"]
 
             top.update_topology()
 
@@ -114,30 +113,30 @@ class BaseTest:
 
     @pytest.fixture
     def water_system(self):
-        water = mb.load(get_path('tip3p.mol2'))
-        water.name = 'water'
-        water[0].name = 'opls_111'
-        water[1].name = water[2].name = 'opls_112'
+        water = mb.load(get_path("tip3p.mol2"))
+        water.name = "water"
+        water[0].name = "opls_111"
+        water[1].name = water[2].name = "opls_112"
 
         packed_system = mb.fill_box(
-                compound=water,
-                n_compounds=2,
-                box=mb.Box([2, 2, 2])
-                )
+            compound=water, n_compounds=2, box=mb.Box([2, 2, 2])
+        )
 
-        return  from_mbuild(packed_system)
+        return from_mbuild(packed_system)
 
     @pytest.fixture
     def ethane(self):
         from mbuild.lib.molecules import Ethane
+
         top = from_mbuild(Ethane())
         return top
 
     @pytest.fixture
     def typed_ethane(self):
         from mbuild.lib.molecules import Ethane
+
         mb_ethane = Ethane()
-        oplsaa = foyer.Forcefield(name='oplsaa')
+        oplsaa = foyer.Forcefield(name="oplsaa")
         # At this point, we still need to go through
         # parmed Structure, until foyer can perform
         # atomtyping on gmso Topology
@@ -149,37 +148,38 @@ class BaseTest:
     @pytest.fixture
     def parmed_ethane(self):
         from mbuild.lib.molecules import Ethane
+
         compound = Ethane()
-        oplsaa = foyer.Forcefield(name='oplsaa')
+        oplsaa = foyer.Forcefield(name="oplsaa")
         pmd_structure = oplsaa.apply(compound)
         return pmd_structure
 
     @pytest.fixture
     def parmed_methylnitroaniline(self):
-        compound = mb.load('CC1=C(C=CC(=C1)[N+](=O)[O-])N', smiles=True)
-        oplsaa = foyer.Forcefield(name='oplsaa')
+        compound = mb.load("CC1=C(C=CC(=C1)[N+](=O)[O-])N", smiles=True)
+        oplsaa = foyer.Forcefield(name="oplsaa")
         pmd_structure = oplsaa.apply(compound)
         return pmd_structure
 
     @pytest.fixture
     def typed_methylnitroaniline(self):
-        compound = mb.load('CC1=C(C=CC(=C1)[N+](=O)[O-])N', smiles=True)
-        oplsaa = foyer.Forcefield(name='oplsaa')
+        compound = mb.load("CC1=C(C=CC(=C1)[N+](=O)[O-])N", smiles=True)
+        oplsaa = foyer.Forcefield(name="oplsaa")
         pmd_structure = oplsaa.apply(compound)
         top = from_parmed(pmd_structure)
         return top
 
     @pytest.fixture
     def parmed_chloroethanol(self):
-        compound = mb.load('C(CCl)O', smiles=True)
-        oplsaa = foyer.Forcefield(name='oplsaa')
+        compound = mb.load("C(CCl)O", smiles=True)
+        oplsaa = foyer.Forcefield(name="oplsaa")
         pmd_structure = oplsaa.apply(compound)
         return pmd_structure
 
     @pytest.fixture
     def typed_chloroethanol(self):
-        compound = mb.load('C(CCl)O', smiles=True)
-        oplsaa = foyer.Forcefield(name='oplsaa')
+        compound = mb.load("C(CCl)O", smiles=True)
+        oplsaa = foyer.Forcefield(name="oplsaa")
         pmd_structure = oplsaa.apply(compound)
         top = from_parmed(pmd_structure)
         return top
@@ -188,8 +188,8 @@ class BaseTest:
     def parmed_hexane_box(self):
         compound = mb.recipes.Alkane(6)
         compound.name = "HEX"
-        compound_box = mb.fill_box(compound, n_compounds=6, box=[6,6,6])
-        oplsaa = foyer.Forcefield(name='oplsaa')
+        compound_box = mb.fill_box(compound, n_compounds=6, box=[6, 6, 6])
+        oplsaa = foyer.Forcefield(name="oplsaa")
         pmd_structure = oplsaa.apply(compound_box, residues="HEX")
         return pmd_structure
 
@@ -197,7 +197,7 @@ class BaseTest:
     def typed_water_system(self, water_system):
         top = water_system
 
-        ff = ForceField(get_path('tip3p.xml'))
+        ff = ForceField(get_path("tip3p.xml"))
 
         element_map = {"O": "opls_111", "H": "opls_112"}
 
@@ -211,7 +211,7 @@ class BaseTest:
             angle = Angle(
                 connection_members=[site for site in subtop.sites],
                 name="opls_112~opls_111~opls_112",
-                angle_type=ff.angle_types["opls_112~opls_111~opls_112"]
+                angle_type=ff.angle_types["opls_112~opls_111~opls_112"],
             )
             top.add_connection(angle)
 
@@ -220,30 +220,30 @@ class BaseTest:
 
     @pytest.fixture
     def foyer_fullerene(self):
-       if has_foyer:
-          import foyer
-          from foyer.tests.utils import get_fn
-       from_foyer_xml(get_fn("fullerene.xml"), overwrite=True)
-       gmso_ff = ForceField("fullerene_gmso.xml")
+        if has_foyer:
+            import foyer
+            from foyer.tests.utils import get_fn
+        from_foyer_xml(get_fn("fullerene.xml"), overwrite=True)
+        gmso_ff = ForceField("fullerene_gmso.xml")
 
-       return gmso_ff
-
+        return gmso_ff
 
     @pytest.fixture
     def foyer_periodic(self):
-       if has_foyer:
-          import foyer
-          from foyer.tests.utils import get_fn
-       from_foyer_xml(get_fn("oplsaa-periodic.xml"), overwrite=True)
-       gmso_ff = ForceField("oplsaa-periodic_gmso.xml")
+        if has_foyer:
+            import foyer
+            from foyer.tests.utils import get_fn
+        from_foyer_xml(get_fn("oplsaa-periodic.xml"), overwrite=True)
+        gmso_ff = ForceField("oplsaa-periodic_gmso.xml")
 
-       return gmso_ff
+        return gmso_ff
 
     @pytest.fixture
     def foyer_urey_bradley(self):
         if has_foyer:
             import foyer
             from foyer.tests.utils import get_fn
+
             from_foyer_xml(get_fn("charmm36_cooh.xml"), overwrite=True)
             gmso_ff = ForceField("charmm36_cooh_gmso.xml")
 
@@ -254,7 +254,10 @@ class BaseTest:
         if has_foyer:
             import foyer
             from foyer.tests.utils import get_fn
-            from_foyer_xml(get_fn("refs-multi.xml"), overwrite=True, validate_foyer=True)
+
+            from_foyer_xml(
+                get_fn("refs-multi.xml"), overwrite=True, validate_foyer=True
+            )
             gmso_ff = ForceField("refs-multi_gmso.xml")
 
             return gmso_ff
@@ -262,15 +265,15 @@ class BaseTest:
     @pytest.fixture
     def methane(self):
         mytop = Topology()
-        c = Atom(name='c')
-        h1 = Atom(name='h1')
-        h2 = Atom(name='h2')
-        h3 = Atom(name='h3')
-        h4 = Atom(name='h4')
-        ch1 = Bond(connection_members=[c,h1])
-        ch2 = Bond(connection_members=[c,h2])
-        ch3 = Bond(connection_members=[c,h3])
-        ch4 = Bond(connection_members=[c,h4])
+        c = Atom(name="c")
+        h1 = Atom(name="h1")
+        h2 = Atom(name="h2")
+        h3 = Atom(name="h3")
+        h4 = Atom(name="h4")
+        ch1 = Bond(connection_members=[c, h1])
+        ch2 = Bond(connection_members=[c, h2])
+        ch3 = Bond(connection_members=[c, h3])
+        ch4 = Bond(connection_members=[c, h4])
         mytop.add_site(c, update_types=False)
         mytop.add_site(h1, update_types=False)
         mytop.add_site(h2, update_types=False)
@@ -287,15 +290,15 @@ class BaseTest:
     @pytest.fixture
     def ethane(self):
         mytop = Topology()
-        c1 = Atom(name='C1')
-        h11 = Atom(name='H11')
-        h12 = Atom(name='H12')
-        h13 = Atom(name='H13')
+        c1 = Atom(name="C1")
+        h11 = Atom(name="H11")
+        h12 = Atom(name="H12")
+        h13 = Atom(name="H13")
 
-        c2 = Atom(name='C2')
-        h21 = Atom(name='H21')
-        h22 = Atom(name='H22')
-        h23 = Atom(name='H23')
+        c2 = Atom(name="C2")
+        h21 = Atom(name="H21")
+        h22 = Atom(name="H22")
+        h23 = Atom(name="H23")
 
         c1h11 = Bond(connection_members=[c1, h11])
         c1h12 = Bond(connection_members=[c1, h12])
@@ -305,7 +308,7 @@ class BaseTest:
         c2h22 = Bond(connection_members=[c2, h22])
         c2h23 = Bond(connection_members=[c2, h23])
 
-        c1c2 = Bond(connection_members=[c1,c2])
+        c1c2 = Bond(connection_members=[c1, c2])
 
         mytop.add_connection(c1h11, update_types=False)
         mytop.add_connection(c1h12, update_types=False)
@@ -320,16 +323,21 @@ class BaseTest:
 
         return mytop
 
-    @pytest.fixture(scope='module')
+    @pytest.fixture(scope="module")
     def are_equivalent_atoms(self):
         def test_atom_equality(atom1, atom2):
             if not all(isinstance(x, Atom) for x in [atom1, atom2]):
                 return False
             if atom1 is atom2:
                 return True
-            equal = lambda x1, x2: u.allclose_units(x1, x2) if isinstance(x1, u.unyt_array) and isinstance(x2, u.unyt_array) else x1 == x2
+            equal = (
+                lambda x1, x2: u.allclose_units(x1, x2)
+                if isinstance(x1, u.unyt_array) and isinstance(x2, u.unyt_array)
+                else x1 == x2
+            )
             for prop in atom1.dict(by_alias=True):
                 if not equal(atom2.dict().get(prop), atom1.dict().get(prop)):
                     return False
             return True
+
         return test_atom_equality

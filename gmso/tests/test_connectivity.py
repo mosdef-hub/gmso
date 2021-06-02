@@ -1,13 +1,12 @@
 import pytest
 
-from gmso.core.topology import Topology
-from gmso.core.bond import Bond
 from gmso.core.atom import Atom
+from gmso.core.bond import Bond
+from gmso.core.topology import Topology
 from gmso.tests.base_test import BaseTest
 
 
 class TestConnectivity(BaseTest):
-
     def test_methane_connectivity(self, methane):
         assert methane.n_bonds == 4
         assert methane.n_angles == 0
@@ -36,10 +35,10 @@ class TestConnectivity(BaseTest):
 
     def test_square(self):
         mytop = Topology()
-        s1 = Atom(name='1')
-        s2 = Atom(name='2')
-        s3 = Atom(name='3')
-        s4 = Atom(name='4')
+        s1 = Atom(name="1")
+        s2 = Atom(name="2")
+        s3 = Atom(name="3")
+        s4 = Atom(name="4")
         c12 = Bond(connection_members=[s1, s2])
         c23 = Bond(connection_members=[s2, s3])
         c34 = Bond(connection_members=[s3, s4])
@@ -65,10 +64,10 @@ class TestConnectivity(BaseTest):
 
     def test_square_with_bridge(self):
         mytop = Topology()
-        s1 = Atom(name='1')
-        s2 = Atom(name='2')
-        s3 = Atom(name='3')
-        s4 = Atom(name='4')
+        s1 = Atom(name="1")
+        s2 = Atom(name="2")
+        s3 = Atom(name="3")
+        s4 = Atom(name="4")
         c12 = Bond(connection_members=[s1, s2])
         c23 = Bond(connection_members=[s2, s3])
         c34 = Bond(connection_members=[s3, s4])
