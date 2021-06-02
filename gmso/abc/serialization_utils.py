@@ -10,7 +10,9 @@ __all__ = ["unyt_to_dict", "dict_to_unyt", "GMSOJSONHandler"]
 def unyt_to_dict(unyt_qt: Union[u.unyt_array, u.unyt_quantity]) -> dict:
     """Convert a unyt quantity into json serializable dictionary"""
     if not isinstance(unyt_qt, u.unyt_array):
-        raise TypeError("Please provide a value of type unyt array or unyt quantity")
+        raise TypeError(
+            "Please provide a value of type unyt array or unyt quantity"
+        )
     else:
         numpy_array = unyt_qt.value
         unit = str(unyt_qt.units)

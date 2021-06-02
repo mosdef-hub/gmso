@@ -1,45 +1,41 @@
 import pytest
 import unyt as u
 
-from gmso.core.element import element_by_symbol
-from gmso.core.atom import Atom
-from gmso.core.bond import Bond
 from gmso.core.angle import Angle
-from gmso.core.dihedral import Dihedral
-from gmso.core.improper import Improper
-from gmso.core.atom_type import AtomType
-from gmso.core.bond_type import BondType
 from gmso.core.angle_type import AngleType
+from gmso.core.atom import Atom
+from gmso.core.atom_type import AtomType
+from gmso.core.bond import Bond
+from gmso.core.bond_type import BondType
+from gmso.core.dihedral import Dihedral
 from gmso.core.dihedral_type import DihedralType
+from gmso.core.element import element_by_symbol
+from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
 from gmso.tests.base_test import BaseTest
 
 
 class TestSerialization(BaseTest):
-
-    @pytest.fixture(scope='module')
+    @pytest.fixture(scope="module")
     def full_atom_type(self):
         return AtomType(
-            name='test_atom_type',
-            expression='a*b+c*d+e**2',
-            independent_variables={'a'},
+            name="test_atom_type",
+            expression="a*b+c*d+e**2",
+            independent_variables={"a"},
             parameters={
-                'b': 2.0 * u.amu,
-                'c': 3.0 * u.nm / u.kg ** 2,
-                'd': 5.0 * u.kJ / u.mol,
-                'e': 1.0 * u.C
+                "b": 2.0 * u.amu,
+                "c": 3.0 * u.nm / u.kg ** 2,
+                "d": 5.0 * u.kJ / u.mol,
+                "e": 1.0 * u.C,
             },
             mass=1.0 * u.amu,
             charge=1.0 * u.elementary_charge,
-            atomclass='test_atom_class',
-            doi='https://dx.doi.org/110.200.300',
-            overrides={'A', 'B', 'C'},
-            definition='CX_6',
-            description='A test AtomType object',
-            tags={
-                'tag1': 10,
-                'tag2': 10 * u.nm
-            }
+            atomclass="test_atom_class",
+            doi="https://dx.doi.org/110.200.300",
+            overrides={"A", "B", "C"},
+            definition="CX_6",
+            description="A test AtomType object",
+            tags={"tag1": 10, "tag2": 10 * u.nm},
         )
 
     def test_atom_to_json_loop(self, typed_ethane, are_equivalent_atoms):
@@ -62,7 +58,9 @@ class TestSerialization(BaseTest):
             bond_json = bond.json()
             bond_copy = Bond.parse_raw(bond_json)
             assert bond_copy.name == bond.name
-            for member1, member2 in zip(bond.connection_members, bond_copy.connection_members):
+            for member1, member2 in zip(
+                bond.connection_members, bond_copy.connection_members
+            ):
                 assert are_equivalent_atoms(member1, member2)
             assert bond_copy.bond_type == bond.bond_type
 
@@ -78,7 +76,9 @@ class TestSerialization(BaseTest):
         for angle in typed_ethane.angles:
             angle_json = angle.json()
             angle_copy = Angle.parse_raw(angle_json)
-            for member1, member2 in zip(angle.connection_members, angle_copy.connection_members):
+            for member1, member2 in zip(
+                angle.connection_members, angle_copy.connection_members
+            ):
                 assert are_equivalent_atoms(member1, member2)
             assert angle.angle_type == angle_copy.angle_type
 
@@ -94,7 +94,9 @@ class TestSerialization(BaseTest):
         for dihedral in typed_ethane.dihedrals:
             dihedral_json = dihedral.json()
             dihedral_copy = Dihedral.parse_raw(dihedral_json)
-            for member1, member2 in zip(dihedral.connection_members, dihedral_copy.connection_members):
+            for member1, member2 in zip(
+                dihedral.connection_members, dihedral_copy.connection_members
+            ):
                 assert are_equivalent_atoms(member1, member2)
             assert dihedral.dihedral_type == dihedral_copy.dihedral_type
 
@@ -110,7 +112,9 @@ class TestSerialization(BaseTest):
         for improper in typed_ethane.impropers:
             improper_json = improper.json()
             improper_copy = Improper.parse_raw(improper_json)
-            for member1, member2 in zip(improper_copy.connection_members, improper.connection_members):
+            for member1, member2 in zip(
+                improper_copy.connection_members, improper.connection_members
+            ):
                 assert are_equivalent_atoms(member1, member2)
             assert improper_copy.improper_type == improper.improper_type
 
@@ -124,13 +128,13 @@ class TestSerialization(BaseTest):
 
     def test_atom_every_field_set(self, full_atom_type, are_equivalent_atoms):
         atom = Atom(
-            name='test_atom',
-            label='test_label',
+            name="test_atom",
+            label="test_label",
             position=[0.0, 0.0, 0.0],
             charge=1.5,
             mass=2.0,
-            element=element_by_symbol('C'),
-            atom_type=full_atom_type
+            element=element_by_symbol("C"),
+            atom_type=full_atom_type,
         )
 
         atom_copy = Atom.parse_raw(atom.json())
@@ -138,57 +142,49 @@ class TestSerialization(BaseTest):
 
     def test_bond_every_field_set(self, full_atom_type, are_equivalent_atoms):
         atom1 = Atom(
-            name='test_atom1',
-            label='test_label1',
+            name="test_atom1",
+            label="test_label1",
             position=[0.0, 0.0, 0.0],
             charge=1.5,
             mass=2.0,
-            element=element_by_symbol('C'),
-            atom_type=full_atom_type
+            element=element_by_symbol("C"),
+            atom_type=full_atom_type,
         )
 
         atom2 = Atom(
-            name='test_atom1',
-            label='test_label1',
+            name="test_atom1",
+            label="test_label1",
             position=[0.1, 0.4, 0.5],
             charge=5,
             mass=2.6,
-            element=element_by_symbol('H'),
-            atom_type=full_atom_type
+            element=element_by_symbol("H"),
+            atom_type=full_atom_type,
         )
 
-        bond = Bond(
-            name='test_bond1',
-            connection_members=(atom1, atom2)
-        )
+        bond = Bond(name="test_bond1", connection_members=(atom1, atom2))
 
         bond_type = BondType(
-            name='test_bond_type',
-            expression='a*b+c**2',
-            parameters={
-                'a': 10 * u.nm,
-                'b': 20 * u.angstrom
-            },
-            independent_variables={'c'}
+            name="test_bond_type",
+            expression="a*b+c**2",
+            parameters={"a": 10 * u.nm, "b": 20 * u.angstrom},
+            independent_variables={"c"},
         )
 
         bond_copy = Bond.parse_raw(bond.json())
         assert bond_copy.name == bond.name
-        for member1, member2 in zip(bond.connection_members, bond_copy.connection_members):
+        for member1, member2 in zip(
+            bond.connection_members, bond_copy.connection_members
+        ):
             assert are_equivalent_atoms(member1, member2)
         assert bond_copy.bond_type == bond.bond_type
 
     def test_include_and_exclude(self):
-        atom = Atom(
-            mass=2.0 * u.g / u.mol,
-            charge=30.0*u.C,
-            name='TestAtom'
-        )
-        atom_json = atom.json(exclude={'mass'})
-        assert 'mass' not in atom_json
-        atom_json = atom.json(exclude={'mass_'})
-        assert 'mass' not in atom_json
-        atom_json = atom.json(include={'mass'})
-        assert 'name' not in atom_json
-        atom_json = atom.json(include={'mass_'})
-        assert 'name' not in atom_json
+        atom = Atom(mass=2.0 * u.g / u.mol, charge=30.0 * u.C, name="TestAtom")
+        atom_json = atom.json(exclude={"mass"})
+        assert "mass" not in atom_json
+        atom_json = atom.json(exclude={"mass_"})
+        assert "mass" not in atom_json
+        atom_json = atom.json(include={"mass"})
+        assert "name" not in atom_json
+        atom_json = atom.json(include={"mass_"})
+        assert "name" not in atom_json

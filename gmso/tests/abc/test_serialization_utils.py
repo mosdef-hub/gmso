@@ -1,7 +1,7 @@
 import pytest
 import unyt as u
 
-from gmso.abc.serialization_utils import unyt_to_dict, dict_to_unyt, JSONHandler
+from gmso.abc.serialization_utils import JSONHandler, dict_to_unyt, unyt_to_dict
 from gmso.tests.base_test import BaseTest
 
 
@@ -45,7 +45,8 @@ class TestSerializationUtils(BaseTest):
         dict_to_unyt(unyt_dict)
 
         assert u.allclose_units(
-            unyt_dict["level1"]["my_quantity"], u.unyt_array([7.0, 2.5, 6.3], u.K)
+            unyt_dict["level1"]["my_quantity"],
+            u.unyt_array([7.0, 2.5, 6.3], u.K),
         )
         assert u.allclose_units(
             unyt_dict["level1"]["level2"]["my_quantity"],
