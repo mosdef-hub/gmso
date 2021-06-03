@@ -89,7 +89,7 @@
             </Parameters>
         </ImproperType>
     </DihedralTypes>
-    
+
     <DihedralTypes name="RBProper" expression="c0 * cos(phi)**0 + c1 * cos(phi)**1 + c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + c5 * cos(phi)**5">
         <ParametersUnitDef parameter="c5" unit="kJ/mol"/>
         <ParametersUnitDef parameter="c4" unit="kJ/mol"/>
