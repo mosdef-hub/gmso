@@ -147,7 +147,7 @@
             <xsd:field xpath="@type4|@class4"/>
         </xsd:key>
     </xsd:element>
-    
+
     <!-- Begin: PairPotentialTypes Tags and Attributes -->
     <xsd:complexType name="PairPotentialType">
         <xsd:sequence>

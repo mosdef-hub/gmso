@@ -84,7 +84,7 @@
             </Parameters>
         </DihedralType>
     </DihedralTypes>
-    
+
   <PairPotentialTypes expression="4*k * ((sigma/r)**12 - (sigma/r)**6)">
     <ParametersUnitDef parameter="sigma" unit="nm"/>
     <ParametersUnitDef parameter="k" unit="kJ/mol"/>
@@ -94,6 +94,6 @@
             <Parameter name="sigma" value="10"/>
         </Parameters>
     </PairPotentialType>
-  </PairPotentialTypes>    
+  </PairPotentialTypes>
 
 </ForceField>
