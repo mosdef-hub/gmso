@@ -15,6 +15,7 @@ from gmso.exceptions import (
     ForceFieldError,
     ForceFieldParseError,
     MissingAtomTypesError,
+    MixedClassAndTypesError,
 )
 from gmso.utils._constants import FF_TOKENS_SEPARATOR
 
@@ -180,6 +181,7 @@ def validate(gmso_xml_or_etree, strict=True, greedy=True):
         the entries of the `AtomTypes` section
     """
     ff_etree = _validate_schema(xml_path_or_etree=gmso_xml_or_etree)
+    _assert_membertype_class_exclusivity(ff_etree)
     if strict:
         missing = _find_missing_atom_types_or_classes(ff_etree, greedy=greedy)
         if missing:
@@ -189,6 +191,36 @@ def validate(gmso_xml_or_etree, strict=True, greedy=True):
                 f"section of the ForceField XML file. If this behavior is intended, "
                 f"please disable this check by setting strict=False."
             )
+
+
+def _assert_membertype_class_exclusivity(root):
+    """Check if there's a criss-cross between type and class in Bonded Potentials."""
+    for idx, potential_tag in enumerate(
+        ["BondType", "AngleType", "DihedralType", "ImproperType"], start=2
+    ):
+        potential_iter = root.iterfind(f".//{potential_tag}")
+        for potential in potential_iter:
+            types_and_classes = (
+                (
+                    potential.attrib.get(f"type{j}"),
+                    potential.attrib.get(f"class{j}"),
+                )
+                for j in range(1, idx + 1)
+            )
+            error_msg = (
+                f"{potential_tag} {potential.attrib['name']} has a mix "
+                f"of atom type and atom classes "
+                f"which is not allowed, please use uniform attributes.\n"
+                f"{etree.tostring(potential, encoding='utf-8', pretty_print=True).decode()}"
+            )
+
+            if any(type_ for (type_, _) in types_and_classes):
+                if any(class_ for (_, class_) in types_and_classes):
+                    raise MixedClassAndTypesError(error_msg)
+
+            if any(class_ for (_, class_) in types_and_classes):
+                if any(type_ for (type_, _) in types_and_classes):
+                    raise MixedClassAndTypesError(error_msg)
 
 
 def _find_missing_atom_types_or_classes(ff_etree, greedy=False):

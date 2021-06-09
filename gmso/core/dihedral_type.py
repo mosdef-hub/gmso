@@ -32,8 +32,14 @@ class DihedralType(ParametricPotential):
 
     member_types_: Optional[Tuple[str, str, str, str]] = Field(
         None,
-        description="List-like of of gmso.AtomType.name or gmso.AtomType.atomclass "
+        description="List-like of of gmso.AtomType.name "
         "defining the members of this dihedral type",
+    )
+
+    member_classes_: Optional[Tuple[str, str, str, str]] = Field(
+        None,
+        description="List-like of of gmso.AtomType.atomclass defining the "
+        "members of this dihedral type",
     )
 
     def __init__(
@@ -43,6 +49,7 @@ class DihedralType(ParametricPotential):
         parameters=None,
         independent_variables=None,
         member_types=None,
+        member_classes=None,
         topology=None,
         tags=None,
     ):
@@ -62,6 +69,7 @@ class DihedralType(ParametricPotential):
             independent_variables=independent_variables,
             topology=topology,
             member_types=member_types,
+            member_classes=member_classes,
             set_ref=DIHEDRAL_TYPE_DICT,
             tags=tags,
         )
@@ -71,6 +79,12 @@ class DihedralType(ParametricPotential):
         return self.__dict__.get("member_types_")
 
     class Config:
-        fields = {"member_types_": "member_types"}
+        fields = {
+            "member_types_": "member_types",
+            "member_classes_": "member_classes",
+        }
 
-        alias_to_fields = {"member_types": "member_types_"}
+        alias_to_fields = {
+            "member_types": "member_types_",
+            "member_classes": "member_classes_",
+        }

@@ -37,7 +37,7 @@
                 <Parameter name='k' value="10000"/>
             </Parameters>
         </BondType>
-        <BondType name="BondType2" type1='Xe' class2="Xe">
+        <BondType name="BondType2" type1='Xe' type2="Xe">
             <Parameters>
                 <Parameter name='r_eq' value="10"/>
                 <Parameter name='k' value="20000"/>
@@ -65,7 +65,7 @@
     <DihedralTypes expression="0.5 * z * (r-r_eq)**2">
         <ParametersUnitDef parameter="r_eq" unit="nm"/>
         <ParametersUnitDef parameter="z" unit="kJ/mol"/>
-        <DihedralType name="DihedralType1" class1='Ar' class2='Ar' type3="Ar" type4="Ar">
+        <DihedralType name="DihedralType1" class1='Ar' class2='Ar' class3="Ar" class4="Ar">
             <Parameters>
                 <Parameter name='r_eq' value="10.0"/>
                 <Parameter name='z' value="100"/>
