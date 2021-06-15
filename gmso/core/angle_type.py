@@ -1,6 +1,6 @@
-from typing import Tuple, Optional
-import unyt as u
+from typing import Optional, Tuple
 
+import unyt as u
 from pydantic import Field
 
 from gmso.core.parametric_potential import ParametricPotential
@@ -26,25 +26,27 @@ class AngleType(ParametricPotential):
 
     member_types_: Optional[Tuple[str, str, str]] = Field(
         None,
-        description='List-like of gmso.AtomType.name or gmso.AtomType.atomclass '
-                    'defining the members of this angle type'
+        description="List-like of gmso.AtomType.name or gmso.AtomType.atomclass "
+        "defining the members of this angle type",
     )
 
-    def __init__(self,
-                 name='AngleType',
-                 expression='0.5 * k * (theta-theta_eq)**2',
-                 parameters=None,
-                 independent_variables=None,
-                 member_types=None,
-                 topology=None,
-                 tags=None):
+    def __init__(
+        self,
+        name="AngleType",
+        expression="0.5 * k * (theta-theta_eq)**2",
+        parameters=None,
+        independent_variables=None,
+        member_types=None,
+        topology=None,
+        tags=None,
+    ):
         if parameters is None:
             parameters = {
-                'k': 1000 * u.Unit('kJ / (deg**2)'),
-                'theta_eq': 180 * u.deg
+                "k": 1000 * u.Unit("kJ / (deg**2)"),
+                "theta_eq": 180 * u.deg,
             }
         if independent_variables is None:
-            independent_variables = {'theta'}
+            independent_variables = {"theta"}
 
         super(AngleType, self).__init__(
             name=name,
@@ -54,18 +56,14 @@ class AngleType(ParametricPotential):
             topology=topology,
             member_types=member_types,
             set_ref=ANGLE_TYPE_DICT,
-            tags=tags
+            tags=tags,
         )
 
     @property
     def member_types(self):
-        return self.__dict__.get('member_types_')
+        return self.__dict__.get("member_types_")
 
     class Config:
-        fields = {
-            'member_types_': 'member_types'
-        }
+        fields = {"member_types_": "member_types"}
 
-        alias_to_fields = {
-            'member_types': 'member_types_'
-        }
+        alias_to_fields = {"member_types": "member_types_"}

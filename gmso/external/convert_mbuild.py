@@ -1,47 +1,49 @@
+"""Convert to and from an mbuild.Compound."""
 from warnings import warn
 
 import numpy as np
 import unyt as u
 
-from gmso.core.topology import Topology
-from gmso.core.subtopology import SubTopology
 from gmso.core.atom import Atom
 from gmso.core.bond import Bond
 from gmso.core.box import Box
+from gmso.core.element import (
+    element_by_atomic_number,
+    element_by_mass,
+    element_by_name,
+    element_by_symbol,
+)
+from gmso.core.subtopology import SubTopology
+from gmso.core.topology import Topology
 from gmso.utils.io import has_mbuild
-from gmso.core.element import (element_by_symbol,
-                                   element_by_name,
-                                   element_by_atomic_number,
-                                   element_by_mass)
 
 if has_mbuild:
     import mbuild as mb
 
 
 def from_mbuild(compound, box=None, search_method=element_by_symbol):
-    """Convert an mbuild.Compound to a gmso.Topology
+    """Convert an mbuild.Compound to a gmso.Topology.
 
-    This conversion makes the following assumptions about the inputted
-    `Compound`:
-        * All positional and box dimension values in compound are in nanometers
+    This conversion makes the following assumptions about the inputted `Compound`:
+
+        * All positional and box dimension values in compound are in nanometers.
 
         * If the `Compound` has 4 or more levels of hierarchy, these are\
-            compressed to 3 levels of hierarchy in the resulting `Topology`. The\
-            top level `Compound` becomes the `Topology`, the second level\
-            Compounds become `SubTopologies`, and each particle becomes a `Site`,\
-            which are added to their corresponding `SubTopologies`.\
+          compressed to 3 levels of hierarchy in the resulting `Topology`. The\
+          top level `Compound` becomes the `Topology`, the second level\
+          Compounds become `SubTopologies`, and each particle becomes a `Site`,\
+          which are added to their corresponding `SubTopologies`.
 
         * Furthermore, `Sites` that do not belong to a sub-`Compound` are\
-            added to a single-`Site` `SubTopology`.
+          added to a single-`Site` `SubTopology`.
 
-        * The box dimension are extracted from `compound.periodicity`. If the\
-            `compound.periodicity` is `None`, the box lengths are the lengths of\
-            the bounding box + a 0.5 nm buffer.
+        * The box dimension are extracted from `compound.periodicity`. If\
+          the `compound.periodicity` is `None`, the box lengths are the lengths of\
+          the bounding box + a 0.5 nm buffer.
 
         * Only `Bonds` are added for each bond in the `Compound`. If `Angles`\
-        and `Dihedrals` are desired in the resulting `Topology`, they must be\
-        added separately from this function.
-
+          and `Dihedrals` are desired in the resulting `Topology`, they must be\
+          added separately from this function.
 
     Parameters
     ----------
@@ -58,14 +60,11 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
         element_by_atomic_number, and element_by_mass, which can be imported
         from `gmso.core.element'
 
-
     Returns
     -------
     top : gmso.Topology
-
     """
-
-    msg = ("Argument compound is not an mbuild.Compound")
+    msg = "Argument compound is not an mbuild.Compound"
     assert isinstance(compound, mb.Compound), msg
 
     top = Topology()
@@ -110,8 +109,9 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
             top.add_site(site, update_types=False)
 
     for b1, b2 in compound.bonds():
-        new_bond = Bond(connection_members=[site_map[b1], site_map[b2]],
-                bond_type=None)
+        new_bond = Bond(
+            connection_members=[site_map[b1], site_map[b2]], bond_type=None
+        )
         top.add_connection(new_bond, update_types=False)
     top.update_topology()
 
@@ -120,19 +120,17 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
     # Assumes 2-D systems are not supported in mBuild
     # if compound.periodicity is None and not box:
     else:
-        if np.allclose(compound.periodicity, np.zeros(3)):
-            box = from_mbuild_box(compound.boundingbox)
-            if box:
-                box.lengths += [0.5, 0.5, 0.5] * u.nm
-            top.box = box
+        if compound.box:
+            top.box = from_mbuild_box(compound.box)
         else:
-            top.box = Box(lengths=compound.periodicity)
+            top.box = from_mbuild_box(compound.get_boundingbox())
+    top.periodicity = compound.periodicity
 
     return top
 
 
 def to_mbuild(topology):
-    """ Convert a gmso.Topology to mbuild.Compound
+    """Convert a gmso.Topology to mbuild.Compound.
 
     Parameters
     ----------
@@ -144,13 +142,12 @@ def to_mbuild(topology):
     compound : mbuild.Compound
 
     """
-
-    msg = ("Argument topology is not a Topology")
+    msg = "Argument topology is not a Topology"
     assert isinstance(topology, Topology), msg
 
     compound = mb.Compound()
     if topology.name is Topology().name:
-        compound.name = 'Compound'
+        compound.name = "Compound"
     else:
         compound.name = topology.name
 
@@ -162,14 +159,19 @@ def to_mbuild(topology):
 
     for connect in topology.connections:
         if isinstance(connect, Bond):
-            compound.add_bond((
-                particle_map[connect.connection_members[0]],
-                particle_map[connect.connection_members[1]]))
+            compound.add_bond(
+                (
+                    particle_map[connect.connection_members[0]],
+                    particle_map[connect.connection_members[1]],
+                )
+            )
 
     return compound
 
+
 def from_mbuild_box(mb_box):
-    """Convert an mBuild box to a GMSO box
+    """Convert an mBuild box to a GMSO box.
+
     Assumes that the mBuild box dimensions are in nanometers
 
     Parameters
@@ -177,26 +179,23 @@ def from_mbuild_box(mb_box):
     mb_box : mbuild.Box
         mBuild box object to be converted to a gmso.core.Box object
 
-    Returns:
-    --------
+    Returns
+    -------
     box : gmso.core.Box
 
     """
-
     # TODO: Unit tests
 
     if not isinstance(mb_box, mb.Box):
-        raise ValueError('Argument mb_box is not an mBuild Box')
+        raise ValueError("Argument mb_box is not an mBuild Box")
 
     if np.allclose(mb_box.lengths, [0, 0, 0]):
-        warn(
-            'No box or boundingbox information detected, setting box to None'
-        )
+        warn("No box or boundingbox information detected, setting box to None")
         return None
 
     box = Box(
-        lengths=np.asarray(mb_box.lengths)*u.nm,
-        angles=np.asarray(mb_box.angles)*u.degree,
+        lengths=np.asarray(mb_box.lengths) * u.nm,
+        angles=np.asarray(mb_box.angles) * u.degree,
     )
 
     return box
