@@ -236,14 +236,6 @@ def _assert_membertype_class_exclusivity(root):
             if any(types) and any(classes):
                 raise MixedClassAndTypesError(error_msg)
 
-            # if any(any(type_) for (type_, _) in types_and_classes):
-            #     if any(any(class_) for (_, class_) in types_and_classes):
-            #         raise MixedClassAndTypesError(error_msg)
-            #
-            # if any(any(class_) for (_, class_) in types_and_classes):
-            #     if any(any(type_) for (type_, _) in types_and_classes):
-            #         raise MixedClassAndTypesError(error_msg)
-
 
 def _find_missing_atom_types_or_classes(ff_etree, greedy=False):
     """Iterate through the forcefield tree and find any missing atomtypes or classes."""
