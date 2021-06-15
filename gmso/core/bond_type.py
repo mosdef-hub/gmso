@@ -73,6 +73,10 @@ class BondType(ParametricPotential):
         """Return the members involved in this bondtype."""
         return self.__dict__.get("member_types_")
 
+    @property
+    def member_classes(self):
+        return self.__dict__.get("member_classes_")
+
     class Config:
         """Pydantic configuration for class attributes."""
 

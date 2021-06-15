@@ -71,6 +71,10 @@ class AngleType(ParametricPotential):
     def member_types(self):
         return self.__dict__.get("member_types_")
 
+    @property
+    def member_classes(self):
+        return self.__dict__.get("member_classes_")
+
     class Config:
         fields = {
             "member_types_": "member_types",

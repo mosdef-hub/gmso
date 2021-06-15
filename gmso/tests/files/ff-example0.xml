@@ -31,7 +31,7 @@
     <BondTypes expression="0.5 * k * (r-r_eq)**2">
         <ParametersUnitDef parameter="r_eq" unit="nm"/>
         <ParametersUnitDef parameter="k" unit="kJ/mol"/>
-        <BondType name="BondType1" class1='Ar' type2='Ar'>
+        <BondType name="BondType1" type1='Ar' type2='Ar'>
             <Parameters>
                 <Parameter name='r_eq' value="10.0"/>
                 <Parameter name='k' value="10000"/>

@@ -113,17 +113,31 @@ def _consolidate_params(params_dict, expression, update_orig=True):
 
 def _get_member_types(tag):
     """Return the types of the members, handle wildcards."""
-    at1 = tag.attrib.get("type1", tag.attrib.get("class1", None))
-    at2 = tag.attrib.get("type2", tag.attrib.get("class2", None))
-    at3 = tag.attrib.get("type3", tag.attrib.get("class3", None))
-    at4 = tag.attrib.get("type4", tag.attrib.get("class4", None))
+    at1 = tag.attrib.get("type1")
+    at2 = tag.attrib.get("type2")
+    at3 = tag.attrib.get("type3")
+    at4 = tag.attrib.get("type4")
 
     member_types = filter(lambda x: x is not None, [at1, at2, at3, at4])
     member_types = [
         "*" if mem_type == "" else mem_type for mem_type in member_types
     ]
+    return member_types or None
 
-    return member_types
+
+def _get_member_classes(tag):
+    """Return the classes of the members, handle wildcards."""
+    at1 = tag.attrib.get("class1")
+    at2 = tag.attrib.get("class2")
+    at3 = tag.attrib.get("class3")
+    at4 = tag.attrib.get("class4")
+
+    member_classes = filter(lambda x: x is not None, [at1, at2, at3, at4])
+    member_classes = [
+        "*" if mem_type == "" else mem_type for mem_type in member_classes
+    ]
+
+    return member_classes or None
 
 
 def _parse_default_units(unit_tag):
@@ -200,12 +214,16 @@ def _assert_membertype_class_exclusivity(root):
     ):
         potential_iter = root.iterfind(f".//{potential_tag}")
         for potential in potential_iter:
+            if potential_tag == "ImproperType":
+                iter_end_idx = idx
+            else:
+                iter_end_idx = idx + 1
             types_and_classes = (
                 (
                     potential.attrib.get(f"type{j}"),
                     potential.attrib.get(f"class{j}"),
                 )
-                for j in range(1, idx + 1)
+                for j in range(1, iter_end_idx)
             )
             error_msg = (
                 f"{potential_tag} {potential.attrib['name']} has a mix "
@@ -214,13 +232,17 @@ def _assert_membertype_class_exclusivity(root):
                 f"{etree.tostring(potential, encoding='utf-8', pretty_print=True).decode()}"
             )
 
-            if any(type_ for (type_, _) in types_and_classes):
-                if any(class_ for (_, class_) in types_and_classes):
-                    raise MixedClassAndTypesError(error_msg)
+            types, classes = zip(*types_and_classes)
+            if any(types) and any(classes):
+                raise MixedClassAndTypesError(error_msg)
 
-            if any(class_ for (_, class_) in types_and_classes):
-                if any(type_ for (type_, _) in types_and_classes):
-                    raise MixedClassAndTypesError(error_msg)
+            # if any(any(type_) for (type_, _) in types_and_classes):
+            #     if any(any(class_) for (_, class_) in types_and_classes):
+            #         raise MixedClassAndTypesError(error_msg)
+            #
+            # if any(any(class_) for (_, class_) in types_and_classes):
+            #     if any(any(type_) for (type_, _) in types_and_classes):
+            #         raise MixedClassAndTypesError(error_msg)
 
 
 def _find_missing_atom_types_or_classes(ff_etree, greedy=False):
@@ -248,6 +270,8 @@ def _find_missing_atom_types_or_classes(ff_etree, greedy=False):
     for potentials_type in remaining_potentials:
         for potential_type in potentials_type:
             types_or_classes = _get_member_types(potential_type)
+            if not types_or_classes:
+                types_or_classes = _get_member_classes(potential_type)
             for type_or_class in types_or_classes:
                 member_types_or_classes.add(type_or_class)
 
@@ -397,6 +421,7 @@ def parse_ff_connection_types(connectiontypes_el, child_tag="BondType"):
             "parameters": None,
             "independent_variables": None,
             "member_types": None,
+            "member_classes": None,
         }
         if connectiontype_expression:
             ctor_kwargs["expression"] = connectiontype_expression
@@ -407,6 +432,9 @@ def parse_ff_connection_types(connectiontypes_el, child_tag="BondType"):
             )
 
         ctor_kwargs["member_types"] = _get_member_types(connection_type)
+        if not ctor_kwargs["member_types"]:
+            ctor_kwargs["member_classes"] = _get_member_classes(connection_type)
+
         if not ctor_kwargs["parameters"]:
             ctor_kwargs["parameters"] = _parse_params_values(
                 connection_type,
@@ -421,9 +449,11 @@ def parse_ff_connection_types(connectiontypes_el, child_tag="BondType"):
         ctor_kwargs["independent_variables"] = (
             sympify(connectiontype_expression).free_symbols - valued_param_vars
         )
+
         this_conn_type_key = FF_TOKENS_SEPARATOR.join(
-            ctor_kwargs["member_types"]
+            ctor_kwargs.get("member_types") or ctor_kwargs.get("member_classes")
         )
+
         this_conn_type = TAG_TO_CLASS_MAP[child_tag](**ctor_kwargs)
         connectiontypes_dict[this_conn_type_key] = this_conn_type
 
