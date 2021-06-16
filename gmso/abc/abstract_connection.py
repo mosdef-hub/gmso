@@ -4,7 +4,7 @@ from pydantic import Field, root_validator
 
 from gmso.abc.abstract_site import Site
 from gmso.abc.gmso_base import GMSOBase
-from gmso.exceptions import GMSOError
+from gmso.exceptions import GMSOError, SerializationError
 
 
 class Connection(GMSOBase):
@@ -39,9 +39,11 @@ class Connection(GMSOBase):
                 connection_members = [
                     cls.__members_creator__(x) for x in connection_members
                 ]
-            except:
-                raise TypeError(
-                    f"A non-site object provided to be a connection member"
+            except Exception as e:
+                raise SerializationError(
+                    f"Something went wrong while creating connection members "
+                    f"from a serialized representation. The original error "
+                    f"message is:\n\t {e}"
                 )
 
         if len(set(connection_members)) != len(connection_members):

@@ -28,3 +28,7 @@ class MissingAtomTypesError(ForceFieldParseError):
 
 class MissingPotentialError(ForceFieldError):
     """Error for missing Potential when searching for Potentials in a ForceField."""
+
+
+class SerializationError(GMSOError):
+    """Error to be raised when serialization fails."""

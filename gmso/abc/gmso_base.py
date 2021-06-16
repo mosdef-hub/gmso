@@ -84,7 +84,6 @@ class GMSOBase(BaseModel, ABC):
                     exclude_alias.add(excluded)
             kwargs["exclude"] = exclude_alias
         super_dict = super(GMSOBase, self).dict(**kwargs)
-        print(self.__dict__.get("mass_"), super_dict)
         return super_dict
 
     def json(self, **kwargs):

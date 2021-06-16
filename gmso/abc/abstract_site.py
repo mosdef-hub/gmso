@@ -4,7 +4,7 @@ from typing import Any, ClassVar, Sequence, TypeVar, Union
 
 import numpy as np
 import unyt as u
-from pydantic import Field, root_validator, validator
+from pydantic import Field, validator
 from unyt.exceptions import InvalidUnitOperation
 
 from gmso.abc.gmso_base import GMSOBase
