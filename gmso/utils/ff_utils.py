@@ -318,10 +318,8 @@ def parse_ff_atomtypes(atomtypes_el, ff_meta):
             )
         if isinstance(ctor_kwargs["overrides"], str):
             ctor_kwargs["overrides"] = set(
-                [
-                    override.strip()
-                    for override in ctor_kwargs["overrides"].split(",")
-                ]
+                override.strip()
+                for override in ctor_kwargs["overrides"].split(",")
             )
         if isinstance(ctor_kwargs["charge"], str):
             ctor_kwargs["charge"] = u.unyt_quantity(
