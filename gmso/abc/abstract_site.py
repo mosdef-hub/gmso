@@ -4,7 +4,7 @@ from typing import Any, ClassVar, Sequence, TypeVar, Union
 
 import numpy as np
 import unyt as u
-from pydantic import Field, root_validator, validator
+from pydantic import Field, validator
 from unyt.exceptions import InvalidUnitOperation
 
 from gmso.abc.gmso_base import GMSOBase
@@ -108,11 +108,12 @@ class Site(GMSOBase):
 
         return position
 
-    @root_validator(pre=True)
-    def inject_name(cls, values):
-        if not values.get("name"):
-            values["name"] = cls.__name__
-        return values
+    @validator("name_", pre=True, always=True)
+    def inject_name(cls, value):
+        if value == "" or value is None:
+            return cls.__name__
+        else:
+            return value
 
     @classmethod
     def __new__(cls, *args: Any, **kwargs: Any) -> SiteT:

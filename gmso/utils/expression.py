@@ -4,11 +4,13 @@ import warnings
 import sympy
 import unyt as u
 
+from gmso.utils.decorators import register_pydantic_json
 from gmso.utils.misc import unyt_to_hashable
 
 __all__ = ["_PotentialExpression"]
 
 
+@register_pydantic_json(method="json")
 class _PotentialExpression:
     """A general Expression class with parameters.
 
@@ -266,6 +268,26 @@ class _PotentialExpression:
             )
 
         return indep_vars
+
+    @staticmethod
+    def json(potential_expression):
+        """Convert the provided potential expression to a json serializable dictionary."""
+        if not isinstance(potential_expression, _PotentialExpression):
+            raise TypeError(
+                f"{potential_expression} is not of type _PotentialExpression"
+            )
+        else:
+            json_dict = {
+                "expression": str(potential_expression.expression),
+                "independent_variables": list(
+                    str(idep)
+                    for idep in potential_expression.independent_variables
+                ),
+            }
+            if potential_expression.is_parametric:
+                json_dict["parameters"] = potential_expression.parameters
+
+        return json_dict
 
     @staticmethod
     def _verify_validity(

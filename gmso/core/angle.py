@@ -1,5 +1,5 @@
 """Support for 3-partner connections between gmso.core.Atoms."""
-from typing import Optional, Tuple
+from typing import Callable, ClassVar, Optional, Tuple
 
 from pydantic import Field
 
@@ -21,6 +21,7 @@ class Angle(Connection):
         __eq__, __repr__, _validate methods
     Additional _validate methods are presented
     """
+    __members_creator__: ClassVar[Callable] = Atom.parse_obj
 
     connection_members_: Tuple[Atom, Atom, Atom] = Field(
         ..., description="The 3 atoms involved in the angle."

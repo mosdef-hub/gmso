@@ -33,26 +33,32 @@ class AngleType(ParametricPotential):
     def __init__(
         self,
         name="AngleType",
-        expression="0.5 * k * (theta-theta_eq)**2",
+        expression=None,
         parameters=None,
         independent_variables=None,
+        potential_expression=None,
         member_types=None,
         topology=None,
         tags=None,
     ):
-        if parameters is None:
-            parameters = {
-                "k": 1000 * u.Unit("kJ / (deg**2)"),
-                "theta_eq": 180 * u.deg,
-            }
-        if independent_variables is None:
-            independent_variables = {"theta"}
+        if potential_expression is None:
+            if expression is None:
+                expression = "0.5 * k * (theta-theta_eq)**2"
+
+            if parameters is None:
+                parameters = {
+                    "k": 1000 * u.Unit("kJ / (deg**2)"),
+                    "theta_eq": 180 * u.deg,
+                }
+            if independent_variables is None:
+                independent_variables = {"theta"}
 
         super(AngleType, self).__init__(
             name=name,
             expression=expression,
             parameters=parameters,
             independent_variables=independent_variables,
+            potential_expression=potential_expression,
             topology=topology,
             member_types=member_types,
             set_ref=ANGLE_TYPE_DICT,
