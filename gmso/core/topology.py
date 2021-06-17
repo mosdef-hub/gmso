@@ -757,6 +757,12 @@ class Topology(object):
         for i, ref_member in enumerate(self._set_refs[ref].keys()):
             self._index_refs[ref][ref_member] = i
 
+    def get_sites_by(self, key, value):
+        assert key in {"residue_label", "residue_index", "label"}
+        for site in self.sites:
+            if getattr(site, key) == value:
+                yield site
+
     def __repr__(self):
         """Return custom format to represent topology."""
         return (
