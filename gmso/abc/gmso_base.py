@@ -93,6 +93,13 @@ class GMSOBase(BaseModel, ABC):
 
         return super(GMSOBase, self).json(**kwargs)
 
+    def json_dict(self, **kwargs):
+        """Return a JSON serializable dictionary from the object"""
+        import json
+
+        raw_json = self.json(**kwargs)
+        return json.loads(raw_json)
+
     @classmethod
     def validate(cls, value):
         """Ensure that the object is validated before use."""

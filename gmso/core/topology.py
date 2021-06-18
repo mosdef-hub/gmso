@@ -757,6 +757,110 @@ class Topology(object):
         for i, ref_member in enumerate(self._set_refs[ref].keys()):
             self._index_refs[ref][ref_member] = i
 
+    def json(self, types=False, update=False):
+        """Return a json serializable dictionary of this topology.
+
+        This is used for json serializing the topology
+
+        Parameters
+        ----------
+        types: bool, default=False
+            If true, include type info (i.e. Potentials)
+        update: bool, default=False
+            If true, update the topology before iterating through the files
+
+        Returns
+        -------
+        dict
+            A json serializable dictionary representing members of this Topology
+        """
+        if types and not self.is_typed():
+            raise ValueError(
+                "Cannot incorporate types because the topology is not typed."
+            )
+        if update:
+            self.update_topology()
+
+        json_dict = {
+            "name": self._name,
+            "scaling_factors": self.scaling_factors,
+            "subtopolgies": [],
+            "atoms": [],
+            "bonds": [],
+            "angles": [],
+            "dihedrals": [],
+            "impropers": [],
+            "atom_types": [],
+            "bond_types": [],
+            "angle_types": [],
+            "dihedral_types": [],
+            "improper_types": [],
+        }
+
+        for atom in self._sites:
+            atom_dict = atom.json_dict(exclude={"atom_type"})
+            if types and atom.atom_type:
+                # if not potentials.get(id(atom.atom_type)):
+                #     potentials[id(atom.atom_type)] = []
+                # potentials[id(atom.atom_type)].append(id(atom))
+                atom_dict["atom_type"] = id(atom.atom_type)
+
+            json_dict["atoms"].append(atom_dict)
+
+        targets = {
+            Bond: json_dict["bonds"],
+            Angle: json_dict["angles"],
+            Dihedral: json_dict["dihedrals"],
+            Improper: json_dict["impropers"],
+            AtomType: json_dict["atom_types"],
+            BondType: json_dict["bond_types"],
+            AngleType: json_dict["angle_types"],
+            DihedralType: json_dict["dihedral_types"],
+            ImproperType: json_dict["improper_types"],
+        }
+
+        for connections, exclude_attr in [
+            (self._bonds, "bond_type"),
+            (self._angles, "angle_type"),
+            (self._dihedrals, "dihedral_type"),
+            (self._impropers, "improper_type"),
+        ]:
+            for connection in connections:
+                connection_dict = connection.json_dict(
+                    exclude={exclude_attr, "connection_members"}
+                )
+                target = targets[type(connection)]
+                connection_dict["connection_members"] = [
+                    self.get_index(member)
+                    for member in connection.connection_members
+                ]
+                target.append(connection_dict)
+                connection_type = getattr(connection, exclude_attr)
+                if types and connection_type:
+                    # if not potentials.get(id(connection_type)):
+                    #     potentials[id(connection_type)] = []
+                    # potentials[id(connection_type)].append(
+                    #     id(connection)
+                    # )
+                    connection_dict[exclude_attr] = id(connection_type)
+
+        for potentials in [
+            self._atom_types.values(),
+            self._bond_types.values(),
+            self._angle_types.values(),
+            self._dihedral_types.values(),
+            self._improper_types.values(),
+        ]:
+            for potential in potentials:
+                potential_dict = potential.json_dict(
+                    exclude={"topology", "set_ref"}
+                )
+                target = targets[type(potential)]
+                potential_dict["id"] = id(potential)
+                target.append(potential_dict)
+
+        return json_dict
+
     def __repr__(self):
         """Return custom format to represent topology."""
         return (
@@ -769,3 +873,7 @@ class Topology(object):
     def __str__(self):
         """Return custom format to represent topology as a string."""
         return f"<Topology {self.name}, {self.n_sites} sites, id: {id(self)}>"
+
+    @classmethod
+    def from_json(cls, json_file_or_dict):
+        pass

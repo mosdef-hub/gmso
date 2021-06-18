@@ -124,6 +124,11 @@ class SubTopology(object):
             f"id: {id(self)}>"
         )
 
+    def json(self):
+        import json
+
+        return {"id": f"{id(self)}", "atoms": json.loads()}
+
 
 def _validate_parent(parent):
     """Ensure the parent is a topology."""
