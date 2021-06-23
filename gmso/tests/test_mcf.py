@@ -1,10 +1,10 @@
-import pytest
 import numpy as np
+import pytest
 import unyt as u
 
+from gmso.exceptions import EngineIncompatibilityError
 from gmso.formats.mcf import write_mcf
 from gmso.tests.base_test import BaseTest
-from gmso.exceptions import EngineIncompatibilityError
 
 
 class TestMCF(BaseTest):
@@ -50,7 +50,10 @@ class TestMCF(BaseTest):
         )
         assert np.isclose(
             float(mcf_data[atom_section_start + 2][7]),
-            top.sites[0].atom_type.parameters["sigma"].in_units(u.Angstrom).value,
+            top.sites[0]
+            .atom_type.parameters["sigma"]
+            .in_units(u.Angstrom)
+            .value,
         )
 
     def test_write_mie_full(self, n_typed_xe_mie):
@@ -88,7 +91,10 @@ class TestMCF(BaseTest):
         )
         assert np.isclose(
             float(mcf_data[atom_section_start + 2][7]),
-            top.sites[0].atom_type.parameters["sigma"].in_units(u.Angstrom).value,
+            top.sites[0]
+            .atom_type.parameters["sigma"]
+            .in_units(u.Angstrom)
+            .value,
         )
         assert np.isclose(
             float(mcf_data[atom_section_start + 2][8]),

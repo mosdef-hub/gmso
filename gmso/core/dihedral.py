@@ -1,4 +1,4 @@
-from typing import Tuple, Optional
+from typing import Callable, ClassVar, Optional, Tuple
 
 from pydantic import Field
 
@@ -22,27 +22,27 @@ class Dihedral(Connection):
     -----
     Inherits some methods from Connection:
         __eq__, __repr__, _validate methods
-        
+
     Additional _validate methods are presented
     """
+    __members_creator__: ClassVar[Callable] = Atom.parse_obj
+
     connection_members_: Tuple[Atom, Atom, Atom, Atom] = Field(
-        ...,
-        description='The 4 atoms involved in the dihedral.'
+        ..., description="The 4 atoms involved in the dihedral."
     )
 
     dihedral_type_: Optional[DihedralType] = Field(
-        default=None,
-        description='DihedralType of this dihedral.'
+        default=None, description="DihedralType of this dihedral."
     )
 
     @property
     def dihedral_type(self):
-        return self.__dict__.get('dihedral_type_')
+        return self.__dict__.get("dihedral_type_")
 
     @property
     def connection_type(self):
         # ToDo: Deprecate this?
-        return self.__dict__.get('dihedral_type_')
+        return self.__dict__.get("dihedral_type_")
 
     def equivalent_members(self):
         """Get a set of the equivalent connection member tuples
@@ -60,10 +60,9 @@ class Dihedral(Connection):
 
         where i, j, k, and l are the connection members.
         """
-        return frozenset([
-                self.connection_members,
-                tuple(reversed(self.connection_members))
-                ])
+        return frozenset(
+            [self.connection_members, tuple(reversed(self.connection_members))]
+        )
 
     def _equivalent_members_hash(self):
         """Returns a unique hash representing the connection
@@ -81,27 +80,34 @@ class Dihedral(Connection):
         one another.
         """
 
-        return hash(frozenset([
-            frozenset([self.connection_members[0],
-                       self.connection_members[1]]),
-            frozenset([self.connection_members[1],
-                       self.connection_members[2]]),
-            frozenset([self.connection_members[2],
-                       self.connection_members[3]])
-            ]))
+        return hash(
+            frozenset(
+                [
+                    frozenset(
+                        [self.connection_members[0], self.connection_members[1]]
+                    ),
+                    frozenset(
+                        [self.connection_members[1], self.connection_members[2]]
+                    ),
+                    frozenset(
+                        [self.connection_members[2], self.connection_members[3]]
+                    ),
+                ]
+            )
+        )
 
     def __setattr__(self, key, value):
-        if key == 'connection_type':
-            super(Dihedral, self).__setattr__('dihedral_type', value)
+        if key == "connection_type":
+            super(Dihedral, self).__setattr__("dihedral_type", value)
         else:
             super(Dihedral, self).__setattr__(key, value)
 
     class Config:
         fields = {
-            'dihedral_type_': 'dihedral_type',
-            'connection_members_': 'connection_members'
+            "dihedral_type_": "dihedral_type",
+            "connection_members_": "connection_members",
         }
         alias_to_fields = {
-            'dihedral_type': 'dihedral_type_',
-            'connection_members': 'connection_members_'
+            "dihedral_type": "dihedral_type_",
+            "connection_members": "connection_members_",
         }

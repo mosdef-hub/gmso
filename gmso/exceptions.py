@@ -1,5 +1,4 @@
-
-
+"""Custom exception module for GMSO."""
 TYPE_ERROR_STRING = "Error: Expected {0} to be of type {1}, found {2}."
 
 
@@ -12,20 +11,20 @@ class GMSOError(Exception):
 
 
 class ForceFieldError(Exception):
-    """Base class for forcefiled related error"""
+    """Base class for forcefield related errors."""
 
 
 class ForceFieldParseError(Exception):
-    """Base class for forcefield parsing errors"""
+    """Base class for forcefield parsing errors."""
 
 
 class EngineIncompatibilityError(GMSOError):
-    """Error for engine incompatibility when writing or converting"""
+    """Error for engine incompatibility when writing or converting."""
 
 
 class MissingAtomTypesError(ForceFieldParseError):
-    """Error for missing AtomTypes when creating a ForceField from an XML file"""
+    """Error for missing AtomTypes when creating a ForceField from an XML file."""
 
 
 class MissingPotentialError(ForceFieldError):
-    """Error for missing Potential when searching for Potentials in a ForceField"""
+    """Error for missing Potential when searching for Potentials in a ForceField."""

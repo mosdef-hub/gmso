@@ -20,7 +20,7 @@ timestep            1.0
 thermo              100
 compute             PE all pe
 
-fix                 MyNVE all nve 
+fix                 MyNVE all nve
 dump                NVEdump all atom 100 ar_nve.lammpstrj
 fix                 thermoprint all print 100 "$(step)  $(temp)  $(c_PE)" file thermo.txt
 
