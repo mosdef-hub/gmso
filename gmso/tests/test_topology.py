@@ -693,12 +693,17 @@ class TestTopology(BaseTest):
         with pytest.raises(GMSOError):
             typed_methylnitroaniline.scaling_factors = (0.5, 1.0)
         with pytest.raises(GMSOError):
-            typed_methylnitroaniline.scaling_factors = {
-                "lj_12": 0.0
-            }
+            typed_methylnitroaniline.scaling_factors = {"lj_12": 0.0}
 
     def test_is_typed_check(self, typed_chloroethanol):
-        groups = ['sites', 'bonds', 'angles', 'dihedrals', 'impropers', 'topology']
+        groups = [
+            "sites",
+            "bonds",
+            "angles",
+            "dihedrals",
+            "impropers",
+            "topology",
+        ]
         for group in groups:
             assert typed_chloroethanol.is_fully_typed(group=group)
 
@@ -709,15 +714,15 @@ class TestTopology(BaseTest):
         clone.dihedrals[0].dihedral_type = None
 
     def get_untyped(self, typed_chloroethanol):
-        #Note impropers list is empty, and hence is not tested here
-        groups = ['sites', 'bonds', 'angles', 'dihedrals']
+        # Note impropers list is empty, and hence is not tested here
+        groups = ["sites", "bonds", "angles", "dihedrals"]
         clone = deepcopy(typed_chloroethanol)
         clone.sites[0].atom_type = None
         clone.bonds[0].bond_type = None
         clone.angles[0].angle_type = None
         clone.dihedrals[0].dihedral_type = None
 
-        full_opt = clone.get_untyped(group='topology')
+        full_opt = clone.get_untyped(group="topology")
         for group in groups[:-1]:
             assert not clone.is_fully_typed(group=group)
             assert len(clone.get_untyped(group=group)) == 1

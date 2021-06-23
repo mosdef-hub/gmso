@@ -625,8 +625,7 @@ class Topology(object):
             self._typed = False
         return self._typed
 
-    def is_fully_typed(self, updated=False,
-                       group='topology'):
+    def is_fully_typed(self, updated=False, group="topology"):
         """Check if the topology certain group of objects of topology is fully or partially typed
 
         Parameters
@@ -660,14 +659,18 @@ class Topology(object):
             self.update_atom_types()
 
         typed_status = {
-            'sites' : lambda top: all(site.atom_type for site in top.sites),
-            'bonds' : lambda top: all(bond.bond_type for bond in top.bonds),
-            'angles' : lambda top: all(angle.angle_type for angle in top.angles),
-            'dihedrals' : lambda top: all(dihedral.dihedral_type for dihedral in top.dihedrals),
-            'impropers' : lambda top: all(improper.improper_type for improper in top.impropers)
-    }
+            "sites": lambda top: all(site.atom_type for site in top.sites),
+            "bonds": lambda top: all(bond.bond_type for bond in top.bonds),
+            "angles": lambda top: all(angle.angle_type for angle in top.angles),
+            "dihedrals": lambda top: all(
+                dihedral.dihedral_type for dihedral in top.dihedrals
+            ),
+            "impropers": lambda top: all(
+                improper.improper_type for improper in top.impropers
+            ),
+        }
 
-        if group == 'topology':
+        if group == "topology":
             result = list()
             for subgroup in typed_status:
                 result.append(typed_status[subgroup](self))
@@ -675,9 +678,11 @@ class Topology(object):
         elif group in typed_status:
             return typed_status[group](self)
         else:
-            raise ValueError(f"Could not check typing status of {group}. "
-                             "Available options: 'topology', 'sites', 'bonds', "
-                             "'angles', 'dihedrals', 'impropers'.")
+            raise ValueError(
+                f"Could not check typing status of {group}. "
+                "Available options: 'topology', 'sites', 'bonds', "
+                "'angles', 'dihedrals', 'impropers'."
+            )
 
     def get_untyped(self, group):
         """Get untyped objects of the Topology
@@ -695,21 +700,24 @@ class Topology(object):
             object groups
         """
         untyped = dict()
-        untyped_extractors = {"sites": self._get_untyped_sites,
-                              "bonds": self._get_untyped_bonds,
-                              "angles": self._get_untyped_angles,
-                              "dihedrals": self._get_untyped_dihedrals,
-                              "impropers": self._get_untyped_impropers
-                             }
-        if group == 'topology':
+        untyped_extractors = {
+            "sites": self._get_untyped_sites,
+            "bonds": self._get_untyped_bonds,
+            "angles": self._get_untyped_angles,
+            "dihedrals": self._get_untyped_dihedrals,
+            "impropers": self._get_untyped_impropers,
+        }
+        if group == "topology":
             for subgroup in untyped_extractors:
                 untyped.update(untyped_extractors[subgroup])
         elif group in untyped_extractors:
             untyped = untyped_extractors[group]()
         else:
-            raise ValueError(f"Cannot get untyped {group}. "
-                              "Available options: 'sites', 'bonds', "
-                              "'angles', 'dihedrals', 'impropers'")
+            raise ValueError(
+                f"Cannot get untyped {group}. "
+                "Available options: 'sites', 'bonds', "
+                "'angles', 'dihedrals', 'impropers'"
+            )
         return untyped
 
     def _get_untyped_sites(self):
