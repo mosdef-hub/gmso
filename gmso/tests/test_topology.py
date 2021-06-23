@@ -707,11 +707,8 @@ class TestTopology(BaseTest):
         for group in groups:
             assert typed_chloroethanol.is_fully_typed(group=group)
 
-        clone = deepcopy(typed_chloroethanol)
-        clone.sites[0].atom_type = None
-        clone.bonds[0].bond_type = None
-        clone.angles[0].angle_type = None
-        clone.dihedrals[0].dihedral_type = None
+        with pytest.raises(ValueError):
+            typed_chloroethanol.is_fully_typed(group="foo")
 
     def get_untyped(self, typed_chloroethanol):
         # Note impropers list is empty, and hence is not tested here
@@ -723,7 +720,10 @@ class TestTopology(BaseTest):
         clone.dihedrals[0].dihedral_type = None
 
         full_opt = clone.get_untyped(group="topology")
-        for group in groups[:-1]:
+        for group in groups:
             assert not clone.is_fully_typed(group=group)
             assert len(clone.get_untyped(group=group)) == 1
             assert len(full_opt[group] == 1)
+
+        with pytest.raises(ValueError):
+            clone.get_untyped(group="foo")

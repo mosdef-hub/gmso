@@ -659,14 +659,16 @@ class Topology(object):
             self.update_atom_types()
 
         typed_status = {
-            "sites": lambda top: all(site.atom_type for site in top.sites),
-            "bonds": lambda top: all(bond.bond_type for bond in top.bonds),
-            "angles": lambda top: all(angle.angle_type for angle in top.angles),
+            "sites": lambda top: all(site.atom_type for site in top._sites),
+            "bonds": lambda top: all(bond.bond_type for bond in top._bonds),
+            "angles": lambda top: all(
+                angle.angle_type for angle in top._angles
+            ),
             "dihedrals": lambda top: all(
-                dihedral.dihedral_type for dihedral in top.dihedrals
+                dihedral.dihedral_type for dihedral in top._dihedrals
             ),
             "impropers": lambda top: all(
-                improper.improper_type for improper in top.impropers
+                improper.improper_type for improper in top._impropers
             ),
         }
 
@@ -723,7 +725,7 @@ class Topology(object):
     def _get_untyped_sites(self):
         "Return a list of untyped sites"
         untyped = {"sites": list()}
-        for site in self.sites:
+        for site in self._sites:
             if not site.atom_type:
                 untyped[sites].append(site)
         return untyped
@@ -731,7 +733,7 @@ class Topology(object):
     def _get_untyped_bonds(self):
         "Return a list of untyped bonds"
         untyped = {"bonds": list()}
-        for bond in self.bonds:
+        for bond in self._bonds:
             if not bond.bond_type:
                 untyped["bonds"].append(bond)
         return untyped
@@ -739,7 +741,7 @@ class Topology(object):
     def _get_untyped_angles(self):
         "Return a list of untyped angles"
         untyped = {"angles": list()}
-        for angle in self.angles:
+        for angle in self._angles:
             if not angle.angle_type:
                 untyped["angles"].append(angle)
         return untyped
@@ -747,7 +749,7 @@ class Topology(object):
     def _get_untyped_dihedrals(self):
         "Return a list of untyped dihedrals"
         untyped = {"dihedrals": list()}
-        for dihedral in self.dihedrals:
+        for dihedral in self._dihedrals:
             if not dihedral.dihedral_type:
                 untyped["dihedrals"].append(dihedral)
         return untyped
@@ -755,7 +757,7 @@ class Topology(object):
     def _get_untyped_impropers(self):
         "Return a list of untyped impropers"
         untyped = {"impropers": list()}
-        for improper in self.impropers:
+        for improper in self._impropers:
             if not improper.improper_type:
                 untyped["impropers"].append(improper)
         return untyped
