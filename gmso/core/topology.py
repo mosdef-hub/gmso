@@ -628,7 +628,7 @@ class Topology(object):
 
         Parameters
         ----------
-        pair_if_types: list-like of strs
+        pair_of_types: list-like of strs
             The pair (or set) of names or atomclasses of gmso.AtomTypes of which
             the custom pairwise potential should be removed
         """
