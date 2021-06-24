@@ -105,6 +105,16 @@ class TestPotentialTemplates(BaseTest):
             sympy.sympify("phi")
         }
 
+    def test_fixed_bond_potential(self, templates):
+        potential = templates["FixedBondPotential"]
+        assert potential.name == "FixedBondPotential"
+        assert potential.expression == sympy.sympify(
+            "DiracDelta(r-r_eq)"
+        )
+        assert potential.independent_variables == {
+            sympy.sympify("r")
+        }
+
     def test_harmonic_bond_potential(self, templates):
         harmonic_bond_potential = templates["HarmonicBondPotential"]
         assert harmonic_bond_potential.name == "HarmonicBondPotential"
@@ -115,13 +125,23 @@ class TestPotentialTemplates(BaseTest):
             sympy.sympify("r")
         }
 
+    def test_fixed_angle_potential(self, templates):
+        potential = templates["FixedAnglePotential"]
+        assert potential.name == "FixedAnglePotential"
+        assert potential.expression == sympy.sympify(
+            "DiracDelta(theta-theta_eq)"
+        )
+        assert potential.independent_variables == {
+            sympy.sympify("theta")
+        }
+
     def test_harmonic_angle_potential(self, templates):
-        harmonic_bond_potential = templates["HarmonicAnglePotential"]
-        assert harmonic_bond_potential.name == "HarmonicAnglePotential"
-        assert harmonic_bond_potential.expression == sympy.sympify(
+        harmonic_angle_potential = templates["HarmonicAnglePotential"]
+        assert harmonic_angle_potential.name == "HarmonicAnglePotential"
+        assert harmonic_angle_potential.expression == sympy.sympify(
             "0.5 * k * (theta-theta_eq)**2"
         )
-        assert harmonic_bond_potential.independent_variables == {
+        assert harmonic_angle_potential.independent_variables == {
             sympy.sympify("theta")
         }
 
