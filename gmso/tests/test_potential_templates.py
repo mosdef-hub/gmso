@@ -108,12 +108,8 @@ class TestPotentialTemplates(BaseTest):
     def test_fixed_bond_potential(self, templates):
         potential = templates["FixedBondPotential"]
         assert potential.name == "FixedBondPotential"
-        assert potential.expression == sympy.sympify(
-            "DiracDelta(r-r_eq)"
-        )
-        assert potential.independent_variables == {
-            sympy.sympify("r")
-        }
+        assert potential.expression == sympy.sympify("DiracDelta(r-r_eq)")
+        assert potential.independent_variables == {sympy.sympify("r")}
 
     def test_harmonic_bond_potential(self, templates):
         harmonic_bond_potential = templates["HarmonicBondPotential"]
@@ -131,9 +127,7 @@ class TestPotentialTemplates(BaseTest):
         assert potential.expression == sympy.sympify(
             "DiracDelta(theta-theta_eq)"
         )
-        assert potential.independent_variables == {
-            sympy.sympify("theta")
-        }
+        assert potential.independent_variables == {sympy.sympify("theta")}
 
     def test_harmonic_angle_potential(self, templates):
         harmonic_angle_potential = templates["HarmonicAnglePotential"]

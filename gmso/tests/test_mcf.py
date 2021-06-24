@@ -195,16 +195,16 @@ class TestMCF(BaseTest):
         assert np.isclose(
             float(mcf_data[atom_section_start + 2][6]),
             (top.sites[0].atom_type.parameters["epsilon"] / u.kb)
-                .in_units(u.K)
-                .value,
-                )
+            .in_units(u.K)
+            .value,
+        )
         assert np.isclose(
             float(mcf_data[atom_section_start + 2][7]),
             top.sites[0]
-                .atom_type.parameters["sigma"]
-                .in_units(u.Angstrom)
-                .value,
-                )
+            .atom_type.parameters["sigma"]
+            .in_units(u.Angstrom)
+            .value,
+        )
         assert np.isclose(
             float(mcf_data[atom_section_start + 2][8]),
             top.sites[0].atom_type.parameters["n"],
