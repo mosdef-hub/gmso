@@ -105,7 +105,13 @@ def _id_rings_fragments(top):
     # Identify atoms in rings
     bond_graph = nx.Graph()
     bond_graph.add_edges_from(
-        [[top.get_index(bond.connection_members[0]), top.get_index(bond.connection_members[1])] for bond in top.bonds]
+        [
+            [
+                top.get_index(bond.connection_members[0]),
+                top.get_index(bond.connection_members[1]),
+            ]
+            for bond in top.bonds
+        ]
     )
     if len(top.bonds) == 0:
         warnings.warn(
@@ -155,8 +161,8 @@ def _id_rings_fragments(top):
                 if len(set(ring1) & set(ring2)) > 0:
                     all_rings.remove(ring1)
                     all_rings.remove(ring2)
-                    all_rings.append(list(set(ring1+ring2)))
-                    rings_changed=True
+                    all_rings.append(list(set(ring1 + ring2)))
+                    rings_changed = True
                     break
 
     # ID fragments which contain a ring
@@ -356,7 +362,8 @@ def _write_bond_information(mcf, top):
             "{:s}  "
             "{:10.5f}\n".format(
                 idx + 1,
-                top.get_index(bond.connection_members[0]) + 1,  # TODO: Confirm the +1 here
+                top.get_index(bond.connection_members[0])
+                + 1,  # TODO: Confirm the +1 here
                 top.get_index(bond.connection_members[1]) + 1,
                 "fixed",
                 bond.connection_type.parameters["r_eq"]
@@ -398,7 +405,9 @@ def _write_angle_information(mcf, top):
                 "{:s}  "
                 "{:10.5f}\n".format(
                     angle_style,
-                    angle.connection_type.parameters["theta_eq"].in_units(u.degree).value,
+                    angle.connection_type.parameters["theta_eq"]
+                    .in_units(u.degree)
+                    .value,
                 )
             )
         elif angle_style == "harmonic":
@@ -407,14 +416,16 @@ def _write_angle_information(mcf, top):
                 "{:10.5f} "
                 "{:10.5f}\n".format(
                     angle_style,
-                    (0.5 * angle.connection_type.parameters["k"] / u.kb).in_units("K/rad**2").value,  # TODO: k vs. k/2. conversion
-                    angle.connection_type.parameters["theta_eq"].in_units(u.degree).value,
+                    (0.5 * angle.connection_type.parameters["k"] / u.kb)
+                    .in_units("K/rad**2")
+                    .value,  # TODO: k vs. k/2. conversion
+                    angle.connection_type.parameters["theta_eq"]
+                    .in_units(u.degree)
+                    .value,
                 )
             )
         else:
-            raise GMSOError(
-                "Unsupported angle style for Cassandra MCF writer"
-            )
+            raise GMSOError("Unsupported angle style for Cassandra MCF writer")
 
 
 def _write_dihedral_information(mcf, top):
