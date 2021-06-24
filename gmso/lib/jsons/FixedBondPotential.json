@@ -1,0 +1,5 @@
+{
+  "name": "FixedBondPotential",
+  "expression": "DiracDelta(r-r_eq)",
+  "independent_variables": "r"
+}
