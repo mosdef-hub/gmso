@@ -1,5 +1,5 @@
 """Support for improper style connections (4-member connection)."""
-from typing import Optional, Tuple
+from typing import Callable, ClassVar, Optional, Tuple
 
 from pydantic import Field
 
@@ -31,6 +31,8 @@ class Improper(Connection):
 
     Additional _validate methods are presented
     """
+    __members_creator__: ClassVar[Callable] = Atom.parse_obj
+
     connection_members_: Tuple[Atom, Atom, Atom, Atom] = Field(
         ...,
         description="The 4 atoms of this improper. Central atom first, "
