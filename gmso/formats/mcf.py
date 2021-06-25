@@ -288,7 +288,7 @@ def _write_atom_information(mcf, top, in_ring):
                 types[idx],
                 names[idx],
                 site.mass.in_units(u.amu).value,
-                site.charge.in_units(u.charge_electron).value,
+                site.charge.in_units(u.elementary_charge).value,
             )
         )
         if vdw_style == "LJ":
