@@ -3,6 +3,7 @@ from copy import deepcopy
 import numpy as np
 import pytest
 import unyt as u
+from molbox.box import BoxError
 from unyt.testing import assert_allclose_units
 
 from gmso.core.box import Box
@@ -25,7 +26,7 @@ class TestBox(BaseTest):
             Box(lengths=lengths, angles=angles)
 
     def test_build_2D_Box(self):
-        with pytest.warns(UserWarning):
+        with pytest.raises(BoxError):
             Box(lengths=u.nm * [4, 4, 0])
 
     def test_dtype(self, box):
@@ -47,7 +48,8 @@ class TestBox(BaseTest):
         box = Box(lengths=lengths, angles=u.degree * np.ones(3))
         angles *= u.degree
         box.angles = angles
-        assert (box.angles == angles).all()
+        print(angles, box.angles)
+        assert u.allclose_units(angles, box.angles, rtol=10 ** (-box.precision))
 
     @pytest.mark.parametrize("lengths", [[3, 3, 3], [4, 4, 4], [4, 6, 4]])
     def test_setters_with_lists(self, lengths):

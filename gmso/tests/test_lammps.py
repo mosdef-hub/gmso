@@ -89,15 +89,9 @@ class TestLammpsWriter(BaseTest):
         write_lammpsdata(typed_ar_system, filename="data.triclinic")
 
         read = read_lammpsdata("data.triclinic")
-        assert_allclose_units(
-            read.box.lengths,
-            u.unyt_array([1, 1, 1], u.nm),
-            rtol=1e-5,
-            atol=1e-8,
+        assert u.allclose_units(
+            read.box.lengths, u.unyt_array([1.0, 1.0, 1.0], u.nm)
         )
-        assert_allclose_units(
-            read.box.angles,
-            u.unyt_array([60, 90, 120], u.degree),
-            rtol=1e-5,
-            atol=1e-8,
+        assert u.allclose_units(
+            read.box.angles, u.unyt_array([60, 90, 120], u.degree)
         )

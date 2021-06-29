@@ -3,6 +3,7 @@ import warnings
 
 import numpy as np
 import unyt as u
+from molbox import Box as MolBox
 from unyt.array import allclose_units
 
 
@@ -117,30 +118,73 @@ class Box(object):
 
     """
 
-    def __init__(self, lengths, angles=None):
+    def __init__(self, lengths, angles=None, precision=None):
         """Construct a `Box` based on lengths and angles."""
-        self._lengths = _validate_lengths(lengths)
-        self._angles = _validate_angles(angles)
+        lengths = _validate_lengths(lengths)
+        angles = _validate_angles(angles)
+        precision = int(precision or 6)
+        self._box = MolBox(
+            lengths=lengths.value, angles=angles.value, precision=precision
+        )
 
     @property
     def lengths(self):
         """Return edge lengths of the box."""
-        return self._lengths
+        return self._box.lengths * u.nm
 
     @property
     def angles(self):
         """Return angles of the box."""
-        return self._angles
+        return self._box.angles * u.degree
 
     @lengths.setter
     def lengths(self, lengths):
         """Set the lengths of the box."""
-        self._lengths = _validate_lengths(lengths)
+        lengths = _validate_lengths(lengths).value
+        self._set_internal_box_vectors(lengths=lengths)
 
     @angles.setter
     def angles(self, angles):
         """Set the angles of the box."""
-        self._angles = _validate_angles(angles)
+        angles = _validate_angles(angles).value
+        self._set_internal_box_vectors(angles=angles)
+
+    @property
+    def precision(self):
+        """Amount of decimals to represent floating point values."""
+        return self._box._precision
+
+    @precision.setter
+    def precision(self, precision):
+        """Decimal point precision(default=16)."""
+        self._box.precision = precision
+
+    def _set_internal_box_vectors(self, lengths=None, angles=None):
+        from molbox.box import _lengths_angles_to_vectors
+
+        if angles is None:
+            angles = self.angles.value
+        if lengths is None:
+            lengths = self.lengths.value
+
+        self._box._vectors = _lengths_angles_to_vectors(
+            lengths, angles, self._box.precision
+        )
+
+        (
+            Lx,
+            Ly,
+            Lz,
+            xy,
+            xz,
+            yz,
+        ) = self._box._from_vecs_to_lengths_tilt_factors()
+        self._box._Lx = Lx
+        self._box._Ly = Ly
+        self._box._Lz = Lz
+        self._box._xy = xy
+        self._box._xz = xz
+        self._box._yz = yz
 
     def _unit_vectors_from_angles(self):
         """Return unit vectors describing prism from angles."""
@@ -173,7 +217,7 @@ class Box(object):
 
     def get_vectors(self):
         """Return the vectors of the box."""
-        return (self._lengths * self.get_unit_vectors().T).T
+        return (self.lengths * self.get_unit_vectors().T).T
 
     def get_unit_vectors(self):
         """Return the normalized vectors of the box."""
@@ -182,7 +226,7 @@ class Box(object):
     def __repr__(self):
         """Return formatted representation of the box."""
         return "Box(a={}, b={}, c={}, alpha={}, beta={}, gamma={})".format(
-            *self._lengths, *self._angles
+            *self.lengths, *self.angles
         )
 
     def __eq__(self, other):
