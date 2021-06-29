@@ -23,7 +23,6 @@ def _validate_lengths(lengths):
 
     lengths *= input_unit
     lengths.convert_to_units(u.nm)
-
     if np.any(
         np.less(
             lengths,
@@ -120,8 +119,10 @@ class Box(object):
 
     def __init__(self, lengths, angles=None, precision=None):
         """Construct a `Box` based on lengths and angles."""
+        print(lengths, angles)
         lengths = _validate_lengths(lengths)
         angles = _validate_angles(angles)
+        print(lengths, angles)
         precision = int(precision or 6)
         self._box = MolBox(
             lengths=lengths.value, angles=angles.value, precision=precision

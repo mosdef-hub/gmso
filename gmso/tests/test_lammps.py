@@ -89,7 +89,7 @@ class TestLammpsWriter(BaseTest):
         write_lammpsdata(typed_ar_system, filename="data.triclinic")
 
         read = read_lammpsdata("data.triclinic")
-        assert u.allclose_units(
+        assert_allclose_units(
             read.box.lengths, u.unyt_array([1.0, 1.0, 1.0], u.nm)
         )
         assert u.allclose_units(

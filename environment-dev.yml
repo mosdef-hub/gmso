@@ -22,3 +22,5 @@ dependencies:
   - ipywidgets
   - ele >= 0.2.0
   - pre-commit
+  - pip:
+      - git+https://github.com/mosdef-hub/molbox.git#egg=molbox

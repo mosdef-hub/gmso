@@ -100,20 +100,18 @@ def write_lammpsdata(topology, filename, atom_style="full"):
             atol=1e-8,
         ):
             warnings.warn("Orthorhombic box detected")
-            box.lengths.convert_to_units(u.angstrom)
+            lengths = box.lengths.to(u.angstrom)
             for i, dim in enumerate(["x", "y", "z"]):
                 data.write(
                     "{0:.6f} {1:.6f} {2}lo {2}hi\n".format(
-                        0, box.lengths.value[i], dim
+                        0, lengths.value[i], dim
                     )
                 )
         else:
             warnings.warn("Non-orthorhombic box detected")
-            box.lengths.convert_to_units(u.angstrom)
-            box.angles.convert_to_units(u.radian)
-            vectors = box.get_vectors()
-            a, b, c = box.lengths
-            alpha, beta, gamma = box.angles
+            vectors = box.get_vectors().to(u.dimensionless * u.angstrom)
+            a, b, c = box.lengths.to(u.angstrom)
+            alpha, beta, gamma = box.angles.to(u.radian)
 
             lx = a
             xy = b * np.cos(gamma)
@@ -372,7 +370,7 @@ def read_lammpsdata(
 
     # Validate 'unit_style'
     if unit_style not in ["real"]:
-        raiseValueError(
+        raise ValueError(
             'Unit Style "{}" is invalid or is not currently supported'.format(
                 unit_style
             )
