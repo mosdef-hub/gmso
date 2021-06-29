@@ -725,5 +725,11 @@ class TestTopology(BaseTest):
             assert len(clone.get_untyped(group=group)) == 1
             assert len(full_opt[group] == 1)
 
+        # Get multiple untyped
+        untyped_sites_angles = clone.get_untyped(group=["sites", "angles"])
+        assert len(untyped_sites_angles) == 2
+        assert len(untyped_sites_angles["sites"]) == 1
+        assert len(untyped_sites_angles["angles"]) == 1
+
         with pytest.raises(ValueError):
             clone.get_untyped(group="foo")

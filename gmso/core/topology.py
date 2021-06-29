@@ -626,7 +626,7 @@ class Topology(object):
         return self._typed
 
     def is_fully_typed(self, updated=False, group="topology"):
-        """Check if the topology certain group of objects of topology is fully or partially typed
+        """Check if the topology or a specifc group of objects that make up the topology is fully typed
 
         Parameters
         ----------
@@ -634,16 +634,13 @@ class Topology(object):
             If False, will update the atom type and connection type list of the
             Topology before the checking step.
         group : str, optional, default='topology'
-            Specific object to be checked. Options include:
+            Specific objects to be checked. Options include:
             'topology'  : check for status of the topology object
             'sites'     : check for status of all topology.sites
             'bonds'     : check for status of all topology.bonds
             'angles'    : check for status of all topology.angles
             'dihedrals' : check for status of all topology.dihedrals
             'impropers' : check for status of all topology.impropers
-        full : bool, optional, default=True
-            If True, check if the checked group s fully typed,
-            else, check if the group is at least partially typed.
 
         Returns
         -------
@@ -687,19 +684,19 @@ class Topology(object):
             )
 
     def get_untyped(self, group):
-        """Get untyped objects of the Topology
+        """Get the untyped (non-parametrized) objects of the Topology.
 
         Parameters
         ----------
-        group : {'sites', 'bonds', 'angles', 'dihedrals', 'impropers', 'all'}
-            The group of object to be checked. The 'topology' option will return
+        group : {'sites', 'bonds', 'angles', 'dihedrals', 'impropers', 'topology'}
+            The group of objects to be checked. The 'topology' option will return
             all untyped object of the topology.
 
         Returns
         -------
         untyped : dict
-            Dictionary of all untyped object, key of the dictionary correspond to
-            object groups
+            Dictionary of all untyped object, key of the dictionary corresponds to
+            object group names define above.
         """
         untyped = dict()
         untyped_extractors = {
@@ -714,11 +711,13 @@ class Topology(object):
                 untyped.update(untyped_extractors[subgroup])
         elif group in untyped_extractors:
             untyped = untyped_extractors[group]()
+        elif isinstance(group, (list, tuple, set)):
+            for subgroup in group:
+                untyped.update(untyped_extractors[subgroup]())
         else:
             raise ValueError(
                 f"Cannot get untyped {group}. "
-                "Available options: 'sites', 'bonds', "
-                "'angles', 'dihedrals', 'impropers'"
+                f"Available options: {[untyped_extractors.keys()]}."
             )
         return untyped
 
