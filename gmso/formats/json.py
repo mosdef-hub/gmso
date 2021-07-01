@@ -133,9 +133,15 @@ def from_json(json_dict):
         name=json_dict["name"],
     )
     top.scaling_factors = json_dict["scaling_factors"]
+    id_to_type_map = {}
     for atom_dict in json_dict["atoms"]:
+        atom_type_id = atom_dict.pop("atom_type", None)
         atom = Atom.parse_obj(atom_dict)
         top.add_site(atom)
+        if atom_type_id:
+            if not id_to_type_map[atom_type_id]:
+                id_to_type_map[atom_type_id] = []
+            id_to_type_map[atom_type_id].append(atom)
 
     for bond_dict in json_dict["bonds"]:
         bond_dict["connection_members"] = [
@@ -148,7 +154,7 @@ def from_json(json_dict):
     for angle_dict in json_dict["angles"]:
         angle_dict["connection_members"] = [
             top._sites[member_idx]
-            for member_idx in bond_dict["connection_members"]
+            for member_idx in angle_dict["connection_members"]
         ]
         angle = Angle.parse_obj(angle_dict)
         top.add_connection(angle)
@@ -156,7 +162,7 @@ def from_json(json_dict):
     for dihedral_dict in json_dict["dihedrals"]:
         dihedral_dict["connection_members"] = [
             top._sites[member_idx]
-            for member_idx in bond_dict["connection_members"]
+            for member_idx in dihedral_dict["connection_members"]
         ]
         dihedral = Dihedral.parse_obj(dihedral_dict)
         top.add_connection(dihedral)
@@ -164,10 +170,17 @@ def from_json(json_dict):
     for improper_dict in json_dict["impropers"]:
         improper_dict["connection_members"] = [
             top._sites[member_idx]
-            for member_idx in bond_dict["connection_members"]
+            for member_idx in improper_dict["connection_members"]
         ]
         improper = Improper.parse_obj(improper_dict)
         top.add_connection(improper)
+
+    for atom_type_dict in json_dict["atom_types"]:
+        atom_type_id = atom_type_dict.pop("id", None)
+        atom_type = AtomType.parse_obj(atom_type_dict)
+        if atom_type_id in id_to_type_map:
+            for associated_atom in id_to_type_map[atom_type_id]:
+                associated_atom.atom_type = atom_type
 
     top.update_topology()
     return top
