@@ -119,7 +119,6 @@ class Box(object):
 
     def __init__(self, lengths, angles=None, precision=None):
         """Construct a `Box` based on lengths and angles."""
-        print(lengths, angles)
         lengths = _validate_lengths(lengths)
         angles = _validate_angles(angles)
         print(lengths, angles)
