@@ -2,7 +2,7 @@
 from abc import abstractmethod
 from typing import Any
 
-from pydantic import Field
+from pydantic import Field, validator
 
 from gmso.abc.gmso_base import GMSOBase
 from gmso.abc.metadata_mixin import MetadataMixin
@@ -76,6 +76,12 @@ class AbstractPotential(GMSOBase, MetadataMixin):
     def potential_expression(self):
         """Return the functional form of the potential."""
         return self.__dict__.get("potential_expression_")
+
+    @validator("potential_expression_", pre=True)
+    def validate_potential_expression(cls, v):
+        if isinstance(v, dict):
+            v = _PotentialExpression(**v)
+        return v
 
     @abstractmethod
     def set_expression(self):

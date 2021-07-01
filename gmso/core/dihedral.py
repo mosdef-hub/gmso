@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Callable, ClassVar, Optional, Tuple
 
 from pydantic import Field
 
@@ -25,6 +25,8 @@ class Dihedral(Connection):
 
     Additional _validate methods are presented
     """
+    __members_creator__: ClassVar[Callable] = Atom.parse_obj
+
     connection_members_: Tuple[Atom, Atom, Atom, Atom] = Field(
         ..., description="The 4 atoms involved in the dihedral."
     )

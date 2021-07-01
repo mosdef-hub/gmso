@@ -365,7 +365,10 @@ def parse_ff_atomtypes(atomtypes_el, ff_meta):
                 float(ctor_kwargs["mass"]), units_dict["mass"]
             )
         if isinstance(ctor_kwargs["overrides"], str):
-            ctor_kwargs["overrides"] = set(ctor_kwargs["overrides"].split(","))
+            ctor_kwargs["overrides"] = set(
+                override.strip()
+                for override in ctor_kwargs["overrides"].split(",")
+            )
         if isinstance(ctor_kwargs["charge"], str):
             ctor_kwargs["charge"] = u.unyt_quantity(
                 float(ctor_kwargs["charge"]), units_dict["charge"]

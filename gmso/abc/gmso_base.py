@@ -1,12 +1,14 @@
 """Base model all classes extend."""
 import warnings
 from abc import ABC
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Type
 
 from pydantic import BaseModel
 from pydantic.validators import dict_validator
 
+from gmso.abc import GMSOJSONHandler
 from gmso.abc.auto_doc import apply_docs
+from gmso.abc.serialization_utils import dict_to_unyt
 
 
 class GMSOBase(BaseModel, ABC):
@@ -55,6 +57,43 @@ class GMSOBase(BaseModel, ABC):
         apply_docs(cls, map_names=True, silent=False)
 
     @classmethod
+    def parse_obj(cls: Type["Model"], obj: Any) -> "Model":
+        dict_to_unyt(obj)
+        return super(GMSOBase, cls).parse_obj(obj)
+
+    def dict(self, **kwargs) -> "DictStrAny":
+        kwargs["by_alias"] = True
+        exclude = kwargs.get("exclude")
+        include = kwargs.get("include")
+        include_alias = set()
+        exclude_alias = set()
+
+        if include:
+            for included in include:
+                if included in self.Config.alias_to_fields:
+                    include_alias.add(self.Config.alias_to_fields[included])
+                else:
+                    include_alias.add(included)
+            kwargs["include"] = include_alias
+
+        if exclude:
+            for excluded in exclude:
+                if excluded in self.Config.alias_to_fields:
+                    exclude_alias.add(self.Config.alias_to_fields[excluded])
+                else:
+                    exclude_alias.add(excluded)
+            kwargs["exclude"] = exclude_alias
+        super_dict = super(GMSOBase, self).dict(**kwargs)
+        return super_dict
+
+    def json(self, **kwargs):
+        kwargs["by_alias"] = True
+        # FIXME: Pydantic>1.8 doesn't recognize json_encoders without this update
+        self.__config__.json_encoders.update(GMSOJSONHandler.json_encoders)
+
+        return super(GMSOBase, self).json(**kwargs)
+
+    @classmethod
     def validate(cls, value):
         """Ensure that the object is validated before use."""
         if isinstance(value, cls):
@@ -73,3 +112,5 @@ class GMSOBase(BaseModel, ABC):
         arbitrary_types_allowed = True
         alias_to_fields = dict()
         extra = "forbid"
+        json_encoders = GMSOJSONHandler.json_encoders
+        allow_population_by_field_name = True
