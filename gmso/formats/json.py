@@ -1,4 +1,6 @@
 """Serialization to json."""
+from copy import deepcopy
+
 from gmso.core.angle import Angle
 from gmso.core.angle_type import AngleType
 from gmso.core.atom import Atom
@@ -11,7 +13,7 @@ from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
 
 
-def to_json(top, types=False, update=False):
+def _to_json(top, types=False, update=True):
     """Return a json serializable from a topology.
 
     This is used for json serializing the topology
@@ -114,7 +116,7 @@ def to_json(top, types=False, update=False):
     return json_dict
 
 
-def from_json(json_dict):
+def _from_json(json_dict):
     """Convert a json_dict into a topology.
 
     Parameters
@@ -127,7 +129,11 @@ def from_json(json_dict):
     gmso.Topology
         the equivalent Topology representation from the dictionary
     """
+    from gmso.core.subtopology import SubTopology
     from gmso.core.topology import Topology
+
+    # FixMe: DeepCopying a dictionary might not be the most efficient
+    json_dict = deepcopy(json_dict)
 
     top = Topology(
         name=json_dict["name"],
@@ -139,41 +145,60 @@ def from_json(json_dict):
         atom = Atom.parse_obj(atom_dict)
         top.add_site(atom)
         if atom_type_id:
-            if not id_to_type_map[atom_type_id]:
+            if not id_to_type_map.get(atom_type_id):
                 id_to_type_map[atom_type_id] = []
             id_to_type_map[atom_type_id].append(atom)
 
     for bond_dict in json_dict["bonds"]:
+        bond_type_id = bond_dict.pop("bond_type", None)
         bond_dict["connection_members"] = [
             top._sites[member_idx]
             for member_idx in bond_dict["connection_members"]
         ]
         bond = Bond.parse_obj(bond_dict)
         top.add_connection(bond)
+        if bond_type_id:
+            if not id_to_type_map.get(bond_type_id):
+                id_to_type_map[bond_type_id] = []
+            id_to_type_map[bond_type_id].append(bond)
 
     for angle_dict in json_dict["angles"]:
+        angle_type_id = angle_dict.pop("angle_type", None)
         angle_dict["connection_members"] = [
             top._sites[member_idx]
             for member_idx in angle_dict["connection_members"]
         ]
         angle = Angle.parse_obj(angle_dict)
         top.add_connection(angle)
+        if angle_type_id:
+            if not id_to_type_map.get(angle_type_id):
+                id_to_type_map[angle_type_id] = []
+            id_to_type_map[angle_type_id].append(angle)
 
     for dihedral_dict in json_dict["dihedrals"]:
+        dihedral_type_id = dihedral_dict.pop("dihedral_type", None)
         dihedral_dict["connection_members"] = [
             top._sites[member_idx]
             for member_idx in dihedral_dict["connection_members"]
         ]
         dihedral = Dihedral.parse_obj(dihedral_dict)
         top.add_connection(dihedral)
+        if dihedral_type_id:
+            if not id_to_type_map.get(dihedral_type_id):
+                id_to_type_map[dihedral_type_id] = []
+            id_to_type_map[dihedral_type_id].append(dihedral)
 
     for improper_dict in json_dict["impropers"]:
+        improper_type_id = improper_dict.pop("improper_type", None)
         improper_dict["connection_members"] = [
             top._sites[member_idx]
             for member_idx in improper_dict["connection_members"]
         ]
         improper = Improper.parse_obj(improper_dict)
-        top.add_connection(improper)
+        if improper_type_id:
+            if not id_to_type_map.get(improper_type_id):
+                id_to_type_map[improper_type_id] = []
+            id_to_type_map[improper_type_id].append(improper)
 
     for atom_type_dict in json_dict["atom_types"]:
         atom_type_id = atom_type_dict.pop("id", None)
@@ -181,6 +206,25 @@ def from_json(json_dict):
         if atom_type_id in id_to_type_map:
             for associated_atom in id_to_type_map[atom_type_id]:
                 associated_atom.atom_type = atom_type
+
+    for connection_types, Creator, attr in [
+        (json_dict["bond_types"], BondType, "bond_type"),
+        (json_dict["angle_types"], AngleType, "angle_type"),
+        (json_dict["dihedral_types"], DihedralType, "dihedral_type"),
+        (json_dict["improper_types"], ImproperType, "improper_type"),
+    ]:
+        for connection_type_dict in connection_types:
+            connection_type_id = connection_type_dict.pop("id")
+            connection_type = Creator.parse_obj(connection_type_dict)
+            if connection_type_id in id_to_type_map:
+                for associated_connection in id_to_type_map[connection_type_id]:
+                    setattr(associated_connection, attr, connection_type)
+
+    for subtop_dict in json_dict["subtopologies"]:
+        subtop = SubTopology(name=subtop_dict["name"])
+        for atom_idx in subtop_dict["atoms"]:
+            subtop.add_site(top.sites[atom_idx])
+        top.add_subtopology(subtop, update=False)
 
     top.update_topology()
     return top

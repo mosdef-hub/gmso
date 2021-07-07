@@ -10,8 +10,10 @@ from gmso.core.atom import Atom
 from gmso.core.atom_type import AtomType
 from gmso.core.bond import Bond
 from gmso.core.box import Box
+from gmso.core.dihedral import Dihedral
 from gmso.core.element import Hydrogen, Oxygen
 from gmso.core.forcefield import ForceField
+from gmso.core.improper import Improper
 from gmso.core.topology import Topology
 from gmso.external import from_mbuild, from_parmed
 from gmso.external.convert_foyer_xml import from_foyer_xml
@@ -323,7 +325,7 @@ class BaseTest:
 
         return mytop
 
-    @pytest.fixture(scope="module")
+    @pytest.fixture(scope="session")
     def are_equivalent_atoms(self):
         def test_atom_equality(atom1, atom2):
             if not all(isinstance(x, Atom) for x in [atom1, atom2]):
@@ -341,3 +343,40 @@ class BaseTest:
             return True
 
         return test_atom_equality
+
+    @pytest.fixture(scope="session")
+    def are_equivalent_connections(self, are_equivalent_atoms):
+        connection_types_attrs_map = {
+            Bond: "bond_type",
+            Angle: "angle_type",
+            Dihedral: "dihedral_type",
+            Improper: "improper_type",
+        }
+
+        def test_connection_equality(conn1, conn2):
+            if not type(conn1) == type(conn2):
+                return False
+            conn1_eq_members = conn1.equivalent_members()
+            conn2_eq_members = conn2.equivalent_members()
+            have_eq_members = False
+            for conn2_eq_member_tuple in conn2_eq_members:
+                for conn1_eq_member_tuple in conn1_eq_members:
+                    if any(
+                        are_equivalent_atoms(member1, member2)
+                        for member1, member2 in zip(
+                            conn1_eq_member_tuple, conn2_eq_member_tuple
+                        )
+                    ):
+                        have_eq_members = True
+
+            if not have_eq_members:
+                return False
+            if conn1.name != conn2.name:
+                return False
+            if getattr(
+                conn1, connection_types_attrs_map[type(conn1)]
+            ) != getattr(conn2, connection_types_attrs_map[type(conn2)]):
+                return False
+            return True
+
+        return test_connection_equality

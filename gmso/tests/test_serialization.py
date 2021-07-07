@@ -12,6 +12,7 @@ from gmso.core.dihedral_type import DihedralType
 from gmso.core.element import element_by_symbol
 from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
+from gmso.core.topology import Topology
 from gmso.tests.base_test import BaseTest
 
 
@@ -188,3 +189,47 @@ class TestSerialization(BaseTest):
         assert "name" not in atom_json
         atom_json = atom.json(include={"mass_"})
         assert "name" not in atom_json
+
+    def test_full_serialization(
+        self, typed_ethane, are_equivalent_atoms, are_equivalent_connections
+    ):
+        typed_ethane.save("eth.json", types=True)
+        typed_ethane_copy = Topology.load("eth.json")
+        for atom1, atom2 in zip(typed_ethane._sites, typed_ethane_copy._sites):
+            assert are_equivalent_atoms(atom1, atom2)
+            assert typed_ethane.get_index(atom1) == typed_ethane_copy.get_index(
+                atom2
+            )
+
+        for bond1, bond2 in zip(typed_ethane._bonds, typed_ethane_copy._bonds):
+            assert are_equivalent_connections(bond1, bond2)
+
+        for angle1, angle2 in zip(
+            typed_ethane._angles, typed_ethane_copy._angles
+        ):
+            assert are_equivalent_connections(angle1, angle2)
+
+        for dihedral1, dihedral2 in zip(
+            typed_ethane._dihedrals, typed_ethane_copy._dihedrals
+        ):
+            assert are_equivalent_connections(dihedral1, dihedral2)
+
+        for improper1, improper2 in zip(
+            typed_ethane._impropers, typed_ethane_copy._impropers
+        ):
+            assert are_equivalent_connections(improper1, improper2)
+
+        for atom_type in typed_ethane._atom_types:
+            assert atom_type in typed_ethane_copy._atom_types
+
+        for bond_type in typed_ethane._bond_types:
+            assert bond_type in typed_ethane_copy._bond_types
+
+        for angle_type in typed_ethane._angle_types:
+            assert angle_type in typed_ethane_copy._angle_types
+
+        for dihedral_type in typed_ethane._dihedral_types:
+            assert dihedral_type in typed_ethane_copy._dihedral_types
+
+        for improper_type in typed_ethane._improper_types:
+            assert improper_type in typed_ethane_copy._improper_types

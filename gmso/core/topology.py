@@ -1,5 +1,7 @@
 """Base data structure for GMSO chemical systems."""
+import json
 import warnings
+from pathlib import Path
 
 import numpy as np
 import unyt as u
@@ -757,109 +759,37 @@ class Topology(object):
         for i, ref_member in enumerate(self._set_refs[ref].keys()):
             self._index_refs[ref][ref_member] = i
 
-    def json(self, types=False, update=False):
-        """Return a json serializable dictionary of this topology.
-
-        This is used for json serializing the topology
+    def save(self, filename, overwrite=True, **kwargs):
+        """Save the topology to a file.
 
         Parameters
         ----------
-        types: bool, default=False
-            If true, include type info (i.e. Potentials)
-        update: bool, default=False
-            If true, update the topology before iterating through the files
-
-        Returns
-        -------
-        dict
-            A json serializable dictionary representing members of this Topology
+        filename: str, pathlib.Path
+            The file to save the topology as
+        overwrite: bool, default=True
+            If True, overwrite the existing file if it exists
+        **kwargs:
+            The arguments to specific file savers listed below(as extensions):
+            * json: types, update, indent
         """
-        if types and not self.is_typed():
-            raise ValueError(
-                "Cannot incorporate types because the topology is not typed."
+        if not isinstance(filename, Path):
+            filename = Path(filename).resolve()
+
+        if filename.exists() and not overwrite:
+            raise FileExistsError(
+                f"The file {filename} exists. Please set "
+                f"overwrite=True if you wish to overwrite the existing file"
             )
-        if update:
-            self.update_topology()
 
-        json_dict = {
-            "name": self._name,
-            "scaling_factors": self.scaling_factors,
-            "subtopolgies": [],
-            "atoms": [],
-            "bonds": [],
-            "angles": [],
-            "dihedrals": [],
-            "impropers": [],
-            "atom_types": [],
-            "bond_types": [],
-            "angle_types": [],
-            "dihedral_types": [],
-            "improper_types": [],
-        }
+        if filename.suffix == ".json":
+            from gmso.formats.json import _to_json
 
-        for atom in self._sites:
-            atom_dict = atom.json_dict(exclude={"atom_type"})
-            if types and atom.atom_type:
-                # if not potentials.get(id(atom.atom_type)):
-                #     potentials[id(atom.atom_type)] = []
-                # potentials[id(atom.atom_type)].append(id(atom))
-                atom_dict["atom_type"] = id(atom.atom_type)
-
-            json_dict["atoms"].append(atom_dict)
-
-        targets = {
-            Bond: json_dict["bonds"],
-            Angle: json_dict["angles"],
-            Dihedral: json_dict["dihedrals"],
-            Improper: json_dict["impropers"],
-            AtomType: json_dict["atom_types"],
-            BondType: json_dict["bond_types"],
-            AngleType: json_dict["angle_types"],
-            DihedralType: json_dict["dihedral_types"],
-            ImproperType: json_dict["improper_types"],
-        }
-
-        for connections, exclude_attr in [
-            (self._bonds, "bond_type"),
-            (self._angles, "angle_type"),
-            (self._dihedrals, "dihedral_type"),
-            (self._impropers, "improper_type"),
-        ]:
-            for connection in connections:
-                connection_dict = connection.json_dict(
-                    exclude={exclude_attr, "connection_members"}
-                )
-                target = targets[type(connection)]
-                connection_dict["connection_members"] = [
-                    self.get_index(member)
-                    for member in connection.connection_members
-                ]
-                target.append(connection_dict)
-                connection_type = getattr(connection, exclude_attr)
-                if types and connection_type:
-                    # if not potentials.get(id(connection_type)):
-                    #     potentials[id(connection_type)] = []
-                    # potentials[id(connection_type)].append(
-                    #     id(connection)
-                    # )
-                    connection_dict[exclude_attr] = id(connection_type)
-
-        for potentials in [
-            self._atom_types.values(),
-            self._bond_types.values(),
-            self._angle_types.values(),
-            self._dihedral_types.values(),
-            self._improper_types.values(),
-        ]:
-            for potential in potentials:
-                potential_dict = potential.json_dict(
-                    exclude={"topology", "set_ref"}
-                )
-                target = targets[type(potential)]
-                potential_dict["id"] = id(potential)
-                target.append(potential_dict)
-
-        return json_dict
+            types = kwargs.get("types", False)
+            update = kwargs.get("update", True)
+            indent = kwargs.get("indent", 2)
+            top_json = _to_json(self, types=types, update=update)
+            with filename.open("w") as top_json_file:
+                json.dump(top_json, top_json_file, indent=indent)
 
     def __repr__(self):
         """Return custom format to represent topology."""
@@ -875,5 +805,12 @@ class Topology(object):
         return f"<Topology {self.name}, {self.n_sites} sites, id: {id(self)}>"
 
     @classmethod
-    def from_json(cls, json_file_or_dict):
-        pass
+    def load(cls, filename):
+        """Load a file to a topology"""
+        filename = Path(filename).resolve()
+        if filename.suffix == ".json":
+            from gmso.formats.json import _from_json
+
+            with filename.open("r") as json_file:
+                top = _from_json(json.load(json_file))
+                return top

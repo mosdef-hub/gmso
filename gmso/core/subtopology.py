@@ -124,10 +124,14 @@ class SubTopology(object):
             f"id: {id(self)}>"
         )
 
-    def json(self):
-        import json
+    def json_dict(self):
+        """Return a json serializable dictionary of this subtopology."""
+        subtop_dict = {"name": self.name, "atoms": []}
 
-        return {"id": f"{id(self)}", "atoms": json.loads()}
+        for site in self._sites:
+            subtop_dict["atoms"].append(self.parent.get_index(site))
+
+        return subtop_dict
 
 
 def _validate_parent(parent):
