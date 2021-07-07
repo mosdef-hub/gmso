@@ -10,3 +10,4 @@ dependencies:
   - pydantic
   - networkx
   - ele >= 0.2.0
+  - molbox
