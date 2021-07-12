@@ -25,8 +25,9 @@ class TestForceField(BaseTest):
 
     @pytest.fixture
     def multiple_ff(self):
-        return ForceField([get_path('ff-example0.xml'),
-                           get_path('ff-example1.xml')])
+        return ForceField(
+            [get_path("ff-example0.xml"), get_path("ff-example1.xml")]
+        )
 
     def test_ff_multiple_fields(self, multiple_ff):
         assert isinstance(multiple_ff.name, list)
@@ -39,7 +40,6 @@ class TestForceField(BaseTest):
         return ForceField(
             get_path(filename=get_path("oplsaa-ethane_foyer.xml"))
         )
-
 
     def test_ff_name_version_from_xml(self, ff):
         assert ff.name == "ForceFieldOne"
