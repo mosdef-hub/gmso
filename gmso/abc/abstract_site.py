@@ -1,20 +1,20 @@
+"""Basic interaction site in GMSO that all other sites will derive from."""
 import warnings
-from typing import Union, Sequence, Any, TypeVar, ClassVar
+from typing import Any, ClassVar, Sequence, TypeVar, Union
 
 import numpy as np
 import unyt as u
+from pydantic import Field, validator
 from unyt.exceptions import InvalidUnitOperation
-
-from pydantic import validator, root_validator, Field
 
 from gmso.abc.gmso_base import GMSOBase
 from gmso.exceptions import GMSOError
 
 PositionType = Union[Sequence[float], np.ndarray, u.unyt_array]
-SiteT = TypeVar('SiteT', bound='Site')
+SiteT = TypeVar("SiteT", bound="Site")
 
-BASE_DOC_ATTR = '__base_doc__'
-FIELDS_IN_DOCSTRING = 'alias_to_fields'
+BASE_DOC_ATTR = "__base_doc__"
+FIELDS_IN_DOCSTRING = "alias_to_fields"
 
 
 def default_position():
@@ -22,7 +22,9 @@ def default_position():
 
 
 class Site(GMSOBase):
-    __base_doc__: ClassVar[str] = """An interaction site object in the topology hierarchy.
+    __base_doc__: ClassVar[
+        str
+    ] = """An interaction site object in the topology hierarchy.
 
     Site is the object that represents any general interaction site in a molecular simulation.
     Sites have been designed to be as general as possible, making no assumptions about representing atoms or beads, or
@@ -37,45 +39,51 @@ class Site(GMSOBase):
     """
 
     name_: str = Field(
-        '',
-        description='Name of the site, defaults to class name',
+        "",
+        description="Name of the site, defaults to class name",
     )
 
-    label_: str = Field(
-        '',
-        description='Label to be assigned to the site'
-    )
+    label_: str = Field("", description="Label to be assigned to the site")
 
     position_: PositionType = Field(
         default_factory=default_position,
-        description='The 3D Cartesian coordinates of the position of the site'
+        description="The 3D Cartesian coordinates of the position of the site",
     )
 
     @property
     def name(self) -> str:
-        return self.__dict__.get('name_')
+        """Return the name of the site."""
+        return self.__dict__.get("name_")
 
     @property
     def position(self) -> u.unyt_array:
-        return self.__dict__.get('position_')
+        """Return the 3D Cartesian coordinates of the site."""
+        return self.__dict__.get("position_")
 
     @property
     def label(self) -> str:
-        return self.__dict__.get('label_')
+        """Return the label assigned to the site."""
+        return self.__dict__.get("label_")
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} {self.name},\n " \
-               f"position: {self.position},\n " \
-               f"label: {self.label if self.label else None},\n " \
-               f"id: {id(self)}>"
+        """Return the formatted representation of the site."""
+        return (
+            f"<{self.__class__.__name__} {self.name},\n "
+            f"position: {self.position},\n "
+            f"label: {self.label if self.label else None},\n "
+            f"id: {id(self)}>"
+        )
 
     def __str__(self):
-        return f"<{self.__class__.__name__} {self.name}, " \
-               f"label: {self.label if self.label else None} id: {id(self)}>"
+        """Return the string representation of the site."""
+        return (
+            f"<{self.__class__.__name__} {self.name}, "
+            f"label: {self.label if self.label else None} id: {id(self)}>"
+        )
 
-    @validator('position_')
+    @validator("position_")
     def is_valid_position(cls, position):
-        """Validator for attribute position"""
+        """Validate attribute position."""
         if position is None:
             return u.unyt_array([np.nan] * 3, u.nm)
 
@@ -83,45 +91,48 @@ class Site(GMSOBase):
             try:
                 position *= u.nm
             except InvalidUnitOperation as e:
-                raise GMSOError(f'Converting object of type {type(position)} failed with following error: {e}')
-            warnings.warn('Positions are assumed to be in nm')
+                raise GMSOError(
+                    f"Converting object of type {type(position)} failed with following error: {e}"
+                )
+            warnings.warn("Positions are assumed to be in nm")
 
         try:
-            position = np.reshape(position, newshape=(3,), order='C')
+            position = np.reshape(position, newshape=(3,), order="C")
             position.convert_to_units(u.nm)
         except ValueError:
-            raise ValueError(f'Position of shape {position.shape} is not valid. '
-                             'Accepted values: (a.) list-like of length 3'
-                             '(b.) np.array or unyt.unyt_array of shape (3,)')
+            raise ValueError(
+                f"Position of shape {position.shape} is not valid. "
+                "Accepted values: (a.) list-like of length 3"
+                "(b.) np.array or unyt.unyt_array of shape (3,)"
+            )
 
         return position
 
-    @root_validator(pre=True)
-    def inject_name(cls, values):
-        if not values.get('name'):
-            values['name'] = cls.__name__
-        return values
+    @validator("name_", pre=True, always=True)
+    def inject_name(cls, value):
+        if value == "" or value is None:
+            return cls.__name__
+        else:
+            return value
 
     @classmethod
     def __new__(cls, *args: Any, **kwargs: Any) -> SiteT:
         if cls is Site:
-            raise TypeError('Cannot instantiate abstract class of type Site')
+            raise TypeError("Cannot instantiate abstract class of type Site")
         else:
             return object.__new__(cls)
 
     class Config:
+        """Pydantic configuration for site objects."""
+
         arbitrary_types_allowed = True
 
-        fields = {
-            'name_': 'name',
-            'position_': 'position',
-            'label_': 'label'
-        }
+        fields = {"name_": "name", "position_": "position", "label_": "label"}
 
         alias_to_fields = {
-            'name': 'name_',
-            'position': 'position_',
-            'label': 'label_'
+            "name": "name_",
+            "position": "position_",
+            "label": "label_",
         }
 
         validate_assignment = True

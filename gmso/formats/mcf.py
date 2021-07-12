@@ -1,5 +1,6 @@
-import warnings
+"""Write Cassandra Monte Carlo MCF files."""
 import datetime
+import warnings
 
 import networkx as nx
 import sympy
@@ -7,11 +8,10 @@ import unyt as u
 
 from gmso import __version__
 from gmso.core.topology import Topology
+from gmso.exceptions import GMSOError
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.compatibility import check_compatibility
 from gmso.utils.conversions import convert_ryckaert_to_opls
-from gmso.exceptions import GMSOError
-
 
 __all__ = ["write_mcf"]
 
@@ -42,7 +42,6 @@ def write_mcf(top, filename):
     description of the MCF format.
 
     """
-
     _check_compatibility(top)
 
     # Identify atoms in rings and Cassandra 'fragments'
@@ -87,7 +86,7 @@ def write_mcf(top, filename):
 
 
 def _id_rings_fragments(top):
-    """Identifies the rings and fragments of the molecule
+    """Identify the rings and fragments of the molecule.
 
     Parameters
     ----------
@@ -95,7 +94,7 @@ def _id_rings_fragments(top):
         Topology object
 
     Returns
-    ---------
+    -------
     in_ring : list
         True for each atom in a ring
     frag_list : list
@@ -104,7 +103,6 @@ def _id_rings_fragments(top):
         Fragment ids of connected fragments
 
     """
-
     # Identify atoms in rings
     bond_graph = nx.Graph()
     bond_graph.add_edges_from(
@@ -112,8 +110,7 @@ def _id_rings_fragments(top):
     )
     if len(top.bonds) == 0:
         warnings.warn(
-            "No bonds found. Cassandra will interpet "
-            "this as a rigid species"
+            "No bonds found. Cassandra will interpet " "this as a rigid species"
         )
         in_ring = [False] * len(top.sites)
         frag_list = []
@@ -213,7 +210,6 @@ def _write_atom_information(mcf, top, in_ring):
         Boolean for each atom idx True if atom belongs to a ring
 
     """
-
     names = [site.name for site in top.sites]
     types = [site.atom_type.name for site in top.sites]
 
@@ -292,7 +288,7 @@ def _write_atom_information(mcf, top, in_ring):
                 types[idx],
                 names[idx],
                 site.mass.in_units(u.amu).value,
-                site.charge.in_units(u.charge_electron).value,
+                site.charge.in_units(u.elementary_charge).value,
             )
         )
         if vdw_style == "LJ":
@@ -343,7 +339,6 @@ def _write_bond_information(mcf, top):
         Topology object
 
     """
-
     mcf.write("\n!Bond Format\n")
     mcf.write(
         "!index i j type parameters\n" + '!type="fixed", parms=bondLength\n'
@@ -358,8 +353,7 @@ def _write_bond_information(mcf, top):
             "{:s}  "
             "{:10.5f}\n".format(
                 idx + 1,
-                bond.connection_members[0].idx
-                + 1,  # TODO: Confirm the +1 here
+                bond.connection_members[0].idx + 1,  # TODO: Confirm the +1 here
                 bond.connection_members[1].idx + 1,
                 "fixed",
                 bond.connection_type.parameters["r_eq"]
@@ -379,7 +373,6 @@ def _write_angle_information(mcf, top):
     top : Topology
         Topology object
     """
-
     # TODO: Add support for fixed angles
     angle_style = "harmonic"
     header = (
@@ -428,7 +421,6 @@ def _write_dihedral_information(mcf, top):
     dihedral_style : string
         Dihedral style for Cassandra to use
     """
-
     # Dihedral info
     header = (
         "\n!Dihedral Format\n"
@@ -539,7 +531,6 @@ def _write_improper_information(mcf, top):
     top : Topology
         Topology object
     """
-
     header = (
         "\n!Improper Format\n"
         "!index i j k l type parameters\n"
@@ -582,7 +573,6 @@ def _write_fragment_information(mcf, top, frag_list, frag_conn):
         Fragment ids of connected fragments
 
     """
-
     header = (
         "\n!Fragment Format\n"
         "!index number_of_atoms_in_fragment branch_point other_atoms\n"
@@ -655,8 +645,7 @@ def _write_intrascaling_information(mcf, top):
 
 
 def _check_compatibility(top):
-    """Check Topology object for compatibility with Cassandra MCF format"""
-
+    """Check Topology object for compatibility with Cassandra MCF format."""
     if not isinstance(top, Topology):
         raise GMSOError("MCF writer requires a Topology object.")
     if not all([site.atom_type.name for site in top.sites]):
@@ -664,40 +653,40 @@ def _check_compatibility(top):
             "MCF writing not supported without parameterized forcefield."
         )
     accepted_potentials = [
-        potential_templates['LennardJonesPotential'],
-        potential_templates['MiePotential'],
-        potential_templates['HarmonicAnglePotential'],
-        potential_templates['PeriodicTorsionPotential'],
-        potential_templates['OPLSTorsionPotential'],
-        potential_templates['RyckaertBellemansTorsionPotential'],
+        potential_templates["LennardJonesPotential"],
+        potential_templates["MiePotential"],
+        potential_templates["HarmonicAnglePotential"],
+        potential_templates["PeriodicTorsionPotential"],
+        potential_templates["OPLSTorsionPotential"],
+        potential_templates["RyckaertBellemansTorsionPotential"],
     ]
     check_compatibility(top, accepted_potentials)
 
 
 def _get_vdw_style(atom_type):
-    """Return the vdw style"""
-
-    vdw_styles = {"LJ": potential_templates['LennardJonesPotential'],
-                  "Mie": potential_templates['MiePotential']}
+    """Return the vdw style."""
+    vdw_styles = {
+        "LJ": potential_templates["LennardJonesPotential"],
+        "Mie": potential_templates["MiePotential"],
+    }
 
     return _get_potential_style(vdw_styles, atom_type)
 
 
 def _get_dihedral_style(dihedral_type):
-    """Return the dihedral style"""
-
+    """Return the dihedral style."""
     dihedral_styles = {
-        "charmm": potential_templates['PeriodicTorsionPotential'],
-        "harmonic": potential_templates['HarmonicTorsionPotential'],
-        "opls": potential_templates['OPLSTorsionPotential'],
-        "ryckaert": potential_templates['RyckaertBellemansTorsionPotential'],
+        "charmm": potential_templates["PeriodicTorsionPotential"],
+        "harmonic": potential_templates["HarmonicTorsionPotential"],
+        "opls": potential_templates["OPLSTorsionPotential"],
+        "ryckaert": potential_templates["RyckaertBellemansTorsionPotential"],
     }
 
     return _get_potential_style(dihedral_styles, dihedral_type)
 
 
 def _get_potential_style(styles, potential):
-
+    """Return the potential style."""
     for style, ref in styles.items():
         if ref.independent_variables == potential.independent_variables:
             if sympy.simplify(ref.expression - potential.expression) == 0:
