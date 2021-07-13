@@ -240,3 +240,13 @@ class TestSerialization(BaseTest):
         top_copy = Topology.load("n_typed_xe_mie_20.json")
         assert u.allclose_units(top_copy.box.lengths, top.box.lengths)
         assert u.allclose_units(top_copy.box.angles, top.box.angles)
+
+    def test_serialization_with_pairpotential_types(
+        self, pairpotentialtype_top
+    ):
+        pairpotentialtype_top.save("pptype.json", types=True)
+        pptop_copy = Topology.load("pptype.json")
+        assert (
+            pptop_copy.pairpotential_types[0]
+            == pairpotentialtype_top.pairpotential_types[0]
+        )

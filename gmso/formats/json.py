@@ -16,6 +16,7 @@ from gmso.core.dihedral import Dihedral
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
+from gmso.core.pairpotential_type import PairPotentialType
 from gmso.formats.formats_registry import loads_as, saves_as
 
 
@@ -60,6 +61,7 @@ def _to_json(top, types=False, update=True):
         "angle_types": [],
         "dihedral_types": [],
         "improper_types": [],
+        "pair_potentialtypes": [],
     }
 
     for atom in top._sites:
@@ -115,6 +117,11 @@ def _to_json(top, types=False, update=True):
                 target = targets[type(potential)]
                 potential_dict["id"] = id(potential)
                 target.append(potential_dict)
+
+        for pairpotential_type in top._pairpotential_types.values():
+            json_dict["pair_potentialtypes"].append(
+                pairpotential_type.json_dict(exclude={"topology", "set_ref"})
+            )
 
     for subtop in top.subtops:
         subtop_dict = subtop.json_dict()
@@ -233,7 +240,7 @@ def _from_json(json_dict):
             subtop.add_site(top.sites[atom_idx])
         top.add_subtopology(subtop, update=False)
 
-    if json_dict.get("box"):
+    if json_dict.get("box") is not None:
         box_dict = json_dict["box"]
         lengths = u.unyt_array(
             box_dict["lengths"]["array"], box_dict["lengths"]["unit"]
@@ -244,6 +251,14 @@ def _from_json(json_dict):
         top.box = Box(lengths=lengths, angles=angles)
 
     top.update_topology()
+
+    # AtomTypes need to be updated for pairpotentialtype addition
+    for pair_potentialtype_dict in json_dict["pair_potentialtypes"]:
+        pair_potentialtype = PairPotentialType.parse_obj(
+            pair_potentialtype_dict
+        )
+        top.add_pairpotentialtype(pair_potentialtype, update=False)
+
     return top
 
 
