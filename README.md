@@ -7,7 +7,7 @@
 `GMSO`is a flexible storage of chemical topology for molecular simulation.
 With a few lines of `GMSO` code, together with [`mBuild`](https://mbuild.mosdef.org) and [`foyer`](https://foyer.mosdef.org), users can rapidly prototype arbitrary parameterized chemical systems and generate data files for a wide variety of simulation engines.
 
-To learn more, get started or contribute, check out our [Documentation](https://gmso.mosdef.org).
+To learn more, get started, or contribute, check out our [Documentation](https://gmso.mosdef.org).
 
 #### GMSO within the MoSDeF Ecosystem
 <p align="center">
