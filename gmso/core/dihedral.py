@@ -1,4 +1,4 @@
-from typing import Callable, ClassVar, Optional, Tuple
+from typing import Callable, ClassVar, List, Optional, Tuple
 
 from pydantic import Field
 
@@ -7,7 +7,7 @@ from gmso.core.atom import Atom
 from gmso.core.dihedral_type import DihedralType
 
 
-class Dihedral(Connection):
+class BaseDihedral(Connection):
     __base_doc__ = """A 4-partner connection between sites.
 
     This is a subclass of the gmso.Connection superclass.
@@ -30,19 +30,6 @@ class Dihedral(Connection):
     connection_members_: Tuple[Atom, Atom, Atom, Atom] = Field(
         ..., description="The 4 atoms involved in the dihedral."
     )
-
-    dihedral_type_: Optional[DihedralType] = Field(
-        default=None, description="DihedralType of this dihedral."
-    )
-
-    @property
-    def dihedral_type(self):
-        return self.__dict__.get("dihedral_type_")
-
-    @property
-    def connection_type(self):
-        # ToDo: Deprecate this?
-        return self.__dict__.get("dihedral_type_")
 
     def equivalent_members(self):
         """Get a set of the equivalent connection member tuples
@@ -96,18 +83,71 @@ class Dihedral(Connection):
             )
         )
 
+    def is_layered(self):
+        return hasattr(self, "dihedral_types_")
+
+    class Config:
+        fields = {
+            "connection_members_": "connection_members",
+        }
+        alias_to_fields = {
+            "connection_members": "connection_members_",
+        }
+
+
+class Dihedral(BaseDihedral):
+    dihedral_type_: Optional[DihedralType] = Field(
+        default=None, description="DihedralType of this dihedral."
+    )
+
+    @property
+    def dihedral_type(self):
+        return self.__dict__.get("dihedral_type_")
+
+    @property
+    def connection_type(self):
+        # ToDo: Deprecate this?
+        return self.__dict__.get("dihedral_type_")
+
     def __setattr__(self, key, value):
         if key == "connection_type":
-            super(Dihedral, self).__setattr__("dihedral_type", value)
+            super().__setattr__("dihedral_type", value)
         else:
-            super(Dihedral, self).__setattr__(key, value)
+            super().__setattr__(key, value)
 
     class Config:
         fields = {
             "dihedral_type_": "dihedral_type",
-            "connection_members_": "connection_members",
         }
         alias_to_fields = {
             "dihedral_type": "dihedral_type_",
-            "connection_members": "connection_members_",
+        }
+
+
+class LayeredDihedral(BaseDihedral):
+    dihedral_types_: Optional[List[DihedralType]] = Field(
+        default=None, description="DihedralTypes of this dihedral."
+    )
+
+    @property
+    def dihedral_types(self):
+        return self.__dict__.get("dihedral_types_")
+
+    @property
+    def connection_types(self):
+        # ToDo: Deprecate this?
+        return self.__dict__.get("dihedral_types_")
+
+    def __setattr__(self, key, value):
+        if key == "connection_types":
+            super().__setattr__("dihedral_types", value)
+        else:
+            super().__setattr__(key, value)
+
+    class Config:
+        fields = {
+            "dihedral_types_": "dihedral_types",
+        }
+        alias_to_fields = {
+            "dihedral_types": "dihedral_types_",
         }
