@@ -35,7 +35,7 @@ class PairPotentialType(ParametricPotential):
     def __init__(
         self,
         name="PairPotentialType",
-        expression="4 * eps * (sigma / r)**12 - (sigma / r)**6)",
+        expression="4 * eps * (sigma / r)**12 - (sigma / r)**6",
         parameters=None,
         independent_variables=None,
         member_types=None,
