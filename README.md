@@ -1,12 +1,19 @@
+## GMSO: General Molecular Simulation Object
 ![](https://anaconda.org/conda-forge/gmso/badges/license.svg)
 [![](https://anaconda.org/conda-forge/gmso/badges/version.svg)](https://anaconda.org/conda-forge/gmso)
 [![Build Status](https://dev.azure.com/mosdef/mosdef/_apis/build/status/mosdef-hub.gmso?branchName=master)](https://dev.azure.com/mosdef/mosdef/_build/latest?definitionId=9&branchName=master)
 [![codecov](https://codecov.io/gh/mosdef-hub/gmso/branch/master/graph/badge.svg?token=rqPGwmXDzu)](undefined)
 
-## GMSO: General Molecular Simulation Object
-
 Flexible storage of chemical topology for molecular simulation.
 With few lines of `GMSO` code, together with [`mBuild`](https://mbuild.mosdef.org) and [`foyer`](https://foyer.mosdef.org), users can rapidly prototype arbitrary parameterized chemical systems and generate data files for a wide variety of simulation engines.
+
+To learn more, get started or contribute, check out our [Homepage](https://mosdef.org).
+
+#### GMSO within the MoSDeF Ecosystem
+<p align="center">
+  <img src="docs/images/mosdef.svg?raw=true" alt="mBuild within the MoSDeF Ecosystem" width="500" height="500"/>
+</p>
+
 
 ```python
 import foyer
