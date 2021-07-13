@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 import unyt as u
 from pydantic import Field, validator
@@ -38,28 +38,41 @@ class ParametricPotential(AbstractPotential):
         name="ParametricPotential",
         expression="a*x+b",
         parameters=None,
+        potential_expression=None,
         independent_variables=None,
         topology=None,
         **kwargs,
     ):
+        if potential_expression is not None and (
+            expression is not None
+            or independent_variables is not None
+            or parameters is not None
+        ):
+            raise ValueError(
+                "When using potential expressions "
+                "please do not provide arguments for "
+                "expression, independent_variables or parameters."
+            )
+        if potential_expression is None:
+            if expression is None:
+                expression = "a*x+b"
 
-        if expression is None:
-            expression = "a*x+b"
+            if parameters is None:
+                parameters = {
+                    "a": 1.0 * u.dimensionless,
+                    "b": 1.0 * u.dimensionless,
+                }
 
-        if parameters is None:
-            parameters = {
-                "a": 1.0 * u.dimensionless,
-                "b": 1.0 * u.dimensionless,
-            }
+            if independent_variables is None:
+                independent_variables = {"x"}
 
-        if independent_variables is None:
-            independent_variables = {"x"}
-
-        _potential_expression = _PotentialExpression(
-            expression=expression,
-            independent_variables=independent_variables,
-            parameters=parameters,
-        )
+            _potential_expression = _PotentialExpression(
+                expression=expression,
+                independent_variables=independent_variables,
+                parameters=parameters,
+            )
+        else:
+            _potential_expression = potential_expression
 
         super().__init__(
             name=name,
@@ -131,6 +144,28 @@ class ParametricPotential(AbstractPotential):
             expression=expression,
             independent_variables=independent_variables,
             parameters=parameters,
+        )
+
+    def dict(
+        self,
+        *,
+        include: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
+        exclude: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
+        by_alias: bool = False,
+        skip_defaults: bool = None,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        exclude_none: bool = False,
+    ) -> dict:
+        exclude = {"topology_", "set_ref_"}
+        return super().dict(
+            include=include,
+            exclude=exclude,
+            by_alias=True,
+            skip_defaults=skip_defaults,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+            exclude_none=exclude_none,
         )
 
     def get_parameters(self, copy=False):

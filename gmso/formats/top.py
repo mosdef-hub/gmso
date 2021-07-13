@@ -65,7 +65,7 @@ def write_top(top, filename, top_vars=None):
                     atom_type.name,
                     _lookup_atomic_number(atom_type),
                     atom_type.mass.in_units(u.amu).value,
-                    atom_type.charge.in_units(u.charge_electron).value,
+                    atom_type.charge.in_units(u.elementary_charge).value,
                     "A",
                     atom_type.parameters["sigma"].in_units(u.nanometer).value,
                     atom_type.parameters["epsilon"]
@@ -113,7 +113,7 @@ def write_top(top, filename, top_vars=None):
                     top.name,  # TODO: subtop.name
                     _lookup_element_symbol(site.atom_type),
                     1,  # TODO: care about charge groups
-                    site.charge.in_units(u.charge_electron).value,
+                    site.charge.in_units(u.elementary_charge).value,
                     site.atom_type.mass.in_units(u.amu).value,
                 )
             )

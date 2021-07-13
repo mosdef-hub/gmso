@@ -34,16 +34,24 @@ class Connection(GMSOBase):
     @root_validator(pre=True)
     def validate_fields(cls, values):
         connection_members = values.get("connection_members")
+
+        if all(isinstance(member, dict) for member in connection_members):
+            connection_members = [
+                cls.__members_creator__(x) for x in connection_members
+            ]
+
         if not all(isinstance(x, Site) for x in connection_members):
             raise TypeError(
                 f"A non-site object provided to be a connection member"
             )
+
         if len(set(connection_members)) != len(connection_members):
             raise GMSOError(
                 f"Trying to create a {cls.__name__} between "
                 f"same sites. A {cls.__name__} between same "
                 f"{type(connection_members[0]).__name__}s is not allowed"
             )
+
         if not values.get("name"):
             values["name"] = cls.__name__
         return values
