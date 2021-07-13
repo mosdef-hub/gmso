@@ -233,3 +233,10 @@ class TestSerialization(BaseTest):
 
         for improper_type in typed_ethane._improper_types:
             assert improper_type in typed_ethane_copy._improper_types
+
+    def test_serialization_with_box(self, n_typed_xe_mie):
+        top = n_typed_xe_mie(n_sites=20)
+        top.save("n_typed_xe_mie_20.json")
+        top_copy = Topology.load("n_typed_xe_mie_20.json")
+        assert u.allclose_units(top_copy.box.lengths, top.box.lengths)
+        assert u.allclose_units(top_copy.box.angles, top.box.angles)

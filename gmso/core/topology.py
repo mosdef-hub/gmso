@@ -1,5 +1,4 @@
 """Base data structure for GMSO chemical systems."""
-import json
 import warnings
 from pathlib import Path
 

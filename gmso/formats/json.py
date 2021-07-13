@@ -3,12 +3,15 @@ import json
 from copy import deepcopy
 from pathlib import Path
 
+import unyt as u
+
 from gmso.core.angle import Angle
 from gmso.core.angle_type import AngleType
 from gmso.core.atom import Atom
 from gmso.core.atom_type import AtomType
 from gmso.core.bond import Bond
 from gmso.core.bond_type import BondType
+from gmso.core.box import Box
 from gmso.core.dihedral import Dihedral
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper import Improper
@@ -229,6 +232,16 @@ def _from_json(json_dict):
         for atom_idx in subtop_dict["atoms"]:
             subtop.add_site(top.sites[atom_idx])
         top.add_subtopology(subtop, update=False)
+
+    if json_dict.get("box"):
+        box_dict = json_dict["box"]
+        lengths = u.unyt_array(
+            box_dict["lengths"]["array"], box_dict["lengths"]["unit"]
+        )
+        angles = u.unyt_array(
+            box_dict["angles"]["array"], box_dict["angles"]["unit"]
+        )
+        top.box = Box(lengths=lengths, angles=angles)
 
     top.update_topology()
     return top
