@@ -72,8 +72,6 @@ class TestConvertMBuild(BaseTest):
         assert new.n_particles == 8
         assert new.n_bonds == 7
         for i in range(new.n_particles):
-            print(new[i].xyz)
-            print(top.sites[i].position.value)
             assert np.isclose(new[i].xyz, top.sites[i].position.value).all()
 
     def test_3_layer_compound(self):
