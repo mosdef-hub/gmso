@@ -1,5 +1,7 @@
 """Serialization to json."""
+import json
 from copy import deepcopy
+from pathlib import Path
 
 from gmso.core.angle import Angle
 from gmso.core.angle_type import AngleType
@@ -11,12 +13,13 @@ from gmso.core.dihedral import Dihedral
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
+from gmso.formats.formats_registry import loads_as, saves_as
 
 
 def _to_json(top, types=False, update=True):
-    """Return a json serializable from a topology.
+    """Return a json serializable dictionary from a topology.
 
-    This is used for json serializing the topology
+    This method is used for json serializing the topology
 
     Parameters
     ----------
@@ -43,6 +46,7 @@ def _to_json(top, types=False, update=True):
         "name": top._name,
         "scaling_factors": top.scaling_factors,
         "subtopologies": [],
+        "box": top.box.json_dict() if top.box else None,
         "atoms": [],
         "bonds": [],
         "angles": [],
@@ -228,3 +232,49 @@ def _from_json(json_dict):
 
     top.update_topology()
     return top
+
+
+@saves_as(".json")
+def save_json(top, filename, **kwargs):
+    """Save the topology as a JSON file.
+
+    Parameters
+    ----------
+    top: gmso.Topology
+        The topology to save
+    filename: str, pathlib.Path
+        The file to save to topology to, must be suffixed with .json
+    **kwargs: dict
+        The keyword arguments to _to_json and json.dump methods
+    """
+    json_dict = _to_json(
+        top, update=kwargs.pop("update", True), types=kwargs.pop("types", False)
+    )
+    if not isinstance(filename, Path):
+        filename = Path(filename).resolve()
+
+    with filename.open("w") as json_file:
+        json.dump(json_dict, json_file, **kwargs)
+
+
+@loads_as(".json")
+def load_json(filename):
+    """Load a topology from a json file.
+
+    Parameters
+    ----------
+    filename: str, pathlib.Path
+        The file to load the topology from, must be suffixed with .json
+
+    Returns
+    -------
+    gmso.Topology
+        The Topology object obtained by loading the json file
+    """
+    if not isinstance(filename, Path):
+        filename = Path(filename).resolve()
+
+    with filename.open("r") as json_file:
+        json_dict = json.load(json_file)
+        top = _from_json(json_dict)
+        return top

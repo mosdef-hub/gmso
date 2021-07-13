@@ -759,7 +759,7 @@ class Topology(object):
         for i, ref_member in enumerate(self._set_refs[ref].keys()):
             self._index_refs[ref][ref_member] = i
 
-    def save(self, filename, overwrite=True, **kwargs):
+    def save(self, filename, overwrite=False, **kwargs):
         """Save the topology to a file.
 
         Parameters
@@ -781,15 +781,10 @@ class Topology(object):
                 f"overwrite=True if you wish to overwrite the existing file"
             )
 
-        if filename.suffix == ".json":
-            from gmso.formats.json import _to_json
+        from gmso.formats import SaversRegistry
 
-            types = kwargs.get("types", False)
-            update = kwargs.get("update", True)
-            indent = kwargs.get("indent", 2)
-            top_json = _to_json(self, types=types, update=update)
-            with filename.open("w") as top_json_file:
-                json.dump(top_json, top_json_file, indent=indent)
+        saver = SaversRegistry.get_callable(filename.suffix)
+        saver(self, filename, **kwargs)
 
     def __repr__(self):
         """Return custom format to represent topology."""
@@ -805,12 +800,10 @@ class Topology(object):
         return f"<Topology {self.name}, {self.n_sites} sites, id: {id(self)}>"
 
     @classmethod
-    def load(cls, filename):
+    def load(cls, filename, **kwargs):
         """Load a file to a topology"""
         filename = Path(filename).resolve()
-        if filename.suffix == ".json":
-            from gmso.formats.json import _from_json
+        from gmso.formats import LoadersRegistry
 
-            with filename.open("r") as json_file:
-                top = _from_json(json.load(json_file))
-                return top
+        loader = LoadersRegistry.get_callable(filename.suffix)
+        return loader(filename, **kwargs)
