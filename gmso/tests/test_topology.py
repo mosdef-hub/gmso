@@ -17,6 +17,7 @@ from gmso.core.dihedral import Dihedral
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
+from gmso.core.pairpotential_type import PairPotentialType
 from gmso.core.subtopology import SubTopology
 from gmso.core.topology import Topology
 from gmso.exceptions import GMSOError
@@ -384,6 +385,31 @@ class TestTopology(BaseTest):
         assert len(top.improper_types) == 1
         assert len(top.improper_type_expressions) == 1
         assert len(top.atom_type_expressions) == 2
+
+    def test_pairpotential_pairpotentialtype_update(self):
+        top = Topology()
+        atype1 = AtomType(name="a1", expression="sigma + epsilon*r")
+        atype2 = AtomType(name="a2", expression="sigma * epsilon*r")
+        atom1 = Atom(name="a", atom_type=atype1)
+        atom2 = Atom(name="b", atom_type=atype2)
+        top.add_site(atom1)
+        top.add_site(atom2)
+        top.update_topology()
+
+        pptype12 = PairPotentialType(
+            name="pp12",
+            expression="r + 1",
+            independent_variables="r",
+            parameters={},
+            member_types=tuple(["a1", "a2"]),
+        )
+
+        top.add_pairpotentialtype(pptype12)
+        assert len(top.pairpotential_types) == 1
+        assert top._pairpotential_types_idx[pptype12] == 0
+
+        top.remove_pairpotentialtype(["a1", "a2"])
+        assert len(top.pairpotential_types) == 0
 
     def test_add_subtopology(self):
         top = Topology()
