@@ -85,7 +85,15 @@ ImproperType
     .. autoclass:: gmso.ImproperType
         :members:
 
+PairPotentialType
+************
+    .. autoclass:: gmso.PairPotentialType
+        :members:
+
 ForceField
 ==========
     .. autoclass:: gmso.ForceField
         :members:
+
+
+=======
