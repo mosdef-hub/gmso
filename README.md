@@ -11,7 +11,7 @@ To learn more, get started, or contribute, check out our [Documentation](https:/
 
 #### GMSO within the MoSDeF Ecosystem
 <p align="center">
-  <img src="docs/images/mosdef_graphic_gmso.svg?raw=true" alt="GMSO within the MoSDeF Ecosystem" width="500" height="500"/>
+  <img src="docs/images/mosdef_graphic_gmso.png?raw=true" alt="GMSO within the MoSDeF Ecosystem" width="500" height="500"/>
 </p>
 
 This is an example using `mBuild` and `Foyer` to build a `GMSO` topology through [`ParmEd`](https://parmed.github.io/ParmEd/html/index.html) and write out to [`LAMMPS`](https://docs.lammps.org/).
