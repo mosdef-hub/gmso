@@ -11,8 +11,8 @@ from gmso.tests.base_test import BaseTest
 
 
 class TestConvertNetworkX(BaseTest):
-    def test_to_networkx_ethane(self, ethane):
-        ethane_to_nx = to_networkx(ethane)
+    def test_to_networkx_ethane(self, ethane_from_scratch):
+        ethane_to_nx = to_networkx(ethane_from_scratch)
 
         assert ethane.n_sites == ethane_to_nx.number_of_nodes()
         assert ethane.n_bonds == ethane_to_nx.number_of_edges()
@@ -26,8 +26,8 @@ class TestConvertNetworkX(BaseTest):
                 ethane._get_dihedrals_for(site)
             )
 
-    def test_from_networkx_ethane(self, ethane):
-        ethane_to_nx = to_networkx(ethane)
+    def test_from_networkx_ethane(self, ethane_from_scratch):
+        ethane_to_nx = to_networkx(ethane_from_scratch)
         ethane_from_nx = from_networkx(ethane_to_nx)
 
         assert ethane.n_sites == ethane_from_nx.n_sites
