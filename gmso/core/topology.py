@@ -708,7 +708,7 @@ class Topology(object):
         return self._typed
 
     def is_fully_typed(self, updated=False, group="topology"):
-        """Check if the topology or a specifc group of objects that make up the topology is fully typed
+        """Check if the topology or a specifc group of objects that make up the topology are fully typed
 
         Parameters
         ----------
@@ -717,7 +717,7 @@ class Topology(object):
             Topology before the checking step.
         group : str, optional, default='topology'
             Specific objects to be checked. Options include:
-            'topology'  : check for status of the topology object
+            'topology'  : check for status of all the topology constituents
             'sites'     : check for status of all topology.sites
             'bonds'     : check for status of all topology.bonds
             'angles'    : check for status of all topology.angles
