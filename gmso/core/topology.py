@@ -727,6 +727,142 @@ class Topology(object):
             self._typed = False
         return self._typed
 
+    def is_fully_typed(self, updated=False, group="topology"):
+        """Check if the topology or a specifc group of objects that make up the topology are fully typed
+
+        Parameters
+        ----------
+        updated : bool, optional, default=False
+            If False, will update the atom type and connection type list of the
+            Topology before the checking step.
+        group : str, optional, default='topology'
+            Specific objects to be checked. Options include:
+            'topology'  : check for status of all the topology constituents
+            'sites'     : check for status of all topology.sites
+            'bonds'     : check for status of all topology.bonds
+            'angles'    : check for status of all topology.angles
+            'dihedrals' : check for status of all topology.dihedrals
+            'impropers' : check for status of all topology.impropers
+
+        Returns
+        -------
+        bool
+            Status of the check
+        Notes
+        -----
+        `self._type` is set to True as long as the Topology is at least
+        partially typed.
+        """
+        if not updated:
+            self.update_connection_types()
+            self.update_atom_types()
+
+        typed_status = {
+            "sites": lambda top: all(site.atom_type for site in top._sites),
+            "bonds": lambda top: all(bond.bond_type for bond in top._bonds),
+            "angles": lambda top: all(
+                angle.angle_type for angle in top._angles
+            ),
+            "dihedrals": lambda top: all(
+                dihedral.dihedral_type for dihedral in top._dihedrals
+            ),
+            "impropers": lambda top: all(
+                improper.improper_type for improper in top._impropers
+            ),
+        }
+
+        if group == "topology":
+            result = list()
+            for subgroup in typed_status:
+                result.append(typed_status[subgroup](self))
+            return all(result)
+        elif group in typed_status:
+            return typed_status[group](self)
+        else:
+            raise ValueError(
+                f"Could not check typing status of {group}. "
+                "Available options: 'topology', 'sites', 'bonds', "
+                "'angles', 'dihedrals', 'impropers'."
+            )
+
+    def get_untyped(self, group):
+        """Get the untyped (non-parametrized) objects of the Topology.
+
+        Parameters
+        ----------
+        group : {'sites', 'bonds', 'angles', 'dihedrals', 'impropers', 'topology'}
+            The group of objects to be checked. The 'topology' option will return
+            all untyped object of the topology.
+
+        Returns
+        -------
+        untyped : dict
+            Dictionary of all untyped object, key of the dictionary corresponds to
+            object group names define above.
+        """
+        untyped = dict()
+        untyped_extractors = {
+            "sites": self._get_untyped_sites,
+            "bonds": self._get_untyped_bonds,
+            "angles": self._get_untyped_angles,
+            "dihedrals": self._get_untyped_dihedrals,
+            "impropers": self._get_untyped_impropers,
+        }
+        if group == "topology":
+            for subgroup in untyped_extractors:
+                untyped.update(untyped_extractors[subgroup])
+        elif group in untyped_extractors:
+            untyped = untyped_extractors[group]()
+        elif isinstance(group, (list, tuple, set)):
+            for subgroup in group:
+                untyped.update(untyped_extractors[subgroup]())
+        else:
+            raise ValueError(
+                f"Cannot get untyped {group}. "
+                f"Available options: {[untyped_extractors.keys()]}."
+            )
+        return untyped
+
+    def _get_untyped_sites(self):
+        "Return a list of untyped sites"
+        untyped = {"sites": list()}
+        for site in self._sites:
+            if not site.atom_type:
+                untyped[sites].append(site)
+        return untyped
+
+    def _get_untyped_bonds(self):
+        "Return a list of untyped bonds"
+        untyped = {"bonds": list()}
+        for bond in self._bonds:
+            if not bond.bond_type:
+                untyped["bonds"].append(bond)
+        return untyped
+
+    def _get_untyped_angles(self):
+        "Return a list of untyped angles"
+        untyped = {"angles": list()}
+        for angle in self._angles:
+            if not angle.angle_type:
+                untyped["angles"].append(angle)
+        return untyped
+
+    def _get_untyped_dihedrals(self):
+        "Return a list of untyped dihedrals"
+        untyped = {"dihedrals": list()}
+        for dihedral in self._dihedrals:
+            if not dihedral.dihedral_type:
+                untyped["dihedrals"].append(dihedral)
+        return untyped
+
+    def _get_untyped_impropers(self):
+        "Return a list of untyped impropers"
+        untyped = {"impropers": list()}
+        for improper in self._impropers:
+            if not improper.improper_type:
+                untyped["impropers"].append(improper)
+        return untyped
+
     def update_angle_types(self):
         """Use gmso.Topology.update_connection_types to update AngleTypes in the topology.
 
