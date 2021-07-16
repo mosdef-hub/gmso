@@ -169,8 +169,7 @@ class TestDihedral(BaseTest):
                 "kn": 1.0 * u.K * u.kb,
                 "n": 1 * u.dimensionless,
                 "a0": 30.0 * u.degree,
-
-            }
+            },
         )
         dihedral_type2 = DihedralType(
             name=f"layer2",
@@ -180,8 +179,7 @@ class TestDihedral(BaseTest):
                 "kn": 1.0 * u.K * u.kb,
                 "n": 2 * u.dimensionless,
                 "a0": 30.0 * u.degree,
-
-            }
+            },
         )
         dihedral_type3 = DihedralType(
             name=f"layer3",
@@ -191,8 +189,7 @@ class TestDihedral(BaseTest):
                 "kn": 1.0 * u.K * u.kb,
                 "n": 3 * u.dimensionless,
                 "a0": 30.0 * u.degree,
-
-            }
+            },
         )
 
         connect = LayeredDihedral(
