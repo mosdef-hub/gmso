@@ -611,16 +611,28 @@ class Topology(object):
                 elif connection_type in self.connection_types:
                     if isinstance(connection_type, BondType):
                         c.connection_type = self._bond_types[connection_type]
-                    if isinstance(c.connection_type, AngleType):
+                    if isinstance(connection_type, AngleType):
                         c.connection_type = self._angle_types[connection_type]
-                    if isinstance(c.connection_type, DihedralType):
-                        c.connection_type = self._dihedral_types[
-                            connection_type
-                        ]
+                    if isinstance(connection_type, DihedralType):
+                        if c.is_layered():
+                            c.connection_types = c.connection_types or []
+                            c.connection_types.append(
+                                self.dihedral_types[connection_type]
+                            )
+                        else:
+                            c.connection_type = self._dihedral_types[
+                                connection_type
+                            ]
                     if isinstance(connection_type, ImproperType):
-                        c.connection_type = self._improper_types[
-                            connection_type
-                        ]
+                        if c.is_layered():
+                            c.connection_types = c.connection_types or []
+                            c.connection_types.append(
+                                self.improper_types[connection_type]
+                            )
+                        else:
+                            c.connection_type = self.improper_types[
+                                connection_type
+                            ]
 
     def add_pairpotentialtype(self, pairpotentialtype, update=True):
         """add a PairPotentialType to the topology
