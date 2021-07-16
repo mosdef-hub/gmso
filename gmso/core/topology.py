@@ -11,9 +11,9 @@ from gmso.core.atom import Atom
 from gmso.core.atom_type import AtomType
 from gmso.core.bond import Bond
 from gmso.core.bond_type import BondType
-from gmso.core.dihedral import Dihedral
+from gmso.core.dihedral import Dihedral, LayeredDihedral
 from gmso.core.dihedral_type import DihedralType
-from gmso.core.improper import Improper
+from gmso.core.improper import Improper, LayeredImproper
 from gmso.core.improper_type import ImproperType
 from gmso.core.pairpotential_type import PairPotentialType
 from gmso.core.parametric_potential import ParametricPotential
@@ -154,7 +154,9 @@ class Topology(object):
         self._bonds = IndexedSet()
         self._angles = IndexedSet()
         self._dihedrals = IndexedSet()
+        self._layered_dihedrals = IndexedSet()
         self._impropers = IndexedSet()
+        self._layered_impropers = IndexedSet()
         self._subtops = IndexedSet()
         self._atom_types = {}
         self._atom_types_idx = {}
@@ -343,9 +345,18 @@ class Topology(object):
         return tuple(self._dihedrals)
 
     @property
+    def layered_dihedrals(self):
+        return tuple(self._layered_dihedrals)
+
+    @property
     def impropers(self):
         """Return all impropers in the topology."""
         return tuple(self._impropers)
+
+    @property
+    def layered_impropers(self):
+        """Return all layered impropers in the topology."""
+        return tuple(self._layered_impropers)
 
     @property
     def atom_types(self):
@@ -520,8 +531,14 @@ class Topology(object):
             self._angles.add(connection)
         if isinstance(connection, Dihedral):
             self._dihedrals.add(connection)
+        if isinstance(connection, LayeredDihedral):
+            self._dihedrals.add(connection)
+            self._layered_dihedrals.add(connection)
         if isinstance(connection, Improper):
             self._impropers.add(connection)
+        if isinstance(connection, LayeredImproper):
+            self._impropers.add(connection)
+            self._layered_impropers.add(connection)
         if update_types:
             self.update_connection_types()
 
@@ -764,10 +781,14 @@ class Topology(object):
                 angle.angle_type for angle in top._angles
             ),
             "dihedrals": lambda top: all(
-                dihedral.dihedral_type for dihedral in top._dihedrals
+                hasattr(dihedral, "dihedral_types")
+                or hasattr(dihedral, "dihedral_type")
+                for dihedral in top._dihedrals
             ),
             "impropers": lambda top: all(
-                improper.improper_type for improper in top._impropers
+                hasattr(improper, "improper_types")
+                or hasattr(improper, "improper_type")
+                for improper in top._impropers
             ),
         }
 
@@ -828,7 +849,7 @@ class Topology(object):
         untyped = {"sites": list()}
         for site in self._sites:
             if not site.atom_type:
-                untyped[sites].append(site)
+                untyped["sites"].append(site)
         return untyped
 
     def _get_untyped_bonds(self):
@@ -851,7 +872,11 @@ class Topology(object):
         "Return a list of untyped dihedrals"
         untyped = {"dihedrals": list()}
         for dihedral in self._dihedrals:
-            if not dihedral.dihedral_type:
+            if getattr(
+                dihedral,
+                "dihedral_type",
+                getattr(dihedral, "dihedral_types", None),
+            ):
                 untyped["dihedrals"].append(dihedral)
         return untyped
 
@@ -859,7 +884,11 @@ class Topology(object):
         "Return a list of untyped impropers"
         untyped = {"impropers": list()}
         for improper in self._impropers:
-            if not improper.improper_type:
+            if getattr(
+                improper,
+                "improper_type",
+                getattr(improper, "improper_types", None),
+            ):
                 untyped["impropers"].append(improper)
         return untyped
 
