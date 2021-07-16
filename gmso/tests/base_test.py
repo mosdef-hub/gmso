@@ -291,7 +291,7 @@ class BaseTest:
         return mytop
 
     @pytest.fixture
-    def ethane(self):
+    def ethane_from_scratch(self):
         mytop = Topology()
         c1 = Atom(name="C1")
         h11 = Atom(name="H11")
