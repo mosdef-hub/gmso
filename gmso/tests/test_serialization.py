@@ -13,6 +13,7 @@ from gmso.core.element import element_by_symbol
 from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
 from gmso.core.topology import Topology
+from gmso.formats.formats_registry import UnsupportedFileFormatError
 from gmso.tests.base_test import BaseTest
 
 
@@ -250,3 +251,19 @@ class TestSerialization(BaseTest):
             pptop_copy.pairpotential_types[0]
             == pairpotentialtype_top.pairpotential_types[0]
         )
+
+    def test_serialization_unsupported_file_format(self, ethane_from_scratch):
+        with pytest.raises(UnsupportedFileFormatError):
+            ethane_from_scratch.save("ethane_from_scratch.zip")
+
+    def test_serialization_untyped_with_types_info(self, ethane_from_scratch):
+        with pytest.raises(ValueError):
+            ethane_from_scratch.save("ethane_from_scratch.json", types=True)
+
+    def test_serialization_overwrite(self, ethane_from_scratch):
+        ethane_from_scratch.save("ethane_from_scratch.json", overwrite=False)
+        with pytest.raises(FileExistsError):
+            ethane_from_scratch.save(
+                "ethane_from_scratch.json", overwrite=False
+            )
+        ethane_from_scratch.save("ethane_from_scratch.json", overwrite=True)
