@@ -542,48 +542,68 @@ class Topology(object):
         --------
         gmso.Topology.update_atom_types : Update atom types in the topology.
         """
+        # Here an alternative could be using checking instances of LayeredConnection classes
+        # But to make it generic, this approach works best
+        get_connection_type = (
+            lambda conn: conn.connection_types
+            if hasattr(conn, "connection_types")
+            else conn.connection_type
+        )
         for c in self.connections:
-            if c.connection_type is None:
+            connection_type_or_types = get_connection_type(c)
+            if connection_type_or_types is None:
                 warnings.warn(
                     "Non-parametrized Connection {} detected".format(c)
                 )
-            elif not isinstance(c.connection_type, ParametricPotential):
+                continue
+            elif not isinstance(
+                connection_type_or_types, (ParametricPotential, list)
+            ):
                 raise GMSOError(
                     "Non-Potential {} found"
-                    "in Connection {}".format(c.connection_type, c)
+                    "in Connection {}".format(connection_type_or_types, c)
                 )
-            elif c.connection_type not in self._connection_types:
-                c.connection_type.topology = self
-                self._connection_types[c.connection_type] = c.connection_type
-                if isinstance(c.connection_type, BondType):
-                    self._bond_types[c.connection_type] = c.connection_type
-                    self._bond_types_idx[c.connection_type] = (
-                        len(self._bond_types) - 1
-                    )
-                if isinstance(c.connection_type, AngleType):
-                    self._angle_types[c.connection_type] = c.connection_type
-                    self._angle_types_idx[c.connection_type] = (
-                        len(self._angle_types) - 1
-                    )
-                if isinstance(c.connection_type, DihedralType):
-                    self._dihedral_types[c.connection_type] = c.connection_type
-                    self._dihedral_types_idx[c.connection_type] = (
-                        len(self._dihedral_types) - 1
-                    )
-                if isinstance(c.connection_type, ImproperType):
-                    self._improper_types[c.connection_type] = c.connection_type
-                    self._improper_types_idx[c.connection_type] = (
-                        len(self._improper_types) - 1
-                    )
-            elif c.connection_type in self.connection_types:
-                if isinstance(c.connection_type, BondType):
-                    c.connection_type = self._bond_types[c.connection_type]
-                if isinstance(c.connection_type, AngleType):
-                    c.connection_type = self._angle_types[c.connection_type]
-                if isinstance(c.connection_type, DihedralType):
-                    c.connection_type = self._dihedral_types[c.connection_type]
-                if isinstance(c.connection_type, ImproperType):
-                    c.connection_type = self._improper_types[c.connection_type]
+            if not isinstance(connection_type_or_types, list):
+                connection_type_or_types = [connection_type_or_types]
+            for connection_type in connection_type_or_types:
+                if connection_type not in self._connection_types:
+                    connection_type.topology = self
+                    self._connection_types[connection_type] = connection_type
+                    if isinstance(connection_type, BondType):
+                        self._bond_types[connection_type] = connection_type
+                        self._bond_types_idx[connection_type] = (
+                            len(self._bond_types) - 1
+                        )
+                    if isinstance(connection_type, AngleType):
+                        self._angle_types[connection_type] = connection_type
+                        self._angle_types_idx[connection_type] = (
+                            len(self._angle_types) - 1
+                        )
+                    if isinstance(connection_type, DihedralType):
+                        self._dihedral_types[connection_type] = connection_type
+                        self._dihedral_types_idx[connection_type] = (
+                            len(self._dihedral_types) - 1
+                        )
+                    if isinstance(connection_type, ImproperType):
+                        self._improper_types[
+                            connection_type
+                        ] = c.connection_type
+                        self._improper_types_idx[connection_type] = (
+                            len(self._improper_types) - 1
+                        )
+                elif connection_type in self.connection_types:
+                    if isinstance(connection_type, BondType):
+                        c.connection_type = self._bond_types[connection_type]
+                    if isinstance(c.connection_type, AngleType):
+                        c.connection_type = self._angle_types[connection_type]
+                    if isinstance(c.connection_type, DihedralType):
+                        c.connection_type = self._dihedral_types[
+                            connection_type
+                        ]
+                    if isinstance(connection_type, ImproperType):
+                        c.connection_type = self._improper_types[
+                            connection_type
+                        ]
 
     def add_pairpotentialtype(self, pairpotentialtype, update=True):
         """add a PairPotentialType to the topology
