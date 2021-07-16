@@ -872,7 +872,7 @@ class Topology(object):
         "Return a list of untyped dihedrals"
         untyped = {"dihedrals": list()}
         for dihedral in self._dihedrals:
-            if getattr(
+            if not getattr(
                 dihedral,
                 "dihedral_type",
                 getattr(dihedral, "dihedral_types", None),
@@ -884,7 +884,7 @@ class Topology(object):
         "Return a list of untyped impropers"
         untyped = {"impropers": list()}
         for improper in self._impropers:
-            if getattr(
+            if not getattr(
                 improper,
                 "improper_type",
                 getattr(improper, "improper_types", None),
