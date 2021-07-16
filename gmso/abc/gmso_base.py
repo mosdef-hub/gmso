@@ -1,4 +1,5 @@
 """Base model all classes extend."""
+import json
 import warnings
 from abc import ABC
 from typing import Any, ClassVar, Type
@@ -95,8 +96,6 @@ class GMSOBase(BaseModel, ABC):
 
     def json_dict(self, **kwargs):
         """Return a JSON serializable dictionary from the object"""
-        import json
-
         raw_json = self.json(**kwargs)
         return json.loads(raw_json)
 
