@@ -808,7 +808,7 @@ class Topology(object):
         untyped = {"sites": list()}
         for site in self._sites:
             if not site.atom_type:
-                untyped[sites].append(site)
+                untyped["sites"].append(site)
         return untyped
 
     def _get_untyped_bonds(self):
