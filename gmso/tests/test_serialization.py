@@ -192,65 +192,30 @@ class TestSerialization(BaseTest):
         assert "name" not in atom_json
 
     def test_full_serialization(
-        self, typed_ethane, are_equivalent_atoms, are_equivalent_connections
+        self,
+        typed_ethane,
+        are_equivalent_atoms,
+        are_equivalent_connections,
+        are_equivalent_topologies,
     ):
         typed_ethane.save("eth.json", types=True)
         typed_ethane_copy = Topology.load("eth.json")
-        for atom1, atom2 in zip(typed_ethane._sites, typed_ethane_copy._sites):
-            assert are_equivalent_atoms(atom1, atom2)
-            assert typed_ethane.get_index(atom1) == typed_ethane_copy.get_index(
-                atom2
-            )
+        assert are_equivalent_topologies(typed_ethane_copy, typed_ethane)
 
-        for bond1, bond2 in zip(typed_ethane._bonds, typed_ethane_copy._bonds):
-            assert are_equivalent_connections(bond1, bond2)
-
-        for angle1, angle2 in zip(
-            typed_ethane._angles, typed_ethane_copy._angles
-        ):
-            assert are_equivalent_connections(angle1, angle2)
-
-        for dihedral1, dihedral2 in zip(
-            typed_ethane._dihedrals, typed_ethane_copy._dihedrals
-        ):
-            assert are_equivalent_connections(dihedral1, dihedral2)
-
-        for improper1, improper2 in zip(
-            typed_ethane._impropers, typed_ethane_copy._impropers
-        ):
-            assert are_equivalent_connections(improper1, improper2)
-
-        for atom_type in typed_ethane._atom_types:
-            assert atom_type in typed_ethane_copy._atom_types
-
-        for bond_type in typed_ethane._bond_types:
-            assert bond_type in typed_ethane_copy._bond_types
-
-        for angle_type in typed_ethane._angle_types:
-            assert angle_type in typed_ethane_copy._angle_types
-
-        for dihedral_type in typed_ethane._dihedral_types:
-            assert dihedral_type in typed_ethane_copy._dihedral_types
-
-        for improper_type in typed_ethane._improper_types:
-            assert improper_type in typed_ethane_copy._improper_types
-
-    def test_serialization_with_box(self, n_typed_xe_mie):
+    def test_serialization_with_box(
+        self, n_typed_xe_mie, are_equivalent_topologies
+    ):
         top = n_typed_xe_mie(n_sites=20)
         top.save("n_typed_xe_mie_20.json")
         top_copy = Topology.load("n_typed_xe_mie_20.json")
-        assert u.allclose_units(top_copy.box.lengths, top.box.lengths)
-        assert u.allclose_units(top_copy.box.angles, top.box.angles)
+        assert are_equivalent_topologies(top, top_copy)
 
     def test_serialization_with_pairpotential_types(
-        self, pairpotentialtype_top
+        self, pairpotentialtype_top, are_equivalent_topologies
     ):
         pairpotentialtype_top.save("pptype.json", types=True)
         pptop_copy = Topology.load("pptype.json")
-        assert (
-            pptop_copy.pairpotential_types[0]
-            == pairpotentialtype_top.pairpotential_types[0]
-        )
+        assert are_equivalent_topologies(pptop_copy, pairpotentialtype_top)
 
     def test_serialization_unsupported_file_format(self, ethane_from_scratch):
         with pytest.raises(UnsupportedFileFormatError):

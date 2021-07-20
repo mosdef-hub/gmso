@@ -383,6 +383,87 @@ class BaseTest:
         return test_connection_equality
 
     @pytest.fixture(scope="session")
+    def have_equivalent_boxes(self):
+        def test_box_equivalence(top1, top2):
+            if top1.box and top2.box:
+                return u.allclose_units(
+                    top1.box.lengths, top2.box.lengths
+                ) and u.allclose_units(top1.box.angles, top2.box.angles)
+            elif not top1.box and not top2.box:
+                return True
+            else:
+                return False
+
+        return test_box_equivalence
+
+    @pytest.fixture(scope="session")
+    def are_equivalent_topologies(
+        self,
+        have_equivalent_boxes,
+        are_equivalent_atoms,
+        are_equivalent_connections,
+    ):
+        def test_topology_equivalence(top1, top2):
+            if top1.n_sites != top2.n_sites:
+                return False, "Unequal number of sites"
+            if top1.n_bonds != top2.n_bonds:
+                return False, "Unequal number of bonds"
+            if top1.n_angles != top2.n_angles:
+                return False, "Unequal number of angles"
+            if top1.n_dihedrals != top2.n_dihedrals:
+                return False, "Unequal number of dihedrals"
+            if top1.n_impropers != top2.n_impropers:
+                return False, "Unequal number of impropers"
+            if top1.name != top2.name:
+                return False, "Dissimilar names"
+
+            if top1.scaling_factors != top2.scaling_factors:
+                return False, f"Mismatch in scaling factors"
+
+            if not have_equivalent_boxes(top1, top2):
+                return (
+                    False,
+                    "Non equivalent boxes, differing in lengths and angles",
+                )
+
+            for atom1, atom2 in zip(top1.sites, top2.sites):
+                if not are_equivalent_atoms(atom1, atom2):
+                    return False, f"Non equivalent atoms {atom1, atom2}"
+
+            # Note: In these zipped iterators, index matches are implicitly checked
+            for bond1, bond2 in zip(top1.bonds, top2.bonds):
+                if not are_equivalent_connections(bond1, bond2):
+                    return False, f"Non equivalent bonds {bond1, bond2}"
+
+            for angle1, angle2 in zip(top1.angles, top2.angles):
+                if not are_equivalent_connections(angle1, angle2):
+                    return False, f"Non equivalent angles {angle1, angle2}"
+
+            for dihedral1, dihedral2 in zip(top1.dihedrals, top2.dihedrals):
+                if not are_equivalent_connections(dihedral1, dihedral2):
+                    return (
+                        False,
+                        f"Non equivalent dihedrals, {dihedral1, dihedral2}",
+                    )
+
+            for improper1, improper2 in zip(top1.impropers, top2.impropers):
+                if not are_equivalent_connections(improper1, improper2):
+                    return (
+                        False,
+                        f"Non equivalent impropers, {improper1, improper2}",
+                    )
+
+            for pp_type1, pp_type2 in zip(
+                top1.pairpotential_types, top2.pairpotential_types
+            ):
+                if pp_type1 != pp_type2:
+                    return False, f"Pair-PotentialTypes mismatch"
+
+            return True, f"{top1} and {top2} are equivalent"
+
+        return test_topology_equivalence
+
+    @pytest.fixture(scope="session")
     def pairpotentialtype_top(self):
         top = Topology()
         atype1 = AtomType(name="a1", expression="sigma + epsilon*r")
