@@ -1,10 +1,12 @@
-from typing import Callable, ClassVar, List, Optional, Tuple
+from typing import Callable, ClassVar, Iterable, Optional, Tuple
 
-from pydantic import Field
+from boltons.setutils import IndexedSet
+from pydantic import Field, ValidationError, validator
 
 from gmso.abc.abstract_connection import Connection
 from gmso.core.atom import Atom
 from gmso.core.dihedral_type import DihedralType
+from gmso.utils.misc import validate_type
 
 
 class BaseDihedral(Connection):
@@ -125,7 +127,7 @@ class Dihedral(BaseDihedral):
 
 
 class LayeredDihedral(BaseDihedral):
-    dihedral_types_: Optional[List[DihedralType]] = Field(
+    dihedral_types_: Optional[IndexedSet] = Field(
         default=None, description="DihedralTypes of this dihedral."
     )
 
@@ -143,6 +145,14 @@ class LayeredDihedral(BaseDihedral):
             super().__setattr__("dihedral_types", value)
         else:
             super().__setattr__(key, value)
+
+    @validator("dihedral_types_", pre=True, always=True)
+    def validate_dihedral_types(cls, dihedral_types):
+        if not isinstance(dihedral_types, Iterable):
+            raise ValidationError("DihedralTypes should be iterable", cls)
+
+        validate_type(dihedral_types, DihedralType)
+        return IndexedSet(dihedral_types)
 
     class Config:
         fields = {

@@ -1,11 +1,13 @@
 """Support for improper style connections (4-member connection)."""
-from typing import Callable, ClassVar, List, Optional, Tuple
+from typing import Callable, ClassVar, Iterable, List, Optional, Tuple
 
-from pydantic import Field
+from boltons.setutils import IndexedSet
+from pydantic import Field, ValidationError, validator
 
 from gmso.abc.abstract_connection import Connection
 from gmso.core.atom import Atom
 from gmso.core.improper_type import ImproperType
+from gmso.utils.misc import validate_type
 
 
 class BaseImproper(Connection):
@@ -155,6 +157,14 @@ class LayeredImproper(BaseImproper):
             super().__setattr__("improper_types_", value)
         else:
             super().__setattr__(key, value)
+
+    @validator("improper_types_", pre=True, always=True)
+    def validate_dihedral_types(cls, improper_types):
+        if not isinstance(improper_types, Iterable):
+            raise ValidationError("ImproperTypes should be iterable", cls)
+
+        validate_type(improper_types, ImproperType)
+        return IndexedSet(improper_types)
 
     class Config:
         fields = {

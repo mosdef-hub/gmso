@@ -205,3 +205,53 @@ class TestDihedral(BaseTest):
         assert connect.dihedral_types[0].parameters["n"] == 1
         assert connect.dihedral_types[1].parameters["n"] == 2
         assert connect.dihedral_types[2].parameters["n"] == 3
+
+    def test_layered_dihedral_duplicate(self):
+        atom1 = Atom(name="atom1")
+        atom2 = Atom(name="atom2")
+        atom3 = Atom(name="atom3")
+        atom4 = Atom(name="atom4")
+
+        dihedral_type1 = DihedralType(
+            name=f"layer1",
+            expression="kn * (1 + cos(n * a - a0))",
+            independent_variables="a",
+            parameters={
+                "kn": 1.0 * u.K * u.kb,
+                "n": 1 * u.dimensionless,
+                "a0": 30.0 * u.degree,
+            },
+        )
+        dihedral_type2 = DihedralType(
+            name=f"layer2",
+            expression="kn * (1 + cos(n * a - a0))",
+            independent_variables="a",
+            parameters={
+                "kn": 1.0 * u.K * u.kb,
+                "n": 2 * u.dimensionless,
+                "a0": 30.0 * u.degree,
+            },
+        )
+        dihedral_type3 = DihedralType(
+            name=f"layer3",
+            expression="kn * (1 + cos(n * a - a0))",
+            independent_variables="a",
+            parameters={
+                "kn": 1.0 * u.K * u.kb,
+                "n": 3 * u.dimensionless,
+                "a0": 30.0 * u.degree,
+            },
+        )
+
+        connect = LayeredDihedral(
+            connection_members=[atom1, atom2, atom3, atom4],
+            dihedral_types=[
+                dihedral_type1,
+                dihedral_type2,
+                dihedral_type3,
+                dihedral_type3,
+            ],
+            name="dihedral_name",
+        )
+
+        assert len(connect.dihedral_types) == 3
