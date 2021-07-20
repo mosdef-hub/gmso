@@ -1,5 +1,5 @@
 """Support for improper style connections (4-member connection)."""
-from typing import Callable, ClassVar, Iterable, List, Optional, Tuple
+from typing import Callable, ClassVar, Iterable, Optional, Tuple
 
 from boltons.setutils import IndexedSet
 from pydantic import Field, ValidationError, validator
@@ -139,7 +139,7 @@ class Improper(BaseImproper):
 
 
 class LayeredImproper(BaseImproper):
-    improper_types_: Optional[List[Improper]] = Field(
+    improper_types_: Optional[IndexedSet] = Field(
         default=None, description="ImproperTypes of this improper."
     )
 
