@@ -794,7 +794,7 @@ class Topology(object):
         elif isinstance(group, (list, tuple, set)):
             for subgroup in group:
                 untyped.update(untyped_extractors[subgroup]())
-        elif isinstance("group", str) and group in untyped_extractors:
+        elif isinstance(group, str) and group in untyped_extractors:
             untyped = untyped_extractors[group]()
         else:
             raise ValueError(
