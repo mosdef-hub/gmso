@@ -966,7 +966,7 @@ class Topology(object):
 
         return index
 
-    def to_datatables(self, parameter="sites", labels=None, unyts_bool=True):
+    def to_dataframe(self, parameter="sites", labels=None, unyts_bool=True):
         """Return a pandas dataframe object for the sites in a topology
 
         Parameters
@@ -990,9 +990,9 @@ class Topology(object):
 
         Examples
         ________
-        >>> topology.to_dataframes(parameter = 'sites', labels = ['charge'])
+        >>> topology.to_dataframe(parameter = 'sites', labels = ['charge'])
             This will return a dataframe with a listing of the sites and include the charges that correspond to each site.
-        >>> topology.to_dataframes(parameter = 'dihedrals', labels = ['positions'])
+        >>> topology.to_dataframe(parameter = 'dihedrals', labels = ['positions'])
             This will return a dataframe with a listing of the sites that make up each dihedral, the positions of each of
             those sites, and the parameters that are associated with the dihedrals.
 

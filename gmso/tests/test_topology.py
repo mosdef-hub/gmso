@@ -722,28 +722,28 @@ class TestTopology(BaseTest):
         with pytest.raises(GMSOError):
             typed_methylnitroaniline.scaling_factors = {"lj_12": 0.0}
 
-    def test_to_datatables(self, typed_ethane):
-        assert len(typed_ethane.to_datatables()) == 8
-        assert len(typed_ethane.to_datatables(parameter="bonds")) == 7
-        assert len(typed_ethane.to_datatables(parameter="angles")) == 12
-        assert len(typed_ethane.to_datatables(parameter="dihedrals")) == 9
+    def test_to_dataframe(self, typed_ethane):
+        assert len(typed_ethane.to_dataframe()) == 8
+        assert len(typed_ethane.to_dataframe(parameter="bonds")) == 7
+        assert len(typed_ethane.to_dataframe(parameter="angles")) == 12
+        assert len(typed_ethane.to_dataframe(parameter="dihedrals")) == 9
         assert np.allclose(
             float(
-                typed_ethane.to_datatables(labels=["charge", "position"])[
+                typed_ethane.to_dataframe(labels=["charge", "position"])[
                     "charge (e)"
                 ][0]
             ),
             0.18,
         )
         assert (
-            typed_ethane.to_datatables(labels=["atom_type.name"])[
+            typed_ethane.to_dataframe(labels=["atom_type.name"])[
                 "atom_type.name"
             ][0]
             == "opls_135"
         )
         assert np.allclose(
             float(
-                typed_ethane.to_datatables(labels=["charge", "position"])["x"][
+                typed_ethane.to_dataframe(labels=["charge", "position"])["x"][
                     0
                 ]
             ),
@@ -751,38 +751,38 @@ class TestTopology(BaseTest):
         )
         assert np.allclose(
             float(
-                typed_ethane.to_datatables(
+                typed_ethane.to_dataframe(
                     parameter="bonds", labels=["charge", "position"]
                 )["charge Atom0 (e)"][0]
             ),
             -0.06,
         )
         with pytest.raises(AttributeError) as e:
-            typed_ethane.to_datatables(labels=["missingattr"])
+            typed_ethane.to_dataframe(labels=["missingattr"])
         assert (
             str(e.value) == "The label missingattr is not in this gmso object"
         )
         with pytest.raises(AttributeError) as e:
-            typed_ethane.to_datatables(labels=["missingattr.missingattr"])
+            typed_ethane.to_dataframe(labels=["missingattr.missingattr"])
         assert (
             str(e.value)
             == "The label missingattr.missingattr is not in this gmso object"
         )
         with pytest.raises(AttributeError) as e:
-            typed_ethane.to_datatables(labels=["missingattr.attr"])
+            typed_ethane.to_dataframe(labels=["missingattr.attr"])
         assert (
             str(e.value)
             == "The label missingattr.attr is not in this gmso object"
         )
         with pytest.raises(AttributeError) as e:
-            typed_ethane.to_datatables(
+            typed_ethane.to_dataframe(
                 parameter="bonds", labels=["missingattr"]
             )
         assert (
             str(e.value) == "The label missingattr is not in this gmso object"
         )
         with pytest.raises(AttributeError) as e:
-            typed_ethane.to_datatables(
+            typed_ethane.to_dataframe(
                 parameter="bonds", labels=["missingattr.attr"]
             )
         assert (
