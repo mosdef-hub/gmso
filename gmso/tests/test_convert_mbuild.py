@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 import unyt as u
 from unyt.testing import assert_allclose_units
@@ -70,6 +71,8 @@ class TestConvertMBuild(BaseTest):
 
         assert new.n_particles == 8
         assert new.n_bonds == 7
+        for i in range(new.n_particles):
+            assert np.isclose(new[i].xyz, top.sites[i].position.value).all()
 
     def test_3_layer_compound(self):
         top_cmpnd = mb.Compound()
