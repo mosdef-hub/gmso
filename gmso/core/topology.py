@@ -977,7 +977,7 @@ class Topology(object):
         labels : List of strings that are attributes of the topology site.
             Examples of these can be found by printing `topology.sites[0]__dict__`.
             See https://gmso.mosdef.org/en/stable/data_structures.html#gmso.Atom for additional information on labeling.
-        unyts_bool: bool
+        unyts_bool: bool, default=True
             Determine if numerical values are saved as unyt quantities or floats. See
         https://unyt.readthedocs.io/en/stable/usage.html
         for more information about manipulating unyt quantities.
