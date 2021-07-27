@@ -154,9 +154,7 @@ class Topology(object):
         self._bonds = IndexedSet()
         self._angles = IndexedSet()
         self._dihedrals = IndexedSet()
-        self._layered_dihedrals = IndexedSet()
         self._impropers = IndexedSet()
-        self._layered_impropers = IndexedSet()
         self._subtops = IndexedSet()
         self._atom_types = {}
         self._atom_types_idx = {}
@@ -345,18 +343,9 @@ class Topology(object):
         return tuple(self._dihedrals)
 
     @property
-    def layered_dihedrals(self):
-        return tuple(self._layered_dihedrals)
-
-    @property
     def impropers(self):
         """Return all impropers in the topology."""
         return tuple(self._impropers)
-
-    @property
-    def layered_impropers(self):
-        """Return all layered impropers in the topology."""
-        return tuple(self._layered_impropers)
 
     @property
     def atom_types(self):
@@ -529,16 +518,10 @@ class Topology(object):
             self._bonds.add(connection)
         if isinstance(connection, Angle):
             self._angles.add(connection)
-        if isinstance(connection, Dihedral):
+        if isinstance(connection, BaseDihedral):
             self._dihedrals.add(connection)
-        if isinstance(connection, LayeredDihedral):
-            self._dihedrals.add(connection)
-            self._layered_dihedrals.add(connection)
-        if isinstance(connection, Improper):
+        if isinstance(connection, BaseImproper):
             self._impropers.add(connection)
-        if isinstance(connection, LayeredImproper):
-            self._impropers.add(connection)
-            self._layered_impropers.add(connection)
         if update_types:
             self.update_connection_types()
 
