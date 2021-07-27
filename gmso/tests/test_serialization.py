@@ -194,8 +194,6 @@ class TestSerialization(BaseTest):
     def test_full_serialization(
         self,
         typed_ethane,
-        are_equivalent_atoms,
-        are_equivalent_connections,
         are_equivalent_topologies,
     ):
         typed_ethane.save("eth.json", types=True)

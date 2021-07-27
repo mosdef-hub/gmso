@@ -1,5 +1,6 @@
 """Serialization to json."""
 import json
+import warnings
 from copy import deepcopy
 from pathlib import Path
 
@@ -43,6 +44,20 @@ def _to_json(top, types=False, update=True):
         raise ValueError(
             "Cannot incorporate types because the topology is not typed."
         )
+
+    if not types and top.is_typed():
+        warnings.warn(
+            "The provided topology is typed and `types` is set to False. "
+            "The types(potentials) info will be lost in the serialized representation. "
+            "Please consider using `types=True` if this behavior is not intended. "
+        )
+
+    if types and not top.is_fully_typed():
+        warnings.warn(
+            "The provided topology is not full typed and `types` is set to True. "
+            "Please consider using `types=False` if this behavior is not intended. "
+        )
+
     if update:
         top.update_topology()
 
@@ -147,6 +162,9 @@ def _from_json(json_dict):
     from gmso.core.topology import Topology
 
     # FixMe: DeepCopying a dictionary might not be the most efficient
+    # DeepCopying the following structure is done because of the subsequent
+    # updates to the dictionary will modify the original one passed as function's
+    # argument
     json_dict = deepcopy(json_dict)
 
     top = Topology(
