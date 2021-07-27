@@ -1,5 +1,6 @@
 """Base data structure for GMSO chemical systems."""
 import warnings
+from pathlib import Path
 
 import numpy as np
 import unyt as u
@@ -1022,6 +1023,33 @@ class Topology(object):
         for i, ref_member in enumerate(self._set_refs[ref].keys()):
             self._index_refs[ref][ref_member] = i
 
+    def save(self, filename, overwrite=False, **kwargs):
+        """Save the topology to a file.
+
+        Parameters
+        ----------
+        filename: str, pathlib.Path
+            The file to save the topology as
+        overwrite: bool, default=True
+            If True, overwrite the existing file if it exists
+        **kwargs:
+            The arguments to specific file savers listed below(as extensions):
+            * json: types, update, indent
+        """
+        if not isinstance(filename, Path):
+            filename = Path(filename).resolve()
+
+        if filename.exists() and not overwrite:
+            raise FileExistsError(
+                f"The file {filename} exists. Please set "
+                f"overwrite=True if you wish to overwrite the existing file"
+            )
+
+        from gmso.formats import SaversRegistry
+
+        saver = SaversRegistry.get_callable(filename.suffix)
+        saver(self, filename, **kwargs)
+
     def __repr__(self):
         """Return custom format to represent topology."""
         return (
@@ -1034,3 +1062,12 @@ class Topology(object):
     def __str__(self):
         """Return custom format to represent topology as a string."""
         return f"<Topology {self.name}, {self.n_sites} sites, id: {id(self)}>"
+
+    @classmethod
+    def load(cls, filename, **kwargs):
+        """Load a file to a topology"""
+        filename = Path(filename).resolve()
+        from gmso.formats import LoadersRegistry
+
+        loader = LoadersRegistry.get_callable(filename.suffix)
+        return loader(filename, **kwargs)

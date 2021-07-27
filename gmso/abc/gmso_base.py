@@ -1,4 +1,5 @@
 """Base model all classes extend."""
+import json
 import warnings
 from abc import ABC
 from typing import Any, ClassVar, Type
@@ -92,6 +93,11 @@ class GMSOBase(BaseModel, ABC):
         self.__config__.json_encoders.update(GMSOJSONHandler.json_encoders)
 
         return super(GMSOBase, self).json(**kwargs)
+
+    def json_dict(self, **kwargs):
+        """Return a JSON serializable dictionary from the object"""
+        raw_json = self.json(**kwargs)
+        return json.loads(raw_json)
 
     @classmethod
     def validate(cls, value):
