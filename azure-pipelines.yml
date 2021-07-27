@@ -57,11 +57,14 @@ stages:
             displayName: Take ownership of conda installation
 
           - bash: |
-              conda install -c conda-forge mamba
+              conda config --set always_yes yes --set changeps1 no
+            displayName: Set conda configuration
+
+          - bash: |
+              conda install -y -c conda-forge mamba
             displayName: Install mamba
 
           - bash: |
-              conda config --set always_yes yes --set changeps1 no
               mamba update conda -yq
             displayName: Add relevant channels and update
 
