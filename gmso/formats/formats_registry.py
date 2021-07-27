@@ -15,7 +15,7 @@ class Registry:
         if extension not in self.handlers:
             raise UnsupportedFileFormatError(
                 f"Extension {extension} cannot be processed as no utility "
-                f" is defined in the current API to handle {extension} files."
+                f"is defined in the current API to handle {extension} files."
             )
 
     def get_callable(self, extension):
