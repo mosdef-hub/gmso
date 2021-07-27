@@ -11,9 +11,9 @@ from gmso.core.atom import Atom
 from gmso.core.atom_type import AtomType
 from gmso.core.bond import Bond
 from gmso.core.bond_type import BondType
-from gmso.core.dihedral import Dihedral, LayeredDihedral
+from gmso.core.dihedral import BaseDihedral, Dihedral, LayeredDihedral
 from gmso.core.dihedral_type import DihedralType
-from gmso.core.improper import Improper, LayeredImproper
+from gmso.core.improper import BaseImproper, Improper, LayeredImproper
 from gmso.core.improper_type import ImproperType
 from gmso.core.pairpotential_type import PairPotentialType
 from gmso.core.parametric_potential import ParametricPotential
@@ -884,11 +884,7 @@ class Topology(object):
         "Return a list of untyped dihedrals"
         untyped = {"dihedrals": list()}
         for dihedral in self._dihedrals:
-            if not getattr(
-                dihedral,
-                "dihedral_type",
-                getattr(dihedral, "dihedral_types", None),
-            ):
+            if not self._get_types(dihedral):
                 untyped["dihedrals"].append(dihedral)
         return untyped
 
@@ -896,13 +892,22 @@ class Topology(object):
         "Return a list of untyped impropers"
         untyped = {"impropers": list()}
         for improper in self._impropers:
-            if not getattr(
-                improper,
-                "improper_type",
-                getattr(improper, "improper_types", None),
-            ):
+            if not self._get_types(improper):
                 untyped["impropers"].append(improper)
         return untyped
+
+    def _get_types(self, dihedral_or_improper):
+        """Get the dihedral/impropertypes for a dihedral/improper in this topology."""
+        if not isinstance(dihedral_or_improper, (BaseDihedral, BaseImproper)):
+            raise TypeError(
+                f"Expected `dihedral_or_improper` to be either Dihedral or Improper. "
+                f"Got {type(dihedral_or_improper).__name__} instead."
+            )
+        return (
+            dihedral_or_improper.connection_types
+            if dihedral_or_improper.is_layered()
+            else dihedral_or_improper.connection_type
+        )
 
     def update_angle_types(self):
         """Use gmso.Topology.update_connection_types to update AngleTypes in the topology.
