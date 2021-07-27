@@ -35,16 +35,21 @@ class PairPotentialType(ParametricPotential):
     def __init__(
         self,
         name="PairPotentialType",
-        expression="4 * eps * ((sigma / r)**12 - (sigma / r)**6)",
+        expression=None,
         parameters=None,
         independent_variables=None,
+        potential_expression=None,
         member_types=None,
         topology=None,
+        tags=None,
     ):
-        if parameters is None:
-            parameters = {"eps": 1 * u.Unit("kJ / mol"), "sigma": 1 * u.nm}
-        if independent_variables is None:
-            independent_variables = {"r"}
+        if potential_expression is None:
+            if expression is None:
+                expression = "4 * eps * ((sigma / r)**12 - (sigma / r)**6)"
+            if parameters is None:
+                parameters = {"eps": 1 * u.Unit("kJ / mol"), "sigma": 1 * u.nm}
+            if independent_variables is None:
+                independent_variables = {"r"}
 
         super(PairPotentialType, self).__init__(
             name=name,
@@ -53,7 +58,9 @@ class PairPotentialType(ParametricPotential):
             independent_variables=independent_variables,
             topology=topology,
             member_types=member_types,
+            potential_expression=potential_expression,
             set_ref=PAIRPOTENTIAL_TYPE_DICT,
+            tags=tags,
         )
 
     @property
