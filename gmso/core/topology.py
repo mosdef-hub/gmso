@@ -793,14 +793,10 @@ class Topology(object):
                 angle.angle_type for angle in top._angles
             ),
             "dihedrals": lambda top: all(
-                hasattr(dihedral, "dihedral_types")
-                or hasattr(dihedral, "dihedral_type")
-                for dihedral in top._dihedrals
+                self._get_types(dihedral) for dihedral in top._dihedrals
             ),
             "impropers": lambda top: all(
-                hasattr(improper, "improper_types")
-                or hasattr(improper, "improper_type")
-                for improper in top._impropers
+                self._get_types(improper) for improper in top._impropers
             ),
         }
 
