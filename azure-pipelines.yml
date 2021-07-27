@@ -57,13 +57,17 @@ stages:
             displayName: Take ownership of conda installation
 
           - bash: |
+              conda install -c conda-forge mamba
+            displayName: Install mamba
+
+          - bash: |
               conda config --set always_yes yes --set changeps1 no
-              conda update conda -yq
-            displayName: Add relevant channels
+              mamba update conda -yq
+            displayName: Add relevant channels and update
 
           - bash: |
               sed -i -E 's/python.*$/python='$(python.version)'/' environment-dev.yml
-              conda env create -f environment-dev.yml
+              mamba env create -f environment-dev.yml
               source activate gmso-dev
               pip install -e .
             displayName: Install requirements and testing branch
