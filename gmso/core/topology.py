@@ -843,12 +843,12 @@ class Topology(object):
         }
         if group == "topology":
             for subgroup in untyped_extractors:
-                untyped.update(untyped_extractors[subgroup])
-        elif group in untyped_extractors:
-            untyped = untyped_extractors[group]()
+                untyped.update(untyped_extractors[subgroup]())
         elif isinstance(group, (list, tuple, set)):
             for subgroup in group:
                 untyped.update(untyped_extractors[subgroup]())
+        elif isinstance(group, str) and group in untyped_extractors:
+            untyped = untyped_extractors[group]()
         else:
             raise ValueError(
                 f"Cannot get untyped {group}. "
