@@ -16,6 +16,7 @@ from gmso.core.dihedral import Dihedral
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
+from gmso.core.pairpotential_type import PairPotentialType
 from gmso.core.subtopology import SubTopology
 from gmso.core.topology import Topology
 from gmso.exceptions import GMSOError
@@ -384,6 +385,31 @@ class TestTopology(BaseTest):
         assert len(top.improper_type_expressions) == 1
         assert len(top.atom_type_expressions) == 2
 
+    def test_pairpotential_pairpotentialtype_update(self):
+        top = Topology()
+        atype1 = AtomType(name="a1", expression="sigma + epsilon*r")
+        atype2 = AtomType(name="a2", expression="sigma * epsilon*r")
+        atom1 = Atom(name="a", atom_type=atype1)
+        atom2 = Atom(name="b", atom_type=atype2)
+        top.add_site(atom1)
+        top.add_site(atom2)
+        top.update_topology()
+
+        pptype12 = PairPotentialType(
+            name="pp12",
+            expression="r + 1",
+            independent_variables="r",
+            parameters={},
+            member_types=tuple(["a1", "a2"]),
+        )
+
+        top.add_pairpotentialtype(pptype12)
+        assert len(top.pairpotential_types) == 1
+        assert top._pairpotential_types_idx[pptype12] == 0
+
+        top.remove_pairpotentialtype(["a1", "a2"])
+        assert len(top.pairpotential_types) == 0
+
     def test_add_subtopology(self):
         top = Topology()
         subtop = SubTopology()
@@ -694,3 +720,42 @@ class TestTopology(BaseTest):
             typed_methylnitroaniline.scaling_factors = (0.5, 1.0)
         with pytest.raises(GMSOError):
             typed_methylnitroaniline.scaling_factors = {"lj_12": 0.0}
+
+    def test_is_typed_check(self, typed_chloroethanol):
+        groups = [
+            "sites",
+            "bonds",
+            "angles",
+            "dihedrals",
+            "impropers",
+            "topology",
+        ]
+        for group in groups:
+            assert typed_chloroethanol.is_fully_typed(group=group)
+
+        with pytest.raises(ValueError):
+            typed_chloroethanol.is_fully_typed(group="foo")
+
+    def test_cget_untyped(self, typed_chloroethanol):
+        # Note impropers list is empty, and hence is not tested here
+        groups = ["sites", "bonds", "angles", "dihedrals"]
+        clone = deepcopy(typed_chloroethanol)
+        clone.sites[0].atom_type = None
+        clone.bonds[0].bond_type = None
+        clone.angles[0].angle_type = None
+        clone.dihedrals[0].dihedral_type = None
+
+        full_opt = clone.get_untyped(group="topology")
+        for group in groups:
+            assert not clone.is_fully_typed(group=group)
+            assert len(clone.get_untyped(group=group)[group]) == 1
+            assert len(full_opt[group]) == 1
+
+        # Get multiple untyped
+        untyped_sites_angles = clone.get_untyped(group=["sites", "angles"])
+        assert len(untyped_sites_angles) == 2
+        assert len(untyped_sites_angles["sites"]) == 1
+        assert len(untyped_sites_angles["angles"]) == 1
+
+        with pytest.raises(ValueError):
+            clone.get_untyped(group="foo")
