@@ -11,9 +11,9 @@ from gmso.core.atom import Atom
 from gmso.core.atom_type import AtomType
 from gmso.core.bond import Bond
 from gmso.core.bond_type import BondType
-from gmso.core.dihedral import BaseDihedral, Dihedral, LayeredDihedral
+from gmso.core.dihedral import BaseDihedral, Dihedral
 from gmso.core.dihedral_type import DihedralType
-from gmso.core.improper import BaseImproper, Improper, LayeredImproper
+from gmso.core.improper import BaseImproper, Improper
 from gmso.core.improper_type import ImproperType
 from gmso.core.pairpotential_type import PairPotentialType
 from gmso.core.parametric_potential import ParametricPotential
