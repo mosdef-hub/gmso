@@ -1307,7 +1307,7 @@ class Topology(object):
                 for connection in getattr(self, parameter)
             )
         return df
-      
+
     @classmethod
     def load(cls, filename, **kwargs):
         """Load a file to a topology"""
@@ -1317,12 +1317,10 @@ class Topology(object):
         loader = LoadersRegistry.get_callable(filename.suffix)
         return loader(filename, **kwargs)
 
-      
+
 def _return_float_for_unyt(unyt_quant, unyts_bool):
     unyt_arr = u.A * 1
     if isinstance(unyt_quant, unyt_arr.__class__):
         return unyt_quant if unyts_bool else float(unyt_quant.value)
     else:
         return unyt_quant
-      
-
