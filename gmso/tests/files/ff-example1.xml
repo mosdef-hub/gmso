@@ -109,5 +109,16 @@
         </DihedralType>
     </DihedralTypes>
 
+    <PairPotentialTypes name = "LJ" expression="4*k * ((sigma/r)**12 - (sigma/r)**6)">
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <ParametersUnitDef parameter="k" unit="kJ/mol"/>
+    <PairPotentialType name="PairPotentialType-LJ-1" type1="Xe" type2="Xe">
+        <Parameters>
+            <Parameter name="k" value="10"/>
+            <Parameter name="sigma" value="0.1"/>
+        </Parameters>
+    </PairPotentialType>
+  </PairPotentialTypes>
+
 
 </ForceField>

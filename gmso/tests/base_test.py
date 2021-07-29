@@ -10,8 +10,11 @@ from gmso.core.atom import Atom
 from gmso.core.atom_type import AtomType
 from gmso.core.bond import Bond
 from gmso.core.box import Box
+from gmso.core.dihedral import Dihedral
 from gmso.core.element import Hydrogen, Oxygen
 from gmso.core.forcefield import ForceField
+from gmso.core.improper import Improper
+from gmso.core.pairpotential_type import PairPotentialType
 from gmso.core.topology import Topology
 from gmso.external import from_mbuild, from_parmed
 from gmso.external.convert_foyer_xml import from_foyer_xml
@@ -288,7 +291,7 @@ class BaseTest:
         return mytop
 
     @pytest.fixture
-    def ethane(self):
+    def ethane_from_scratch(self):
         mytop = Topology()
         c1 = Atom(name="C1")
         h11 = Atom(name="H11")
@@ -323,7 +326,7 @@ class BaseTest:
 
         return mytop
 
-    @pytest.fixture(scope="module")
+    @pytest.fixture(scope="session")
     def are_equivalent_atoms(self):
         def test_atom_equality(atom1, atom2):
             if not all(isinstance(x, Atom) for x in [atom1, atom2]):
@@ -341,3 +344,143 @@ class BaseTest:
             return True
 
         return test_atom_equality
+
+    @pytest.fixture(scope="session")
+    def are_equivalent_connections(self, are_equivalent_atoms):
+        connection_types_attrs_map = {
+            Bond: "bond_type",
+            Angle: "angle_type",
+            Dihedral: "dihedral_type",
+            Improper: "improper_type",
+        }
+
+        def test_connection_equality(conn1, conn2):
+            if not type(conn1) == type(conn2):
+                return False
+            conn1_eq_members = conn1.equivalent_members()
+            conn2_eq_members = conn2.equivalent_members()
+            have_eq_members = False
+            for conn2_eq_member_tuple in conn2_eq_members:
+                for conn1_eq_member_tuple in conn1_eq_members:
+                    if any(
+                        are_equivalent_atoms(member1, member2)
+                        for member1, member2 in zip(
+                            conn1_eq_member_tuple, conn2_eq_member_tuple
+                        )
+                    ):
+                        have_eq_members = True
+
+            if not have_eq_members:
+                return False
+            if conn1.name != conn2.name:
+                return False
+            if getattr(
+                conn1, connection_types_attrs_map[type(conn1)]
+            ) != getattr(conn2, connection_types_attrs_map[type(conn2)]):
+                return False
+            return True
+
+        return test_connection_equality
+
+    @pytest.fixture(scope="session")
+    def have_equivalent_boxes(self):
+        def test_box_equivalence(top1, top2):
+            if top1.box and top2.box:
+                return u.allclose_units(
+                    top1.box.lengths, top2.box.lengths
+                ) and u.allclose_units(top1.box.angles, top2.box.angles)
+            elif not top1.box and not top2.box:
+                return True
+            else:
+                return False
+
+        return test_box_equivalence
+
+    @pytest.fixture(scope="session")
+    def are_equivalent_topologies(
+        self,
+        have_equivalent_boxes,
+        are_equivalent_atoms,
+        are_equivalent_connections,
+    ):
+        def test_topology_equivalence(top1, top2):
+            if top1.n_sites != top2.n_sites:
+                return False, "Unequal number of sites"
+            if top1.n_bonds != top2.n_bonds:
+                return False, "Unequal number of bonds"
+            if top1.n_angles != top2.n_angles:
+                return False, "Unequal number of angles"
+            if top1.n_dihedrals != top2.n_dihedrals:
+                return False, "Unequal number of dihedrals"
+            if top1.n_impropers != top2.n_impropers:
+                return False, "Unequal number of impropers"
+            if top1.name != top2.name:
+                return False, "Dissimilar names"
+
+            if top1.scaling_factors != top2.scaling_factors:
+                return False, f"Mismatch in scaling factors"
+
+            if not have_equivalent_boxes(top1, top2):
+                return (
+                    False,
+                    "Non equivalent boxes, differing in lengths and angles",
+                )
+
+            for atom1, atom2 in zip(top1.sites, top2.sites):
+                if not are_equivalent_atoms(atom1, atom2):
+                    return False, f"Non equivalent atoms {atom1, atom2}"
+
+            # Note: In these zipped iterators, index matches are implicitly checked
+            for bond1, bond2 in zip(top1.bonds, top2.bonds):
+                if not are_equivalent_connections(bond1, bond2):
+                    return False, f"Non equivalent bonds {bond1, bond2}"
+
+            for angle1, angle2 in zip(top1.angles, top2.angles):
+                if not are_equivalent_connections(angle1, angle2):
+                    return False, f"Non equivalent angles {angle1, angle2}"
+
+            for dihedral1, dihedral2 in zip(top1.dihedrals, top2.dihedrals):
+                if not are_equivalent_connections(dihedral1, dihedral2):
+                    return (
+                        False,
+                        f"Non equivalent dihedrals, {dihedral1, dihedral2}",
+                    )
+
+            for improper1, improper2 in zip(top1.impropers, top2.impropers):
+                if not are_equivalent_connections(improper1, improper2):
+                    return (
+                        False,
+                        f"Non equivalent impropers, {improper1, improper2}",
+                    )
+
+            for pp_type1, pp_type2 in zip(
+                top1.pairpotential_types, top2.pairpotential_types
+            ):
+                if pp_type1 != pp_type2:
+                    return False, f"Pair-PotentialTypes mismatch"
+
+            return True, f"{top1} and {top2} are equivalent"
+
+        return test_topology_equivalence
+
+    @pytest.fixture(scope="session")
+    def pairpotentialtype_top(self):
+        top = Topology()
+        atype1 = AtomType(name="a1", expression="sigma + epsilon*r")
+        atype2 = AtomType(name="a2", expression="sigma * epsilon*r")
+        atom1 = Atom(name="a", atom_type=atype1)
+        atom2 = Atom(name="b", atom_type=atype2)
+        top.add_site(atom1)
+        top.add_site(atom2)
+        top.update_topology()
+
+        pptype12 = PairPotentialType(
+            name="pp12",
+            expression="r + 1",
+            independent_variables="r",
+            parameters={},
+            member_types=tuple(["a1", "a2"]),
+        )
+
+        top.add_pairpotentialtype(pptype12)
+        return top
