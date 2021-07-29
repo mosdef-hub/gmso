@@ -30,6 +30,7 @@ from gmso.utils._constants import (
 from gmso.utils.connectivity import (
     identify_connections as _identify_connections,
 )
+from gmso.abc.serialization_utils import unyt_to_dict
 
 
 class Topology(object):
@@ -1282,8 +1283,7 @@ class Topology(object):
 
 
 def _return_float_for_unyt(unyt_quant, unyts_bool):
-    unyt_arr = u.A * 1
-    if isinstance(unyt_quant, unyt_arr.__class__):
-        return unyt_quant if unyts_bool else float(unyt_quant.value)
-    else:
+    try:
+        return unyt_quant if unyts_bool else unyt_to_dict(unyt_quant)['array']
+    except TypeError:
         return unyt_quant
