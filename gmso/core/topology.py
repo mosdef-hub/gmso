@@ -3,7 +3,6 @@ import warnings
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 import unyt as u
 from boltons.setutils import IndexedSet
 
@@ -32,6 +31,7 @@ from gmso.utils._constants import (
 from gmso.utils.connectivity import (
     identify_connections as _identify_connections,
 )
+from gmso.utils.io import import_
 
 
 class Topology(object):
@@ -977,7 +977,7 @@ class Topology(object):
             A string determining what aspects of the gmso topology will be reported. Options are: 'sites','bonds','angles',
         'dihedrals', and 'impropers'. Defaults to 'sites'.
         labels : List of strings that are attributes of the topology site.
-            Examples of these can be found by printing `topology.sites[0]__dict__`.
+            Examples of these can be found by printing `topology.sites[0].__dict__`.
             See https://gmso.mosdef.org/en/stable/data_structures.html#gmso.Atom for additional information on labeling.
         unyts_bool: bool, default=True
             Determine if numerical values are saved as unyt quantities or floats. See
@@ -1008,6 +1008,7 @@ class Topology(object):
             >>> df.rename(columns = {'Atom0':'newname'})
         See https://pandas.pydata.org/pandas-docs/stable/getting_started/intro_tutorials/index.html for further information.
         """
+        pd = import_('pandas')
         if not labels:
             labels = []
         df = pd.DataFrame()
