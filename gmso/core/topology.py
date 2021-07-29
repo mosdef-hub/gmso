@@ -31,7 +31,6 @@ from gmso.utils._constants import (
 from gmso.utils.connectivity import (
     identify_connections as _identify_connections,
 )
-from gmso.utils.io import import_
 
 
 class Topology(object):
@@ -1008,6 +1007,7 @@ class Topology(object):
             >>> df.rename(columns = {'Atom0':'newname'})
         See https://pandas.pydata.org/pandas-docs/stable/getting_started/intro_tutorials/index.html for further information.
         """
+        from gmso.utils.io import import_
         pd = import_('pandas')
         if not site_attrs:
             site_attrs = []
