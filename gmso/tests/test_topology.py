@@ -727,7 +727,9 @@ class TestTopology(BaseTest):
         )
         assert np.allclose(
             float(
-                typed_ethane.to_dataframe(site_attrs=["charge", "position"])["x"][0]
+                typed_ethane.to_dataframe(site_attrs=["charge", "position"])[
+                    "x"
+                ][0]
             ),
             0,
         )
@@ -742,7 +744,8 @@ class TestTopology(BaseTest):
         with pytest.raises(AttributeError) as e:
             typed_ethane.to_dataframe(site_attrs=["missingattr"])
         assert (
-            str(e.value) == "The attribute missingattr is not in this gmso object"
+            str(e.value)
+            == "The attribute missingattr is not in this gmso object"
         )
         with pytest.raises(AttributeError) as e:
             typed_ethane.to_dataframe(site_attrs=["missingattr.missingattr"])
@@ -757,9 +760,12 @@ class TestTopology(BaseTest):
             == "The attribute missingattr.attr is not in this gmso object"
         )
         with pytest.raises(AttributeError) as e:
-            typed_ethane.to_dataframe(parameter="bonds", site_attrs=["missingattr"])
+            typed_ethane.to_dataframe(
+                parameter="bonds", site_attrs=["missingattr"]
+            )
         assert (
-            str(e.value) == "The attribute missingattr is not in this gmso object"
+            str(e.value)
+            == "The attribute missingattr is not in this gmso object"
         )
         with pytest.raises(AttributeError) as e:
             typed_ethane.to_dataframe(

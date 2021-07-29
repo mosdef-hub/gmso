@@ -1008,7 +1008,7 @@ class Topology(object):
         See https://pandas.pydata.org/pandas-docs/stable/getting_started/intro_tutorials/index.html for further information.
         """
         from gmso.utils.io import import_
-        pd = import_('pandas')
+        pd = import_("pandas")
         if not site_attrs:
             site_attrs = []
         df = pd.DataFrame()
@@ -1025,7 +1025,10 @@ class Topology(object):
                 )
         elif parameter in ["bonds", "angles", "dihedrals", "impropers"]:
             df = self._pandas_from_parameters(
-                df, parameter=parameter, site_attrs=site_attrs, unyts_bool=unyts_bool
+                df,
+                parameter=parameter,
+                site_attrs=site_attrs,
+                unyts_bool=unyts_bool,
             )
             df = self._parse_parameter_expression(df, parameter, unyts_bool)
         else:
@@ -1139,7 +1142,9 @@ class Topology(object):
                     )
                 except AttributeError:
                     raise AttributeError(
-                        "The attribute {} is not in this gmso object".format(attr)
+                        "The attribute {} is not in this gmso object".format(
+                            attr
+                        )
                     )
             elif attr == "positions" or attr == "position":
                 df["x"] = list(
@@ -1173,7 +1178,9 @@ class Topology(object):
                     )
                 except AttributeError:
                     raise AttributeError(
-                        "The attribute {} is not in this gmso object".format(attr)
+                        "The attribute {} is not in this gmso object".format(
+                            attr
+                        )
                     )
 
         elif parameter in ["bonds", "angles", "dihedrals", "impropers"]:
