@@ -7,6 +7,7 @@ import pandas as pd
 import unyt as u
 from boltons.setutils import IndexedSet
 
+from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.core.angle import Angle
 from gmso.core.angle_type import AngleType
 from gmso.core.atom import Atom
@@ -31,7 +32,6 @@ from gmso.utils._constants import (
 from gmso.utils.connectivity import (
     identify_connections as _identify_connections,
 )
-from gmso.abc.serialization_utils import unyt_to_dict
 
 
 class Topology(object):
@@ -1313,6 +1313,6 @@ class Topology(object):
 
 def _return_float_for_unyt(unyt_quant, unyts_bool):
     try:
-        return unyt_quant if unyts_bool else unyt_to_dict(unyt_quant)['array']
+        return unyt_quant if unyts_bool else unyt_to_dict(unyt_quant)["array"]
     except TypeError:
         return unyt_quant
