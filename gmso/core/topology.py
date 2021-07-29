@@ -968,7 +968,7 @@ class Topology(object):
 
         return index
 
-    def to_dataframe(self, parameter="sites", labels=None, unyts_bool=True):
+    def to_dataframe(self, parameter="sites", site_attrs=None, unyts_bool=True):
         """Return a pandas dataframe object for the sites in a topology
 
         Parameters
@@ -976,7 +976,7 @@ class Topology(object):
         parameter : a string
             A string determining what aspects of the gmso topology will be reported. Options are: 'sites','bonds','angles',
         'dihedrals', and 'impropers'. Defaults to 'sites'.
-        labels : List of strings that are attributes of the topology site.
+        site_attrs : List of strings that are attributes of the topology site and can be included as entries in the pandas dataframe.
             Examples of these can be found by printing `topology.sites[0].__dict__`.
             See https://gmso.mosdef.org/en/stable/data_structures.html#gmso.Atom for additional information on labeling.
         unyts_bool: bool, default=True
@@ -993,9 +993,9 @@ class Topology(object):
 
         Examples
         ________
-        >>> topology.to_dataframe(parameter = 'sites', labels = ['charge'])
+        >>> topology.to_dataframe(parameter = 'sites', site_attrs = ['charge'])
             This will return a dataframe with a listing of the sites and include the charges that correspond to each site.
-        >>> topology.to_dataframe(parameter = 'dihedrals', labels = ['positions'])
+        >>> topology.to_dataframe(parameter = 'dihedrals', site_attrs = ['positions'])
             This will return a dataframe with a listing of the sites that make up each dihedral, the positions of each of
             those sites, and the parameters that are associated with the dihedrals.
 
@@ -1009,8 +1009,8 @@ class Topology(object):
         See https://pandas.pydata.org/pandas-docs/stable/getting_started/intro_tutorials/index.html for further information.
         """
         pd = import_('pandas')
-        if not labels:
-            labels = []
+        if not site_attrs:
+            site_attrs = []
         df = pd.DataFrame()
         if not self.is_typed:
             raise GMSOError(
@@ -1019,13 +1019,13 @@ class Topology(object):
         if parameter == "sites":
             df["atom_types"] = list(site.atom_type.name for site in self.sites)
             df["names"] = list(site.name for site in self.sites)
-            for label in labels:
-                df = self._parse_dataframe_labels(
-                    df, label, parameter, unyts_bool
+            for attr in site_attrs:
+                df = self._parse_dataframe_attrs(
+                    df, attr, parameter, unyts_bool
                 )
         elif parameter in ["bonds", "angles", "dihedrals", "impropers"]:
             df = self._pandas_from_parameters(
-                df, parameter=parameter, labels=labels, unyts_bool=unyts_bool
+                df, parameter=parameter, site_attrs=site_attrs, unyts_bool=unyts_bool
             )
             df = self._parse_parameter_expression(df, parameter, unyts_bool)
         else:
@@ -1092,13 +1092,13 @@ class Topology(object):
         return f"<Topology {self.name}, {self.n_sites} sites, id: {id(self)}>"
 
     def _pandas_from_parameters(
-        self, df, parameter, labels=None, unyts_bool=True
+        self, df, parameter, site_attrs=None, unyts_bool=True
     ):
         """Add to a pandas dataframe the site indices for each connection member in a
         multimember topology attribute such as a bond. Also include information about
-        those sites in the labels list"""
-        if labels is None:
-            labels = []
+        those sites in the site_attrs list"""
+        if site_attrs is None:
+            site_attrs = []
         list_of_sites = list(site for site in self.sites)
         sites_per_connection = len(
             getattr(self, parameter)[0].connection_members
@@ -1115,33 +1115,33 @@ class Topology(object):
                 + ")"
                 for connection in getattr(self, parameter)
             )
-        for label in labels:
-            df = self._parse_dataframe_labels(
-                df, label, parameter, sites_per_connection, unyts_bool
+        for attr in site_attrs:
+            df = self._parse_dataframe_attrs(
+                df, attr, parameter, sites_per_connection, unyts_bool
             )
         return df
 
-    def _parse_dataframe_labels(
-        self, df, label, parameter, sites_per_connection=1, unyts_bool=True
+    def _parse_dataframe_attrs(
+        self, df, attr, parameter, sites_per_connection=1, unyts_bool=True
     ):
-        """Parses a label string to correctly format and return the topology attribute
+        """Parses an attribute string to correctly format and return the topology attribute
         into a pandas dataframe"""
         if parameter == "sites":
-            if "." in label:
+            if "." in attr:
                 try:
-                    label1, label2 = label.split(".")
-                    df[label] = list(
+                    attr1, attr2 = attr.split(".")
+                    df[attr] = list(
                         _return_float_for_unyt(
-                            getattr(getattr(site, label1), label2),
+                            getattr(getattr(site, attr1), attr2),
                             unyts_bool,
                         )
                         for site in self.sites
                     )
                 except AttributeError:
                     raise AttributeError(
-                        "The label {} is not in this gmso object".format(label)
+                        "The attribute {} is not in this gmso object".format(attr)
                     )
-            elif label == "positions" or label == "position":
+            elif attr == "positions" or attr == "position":
                 df["x"] = list(
                     _return_float_for_unyt(
                         getattr(site, "position")[0], unyts_bool
@@ -1160,7 +1160,7 @@ class Topology(object):
                     )
                     for site in self.sites
                 )
-            elif label == "charge" or label == "charges":
+            elif attr == "charge" or attr == "charges":
                 df["charge (e)"] = list(
                     site.charge.to_value() \
                     / u.electron_charge.to_value() \
@@ -1168,30 +1168,30 @@ class Topology(object):
                 )
             else:
                 try:
-                    df[label] = list(
-                        _return_float_for_unyt(getattr(site, label), unyts_bool)
+                    df[attr] = list(
+                        _return_float_for_unyt(getattr(site, attr), unyts_bool)
                         for site in self.sites
                     )
                 except AttributeError:
                     raise AttributeError(
-                        "The label {} is not in this gmso object".format(label)
+                        "The attribute {} is not in this gmso object".format(attr)
                     )
 
         elif parameter in ["bonds", "angles", "dihedrals", "impropers"]:
             for site_index in np.arange(sites_per_connection):
-                if "." in label:
+                if "." in attr:
                     try:
-                        label1, label2 = label.split(".")
-                        df[label + " Atom" + str(site_index)] = list(
+                        attr1, attr2 = attr.split(".")
+                        df[attr + " Atom" + str(site_index)] = list(
                             _return_float_for_unyt(
                                 getattr(
                                     getattr(
                                         connection.connection_members[
                                             site_index
                                         ],
-                                        label1,
+                                        attr1,
                                     ),
-                                    label2,
+                                    attr2,
                                 ),
                                 unyts_bool,
                             )
@@ -1199,11 +1199,11 @@ class Topology(object):
                         )
                     except AttributeError:
                         raise AttributeError(
-                            "The label {} is not in this gmso object".format(
-                                label
+                            "The attribute {} is not in this gmso object".format(
+                                attr
                             )
                         )
-                elif label == "positions" or label == "position":
+                elif attr == "positions" or attr == "position":
                     df["x Atom" + str(site_index) + " (nm)"] = list(
                         _return_float_for_unyt(
                             getattr(
@@ -1234,7 +1234,7 @@ class Topology(object):
                         )
                         for connection in getattr(self, parameter)
                     )
-                elif label == "charge" or label == "charges":
+                elif attr == "charge" or attr == "charges":
                     df["charge Atom" + str(site_index) + " (e)"] = list(
                         getattr(
                              connection.connection_members[site_index],
@@ -1245,11 +1245,11 @@ class Topology(object):
                     )
                 else:
                     try:
-                        df[label + " Atom" + str(site_index)] = list(
+                        df[attr + " Atom" + str(site_index)] = list(
                             _return_float_for_unyt(
                                 getattr(
                                     connection.connection_members[site_index],
-                                    label,
+                                    attr,
                                 ),
                                 unyts_bool,
                             )
@@ -1257,8 +1257,8 @@ class Topology(object):
                         )
                     except AttributeError:
                         raise AttributeError(
-                            "The label {} is not in this gmso object".format(
-                                label
+                            "The attribute {} is not in this gmso object".format(
+                                attr
                             )
                         )
         else:

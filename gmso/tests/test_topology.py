@@ -714,61 +714,61 @@ class TestTopology(BaseTest):
         assert len(typed_ethane.to_dataframe(parameter="dihedrals")) == 9
         assert np.allclose(
             float(
-                typed_ethane.to_dataframe(labels=["charge", "position"])[
+                typed_ethane.to_dataframe(site_attrs=["charge", "position"])[
                     "charge (e)"
                 ][0]
             ),
             0.18,
         )
         assert (
-            typed_ethane.to_dataframe(labels=["atom_type.name"])[
+            typed_ethane.to_dataframe(site_attrs=["atom_type.name"])[
                 "atom_type.name"
             ][0]
             == "opls_135"
         )
         assert np.allclose(
             float(
-                typed_ethane.to_dataframe(labels=["charge", "position"])["x"][0]
+                typed_ethane.to_dataframe(site_attrs=["charge", "position"])["x"][0]
             ),
             0,
         )
         assert np.allclose(
             float(
                 typed_ethane.to_dataframe(
-                    parameter="bonds", labels=["charge", "position"]
+                    parameter="bonds", to_attrs=["charge", "position"]
                 )["charge Atom0 (e)"][0]
             ),
             -0.06,
         )
         with pytest.raises(AttributeError) as e:
-            typed_ethane.to_dataframe(labels=["missingattr"])
+            typed_ethane.to_dataframe(site_attrs=["missingattr"])
         assert (
-            str(e.value) == "The label missingattr is not in this gmso object"
+            str(e.value) == "The attribute missingattr is not in this gmso object"
         )
         with pytest.raises(AttributeError) as e:
-            typed_ethane.to_dataframe(labels=["missingattr.missingattr"])
+            typed_ethane.to_dataframe(site_attrs=["missingattr.missingattr"])
         assert (
             str(e.value)
-            == "The label missingattr.missingattr is not in this gmso object"
+            == "The attribute missingattr.missingattr is not in this gmso object"
         )
         with pytest.raises(AttributeError) as e:
-            typed_ethane.to_dataframe(labels=["missingattr.attr"])
+            typed_ethane.to_dataframe(site_attrs=["missingattr.attr"])
         assert (
             str(e.value)
-            == "The label missingattr.attr is not in this gmso object"
+            == "The attribute missingattr.attr is not in this gmso object"
         )
         with pytest.raises(AttributeError) as e:
-            typed_ethane.to_dataframe(parameter="bonds", labels=["missingattr"])
+            typed_ethane.to_dataframe(parameter="bonds", site_attrs=["missingattr"])
         assert (
-            str(e.value) == "The label missingattr is not in this gmso object"
+            str(e.value) == "The attribute missingattr is not in this gmso object"
         )
         with pytest.raises(AttributeError) as e:
             typed_ethane.to_dataframe(
-                parameter="bonds", labels=["missingattr.attr"]
+                parameter="bonds", site_attrs=["missingattr.attr"]
             )
         assert (
             str(e.value)
-            == "The label missingattr.attr is not in this gmso object"
+            == "The attribute missingattr.attr is not in this gmso object"
         )
 
     def test__pandas_from_parameters(self, typed_ethane):
