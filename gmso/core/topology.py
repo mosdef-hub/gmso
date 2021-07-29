@@ -1161,12 +1161,8 @@ class Topology(object):
                 )
             elif label == "charge" or label == "charges":
                 df["charge (e)"] = list(
-                    _return_float_for_unyt(
-                        site.charge
-                        / u.electron_charge
-                        * u.electron_charge.units,
-                        unyts_bool,
-                    )
+                    site.charge.to_value() \
+                    / u.electron_charge.to_value() \
                     for site in self.sites
                 )
             else:
@@ -1239,15 +1235,11 @@ class Topology(object):
                     )
                 elif label == "charge" or label == "charges":
                     df["charge Atom" + str(site_index) + " (e)"] = list(
-                        _return_float_for_unyt(
-                            getattr(
-                                connection.connection_members[site_index],
-                                "charge",
-                            )
-                            / u.electron_charge
-                            * u.electron_charge.units,
-                            unyts_bool,
-                        )
+                        getattr(
+                             connection.connection_members[site_index],
+                             "charge",
+                         ).to_value() \
+                         / u.electron_charge.to_value() \
                         for connection in getattr(self, parameter)
                     )
                 else:
