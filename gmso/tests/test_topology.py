@@ -1,7 +1,6 @@
 from copy import deepcopy
 
 import numpy as np
-import pandas as pd
 import pytest
 import unyt as u
 from unyt.testing import assert_allclose_units
@@ -23,12 +22,10 @@ from gmso.core.topology import Topology
 from gmso.exceptions import GMSOError
 from gmso.external.convert_parmed import from_parmed
 from gmso.tests.base_test import BaseTest
-from gmso.utils.io import get_fn, has_parmed, import_, has_pandas
+from gmso.utils.io import get_fn, has_parmed, has_pandas, import_
 
 if has_parmed:
     pmd = import_("parmed")
-if has_pandas:
-    plt = import_("pandas")
 
 class TestTopology(BaseTest):
     def test_new_topology(self):
@@ -775,6 +772,7 @@ class TestTopology(BaseTest):
 
     @pytest.mark.skipif(not has_pandas, reason="Pandas is not installed")
     def test__pandas_from_parameters(self, typed_ethane):
+        pd = import_('pandas')
         df = pd.DataFrame()
         assert np.allclose(
             float(
