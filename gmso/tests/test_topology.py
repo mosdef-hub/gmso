@@ -385,30 +385,15 @@ class TestTopology(BaseTest):
         assert len(top.improper_type_expressions) == 1
         assert len(top.atom_type_expressions) == 2
 
-    def test_pairpotential_pairpotentialtype_update(self):
-        top = Topology()
-        atype1 = AtomType(name="a1", expression="sigma + epsilon*r")
-        atype2 = AtomType(name="a2", expression="sigma * epsilon*r")
-        atom1 = Atom(name="a", atom_type=atype1)
-        atom2 = Atom(name="b", atom_type=atype2)
-        top.add_site(atom1)
-        top.add_site(atom2)
-        top.update_topology()
+    def test_pairpotential_pairpotentialtype_update(
+        self, pairpotentialtype_top
+    ):
+        assert len(pairpotentialtype_top.pairpotential_types) == 1
+        pptype12 = pairpotentialtype_top.pairpotential_types[0]
+        assert pairpotentialtype_top._pairpotential_types_idx[pptype12] == 0
 
-        pptype12 = PairPotentialType(
-            name="pp12",
-            expression="r + 1",
-            independent_variables="r",
-            parameters={},
-            member_types=tuple(["a1", "a2"]),
-        )
-
-        top.add_pairpotentialtype(pptype12)
-        assert len(top.pairpotential_types) == 1
-        assert top._pairpotential_types_idx[pptype12] == 0
-
-        top.remove_pairpotentialtype(["a1", "a2"])
-        assert len(top.pairpotential_types) == 0
+        pairpotentialtype_top.remove_pairpotentialtype(["a1", "a2"])
+        assert len(pairpotentialtype_top.pairpotential_types) == 0
 
     def test_add_subtopology(self):
         top = Topology()
