@@ -22,10 +22,11 @@ from gmso.core.topology import Topology
 from gmso.exceptions import GMSOError
 from gmso.external.convert_parmed import from_parmed
 from gmso.tests.base_test import BaseTest
-from gmso.utils.io import get_fn, has_parmed, has_pandas, import_
+from gmso.utils.io import get_fn, has_pandas, has_parmed, import_
 
 if has_parmed:
     pmd = import_("parmed")
+
 
 class TestTopology(BaseTest):
     def test_new_topology(self):
@@ -777,8 +778,8 @@ class TestTopology(BaseTest):
         )
 
     @pytest.mark.skipif(not has_pandas, reason="Pandas is not installed")
-    def test__pandas_from_parameters(self, typed_ethane):
-        pd = import_('pandas')
+    def test_pandas_from_parameters(self, typed_ethane):
+        pd = import_("pandas")
         df = pd.DataFrame()
         assert np.allclose(
             float(

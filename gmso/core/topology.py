@@ -1008,6 +1008,7 @@ class Topology(object):
         See https://pandas.pydata.org/pandas-docs/stable/getting_started/intro_tutorials/index.html for further information.
         """
         from gmso.utils.io import import_
+
         pd = import_("pandas")
         if not site_attrs:
             site_attrs = []
