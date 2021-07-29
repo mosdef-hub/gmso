@@ -23,11 +23,12 @@ from gmso.core.topology import Topology
 from gmso.exceptions import GMSOError
 from gmso.external.convert_parmed import from_parmed
 from gmso.tests.base_test import BaseTest
-from gmso.utils.io import get_fn, has_parmed, import_
+from gmso.utils.io import get_fn, has_parmed, import_, has_pandas
 
 if has_parmed:
     pmd = import_("parmed")
-
+if has_pandas:
+    plt = import_("pandas")
 
 class TestTopology(BaseTest):
     def test_new_topology(self):
@@ -707,6 +708,7 @@ class TestTopology(BaseTest):
         with pytest.raises(GMSOError):
             typed_methylnitroaniline.scaling_factors = {"lj_12": 0.0}
 
+    @pytest.mark.skipif(not has_pandas, reason="Pandas is not installed")
     def test_to_dataframe(self, typed_ethane):
         assert len(typed_ethane.to_dataframe()) == 8
         assert len(typed_ethane.to_dataframe(parameter="bonds")) == 7
@@ -735,7 +737,7 @@ class TestTopology(BaseTest):
         assert np.allclose(
             float(
                 typed_ethane.to_dataframe(
-                    parameter="bonds", to_attrs=["charge", "position"]
+                    parameter="bonds", site_attrs=["charge", "position"]
                 )["charge Atom0 (e)"][0]
             ),
             -0.06,
@@ -771,6 +773,7 @@ class TestTopology(BaseTest):
             == "The attribute missingattr.attr is not in this gmso object"
         )
 
+    @pytest.mark.skipif(not has_pandas, reason="Pandas is not installed")
     def test__pandas_from_parameters(self, typed_ethane):
         df = pd.DataFrame()
         assert np.allclose(
