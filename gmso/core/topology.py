@@ -1161,8 +1161,7 @@ class Topology(object):
                 )
             elif label == "charge" or label == "charges":
                 df["charge (e)"] = list(
-                    site.charge.to_value() \
-                    / u.electron_charge.to_value() \
+                    site.charge.to_value() / u.electron_charge.to_value()
                     for site in self.sites
                 )
             else:
@@ -1236,10 +1235,10 @@ class Topology(object):
                 elif label == "charge" or label == "charges":
                     df["charge Atom" + str(site_index) + " (e)"] = list(
                         getattr(
-                             connection.connection_members[site_index],
-                             "charge",
-                         ).to_value() \
-                         / u.electron_charge.to_value() \
+                            connection.connection_members[site_index],
+                            "charge",
+                        ).to_value()
+                        / u.electron_charge.to_value()
                         for connection in getattr(self, parameter)
                     )
                 else:
