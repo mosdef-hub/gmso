@@ -778,7 +778,7 @@ class TestTopology(BaseTest):
         )
 
     @pytest.mark.skipif(not has_pandas, reason="Pandas is not installed")
-    def test__pandas_from_parameters(self, typed_ethane):
+    def test_pandas_from_parameters(self, typed_ethane):
         pd = import_("pandas")
         df = pd.DataFrame()
         assert np.allclose(
