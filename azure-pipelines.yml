@@ -78,7 +78,7 @@ stages:
           - bash: |
               source activate gmso-dev
               pip install pytest-azurepipelines
-              python -m pytest -v --cov=gmso --cov-report=html --pyargs gmso --no-coverage-upload
+              python -m pytest -v --cov=gmso --cov-report=html --color=yes --pyargs gmso --no-coverage-upload
             displayName: Run tests
 
           - bash: |
