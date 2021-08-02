@@ -60,7 +60,7 @@ class Connection(GMSOBase):
         return (
             f"<{self.__class__.__name__} {self.name},\n "
             f"connection_members: {self.connection_members},\n "
-            f"potential: {str(getattr(self, 'connection_type', getattr(self, 'connection_types')))},\n "
+            f"potential: {str(self.connection_type)},\n "
             f"id: {id(self)}>"
         )
 

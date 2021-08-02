@@ -12,8 +12,10 @@ from gmso.utils.misc import validate_type
 class BaseDihedral(Connection):
     __base_doc__ = """A 4-partner connection between sites.
 
-    This is a subclass of the gmso.Connection superclass.
-    This class has strictly 4 members in its connection_members.
+    This is a subclass of the gmso.Connection superclass. This class
+    has strictly 4 members in its connection_members and used as
+    a base class to define many different forms of a Dihedral.
+
     The connection_type in this class corresponds to gmso.DihedralType.
     The connectivity of a dihedral is:
         m1–m2–m3–m4
@@ -23,7 +25,7 @@ class BaseDihedral(Connection):
     Notes
     -----
     Inherits some methods from Connection:
-        __eq__, __repr__, _validate methods
+        __eq__, _validate methods
 
     Additional _validate methods are presented
     """
@@ -88,6 +90,14 @@ class BaseDihedral(Connection):
     def is_layered(self):
         return hasattr(self, "dihedral_types_")
 
+    def __repr__(self):
+        return (
+            f"<{self.__class__.__name__} {self.name},\n "
+            f"connection_members: {self.connection_members},\n "
+            f"potential: {str(self.dihedral_types if self.is_layered() else self.dihedral_type)},\n "
+            f"id: {id(self)}>"
+        )
+
     class Config:
         fields = {
             "connection_members_": "connection_members",
@@ -98,6 +108,12 @@ class BaseDihedral(Connection):
 
 
 class Dihedral(BaseDihedral):
+    __base_doc__ = """A 4-Partner connection between 2 sites with a single dihedral type association
+
+    Notes
+    -----
+    This class inherits from BaseDihedral.
+    """
     dihedral_type_: Optional[DihedralType] = Field(
         default=None, description="DihedralType of this dihedral."
     )
@@ -127,6 +143,13 @@ class Dihedral(BaseDihedral):
 
 
 class LayeredDihedral(BaseDihedral):
+    __base_doc__ = """A 4-Partner connection between 2 sites with a multiple dihedral type associations
+
+    Notes
+    -----
+    This class inherits from BaseDihedral.
+    """
+
     dihedral_types_: Optional[IndexedSet] = Field(
         default=None, description="DihedralTypes of this dihedral."
     )

@@ -155,7 +155,7 @@ class TestDihedrals(BaseTest):
             in dihedral_not_eq.equivalent_members()
         )
 
-    def test_layered_dihedrals(self, layered_dihedrals_top):
+    def test_layered_dihedrals(self):
         atom1 = Atom(name="atom1")
         atom2 = Atom(name="atom2")
         atom3 = Atom(name="atom3")
