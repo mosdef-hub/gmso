@@ -558,13 +558,13 @@ class Topology(object):
                 )
                 continue
             elif not isinstance(
-                connection_type_or_types, (ParametricPotential, list)
+                connection_type_or_types, (ParametricPotential, IndexedSet)
             ):
                 raise GMSOError(
                     "Non-Potential {} found"
                     "in Connection {}".format(connection_type_or_types, c)
                 )
-            if not isinstance(connection_type_or_types, list):
+            if not isinstance(connection_type_or_types, IndexedSet):
                 connection_type_or_types = [connection_type_or_types]
             for connection_type in connection_type_or_types:
                 if connection_type not in self._connection_types:
@@ -599,22 +599,30 @@ class Topology(object):
                         c.connection_type = self._angle_types[connection_type]
                     if isinstance(connection_type, DihedralType):
                         if c.is_layered():
-                            c.connection_types = c.connection_types or []
-                            c.connection_types.append(
-                                self.dihedral_types[connection_type]
-                            )
+                            if c.connection_types is None:
+                                c.connection_types = IndexedSet([
+                                    self._dihedrals_types[connection_type]
+                                ])
+                            else:
+                                c.connection_types.add(
+                                    self._dihedral_types[connection_type]
+                                )
                         else:
                             c.connection_type = self._dihedral_types[
                                 connection_type
                             ]
                     if isinstance(connection_type, ImproperType):
                         if c.is_layered():
-                            c.connection_types = c.connection_types or []
-                            c.connection_types.append(
-                                self.improper_types[connection_type]
-                            )
+                            if c.connection_types is None:
+                                c.connection_types = IndexedSet([
+                                    self._improper_types[connection_type]
+                                ])
+                            else:
+                                c.connection_types.add(
+                                    self._improper_types[connection_type]
+                                )
                         else:
-                            c.connection_type = self.improper_types[
+                            c.connection_type = self._improper_types[
                                 connection_type
                             ]
 

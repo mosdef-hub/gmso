@@ -33,7 +33,7 @@ class Connection(GMSOBase):
 
     @root_validator(pre=True)
     def validate_fields(cls, values):
-        connection_members = values.get("connection_members")
+        connection_members = values.get("connection_members", [])
 
         if all(isinstance(member, dict) for member in connection_members):
             connection_members = [
@@ -60,7 +60,7 @@ class Connection(GMSOBase):
         return (
             f"<{self.__class__.__name__} {self.name},\n "
             f"connection_members: {self.connection_members},\n "
-            f"potential: {str(self.connection_type)},\n "
+            f"potential: {str(getattr(self, 'connection_type', getattr(self, 'connection_types')))},\n "
             f"id: {id(self)}>"
         )
 

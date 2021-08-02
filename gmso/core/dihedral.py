@@ -146,9 +146,9 @@ class LayeredDihedral(BaseDihedral):
         else:
             super().__setattr__(key, value)
 
-    @validator("dihedral_types_", pre=True, always=True)
+    @validator("dihedral_types_", pre=True)
     def validate_dihedral_types(cls, dihedral_types):
-        if not isinstance(dihedral_types, Iterable):
+        if not isinstance(dihedral_types, Iterable) or isinstance(dihedral_types, str):
             raise ValidationError("DihedralTypes should be iterable", cls)
 
         validate_type(dihedral_types, DihedralType)

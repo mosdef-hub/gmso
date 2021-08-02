@@ -120,3 +120,4 @@ class GMSOBase(BaseModel, ABC):
         extra = "forbid"
         json_encoders = GMSOJSONHandler.json_encoders
         allow_population_by_field_name = True
+        validate_assignment = True
