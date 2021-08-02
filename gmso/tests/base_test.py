@@ -493,13 +493,13 @@ class BaseTest:
         rb_type = DihedralType.from_template(
             potential_template=lib["RyckaertBellemansTorsionPotential"],
             parameters={
-                'c0': 9.28 * u.kJ / u.mol,
-                'c1': 12.16 * u.kJ / u.mol,
-                'c2': -13.12 * u.kJ / u.mol,
-                'c3': -3.06 * u.kJ / u.mol,
-                'c4': 26.24 * u.kJ / u.mol,
-                'c5': -31.5 * u.kJ / u.mol,
-            }
+                "c0": 9.28 * u.kJ / u.mol,
+                "c1": 12.16 * u.kJ / u.mol,
+                "c2": -13.12 * u.kJ / u.mol,
+                "c3": -3.06 * u.kJ / u.mol,
+                "c4": 26.24 * u.kJ / u.mol,
+                "c5": -31.5 * u.kJ / u.mol,
+            },
         )
 
         periodic_type = DihedralType.from_template(
@@ -507,14 +507,14 @@ class BaseTest:
             parameters={
                 "k": 1.25 * u.nm,
                 "phi_eq": 3.14159 * u.rad,
-                "n": 2 * u.dimensionless
-            }
+                "n": 2 * u.dimensionless,
+            },
         )
 
         top = Topology(name="Topology")
-        atoms = [Atom(name=f'Atom{i+1}') for i in range(0, 100)]
+        atoms = [Atom(name=f"Atom{i+1}") for i in range(0, 100)]
         dihedrals_group = [
-            (atoms[i], atoms[i+1], atoms[i+2], atoms[i+3])
+            (atoms[i], atoms[i + 1], atoms[i + 2], atoms[i + 3])
             for i in range(0, 100, 4)
         ]
 
@@ -526,9 +526,7 @@ class BaseTest:
                 dh.connection_type = rb_type
 
             else:
-                dh = LayeredDihedral(
-                    connection_members=atom_groups
-                )
+                dh = LayeredDihedral(connection_members=atom_groups)
                 dh.connection_types = [rb_type, periodic_type]
             top.add_connection(connection=dh)
         top.update_topology()

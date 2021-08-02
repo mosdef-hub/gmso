@@ -600,9 +600,9 @@ class Topology(object):
                     if isinstance(connection_type, DihedralType):
                         if c.is_layered():
                             if c.connection_types is None:
-                                c.connection_types = IndexedSet([
-                                    self._dihedrals_types[connection_type]
-                                ])
+                                c.connection_types = IndexedSet(
+                                    [self._dihedrals_types[connection_type]]
+                                )
                             else:
                                 c.connection_types.add(
                                     self._dihedral_types[connection_type]
@@ -614,9 +614,9 @@ class Topology(object):
                     if isinstance(connection_type, ImproperType):
                         if c.is_layered():
                             if c.connection_types is None:
-                                c.connection_types = IndexedSet([
-                                    self._improper_types[connection_type]
-                                ])
+                                c.connection_types = IndexedSet(
+                                    [self._improper_types[connection_type]]
+                                )
                             else:
                                 c.connection_types.add(
                                     self._improper_types[connection_type]
