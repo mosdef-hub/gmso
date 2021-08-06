@@ -1,5 +1,6 @@
 """Base data structure for GMSO chemical systems."""
 import warnings
+from pathlib import Path
 
 import numpy as np
 import unyt as u
@@ -15,6 +16,7 @@ from gmso.core.dihedral import Dihedral
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
+from gmso.core.pairpotential_type import PairPotentialType
 from gmso.core.parametric_potential import ParametricPotential
 from gmso.exceptions import GMSOError
 from gmso.utils._constants import (
@@ -23,6 +25,7 @@ from gmso.utils._constants import (
     BOND_TYPE_DICT,
     DIHEDRAL_TYPE_DICT,
     IMPROPER_TYPE_DICT,
+    PAIRPOTENTIAL_TYPE_DICT,
 )
 from gmso.utils.connectivity import (
     identify_connections as _identify_connections,
@@ -112,6 +115,9 @@ class Topology(object):
     improper_types : tuple of gmso.ImproperType objects
         A collection of ImproperTypes in the topology
 
+    pairpotential_types : tuple of gmso.PairPotentialType objects
+        A collection of PairPotentialTypes in the topology
+
     atom_type_expressions : list of gmso.AtomType.expression objects
         A collection of all the expressions for the AtomTypes in topology
 
@@ -129,6 +135,9 @@ class Topology(object):
 
     improper_type_expressions : list of gmso.ImproperType.expression objects
         A collection of all the expression for the ImproperTypes in the topology
+
+    pairpotential_type_expressions : list of gmso.PairPotentialType.expression objects
+        A collection of all the expression for the PairPotentialTypes in the topology
 
     See Also
     --------
@@ -160,6 +169,8 @@ class Topology(object):
         self._improper_types = {}
         self._improper_types_idx = {}
         self._combining_rule = "lorentz"
+        self._pairpotential_types = {}
+        self._pairpotential_types_idx = {}
         self._scaling_factors = {
             "vdw_12": 0.0,
             "vdw_13": 0.0,
@@ -174,6 +185,7 @@ class Topology(object):
             ANGLE_TYPE_DICT: self._angle_types,
             DIHEDRAL_TYPE_DICT: self._dihedral_types,
             IMPROPER_TYPE_DICT: self._improper_types,
+            PAIRPOTENTIAL_TYPE_DICT: self._pairpotential_types,
         }
 
         self._index_refs = {
@@ -182,6 +194,7 @@ class Topology(object):
             ANGLE_TYPE_DICT: self._angle_types_idx,
             DIHEDRAL_TYPE_DICT: self._dihedral_types_idx,
             IMPROPER_TYPE_DICT: self._improper_types_idx,
+            PAIRPOTENTIAL_TYPE_DICT: self._pairpotential_types_idx,
         }
 
         self._unique_connections = {}
@@ -366,6 +379,10 @@ class Topology(object):
         return tuple(self._improper_types.values())
 
     @property
+    def pairpotential_types(self):
+        return tuple(self._pairpotential_types.values())
+
+    @property
     def atom_type_expressions(self):
         """Return all atom_type expressions in the topology."""
         return list(set([atype.expression for atype in self.atom_types]))
@@ -396,6 +413,12 @@ class Topology(object):
     def improper_type_expressions(self):
         """Return all improper_type expressions in the topology."""
         return list(set([atype.expression for atype in self.improper_types]))
+
+    @property
+    def pairpotential_type_expressions(self):
+        return list(
+            set([atype.expression for atype in self.pairpotential_types])
+        )
 
     def add_site(self, site, update_types=True):
         """Add a site to the topology.
@@ -563,6 +586,66 @@ class Topology(object):
                 if isinstance(c.connection_type, ImproperType):
                     c.connection_type = self._improper_types[c.connection_type]
 
+    def add_pairpotentialtype(self, pairpotentialtype, update=True):
+        """add a PairPotentialType to the topology
+
+        This method checks whether the member_type of a PairPotentialType
+        object is already stored in pairpotential_types. If so, update the
+        pair potential between the member_type, and if not, add the
+        PairPotentialType to the topology.
+
+        Parameters
+        ----------
+        pairpotentialtype: gmso.core.PairPotentialType
+            The PairPotentialType object to be added
+        update: Boolean, default=True
+
+        See Also:
+        --------
+        gmso.core.pairpotential_type: Pairwise potential that does not follow
+        combination rules
+        """
+        if update:
+            self.update_atom_types()
+        if not isinstance(pairpotentialtype, PairPotentialType):
+            raise GMSOError(
+                "Non-PairPotentialType {} provided".format(pairpotentialtype)
+            )
+        for atype in pairpotentialtype.member_types:
+            if atype not in [t.name for t in self.atom_types]:
+                if atype not in [t.atomclass for t in self.atom_types]:
+                    raise GMSOError(
+                        "There is no name/atomclass of AtomType {} in current topology".format(
+                            atype
+                        )
+                    )
+        self._pairpotential_types[pairpotentialtype] = pairpotentialtype
+        self._pairpotential_types_idx[pairpotentialtype] = (
+            len(self._pairpotential_types) - 1
+        )
+
+    def remove_pairpotentialtype(self, pair_of_types):
+        """Remove the custom pairwise potential between two AtomTypes/Atomclasses
+
+        Parameters
+        ----------
+        pair_of_types: list-like of strs
+            The pair (or set) of names or atomclasses of gmso.AtomTypes of which
+            the custom pairwise potential should be removed
+        """
+        to_delete = []
+        for t in self._pairpotential_types:
+            if t.member_types == tuple(pair_of_types):
+                to_delete.append(t)
+        if len(to_delete) > 0:
+            for t in to_delete:
+                del self._pairpotential_types[t]
+            self._reindex_connection_types(PAIRPOTENTIAL_TYPE_DICT)
+        else:
+            warnings.warn(
+                "No pair potential specified for such pair of AtomTypes/atomclasses"
+            )
+
     def update_atom_types(self):
         """Update atom types in the topology.
 
@@ -624,6 +707,142 @@ class Topology(object):
         else:
             self._typed = False
         return self._typed
+
+    def is_fully_typed(self, updated=False, group="topology"):
+        """Check if the topology or a specifc group of objects that make up the topology are fully typed
+
+        Parameters
+        ----------
+        updated : bool, optional, default=False
+            If False, will update the atom type and connection type list of the
+            Topology before the checking step.
+        group : str, optional, default='topology'
+            Specific objects to be checked. Options include:
+            'topology'  : check for status of all the topology constituents
+            'sites'     : check for status of all topology.sites
+            'bonds'     : check for status of all topology.bonds
+            'angles'    : check for status of all topology.angles
+            'dihedrals' : check for status of all topology.dihedrals
+            'impropers' : check for status of all topology.impropers
+
+        Returns
+        -------
+        bool
+            Status of the check
+        Notes
+        -----
+        `self._type` is set to True as long as the Topology is at least
+        partially typed.
+        """
+        if not updated:
+            self.update_connection_types()
+            self.update_atom_types()
+
+        typed_status = {
+            "sites": lambda top: all(site.atom_type for site in top._sites),
+            "bonds": lambda top: all(bond.bond_type for bond in top._bonds),
+            "angles": lambda top: all(
+                angle.angle_type for angle in top._angles
+            ),
+            "dihedrals": lambda top: all(
+                dihedral.dihedral_type for dihedral in top._dihedrals
+            ),
+            "impropers": lambda top: all(
+                improper.improper_type for improper in top._impropers
+            ),
+        }
+
+        if group == "topology":
+            result = list()
+            for subgroup in typed_status:
+                result.append(typed_status[subgroup](self))
+            return all(result)
+        elif group in typed_status:
+            return typed_status[group](self)
+        else:
+            raise ValueError(
+                f"Could not check typing status of {group}. "
+                "Available options: 'topology', 'sites', 'bonds', "
+                "'angles', 'dihedrals', 'impropers'."
+            )
+
+    def get_untyped(self, group):
+        """Get the untyped (non-parametrized) objects of the Topology.
+
+        Parameters
+        ----------
+        group : {'sites', 'bonds', 'angles', 'dihedrals', 'impropers', 'topology'}
+            The group of objects to be checked. The 'topology' option will return
+            all untyped object of the topology.
+
+        Returns
+        -------
+        untyped : dict
+            Dictionary of all untyped object, key of the dictionary corresponds to
+            object group names define above.
+        """
+        untyped = dict()
+        untyped_extractors = {
+            "sites": self._get_untyped_sites,
+            "bonds": self._get_untyped_bonds,
+            "angles": self._get_untyped_angles,
+            "dihedrals": self._get_untyped_dihedrals,
+            "impropers": self._get_untyped_impropers,
+        }
+        if group == "topology":
+            for subgroup in untyped_extractors:
+                untyped.update(untyped_extractors[subgroup]())
+        elif isinstance(group, (list, tuple, set)):
+            for subgroup in group:
+                untyped.update(untyped_extractors[subgroup]())
+        elif isinstance(group, str) and group in untyped_extractors:
+            untyped = untyped_extractors[group]()
+        else:
+            raise ValueError(
+                f"Cannot get untyped {group}. "
+                f"Available options: {[untyped_extractors.keys()]}."
+            )
+        return untyped
+
+    def _get_untyped_sites(self):
+        "Return a list of untyped sites"
+        untyped = {"sites": list()}
+        for site in self._sites:
+            if not site.atom_type:
+                untyped["sites"].append(site)
+        return untyped
+
+    def _get_untyped_bonds(self):
+        "Return a list of untyped bonds"
+        untyped = {"bonds": list()}
+        for bond in self._bonds:
+            if not bond.bond_type:
+                untyped["bonds"].append(bond)
+        return untyped
+
+    def _get_untyped_angles(self):
+        "Return a list of untyped angles"
+        untyped = {"angles": list()}
+        for angle in self._angles:
+            if not angle.angle_type:
+                untyped["angles"].append(angle)
+        return untyped
+
+    def _get_untyped_dihedrals(self):
+        "Return a list of untyped dihedrals"
+        untyped = {"dihedrals": list()}
+        for dihedral in self._dihedrals:
+            if not dihedral.dihedral_type:
+                untyped["dihedrals"].append(dihedral)
+        return untyped
+
+    def _get_untyped_impropers(self):
+        "Return a list of untyped impropers"
+        untyped = {"impropers": list()}
+        for improper in self._impropers:
+            if not improper.improper_type:
+                untyped["impropers"].append(improper)
+        return untyped
 
     def update_angle_types(self):
         """Use gmso.Topology.update_connection_types to update AngleTypes in the topology.
@@ -730,6 +949,7 @@ class Topology(object):
             AngleType: self._angle_types_idx,
             DihedralType: self._dihedral_types_idx,
             ImproperType: self._improper_types_idx,
+            PairPotentialType: self._pairpotential_types_idx,
         }
 
         member_type = type(member)
@@ -752,7 +972,8 @@ class Topology(object):
             raise GMSOError(
                 f"cannot reindex {ref}. It should be one of "
                 f"{ANGLE_TYPE_DICT}, {BOND_TYPE_DICT}, "
-                f"{ANGLE_TYPE_DICT}, {DIHEDRAL_TYPE_DICT}, {IMPROPER_TYPE_DICT}"
+                f"{ANGLE_TYPE_DICT}, {DIHEDRAL_TYPE_DICT}, {IMPROPER_TYPE_DICT},"
+                f"{PAIRPOTENTIAL_TYPE_DICT}"
             )
         for i, ref_member in enumerate(self._set_refs[ref].keys()):
             self._index_refs[ref][ref_member] = i
@@ -762,6 +983,33 @@ class Topology(object):
         for site in self.sites:
             if getattr(site, key) == value:
                 yield site
+
+    def save(self, filename, overwrite=False, **kwargs):
+        """Save the topology to a file.
+
+        Parameters
+        ----------
+        filename: str, pathlib.Path
+            The file to save the topology as
+        overwrite: bool, default=True
+            If True, overwrite the existing file if it exists
+        **kwargs:
+            The arguments to specific file savers listed below(as extensions):
+            * json: types, update, indent
+        """
+        if not isinstance(filename, Path):
+            filename = Path(filename).resolve()
+
+        if filename.exists() and not overwrite:
+            raise FileExistsError(
+                f"The file {filename} exists. Please set "
+                f"overwrite=True if you wish to overwrite the existing file"
+            )
+
+        from gmso.formats import SaversRegistry
+
+        saver = SaversRegistry.get_callable(filename.suffix)
+        saver(self, filename, **kwargs)
 
     def __repr__(self):
         """Return custom format to represent topology."""
@@ -775,3 +1023,12 @@ class Topology(object):
     def __str__(self):
         """Return custom format to represent topology as a string."""
         return f"<Topology {self.name}, {self.n_sites} sites, id: {id(self)}>"
+
+    @classmethod
+    def load(cls, filename, **kwargs):
+        """Load a file to a topology"""
+        filename = Path(filename).resolve()
+        from gmso.formats import LoadersRegistry
+
+        loader = LoadersRegistry.get_callable(filename.suffix)
+        return loader(filename, **kwargs)
