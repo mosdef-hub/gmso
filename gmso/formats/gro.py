@@ -6,12 +6,15 @@ import numpy as np
 import unyt as u
 from unyt.array import allclose_units
 
+import gmso
 from gmso.core.atom import Atom
 from gmso.core.box import Box
 from gmso.core.topology import Topology
 from gmso.exceptions import NotYetImplementedWarning
+from gmso.formats.formats_registry import loads_as, saves_as
 
 
+@loads_as(".gro")
 def read_gro(filename):
     """Create a topology from a provided gro file.
 
@@ -93,6 +96,7 @@ def read_gro(filename):
     return top
 
 
+@saves_as(".gro")
 def write_gro(top, filename):
     """Write a topology to a gro file.
 
@@ -116,77 +120,92 @@ def write_gro(top, filename):
     Multiple residue assignment has not been added, each `site` will belong to
     the same resid of 1 currently.
 
+    Velocities are not written out.
+
     """
-    top = _prepare_topology_to_gro(top)
+    top = _validate_positions(top)
 
     with open(filename, "w") as out_file:
         out_file.write(
-            "{} written by topology at {}\n".format(
+            "{} written by GMSO {} at {}\n".format(
                 top.name if top.name is not None else "",
+                gmso.__version__,
                 str(datetime.datetime.now()),
             )
         )
         out_file.write("{:d}\n".format(top.n_sites))
-        for idx, site in enumerate(top.sites):
-            warnings.warn(
-                "Residue information is not currently "
-                "stored or written to GRO files.",
-                NotYetImplementedWarning,
-            )
-            # TODO: assign residues
-            res_id = 1
-            res_name = "X"
-            atom_name = site.name
-            atom_id = idx + 1
-            out_file.write(
-                "{0:5d}{1:5s}{2:5s}{3:5d}{4:8.3f}{5:8.3f}{6:8.3f}\n".format(
-                    res_id,
-                    res_name,
-                    atom_name,
-                    atom_id,
-                    site.position[0].in_units(u.nm).value,
-                    site.position[1].in_units(u.nm).value,
-                    site.position[2].in_units(u.nm).value,
-                )
-            )
-
-        if allclose_units(
-            top.box.angles,
-            u.degree * [90, 90, 90],
-            rtol=1e-5,
-            atol=0.1 * u.degree,
-        ):
-            out_file.write(
-                " {:0.5f} {:0.5f} {:0.5f} \n".format(
-                    top.box.lengths[0].in_units(u.nm).value.round(6),
-                    top.box.lengths[1].in_units(u.nm).value.round(6),
-                    top.box.lengths[2].in_units(u.nm).value.round(6),
-                )
-            )
-        else:
-            # TODO: Work around GROMACS's triclinic limitations #30
-            vectors = top.box.get_vectors()
-            out_file.write(
-                " {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} \n".format(
-                    vectors[0, 0].in_units(u.nm).value.round(6),
-                    vectors[1, 1].in_units(u.nm).value.round(6),
-                    vectors[2, 2].in_units(u.nm).value.round(6),
-                    vectors[0, 1].in_units(u.nm).value.round(6),
-                    vectors[0, 2].in_units(u.nm).value.round(6),
-                    vectors[1, 0].in_units(u.nm).value.round(6),
-                    vectors[1, 2].in_units(u.nm).value.round(6),
-                    vectors[2, 0].in_units(u.nm).value.round(6),
-                    vectors[2, 1].in_units(u.nm).value.round(6),
-                )
-            )
+        out_file.write(_prepare_atoms(top))
+        out_file.write(_prepare_box(top))
 
 
-def _prepare_topology_to_gro(top):
+def _validate_positions(top):
     """Modify topology, as necessary, to fit limitations of the GRO format."""
     if np.min(top.positions) < 0:
         warnings.warn(
             "Topology contains some negative positions. Translating "
             "in order to ensure all coordinates are non-negative."
         )
-
+    min_xyz = np.min(top.positions, axis=0)
+    for i, minimum in enumerate(min_xyz):
+        if minimum < 0.0:
+            for site in top.sites:
+                site.position[i] = site.position[i] - minimum
     return top
+
+
+def _prepare_atoms(top):
+    out_str = str()
+    for idx, site in enumerate(top.sites):
+        warnings.warn(
+            "Residue information is not currently "
+            "stored or written to GRO files.",
+            NotYetImplementedWarning,
+        )
+        # TODO: assign residues
+        res_id = 1
+        res_name = "X"
+        atom_name = site.name
+        atom_id = idx + 1
+        out_str = (
+            out_str
+            + "{0:5d}{1:5s}{2:5s}{3:5d}{4:8.3f}{5:8.3f}{6:8.3f}\n".format(
+                res_id,
+                res_name,
+                atom_name,
+                atom_id,
+                site.position[0].in_units(u.nm).value,
+                site.position[1].in_units(u.nm).value,
+                site.position[2].in_units(u.nm).value,
+            )
+        )
+    return out_str
+
+
+def _prepare_box(top):
+    out_str = str()
+    if allclose_units(
+        top.box.angles,
+        u.degree * [90, 90, 90],
+        rtol=1e-5,
+        atol=0.1 * u.degree,
+    ):
+        out_str = out_str + " {:0.5f} {:0.5f} {:0.5f} \n".format(
+            top.box.lengths[0].in_units(u.nm).value.round(6),
+            top.box.lengths[1].in_units(u.nm).value.round(6),
+            top.box.lengths[2].in_units(u.nm).value.round(6),
+        )
+    else:
+        # TODO: Work around GROMACS's triclinic limitations #30
+        vectors = top.box.get_vectors()
+        out_str = out_str + " {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} \n".format(
+            vectors[0, 0].in_units(u.nm).value.round(6),
+            vectors[1, 1].in_units(u.nm).value.round(6),
+            vectors[2, 2].in_units(u.nm).value.round(6),
+            vectors[0, 1].in_units(u.nm).value.round(6),
+            vectors[0, 2].in_units(u.nm).value.round(6),
+            vectors[1, 0].in_units(u.nm).value.round(6),
+            vectors[1, 2].in_units(u.nm).value.round(6),
+            vectors[2, 0].in_units(u.nm).value.round(6),
+            vectors[2, 1].in_units(u.nm).value.round(6),
+        )
+    return out_str
