@@ -12,6 +12,8 @@ from gmso.core.dihedral_type import DihedralType
 from gmso.core.element import element_by_symbol
 from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
+from gmso.core.topology import Topology
+from gmso.formats.formats_registry import UnsupportedFileFormatError
 from gmso.tests.base_test import BaseTest
 
 
@@ -188,3 +190,43 @@ class TestSerialization(BaseTest):
         assert "name" not in atom_json
         atom_json = atom.json(include={"mass_"})
         assert "name" not in atom_json
+
+    def test_full_serialization(
+        self,
+        typed_ethane,
+        are_equivalent_topologies,
+    ):
+        typed_ethane.save("eth.json", types=True)
+        typed_ethane_copy = Topology.load("eth.json")
+        assert are_equivalent_topologies(typed_ethane_copy, typed_ethane)
+
+    def test_serialization_with_box(
+        self, n_typed_xe_mie, are_equivalent_topologies
+    ):
+        top = n_typed_xe_mie(n_sites=20)
+        top.save("n_typed_xe_mie_20.json")
+        top_copy = Topology.load("n_typed_xe_mie_20.json")
+        assert are_equivalent_topologies(top, top_copy)
+
+    def test_serialization_with_pairpotential_types(
+        self, pairpotentialtype_top, are_equivalent_topologies
+    ):
+        pairpotentialtype_top.save("pptype.json", types=True)
+        pptop_copy = Topology.load("pptype.json")
+        assert are_equivalent_topologies(pptop_copy, pairpotentialtype_top)
+
+    def test_serialization_unsupported_file_format(self, ethane_from_scratch):
+        with pytest.raises(UnsupportedFileFormatError):
+            ethane_from_scratch.save("ethane_from_scratch.zip")
+
+    def test_serialization_untyped_with_types_info(self, ethane_from_scratch):
+        with pytest.raises(ValueError):
+            ethane_from_scratch.save("ethane_from_scratch.json", types=True)
+
+    def test_serialization_overwrite(self, ethane_from_scratch):
+        ethane_from_scratch.save("ethane_from_scratch.json", overwrite=False)
+        with pytest.raises(FileExistsError):
+            ethane_from_scratch.save(
+                "ethane_from_scratch.json", overwrite=False
+            )
+        ethane_from_scratch.save("ethane_from_scratch.json", overwrite=True)
