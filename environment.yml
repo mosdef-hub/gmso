@@ -1,0 +1,12 @@
+name: gmso
+channels:
+  - conda-forge
+dependencies:
+  - numpy
+  - sympy
+  - unyt >= 2.4
+  - boltons
+  - lxml
+  - pydantic
+  - networkx
+  - ele >= 0.2.0

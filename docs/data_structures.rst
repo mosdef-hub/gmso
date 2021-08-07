@@ -1,23 +1,39 @@
-Data Structures in GMSO 
+Data Structures in GMSO
 ---------------------------
 Following data structures are available within GMSO.
 
 Core Classes
 ============
+.. autosummary::
+    :nosignatures:
+
+    gmso.Topology
+    gmso.SubTopology
+    gmso.Atom
+    gmso.Bond
+    gmso.Angle
+    gmso.Dihedral
+    gmso.Improper
+    gmso.AtomType
+    gmso.BondType
+    gmso.AngleType
+    gmso.DihedralType
+    gmso.ImproperType
+
 
 Topology
 ********
     .. autoclass:: gmso.Topology
-        :members: add_site, add_bond, add_angle
+        :members: add_site, add_connection, update_topology
 
 SubTopology
 ***********
     .. autoclass:: gmso.SubTopology
         :members:
 
-Site
+Atom
 ****
-    .. autoclass:: gmso.Site
+    .. autoclass:: gmso.Atom
         :members:
 
 Bond
@@ -35,11 +51,14 @@ Dihedral
     .. autoclass:: gmso.Dihedral
         :members:
 
+Improper
+********
+    .. autoclass:: gmso.Improper
+        :members:
+
 
 Potential Classes
 =================
-    .. autoclass:: gmso.Potential
-        :members:
 
 AtomType
 ********
@@ -61,8 +80,20 @@ DihedralType
     .. autoclass:: gmso.DihedralType
         :members:
 
+ImproperType
+************
+    .. autoclass:: gmso.ImproperType
+        :members:
+
+PairPotentialType
+************
+    .. autoclass:: gmso.PairPotentialType
+        :members:
 
 ForceField
 ==========
     .. autoclass:: gmso.ForceField
         :members:
+
+
+=======

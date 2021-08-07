@@ -1,158 +1,106 @@
-from gmso.core.potential import Potential
+"""Module supporting template potential objects."""
+import json
+from pathlib import Path
+
+from gmso.abc.abstract_potential import AbstractPotential
+from gmso.exceptions import GMSOError
+from gmso.utils.expression import _PotentialExpression
+from gmso.utils.singleton import Singleton
+
+POTENTIAL_JSONS = list(Path(__file__).parent.glob("jsons/*.json"))
+JSON_DIR = Path.joinpath(Path(__file__).parent, "jsons")
 
 
-class PotentialTemplate(Potential):
-    def __init__(self,
-                 name='PotentialTemplate',
-                 expression='4*epsilon*((sigma/r)**12 - (sigma/r)**6)',
-                 independent_variables={'r'},
-                 template=True):
-
-        super(PotentialTemplate, self).__init__(
-            name=name,
-            expression=expression,
-            independent_variables=independent_variables,
-            template=template,
+def _verify_potential_template_keys(_dict, name):
+    """Verify the potential template is properly formatted."""
+    assert (
+        "name" in _dict
+    ), f"Key name not found in the potential template {name}.json"
+    assert (
+        "expression" in _dict
+    ), f"Key expression not found in the potential template {name}.json"
+    assert (
+        "independent_variables" in _dict
+    ), f"Key independent_variables not found in the potential template {name}.json"
+    if str(name) != _dict["name"]:
+        raise GMSOError(
+            f'Mismatch between Potential name {name} and {_dict["name"]}'
         )
 
-class LennardJonesPotential(PotentialTemplate):
-    def __init__(self,
-                 name='LennardJonesPotential',
-                 expression='4*epsilon*((sigma/r)**12 - (sigma/r)**6)',
-                 independent_variables=None):
-        if independent_variables is None:
-            independent_variables = {'r'}
-        super(PotentialTemplate, self).__init__(
-            name=name,
-            expression=expression,
-            independent_variables=independent_variables,
-            template=True,
-        )
 
-class MiePotential(PotentialTemplate):
-    def __init__(self,
-                 name='MiePotential',
-                 expression=('(n/(n-m)) * (n/m)**(m/(n-m)) * '
-                            'epsilon * ((sigma/r)**n - (sigma/r)**m)'),
-                 independent_variables=None):
-        if independent_variables is None:
-            independent_variables = {'r'}
-        super(PotentialTemplate, self).__init__(
-            name=name,
-            expression=expression,
-            independent_variables=independent_variables,
-            template=True,
-        )
+def _load_template_json(item, json_dir=JSON_DIR):
+    """Return dictionary representation of PotentialTemplate from JSON."""
+    with json_dir.joinpath(f"{item}.json").open("r") as json_file:
+        potential_dict = json.load(json_file)
+        _verify_potential_template_keys(potential_dict, item)
+        return potential_dict
 
-class BuckinghamPotential(PotentialTemplate):
-    def __init__(self,
-                 name='BuckinghamPotential',
-                 expression='a*exp(-b*r) - c*r**-6',
-                 independent_variables=None):
-        if independent_variables is None:
-            independent_variables = {'r'}
 
-        super(PotentialTemplate, self).__init__(
-            name=name,
-            expression=expression,
-            independent_variables=independent_variables,
-            template=True,
-        )
+class PotentialTemplate(AbstractPotential):
+    """Template for potential objects to be re-used."""
 
-class HarmonicBondPotential(PotentialTemplate):
-    def __init__(self,
-                 name='HarmonicBondPotential',
-                 expression='0.5 * k * (r-r_eq)**2',
-                 independent_variables={'r'}):
+    def __init__(
+        self,
+        name="PotentialTemplate",
+        expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
+        independent_variables="r",
+        potential_expression=None,
+        template=True,
+    ):
+        if not isinstance(independent_variables, set):
+            independent_variables = set(independent_variables.split(","))
 
-        super(PotentialTemplate, self).__init__(
-            name=name,
-            expression=expression,
-            independent_variables=independent_variables,
-            template=True,
-        )
-
-class HarmonicAnglePotential(PotentialTemplate):
-    def __init__(self,
-                 name='HarmonicAnglePotential',
-                 expression='0.5 * k * (theta-theta_eq)**2',
-                 independent_variables={'theta'}):
-
-        super(PotentialTemplate, self).__init__(
-            name=name,
-            expression=expression,
-            independent_variables=independent_variables,
-            template=True,
-        )
-
-class HarmonicTorsionPotential(PotentialTemplate):
-    def __init__(self,
-                 name='HarmonicTorsionPotential',
-                 expression='0.5 * k * (phi - phi_eq)**2',
-                 independent_variables={'phi'}):
-
-        super(PotentialTemplate, self).__init__(
-                name=name,
+        if potential_expression is None:
+            _potential_expression = _PotentialExpression(
                 expression=expression,
                 independent_variables=independent_variables,
-                template=True
-        )
-
-class PeriodicTorsionPotential(PotentialTemplate):
-    def __init__(self,
-                 name='PeriodicTorsionPotential',
-                 expression='k * (1 + cos(n * phi - phi_eq))**2',
-                 independent_variables={'phi'}):
+            )
+        else:
+            _potential_expression = potential_expression
 
         super(PotentialTemplate, self).__init__(
-                name=name,
-                expression=expression,
-                independent_variables=independent_variables,
-                template=True
+            name=name, potential_expression=_potential_expression
         )
 
-class OPLSTorsionPotential(PotentialTemplate):
-    def __init__(self,
-                 name='OPLSTorsionPotential',
-                 expression=('0.5 * k0 + '
-                             '0.5 * k1 * (1 + cos(phi)) + '
-                             '0.5 * k2 * (1 - cos(2*phi)) + '
-                             '0.5 * k3 * (1 + cos(3*phi)) + '
-                             '0.5 * k4 * (1 - cos(4*phi))'),
-                 independent_variables={'phi'}):
+    def set_expression(self, *args, **kwargs):
+        """Set the expression of the PotentialTemplate."""
+        raise NotImplementedError
 
-        super(PotentialTemplate, self).__init__(
-                name=name,
-                expression=expression,
-                independent_variables=independent_variables,
-                template=True
-        )
+    class Config:
+        """Pydantic configuration for potential template."""
 
-class RyckaertBellemansTorsionPotential(PotentialTemplate):
-    def __init__(self,
-                 name='RyckaertBellemansTorsionPotential',
-                 expression=('c0 * cos(phi)**0 + c1 * cos(phi)**1 + '
-                             'c2 * cos(phi)**2 + c3 * cos(phi)**3 + '
-                             'c4 * cos(phi)**4 + c5 * cos(phi)**5'),
-                 independent_variables={'phi'}):
+        allow_mutation = False
 
-        super(PotentialTemplate, self).__init__(
-                name=name,
-                expression=expression,
-                independent_variables=independent_variables,
-                template=True
-        )
 
-class HarmonicImproperPotential(PotentialTemplate):
-    def __init__(self,
-                 name='HarmonicImproperPotetial',
-                 expression='0.5 * k * (phi - phi_eq)**2',
-                 independent_variables={'phi'}):
+class PotentialTemplateLibrary(Singleton):
+    """A singleton collection of all the potential templates."""
 
-        super(PotentialTemplate, self).__init__(
-                name=name,
-                expression=expression,
-                independent_variables=independent_variables,
-                template=True
-        )
+    def __init__(self):
+        try:
+            self.json_refs
+        except AttributeError:
+            self.json_refs = POTENTIAL_JSONS
+            potential_names = [pot_json.name for pot_json in POTENTIAL_JSONS]
+            self._ref_dict = {
+                potential.replace(".json", ""): None
+                for potential in potential_names
+            }
+            self._user_ref_dict = {}
 
+    def get_available_template_names(self):
+        """Return all available potential templates available to gmso."""
+        return tuple(self._ref_dict.keys())
+
+    def __getitem__(self, item):
+        """Return template if it exists."""
+        if item not in self._ref_dict:
+            raise KeyError(f"Potential Template {item} not found.")
+
+        return self._load_from_json(item)
+
+    def _load_from_json(self, item):
+        """Return template from JSON."""
+        if self._ref_dict[item] is None:
+            potential_dict = _load_template_json(item, JSON_DIR)
+            self._ref_dict[item] = PotentialTemplate(**potential_dict)
+        return self._ref_dict[item]

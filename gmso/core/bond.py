@@ -1,25 +1,19 @@
-import warnings
+"""Module for 2-partner connections between sites."""
+from typing import Callable, ClassVar, Optional, Tuple
 
-from gmso.core.connection import Connection
+from pydantic import Field
+
+from gmso.abc.abstract_connection import Connection
+from gmso.core.atom import Atom
 from gmso.core.bond_type import BondType
-from gmso.exceptions import GMSOError
 
 
 class Bond(Connection):
-    """A 2-partner connection between sites.
+    __base_doc__ = """A 2-partner connection between sites.
 
-    This is a subclass of the gmso.Connection superclass.
+    This is a subclass of the gmso.abc.Connection superclass.
     This class has strictly 2 members in its connection_members.
     The connection_type in this class corresponds to gmso.BondType.
-
-    Parameters
-    ---------
-    connection_members: list of gmso.Site
-        2 sites of a bond.
-    connection_type : gmso.BondType, optional, default=None
-        BondType of this bond.
-    name : str, optional, default="Bond"
-        Name of the bond.
 
     Notes
     -----
@@ -27,28 +21,80 @@ class Bond(Connection):
         __eq__, __repr__, _validate methods.
     Additional _validate methods are presented.
     """
+    __members_creator__: ClassVar[Callable] = Atom.parse_obj
 
-    def __init__(self, connection_members=None, connection_type=None, name="Bond"):
-        connection_members = _validate_two_partners(connection_members)
-        connection_type = _validate_bondtype(connection_type)
+    connection_members_: Tuple[Atom, Atom] = Field(
+        ..., description="The 2 atoms involved in the bond."
+    )
 
-        super(Bond, self).__init__(connection_members=connection_members,
-                connection_type=connection_type, name=name)
+    bond_type_: Optional[BondType] = Field(
+        default=None, description="BondType of this bond."
+    )
 
+    @property
+    def bond_type(self):
+        """Return parameters of the potential type."""
+        return self.__dict__.get("bond_type_")
 
-def _validate_two_partners(connection_members):
-    """Ensure 2 partners are involved in Bond"""
-    assert connection_members is not None, "connection_members is not given"
-    if len(connection_members) != 2:
-        raise GMSOError("Trying to create a Bond "
-                "with {} connection members". format(len(connection_members)))
-    return connection_members
+    @property
+    def connection_type(self):
+        """Return parameters of the potential type."""
+        # ToDo: Deprecate this?
+        return self.__dict__.get("bond_type_")
 
+    def equivalent_members(self):
+        """Get a set of the equivalent connection member tuples.
 
-def _validate_bondtype(contype):
-    """Ensure connection_type is a BondType """
-    if contype is None:
-        warnings.warn("Non-parametrized Bond detected")
-    elif not isinstance(contype, BondType):
-        raise GMSOError("Supplied non-BondType {}".format(contype))
-    return contype
+        Returns
+        -------
+        frozenset
+            A unique set of tuples of equivalent connection members
+
+        Notes
+        -----
+        For a bond:
+
+            i, j == j, i
+
+        where i and j are the connection members.
+        """
+        return frozenset(
+            [self.connection_members, tuple(reversed(self.connection_members))]
+        )
+
+    def _equivalent_members_hash(self):
+        """Return a unique hash representing the connection.
+
+        Returns
+        -------
+        int
+            A unique hash to represent the connection members
+        Notes
+        -----
+        For a bond:
+            i, j == j, i
+        where i and j are the connection members.
+        Here, i and j are interchangeable.
+        """
+        return hash(
+            frozenset([self.connection_members[0], self.connection_members[1]])
+        )
+
+    def __setattr__(self, key, value):
+        """Handle attribute assignment."""
+        if key == "connection_type":
+            super(Bond, self).__setattr__("bond_type", value)
+        else:
+            super(Bond, self).__setattr__(key, value)
+
+    class Config:
+        """Pydantic configuration for Bond."""
+
+        fields = {
+            "bond_type_": "bond_type",
+            "connection_members_": "connection_members",
+        }
+        alias_to_fields = {
+            "bond_type": "bond_type_",
+            "connection_members": "connection_members_",
+        }

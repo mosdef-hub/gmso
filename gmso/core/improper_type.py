@@ -1,12 +1,15 @@
-import warnings
-import unyt as u
+"""Defined interactions for improper-style connections."""
+from typing import Optional, Tuple
 
-from gmso.core.potential import Potential
-from gmso.exceptions import GMSOError
+import unyt as u
+from pydantic import Field
+
+from gmso.core.parametric_potential import ParametricPotential
 from gmso.utils._constants import IMPROPER_TYPE_DICT
 
-class ImproperType(Potential):
-    """A descripton of the interaction between 4 bonded partners.
+
+class ImproperType(ParametricPotential):
+    __base_doc__ = """A description of the interaction between 4 bonded partners.
 
     This is a subclass of the gmso.core.Potential superclass.
 
@@ -26,82 +29,63 @@ class ImproperType(Potential):
 
     where m1, m2, m3, and m4 are connection members 1-4, respectively.
 
-
-    Parameters
-    ----------
-    name : str
-    expression : str or sympy.Expression
-        See `Potential` documentation for more information
-    parameters : dict {str, unyt.unyt_quantity}
-        See `Potential` documentation for more information
-    independent vars : set of str
-        See `Potential` documentation for more information
-    member_types : list-like of str
-        List-like of of gmso.AtomType.name defining the members of this
-        improper type
-    topology: gmso.core.Topology, default=None
-        The topology of which this improper type is a part of
-    set_ref: str
-        The string name of the bookkeeping set in topology class.
-
     Notes
     ----
-    Inherits many functions from gmso.Potential:
+    Inherits many functions from gmso.ParametricPotential:
         __eq__, _validate functions
 
     """
 
-    def __init__(self,
-                 name='ImproperType',
-                 expression='0.5 * k * ((phi - phi_eq))**2',
-                 parameters=None,
-                 independent_variables=None,
-                 member_types=None,
-                 topology=None,
-                 set_ref='improper_type_set'):
-        if parameters is None:
-            parameters = {
-                'k': 1000 * u.Unit('kJ / (deg**2)'),
-                'phi_eq': 0 * u.deg,
-            }
-        if independent_variables is None:
-            independent_variables = {'phi'}
+    member_types_: Optional[Tuple[str, str, str, str]] = Field(
+        None,
+        description="List-like of of gmso.AtomType.name or gmso.AtomType.atomclass "
+        "defining the members of this improper type",
+    )
 
-        if member_types is None:
-            member_types = list()
+    def __init__(
+        self,
+        name="ImproperType",
+        expression=None,
+        parameters=None,
+        independent_variables=None,
+        potential_expression=None,
+        member_types=None,
+        topology=None,
+        tags=None,
+    ):
+        if potential_expression is None:
+            if expression is None:
+                expression = "0.5 * k * ((phi - phi_eq))**2"
 
-        super(ImproperType, self).__init__(name=name, expression=expression,
-                                           parameters=parameters, independent_variables=independent_variables,
-                                           topology=topology)
-        self._set_ref = IMPROPER_TYPE_DICT
-        self._member_types = _validate_four_member_type_names(member_types)
+            if parameters is None:
+                parameters = {
+                    "k": 1000 * u.Unit("kJ / (deg**2)"),
+                    "phi_eq": 0 * u.deg,
+                }
 
-    @property
-    def set_ref(self):
-        return self._set_ref
+            if independent_variables is None:
+                independent_variables = {"phi"}
+
+        super(ImproperType, self).__init__(
+            name=name,
+            expression=expression,
+            parameters=parameters,
+            independent_variables=independent_variables,
+            potential_expression=potential_expression,
+            topology=topology,
+            member_types=member_types,
+            set_ref=IMPROPER_TYPE_DICT,
+            tags=tags,
+        )
 
     @property
     def member_types(self):
-        return self._member_types
+        """Return member information for this ImproperType."""
+        return self.__dict__.get("member_types_")
 
-    @member_types.setter
-    def member_types(self, val):
-        if self.member_types != val:
-            warnings.warn("Changing an ImproperType's constituent "
-                          "member types: {} to {}".format(self.member_types, val))
-        self._member_types = _validate_four_member_type_names(val)
+    class Config:
+        """Pydantic configuration for attributes."""
 
-    def __repr__(self):
-        return "<ImproperType {}, id {}>".format(self.name, id(self))
+        fields = {"member_types_": "member_types"}
 
-
-def _validate_four_member_type_names(types):
-    """Ensure exactly 4 partners are involved in ImproperType"""
-    if len(types) != 4 and len(types) != 0:
-        raise GMSOError("Trying to create an ImproperType "
-                            "with {} constituent types".format(len(types)))
-    if not all([isinstance(t, str) for t in types]):
-        raise GMSOError("Types passed to ImproperType "
-                            "need to be strings corresponding to AtomType names")
-
-    return types
+        alias_to_fields = {"member_types": "member_types_"}

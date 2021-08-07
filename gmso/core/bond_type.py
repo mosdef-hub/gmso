@@ -1,14 +1,15 @@
-import unyt as u
-import warnings
+"""Defined interactions between two bonded partners."""
+from typing import Optional, Tuple
 
-from gmso.core.potential import Potential
-from gmso.utils.decorators import confirm_dict_existence
-from gmso.exceptions import GMSOError
+import unyt as u
+from pydantic import Field
+
+from gmso.core.parametric_potential import ParametricPotential
 from gmso.utils._constants import BOND_TYPE_DICT
 
 
-class BondType(Potential):
-    """A descripton of the interaction between 2 bonded partners.
+class BondType(ParametricPotential):
+    __base_doc__ = """A descripton of the interaction between 2 bonded partners.
 
     This is a subclass of the gmso.core.Potential superclass.
 
@@ -18,79 +19,61 @@ class BondType(Potential):
     The AtomTypes that are used to define the bond type are stored as
     `member_types`.
 
-    Parameters
-    ----------
-    name : str
-        The name of the potential.
-    expression : str or sympy.Expression
-        See `Potential` documentation for more information
-    parameters : dict {str, unyt.unyt_quantity}
-        See `Potential` documentation for more information
-    independent vars : set of str
-        see `Potential` documentation for more information
-    member_types : list-like of str
-        List-like of of gmso.AtomType.name defining the members of this
-        bond type
-
     Notes
     ----
-    Inherits many functions from gmso.Potential:
+    Inherits many functions from gmso.ParametricPotential:
         __eq__, _validate functions
-
     """
 
-    def __init__(self,
-                 name='BondType',
-                 expression='0.5 * k * (r-r_eq)**2',
-                 parameters=None,
-                 independent_variables=None,
-                 member_types=None,
-                 topology=None,
-                 set_ref='bond_type_set'):
-        if parameters is None:
-            parameters = {
-                'k': 1000 * u.Unit('kJ / (nm**2)'),
-                'r_eq': 0.14 * u.nm
-            }
-        if independent_variables is None:
-            independent_variables = {'r'}
+    member_types_: Optional[Tuple[str, str]] = Field(
+        None,
+        description="List-like of of gmso.AtomType.name or gmso.AtomType.atomclass "
+        "defining the members of this bond type",
+    )
 
-        if member_types is None:
-            member_types = list()
+    def __init__(
+        self,
+        name="BondType",
+        expression=None,
+        parameters=None,
+        independent_variables=None,
+        potential_expression=None,
+        member_types=None,
+        topology=None,
+        tags=None,
+    ):
+        if potential_expression is None:
+            if expression is None:
+                expression = "0.5 * k * (r-r_eq)**2"
 
-        super(BondType, self).__init__(name=name, expression=expression,
-                                       parameters=parameters, independent_variables=independent_variables,
-                                       topology=topology)
-        self._set_ref = BOND_TYPE_DICT
-        self._member_types = _validate_two_member_type_names(member_types)
+            if parameters is None:
+                parameters = {
+                    "k": 1000 * u.Unit("kJ / (nm**2)"),
+                    "r_eq": 0.14 * u.nm,
+                }
+            if independent_variables is None:
+                independent_variables = {"r"}
 
-    @property
-    def set_ref(self):
-        return self._set_ref
+        super(BondType, self).__init__(
+            name=name,
+            expression=expression,
+            parameters=parameters,
+            independent_variables=independent_variables,
+            potential_expression=potential_expression,
+            topology=topology,
+            member_types=member_types,
+            set_ref=BOND_TYPE_DICT,
+            tags=tags,
+        )
 
     @property
     def member_types(self):
-        return self._member_types
+        """Return the members involved in this bondtype."""
+        return self.__dict__.get("member_types_")
 
-    @member_types.setter
-    @confirm_dict_existence
-    def member_types(self, val):
-        if self.member_types != val:
-            warnings.warn("Changing a BondType's constituent "
-                          "member types: {} to {}".format(self.member_types, val))
-        self._member_types = _validate_two_member_type_names(val)
+    class Config:
+        """Pydantic configuration for class attributes."""
 
-    def __repr__(self):
-        return "<BondType {}, id {}>".format(self.name, id(self))
+        fields = {"member_types_": "member_types"}
 
-
-def _validate_two_member_type_names(types):
-    """Ensure exactly 2 partners are involved in BondType"""
-    if len(types) != 2 and len(types) != 0:
-        raise GMSOError("Trying to create a BondType "
-                            "with {} constituent types".format(len(types)))
-    if not all([isinstance(t, str) for t in types]):
-        raise GMSOError("Types passed to BondType "
-                            "need to be strings corresponding to AtomType names")
-
-    return types
+        alias_to_fields = {"member_types": "member_types_"}

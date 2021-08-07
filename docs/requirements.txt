@@ -1,6 +1,0 @@
-sphinx
-boltons
-lxml
-unyt
-pytest
-sphinx_rtd_theme

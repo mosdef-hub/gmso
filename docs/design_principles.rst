@@ -23,26 +23,26 @@ of elements with each particle).
 ``GMSO`` enables the following features:
 
 * Supporting a variety of models in the molecular simulation/computational
-  chemistry community: No assumptions are made about an interaciton site
-  represetning an atom or bead, instead supported atomistic,
+  chemistry community: No assumptions are made about an interaction site
+  representing an atom or bead, instead supported atomistic,
   united-atom/coarse-grained, polarizable, and other models!
 
-* Greater flexibility for exotic potentials: The ``AtomType`` (and analoug
-  classes for intramolecular interactions) uses ``sympy`` toclass can store any
+* Greater flexibility for exotic potentials: The ``AtomType`` (and analogue
+  classes for intramolecular interactions) uses ``sympy`` to store any
   potential that can be represented by a mathematical expression. If you can
   write it down, it can be stored!
 
-* Easier development for glue to new engines: by not initially for
+* Easier development for glue to new engines: by not being designed for
   compatibility with any particular molecular simulation engine or ecosystem,
-  it becomes more tractable for developers in the community add glue for
+  it becomes more tractable for developers in the community to add glue for
   engines that are not currently supported (and even ones that do not exist at
   present)!
 
 
 * Compatibility with existing community tools: No single molecular simulation
   tool will be a silver bullet, so ``GMSO`` includes functions to convert
-  objects. These can be used in their own right to convert between objects in
-  memory and also to support conversion to file formats not natively support at
+  objects. These can be used in their own right to convert between objects in-memory
+  and also to support conversion to file formats not natively supported at
   any given time. Currently supported conversions include ``ParmEd``,
   ``OpenMM``, ``mBuild``, ``MDTraj``, with others coming in the future!
 

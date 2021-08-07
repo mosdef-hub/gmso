@@ -33,6 +33,7 @@
                 <xsd:element name="AtomType" type="AtomType" minOccurs="0" maxOccurs="unbounded"/>
             </xsd:sequence>
             <xsd:attribute name="expression" type="xsd:string" use="optional"/>
+            <xsd:attribute name="name" type="xsd:string" use="optional"/>
         </xsd:complexType>
     </xsd:element>
 
@@ -43,8 +44,10 @@
             <xsd:element ref="Parameters" minOccurs="0" maxOccurs="1"/>
         </xsd:sequence>
         <xsd:attribute name="name" type="xsd:string" use="optional"/>
-        <xsd:attribute name="type1" type="xsd:string" use="required"/>
-        <xsd:attribute name="type2" type="xsd:string" use="required"/>
+        <xsd:attribute name="type1" type="xsd:string"/>
+        <xsd:attribute name="class1" type="xsd:string"/>
+        <xsd:attribute name="type2" type="xsd:string"/>
+        <xsd:attribute name="class2" type="xsd:string"/>
         <xsd:attribute name="expression" type="xsd:string" use="optional"/>
     </xsd:complexType>
 
@@ -52,9 +55,16 @@
         <xsd:complexType>
             <xsd:sequence>
                 <xsd:element name="ParametersUnitDef" type="ParametersUnitDef" minOccurs="0" maxOccurs="unbounded"/>
-                <xsd:element name="BondType" type="BondType" maxOccurs="unbounded" minOccurs="0"/>
+                <xsd:element name="BondType" type="BondType" maxOccurs="unbounded" minOccurs="0">
+                    <xsd:key name="mutuallyExclusiveAttributesBondType">
+                        <xsd:selector xpath="."/>
+                        <xsd:field xpath="@type1|@class1"/>
+                        <xsd:field xpath="@type2|@class2"/>
+                    </xsd:key>
+                </xsd:element>
             </xsd:sequence>
             <xsd:attribute name="expression" type="xsd:string"/>
+            <xsd:attribute name="name" type="xsd:string" use="optional"/>
         </xsd:complexType>
         <xsd:key name="bondtype_name_key">
             <xsd:selector xpath="BondType"/>
@@ -68,9 +78,12 @@
             <xsd:element ref="Parameters" minOccurs="0" maxOccurs="1"/>
         </xsd:sequence>
         <xsd:attribute name="name" type="xsd:string" use="optional"/>
-        <xsd:attribute name="type1" type="xsd:string" use="required"/>
-        <xsd:attribute name="type2" type="xsd:string" use="required"/>
-        <xsd:attribute name="type3" type="xsd:string" use="required"/>
+        <xsd:attribute name="type1" type="xsd:string"/>
+        <xsd:attribute name="class1" type="xsd:string"/>
+        <xsd:attribute name="type2" type="xsd:string"/>
+        <xsd:attribute name="class2" type="xsd:string"/>
+        <xsd:attribute name="type3" type="xsd:string"/>
+        <xsd:attribute name="class3" type="xsd:string"/>
         <xsd:attribute name="expression" type="xsd:string" use="optional"/>
     </xsd:complexType>
 
@@ -78,9 +91,17 @@
         <xsd:complexType>
             <xsd:sequence>
                 <xsd:element name="ParametersUnitDef" type="ParametersUnitDef" minOccurs="0" maxOccurs="unbounded"/>
-                <xsd:element name="AngleType" type="AngleType" maxOccurs="unbounded" minOccurs="0"/>
+                <xsd:element name="AngleType" type="AngleType" maxOccurs="unbounded" minOccurs="0">
+                    <xsd:key name="mutuallyExclusiveAttributesAngleType">
+                        <xsd:selector xpath="."/>
+                        <xsd:field xpath="@type1|@class1"/>
+                        <xsd:field xpath="@type2|@class2"/>
+                        <xsd:field xpath="@type3|@class3"/>
+                    </xsd:key>
+                </xsd:element>
             </xsd:sequence>
             <xsd:attribute name="expression" type="xsd:string"/>
+            <xsd:attribute name="name" type="xsd:string" use="optional"/>
         </xsd:complexType>
         <xsd:key name="angle_type_name_key">
             <xsd:selector xpath="AngleType"/>
@@ -88,16 +109,20 @@
         </xsd:key>
     </xsd:element>
 
-    <!-- Begin ForceField DihedralType Tags and Attributes -->
-    <xsd:complexType name="DihedralType">
+    <!-- Begin ForceField DihedralType and ImproperType Tags and Attributes -->
+    <xsd:complexType name="DihedralOrImproperType">
         <xsd:sequence>
             <xsd:element ref="Parameters" minOccurs="0" maxOccurs="1"/>
         </xsd:sequence>
         <xsd:attribute name="name" type="xsd:string" use="optional"/>
-        <xsd:attribute name="type1" type="xsd:string" use="required"/>
-        <xsd:attribute name="type2" type="xsd:string" use="required"/>
-        <xsd:attribute name="type3" type="xsd:string" use="required"/>
-        <xsd:attribute name="type4" type="xsd:string" use="required"/>
+        <xsd:attribute name="type1" type="xsd:string"/>
+        <xsd:attribute name="class1" type="xsd:string"/>
+        <xsd:attribute name="type2" type="xsd:string"/>
+        <xsd:attribute name="class2" type="xsd:string"/>
+        <xsd:attribute name="type3" type="xsd:string"/>
+        <xsd:attribute name="class3" type="xsd:string"/>
+        <xsd:attribute name="type4" type="xsd:string"/>
+        <xsd:attribute name="class4" type="xsd:string"/>
         <xsd:attribute name="expression" type="xsd:string" use="optional"/>
     </xsd:complexType>
 
@@ -105,12 +130,54 @@
         <xsd:complexType>
             <xsd:sequence>
                 <xsd:element name="ParametersUnitDef" type="ParametersUnitDef" minOccurs="0" maxOccurs="unbounded"/>
-                <xsd:element name="DihedralType" type="DihedralType" maxOccurs="unbounded" minOccurs="0"/>
+                <xsd:choice minOccurs="0" maxOccurs="unbounded">
+                    <xsd:element name="DihedralType" type="DihedralOrImproperType" minOccurs="0"/>
+                    <xsd:element name="ImproperType" type="DihedralOrImproperType" minOccurs="0"/>
+                </xsd:choice>
+                </xsd:sequence>
+            <xsd:attribute name="expression" type="xsd:string"/>
+            <xsd:attribute name="name" type="xsd:string" use="optional"/>
+        </xsd:complexType>
+        <xsd:key name="dihedral_or_improper_type_key">
+            <xsd:selector xpath="DihedralType|ImproperType"/>
+            <xsd:field xpath="@name"/>
+            <xsd:field xpath="@type1|@class1"/>
+            <xsd:field xpath="@type2|@class2"/>
+            <xsd:field xpath="@type3|@class3"/>
+            <xsd:field xpath="@type4|@class4"/>
+        </xsd:key>
+    </xsd:element>
+
+    <!-- Begin: PairPotentialTypes Tags and Attributes -->
+    <xsd:complexType name="PairPotentialType">
+        <xsd:sequence>
+            <xsd:element ref="Parameters" minOccurs="0" maxOccurs="1"/>
+        </xsd:sequence>
+        <xsd:attribute name="name" type="xsd:string" use="optional"/>
+        <xsd:attribute name="type1" type="xsd:string"/>
+        <xsd:attribute name="class1" type="xsd:string"/>
+        <xsd:attribute name="type2" type="xsd:string"/>
+        <xsd:attribute name="class2" type="xsd:string"/>
+        <xsd:attribute name="expression" type="xsd:string" use="optional"/>
+    </xsd:complexType>
+
+    <xsd:element name="PairPotentialTypes">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="ParametersUnitDef" type="ParametersUnitDef" minOccurs="0" maxOccurs="unbounded"/>
+                <xsd:element name="PairPotentialType" type="PairPotentialType" maxOccurs="unbounded" minOccurs="0">
+                    <xsd:key name="mutuallyExclusiveAttributesPairPotentialType">
+                        <xsd:selector xpath="."/>
+                        <xsd:field xpath="@type1|@class1"/>
+                        <xsd:field xpath="@type2|@class2"/>
+                    </xsd:key>
+                </xsd:element>
             </xsd:sequence>
             <xsd:attribute name="expression" type="xsd:string"/>
+            <xsd:attribute name="name" type="xsd:string" use="optional"/>
         </xsd:complexType>
-        <xsd:key name="dihedral_type_key">
-            <xsd:selector xpath="DihedralType"/>
+        <xsd:key name="pairpotentialtype_name_key">
+            <xsd:selector xpath="PairPotentialType"/>
             <xsd:field xpath="@name"/>
         </xsd:key>
     </xsd:element>
@@ -169,6 +236,7 @@
                 <xsd:element ref="BondTypes" minOccurs="0" maxOccurs="unbounded"/>
                 <xsd:element ref="AngleTypes" minOccurs="0" maxOccurs="unbounded"/>
                 <xsd:element ref="DihedralTypes" minOccurs="0" maxOccurs="unbounded"/>
+                <xsd:element ref="PairPotentialTypes" minOccurs="0" maxOccurs="unbounded"/>
             </xsd:sequence>
             <xsd:attribute name="version" use="optional" type="xsd:string"/>
             <xsd:attribute name="name" use="optional" type="xsd:string"/>
@@ -187,6 +255,10 @@
         </xsd:unique>
         <xsd:unique name="dihedraltypes_names">
             <xsd:selector xpath="DihedralTypes/DihedralType"/>
+            <xsd:field xpath="@name"/>
+        </xsd:unique>
+        <xsd:unique name="pairpotentialtypes_names">
+            <xsd:selector xpath="PairPotentialTypes/PairPotentialType"/>
             <xsd:field xpath="@name"/>
         </xsd:unique>
     </xsd:element>

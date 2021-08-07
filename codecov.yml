@@ -1,3 +1,4 @@
 ignore:
-  - "mbuild/examples"
-  - "mbuild/tests"
+  - "gmso/examples"
+  - "gmso/tests"
+  - "gmso/formats/networkx.py"

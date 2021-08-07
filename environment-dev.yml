@@ -1,0 +1,24 @@
+name: gmso-dev
+channels:
+  - conda-forge
+dependencies:
+  - numpy
+  - sympy
+  - unyt >= 2.4
+  - boltons
+  - lxml
+  - pydantic
+  - networkx
+  - pytest
+  - mbuild >= 0.11.0
+  - openbabel >= 3.0.0
+  - foyer
+  - gsd >= 2.0
+  - parmed
+  - pytest-cov
+  - codecov
+  - bump2version
+  - matplotlib
+  - ipywidgets
+  - ele >= 0.2.0
+  - pre-commit
