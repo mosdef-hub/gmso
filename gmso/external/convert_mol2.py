@@ -9,7 +9,9 @@ from gmso import Atom, Bond, Box, Topology
 from gmso.core.element import element_by_name, element_by_symbol
 
 
-def from_mol2(filename, site_type = "Atom"):  # TODO add flags for information to return
+def from_mol2(
+    filename, site_type="Atom"
+):  # TODO add flags for information to return
     # TODO: descriptions and examples
     # TODO: Be sure to be clear about how to read in to mbuild compound using gmso.external.to_mbuild function
 
@@ -26,7 +28,9 @@ def from_mol2(filename, site_type = "Atom"):  # TODO add flags for information t
         # check for header character in line
         if line.startswith("@<TRIPOS>"):
             # if header character in line, send to a function that will direct it properly
-            line, topology = parse_record_type_indicator(f, line, topology, site_type)
+            line, topology = parse_record_type_indicator(
+                f, line, topology, site_type
+            )
         elif line == "":
             break
         else:
@@ -44,7 +48,7 @@ def from_mol2(filename, site_type = "Atom"):  # TODO add flags for information t
     return topology
 
 
-def load_top_sites(f, topology, site_type = "Atom"):
+def load_top_sites(f, topology, site_type="Atom"):
     """Take a mol2 file section with the heading @<TRIPOS>ATOM and save to the topology.sites attribute"""
     while True:
         line = f.readline()
@@ -60,8 +64,11 @@ def load_top_sites(f, topology, site_type = "Atom"):
             elif element_by_name(line[5]):
                 element = element_by_name(line[5])
             else:
-                warnings.warn("No element detected for site {} with index {}, consider manually adding the element to the topology".format(
-                                  line[1], len(topology.sites) + 1))
+                raise UserWarning(
+                    "No element detected for site {} with index{}, consider manually adding the element to the topology".format(
+                        line[1], len(topology.sites) + 1
+                    )
+                )
                 element = None
             try:
                 charge = float(line[8])
@@ -84,7 +91,7 @@ def load_top_bonds(f, topology, **kwargs):
     """Take a mol2 file section with the heading @<TRIPOS>BOND and save to the topology.bonds attribute"""
     while True:
         line = f.readline()
-        if "@" not in line and not line == '\n':
+        if "@" not in line and not line == "\n":
             line = line.split()
             bond = Bond(
                 connection_members=(
