@@ -132,12 +132,12 @@ def load_top_bonds(f, topology, **kwargs):
 def load_top_box(f, topology, **kwargs):
     """Take a mol2 file section with the heading '@<TRIPOS>FF_PBC' or '@<TRIPOS>CRYSIN' and save to topology.box."""
     if topology.box:
-        raise warnings.UserWarning(
+        warnings.warn(
             "This mol2 file has two boxes to be read in, only reading in one with dimensions {}".format(
                 topology.box
             )
         )
-        f.readline()
+        line = f.readline()
         return line, topology
     while True:
         line = f.readline()

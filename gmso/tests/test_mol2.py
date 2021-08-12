@@ -55,3 +55,5 @@ class TestMol2(BaseTest):
         with pytest.warns(UserWarning) as record:
             from_mol2(get_fn("broken.mol2"))
         assert record[0].message.args[0] == match
+        match = "This mol2 file has two boxes to be read in, only reading in one with dimensions Box(a=0.72 nm, b=0.9337999999999999 nm, c=0.6646 nm, alpha=90.0 degree, beta=90.0 degree, gamma=90.0 degree)"
+        assert record[-1].message.args[0] == match

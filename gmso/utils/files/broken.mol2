@@ -30,3 +30,5 @@ USER_CHARGES
       10       10        8 1
 @<TRIPOS>SUBSTRUCTURE
        1 RES             1 RESIDUE    0 **** ROOT      0
+@<TRIPOS>FF_PBC
+    7.2000     9.3380     6.6460    90.0000    90.0000    90.0000  1  1
