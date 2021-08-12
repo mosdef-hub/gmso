@@ -70,7 +70,8 @@ def load_top_bonds(f, topology):
     """Take a mol2 file section with the heading @<TRIPOS>BOND and save to the topology.bonds attribute"""
     while True:
         line = f.readline()
-        if "@" not in line:
+        display(line)
+        if "@" not in line and not line == '\n':
             line = line.split()
             bond = Bond(
                 connection_members=(
