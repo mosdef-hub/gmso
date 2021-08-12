@@ -40,7 +40,6 @@ class TestMol2(BaseTest):
     def test_lj_system(self):
         top = from_mol2(get_fn("parmed.mol2"), site_type="lj")
         assert np.all([site.element == None for site in top.sites])
-        
 
     def test_wrong_path(self):
         with pytest.raises(OSError) as e:
