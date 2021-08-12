@@ -60,13 +60,18 @@ def load_top_sites(f, topology, site_type = "Atom"):
             elif element_by_name(line[5]):
                 element = element_by_name(line[5])
             else:
-                raise UserWarning("No element detected for site {} with index{}, consider manually adding the element to the topology".format(
+                warnings.warn("No element detected for site {} with index {}, consider manually adding the element to the topology".format(
                                   line[1], len(topology.sites) + 1))
                 element = None
-            atom = Atom(
+            try:
+                charge = float(line[8])
+            except IndexError:
+                warnings.warn("No charges were detected for site {} with index {}".format(line[1], line[0]))
+                charge = None
+            atom = Atom( 
                 name=line[1],
                 position=position.to("nm"),
-                charge=float(line[8]),
+                charge=charge,
                 element=element,
             )
             topology.add_site(atom)
