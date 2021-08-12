@@ -1,5 +1,7 @@
 """Convert to and from a TRIPOS mol2 file."""
 #TODO add sources of mol2 files
+import os
+
 import unyt as u
 import warnings
 
@@ -7,13 +9,17 @@ from gmso import Topology, Atom, Bond
 from gmso.core.element import element_by_name
 
 def from_mol2(filename): #TODO add flags for information to return
-    #TODO descriptions and examples
-    msg = "Provided path to file is not a support mol2 file"
-    #TODO write a function that verifies a file path is a mol2 file
-    #TODO implement reading in and saving to an empty topology
-        # Initialize topology
-    topology = Topology(name='Mol2_top')
-        # Read in filename, return error if filename not found
+    #TODO: descriptions and examples
+    #TODO: Be sure to be clear about how to read in to mbuild compound using gmso.external.to_mbuild function 
+    
+    msg = "Provided path to file that does not exist"
+    if not os.path.isfile(filename):
+        raise OSError(msg)
+    #TODO: write a function that verifies a file path is a mol2 file
+
+    # Initialize topology
+    topology = Topology(name=os.path.splitext(os.path.basename(filename))[0])
+    #save the name from the filename
     f = open(filename, 'r')
     line = f.readline()
     while f:
@@ -27,15 +33,15 @@ def from_mol2(filename): #TODO add flags for information to return
             # else, skip to next line
             line = f.readline()
     f.close()
+
     # return warnings if any sections are not covered
     # save sections to a list for each
     # Iterate through list of <ATOM> to save to Topology.sites
     # Iterate through list of <BOND> to save to Topology.bonds
     # Save box dimensions to Topology.box
     # Make sure other attributes of the topology are updated accordingly
-    #TODO read in parameters to correct attribute as well
+    #TODO: read in parameters to correct attribute as well
     return topology
-    #TODO Be sure to be clear about how to read in to mbuild compound using gmso.external.to_mbuild function 
 
 def load_top_sites(f, topology):
     """Take a mol2 file section with the heading @<TRIPOS>ATOM and save to the topology.sites attribute"""
@@ -43,7 +49,10 @@ def load_top_sites(f, topology):
         line = f.readline()
         if '@' not in line:
             line = line.split()
-            atom = Atom(name=line[1], position=line[2:5], charge=line[8], element=element_by_name(line[5]))
+            position = [float(x) for x in line[2:5]] * u.Å
+            # TODO: make sure charges are also saved as a unyt value
+            # TODO: add validation for element names
+            atom = Atom(name=line[1], position=position.to('nm'), charge=float(line[8])*u., element=element_by_name(line[5]))
             topology.add_site(atom)
         else:
             break
