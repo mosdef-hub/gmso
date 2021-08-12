@@ -9,14 +9,12 @@ from gmso import Atom, Bond, Box, Topology
 from gmso.core.element import element_by_name, element_by_symbol
 
 
-def from_mol2(
-    filename, site_type="Atom"
-):  # TODO add flags for information to return
+def from_mol2(filename, site_type="Atom"):  # TODO add flags for information to return
     """Read in a TRIPOS mol2 file format into a gmso topology object.
 
-    Creates a Topology from a mol2 file structure. This will read in the 
-    topological structure (sites, angles, and box) information into gmso. 
-    Note that parameterized information can be found in these objects, but 
+    Creates a Topology from a mol2 file structure. This will read in the
+    topological structure (sites, angles, and box) information into gmso.
+    Note that parameterized information can be found in these objects, but
     will not be converted to the Topology.
 
     Parameters
@@ -24,10 +22,10 @@ def from_mol2(
     filename : string
         path to the file where the mol2 file is stored.
     site_type : string, optional, default='Atom'
-        tells the reader to consider the elements saved in the mol2 file, and 
+        tells the reader to consider the elements saved in the mol2 file, and
         if the type is 'lj', to not try to identify the element of the site,
         instead saving the site name.
-    
+
     Returns
     -------
     top : gmso.Topology
@@ -37,12 +35,12 @@ def from_mol2(
     It may be common to want to create an mBuild compound from a mol2 file. This is possible
     by installing [mBuild](https://mbuild.mosdef.org/en/stable/index.html)
     and converting using the following python code:
-    
+
         >>> from gmso.external.convert_mol2 import from_mol2
         >>> from gmso.external.convert_mbuild import to_mbuild
         >>> top = from_mol2('myfile.mol2')
         >>> mbuild_compound = to_mbuild(top)
-    ```
+    """
     msg = "Provided path to file that does not exist"
     if not os.path.isfile(filename):
         raise OSError(msg)
@@ -55,9 +53,7 @@ def from_mol2(
         # check for header character in line
         if line.startswith("@<TRIPOS>"):
             # if header character in line, send to a function that will direct it properly
-            line, topology = parse_record_type_indicator(
-                f, line, topology, site_type
-            )
+            line, topology = parse_record_type_indicator(f, line, topology, site_type)
         elif line == "":
             break
         else:
@@ -69,7 +65,7 @@ def from_mol2(
 
 
 def load_top_sites(f, topology, site_type="Atom"):
-    """Take a mol2 file section with the heading @<TRIPOS>ATOM and save to the topology.sites attribute."""
+    """Take a mol2 file section with the heading '<TRIPOS>ATOM' and save to the topology.sites attribute."""
     while True:
         line = f.readline()
         if "@" not in line and not line == "\n":
@@ -112,7 +108,7 @@ def load_top_sites(f, topology, site_type="Atom"):
 
 
 def load_top_bonds(f, topology, **kwargs):
-    """Take a mol2 file section with the heading @<TRIPOS>BOND and save to the topology.bonds attribute."""
+    """Take a mol2 file section with the heading '@<TRIPOS>BOND' and save to the topology.bonds attribute."""
     while True:
         line = f.readline()
         if "@" not in line and not line == "\n":
@@ -130,7 +126,7 @@ def load_top_bonds(f, topology, **kwargs):
 
 
 def load_top_box(f, topology, **kwargs):
-    """Take a mol2 file section with the heading @<TRIPOS>FF_PBC or @<TRIPOS>CRYSIN and save to topology.box"""
+    """Take a mol2 file section with the heading '@<TRIPOS>FF_PBC' or '@<TRIPOS>CRYSIN' and save to topology.box"""
     if topology.box:
         raise warnings.UserWarning(
             "This mol2 file has two boxes to be read in, only reading in one with dimensions {}".format(
@@ -166,8 +162,6 @@ def parse_record_type_indicator(f, line, topology, site_type):
     try:
         return supported_rti[line](f, topology, site_type=site_type)
     except KeyError:
-        warnings.warn(
-            "The record type indicator {} is not supported".format(line)
-        )
+        warnings.warn("The record type indicator {} is not supported".format(line))
         line = f.readline()
         return line, topology
