@@ -37,9 +37,15 @@ class TestMol2(BaseTest):
         assert top.bonds[0].connection_members[0] == top.sites[0]
         assert top.box == None
 
+    def test_lj_system(self):
+        top = from_mol2(get_fn("parmed.mol2"), site_type="lj")
+        assert np.all([site.element == None for site in top.sites])
+        
+
     def test_wrong_path(self):
-        with pytest.raises(OSError):
-            from_mol2(get_fn("not_a_file.mol2"))
+        with pytest.raises(OSError) as e:
+            from_mol2("not_a_file.mol2")
+        assert e.value.args[0] == "Provided path to file that does not exist"
         top = from_mol2(get_fn("ethane.gro"))
         assert len(top.sites) == 0
         assert len(top.bonds) == 0
@@ -49,5 +55,3 @@ class TestMol2(BaseTest):
         with pytest.warns(UserWarning) as record:
             from_mol2(get_fn("broken.mol2"))
         assert record[0].message.args[0] == match
-        # with pytest.raises(UserWarning):
-        #    from_mol2(get_fn("broken.mol2"))
