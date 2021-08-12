@@ -19,9 +19,10 @@ RUN conda update conda -yq && \
 	conda config --set always_yes yes --set changeps1 no && \
 	. /opt/conda/etc/profile.d/conda.sh && \
 	sed -i -E "s/python.*$/python="$PY_VERSION"/" environment-dev.yml && \
-	conda env create nomkl -f environment-dev.yml && \
+  conda install -c conda-forge mamba && \
+	mamba env create nomkl -f environment-dev.yml && \
 	conda activate gmso-dev && \
-	conda install -c conda-forge nomkl jupyter && \
+	mamba install -c conda-forge nomkl jupyter && \
         python setup.py install && \
 	echo "source activate gmso-dev" >> \
 	/home/anaconda/.profile && \
