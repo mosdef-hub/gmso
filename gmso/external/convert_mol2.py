@@ -1,17 +1,18 @@
 """Convert to and from a TRIPOS mol2 file."""
 #TODO add sources of mol2 files
 import os
-
-import unyt as u
 import warnings
 
-from gmso import Topology, Atom, Bond
+import unyt as u
+
+from gmso import Atom, Bond, Topology
 from gmso.core.element import element_by_name
+
 
 def from_mol2(filename): #TODO add flags for information to return
     #TODO: descriptions and examples
-    #TODO: Be sure to be clear about how to read in to mbuild compound using gmso.external.to_mbuild function 
-    
+    #TODO: Be sure to be clear about how to read in to mbuild compound using gmso.external.to_mbuild function
+
     msg = "Provided path to file that does not exist"
     if not os.path.isfile(filename):
         raise OSError(msg)
@@ -29,7 +30,7 @@ def from_mol2(filename): #TODO add flags for information to return
             line, topology = parse_record_type_indicator(f, line, topology)
         elif line == "":
             break
-        else: 
+        else:
             # else, skip to next line
             line = f.readline()
     f.close()
