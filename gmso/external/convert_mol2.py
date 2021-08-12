@@ -52,7 +52,7 @@ def load_top_sites(f, topology):
             position = [float(x) for x in line[2:5]] * u.Å
             # TODO: make sure charges are also saved as a unyt value
             # TODO: add validation for element names
-            atom = Atom(name=line[1], position=position.to('nm'), charge=float(line[8])*u., element=element_by_name(line[5]))
+            atom = Atom(name=line[1], position=position.to('nm'), charge=float(line[8]), element=element_by_name(line[5]))
             topology.add_site(atom)
         else:
             break
@@ -94,60 +94,3 @@ def parse_record_type_indicator(f, line, topology):
         warnings.warn('The record type indicator {} is not supported'.format(line))
         line = f.readline()
         return line, topology
-        
-        
-
-def to_mol2(topology, openmm_object="topology"):
-    """Convert an untyped topology object to an untyped OpenMM modeller or topology.
-
-    This is useful if it's preferred to atom-type a system within OpenMM.
-    See http://openmm.org for more information.
-
-    Parameters
-    ----------
-    topology : `Topology` object
-        An untyped topology object
-    open_mm_object : 'topology' or 'modeller' OpenMM object, default='topology'
-        Untyped OpenMM object to convert to
-
-    Returns
-    -------
-    open_mm_object : Untyped `topology` or `modeller` object
-
-    """
-    openmm_top = app.Topology()
-
-    # Get topology.positions into OpenMM form
-    openmm_unit = 1 * simtk_unit.nanometer
-    topology.positions.convert_to_units(openmm_unit.unit.get_symbol())
-    value = [i.value for i in topology.positions]
-    openmm_pos = simtk_unit.Quantity(value=value, unit=openmm_unit.unit)
-
-    # Adding a default chain and residue temporarily
-    chain = openmm_top.addChain()
-    residue = openmm_top.addResidue(name="RES", chain=chain)
-
-    for site in topology.sites:
-        openmm_top.addAtom(
-            name=site.name, element=site.element.name, residue=residue
-        )
-
-    # Set box
-    box = topology.box
-    box.lengths.convert_to_units(u.nanometer)
-    lengths = box.lengths.value
-    openmm_top.setUnitCellDimensions(lengths)
-
-    # TODO: Figure out how to add residues
-    # TODO: Convert connections to OpenMM Bonds
-
-    if openmm_object == "topology":
-
-        return openmm_top
-
-    else:
-        modeller = app.Modeller(openmm_top, openmm_pos)
-
-        return modeller
-
-
