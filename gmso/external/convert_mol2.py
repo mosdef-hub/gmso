@@ -14,9 +14,9 @@ def from_mol2(
 ):  # TODO add flags for information to return
     """Read in a TRIPOS mol2 file format into a gmso topology object.
 
-    Creates a Topology from a mol2 file structure. This will read in the 
-    topological structure (sites, angles, and box) information into gmso. 
-    Note that parameterized information can be found in these objects, but 
+    Creates a Topology from a mol2 file structure. This will read in the
+    topological structure (sites, angles, and box) information into gmso.
+    Note that parameterized information can be found in these objects, but
     will not be converted to the Topology.
 
     Parameters
@@ -24,10 +24,10 @@ def from_mol2(
     filename : string
         path to the file where the mol2 file is stored.
     site_type : string, optional, default='Atom'
-        tells the reader to consider the elements saved in the mol2 file, and 
+        tells the reader to consider the elements saved in the mol2 file, and
         if the type is 'lj', to not try to identify the element of the site,
         instead saving the site name.
-    
+
     Returns
     -------
     top : gmso.Topology
@@ -37,7 +37,7 @@ def from_mol2(
     It may be common to want to create an mBuild compound from a mol2 file. This is possible
     by installing [mBuild](https://mbuild.mosdef.org/en/stable/index.html)
     and converting using the following python code:
-    
+
         >>> from gmso.external.convert_mol2 import from_mol2
         >>> from gmso.external.convert_mbuild import to_mbuild
         >>> top = from_mol2('myfile.mol2')
