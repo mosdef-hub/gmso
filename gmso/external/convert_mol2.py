@@ -126,7 +126,7 @@ def load_top_bonds(f, topology, **kwargs):
 
 
 def load_top_box(f, topology, **kwargs):
-    """Take a mol2 file section with the heading '@<TRIPOS>FF_PBC' or '@<TRIPOS>CRYSIN' and save to topology.box"""
+    """Take a mol2 file section with the heading '@<TRIPOS>FF_PBC' or '@<TRIPOS>CRYSIN' and save to topology.box."""
     if topology.box:
         raise warnings.UserWarning(
             "This mol2 file has two boxes to be read in, only reading in one with dimensions {}".format(
@@ -151,7 +151,9 @@ def load_top_box(f, topology, **kwargs):
 
 def parse_record_type_indicator(f, line, topology, site_type):
     """Take a specific record type indicator from a mol2 file format and save to the proper attribute of a gmso topology.
-    Supported record type indicators include Atom, Bond, FF_PBC, and CRYSIN."""
+
+    Supported record type indicators include Atom, Bond, FF_PBC, and CRYSIN.
+    """
     supported_rti = {
         "@<TRIPOS>ATOM\n": load_top_sites,
         "@<TRIPOS>BOND\n": load_top_bonds,
