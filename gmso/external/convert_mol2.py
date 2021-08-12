@@ -71,7 +71,7 @@ def load_top_bonds(f, topology):
     while True:
         line = f.readline()
         display(line)
-        if "@" not in line and not line == '\n':
+        if "@" not in line and not line == "\n":
             line = line.split()
             bond = Bond(
                 connection_members=(
