@@ -49,7 +49,7 @@ def load_top_sites(f, topology):
     """Take a mol2 file section with the heading @<TRIPOS>ATOM and save to the topology.sites attribute"""
     while True:
         line = f.readline()
-        if "@" not in line:
+        if "@" not in line and not line == "\n":
             line = line.split()
             position = [float(x) for x in line[2:5]] * u.Å
             # TODO: make sure charges are also saved as a unyt value
@@ -94,7 +94,7 @@ def load_top_box(f, topology):
         return line, topology
     while True:
         line = f.readline()
-        if "@" not in line:
+        if "@" not in line and not line == "\n":
             line = line.split()
             # TODO: write to box information
             topology.box = Box(lengths=[float(x) for x in line[0:3]] * u.Å, angles=[float(x) for x in line[3:6]] * u.degree)
