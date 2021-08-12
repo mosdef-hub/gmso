@@ -15,7 +15,10 @@ class TestMol2(BaseTest):
         assert top.name == "parmed"
         assert top.n_sites == 8
         assert_allclose_units(
-            top.box.lengths, ([8.2693,7.9100,6.6460] * u.Å).to("nm"), rtol=1e-5, atol=1e-8
+            top.box.lengths,
+            ([8.2693, 7.9100, 6.6460] * u.Å).to("nm"),
+            rtol=1e-5,
+            atol=1e-8,
         )
 
         top = from_mol2(get_fn("tip3p.mol2"))
@@ -23,7 +26,7 @@ class TestMol2(BaseTest):
         assert top.name == "tip3p"
         assert top.n_sites == 3
         assert_allclose_units(
-            top.box.lengths, 3.0130* np.ones(3) * u.Å, rtol=1e-5, atol=1e-8
+            top.box.lengths, 3.0130 * np.ones(3) * u.Å, rtol=1e-5, atol=1e-8
         )
 
         top = from_mol2(get_fn("vmd.mol2"))
@@ -33,7 +36,6 @@ class TestMol2(BaseTest):
         assert len(top.bonds) == 5
         assert top.bonds[0].connection_members[0] == top.sites[0]
         assert top.box == None
-
 
     def test_wrong_path(self):
         with pytest.raises(OSError):
@@ -47,5 +49,5 @@ class TestMol2(BaseTest):
         with pytest.warns(UserWarning) as record:
             from_mol2(get_fn("broken.mol2"))
         assert record[0].message.args[0] == match
-        #with pytest.raises(UserWarning):
+        # with pytest.raises(UserWarning):
         #    from_mol2(get_fn("broken.mol2"))
