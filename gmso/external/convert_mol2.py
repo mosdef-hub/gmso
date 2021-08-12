@@ -6,17 +6,16 @@ import warnings
 import unyt as u
 
 from gmso import Atom, Bond, Box, Topology
-from gmso.core.element import element_by_name
+from gmso.core.element import element_by_name, element_by_symbol
 
 
-def from_mol2(filename):  # TODO add flags for information to return
+def from_mol2(filename, site_type = "Atom"):  # TODO add flags for information to return
     # TODO: descriptions and examples
     # TODO: Be sure to be clear about how to read in to mbuild compound using gmso.external.to_mbuild function
 
     msg = "Provided path to file that does not exist"
     if not os.path.isfile(filename):
         raise OSError(msg)
-    # TODO: write a function that verifies a file path is a mol2 file
 
     # Initialize topology
     topology = Topology(name=os.path.splitext(os.path.basename(filename))[0])
@@ -27,7 +26,7 @@ def from_mol2(filename):  # TODO add flags for information to return
         # check for header character in line
         if line.startswith("@<TRIPOS>"):
             # if header character in line, send to a function that will direct it properly
-            line, topology = parse_record_type_indicator(f, line, topology)
+            line, topology = parse_record_type_indicator(f, line, topology, site_type)
         elif line == "":
             break
         else:
@@ -45,7 +44,7 @@ def from_mol2(filename):  # TODO add flags for information to return
     return topology
 
 
-def load_top_sites(f, topology):
+def load_top_sites(f, topology, site_type = "Atom"):
     """Take a mol2 file section with the heading @<TRIPOS>ATOM and save to the topology.sites attribute"""
     while True:
         line = f.readline()
@@ -54,11 +53,21 @@ def load_top_sites(f, topology):
             position = [float(x) for x in line[2:5]] * u.Å
             # TODO: make sure charges are also saved as a unyt value
             # TODO: add validation for element names
+            if site_type == "lj":
+                element = None
+            elif element_by_symbol(line[5]):
+                element = element_by_symbol(line[5])
+            elif element_by_name(line[5]):
+                element = element_by_name(line[5])
+            else:
+                raise UserWarning("No element detected for site {} with index{}, consider manually adding the element to the topology".format(
+                                  line[1], len(topology.sites) + 1))
+                element = None
             atom = Atom(
                 name=line[1],
                 position=position.to("nm"),
                 charge=float(line[8]),
-                element=element_by_name(line[5]),
+                element=element,
             )
             topology.add_site(atom)
         else:
@@ -66,11 +75,10 @@ def load_top_sites(f, topology):
     return line, topology
 
 
-def load_top_bonds(f, topology):
+def load_top_bonds(f, topology, **kwargs):
     """Take a mol2 file section with the heading @<TRIPOS>BOND and save to the topology.bonds attribute"""
     while True:
         line = f.readline()
-        display(line)
         if "@" not in line and not line == '\n':
             line = line.split()
             bond = Bond(
@@ -85,7 +93,7 @@ def load_top_bonds(f, topology):
     return line, topology
 
 
-def load_top_box(f, topology):
+def load_top_box(f, topology, **kwargs):
     """Take a mol2 file section with the heading @<TRIPOS>FF_PBC and save to a topology"""
     if topology.box:
         raise warnings.UserWarning(
@@ -109,7 +117,7 @@ def load_top_box(f, topology):
     return line, topology
 
 
-def parse_record_type_indicator(f, line, topology):
+def parse_record_type_indicator(f, line, topology, site_type):
     """Take a specific record type indicator from a mol2 file format and save to the proper attribute of a gmso topology.
     Supported record type indicators include Atom, Bond, FF_PBC."""
     supported_rti = {
@@ -120,7 +128,7 @@ def parse_record_type_indicator(f, line, topology):
     }
     # read in to atom attribute
     try:
-        return supported_rti[line](f, topology)
+        return supported_rti[line](f, topology, site_type=site_type)
     except KeyError:
         warnings.warn(
             "The record type indicator {} is not supported".format(line)
