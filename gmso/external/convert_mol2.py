@@ -9,7 +9,9 @@ from gmso import Atom, Bond, Box, Topology
 from gmso.core.element import element_by_name, element_by_symbol
 
 
-def from_mol2(filename, site_type="Atom"):  # TODO add flags for information to return
+def from_mol2(
+    filename, site_type="Atom"
+):  # TODO add flags for information to return
     """Read in a TRIPOS mol2 file format into a gmso topology object.
 
     Creates a Topology from a mol2 file structure. This will read in the
@@ -53,7 +55,9 @@ def from_mol2(filename, site_type="Atom"):  # TODO add flags for information to 
         # check for header character in line
         if line.startswith("@<TRIPOS>"):
             # if header character in line, send to a function that will direct it properly
-            line, topology = parse_record_type_indicator(f, line, topology, site_type)
+            line, topology = parse_record_type_indicator(
+                f, line, topology, site_type
+            )
         elif line == "":
             break
         else:
@@ -162,6 +166,8 @@ def parse_record_type_indicator(f, line, topology, site_type):
     try:
         return supported_rti[line](f, topology, site_type=site_type)
     except KeyError:
-        warnings.warn("The record type indicator {} is not supported".format(line))
+        warnings.warn(
+            "The record type indicator {} is not supported".format(line)
+        )
         line = f.readline()
         return line, topology
