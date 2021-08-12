@@ -12,13 +12,40 @@ from gmso.core.element import element_by_name, element_by_symbol
 def from_mol2(
     filename, site_type="Atom"
 ):  # TODO add flags for information to return
-    # TODO: descriptions and examples
-    # TODO: Be sure to be clear about how to read in to mbuild compound using gmso.external.to_mbuild function
+    """Read in a TRIPOS mol2 file format into a gmso topology object.
 
+    Creates a Topology from a mol2 file structure. This will read in the 
+    topological structure (sites, angles, and box) information into gmso. 
+    Note that parameterized information can be found in these objects, but 
+    will not be converted to the Topology.
+
+    Parameters
+    ----------
+    filename : string
+        path to the file where the mol2 file is stored.
+    site_type : string, optional, default='Atom'
+        tells the reader to consider the elements saved in the mol2 file, and 
+        if the type is 'lj', to not try to identify the element of the site,
+        instead saving the site name.
+    
+    Returns
+    -------
+    top : gmso.Topology
+
+    Notes
+    -----
+    It may be common to want to create an mBuild compound from a mol2 file. This is possible
+    by installing [mBuild](https://mbuild.mosdef.org/en/stable/index.html)
+    and converting using the following python code:
+    
+        >>> from gmso.external.convert_mol2 import from_mol2
+        >>> from gmso.external.convert_mbuild import to_mbuild
+        >>> top = from_mol2('myfile.mol2')
+        >>> mbuild_compound = to_mbuild(top)
+    ```
     msg = "Provided path to file that does not exist"
     if not os.path.isfile(filename):
         raise OSError(msg)
-
     # Initialize topology
     topology = Topology(name=os.path.splitext(os.path.basename(filename))[0])
     # save the name from the filename
@@ -37,19 +64,12 @@ def from_mol2(
             # else, skip to next line
             line = f.readline()
     f.close()
-
-    # return warnings if any sections are not covered
-    # save sections to a list for each
-    # Iterate through list of <ATOM> to save to Topology.sites
-    # Iterate through list of <BOND> to save to Topology.bonds
-    # Save box dimensions to Topology.box
-    # Make sure other attributes of the topology are updated accordingly
-    # TODO: read in parameters to correct attribute as well
+    # TODO: read in parameters to correct attribute as well. This can be saved in various rti sections.
     return topology
 
 
 def load_top_sites(f, topology, site_type="Atom"):
-    """Take a mol2 file section with the heading @<TRIPOS>ATOM and save to the topology.sites attribute"""
+    """Take a mol2 file section with the heading @<TRIPOS>ATOM and save to the topology.sites attribute."""
     while True:
         line = f.readline()
         if "@" not in line and not line == "\n":
@@ -88,7 +108,7 @@ def load_top_sites(f, topology, site_type="Atom"):
 
 
 def load_top_bonds(f, topology, **kwargs):
-    """Take a mol2 file section with the heading @<TRIPOS>BOND and save to the topology.bonds attribute"""
+    """Take a mol2 file section with the heading @<TRIPOS>BOND and save to the topology.bonds attribute."""
     while True:
         line = f.readline()
         if "@" not in line and not line == "\n":
@@ -106,7 +126,7 @@ def load_top_bonds(f, topology, **kwargs):
 
 
 def load_top_box(f, topology, **kwargs):
-    """Take a mol2 file section with the heading @<TRIPOS>FF_PBC and save to a topology"""
+    """Take a mol2 file section with the heading @<TRIPOS>FF_PBC or @<TRIPOS>CRYSIN and save to topology.box"""
     if topology.box:
         raise warnings.UserWarning(
             "This mol2 file has two boxes to be read in, only reading in one with dimensions {}".format(
@@ -131,7 +151,7 @@ def load_top_box(f, topology, **kwargs):
 
 def parse_record_type_indicator(f, line, topology, site_type):
     """Take a specific record type indicator from a mol2 file format and save to the proper attribute of a gmso topology.
-    Supported record type indicators include Atom, Bond, FF_PBC."""
+    Supported record type indicators include Atom, Bond, FF_PBC, and CRYSIN."""
     supported_rti = {
         "@<TRIPOS>ATOM\n": load_top_sites,
         "@<TRIPOS>BOND\n": load_top_bonds,
