@@ -5,7 +5,7 @@ import warnings
 
 import unyt as u
 
-from gmso import Atom, Bond, Topology
+from gmso import Atom, Bond, Box, Topology
 from gmso.core.element import element_by_name
 
 
@@ -73,11 +73,17 @@ def load_top_bonds(f, topology):
 
 def load_top_box(f, topology):
     """Take a mol2 file section with the heading @<TRIPOS>FF_PBC and save to a topology"""
+    if topology.box:
+        raise warnings.UserWarning('This mol2 file has two boxes to be read in, only reading in one with dimensions {}'.format(
+                                   topology.box))
+        f.readline()
+        return line, topology
     while True:
         line = f.readline()
         if '@' not in line:
             line = line.split()
             #TODO: write to box information
+            topology.box = Box(lengths=[float(x) for x in line[0:3]] * u.Å, angles=[float(x) for x in line[3:6]] * u.degree)
         else:
             break
     return line, topology
@@ -87,6 +93,7 @@ def parse_record_type_indicator(f, line, topology):
     Supported record type indicators include Atom, Bond, FF_PBC."""
     supported_rti = {'@<TRIPOS>ATOM\n':load_top_sites,
                      '@<TRIPOS>BOND\n':load_top_bonds,
+                     '@<TRIPOS>CRYSIN\n':load_top_box,
                      '@<TRIPOS>FF_PBC\n':load_top_box}
     #read in to atom attribute
     try:
