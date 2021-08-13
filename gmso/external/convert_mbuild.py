@@ -159,7 +159,13 @@ def to_mbuild(topology):
 
     particle_map = dict()
     for site in topology.sites:
-        particle = mb.Compound(name=site.name, pos=site.position)
+        if site.element:
+            element = site.element.symbol
+        else:
+            element = None
+        particle = mb.Compound(
+            name=site.name, pos=site.position, element=element
+        )
         particle_map[site] = particle
         compound.add(particle)
 
