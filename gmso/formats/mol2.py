@@ -23,7 +23,7 @@ def from_mol2(
     ----------
     filename : string
         path to the file where the mol2 file is stored.
-    site_type : string, optional, options:(default:'atom','lj')
+    site_type : string ('atom' or 'lj'), default='atom'
         tells the reader to consider the elements saved in the mol2 file, and
         if the type is 'lj', to not try to identify the element of the site,
         instead saving the site name.
