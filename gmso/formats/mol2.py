@@ -57,9 +57,7 @@ def from_mol2(
         # check for header character in line
         if line.startswith("@<TRIPOS>"):
             # if header character in line, send to a function that will direct it properly
-            line = parse_record_type_indicator(
-                f, line, topology, site_type
-            )
+            line = parse_record_type_indicator(f, line, topology, site_type)
         elif line == "":
             break
         else:
