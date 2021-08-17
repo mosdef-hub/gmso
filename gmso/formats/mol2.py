@@ -39,7 +39,7 @@ def from_mol2(
     by installing [mBuild](https://mbuild.mosdef.org/en/stable/index.html)
     and converting using the following python code:
 
-        >>> from gmso.external.convert_mol2 import from_mol2
+        >>> from gmso.formats.mol2 import from_mol2
         >>> from gmso.external.convert_mbuild import to_mbuild
         >>> top = from_mol2('myfile.mol2')
         >>> mbuild_compound = to_mbuild(top)

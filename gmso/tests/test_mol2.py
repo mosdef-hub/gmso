@@ -3,7 +3,7 @@ import pytest
 import unyt as u
 from unyt.testing import assert_allclose_units
 
-from gmso.external.convert_mol2 import from_mol2
+from gmso.formats.mol2 import from_mol2
 from gmso.tests.base_test import BaseTest
 from gmso.utils.io import get_fn
 
