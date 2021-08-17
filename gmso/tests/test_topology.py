@@ -764,4 +764,7 @@ class TestTopology(BaseTest):
             residue_top.iter_sites("residue_label", None)
 
     def test_iter_sites_by_residue_label(self, pairpotentialtype_top):
-        assert len(list(pairpotentialtype_top.iter_sites_by_residue_label("AAA"))) == 0
+        assert (
+            len(list(pairpotentialtype_top.iter_sites_by_residue_label("AAA")))
+            == 0
+        )
