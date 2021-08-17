@@ -40,9 +40,9 @@ def from_mol2(
     by installing [mBuild](https://mbuild.mosdef.org/en/stable/index.html)
     and converting using the following python code:
 
-        >>> from gmso.formats.mol2 import from_mol2
+        >>> import gmso.Topology
         >>> from gmso.external.convert_mbuild import to_mbuild
-        >>> top = from_mol2('myfile.mol2')
+        >>> top = Topology.load('myfile.mol2')
         >>> mbuild_compound = to_mbuild(top)
     """
     msg = "Provided path to file that does not exist"
