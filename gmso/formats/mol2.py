@@ -48,7 +48,7 @@ def from_mol2(
     if not path.exists():
         raise OSError(msg)
     # Initialize topology
-    topology = Topology(name=path.name)
+    topology = Topology(name=path.stem)
     # save the name from the filename
     f = open(path, "r")
     line = f.readline()
@@ -72,7 +72,7 @@ def load_top_sites(f, topology, site_type="atom"):
     """Take a mol2 file section with the heading '<TRIPOS>ATOM' and save to the topology.sites attribute."""
     while True:
         line = f.readline()
-        if "@" not in line and not line == "\n":
+        if "@" not in line and not line == "\n" and line:
             line = line.split()
             position = [float(x) for x in line[2:5]] * u.Å
             # TODO: make sure charges are also saved as a unyt value
@@ -115,7 +115,7 @@ def load_top_bonds(f, topology, **kwargs):
     """Take a mol2 file section with the heading '@<TRIPOS>BOND' and save to the topology.bonds attribute."""
     while True:
         line = f.readline()
-        if "@" not in line and not line == "\n":
+        if "@" not in line and not line == "\n" and line:
             line = line.split()
             bond = Bond(
                 connection_members=(
