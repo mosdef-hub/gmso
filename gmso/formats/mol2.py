@@ -16,7 +16,7 @@ def from_mol2(
     """Read in a TRIPOS mol2 file format into a gmso topology object.
 
     Creates a Topology from a mol2 file structure. This will read in the
-    topological structure (sites, angles, and box) information into gmso.
+    topological structure (sites, bonds, and box) information into gmso.
     Note that parameterized information can be found in these objects, but
     will not be converted to the Topology.
 
@@ -24,7 +24,7 @@ def from_mol2(
     ----------
     filename : string
         path to the file where the mol2 file is stored.
-    site_type : string, optional, default='atom'
+    site_type : string, optional, options:(default:'atom','lj')
         tells the reader to consider the elements saved in the mol2 file, and
         if the type is 'lj', to not try to identify the element of the site,
         instead saving the site name.
