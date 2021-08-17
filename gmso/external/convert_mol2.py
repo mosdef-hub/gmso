@@ -2,6 +2,7 @@
 # TODO add sources of mol2 files
 import os
 import warnings
+from pathlib import Path
 
 import unyt as u
 
@@ -44,18 +45,19 @@ def from_mol2(
         >>> mbuild_compound = to_mbuild(top)
     """
     msg = "Provided path to file that does not exist"
-    if not os.path.isfile(filename):
+    path = Path(filename)
+    if not path.exists():
         raise OSError(msg)
     # Initialize topology
-    topology = Topology(name=os.path.splitext(os.path.basename(filename))[0])
+    topology = Topology(name=path.name)
     # save the name from the filename
-    f = open(filename, "r")
+    f = open(path, "r")
     line = f.readline()
     while f:
         # check for header character in line
         if line.startswith("@<TRIPOS>"):
             # if header character in line, send to a function that will direct it properly
-            line, topology = parse_record_type_indicator(
+            line = parse_record_type_indicator(
                 f, line, topology, site_type
             )
         elif line == "":
@@ -64,6 +66,7 @@ def from_mol2(
             # else, skip to next line
             line = f.readline()
     f.close()
+    topology.update_topology()
     # TODO: read in parameters to correct attribute as well. This can be saved in various rti sections.
     return topology
 
@@ -108,7 +111,7 @@ def load_top_sites(f, topology, site_type="Atom"):
             topology.add_site(atom)
         else:
             break
-    return line, topology
+    return line
 
 
 def load_top_bonds(f, topology, **kwargs):
@@ -126,7 +129,7 @@ def load_top_bonds(f, topology, **kwargs):
             topology.add_connection(bond)
         else:
             break
-    return line, topology
+    return line
 
 
 def load_top_box(f, topology, **kwargs):
@@ -138,7 +141,7 @@ def load_top_box(f, topology, **kwargs):
             )
         )
         line = f.readline()
-        return line, topology
+        return line
     while True:
         line = f.readline()
         if "@" not in line and not line == "\n":
@@ -150,7 +153,7 @@ def load_top_box(f, topology, **kwargs):
             )
         else:
             break
-    return line, topology
+    return line
 
 
 def parse_record_type_indicator(f, line, topology, site_type):
@@ -166,10 +169,10 @@ def parse_record_type_indicator(f, line, topology, site_type):
     }
     # read in to atom attribute
     try:
-        return supported_rti[line](f, topology, site_type=site_type)
+        line = supported_rti[line](f, topology, site_type=site_type)
     except KeyError:
         warnings.warn(
             "The record type indicator {} is not supported".format(line)
         )
         line = f.readline()
-        return line, topology
+    return line
