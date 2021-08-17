@@ -22,6 +22,12 @@ def default_position():
 
 
 class Site(GMSOBase):
+    __iterable_attributes__: ClassVar[set] = {
+        "label",
+        "residue_label",
+        "residue_index"
+    }
+
     __base_doc__: ClassVar[
         str
     ] = """An interaction site object in the topology hierarchy.
@@ -72,6 +78,16 @@ class Site(GMSOBase):
     def label(self) -> str:
         """Return the label assigned to the site."""
         return self.__dict__.get("label_")
+
+    @property
+    def residue_label(self):
+        """Return the residue label assigned to the site."""
+        return self.__dict__.get("residue_label_")
+
+    @property
+    def residue_index(self):
+        """Return the reside index assigned to the site."""
+        return self.__dict__.get("residue_index_")
 
     def __repr__(self):
         """Return the formatted representation of the site."""
