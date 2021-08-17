@@ -25,7 +25,7 @@ class Site(GMSOBase):
     __iterable_attributes__: ClassVar[set] = {
         "label",
         "residue_label",
-        "residue_index"
+        "residue_index",
     }
 
     __base_doc__: ClassVar[

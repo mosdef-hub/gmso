@@ -1003,7 +1003,9 @@ class Topology(object):
             )
 
         if value is None:
-            raise ValueError("Expected `value` to be something other than None. Provided None.")
+            raise ValueError(
+                "Expected `value` to be something other than None. Provided None."
+            )
 
         for site in self.sites:
             if getattr(site, key) == value:
