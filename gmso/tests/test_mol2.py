@@ -3,10 +3,10 @@ import pytest
 import unyt as u
 from unyt.testing import assert_allclose_units
 
+from gmso import Topology
+from gmso.formats.mol2 import from_mol2
 from gmso.tests.base_test import BaseTest
 from gmso.utils.io import get_fn
-from gmso.formats.mol2 import from_mol2
-from gmso import Topology
 
 
 class TestMol2(BaseTest):
@@ -34,11 +34,15 @@ class TestMol2(BaseTest):
         assert_allclose_units(
             top.box.lengths, 3.0130 * np.ones(3) * u.Å, rtol=1e-5, atol=1e-8
         )
-        positions_check = [[0.061, 0.1, 0.1], [0.017, 0.09, 0.177], [0.011, 0.154, 0.04]]
+        positions_check = [
+            [0.061, 0.1, 0.1],
+            [0.017, 0.09, 0.177],
+            [0.011, 0.154, 0.04],
+        ]
         for check, site in zip(positions_check, top.sites):
             assert_allclose_units(
                 site.position,
-                check*u.nm,
+                check * u.nm,
                 rtol=1e-5,
                 atol=1e-8,
             )
