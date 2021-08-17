@@ -34,7 +34,10 @@ class TestMol2(BaseTest):
             top.box.lengths, 3.0130 * np.ones(3) * u.Å, rtol=1e-5, atol=1e-8
         )
         assert_allclose_units(
-            list(top.sites)[0].position, [0.061, 0.1, 0.1]* u.nm, rtol=1e-5, atol=1e-8
+            list(top.sites)[0].position,
+            [0.061, 0.1, 0.1] * u.nm,
+            rtol=1e-5,
+            atol=1e-8,
         )
 
         top = from_mol2(get_fn("vmd.mol2"))
