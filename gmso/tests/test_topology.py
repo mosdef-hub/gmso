@@ -757,11 +757,16 @@ class TestTopology(BaseTest):
 
     def test_iter_sites_non_iterable_attribute(self, residue_top):
         with pytest.raises(ValueError):
-            residue_top.iter_sites("atom_type", "abc")
+            for site in residue_top.iter_sites("atom_type", "abc"):
+                pass
 
     def test_iter_sites_none(self, residue_top):
         with pytest.raises(ValueError):
-            residue_top.iter_sites("residue_label", None)
+            for site in residue_top.iter_sites("residue_label", None):
+                pass
 
     def test_iter_sites_by_residue_label(self, pairpotentialtype_top):
-        assert len(list(pairpotentialtype_top.iter_sites_by_residue_label("AAA"))) == 0
+        assert (
+            len(list(pairpotentialtype_top.iter_sites_by_residue_label("AAA")))
+            == 0
+        )
