@@ -11,7 +11,7 @@ from gmso.core.element import element_by_name, element_by_symbol
 
 
 def from_mol2(
-    filename, site_type="Atom"
+    filename, site_type="atom"
 ):  # TODO add flags for information to return
     """Read in a TRIPOS mol2 file format into a gmso topology object.
 
@@ -24,7 +24,7 @@ def from_mol2(
     ----------
     filename : string
         path to the file where the mol2 file is stored.
-    site_type : string, optional, default='Atom'
+    site_type : string, optional, default='atom'
         tells the reader to consider the elements saved in the mol2 file, and
         if the type is 'lj', to not try to identify the element of the site,
         instead saving the site name.
@@ -71,7 +71,7 @@ def from_mol2(
     return topology
 
 
-def load_top_sites(f, topology, site_type="Atom"):
+def load_top_sites(f, topology, site_type="atom"):
     """Take a mol2 file section with the heading '<TRIPOS>ATOM' and save to the topology.sites attribute."""
     while True:
         line = f.readline()
