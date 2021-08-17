@@ -994,7 +994,6 @@ class Topology(object):
         gmso.abc.abstract_site.Site
             The site where getattr(site, key) == value
         """
-        print(Site.__iterable_attributes__)
         if key not in Site.__iterable_attributes__:
 
             raise ValueError(
