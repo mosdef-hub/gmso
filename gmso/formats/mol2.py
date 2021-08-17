@@ -7,8 +7,9 @@ import unyt as u
 
 from gmso import Atom, Bond, Box, Topology
 from gmso.core.element import element_by_name, element_by_symbol
+from gmso.formats.formats_registry import loads_as
 
-
+@loads_as(".mol2")
 def from_mol2(
     filename, site_type="atom"
 ):  # TODO add flags for information to return
