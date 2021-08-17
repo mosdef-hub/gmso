@@ -17,14 +17,14 @@ class TestMol2(BaseTest):
             top.box.lengths,
             ([8.2693, 7.9100, 6.6460] * u.Å).to("nm"),
             rtol=1e-5,
-            atol=1e-8
+            atol=1e-8,
         )
-        assert list(top.sites)[0].element.name == "carbon" 
+        assert list(top.sites)[0].element.name == "carbon"
         assert_allclose_units(
             list(top.sites)[0].element.mass,
-            np.array(1.9944733e-26)*u.kg,
+            np.array(1.9944733e-26) * u.kg,
             rtol=1e-5,
-            atol=1e-8
+            atol=1e-8,
         )
 
         top = from_mol2(get_fn("tip3p.mol2"))
@@ -51,7 +51,6 @@ class TestMol2(BaseTest):
         with pytest.warns(UserWarning) as record:
             from_mol2(get_fn("benzene.mol2"))
         assert record[3].message.args[0] == match
-        
 
     def test_lj_system(self):
         top = from_mol2(get_fn("methane.mol2"), site_type="lj")
