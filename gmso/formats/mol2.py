@@ -1,6 +1,5 @@
 """Convert to and from a TRIPOS mol2 file."""
 # TODO add sources of mol2 files
-import os
 import warnings
 from pathlib import Path
 
