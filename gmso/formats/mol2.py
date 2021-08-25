@@ -11,9 +11,7 @@ from gmso.formats.formats_registry import loads_as
 
 
 @loads_as(".mol2")
-def from_mol2(
-    filename, site_type="atom"
-):
+def from_mol2(filename, site_type="atom"):
     """Read in a TRIPOS mol2 file format into a gmso topology object.
 
     Creates a Topology from a mol2 file structure. This will read in the
@@ -107,7 +105,7 @@ def load_top_sites(f, topology, site_type="atom"):
                 charge=charge,
                 element=element,
                 residue_label=line[7],
-                residue_index=int(line[6])
+                residue_index=int(line[6]),
             )
             topology.add_site(atom)
         else:
