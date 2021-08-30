@@ -1,12 +1,12 @@
 """Convert to and from an OpenMM Topology or System object."""
 import unyt as u
 
-from gmso.utils.io import has_openmm, has_simtk_unit, import_
+from gmso.utils.io import has_openmm, has_openmm_unit, import_
 
-if has_openmm & has_simtk_unit:
-    simtk_unit = import_("simtk.unit")
-    from simtk.openmm import *
-    from simtk.openmm.app import *
+if has_openmm & has_openmm_unit:
+    openmm_unit = import_("openmm.unit")
+    from openmm import *
+    from openmm.app import *
 
 
 def to_openmm(topology, openmm_object="topology"):
@@ -30,10 +30,10 @@ def to_openmm(topology, openmm_object="topology"):
     openmm_top = app.Topology()
 
     # Get topology.positions into OpenMM form
-    openmm_unit = 1 * simtk_unit.nanometer
+    openmm_unit = 1 * openmm_unit.nanometer
     topology.positions.convert_to_units(openmm_unit.unit.get_symbol())
     value = [i.value for i in topology.positions]
-    openmm_pos = simtk_unit.Quantity(value=value, unit=openmm_unit.unit)
+    openmm_pos = openmm_unit.Quantity(value=value, unit=openmm_unit.unit)
 
     # Adding a default chain and residue temporarily
     chain = openmm_top.addChain()
@@ -92,7 +92,7 @@ def to_system(
         An untyped topology object.
     nonbondedMethod : cutoff method, optional, default=None
         Cutoff method specified for OpenMM system.
-        Options supported are 'NoCutoff', 'CutoffNonPeriodic', 'CutoffPeriodic', 'PME', or Ewald objects from simtk.openmm.app.
+        Options supported are 'NoCutoff', 'CutoffNonPeriodic', 'CutoffPeriodic', 'PME', or Ewald objects from openmm.app.
     nonbondedCutoff : unyt array or float, default=0.8*u.nm
         The nonbonded cutoff must either be a float or a unyt array.
         Float interpreted in units of nm.
