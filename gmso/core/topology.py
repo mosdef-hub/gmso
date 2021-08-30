@@ -997,8 +997,8 @@ class Topology(object):
         if key not in Site.__iterable_attributes__:
 
             raise ValueError(
-                "`key` is not an iterable attribute for Site. "
-                "To check what the iterable attributes are see gmso.abc.abstract_site module"
+                f"`{key}` is not an iterable attribute for Site. "
+                f"To check what the iterable attributes are see gmso.abc.abstract_site module."
             )
 
         if value is None:
