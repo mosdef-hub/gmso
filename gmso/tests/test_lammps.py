@@ -92,6 +92,6 @@ class TestLammpsWriter(BaseTest):
         assert_allclose_units(
             read.box.lengths, u.unyt_array([1.0, 1.0, 1.0], u.nm)
         )
-        assert u.allclose_units(
-            read.box.angles, u.unyt_array([60, 90, 120], u.degree)
+        assert_allclose_units(
+            read.box.angles, u.unyt_array([60, 90, 120], u.degree), rtol=1e-5
         )

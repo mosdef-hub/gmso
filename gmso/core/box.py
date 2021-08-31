@@ -227,8 +227,8 @@ class Box(object):
         from gmso.abc.serialization_utils import unyt_to_dict
 
         return {
-            "lengths": unyt_to_dict(self._lengths),
-            "angles": unyt_to_dict(self._angles),
+            "lengths": unyt_to_dict(self.lengths),
+            "angles": unyt_to_dict(self.angles),
         }
 
     def __repr__(self):
