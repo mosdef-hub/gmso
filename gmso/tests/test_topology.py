@@ -770,3 +770,7 @@ class TestTopology(BaseTest):
             len(list(pairpotentialtype_top.iter_sites_by_residue_label("AAA")))
             == 0
         )
+
+    def test_iter_sites_by_residue_index(self, residue_top):
+        sites = list(residue_top.iter_sites_by_residue_index(4))
+        assert len(sites) == 5
