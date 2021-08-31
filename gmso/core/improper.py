@@ -11,7 +11,7 @@ from gmso.utils.misc import validate_type
 
 
 class BaseImproper(Connection):
-    __base_doc__ = """sA 4-partner connection between sites.
+    __base_doc__ = """A 4-partner connection between sites.
 
     This is a subclass of the gmso.Connection superclass.
     This class has strictly 4 members in its connection_members.
@@ -159,7 +159,7 @@ class LayeredImproper(BaseImproper):
             super().__setattr__(key, value)
 
     @validator("improper_types_", pre=True, always=True)
-    def validate_dihedral_types(cls, improper_types):
+    def validate_improper_types(cls, improper_types):
         if not isinstance(improper_types, Iterable):
             raise ValidationError("ImproperTypes should be iterable", cls)
 
