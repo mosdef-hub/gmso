@@ -161,3 +161,9 @@ class TestConnectivity(BaseTest):
             (1, 0, 4, 2),
             (1, 4, 5, 2),
         ]
+
+        for idx_tuple in improper_indices:
+            assert all(
+                idx_tuple[0] == members_tuple[0]
+                for members_tuple in indices["impropers"]
+            )

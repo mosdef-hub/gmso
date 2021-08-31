@@ -17,6 +17,14 @@ EDGES = {
 def identify_connections(top, index_only=False):
     """Identify all possible connections within a topology.
 
+    Parameters
+    ----------
+    top: gmso.Topology
+        The gmso topology for which to identify connections for
+    index_only: bool, default=False
+        If True, return atom indices that would form the actual connections
+        rather than adding the connections to the topology
+
     Notes: We are using networkx graph matching to match
     the topology's bonding graph to smaller sub-graphs that
     correspond to an angle, dihedral, improper etc.
