@@ -14,7 +14,7 @@ EDGES = {
 }
 
 
-def identify_connections(top):
+def identify_connections(top, index_only=False):
     """Identify all possible connections within a topology.
 
     Notes: We are using networkx graph matching to match
@@ -48,12 +48,28 @@ def identify_connections(top):
         compound_line_graph, type_="improper"
     )
 
-    for conn_matches, conn_type in zip(
-        (angle_matches, dihedral_matches, improper_matches),
-        ("angle", "dihedral", "improper"),
-    ):
-        if conn_matches:
-            _add_connections(top, conn_matches, conn_type=conn_type)
+    if not index_only:
+        for conn_matches, conn_type in zip(
+            (angle_matches, dihedral_matches, improper_matches),
+            ("angle", "dihedral", "improper"),
+        ):
+            if conn_matches:
+                _add_connections(top, conn_matches, conn_type=conn_type)
+    else:
+        return {
+            "angles": [
+                tuple(map(lambda x: top.get_index(x), members))
+                for members in angle_matches
+            ],
+            "dihedrals": [
+                tuple(map(lambda x: top.get_index(x), members))
+                for members in dihedral_matches
+            ],
+            "impropers": [
+                tuple(map(lambda x: top.get_index(x), members))
+                for members in improper_matches
+            ],
+        }
 
     return top
 
