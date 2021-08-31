@@ -1020,6 +1020,16 @@ class Topology(object):
         """
         return self.iter_sites("residue_label", label)
 
+    def iter_sites_by_residue_index(self, index):
+        """Iterate through this topology's sites which contain this specific residue `index`.
+
+        See Also
+        --------
+        gmso.core.topology.Topology.iter_sites
+            The method to iterate over Topology's sites
+        """
+        return self.iter_sites("residue_index", index)
+
     def save(self, filename, overwrite=False, **kwargs):
         """Save the topology to a file.
 
