@@ -1,15 +1,14 @@
 """Abstract representation of a Potential object."""
 from abc import abstractmethod
-from typing import Any
+from typing import Any, Dict, Iterator, List
 
 from pydantic import Field, validator
 
 from gmso.abc.gmso_base import GMSOBase
-from gmso.abc.metadata_mixin import MetadataMixin
 from gmso.utils.expression import _PotentialExpression
 
 
-class AbstractPotential(GMSOBase, MetadataMixin):
+class AbstractPotential(GMSOBase):
     __base_doc__ = """An abstract potential class.
 
     AbstractPotential stores a general interaction between components of a chemical
@@ -28,6 +27,10 @@ class AbstractPotential(GMSOBase, MetadataMixin):
     potential_expression_: _PotentialExpression = Field(
         _PotentialExpression(expression="a*x+b", independent_variables={"x"}),
         description="The mathematical expression for the potential",
+    )
+
+    tags: Dict[str, Any] = Field(
+        {}, description="Tags associated with the metadata"
     )
 
     def __init__(
@@ -50,11 +53,13 @@ class AbstractPotential(GMSOBase, MetadataMixin):
                 independent_variables=independent_variables,
                 parameters=None,
             )
+        tags = kwargs.pop("tags", None)
 
-        MetadataMixin.__init__(self, tags=kwargs.get("tags"))
+        if not tags:
+            kwargs["tags"] = {}
 
-        GMSOBase.__init__(
-            self, name=name, potential_expression=potential_expression, **kwargs
+        super().__init__(
+            name=name, potential_expression=potential_expression, **kwargs
         )
 
     @property
@@ -76,6 +81,36 @@ class AbstractPotential(GMSOBase, MetadataMixin):
     def potential_expression(self):
         """Return the functional form of the potential."""
         return self.__dict__.get("potential_expression_")
+
+    @property
+    def tag_names(self) -> List[str]:
+        return list(self.__dict__.get("tags_"))
+
+    @property
+    def tag_names_iter(self) -> Iterator[str]:
+        return iter(self.__dict__.get("tags_"))
+
+    def add_tag(self, tag: str, value: Any, overwrite=True) -> None:
+        """Add metadata for a particular tag"""
+        if self.tags.get(tag) and not overwrite:
+            raise ValueError(
+                f"Tag {tag} already exists. "
+                f"Please use overwrite=True to overwrite"
+            )
+        self.tags[tag] = value
+
+    def get_tag(self, tag: str, throw=False) -> Any:
+        """Get value of a particular tag"""
+        if throw:
+            return self.tags[tag]
+        else:
+            return self.tags.get(tag)
+
+    def delete_tag(self, tag: str) -> None:
+        del self.tags[tag]
+
+    def pop_tag(self, tag: str) -> Any:
+        return self.tags.pop(tag, None)
 
     @validator("potential_expression_", pre=True)
     def validate_potential_expression(cls, v):
@@ -130,9 +165,11 @@ class AbstractPotential(GMSOBase, MetadataMixin):
         fields = {
             "name_": "name",
             "potential_expression_": "potential_expression",
+            "tags_": "tags",
         }
 
         alias_to_fields = {
             "name": "name_",
             "potential_expression": "potential_expression_",
+            "tags": "tags_",
         }
