@@ -30,7 +30,7 @@ class AbstractPotential(GMSOBase):
     )
 
     tags_: Dict[str, Any] = Field(
-        {}, description="Tags associated with the metadata"
+        {}, description="Tags associated with the potential"
     )
 
     def __init__(
