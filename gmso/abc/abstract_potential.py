@@ -29,7 +29,7 @@ class AbstractPotential(GMSOBase):
         description="The mathematical expression for the potential",
     )
 
-    tags: Dict[str, Any] = Field(
+    tags_: Dict[str, Any] = Field(
         {}, description="Tags associated with the metadata"
     )
 
@@ -81,6 +81,10 @@ class AbstractPotential(GMSOBase):
     def potential_expression(self):
         """Return the functional form of the potential."""
         return self.__dict__.get("potential_expression_")
+
+    @property
+    def tags(self):
+        return self.__dict__.get("tags_")
 
     @property
     def tag_names(self) -> List[str]:
