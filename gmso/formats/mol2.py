@@ -70,7 +70,7 @@ def from_mol2(filename, site_type="atom"):
 
 def load_top_sites(f, topology, site_type="atom"):
     """Take a mol2 file section with the heading '<TRIPOS>ATOM' and save to the topology.sites attribute.
-    
+
     Parameters
     ----------
     f : file pointer
@@ -86,12 +86,12 @@ def load_top_sites(f, topology, site_type="atom"):
     Returns
     -------
     line : string
-         returns the last line of the `@<TRIPOS>ATOM` section, and this is where the file pointer (`f`) 
+         returns the last line of the `@<TRIPOS>ATOM` section, and this is where the file pointer (`f`)
          will now point to.
 
     Notes
     -----
-    Will modify the topology in place with the relevant site information. Indices will be appended to any 
+    Will modify the topology in place with the relevant site information. Indices will be appended to any
     current site information.
 
     """
@@ -196,7 +196,9 @@ def parse_record_type_indicator(f, line, topology, site_type):
         line = supported_rti[line.strip()](f, topology, site_type=site_type)
     except KeyError:
         warnings.warn(
-            "The record type indicator {} is not supported. Skipping current section and moving to the next RTI header.".format(line)
+            "The record type indicator {} is not supported. Skipping current section and moving to the next RTI header.".format(
+                line
+            )
         )
         line = f.readline()
     return line
