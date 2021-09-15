@@ -54,16 +54,12 @@ class TestMol2(BaseTest):
         assert top.bonds[0].connection_members[0] == top.sites[0]
         assert top.box == None
 
-        match = "No charges were detected for site C with index 1"
-        with pytest.warns(UserWarning) as record:
+        with pytest.warns(UserWarning, match=r"No charges were detected for site C with index 1"):
             top = Topology.load(get_fn("ethane.mol2"))
-        assert record[3].message.args[0] == match
         assert list(top.sites)[0].charge is None
 
-        match = "No element detected for site C with index1, consider manually adding the element to the topology"
-        with pytest.warns(UserWarning) as record:
+        with pytest.warns(UserWarning, match=r"No element detected for site C with index1\, consider manually adding the element to the topology"):
             Topology.load(get_fn("benzene.mol2"))
-        assert record[3].message.args[0] == match
 
     def test_residue(self):
         top = Topology.load(get_fn("ethanol_aa.mol2"))
@@ -101,17 +97,15 @@ class TestMol2(BaseTest):
         assert np.all([site.element == None for site in top.sites])
 
     def test_wrong_path(self):
-        with pytest.raises(OSError) as e:
+        with pytest.raises(OSError, match=r"Provided path to file that does not exist"):
             Topology.load("not_a_file.mol2")
-        assert e.value.args[0] == "Provided path to file that does not exist"
         top = Topology.load(get_fn("ethanegro.mol2"))
         assert len(top.sites) == 0
         assert len(top.bonds) == 0
 
     def test_broken_files(self):
-        match = "The record type indicator @<TRIPOS>MOLECULE_extra_text\n is not supported"
-        with pytest.warns(UserWarning) as record:
+        with pytest.warns(UserWarning, match=r"The record type indicator @<TRIPOS>MOLECULE_extra_text\n is not supported. Skipping current section and moving to the next RTI header."):
             Topology.load(get_fn("broken.mol2"))
-        assert record[0].message.args[0] == match
-        match = "This mol2 file has two boxes to be read in, only reading in one with dimensions Box(a=0.72 nm, b=0.9337999999999999 nm, c=0.6646 nm, alpha=90.0 degree, beta=90.0 degree, gamma=90.0 degree)"
-        assert record[90].message.args[0] == match
+        with pytest.warns(UserWarning, match=r"This mol2 file has two boxes to be read in, only reading in one with dimensions Box\(a=0.72"):
+            Topology.load(get_fn("broken.mol2"))
+

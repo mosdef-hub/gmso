@@ -43,33 +43,58 @@ def from_mol2(filename, site_type="atom"):
         >>> top = Topology.load('myfile.mol2')
         >>> mbuild_compound = to_mbuild(top)
     """
-    msg = "Provided path to file that does not exist"
     path = Path(filename)
     if not path.exists():
+        msg = "Provided path to file that does not exist"
         raise OSError(msg)
     # Initialize topology
     topology = Topology(name=path.stem)
     # save the name from the filename
-    f = open(path, "r")
-    line = f.readline()
-    while f:
-        # check for header character in line
-        if line.startswith("@<TRIPOS>"):
-            # if header character in line, send to a function that will direct it properly
-            line = parse_record_type_indicator(f, line, topology, site_type)
-        elif line == "":
-            break
-        else:
-            # else, skip to next line
-            line = f.readline()
-    f.close()
+    with open(path, "r") as f:
+        line = f.readline()
+        while f:
+            # check for header character in line
+            if line.strip().startswith("@<TRIPOS>"):
+                # if header character in line, send to a function that will direct it properly
+                line = parse_record_type_indicator(f, line, topology, site_type)
+            elif line == "":
+                # check for the end of file
+                break
+            else:
+                # else, skip to next line
+                line = f.readline()
     topology.update_topology()
     # TODO: read in parameters to correct attribute as well. This can be saved in various rti sections.
     return topology
 
 
 def load_top_sites(f, topology, site_type="atom"):
-    """Take a mol2 file section with the heading '<TRIPOS>ATOM' and save to the topology.sites attribute."""
+    """Take a mol2 file section with the heading '<TRIPOS>ATOM' and save to the topology.sites attribute.
+    
+    Parameters
+    ----------
+    f : file pointer
+        pointer file where the mol2 file is stored. The pointer must be at the head of the rti for that
+        `@<TRIPOS>ATOM` section.
+    topology : gmso.Topology
+        topology to save the site information to.
+    site_type : string ('atom' or 'lj'), default='atom'
+        tells the reader to consider the elements saved in the mol2 file, and
+        if the type is 'lj', to not try to identify the element of the site,
+        instead saving the site name.
+
+    Returns
+    -------
+    line : string
+         returns the last line of the `@<TRIPOS>ATOM` section, and this is where the file pointer (`f`) 
+         will now point to.
+
+    Notes
+    -----
+    Will modify the topology in place with the relevant site information. Indices will be appended to any 
+    current site information.
+
+    """
     while True:
         line = f.readline()
         if "@" not in line and not line == "\n" and line:
@@ -156,22 +181,22 @@ def load_top_box(f, topology, **kwargs):
 
 
 def parse_record_type_indicator(f, line, topology, site_type):
-    """Take a specific record type indicator from a mol2 file format and save to the proper attribute of a gmso topology.
+    """Take a specific record type indicator (RTI) from a mol2 file format and save to the proper attribute of a gmso topology.
 
     Supported record type indicators include Atom, Bond, FF_PBC, and CRYSIN.
     """
     supported_rti = {
-        "@<TRIPOS>ATOM\n": load_top_sites,
-        "@<TRIPOS>BOND\n": load_top_bonds,
-        "@<TRIPOS>CRYSIN\n": load_top_box,
-        "@<TRIPOS>FF_PBC\n": load_top_box,
+        "@<TRIPOS>ATOM": load_top_sites,
+        "@<TRIPOS>BOND": load_top_bonds,
+        "@<TRIPOS>CRYSIN": load_top_box,
+        "@<TRIPOS>FF_PBC": load_top_box,
     }
     # read in to atom attribute
     try:
-        line = supported_rti[line](f, topology, site_type=site_type)
+        line = supported_rti[line.strip()](f, topology, site_type=site_type)
     except KeyError:
         warnings.warn(
-            "The record type indicator {} is not supported".format(line)
+            "The record type indicator {} is not supported. Skipping current section and moving to the next RTI header.".format(line)
         )
         line = f.readline()
     return line
