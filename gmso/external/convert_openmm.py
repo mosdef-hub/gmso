@@ -30,10 +30,9 @@ def to_openmm(topology, openmm_object="topology"):
     openmm_top = app.Topology()
 
     # Get topology.positions into OpenMM form
-    openmm_unit = 1 * openmm_unit.nanometer
-    topology.positions.convert_to_units(openmm_unit.unit.get_symbol())
+    topology.positions.convert_to_units(u.nm)
     value = [i.value for i in topology.positions]
-    openmm_pos = openmm_unit.Quantity(value=value, unit=openmm_unit.unit)
+    openmm_pos = openmm_unit.Quantity(value=value, unit=openmm_unit.nanometer)
 
     # Adding a default chain and residue temporarily
     chain = openmm_top.addChain()
