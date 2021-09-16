@@ -6,14 +6,14 @@ from unyt.testing import assert_allclose_units
 from gmso.core.box import Box
 from gmso.external.convert_openmm import to_openmm
 from gmso.tests.base_test import BaseTest
-from gmso.utils.io import has_openmm, has_simtk_unit, import_
+from gmso.utils.io import has_openmm, has_openmm_unit, import_
 
-if has_openmm and has_simtk_unit:
-    simtk_unit = import_("simtk.unit")
+if has_openmm and has_openmm_unit:
+    openmm_unit = import_("openmm.unit")
 
 
 @pytest.mark.skipif(not has_openmm, reason="OpenMM is not installed")
-@pytest.mark.skipif(not has_simtk_unit, reason="SimTK is not installed")
+@pytest.mark.skipif(not has_openmm_unit, reason="OpenMM units is not installed")
 class TestOpenMM(BaseTest):
     def test_openmm_modeller(self, typed_ar_system):
         to_openmm(typed_ar_system, openmm_object="modeller")
@@ -55,4 +55,4 @@ class TestOpenMM(BaseTest):
         n_topology_sites = len(typed_ar_system.sites)
         omm_top = to_openmm(typed_ar_system, openmm_object="modeller")
 
-        assert isinstance(omm_top.positions.unit, type(simtk_unit.nanometer))
+        assert isinstance(omm_top.positions.unit, type(openmm_unit.nanometer))
