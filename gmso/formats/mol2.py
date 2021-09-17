@@ -56,7 +56,7 @@ def from_mol2(filename, site_type="atom"):
             # check for header character in line
             if line.strip().startswith("@<TRIPOS>"):
                 # if header character in line, send to a function that will direct it properly
-                line = parse_record_type_indicator(f, line, topology, site_type)
+                line = _parse_record_type_indicator(f, line, topology, site_type)
             elif line == "":
                 # check for the end of file
                 break
@@ -97,7 +97,7 @@ def _load_top_sites(f, topology, site_type="atom"):
     """
     while True:
         line = f.readline()
-        if "@" not in line and not line == "\n" and line:
+        if _if_end_of_rti(line):
             line = line.split()
             position = [float(x) for x in line[2:5]] * u.Å
             # TODO: make sure charges are also saved as a unyt value
@@ -142,7 +142,7 @@ def _load_top_bonds(f, topology, **kwargs):
     """Take a mol2 file section with the heading '@<TRIPOS>BOND' and save to the topology.bonds attribute."""
     while True:
         line = f.readline()
-        if "@" not in line and not line == "\n" and line:
+        if _if_end_of_rti(line):
             line = line.split()
             bond = Bond(
                 connection_members=(
@@ -168,7 +168,7 @@ def _load_top_box(f, topology, **kwargs):
         return line
     while True:
         line = f.readline()
-        if "@" not in line and not line == "\n":
+        if _if_end_of_rti(line):
             line = line.split()
             # TODO: write to box information
             topology.box = Box(
@@ -202,3 +202,9 @@ def _parse_record_type_indicator(f, line, topology, site_type):
         )
         line = f.readline()
     return line
+
+def _if_end_of_rti(line):
+    if "@" not in line and not line == "\n" and line and not line.strip().startswith("#"):
+        return True
+    else:
+        return False
