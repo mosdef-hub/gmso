@@ -71,6 +71,15 @@ class BondType(ParametricPotential):
         """Return the members involved in this bondtype."""
         return self.__dict__.get("member_types_")
 
+    def __repr__(self):
+        """Return a formatted representation of the bond type."""
+        desc = (
+            f"<{self.__class__.__name__} {self.name},\n "
+            f"expression: {self.expression},\n "
+            f"id: {id(self)}>,\n"
+            f"member types: {self.member_types}"
+        )
+
     class Config:
         """Pydantic configuration for class attributes."""
 
