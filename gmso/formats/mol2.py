@@ -56,7 +56,9 @@ def from_mol2(filename, site_type="atom"):
             # check for header character in line
             if line.strip().startswith("@<TRIPOS>"):
                 # if header character in line, send to a function that will direct it properly
-                line = _parse_record_type_indicator(f, line, topology, site_type)
+                line = _parse_record_type_indicator(
+                    f, line, topology, site_type
+                )
             elif line == "":
                 # check for the end of file
                 break
@@ -203,9 +205,15 @@ def _parse_record_type_indicator(f, line, topology, site_type):
         line = f.readline()
     return line
 
-def _if_end_of_rti(line): 
+
+def _if_end_of_rti(line):
     """Check if line in an rti is at the end of the section."""
-    if "@" not in line and not line == "\n" and line and not line.strip().startswith("#"):
+    if (
+        "@" not in line
+        and not line == "\n"
+        and line
+        and not line.strip().startswith("#")
+    ):
         return True
     else:
         return False
