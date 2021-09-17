@@ -203,7 +203,8 @@ def _parse_record_type_indicator(f, line, topology, site_type):
         line = f.readline()
     return line
 
-def _if_end_of_rti(line):
+def _if_end_of_rti(line): 
+    """Check if line in an rti is at the end of the section."""
     if "@" not in line and not line == "\n" and line and not line.strip().startswith("#"):
         return True
     else:
