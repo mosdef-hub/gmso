@@ -68,7 +68,7 @@ def from_mol2(filename, site_type="atom"):
     return topology
 
 
-def load_top_sites(f, topology, site_type="atom"):
+def _load_top_sites(f, topology, site_type="atom"):
     """Take a mol2 file section with the heading '<TRIPOS>ATOM' and save to the topology.sites attribute.
 
     Parameters
@@ -138,7 +138,7 @@ def load_top_sites(f, topology, site_type="atom"):
     return line
 
 
-def load_top_bonds(f, topology, **kwargs):
+def _load_top_bonds(f, topology, **kwargs):
     """Take a mol2 file section with the heading '@<TRIPOS>BOND' and save to the topology.bonds attribute."""
     while True:
         line = f.readline()
@@ -156,7 +156,7 @@ def load_top_bonds(f, topology, **kwargs):
     return line
 
 
-def load_top_box(f, topology, **kwargs):
+def _load_top_box(f, topology, **kwargs):
     """Take a mol2 file section with the heading '@<TRIPOS>FF_PBC' or '@<TRIPOS>CRYSIN' and save to topology.box."""
     if topology.box:
         warnings.warn(
@@ -180,16 +180,16 @@ def load_top_box(f, topology, **kwargs):
     return line
 
 
-def parse_record_type_indicator(f, line, topology, site_type):
+def _parse_record_type_indicator(f, line, topology, site_type):
     """Take a specific record type indicator (RTI) from a mol2 file format and save to the proper attribute of a gmso topology.
 
     Supported record type indicators include Atom, Bond, FF_PBC, and CRYSIN.
     """
     supported_rti = {
-        "@<TRIPOS>ATOM": load_top_sites,
-        "@<TRIPOS>BOND": load_top_bonds,
-        "@<TRIPOS>CRYSIN": load_top_box,
-        "@<TRIPOS>FF_PBC": load_top_box,
+        "@<TRIPOS>ATOM": _load_top_sites,
+        "@<TRIPOS>BOND": _load_top_bonds,
+        "@<TRIPOS>CRYSIN": _load_top_box,
+        "@<TRIPOS>FF_PBC": _load_top_box,
     }
     # read in to atom attribute
     try:
