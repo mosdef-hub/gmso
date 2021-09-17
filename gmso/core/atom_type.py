@@ -154,12 +154,8 @@ class AtomType(ParametricPotential):
 
     def __repr__(self):
         """Return a formatted representation of the bond type."""
-        desc = (
-            f"<{self.__class__.__name__} {self.name},\n "
-            f"expression: {self.expression},\n "
-            f"id: {id(self)}>,\n"
-            f"atomclass: {self.atomclass}"
-        )
+        desc = super().__repr__()
+        desc = desc.replace(">", f", \n atomclass: {self.atomclass}>")
 
     @validator("mass_", pre=True)
     def validate_mass(cls, mass):
