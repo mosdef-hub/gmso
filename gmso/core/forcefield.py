@@ -413,12 +413,12 @@ class ForceField(object):
                 forward_match_key = FF_TOKENS_SEPARATOR.join(forward_pattern)
                 reverse_match_key = FF_TOKENS_SEPARATOR.join(reverse_pattern)
 
-                if forward_match_key in self.dihedral_types:
-                    match = self.dihedral_types[forward_match_key]
+                if forward_match_key in self.improper_types:
+                    match = self.improper_types[forward_match_key]
                     break
 
-                if reverse_match_key in self.dihedral_types:
-                    match = self.dihedral_types[reverse_match_key]
+                if reverse_match_key in self.improper_types:
+                    match = self.improper_types[reverse_match_key]
                     break
 
             if match:
