@@ -83,7 +83,10 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
             top.add_subtopology(subtop, update=False)
             for particle in child.particles():
                 pos = particle.xyz[0] * u.nanometer
-                ele = search_method(particle.name)
+                if particle.element:
+                    ele = search_method(particle.element.symbol)
+                else:
+                    ele = search_method(particle.name)
                 site = Atom(name=particle.name, position=pos, element=ele)
                 site_map[particle] = site
                 subtop.add_site(site, update_types=False)
@@ -94,7 +97,10 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
             continue
 
         pos = particle.xyz[0] * u.nanometer
-        ele = search_method(particle.name)
+        if particle.element:
+            ele = search_method(particle.element.symbol)
+        else:
+            ele = search_method(particle.name)
         site = Atom(name=particle.name, position=pos, element=ele)
         site_map[particle] = site
 
@@ -153,7 +159,13 @@ def to_mbuild(topology):
 
     particle_map = dict()
     for site in topology.sites:
-        particle = mb.Compound(name=site.name, pos=site.position[0])
+        if site.element:
+            element = site.element.symbol
+        else:
+            element = None
+        particle = mb.Compound(
+            name=site.name, pos=site.position, element=element
+        )
         particle_map[site] = particle
         compound.add(particle)
 
