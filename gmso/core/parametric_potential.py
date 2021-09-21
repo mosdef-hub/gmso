@@ -221,7 +221,14 @@ class ParametricPotential(AbstractPotential):
     def __repr__(self):
         """Return formatted representation of the potential."""
         desc = super().__repr__()
-        desc = desc.replace(">", f", \n parameters: {self.parameters}>")
+        member_types = (
+            lambda x: x.member_types if hasattr(x, "member_types") else ""
+        )
+        desc = desc.replace(
+            ">",
+            f", \n parameters: {self.parameters},\n"
+            f"member types: {member_types(self)}>",
+        )
         return desc
 
     class Config:

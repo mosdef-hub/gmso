@@ -69,11 +69,6 @@ class AngleType(ParametricPotential):
     def member_types(self):
         return self.__dict__.get("member_types_")
 
-    def __repr__(self):
-        """Return a formatted representation of the bond type."""
-        desc = super().__repr__()
-        desc = desc.replace(">", f", \n member types: {self.member_types}>")
-
     class Config:
         fields = {"member_types_": "member_types"}
 

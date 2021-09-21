@@ -83,11 +83,6 @@ class ImproperType(ParametricPotential):
         """Return member information for this ImproperType."""
         return self.__dict__.get("member_types_")
 
-    def __repr__(self):
-        """Return a formatted representation of the bond type."""
-        desc = super().__repr__()
-        desc = desc.replace(">", f", \n member types: {self.member_types}>")
-
     class Config:
         """Pydantic configuration for attributes."""
 
