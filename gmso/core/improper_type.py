@@ -105,5 +105,5 @@ class ImproperType(ParametricPotential):
 
         alias_to_fields = {
             "member_types": "member_types_",
-            "member_classes_": "member_classes",
+            "member_classes": "member_classes_",
         }
