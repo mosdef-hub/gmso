@@ -165,7 +165,7 @@ except ImportError:
     has_mdtraj = False
 
 try:
-    from simtk import openmm
+    import openmm
 
     has_openmm = True
     del openmm
@@ -173,12 +173,12 @@ except ImportError:
     has_openmm = False
 
 try:
-    from simtk import unit
+    from openmm import unit
 
-    has_simtk_unit = True
+    has_openmm_unit = True
     del unit
 except ImportError:
-    has_simtk_unit = False
+    has_openmm_unit = False
 
 try:
     import ipywidgets

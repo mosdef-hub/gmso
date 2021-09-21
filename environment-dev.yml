@@ -12,9 +12,9 @@ dependencies:
   - pytest
   - mbuild >= 0.11.0
   - openbabel >= 3.0.0
-  - foyer
+  - foyer >= 0.9.4
   - gsd >= 2.0
-  - parmed
+  - parmed >= 3.4.3
   - pytest-cov
   - codecov
   - bump2version
