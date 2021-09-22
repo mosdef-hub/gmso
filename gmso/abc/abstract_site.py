@@ -1,10 +1,10 @@
 """Basic interaction site in GMSO that all other sites will derive from."""
 import warnings
-from typing import Any, ClassVar, Sequence, TypeVar, Union
+from typing import Any, ClassVar, Optional, Sequence, TypeVar, Union
 
 import numpy as np
 import unyt as u
-from pydantic import Field, validator
+from pydantic import Field, StrictInt, StrictStr, validator
 from unyt.exceptions import InvalidUnitOperation
 
 from gmso.abc.gmso_base import GMSOBase
@@ -22,6 +22,12 @@ def default_position():
 
 
 class Site(GMSOBase):
+    __iterable_attributes__: ClassVar[set] = {
+        "label",
+        "residue_name",
+        "residue_number",
+    }
+
     __base_doc__: ClassVar[
         str
     ] = """An interaction site object in the topology hierarchy.
@@ -45,6 +51,14 @@ class Site(GMSOBase):
 
     label_: str = Field("", description="Label to be assigned to the site")
 
+    residue_number_: Optional[StrictInt] = Field(
+        None, description="Residue number for the site"
+    )
+
+    residue_name_: Optional[StrictStr] = Field(
+        None, description="Residue label for the site"
+    )
+
     position_: PositionType = Field(
         default_factory=default_position,
         description="The 3D Cartesian coordinates of the position of the site",
@@ -64,6 +78,16 @@ class Site(GMSOBase):
     def label(self) -> str:
         """Return the label assigned to the site."""
         return self.__dict__.get("label_")
+
+    @property
+    def residue_name(self):
+        """Return the residue name assigned to the site."""
+        return self.__dict__.get("residue_name_")
+
+    @property
+    def residue_number(self):
+        """Return the reside number assigned to the site."""
+        return self.__dict__.get("residue_number_")
 
     def __repr__(self):
         """Return the formatted representation of the site."""
@@ -127,12 +151,20 @@ class Site(GMSOBase):
 
         arbitrary_types_allowed = True
 
-        fields = {"name_": "name", "position_": "position", "label_": "label"}
+        fields = {
+            "name_": "name",
+            "position_": "position",
+            "label_": "label",
+            "residue_name_": "residue_name",
+            "residue_number_": "residue_number",
+        }
 
         alias_to_fields = {
             "name": "name_",
             "position": "position_",
             "label": "label_",
+            "residue_name": "residue_name_",
+            "residue_number": "residue_number_",
         }
 
         validate_assignment = True
