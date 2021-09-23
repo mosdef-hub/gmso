@@ -753,3 +753,33 @@ class TestTopology(BaseTest):
                 assert isinstance(ld_top._dihedrals[j], Dihedral)
             else:
                 assert isinstance(ld_top._dihedrals[j], LayeredDihedral)
+
+    def test_iter_sites(self, residue_top):
+        for site in residue_top.iter_sites("residue_name", "MY_RES_EVEN"):
+            assert site.residue_name == "MY_RES_EVEN"
+
+        for site in residue_top.iter_sites("residue_name", "MY_RES_ODD"):
+            assert site.residue_name == "MY_RES_ODD"
+
+        sites = list(residue_top.iter_sites("residue_number", 4))
+        assert len(sites) == 5
+
+    def test_iter_sites_non_iterable_attribute(self, residue_top):
+        with pytest.raises(ValueError):
+            for site in residue_top.iter_sites("atom_type", "abc"):
+                pass
+
+    def test_iter_sites_none(self, residue_top):
+        with pytest.raises(ValueError):
+            for site in residue_top.iter_sites("residue_name", None):
+                pass
+
+    def test_iter_sites_by_residue_name(self, pairpotentialtype_top):
+        assert (
+            len(list(pairpotentialtype_top.iter_sites_by_residue_name("AAA")))
+            == 0
+        )
+
+    def test_iter_sites_by_residue_number(self, residue_top):
+        sites = list(residue_top.iter_sites_by_residue_number(4))
+        assert len(sites) == 5

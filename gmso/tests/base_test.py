@@ -487,6 +487,20 @@ class BaseTest:
         top.add_pairpotentialtype(pptype12)
         return top
 
+    @pytest.fixture(scope="session")
+    def residue_top(self):
+        top = Topology()
+        for i in range(1, 26):
+            atom = Atom(
+                name=f"atom_{i + 1}",
+                residue_number=i % 5,
+                residue_name="MY_RES_EVEN" if i % 2 == 0 else f"MY_RES_ODD",
+            )
+            top.add_site(atom, update_types=False)
+        top.update_topology()
+
+        return top
+
     @pytest.fixture
     def ld_top(self):
         lib = PotentialTemplateLibrary()
@@ -512,7 +526,7 @@ class BaseTest:
         )
 
         top = Topology(name="Topology")
-        atoms = [Atom(name=f"Atom{i+1}") for i in range(0, 100)]
+        atoms = [Atom(name=f"Atom{i + 1}") for i in range(0, 100)]
         dihedrals_group = [
             (atoms[i], atoms[i + 1], atoms[i + 2], atoms[i + 3])
             for i in range(0, 100, 4)
@@ -530,4 +544,5 @@ class BaseTest:
                 dh.connection_types = [rb_type, periodic_type]
             top.add_connection(connection=dh)
         top.update_topology()
+
         return top

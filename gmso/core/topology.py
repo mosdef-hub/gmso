@@ -6,6 +6,7 @@ import numpy as np
 import unyt as u
 from boltons.setutils import IndexedSet
 
+from gmso.abc.abstract_site import Site
 from gmso.core.angle import Angle
 from gmso.core.angle_type import AngleType
 from gmso.core.atom import Atom
@@ -1020,6 +1021,57 @@ class Topology(object):
             )
         for i, ref_member in enumerate(self._set_refs[ref].keys()):
             self._index_refs[ref][ref_member] = i
+
+    def iter_sites(self, key, value):
+        """Iterate through this topology's sites based on certain attribute and their values.
+
+        Parameters
+        ----------
+        key: str
+            The attribute of the site to look for
+        value:
+            The value that the given attribute should be equal to
+
+        Yields
+        ------
+        gmso.abc.abstract_site.Site
+            The site where getattr(site, key) == value
+        """
+        if key not in Site.__iterable_attributes__:
+
+            raise ValueError(
+                f"`{key}` is not an iterable attribute for Site. "
+                f"To check what the iterable attributes are see gmso.abc.abstract_site module."
+            )
+
+        if value is None:
+            raise ValueError(
+                "Expected `value` to be something other than None. Provided None."
+            )
+
+        for site in self.sites:
+            if getattr(site, key) == value:
+                yield site
+
+    def iter_sites_by_residue_name(self, name):
+        """Iterate through this topology's sites which contain this specific residue `name`.
+
+        See Also
+        --------
+        gmso.core.topology.Topology.iter_sites
+            The method to iterate over Topology's sites
+        """
+        return self.iter_sites("residue_name", name)
+
+    def iter_sites_by_residue_number(self, number):
+        """Iterate through this topology's sites which contain this specific residue `number`.
+
+        See Also
+        --------
+        gmso.core.topology.Topology.iter_sites
+            The method to iterate over Topology's sites
+        """
+        return self.iter_sites("residue_number", number)
 
     def save(self, filename, overwrite=False, **kwargs):
         """Save the topology to a file.
