@@ -346,3 +346,9 @@ class TestAtomType(BaseTest):
         assert atomtype_metadata.pop_tag("non_existent_tag") is None
         atomtype_metadata.delete_tag("int_tag")
         assert len(atomtype_metadata.tag_names) == 2
+
+    def test_atom_type_dict(self):
+        atype = AtomType()
+        atype_dict = atype.dict(exclude={"potential_expression"})
+        assert "potential_expression" not in atype_dict
+        assert "charge" in atype_dict
