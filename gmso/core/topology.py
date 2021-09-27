@@ -6,8 +6,8 @@ import numpy as np
 import unyt as u
 from boltons.setutils import IndexedSet
 
-from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.abc.abstract_site import Site
+from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.core.angle import Angle
 from gmso.core.angle_type import AngleType
 from gmso.core.atom import Atom
