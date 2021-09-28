@@ -491,8 +491,8 @@ class BaseTest:
         for i in range(1, 26):
             atom = Atom(
                 name=f"atom_{i + 1}",
-                residue_index=i % 5,
-                residue_label="MY_RES_EVEN" if i % 2 == 0 else f"MY_RES_ODD",
+                residue_number=i % 5,
+                residue_name="MY_RES_EVEN" if i % 2 == 0 else f"MY_RES_ODD",
             )
             top.add_site(atom, update_types=False)
         top.update_topology()
