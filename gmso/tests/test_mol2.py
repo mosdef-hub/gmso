@@ -69,32 +69,32 @@ class TestMol2(BaseTest):
 
     def test_residue(self):
         top = Topology.load(get_fn("ethanol_aa.mol2"))
-        assert np.all([site.residue_label == "ETO" for site in top.sites])
-        assert np.all([site.residue_index == 1 for site in top.sites])
+        assert np.all([site.residue_name == "ETO" for site in top.sites])
+        assert np.all([site.residue_number == 1 for site in top.sites])
 
         top = Topology.load(get_fn("benzene_ua.mol2"), site_type="lj")
         assert np.all(
             [
-                site.residue_label == "BEN1"
-                for site in top.iter_sites("residue_label", "BEN1")
+                site.residue_name == "BEN1"
+                for site in top.iter_sites("residue_name", "BEN1")
             ]
         )
         assert np.all(
             [
-                site.residue_index == 1
-                for site in top.iter_sites("residue_label", "BEN1")
+                site.residue_number == 1
+                for site in top.iter_sites("residue_name", "BEN1")
             ]
         )
         assert np.all(
             [
-                site.residue_label == "BEN2"
-                for site in top.iter_sites("residue_label", "BEN2")
+                site.residue_name == "BEN2"
+                for site in top.iter_sites("residue_name", "BEN2")
             ]
         )
         assert np.all(
             [
-                site.residue_index == 2
-                for site in top.iter_sites("residue_label", "BEN2")
+                site.residue_number == 2
+                for site in top.iter_sites("residue_name", "BEN2")
             ]
         )
 
