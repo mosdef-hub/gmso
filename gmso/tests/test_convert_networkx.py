@@ -11,30 +11,30 @@ from gmso.tests.base_test import BaseTest
 
 
 class TestConvertNetworkX(BaseTest):
-    def test_to_networkx_ethane(self, ethane):
-        ethane_to_nx = to_networkx(ethane)
+    def test_to_networkx_ethane(self, ethane_from_scratch):
+        ethane_to_nx = to_networkx(ethane_from_scratch)
 
-        assert ethane.n_sites == ethane_to_nx.number_of_nodes()
-        assert ethane.n_bonds == ethane_to_nx.number_of_edges()
+        assert ethane_from_scratch.n_sites == ethane_to_nx.number_of_nodes()
+        assert ethane_from_scratch.n_bonds == ethane_to_nx.number_of_edges()
 
-        assert set(ethane.sites) == set(ethane_to_nx.nodes)
-        for site in ethane.sites:
+        assert set(ethane_from_scratch.sites) == set(ethane_to_nx.nodes)
+        for site in ethane_from_scratch.sites:
             assert set(ethane_to_nx.nodes[site]["angles"]) == set(
-                ethane._get_angles_for(site)
+                ethane_from_scratch._get_angles_for(site)
             )
             assert set(ethane_to_nx.nodes[site]["dihedrals"]) == set(
-                ethane._get_dihedrals_for(site)
+                ethane_from_scratch._get_dihedrals_for(site)
             )
 
-    def test_from_networkx_ethane(self, ethane):
-        ethane_to_nx = to_networkx(ethane)
+    def test_from_networkx_ethane(self, ethane_from_scratch):
+        ethane_to_nx = to_networkx(ethane_from_scratch)
         ethane_from_nx = from_networkx(ethane_to_nx)
 
-        assert ethane.n_sites == ethane_from_nx.n_sites
-        assert ethane.n_bonds == ethane_from_nx.n_bonds
+        assert ethane_from_scratch.n_sites == ethane_from_nx.n_sites
+        assert ethane_from_scratch.n_bonds == ethane_from_nx.n_bonds
 
-        assert set(ethane.sites) == set(ethane_from_nx.sites)
-        assert set(ethane.bonds) == set(ethane_from_nx.bonds)
+        assert set(ethane_from_scratch.sites) == set(ethane_from_nx.sites)
+        assert set(ethane_from_scratch.bonds) == set(ethane_from_nx.bonds)
 
     def test_from_networkx_argon(self, ar_system):
         ar_to_nx = to_networkx(ar_system)

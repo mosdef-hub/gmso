@@ -157,7 +157,13 @@ class ParametricPotential(AbstractPotential):
         exclude_defaults: bool = False,
         exclude_none: bool = False,
     ) -> dict:
-        exclude = {"topology_", "set_ref_"}
+        if exclude is None:
+            exclude = set()
+        if isinstance(exclude, dict):
+            exclude = set(exclude)
+
+        exclude = exclude.union({"topology_", "set_ref_"})
+
         return super().dict(
             include=include,
             exclude=exclude,

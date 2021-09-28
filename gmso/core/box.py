@@ -179,6 +179,14 @@ class Box(object):
         """Return the normalized vectors of the box."""
         return self._unit_vectors_from_angles()
 
+    def json_dict(self):
+        from gmso.abc.serialization_utils import unyt_to_dict
+
+        return {
+            "lengths": unyt_to_dict(self._lengths),
+            "angles": unyt_to_dict(self._angles),
+        }
+
     def __repr__(self):
         """Return formatted representation of the box."""
         return "Box(a={}, b={}, c={}, alpha={}, beta={}, gamma={})".format(

@@ -12,6 +12,10 @@ from gmso.tests.base_test import BaseTest
 
 
 class TestAtomType(BaseTest):
+    @pytest.fixture(scope="session")
+    def atomtype_metadata(self):
+        return AtomType()
+
     def test_new_atom_type(self, charge, mass):
         new_type = AtomType(
             name="mytype",
@@ -308,3 +312,43 @@ class TestAtomType(BaseTest):
         for atom_type in typed_ethane.atom_types:
             assert atom_type.copy(deep=True) == atom_type
             assert deepcopy(atom_type) == atom_type
+
+    def test_metadata_empty_tags(self, atomtype_metadata):
+        assert atomtype_metadata.tag_names == []
+        assert list(atomtype_metadata.tag_names_iter) == []
+
+    def test_metadata_add_tags(self, atomtype_metadata):
+        atomtype_metadata.add_tag("tag1", dict([("tag_name_1", "value_1")]))
+        atomtype_metadata.add_tag("tag2", dict([("tag_name_2", "value_2")]))
+        atomtype_metadata.add_tag("int_tag", 1)
+        assert len(atomtype_metadata.tag_names) == 3
+
+    def test_metadata_add_tags_overwrite(self, atomtype_metadata):
+        with pytest.raises(ValueError):
+            atomtype_metadata.add_tag("tag2", "new_value", overwrite=False)
+        atomtype_metadata.add_tag("tag2", "new_value", overwrite=True)
+        assert atomtype_metadata.get_tag("tag2") == "new_value"
+        assert len(atomtype_metadata.tag_names) == 3
+
+    def test_metadata_get_tags(self, atomtype_metadata):
+        assert atomtype_metadata.get_tag("tag1").get("tag_name_1") == "value_1"
+        assert atomtype_metadata.get_tag("int_tag") == 1
+        assert atomtype_metadata.get_tag("non_existent_tag") is None
+        with pytest.raises(KeyError):
+            atomtype_metadata.get_tag("non_existent_tag", throw=True)
+
+    def test_metadata_all_tags(self, atomtype_metadata):
+        assert "int_tag" in atomtype_metadata.tags
+
+    def test_metadata_delete_tags(self, atomtype_metadata):
+        with pytest.raises(KeyError):
+            atomtype_metadata.delete_tag("non_existent_tag")
+        assert atomtype_metadata.pop_tag("non_existent_tag") is None
+        atomtype_metadata.delete_tag("int_tag")
+        assert len(atomtype_metadata.tag_names) == 2
+
+    def test_atom_type_dict(self):
+        atype = AtomType()
+        atype_dict = atype.dict(exclude={"potential_expression"})
+        assert "potential_expression" not in atype_dict
+        assert "charge" in atype_dict

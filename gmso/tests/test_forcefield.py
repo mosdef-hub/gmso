@@ -211,6 +211,22 @@ class TestForceField(BaseTest):
             "Xe",
         )
 
+    def test_ff_pairpotentialtypes_from_xml(self, ff):
+        assert len(ff.pairpotential_types) == 1
+        assert "Xe~Xe" in ff.pairpotential_types
+
+        assert (
+            sympify("r")
+            in ff.pairpotential_types["Xe~Xe"].independent_variables
+        )
+        assert ff.pairpotential_types["Xe~Xe"].parameters[
+            "sigma"
+        ] == u.unyt_quantity(10.0, u.nm)
+        assert ff.pairpotential_types["Xe~Xe"].parameters[
+            "k"
+        ] == u.unyt_quantity(0.1, u.kJ / u.mol)
+        assert ff.pairpotential_types["Xe~Xe"].member_types == ("Xe", "Xe")
+
     def test_ff_charmm_xml(self):
         charm_ff = ForceField(get_path("trimmed_charmm.xml"))
 
@@ -288,6 +304,7 @@ class TestForceField(BaseTest):
         assert len(named_groups_ff.potential_groups["HarmonicAngle"]) == 2
         assert len(named_groups_ff.potential_groups["PeriodicProper"]) == 2
         assert len(named_groups_ff.potential_groups["RBProper"]) == 1
+        assert len(named_groups_ff.potential_groups["LJ"]) == 1
 
     def test_potential_types_by_expression(self, named_groups_ff):
         atom_types_grouped_by_expression = (
@@ -302,8 +319,11 @@ class TestForceField(BaseTest):
         dihedral_types_grouped_by_expression = (
             named_groups_ff.group_dihedral_types_by_expression()
         )
-        improper_types_gropued_by_expression = (
+        improper_types_grouped_by_expression = (
             named_groups_ff.group_improper_types_by_expression()
+        )
+        pairpotential_types_grouped_by_expression = (
+            named_groups_ff.group_pairpotential_types_by_expression()
         )
 
         assert (
@@ -318,7 +338,15 @@ class TestForceField(BaseTest):
             == 2
         )
         assert (
-            len(improper_types_gropued_by_expression["0.5*z*(r - r_eq)**2"])
+            len(improper_types_grouped_by_expression["0.5*z*(r - r_eq)**2"])
+            == 1
+        )
+        assert (
+            len(
+                pairpotential_types_grouped_by_expression[
+                    "4*k*(-sigma**6/r**6 + sigma**12/r**12)"
+                ]
+            )
             == 1
         )
 
