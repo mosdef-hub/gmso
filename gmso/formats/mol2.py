@@ -46,7 +46,7 @@ def from_mol2(filename, site_type="atom"):
     path = Path(filename)
     if not path.exists():
         msg = "Provided path to file that does not exist"
-        raise OSError(msg)
+        raise FileNotFoundError(msg)
     # Initialize topology
     topology = Topology(name=path.stem)
     # save the name from the filename
