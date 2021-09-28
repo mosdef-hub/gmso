@@ -38,7 +38,7 @@ def from_mol2(filename, site_type="atom"):
     by installing [mBuild](https://mbuild.mosdef.org/en/stable/index.html)
     and converting using the following python code:
 
-        >>> import gmso.Topology
+        >>> from gmso import Topology
         >>> from gmso.external.convert_mbuild import to_mbuild
         >>> top = Topology.load('myfile.mol2')
         >>> mbuild_compound = to_mbuild(top)
