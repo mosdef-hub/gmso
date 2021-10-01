@@ -100,3 +100,37 @@ class TestBond(BaseTest):
 
         assert tuple(bond_eq.connection_members) in bond.equivalent_members()
         assert tuple(bond.connection_members) in bond_eq.equivalent_members()
+
+    def test_bond_member_classes_none(self, typed_ethane):
+        bonds = typed_ethane.bonds
+        assert bonds[0].member_classes is None
+
+    def test_bond_member_types(self, typed_ethane):
+        bonds = typed_ethane.bonds
+        assert not bonds[0].member_types == ["opls_135", "opls_140"]
+
+    def test_bond_member_classes_from_connection_members(self):
+        atype1 = AtomType(atomclass="CT", name="t1")
+
+        atype2 = AtomType(atomclass="CK", name="t2")
+
+        bond = Bond(
+            connection_members=[Atom(atom_type=atype1), Atom(atom_type=atype2)]
+        )
+        assert bond.member_classes == ["CT", "CK"]
+        assert bond.member_types == ["t1", "t2"]
+
+    def test_bond_member_types_classes_from_bond_type(self):
+        atom_type = AtomType()
+        atom1 = Atom(atom_type=atom_type)
+        atom2 = Atom(atom_type=atom_type)
+
+        btype = BondType(
+            name="atom1-atom2-bond",
+            member_types=["at1", "at2"],
+            member_classes=["XE", "XE"],
+        )
+        bond = Bond(connection_members=[atom1, atom2], bond_type=btype)
+        print(btype.member_classes)
+        assert bond.member_classes == ["XE", "XE"]
+        assert bond.member_types == ["at1", "at2"]
