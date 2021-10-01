@@ -131,6 +131,5 @@ class TestBond(BaseTest):
             member_classes=["XE", "XE"],
         )
         bond = Bond(connection_members=[atom1, atom2], bond_type=btype)
-        print(btype.member_classes)
         assert bond.member_classes == ["XE", "XE"]
         assert bond.member_types == ["at1", "at2"]
