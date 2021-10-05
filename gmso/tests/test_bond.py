@@ -107,7 +107,7 @@ class TestBond(BaseTest):
 
     def test_bond_member_types(self, typed_ethane):
         bonds = typed_ethane.bonds
-        assert not bonds[0].member_types == ["opls_135", "opls_140"]
+        assert set(bonds[0].member_types) == set(["opls_135", "opls_140"])
 
     def test_bond_member_classes_from_connection_members(self):
         atype1 = AtomType(atomclass="CT", name="t1")
@@ -117,8 +117,8 @@ class TestBond(BaseTest):
         bond = Bond(
             connection_members=[Atom(atom_type=atype1), Atom(atom_type=atype2)]
         )
-        assert bond.member_classes == ["CT", "CK"]
-        assert bond.member_types == ["t1", "t2"]
+        assert set(bond.member_classes) == set(["CT", "CK"])
+        assert set(bond.member_types) == set(["t1", "t2"])
 
     def test_bond_member_types_classes_from_bond_type(self):
         atom_type = AtomType()
@@ -131,5 +131,5 @@ class TestBond(BaseTest):
             member_classes=["XE", "XE"],
         )
         bond = Bond(connection_members=[atom1, atom2], bond_type=btype)
-        assert bond.member_classes == ["XE", "XE"]
-        assert bond.member_types == ["at1", "at2"]
+        assert set(bond.member_classes) == set(["XE", "XE"])
+        assert set(bond.member_types) == set(["at1", "at2"])
