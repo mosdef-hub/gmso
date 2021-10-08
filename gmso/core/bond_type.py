@@ -27,7 +27,13 @@ class BondType(ParametricPotential):
 
     member_types_: Optional[Tuple[str, str]] = Field(
         None,
-        description="List-like of of gmso.AtomType.name or gmso.AtomType.atomclass "
+        description="List-like of of gmso.AtomType.name "
+        "defining the members of this bond type",
+    )
+
+    member_classes_: Optional[Tuple[str, str]] = Field(
+        None,
+        description="List-like of of gmso.AtomType.atomclass "
         "defining the members of this bond type",
     )
 
@@ -39,6 +45,7 @@ class BondType(ParametricPotential):
         independent_variables=None,
         potential_expression=None,
         member_types=None,
+        member_classes=None,
         topology=None,
         tags=None,
     ):
@@ -62,6 +69,7 @@ class BondType(ParametricPotential):
             potential_expression=potential_expression,
             topology=topology,
             member_types=member_types,
+            member_classes=member_classes,
             set_ref=BOND_TYPE_DICT,
             tags=tags,
         )
@@ -71,9 +79,19 @@ class BondType(ParametricPotential):
         """Return the members involved in this bondtype."""
         return self.__dict__.get("member_types_")
 
+    @property
+    def member_classes(self):
+        return self.__dict__.get("member_classes_")
+
     class Config:
         """Pydantic configuration for class attributes."""
 
-        fields = {"member_types_": "member_types"}
+        fields = {
+            "member_types_": "member_types",
+            "member_classes_": "member_classes",
+        }
 
-        alias_to_fields = {"member_types": "member_types_"}
+        alias_to_fields = {
+            "member_types": "member_types_",
+            "member_classes": "member_classes_",
+        }
