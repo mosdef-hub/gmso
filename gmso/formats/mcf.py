@@ -9,6 +9,7 @@ import unyt as u
 from gmso import __version__
 from gmso.core.topology import Topology
 from gmso.exceptions import GMSOError
+from gmso.formats.formats_registry import saves_as
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.compatibility import check_compatibility
 from gmso.utils.conversions import convert_ryckaert_to_opls
@@ -18,6 +19,7 @@ __all__ = ["write_mcf"]
 potential_templates = PotentialTemplateLibrary()
 
 
+@saves_as(".mcf")
 def write_mcf(top, filename):
     """Generate a Cassandra MCF from a gmso.core.Topology object.
 
