@@ -57,6 +57,8 @@ class TestForceField(BaseTest):
         assert len(ff.atom_types) == 3
         assert "Ar" in ff.atom_types
         assert "Xe" in ff.atom_types
+        assert ff.atom_types["Ar"].get_tag("element") == "Ar"
+        assert ff.atom_types["Xe"].get_tag("element") == "Xe"
 
         assert sympify("r") in ff.atom_types["Ar"].independent_variables
         assert ff.atom_types["Ar"].parameters["A"] == u.unyt_quantity(
