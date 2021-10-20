@@ -14,6 +14,7 @@ repos:
     - id: check-yaml
     - id: end-of-file-fixer
     - id: trailing-whitespace
+      exclude: 'setup.cfg'
 - repo: https://github.com/psf/black
   rev: 21.9b0
   hooks:
