@@ -1,6 +1,7 @@
 """Read and write Gromos87 (.GRO) file format."""
 import datetime
 import warnings
+from copy import deepcopy
 
 import numpy as np
 import unyt as u
@@ -123,19 +124,20 @@ def write_gro(top, filename):
     Velocities are not written out.
 
     """
-    top = _validate_positions(top)
+    tmp_top = deepcopy(top)
+    tmp_top = _validate_positions(tmp_top)
 
     with open(filename, "w") as out_file:
         out_file.write(
             "{} written by GMSO {} at {}\n".format(
-                top.name if top.name is not None else "",
+                tmp_top.name if tmp_top.name is not None else "",
                 gmso.__version__,
                 str(datetime.datetime.now()),
             )
         )
-        out_file.write("{:d}\n".format(top.n_sites))
-        out_file.write(_prepare_atoms(top))
-        out_file.write(_prepare_box(top))
+        out_file.write("{:d}\n".format(tmp_top.n_sites))
+        out_file.write(_prepare_atoms(tmp_top))
+        out_file.write(_prepare_box(tmp_top))
 
 
 def _validate_positions(top):
