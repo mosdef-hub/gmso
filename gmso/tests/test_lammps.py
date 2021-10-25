@@ -1,3 +1,4 @@
+import pytest
 import unyt as u
 from unyt.testing import assert_allclose_units
 
@@ -9,8 +10,12 @@ from gmso.tests.utils import get_path
 
 
 class TestLammpsWriter(BaseTest):
-    def test_write_lammps(self, typed_ar_system):
-        typed_ar_system.save("data.lammps")
+    @pytest.mark.parametrize(
+        "fname", ["data.lammps", "data.data", "data.lammpsdata"]
+    )
+    def test_write_lammps(self, fname, typed_ar_system):
+        print(fname)
+        typed_ar_system.save(fname)
 
     def test_write_lammps_triclinic(self, typed_ar_system):
         typed_ar_system.box = Box(lengths=[1, 1, 1], angles=[60, 90, 120])

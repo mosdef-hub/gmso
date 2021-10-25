@@ -36,7 +36,13 @@ class saves_as:
 
     def __call__(self, method):
         """Register the method as saver for an extension."""
-        SaversRegistry.handlers[self.extension] = method
+
+        def decorator(func):
+            """Use a decorator so we can stack multiple file types per method."""
+            SaversRegistry.handlers[self.extension] = method
+            return func
+
+        return decorator(method)
 
 
 class loads_as:
@@ -47,4 +53,10 @@ class loads_as:
 
     def __call__(self, method):
         """Register the method as loader for an extension."""
-        LoadersRegistry.handlers[self.extension] = method
+
+        def decorator(func):
+            """Use a decorator so we can stack multiple file types per method."""
+            LoadersRegistry.handlers[self.extension] = method
+            return func
+
+        return decorator(method)
