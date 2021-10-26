@@ -1,7 +1,6 @@
 """Read and write Gromos87 (.GRO) file format."""
 import datetime
 import warnings
-from copy import deepcopy
 
 import numpy as np
 import unyt as u
@@ -124,40 +123,40 @@ def write_gro(top, filename):
     Velocities are not written out.
 
     """
-    tmp_top = deepcopy(top)
-    tmp_top = _validate_positions(tmp_top)
+    pos_array = np.ndarray.copy(top.positions)
+    pos_array = _validate_positions(pos_array)
 
     with open(filename, "w") as out_file:
         out_file.write(
             "{} written by GMSO {} at {}\n".format(
-                tmp_top.name if tmp_top.name is not None else "",
+                top.name if top.name is not None else "",
                 gmso.__version__,
                 str(datetime.datetime.now()),
             )
         )
-        out_file.write("{:d}\n".format(tmp_top.n_sites))
-        out_file.write(_prepare_atoms(tmp_top))
-        out_file.write(_prepare_box(tmp_top))
+        out_file.write("{:d}\n".format(top.n_sites))
+        out_file.write(_prepare_atoms(top, pos_array))
+        out_file.write(_prepare_box(top))
 
 
-def _validate_positions(top):
-    """Modify topology, as necessary, to fit limitations of the GRO format."""
-    if np.min(top.positions) < 0:
+def _validate_positions(pos_array):
+    """Modify coordinates, as necessary, to fit limitations of the GRO format."""
+    if np.min(pos_array) < 0:
         warnings.warn(
             "Topology contains some negative positions. Translating "
             "in order to ensure all coordinates are non-negative."
         )
-    min_xyz = np.min(top.positions, axis=0)
+    min_xyz = np.min(pos_array, axis=0)
     for i, minimum in enumerate(min_xyz):
         if minimum < 0.0:
-            for site in top.sites:
-                site.position[i] = site.position[i] - minimum
-    return top
+            for loc in pos_array:
+                loc[i] = loc[i] - minimum
+    return pos_array
 
 
-def _prepare_atoms(top):
+def _prepare_atoms(top, updated_positions):
     out_str = str()
-    for idx, site in enumerate(top.sites):
+    for idx, (site, pos) in enumerate(zip(top.sites, updated_positions)):
         warnings.warn(
             "Residue information is not currently "
             "stored or written to GRO files.",
@@ -175,9 +174,9 @@ def _prepare_atoms(top):
                 res_name,
                 atom_name,
                 atom_id,
-                site.position[0].in_units(u.nm).value,
-                site.position[1].in_units(u.nm).value,
-                site.position[2].in_units(u.nm).value,
+                pos[0].in_units(u.nm).value,
+                pos[1].in_units(u.nm).value,
+                pos[2].in_units(u.nm).value,
             )
         )
     return out_str

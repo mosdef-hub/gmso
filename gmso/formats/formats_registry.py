@@ -31,32 +31,26 @@ LoadersRegistry = Registry()
 class saves_as:
     """Decorator to aid saving."""
 
-    def __init__(self, extension):
-        self.extension = extension
+    def __init__(self, *extensions):
+        extension_set = set(extensions)
+        self.extensions = extension_set
 
     def __call__(self, method):
         """Register the method as saver for an extension."""
-
-        def decorator(func):
-            """Use a decorator so we can stack multiple file types per method."""
-            SaversRegistry.handlers[self.extension] = method
-            return func
-
-        return decorator(method)
+        for ext in self.extensions:
+            SaversRegistry.handlers[ext] = method
+        return method
 
 
 class loads_as:
     """Decorator to aid loading."""
 
-    def __init__(self, extension):
-        self.extension = extension
+    def __init__(self, *extensions):
+        extension_set = set(extensions)
+        self.extensions = extension_set
 
     def __call__(self, method):
         """Register the method as loader for an extension."""
-
-        def decorator(func):
-            """Use a decorator so we can stack multiple file types per method."""
-            LoadersRegistry.handlers[self.extension] = method
-            return func
-
-        return decorator(method)
+        for ext in self.extensions:
+            LoadersRegistry.handlers[ext] = method
+        return method

@@ -26,9 +26,7 @@ from gmso.utils.conversions import (
 )
 
 
-@saves_as(".lammps")
-@saves_as(".lammpsdata")
-@saves_as(".data")
+@saves_as(".lammps", ".lammpsdata", ".data")
 def write_lammpsdata(topology, filename, atom_style="full"):
     """Output a LAMMPS data file.
 
@@ -327,9 +325,7 @@ def write_lammpsdata(topology, filename, atom_style="full"):
                 )
 
 
-@loads_as(".lammps")
-@loads_as(".lammpsdata")
-@loads_as(".data")
+@loads_as(".lammps", ".lammpsdata", ".data")
 def read_lammpsdata(
     filename, atom_style="full", unit_style="real", potential="lj"
 ):
