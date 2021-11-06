@@ -83,9 +83,13 @@ stages:
 
           - bash: |
               source activate gmso-dev
-              bash <(curl -s https://codecov.io/bash) -C $(Build.SourceVersion)
-            condition: and( eq( variables['Agent.OS'], 'Linux' ), eq( variables['python.version'], '3.7' ) )
+              curl -Os https://uploader.codecov.io/latest/linux/codecov
+              chmod +x codecov
+              ./codecov -t ${CODECOV_UPLOAD_TOKEN} -C $(Build.SourceVersion)
+            condition: and( eq( variables['Agent.OS'], 'Linux'  ), eq( variables['python.version'], '3.7'  )  )
             displayName: Upload coverage report to codecov.io
+            env:
+              CODECOV_UPLOAD_TOKEN: $(codecovUploadToken)
 
           - task: PublishCodeCoverageResults@1
             inputs:

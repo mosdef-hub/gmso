@@ -57,6 +57,8 @@ class TestForceField(BaseTest):
         assert len(ff.atom_types) == 3
         assert "Ar" in ff.atom_types
         assert "Xe" in ff.atom_types
+        assert ff.atom_types["Ar"].get_tag("element") == "Ar"
+        assert ff.atom_types["Xe"].get_tag("element") == "Xe"
 
         assert sympify("r") in ff.atom_types["Ar"].independent_variables
         assert ff.atom_types["Ar"].parameters["A"] == u.unyt_quantity(
@@ -137,7 +139,7 @@ class TestForceField(BaseTest):
         assert ff.angle_types["Xe~Xe~Xe"].parameters["z"] == u.unyt_quantity(
             20, u.kJ / u.mol
         )
-        assert ff.angle_types["Xe~Xe~Xe"].member_types == ("Xe", "Xe", "Xe")
+        assert ff.angle_types["Xe~Xe~Xe"].member_classes == ("Xe", "Xe", "Xe")
 
     def test_ff_dihedraltypes_from_xml(self, ff):
         assert len(ff.dihedral_types) == 2
@@ -154,7 +156,7 @@ class TestForceField(BaseTest):
         assert ff.dihedral_types["Ar~Ar~Ar~Ar"].parameters[
             "z"
         ] == u.unyt_quantity(100, u.kJ / u.mol)
-        assert ff.dihedral_types["Ar~Ar~Ar~Ar"].member_types == (
+        assert ff.dihedral_types["Ar~Ar~Ar~Ar"].member_classes == (
             "Ar",
             "Ar",
             "Ar",
@@ -171,7 +173,7 @@ class TestForceField(BaseTest):
         assert ff.dihedral_types["Xe~Xe~Xe~Xe"].parameters[
             "z"
         ] == u.unyt_quantity(20, u.kJ / u.mol)
-        assert ff.dihedral_types["Xe~Xe~Xe~Xe"].member_types == (
+        assert ff.dihedral_types["Xe~Xe~Xe~Xe"].member_classes == (
             "Xe",
             "Xe",
             "Xe",
