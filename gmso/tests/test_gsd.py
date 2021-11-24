@@ -2,7 +2,6 @@ import pytest
 import unyt as u
 
 from gmso.external.convert_parmed import from_parmed
-from gmso.formats.gsd import write_gsd
 from gmso.tests.base_test import BaseTest
 from gmso.utils.io import get_fn, has_gsd, has_parmed, import_
 
@@ -19,7 +18,7 @@ class TestGsd(BaseTest):
             pmd.load_file(get_fn("ethane.top"), xyz=get_fn("ethane.gro"))
         )
 
-        write_gsd(top, "out.gsd")
+        top.save("out.gsd")
 
     def test_write_gsd_non_orthogonal(self):
         top = from_parmed(
@@ -27,4 +26,4 @@ class TestGsd(BaseTest):
         )
         top.box.angles = u.degree * [90, 90, 120]
 
-        write_gsd(top, "out.gsd")
+        top.save("out.gsd")
