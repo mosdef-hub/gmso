@@ -18,20 +18,22 @@ class TestElement(BaseTest):
         assert carbon.mass == element.Carbon.mass
 
     def test_element_by_name(self):
-        for name in ["Carbon", "carbon", " CarBon 12 "]:
-            carbon = element.element_by_name(name)
+        for idx, name in enumerate(["Carbon", "carbon", " CarBon 12 "]):
+            with pytest.warns(UserWarning if idx != 1 else None):
+                carbon = element.element_by_name(name)
 
-            assert carbon.name == element.Carbon.name
-            assert carbon.symbol == element.Carbon.symbol
-            assert carbon.mass == element.Carbon.mass
+                assert carbon.name == element.Carbon.name
+                assert carbon.symbol == element.Carbon.symbol
+                assert carbon.mass == element.Carbon.mass
 
     def test_element_by_symbol(self):
-        for symbol in ["N", "n", " N7"]:
-            nitrogen = element.element_by_symbol(symbol)
+        for idx, symbol in enumerate(["N", "n", " N7"]):
+            with pytest.warns(UserWarning if idx != 0 else None):
+                nitrogen = element.element_by_symbol(symbol)
 
-            assert nitrogen.name == element.Nitrogen.name
-            assert nitrogen.symbol == element.Nitrogen.symbol
-            assert nitrogen.mass == element.Nitrogen.mass
+                assert nitrogen.name == element.Nitrogen.name
+                assert nitrogen.symbol == element.Nitrogen.symbol
+                assert nitrogen.mass == element.Nitrogen.mass
 
     def test_element_by_atomic_number(self):
         for number in [8, "8", "08", "Oxygen-08"]:

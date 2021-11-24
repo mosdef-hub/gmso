@@ -13,14 +13,14 @@ from gmso.utils.io import get_fn
 class TestTop(BaseTest):
     def test_write_top(self, typed_ar_system):
         top = typed_ar_system
-        write_top(top, "ar.top")
+        top.save("ar.top")
 
     @pytest.mark.parametrize(
         "top", ["typed_ar_system", "typed_water_system", "typed_ethane"]
     )
     def test_pmd_loop(self, top, request):
         top = request.getfixturevalue(top)
-        write_top(top, "system.top")
+        top.save("system.top")
         pmd.load_file("system.top")
 
     def test_modified_potentials(self, ar_system):
@@ -36,12 +36,12 @@ class TestTop(BaseTest):
         top.atom_types[0].set_expression("sigma + epsilon*r")
 
         with pytest.raises(EngineIncompatibilityError):
-            write_top(top, "out.top")
+            top.save("out.top")
 
         alternate_lj = "4*epsilon*sigma**12/r**12 - 4*epsilon*sigma**6/r**6"
         top.atom_types[0].set_expression(alternate_lj)
 
-        write_top(top, "ar.top")
+        top.save("ar.top")
 
     def test_water_top(self, water_system):
         top = water_system
@@ -71,7 +71,7 @@ class TestTop(BaseTest):
 
         top.update_angle_types()
 
-        write_top(top, "water.top")
+        top.save("water.top")
 
     def test_ethane_periodic(self, typed_ethane):
         from gmso.core.dihedral_type import DihedralType
@@ -91,13 +91,12 @@ class TestTop(BaseTest):
 
         typed_ethane.update_connection_types()
 
-        write_top(typed_ethane, "system.top")
+        typed_ethane.save("system.top")
         struct = pmd.load_file("system.top")
         assert len(struct.dihedrals) == 9
 
     def test_custom_defaults(self, typed_ethane):
-        write_top(
-            typed_ethane,
+        typed_ethane.save(
             "system.top",
             top_vars={"gen-pairs": "yes", "fudgeLJ": 0.5, "fudgeQQ": 0.5},
         )

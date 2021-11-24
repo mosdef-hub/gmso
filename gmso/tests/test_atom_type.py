@@ -16,6 +16,12 @@ class TestAtomType(BaseTest):
     def atomtype_metadata(self):
         return AtomType()
 
+    def test_atom_type_tag_kwarg(self):
+        at = AtomType(
+            tags={"element": "Li", "comesFrom": "ForceFieldExperiments"}
+        )
+        assert at.tag_names == ["element", "comesFrom"]
+
     def test_new_atom_type(self, charge, mass):
         new_type = AtomType(
             name="mytype",
