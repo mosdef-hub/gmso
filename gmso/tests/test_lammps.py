@@ -1,3 +1,4 @@
+import pytest
 import unyt as u
 from unyt.testing import assert_allclose_units
 
@@ -9,35 +10,39 @@ from gmso.tests.utils import get_path
 
 
 class TestLammpsWriter(BaseTest):
-    def test_write_lammps(self, typed_ar_system):
-        write_lammpsdata(typed_ar_system, filename="data.lammps")
+    @pytest.mark.parametrize(
+        "fname", ["data.lammps", "data.data", "data.lammpsdata"]
+    )
+    def test_write_lammps(self, fname, typed_ar_system):
+        print(fname)
+        typed_ar_system.save(fname)
 
     def test_write_lammps_triclinic(self, typed_ar_system):
         typed_ar_system.box = Box(lengths=[1, 1, 1], angles=[60, 90, 120])
-        write_lammpsdata(typed_ar_system, filename="data.triclinic")
+        typed_ar_system.save("triclinic.lammps")
 
     def test_ethane_lammps(self, typed_ethane):
-        write_lammpsdata(typed_ethane, "data.ethane")
+        typed_ethane.save("ethane.lammps")
 
     def test_water_lammps(self, typed_water_system):
-        write_lammpsdata(typed_water_system, "data.water")
+        typed_water_system.save("data.lammps")
 
     def test_read_lammps(self, filename=get_path("data.lammps")):
-        read_lammpsdata(filename)
+        top = gmso.Topology.load(filename)
 
     def test_read_sites(self, filename=get_path("data.lammps")):
-        read = read_lammpsdata(filename)
+        read = gmso.Topology.load(filename)
 
         assert read.box == Box(lengths=[1, 1, 1])
 
     def test_read_n_sites(self, typed_ar_system):
-        write_lammpsdata(typed_ar_system, filename="data.ar")
-        read = read_lammpsdata("data.ar")
+        typed_ar_system.save("ar.lammps")
+        read = gmso.Topology.load("ar.lammps")
 
         assert read.n_sites == 100
 
     def test_read_mass(self, filename=get_path("data.lammps")):
-        read = read_lammpsdata(filename)
+        read = gmso.Topology.load(filename)
         masses = [i.mass for i in read.atom_types]
 
         assert_allclose_units(
@@ -45,7 +50,7 @@ class TestLammpsWriter(BaseTest):
         )
 
     def test_read_charge(self, filename=get_path("data.lammps")):
-        read = read_lammpsdata(filename)
+        read = gmso.Topology.load(filename)
         charge = [i.charge for i in read.atom_types]
 
         assert_allclose_units(
@@ -53,7 +58,7 @@ class TestLammpsWriter(BaseTest):
         )
 
     def test_read_sigma(self, filename=get_path("data.lammps")):
-        read = read_lammpsdata(filename)
+        read = gmso.Topology.load(filename)
         lj = [i.parameters for i in read.atom_types][0]
 
         assert_allclose_units(
@@ -61,7 +66,7 @@ class TestLammpsWriter(BaseTest):
         )
 
     def test_read_epsilon(self, filename=get_path("data.lammps")):
-        read = read_lammpsdata(filename)
+        read = gmso.Topology.load(filename)
         lj = [i.parameters for i in read.atom_types][0]
 
         assert_allclose_units(
@@ -72,8 +77,8 @@ class TestLammpsWriter(BaseTest):
         )
 
     def test_read_water(self, typed_water_system):
-        write_lammpsdata(typed_water_system, filename="data.water")
-        water = read_lammpsdata("data.water")
+        typed_water_system.save("water.lammps")
+        water = gmso.Topology.load("water.lammps")
 
         assert_allclose_units(
             water.sites[0].charge,
@@ -86,9 +91,9 @@ class TestLammpsWriter(BaseTest):
 
     def test_read_lammps_triclinic(self, typed_ar_system):
         typed_ar_system.box = Box(lengths=[1, 1, 1], angles=[60, 90, 120])
-        write_lammpsdata(typed_ar_system, filename="data.triclinic")
+        typed_ar_system.save("triclinic.lammps")
 
-        read = read_lammpsdata("data.triclinic")
+        read = gmso.Topology.load("triclinic.lammps")
         assert_allclose_units(
             read.box.lengths,
             u.unyt_array([1, 1, 1], u.nm),
