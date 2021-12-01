@@ -74,7 +74,7 @@ class TestXMLConversion(BaseTest):
             "sigma"
         ] == u.unyt_quantity(0.1, u.nm)
         assert foyer_fullerene.atom_types["C"].parameters[
-            "ep"
+            "epsilon"
         ] == u.unyt_quantity(0.1, u.kJ / u.mol)
         assert foyer_fullerene.atom_types["C"].mass == u.unyt_quantity(
             12.01, u.amu
@@ -85,7 +85,7 @@ class TestXMLConversion(BaseTest):
         assert foyer_fullerene.atom_types["C"].description == "carbon"
         assert foyer_fullerene.atom_types["C"].definition == "[C;r5;r6]"
         assert foyer_fullerene.atom_types["C"].expression == sympify(
-            "ep*(-sigma**6/r**6 + sigma**12/r**12)"
+            "epsilon*(-sigma**6/r**6 + sigma**12/r**12)"
         )
 
     def test_foyer_bonds(self, foyer_fullerene):
