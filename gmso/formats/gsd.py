@@ -9,6 +9,7 @@ from unyt.array import allclose_units
 
 from gmso.core.bond import Bond
 from gmso.exceptions import NotYetImplementedWarning
+from gmso.formats.formats_registry import saves_as
 from gmso.utils.geometry import coord_shift
 from gmso.utils.io import has_gsd
 
@@ -19,6 +20,7 @@ if has_gsd:
     import gsd.hoomd
 
 
+@saves_as(".gsd")
 def write_gsd(
     top,
     filename,
@@ -76,21 +78,11 @@ def write_gsd(
     gsd_snapshot.configuration.dimensions = 3
 
     # Write box information
-    if allclose_units(
-        top.box.angles, np.array([90, 90, 90]) * u.degree, rtol=1e-5, atol=1e-8
-    ):
-        warnings.warn("Orthorhombic box detected")
-        gsd_snapshot.configuration.box = np.hstack(
-            (top.box.lengths / ref_distance, np.zeros(3))
-        )
-    else:
-        warnings.warn("Non-orthorhombic box detected")
-        u_vectors = top.box.get_unit_vectors()
-        lx, ly, lz = top.box.lengths / ref_distance
-        xy = u_vectors[1][0]
-        xz = u_vectors[2][0]
-        yz = u_vectors[2][1]
-        gsd_snapshot.configuration.box = np.array([lx, ly, lz, xy, xz, yz])
+    (lx, ly, lz, xy, xz, yz) = _prepare_box_information(top)
+    lx = lx / ref_distance
+    ly = ly / ref_distance
+    lz = lz / ref_distance
+    gsd_snapshot.configuration.box = np.array([lx, ly, lz, xy, xz, yz])
 
     warnings.warn(
         "Only writing particle and bond information."
@@ -342,3 +334,22 @@ def _write_dihedral_information(gsd_snapshot, structure):
     # gsd_snapshot.dihedrals.typeid = dihedral_typeids
     # gsd_snapshot.dihedrals.group = dihedral_groups
     pass
+
+
+def _prepare_box_information(top):
+    """Prepare the box information for writing to gsd."""
+    lx = ly = lz = xy = xz = yz = 0.0
+    if allclose_units(
+        top.box.angles, np.array([90, 90, 90]) * u.degree, rtol=1e-5, atol=1e-8
+    ):
+        warnings.warn("Orthorhombic box detected")
+        lx, ly, lz = top.box.lengths
+        xy, xz, yz = 0.0, 0.0, 0.0
+    else:
+        warnings.warn("Non-orthorhombic box detected")
+        u_vectors = top.box.get_unit_vectors()
+        lx, ly, lz = top.box.lengths
+        xy = u_vectors[1][0]
+        xz = u_vectors[2][0]
+        yz = u_vectors[2][1]
+    return lx, ly, lz, xy, xz, yz

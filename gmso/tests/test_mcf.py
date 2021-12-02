@@ -10,15 +10,15 @@ from gmso.tests.base_test import BaseTest
 class TestMCF(BaseTest):
     def test_write_lj_simple(self, n_typed_ar_system):
         top = n_typed_ar_system(n_sites=1)
-        write_mcf(top, "ar.mcf")
+        top.save("ar.mcf")
 
     def test_write_mie_simple(self, n_typed_xe_mie):
         top = n_typed_xe_mie()
-        write_mcf(top, "xe.mcf")
+        top.save("xe.mcf")
 
     def test_write_lj_full(self, n_typed_ar_system):
         top = n_typed_ar_system(n_sites=1)
-        write_mcf(top, "ar.mcf")
+        top.save("ar.mcf")
 
         mcf_data = []
         with open("ar.mcf") as f:
@@ -58,7 +58,7 @@ class TestMCF(BaseTest):
 
     def test_write_mie_full(self, n_typed_xe_mie):
         top = n_typed_xe_mie()
-        write_mcf(top, "xe.mcf")
+        top.save("xe.mcf")
 
         mcf_data = []
         with open("xe.mcf") as f:
@@ -111,16 +111,16 @@ class TestMCF(BaseTest):
         top.atom_types[0].set_expression("sigma + epsilon*r")
 
         with pytest.raises(EngineIncompatibilityError):
-            write_mcf(top, "out.mcf")
+            top.save("out.mcf")
 
         alternate_lj = "4*epsilon*sigma**12/r**12 - 4*epsilon*sigma**6/r**6"
         top.atom_types[0].set_expression(alternate_lj)
 
-        write_mcf(top, "ar.mcf")
+        top.save("ar.mcf")
 
     def test_scaling_factors(self, n_typed_ar_system):
         top = n_typed_ar_system()
-        write_mcf(top, "ar.mcf")
+        top.save("ar.mcf")
         mcf_data = []
         with open("ar.mcf") as f:
             for line in f:
@@ -143,7 +143,7 @@ class TestMCF(BaseTest):
             "coul_14": 0.6,
         }
 
-        write_mcf(top, "ar.mcf")
+        top.save("ar.mcf", overwrite=True)
         mcf_data = []
         with open("ar.mcf") as f:
             for line in f:

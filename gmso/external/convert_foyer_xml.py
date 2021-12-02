@@ -246,10 +246,10 @@ def _write_nbforces(forcefield, ff_kwargs):
         forcefield,
         "AtomTypes",
         attrib_dict={
-            "expression": "ep * ((sigma/r)**12 - (sigma/r)**6)",
+            "expression": "epsilon * ((sigma/r)**12 - (sigma/r)**6)",
         },
     )
-    parameters_units = {"ep": "kJ/mol", "sigma": "nm"}
+    parameters_units = {"epsilon": "kJ/mol", "sigma": "nm"}
 
     # NonBondedForces
     for name, unit in parameters_units.items():
@@ -279,7 +279,7 @@ def _write_nbforces(forcefield, ff_kwargs):
         thisAtomType.attrib["name"] = atom_type.get("type", "AtomType")
         thisAtomType.attrib["charge"] = atom_type.get("charge")
         parameters = {
-            "ep": atom_type.get("epsilon"),
+            "epsilon": atom_type.get("epsilon"),
             "sigma": atom_type.get("sigma"),
         }
         _add_parameters(thisAtomType, parameters)
