@@ -90,6 +90,8 @@ def from_parmed(structure, refer_type=True):
                         [atom.xx, atom.xy, atom.xz] * u.angstrom
                     ).in_units(u.nm),
                     atom_type=pmd_top_atomtypes[atom.atom_type],
+                    residue_name=residue.name,
+                    residue_number=residue.idx,
                 )
             else:
                 site = gmso.Atom(
@@ -99,6 +101,8 @@ def from_parmed(structure, refer_type=True):
                         [atom.xx, atom.xy, atom.xz] * u.angstrom
                     ).in_units(u.nm),
                     atom_type=None,
+                    residue_name=residue.name,
+                    residue_number=residue.idx,
                 )
             site_map[atom] = site
             subtops[-1].add_site(site)
