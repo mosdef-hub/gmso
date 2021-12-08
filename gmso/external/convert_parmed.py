@@ -456,43 +456,32 @@ def to_parmed(top, refer_type=True):
     dihedral_map = dict()  # Map top's dihedral to structure's dihedral
 
     # Set up unparametrized system
-    # Build subtop_map (site -> top)
-    default_residue = pmd.Residue("RES")
-    for subtop in top.subtops:
-        for site in subtop.sites:
-            subtop_map[site] = subtop
-
     # Build up atom
+    residue_map = dict()
     for site in top.sites:
-        if site in subtop_map:
-            residue = subtop_map[site].name
-            residue_name = residue[: residue.find("[")]
-            residue_idx = int(
-                residue[residue.find("[") + 1 : residue.find("]")]
-            )
-            # since subtop contains information needed to build residue
-        else:
-            residue = default_residue
-        # Check element
         if site.element:
             atomic_number = site.element.atomic_number
             charge = site.element.charge
         else:
             atomic_number = 0
             charge = 0
-
         pmd_atom = pmd.Atom(
             atomic_number=atomic_number,
             name=site.name,
-            mass=site.mass,
-            charge=site.charge,
+            mass=site.mass.to(u.amu).value,
+            charge=site.charge.to(u.elementary_charge).value,
         )
         pmd_atom.xx, pmd_atom.xy, pmd_atom.xz = site.position.to(
             "angstrom"
         ).value
 
         # Add atom to structure
-        structure.add_atom(pmd_atom, resname=residue_name, resnum=residue_idx)
+        if site.residue_name:
+            structure.add_atom(
+                pmd_atom, resname=site.residue_name, resnum=site.residue_number
+            )
+        else:
+            structure.add_atom(pmd_atom, resname="RES", resnum=0)
         atom_map[site] = pmd_atom
 
     # "Claim" all of the item it contains and subsequently index all of its item
