@@ -1,5 +1,5 @@
 {
   "name": "PeriodicTorsionPotential",
-  "expression": "k0 + k1 * (1 + cos(1 * phi - phi1_eq)) + k2 * (1 + cos(2 * phi - phi2_eq)) + k3 * (1 + cos(3 * phi - phi3_eq)) + k4 * (1 + cos(4 * phi - phi4_eq)) + k5 * (1 + cos(5 * phi - phi5_eq))",
+  "expression": "k0 + k1 * (1 + cos(1 * phi - phi_eq1)) + k2 * (1 + cos(2 * phi - phi_eq2)) + k3 * (1 + cos(3 * phi - phi_eq3)) + k4 * (1 + cos(4 * phi - phi_eq4)) + k5 * (1 + cos(5 * phi - phi_eq5))",
   "independent_variables": "phi"
 }
