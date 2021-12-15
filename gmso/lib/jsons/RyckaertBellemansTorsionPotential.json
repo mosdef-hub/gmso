@@ -1,5 +1,5 @@
 {
   "name": "RyckaertBellemansTorsionPotential",
-  "expression": "c0 * cos(phi)**0 + c1 * cos(phi)**1 + c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + c5 * cos(phi)**5",
+  "expression": "c0 + c1 * cos(phi)**1 + c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + c5 * cos(phi)**5",
   "independent_variables": "phi"
 }
