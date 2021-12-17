@@ -1,5 +1,0 @@
-{
-  "name": "MiePotential_n_6",
-  "expression": "(n/(n-6)) * (n/6)**(6/(n-6)) * epsilon * ((sigma/r)**n - (sigma/r)**6)",
-  "independent_variables": "r"
-}
