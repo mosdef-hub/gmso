@@ -398,10 +398,10 @@ def _dihedral_types_from_pmd(structure, dihedral_types_member_map=None):
 
         top_dihedraltype = gmso.DihedralType(
             parameters=dihedral_params,
-            expression="c0 * cos(phi)**0 + c1 * cos(phi)**1 + "
-            + "c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + "
-            + "c5 * cos(phi)**5",
-            independent_variables="phi",
+            expression="c0 * cos(psi)**0 + c1 * cos(psi)**1 + "
+            + "c2 * cos(psi)**2 + c3 * cos(psi)**3 + c4 * cos(psi)**4 + "
+            + "c5 * cos(psi)**5",
+            independent_variables="psi",
             member_types=member_types,
         )
         pmd_top_dihedraltypes[dihedraltype] = top_dihedraltype
@@ -519,12 +519,12 @@ def to_parmed(top, refer_type=True):
             dihedral.connection_type
             and dihedral.connection_type.expression
             == parse_expr(
-                "c0 * cos(phi)**0 + "
-                + "c1 * cos(phi)**1 + "
-                + "c2 * cos(phi)**2 + "
-                + "c3 * cos(phi)**3 + "
-                + "c4 * cos(phi)**4 + "
-                + "c5 * cos(phi)**5"
+                "c0 * cos(psi)**0 + "
+                + "c1 * cos(psi)**1 + "
+                + "c2 * cos(psi)**2 + "
+                + "c3 * cos(psi)**3 + "
+                + "c4 * cos(psi)**4 + "
+                + "c5 * cos(psi)**5"
             )
         ):
             structure.rb_torsions.append(pmd_dihedral)
@@ -712,12 +712,12 @@ def _dihedral_types_from_gmso(top, structure, dihedral_map):
             # Add DihedralType to structure.dihedral_types
             structure.dihedral_types.append(dtype)
         elif dihedral_type.expression == parse_expr(
-            "c0 * cos(phi)**0 + "
-            + "c1 * cos(phi)**1 + "
-            + "c2 * cos(phi)**2 + "
-            + "c3 * cos(phi)**3 + "
-            + "c4 * cos(phi)**4 + "
-            + "c5 * cos(phi)**5"
+            "c0 * cos(psi)**0 + "
+            + "c1 * cos(psi)**1 + "
+            + "c2 * cos(psi)**2 + "
+            + "c3 * cos(psi)**3 + "
+            + "c4 * cos(psi)**4 + "
+            + "c5 * cos(psi)**5"
         ):
             dtype_c0 = float(
                 dihedral_type.parameters["c0"].to("kcal/mol").value
