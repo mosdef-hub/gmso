@@ -18,7 +18,7 @@
         <BondType name="BondType1" type1="C" type2="C">
             <Parameters>
 		<Parameter name="r_eq" value="0.1324"/>
-                <Parameter name="'k"value="493460.96"/>
+                <Parameter name="k"value="493460.96"/>
             </Parameters>
         </BondType>
     </BondTypes>
