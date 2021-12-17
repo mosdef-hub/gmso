@@ -478,7 +478,7 @@ class TestForceField(BaseTest):
         assert "c4" in params
         assert "c5" in params
 
-        assert sympify("phi") in dt.independent_variables
+        assert sympify("psi") in dt.independent_variables
 
         assert allclose_units_mixed(
             params.values(),
