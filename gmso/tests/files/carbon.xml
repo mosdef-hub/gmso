@@ -15,32 +15,48 @@
     <BondTypes expression="0.5 * k * (r-r_eq)**2">
         <ParametersUnitDef parameter="r_eq" unit="nm"/>
 	<ParametersUnitDef parameter="k" unit="kJ/(mol*nm**2)"/>
-        <BondType name="BondType1" type1='C' type2='C'>
+        <BondType name="BondType1" type1="C" type2="C">
             <Parameters>
-		<Parameter name='r_eq' value="0.1324"/>
-                <Parameter name='k' value="493460.96"/>
+		<Parameter name="'r_eq" value="0.1324"/>
+                <Parameter name="'k"value="493460.96"/>
             </Parameters>
         </BondType>
     </BondTypes>
     <AngleTypes expression="0.5 * k * (theta-theta_eq)**2">
         <ParametersUnitDef parameter="theta_eq" unit="radian"/>
 	<ParametersUnitDef parameter="k" unit="kJ/(mol*radian**2)"/>
-        <AngleType name="AngleType1" type1='C' type2='C' type3="C">
+        <AngleType name="AngleType1" type1="'C" type2="'C'" type3="C">
             <Parameters>
-                <Parameter name='theta_eq' value="2.12598556185"/>
-		<Parameter name='k' value="584.42112"/>
+                <Parameter name="theta_eq" value="2.12598556185"/>
+		<Parameter name="k" value="584.42112"/>
             </Parameters>
         </AngleType>
     </AngleTypes>
-    <DihedralTypes expression="k * (1 + cos(n * theta - theta_0))">
- 	<ParametersUnitDef parameter="k" unit="kJ/mol"/>
-        <ParametersUnitDef parameter="n" unit="dimensionless"/>
-	<ParametersUnitDef parameter="theta_0" unit="radian"/>
+    <DihedralTypes expression="k0 + k1 * (1 + cos(1 * phi - phi_eq1)) + k2 * (1 + cos(2 * phi - phi_eq2)) + k3 * (1 + cos(3 * phi - phi_eq3)) + k4 * (1 + cos(4 * phi - phi_eq4)) + k5 * (1 + cos(5 * phi - phi_eq5))"">
+ 	<ParametersUnitDef parameter="k0" unit="kJ/mol"/>
+        <ParametersUnitDef parameter="k1" unit="kJ/mol"/>
+        	<ParametersUnitDef parameter="phi_eq1" unit="radian"/>
+	<ParametersUnitDef parameter="k2" unit="kJ/mol"/>
+        	<ParametersUnitDef parameter="phi_eq2" unit="radian"/>
+	<ParametersUnitDef parameter="k3" unit="kJ/mol"/>
+        	<ParametersUnitDef parameter="phi_eq3" unit="radian"/>
+	<ParametersUnitDef parameter="k4" unit="kJ/mol"/>
+        	<ParametersUnitDef parameter="phi_eq4" unit="radian"/>
+	<ParametersUnitDef parameter="k5" unit="kJ/mol"/>
+        	<ParametersUnitDef parameter="phi_eq5" unit="radian"/>
         <DihedralType name="DihedralType1" type1="" type2="C" type3="C" type4="">
             <Parameters>
-		<Parameter name='k' value="27.8236"/>
-		<Parameter name='n' value="2"/>
-		<Parameter name='theta_0' value="3.14159265359"/>
+            	<Parameter name="k0" value="0"/>
+		<Parameter name="k1" value="0"/>
+		<Parameter name="phi_eq1" value="0"/>
+		<Parameter name="k2" value="27.8236"/>
+		<Parameter name="phi_eq2" value="3.14159265359"/>
+		<Parameter name="k3" value="0"/>
+		<Parameter name="phi_eq3" value="0"/>
+		<Parameter name="k4" value="0"/>
+		<Parameter name="phi_eq4" value="0"/>
+		<Parameter name="k5" value="0"/>
+		<Parameter name="phi_eq5" value="0"/>
             </Parameters>
         </DihedralType>
     </DihedralTypes>

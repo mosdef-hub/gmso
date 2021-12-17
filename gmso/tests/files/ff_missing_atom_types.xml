@@ -31,16 +31,16 @@
     <BondTypes name="HarmonicBond" expression="0.5 * k * (r-r_eq)**2">
         <ParametersUnitDef parameter="r_eq" unit="nm"/>
         <ParametersUnitDef parameter="k" unit="kJ/mol"/>
-        <BondType name="BondType1" type1='Ar' type2='Ar'>
+        <BondType name="BondType1" type1="Ar" type2="Ar"'>
             <Parameters>
-                <Parameter name='r_eq' value="10.0"/>
-                <Parameter name='k' value="10000"/>
+                <Parameter name="r_eq" value="10.0"/>
+                <Parameter name="'k" value="10000"/>
             </Parameters>
         </BondType>
-        <BondType name="BondType2" type1='Xe' type2="Xe">
+        <BondType name="BondType2" type1="Xe" type2="Xe">
             <Parameters>
-                <Parameter name='r_eq' value="10"/>
-                <Parameter name='k' value="20000"/>
+                <Parameter name="'r_eq"' value="10"/>
+                <Parameter name="'k'" value="20000"/>
             </Parameters>
         </BondType>
     </BondTypes>
@@ -48,16 +48,16 @@
     <AngleTypes name="HarmonicAngle" expression="0.5 * z * (r-r_eq)**2">
         <ParametersUnitDef parameter="r_eq" unit="nm"/>
         <ParametersUnitDef parameter="z" unit="kJ/mol"/>
-        <AngleType name="AngleType1" type1='Ar' type2='Ar' type3="Ar">
+        <AngleType name="AngleType1" type1="'Ar" type2="Ar" type3="Ar">
             <Parameters>
-                <Parameter name='r_eq' value="10.0"/>
-                <Parameter name='z' value="100"/>
+                <Parameter name="r_eq" value="10.0"/>
+                <Parameter name="z'" value="100"/>
             </Parameters>
         </AngleType>
-        <AngleType name="AngleType2" type1='Xe' type2="Xe" type3="Xe">
+        <AngleType name="AngleType2" type1="Xe" type2="Xe" type3="Xe">
             <Parameters>
-                <Parameter name='r_eq' value="10"/>
-                <Parameter name='z' value="20"/>
+                <Parameter name="'r_eq" value="10"/>
+                <Parameter name="'z"' value="20"/>
             </Parameters>
         </AngleType>
     </AngleTypes>
@@ -65,16 +65,16 @@
     <DihedralTypes name="PeriodicProper" expression="0.5 * z * (r-r_eq)**2">
         <ParametersUnitDef parameter="r_eq" unit="nm"/>
         <ParametersUnitDef parameter="z" unit="kJ/mol"/>
-        <DihedralType name="ProperType1" type1='Ar' type2='Ar' type3="Ar" type4="Ar">
+        <DihedralType name="ProperType1" type1="Ar" type2="Ar" type3="Ar" type4="Ar">
             <Parameters>
-                <Parameter name='r_eq' value="10.0"/>
-                <Parameter name='z' value="100"/>
+                <Parameter name="'r_eq" value="10.0"/>
+                <Parameter name="'z" value="100"/>
             </Parameters>
         </DihedralType>
-        <DihedralType name="ProperType2" type1='Xe' type2="Xe" type3="Xe" type4="Xe">
+        <DihedralType name="ProperType2" type1="Xe" type2="Xe" type3="Xe" type4="Xe">
             <Parameters>
-                <Parameter name='r_eq' value="10"/>
-                <Parameter name='z' value="20"/>
+                <Parameter name="r_eq" value="10"/>
+                <Parameter name="z" value="20"/>
             </Parameters>
         </DihedralType>
     </DihedralTypes>
@@ -82,15 +82,15 @@
     <DihedralTypes name="PeriodicImproper" expression="0.5 * z * (r-r_eq)**2">
         <ParametersUnitDef parameter="r_eq" unit="nm"/>
         <ParametersUnitDef parameter="z" unit="kJ/mol"/>
-        <ImproperType name="ImproperType1" type1='Ar' type2='Ar' type3="Ar" type4="Ar">
+        <ImproperType name="ImproperType1" type1="Ar" type2="A" type3="Ar" type4="Ar">
             <Parameters>
-                <Parameter name='r_eq' value="10.0"/>
-                <Parameter name='z' value="100"/>
+                <Parameter name="r_eq" value="10.0"/>
+                <Parameter name="z" value="100"/>
             </Parameters>
         </ImproperType>
     </DihedralTypes>
 
-    <DihedralTypes name="RBProper" expression="c0 * cos(phi)**0 + c1 * cos(phi)**1 + c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + c5 * cos(phi)**5">
+    <DihedralTypes name="RBProper" expression="c0 + c1 * cos(psi)**1 + c2 * cos(psi)**2 + c3 * cos(psi)**3 + c4 * cos(psi)**4 + c5 * cos(psi)**5">
         <ParametersUnitDef parameter="c5" unit="kJ/mol"/>
         <ParametersUnitDef parameter="c4" unit="kJ/mol"/>
         <ParametersUnitDef parameter="c3" unit="kJ/mol"/>
