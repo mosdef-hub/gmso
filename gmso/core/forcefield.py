@@ -343,7 +343,7 @@ class ForceField(object):
         forward = FF_TOKENS_SEPARATOR.join(atom_types)
         reverse = FF_TOKENS_SEPARATOR.join(reversed(atom_types))
 
-        if forward is self.dihedral_types:
+        if forward in self.dihedral_types:
             return self.dihedral_types[forward]
         if reverse in self.dihedral_types:
             return self.dihedral_types[reverse]
@@ -395,7 +395,7 @@ class ForceField(object):
             [atom_types[0], atom_types[2], atom_types[1], atom_types[3]]
         )
 
-        if forward is self.improper_types:
+        if forward in self.improper_types:
             return self.improper_types[forward]
         if reverse in self.improper_types:
             return self.improper_types[reverse]
