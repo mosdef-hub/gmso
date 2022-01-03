@@ -7,6 +7,6 @@ dependencies:
   - unyt >= 2.4
   - boltons
   - lxml
-  - pydantic
+  - pydantic < 1.9.0
   - networkx
   - ele >= 0.2.0
