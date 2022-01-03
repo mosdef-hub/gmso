@@ -211,9 +211,9 @@ class ForceField(object):
 
         Parameters
         ----------
-        group:  {'atom_types', 'bond_types', 'angle_types', 'dihedral_types', 'improper_types'}
+        group:  {'atom_type', 'bond_type', 'angle_type', 'dihedral_type', 'improper_type'}
             The potential group to perform this search on
-        key: str or list of str
+        key: str (for atom type) or list of str (for connection types)
             The key to lookup for this potential group
         warn: bool, default=False
             If true, raise a warning instead of Error if no match found

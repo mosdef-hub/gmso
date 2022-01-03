@@ -135,12 +135,12 @@ class TestMCF(BaseTest):
         assert np.allclose(float(mcf_data[-4][3]), 1.0)
 
         top.scaling_factors = {
-            "vdw_12": 0.1,
-            "vdw_13": 0.2,
-            "vdw_14": 0.5,
-            "coul_12": 0.2,
-            "coul_13": 0.4,
-            "coul_14": 0.6,
+            "nonBonded12Scale": 0.1,
+            "nonBonded13Scale": 0.2,
+            "nonBonded14Scale": 0.5,
+            "electrostatics12Scale": 0.2,
+            "electrostatics13Scale": 0.4,
+            "electrostatics14Scale": 0.6,
         }
 
         top.save("ar.mcf", overwrite=True)
