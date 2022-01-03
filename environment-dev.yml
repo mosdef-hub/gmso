@@ -7,7 +7,7 @@ dependencies:
   - unyt >= 2.4
   - boltons
   - lxml
-  - pydantic
+  - pydantic < 1.9.0
   - networkx
   - pytest
   - mbuild >= 0.11.0
