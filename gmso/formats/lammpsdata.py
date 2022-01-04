@@ -375,7 +375,7 @@ def read_lammpsdata(
 
     # Validate 'unit_style'
     if unit_style not in ["real"]:
-        raiseValueError(
+        raise ValueError(
             'Unit Style "{}" is invalid or is not currently supported'.format(
                 unit_style
             )

@@ -674,31 +674,31 @@ class TestTopology(BaseTest):
 
     def test_topology_scale_factors(self, typed_methylnitroaniline):
         sf = typed_methylnitroaniline.scaling_factors
-        assert np.allclose(sf["vdw_12"], 0.0)
-        assert np.allclose(sf["vdw_13"], 0.0)
-        assert np.allclose(sf["vdw_14"], 0.5)
-        assert np.allclose(sf["coul_12"], 0.0)
-        assert np.allclose(sf["coul_13"], 0.0)
-        assert np.allclose(sf["coul_14"], 0.5)
+        assert np.allclose(sf["nonBonded12Scale"], 0.0)
+        assert np.allclose(sf["nonBonded13Scale"], 0.0)
+        assert np.allclose(sf["nonBonded14Scale"], 0.5)
+        assert np.allclose(sf["electrostatics12Scale"], 0.0)
+        assert np.allclose(sf["electrostatics13Scale"], 0.0)
+        assert np.allclose(sf["electrostatics14Scale"], 0.5)
 
     def test_topology_change_scale_factors(self, typed_methylnitroaniline):
         typed_methylnitroaniline.scaling_factors = {
-            "vdw_12": 0.5,
-            "vdw_13": 0.5,
-            "vdw_14": 1.0,
-            "coul_12": 1.0,
-            "coul_13": 1.0,
-            "coul_14": 1.0,
+            "nonBonded12Scale": 0.5,
+            "nonBonded13Scale": 0.5,
+            "nonBonded14Scale": 1.0,
+            "electrostatics12Scale": 1.0,
+            "electrostatics13Scale": 1.0,
+            "electrostatics14Scale": 1.0,
         }
         sf = typed_methylnitroaniline.scaling_factors
-        assert np.allclose(sf["vdw_12"], 0.5)
-        assert np.allclose(sf["vdw_13"], 0.5)
-        assert np.allclose(sf["vdw_14"], 1.0)
-        assert np.allclose(sf["coul_12"], 1.0)
-        assert np.allclose(sf["coul_13"], 1.0)
-        assert np.allclose(sf["coul_14"], 1.0)
-        typed_methylnitroaniline.scaling_factors["vdw_12"] = 1.0
-        assert np.allclose(sf["vdw_12"], 1.0)
+        assert np.allclose(sf["nonBonded12Scale"], 0.5)
+        assert np.allclose(sf["nonBonded13Scale"], 0.5)
+        assert np.allclose(sf["nonBonded14Scale"], 1.0)
+        assert np.allclose(sf["electrostatics12Scale"], 1.0)
+        assert np.allclose(sf["electrostatics13Scale"], 1.0)
+        assert np.allclose(sf["electrostatics14Scale"], 1.0)
+        typed_methylnitroaniline.scaling_factors["nonBonded12Scale"] = 1.0
+        assert np.allclose(sf["nonBonded12Scale"], 1.0)
 
     def test_topology_invalid_scaling_factors(self, typed_methylnitroaniline):
         with pytest.raises(GMSOError):

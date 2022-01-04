@@ -173,12 +173,12 @@ class Topology(object):
         self._pairpotential_types = {}
         self._pairpotential_types_idx = {}
         self._scaling_factors = {
-            "vdw_12": 0.0,
-            "vdw_13": 0.0,
-            "vdw_14": 0.5,
-            "coul_12": 0.0,
-            "coul_13": 0.0,
-            "coul_14": 0.5,
+            "nonBonded12Scale": 0.0,
+            "nonBonded13Scale": 0.0,
+            "nonBonded14Scale": 0.5,
+            "electrostatics12Scale": 0.0,
+            "electrostatics13Scale": 0.0,
+            "electrostatics14Scale": 0.5,
         }
         self._set_refs = {
             ATOM_TYPE_DICT: self._atom_types,
@@ -251,12 +251,12 @@ class Topology(object):
     def scaling_factors(self, scaling_factors):
         """Set the scaling factors for the topology."""
         expected_items = [
-            "vdw_12",
-            "vdw_13",
-            "vdw_14",
-            "coul_12",
-            "coul_13",
-            "coul_14",
+            "nonBonded12Scale",
+            "nonBonded13Scale",
+            "nonBonded14Scale",
+            "electrostatics12Scale",
+            "electrostatics13Scale",
+            "electrostatics14Scale",
         ]
         if not isinstance(scaling_factors, dict):
             raise GMSOError("Scaling factors should be a dictionary")
