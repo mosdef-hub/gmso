@@ -9,6 +9,7 @@ import unyt as u
 from gmso import __version__
 from gmso.core.topology import Topology
 from gmso.exceptions import GMSOError
+from gmso.formats.formats_registry import saves_as
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.compatibility import check_compatibility
 from gmso.utils.conversions import convert_ryckaert_to_opls
@@ -18,6 +19,7 @@ __all__ = ["write_mcf"]
 potential_templates = PotentialTemplateLibrary()
 
 
+@saves_as(".mcf")
 def write_mcf(top, filename):
     """Generate a Cassandra MCF from a gmso.core.Topology object.
 
@@ -634,12 +636,16 @@ def _write_intrascaling_information(mcf, top):
     mcf.write(header)
     mcf.write(
         "{:.4f} {:.4f} {:.4f} 1.0000\n".format(
-            sf["vdw_12"], sf["vdw_13"], sf["vdw_14"]
+            sf["nonBonded12Scale"],
+            sf["nonBonded13Scale"],
+            sf["nonBonded14Scale"],
         )
     )
     mcf.write(
         "{:.4f} {:.4f} {:.4f} 1.0000\n".format(
-            sf["coul_12"], sf["coul_13"], sf["coul_14"]
+            sf["electrostatics12Scale"],
+            sf["electrostatics13Scale"],
+            sf["electrostatics14Scale"],
         )
     )
 

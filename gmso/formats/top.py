@@ -5,10 +5,12 @@ import unyt as u
 
 from gmso.core.element import element_by_atom_type
 from gmso.exceptions import GMSOError
+from gmso.formats.formats_registry import saves_as
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.compatibility import check_compatibility
 
 
+@saves_as(".top")
 def write_top(top, filename, top_vars=None):
     """Write a gmso.core.Topology object to a GROMACS topology (.TOP) file."""
     pot_types = _validate_compatibility(top)

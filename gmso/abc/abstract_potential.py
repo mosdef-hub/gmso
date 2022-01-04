@@ -53,9 +53,8 @@ class AbstractPotential(GMSOBase):
                 independent_variables=independent_variables,
                 parameters=None,
             )
-        tags = kwargs.pop("tags", None)
 
-        if not tags:
+        if not kwargs.get("tags"):
             kwargs["tags"] = {}
 
         super().__init__(

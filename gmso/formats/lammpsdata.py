@@ -18,6 +18,7 @@ from gmso.core.bond_type import BondType
 from gmso.core.box import Box
 from gmso.core.element import element_by_mass
 from gmso.core.topology import Topology
+from gmso.formats.formats_registry import loads_as, saves_as
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.conversions import (
     convert_opls_to_ryckaert,
@@ -25,6 +26,7 @@ from gmso.utils.conversions import (
 )
 
 
+@saves_as(".lammps", ".lammpsdata", ".data")
 def write_lammpsdata(topology, filename, atom_style="full"):
     """Output a LAMMPS data file.
 
@@ -323,6 +325,7 @@ def write_lammpsdata(topology, filename, atom_style="full"):
                 )
 
 
+@loads_as(".lammps", ".lammpsdata", ".data")
 def read_lammpsdata(
     filename, atom_style="full", unit_style="real", potential="lj"
 ):
@@ -372,7 +375,7 @@ def read_lammpsdata(
 
     # Validate 'unit_style'
     if unit_style not in ["real"]:
-        raiseValueError(
+        raise ValueError(
             'Unit Style "{}" is invalid or is not currently supported'.format(
                 unit_style
             )

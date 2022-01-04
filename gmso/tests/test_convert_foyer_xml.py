@@ -74,7 +74,7 @@ class TestXMLConversion(BaseTest):
             "sigma"
         ] == u.unyt_quantity(0.1, u.nm)
         assert foyer_fullerene.atom_types["C"].parameters[
-            "ep"
+            "epsilon"
         ] == u.unyt_quantity(0.1, u.kJ / u.mol)
         assert foyer_fullerene.atom_types["C"].mass == u.unyt_quantity(
             12.01, u.amu
@@ -85,7 +85,7 @@ class TestXMLConversion(BaseTest):
         assert foyer_fullerene.atom_types["C"].description == "carbon"
         assert foyer_fullerene.atom_types["C"].definition == "[C;r5;r6]"
         assert foyer_fullerene.atom_types["C"].expression == sympify(
-            "ep*(-sigma**6/r**6 + sigma**12/r**12)"
+            "epsilon*(-sigma**6/r**6 + sigma**12/r**12)"
         )
 
     def test_foyer_bonds(self, foyer_fullerene):
@@ -101,8 +101,8 @@ class TestXMLConversion(BaseTest):
         ] == u.unyt_quantity(0.1, u.nm)
         assert foyer_fullerene.bond_types["C~C"].parameters[
             "k"
-        ] == u.unyt_quantity(1000, u.kJ / u.nm ** 2)
-        assert foyer_fullerene.bond_types["C~C"].member_types == ("C", "C")
+        ] == u.unyt_quantity(1000, u.kJ / u.mol / u.nm ** 2)
+        assert foyer_fullerene.bond_types["C~C"].member_classes == ("C", "C")
 
     def test_foyer_angles(self, foyer_fullerene):
         assert len(foyer_fullerene.angle_types) == 1
@@ -114,11 +114,11 @@ class TestXMLConversion(BaseTest):
         )
         assert foyer_fullerene.angle_types["C~C~C"].parameters[
             "k"
-        ] == u.unyt_quantity(1000, u.kJ / u.rad ** 2)
+        ] == u.unyt_quantity(1000, u.kJ / u.mol / u.rad ** 2)
         assert foyer_fullerene.angle_types["C~C~C"].parameters[
             "theta_eq"
         ] == u.unyt_quantity(3.141592, u.rad)
-        assert foyer_fullerene.angle_types["C~C~C"].member_types == (
+        assert foyer_fullerene.angle_types["C~C~C"].member_classes == (
             "C",
             "C",
             "C",
@@ -139,7 +139,7 @@ class TestXMLConversion(BaseTest):
         )
         assert foyer_periodic.dihedral_types[
             "opls_140~opls_135~opls_135~opls_140"
-        ].parameters["k"] == u.unyt_quantity(3.1, u.kJ)
+        ].parameters["k"] == u.unyt_quantity(3.1, u.kJ / u.mol)
         assert foyer_periodic.dihedral_types[
             "opls_140~opls_135~opls_135~opls_140"
         ].parameters["n"] == u.unyt_quantity(1, u.dimensionless)

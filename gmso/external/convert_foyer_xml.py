@@ -235,7 +235,7 @@ def _populate_class_or_type_attrib(root, type_):
                 "type{}".format(j + 1), "c{}".format(j + 1)
             )
         elif "class" in item[0]:
-            root.attrib["type{}".format(j + 1)] = type_.get(
+            root.attrib["class{}".format(j + 1)] = type_.get(
                 "class{}".format(j + 1), "c{}".format(j + 1)
             )
 
@@ -246,10 +246,10 @@ def _write_nbforces(forcefield, ff_kwargs):
         forcefield,
         "AtomTypes",
         attrib_dict={
-            "expression": "ep * ((sigma/r)**12 - (sigma/r)**6)",
+            "expression": "epsilon * ((sigma/r)**12 - (sigma/r)**6)",
         },
     )
-    parameters_units = {"ep": "kJ/mol", "sigma": "nm"}
+    parameters_units = {"epsilon": "kJ/mol", "sigma": "nm"}
 
     # NonBondedForces
     for name, unit in parameters_units.items():
@@ -279,7 +279,7 @@ def _write_nbforces(forcefield, ff_kwargs):
         thisAtomType.attrib["name"] = atom_type.get("type", "AtomType")
         thisAtomType.attrib["charge"] = atom_type.get("charge")
         parameters = {
-            "ep": atom_type.get("epsilon"),
+            "epsilon": atom_type.get("epsilon"),
             "sigma": atom_type.get("sigma"),
         }
         _add_parameters(thisAtomType, parameters)
@@ -294,7 +294,7 @@ def _write_harmonic_bonds(forcefield, ff_kwargs):
         },
     )
 
-    parameters_units = {"k": "kJ/nm**2", "r_eq": "nm"}
+    parameters_units = {"k": "kJ/mol/nm**2", "r_eq": "nm"}
 
     for name, unit in parameters_units.items():
         _insert_parameters_units_def(harmonicBondTypes, name, unit)
@@ -327,7 +327,7 @@ def _write_harmonic_angles(forcefield, ff_kwargs):
         },
     )
 
-    parameters_units = {"k": "kJ/radian**2", "theta_eq": "radian"}
+    parameters_units = {"k": "kJ/mol/radian**2", "theta_eq": "radian"}
 
     for name, unit in parameters_units.items():
         _insert_parameters_units_def(harmonicAngleTypes, name, unit)
@@ -361,7 +361,7 @@ def _write_ub_angles(forcefield, ff_kwargs):
         },
     )
 
-    parameters_units = {"k": "kJ/radian**2", "w_0": "nm"}
+    parameters_units = {"k": "kJ/mol/radian**2", "w_0": "nm"}
 
     for name, unit in parameters_units.items():
         _insert_parameters_units_def(ureybradleyAngleTypes, name, unit)
@@ -421,7 +421,7 @@ def _write_periodic_dihedrals(forcefield, ff_kwargs):
 
     for k in range(0, max_j):
         _insert_parameters_units_def(
-            periodicTorsionDihedralTypes, "k{}".format(k), "kJ"
+            periodicTorsionDihedralTypes, "k{}".format(k), "kJ/mol"
         )
         _insert_parameters_units_def(
             periodicTorsionDihedralTypes, "n{}".format(k), "dimensionless"
@@ -463,7 +463,7 @@ def _write_periodic_impropers(forcefield, ff_kwargs):
 
     for k in range(0, max_j):
         _insert_parameters_units_def(
-            periodicImproperTypes, "k{}".format(k), "kJ"
+            periodicImproperTypes, "k{}".format(k), "kJ/mol"
         )
         _insert_parameters_units_def(
             periodicImproperTypes, "n{}".format(k), "dimensionless"
