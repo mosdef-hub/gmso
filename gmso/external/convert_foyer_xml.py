@@ -235,7 +235,7 @@ def _populate_class_or_type_attrib(root, type_):
                 "type{}".format(j + 1), "c{}".format(j + 1)
             )
         elif "class" in item[0]:
-            root.attrib["type{}".format(j + 1)] = type_.get(
+            root.attrib["class{}".format(j + 1)] = type_.get(
                 "class{}".format(j + 1), "c{}".format(j + 1)
             )
 
