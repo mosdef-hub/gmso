@@ -184,9 +184,20 @@ def write_lammpsdata(topology, filename, atom_style="full"):
             # Pair coefficients
             data.write("\nPair Coeffs # lj\n\n")
             for idx, param in enumerate(topology.atom_types):
+                #expected expression for lammps for standard LJ
                 lj_expression = "4.0 * epsilon * ((sigma/r)**12 - (sigma/r)**6)"
-                scaling_factor = simplify(lj_expression)/simplify(param.expression)
-                if scaling_factor.is_real:
+                
+                if sympify(param.expression).equals(sympify(lj_expression)):
+                    data.write(
+                        "{}\t{:.5f}\t{:.5f}\n".format(
+                            idx + 1,
+                            param.parameters["epsilon"]
+                            .in_units(u.Unit("kcal/mol"))
+                            .value,
+                            param.parameters["sigma"].in_units(u.angstrom).value,
+                        )
+                    )
+                elif (scaling_factor := simplify(lj_expression)/simplify(param.expression)).is_real:
                     data.write(
                         "{}\t{:.5f}\t{:.5f}\n".format(
                             idx + 1,
@@ -206,10 +217,36 @@ def write_lammpsdata(topology, filename, atom_style="full"):
             if topology.bonds:
                 data.write("\nBond Coeffs\n\n")
                 for idx, bond_type in enumerate(topology.bond_types):
-                    # note lammps drops the factor of 1/2 in harmonic potentials
+                    
+                    # expected harmonic potential expression for lammps
                     bond_expression = "k * (r-r_eq)**2"
-                    scaling_factor = simplify(bond_expression)/simplify(bond_type.expression)
-                    if scaling_factor.is_real:
+                    
+                    if sympify(bond_type.expression).equals(sympify(bond_expression)):
+                        data.write(
+                           "{}\t{:.5f}\t{:.5f}\n".format(
+                                 idx + 1,
+                                 bond_type.parameters["k"]
+                                 .in_units(u.Unit("kcal/mol/angstrom**2"))
+                                 .value,
+                                 bond_type.parameters["r_eq"]
+                                 .in_units(u.Unit("angstrom"))
+                                 .value,
+                                 )
+                           )
+                    elif sympify(bond_type.expression).equals(sympify("0.5 * k * (r-r_eq)**2")):
+                        data.write(
+                           "{}\t{:.5f}\t{:.5f}\n".format(
+                                 idx + 1,
+                                 bond_type.parameters["k"]
+                                 .in_units(u.Unit("kcal/mol/angstrom**2"))
+                                 .value
+                                 /2.0,
+                                 bond_type.parameters["r_eq"]
+                                 .in_units(u.Unit("angstrom"))
+                                 .value,
+                                 )
+                            )
+                    elif (scaling_factor := simplify(bond_expression)/simplify(bond_type.expression)).is_real:
                         data.write(
                             "{}\t{:.5f}\t{:.5f}\n".format(
                                 idx + 1,
@@ -232,19 +269,45 @@ def write_lammpsdata(topology, filename, atom_style="full"):
             if topology.angles:
                 data.write("\nAngle Coeffs\n\n")
                 for idx, angle_type in enumerate(topology.angle_types):
+                    #expected lammps harmonic angle expression
                     angle_expression = "k * (theta - theta_eq)**2"
-                    scaling_factor = simplify(angle_expression)/simplify(angle_type.expression)
-                    if scaling_factor.is_real:
+                    
+                    if sympify(angle_type.expression).equals(sympify(angle_expression)):
                         data.write(
                             "{}\t{:.5f}\t{:.5f}\n".format(
                                 idx + 1,
                                 angle_type.parameters["k"]
                                 .in_units(u.Unit("kcal/mol/radian**2"))
-                                .value
-                                / scaling_factor,
+                                .value,
                                 angle_type.parameters["theta_eq"]
                                 .in_units(u.Unit("degree"))
                                 .value,
+                            )
+                        )
+                    elif sympify(angle_type.expression).equals(sympify("0.5 * k * (theta - theta_eq)**2")):
+                        data.write(
+                            "{}\t{:.5f}\t{:.5f}\n".format(
+                                 idx + 1,
+                                 angle_type.parameters["k"]
+                                 .in_units(u.Unit("kcal/mol/radian**2"))
+                                 .value
+                                 / 2.0,
+                                 angle_type.parameters["theta_eq"]
+                                 .in_units(u.Unit("degree"))
+                                 .value,
+                            )
+                        )
+                    elif (scaling_factor := simplify(angle_expression)/simplify(angle_type.expression)).is_real:
+                        data.write(
+                            "{}\t{:.5f}\t{:.5f}\n".format(
+                                 idx + 1,
+                                 angle_type.parameters["k"]
+                                 .in_units(u.Unit("kcal/mol/radian**2"))
+                                 .value
+                                 / scaling_factor,
+                                 angle_type.parameters["theta_eq"]
+                                 .in_units(u.Unit("degree"))
+                                 .value,
                             )
                         )
                     else:
@@ -431,7 +494,7 @@ def get_units(unit_style):
     # Need separate angle units for harmonic force constant and angle
     unit_style_dict = {
         "real": {
-            "mass": u.g,
+            "mass": u.g / u.mol,
             "distance": u.angstrom,
             "energy": u.kcal / u.mol,
             "angle_k": u.radian,
@@ -472,7 +535,7 @@ def _get_connection(filename, topology, unit_style, connection_type):
                 * 2
             )
             c_type.parameters["r_eq"] = float(line.split()[2]) * (
-                get_units(unit_style)["distance"] ** 2
+                get_units(unit_style)["distance"]
             )
         elif connection_type == "angle":
             c_type = AngleType(name=line.split()[0])
