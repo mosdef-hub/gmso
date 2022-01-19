@@ -65,9 +65,11 @@ def from_foyer_xml(
     ff_root = foyer_xml_tree.getroot()
     name = ff_root.attrib.get("name")
     version = ff_root.attrib.get("version")
+    combining_rule = ff_root.attrib.get("combining_rule")
     f_kwargs = {
         "name": name,
         "version": version,
+        "combining_rule": combining_rule,
         "coulomb14scale": [],
         "lj14scale": [],
         "atom_types": [],
@@ -132,15 +134,20 @@ def _write_gmso_xml(gmso_xml, **kwargs):
     """Given the set of keyword arguments, write a gmso Forcefield xml file."""
     forcefield = etree.Element("ForceField")
 
-    if kwargs.get("name") is not None:
+    if kwargs.get("name"):
         forcefield.attrib["name"] = kwargs.get("name")
     else:
         forcefield.attrib["name"] = pathlib.Path(gmso_xml).stem
 
-    if kwargs.get("version") is not None:
+    if kwargs.get("version"):
         forcefield.attrib["version"] = kwargs.get("version")
     else:
         forcefield.attrib["version"] = "0.0.1"
+
+    if kwargs.get("combining_rule"):
+        forcefield.attrib["combining_rule"] = kwargs.get("combining_rule")
+    else:
+        forcefield.attrib["combining_rule"] = "geometric"
 
     ffMeta = _create_sub_element(forcefield, "FFMetaData")
     if kwargs["coulomb14scale"]:
@@ -246,7 +253,7 @@ def _write_nbforces(forcefield, ff_kwargs):
         forcefield,
         "AtomTypes",
         attrib_dict={
-            "expression": "epsilon * ((sigma/r)**12 - (sigma/r)**6)",
+            "expression": "4 * epsilon * ((sigma/r)**12 - (sigma/r)**6)",
         },
     )
     parameters_units = {"epsilon": "kJ/mol", "sigma": "nm"}
@@ -290,7 +297,7 @@ def _write_harmonic_bonds(forcefield, ff_kwargs):
         forcefield,
         "BondTypes",
         attrib_dict={
-            "expression": "k * (r-r_eq)**2",
+            "expression": "1/2 * k * (r-r_eq)**2",
         },
     )
 
@@ -323,7 +330,7 @@ def _write_harmonic_angles(forcefield, ff_kwargs):
         forcefield,
         "AngleTypes",
         attrib_dict={
-            "expression": "k * (theta - theta_eq)**2",
+            "expression": "1/2 * k * (theta - theta_eq)**2",
         },
     )
 
