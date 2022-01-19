@@ -246,7 +246,7 @@ def _write_nbforces(forcefield, ff_kwargs):
         forcefield,
         "AtomTypes",
         attrib_dict={
-            "expression": "epsilon * ((sigma/r)**12 - (sigma/r)**6)",
+            "expression": "4.0 * epsilon * ((sigma/r)**12 - (sigma/r)**6)",
         },
     )
     parameters_units = {"epsilon": "kJ/mol", "sigma": "nm"}
@@ -290,7 +290,7 @@ def _write_harmonic_bonds(forcefield, ff_kwargs):
         forcefield,
         "BondTypes",
         attrib_dict={
-            "expression": "k * (r-r_eq)**2",
+            "expression": "0.5 * k * (r-r_eq)**2",
         },
     )
 
@@ -323,7 +323,7 @@ def _write_harmonic_angles(forcefield, ff_kwargs):
         forcefield,
         "AngleTypes",
         attrib_dict={
-            "expression": "k * (theta - theta_eq)**2",
+            "expression": "0.5 * k * (theta - theta_eq)**2",
         },
     )
 
