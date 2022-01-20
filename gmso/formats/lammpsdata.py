@@ -6,8 +6,7 @@ import warnings
 
 import numpy as np
 import unyt as u
-from sympy import sympify
-from sympy import simplify
+from sympy import simplify, sympify
 from unyt.array import allclose_units
 
 from gmso.core.angle import Angle
@@ -184,9 +183,10 @@ def write_lammpsdata(topology, filename, atom_style="full"):
             # Pair coefficients
             data.write("\nPair Coeffs # lj\n\n")
             for idx, param in enumerate(topology.atom_types):
-                #expected expression for lammps for standard LJ
+                # expected expression for lammps for standard LJ
                 lj_expression = "4.0 * epsilon * ((sigma/r)**12 - (sigma/r)**6)"
-                scaling_factor = simplify(lj_expression)/simplify(param.expression)
+
+scaling_factor = simplify(lj_expression)/simplify(param.expression)
                 print(scaling_factor)
                 if scaling_factor.is_real:
                     data.write(
@@ -195,22 +195,25 @@ def write_lammpsdata(topology, filename, atom_style="full"):
                             param.parameters["epsilon"]
                             .in_units(u.Unit("kcal/mol"))
                             .value
-                            /float(scaling_factor),
-                            param.parameters["sigma"].in_units(u.angstrom).value,
+                            / scaling_factor,
+                            param.parameters["sigma"]
+                            .in_units(u.angstrom)
+                            .value,
                         )
                     )
                 else:
                     raise ValueError(
-                         'Pair Style "{}" is invalid or is not currently supported'.format(
-                                                                                           param.expression
-                                                                                           )
-                         )
+                        'Pair Style "{}" is invalid or is not currently supported'.format(
+                            param.expression
+                        )
+                    )
             if topology.bonds:
                 data.write("\nBond Coeffs\n\n")
                 for idx, bond_type in enumerate(topology.bond_types):
-                    
+
                     # expected harmonic potential expression for lammps
                     bond_expression = "k * (r-r_eq)**2"
+
                     scaling_factor = simplify(bond_expression)/simplify(bond_type.expression)
                     
                     if scaling_factor.is_real:
@@ -228,15 +231,15 @@ def write_lammpsdata(topology, filename, atom_style="full"):
                         )
                     else:
                         raise ValueError(
-                              'Bond Style "{}" is invalid or is not currently supported'.format(
-                                                                                       bond_type.expression
-                                                                                       )
+                            'Bond Style "{}" is invalid or is not currently supported'.format(
+                                bond_type.expression
+                            )
                         )
 
             if topology.angles:
                 data.write("\nAngle Coeffs\n\n")
                 for idx, angle_type in enumerate(topology.angle_types):
-                    #expected lammps harmonic angle expression
+                    # expected lammps harmonic angle expression
                     angle_expression = "k * (theta - theta_eq)**2"
                     scaling_factor = simplify(angle_expression)/simplify(angle_type.expression)
                     
@@ -255,10 +258,10 @@ def write_lammpsdata(topology, filename, atom_style="full"):
                         )
                     else:
                         raise ValueError(
-                              'Angle Style "{}" is invalid or is not currently supported'.format(
-                                                                                        angle_type.expression
-                                                                                        )
-                                         )
+                            'Angle Style "{}" is invalid or is not currently supported'.format(
+                                angle_type.expression
+                            )
+                        )
             # TODO: Write out multiple dihedral styles
             if topology.dihedrals:
                 data.write("\nDihedral Coeffs\n\n")

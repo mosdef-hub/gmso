@@ -252,7 +252,6 @@ def _write_nbforces(forcefield, ff_kwargs):
         forcefield,
         "AtomTypes",
         attrib_dict={
-
             "expression": "4 * epsilon * ((sigma/r)**12 - (sigma/r)**6)",
         },
     )
