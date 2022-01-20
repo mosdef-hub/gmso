@@ -215,7 +215,7 @@ def write_lammpsdata(topology, filename, atom_style="full"):
                     bond_expression = "k * (r-r_eq)**2"
 
                     scaling_factor = simplify(bond_expression)/simplify(bond_type.expression)
-                    
+
                     if scaling_factor.is_real:
                         data.write(
                             "{}\t{:.5f}\t{:.5f}\n".format(
@@ -242,7 +242,7 @@ def write_lammpsdata(topology, filename, atom_style="full"):
                     # expected lammps harmonic angle expression
                     angle_expression = "k * (theta - theta_eq)**2"
                     scaling_factor = simplify(angle_expression)/simplify(angle_type.expression)
-                    
+
                     if scaling_factor.is_real:
                         data.write(
                             "{}\t{:.5f}\t{:.5f}\n".format(
