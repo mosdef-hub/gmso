@@ -185,7 +185,9 @@ def write_lammpsdata(topology, filename, atom_style="full"):
             for idx, param in enumerate(topology.atom_types):
                 # expected expression for lammps for standard LJ
                 lj_expression = "4.0 * epsilon * ((sigma/r)**12 - (sigma/r)**6)"
-                scaling_factor = simplify(lj_expression)/simplify(param.expression)
+                scaling_factor = simplify(lj_expression) / simplify(
+                    param.expression
+                )
 
                 if scaling_factor.is_real:
                     data.write(
