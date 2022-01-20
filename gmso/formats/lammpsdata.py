@@ -187,7 +187,6 @@ def write_lammpsdata(topology, filename, atom_style="full"):
                 lj_expression = "4.0 * epsilon * ((sigma/r)**12 - (sigma/r)**6)"
 
                 scaling_factor = simplify(lj_expression)/simplify(param.expression)
-                print(scaling_factor)
                 if scaling_factor.is_real:
                     data.write(
                         "{}\t{:.5f}\t{:.5f}\n".format(
