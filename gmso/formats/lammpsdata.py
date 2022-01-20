@@ -186,7 +186,9 @@ def write_lammpsdata(topology, filename, atom_style="full"):
                 # expected expression for lammps for standard LJ
                 lj_expression = "4.0 * epsilon * ((sigma/r)**12 - (sigma/r)**6)"
 
-                scaling_factor = simplify(lj_expression)/simplify(param.expression)
+                scaling_factor = simplify(lj_expression) / simplify(
+                    param.expression
+                )
                 print(scaling_factor)
                 if scaling_factor.is_real:
                     data.write(
@@ -214,7 +216,9 @@ def write_lammpsdata(topology, filename, atom_style="full"):
                     # expected harmonic potential expression for lammps
                     bond_expression = "k * (r-r_eq)**2"
 
-                    scaling_factor = simplify(bond_expression)/simplify(bond_type.expression)
+                    scaling_factor = simplify(bond_expression) / simplify(
+                        bond_type.expression
+                    )
 
                     if scaling_factor.is_real:
                         data.write(
@@ -241,19 +245,21 @@ def write_lammpsdata(topology, filename, atom_style="full"):
                 for idx, angle_type in enumerate(topology.angle_types):
                     # expected lammps harmonic angle expression
                     angle_expression = "k * (theta - theta_eq)**2"
-                    scaling_factor = simplify(angle_expression)/simplify(angle_type.expression)
+                    scaling_factor = simplify(angle_expression) / simplify(
+                        angle_type.expression
+                    )
 
                     if scaling_factor.is_real:
                         data.write(
                             "{}\t{:.5f}\t{:.5f}\n".format(
-                                 idx + 1,
-                                 angle_type.parameters["k"]
-                                 .in_units(u.Unit("kcal/mol/radian**2"))
-                                 .value
-                                 / float(scaling_factor),
-                                 angle_type.parameters["theta_eq"]
-                                 .in_units(u.Unit("degree"))
-                                 .value,
+                                idx + 1,
+                                angle_type.parameters["k"]
+                                .in_units(u.Unit("kcal/mol/radian**2"))
+                                .value
+                                / float(scaling_factor),
+                                angle_type.parameters["theta_eq"]
+                                .in_units(u.Unit("degree"))
+                                .value,
                             )
                         )
                     else:
