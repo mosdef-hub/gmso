@@ -186,7 +186,7 @@ def write_lammpsdata(topology, filename, atom_style="full"):
                 # expected expression for lammps for standard LJ
                 lj_expression = "4.0 * epsilon * ((sigma/r)**12 - (sigma/r)**6)"
 
-scaling_factor = simplify(lj_expression)/simplify(param.expression)
+                scaling_factor = simplify(lj_expression)/simplify(param.expression)
                 print(scaling_factor)
                 if scaling_factor.is_real:
                     data.write(
@@ -195,7 +195,7 @@ scaling_factor = simplify(lj_expression)/simplify(param.expression)
                             param.parameters["epsilon"]
                             .in_units(u.Unit("kcal/mol"))
                             .value
-                            / scaling_factor,
+                            / float(scaling_factor),
                             param.parameters["sigma"]
                             .in_units(u.angstrom)
                             .value,
