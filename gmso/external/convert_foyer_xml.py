@@ -363,7 +363,7 @@ def _write_ub_angles(forcefield, ff_kwargs):
         forcefield,
         "AngleTypes",
         attrib_dict={
-            "expression": "0.5 * k * (w - w_0) ** 2",
+            "expression": "1/2 * k * (w - w_0) ** 2",
         },
     )
 
