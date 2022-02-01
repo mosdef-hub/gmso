@@ -120,9 +120,9 @@ def write_lammpsdata(topology, filename, atom_style="full"):
             lx = a
             xy = b * np.cos(gamma)
             xz = c * np.cos(beta)
-            ly = np.sqrt(b ** 2 - xy ** 2)
+            ly = np.sqrt(b**2 - xy**2)
             yz = (b * c * np.cos(alpha) - xy * xz) / ly
-            lz = np.sqrt(c ** 2 - xz ** 2 - yz ** 2)
+            lz = np.sqrt(c**2 - xz**2 - yz**2)
 
             xhi = vectors[0][0]
             yhi = vectors[1][1]
@@ -606,8 +606,8 @@ def _get_box_coordinates(filename, unit_style, topology):
             ly = yhi - ylo
             lz = zhi - zlo
 
-            c = np.sqrt(lz ** 2 + xz ** 2 + yz ** 2)
-            b = np.sqrt(ly ** 2 + xy ** 2)
+            c = np.sqrt(lz**2 + xz**2 + yz**2)
+            b = np.sqrt(ly**2 + xy**2)
             a = lx
 
             alpha = np.arccos((yz * ly + xy * xz) / (b * c))

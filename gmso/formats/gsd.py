@@ -132,7 +132,7 @@ def _write_particle_information(
 
     charges = np.array([site.charge for site in top.sites])
     e0 = u.physical_constants.eps_0.in_units(
-        u.elementary_charge ** 2 / u.Unit("kcal*angstrom/mol")
+        u.elementary_charge**2 / u.Unit("kcal*angstrom/mol")
     )
     """
     Permittivity of free space = 2.39725e-4 e^2/((kcal/mol)(angstrom)),
