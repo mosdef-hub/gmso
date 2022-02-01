@@ -101,7 +101,7 @@ class TestXMLConversion(BaseTest):
         ] == u.unyt_quantity(0.1, u.nm)
         assert foyer_fullerene.bond_types["C~C"].parameters[
             "k"
-        ] == u.unyt_quantity(1000, u.kJ / u.mol / u.nm ** 2)
+        ] == u.unyt_quantity(1000, u.kJ / u.mol / u.nm**2)
         assert foyer_fullerene.bond_types["C~C"].member_classes == ("C", "C")
 
     def test_foyer_angles(self, foyer_fullerene):
@@ -114,7 +114,7 @@ class TestXMLConversion(BaseTest):
         )
         assert foyer_fullerene.angle_types["C~C~C"].parameters[
             "k"
-        ] == u.unyt_quantity(1000, u.kJ / u.mol / u.rad ** 2)
+        ] == u.unyt_quantity(1000, u.kJ / u.mol / u.rad**2)
         assert foyer_fullerene.angle_types["C~C~C"].parameters[
             "theta_eq"
         ] == u.unyt_quantity(3.141592, u.rad)

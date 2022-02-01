@@ -66,7 +66,7 @@ class TestForceField(BaseTest):
         )
         assert ff.atom_types["Ar"].parameters["B"] == u.unyt_quantity(4.0, u.nm)
         assert ff.atom_types["Ar"].parameters["C"] == u.unyt_quantity(
-            0.5, u.kcal / u.mol * u.nm ** 6
+            0.5, u.kcal / u.mol * u.nm**6
         )
         assert ff.atom_types["Ar"].mass == u.unyt_quantity(39.948, u.amu)
         assert ff.atom_types["Ar"].charge == u.unyt_quantity(0.0, u.coulomb)
@@ -83,7 +83,7 @@ class TestForceField(BaseTest):
         )
         assert ff.atom_types["Xe"].parameters["B"] == u.unyt_quantity(5.0, u.nm)
         assert ff.atom_types["Xe"].parameters["C"] == u.unyt_quantity(
-            0.3, u.kcal / u.mol * u.nm ** 6
+            0.3, u.kcal / u.mol * u.nm**6
         )
         assert ff.atom_types["Xe"].mass == u.unyt_quantity(131.293, u.amu)
         assert ff.atom_types["Xe"].charge == u.unyt_quantity(0.0, u.coulomb)
@@ -408,7 +408,7 @@ class TestForceField(BaseTest):
         assert sympify("r") in bt.independent_variables
 
         assert allclose_units_mixed(
-            params.values(), [284512.0 * u.kJ / u.nm ** 2, 0.109 * u.nm]
+            params.values(), [284512.0 * u.kJ / u.nm**2, 0.109 * u.nm]
         )
 
     def test_forcefield_get_potential_bond_type_reversed(
@@ -426,7 +426,7 @@ class TestForceField(BaseTest):
         )
 
         assert allclose_units_mixed(
-            params.values(), [224262.4 * u.kJ / u.nm ** 2, 0.1529 * u.nm]
+            params.values(), [224262.4 * u.kJ / u.nm**2, 0.1529 * u.nm]
         )
 
     def test_forcefield_get_potential_angle_type(self, opls_ethane_foyer):
@@ -442,7 +442,7 @@ class TestForceField(BaseTest):
 
         assert allclose_units_mixed(
             params.values(),
-            [313.8 * u.kJ / u.radian ** 2, 1.932079482 * u.radian],
+            [313.8 * u.kJ / u.radian**2, 1.932079482 * u.radian],
         )
 
     def test_forcefield_get_potential_angle_type_reversed(
@@ -461,7 +461,7 @@ class TestForceField(BaseTest):
 
         assert allclose_units_mixed(
             params.values(),
-            [276.144 * u.kJ / u.radian ** 2, 1.8814649337 * u.radian],
+            [276.144 * u.kJ / u.radian**2, 1.8814649337 * u.radian],
         )
 
     def test_forcefield_get_potential_dihedral_type(self, opls_ethane_foyer):
