@@ -134,12 +134,12 @@ def _write_gmso_xml(gmso_xml, **kwargs):
     """Given the set of keyword arguments, write a gmso Forcefield xml file."""
     forcefield = etree.Element("ForceField")
 
-    if kwargs.get("name"):
+    if kwargs.get("name") is not None:
         forcefield.attrib["name"] = kwargs.get("name")
     else:
         forcefield.attrib["name"] = pathlib.Path(gmso_xml).stem
 
-    if kwargs.get("version"):
+    if kwargs.get("version") is not None:
         forcefield.attrib["version"] = kwargs.get("version")
     else:
         forcefield.attrib["version"] = "0.0.1"
