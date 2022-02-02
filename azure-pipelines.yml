@@ -26,22 +26,22 @@ stages:
       - job: TestsForGMSO
         strategy:
           matrix:
-            Python36Ubuntu:
-              imageName: 'ubuntu-latest'
-              python.version: 3.7
             Python37Ubuntu:
               imageName: 'ubuntu-latest'
-              python.version: 3.8
+              python.version: 3.7
             Python38Ubuntu:
               imageName: 'ubuntu-latest'
+              python.version: 3.8
+            Python39Ubuntu:
+              imageName: 'ubuntu-latest'
               python.version: 3.9
-            Python36macOS:
-              imageName: 'macOS-latest'
-              python.version: 3.7
             Python37macOS:
               imageName: 'macOS-latest'
-              python.version: 3.8
+              python.version: 3.7
             Python38macOS:
+              imageName: 'macOS-latest'
+              python.version: 3.8
+            Python39macOS:
               imageName: 'macOS-latest'
               python.version: 3.9
 
