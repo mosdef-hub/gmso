@@ -466,8 +466,10 @@ class BaseTest:
     @pytest.fixture(scope="session")
     def pairpotentialtype_top(self):
         top = Topology()
-        atype1 = AtomType(name="a1", expression="sigma + epsilon*r")
-        atype2 = AtomType(name="a2", expression="sigma * epsilon*r")
+        atype1 = AtomType(name="a1")
+        atype1.expression = "sigma + epsilon*r"
+        atype2 = AtomType(name="a2")
+        atype2.expression = "sigma * epsilon * r"
         atom1 = Atom(name="a", atom_type=atype1)
         atom2 = Atom(name="b", atom_type=atype2)
         top.add_site(atom1)

@@ -6,6 +6,7 @@ from pydantic import Field
 
 from gmso.core.parametric_potential import ParametricPotential
 from gmso.utils._constants import BOND_TYPE_DICT
+from gmso.utils.expression import PotentialExpression
 
 
 class BondType(ParametricPotential):
@@ -49,18 +50,6 @@ class BondType(ParametricPotential):
         topology=None,
         tags=None,
     ):
-        if potential_expression is None:
-            if expression is None:
-                expression = "0.5 * k * (r-r_eq)**2"
-
-            if parameters is None:
-                parameters = {
-                    "k": 1000 * u.Unit("kJ / (nm**2)"),
-                    "r_eq": 0.14 * u.nm,
-                }
-            if independent_variables is None:
-                independent_variables = {"r"}
-
         super(BondType, self).__init__(
             name=name,
             expression=expression,
@@ -82,6 +71,17 @@ class BondType(ParametricPotential):
     @property
     def member_classes(self):
         return self.__dict__.get("member_classes_")
+
+    @staticmethod
+    def _default_potential_expr():
+        return PotentialExpression(
+            expression="0.5 * k * (r-r_eq)**2",
+            independent_variables={"r"},
+            parameters={
+                "k": 1000 * u.Unit("kJ / (nm**2)"),
+                "r_eq": 0.14 * u.nm,
+            },
+        )
 
     class Config:
         """Pydantic configuration for class attributes."""
