@@ -85,13 +85,16 @@ class TestXMLConversion(BaseTest):
         assert foyer_fullerene.atom_types["C"].description == "carbon"
         assert foyer_fullerene.atom_types["C"].definition == "[C;r5;r6]"
         assert foyer_fullerene.atom_types["C"].expression == sympify(
-            "epsilon*(-sigma**6/r**6 + sigma**12/r**12)"
+            "4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)"
         )
 
     def test_foyer_bonds(self, foyer_fullerene):
         assert len(foyer_fullerene.bond_types) == 1
         assert "C~C" in foyer_fullerene.bond_types
 
+        assert foyer_fullerene.bond_types["C~C"].expression == sympify(
+            "1/2 * k * (r-r_eq)**2"
+        )
         assert (
             sympify("r")
             in foyer_fullerene.bond_types["C~C"].independent_variables
@@ -108,6 +111,9 @@ class TestXMLConversion(BaseTest):
         assert len(foyer_fullerene.angle_types) == 1
         assert "C~C~C" in foyer_fullerene.angle_types
 
+        assert foyer_fullerene.angle_types["C~C~C"].expression == sympify(
+            "1/2 * k * (theta - theta_eq)**2"
+        )
         assert (
             sympify("theta")
             in foyer_fullerene.angle_types["C~C~C"].independent_variables

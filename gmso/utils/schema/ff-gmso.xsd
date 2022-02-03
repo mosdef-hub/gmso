@@ -211,6 +211,7 @@
             <xsd:sequence>
                 <xsd:element name="Units" type="Units" minOccurs="0" maxOccurs="1"/>
             </xsd:sequence>
+            <xsd:attribute name="combining_rule" type="xsd:string" use="optional"/>
             <xsd:attribute name="electrostatics14Scale" type="xsd:float" use="optional"/>
             <xsd:attribute name="nonBonded14Scale" type="xsd:float" use="optional"/>
             <xsd:attribute name="combiningRule" type="xsd:string" use="optional"/>
