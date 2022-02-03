@@ -1,5 +1,5 @@
 <ForceField version="0.4.1" name="ForceFieldOne">
-    <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.67">
+    <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.67" combiningRule="lorentz">
         <Units energy="K*kb" distance="nm" mass="amu" charge="coulomb"/>
     </FFMetaData>
     <AtomTypes expression="(A*exp(-B/r) - C/r**6)">

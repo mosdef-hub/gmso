@@ -37,6 +37,10 @@ class TestForceField(BaseTest):
         assert ff.scaling_factors["nonBonded14Scale"] == 0.67
         assert ff.scaling_factors["electrostatics14Scale"] == 0.5
 
+    def test_ff_combining_rule(self, ff, opls_ethane_foyer):
+        assert ff.combining_rule == "lorentz"
+        assert opls_ethane_foyer.combining_rule == "geometric"
+
     @pytest.mark.parametrize(
         "unit_name,unit_value",
         [
