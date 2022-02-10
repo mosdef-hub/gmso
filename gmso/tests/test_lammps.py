@@ -30,7 +30,7 @@ class TestLammpsWriter(BaseTest):
     def test_read_lammps(self, filename=get_path("data.lammps")):
         top = gmso.Topology.load(filename)
 
-    def test_read_sites(self, filename=get_path("data.lammps")):
+    def test_read_box(self, filename=get_path("data.lammps")):
         read = gmso.Topology.load(filename)
 
         assert read.box == Box(lengths=[1, 1, 1])
@@ -46,7 +46,7 @@ class TestLammpsWriter(BaseTest):
         masses = [i.mass for i in read.atom_types]
 
         assert_allclose_units(
-            masses, u.unyt_array(1.0079, u.g), rtol=1e-5, atol=1e-8
+            masses, u.unyt_array(1.0079, u.g / u.mol), rtol=1e-5, atol=1e-8
         )
 
     def test_read_charge(self, filename=get_path("data.lammps")):
@@ -106,3 +106,84 @@ class TestLammpsWriter(BaseTest):
             rtol=1e-5,
             atol=1e-8,
         )
+
+    def test_read_n_bonds(self, typed_ethane):
+        typed_ethane.save("ethane.lammps")
+        read = gmso.Topology.load("ethane.lammps")
+
+        assert read.n_bonds == 7
+
+    def test_read_n_angles(self, typed_ethane):
+        typed_ethane.save("ethane.lammps")
+        read = gmso.Topology.load("ethane.lammps")
+
+        assert read.n_angles == 12
+
+    def test_read_bond_params(self, typed_ethane):
+        typed_ethane.save("ethane.lammps")
+        read = gmso.Topology.load("ethane.lammps")
+        bond_params = [i.parameters for i in read.bond_types]
+
+        assert_allclose_units(
+            bond_params[0]["k"],
+            u.unyt_array(680, (u.kcal / u.mol / u.angstrom / u.angstrom)),
+            rtol=1e-5,
+            atol=1e-8,
+        )
+        assert_allclose_units(
+            bond_params[0]["r_eq"],
+            u.unyt_array(1.09, (u.angstrom)),
+            rtol=1e-5,
+            atol=1e-8,
+        )
+        assert_allclose_units(
+            bond_params[1]["k"],
+            u.unyt_array(536, (u.kcal / u.mol / u.angstrom / u.angstrom)),
+            rtol=1e-5,
+            atol=1e-8,
+        )
+        assert_allclose_units(
+            bond_params[1]["r_eq"],
+            u.unyt_array(1.529, (u.angstrom)),
+            rtol=1e-5,
+            atol=1e-8,
+        )
+
+    def test_read_angle_params(self, typed_ethane):
+        typed_ethane.save("ethane.lammps")
+        read = gmso.Topology.load("ethane.lammps")
+        angle_params = [i.parameters for i in read.angle_types]
+
+        assert_allclose_units(
+            angle_params[0]["k"],
+            u.unyt_array(75, (u.kcal / u.mol / u.radian / u.radian)),
+            rtol=1e-5,
+            atol=1e-8,
+        )
+        assert_allclose_units(
+            angle_params[0]["theta_eq"],
+            u.unyt_array(110.7, (u.degree)),
+            rtol=1e-5,
+            atol=1e-8,
+        )
+        assert_allclose_units(
+            angle_params[1]["k"],
+            u.unyt_array(66, (u.kcal / u.mol / u.radian / u.radian)),
+            rtol=1e-5,
+            atol=1e-8,
+        )
+        assert_allclose_units(
+            angle_params[1]["theta_eq"],
+            u.unyt_array(107.8, (u.degree)),
+            rtol=1e-5,
+            atol=1e-8,
+        )
+
+
+"""
+    def test_read_n_diherals(self, typed_ethane):
+        typed_ethane.save("ethane.lammps")
+        read = gmso.Topology.load("ethane.lammps")
+
+        assert read.n_dihedrals == 9
+"""

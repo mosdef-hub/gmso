@@ -26,7 +26,7 @@ class TestSerialization(BaseTest):
             independent_variables={"a"},
             parameters={
                 "b": 2.0 * u.amu,
-                "c": 3.0 * u.nm / u.kg ** 2,
+                "c": 3.0 * u.nm / u.kg**2,
                 "d": 5.0 * u.kJ / u.mol,
                 "e": 1.0 * u.C,
             },

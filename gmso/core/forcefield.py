@@ -90,6 +90,7 @@ class ForceField(object):
             self.pairpotential_types = ff.pairpotential_types
             self.potential_groups = ff.potential_groups
             self.scaling_factors = ff.scaling_factors
+            self.combining_rule = ff.combining_rule
             self.units = ff.units
         else:
             self.name = "ForceField"
@@ -102,6 +103,7 @@ class ForceField(object):
             self.pairpotential_types = {}
             self.potential_groups = {}
             self.scaling_factors = {}
+            self.combining_rule = "geometric"
             self.units = {}
 
     @property
@@ -610,6 +612,7 @@ class ForceField(object):
         ff.name = names[0]
         ff.version = versions[0]
         ff.scaling_factors = ff_meta_map["scaling_factors"]
+        ff.combining_rule = ff_meta_map["combining_rule"]
         ff.units = ff_meta_map["Units"]
         ff.atom_types = atom_types_dict.maps[0]
         ff.bond_types = bond_types_dict
