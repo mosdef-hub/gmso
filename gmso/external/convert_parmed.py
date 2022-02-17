@@ -457,7 +457,6 @@ def to_parmed(top, refer_type=True):
 
     # Set up unparametrized system
     # Build up atom
-    residue_map = dict()
     for site in top.sites:
         if site.element:
             atomic_number = site.element.atomic_number
@@ -481,7 +480,7 @@ def to_parmed(top, refer_type=True):
                 pmd_atom, resname=site.residue_name, resnum=site.residue_number
             )
         else:
-            structure.add_atom(pmd_atom, resname="RES", resnum=0)
+            structure.add_atom(pmd_atom, resname="RES", resnum=-1)
         atom_map[site] = pmd_atom
 
     # "Claim" all of the item it contains and subsequently index all of its item
