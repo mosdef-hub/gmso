@@ -65,9 +65,11 @@ def from_foyer_xml(
     ff_root = foyer_xml_tree.getroot()
     name = ff_root.attrib.get("name")
     version = ff_root.attrib.get("version")
+    combining_rule = ff_root.attrib.get("combining_rule")
     f_kwargs = {
         "name": name,
         "version": version,
+        "combining_rule": combining_rule,
         "coulomb14scale": [],
         "lj14scale": [],
         "atom_types": [],
@@ -143,6 +145,10 @@ def _write_gmso_xml(gmso_xml, **kwargs):
         forcefield.attrib["version"] = "0.0.1"
 
     ffMeta = _create_sub_element(forcefield, "FFMetaData")
+    if kwargs.get("combining_rule"):
+        ffMeta.attrib["combining_rule"] = kwargs.get("combining_rule")
+    else:
+        ffMeta.attrib["combining_rule"] = "geometric"
     if kwargs["coulomb14scale"]:
         ffMeta.attrib["electrostatics14Scale"] = kwargs["coulomb14scale"]
 
@@ -235,7 +241,7 @@ def _populate_class_or_type_attrib(root, type_):
                 "type{}".format(j + 1), "c{}".format(j + 1)
             )
         elif "class" in item[0]:
-            root.attrib["type{}".format(j + 1)] = type_.get(
+            root.attrib["class{}".format(j + 1)] = type_.get(
                 "class{}".format(j + 1), "c{}".format(j + 1)
             )
 
@@ -246,7 +252,7 @@ def _write_nbforces(forcefield, ff_kwargs):
         forcefield,
         "AtomTypes",
         attrib_dict={
-            "expression": "epsilon * ((sigma/r)**12 - (sigma/r)**6)",
+            "expression": "4 * epsilon * ((sigma/r)**12 - (sigma/r)**6)",
         },
     )
     parameters_units = {"epsilon": "kJ/mol", "sigma": "nm"}
@@ -290,11 +296,11 @@ def _write_harmonic_bonds(forcefield, ff_kwargs):
         forcefield,
         "BondTypes",
         attrib_dict={
-            "expression": "k * (r-r_eq)**2",
+            "expression": "1/2 * k * (r-r_eq)**2",
         },
     )
 
-    parameters_units = {"k": "kJ/nm**2", "r_eq": "nm"}
+    parameters_units = {"k": "kJ/mol/nm**2", "r_eq": "nm"}
 
     for name, unit in parameters_units.items():
         _insert_parameters_units_def(harmonicBondTypes, name, unit)
@@ -323,11 +329,11 @@ def _write_harmonic_angles(forcefield, ff_kwargs):
         forcefield,
         "AngleTypes",
         attrib_dict={
-            "expression": "k * (theta - theta_eq)**2",
+            "expression": "1/2 * k * (theta - theta_eq)**2",
         },
     )
 
-    parameters_units = {"k": "kJ/radian**2", "theta_eq": "radian"}
+    parameters_units = {"k": "kJ/mol/radian**2", "theta_eq": "radian"}
 
     for name, unit in parameters_units.items():
         _insert_parameters_units_def(harmonicAngleTypes, name, unit)
@@ -357,11 +363,11 @@ def _write_ub_angles(forcefield, ff_kwargs):
         forcefield,
         "AngleTypes",
         attrib_dict={
-            "expression": "k * (w - w_0) ** 2",
+            "expression": "1/2 * k * (w - w_0) ** 2",
         },
     )
 
-    parameters_units = {"k": "kJ/radian**2", "w_0": "nm"}
+    parameters_units = {"k": "kJ/mol/radian**2", "w_0": "nm"}
 
     for name, unit in parameters_units.items():
         _insert_parameters_units_def(ureybradleyAngleTypes, name, unit)
@@ -421,7 +427,7 @@ def _write_periodic_dihedrals(forcefield, ff_kwargs):
 
     for k in range(0, max_j):
         _insert_parameters_units_def(
-            periodicTorsionDihedralTypes, "k{}".format(k), "kJ"
+            periodicTorsionDihedralTypes, "k{}".format(k), "kJ/mol"
         )
         _insert_parameters_units_def(
             periodicTorsionDihedralTypes, "n{}".format(k), "dimensionless"
@@ -463,7 +469,7 @@ def _write_periodic_impropers(forcefield, ff_kwargs):
 
     for k in range(0, max_j):
         _insert_parameters_units_def(
-            periodicImproperTypes, "k{}".format(k), "kJ"
+            periodicImproperTypes, "k{}".format(k), "kJ/mol"
         )
         _insert_parameters_units_def(
             periodicImproperTypes, "n{}".format(k), "dimensionless"

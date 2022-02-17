@@ -211,8 +211,10 @@
             <xsd:sequence>
                 <xsd:element name="Units" type="Units" minOccurs="0" maxOccurs="1"/>
             </xsd:sequence>
+            <xsd:attribute name="combining_rule" type="xsd:string" use="optional"/>
             <xsd:attribute name="electrostatics14Scale" type="xsd:float" use="optional"/>
             <xsd:attribute name="nonBonded14Scale" type="xsd:float" use="optional"/>
+            <xsd:attribute name="combiningRule" type="xsd:string" use="optional"/>
         </xsd:complexType>
 
     </xsd:element>
@@ -231,7 +233,7 @@
     <xsd:element name="ForceField">
         <xsd:complexType>
             <xsd:sequence>
-                <xsd:element ref="FFMetaData" minOccurs="0" maxOccurs="unbounded"/>
+                <xsd:element ref="FFMetaData" minOccurs="0" maxOccurs="1"/>
                 <xsd:element ref="AtomTypes" minOccurs="0" maxOccurs="unbounded"/>
                 <xsd:element ref="BondTypes" minOccurs="0" maxOccurs="unbounded"/>
                 <xsd:element ref="AngleTypes" minOccurs="0" maxOccurs="unbounded"/>

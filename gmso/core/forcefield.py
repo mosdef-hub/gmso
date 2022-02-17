@@ -90,6 +90,7 @@ class ForceField(object):
             self.pairpotential_types = ff.pairpotential_types
             self.potential_groups = ff.potential_groups
             self.scaling_factors = ff.scaling_factors
+            self.combining_rule = ff.combining_rule
             self.units = ff.units
         else:
             self.name = "ForceField"
@@ -102,6 +103,7 @@ class ForceField(object):
             self.pairpotential_types = {}
             self.potential_groups = {}
             self.scaling_factors = {}
+            self.combining_rule = "geometric"
             self.units = {}
 
     @property
@@ -211,9 +213,9 @@ class ForceField(object):
 
         Parameters
         ----------
-        group:  {'atom_types', 'bond_types', 'angle_types', 'dihedral_types', 'improper_types'}
+        group:  {'atom_type', 'bond_type', 'angle_type', 'dihedral_type', 'improper_type'}
             The potential group to perform this search on
-        key: str or list of str
+        key: str (for atom type) or list of str (for connection types)
             The key to lookup for this potential group
         warn: bool, default=False
             If true, raise a warning instead of Error if no match found
@@ -343,7 +345,7 @@ class ForceField(object):
         forward = FF_TOKENS_SEPARATOR.join(atom_types)
         reverse = FF_TOKENS_SEPARATOR.join(reversed(atom_types))
 
-        if forward is self.dihedral_types:
+        if forward in self.dihedral_types:
             return self.dihedral_types[forward]
         if reverse in self.dihedral_types:
             return self.dihedral_types[reverse]
@@ -395,7 +397,7 @@ class ForceField(object):
             [atom_types[0], atom_types[2], atom_types[1], atom_types[3]]
         )
 
-        if forward is self.improper_types:
+        if forward in self.improper_types:
             return self.improper_types[forward]
         if reverse in self.improper_types:
             return self.improper_types[reverse]
@@ -610,6 +612,7 @@ class ForceField(object):
         ff.name = names[0]
         ff.version = versions[0]
         ff.scaling_factors = ff_meta_map["scaling_factors"]
+        ff.combining_rule = ff_meta_map["combining_rule"]
         ff.units = ff_meta_map["Units"]
         ff.atom_types = atom_types_dict.maps[0]
         ff.bond_types = bond_types_dict
