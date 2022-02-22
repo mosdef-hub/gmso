@@ -288,7 +288,7 @@ class TestConvertParmEd(BaseTest):
             site.residue_number = None
 
         struc_from_top = to_parmed(top_from_struc)
-        assert len(struc_from_top).residues == 1
+        assert len(struc_from_top.residues) == 1
         assert struc_from_top.residues[0].name == "RES"
         assert len(struc_from_top.atoms) == len(struc.atoms)
 
