@@ -278,6 +278,20 @@ class TestConvertParmEd(BaseTest):
             assert residue_og.number == residue_cp.number
             assert len(residue_og.atoms) == len(residue_cp.atoms)
 
+    def test_default_residue_info(selfself, parmed_hexane_box):
+        struc = parmed_hexane_box
+        top_from_struc = from_parmed(struc)
+        assert len(top_from_struc.subtops) == len(struc.residues)
+
+        for site in top_from_struc.sites:
+            site.residue_name = None
+            site.residue_number = None
+
+        struc_from_top = to_parmed(top_from_struc)
+        assert len(struc_from_top).residues == 1
+        assert struc_from_top.residues[0].name == "RES"
+        assert len(struc_from_top.atoms) == len(struc.atoms)
+
     def test_box_info(self, parmed_hexane_box):
         struc = parmed_hexane_box
 
