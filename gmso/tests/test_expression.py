@@ -3,12 +3,12 @@ import sympy
 import unyt as u
 
 from gmso.tests.base_test import BaseTest
-from gmso.utils.expression import _PotentialExpression
+from gmso.utils.expression import PotentialExpression
 
 
 class TestExpression(BaseTest):
     def test_expression(self):
-        expression = _PotentialExpression(
+        expression = PotentialExpression(
             expression="a*x+b",
             independent_variables="x",
             parameters={"a": 1.0 * u.dimensionless, "b": 2.0 * u.dimensionless},
@@ -21,7 +21,7 @@ class TestExpression(BaseTest):
         assert expression.parameters["b"] == 2.0 * u.dimensionless
 
     def test_expression_multiple_indep_vars(self):
-        expression = _PotentialExpression(
+        expression = PotentialExpression(
             expression="a^2+2*a*b+b^2+2*theta*phi",
             independent_variables={"theta", "phi"},
             parameters={"a": 2.0 * u.nm, "b": 2.0 * u.rad},
@@ -35,7 +35,7 @@ class TestExpression(BaseTest):
 
     def test_invalid_expression(self):
         with pytest.raises(ValueError) as e:
-            expression = _PotentialExpression(
+            expression = PotentialExpression(
                 expression="a*x+b",
                 independent_variables="x",
                 parameters={"sigma": 1.0 * u.nm, "phi": 1.0 * u.rad},
@@ -47,7 +47,7 @@ class TestExpression(BaseTest):
 
     def test_invalid_indep_vars(self):
         with pytest.raises(ValueError) as e:
-            expression = _PotentialExpression(
+            expression = PotentialExpression(
                 expression="a*x+b", independent_variables="j", parameters=None
             )
             assert (
@@ -57,7 +57,7 @@ class TestExpression(BaseTest):
             )
 
     def test_non_parametric_expression(self):
-        expression = _PotentialExpression(
+        expression = PotentialExpression(
             expression="a^2+2*a*b+b^2",
             independent_variables="a",
             parameters=None,
@@ -71,7 +71,7 @@ class TestExpression(BaseTest):
             )
 
     def test_set_indep_variables(self):
-        expression = _PotentialExpression(
+        expression = PotentialExpression(
             expression="a^2+2*a*b+b^2",
             independent_variables="a",
             parameters=None,
@@ -81,7 +81,7 @@ class TestExpression(BaseTest):
         assert sympy.Symbol("a") not in expression.independent_variables
 
     def test_set_indep_variables_invalid(self):
-        expression = _PotentialExpression(
+        expression = PotentialExpression(
             expression="a^2+2*a*b+b^2",
             independent_variables="a",
             parameters=None,
@@ -93,7 +93,7 @@ class TestExpression(BaseTest):
         assert expression.independent_variables == {sympy.Symbol("a")}
 
     def test_set_expression(self):
-        expression = _PotentialExpression(
+        expression = PotentialExpression(
             "a^x + b^y + c^z",
             independent_variables={"x", "y", "z"},
             parameters={"a": 2.6 * u.nm, "b": 2.7 * u.nm, "c": 22.8 * u.hertz},
@@ -102,7 +102,7 @@ class TestExpression(BaseTest):
         assert sympy.Symbol("x") in expression.independent_variables
 
     def test_set_expression_invalid(self):
-        expression = _PotentialExpression(
+        expression = PotentialExpression(
             "a^x + b^y + c^z",
             independent_variables={"x", "y", "z"},
             parameters={"a": 2.6 * u.nm, "b": 2.7 * u.nm, "c": 22.8 * u.hertz},
@@ -113,7 +113,7 @@ class TestExpression(BaseTest):
         assert sympy.sympify("a^x + b^y + c^z") == expression.expression
 
     def test_set_parameters(self):
-        expression = _PotentialExpression(
+        expression = PotentialExpression(
             "a^x + b^y + c^z",
             independent_variables={"x", "y", "z"},
             parameters={"a": 2.6 * u.nm, "b": 2.7 * u.nm, "c": 22.8 * u.hertz},
@@ -130,7 +130,7 @@ class TestExpression(BaseTest):
         )
 
     def test_set_parameters_extra(self):
-        expression = _PotentialExpression(
+        expression = PotentialExpression(
             "a^x + b^y + c^z",
             independent_variables={"x", "y", "z"},
             parameters={"a": 2.6 * u.nm, "b": 2.7 * u.nm, "c": 22.8 * u.hertz},
@@ -151,7 +151,7 @@ class TestExpression(BaseTest):
         assert "d" not in expression.parameters
 
     def test_set_parameters_invalid(self):
-        expression = _PotentialExpression(
+        expression = PotentialExpression(
             "a^x + b^y + c^z",
             independent_variables={"x", "y", "z"},
             parameters={"a": 2.6 * u.nm, "b": 2.7 * u.nm, "c": 22.8 * u.hertz},
@@ -171,15 +171,15 @@ class TestExpression(BaseTest):
         assert "l" not in expression.parameters
 
     def test_expression_equality(self):
-        expression_1 = _PotentialExpression(
+        expression_1 = PotentialExpression(
             expression="exp(2)+exp(4)+2*phi", independent_variables={"phi"}
         )
 
-        expression_2 = _PotentialExpression(
+        expression_2 = PotentialExpression(
             expression="exp(4) + exp(2) + phi*2", independent_variables={"phi"}
         )
 
-        expression_3 = _PotentialExpression(
+        expression_3 = PotentialExpression(
             expression="exp(4) + exp(2) + phi * 8",
             independent_variables={"phi"},
         )
@@ -190,19 +190,19 @@ class TestExpression(BaseTest):
         assert expression_1 != expression_3
 
     def test_parametric_equality(self):
-        expression_1 = _PotentialExpression(
+        expression_1 = PotentialExpression(
             expression="e^2+e^4+2*phi",
             independent_variables={"phi"},
             parameters={"e": 2.2400 * u.dimensionless},
         )
 
-        expression_2 = _PotentialExpression(
+        expression_2 = PotentialExpression(
             expression="e^4 + e^2 + phi*2",
             independent_variables={"phi"},
             parameters={"e": 2.2400 * u.dimensionless},
         )
 
-        expression_3 = _PotentialExpression(
+        expression_3 = PotentialExpression(
             expression="e^4 + e^2 + phi * 8",
             independent_variables={"phi"},
             parameters={"e": 2.2400 * u.dimensionless},

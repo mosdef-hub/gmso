@@ -27,6 +27,7 @@ class TestAtomType(BaseTest):
             name="mytype",
             charge=charge,
             mass=mass,
+            expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
             parameters={
                 "sigma": 1 * u.nm,
                 "epsilon": 10 * u.Unit("kcal / mol"),
@@ -98,39 +99,46 @@ class TestAtomType(BaseTest):
         first_type = AtomType(
             name="mytype",
             charge=charge,
+            expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
             parameters={"sigma": 1 * u.m, "epsilon": 10 * u.m},
+            independent_variables={"r"},
         )
         same_type = AtomType(
             name="mytype",
             charge=charge,
+            expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
             parameters={"sigma": 1 * u.m, "epsilon": 10 * u.m},
+            independent_variables={"r"},
         )
         different_name = AtomType(
             name="difftype",
             charge=charge,
-            parameters={"sigma": 1 * u.m, "epsilon": 10 * u.m},
         )
         different_charge = AtomType(
             name="mytype",
             charge=4.0 * charge,
-            parameters={"sigma": 1 * u.m, "epsilon": 10 * u.m},
         )
         different_function = AtomType(
             name="mytype",
             charge=charge,
             parameters={"sigma": 1 * u.m, "epsilon": 10 * u.m},
             expression="r * sigma * epsilon",
+            independent_variables={"r"},
         )
         different_params = AtomType(
             name="mytype",
             charge=charge,
+            expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
             parameters={"sigma": 42 * u.m, "epsilon": 100000 * u.m},
+            independent_variables={"r"},
         )
         different_mass = AtomType(
             name="mytype",
             charge=charge,
             mass=5 * u.kg / u.mol,
             parameters={"sigma": 1 * u.m, "epsilon": 10 * u.m},
+            expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
+            independent_variables={"r"},
         )
 
         assert first_type == same_type
@@ -145,6 +153,7 @@ class TestAtomType(BaseTest):
         first_type = AtomType(
             name="mytype",
             charge=charge,
+            expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
             parameters={"sigma": 1 * u.m, "epsilon": 10 * u.m},
             independent_variables="r",
         )
