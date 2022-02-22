@@ -258,10 +258,12 @@ def _atom_types_from_pmd(structure):
         top_atomtype = gmso.AtomType(
             name=atom_type.name,
             charge=atom_type.charge * u.elementary_charge,
+            expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
             parameters={
                 "sigma": atom_type.sigma * u.angstrom,
                 "epsilon": atom_type.epsilon * u.Unit("kcal / mol"),
             },
+            independent_variables={"r"},
             mass=atom_type.mass,
         )
         pmd_top_atomtypes[atom_type] = top_atomtype
@@ -298,10 +300,12 @@ def _bond_types_from_pmd(structure, bond_types_members_map=None):
             "k": (2 * btype.k * u.Unit("kcal / (angstrom**2 * mol)")),
             "r_eq": btype.req * u.angstrom,
         }
+        expr = gmso.BondType._default_potential_expr()
+        expr.set(parameters=bond_params)
 
         member_types = bond_types_members_map.get(id(btype))
         top_bondtype = gmso.BondType(
-            parameters=bond_params, member_types=member_types
+            potential_expression=expr, member_types=member_types
         )
         pmd_top_bondtypes[btype] = top_bondtype
     return pmd_top_bondtypes
@@ -338,13 +342,15 @@ def _angle_types_from_pmd(structure, angle_types_member_map=None):
             "k": (2 * angletype.k * u.Unit("kcal / (rad**2 * mol)")),
             "theta_eq": (angletype.theteq * u.degree),
         }
+        expr = gmso.AngleType._default_potential_expr()
+        expr.parameters = angle_params
         # Do we need to worry about Urey Bradley terms
         # For Urey Bradley:
         # k in (kcal/(angstrom**2 * mol))
         # r_eq in angstrom
         member_types = angle_types_member_map.get(id(angletype))
         top_angletype = gmso.AngleType(
-            parameters=angle_params, member_types=member_types
+            potential_expression=expr, member_types=member_types
         )
         pmd_top_angletypes[angletype] = top_angletype
     return pmd_top_angletypes
@@ -382,9 +388,11 @@ def _dihedral_types_from_pmd(structure, dihedral_types_member_map=None):
             "phi_eq": (dihedraltype.phase * u.degree),
             "n": dihedraltype.per * u.dimensionless,
         }
+        expr = gmso.DihedralType._default_potential_expr()
+        expr.parameters = dihedral_params
         member_types = dihedral_types_member_map.get(id(dihedraltype))
         top_dihedraltype = gmso.DihedralType(
-            parameters=dihedral_params, member_types=member_types
+            potential_expression=expr, member_types=member_types
         )
         pmd_top_dihedraltypes[dihedraltype] = top_dihedraltype
 

@@ -7,6 +7,7 @@ from pydantic import Field, validator
 
 from gmso.core.parametric_potential import ParametricPotential
 from gmso.utils._constants import ATOM_TYPE_DICT, UNIT_WARNING_STRING
+from gmso.utils.expression import PotentialExpression
 from gmso.utils.misc import ensure_valid_dimensions, unyt_to_hashable
 
 
@@ -70,19 +71,6 @@ class AtomType(ParametricPotential):
         tags=None,
         topology=None,
     ):
-        if potential_expression is None:
-            if expression is None:
-                expression = "4*epsilon*((sigma/r)**12 - (sigma/r)**6)"
-
-            if parameters is None:
-                parameters = {
-                    "sigma": 0.3 * u.nm,
-                    "epsilon": 0.3 * u.Unit("kJ"),
-                }
-
-            if independent_variables is None:
-                independent_variables = {"r"}
-
         if overrides is None:
             overrides = set()
 
@@ -186,6 +174,17 @@ class AtomType(ParametricPotential):
             ensure_valid_dimensions(charge, u.elementary_charge)
 
         return charge
+
+    @staticmethod
+    def _default_potential_expr():
+        return PotentialExpression(
+            expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
+            independent_variables={"r"},
+            parameters={
+                "sigma": 0.3 * u.nm,
+                "epsilon": 0.3 * u.Unit("kJ"),
+            },
+        )
 
     class Config:
         """Pydantic configuration of the attributes for an atom_type."""
