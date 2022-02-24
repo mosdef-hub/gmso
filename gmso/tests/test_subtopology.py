@@ -80,3 +80,15 @@ class TestSubTopology(BaseTest):
         top.add_site(site2)
         assert top.n_sites == 2
         assert subtop.n_sites == 1
+
+    def test_subtopology_to_top(self, typed_ethane, are_equivalent_atoms):
+        sub_top_of_interest = typed_ethane.subtops[0]
+        created_topology = typed_ethane.subtops[0].to_top()
+        for sub_top_site, created_topology_site in zip(
+            sub_top_of_interest.sites, created_topology.sites
+        ):
+            assert are_equivalent_atoms(sub_top_site, created_topology_site)
+
+        assert typed_ethane.subtops[0].name == created_topology.name
+        assert typed_ethane.scaling_factors == created_topology.scaling_factors
+        # ToDo: How to test connections?

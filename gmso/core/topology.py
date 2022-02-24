@@ -1106,3 +1106,15 @@ class Topology(object):
 
         loader = LoadersRegistry.get_callable(filename.suffix)
         return loader(filename, **kwargs)
+
+    # @classmethod
+    # def from_subtopologies(cls, *subtops, parent=None, **kwargs):
+    #     """Join several several topologies into a Topology.
+    #
+    #     *args: Iterable[SubTopology]
+    #         An iterable of sub-topolgies to join to create a topology.
+    #     parent: Optional[Topology], default=None
+    #         An optional parent Topolgy to add these subtopologies to, If non
+    #     """
+    #     try:
+    #         subtop =

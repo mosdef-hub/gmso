@@ -1,9 +1,14 @@
 """A topology within a topology."""
 import warnings
+from copy import deepcopy
 
 from boltons.setutils import IndexedSet
 
+from gmso.core.angle import Angle
 from gmso.core.atom import Atom
+from gmso.core.bond import Bond
+from gmso.core.dihedral import Dihedral
+from gmso.core.improper import Improper
 from gmso.core.topology import Topology
 
 
@@ -135,52 +140,67 @@ class SubTopology(object):
 
     def to_top(self):
         """Return a Topology formed by sites of this Sub-Topology."""
-        from copy import deepcopy
 
         top = Topology(name=self.name)
+        connection_type_attr_map = {
+            Bond: "bond_type",
+            Angle: "angle_type",
+            Dihedral: "dihedral_type",
+            Improper: "improper_type",
+        }
+        copy_excludes = {"topology_", "set_ref_"}
         sites_map = {}
         for site in self._sites:
-            site_copy = site.copy(deep=True, exclude={"atom_type"})
+            site_copy = site.copy(deep=True, exclude={"atom_type_"})
             if site.atom_type:
                 atom_type_copy = site.atom_type.copy(
-                    deep=True, exclude={"topology"}
+                    deep=True, exclude=copy_excludes
                 )
                 site_copy.atom_type = atom_type_copy
-            sites_map[site] = site_copy
+            sites_map[id(site)] = site_copy
+            top.add_site(site, update_types=False)
 
-        print(sites_map)
         # create new connections
-        for connection in self._parent.connections:
+        for connection in self._parent._connections:
             new_members = []
             for member in connection.connection_members:
-                if member in sites_map:
-                    new_members.append(sites_map[member])
+                if id(member) in sites_map:
+                    new_members.append(sites_map[id(member)])
 
-            if len(new_members) != 0 and len(new_members) < len(
-                connection.connection_members
-            ):
+            if len(new_members) == 0:
+                break
+
+            if len(new_members) < len(connection.connection_members):
                 raise Exception(  # ToDo: raise a better error
                     "One or more sites in this Topology are connected to other sites"
                     "which are not part of this subTopology."
                 )
-            connection_copy = type(connection)(
-                connection_members=new_members, **{}
-            )
+            ConnClass = type(connection)
+            connection_copy = ConnClass(connection_members=new_members)
+            conn_type = getattr(connection, connection_type_attr_map[ConnClass])
+            if conn_type:
+                setattr(
+                    connection_copy,
+                    connection_type_attr_map[ConnClass],
+                    conn_type.copy(deep=True, exclude=copy_excludes),
+                )
+
             top.add_connection(connection_copy, update_types=False)
 
-        top.combining_rule = self.parent.combining_rule
-        top.scaling_factors = deepcopy(self.parent.scaling_factors)
-
+        top.combining_rule = self._parent.combining_rule
+        top.scaling_factors = deepcopy(self._parent.scaling_factors)
         top.update_topology()
+
         atom_type_names = set(atom_type.name for atom_type in top.atom_types)
 
         # create new pairpotential types
-
         for ptype in self._parent.pairpotential_types:
             at1_name = ptype.member_types[0]
             at2_name = ptype.member_types[1]
             if at1_name in atom_type_names and at2_name in atom_type_names:
-                top.add_pairpotentialtype(ptype.copy(deep=True))
+                top.add_pairpotentialtype(
+                    ptype.copy(deep=True, exclude=copy_excludes)
+                )
 
         return top
 
