@@ -92,3 +92,10 @@ class TestSubTopology(BaseTest):
         assert typed_ethane.subtops[0].name == created_topology.name
         assert typed_ethane.scaling_factors == created_topology.scaling_factors
         # ToDo: How to test connections?
+
+    def test_pair_potential_top_from_subtop(
+        self, pairpotentialtype_top, are_equivalent_topologies
+    ):
+        pairpotentialtype_top.partition()
+        copy = pairpotentialtype_top.subtops[0].to_top()
+        assert are_equivalent_topologies(pairpotentialtype_top, copy)
