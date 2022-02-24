@@ -143,7 +143,7 @@ class Dihedral(BaseDihedral):
 
 
 class LayeredDihedral(BaseDihedral):
-    __base_doc__ = """A 4-Partner connection between 4 sites with a **multiple** dihedral type associations
+    __base_doc__ = """A 4-Partner connection between 4 sites with **multiple** dihedral type associations
 
     Notes
     -----
