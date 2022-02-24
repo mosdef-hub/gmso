@@ -6,7 +6,7 @@ from pydantic import Field, validator
 from gmso.abc.abstract_potential import AbstractPotential
 from gmso.exceptions import GMSOError
 from gmso.utils.decorators import confirm_dict_existence
-from gmso.utils.expression import _PotentialExpression
+from gmso.utils.expression import PotentialExpression
 
 
 class ParametricPotential(AbstractPotential):
@@ -36,7 +36,7 @@ class ParametricPotential(AbstractPotential):
     def __init__(
         self,
         name="ParametricPotential",
-        expression="a*x+b",
+        expression=None,
         parameters=None,
         potential_expression=None,
         independent_variables=None,
@@ -53,23 +53,10 @@ class ParametricPotential(AbstractPotential):
                 "please do not provide arguments for "
                 "expression, independent_variables or parameters."
             )
+
         if potential_expression is None:
-            if expression is None:
-                expression = "a*x+b"
-
-            if parameters is None:
-                parameters = {
-                    "a": 1.0 * u.dimensionless,
-                    "b": 1.0 * u.dimensionless,
-                }
-
-            if independent_variables is None:
-                independent_variables = {"x"}
-
-            _potential_expression = _PotentialExpression(
-                expression=expression,
-                independent_variables=independent_variables,
-                parameters=parameters,
+            _potential_expression = self._get_expression(
+                expression, parameters, independent_variables
             )
         else:
             _potential_expression = potential_expression
@@ -79,6 +66,39 @@ class ParametricPotential(AbstractPotential):
             potential_expression=_potential_expression,
             topology=topology,
             **kwargs,
+        )
+
+    def _get_expression(self, expression, parameters, indep_vars):
+        args = (expression, parameters, indep_vars)
+        all_provided = tuple(1 if param is not None else 0 for param in args)
+
+        if sum(all_provided) == 0:
+            return self._default_potential_expr()
+        elif sum(all_provided) < 3:
+            raise ValueError(
+                "When using keyword arguments `expression`, "
+                "`independent_variables` and `parameters` for "
+                "a potential, you are expected to provide all the values "
+                "or none of them to use defaults. However, you provided "
+                "the following and there's not enough information to form "
+                "a set of expression, idependent_variables and parameters.\n"
+                f"expression: {expression}\n"
+                f"parameters: {parameters}\n"
+                f"independent_variables: {indep_vars}\n"
+            )
+        else:
+            return PotentialExpression(
+                expression=expression,
+                independent_variables=indep_vars,
+                parameters=parameters,
+            )
+
+    @staticmethod
+    def _default_potential_expr():
+        return PotentialExpression(
+            expression="a*x+b",
+            parameters={"a": 1.0 * u.dimensionless, "b": 1.0 * u.dimensionless},
+            independent_variables={"x"},
         )
 
     @property
