@@ -1030,6 +1030,34 @@ class Topology(object):
         """
         return self.iter_sites("residue_number", number)
 
+    def partition(self, by="connections", prefix="SUBTOP"):
+        """Partition this topology into separate sub-topologies.
+
+        This method partitions the topology into separate sub-topologies
+        based on site connectivity or some other factors.
+        """
+        if self._subtops:
+            warnings.warn("Existing sub-topologies will be removed")
+
+        if by == "connections":
+            self._partition_disconnected(prefix)
+
+    def _partition_disconnected(self, prefix="SUBTOP"):
+
+        import networkx as nx
+
+        from gmso.core.subtopology import SubTopology
+        from gmso.formats.networkx import to_networkx
+
+        self._subtops = IndexedSet()
+        top_graph = to_networkx(self)
+        for subtop_atoms in nx.connected_components(top_graph):
+            self._subtops.add(
+                SubTopology.from_sites(
+                    sorted(subtop_atoms, key=self.get_index), parent=self
+                )
+            )
+
     def save(self, filename, overwrite=False, **kwargs):
         """Save the topology to a file.
 

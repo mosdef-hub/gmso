@@ -133,6 +133,64 @@ class SubTopology(object):
 
         return subtop_dict
 
+    def to_top(self):
+        """Return a Topology formed by sites of this Sub-Topology."""
+        from copy import deepcopy
+
+        top = Topology(name=self.name)
+        sites_map = {}
+        for site in self._sites:
+            site_copy = site.copy(deep=True, exclude={"atom_type"})
+            if site.atom_type:
+                atom_type_copy = site.atom_type.copy(
+                    deep=True, exclude={"topology"}
+                )
+                site_copy.atom_type = atom_type_copy
+            sites_map[site] = site_copy
+
+        print(sites_map)
+        # create new connections
+        for connection in self._parent.connections:
+            new_members = []
+            for member in connection.connection_members:
+                if member in sites_map:
+                    new_members.append(sites_map[member])
+
+            if len(new_members) != 0 and len(new_members) < len(
+                connection.connection_members
+            ):
+                raise Exception(  # ToDo: raise a better error
+                    "One or more sites in this Topology are connected to other sites"
+                    "which are not part of this subTopology."
+                )
+            connection_copy = type(connection)(
+                connection_members=new_members, **{}
+            )
+            top.add_connection(connection_copy, update_types=False)
+
+        top.combining_rule = self.parent.combining_rule
+        top.scaling_factors = deepcopy(self.parent.scaling_factors)
+
+        top.update_topology()
+        atom_type_names = set(atom_type.name for atom_type in top.atom_types)
+
+        # create new pairpotential types
+
+        for ptype in self._parent.pairpotential_types:
+            at1_name = ptype.member_types[0]
+            at2_name = ptype.member_types[1]
+            if at1_name in atom_type_names and at2_name in atom_type_names:
+                top.add_pairpotentialtype(ptype.copy(deep=True))
+
+        return top
+
+    @classmethod
+    def from_sites(cls, sites, parent, update_types=False):
+        subtop = cls(parent=parent)
+        for site in sites:
+            subtop.add_site(site, update_types=update_types)
+        return subtop
+
 
 def _validate_parent(parent):
     """Ensure the parent is a topology."""
