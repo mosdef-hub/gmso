@@ -4,6 +4,7 @@ import pytest
 import unyt as u
 from sympy import sympify
 
+from gmso.core.forcefield import ForceField
 from gmso.exceptions import ForceFieldParseError
 from gmso.external.convert_foyer_xml import from_foyer_xml
 from gmso.tests.base_test import BaseTest
@@ -53,6 +54,16 @@ class TestXMLConversion(BaseTest):
 
     def test_foyer_version(self, foyer_fullerene):
         assert foyer_fullerene.version == "0.0.1"
+
+    def test_foyer_combining_rule(self):
+        from_foyer_xml(get_path("foyer-trappe-ua.xml"))
+        loaded = ForceField("foyer-trappe-ua_gmso.xml")
+
+        assert loaded.name == "Trappe-UA"
+        assert loaded.version == "0.0.2"
+        assert loaded.combining_rule == "lorentz"
+        assert loaded.scaling_factors["electrostatics14Scale"] == 0
+        assert loaded.scaling_factors["nonBonded14Scale"] == 0
 
     def test_foyer_14scale(self, foyer_fullerene):
         assert foyer_fullerene.scaling_factors["electrostatics14Scale"] == 1.0
