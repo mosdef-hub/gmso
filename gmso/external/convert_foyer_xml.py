@@ -146,9 +146,9 @@ def _write_gmso_xml(gmso_xml, **kwargs):
 
     ffMeta = _create_sub_element(forcefield, "FFMetaData")
     if kwargs.get("combining_rule"):
-        ffMeta.attrib["combining_rule"] = kwargs.get("combining_rule")
+        ffMeta.attrib["combiningRule"] = kwargs.get("combining_rule")
     else:
-        ffMeta.attrib["combining_rule"] = "geometric"
+        ffMeta.attrib["combiningRule"] = "geometric"
     if kwargs["coulomb14scale"]:
         ffMeta.attrib["electrostatics14Scale"] = kwargs["coulomb14scale"]
 
