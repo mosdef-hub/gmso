@@ -31,6 +31,7 @@ from gmso.utils._constants import (
 from gmso.utils.connectivity import (
     identify_connections as _identify_connections,
 )
+from gmso.utils.decorators import requires_package
 
 
 class Topology(object):
@@ -1085,6 +1086,11 @@ class Topology(object):
         saver = SaversRegistry.get_callable(filename.suffix)
         saver(self, filename, **kwargs)
 
+    @requires_package("foyer")
+    def atom_type_with_foyer(self, forcefields, identify_duplicates=False):
+        """Atomtype this topology with a foyer forcefield."""
+        pass
+
     def __repr__(self):
         """Return custom format to represent topology."""
         return (
@@ -1106,15 +1112,3 @@ class Topology(object):
 
         loader = LoadersRegistry.get_callable(filename.suffix)
         return loader(filename, **kwargs)
-
-    # @classmethod
-    # def from_subtopologies(cls, *subtops, parent=None, **kwargs):
-    #     """Join several several topologies into a Topology.
-    #
-    #     *args: Iterable[SubTopology]
-    #         An iterable of sub-topolgies to join to create a topology.
-    #     parent: Optional[Topology], default=None
-    #         An optional parent Topolgy to add these subtopologies to, If non
-    #     """
-    #     try:
-    #         subtop =

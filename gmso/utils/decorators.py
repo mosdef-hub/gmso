@@ -1,7 +1,8 @@
 """Various decorators for GMSO."""
-from functools import wraps
+from functools import update_wrapper, wraps
 
 from gmso.abc import GMSOJSONHandler
+from gmso.utils.io import import_
 
 
 def confirm_dict_existence(setter_function):
@@ -34,3 +35,20 @@ class register_pydantic_json(object):
         json_method = getattr(cls, self.method)
         GMSOJSONHandler.register(cls, json_method)
         return cls
+
+
+class requires_package:
+    """Decorator to use when a function requires a package to function."""
+
+    def __init__(self, pkgname):
+        self.pkgname = pkgname
+
+    def __call__(self, func):
+        """Return a wrapped function by checking if the package is importable."""
+
+        def wrapped(*args, **kwargs):
+            import_(self.pkgname)
+            return func(*args, **kwargs)
+
+        update_wrapper(wrapped, func)
+        return wrapped

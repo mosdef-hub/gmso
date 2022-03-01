@@ -139,7 +139,10 @@ class SubTopology(object):
         return subtop_dict
 
     def to_top(self):
-        """Return a Topology formed by sites of this Sub-Topology."""
+        """Return a Topology formed by sites of this Sub-Topology.
+
+        FixME: This is really costly, primarily because of the unyt hasing
+        """
 
         top = Topology(name=self.name)
         connection_type_attr_map = {
@@ -185,7 +188,7 @@ class SubTopology(object):
                     conn_type.copy(deep=True, exclude=copy_excludes),
                 )
 
-            top.add_connection(connection_copy, update_types=False)
+            top.add_connection(connection_copy, update_types=True)
 
         top.combining_rule = self._parent.combining_rule
         top.scaling_factors = deepcopy(self._parent.scaling_factors)
@@ -206,6 +209,16 @@ class SubTopology(object):
 
     @classmethod
     def from_sites(cls, sites, parent, update_types=False):
+        """Create a subtopology from a group of sites
+
+        Parameters
+        ----------
+        sites: iterable of gmso.abc.abstract_site.Site
+            The sites that belong to this subtopology
+
+        parent: gmso.Topology
+            The parent topology that the created subtopology is a part of
+        """
         subtop = cls(parent=parent)
         for site in sites:
             subtop.add_site(site, update_types=update_types)
