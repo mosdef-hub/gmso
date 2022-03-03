@@ -16,4 +16,4 @@ from .core.pairpotential_type import PairPotentialType
 from .core.subtopology import SubTopology
 from .core.topology import Topology
 
-__version__ = "0.7.3"
+__version__ = "0.8.0"
