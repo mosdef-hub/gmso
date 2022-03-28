@@ -24,6 +24,8 @@ def default_position():
 class Site(GMSOBase):
     __iterable_attributes__: ClassVar[set] = {
         "label",
+        "molecule_name",
+        "molecule_number",
         "residue_name",
         "residue_number",
     }
@@ -50,6 +52,10 @@ class Site(GMSOBase):
     )
 
     label_: str = Field("", description="Label to be assigned to the site")
+
+    molecule_group_: str = Field(
+        "DefaultMolecule", description="Molecule label for the site"
+    )
 
     residue_number_: Optional[StrictInt] = Field(
         None, description="Residue number for the site"
@@ -78,6 +84,11 @@ class Site(GMSOBase):
     def label(self) -> str:
         """Return the label assigned to the site."""
         return self.__dict__.get("label_")
+
+    @property
+    def molecule_group(self) -> str:
+        """Return the molecule group of the site."""
+        return self.__dict__.get("molecule_group_")
 
     @property
     def residue_name(self):
@@ -155,6 +166,7 @@ class Site(GMSOBase):
             "name_": "name",
             "position_": "position",
             "label_": "label",
+            "molecule_group_": "molecule_group",
             "residue_name_": "residue_name",
             "residue_number_": "residue_number",
         }
@@ -163,6 +175,7 @@ class Site(GMSOBase):
             "name": "name_",
             "position": "position_",
             "label": "label_",
+            "molecule_group": "molecule_group_",
             "residue_name": "residue_name_",
             "residue_number": "residue_number_",
         }

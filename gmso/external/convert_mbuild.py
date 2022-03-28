@@ -75,26 +75,8 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
         top.name = compound.name
 
     site_map = dict()
-    for child in compound.children:
-        if len(child.children) == 0:
-            continue
-        else:
-            subtop = SubTopology(name=child.name)
-            top.add_subtopology(subtop, update=False)
-            for particle in child.particles():
-                pos = particle.xyz[0] * u.nanometer
-                if particle.element:
-                    ele = search_method(particle.element.symbol)
-                else:
-                    ele = search_method(particle.name)
-                site = Atom(name=particle.name, position=pos, element=ele)
-                site_map[particle] = site
-                subtop.add_site(site, update_types=False)
-
     for particle in compound.particles():
-        already_added_site = site_map.get(particle, None)
-        if already_added_site:
-            continue
+        # Traverse back through the hierarchy to grab the first parent that is free
 
         pos = particle.xyz[0] * u.nanometer
         if particle.element:
@@ -104,21 +86,20 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
         site = Atom(name=particle.name, position=pos, element=ele)
         site_map[particle] = site
 
-        # If the top has subtopologies, then place this particle into
-        # a single-site subtopology -- ensures that all sites are in the
-        # same level of hierarchy.
-        if len(top.subtops) > 0:
-            subtop = SubTopology(name=particle.name)
-            top.add_subtopology(subtop)
-            subtop.add_site(site, update_types=False)
-        else:
-            top.add_site(site, update_types=False)
+        molecule_group = particle
+        while not molecule_group.is_independent():
+            molecule_group = molecule_group.parent
+
+        site.molecule_group = molecule_group.name
 
     for b1, b2 in compound.bonds():
+        assert site_map[b1].molecule_group == site_map[b2].molecule_group
         new_bond = Bond(
-            connection_members=[site_map[b1], site_map[b2]], bond_type=None
+            connection_members=[site_map[b1], site_map[b2]],
+            bond_type=None,
         )
         top.add_connection(new_bond, update_types=False)
+
     top.update_topology()
 
     if box:
