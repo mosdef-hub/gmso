@@ -148,7 +148,9 @@ def check_convert_kelvin_to_energy_units(
         energy_input_unyt,
         energy_output_unyt_units_str,
 ):
-    """Checks to see if the unyt energy value is in Kelvin (K) and converts it to
+    """Converts the Kelvin (K) energy unit to a standard energy unit.
+
+    Check to see if the unyt energy value is in Kelvin (K) and converts it to
     another energy unit (Ex: kcal/mol, kJ/mol, etc.).  Otherwise, it passes thru the
     existing unyt values.
 
