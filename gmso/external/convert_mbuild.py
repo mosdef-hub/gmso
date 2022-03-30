@@ -74,23 +74,30 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
     if compound.name != mb.Compound().name:
         top.name = compound.name
 
+    connected_subgraph = compound.bond_graph.connected_components()
+    children_set = compound.children
+    molecule_groups = list()
+    for subgraph in connected_subgraph:
+        tmp_group = list()
+        for child in children_set:
+            if set(child.particles()).issubset(subgraph):
+                tmp_group.append(child)
+        molecule_groups.append(tmp_group)
+        children_set.remove(i for i in tmp_group)
+
     site_map = dict()
-    for particle in compound.particles():
-        # Traverse back through the hierarchy to grab the first parent that is free
-
-        pos = particle.xyz[0] * u.nanometer
-        if particle.element:
-            ele = search_method(particle.element.symbol)
-        else:
-            ele = search_method(particle.name)
-        site = Atom(name=particle.name, position=pos, element=ele)
-        site_map[particle] = site
-
-        molecule_group = particle
-        while not molecule_group.is_independent():
-            molecule_group = molecule_group.parent
-
-        site.molecule_group = molecule_group.name
+    for group in molecule_groups:
+        molecule_id = "-".join(sorted(cmp.name for cmp in group))
+        for cmp in group:
+            for particle in cmp.particles():
+                pos = particle.xyz[0] * u.nanometer
+                if particle.element:
+                    ele = search_method(particle.element.symbol)
+                else:
+                    ele = search_method(particle.name)
+                site = Atom(name=particle.name, position=pos, element=ele)
+                site_map[particle] = site
+                site.molecule_group = molecule_id
 
     for b1, b2 in compound.bonds():
         assert site_map[b1].molecule_group == site_map[b2].molecule_group
