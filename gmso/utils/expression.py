@@ -217,6 +217,24 @@ class PotentialExpression:
 
         return parameters
 
+    def __eq__(self, other):
+        """Equality checks for two expressions."""
+        if other is self:
+            return True
+        if not isinstance(other, PotentialExpression):
+            return False
+        if not self.is_parametric:
+            return (
+                self.expression == other.expression
+                and self.independent_variables == other.independent_variables
+            )
+        else:
+            return (
+                self.expression == other.expression
+                and self.independent_variables == other.independent_variables
+                and self.parameters == other.parameters
+            )
+
     @staticmethod
     def _validate_independent_variables(indep_vars):
         """Check to see that independent_variables is a set of valid sympy symbols."""

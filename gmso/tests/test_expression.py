@@ -185,7 +185,6 @@ class TestExpression(BaseTest):
         )
 
         assert expression_1.expression == expression_2.expression
-        assert hash(expression_1) == hash(expression_2)
         assert expression_3 != expression_2
         assert expression_1 != expression_3
 
@@ -209,6 +208,5 @@ class TestExpression(BaseTest):
         )
 
         assert expression_1.expression == expression_2.expression
-        assert hash(expression_1) == hash(expression_2)
         assert expression_3 != expression_2
         assert expression_1 != expression_3

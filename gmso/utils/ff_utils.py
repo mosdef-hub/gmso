@@ -352,7 +352,6 @@ def parse_ff_atomtypes(atomtypes_el, ff_meta):
             "overrides": "",
             "definition": "",
             "description": "",
-            "topology": None,
             "element": "",
         }
 

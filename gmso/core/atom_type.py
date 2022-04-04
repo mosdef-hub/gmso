@@ -6,7 +6,7 @@ import unyt as u
 from pydantic import Field, validator
 
 from gmso.core.parametric_potential import ParametricPotential
-from gmso.utils._constants import ATOM_TYPE_DICT, UNIT_WARNING_STRING
+from gmso.utils._constants import UNIT_WARNING_STRING
 from gmso.utils.expression import PotentialExpression
 from gmso.utils.misc import ensure_valid_dimensions, unyt_to_hashable
 
@@ -69,7 +69,6 @@ class AtomType(ParametricPotential):
         definition="",
         description="",
         tags=None,
-        topology=None,
     ):
         if overrides is None:
             overrides = set()
@@ -80,7 +79,6 @@ class AtomType(ParametricPotential):
             parameters=parameters,
             independent_variables=independent_variables,
             potential_expression=potential_expression,
-            topology=topology,
             mass=mass,
             charge=charge,
             atomclass=atomclass,
@@ -88,7 +86,6 @@ class AtomType(ParametricPotential):
             overrides=overrides,
             description=description,
             definition=definition,
-            set_ref=ATOM_TYPE_DICT,
             tags=tags,
         )
 
@@ -126,6 +123,25 @@ class AtomType(ParametricPotential):
     def definition(self):
         """Return the SMARTS string of the atom_type."""
         return self.__dict__.get("definition_")
+
+    def __eq__(self, other):
+        if other is self:
+            return True
+        if not isinstance(other, AtomType):
+            return False
+        return (
+            self.name == other.name
+            and self.expression == other.expression
+            and self.independent_variables == other.independent_variables
+            and self.parameters == other.parameters
+            and self.charge == other.charge
+            and self.atomclass == other.atomclass
+            and self.mass == other.mass
+            and self.doi == other.doi
+            and self.overrides == other.overrides
+            and self.definition == other.definition
+            and self.description == other.description
+        )
 
     def __repr__(self):
         """Return a formatted representation of the atom type."""

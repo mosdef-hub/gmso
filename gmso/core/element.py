@@ -45,6 +45,18 @@ class Element(GMSOBase):
             f"atomic number: {self.atomic_number}, mass: {self.mass.to('amu')}>"
         )
 
+    def __eq__(self, other):
+        if other is self:
+            return True
+        if not isinstance(other, Element):
+            return False
+        return (
+            self.name == other.name
+            and self.mass == other.mass
+            and self.symbol == other.symbol
+            and self.atomic_number == other.atomic_number
+        )
+
     class Config:
         """Pydantic configuration for element."""
 

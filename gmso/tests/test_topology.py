@@ -404,8 +404,6 @@ class TestTopology(BaseTest):
         self, pairpotentialtype_top
     ):
         assert len(pairpotentialtype_top.pairpotential_types) == 1
-        pptype12 = pairpotentialtype_top.pairpotential_types[0]
-        assert pairpotentialtype_top._pairpotential_types_idx[pptype12] == 0
 
         pairpotentialtype_top.remove_pairpotentialtype(["a1", "a2"])
         assert len(pairpotentialtype_top.pairpotential_types) == 0
@@ -422,7 +420,7 @@ class TestTopology(BaseTest):
         top = Topology()
 
         assert top.typed == False
-        top.add_site(Atom(atom_type=AtomType()))
+        top.add_site(Atom(atom_type=AtomType()), update_types=True)
 
         assert top.typed == True
         assert top.is_typed() == True
@@ -445,10 +443,9 @@ class TestTopology(BaseTest):
             site.atom_type = atom_type
             top.add_site(site, update_types=False)
         top.update_topology()
-        assert len(top.atom_types) == 10
+        assert len(top.atom_types) == 100
         top.sites[0].atom_type.name = "atom_type_changed"
-        assert id(top.sites[0].atom_type) == id(top.sites[10].atom_type)
-        assert top.sites[10].atom_type.name == "atom_type_changed"
+        assert top.sites[10].atom_type.name != "atom_type_changed"
         assert top.is_typed()
 
     def test_add_duplicate_connected_atom(self):
@@ -562,19 +559,6 @@ class TestTopology(BaseTest):
             == 1
         )
 
-    def test_topology_get_index_atom_type_after_change(
-        self, typed_water_system
-    ):
-        typed_water_system.sites[0].atom_type.name = "atom_type_changed_name"
-        assert (
-            typed_water_system.get_index(typed_water_system.sites[0].atom_type)
-            == 1
-        )
-        assert (
-            typed_water_system.get_index(typed_water_system.sites[1].atom_type)
-            == 0
-        )
-
     def test_topology_get_index_bond_type(self, typed_methylnitroaniline):
         assert (
             typed_methylnitroaniline.get_index(
@@ -587,17 +571,6 @@ class TestTopology(BaseTest):
                 typed_methylnitroaniline.bonds[-1].connection_type
             ),
             int,
-        )
-
-    def test_topology_get_index_bond_type_after_change(
-        self, typed_methylnitroaniline
-    ):
-        typed_methylnitroaniline.bonds[0].connection_type.name = "changed name"
-        assert (
-            typed_methylnitroaniline.get_index(
-                typed_methylnitroaniline.bonds[0].connection_type
-            )
-            != 0
         )
 
     def test_topology_get_index_angle_type(self, typed_chloroethanol):
@@ -614,16 +587,6 @@ class TestTopology(BaseTest):
             == 1
         )
 
-    def test_topology_get_index_angle_type_after_change(
-        self, typed_methylnitroaniline
-    ):
-        angle_type_to_test = typed_methylnitroaniline.angles[0].connection_type
-        prev_idx = typed_methylnitroaniline.get_index(angle_type_to_test)
-        typed_methylnitroaniline.angles[0].connection_type.name = "changed name"
-        assert (
-            typed_methylnitroaniline.get_index(angle_type_to_test) != prev_idx
-        )
-
     def test_topology_get_index_dihedral_type(self, typed_chloroethanol):
         assert (
             typed_chloroethanol.get_index(
@@ -636,21 +599,6 @@ class TestTopology(BaseTest):
                 typed_chloroethanol.dihedrals[5].connection_type
             )
             == 3
-        )
-
-    def test_topology_get_index_dihedral_type_after_change(
-        self, typed_methylnitroaniline
-    ):
-        dihedral_type_to_test = typed_methylnitroaniline.dihedrals[
-            0
-        ].connection_type
-        prev_idx = typed_methylnitroaniline.get_index(dihedral_type_to_test)
-        typed_methylnitroaniline.dihedrals[
-            0
-        ].connection_type.name = "changed name"
-        assert (
-            typed_methylnitroaniline.get_index(dihedral_type_to_test)
-            != prev_idx
         )
 
     def test_topology_get_bonds_for(self, typed_methylnitroaniline):
