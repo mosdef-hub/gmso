@@ -127,19 +127,6 @@ class AtomType(ParametricPotential):
         """Return the SMARTS string of the atom_type."""
         return self.__dict__.get("definition_")
 
-    def __hash__(self):
-        """Return the hash of the atom_type."""
-        return hash(
-            tuple(
-                (
-                    self.name,
-                    unyt_to_hashable(self.mass),
-                    unyt_to_hashable(self.charge),
-                    self.potential_expression,
-                )
-            )
-        )
-
     def __repr__(self):
         """Return a formatted representation of the atom type."""
         desc = (

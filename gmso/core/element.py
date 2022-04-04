@@ -45,21 +45,6 @@ class Element(GMSOBase):
             f"atomic number: {self.atomic_number}, mass: {self.mass.to('amu')}>"
         )
 
-    def __eq__(self, other):
-        """Return true if the element is equvalent to another element."""
-        return hash(self) == hash(other)
-
-    def __hash__(self):
-        """Generate an unique hash of the element for comparison."""
-        return hash(
-            (
-                self.name,
-                self.symbol,
-                self.atomic_number,
-                unyt_to_hashable(self.mass),
-            )
-        )
-
     class Config:
         """Pydantic configuration for element."""
 
