@@ -232,7 +232,7 @@ class PotentialExpression:
         return "".join(descr)
 
     @staticmethod
-    @lru_cache
+    @lru_cache(maxsize=128)
     def _validate_expression(expression):
         """Check to see that an expression is a valid sympy expression."""
         if expression is None or isinstance(expression, sympy.Expr):
@@ -330,7 +330,7 @@ class PotentialExpression:
         return json_dict
 
     @staticmethod
-    @lru_cache
+    @lru_cache(maxsize=128)
     def _verify_validity(
         expression, independent_variables_symbols, parameters=None
     ):
