@@ -212,3 +212,25 @@ class TestExpression(BaseTest):
         assert hash(expression_1) == hash(expression_2)
         assert expression_3 != expression_2
         assert expression_1 != expression_3
+
+    def test_clone(self):
+        expr = PotentialExpression(
+            expression="a^2+2*a*b+b^2+2*theta*phi",
+            independent_variables={"theta", "phi"},
+            parameters={"a": 2.0 * u.nm, "b": 2.0 * u.rad},
+        )
+
+        expr_clone = expr.clone()
+
+        assert expr_clone.expression == expr.expression
+        assert id(expr_clone.expression) != id(expr.expression)
+
+        assert expr_clone.parameters == expr.parameters
+        assert id(expr_clone.parameters) != id(expr.parameters)
+
+        assert expr_clone.independent_variables == expr.independent_variables
+        assert id(expr_clone.independent_variables) != id(
+            expr.independent_variables
+        )
+
+        assert expr == expr_clone

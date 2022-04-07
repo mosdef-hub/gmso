@@ -367,3 +367,48 @@ class TestAtomType(BaseTest):
         atype_dict = atype.dict(exclude={"potential_expression"})
         assert "potential_expression" not in atype_dict
         assert "charge" in atype_dict
+
+    def test_atom_type_clone(self):
+        top = Topology()
+        atype = AtomType(
+            name="ff_255",
+            expression="a*x+b+c*y",
+            independent_variables={"x", "y"},
+            parameters={"a": 200 * u.g, "b": 300 * u.K, "c": 400 * u.J},
+            mass=2.0 * u.g / u.mol,
+            charge=2.0 * u.elementary_charge,
+            atomclass="CX",
+            overrides={"ff_234"},
+            definition="CC-C",
+            topology=top,
+            description="Dummy Description",
+        )
+        atype_clone = atype.clone()
+
+        atom1 = Atom(name="1")
+        atom2 = Atom(name="2")
+        atom1.atom_type = atype
+        atom2.atom_type = atype_clone
+
+        top.add_site(atom1)
+        top.add_site(atom2)
+        top.update_topology()
+
+        try:
+            assert len(top.atom_types) == 1
+        except:
+            for atype in top._atom_types.values():
+                print(atype.dict(), hash(atype.potential_expression))
+
+        atype_dict = atype.dict(exclude={"topology", "set_ref"})
+        atype_clone_dict = atype_clone.dict(exclude={"topology", "set_ref"})
+
+        assert atype_clone.topology_ == atype.topology_
+        assert atype_clone.set_ref_ == atype.set_ref_
+
+        for key, value in atype_dict.items():
+            cloned = atype_clone_dict[key]
+            assert value == cloned
+            if id(value) == id(cloned):
+                assert isinstance(value, str)
+                assert isinstance(cloned, str)

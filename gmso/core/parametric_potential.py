@@ -1,3 +1,4 @@
+from copy import copy, deepcopy
 from typing import Any, Optional, Union
 
 import unyt as u
@@ -205,6 +206,26 @@ class ParametricPotential(AbstractPotential):
             params = self.parameters
 
         return params
+
+    def clone(self):
+        """Clone this parametric potential, faster alternative to deepcopying."""
+        Creator = self.__class__
+        kwargs = {"topology": self.topology_, "tags": deepcopy(self.tags_)}
+        if hasattr(self, "member_classes"):
+            kwargs["member_classes"] = (
+                copy(self.member_classes) if self.member_classes else None
+            )
+
+        if hasattr(self, "member_types"):
+            kwargs["member_types"] = (
+                copy(self.member_types) if self.member_types else None
+            )
+
+        return Creator(
+            name=self.name,
+            potential_expression=self.potential_expression_.clone(),
+            **kwargs,
+        )
 
     @classmethod
     def from_template(cls, potential_template, parameters, topology=None):
