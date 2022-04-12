@@ -20,14 +20,6 @@ from gmso.core.improper_type import ImproperType
 from gmso.core.pairpotential_type import PairPotentialType
 from gmso.core.parametric_potential import ParametricPotential
 from gmso.exceptions import GMSOError
-from gmso.utils._constants import (
-    ANGLE_TYPE_DICT,
-    ATOM_TYPE_DICT,
-    BOND_TYPE_DICT,
-    DIHEDRAL_TYPE_DICT,
-    IMPROPER_TYPE_DICT,
-    PAIRPOTENTIAL_TYPE_DICT,
-)
 from gmso.utils.connectivity import (
     identify_connections as _identify_connections,
 )
@@ -158,20 +150,14 @@ class Topology(object):
         self._dihedrals = IndexedSet()
         self._impropers = IndexedSet()
         self._subtops = IndexedSet()
-        self._atom_types = {}
-        self._atom_types_idx = {}
-        self._connection_types = {}
-        self._bond_types = {}
-        self._bond_types_idx = {}
-        self._angle_types = {}
-        self._angle_types_idx = {}
-        self._dihedral_types = {}
-        self._dihedral_types_idx = {}
-        self._improper_types = {}
-        self._improper_types_idx = {}
+        self._atom_types = IndexedSet()
+        self._connection_types = IndexedSet()
+        self._bond_types = IndexedSet()
+        self._angle_types = IndexedSet()
+        self._dihedral_types = IndexedSet()
+        self._improper_types = IndexedSet()
         self._combining_rule = "lorentz"
-        self._pairpotential_types = {}
-        self._pairpotential_types_idx = {}
+        self._pairpotential_types = IndexedSet()
         self._scaling_factors = {
             "nonBonded12Scale": 0.0,
             "nonBonded13Scale": 0.0,
@@ -179,23 +165,6 @@ class Topology(object):
             "electrostatics12Scale": 0.0,
             "electrostatics13Scale": 0.0,
             "electrostatics14Scale": 0.5,
-        }
-        self._set_refs = {
-            ATOM_TYPE_DICT: self._atom_types,
-            BOND_TYPE_DICT: self._bond_types,
-            ANGLE_TYPE_DICT: self._angle_types,
-            DIHEDRAL_TYPE_DICT: self._dihedral_types,
-            IMPROPER_TYPE_DICT: self._improper_types,
-            PAIRPOTENTIAL_TYPE_DICT: self._pairpotential_types,
-        }
-
-        self._index_refs = {
-            ATOM_TYPE_DICT: self._atom_types_idx,
-            BOND_TYPE_DICT: self._bond_types_idx,
-            ANGLE_TYPE_DICT: self._angle_types_idx,
-            DIHEDRAL_TYPE_DICT: self._dihedral_types_idx,
-            IMPROPER_TYPE_DICT: self._improper_types_idx,
-            PAIRPOTENTIAL_TYPE_DICT: self._pairpotential_types_idx,
         }
 
         self._unique_connections = {}
@@ -282,32 +251,32 @@ class Topology(object):
     @property
     def n_sites(self):
         """Return the number of sites in the topology."""
-        return len(self.sites)
+        return len(self._sites)
 
     @property
     def n_connections(self):
         """Return the number of connections in the topology."""
-        return len(self.connections)
+        return len(self._connections)
 
     @property
     def n_bonds(self):
         """Return the number of bonds in the topology."""
-        return len(self.bonds)
+        return len(self._bonds)
 
     @property
     def n_angles(self):
         """Return the amount of angles in the topology."""
-        return len(self.angles)
+        return len(self._angles)
 
     @property
     def n_dihedrals(self):
         """Return the amount of dihedrals in the topology."""
-        return len(self.dihedrals)
+        return len(self._dihedrals)
 
     @property
     def n_impropers(self):
         """Return the number of impropers in the topology."""
-        return len(self.impropers)
+        return len(self._impropers)
 
     @property
     def subtops(self):
@@ -322,103 +291,103 @@ class Topology(object):
     @property
     def sites(self):
         """Return all sites in the topology."""
-        return tuple(self._sites)
+        return self._sites
 
     @property
     def connections(self):
         """Return all connections in topology."""
-        return tuple(self._connections)
+        return self._connections
 
     @property
     def bonds(self):
         """Return all bonds in the topology."""
-        return tuple(self._bonds)
+        return self._bonds
 
     @property
     def angles(self):
         """Return all angles in the topology."""
-        return tuple(self._angles)
+        return self._angles
 
     @property
     def dihedrals(self):
         """Return all dihedrals in the topology."""
-        return tuple(self._dihedrals)
+        return self._dihedrals
 
     @property
     def impropers(self):
         """Return all impropers in the topology."""
-        return tuple(self._impropers)
+        return self._impropers
 
     @property
     def atom_types(self):
         """Return all atom_types in the topology."""
-        return tuple(self._atom_types.values())
+        return self._atom_types
 
     @property
     def connection_types(self):
         """Return all connection_types in the topology."""
-        return tuple(self._connection_types.values())
+        return self._connection_types
 
     @property
     def bond_types(self):
         """Return all bond_types in the topology."""
-        return tuple(self._bond_types.values())
+        return self._bond_types
 
     @property
     def angle_types(self):
         """Return all angle_types in the topology."""
-        return tuple(self._angle_types.values())
+        return self._angle_types
 
     @property
     def dihedral_types(self):
         """Return all dihedral_types in the topology."""
-        return tuple(self._dihedral_types.values())
+        return self._dihedral_types
 
     @property
     def improper_types(self):
         """Return all improper_types in the topology."""
-        return tuple(self._improper_types.values())
+        return self._improper_types
 
     @property
     def pairpotential_types(self):
-        return tuple(self._pairpotential_types.values())
+        return self._pairpotential_types
 
     @property
     def atom_type_expressions(self):
         """Return all atom_type expressions in the topology."""
-        return list(set([atype.expression for atype in self.atom_types]))
+        return list(set([atype.expression for atype in self._atom_types]))
 
     @property
     def connection_type_expressions(self):
         """Return all connection_type expressions in the topology."""
         return list(
-            set([contype.expression for contype in self.connection_types])
+            set([contype.expression for contype in self._connection_types])
         )
 
     @property
     def bond_type_expressions(self):
         """Return all bond_type expressions in the topology."""
-        return list(set([btype.expression for btype in self.bond_types]))
+        return list(set([btype.expression for btype in self._bond_types]))
 
     @property
     def angle_type_expressions(self):
         """Return all angle_type expressions in the topology."""
-        return list(set([atype.expression for atype in self.angle_types]))
+        return list(set([atype.expression for atype in self._angle_types]))
 
     @property
     def dihedral_type_expressions(self):
         """Return all dihedral_type expressions in the topology."""
-        return list(set([atype.expression for atype in self.dihedral_types]))
+        return list(set([dtype.expression for dtype in self._dihedral_types]))
 
     @property
     def improper_type_expressions(self):
         """Return all improper_type expressions in the topology."""
-        return list(set([atype.expression for atype in self.improper_types]))
+        return list(set([itype.expression for itype in self._improper_types]))
 
     @property
     def pairpotential_type_expressions(self):
         return list(
-            set([atype.expression for atype in self.pairpotential_types])
+            set([ptype.expression for ptype in self._pairpotential_types])
         )
 
     def add_site(self, site, update_types=True):
@@ -440,12 +409,7 @@ class Topology(object):
         """
         self._sites.add(site)
         if update_types and site.atom_type:
-            site.atom_type.topology = self
-            if site.atom_type in self._atom_types:
-                site.atom_type = self._atom_types[site.atom_type]
-            else:
-                self._atom_types[site.atom_type] = site.atom_type
-                self._atom_types_idx[site.atom_type] = len(self._atom_types) - 1
+            self._atom_types.add(site.atom_type)
             self.is_typed(updated=False)
 
     def update_sites(self):
@@ -471,7 +435,7 @@ class Topology(object):
         gmso.Topology.add_connection : Add a Bond, an Angle or a Dihedral to the topology.
         gmso.Topology.update_topology : Update the entire topology.
         """
-        for connection in self.connections:
+        for connection in self._connections:
             for member in connection.connection_members:
                 if member not in self._sites:
                     self.add_site(member)
@@ -512,8 +476,9 @@ class Topology(object):
             connection = self._unique_connections[equivalent_members]
 
         for conn_member in connection.connection_members:
-            if conn_member not in self.sites:
+            if conn_member not in self._sites:
                 self.add_site(conn_member)
+
         self._connections.add(connection)
         self._unique_connections.update({equivalent_members: connection})
         if isinstance(connection, Bond):
@@ -544,48 +509,21 @@ class Topology(object):
         --------
         gmso.Topology.update_atom_types : Update atom types in the topology.
         """
+        targets = {
+            BondType: self._bond_types,
+            AngleType: self._angle_types,
+            DihedralType: self._dihedral_types,
+            ImproperType: self._improper_types,
+        }
         for c in self.connections:
             if c.connection_type is None:
                 warnings.warn(
                     "Non-parametrized Connection {} detected".format(c)
                 )
-            elif not isinstance(c.connection_type, ParametricPotential):
-                raise GMSOError(
-                    "Non-Potential {} found"
-                    "in Connection {}".format(c.connection_type, c)
-                )
-            elif c.connection_type not in self._connection_types:
-                c.connection_type.topology = self
-                self._connection_types[c.connection_type] = c.connection_type
-                if isinstance(c.connection_type, BondType):
-                    self._bond_types[c.connection_type] = c.connection_type
-                    self._bond_types_idx[c.connection_type] = (
-                        len(self._bond_types) - 1
-                    )
-                if isinstance(c.connection_type, AngleType):
-                    self._angle_types[c.connection_type] = c.connection_type
-                    self._angle_types_idx[c.connection_type] = (
-                        len(self._angle_types) - 1
-                    )
-                if isinstance(c.connection_type, DihedralType):
-                    self._dihedral_types[c.connection_type] = c.connection_type
-                    self._dihedral_types_idx[c.connection_type] = (
-                        len(self._dihedral_types) - 1
-                    )
-                if isinstance(c.connection_type, ImproperType):
-                    self._improper_types[c.connection_type] = c.connection_type
-                    self._improper_types_idx[c.connection_type] = (
-                        len(self._improper_types) - 1
-                    )
-            elif c.connection_type in self.connection_types:
-                if isinstance(c.connection_type, BondType):
-                    c.connection_type = self._bond_types[c.connection_type]
-                if isinstance(c.connection_type, AngleType):
-                    c.connection_type = self._angle_types[c.connection_type]
-                if isinstance(c.connection_type, DihedralType):
-                    c.connection_type = self._dihedral_types[c.connection_type]
-                if isinstance(c.connection_type, ImproperType):
-                    c.connection_type = self._improper_types[c.connection_type]
+            else:
+                target_conn_type = targets[type(c.connection_type)]
+                target_conn_type.add(c.connection_type)
+                self._connection_types.add(c.connection_type)
 
     def add_pairpotentialtype(self, pairpotentialtype, update=True):
         """add a PairPotentialType to the topology
@@ -613,17 +551,14 @@ class Topology(object):
                 "Non-PairPotentialType {} provided".format(pairpotentialtype)
             )
         for atype in pairpotentialtype.member_types:
-            if atype not in [t.name for t in self.atom_types]:
-                if atype not in [t.atomclass for t in self.atom_types]:
+            if atype not in {t.name for t in self.atom_types}:
+                if atype not in {t.atomclass for t in self.atom_types}:
                     raise GMSOError(
                         "There is no name/atomclass of AtomType {} in current topology".format(
                             atype
                         )
                     )
-        self._pairpotential_types[pairpotentialtype] = pairpotentialtype
-        self._pairpotential_types_idx[pairpotentialtype] = (
-            len(self._pairpotential_types) - 1
-        )
+        self._pairpotential_types.add(pairpotentialtype)
 
     def remove_pairpotentialtype(self, pair_of_types):
         """Remove the custom pairwise potential between two AtomTypes/Atomclasses
@@ -640,8 +575,7 @@ class Topology(object):
                 to_delete.append(t)
         if len(to_delete) > 0:
             for t in to_delete:
-                del self._pairpotential_types[t]
-            self._reindex_connection_types(PAIRPOTENTIAL_TYPE_DICT)
+                self._pairpotential_types.remove(t)
         else:
             warnings.warn(
                 "No pair potential specified for such pair of AtomTypes/atomclasses"
@@ -666,12 +600,9 @@ class Topology(object):
                 raise GMSOError(
                     "Non AtomType instance found in site {}".format(site)
                 )
-            elif site.atom_type not in self._atom_types:
-                site.atom_type.topology = self
-                self._atom_types[site.atom_type] = site.atom_type
-                self._atom_types_idx[site.atom_type] = len(self._atom_types) - 1
-            elif site.atom_type in self._atom_types:
-                site.atom_type = self._atom_types[site.atom_type]
+            else:
+                self._atom_types.add(site.atom_type)
+
         self.is_typed(updated=True)
 
     def add_subtopology(self, subtop, update=True):
@@ -945,12 +876,12 @@ class Topology(object):
             Angle: self._angles,
             Dihedral: self._dihedrals,
             Improper: self._impropers,
-            AtomType: self._atom_types_idx,
-            BondType: self._bond_types_idx,
-            AngleType: self._angle_types_idx,
-            DihedralType: self._dihedral_types_idx,
-            ImproperType: self._improper_types_idx,
-            PairPotentialType: self._pairpotential_types_idx,
+            AtomType: self._atom_types,
+            BondType: self._bond_types,
+            AngleType: self._angle_types,
+            DihedralType: self._dihedral_types,
+            ImproperType: self._improper_types,
+            PairPotentialType: self._pairpotential_types,
         }
 
         member_type = type(member)
@@ -960,24 +891,9 @@ class Topology(object):
                 f"Cannot index member of type {member_type.__name__}"
             )
 
-        try:
-            index = refs[member_type].index(member)
-        except AttributeError:
-            index = refs[member_type][member]
+        index = refs[member_type].index(member)
 
         return index
-
-    def _reindex_connection_types(self, ref):
-        """Re-generate the indices of the connection types in the topology."""
-        if ref not in self._index_refs:
-            raise GMSOError(
-                f"cannot reindex {ref}. It should be one of "
-                f"{ANGLE_TYPE_DICT}, {BOND_TYPE_DICT}, "
-                f"{ANGLE_TYPE_DICT}, {DIHEDRAL_TYPE_DICT}, {IMPROPER_TYPE_DICT},"
-                f"{PAIRPOTENTIAL_TYPE_DICT}"
-            )
-        for i, ref_member in enumerate(self._set_refs[ref].keys()):
-            self._index_refs[ref][ref_member] = i
 
     def iter_sites(self, key, value):
         """Iterate through this topology's sites based on certain attribute and their values.
@@ -1006,7 +922,7 @@ class Topology(object):
                 "Expected `value` to be something other than None. Provided None."
             )
 
-        for site in self.sites:
+        for site in self._sites:
             if getattr(site, key) == value:
                 yield site
 

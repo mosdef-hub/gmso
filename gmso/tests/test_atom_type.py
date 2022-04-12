@@ -292,11 +292,9 @@ class TestAtomType(BaseTest):
         site2.atom_type = atom_type2
         top.add_site(site1)
         top.add_site(site2)
-        assert id(site1.atom_type) == id(site2.atom_type)
+        assert id(site1.atom_type) != id(site2.atom_type)
         assert site1.atom_type is not None
-        assert len(top.atom_types) == 1
-        assert site1.atom_type.topology == top
-        assert site2.atom_type.topology == top
+        assert len(top.atom_types) == 2
 
     def test_atom_type_with_topology_and_site_change_properties(self):
         site1 = Atom()
@@ -309,7 +307,7 @@ class TestAtomType(BaseTest):
         top.add_site(site1)
         top.add_site(site2)
         site1.atom_type.mass = 250
-        assert site2.atom_type.mass == 250
+        assert site1.atom_type.mass == 250
         assert top.atom_types[0].mass == 250
 
     def test_with_1000_atom_types(self):
@@ -320,7 +318,7 @@ class TestAtomType(BaseTest):
             site.atom_type = atom_type
             top.add_site(site, update_types=False)
         top.update_topology()
-        assert len(top.atom_types) == 1
+        assert len(top.atom_types) == 1000
         assert top.n_sites == 1000
 
     def test_atom_type_copy(self, typed_ethane):
@@ -380,7 +378,6 @@ class TestAtomType(BaseTest):
             atomclass="CX",
             overrides={"ff_234"},
             definition="CC-C",
-            topology=top,
             description="Dummy Description",
         )
         atype_clone = atype.clone()
@@ -394,17 +391,10 @@ class TestAtomType(BaseTest):
         top.add_site(atom2)
         top.update_topology()
 
-        try:
-            assert len(top.atom_types) == 1
-        except:
-            for atype in top._atom_types.values():
-                print(atype.dict(), hash(atype.potential_expression))
+        assert len(top.atom_types) == 2
 
         atype_dict = atype.dict(exclude={"topology", "set_ref"})
         atype_clone_dict = atype_clone.dict(exclude={"topology", "set_ref"})
-
-        assert atype_clone.topology_ == atype.topology_
-        assert atype_clone.set_ref_ == atype.set_ref_
 
         for key, value in atype_dict.items():
             cloned = atype_clone_dict[key]

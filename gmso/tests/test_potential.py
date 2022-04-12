@@ -241,7 +241,6 @@ class TestPotential(BaseTest):
             expression="a*x+b+c*y",
             independent_variables={"x", "y"},
             parameters={"a": 200 * u.g, "b": 300 * u.K, "c": 400 * u.J},
-            topology=top,
         )
         btype_clone = btype.clone()
 
@@ -260,13 +259,10 @@ class TestPotential(BaseTest):
         top.add_connection(bond2)
         top.update_topology()
 
-        assert len(top.bond_types) == 1
+        assert len(top.bond_types) == 2
 
         btype_dict = btype.dict(exclude={"topology", "set_ref"})
         btype_clone_dict = btype_clone.dict(exclude={"topology", "set_ref"})
-
-        assert btype_clone.topology_ == btype.topology_
-        assert btype_clone.set_ref_ == btype.set_ref_
 
         for key, value in btype_dict.items():
             cloned = btype_clone_dict[key]

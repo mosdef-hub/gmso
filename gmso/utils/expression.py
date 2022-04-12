@@ -196,31 +196,6 @@ class PotentialExpression:
                 if sympy.Symbol(key) not in self.expression.free_symbols:
                     self._parameters.pop(key)
 
-    def __hash__(self):
-        """Return hash of the potential expression."""
-        if self._is_parametric:
-            return hash(
-                tuple(
-                    (
-                        self.expression,
-                        tuple(self.independent_variables),
-                        tuple(self.parameters.keys()),
-                        tuple(
-                            unyt_to_hashable(val)
-                            for val in self.parameters.values()
-                        ),
-                    )
-                )
-            )
-        else:
-            return hash(
-                tuple((self.expression, tuple(self.independent_variables)))
-            )
-
-    def __eq__(self, other):
-        """Determine if two expressions are equivalent."""
-        return hash(self) == hash(other)
-
     def __repr__(self):
         """Representation of the potential expression."""
         descr = list(f"<PotentialExpression, ")
@@ -267,6 +242,24 @@ class PotentialExpression:
                 raise ValueError("Parameter key {} is not a str".format(key))
 
         return parameters
+
+    def __eq__(self, other):
+        """Equality checks for two expressions."""
+        if other is self:
+            return True
+        if not isinstance(other, PotentialExpression):
+            return False
+        if not self.is_parametric:
+            return (
+                self.expression == other.expression
+                and self.independent_variables == other.independent_variables
+            )
+        else:
+            return (
+                self.expression == other.expression
+                and self.independent_variables == other.independent_variables
+                and self.parameters == other.parameters
+            )
 
     @staticmethod
     def _validate_independent_variables(indep_vars):

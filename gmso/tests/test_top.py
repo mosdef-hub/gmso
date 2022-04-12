@@ -74,7 +74,7 @@ class TestTop(BaseTest):
         top.save("water.top")
 
     def test_ethane_periodic(self, typed_ethane):
-        from gmso.core.parametric_potential import ParametricPotential
+        from gmso.core.dihedral_type import DihedralType
         from gmso.lib.potential_templates import PotentialTemplateLibrary
 
         per_torsion = PotentialTemplateLibrary()["PeriodicTorsionPotential"]
@@ -83,7 +83,7 @@ class TestTop(BaseTest):
             "phi_eq": 15 * u.Unit("degree"),
             "n": 3 * u.Unit("dimensionless"),
         }
-        periodic_dihedral_type = ParametricPotential.from_template(
+        periodic_dihedral_type = DihedralType.from_template(
             potential_template=per_torsion, parameters=params
         )
         for dihedral in typed_ethane.dihedrals:
