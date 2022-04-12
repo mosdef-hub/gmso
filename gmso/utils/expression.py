@@ -1,5 +1,7 @@
 """Manage Potential functional expressions and variables."""
 import warnings
+from copy import deepcopy
+from functools import lru_cache
 
 import sympy
 import unyt as u
@@ -34,6 +36,9 @@ class PotentialExpression:
 
     parameters: dict, default=None
         A dictionary of parameter whose key is a string and values are parameters
+
+    verify_validity: bool, default=True
+        If true verify validity of the expression, parameters and independent variables
     """
 
     __slots__ = (
@@ -43,22 +48,38 @@ class PotentialExpression:
         "_is_parametric",
     )
 
-    def __init__(self, expression, independent_variables, parameters=None):
-        self._expression = self._validate_expression(expression)
-        self._independent_variables = self._validate_independent_variables(
-            independent_variables
+    def __init__(
+        self,
+        expression,
+        independent_variables,
+        parameters=None,
+        verify_validity=True,
+    ):
+        self._expression = (
+            self._validate_expression(expression)
+            if verify_validity
+            else expression
+        )
+        self._independent_variables = (
+            self._validate_independent_variables(independent_variables)
+            if verify_validity
+            else independent_variables
         )
         self._is_parametric = False
 
         if parameters is not None:
             self._is_parametric = True
-            self._parameters = self._validate_parameters(parameters)
-            self._verify_validity(
-                self._expression, self._independent_variables, self._parameters
+            self._parameters = (
+                self._validate_parameters(parameters)
+                if verify_validity
+                else parameters
             )
-        else:
+
+        if verify_validity:
             self._verify_validity(
-                self._expression, self.independent_variables, None
+                self._expression,
+                frozenset(self._independent_variables),
+                frozenset(self._parameters) if self._is_parametric else None,
             )
 
     @property
@@ -157,11 +178,15 @@ class PotentialExpression:
             else:
                 parameters = self._parameters
 
-            self._verify_validity(expression, independent_variables, parameters)
+            self._verify_validity(
+                expression,
+                frozenset(independent_variables),
+                frozenset(parameters),
+            )
 
             self._parameters.update(parameters)
         else:
-            self._verify_validity(expression, independent_variables)
+            self._verify_validity(expression, frozenset(independent_variables))
 
         self._expression = expression
         self._independent_variables = independent_variables
@@ -182,6 +207,7 @@ class PotentialExpression:
         return "".join(descr)
 
     @staticmethod
+    @lru_cache(maxsize=128)
     def _validate_expression(expression):
         """Check to see that an expression is a valid sympy expression."""
         if expression is None or isinstance(expression, sympy.Expr):
@@ -262,6 +288,20 @@ class PotentialExpression:
 
         return indep_vars
 
+    def clone(self):
+        """Return a clone of this potential expression, faster alternative to deepcopying."""
+        return PotentialExpression(
+            deepcopy(self._expression),
+            deepcopy(self._independent_variables),
+            {
+                k: u.unyt_quantity(v.value, v.units)
+                for k, v in self._parameters.items()
+            }
+            if self._is_parametric
+            else None,
+            verify_validity=False,
+        )
+
     @staticmethod
     def json(potential_expression):
         """Convert the provided potential expression to a json serializable dictionary."""
@@ -283,6 +323,7 @@ class PotentialExpression:
         return json_dict
 
     @staticmethod
+    @lru_cache(maxsize=128)
     def _verify_validity(
         expression, independent_variables_symbols, parameters=None
     ):
@@ -295,7 +336,7 @@ class PotentialExpression:
                     f"exist in the expression's free symbols {expression.free_symbols}"
                 )
         if parameters is not None:
-            parameter_symbols = sympy.symbols(set(parameters.keys()))
+            parameter_symbols = sympy.symbols(parameters)
             used_symbols = parameter_symbols.union(
                 independent_variables_symbols
             )
@@ -307,7 +348,7 @@ class PotentialExpression:
                 )
 
             if used_symbols != expression.free_symbols:
-                symbols = sympy.symbols(set(parameters.keys()))
+                symbols = sympy.symbols(parameters)
                 if symbols != expression.free_symbols:
                     missing_syms = (
                         expression.free_symbols
