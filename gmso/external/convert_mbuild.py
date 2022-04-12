@@ -67,6 +67,9 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
     msg = "Argument compound is not an mbuild.Compound"
     assert isinstance(compound, mb.Compound), msg
 
+    # Create a clone of the input compound
+    compound = mb.clone(compound)
+
     top = Topology()
     top.typed = False
 
@@ -74,7 +77,10 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
     if compound.name != mb.Compound().name:
         top.name = compound.name
 
-    connected_subgraph = compound.bond_graph.connected_components()
+    try:
+        connected_subgraph = compound.bond_graph.connected_components()
+    except:
+        connected_subgraph = [[]]
     children_set = compound.children
     molecule_groups = list()
     for subgraph in connected_subgraph:
@@ -82,12 +88,19 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
         for child in children_set:
             if set(child.particles()).issubset(subgraph):
                 tmp_group.append(child)
-        molecule_groups.append(tmp_group)
-        children_set.remove(i for i in tmp_group)
+        if tmp_group:
+            molecule_groups.append(tmp_group)
+        for comp in tmp_group:
+            children_set.remove(comp)
+
+    # Add remaining children (those don't have any bond and hence don't
+    # show up in the bondgraph)
+    for remained in children_set:
+        molecule_groups.append(remained)
 
     site_map = dict()
     for group in molecule_groups:
-        molecule_id = "-".join(sorted(cmp.name for cmp in group))
+        group_name = "-".join(sorted(cmp.name for cmp in group))
         for cmp in group:
             for particle in cmp.particles():
                 pos = particle.xyz[0] * u.nanometer
@@ -95,12 +108,26 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
                     ele = search_method(particle.element.symbol)
                 else:
                     ele = search_method(particle.name)
+
+                # Determining the closet molecule
+                molecule = particle
+                while not molecule.is_independent():
+                    molecule = molecule.parent
+
+                if molecule == compound:
+                    molecule = group_name
+                else:
+                    molecule = molecule.name
+
                 site = Atom(name=particle.name, position=pos, element=ele)
                 site_map[particle] = site
-                site.molecule_group = molecule_id
+                site.group = group_name
+                site.molecule = molecule
+
+                top.add_site(site)
 
     for b1, b2 in compound.bonds():
-        assert site_map[b1].molecule_group == site_map[b2].molecule_group
+        assert site_map[b1].molecule == site_map[b2].molecule
         new_bond = Bond(
             connection_members=[site_map[b1], site_map[b2]],
             bond_type=None,
