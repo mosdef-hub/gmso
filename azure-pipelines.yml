@@ -2,6 +2,7 @@ trigger:
   branches:
     include:
     - master
+    - develop
   tags:
     include:
     - 0.*
@@ -11,6 +12,7 @@ pr:
   branches:
     include:
       - master
+      - develop
 
 schedules:
 - cron: "0 0 * * *"
