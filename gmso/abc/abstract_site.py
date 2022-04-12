@@ -91,7 +91,7 @@ class Site(GMSOBase):
     @property
     def group(self) -> str:
         """Return the group of the site."""
-        return self.__dict__.get("molecule_")
+        return self.__dict__.get("group_")
 
     @property
     def molecule(self) -> str:

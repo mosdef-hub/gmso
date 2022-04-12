@@ -81,6 +81,7 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
         connected_subgraph = compound.bond_graph.connected_components()
     except:
         connected_subgraph = [[]]
+
     children_set = compound.children
     molecule_groups = list()
     for subgraph in connected_subgraph:
@@ -96,11 +97,15 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
     # Add remaining children (those don't have any bond and hence don't
     # show up in the bondgraph)
     for remained in children_set:
-        molecule_groups.append(remained)
+        molecule_groups.append([remained])
 
     site_map = dict()
     for group in molecule_groups:
-        group_name = "-".join(sorted(cmp.name for cmp in group))
+        if isinstance(group, mb.Compound):
+            group_name = group.name
+        else:
+            group_name = "-".join(sorted(cmp.name for cmp in group))
+        print(group_name)
         for cmp in group:
             for particle in cmp.particles():
                 pos = particle.xyz[0] * u.nanometer
@@ -109,7 +114,7 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
                 else:
                     ele = search_method(particle.name)
 
-                # Determining the closet molecule
+                # Determining the lowest molecule this particle belongs to
                 molecule = particle
                 while not molecule.is_independent():
                     molecule = molecule.parent
@@ -118,7 +123,6 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
                     molecule = group_name
                 else:
                     molecule = molecule.name
-
                 site = Atom(name=particle.name, position=pos, element=ele)
                 site_map[particle] = site
                 site.group = group_name
