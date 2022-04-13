@@ -109,10 +109,10 @@ class TestConvertMBuild(BaseTest):
         assert compound.n_particles == 1
 
     def test_4_layer_compound(self):
-        l0_cmpnd = mb.Compound()
-        l1_cmpnd = mb.Compound()
-        l2_cmpnd = mb.Compound()
-        particle = mb.Compound()
+        l0_cmpnd = mb.Compound(name="l0")
+        l1_cmpnd = mb.Compound(name="l1")
+        l2_cmpnd = mb.Compound(name="l2")
+        particle = mb.Compound(name="particle")
 
         l0_cmpnd.add(l1_cmpnd)
         l1_cmpnd.add(l2_cmpnd)
@@ -123,12 +123,14 @@ class TestConvertMBuild(BaseTest):
         top = from_mbuild(l0_cmpnd)
 
         assert top.n_sites == 1
+        assert top.sites[0].group == "l1"
+        assert top.sites[0].molecule == "particle"
 
     def test_uneven_hierarchy(self):
-        top_cmpnd = mb.Compound()
-        mid_cmpnd = mb.Compound()
-        particle1 = mb.Compound()
-        particle2 = mb.Compound()
+        top_cmpnd = mb.Compound(name="top")
+        mid_cmpnd = mb.Compound(name="mid")
+        particle1 = mb.Compound(name="particle1")
+        particle2 = mb.Compound(name="particle2")
 
         top_cmpnd.add(mid_cmpnd)
         top_cmpnd.add(particle1)
@@ -139,6 +141,12 @@ class TestConvertMBuild(BaseTest):
         top = from_mbuild(top_cmpnd)
 
         assert top.n_sites == 2
+        for site in top.sites:
+            if site.name == "particle2":
+                assert site.group == "mid"
+                assert site.molecule == "particle2"
+            elif site.name == "particle1":
+                assert site.group == site.molecule == "particle1"
 
     def test_pass_box(self, mb_ethane):
         mb_box = Box(lengths=[3, 3, 3])

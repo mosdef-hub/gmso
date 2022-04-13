@@ -105,7 +105,6 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
             group_name = group.name
         else:
             group_name = "-".join(sorted(cmp.name for cmp in group))
-        print(group_name)
         for cmp in group:
             for particle in cmp.particles():
                 pos = particle.xyz[0] * u.nanometer
