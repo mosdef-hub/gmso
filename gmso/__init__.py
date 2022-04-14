@@ -1,5 +1,4 @@
 """GMSO: General Molecular Simulation Object."""
-from .atomtyping.parameterize import apply
 from .core.angle import Angle
 from .core.angle_type import AngleType
 from .core.atom import Atom
