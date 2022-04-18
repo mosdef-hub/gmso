@@ -46,3 +46,4 @@ jobs:
         uses: codecov/codecov-action@v2
         with:
           name: GMSO-Coverage
+          verbose: true
