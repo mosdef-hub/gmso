@@ -30,7 +30,7 @@ jobs:
         name: Checkout Branch / Pull Request
 
       - name: Install Mamba
-        uses: mamba-org/provision-with-micromaba@main
+        uses: mamba-org/provision-with-micromamba@main
         with:
           environment-file: environment-dev.yml
           extra-specs: |
