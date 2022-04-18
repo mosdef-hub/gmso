@@ -3,11 +3,11 @@ name: CI
 on:
   push:
     branches:
-      - master
-      - ditch-azp-gha
+      - "master"
+      - "ditch-azp-gha"
   pull_request:
     branches:
-      - master
+      - "master"
   schedule:
     - cron:  "0 0 * * *"
 
@@ -15,7 +15,7 @@ jobs:
   test:
     if: github.event.pull_request.draft == false
     name: GMSO Tests
-    runs-on: $${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [macOS-latest, ubuntu-latest]
