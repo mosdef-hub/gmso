@@ -51,165 +51,88 @@ def from_mol2(filename, site_type="atom"):
     # save the name from the filename
     with open(mol2path, "r") as f:
         line = f.readline()
-        while f:
-            # check for header character in line
-            if line.strip().startswith("@<TRIPOS>"):
-                # if header character in line, send to a function that will direct it properly
-                line = _parse_record_type_indicator(
-                    f, line, topology, site_type
-                )
-            elif line == "":
-                # check for the end of file
-                break
+        with open(filename, "r") as f:
+            fcontents = f.readlines()
+        sections = dict()
+        key = "meta"
+        for line in fcontents:
+            if "@<TRIPOS>" in line:
+                section_key = line.strip("\n")
+                sections[section_key] = list()
             else:
-                # else, skip to next line
-                line = f.readline()
+                sections[section_key].append(line)
+
+        supported_rti = {
+            "@<TRIPOS>ATOM": _parse_atom,
+            "@<TRIPOS>BOND": _parse_bond,
+            "@<TRIPOS>CRYSIN": _parse_box,
+            "@<TRIPOS>FF_PBC": _parse_box,
+        }
+        for section in sections:
+            if section not in supported_rti:
+                warnings.warn(
+                    f"The record type indicator {section} is not supported."
+                )
+            else:
+                supported_rti[section](
+                    topology, sections[section], site_type="atom"
+                )
+
     topology.update_topology()
     # TODO: read in parameters to correct attribute as well. This can be saved in various rti sections.
     return topology
 
 
-def _load_top_sites(f, topology, site_type="atom"):
-    """Take a mol2 file section with the heading '<TRIPOS>ATOM' and save to the topology.sites attribute.
-
-    Parameters
-    ----------
-    f : file pointer
-        pointer file where the mol2 file is stored. The pointer must be at the head of the rti for that
-        `@<TRIPOS>ATOM` section.
-    topology : gmso.Topology
-        topology to save the site information to.
-    site_type : string ('atom' or 'lj'), default='atom'
-        tells the reader to consider the elements saved in the mol2 file, and
-        if the type is 'lj', to not try to identify the element of the site,
-        instead saving the site name.
-
-    Returns
-    -------
-    line : string
-         returns the last line of the `@<TRIPOS>ATOM` section, and this is where the file pointer (`f`)
-         will now point to.
-
-    Notes
-    -----
-    Will modify the topology in place with the relevant site information. Indices will be appended to any
-    current site information.
-
-    """
-    while True:
-        line = f.readline()
-        if _is_end_of_rti(line):
-            line = line.split()
-            position = [float(x) for x in line[2:5]] * u.Å
-            # TODO: make sure charges are also saved as a unyt value
-            # TODO: add validation for element names
-            if site_type == "lj":
-                element = None
-            elif element_by_symbol(line[5]):
-                element = element_by_symbol(line[5])
-            elif element_by_name(line[5]):
-                element = element_by_name(line[5])
-            else:
-                warnings.warn(
-                    "No element detected for site {} with index{}, consider manually adding the element to the topology".format(
-                        line[1], len(topology.sites) + 1
-                    )
-                )
-                element = None
-            try:
-                charge = float(line[8])
-            except IndexError:
-                warnings.warn(
-                    "No charges were detected for site {} with index {}".format(
-                        line[1], line[0]
-                    )
-                )
-                charge = None
-            atom = Atom(
-                name=line[1],
-                position=position.to("nm"),
-                charge=charge,
-                element=element,
-                residue_name=line[7],
-                residue_number=int(line[6]),
-            )
-            topology.add_site(atom)
-        else:
-            break
-    return line
-
-
-def _load_top_bonds(f, topology, **kwargs):
-    """Take a mol2 file section with the heading '@<TRIPOS>BOND' and save to the topology.bonds attribute."""
-    while True:
-        line = f.readline()
-        if _is_end_of_rti(line):
-            line = line.split()
-            bond = Bond(
-                connection_members=(
-                    topology.sites[int(line[1]) - 1],
-                    topology.sites[int(line[2]) - 1],
-                )
-            )
-            topology.add_connection(bond)
-        else:
-            break
-    return line
-
-
-def _load_top_box(f, topology, **kwargs):
-    """Take a mol2 file section with the heading '@<TRIPOS>FF_PBC' or '@<TRIPOS>CRYSIN' and save to topology.box."""
-    if topology.box:
-        warnings.warn(
-            "This mol2 file has two boxes to be read in, only reading in one with dimensions {}".format(
-                topology.box
-            )
-        )
-        line = f.readline()
-        return line
-    while True:
-        line = f.readline()
-        if _is_end_of_rti(line):
-            line = line.split()
-            # TODO: write to box information
-            topology.box = Box(
-                lengths=[float(x) for x in line[0:3]] * u.Å,
-                angles=[float(x) for x in line[3:6]] * u.degree,
-            )
-        else:
-            break
-    return line
-
-
-def _parse_record_type_indicator(f, line, topology, site_type):
-    """Take a specific record type indicator (RTI) from a mol2 file format and save to the proper attribute of a gmso topology.
-
-    Supported record type indicators include Atom, Bond, FF_PBC, and CRYSIN.
-    """
-    supported_rti = {
-        "@<TRIPOS>ATOM": _load_top_sites,
-        "@<TRIPOS>BOND": _load_top_bonds,
-        "@<TRIPOS>CRYSIN": _load_top_box,
-        "@<TRIPOS>FF_PBC": _load_top_box,
+def _parse_atom(top, section, site_type="atom"):
+    """Parse atom information from the mol2 file."""
+    parse_ele = {
+        "lj": lambda ele: None,
+        "atom": lambda ele: element_by_symbol(ele)
+        if element_by_symbol(ele)
+        else element_by_name(ele),
     }
-    # read in to atom attribute
-    try:
-        line = supported_rti[line.strip()](f, topology, site_type=site_type)
-    except KeyError:
-        warnings.warn(
-            "The record type indicator {} is not supported. Skipping current section and moving to the next RTI header.".format(
-                line
+    for line in section:
+        cont = line.split()
+        position = [float(x) for x in cont[2:5]] * u.Å
+        element = parse_ele[site_type](cont[5])
+        try:
+            charge = float(cont[8])
+        except IndexError:
+            warnings.warn(
+                f"No charge was detected for site {cont[1]} with index {cont[0]}"
+            )
+
+        atom = Atom(
+            name=cont[1],
+            position=position.to("nm"),
+            element=element,
+            residue_name=cont[7],
+            residue_number=int(cont[6]),
+        )
+        top.add_site(atom)
+
+
+def _parse_bond(top, section, **kwargs):
+    """Parse bond information from the mol2 file."""
+    for line in section:
+        cont = line.split()
+        bond = Bond(
+            connection_members=(
+                top.sites[int(cont[1]) - 1],
+                top.sites[int(cont[2]) - 1],
             )
         )
-        line = f.readline()
-    return line
+        top.add_connection(bond)
 
 
-def _is_end_of_rti(line):
-    """Check if line in an rti is at the end of the section."""
-    return (
-        line
-        and "@" not in line
-        and not line == "\n"
-        and not line.strip().startswith("#")
-    )
+def _parse_box(top, section, **kwargs):
+    """Parse box information from the mol2 file."""
+    if top.box:
+        warnings.warn("Topology already has a box")
+
+    for line in section:
+        cont = line.split()
+        top.box = Box(
+            lengths=[float(x) for x in cont[0:3]] * u.Å,
+            angles=[float(x) for x in cont[3:6]] * u.degree,
+        )
