@@ -64,8 +64,16 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
+      - name: Get Tagged Version
+        run: |
+          echo ::set-output name=DOCKER_TAGS::${GITHUB_REF/refs\/tags\//}
+          $DOCKER_TAGS="mosdef/gmso:$DOCKER_TAGS, mosdef/gmso:stable"
+          echo $DOCKER_TAGS
+        if: github.ref_type == 'branch'
+
       - name: Build and Push
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: mosdef/gmso:DONOTUSE
+          tags: ${{ DOCKER_TAGS }}
+        if: github.ref_type == 'tag'
