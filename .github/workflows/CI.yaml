@@ -67,14 +67,16 @@ jobs:
       - name: Get Tagged Version
         run: |
           echo "DOCKER_TAGS=mosdef/gmso:${GITHUB_REF_NAME}, mosdef/gmso:stable" >> $GITHUB_ENV
-          echo Image Tags: $DOCKER_TAGS
         if: github.ref_type == 'tag'
 
       - name: Get Push Version
         run: |
-          echo "DOCKER_TAGS=mosdef/gmso:${GITHUB_REF_NAME}, mosdef/gmso:stable" >> $GITHUB_ENV
-          echo Image Tags: $DOCKER_TAGS
+          echo "DOCKER_TAGS=mosdef/gmso:${GITHUB_REF_NAME}, mosdef/gmso:latest" >> $GITHUB_ENV
         if: github.ref_type == 'branch'
+
+      - name: Docker Image Info
+        run: |
+          echo Docker Image tags: ${DOCKER_TAGS}
 
       - name: Build and Push
         uses: docker/build-push-action@v2
