@@ -65,11 +65,11 @@ stages:
             displayName: Install mamba
 
           - bash: |
+              rm /usr/share/miniconda/pkgs/cache/*.json
               mamba update conda -yq
             displayName: Add relevant channels and update
 
           - bash: |
-              rm /usr/share/miniconda/pkgs/cache/*.json
               sed -i -E 's/python.*$/python='$(python.version)'/' environment-dev.yml
               mamba env create -f environment-dev.yml
               source activate gmso-dev
