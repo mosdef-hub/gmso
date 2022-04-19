@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - "master"
-      - "ditch-azp-gha"
   pull_request:
     branches:
       - "master"
@@ -81,5 +80,5 @@ jobs:
       - name: Build and Push
         uses: docker/build-push-action@v2
         with:
-          push: false
+          push: true
           tags: ${{ env.DOCKER_TAGS }}
