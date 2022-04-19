@@ -73,9 +73,7 @@ def from_mol2(filename, site_type="atom"):
                 f"The record type indicator {section} is not supported."
             )
         else:
-            supported_rti[section](
-                topology, sections[section], site_type="atom"
-            )
+            supported_rti[section](topology, sections[section])
 
     topology.update_topology()
     # TODO: read in parameters to correct attribute as well. This can be saved in various rti sections.
@@ -138,7 +136,7 @@ def _parse_atom(top, section):
         top.add_site(atom)
 
 
-def _parse_bond(top, section, **kwargs):
+def _parse_bond(top, section):
     """Parse bond information from the mol2 file."""
     for line in section:
         cont = line.split()
@@ -151,7 +149,7 @@ def _parse_bond(top, section, **kwargs):
         top.add_connection(bond)
 
 
-def _parse_box(top, section, **kwargs):
+def _parse_box(top, section):
     """Parse box information from the mol2 file."""
     if top.box:
         warnings.warn("Topology already has a box")
