@@ -66,18 +66,18 @@ jobs:
 
       - name: Get Tagged Version
         run: |
-          DOCKER_TAGS="mosdef/gmso:${GITHUB_REF_NAME}, mosdef/gmso:stable"
+          echo "DOCKER_TAGS=mosdef/gmso:${GITHUB_REF_NAME}, mosdef/gmso:stable" >> $GITHUB_ENV
           echo Image Tags: $DOCKER_TAGS
         if: github.ref_type == 'tag'
 
       - name: Get Push Version
         run: |
-          DOCKER_TAGS="mosdef/gmso:${GITHUB_REF_NAME}, mosdef/gmso:latest"
+          echo "DOCKER_TAGS=mosdef/gmso:${GITHUB_REF_NAME}, mosdef/gmso:stable" >> $GITHUB_ENV
           echo Image Tags: $DOCKER_TAGS
         if: github.ref_type == 'branch'
 
       - name: Build and Push
         uses: docker/build-push-action@v2
         with:
-          push: true
+          push: false
           tags: ${{ env.DOCKER_TAGS }}
