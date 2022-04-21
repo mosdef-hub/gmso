@@ -52,7 +52,9 @@ def from_mol2(filename, site_type="atom"):
     # save the name from the filename
     with open(filename, "r") as f:
         fcontents = f.readlines()
-    sections = dict()
+
+    sections = {"Meta": list()}
+    section_key = "Meta"  # Used to parse the meta info at top of the file
     for line in fcontents:
         if "@<TRIPOS>" in line:
             section_key = line.strip("\n")
@@ -70,7 +72,8 @@ def from_mol2(filename, site_type="atom"):
     for section in sections:
         if section not in supported_rti:
             warnings.warn(
-                f"The record type indicator {section} is not supported."
+                f"The record type indicator {section} is not supported. "
+                "Skipping current section and moving to the next RTI header."
             )
         else:
             supported_rti[section](topology, sections[section])
@@ -83,24 +86,25 @@ def from_mol2(filename, site_type="atom"):
 def _parse_lj(top, section):
     """Parse atom of lj style from mol2 file."""
     for line in section:
-        cont = line.split()
-        position = [float(x) for x in cont[2:5]] * u.Å
+        if line.strip():
+            content = line.split()
+            position = [float(x) for x in content[2:5]] * u.Å
 
-        try:
-            charge = float(cont[8])
-        except IndexError:
-            warnings.warn(
-                f"No charge was detected for site {cont[1]} with index {cont[0]}"
+            try:
+                charge = float(content[8])
+            except IndexError:
+                warnings.warn(
+                    f"No charge was detected for site {content[1]} with index {content[0]}"
+                )
+
+            atom = Atom(
+                name=content[1],
+                position=position.to("nm"),
+                charge=charge,
+                residue_name=content[7],
+                residue_number=int(content[6]),
             )
-
-        atom = Atom(
-            name=cont[1],
-            position=position.to("nm"),
-            charge=charge,
-            residue_name=cont[7],
-            residue_number=int(cont[6]),
-        )
-        top.add_site(atom)
+            top.add_site(atom)
 
 
 def _parse_atom(top, section):
@@ -108,55 +112,65 @@ def _parse_atom(top, section):
     parse_ele = (
         lambda ele: element_by_symbol(ele)
         if element_by_symbol(ele)
-        else element_by_name(ele),
+        else element_by_name(ele)
     )
+
     for line in section:
-        cont = line.split()
-        position = [float(x) for x in cont[2:5]] * u.Å
-        element = parse_ele(cont[5])
+        if line.strip():
+            content = line.split()
+            position = [float(x) for x in content[2:5]] * u.Å
+            element = parse_ele(content[5])
 
-        if not element:
-            warnings.warn(f"Could not parse the element of {cont[5]}")
+            if not element:
+                warnings.warn(
+                    f"No element detected for site {content[1]} with index {content[0]}, "
+                    "consider manually adding the element to the topology"
+                )
 
-        try:
-            charge = float(cont[8])
-        except IndexError:
-            warnings.warn(
-                f"No charge was detected for site {cont[1]} with index {cont[0]}"
+            try:
+                charge = float(content[8])
+            except IndexError:
+                warnings.warn(
+                    f"No charge was detected for site {content[1]} with index {content[0]}"
+                )
+                charge = None
+
+            atom = Atom(
+                name=content[1],
+                position=position.to("nm"),
+                element=element,
+                charge=charge,
+                residue_name=content[7],
+                residue_number=int(content[6]),
             )
-
-        atom = Atom(
-            name=cont[1],
-            position=position.to("nm"),
-            element=element,
-            charge=charge,
-            residue_name=cont[7],
-            residue_number=int(cont[6]),
-        )
-        top.add_site(atom)
+            top.add_site(atom)
 
 
 def _parse_bond(top, section):
     """Parse bond information from the mol2 file."""
     for line in section:
-        cont = line.split()
-        bond = Bond(
-            connection_members=(
-                top.sites[int(cont[1]) - 1],
-                top.sites[int(cont[2]) - 1],
+        if line.strip():
+            content = line.split()
+            bond = Bond(
+                connection_members=(
+                    top.sites[int(content[1]) - 1],
+                    top.sites[int(content[2]) - 1],
+                )
             )
-        )
-        top.add_connection(bond)
+            top.add_connection(bond)
 
 
 def _parse_box(top, section):
     """Parse box information from the mol2 file."""
     if top.box:
-        warnings.warn("Topology already has a box")
+        warnings.warn(
+            f"This mol2 file has two boxes to be read in, only reading in one with dimensions {top.box}"
+        )
 
     for line in section:
-        cont = line.split()
-        top.box = Box(
-            lengths=[float(x) for x in cont[0:3]] * u.Å,
-            angles=[float(x) for x in cont[3:6]] * u.degree,
-        )
+        if line.strip():
+            content = line.split()
+            top.box = Box(
+                lengths=[float(x) for x in content[0:3]] * u.Å,
+                angles=[float(x) for x in content[3:6]] * u.degree,
+            )
