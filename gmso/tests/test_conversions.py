@@ -6,13 +6,13 @@ import unyt as u
 from mbuild.tests.base_test import BaseTest
 from unyt.testing import assert_allclose_units
 
-from gmso.utils.conversions import check_convert_kelvin_to_energy_units
+from gmso.utils.conversions import convert_kelvin_to_energy_units
 
 
 class TestKelvinToEnergy(BaseTest):
     def test_K_to_kcal(self):
         input_value = 1 * u.Kelvin / u.nm**2
-        new_value = check_convert_kelvin_to_energy_units(
+        new_value = convert_kelvin_to_energy_units(
             input_value,
             "kcal/mol",
         )
@@ -23,7 +23,7 @@ class TestKelvinToEnergy(BaseTest):
 
     def test_kcal_per_mol_to_kJ_per_mol(self):
         input_value = 2 * u.kcal / u.mol * u.gram**2
-        new_value = check_convert_kelvin_to_energy_units(
+        new_value = convert_kelvin_to_energy_units(
             input_value,
             "kJ/mol",
         )
@@ -37,7 +37,7 @@ class TestKelvinToEnergy(BaseTest):
             r"not a <class 'unyt.unit_object.Unit'>.",
         ):
             input_value = 2.0
-            check_convert_kelvin_to_energy_units(
+            convert_kelvin_to_energy_units(
                 input_value,
                 "kJ/mol",
             )
@@ -49,7 +49,7 @@ class TestKelvinToEnergy(BaseTest):
             r"not a <class 'str'>.",
         ):
             input_value = 2 * u.kcal / u.mol * u.gram**2
-            check_convert_kelvin_to_energy_units(
+            convert_kelvin_to_energy_units(
                 input_value,
                 1.0,
             )
@@ -60,7 +60,7 @@ class TestKelvinToEnergy(BaseTest):
             match=r"ERROR: The entered energy_output_unyt_units_str can not be in K energy units.",
         ):
             input_value = 2 * u.kcal / u.mol * u.gram**2
-            check_convert_kelvin_to_energy_units(
+            convert_kelvin_to_energy_units(
                 input_value,
                 "K",
             )
@@ -72,7 +72,7 @@ class TestKelvinToEnergy(BaseTest):
             r"\(length\)\**2\*\(mass\)/\(time\)\**2, but not in K energy units.",
         ):
             input_value = 2 * u.kcal / u.mol * u.gram**2
-            check_convert_kelvin_to_energy_units(
+            convert_kelvin_to_energy_units(
                 input_value,
                 "m",
             )

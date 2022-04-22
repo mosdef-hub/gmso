@@ -140,7 +140,7 @@ def convert_ryckaert_to_opls(ryckaert_connection_type):
     return opls_connection_type
 
 
-def check_convert_kelvin_to_energy_units(
+def convert_kelvin_to_energy_units(
     energy_input_unyt,
     energy_output_unyt_units_str,
 ):
@@ -159,6 +159,9 @@ def check_convert_kelvin_to_energy_units(
         (Example - 'kcal/mol', 'kJ/mol', or any '(length)**2*(mass)/(time)**2' , but not 'K')
         The energy units which a Kelvin (K) energy is converted into.
         It does not convert any energy unit if the the energy_input_unyt is not in Kelvin (K).
+        NOTE and WARNING: the energy units of kcal, kJ will be accepted due to the way the
+        Unyt module does not accept mol as a recorded unit; however, this will result in
+        incorrect results from the intended function.
 
 
     Returns
@@ -169,8 +172,10 @@ def check_convert_kelvin_to_energy_units(
 
     """
     # check for input errors
-    if not isinstance(energy_input_unyt, type(u.unyt_quantity(1, "K"))):
-        print_error_message = f"ERROR: The entered energy_input_unyt value is a {type(energy_input_unyt)}, not a {type(u.Kelvin)}."
+    #if not isinstance(energy_input_unyt, type(u.unyt_quantity(1, "K"))):
+    if not isinstance(energy_input_unyt, u.unyt_quantity):
+        print_error_message = f"ERROR: The entered energy_input_unyt value is a {type(energy_input_unyt)}, " \
+                              f"not a {type(u.Kelvin)}."
         raise ValueError(print_error_message)
 
     if not isinstance(energy_output_unyt_units_str, str):
