@@ -172,10 +172,12 @@ def convert_kelvin_to_energy_units(
 
     """
     # check for input errors
-    #if not isinstance(energy_input_unyt, type(u.unyt_quantity(1, "K"))):
+    # if not isinstance(energy_input_unyt, type(u.unyt_quantity(1, "K"))):
     if not isinstance(energy_input_unyt, u.unyt_quantity):
-        print_error_message = f"ERROR: The entered energy_input_unyt value is a {type(energy_input_unyt)}, " \
-                              f"not a {type(u.Kelvin)}."
+        print_error_message = (
+            f"ERROR: The entered energy_input_unyt value is a {type(energy_input_unyt)}, "
+            f"not a {type(u.Kelvin)}."
+        )
         raise ValueError(print_error_message)
 
     if not isinstance(energy_output_unyt_units_str, str):
