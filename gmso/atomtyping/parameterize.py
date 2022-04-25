@@ -65,11 +65,12 @@ def apply(
         topgraph = get_modified_topology_graph(top)
         # get rules provider from gmso_ff
         # Assumes forcefields is just one forcefield
-        at_rules_provider = get_atomtyping_rules_provider(gmso_ff=forcefields)
+        ff_of_interest = next(iter(forcefields.values()))
+        at_rules_provider = get_atomtyping_rules_provider(gmso_ff=ff_of_interest)
         # create a typemap of that topgraph
         typemap = find_atomtypes(topgraph, at_rules_provider)
         # apply typemap
-        traverse_typemap(top, typemap, forcefields)
+        traverse_typemap(top, typemap, ff_of_interest)
     elif use_residue_map:  # False, True
         """Not Implemented
         maps = {}
