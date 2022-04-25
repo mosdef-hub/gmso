@@ -66,7 +66,9 @@ def apply(
         # get rules provider from gmso_ff
         # Assumes forcefields is just one forcefield
         ff_of_interest = next(iter(forcefields.values()))
-        at_rules_provider = get_atomtyping_rules_provider(gmso_ff=ff_of_interest)
+        at_rules_provider = get_atomtyping_rules_provider(
+            gmso_ff=ff_of_interest
+        )
         # create a typemap of that topgraph
         typemap = find_atomtypes(topgraph, at_rules_provider)
         # apply typemap
