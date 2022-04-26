@@ -29,6 +29,10 @@ class TestForceField(BaseTest):
             get_path(filename=get_path("oplsaa-ethane_foyer.xml"))
         )
 
+    @pytest.fixture(scope="session")
+    def non_element_ff(self):
+        return ForceField(get_path(filename="non-element-type-ff.xml"))
+
     def test_ff_name_version_from_xml(self, ff):
         assert ff.name == "ForceFieldOne"
         assert ff.version == "0.4.1"
@@ -560,3 +564,8 @@ class TestForceField(BaseTest):
             opls_ethane_foyer._get_improper_type(
                 ["opls_359", "opls_600", "opls_700", "opls_800"], warn=True
             )
+
+    def test_non_element_types(self, non_element_ff, opls_ethane_foyer):
+        assert "_CH3" in non_element_ff.non_element_types
+        assert "_CH2" in non_element_ff.non_element_types
+        assert opls_ethane_foyer.non_element_types == set()

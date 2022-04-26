@@ -107,6 +107,24 @@ class ForceField(object):
             self.units = {}
 
     @property
+    def non_element_types(self):
+        """Get the non-element types in the ForceField."""
+        from gmso.core.element import element_by_symbol
+
+        non_element_types = set()
+
+        for name, atom_type in self.atom_types.items():
+            element_symbol = atom_type.get_tag("element")
+            if element_symbol:
+                element = element_by_symbol(
+                    element_symbol
+                )  # FixMe: Should we make this a first class citizen?
+                non_element_types.add(None if element else element_symbol)
+
+        non_element_types.discard(None)
+        return non_element_types
+
+    @property
     def atom_class_groups(self):
         """Return a dictionary of atomClasses in the Forcefield."""
         atom_types = self.atom_types.values()
