@@ -5,6 +5,7 @@ from typing import Iterable
 
 from lxml import etree
 
+from gmso.core.element import element_by_symbol
 from gmso.exceptions import MissingPotentialError
 from gmso.utils._constants import FF_TOKENS_SEPARATOR
 from gmso.utils.ff_utils import (
@@ -109,16 +110,14 @@ class ForceField(object):
     @property
     def non_element_types(self):
         """Get the non-element types in the ForceField."""
-        from gmso.core.element import element_by_symbol
-
         non_element_types = set()
 
         for name, atom_type in self.atom_types.items():
-            element_symbol = atom_type.get_tag("element")
+            element_symbol = atom_type.get_tag(
+                "element"
+            )  # FixMe: Should we make this a first class citizen?
             if element_symbol:
-                element = element_by_symbol(
-                    element_symbol
-                )  # FixMe: Should we make this a first class citizen?
+                element = element_by_symbol(element_symbol)
                 non_element_types.add(None if element else element_symbol)
 
         non_element_types.discard(None)
