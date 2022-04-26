@@ -624,7 +624,7 @@ class Topology(object):
         """
         self._subtops.add(subtop)
         subtop.parent = self
-        self._sites.union(subtop.sites)
+        self._sites = self._sites.union(subtop.sites)
         if update:
             self.update_topology()
 
