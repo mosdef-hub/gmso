@@ -177,18 +177,13 @@ class TestTopology(BaseTest):
 
         assert top1 != top2
 
-    def test_add_untyped_site_update(self):
+    def test_add_untyped_site(self):
         untyped_site = Atom(atom_type=None)
 
         top = Topology()
         assert len(top.atom_types) == 0
-        top.add_site(untyped_site, update_types=False)
-        assert len(top.atom_types) == 0
-
-        top = Topology()
-        assert len(top.atom_types) == 0
-        top.add_site(untyped_site, update_types=True)
-        assert len(top.atom_types) == 0
+        top.add_site(untyped_site)
+        assert len(top.atom_types) == 1
 
     def test_add_typed_site_update(self):
         typed_site = Atom(atom_type=AtomType())
@@ -196,27 +191,13 @@ class TestTopology(BaseTest):
         top = Topology()
         assert len(top.atom_types) == 0
         top.add_site(typed_site, update_types=False)
-        assert len(top.atom_types) == 0
-
-        top = Topology()
-        assert len(top.atom_types) == 0
-        top.add_site(typed_site, update_types=True)
         assert len(top.atom_types) == 1
 
     def test_add_untyped_bond_update(self):
         atom1 = Atom(atom_type=None)
         atom2 = Atom(atom_type=None)
         bond = Bond(connection_members=[atom1, atom2], bond_type=None)
-
-        top = Topology()
-        assert len(top.bond_types) == 0
-        top.add_connection(bond, update_types=False)
-        assert len(top.bond_types) == 0
-
-        top = Topology()
-        assert len(top.bond_types) == 0
-        top.add_connection(bond, update_types=True)
-        assert len(top.bond_types) == 0
+        assert len(self.bo)
 
     def test_add_typed_bond_update(self):
         atom1 = Atom(atom_type=None)

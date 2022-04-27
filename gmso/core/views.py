@@ -54,6 +54,11 @@ class TopologyPotentialView:
     def __iter__(self):
         yield from self.yield_view(False, None)
 
+    def index(self, item):
+        for j, potential in enumerate(self.yield_view(False)):
+            if potential is item:
+                return j
+
     def yield_view(self, unique=False, checker=None):
         if not unique:
             for item in self.iterator:
@@ -74,3 +79,6 @@ class TopologyPotentialView:
 
     def __call__(self, unique=False, checker=None):
         yield from self.yield_view(unique, checker)
+
+    def __len__(self):
+        return len(self.iterator)
