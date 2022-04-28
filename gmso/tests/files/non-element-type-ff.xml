@@ -1,0 +1,104 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ForceField name="Trappe_CH3_CH2s" version="0.0.1">
+  <FFMetaData electrostatics14Scale="0" nonBonded14Scale="0">
+    <Units energy="kJ/mol" mass="amu" charge="elementary_charge" distance="nm"/>
+  </FFMetaData>
+  <AtomTypes expression="4 * epsilon * ((sigma/r)**12 - (sigma/r)**6)">
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <AtomType name="CH3_sp3" atomclass="CH3" element="_CH3" charge="0.0" mass="15.03500" definition="[_CH3;X1][_CH3,_CH2]" doi="10.1021/jp972543+">
+      <Parameters>
+        <Parameter name="epsilon" value="0.814817"/>
+        <Parameter name="sigma" value="0.375"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="CH2_sp3" atomclass="CH2" element="_CH2" charge="0.0" mass="14.02700" definition="[_CH2;X2]([_CH3,_CH2])[_CH3,_CH2]" doi="10.1021/jp972543+">
+      <Parameters>
+        <Parameter name="epsilon" value="0.382465"/>
+        <Parameter name="sigma" value="0.395"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+  <BondTypes expression="k / 2 * (r-r_eq)**2">
+    <ParametersUnitDef parameter="k" unit="kJ/mol/nm**2"/>
+    <ParametersUnitDef parameter="r_eq" unit="nm"/>
+    <BondType name="BondType_1" class1="CH3" class2="CH3">
+      <Parameters>
+        <Parameter name="k" value="502416.0"/>
+        <Parameter name="r_eq" value="0.1540"/>
+      </Parameters>
+    </BondType>
+    <BondType name="BondType_2" class1="CH3" class2="CH2">
+      <Parameters>
+        <Parameter name="k" value="502416.0"/>
+        <Parameter name="r_eq" value="0.1540"/>
+      </Parameters>
+    </BondType>
+    <BondType name="BondType_3" class1="CH2" class2="CH2">
+      <Parameters>
+        <Parameter name="k" value="502416.0"/>
+        <Parameter name="r_eq" value="0.1540"/>
+      </Parameters>
+    </BondType>
+  </BondTypes>
+  <AngleTypes expression="k / 2 * (theta - theta_eq)**2">
+    <ParametersUnitDef parameter="k" unit="kJ/mol/rad**2"/>
+    <ParametersUnitDef parameter="theta_eq" unit="rad"/>
+    <AngleType name="AngleType_1" class1="CH3" class2="CH2" class3="CH3">
+      <Parameters>
+        <Parameter name="k" value="519.65389"/>
+        <Parameter name="theta_eq" value="1.98967"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="AngleType_2" class1="CH3" class2="CH2" class3="CH2">
+      <Parameters>
+        <Parameter name="k" value="519.65389"/>
+        <Parameter name="theta_eq" value="1.98967"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="AngleType_3" class1="CH2" class2="CH2" class3="CH2">
+      <Parameters>
+        <Parameter name="k" value="519.65389"/>
+        <Parameter name="theta_eq" value="1.98967"/>
+      </Parameters>
+    </AngleType>
+  </AngleTypes>
+    <DihedralTypes expression="c0 + c1 * cos(phi)**1 + c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + c5 * cos(phi)**5">
+    <ParametersUnitDef parameter="c5" unit="kJ"/>
+    <ParametersUnitDef parameter="c4" unit="kJ"/>
+    <ParametersUnitDef parameter="c3" unit="kJ"/>
+    <ParametersUnitDef parameter="c2" unit="kJ"/>
+    <ParametersUnitDef parameter="c1" unit="kJ"/>
+    <ParametersUnitDef parameter="c0" unit="kJ"/>
+    <DihedralType name="Dihedral_1" class1="CH3" class2="CH2" class3="CH2" class4="CH3">
+      <Parameters>
+        <Parameter name="c0" value="8.39736"/>
+        <Parameter name="c1" value="16.78632"/>
+        <Parameter name="c2" value="1.13393"/>
+        <Parameter name="c3" value="-26.31760"/>
+        <Parameter name="c4" value="0.0"/>
+        <Parameter name="c5" value="0.0"/>
+      </Parameters>
+    </DihedralType>
+    <DihedralType name="Dihedral_2" class1="CH3" class2="CH2" class3="CH2" class4="CH2">
+      <Parameters>
+        <Parameter name="c0" value="8.39736"/>
+        <Parameter name="c1" value="16.78632"/>
+        <Parameter name="c2" value="1.13393"/>
+        <Parameter name="c3" value="-26.31760"/>
+        <Parameter name="c4" value="0.0"/>
+        <Parameter name="c5" value="0.0"/>
+      </Parameters>
+    </DihedralType>
+    <DihedralType name="Dihedral_3" class1="CH2" class2="CH2" class3="CH2" class4="CH2">
+      <Parameters>
+        <Parameter name="c0" value="8.39736"/>
+        <Parameter name="c1" value="16.78632"/>
+        <Parameter name="c2" value="1.13393"/>
+        <Parameter name="c3" value="-26.31760"/>
+        <Parameter name="c4" value="0.0"/>
+        <Parameter name="c5" value="0.0"/>
+      </Parameters>
+    </DihedralType>
+  </DihedralTypes>
+</ForceField>
