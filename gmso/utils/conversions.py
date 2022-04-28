@@ -1,6 +1,7 @@
 """Module for standard conversions needed in molecular simulations."""
 import sympy
 import unyt as u
+from unyt.dimensions import length, mass, time
 
 import gmso
 from gmso.exceptions import GMSOError
@@ -137,3 +138,84 @@ def convert_ryckaert_to_opls(ryckaert_connection_type):
     )
 
     return opls_connection_type
+
+
+def convert_kelvin_to_energy_units(
+    energy_input_unyt,
+    energy_output_unyt_units_str,
+):
+    """Convert the Kelvin (K) energy unit to a standard energy unit.
+
+    Check to see if the unyt energy value is in Kelvin (K) and converts it to
+    another energy unit (Ex: kcal/mol, kJ/mol, etc.).  Otherwise, it passes thru the
+    existing unyt values.
+
+    Parameters
+    ----------
+    energy_input_unyt : unyt.unyt_quantity
+        The energy in units of 'energy / other_units' Example: 'energy/mol/angstroms**2' or 'K/angstroms**2'.
+        NOTE: The only valid temperature unit for thermal energy is Kelvin (K).
+    energy_output_unyt_units_str : str (unyt valid energy units only)
+        (Example - 'kcal/mol', 'kJ/mol', or any '(length)**2*(mass)/(time)**2' , but not 'K')
+        The energy units which a Kelvin (K) energy is converted into.
+        It does not convert any energy unit if the the energy_input_unyt is not in Kelvin (K).
+        NOTE and WARNING: the energy units of kcal, kJ will be accepted due to the way the
+        Unyt module does not accept mol as a recorded unit; however, this will result in
+        incorrect results from the intended function.
+
+
+    Returns
+    -------
+    energy_output_unyt : unyt.unyt_quantity
+        If the energy_input_unyt is in Kelvin (K), it converted to the specified energy_output_unyt_units_str.
+        Otherwise, it passes through the existing unyt values.
+
+    """
+    # check for input errors
+    # if not isinstance(energy_input_unyt, type(u.unyt_quantity(1, "K"))):
+    if not isinstance(energy_input_unyt, u.unyt_quantity):
+        print_error_message = (
+            f"ERROR: The entered energy_input_unyt value is a {type(energy_input_unyt)}, "
+            f"not a {type(u.Kelvin)}."
+        )
+        raise ValueError(print_error_message)
+
+    if not isinstance(energy_output_unyt_units_str, str):
+        print_error_message = (
+            f"ERROR: The entered energy_output_unyt_units_str value is a {type(energy_output_unyt_units_str)}, "
+            f"not a {type('string')}."
+        )
+        raise ValueError(print_error_message)
+
+    # check for K energy units and convert them to normal energy units;
+    # otherwise, just pass thru the original unyt units
+    if energy_output_unyt_units_str in ["K"]:
+        print_error_message = f"ERROR: The entered energy_output_unyt_units_str can not be in K energy units."
+        raise ValueError(print_error_message)
+
+    elif (length) ** 2 * (mass) / (time) ** 2 != u.unyt_quantity(
+        1, energy_output_unyt_units_str
+    ).units.dimensions:
+        print_error_message = (
+            f"ERROR: The entered energy_output_unyt_units_str value must be in units of energy/mol, "
+            f"(length)**2*(mass)/(time)**2, but not in K energy units."
+        )
+        raise ValueError(print_error_message)
+
+    if ("K") in str(energy_input_unyt.units) and "temperature" in str(
+        energy_input_unyt.units.dimensions
+    ):
+        K_to_energy_conversion_constant = u.unyt_quantity(1, "K").to_value(
+            energy_output_unyt_units_str, equivalence="thermal"
+        )
+        energy_output_unyt = (
+            energy_input_unyt
+            / u.Kelvin
+            * u.unyt_quantity(
+                K_to_energy_conversion_constant, energy_output_unyt_units_str
+            )
+        )
+    else:
+        energy_output_unyt = energy_input_unyt
+
+    return energy_output_unyt
