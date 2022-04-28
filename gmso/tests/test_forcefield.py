@@ -586,13 +586,13 @@ class TestForceField(BaseTest):
 
         assert (
             non_element_ff.get_potential(
-                group="atom_type", key="CH2_sp3"
+                group="atom_type", key="CH3_sp3"
             ).definition
             == "[_CH3;X1][_CH3,_CH2]"
         )
         assert (
             non_element_ff.get_potential(
-                group="atom_type", key="CH3_sp3"
+                group="atom_type", key="CH2_sp3"
             ).definition
             == "[_CH2;X2]([_CH3,_CH2])[_CH3,_CH2]"
         )
