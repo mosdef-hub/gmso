@@ -22,4 +22,3 @@ dependencies:
   - ipywidgets
   - ele >= 0.2.0
   - pre-commit
-  - python=3.9
