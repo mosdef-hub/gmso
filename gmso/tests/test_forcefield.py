@@ -569,3 +569,4 @@ class TestForceField(BaseTest):
         assert "_CH3" in non_element_ff.non_element_types
         assert "_CH2" in non_element_ff.non_element_types
         assert opls_ethane_foyer.non_element_types == set()
+        assert len(opls_ethane_foyer.atom_types) > 0

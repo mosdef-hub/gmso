@@ -118,9 +118,8 @@ class ForceField(object):
             )  # FixMe: Should we make this a first class citizen?
             if element_symbol:
                 element = element_by_symbol(element_symbol)
-                non_element_types.add(None if element else element_symbol)
+                non_element_types.add(element_symbol) if not element else None
 
-        non_element_types.discard(None)
         return non_element_types
 
     @property
