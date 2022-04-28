@@ -119,11 +119,11 @@ def _to_json(top, types=False, update=True):
                 connection_dict[exclude_attr] = id(connection_type)
     if types:
         for potentials in [
-            top._atom_types,
-            top._bond_types,
-            top._angle_types,
-            top._dihedral_types,
-            top._improper_types,
+            top.atom_types,
+            top.bond_types,
+            top.angle_types,
+            top.dihedral_types,
+            top.improper_types,
         ]:
             for potential in potentials:
                 potential_dict = potential.json_dict(

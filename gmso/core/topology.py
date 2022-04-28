@@ -161,6 +161,15 @@ class Topology(object):
             "electrostatics13Scale": 0.0,
             "electrostatics14Scale": 0.5,
         }
+        self.is_updated = True
+        self._potentials_count = {
+            "atom_types": 0,
+            "bond_types": 0,
+            "angle_types": 0,
+            "dihedral_types": 0,
+            "improper_types": 0,
+            "pairpotential_types": 0,
+        }
 
         self._unique_connections = {}
 
@@ -407,6 +416,9 @@ class Topology(object):
             If true, add this site's atom type to the topology's set of AtomTypes
         """
         self._sites.add(site)
+        self.is_updated = False
+        if update_types:
+            self.update_topology()
 
     def update_sites(self):
         """Update the sites of the topology.
@@ -487,6 +499,9 @@ class Topology(object):
         if isinstance(connection, Improper):
             self._impropers.add(connection)
 
+        if update_types:
+            self.update_topology()
+
         return connection
 
     def identify_connections(self):
@@ -494,15 +509,28 @@ class Topology(object):
         _identify_connections(self)
 
     def update_atom_types(self):
-        pass
+        self.update_topology()
 
     def update_connection_types(self):
-        pass
+        self.update_topology()
 
     def update_topology(self):
-        pass
+        """Update the entire topology."""
+        self._bookkeep_potentials()
+        self.is_updated = True
+        self.is_typed(updated=True)
 
-    def add_pairpotentialtype(self, pairpotentialtype):
+    def _bookkeep_potentials(self):
+        self._potentials_count = {
+            "atom_types": len(self.atom_types),
+            "bond_types": len(self.bond_types),
+            "angle_types": len(self.angle_types),
+            "dihedral_types": len(self.dihedral_types),
+            "improper_types": len(self.improper_types),
+            "pairpotential_types": len(self._pairpotential_types),
+        }
+
+    def add_pairpotentialtype(self, pairpotentialtype, update=True):
         """add a PairPotentialType to the topology
 
         This method checks whether the member_type of a PairPotentialType
@@ -581,16 +609,13 @@ class Topology(object):
 
     def is_typed(self, updated=False):
         """Verify if the topology is parametrized."""
-        try:
-            next(self.atom_types)
-        except StopIteration:
-            try:
-                next(self.connection_types)
-            except StopIteration:
-                return False
-        return True
+        if not updated:
+            self.update_topology()
+        self._typed = any(self._potentials_count.values())
+        print(self._typed)
+        return self._typed
 
-    def is_fully_typed(self, group="topology"):
+    def is_fully_typed(self, group="topology", updated=False):
         """Check if the topology or a specifc group of objects that make up the topology are fully typed
 
         Parameters
@@ -616,6 +641,9 @@ class Topology(object):
         `self._type` is set to True as long as the Topology is at least
         partially typed.
         """
+
+        if not self.is_updated:
+            self.update_topology()
 
         typed_status = {
             "sites": lambda top: all(site.atom_type for site in top._sites),
@@ -771,10 +799,6 @@ class Topology(object):
         """
         self.update_connection_types()
 
-    def update_topology(self):
-        """Update the entire topology."""
-        self.update_sites()
-
     def _get_bonds_for(self, site):
         """Return a list of bonds in this Topology that the site is a part of."""
         bonds = []
@@ -919,10 +943,12 @@ class Topology(object):
 
     def __repr__(self):
         """Return custom format to represent topology."""
+        if not self.is_updated:
+            self.update_topology()
         return (
             f"<Topology {self.name}, {self.n_sites} sites,\n "
             f"{self.n_connections} connections,\n "
-            f"{len(self.connection_types)} potentials,\n "
+            f"{sum(self._potentials_count.values())} potentials,\n "
             f"id: {id(self)}>"
         )
 

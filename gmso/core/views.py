@@ -27,58 +27,74 @@ def get_identifier(potential):
         return potential.member_types or potential.member_classes
 
 
-def filter_unique_potentials(potential_types):
+def unique_potentials(potential_types):
     visited = defaultdict(set)
     for potential_type in potential_types:
-        if get_identifier(potential_type) not in visited[type(potential_type)]:
-            visited[type(potential_type)].add(
-                potential_type.atom_types or potential_type.atom_classes
-            )
+        identifier = get_identifier(potential_type)
+        if identifier not in visited[type(potential_type)]:
+            visited[type(potential_type)].add(identifier)
 
             yield potential_type
+
+
+class PotentialFilters:
+    UNIQUE_NAME_CLASS = "unique_name_class"
+
+
+default_filters = {PotentialFilters.UNIQUE_NAME_CLASS: unique_potentials}
 
 
 class TopologyPotentialView:
     """A potential view based on different filters for a topology potentials.
 
+    Parameters
+    ----------
     iterator: typing.Iterator, required=True
         An iterator of either topology sites or connections from which to extract potentials from
 
-    attribute: str, required=True
-        The attribute information to extract i.e atom_type, bond_type, angle_type etc...
     """
 
     def __init__(self, iterator):
         self.iterator = iterator
 
     def __iter__(self):
-        yield from self.yield_view(False, None)
+        yield from self.yield_view()
 
     def index(self, item):
-        for j, potential in enumerate(self.yield_view(False)):
+        for j, potential in enumerate(self.yield_view()):
             if potential is item:
                 return j
 
-    def yield_view(self, unique=False, checker=None):
-        if not unique:
+    def yield_view(self, filter_by=None):
+        visited = set()
+        if not filter_by:
             for item in self.iterator:
-                yield getattr(
+                potential = getattr(
                     item, potential_attribute_map[type(item)]
                 )  # Since this use is internal, KeyErrors N/A
+                if potential and id(potential) not in visited:
+                    visited.add(id(potential))
+                    yield potential
         else:
-            if checker is None:
-                checker = filter_unique_potentials
-
-            collected_potentials = (
-                getattr(item, potential_attribute_map[type(item)])
-                for item in self.iterator
+            collected_potentials = filter(
+                lambda p: p is not None,
+                (
+                    getattr(item, potential_attribute_map[type(item)])
+                    for item in self.iterator
+                ),
             )
 
-            for item in checker(collected_potentials):
+            for item in filter_by(collected_potentials):
                 yield item
 
-    def __call__(self, unique=False, checker=None):
-        yield from self.yield_view(unique, checker)
+    def __call__(self, filter_by=None):
+
+        if filter_by in default_filters:
+            filter_by = default_filters[filter_by]
+
+        yield from self.yield_view(filter_by)
 
     def __len__(self):
-        return len(self.iterator)
+        return len(
+            list(self.yield_view())
+        )  # This will be costly? But How frequent?

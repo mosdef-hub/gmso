@@ -177,13 +177,18 @@ class TestTopology(BaseTest):
 
         assert top1 != top2
 
-    def test_add_untyped_site(self):
+    def test_add_untyped_site_update(self):
         untyped_site = Atom(atom_type=None)
 
         top = Topology()
         assert len(top.atom_types) == 0
-        top.add_site(untyped_site)
-        assert len(top.atom_types) == 1
+        top.add_site(untyped_site, update_types=False)
+        assert len(top.atom_types) == 0
+
+        top = Topology()
+        assert len(top.atom_types) == 0
+        top.add_site(untyped_site, update_types=True)
+        assert len(top.atom_types) == 0
 
     def test_add_typed_site_update(self):
         typed_site = Atom(atom_type=AtomType())
@@ -191,13 +196,31 @@ class TestTopology(BaseTest):
         top = Topology()
         assert len(top.atom_types) == 0
         top.add_site(typed_site, update_types=False)
+        assert (
+            len(top.atom_types) == 1
+        )  # Always upto date now (except for repr)
+        assert top._potentials_count["atom_types"] == 0
+
+        top = Topology()
+        assert len(top.atom_types) == 0
+        top.add_site(typed_site, update_types=True)
         assert len(top.atom_types) == 1
+        assert top._potentials_count["atom_types"] == 1
 
     def test_add_untyped_bond_update(self):
         atom1 = Atom(atom_type=None)
         atom2 = Atom(atom_type=None)
         bond = Bond(connection_members=[atom1, atom2], bond_type=None)
-        assert len(self.bo)
+
+        top = Topology()
+        assert len(top.bond_types) == 0
+        top.add_connection(bond, update_types=False)
+        assert len(top.bond_types) == 0
+
+        top = Topology()
+        assert len(top.bond_types) == 0
+        top.add_connection(bond, update_types=True)
+        assert len(top.bond_types) == 0
 
     def test_add_typed_bond_update(self):
         atom1 = Atom(atom_type=None)
@@ -208,7 +231,7 @@ class TestTopology(BaseTest):
         top.add_site(atom1)
         top.add_site(atom2)
         top.add_connection(bond, update_types=False)
-        assert len(top.connection_types) == 0
+        assert len(top.connection_types) == 1
 
         top = Topology()
         top.add_connection(bond, update_types=True)
@@ -251,8 +274,8 @@ class TestTopology(BaseTest):
         atom1.atom_type = AtomType()
         atom1.atom_type.expression = "sigma*epsilon*r"
         assert top.n_sites == 2
-        assert len(top.atom_types) == 1
-        assert len(top.atom_type_expressions) == 1
+        assert len(top.atom_types) == 2
+        assert len(top.atom_type_expressions) == 2
         assert top.n_connections == 1
         assert len(top.connection_types) == 1
         assert len(top.connection_type_expressions) == 1
@@ -406,15 +429,6 @@ class TestTopology(BaseTest):
         assert top.typed == True
         assert top.is_typed() == True
         assert top.typed == True
-
-    def test_parametrization_setter(self):
-        top = Topology()
-
-        assert top.typed == False
-        assert top.is_typed() == False
-        top.typed = True
-        assert top.typed == True
-        assert top.is_typed() == False
 
     def test_topology_atom_type_changes(self):
         top = Topology()
