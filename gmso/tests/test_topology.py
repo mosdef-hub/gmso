@@ -16,7 +16,6 @@ from gmso.core.dihedral import Dihedral
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
-from gmso.core.pairpotential_type import PairPotentialType
 from gmso.core.subtopology import SubTopology
 from gmso.core.topology import Topology
 from gmso.exceptions import GMSOError
