@@ -330,6 +330,8 @@ class TestConvertParmEd(BaseTest):
         for gmso_atom, pmd_atom in zip(top.sites, struc.atoms):
             assert gmso_atom.element.atomic_number == pmd_atom.element
 
-    def test_parmed_element_non_atomistic(self):
-        # ToDo: Add Test here
-        pass
+    def test_parmed_element_non_atomistic(self, pentane_ua_parmed):
+        top = from_parmed(pentane_ua_parmed)
+        for gmso_atom, pmd_atom in zip(top.sites, pentane_ua_parmed.atoms):
+            assert gmso_atom.element is None
+            assert pmd_atom.element == 0
