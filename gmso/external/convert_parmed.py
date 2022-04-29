@@ -9,6 +9,7 @@ from sympy.parsing.sympy_parser import parse_expr
 import gmso
 from gmso.core.element import (
     element_by_atom_type,
+    element_by_atomic_number,
     element_by_name,
     element_by_symbol,
 )
@@ -82,6 +83,9 @@ def from_parmed(structure, refer_type=True):
         subtop_name = ("{}[{}]").format(residue.name, residue.idx)
         subtops.append(gmso.SubTopology(name=subtop_name, parent=top))
         for atom in residue.atoms:
+            element = (
+                element_by_atomic_number(atom.element) if atom.element else None
+            )
             if refer_type and isinstance(atom.atom_type, pmd.AtomType):
                 site = gmso.Atom(
                     name=atom.name,
@@ -92,6 +96,7 @@ def from_parmed(structure, refer_type=True):
                     atom_type=pmd_top_atomtypes[atom.atom_type],
                     residue_name=residue.name,
                     residue_number=residue.idx,
+                    element=element,
                 )
             else:
                 site = gmso.Atom(
@@ -103,6 +108,7 @@ def from_parmed(structure, refer_type=True):
                     atom_type=None,
                     residue_name=residue.name,
                     residue_number=residue.idx,
+                    element=element,
                 )
             site_map[atom] = site
             subtops[-1].add_site(site)
@@ -468,10 +474,8 @@ def to_parmed(top, refer_type=True):
     for site in top.sites:
         if site.element:
             atomic_number = site.element.atomic_number
-            charge = site.element.charge
         else:
             atomic_number = 0
-            charge = 0
         pmd_atom = pmd.Atom(
             atomic_number=atomic_number,
             name=site.name,
