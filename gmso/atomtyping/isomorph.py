@@ -5,7 +5,7 @@ import networkx as nx
 
 
 def partition_isomorphic_topology_graphs(graph):
-    """Return a dictionary of subgraphs that are partitioned by isomorphism.
+    """Return a collection of isomorphic sets of the subgraphs of the Topology Graph..
 
      Parameters
      ----------

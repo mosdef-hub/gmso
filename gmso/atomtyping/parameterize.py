@@ -40,16 +40,16 @@ def apply(
         A flag to determine whether or not to look at site.residue_name to look parameterize
         each molecule only once. Will only be used if identify_connected_components=False
     assert_bond_params : bool, optional, default=True
-        If True, Foyer will exit if parameters are not found for all system
+        If True, an error is raised if parameters are not found for all system
         bonds.
     assert_angle_params : bool, optional, default=True
-        If True, Foyer will exit if parameters are not found for all system
+        If True, an error is raised if parameters are not found for all system
         angles.
     assert_dihedral_params : bool, optional, default=True
-        If True, Foyer will exit if parameters are not found for all system
+        If True, an error is raised if parameters are not found for all system
         proper dihedrals.
     assert_improper_params : bool, optional, default=False
-        If True, Foyer will exit if parameters are not found for all system
+        If True, an error is raised if parameters are not found for all system
         improper dihedrals.
     """
     top.identify_connections()
@@ -128,7 +128,7 @@ def get_modified_topology_graph(gmso_topology):
                     index=gmso_topology.get_index(atom),
                     atomic_number=None,
                     element=atom.name,
-                    subtopology_label=atom.label,
+                    subtopology_label=atom.label, #TODO: Change based on PR #638 conventions
                 )
 
             else:
@@ -137,7 +137,7 @@ def get_modified_topology_graph(gmso_topology):
                     index=gmso_topology.get_index(atom),
                     atomic_number=atom.element.atomic_number,
                     element=atom.element.symbol,
-                    subtopology_label=atom.label,
+                    subtopology_label=atom.label, #TODO: Change based on PR #638 conventions
                 )
 
     for top_bond in gmso_topology.bonds:
@@ -264,8 +264,14 @@ def apply_connection_types(top, forcefields, parameter):
         "dihedral": [0, 1, 2, 3],
         "improper": [0, 1, 2, 3],
     }  # TODO validate improper order
+    molecule_label = "label_" # place to grab info referencing molecule name
     for connect in getattr(top, "_" + parameter + "s"):
-        sub_top_label = connect.connection_members[0].label_
+        sub_top_label = connect.connection_members[0].get(molecule_label)
+        if sub_top_label is None:
+            msg = f"Site {connect.connection_members[0]}in this connection has no molecule_label {molecule_label}.\
+                This string should correspond to one of the keys associated with the forcefield that has been \
+                passed. Currently provided name:GMSOForcefields pairs are {forcefields.items()}"
+            raise ParameterizationError(msg)
         ff_of_interest = forcefields[sub_top_label]
         type_getter = attrgetter("atom_type.atomclass")
         member_types = [
