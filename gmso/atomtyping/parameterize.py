@@ -128,7 +128,7 @@ def get_modified_topology_graph(gmso_topology):
                     index=gmso_topology.get_index(atom),
                     atomic_number=None,
                     element=atom.name,
-                    subtopology_label=atom.label, #TODO: Change based on PR #638 conventions
+                    subtopology_label=atom.label,  # TODO: Change based on PR #638 conventions
                 )
 
             else:
@@ -137,7 +137,7 @@ def get_modified_topology_graph(gmso_topology):
                     index=gmso_topology.get_index(atom),
                     atomic_number=atom.element.atomic_number,
                     element=atom.element.symbol,
-                    subtopology_label=atom.label, #TODO: Change based on PR #638 conventions
+                    subtopology_label=atom.label,  # TODO: Change based on PR #638 conventions
                 )
 
     for top_bond in gmso_topology.bonds:
@@ -264,7 +264,7 @@ def apply_connection_types(top, forcefields, parameter):
         "dihedral": [0, 1, 2, 3],
         "improper": [0, 1, 2, 3],
     }  # TODO validate improper order
-    molecule_label = "label_" # place to grab info referencing molecule name
+    molecule_label = "label_"  # place to grab info referencing molecule name
     for connect in getattr(top, "_" + parameter + "s"):
         sub_top_label = connect.connection_members[0].get(molecule_label)
         if sub_top_label is None:
