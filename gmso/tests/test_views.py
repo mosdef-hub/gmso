@@ -10,3 +10,8 @@ class TestViews(BaseTest):
             filter_by=PotentialFilters.UNIQUE_NAME_CLASS
         )
         assert len(atom_types_unique) == 1
+
+    def test_ethane_views(self, typed_ethane):
+        atom_types = typed_ethane.atom_types
+        unique_atomtypes = atom_types(repeat=True)
+        assert len(atom_types) == len(unique_atomtypes)

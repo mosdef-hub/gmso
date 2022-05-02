@@ -43,7 +43,7 @@ class PotentialFilters:
     UNIQUE_NAME_CLASS = "unique_name_class"
 
 
-default_filters = {PotentialFilters.UNIQUE_NAME_CLASS: unique_potentials}
+potential_filters = {PotentialFilters.UNIQUE_NAME_CLASS: unique_potentials}
 
 
 class TopologyPotentialView:
@@ -61,7 +61,8 @@ class TopologyPotentialView:
         see, default_filters for names of the default potential filters
 
     repeat: bool, default=False
-        If true, repeat same objects in the iterator
+        If true, repeat same objects in the iterator. This has no effect when
+        using filter_by
 
     Notes
     -----
@@ -114,7 +115,7 @@ class TopologyPotentialView:
                         yield potential
         else:
             if isinstance(self.filter_by, str):
-                potential_filter = default_filters[self.filter_by]
+                potential_filter = potential_filters[self.filter_by]
             else:
                 potential_filter = self.filter_by
             collected_potentials = filter(
