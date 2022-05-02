@@ -323,3 +323,15 @@ class TestConvertParmEd(BaseTest):
         ]:
             for potential in potential_types:
                 assert potential.member_types
+
+    def test_parmed_element(self):
+        struc = pmd.load_file(get_fn("ethane.top"), xyz=get_fn("ethane.gro"))
+        top = from_parmed(struc)
+        for gmso_atom, pmd_atom in zip(top.sites, struc.atoms):
+            assert gmso_atom.element.atomic_number == pmd_atom.element
+
+    def test_parmed_element_non_atomistic(self, pentane_ua_parmed):
+        top = from_parmed(pentane_ua_parmed)
+        for gmso_atom, pmd_atom in zip(top.sites, pentane_ua_parmed.atoms):
+            assert gmso_atom.element is None
+            assert pmd_atom.element == 0
