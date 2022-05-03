@@ -612,7 +612,6 @@ class Topology(object):
         if not updated:
             self.update_topology()
         self._typed = any(self._potentials_count.values())
-        print(self._typed)
         return self._typed
 
     def is_fully_typed(self, group="topology", updated=False):
