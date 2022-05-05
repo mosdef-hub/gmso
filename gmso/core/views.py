@@ -116,8 +116,6 @@ class TopologyPotentialView:
     https://github.com/networkx/networkx/blob/12c1a00cd116701a763f7c57c230b8739d2ed085/networkx/classes/reportviews.py#L115-L279
     """
 
-    attribute = None
-
     def __init__(self, iterator, filter_by=None):
         self.iterator = iterator
         self.filter_by = filter_by
