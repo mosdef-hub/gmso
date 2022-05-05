@@ -11,18 +11,13 @@ from gmso.tests.base_test import BaseTest
 from gmso.utils.misc import unyt_to_hashable
 
 
-def str_expr_dict_param(potentials):
-    visited = set()
-    for potential in potentials:
-        print(potential.parameters.values())
-        pot_id = (
-            str(potential.expression),
-            frozenset(potential.parameters),
-            tuple(unyt_to_hashable(list(potential.parameters.values()))),
-        )
-        if pot_id not in visited:
-            visited.add(pot_id)
-            yield potential
+def str_expr_dict_param(potential):
+    pot_id = (
+        str(potential.expression),
+        frozenset(potential.parameters),
+        tuple(unyt_to_hashable(list(potential.parameters.values()))),
+    )
+    return pot_id
 
 
 class TestViews(BaseTest):
@@ -120,5 +115,21 @@ class TestViews(BaseTest):
         atom_types_new_different_filter = atom_types(
             filter_by=str_expr_dict_param
         )
+
         assert id(atom_types) == id(atom_types_new)
         assert id(atom_types) != atom_types_new_different_filter
+
+    def test_default_filters(self, custom_top):
+        bond_types = custom_top.bond_types(
+            filter_by=PotentialFilters.UNIQUE_EXPRESSION
+        )
+        bond_types_params = bond_types(
+            filter_by=PotentialFilters.UNIQUE_PARAMETERS
+        )
+        bond_types_name_class = bond_types(
+            filter_by=PotentialFilters.UNIQUE_NAME_CLASS
+        )
+
+        assert len(bond_types) == 1
+        assert len(bond_types_params) == 1
+        assert len(bond_types_name_class) == 100

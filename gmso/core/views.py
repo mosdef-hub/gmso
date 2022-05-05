@@ -11,6 +11,8 @@ from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
 
+__all__ = ["TopologyPotentialView", "PotentialFilters"]
+
 potential_attribute_map = {
     Atom: "atom_type",
     Bond: "bond_type",
@@ -20,30 +22,46 @@ potential_attribute_map = {
 }
 
 
-def get_identifier(potential):
-    """Get identifier for a topology potential."""
+def get_name_or_class(potential):
+    """Get identifier for a topology potential based on name or membertype/class."""
     if isinstance(potential, AtomType):
         return potential.name
     if isinstance(potential, (BondType, AngleType, DihedralType, ImproperType)):
         return potential.member_types or potential.member_classes
 
 
-def unique_potentials(potential_types):
-    """Filter unique potentials based on pre-defiend identifiers."""
+def get_parameters(potential):
+    """Return hashable version of parameters for a potential."""
+
+    return (
+        tuple(potential.get_parameters().keys()),
+        tuple(map(lambda x: x.to_value(), potential.get_parameters().values())),
+    )
+
+
+def filtered_potentials(potential_types, identifier):
+    """Filter and return unique potentials based on pre-defined identifier function."""
     visited = defaultdict(set)
+
     for potential_type in potential_types:
-        identifier = get_identifier(potential_type)
-        if identifier not in visited[type(potential_type)]:
-            visited[type(potential_type)].add(identifier)
+        potential_id = identifier(potential_type)
+        if potential_id not in visited[type(potential_type)]:
+            visited[type(potential_type)].add(potential_id)
 
             yield potential_type
 
 
 class PotentialFilters:
     UNIQUE_NAME_CLASS = "unique_name_class"
+    UNIQUE_EXPRESSION = "unique_expression"
+    UNIQUE_PARAMETERS = "unique_parameters"
 
 
-potential_filters = {PotentialFilters.UNIQUE_NAME_CLASS: unique_potentials}
+potential_identifiers = {
+    PotentialFilters.UNIQUE_NAME_CLASS: get_name_or_class,
+    PotentialFilters.UNIQUE_EXPRESSION: lambda p: str(p.expression),
+    PotentialFilters.UNIQUE_PARAMETERS: get_parameters,
+}
 
 
 class TopologyPotentialView:
@@ -57,8 +75,16 @@ class TopologyPotentialView:
     Parameters
     ----------
     filter_by: str or function, default=None
-        If provided, filter the collected potentials by some function
-        see, default_filters for names of the default potential filters
+        If provided, filter the collected potentials by some unique identifier
+        of a potential.
+
+    Notes
+    -----
+    If `filter_by` is provided and is a custom function, the collected potentials are
+    filtered on the basis of the return value of the `filter_by` function. A single potential
+    is passed to the filter_by function and it should return an identifier (should be hashable)
+    for that potential thus describing its uniqueness in the context of which the filter is being
+    used. Some simple examples are given below.
 
     Examples
     --------
@@ -129,11 +155,13 @@ class TopologyPotentialView:
 
         else:
             if isinstance(self.filter_by, str):
-                potential_filter = potential_filters[self.filter_by]
+                identifier_func = potential_identifiers[self.filter_by]
             else:
-                potential_filter = self.filter_by
+                identifier_func = self.filter_by
 
-            yield from potential_filter(self._collect_potentials())
+            yield from filtered_potentials(
+                self._collect_potentials(), identifier=identifier_func
+            )
 
     def __call__(self, filter_by=None):
         """The call method, for turning property decorators into functions"""
