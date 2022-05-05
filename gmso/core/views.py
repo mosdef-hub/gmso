@@ -60,6 +60,28 @@ class TopologyPotentialView:
         If provided, filter the collected potentials by some function
         see, default_filters for names of the default potential filters
 
+    Examples
+    --------
+    To use a TopologyPotentialView, a Topology must have few sites with AtomTypes or BondTypes.
+
+    >>> from gmso.core.topology import Topology
+    >>> from gmso.core.atom import Atom
+    >>> from gmso.core.atom_type import AtomType
+    >>> top = Topology(name="ViewTopology")
+    >>> sites = [Atom(name=f"Atom_{j}") for j in range(10)]
+    >>> atom_type1 = AtomType(name='atom_type1')
+    >>> atom_type2 = AtomType(name='atom_type2')
+    >>> for site in sites:
+    ...     site.atom_type = atom_type1 if int(site.name[-1]) % 2 == 0 else atom_type2
+    ...     top.add_site(site)
+    >>> top.update_topology()
+    >>> for atom_type in top.atom_types:
+    ...     print(atom_type.name)
+    atom_type1
+    atom_type2
+    >>> top.get_index(atom_type2)
+    1
+
     Notes
     -----
     The implementation of this class is inspired from networkx.classes.reportviews.NodeView by extending
@@ -67,6 +89,8 @@ class TopologyPotentialView:
 
     https://github.com/networkx/networkx/blob/12c1a00cd116701a763f7c57c230b8739d2ed085/networkx/classes/reportviews.py#L115-L279
     """
+
+    attribute = None
 
     def __init__(self, iterator, filter_by=None):
         self.iterator = iterator
@@ -119,6 +143,10 @@ class TopologyPotentialView:
         return TopologyPotentialView(
             iterator=self.iterator, filter_by=filter_by
         )
+
+    def __repr__(self):
+        name = self.__class__.__name__
+        return f"<{name}({tuple(self)})>"
 
     def __len__(self):
         return len(

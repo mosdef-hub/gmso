@@ -324,12 +324,35 @@ class Topology(object):
 
     @property
     def atom_types(self):
-        """Return all atom_types in the topology."""
+        """Return all atom_types in the topology.
+
+        Notes
+        -----
+        This returns a TopologyPotentialView object which can be used as
+        an iterator.
+
+        See Also
+        --------
+        gmso.core.views.TopologyPotentialView
+            An iterator/filter based view of Potentials in a gmso Topology.
+        """
         return TopologyPotentialView(self._sites)
 
     @property
     def connection_types(self):
-        """Return all connection_types in the topology."""
+        """Return all connection_types in the topology.
+
+        Notes
+        -----
+        This returns a TopologyPotentialView object which can be used as
+        an iterator.
+
+        See Also
+        --------
+        gmso.core.views.TopologyPotentialView
+            An iterator/filter based view of Potentials in a gmso Topology.
+        """
+
         return TopologyPotentialView(
             itertools.chain(
                 self.bonds, self.angles, self.dihedrals, self.impropers
@@ -338,22 +361,66 @@ class Topology(object):
 
     @property
     def bond_types(self):
-        """Return all bond_types in the topology."""
+        """Return all bond_types in the topology.
+
+        Notes
+        -----
+        This returns a TopologyPotentialView object which can be used as
+        an iterator.
+
+        See Also
+        --------
+        gmso.core.views.TopologyPotentialView
+            An iterator/filter based view of Potentials in a gmso Topology.
+        """
         return TopologyPotentialView(self._bonds)
 
     @property
     def angle_types(self):
-        """Return all angle_types in the topology."""
+        """Return all angle_types in the topology.
+
+        Notes
+        -----
+        This returns a TopologyPotentialView object which can be used as
+        an iterator.
+
+        See Also
+        --------
+        gmso.core.views.TopologyPotentialView
+            An iterator/filter based view of Potentials in a gmso Topology.
+        """
         return TopologyPotentialView(self._angles)
 
     @property
     def dihedral_types(self):
-        """Return all dihedral_types in the topology."""
+        """Return all dihedral_types in the topology.
+
+        Notes
+        -----
+        This returns a TopologyPotentialView object which can be used as
+        an iterator.
+
+        See Also
+        --------
+        gmso.core.views.TopologyPotentialView
+            An iterator/filter based view of Potentials in a gmso Topology.
+        """
         return TopologyPotentialView(self._dihedrals)
 
     @property
     def improper_types(self):
-        """Return all improper_types in the topology."""
+        """Return all improper_types in the topology.
+
+        Notes
+        -----
+        This returns a TopologyPotentialView object which can be used as
+        an iterator.
+
+        See Also
+        --------
+        gmso.core.views.TopologyPotentialView
+            An iterator/filter based view of Potentials in a gmso Topology.
+        """
         return TopologyPotentialView(self._impropers)
 
     @property
