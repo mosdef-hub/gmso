@@ -53,12 +53,12 @@ class Site(GMSOBase):
 
     label_: str = Field("", description="Label to be assigned to the site")
 
-    group_: str = Field(
-        "DefaultGroup", description="Molecule Group label for the site"
+    group_: Optional[StrictStr] = Field(
+        None, description="Molecule Group label for the site"
     )
 
     molecule_name_: Optional[StrictStr] = Field(
-        "DefaultMolecule", description="Molecule label for the site"
+        None, description="Molecule label for the site"
     )
 
     molecule_number_: Optional[StrictInt] = Field(
