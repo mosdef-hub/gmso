@@ -56,13 +56,9 @@ class TopologyPotentialView:
 
     Parameters
     ----------
-    filter_by: str or func, default=None
+    filter_by: str or function, default=None
         If provided, filter the collected potentials by some function
         see, default_filters for names of the default potential filters
-
-    repeat: bool, default=False
-        If true, repeat same objects in the iterator. This has no effect when
-        using filter_by
 
     Notes
     -----
@@ -72,10 +68,9 @@ class TopologyPotentialView:
     https://github.com/networkx/networkx/blob/12c1a00cd116701a763f7c57c230b8739d2ed085/networkx/classes/reportviews.py#L115-L279
     """
 
-    def __init__(self, iterator, filter_by=None, repeat=False):
+    def __init__(self, iterator, filter_by=None):
         self.iterator = iterator
         self.filter_by = filter_by
-        self.repeat = repeat
 
     def __iter__(self):
         yield from self.yield_view()
@@ -85,6 +80,17 @@ class TopologyPotentialView:
             if potential is item:
                 return j
 
+    def _collect_potentials(self):
+        """Collect potentials from the iterator"""
+        visited = set()
+        for item in self.iterator:
+            potential = getattr(
+                item, potential_attribute_map[type(item)]
+            )  # Since this use is internal, KeyErrors N/A
+            if potential and id(potential) not in visited:
+                visited.add(id(potential))
+                yield potential
+
     def yield_view(self):
         """Yield a view of the potentials of the iterator provided.
 
@@ -93,49 +99,25 @@ class TopologyPotentialView:
         gmso.core.ParametricPotential
             An instance of gmso.core.ParametricPotential from the attributes of Sites/Connections
             in the iterator.
-
-        Notes
-        -----
-        It is allowed that multiple sites/connections point to the same parametric potential
-        by design. By default this function will just return a single object even if they are
-        referenced by multiple sites or connections, if so isn't desired, set the argument
-        repeat=True.
         """
-        visited = set()
         if not self.filter_by:
-            for item in self.iterator:
-                potential = getattr(
-                    item, potential_attribute_map[type(item)]
-                )  # Since this use is internal, KeyErrors N/A
-                if self.repeat and potential:
-                    yield potential
-                else:
-                    if potential and id(potential) not in visited:
-                        visited.add(id(potential))
-                        yield potential
+            yield from self._collect_potentials()
+
         else:
             if isinstance(self.filter_by, str):
                 potential_filter = potential_filters[self.filter_by]
             else:
                 potential_filter = self.filter_by
-            collected_potentials = filter(
-                lambda p: p is not None,
-                (
-                    getattr(item, potential_attribute_map[type(item)])
-                    for item in self.iterator
-                ),
-            )
 
-            for item in potential_filter(collected_potentials):
-                yield item
+            yield from potential_filter(self._collect_potentials())
 
-    def __call__(self, filter_by=None, repeat=False):
+    def __call__(self, filter_by=None):
         """The call method, for turning property decorators into functions"""
-        if filter_by == self.filter_by and repeat == self.repeat:
+        if filter_by == self.filter_by:
             return self
 
         return TopologyPotentialView(
-            iterator=self.iterator, filter_by=filter_by, repeat=repeat
+            iterator=self.iterator, filter_by=filter_by
         )
 
     def __len__(self):

@@ -509,9 +509,11 @@ class Topology(object):
         _identify_connections(self)
 
     def update_atom_types(self):
+        """Keep an uptodate length of all the connection types."""
         self.update_topology()
 
     def update_connection_types(self):
+        """Keep an upto date length of all the connection types."""
         self.update_topology()
 
     def update_topology(self):
@@ -641,7 +643,7 @@ class Topology(object):
         partially typed.
         """
 
-        if not self.is_updated:
+        if not updated:
             self.update_topology()
 
         typed_status = {
