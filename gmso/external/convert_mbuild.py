@@ -28,18 +28,15 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
 
         * All positional and box dimension values in compound are in nanometers.
 
-        * If the `Compound` has 4 or more levels of hierarchy, these are\
-          compressed to 3 levels of hierarchy in the resulting `Topology`. The\
-          top level `Compound` becomes the `Topology`, the second level\
-          Compounds become `SubTopologies`, and each particle becomes a `Site`,\
-          which are added to their corresponding `SubTopologies`.
-
-        * Furthermore, `Sites` that do not belong to a sub-`Compound` are\
-          added to a single-`Site` `SubTopology`.
-
-        * The box dimension are extracted from `compound.periodicity`. If\
-          the `compound.periodicity` is `None`, the box lengths are the lengths of\
-          the bounding box + a 0.5 nm buffer.
+        * The hierarchical structure of the Compound will be flattened a translated to a
+        system of label in GMSO Sites. The directly supported labels include `Site.group`,
+        `Site.molecule_name`, and `Site.residue_name`. `group` is determined as the
+        second-highest level Compound; `molecule_name` is determined by traversing through
+        hierarchy of the mb.Compound, starting from the particle level, until the lowest
+        independent mb.Compound is reached (determined as an mb.Compound that does not have
+        any bond outside its boundary); `residue_name` is the `mb.Compound` level right above
+        particle level. `molecule_number` and `residue_number` can be used to distinguish between
+        different molecules and residues of the same name. There may be overlap between these labels.
 
         * Only `Bonds` are added for each bond in the `Compound`. If `Angles`\
           and `Dihedrals` are desired in the resulting `Topology`, they must be\
@@ -50,7 +47,7 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
     compound : mbuild.Compound
         mbuild.Compound instance that need to be converted
     box : mbuild.Box, optional, default=None
-        Box information to be loaded to a gmso.Topology
+        Box information to be loaded to a gmso.Topologyl
     search_method : function, optional, default=element_by_symbol
         Searching method used to assign element from periodic table to
         particle site.
@@ -105,6 +102,9 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
             group_name = group.name
         else:
             group_name = "-".join(sorted(cmp.name for cmp in group))
+
+        molecule_tracker = dict()
+        residue_tracker = dict()
         for cmp in group:
             for particle in cmp.particles():
                 pos = particle.xyz[0] * u.nanometer
@@ -118,15 +118,48 @@ def from_mbuild(compound, box=None, search_method=element_by_symbol):
                 while not molecule.is_independent():
                     molecule = molecule.parent
 
-                if molecule == compound:
-                    molecule = group_name
-                else:
-                    molecule = molecule.name
-                site = Atom(name=particle.name, position=pos, element=ele)
-                site_map[particle] = site
-                site.group = group_name
-                site.molecule = molecule
+                molecule_name = (
+                    group_name if molecule == compound else molecule.name
+                )
 
+                if molecule_name in molecule_tracker:
+                    if molecule in molecule_tracker[molecule_name]:
+                        molecule_number = molecule_tracker[molecule_name][
+                            molecule
+                        ]
+                    else:
+                        molecule_number = molecule_tracker[molecule_name][
+                            molecule
+                        ] = len(molecule_tracker[molecule_name])
+                else:
+                    molecule_tracker[molecule_name] = {molecule: 0}
+                    molecule_number = 0
+
+                # Determining residue and residue number
+                residue = particle.parent
+                residue_name = residue.name
+                if residue_name in residue_tracker:
+                    if residue in residue_tracker[residue_name]:
+                        residue_number = residue_tracker[residue_name][residue]
+                    else:
+                        residue_number = residue_tracker[residue_name][
+                            residue
+                        ] = len(residue_tracker[residue_name])
+                else:
+                    residue_tracker[residue_name] = {residue: 0}
+                    residue_number = 0
+
+                site = Atom(
+                    name=particle.name,
+                    position=pos,
+                    element=ele,
+                    group=group_name,
+                    molecule_name=molecule_name,
+                    molecule_number=molecule_number,
+                    residue_name=residue_name,
+                    residue_number=residue_number,
+                )
+                site_map[particle] = site
                 top.add_site(site)
 
     for b1, b2 in compound.bonds():

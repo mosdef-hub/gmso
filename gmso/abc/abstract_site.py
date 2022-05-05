@@ -57,15 +57,20 @@ class Site(GMSOBase):
         "DefaultGroup", description="Molecule Group label for the site"
     )
 
-    molecule_: str = Field(
+    molecule_name_: Optional[StrictStr] = Field(
         "DefaultMolecule", description="Molecule label for the site"
     )
-    residue_number_: Optional[StrictInt] = Field(
-        None, description="Residue number for the site"
+
+    molecule_number_: Optional[StrictInt] = Field(
+        None, description="Molecule number for the site"
     )
 
     residue_name_: Optional[StrictStr] = Field(
         None, description="Residue label for the site"
+    )
+
+    residue_number_: Optional[StrictInt] = Field(
+        None, description="Residue number for the site"
     )
 
     position_: PositionType = Field(
@@ -94,9 +99,14 @@ class Site(GMSOBase):
         return self.__dict__.get("group_")
 
     @property
-    def molecule(self) -> str:
-        """Return the molecule of the site."""
-        return self.__dict__.get("molecule_")
+    def molecule_name(self) -> str:
+        """Return the molecule name of the site."""
+        return self.__dict__.get("molecule_name_")
+
+    @property
+    def molecule_number(self) -> str:
+        """Return the molecule number of the site."""
+        return self.__dict__.get("molecule_number_")
 
     @property
     def residue_name(self):
@@ -175,7 +185,8 @@ class Site(GMSOBase):
             "position_": "position",
             "label_": "label",
             "group_": "group",
-            "molecule_": "molecule",
+            "molecule_name_": "molecule_name",
+            "molecule_number_": "molecule_number",
             "residue_name_": "residue_name",
             "residue_number_": "residue_number",
         }
@@ -185,7 +196,8 @@ class Site(GMSOBase):
             "position": "position_",
             "label": "label_",
             "group": "group_",
-            "molecule": "molecule_",
+            "molecule_name": "molecule_name_",
+            "molecule_number": "molecule_number_",
             "residue_name": "residue_name_",
             "residue_number": "residue_number_",
         }
