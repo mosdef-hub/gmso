@@ -7,7 +7,7 @@ from foyer.smarts import SMARTS
 from foyer.topology_graph import TopologyGraph
 
 from gmso import Atom
-from gmso.atomtyping.isomorph import (  # check refs
+from gmso.parameterization.isomorph import (  # check refs
     partition_isomorphic_topology_graphs,
 )
 
