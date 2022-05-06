@@ -320,7 +320,7 @@ class Topology(object):
     @property
     def impropers(self):
         """Return all impropers in the topology."""
-        return TopologyPotentialView(self._impropers)
+        return self._impropers
 
     @property
     def atom_types(self):
