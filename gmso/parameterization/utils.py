@@ -1,5 +1,6 @@
 """Generic utilities for parameterizing a gmso Topology."""
 
+from gmso.abc.gmso_base import GMSOBase
 from gmso.core.angle import Angle
 from gmso.core.atom import Atom
 from gmso.core.bond import Bond

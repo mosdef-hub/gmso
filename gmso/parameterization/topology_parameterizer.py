@@ -30,7 +30,63 @@ class GMSOParameterizationError(GMSOError):
     """Raise when parameterization fails."""
 
 
-class Parameterizer(GMSOBase):
+class TopologyParameterizationConfig(GMSOBase):
+    """Configuration options for parameterizing a topology."""
+
+    clone_topology: bool = Field(
+        default=False,
+        description="If true, clone the topology and apply parameters to the cloned one.",
+    )  # Unused
+
+    identify_connections: bool = Field(
+        default=False,
+        description="If true, add connections identified using networkx graph matching to match"
+        "the topology's bonding graph to smaller sub-graphs that correspond to an "
+        "angle, dihedral, improper etc",
+    )
+
+    identify_connected_components: bool = Field(
+        default=False,
+        description="A flag to determine whether or not to search the topology"
+        " for repeated disconnected structures, otherwise known as "
+        "molecules and type each molecule only once.",
+    )
+
+    use_residue_info: bool = Field(
+        default=False,
+        description="A flag to determine whether or not to look at site.residue_name "
+        "to look parameterize each molecule only once. Will only be used if "
+        "identify_connected_components=False",
+    )  # Unused
+
+    assert_bond_params: bool = Field(
+        default=True,
+        description="If True, an error is raised if parameters are not found for "
+        "all system bonds.",
+    )
+
+    assert_angle_params: bool = Field(
+        default=True,
+        description="If True, an error is raised if parameters are not found for "
+        "all system angles",
+    )
+
+    assert_dihedral_params: bool = (
+        Field(
+            default=True,
+            description="If True, an error is raised if parameters are not found for "
+            "all system dihedrals.",
+        ),
+    )
+
+    assert_improper_params: bool = Field(
+        default=False,
+        description="If True, an error is raised if parameters are not found for "
+        "all system impropers.",
+    )
+
+
+class TopologyParameterizer(GMSOBase):
     """Utility class to parameterize a topology with gmso Forcefield."""
 
     topology: Topology = Field(..., description="The gmso topology.")
@@ -42,6 +98,10 @@ class Parameterizer(GMSOBase):
         "should match the subtopology names",
     )
 
+    config: TopologyParameterizationConfig = Field(
+        ..., description="The configuration options for the parameterizer."
+    )
+
     def get_ff(self, key=None):
         """Return the forcefield of choice by looking up the forcefield dictionary."""
         if isinstance(self.forcefields, Dict):
@@ -49,23 +109,14 @@ class Parameterizer(GMSOBase):
         else:
             return self.forcefields
 
-    def _parameterize_sites(self, top_or_subtop, typemap, ff):
+    def _parameterize_sites(self, sites, typemap, ff):
         """Parameterize sites with appropriate atom-types from the forcefield."""
-        for j, site in enumerate(top_or_subtop.sites):
+        for j, site in enumerate(sites):
             site.atom_type = ff.get_potential(
-                "atom_type", typemap[j]["atom_type"]
+                "atom_type", typemap[j]["atomtype"]
             ).clone()  # Always properly indexed or not?
 
-    def _parameterize_connections(
-        self,
-        top_or_subtop,
-        ff,
-        is_subtop=False,
-        assert_bond_params=True,
-        assert_angle_params=True,
-        assert_dihedral_params=True,
-        assert_improper_params=False,
-    ):
+    def _parameterize_connections(self, top_or_subtop, ff, is_subtop=False):
         """Parameterize connections with appropriate potentials from the forcefield."""
         if is_subtop:
             bonds = subtop_bonds(top_or_subtop)
@@ -78,10 +129,18 @@ class Parameterizer(GMSOBase):
             dihedrals = top_or_subtop.dihedrals
             impropers = top_or_subtop.impropers
 
-        self._apply_connection_parameters(bonds, ff, assert_bond_params)
-        self._apply_connection_parameters(angles, ff, assert_angle_params)
-        self._apply_connection_parameters(dihedrals, ff, assert_dihedral_params)
-        self._apply_connection_parameters(impropers, ff, assert_improper_params)
+        self._apply_connection_parameters(
+            bonds, ff, self.config.assert_bond_params
+        )
+        self._apply_connection_parameters(
+            angles, ff, self.config.assert_angle_params
+        )
+        self._apply_connection_parameters(
+            dihedrals, ff, self.config.assert_dihedral_params
+        )
+        self._apply_connection_parameters(
+            impropers, ff, self.config.assert_improper_params
+        )
 
     def _apply_connection_parameters(
         self, connections, ff, error_on_missing=True
@@ -103,58 +162,35 @@ class Parameterizer(GMSOBase):
                     group=group, key=identifier_key, warn=True
                 )
                 if match:
-                    visited[tuple[identifier_key]] = match
+                    visited[tuple(identifier_key)] = match
                     break
 
             if not match and error_on_missing:
                 raise GMSOParameterizationError(
                     f"No parameters found for connection {connection} in the Forcefield."
                 )
-            setattr(connection, group, match.clone())
+            elif match:
+                setattr(connection, group, match.clone())
 
-    def _parameterize(
-        self,
-        subtop_or_top,
-        typemap,
-        is_subtop=False,
-        assert_bond_params=True,
-        assert_angle_params=True,
-        assert_dihedral_params=True,
-        assert_improper_params=False,
-    ):
+    def _parameterize(self, subtop_or_top, typemap, is_subtop=False):
         """Parameterize a topology/subtopology based on an atomtype map."""
         forcefield = self.get_ff(subtop_or_top.name)
         self._parameterize_sites(subtop_or_top.sites, typemap, forcefield)
         self._parameterize_connections(
-            subtop_or_top,
-            forcefield,
-            is_subtop=is_subtop,
-            assert_bond_params=assert_bond_params,
-            assert_angle_params=assert_angle_params,
-            assert_dihedral_params=assert_dihedral_params,
-            assert_improper_params=assert_improper_params,
+            subtop_or_top, forcefield, is_subtop=is_subtop
         )
 
-    def apply(
-        self,
-        identify_connected_components=True,
-        use_residue_info=False,
-        assert_bond_params=True,
-        assert_angle_params=True,
-        assert_dihedral_params=True,
-        assert_improper_params=False,
-    ):
-        """Apply the current forcefield(s) to the topology/ various subtopologies."""
-        parameterize_kwargs = dict(
-            assert_bond_params=assert_bond_params,
-            assert_angle_params=assert_angle_params,
-            assert_dihedral_params=assert_dihedral_params,
-            assert_improper_params=assert_improper_params,
-        )
+    def run_parameterization(self):
+        """Run parameterization of the topology with give forcefield(s) and configuration."""
         if self.topology.is_typed():
             raise GMSOParameterizationError(
                 "Cannot parameterize a typed topology. Please provide a topology without any types"
             )
+
+        if self.config.identify_connections:
+            """ToDo: This mutates the topology and is agnostic to downstream
+            errors. So, here we should use index only option"""
+            self.topology.identify_connections()
 
         if isinstance(self.forcefields, Dict):
             for subtop in self.topology.subtops:
@@ -168,27 +204,25 @@ class Parameterizer(GMSOBase):
                     typemap = self._get_atomtypes(
                         self.get_ff(subtop.name),
                         subtop,
-                        identify_connected_components,
+                        self.config.identify_connected_components,
                         is_subtop=True,
                     )
                     self._parameterize(
                         typemap,
                         subtop,
                         is_subtop=True,  # This will be removed from the future iterations
-                        **parameterize_kwargs,
                     )
         else:
             typemap = self._get_atomtypes(
                 self.get_ff(),
                 self.topology,
-                identify_connected_components,
+                self.config.identify_connected_components,
                 is_subtop=False,
             )
             self._parameterize(
                 self.topology,
                 typemap,
                 is_subtop=False,  # This will be removed from the future iterations
-                **parameterize_kwargs,
             )
 
     @staticmethod
@@ -212,7 +246,7 @@ class Parameterizer(GMSOBase):
     def _get_atomtypes(
         forcefield, topology, use_isomprohic_checks=False, is_subtop=False
     ):
-        """Run atom-typing in foyer and return a typemap."""
+        """Run atom-typing in foyer and return the typemap."""
         atom_typing_rules_provider = get_atomtyping_rules_provider(forcefield)
 
         if is_subtop:
