@@ -25,7 +25,8 @@ class Site(GMSOBase):
     __iterable_attributes__: ClassVar[set] = {
         "label",
         "group",
-        "molecule",
+        "molecule_name",
+        "molecule_number",
         "residue_name",
         "residue_number",
     }
