@@ -167,7 +167,8 @@ class TopologyParameterizer(GMSOBase):
 
             if not match and error_on_missing:
                 raise GMSOParameterizationError(
-                    f"No parameters found for connection {connection} in the Forcefield."
+                    f"No parameters found for connection {connection}, group: {group}, "
+                    f"identifiers: {connection_identifiers} in the Forcefield."
                 )
             elif match:
                 setattr(connection, group, match.clone())
