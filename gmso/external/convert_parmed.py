@@ -9,6 +9,7 @@ from sympy.parsing.sympy_parser import parse_expr
 import gmso
 from gmso.core.element import (
     element_by_atom_type,
+    element_by_atomic_number,
     element_by_name,
     element_by_symbol,
 )
@@ -82,6 +83,9 @@ def from_parmed(structure, refer_type=True):
         subtop_name = ("{}[{}]").format(residue.name, residue.idx)
         subtops.append(gmso.SubTopology(name=subtop_name, parent=top))
         for atom in residue.atoms:
+            element = (
+                element_by_atomic_number(atom.element) if atom.element else None
+            )
             if refer_type and isinstance(atom.atom_type, pmd.AtomType):
                 site = gmso.Atom(
                     name=atom.name,
@@ -90,6 +94,9 @@ def from_parmed(structure, refer_type=True):
                         [atom.xx, atom.xy, atom.xz] * u.angstrom
                     ).in_units(u.nm),
                     atom_type=pmd_top_atomtypes[atom.atom_type],
+                    residue_name=residue.name,
+                    residue_number=residue.idx,
+                    element=element,
                 )
             else:
                 site = gmso.Atom(
@@ -99,6 +106,9 @@ def from_parmed(structure, refer_type=True):
                         [atom.xx, atom.xy, atom.xz] * u.angstrom
                     ).in_units(u.nm),
                     atom_type=None,
+                    residue_name=residue.name,
+                    residue_number=residue.idx,
+                    element=element,
                 )
             site_map[atom] = site
             subtops[-1].add_site(site)
@@ -254,10 +264,12 @@ def _atom_types_from_pmd(structure):
         top_atomtype = gmso.AtomType(
             name=atom_type.name,
             charge=atom_type.charge * u.elementary_charge,
+            expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
             parameters={
                 "sigma": atom_type.sigma * u.angstrom,
                 "epsilon": atom_type.epsilon * u.Unit("kcal / mol"),
             },
+            independent_variables={"r"},
             mass=atom_type.mass,
         )
         pmd_top_atomtypes[atom_type] = top_atomtype
@@ -294,10 +306,12 @@ def _bond_types_from_pmd(structure, bond_types_members_map=None):
             "k": (2 * btype.k * u.Unit("kcal / (angstrom**2 * mol)")),
             "r_eq": btype.req * u.angstrom,
         }
+        expr = gmso.BondType._default_potential_expr()
+        expr.set(parameters=bond_params)
 
         member_types = bond_types_members_map.get(id(btype))
         top_bondtype = gmso.BondType(
-            parameters=bond_params, member_types=member_types
+            potential_expression=expr, member_types=member_types
         )
         pmd_top_bondtypes[btype] = top_bondtype
     return pmd_top_bondtypes
@@ -334,13 +348,15 @@ def _angle_types_from_pmd(structure, angle_types_member_map=None):
             "k": (2 * angletype.k * u.Unit("kcal / (rad**2 * mol)")),
             "theta_eq": (angletype.theteq * u.degree),
         }
+        expr = gmso.AngleType._default_potential_expr()
+        expr.parameters = angle_params
         # Do we need to worry about Urey Bradley terms
         # For Urey Bradley:
         # k in (kcal/(angstrom**2 * mol))
         # r_eq in angstrom
         member_types = angle_types_member_map.get(id(angletype))
         top_angletype = gmso.AngleType(
-            parameters=angle_params, member_types=member_types
+            potential_expression=expr, member_types=member_types
         )
         pmd_top_angletypes[angletype] = top_angletype
     return pmd_top_angletypes
@@ -378,9 +394,11 @@ def _dihedral_types_from_pmd(structure, dihedral_types_member_map=None):
             "phi_eq": (dihedraltype.phase * u.degree),
             "n": dihedraltype.per * u.dimensionless,
         }
+        expr = gmso.DihedralType._default_potential_expr()
+        expr.parameters = dihedral_params
         member_types = dihedral_types_member_map.get(id(dihedraltype))
         top_dihedraltype = gmso.DihedralType(
-            parameters=dihedral_params, member_types=member_types
+            potential_expression=expr, member_types=member_types
         )
         pmd_top_dihedraltypes[dihedraltype] = top_dihedraltype
 
@@ -452,43 +470,29 @@ def to_parmed(top, refer_type=True):
     dihedral_map = dict()  # Map top's dihedral to structure's dihedral
 
     # Set up unparametrized system
-    # Build subtop_map (site -> top)
-    default_residue = pmd.Residue("RES")
-    for subtop in top.subtops:
-        for site in subtop.sites:
-            subtop_map[site] = subtop
-
     # Build up atom
     for site in top.sites:
-        if site in subtop_map:
-            residue = subtop_map[site].name
-            residue_name = residue[: residue.find("[")]
-            residue_idx = int(
-                residue[residue.find("[") + 1 : residue.find("]")]
-            )
-            # since subtop contains information needed to build residue
-        else:
-            residue = default_residue
-        # Check element
         if site.element:
             atomic_number = site.element.atomic_number
-            charge = site.element.charge
         else:
             atomic_number = 0
-            charge = 0
-
         pmd_atom = pmd.Atom(
             atomic_number=atomic_number,
             name=site.name,
-            mass=site.mass,
-            charge=site.charge,
+            mass=site.mass.to(u.amu).value,
+            charge=site.charge.to(u.elementary_charge).value,
         )
         pmd_atom.xx, pmd_atom.xy, pmd_atom.xz = site.position.to(
             "angstrom"
         ).value
 
         # Add atom to structure
-        structure.add_atom(pmd_atom, resname=residue_name, resnum=residue_idx)
+        if site.residue_name:
+            structure.add_atom(
+                pmd_atom, resname=site.residue_name, resnum=site.residue_number
+            )
+        else:
+            structure.add_atom(pmd_atom, resname="RES", resnum=-1)
         atom_map[site] = pmd_atom
 
     # "Claim" all of the item it contains and subsequently index all of its item

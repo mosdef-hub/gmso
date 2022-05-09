@@ -198,15 +198,18 @@ def _prepare_box(top):
     else:
         # TODO: Work around GROMACS's triclinic limitations #30
         vectors = top.box.get_vectors()
-        out_str = out_str + " {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} \n".format(
-            vectors[0, 0].in_units(u.nm).value.round(6),
-            vectors[1, 1].in_units(u.nm).value.round(6),
-            vectors[2, 2].in_units(u.nm).value.round(6),
-            vectors[0, 1].in_units(u.nm).value.round(6),
-            vectors[0, 2].in_units(u.nm).value.round(6),
-            vectors[1, 0].in_units(u.nm).value.round(6),
-            vectors[1, 2].in_units(u.nm).value.round(6),
-            vectors[2, 0].in_units(u.nm).value.round(6),
-            vectors[2, 1].in_units(u.nm).value.round(6),
+        out_str = (
+            out_str
+            + " {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} \n".format(
+                vectors[0, 0].in_units(u.nm).value.round(6),
+                vectors[1, 1].in_units(u.nm).value.round(6),
+                vectors[2, 2].in_units(u.nm).value.round(6),
+                vectors[0, 1].in_units(u.nm).value.round(6),
+                vectors[0, 2].in_units(u.nm).value.round(6),
+                vectors[1, 0].in_units(u.nm).value.round(6),
+                vectors[1, 2].in_units(u.nm).value.round(6),
+                vectors[2, 0].in_units(u.nm).value.round(6),
+                vectors[2, 1].in_units(u.nm).value.round(6),
+            )
         )
     return out_str

@@ -5,7 +5,7 @@ from typing import Any, Dict, Iterator, List
 from pydantic import Field, validator
 
 from gmso.abc.gmso_base import GMSOBase
-from gmso.utils.expression import _PotentialExpression
+from gmso.utils.expression import PotentialExpression
 
 
 class AbstractPotential(GMSOBase):
@@ -24,8 +24,8 @@ class AbstractPotential(GMSOBase):
         "", description="The name of the potential. Defaults to class name"
     )
 
-    potential_expression_: _PotentialExpression = Field(
-        _PotentialExpression(expression="a*x+b", independent_variables={"x"}),
+    potential_expression_: PotentialExpression = Field(
+        PotentialExpression(expression="a*x+b", independent_variables={"x"}),
         description="The mathematical expression for the potential",
     )
 
@@ -48,7 +48,7 @@ class AbstractPotential(GMSOBase):
             if independent_variables is None:
                 independent_variables = {"x"}
 
-            potential_expression = _PotentialExpression(
+            potential_expression = PotentialExpression(
                 expression=expression,
                 independent_variables=independent_variables,
                 parameters=None,
@@ -118,7 +118,7 @@ class AbstractPotential(GMSOBase):
     @validator("potential_expression_", pre=True)
     def validate_potential_expression(cls, v):
         if isinstance(v, dict):
-            v = _PotentialExpression(**v)
+            v = PotentialExpression(**v)
         return v
 
     @abstractmethod

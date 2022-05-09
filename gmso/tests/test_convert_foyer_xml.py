@@ -4,6 +4,7 @@ import pytest
 import unyt as u
 from sympy import sympify
 
+from gmso.core.forcefield import ForceField
 from gmso.exceptions import ForceFieldParseError
 from gmso.external.convert_foyer_xml import from_foyer_xml
 from gmso.tests.base_test import BaseTest
@@ -54,6 +55,16 @@ class TestXMLConversion(BaseTest):
     def test_foyer_version(self, foyer_fullerene):
         assert foyer_fullerene.version == "0.0.1"
 
+    def test_foyer_combining_rule(self):
+        from_foyer_xml(get_path("foyer-trappe-ua.xml"))
+        loaded = ForceField("foyer-trappe-ua_gmso.xml")
+
+        assert loaded.name == "Trappe-UA"
+        assert loaded.version == "0.0.2"
+        assert loaded.combining_rule == "lorentz"
+        assert loaded.scaling_factors["electrostatics14Scale"] == 0
+        assert loaded.scaling_factors["nonBonded14Scale"] == 0
+
     def test_foyer_14scale(self, foyer_fullerene):
         assert foyer_fullerene.scaling_factors["electrostatics14Scale"] == 1.0
         assert foyer_fullerene.scaling_factors["nonBonded14Scale"] == 1.0
@@ -85,13 +96,16 @@ class TestXMLConversion(BaseTest):
         assert foyer_fullerene.atom_types["C"].description == "carbon"
         assert foyer_fullerene.atom_types["C"].definition == "[C;r5;r6]"
         assert foyer_fullerene.atom_types["C"].expression == sympify(
-            "epsilon*(-sigma**6/r**6 + sigma**12/r**12)"
+            "4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)"
         )
 
     def test_foyer_bonds(self, foyer_fullerene):
         assert len(foyer_fullerene.bond_types) == 1
         assert "C~C" in foyer_fullerene.bond_types
 
+        assert foyer_fullerene.bond_types["C~C"].expression == sympify(
+            "1/2 * k * (r-r_eq)**2"
+        )
         assert (
             sympify("r")
             in foyer_fullerene.bond_types["C~C"].independent_variables
@@ -101,20 +115,23 @@ class TestXMLConversion(BaseTest):
         ] == u.unyt_quantity(0.1, u.nm)
         assert foyer_fullerene.bond_types["C~C"].parameters[
             "k"
-        ] == u.unyt_quantity(1000, u.kJ / u.mol / u.nm ** 2)
+        ] == u.unyt_quantity(1000, u.kJ / u.mol / u.nm**2)
         assert foyer_fullerene.bond_types["C~C"].member_classes == ("C", "C")
 
     def test_foyer_angles(self, foyer_fullerene):
         assert len(foyer_fullerene.angle_types) == 1
         assert "C~C~C" in foyer_fullerene.angle_types
 
+        assert foyer_fullerene.angle_types["C~C~C"].expression == sympify(
+            "1/2 * k * (theta - theta_eq)**2"
+        )
         assert (
             sympify("theta")
             in foyer_fullerene.angle_types["C~C~C"].independent_variables
         )
         assert foyer_fullerene.angle_types["C~C~C"].parameters[
             "k"
-        ] == u.unyt_quantity(1000, u.kJ / u.mol / u.rad ** 2)
+        ] == u.unyt_quantity(1000, u.kJ / u.mol / u.rad**2)
         assert foyer_fullerene.angle_types["C~C~C"].parameters[
             "theta_eq"
         ] == u.unyt_quantity(3.141592, u.rad)

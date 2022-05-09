@@ -7,11 +7,11 @@ import unyt as u
 from gmso.utils.decorators import register_pydantic_json
 from gmso.utils.misc import unyt_to_hashable
 
-__all__ = ["_PotentialExpression"]
+__all__ = ["PotentialExpression"]
 
 
 @register_pydantic_json(method="json")
-class _PotentialExpression:
+class PotentialExpression:
     """A general Expression class with parameters.
 
     This class is used by `gmso.core.potential.Potential` class and its
@@ -272,7 +272,7 @@ class _PotentialExpression:
     @staticmethod
     def json(potential_expression):
         """Convert the provided potential expression to a json serializable dictionary."""
-        if not isinstance(potential_expression, _PotentialExpression):
+        if not isinstance(potential_expression, PotentialExpression):
             raise TypeError(
                 f"{potential_expression} is not of type _PotentialExpression"
             )

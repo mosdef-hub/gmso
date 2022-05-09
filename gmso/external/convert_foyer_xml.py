@@ -65,9 +65,11 @@ def from_foyer_xml(
     ff_root = foyer_xml_tree.getroot()
     name = ff_root.attrib.get("name")
     version = ff_root.attrib.get("version")
+    combining_rule = ff_root.attrib.get("combining_rule")
     f_kwargs = {
         "name": name,
         "version": version,
+        "combining_rule": combining_rule,
         "coulomb14scale": [],
         "lj14scale": [],
         "atom_types": [],
@@ -143,6 +145,10 @@ def _write_gmso_xml(gmso_xml, **kwargs):
         forcefield.attrib["version"] = "0.0.1"
 
     ffMeta = _create_sub_element(forcefield, "FFMetaData")
+    if kwargs.get("combining_rule"):
+        ffMeta.attrib["combiningRule"] = kwargs.get("combining_rule")
+    else:
+        ffMeta.attrib["combiningRule"] = "geometric"
     if kwargs["coulomb14scale"]:
         ffMeta.attrib["electrostatics14Scale"] = kwargs["coulomb14scale"]
 
@@ -246,7 +252,7 @@ def _write_nbforces(forcefield, ff_kwargs):
         forcefield,
         "AtomTypes",
         attrib_dict={
-            "expression": "epsilon * ((sigma/r)**12 - (sigma/r)**6)",
+            "expression": "4 * epsilon * ((sigma/r)**12 - (sigma/r)**6)",
         },
     )
     parameters_units = {"epsilon": "kJ/mol", "sigma": "nm"}
@@ -290,7 +296,7 @@ def _write_harmonic_bonds(forcefield, ff_kwargs):
         forcefield,
         "BondTypes",
         attrib_dict={
-            "expression": "k * (r-r_eq)**2",
+            "expression": "1/2 * k * (r-r_eq)**2",
         },
     )
 
@@ -323,7 +329,7 @@ def _write_harmonic_angles(forcefield, ff_kwargs):
         forcefield,
         "AngleTypes",
         attrib_dict={
-            "expression": "k * (theta - theta_eq)**2",
+            "expression": "1/2 * k * (theta - theta_eq)**2",
         },
     )
 
@@ -357,7 +363,7 @@ def _write_ub_angles(forcefield, ff_kwargs):
         forcefield,
         "AngleTypes",
         attrib_dict={
-            "expression": "k * (w - w_0) ** 2",
+            "expression": "1/2 * k * (w - w_0) ** 2",
         },
     )
 
