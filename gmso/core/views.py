@@ -1,3 +1,4 @@
+import uuid
 from collections import defaultdict
 
 from gmso.core.angle import Angle
@@ -60,6 +61,7 @@ class PotentialFilters:
     UNIQUE_EXPRESSION = "unique_expression"
     UNIQUE_PARAMETERS = "unique_parameters"
     UNIQUE_ID = "unique_id"
+    REPEAT_DUPLICATES = "repeat_duplicates"
 
     @staticmethod
     def all():
@@ -75,6 +77,7 @@ potential_identifiers = {
     PotentialFilters.UNIQUE_EXPRESSION: lambda p: str(p.expression),
     PotentialFilters.UNIQUE_PARAMETERS: get_parameters,
     PotentialFilters.UNIQUE_ID: lambda p: id(p),
+    PotentialFilters.REPEAT_DUPLICATES: lambda _: str(uuid.uuid4()),
 }
 
 

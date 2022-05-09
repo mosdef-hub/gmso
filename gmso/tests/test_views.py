@@ -130,6 +130,11 @@ class TestViews(BaseTest):
             filter_by=PotentialFilters.UNIQUE_NAME_CLASS
         )
 
+        bond_types_repeat = bond_types(
+            filter_by=PotentialFilters.REPEAT_DUPLICATES
+        )
+
         assert len(bond_types) == 1
         assert len(bond_types_params) == 1
         assert len(bond_types_name_class) == 100
+        assert len(bond_types_repeat) == 100

@@ -329,9 +329,9 @@ class Topology(object):
         Notes
         -----
         This returns a TopologyPotentialView object which can be used as
-        an iterator. By default this will return a view with all the atom_types
-        in the topology (repeats even if multiple sites point to the same atomtype
-        object. Use, different filters(builtin or custom) to suit your needs.
+        an iterator. By default, this will return a view with all the atom_types
+        in the topology (if multiple sites point to the same atom_type, only a
+        single reference is returned/iterated upon). Use, different filters(builtin or custom) to suit your needs.
         See examples below.
 
         Examples
@@ -347,9 +347,9 @@ class Topology(object):
         ...     atom.atom_type = atom_type
         ...     top.add_site(atom)
         >>> len(top.atom_types)
-        100
-        >>> len(top.atom_types(filter_by=PotentialFilters.UNIQUE_ID))
         1
+        >>> len(top.atom_types(filter_by=PotentialFilters.REPEAT_DUPLICATES))
+        100
         >>> len(top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS))
         1
 
@@ -397,9 +397,9 @@ class Topology(object):
         Notes
         -----
         This returns a TopologyPotentialView object which can be used as
-        an iterator.By default this will return a view with all the bond_types
-        in the topology (repeats even if multiple bonds point to the same bond_type
-        object). Use, different filters(builtin or custom) to suit your needs.
+        an iterator.By default, this will return a view with all the bond_types
+        in the topology (if multiple bonds point to the same bond_type, only a
+        single reference is returned/iterated upon). Use, different filters(builtin or custom) to suit your needs.
         See examples below.
 
         Examples
@@ -446,9 +446,9 @@ class Topology(object):
         Notes
         -----
         This returns a TopologyPotentialView object which can be used as
-        an iterator. By default this will return a view with all the angle_types
-        in the topology (repeats even if multiple angles point to the same
-        angle_type object). Use, different filters(builtin or custom) to suit
+        an iterator. By default, this will return a view with all the angle_types
+        in the topology (if multiple angles point to the same angle_type, only a
+        single reference is returned/iterated upon). Use, different filters(builtin or custom) to suit
         your needs. See examples below.
 
         Examples
@@ -496,10 +496,10 @@ class Topology(object):
         Notes
         -----
         This returns a TopologyPotentialView object which can be used as
-        an iterator. By default this will return a view with all the dihedral_types
-        in the topology (repeats even if multiple dihedrals point to the same
-        dihedral_type object). Use, different filters(builtin or custom) to suit
-        your needs. See examples below.
+        an iterator. By default, this will return a view with all the dihedral_types
+        in the topology (if multiple dihedrals point to the same dihedral types, only a
+        single reference is returned/iterated upon). Use, different filters(builtin or custom)
+        to suit your needs. See examples below.
 
         Examples
         --------
@@ -549,10 +549,10 @@ class Topology(object):
         Notes
         -----
         This returns a TopologyPotentialView object which can be used as
-        an iterator. By default this will return a view with all the improper_types
-        in the topology (repeats even if multiple impropers point to the same
-        improper_type object). Use, different filters(builtin or custom) to suit
-        your needs. See examples below.
+        an iterator. By default, this will return a view with all the improper_types
+        in the topology (if multiple impropers point to the same improper_type, only a
+        single reference is returned/iterated upon). Use, different filters(builtin or custom) to
+        suit your needs. See examples below.
 
         Examples
         --------
