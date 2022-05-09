@@ -22,6 +22,10 @@ potential_attribute_map = {
 }
 
 
+class MissingFilterError(KeyError):
+    """Error to be raised when there's a missing builtin filter."""
+
+
 def get_name_or_class(potential):
     """Get identifier for a topology potential based on name or membertype/class."""
     if isinstance(potential, AtomType):
@@ -55,12 +59,22 @@ class PotentialFilters:
     UNIQUE_NAME_CLASS = "unique_name_class"
     UNIQUE_EXPRESSION = "unique_expression"
     UNIQUE_PARAMETERS = "unique_parameters"
+    UNIQUE_ID = "unique_id"
+
+    @staticmethod
+    def all():
+        return set(
+            f"{PotentialFilters.__name__}.{k}"
+            for k, v in PotentialFilters.__dict__.items()
+            if not k.startswith("__") and not callable(v)
+        )
 
 
 potential_identifiers = {
     PotentialFilters.UNIQUE_NAME_CLASS: get_name_or_class,
     PotentialFilters.UNIQUE_EXPRESSION: lambda p: str(p.expression),
     PotentialFilters.UNIQUE_PARAMETERS: get_parameters,
+    PotentialFilters.UNIQUE_ID: lambda p: id(p),
 }
 
 
@@ -74,7 +88,7 @@ class TopologyPotentialView:
 
     Parameters
     ----------
-    filter_by: str or function, default=None
+    filter_by: str or function, default=PotentialFilters.UNIQUE_ID
         If provided, filter the collected potentials by some unique identifier
         of a potential.
 
@@ -116,7 +130,7 @@ class TopologyPotentialView:
     https://github.com/networkx/networkx/blob/12c1a00cd116701a763f7c57c230b8739d2ed085/networkx/classes/reportviews.py#L115-L279
     """
 
-    def __init__(self, iterator, filter_by=None):
+    def __init__(self, iterator, filter_by=PotentialFilters.UNIQUE_ID):
         self.iterator = iterator
         self.filter_by = filter_by
 
@@ -130,13 +144,11 @@ class TopologyPotentialView:
 
     def _collect_potentials(self):
         """Collect potentials from the iterator"""
-        visited = set()
         for item in self.iterator:
             potential = getattr(
                 item, potential_attribute_map[type(item)]
             )  # Since this use is internal, KeyErrors N/A
-            if potential and id(potential) not in visited:
-                visited.add(id(potential))
+            if potential:
                 yield potential
 
     def yield_view(self):
@@ -153,7 +165,14 @@ class TopologyPotentialView:
 
         else:
             if isinstance(self.filter_by, str):
-                identifier_func = potential_identifiers[self.filter_by]
+                try:
+                    identifier_func = potential_identifiers[self.filter_by]
+                except KeyError:
+                    raise MissingFilterError(
+                        f"Potential filter {self.filter_by} is not among the built-in"
+                        f"filters. Please use one of the builtin filters or define a custom "
+                        f"filter callable. Builtin Filters are \n {PotentialFilters.all()}"
+                    )
             else:
                 identifier_func = self.filter_by
 
@@ -161,7 +180,7 @@ class TopologyPotentialView:
                 self._collect_potentials(), identifier=identifier_func
             )
 
-    def __call__(self, filter_by=None):
+    def __call__(self, filter_by=PotentialFilters.UNIQUE_ID):
         """The call method, for turning property decorators into functions"""
         if filter_by == self.filter_by:
             return self

@@ -329,12 +329,43 @@ class Topology(object):
         Notes
         -----
         This returns a TopologyPotentialView object which can be used as
-        an iterator.
+        an iterator. By default this will return a view with all the atom_types
+        in the topology (repeats even if multiple sites point to the same atomtype
+        object. Use, different filters(builtin or custom) to suit your needs.
+        See examples below.
+
+        Examples
+        --------
+        >>> from gmso.core.atom import Atom
+        >>> from gmso.core.atom_type import AtomType
+        >>> from gmso.core.topology import Topology
+        >>> from gmso.core.views import PotentialFilters
+        >>> top = Topology(name="my_top")
+        >>> atom_type = AtomType(name="my_atom_type")
+        >>> for j in range(100):
+        ...     atom = Atom(name=f"atom_{j+1}")
+        ...     atom.atom_type = atom_type
+        ...     top.add_site(atom)
+        >>> len(top.atom_types)
+        100
+        >>> len(top.atom_types(filter_by=PotentialFilters.UNIQUE_ID))
+        1
+        >>> len(top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS))
+        1
 
         See Also
         --------
         gmso.core.views.TopologyPotentialView
             An iterator/filter based view of Potentials in a gmso Topology.
+
+        gmso.core.views.PotentialFilters
+            Builtin filters for viewing potentials in a Topology.
+
+        Returns
+        -------
+        gmso.core.views.TopologyPotentialView
+            An iterator of the atom_types in the system filtered according to the
+            filter function supplied.
         """
         return TopologyPotentialView(self._sites)
 
@@ -366,12 +397,45 @@ class Topology(object):
         Notes
         -----
         This returns a TopologyPotentialView object which can be used as
-        an iterator.
+        an iterator.By default this will return a view with all the bond_types
+        in the topology (repeats even if multiple bonds point to the same bond_type
+        object). Use, different filters(builtin or custom) to suit your needs.
+        See examples below.
+
+        Examples
+        --------
+        >>> from gmso.core.atom import Atom
+        >>> from gmso.core.bond import Bond
+        >>> from gmso.core.bond_type import BondType
+        >>> from gmso.core.topology import Topology
+        >>> from gmso.core.views import PotentialFilters
+        >>> top = Topology(name="my_top")
+        >>> for j in range(100):
+        ...     atom1 = Atom(name=f"atom_A_{j+1}")
+        ...     atom2 = Atom(name=f"atom_B_{j+1}")
+        ...     bond = Bond(connection_members=[atom1, atom2])
+        ...     bond.bond_type = BondType(name=f"bond_type", member_types=('atom_A', 'atom_B'))
+        ...     conn = top.add_connection(bond)
+        >>> len(top.bond_types)
+        100
+        >>> len(top.bond_types(filter_by=PotentialFilters.UNIQUE_ID))
+        100
+        >>> len(top.bond_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS))
+        1
 
         See Also
         --------
         gmso.core.views.TopologyPotentialView
             An iterator/filter based view of Potentials in a gmso Topology.
+
+        gmso.core.views.PotentialFilters
+            Builtin filters for viewing potentials in a Topology.
+
+        Returns
+        -------
+        gmso.core.views.TopologyPotentialView
+            An iterator of the bond_types in the system filtered according to the
+            filter function supplied.
         """
         return TopologyPotentialView(self._bonds)
 
@@ -382,12 +446,46 @@ class Topology(object):
         Notes
         -----
         This returns a TopologyPotentialView object which can be used as
-        an iterator.
+        an iterator. By default this will return a view with all the angle_types
+        in the topology (repeats even if multiple angles point to the same
+        angle_type object). Use, different filters(builtin or custom) to suit
+        your needs. See examples below.
+
+        Examples
+        --------
+        >>> from gmso.core.atom import Atom
+        >>> from gmso.core.angle import Angle
+        >>> from gmso.core.angle_type import AngleType
+        >>> from gmso.core.topology import Topology
+        >>> from gmso.core.views import PotentialFilters
+        >>> for j in range(100):
+        ...     atom1 = Atom(name=f"atom_A_{j+1}")
+        ...     atom2 = Atom(name=f"atom_B_{j+1}")
+        ...     atom3 = Atom(name=f"atom_C_{j+1}")
+        ...     angle = Angle(connection_members=[atom1, atom2, atom3])
+        ...     angle.angle_type = AngleType(name=f"angle_type", member_types=('atom_A', 'atom_B', 'atom_C'))
+        ...     conn = top.add_connection(angle)
+        >>> len(top.angle_types)
+        100
+        >>> len(top.angle_types(filter_by=PotentialFilters.UNIQUE_ID))
+        100
+        >>> len(top.angle_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS))
+        1
+
 
         See Also
         --------
         gmso.core.views.TopologyPotentialView
             An iterator/filter based view of Potentials in a gmso Topology.
+
+        gmso.core.views.PotentialFilters
+            Builtin filters for viewing potentials in a Topology.
+
+        Returns
+        -------
+        gmso.core.views.TopologyPotentialView
+            An iterator of the angle_types in the system filtered according to the
+            filter function supplied.
         """
         return TopologyPotentialView(self._angles)
 
@@ -398,12 +496,49 @@ class Topology(object):
         Notes
         -----
         This returns a TopologyPotentialView object which can be used as
-        an iterator.
+        an iterator. By default this will return a view with all the dihedral_types
+        in the topology (repeats even if multiple dihedrals point to the same
+        dihedral_type object). Use, different filters(builtin or custom) to suit
+        your needs. See examples below.
+
+        Examples
+        --------
+        >>> from gmso.core.atom import Atom
+        >>> from gmso.core.dihedral import Dihedral
+        >>> from gmso.core.dihedral_type import DihedralType
+        >>> from gmso.core.topology import Topology
+        >>> from gmso.core.views import PotentialFilters
+        >>> for j in range(100):
+        ...     atom1 = Atom(name=f"atom_A_{j+1}")
+        ...     atom2 = Atom(name=f"atom_B_{j+1}")
+        ...     atom3 = Atom(name=f"atom_C_{j+1}")
+        ...     atom4 = Atom(name=f"atom_D_{j+1}")
+        ...     dihedral = Dihedral(connection_members=[atom1, atom2, atom3, atom4])
+        ...     dihedral.dihedral_type = DihedralType(
+        ...         name=f"dihedral_type",
+        ...         member_types=('atom_A', 'atom_B', 'atom_C', 'atom_D')
+        ...     )
+        ...     conn = top.add_connection(dihedral)
+        >>> len(top.dihedral_types)
+        100
+        >>> len(top.dihedral_types(filter_by=PotentialFilters.UNIQUE_ID))
+        100
+        >>> len(top.dihedral_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS))
+        1
 
         See Also
         --------
         gmso.core.views.TopologyPotentialView
             An iterator/filter based view of Potentials in a gmso Topology.
+
+        gmso.core.views.PotentialFilters
+            Builtin filters for viewing potentials in a Topology.
+
+        Returns
+        -------
+        gmso.core.views.TopologyPotentialView
+            An iterator of the dihedral_types in the system filtered according to the
+            filter function supplied.
         """
         return TopologyPotentialView(self._dihedrals)
 
@@ -414,12 +549,49 @@ class Topology(object):
         Notes
         -----
         This returns a TopologyPotentialView object which can be used as
-        an iterator.
+        an iterator. By default this will return a view with all the improper_types
+        in the topology (repeats even if multiple impropers point to the same
+        improper_type object). Use, different filters(builtin or custom) to suit
+        your needs. See examples below.
+
+        Examples
+        --------
+        >>> from gmso.core.atom import Atom
+        >>> from gmso.core.improper import Improper
+        >>> from gmso.core.improper_type import ImproperType
+        >>> from gmso.core.topology import Topology
+        >>> from gmso.core.views import PotentialFilters
+        >>> for j in range(100):
+        ...     atom1 = Atom(name=f"atom_A_{j+1}")
+        ...     atom2 = Atom(name=f"atom_B_{j+1}")
+        ...     atom3 = Atom(name=f"atom_C_{j+1}")
+        ...     atom4 = Atom(name=f"atom_D_{j+1}")
+        ...     improper = Improper(connection_members=[atom1, atom2, atom3, atom4])
+        ...     improper.improper_type = ImproperType(
+        ...         name=f"dihedral_type",
+        ...         member_types=('atom_A', 'atom_B', 'atom_C', 'atom_D')
+        ...     )
+        ...     conn = top.add_connection(improper)
+        >>> len(top.improper_types)
+        100
+        >>> len(top.improper_types(filter_by=PotentialFilters.UNIQUE_ID))
+        100
+        >>> len(top.improper_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS))
+        1
 
         See Also
         --------
         gmso.core.views.TopologyPotentialView
             An iterator/filter based view of Potentials in a gmso Topology.
+
+        gmso.core.views.PotentialFilters
+            Builtin filters for viewing potentials in a Topology.
+
+        Returns
+        -------
+        gmso.core.views.TopologyPotentialView
+            An iterator of the dihedral_types in the system filtered according to the
+            filter function supplied.
         """
         return TopologyPotentialView(self._impropers)
 
