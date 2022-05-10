@@ -503,7 +503,7 @@ class Topology(object):
             is in the topology
         """
         # Check if an equivalent connection is in the topology
-        equivalent_members = connection._equivalent_members_hash()
+        equivalent_members = connection.equivalent_members()
         if equivalent_members in self._unique_connections:
             warnings.warn(
                 "An equivalent connection already exists. "

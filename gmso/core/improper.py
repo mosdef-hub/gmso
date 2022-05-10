@@ -79,33 +79,6 @@ class Improper(Connection):
 
         return frozenset([self.connection_members, tuple(equiv_members)])
 
-    def _equivalent_members_hash(self):
-        """Return a unique hash representing the connection.
-
-        Returns
-        -------
-        int
-            A unique hash to represent the connection members
-
-        Notes
-        -----
-        For an improper:
-            i, j, k, l == i, k, j, l
-        where i, j, k, and l are the connection members.
-        Here j and k are interchangeable and i and l are fixed.
-        """
-        return hash(
-            tuple(
-                [
-                    self.connection_members[0],
-                    self.connection_members[3],
-                    frozenset(
-                        [self.connection_members[1], self.connection_members[2]]
-                    ),
-                ]
-            )
-        )
-
     def __setattr__(self, key, value):
         """Set attribute override to support connection_type key."""
         if key == "connection_type":
