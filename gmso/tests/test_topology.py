@@ -12,7 +12,7 @@ from gmso.core.atom_type import AtomType
 from gmso.core.bond import Bond
 from gmso.core.bond_type import BondType
 from gmso.core.box import Box
-from gmso.core.dihedral import Dihedral
+from gmso.core.dihedral import Dihedral, LayeredDihedral
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
@@ -759,6 +759,15 @@ class TestTopology(BaseTest):
 
         with pytest.raises(ValueError):
             clone.get_untyped(group="foo")
+
+    def test_top_with_layered_dihedrals(self, ld_top):
+        assert len(ld_top.dihedral_types) == 2
+        assert len(ld_top.dihedrals) == 25
+        for j in range(ld_top.n_dihedrals):
+            if j % 2 == 0:
+                assert isinstance(ld_top._dihedrals[j], Dihedral)
+            else:
+                assert isinstance(ld_top._dihedrals[j], LayeredDihedral)
 
     def test_iter_sites(self, residue_top):
         for site in residue_top.iter_sites("residue_name", "MY_RES_EVEN"):

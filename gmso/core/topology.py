@@ -13,9 +13,9 @@ from gmso.core.atom import Atom
 from gmso.core.atom_type import AtomType
 from gmso.core.bond import Bond
 from gmso.core.bond_type import BondType
-from gmso.core.dihedral import Dihedral
+from gmso.core.dihedral import BaseDihedral, Dihedral
 from gmso.core.dihedral_type import DihedralType
-from gmso.core.improper import Improper
+from gmso.core.improper import BaseImproper, Improper
 from gmso.core.improper_type import ImproperType
 from gmso.core.pairpotential_type import PairPotentialType
 from gmso.core.parametric_potential import ParametricPotential
@@ -520,9 +520,9 @@ class Topology(object):
             self._bonds.add(connection)
         if isinstance(connection, Angle):
             self._angles.add(connection)
-        if isinstance(connection, Dihedral):
+        if isinstance(connection, BaseDihedral):
             self._dihedrals.add(connection)
-        if isinstance(connection, Improper):
+        if isinstance(connection, BaseImproper):
             self._impropers.add(connection)
         if update_types:
             self.update_connection_types()
@@ -544,48 +544,78 @@ class Topology(object):
         --------
         gmso.Topology.update_atom_types : Update atom types in the topology.
         """
+        # Here an alternative could be using checking instances of LayeredConnection classes
+        # But to make it generic, this approach works best
+        get_connection_type = (
+            lambda conn: conn.connection_types
+            if hasattr(conn, "connection_types")
+            else conn.connection_type
+        )
         for c in self.connections:
-            if c.connection_type is None:
+            connection_type_or_types = get_connection_type(c)
+            if connection_type_or_types is None:
                 warnings.warn(
                     "Non-parametrized Connection {} detected".format(c)
                 )
-            elif not isinstance(c.connection_type, ParametricPotential):
+                continue
+            elif not isinstance(
+                connection_type_or_types, (ParametricPotential, IndexedSet)
+            ):
                 raise GMSOError(
                     "Non-Potential {} found"
-                    "in Connection {}".format(c.connection_type, c)
+                    "in Connection {}".format(connection_type_or_types, c)
                 )
-            elif c.connection_type not in self._connection_types:
-                c.connection_type.topology = self
-                self._connection_types[c.connection_type] = c.connection_type
-                if isinstance(c.connection_type, BondType):
-                    self._bond_types[c.connection_type] = c.connection_type
-                    self._bond_types_idx[c.connection_type] = (
-                        len(self._bond_types) - 1
-                    )
-                if isinstance(c.connection_type, AngleType):
-                    self._angle_types[c.connection_type] = c.connection_type
-                    self._angle_types_idx[c.connection_type] = (
-                        len(self._angle_types) - 1
-                    )
-                if isinstance(c.connection_type, DihedralType):
-                    self._dihedral_types[c.connection_type] = c.connection_type
-                    self._dihedral_types_idx[c.connection_type] = (
-                        len(self._dihedral_types) - 1
-                    )
-                if isinstance(c.connection_type, ImproperType):
-                    self._improper_types[c.connection_type] = c.connection_type
-                    self._improper_types_idx[c.connection_type] = (
-                        len(self._improper_types) - 1
-                    )
-            elif c.connection_type in self.connection_types:
-                if isinstance(c.connection_type, BondType):
-                    c.connection_type = self._bond_types[c.connection_type]
-                if isinstance(c.connection_type, AngleType):
-                    c.connection_type = self._angle_types[c.connection_type]
-                if isinstance(c.connection_type, DihedralType):
-                    c.connection_type = self._dihedral_types[c.connection_type]
-                if isinstance(c.connection_type, ImproperType):
-                    c.connection_type = self._improper_types[c.connection_type]
+            if not isinstance(connection_type_or_types, IndexedSet):
+                connection_type_or_types = [connection_type_or_types]
+            for connection_type in connection_type_or_types:
+                if connection_type not in self._connection_types:
+                    connection_type.topology = self
+                    self._connection_types[connection_type] = connection_type
+                    if isinstance(connection_type, BondType):
+                        self._bond_types[connection_type] = connection_type
+                        self._bond_types_idx[connection_type] = (
+                            len(self._bond_types) - 1
+                        )
+                    if isinstance(connection_type, AngleType):
+                        self._angle_types[connection_type] = connection_type
+                        self._angle_types_idx[connection_type] = (
+                            len(self._angle_types) - 1
+                        )
+                    if isinstance(connection_type, DihedralType):
+                        self._dihedral_types[connection_type] = connection_type
+                        self._dihedral_types_idx[connection_type] = (
+                            len(self._dihedral_types) - 1
+                        )
+                    if isinstance(connection_type, ImproperType):
+                        self._improper_types[
+                            connection_type
+                        ] = c.connection_type
+                        self._improper_types_idx[connection_type] = (
+                            len(self._improper_types) - 1
+                        )
+                elif connection_type in self.connection_types:
+                    if isinstance(connection_type, BondType):
+                        c.connection_type = self._bond_types[connection_type]
+                    if isinstance(connection_type, AngleType):
+                        c.connection_type = self._angle_types[connection_type]
+                    if isinstance(connection_type, DihedralType):
+                        if c.is_layered():
+                            c.connection_types.add(
+                                self._dihedral_types[connection_type]
+                            )
+                        else:
+                            c.connection_type = self._dihedral_types[
+                                connection_type
+                            ]
+                    if isinstance(connection_type, ImproperType):
+                        if c.is_layered():
+                            c.connection_types.add(
+                                self._improper_types[connection_type]
+                            )
+                        else:
+                            c.connection_type = self._improper_types[
+                                connection_type
+                            ]
 
     def add_pairpotentialtype(self, pairpotentialtype, update=True):
         """add a PairPotentialType to the topology
@@ -746,10 +776,10 @@ class Topology(object):
                 angle.angle_type for angle in top._angles
             ),
             "dihedrals": lambda top: all(
-                dihedral.dihedral_type for dihedral in top._dihedrals
+                self._get_types(dihedral) for dihedral in top._dihedrals
             ),
             "impropers": lambda top: all(
-                improper.improper_type for improper in top._impropers
+                self._get_types(improper) for improper in top._impropers
             ),
         }
 
@@ -833,7 +863,7 @@ class Topology(object):
         "Return a list of untyped dihedrals"
         untyped = {"dihedrals": list()}
         for dihedral in self._dihedrals:
-            if not dihedral.dihedral_type:
+            if not self._get_types(dihedral):
                 untyped["dihedrals"].append(dihedral)
         return untyped
 
@@ -841,9 +871,22 @@ class Topology(object):
         "Return a list of untyped impropers"
         untyped = {"impropers": list()}
         for improper in self._impropers:
-            if not improper.improper_type:
+            if not self._get_types(improper):
                 untyped["impropers"].append(improper)
         return untyped
+
+    def _get_types(self, dihedral_or_improper):
+        """Get the dihedral/impropertypes for a dihedral/improper in this topology."""
+        if not isinstance(dihedral_or_improper, (BaseDihedral, BaseImproper)):
+            raise TypeError(
+                f"Expected `dihedral_or_improper` to be either Dihedral or Improper. "
+                f"Got {type(dihedral_or_improper).__name__} instead."
+            )
+        return (
+            dihedral_or_improper.connection_types
+            if dihedral_or_improper.is_layered()
+            else dihedral_or_improper.connection_type
+        )
 
     def update_angle_types(self):
         """Use gmso.Topology.update_connection_types to update AngleTypes in the topology.

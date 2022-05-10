@@ -67,7 +67,7 @@ class Connection(GMSOBase):
 
     @root_validator(pre=True)
     def validate_fields(cls, values):
-        connection_members = values.get("connection_members")
+        connection_members = values.get("connection_members", [])
 
         if all(isinstance(member, dict) for member in connection_members):
             connection_members = [

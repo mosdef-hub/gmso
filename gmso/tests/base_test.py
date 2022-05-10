@@ -10,7 +10,8 @@ from gmso.core.atom import Atom
 from gmso.core.atom_type import AtomType
 from gmso.core.bond import Bond
 from gmso.core.box import Box
-from gmso.core.dihedral import Dihedral
+from gmso.core.dihedral import Dihedral, LayeredDihedral
+from gmso.core.dihedral_type import DihedralType
 from gmso.core.element import Hydrogen, Oxygen
 from gmso.core.forcefield import ForceField
 from gmso.core.improper import Improper
@@ -18,6 +19,7 @@ from gmso.core.pairpotential_type import PairPotentialType
 from gmso.core.topology import Topology
 from gmso.external import from_mbuild, from_parmed
 from gmso.external.convert_foyer_xml import from_foyer_xml
+from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.tests.utils import get_path
 from gmso.utils.io import get_fn, has_foyer
 
@@ -497,6 +499,52 @@ class BaseTest:
                 residue_name="MY_RES_EVEN" if i % 2 == 0 else f"MY_RES_ODD",
             )
             top.add_site(atom, update_types=False)
+        top.update_topology()
+
+        return top
+
+    @pytest.fixture
+    def ld_top(self):
+        lib = PotentialTemplateLibrary()
+        rb_type = DihedralType.from_template(
+            potential_template=lib["RyckaertBellemansTorsionPotential"],
+            parameters={
+                "c0": 9.28 * u.kJ / u.mol,
+                "c1": 12.16 * u.kJ / u.mol,
+                "c2": -13.12 * u.kJ / u.mol,
+                "c3": -3.06 * u.kJ / u.mol,
+                "c4": 26.24 * u.kJ / u.mol,
+                "c5": -31.5 * u.kJ / u.mol,
+            },
+        )
+
+        periodic_type = DihedralType.from_template(
+            lib["PeriodicTorsionPotential"],
+            parameters={
+                "k": 1.25 * u.nm,
+                "phi_eq": 3.14159 * u.rad,
+                "n": 2 * u.dimensionless,
+            },
+        )
+
+        top = Topology(name="Topology")
+        atoms = [Atom(name=f"Atom{i + 1}") for i in range(0, 100)]
+        dihedrals_group = [
+            (atoms[i], atoms[i + 1], atoms[i + 2], atoms[i + 3])
+            for i in range(0, 100, 4)
+        ]
+
+        for j, atom_groups in enumerate(dihedrals_group):
+            if j % 2 == 0:
+                dh = Dihedral(
+                    connection_members=atom_groups,
+                )
+                dh.connection_type = rb_type
+
+            else:
+                dh = LayeredDihedral(connection_members=atom_groups)
+                dh.connection_types = [rb_type, periodic_type]
+            top.add_connection(connection=dh)
         top.update_topology()
 
         return top

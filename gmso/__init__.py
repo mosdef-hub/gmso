@@ -6,11 +6,11 @@ from .core.atom_type import AtomType
 from .core.bond import Bond
 from .core.bond_type import BondType
 from .core.box import Box
-from .core.dihedral import Dihedral
+from .core.dihedral import Dihedral, LayeredDihedral
 from .core.dihedral_type import DihedralType
 from .core.element import Element
 from .core.forcefield import ForceField
-from .core.improper import Improper
+from .core.improper import Improper, LayeredImproper
 from .core.improper_type import ImproperType
 from .core.pairpotential_type import PairPotentialType
 from .core.subtopology import SubTopology

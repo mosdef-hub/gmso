@@ -1,15 +1,16 @@
 import pytest
+import unyt as u
 from pydantic import ValidationError
 
 from gmso.core.atom import Atom
 from gmso.core.atom_type import AtomType
-from gmso.core.improper import Improper
+from gmso.core.improper import Improper, LayeredImproper
 from gmso.core.improper_type import ImproperType
 from gmso.core.topology import Topology
 from gmso.tests.base_test import BaseTest
 
 
-class TestImproper(BaseTest):
+class TestImpropers(BaseTest):
     def test_improper_nonparametrized(self):
         atom1 = Atom(name="atom1")
         atom2 = Atom(name="atom2")
@@ -152,3 +153,134 @@ class TestImproper(BaseTest):
             tuple(improper.connection_members)
             in improper_not_eq.equivalent_members()
         )
+
+    def test_layered_impropers(self):
+        atom1 = Atom(name="atom1")
+        atom2 = Atom(name="atom2")
+        atom3 = Atom(name="atom3")
+        atom4 = Atom(name="atom4")
+
+        improper_type1 = ImproperType(
+            name=f"layer1",
+            expression="kn * (1 + cos(n * a - a0))",
+            independent_variables="a",
+            parameters={
+                "kn": 1.0 * u.K * u.kb,
+                "n": 1 * u.dimensionless,
+                "a0": 30.0 * u.degree,
+            },
+        )
+        improper_type2 = ImproperType(
+            name=f"layer2",
+            expression="kn * (1 + cos(n * a - a0))",
+            independent_variables="a",
+            parameters={
+                "kn": 1.0 * u.K * u.kb,
+                "n": 2 * u.dimensionless,
+                "a0": 30.0 * u.degree,
+            },
+        )
+        improper_type3 = ImproperType(
+            name=f"layer3",
+            expression="kn * (1 + cos(n * a - a0))",
+            independent_variables="a",
+            parameters={
+                "kn": 1.0 * u.K * u.kb,
+                "n": 3 * u.dimensionless,
+                "a0": 30.0 * u.degree,
+            },
+        )
+
+        connect = LayeredImproper(
+            connection_members=[atom1, atom2, atom3, atom4],
+            improper_types=[improper_type1, improper_type2, improper_type3],
+            name="improper_name",
+        )
+
+        assert improper_type1 in connect.improper_types
+        assert improper_type2 in connect.improper_types
+        assert improper_type3 in connect.improper_types
+
+        assert connect.improper_types[0].parameters["n"] == 1
+        assert connect.improper_types[1].parameters["n"] == 2
+        assert connect.improper_types[2].parameters["n"] == 3
+
+    def test_layered_improper_duplicate(self):
+        atom1 = Atom(name="atom1")
+        atom2 = Atom(name="atom2")
+        atom3 = Atom(name="atom3")
+        atom4 = Atom(name="atom4")
+
+        improper_type1 = ImproperType(
+            name=f"layer1",
+            expression="kn * (1 + cos(n * a - a0))",
+            independent_variables="a",
+            parameters={
+                "kn": 1.0 * u.K * u.kb,
+                "n": 1 * u.dimensionless,
+                "a0": 30.0 * u.degree,
+            },
+        )
+        improper_type2 = ImproperType(
+            name=f"layer2",
+            expression="kn * (1 + cos(n * a - a0))",
+            independent_variables="a",
+            parameters={
+                "kn": 1.0 * u.K * u.kb,
+                "n": 2 * u.dimensionless,
+                "a0": 30.0 * u.degree,
+            },
+        )
+        improper_type3 = ImproperType(
+            name=f"layer3",
+            expression="kn * (1 + cos(n * a - a0))",
+            independent_variables="a",
+            parameters={
+                "kn": 1.0 * u.K * u.kb,
+                "n": 3 * u.dimensionless,
+                "a0": 30.0 * u.degree,
+            },
+        )
+
+        connect = LayeredImproper(
+            connection_members=[atom1, atom2, atom3, atom4],
+            improper_types=[
+                improper_type1,
+                improper_type2,
+                improper_type3,
+                improper_type3,
+            ],
+            name="improper_name",
+        )
+
+        assert len(connect.improper_types) == 3
+
+    def test_layered_improper_validation_error(self):
+        atom1 = Atom(name="atom1")
+        atom2 = Atom(name="atom2")
+        atom3 = Atom(name="atom3")
+        atom4 = Atom(name="atom4")
+
+        improper_type = ImproperType(
+            name=f"layer3",
+            expression="kn * (1 + cos(n * a - a0))",
+            independent_variables="a",
+            parameters={
+                "kn": 1.0 * u.K * u.kb,
+                "n": 3 * u.dimensionless,
+                "a0": 30.0 * u.degree,
+            },
+        )
+        with pytest.raises(ValidationError):
+            LayeredImproper(
+                connection_members=[atom1, atom2, atom3, atom4],
+                improper_types_=["a1", "a2", "a3", "a4"],
+                name="dh1",
+            )
+
+        with pytest.raises(ValidationError):
+            LayeredImproper(
+                connection_members=[atom1, atom2, atom3, atom4],
+                improper_types=improper_type,
+                name="dh1",
+            )

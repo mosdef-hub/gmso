@@ -1,15 +1,17 @@
 """Support for improper style connections (4-member connection)."""
-from typing import Callable, ClassVar, Optional, Tuple
+from typing import Callable, ClassVar, Iterable, Optional, Tuple
 
-from pydantic import Field
+from boltons.setutils import IndexedSet
+from pydantic import Field, ValidationError, validator
 
 from gmso.abc.abstract_connection import Connection
 from gmso.core.atom import Atom
 from gmso.core.improper_type import ImproperType
+from gmso.utils.misc import validate_type
 
 
-class Improper(Connection):
-    __base_doc__ = """sA 4-partner connection between sites.
+class BaseImproper(Connection):
+    __base_doc__ = """A 4-partner connection between sites.
 
     This is a subclass of the gmso.Connection superclass.
     This class has strictly 4 members in its connection_members.
@@ -38,21 +40,6 @@ class Improper(Connection):
         description="The 4 atoms of this improper. Central atom first, "
         "then the three atoms connected to the central site.",
     )
-
-    improper_type_: Optional[ImproperType] = Field(
-        default=None, description="ImproperType of this improper."
-    )
-
-    @property
-    def improper_type(self):
-        """Return Potential object for this connection if it exists."""
-        return self.__dict__.get("improper_type_")
-
-    @property
-    def connection_type(self):
-        """Return Potential object for this connection if it exists."""
-        # ToDo: Deprecate this?
-        return self.__dict__.get("improper_type_")
 
     def equivalent_members(self):
         """Get a set of the equivalent connection member tuples.
@@ -106,21 +93,83 @@ class Improper(Connection):
             )
         )
 
+    class Config:
+        """Pydantic configuration to link fields to their public attribute."""
+
+        fields = {
+            "connection_members_": "connection_members",
+        }
+        alias_to_fields = {
+            "connection_members": "connection_members_",
+        }
+
+
+class Improper(BaseImproper):
+    improper_type_: Optional[ImproperType] = Field(
+        default=None, description="ImproperType of this improper."
+    )
+
+    @property
+    def improper_type(self):
+        """Return Potential object for this connection if it exists."""
+        return self.__dict__.get("improper_type_")
+
+    @property
+    def connection_type(self):
+        """Return Potential object for this connection if it exists."""
+        # ToDo: Deprecate this?
+        return self.__dict__.get("improper_type_")
+
     def __setattr__(self, key, value):
         """Set attribute override to support connection_type key."""
         if key == "connection_type":
-            super(Improper, self).__setattr__("improper_type", value)
+            super().__setattr__("improper_type", value)
         else:
-            super(Improper, self).__setattr__(key, value)
+            super().__setattr__(key, value)
 
     class Config:
         """Pydantic configuration to link fields to their public attribute."""
 
         fields = {
             "improper_type_": "improper_type",
-            "connection_members_": "connection_members",
         }
         alias_to_fields = {
             "improper_type": "improper_type_",
-            "connection_members": "connection_members_",
+        }
+
+
+class LayeredImproper(BaseImproper):
+    improper_types_: Optional[IndexedSet] = Field(
+        default=None, description="ImproperTypes of this improper."
+    )
+
+    @property
+    def improper_types(self):
+        return self.__dict__.get("improper_types_")
+
+    @property
+    def connection_types(self):
+        # ToDo: Deprecate this?
+        return self.__dict__.get("improper_types_")
+
+    def __setattr__(self, key, value):
+        if key == "connection_types":
+            super().__setattr__("improper_types_", value)
+        else:
+            super().__setattr__(key, value)
+
+    @validator("improper_types_", pre=True, always=True)
+    def validate_improper_types(cls, improper_types):
+        if not isinstance(improper_types, Iterable):
+            raise ValidationError("ImproperTypes should be iterable", cls)
+
+        validate_type(improper_types, ImproperType)
+        return IndexedSet(improper_types)
+
+    class Config:
+        fields = {
+            "improper_types_": "improper_types",
+        }
+        alias_to_fields = {
+            "improper_types": "improper_types_",
         }
