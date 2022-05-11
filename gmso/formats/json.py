@@ -119,11 +119,11 @@ def _to_json(top, types=False, update=True):
                 connection_dict[exclude_attr] = id(connection_type)
     if types:
         for potentials in [
-            top._atom_types.values(),
-            top._bond_types.values(),
-            top._angle_types.values(),
-            top._dihedral_types.values(),
-            top._improper_types.values(),
+            top.atom_types,
+            top.bond_types,
+            top.angle_types,
+            top.dihedral_types,
+            top.improper_types,
         ]:
             for potential in potentials:
                 potential_dict = potential.json_dict(
@@ -133,9 +133,9 @@ def _to_json(top, types=False, update=True):
                 potential_dict["id"] = id(potential)
                 target.append(potential_dict)
 
-        for pairpotential_type in top._pairpotential_types.values():
+        for pairpotential_type in top._pairpotential_types:
             json_dict["pair_potentialtypes"].append(
-                pairpotential_type.json_dict(exclude={"topology", "set_ref"})
+                pairpotential_type.json_dict()
             )
 
     for subtop in top.subtops:

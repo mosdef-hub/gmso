@@ -6,7 +6,7 @@ import unyt as u
 from pydantic import Field, validator
 
 from gmso.core.parametric_potential import ParametricPotential
-from gmso.utils._constants import ATOM_TYPE_DICT, UNIT_WARNING_STRING
+from gmso.utils._constants import UNIT_WARNING_STRING
 from gmso.utils.expression import PotentialExpression
 from gmso.utils.misc import ensure_valid_dimensions, unyt_to_hashable
 
@@ -69,7 +69,6 @@ class AtomType(ParametricPotential):
         definition="",
         description="",
         tags=None,
-        topology=None,
     ):
         if overrides is None:
             overrides = set()
@@ -80,7 +79,6 @@ class AtomType(ParametricPotential):
             parameters=parameters,
             independent_variables=independent_variables,
             potential_expression=potential_expression,
-            topology=topology,
             mass=mass,
             charge=charge,
             atomclass=atomclass,
@@ -88,7 +86,6 @@ class AtomType(ParametricPotential):
             overrides=overrides,
             description=description,
             definition=definition,
-            set_ref=ATOM_TYPE_DICT,
             tags=tags,
         )
 
@@ -127,17 +124,42 @@ class AtomType(ParametricPotential):
         """Return the SMARTS string of the atom_type."""
         return self.__dict__.get("definition_")
 
-    def __hash__(self):
-        """Return the hash of the atom_type."""
-        return hash(
-            tuple(
-                (
-                    self.name,
-                    unyt_to_hashable(self.mass),
-                    unyt_to_hashable(self.charge),
-                    self.potential_expression,
-                )
-            )
+    def clone(self):
+        """Clone this AtomType, faster alternative to deepcopying."""
+        return AtomType(
+            name=str(self.name),
+            expression=None,
+            parameters=None,
+            independent_variables=None,
+            potential_expression=self.potential_expression_.clone(),
+            mass=u.unyt_quantity(self.mass_.value, self.mass_.units),
+            charge=u.unyt_quantity(self.charge_.value, self.charge_.units),
+            atomclass=self.atomclass_,
+            doi=self.doi_,
+            overrides=set(o for o in self.overrides_)
+            if self.overrides_
+            else None,
+            description=self.description_,
+            definition=self.definition_,
+        )
+
+    def __eq__(self, other):
+        if other is self:
+            return True
+        if not isinstance(other, AtomType):
+            return False
+        return (
+            self.name == other.name
+            and self.expression == other.expression
+            and self.independent_variables == other.independent_variables
+            and self.parameters == other.parameters
+            and self.charge == other.charge
+            and self.atomclass == other.atomclass
+            and self.mass == other.mass
+            and self.doi == other.doi
+            and self.overrides == other.overrides
+            and self.definition == other.definition
+            and self.description == other.description
         )
 
     def __repr__(self):

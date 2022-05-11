@@ -3,7 +3,11 @@ import sympy
 import unyt as u
 from unyt.testing import assert_allclose_units
 
+from gmso.core.atom import Atom
+from gmso.core.bond import Bond
+from gmso.core.bond_type import BondType
 from gmso.core.parametric_potential import ParametricPotential
+from gmso.core.topology import Topology
 from gmso.exceptions import GMSOError
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.tests.base_test import BaseTest
@@ -243,3 +247,40 @@ class TestPotential(BaseTest):
             harmonic_potential_from_template = (
                 ParametricPotential.from_template(template, params)
             )
+
+    def test_bondtype_clone(self):
+        top = Topology()
+        btype = BondType(
+            name="ff_255~ff_256",
+            expression="a*x+b+c*y",
+            independent_variables={"x", "y"},
+            parameters={"a": 200 * u.g, "b": 300 * u.K, "c": 400 * u.J},
+        )
+        btype_clone = btype.clone()
+
+        atom1 = Atom(name="1")
+        atom2 = Atom(name="2")
+        bond1 = Bond(connection_members=[atom1, atom2])
+
+        atom3 = Atom(name="3")
+        atom4 = Atom(name="4")
+        bond2 = Bond(connection_members=[atom3, atom4])
+
+        bond1.bond_type = btype
+        bond2.bond_type = btype_clone
+
+        top.add_connection(bond1)
+        top.add_connection(bond2)
+        top.update_topology()
+
+        assert len(top.bond_types) == 2
+
+        btype_dict = btype.dict(exclude={"topology", "set_ref"})
+        btype_clone_dict = btype_clone.dict(exclude={"topology", "set_ref"})
+
+        for key, value in btype_dict.items():
+            cloned = btype_clone_dict[key]
+            assert value == cloned
+            if id(value) == id(cloned):
+                assert isinstance(value, (str, type(None)))
+                assert isinstance(cloned, (str, type(None)))

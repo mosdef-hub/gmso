@@ -4,7 +4,6 @@ import unyt as u
 from pydantic import Field
 
 from gmso.core.parametric_potential import ParametricPotential
-from gmso.utils._constants import ANGLE_TYPE_DICT
 from gmso.utils.expression import PotentialExpression
 
 
@@ -46,7 +45,6 @@ class AngleType(ParametricPotential):
         potential_expression=None,
         member_types=None,
         member_classes=None,
-        topology=None,
         tags=None,
     ):
 
@@ -56,10 +54,8 @@ class AngleType(ParametricPotential):
             parameters=parameters,
             independent_variables=independent_variables,
             potential_expression=potential_expression,
-            topology=topology,
             member_types=member_types,
             member_classes=member_classes,
-            set_ref=ANGLE_TYPE_DICT,
             tags=tags,
         )
 

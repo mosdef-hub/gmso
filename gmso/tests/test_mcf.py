@@ -108,13 +108,13 @@ class TestMCF(BaseTest):
     def test_modified_potentials(self, n_typed_ar_system):
         top = n_typed_ar_system(n_sites=1)
 
-        top.atom_types[0].set_expression("sigma + epsilon*r")
+        next(iter(top.atom_types)).set_expression("sigma + epsilon*r")
 
         with pytest.raises(EngineIncompatibilityError):
             top.save("out.mcf")
 
         alternate_lj = "4*epsilon*sigma**12/r**12 - 4*epsilon*sigma**6/r**6"
-        top.atom_types[0].set_expression(alternate_lj)
+        next(iter(top.atom_types)).set_expression(alternate_lj)
 
         top.save("ar.mcf")
 
