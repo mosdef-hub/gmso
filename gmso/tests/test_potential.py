@@ -233,7 +233,7 @@ class TestPotential(BaseTest):
 
     def test_class_method_with_error(self):
         template = object()
-        with pytest.raises(GMSOError):
+        with pytest.raises(TypeError):
             ParametricPotential.from_template(template, parameters=None)
 
     def test_template_parameterization_dimension_mismatch(self):

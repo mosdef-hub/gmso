@@ -2,12 +2,12 @@
 import warnings
 from copy import deepcopy
 from functools import lru_cache
+from typing import Dict
 
 import sympy
 import unyt as u
 
 from gmso.utils.decorators import register_pydantic_json
-from gmso.utils.misc import unyt_to_hashable
 
 __all__ = ["PotentialExpression"]
 
@@ -366,3 +366,55 @@ class PotentialExpression:
                         f"Potential expression and parameter symbols do not agree, "
                         f"extraneous symbols: {extra_syms}"
                     )
+
+    @classmethod
+    def from_non_parametric(
+        cls,
+        non_parametric: "PotentialExpression",
+        parameters: Dict[str, u.unyt_array],
+        valid: bool = False,
+    ) -> "PotentialExpression":
+        """Create a parametric expression from a non-parametric one.
+
+        Parameters
+        ----------
+        non_parametric: PotentialExpression
+            The non-parametric potential expression to create the parametric one from
+
+        parameters: dict
+            The dictionary of parameters for the newly created parametric expression.
+
+        valid: bool, default=False
+            Whether to validate expression/independent_variables and with the parameters.
+
+        Notes
+        -----
+        When `valid=True`, the validation checks (on whether or not the expression/independent_variables
+        match with the provided parameters is not performed. Use with caution.
+
+        Returns
+        -------
+        PotentialExpression
+            The parametric potential expression from the provided parameters
+        """
+        if not isinstance(non_parametric, cls):
+            raise TypeError(
+                f"Expected {non_parametric} to be of type {cls} but found "
+                f"{type(non_parametric)}."
+            )
+
+        if non_parametric.is_parametric:
+            raise ValueError(
+                "Cannot create a parametric expression from a parametric "
+                "expression."
+            )
+
+        else:
+            return cls(
+                expression=deepcopy(non_parametric.expression),
+                parameters=parameters,
+                independent_variables=deepcopy(
+                    non_parametric.independent_variables
+                ),
+                verify_validity=not valid,
+            )

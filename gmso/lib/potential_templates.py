@@ -8,7 +8,11 @@ import unyt as u
 from pydantic import Field, validator
 
 from gmso.abc.abstract_potential import AbstractPotential
-from gmso.exceptions import GMSOError
+from gmso.exceptions import (
+    GMSOError,
+    MissingParameterError,
+    UnknownParameterError,
+)
 from gmso.utils.expression import PotentialExpression
 from gmso.utils.singleton import Singleton
 
@@ -70,7 +74,7 @@ class PotentialTemplate(AbstractPotential):
         super(PotentialTemplate, self).__init__(
             name=name,
             potential_expression=_potential_expression,
-            expected_parameters_dimensions=expected_parameters_dimensions or {},
+            expected_parameters_dimensions=expected_parameters_dimensions,
         )
 
     @validator("expected_parameters_dimensions_", pre=True, always=True)
@@ -111,11 +115,19 @@ class PotentialTemplate(AbstractPotential):
         if not isinstance(parameters, dict):
             raise TypeError("Provided `parameters` is not a dictionary.")
 
+        for param_name in self.expected_parameters_dimensions:
+            if param_name not in parameters:
+                raise MissingParameterError(param_name, list(parameters))
+
         for param_name, param_value in parameters.items():
             quantity = param_value
             if not (isinstance(param_value, u.unyt_array)):
-                quantity = param_value * u.dimensionless
+                raise ValueError(f"Parameter {param_name} lacks a unit.")
 
+            if param_name not in self.expected_parameters_dimensions:
+                raise UnknownParameterError(
+                    param_name, list(self.expected_parameters_dimensions)
+                )
             expected_param_dimension = self.expected_parameters_dimensions[
                 param_name
             ]
@@ -127,7 +139,7 @@ class PotentialTemplate(AbstractPotential):
                     param_dimension = "dimensionless"
 
                 raise AssertionError(
-                    f"Expected parameter {param_name} to be in dimension have "
+                    f"Expected parameter {param_name} to have "
                     f"dimension {expected_param_dimension} but found {param_dimension}. "
                     f"So, a {self.__class__.__name__} cannot be instantiated using the provided "
                     f"parameters: {parameters}"

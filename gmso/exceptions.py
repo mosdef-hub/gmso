@@ -32,3 +32,29 @@ class MixedClassAndTypesError(ForceFieldParseError):
 
 class MissingPotentialError(ForceFieldError):
     """Error for missing Potential when searching for Potentials in a ForceField."""
+
+
+class ParameterError(GMSOError):
+    """Errors related to parameters."""
+
+    def __init__(self, param, expected):
+        self.param = param
+        self.params = expected
+
+
+class UnknownParameterError(ParameterError):
+    """Errors to be raised when a parameter is unknown."""
+
+    def __str__(self):
+        """Error message."""
+        err = f"Parameter {self.param} is not one of the expected parameters {self.params}"
+        return err
+
+
+class MissingParameterError(ParameterError):
+    """Error to be raised when a parameter is missing."""
+
+    def __str__(self):
+        """Error message."""
+        err = f"Parameter '{self.param}' missing from the provided parameters {self.params}"
+        return err

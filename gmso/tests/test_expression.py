@@ -232,3 +232,70 @@ class TestExpression(BaseTest):
         )
 
         assert expr == expr_clone
+
+    def test_from_non_parametric(self):
+        non_parametric = PotentialExpression(
+            expression="x**2+z*x*y+y**2", independent_variables={"z"}
+        )
+
+        parametric = PotentialExpression.from_non_parametric(
+            non_parametric,
+            parameters={"x": 2.9 * u.dimensionless, "y": 10000 * u.m},
+            valid=True,
+        )
+
+        assert parametric.expression == non_parametric.expression
+        assert id(parametric.expression) != id(non_parametric.expression)
+        assert (
+            parametric.independent_variables
+            == non_parametric.independent_variables
+        )
+        parametric.independent_variables.add("X")
+        assert (
+            parametric.independent_variables
+            != non_parametric.independent_variables
+        )
+
+    def test_from_non_parametric_errors(self):
+
+        with pytest.raises(
+            TypeError,
+            match="Expected <object object at .*> to be of type "
+            "<class 'gmso.utils.expression.PotentialExpression'> "
+            "but found <class 'object'>.",
+        ):
+            parametric = PotentialExpression.from_non_parametric(
+                non_parametric=object(), parameters={}
+            )
+
+        non_parametric = PotentialExpression(
+            expression="x**2+z*x*y+y**2", independent_variables={"z"}
+        )
+
+        parametric = PotentialExpression.from_non_parametric(
+            non_parametric,
+            parameters={"x": 2.9 * u.dimensionless, "y": 10000 * u.m},
+            valid=False,
+        )
+
+        with pytest.raises(
+            ValueError,
+            match="Cannot create a parametric expression from a parametric expression.",
+        ):
+            PotentialExpression.from_non_parametric(parametric, parameters={})
+
+        with pytest.raises(
+            ValueError,
+            match="Missing necessary dependencies to evaluate potential expression. Missing symbols: {y}",
+        ):
+            parametric = PotentialExpression.from_non_parametric(
+                non_parametric,
+                parameters={"x": 2.9 * u.dimensionless, "z": 10000 * u.m},
+                valid=False,
+            )
+
+        parametric = PotentialExpression.from_non_parametric(
+            non_parametric,
+            parameters={"x": 2.9 * u.dimensionless, "z": 10000 * u.m},
+            valid=True,
+        )
