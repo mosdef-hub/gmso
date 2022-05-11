@@ -96,6 +96,7 @@ def _parse_lj(top, section):
                 warnings.warn(
                     f"No charge was detected for site {content[1]} with index {content[0]}"
                 )
+                charge = None
 
             atom = Atom(
                 name=content[1],
