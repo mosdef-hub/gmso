@@ -236,6 +236,8 @@ class ParametricPotential(AbstractPotential):
                 f"Object {type(potential_template)} is not an instance of PotentialTemplate."
             )
 
+        potential_template.assert_can_parameterize_with(parameters)
+
         return cls(
             name=potential_template.name,
             expression=potential_template.expression,
