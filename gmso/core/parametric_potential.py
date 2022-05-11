@@ -1,11 +1,9 @@
 from copy import copy, deepcopy
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 import unyt as u
-from pydantic import Field, validator
 
 from gmso.abc.abstract_potential import AbstractPotential
-from gmso.exceptions import GMSOError
 from gmso.utils.expression import PotentialExpression
 
 
