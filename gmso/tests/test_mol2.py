@@ -6,6 +6,7 @@ from unyt.testing import assert_allclose_units
 from gmso import Topology
 from gmso.formats.mol2 import from_mol2
 from gmso.tests.base_test import BaseTest
+from gmso.tests.utils import get_path
 from gmso.utils.io import get_fn
 
 
@@ -101,6 +102,15 @@ class TestMol2(BaseTest):
     def test_lj_system(self):
         top = Topology.load(get_fn("methane.mol2"), site_type="lj")
         assert np.all([site.element == None for site in top.sites])
+
+    def test_no_charge_lj(self):
+        with pytest.warns(
+            UserWarning,
+            match="No charge was detected for site .* with index \d+$",
+        ):
+            top = Topology.load(
+                get_path("methane_missing_charge.mol2"), site_type="lj"
+            )
 
     def test_wrong_path(self):
         with pytest.raises(
