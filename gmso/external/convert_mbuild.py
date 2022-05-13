@@ -69,9 +69,6 @@ def from_mbuild(
     msg = "Argument compound is not an mbuild.Compound"
     assert isinstance(compound, mb.Compound), msg
 
-    # Create a clone of the input compound
-    compound = mb.clone(compound)
-
     top = Topology()
     top.typed = False
 
@@ -117,20 +114,21 @@ def from_mbuild(
                     group_label, molecule_label, residue_label = _parse_label(
                         particle, trackers, group
                     )
-                else:
-                    group_label, molecule_label, residue_label = (
-                        None,
-                        None,
-                        None,
+                    site = Atom(
+                        name=particle.name,
+                        position=pos,
+                        element=ele,
+                        group=group_label,
+                        molecule=molecule_label,
+                        residue=residue_label,
                     )
-                site = Atom(
-                    name=particle.name,
-                    position=pos,
-                    element=ele,
-                    group=group_label,
-                    molecule=molecule_label,
-                    residue=residue_label,
-                )
+                else:
+                    site = Atom(
+                        name=particle.name,
+                        position=pos,
+                        element=ele,
+                    )
+
                 site_map[particle] = site
                 top.add_site(site)
 
