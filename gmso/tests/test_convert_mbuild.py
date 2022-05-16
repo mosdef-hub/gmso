@@ -20,7 +20,7 @@ if has_mbuild:
 class TestConvertMBuild(BaseTest):
     @pytest.fixture
     def mb_ethane(self):
-        return mb.load(get_fn("ethane.mol2"))
+        return mb.lib.molecules.Ethane()
 
     def test_from_mbuild_ethane(self, mb_ethane):
         import mbuild as mb
@@ -34,7 +34,7 @@ class TestConvertMBuild(BaseTest):
             assert top.sites[i].name == top.sites[i].element.symbol
 
         for site in top.sites:
-            assert site.molecule == site.group == "CH3-CH3"
+            assert site.molecule[0] == site.group == "CH3-CH3"
 
     def test_from_mbuild_argon(self, ar_system):
         # ar_system is a 3x3x3nm box filled with 100 argon sites using
@@ -49,7 +49,7 @@ class TestConvertMBuild(BaseTest):
             assert top.sites[i].name == top.sites[i].element.symbol
 
         for site in top.sites:
-            assert site.molecule == site.group == "ar"
+            assert site.molecule[0] == site.group == "ar"
 
     def test_from_mbuild_single_particle(self):
         compound = mb.Compound()
@@ -57,8 +57,6 @@ class TestConvertMBuild(BaseTest):
 
         assert top.n_sites == 1
         assert top.n_connections == 0
-        assert top.sites[0].molecule == "DefaultMolecule"
-        assert top.sites[0].group == "DefaultGroup"
 
     def test_to_mbuild_name_none(self):
         top = Top()
@@ -92,7 +90,8 @@ class TestConvertMBuild(BaseTest):
 
         assert top.n_sites == 1
         assert top.sites[0].group == "mid"
-        assert top.sites[0].molecule == "bot"
+        assert top.sites[0].molecule == ("bot", 0)
+        assert top.sites[0].residue == ("bot", 0)
 
     def test_3_layer_top(self):
         top_top = Top()
@@ -124,7 +123,7 @@ class TestConvertMBuild(BaseTest):
 
         assert top.n_sites == 1
         assert top.sites[0].group == "l1"
-        assert top.sites[0].molecule == "particle"
+        assert top.sites[0].molecule == ("particle", 0)
 
     def test_uneven_hierarchy(self):
         top_cmpnd = mb.Compound(name="top")
@@ -144,9 +143,9 @@ class TestConvertMBuild(BaseTest):
         for site in top.sites:
             if site.name == "particle2":
                 assert site.group == "mid"
-                assert site.molecule == "particle2"
+                assert site.molecule == ("particle2", 0)
             elif site.name == "particle1":
-                assert site.group == site.molecule == "particle1"
+                assert site.group == site.molecule == ("particle1", 0)
 
     def test_pass_box(self, mb_ethane):
         mb_box = Box(lengths=[3, 3, 3])
@@ -174,3 +173,11 @@ class TestConvertMBuild(BaseTest):
         compound = mb.load("CCOC", smiles=True)
         top = from_mbuild(compound)
         assert top.name is not None
+
+    def test_convert_performance(self, mb_ethane):
+        mb_eth_box = mb.fill_box(mb_ethane, n_compounds=10000, box=[10, 10, 10])
+        import time
+
+        start = time.time()
+        from_mbuild(mb_eth_box, parse_label=True)
+        assert time.time() - start <= 3
