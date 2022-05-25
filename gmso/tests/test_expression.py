@@ -246,7 +246,7 @@ class TestExpression(BaseTest):
         expression_clone = expression.clone()
         assert expression_clone == expression
 
-    def test_expression_equlity_different_params(self):
+    def test_expression_equality_different_params(self):
         expr1 = PotentialExpression(
             independent_variables="r",
             parameters={"a": 2.0 * u.nm, "b": 3.0 * u.nm},
@@ -257,6 +257,21 @@ class TestExpression(BaseTest):
             independent_variables="r",
             parameters={"c": 2.0 * u.nm, "d": 3.0 * u.nm},
             expression="c+r*d",
+        )
+
+        assert expr1 != expr2
+
+    def test_expression_equality_same_params_different_values(self):
+        expr1 = PotentialExpression(
+            independent_variables="r",
+            parameters={"a": 2.0 * u.nm, "b": 3.0 * u.nm},
+            expression="a+r*b",
+        )
+
+        expr2 = PotentialExpression(
+            independent_variables="r",
+            parameters={"a": 2.0 * u.nm, "b": 3.5 * u.nm},
+            expression="a+r*b",
         )
 
         assert expr1 != expr2
