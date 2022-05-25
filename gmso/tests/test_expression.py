@@ -232,3 +232,16 @@ class TestExpression(BaseTest):
         )
 
         assert expr == expr_clone
+
+    def test_clone_with_unyt_arrays(self):
+        expression = PotentialExpression(
+            expression="x**2 + y**2 + 2*x*y*theta",
+            independent_variables="theta",
+            parameters={
+                "x": [2.0, 4.5] * u.nm,
+                "y": [3.4, 4.5] * u.kcal / u.mol,
+            },
+        )
+
+        expression_clone = expression.clone()
+        assert expression_clone == expression

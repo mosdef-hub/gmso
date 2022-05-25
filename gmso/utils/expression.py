@@ -7,7 +7,7 @@ import sympy
 import unyt as u
 
 from gmso.utils.decorators import register_pydantic_json
-from gmso.utils.misc import unyt_to_hashable
+from gmso.utils.misc import are_equal_unyt_dicts
 
 __all__ = ["PotentialExpression"]
 
@@ -258,7 +258,7 @@ class PotentialExpression:
             return (
                 self.expression == other.expression
                 and self.independent_variables == other.independent_variables
-                and self.parameters == other.parameters
+                and are_equal_unyt_dicts(self.parameters, other.parameters)
             )
 
     @staticmethod
@@ -295,6 +295,8 @@ class PotentialExpression:
             deepcopy(self._independent_variables),
             {
                 k: u.unyt_quantity(v.value, v.units)
+                if v.value.shape == ()
+                else u.unyt_array(v.value, v.units)
                 for k, v in self._parameters.items()
             }
             if self._is_parametric
