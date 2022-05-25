@@ -3,7 +3,7 @@ import sympy
 import unyt as u
 
 from gmso.tests.base_test import BaseTest
-from gmso.utils.expression import PotentialExpression
+from gmso.utils.expression import PotentialExpression, _are_equal_parameters
 
 
 class TestExpression(BaseTest):
@@ -232,3 +232,51 @@ class TestExpression(BaseTest):
         )
 
         assert expr == expr_clone
+
+    def test_clone_with_unyt_arrays(self):
+        expression = PotentialExpression(
+            expression="x**2 + y**2 + 2*x*y*theta",
+            independent_variables="theta",
+            parameters={
+                "x": [2.0, 4.5] * u.nm,
+                "y": [3.4, 4.5] * u.kcal / u.mol,
+            },
+        )
+
+        expression_clone = expression.clone()
+        assert expression_clone == expression
+
+    def test_expression_equality_different_params(self):
+        expr1 = PotentialExpression(
+            independent_variables="r",
+            parameters={"a": 2.0 * u.nm, "b": 3.0 * u.nm},
+            expression="a+r*b",
+        )
+
+        expr2 = PotentialExpression(
+            independent_variables="r",
+            parameters={"c": 2.0 * u.nm, "d": 3.0 * u.nm},
+            expression="c+r*d",
+        )
+
+        assert expr1 != expr2
+
+    def test_expression_equality_same_params_different_values(self):
+        expr1 = PotentialExpression(
+            independent_variables="r",
+            parameters={"a": 2.0 * u.nm, "b": 3.0 * u.nm},
+            expression="a+r*b",
+        )
+
+        expr2 = PotentialExpression(
+            independent_variables="r",
+            parameters={"a": 2.0 * u.nm, "b": 3.5 * u.nm},
+            expression="a+r*b",
+        )
+
+        assert expr1 != expr2
+
+    def test_are_equal_parameters(self):
+        u1 = {"a": 2.0 * u.nm, "b": 3.5 * u.nm}
+        u2 = {"c": 2.0 * u.nm, "d": 3.5 * u.nm}
+        assert _are_equal_parameters(u1, u2) is False

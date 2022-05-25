@@ -7,9 +7,26 @@ import sympy
 import unyt as u
 
 from gmso.utils.decorators import register_pydantic_json
-from gmso.utils.misc import unyt_to_hashable
 
 __all__ = ["PotentialExpression"]
+
+
+def _are_equal_parameters(u1, u2):
+    """Compare two parameters of unyt quantities/arrays.
+
+    This method compares two dictionaries (`u1` and `u2`) of
+    `unyt_quantities` and returns True if:
+        * u1 and u2 have the exact same key set
+        * for each key, the value in u1 and u2 have the same unyt quantity
+    """
+    if u1.keys() != u2.keys():
+        return False
+    else:
+        for k, v in u1.items():
+            if not u.allclose_units(v, u2[k]):
+                return False
+
+        return True
 
 
 @register_pydantic_json(method="json")
@@ -258,7 +275,7 @@ class PotentialExpression:
             return (
                 self.expression == other.expression
                 and self.independent_variables == other.independent_variables
-                and self.parameters == other.parameters
+                and _are_equal_parameters(self.parameters, other.parameters)
             )
 
     @staticmethod
@@ -295,6 +312,8 @@ class PotentialExpression:
             deepcopy(self._independent_variables),
             {
                 k: u.unyt_quantity(v.value, v.units)
+                if v.value.shape == ()
+                else u.unyt_array(v.value, v.units)
                 for k, v in self._parameters.items()
             }
             if self._is_parametric
