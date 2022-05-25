@@ -120,7 +120,7 @@ def are_equal_unyt_dicts(u1, u2):
     """Compare two dictionaries of unyt quantities/arrays.
 
     This method compares two dictionaries (`u1` and `u2`) of
-    unyt qunatities and returns true if:
+    `unyt_quantities` and returns True if:
         * u1 and u2 have the exact same key set
         * for each key, the value in u1 and u2 have the same unyt quantity
     """
