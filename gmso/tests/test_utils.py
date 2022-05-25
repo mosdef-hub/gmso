@@ -1,7 +1,7 @@
 import unyt as u
 
 from gmso.utils.io import run_from_ipython
-from gmso.utils.misc import are_equal_unyt_dicts, unyt_to_hashable
+from gmso.utils.misc import unyt_to_hashable
 
 
 def test_unyt_to_hashable():
@@ -30,9 +30,3 @@ def test_unyt_to_hashable():
 def test_has_ipython():
     __IPYTHON__ = None
     assert run_from_ipython() is False
-
-
-def test_are_equal_unyt_dicts():
-    u1 = {"a": 2.0 * u.nm, "b": 3.5 * u.nm}
-    u2 = {"c": 2.0 * u.nm, "d": 3.5 * u.nm}
-    assert are_equal_unyt_dicts(u1, u2) is False

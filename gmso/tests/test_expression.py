@@ -3,7 +3,7 @@ import sympy
 import unyt as u
 
 from gmso.tests.base_test import BaseTest
-from gmso.utils.expression import PotentialExpression
+from gmso.utils.expression import PotentialExpression, _are_equal_parameters
 
 
 class TestExpression(BaseTest):
@@ -275,3 +275,8 @@ class TestExpression(BaseTest):
         )
 
         assert expr1 != expr2
+
+    def test_are_equal_parameters(self):
+        u1 = {"a": 2.0 * u.nm, "b": 3.5 * u.nm}
+        u2 = {"c": 2.0 * u.nm, "d": 3.5 * u.nm}
+        assert _are_equal_parameters(u1, u2) is False
