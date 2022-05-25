@@ -308,7 +308,7 @@ class TestAtomType(BaseTest):
         top.add_site(site2)
         site1.atom_type.mass = 250
         assert site1.atom_type.mass == 250
-        assert top.atom_types[0].mass == 250
+        assert next(iter(top.atom_types)).mass == 250
 
     def test_with_1000_atom_types(self):
         top = Topology()
