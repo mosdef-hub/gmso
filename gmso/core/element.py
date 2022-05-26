@@ -46,18 +46,15 @@ class Element(GMSOBase):
         )
 
     def __eq__(self, other):
-        """Return true if the element is equvalent to another element."""
-        return hash(self) == hash(other)
-
-    def __hash__(self):
-        """Generate an unique hash of the element for comparison."""
-        return hash(
-            (
-                self.name,
-                self.symbol,
-                self.atomic_number,
-                unyt_to_hashable(self.mass),
-            )
+        if other is self:
+            return True
+        if not isinstance(other, Element):
+            return False
+        return (
+            self.name == other.name
+            and self.mass == other.mass
+            and self.symbol == other.symbol
+            and self.atomic_number == other.atomic_number
         )
 
     class Config:

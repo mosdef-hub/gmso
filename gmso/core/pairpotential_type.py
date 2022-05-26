@@ -4,7 +4,6 @@ import unyt as u
 from pydantic import Field
 
 from gmso.core.parametric_potential import ParametricPotential
-from gmso.utils._constants import PAIRPOTENTIAL_TYPE_DICT
 from gmso.utils.expression import PotentialExpression
 
 
@@ -41,7 +40,6 @@ class PairPotentialType(ParametricPotential):
         independent_variables=None,
         potential_expression=None,
         member_types=None,
-        topology=None,
         tags=None,
     ):
         super(PairPotentialType, self).__init__(
@@ -49,10 +47,8 @@ class PairPotentialType(ParametricPotential):
             expression=expression,
             parameters=parameters,
             independent_variables=independent_variables,
-            topology=topology,
             member_types=member_types,
             potential_expression=potential_expression,
-            set_ref=PAIRPOTENTIAL_TYPE_DICT,
             tags=tags,
         )
 

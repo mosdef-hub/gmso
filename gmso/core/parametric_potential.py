@@ -1,3 +1,4 @@
+from copy import copy, deepcopy
 from typing import Any, Optional, Union
 
 import unyt as u
@@ -5,7 +6,6 @@ from pydantic import Field, validator
 
 from gmso.abc.abstract_potential import AbstractPotential
 from gmso.exceptions import GMSOError
-from gmso.utils.decorators import confirm_dict_existence
 from gmso.utils.expression import PotentialExpression
 
 
@@ -21,18 +21,6 @@ class ParametricPotential(AbstractPotential):
     by classes that represent these potentials.
     """
 
-    # FIXME: Use proper forward referencing??
-    topology_: Optional[Any] = Field(
-        None, description="the topology of which this potential is a part of"
-    )
-
-    set_ref_: Optional[str] = Field(
-        None,
-        description="The string name of the bookkeeping set in gmso.Topology class. "
-        "This is used to track property based hashed object's "
-        "changes so that a dictionary/set can keep track of them",
-    )
-
     def __init__(
         self,
         name="ParametricPotential",
@@ -40,7 +28,6 @@ class ParametricPotential(AbstractPotential):
         parameters=None,
         potential_expression=None,
         independent_variables=None,
-        topology=None,
         **kwargs,
     ):
         if potential_expression is not None and (
@@ -64,7 +51,6 @@ class ParametricPotential(AbstractPotential):
         super().__init__(
             name=name,
             potential_expression=_potential_expression,
-            topology=topology,
             **kwargs,
         )
 
@@ -106,31 +92,6 @@ class ParametricPotential(AbstractPotential):
         """Optional[dict]\n\tThe parameters of the `Potential` expression and their corresponding values, as `unyt` quantities"""
         return self.potential_expression_.parameters
 
-    @property
-    def topology(self):
-        """Return the associated topology with this potential."""
-        return self.__dict__.get("topology_")
-
-    @property
-    def set_ref(self):
-        """Set the string name of the bookkeeping set in gmso.topology to track potentials."""
-        return self.__dict__.get("set_ref_")
-
-    @validator("topology_")
-    def is_valid_topology(cls, value):
-        """Determine if the topology is a valid gmso topology."""
-        if value is None:
-            return None
-        else:
-            from gmso.core.topology import Topology
-
-            if not isinstance(value, Topology):
-                raise TypeError(
-                    f"{type(value).__name__} is not of type Topology"
-                )
-        return value
-
-    @confirm_dict_existence
     def __setattr__(self, key: Any, value: Any) -> None:
         """Set the attributes of the potential."""
         if key == "parameters":
@@ -138,7 +99,6 @@ class ParametricPotential(AbstractPotential):
         else:
             super().__setattr__(key, value)
 
-    @confirm_dict_existence
     def set_expression(
         self, expression=None, parameters=None, independent_variables=None
     ):
@@ -194,6 +154,18 @@ class ParametricPotential(AbstractPotential):
             exclude_none=exclude_none,
         )
 
+    def __eq__(self, other):
+        if other is self:
+            return True
+        if not isinstance(other, type(self)):
+            return False
+        return (
+            self.expression == other.expression
+            and self.independent_variables == other.independent_variables
+            and self.name == other.name
+            and self.parameters == other.parameters
+        )
+
     def get_parameters(self, copy=False):
         """Return parameters for this ParametricPotential."""
         if copy:
@@ -205,6 +177,26 @@ class ParametricPotential(AbstractPotential):
             params = self.parameters
 
         return params
+
+    def clone(self):
+        """Clone this parametric potential, faster alternative to deepcopying."""
+        Creator = self.__class__
+        kwargs = {"tags": deepcopy(self.tags_)}
+        if hasattr(self, "member_classes"):
+            kwargs["member_classes"] = (
+                copy(self.member_classes) if self.member_classes else None
+            )
+
+        if hasattr(self, "member_types"):
+            kwargs["member_types"] = (
+                copy(self.member_types) if self.member_types else None
+            )
+
+        return Creator(
+            name=self.name,
+            potential_expression=self.potential_expression_.clone(),
+            **kwargs,
+        )
 
     @classmethod
     def from_template(cls, potential_template, parameters, topology=None):
@@ -241,7 +233,6 @@ class ParametricPotential(AbstractPotential):
             expression=potential_template.expression,
             independent_variables=potential_template.independent_variables,
             parameters=parameters,
-            topology=topology,
         )
 
     def __repr__(self):

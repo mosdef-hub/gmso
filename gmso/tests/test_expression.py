@@ -3,7 +3,7 @@ import sympy
 import unyt as u
 
 from gmso.tests.base_test import BaseTest
-from gmso.utils.expression import PotentialExpression
+from gmso.utils.expression import PotentialExpression, _are_equal_parameters
 
 
 class TestExpression(BaseTest):
@@ -185,7 +185,6 @@ class TestExpression(BaseTest):
         )
 
         assert expression_1.expression == expression_2.expression
-        assert hash(expression_1) == hash(expression_2)
         assert expression_3 != expression_2
         assert expression_1 != expression_3
 
@@ -209,6 +208,75 @@ class TestExpression(BaseTest):
         )
 
         assert expression_1.expression == expression_2.expression
-        assert hash(expression_1) == hash(expression_2)
         assert expression_3 != expression_2
         assert expression_1 != expression_3
+
+    def test_clone(self):
+        expr = PotentialExpression(
+            expression="a^2+2*a*b+b^2+2*theta*phi",
+            independent_variables={"theta", "phi"},
+            parameters={"a": 2.0 * u.nm, "b": 2.0 * u.rad},
+        )
+
+        expr_clone = expr.clone()
+
+        assert expr_clone.expression == expr.expression
+        assert id(expr_clone.expression) != id(expr.expression)
+
+        assert expr_clone.parameters == expr.parameters
+        assert id(expr_clone.parameters) != id(expr.parameters)
+
+        assert expr_clone.independent_variables == expr.independent_variables
+        assert id(expr_clone.independent_variables) != id(
+            expr.independent_variables
+        )
+
+        assert expr == expr_clone
+
+    def test_clone_with_unyt_arrays(self):
+        expression = PotentialExpression(
+            expression="x**2 + y**2 + 2*x*y*theta",
+            independent_variables="theta",
+            parameters={
+                "x": [2.0, 4.5] * u.nm,
+                "y": [3.4, 4.5] * u.kcal / u.mol,
+            },
+        )
+
+        expression_clone = expression.clone()
+        assert expression_clone == expression
+
+    def test_expression_equality_different_params(self):
+        expr1 = PotentialExpression(
+            independent_variables="r",
+            parameters={"a": 2.0 * u.nm, "b": 3.0 * u.nm},
+            expression="a+r*b",
+        )
+
+        expr2 = PotentialExpression(
+            independent_variables="r",
+            parameters={"c": 2.0 * u.nm, "d": 3.0 * u.nm},
+            expression="c+r*d",
+        )
+
+        assert expr1 != expr2
+
+    def test_expression_equality_same_params_different_values(self):
+        expr1 = PotentialExpression(
+            independent_variables="r",
+            parameters={"a": 2.0 * u.nm, "b": 3.0 * u.nm},
+            expression="a+r*b",
+        )
+
+        expr2 = PotentialExpression(
+            independent_variables="r",
+            parameters={"a": 2.0 * u.nm, "b": 3.5 * u.nm},
+            expression="a+r*b",
+        )
+
+        assert expr1 != expr2
+
+    def test_are_equal_parameters(self):
+        u1 = {"a": 2.0 * u.nm, "b": 3.5 * u.nm}
+        u2 = {"c": 2.0 * u.nm, "d": 3.5 * u.nm}
+        assert _are_equal_parameters(u1, u2) is False

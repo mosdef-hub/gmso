@@ -16,7 +16,6 @@ from gmso.core.dihedral import Dihedral
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
-from gmso.core.pairpotential_type import PairPotentialType
 from gmso.core.subtopology import SubTopology
 from gmso.core.topology import Topology
 from gmso.exceptions import GMSOError
@@ -196,12 +195,16 @@ class TestTopology(BaseTest):
         top = Topology()
         assert len(top.atom_types) == 0
         top.add_site(typed_site, update_types=False)
-        assert len(top.atom_types) == 0
+        assert (
+            len(top.atom_types) == 1
+        )  # Always upto date now (except for repr)
+        assert top._potentials_count["atom_types"] == 0
 
         top = Topology()
         assert len(top.atom_types) == 0
         top.add_site(typed_site, update_types=True)
         assert len(top.atom_types) == 1
+        assert top._potentials_count["atom_types"] == 1
 
     def test_add_untyped_bond_update(self):
         atom1 = Atom(atom_type=None)
@@ -227,7 +230,7 @@ class TestTopology(BaseTest):
         top.add_site(atom1)
         top.add_site(atom2)
         top.add_connection(bond, update_types=False)
-        assert len(top.connection_types) == 0
+        assert len(top.connection_types) == 1
 
         top = Topology()
         top.add_connection(bond, update_types=True)
@@ -270,8 +273,8 @@ class TestTopology(BaseTest):
         atom1.atom_type = AtomType()
         atom1.atom_type.expression = "sigma*epsilon*r"
         assert top.n_sites == 2
-        assert len(top.atom_types) == 1
-        assert len(top.atom_type_expressions) == 1
+        assert len(top.atom_types) == 2
+        assert len(top.atom_type_expressions) == 2
         assert top.n_connections == 1
         assert len(top.connection_types) == 1
         assert len(top.connection_type_expressions) == 1
@@ -404,8 +407,6 @@ class TestTopology(BaseTest):
         self, pairpotentialtype_top
     ):
         assert len(pairpotentialtype_top.pairpotential_types) == 1
-        pptype12 = pairpotentialtype_top.pairpotential_types[0]
-        assert pairpotentialtype_top._pairpotential_types_idx[pptype12] == 0
 
         pairpotentialtype_top.remove_pairpotentialtype(["a1", "a2"])
         assert len(pairpotentialtype_top.pairpotential_types) == 0
@@ -422,20 +423,11 @@ class TestTopology(BaseTest):
         top = Topology()
 
         assert top.typed == False
-        top.add_site(Atom(atom_type=AtomType()))
+        top.add_site(Atom(atom_type=AtomType()), update_types=True)
 
         assert top.typed == True
         assert top.is_typed() == True
         assert top.typed == True
-
-    def test_parametrization_setter(self):
-        top = Topology()
-
-        assert top.typed == False
-        assert top.is_typed() == False
-        top.typed = True
-        assert top.typed == True
-        assert top.is_typed() == False
 
     def test_topology_atom_type_changes(self):
         top = Topology()
@@ -445,10 +437,9 @@ class TestTopology(BaseTest):
             site.atom_type = atom_type
             top.add_site(site, update_types=False)
         top.update_topology()
-        assert len(top.atom_types) == 10
+        assert len(top.atom_types) == 100
         top.sites[0].atom_type.name = "atom_type_changed"
-        assert id(top.sites[0].atom_type) == id(top.sites[10].atom_type)
-        assert top.sites[10].atom_type.name == "atom_type_changed"
+        assert top.sites[10].atom_type.name != "atom_type_changed"
         assert top.is_typed()
 
     def test_add_duplicate_connected_atom(self):
@@ -562,19 +553,6 @@ class TestTopology(BaseTest):
             == 1
         )
 
-    def test_topology_get_index_atom_type_after_change(
-        self, typed_water_system
-    ):
-        typed_water_system.sites[0].atom_type.name = "atom_type_changed_name"
-        assert (
-            typed_water_system.get_index(typed_water_system.sites[0].atom_type)
-            == 1
-        )
-        assert (
-            typed_water_system.get_index(typed_water_system.sites[1].atom_type)
-            == 0
-        )
-
     def test_topology_get_index_bond_type(self, typed_methylnitroaniline):
         assert (
             typed_methylnitroaniline.get_index(
@@ -587,17 +565,6 @@ class TestTopology(BaseTest):
                 typed_methylnitroaniline.bonds[-1].connection_type
             ),
             int,
-        )
-
-    def test_topology_get_index_bond_type_after_change(
-        self, typed_methylnitroaniline
-    ):
-        typed_methylnitroaniline.bonds[0].connection_type.name = "changed name"
-        assert (
-            typed_methylnitroaniline.get_index(
-                typed_methylnitroaniline.bonds[0].connection_type
-            )
-            != 0
         )
 
     def test_topology_get_index_angle_type(self, typed_chloroethanol):
@@ -614,16 +581,6 @@ class TestTopology(BaseTest):
             == 1
         )
 
-    def test_topology_get_index_angle_type_after_change(
-        self, typed_methylnitroaniline
-    ):
-        angle_type_to_test = typed_methylnitroaniline.angles[0].connection_type
-        prev_idx = typed_methylnitroaniline.get_index(angle_type_to_test)
-        typed_methylnitroaniline.angles[0].connection_type.name = "changed name"
-        assert (
-            typed_methylnitroaniline.get_index(angle_type_to_test) != prev_idx
-        )
-
     def test_topology_get_index_dihedral_type(self, typed_chloroethanol):
         assert (
             typed_chloroethanol.get_index(
@@ -636,21 +593,6 @@ class TestTopology(BaseTest):
                 typed_chloroethanol.dihedrals[5].connection_type
             )
             == 3
-        )
-
-    def test_topology_get_index_dihedral_type_after_change(
-        self, typed_methylnitroaniline
-    ):
-        dihedral_type_to_test = typed_methylnitroaniline.dihedrals[
-            0
-        ].connection_type
-        prev_idx = typed_methylnitroaniline.get_index(dihedral_type_to_test)
-        typed_methylnitroaniline.dihedrals[
-            0
-        ].connection_type.name = "changed name"
-        assert (
-            typed_methylnitroaniline.get_index(dihedral_type_to_test)
-            != prev_idx
         )
 
     def test_topology_get_bonds_for(self, typed_methylnitroaniline):
