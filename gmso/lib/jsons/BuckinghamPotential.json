@@ -5,6 +5,6 @@
   "expected_parameters_dimensions": {
     "a": "energy",
     "b": "1/length",
-    "c": "energy"
+    "c": "energy*length**6"
   }
 }
