@@ -338,6 +338,14 @@ class TestConvertParmEd(BaseTest):
 
     def test_from_parmed_impropers(self):
         mol = "NN-dimethylformamide"
-        pmd_structure = pmd.load_file(get_fn("{}.top".format(mol)), xyz=get_fn("{}.gro".format(mol)), parametrize=False)
-        impropers = [dihedral for dihedral in pmd_structure.dihedrals if dihedral.improper]
+        pmd_structure = pmd.load_file(
+            get_fn("{}.top".format(mol)),
+            xyz=get_fn("{}.gro".format(mol)),
+            parametrize=False,
+        )
+        impropers = [
+            dihedral
+            for dihedral in pmd_structure.dihedrals
+            if dihedral.improper
+        ]
         assert len(impropers) == 2
