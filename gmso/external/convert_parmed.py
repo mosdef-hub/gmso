@@ -73,7 +73,9 @@ def from_parmed(structure, refer_type=True):
         )
         # Consolidate parmed dihedraltypes and relate to topology dihedraltypes
         # TODO: CCC seperate structure dihedrals.improper = False
-        dihedral_types_map = _get_types_map(structure, "dihedrals", impropers=False)
+        dihedral_types_map = _get_types_map(
+            structure, "dihedrals", impropers=False
+        )
         dihedral_types_map.update(_get_types_map(structure, "rb_torsions"))
         pmd_top_dihedraltypes = _dihedral_types_from_pmd(
             structure, dihedral_types_member_map=dihedral_types_map
@@ -81,11 +83,12 @@ def from_parmed(structure, refer_type=True):
         # Consolidate parmed dihedral/impropertypes and relate to topology impropertypes
         # TODO: CCC seperate structure dihedrals.improper = True
         improper_types_map = _get_types_map(structure, "impropers")
-        improper_types_map.update(_get_types_map(structure, "dihedrals"), impropers=True)
+        improper_types_map.update(
+            _get_types_map(structure, "dihedrals"), impropers=True
+        )
         pmd_top_impropertypes = _improper_types_from_pmd(
             structure, improper_types_member_map=improper_types_map
         )
-
 
     subtops = list()
     for residue in structure.residues:
@@ -458,6 +461,7 @@ def _dihedral_types_from_pmd(structure, dihedral_types_member_map=None):
         pmd_top_dihedraltypes[dihedraltype] = top_dihedraltype
     return pmd_top_dihedraltypes
 
+
 def _improper_types_from_pmd(structure, improper_types_member_map=None):
     """Convert ParmEd improper types to GMSO ImproperType.
 
@@ -515,6 +519,7 @@ def _improper_types_from_pmd(structure, improper_types_member_map=None):
         )
         pmd_top_impropertypes[impropertype] = top_impropertype
     return pmd_top_impropertypes
+
 
 def to_parmed(top, refer_type=True):
     """Convert a gmso.topology.Topology to a parmed.Structure.
@@ -850,10 +855,19 @@ def _dihedral_types_from_gmso(top, structure, dihedral_map):
 
 def _get_types_map(structure, attr, impropers=False):
     """Build `member_types` map for atoms, bonds, angles and dihedrals."""
-    assert attr in {"atoms", "bonds", "angles", "dihedrals", "rb_torsions", "impropers"}
+    assert attr in {
+        "atoms",
+        "bonds",
+        "angles",
+        "dihedrals",
+        "rb_torsions",
+        "impropers",
+    }
     type_map = {}
     for member in getattr(structure, attr):
-        conn_type_id, member_types = _get_member_types_map_for(member, impropers)
+        conn_type_id, member_types = _get_member_types_map_for(
+            member, impropers
+        )
         if conn_type_id not in type_map and all(member_types):
             type_map[conn_type_id] = member_types
     return type_map
@@ -870,7 +884,7 @@ def _get_member_types_map_for(member, impropers=False):
             member.atom2.type,
             member.atom3.type,
         )
-    elif not impropers: #return dihedrals
+    elif not impropers:  # return dihedrals
         if isinstance(member, pmd.Dihedral) and not member.improper:
             return id(member.type), (
                 member.atom1.type,
@@ -878,8 +892,10 @@ def _get_member_types_map_for(member, impropers=False):
                 member.atom3.type,
                 member.atom4.type,
             )
-    elif impropers: #return impropers
-        if (isinstance(member, pmd.Dihedral) and member.improper) or isinstance(member, pmd.Improper):
+    elif impropers:  # return impropers
+        if (isinstance(member, pmd.Dihedral) and member.improper) or isinstance(
+            member, pmd.Improper
+        ):
             return id(member.type), (
                 member.atom1.type,
                 member.atom2.type,
@@ -887,7 +903,6 @@ def _get_member_types_map_for(member, impropers=False):
                 member.atom4.type,
             )
     return None, (None, None)
-
 
 
 def _assert_dict(input_dict, param):
