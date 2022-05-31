@@ -343,9 +343,20 @@ class TestConvertParmEd(BaseTest):
             xyz=get_fn("{}.gro".format(mol)),
             parametrize=False,
         )
-        impropers = [
-            dihedral
-            for dihedral in pmd_structure.dihedrals
-            if dihedral.improper
-        ]
-        assert len(impropers) == 2
+        assert all(dihedral.improper for dihedral in pmd_structure.dihedrals)
+
+        gmso_top = from_parmed(pmd_structure)
+        assert len(gmso_top.impropers) == 2
+        for gmso_improper, pmd_improper in zip(
+            gmso_top.impropers, pmd_structure.dihedrals
+        ):
+            pmd_member_names = list(
+                atom.name
+                for atom in [
+                    getattr(pmd_improper, f"atom{j+1}") for j in range(4)
+                ]
+            )
+            gmso_member_names = list(
+                map(lambda a: a.name, gmso_improper.connection_members)
+            )
+            assert pmd_member_names == gmso_member_names
