@@ -455,11 +455,15 @@ def to_parmed(top, refer_type=True):
     # Set up Parmed structure and define general properties
     structure = pmd.Structure()
     structure.title = top.name
-    structure.box = np.concatenate(
-        (
-            top.box.lengths.to("angstrom").value,
-            top.box.angles.to("degree").value,
+    structure.box = (
+        np.concatenate(
+            (
+                top.box.lengths.to("angstrom").value,
+                top.box.angles.to("degree").value,
+            )
         )
+        if top.box
+        else None
     )
 
     # Maps
@@ -479,8 +483,10 @@ def to_parmed(top, refer_type=True):
         pmd_atom = pmd.Atom(
             atomic_number=atomic_number,
             name=site.name,
-            mass=site.mass.to(u.amu).value,
-            charge=site.charge.to(u.elementary_charge).value,
+            mass=site.mass.to(u.amu).value if site.mass else None,
+            charge=site.charge.to(u.elementary_charge).value
+            if site.charge
+            else None,
         )
         pmd_atom.xx, pmd_atom.xy, pmd_atom.xz = site.position.to(
             "angstrom"

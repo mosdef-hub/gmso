@@ -225,6 +225,7 @@ class TopologyParameterizer(GMSOBase):
                 typemap,
                 is_subtop=False,  # This will be removed from the future iterations
             )
+        self.topology.update_topology()
 
     @staticmethod
     def connection_identifier(

@@ -10,3 +10,4 @@ dependencies:
   - pydantic < 1.9.0
   - networkx
   - ele >= 0.2.0
+  - forcefield-utilities
