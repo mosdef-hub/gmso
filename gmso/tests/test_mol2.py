@@ -4,7 +4,6 @@ import unyt as u
 from unyt.testing import assert_allclose_units
 
 from gmso import Topology
-from gmso.formats.mol2 import from_mol2
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
 from gmso.utils.io import get_fn
@@ -100,7 +99,7 @@ class TestMol2(BaseTest):
     def test_no_charge_lj(self):
         with pytest.warns(
             UserWarning,
-            match="No charge was detected for site .* with index \d+$",
+            match=r"No charge was detected for site .* with index \d+$",
         ):
             top = Topology.load(
                 get_path("methane_missing_charge.mol2"), site_type="lj"
@@ -132,3 +131,11 @@ class TestMol2(BaseTest):
 
         for atom in top.sites:
             assert atom.element.name in {"hydrogen", "carbon"}
+
+    def test_neopentane_mol2_elements(self):
+        with pytest.warns(
+            UserWarning,
+            match=r"No element detected for site .+ with index \d+, "
+            r"consider manually adding the element to the topology$",
+        ):
+            top = Topology.load(get_fn("neopentane.mol2"))
