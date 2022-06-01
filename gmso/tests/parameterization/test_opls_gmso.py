@@ -29,6 +29,7 @@ def get_foyer_opls_test_dirs():
     return parent_dirs
 
 
+@pytest.mark.skip
 class TestOPLSGMSO(BaseTest):
     @pytest.fixture(scope="session")
     def xml_loader(self):

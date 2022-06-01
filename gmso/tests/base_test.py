@@ -340,7 +340,6 @@ class BaseTest:
             )
             for prop in atom1.dict(by_alias=True):
                 if not equal(atom2.dict().get(prop), atom1.dict().get(prop)):
-                    print(atom2.dict().get(prop), atom1.dict().get(prop), prop)
                     return False
             return True
 
