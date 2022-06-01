@@ -62,12 +62,6 @@ class TestMol2(BaseTest):
             top = Topology.load(get_fn("ethane.mol2"))
         assert list(top.sites)[0].charge is None
 
-        with pytest.warns(
-            UserWarning,
-            match=r"No element detected for site C with index 1, consider manually adding the element to the topology",
-        ):
-            Topology.load(get_fn("benzene.mol2"))
-
     def test_residue(self):
         top = Topology.load(get_fn("ethanol_aa.mol2"))
         assert np.all([site.residue_name == "ETO" for site in top.sites])
@@ -132,3 +126,9 @@ class TestMol2(BaseTest):
             match=r"This mol2 file has two boxes to be read in, only reading in one with dimensions Box\(a=0.72",
         ):
             Topology.load(get_fn("broken.mol2"))
+
+    def test_benzene_mol2_elements(self):
+        top = Topology.load(get_fn("benzene.mol2"))
+
+        for atom in top.sites:
+            assert atom.element.name in {"hydrogen", "carbon"}
