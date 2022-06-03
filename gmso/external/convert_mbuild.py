@@ -3,6 +3,7 @@ from warnings import warn
 
 import numpy as np
 import unyt as u
+from boltons.setutils import IndexedSet
 
 from gmso.core.atom import Atom
 from gmso.core.bond import Bond
