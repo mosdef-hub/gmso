@@ -30,7 +30,9 @@ def get_topology_graph(gmso_topology, atomdata_populator=None):
         A light networkx representation of the topology
     """
     top_graph = TopologyGraph()
-    for atom in gmso_topology.sites:
+    atom_index_map = {}
+    for j, atom in enumerate(gmso_topology.sites):
+        atom_index_map[id(atom)] = j
         if isinstance(atom, Atom):
             kwargs = (
                 atomdata_populator(gmso_topology, atom)
@@ -40,7 +42,7 @@ def get_topology_graph(gmso_topology, atomdata_populator=None):
             if atom.name.startswith("_"):
                 top_graph.add_atom(
                     name=atom.name,
-                    index=gmso_topology.get_index(atom),
+                    index=j,  # Assumes order is preserved
                     atomic_number=None,
                     element=atom.name,
                     **kwargs,
@@ -49,7 +51,7 @@ def get_topology_graph(gmso_topology, atomdata_populator=None):
             else:
                 top_graph.add_atom(
                     name=atom.name,
-                    index=gmso_topology.get_index(atom),
+                    index=j,  # Assumes order is preserved
                     atomic_number=atom.element.atomic_number,
                     element=atom.element.symbol,
                     **kwargs,
@@ -57,8 +59,7 @@ def get_topology_graph(gmso_topology, atomdata_populator=None):
 
     for top_bond in gmso_topology.bonds:
         atoms_indices = [
-            gmso_topology.get_index(atom)
-            for atom in top_bond.connection_members
+            atom_index_map[id(atom)] for atom in top_bond.connection_members
         ]
         top_graph.add_bond(atoms_indices[0], atoms_indices[1])
 
