@@ -260,10 +260,13 @@ class TopologyParameterizer(GMSOBase):
             isomorphic_substructures = partition_isomorphic_topology_graphs(
                 foyer_topology_graph
             )
+            typemap = {}
             for graph, mirrors in isomorphic_substructures.items():
-                typemap = typemap_dict(
-                    atomtyping_rules_provider=atom_typing_rules_provider,
-                    topology_graph=graph,
+                typemap.update(
+                    typemap_dict(
+                        atomtyping_rules_provider=atom_typing_rules_provider,
+                        topology_graph=graph,
+                    )
                 )
                 for mirror, mapping in mirrors:
                     for node in mirror:
