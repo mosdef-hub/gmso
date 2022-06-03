@@ -72,63 +72,68 @@ def from_mbuild(
     top = Topology()
     top.typed = False
 
-    # Keep the name if it is not the default mBuild Compound name
-    if compound.name != mb.Compound().name:
-        top.name = compound.name
-
-    try:
-        connected_subgraph = compound.bond_graph.connected_components()
-    except:
-        connected_subgraph = [[]]
-
-    children_set = compound.children
-    molecule_groups = list()
-    for subgraph in connected_subgraph:
-        tmp_group = list()
-        for child in children_set:
-            if set(child.particles()).issubset(subgraph):
-                tmp_group.append(child)
-        if tmp_group:
-            molecule_groups.append(tmp_group)
-        for comp in tmp_group:
-            children_set.remove(comp)
-
-    # Add remaining children (those don't have any bond and hence don't
-    # show up in the bondgraph)
-    for remained in children_set:
-        molecule_groups.append([remained])
-
     site_map = dict()
-    for group in molecule_groups:
-        trackers = {"molecule": {}, "residue": {}}
-        for cmp in group:
-            for particle in cmp.particles():
+    if not parse_label:
+
+        for particle in compound.particles():
+            pos = particle.xyz[0] * u.nanometer
+            if particle.element:
+                ele = search_method(particle.element.symbol)
+            else:
+                ele = search_method(particle.name)
+            site = Atom(
+                name=particle.name,
+                position=pos,
+                element=ele,
+            )
+            site_map[particle] = site
+            top.add_site(site)
+    else:
+        connected_subgraph = compound.bond_graph.connected_components()
+        molecule_tracker = dict()
+        for molecule in connected_subgraph:
+            ancestors = IndexedSet(molecule[0].ancestors())
+            for particle in molecule:
+                ancestors.intersection(IndexedSet(particle.ancestors()))
+
+            # This works because particle.ancestors traversed, and hence
+            # the lower level will be in the front.
+            # The intersection will only remove, not add to the IndexedSet
+            # of the first particle we used as reference.
+            # Hence, this called will return the lowest-level Compound
+            # that is a molecule
+            """Parse molecule information"""
+            molecule_tag = ancestors[0]
+            if molecule_tag in molecule_tracker:
+                molecule_tracker[molecule_tag] += 1
+            else:
+                molecule_tracker[molecule_tag] = 0
+            molecule_number = molecule_tracker[molecule_tag]
+            """End of molecule parsing"""
+
+            residue_tracker = dict()
+            for particle in molecule:
                 pos = particle.xyz[0] * u.nanometer
                 if particle.element:
                     ele = search_method(particle.element.symbol)
                 else:
                     ele = search_method(particle.name)
 
-                # Determining the lowest molecule this particle belongs to
-                if parse_label:
-                    group_label, molecule_label, residue_label = _parse_label(
-                        particle, trackers, group
-                    )
-                    site = Atom(
-                        name=particle.name,
-                        position=pos,
-                        element=ele,
-                        group=group_label,
-                        molecule=molecule_label,
-                        residue=residue_label,
-                    )
+                """Parse residue information"""
+                residue_tag = particle.parent
+                if residue_tag in residue_tracker:
+                    residue_tracker[residue_tag] += 1
                 else:
-                    site = Atom(
-                        name=particle.name,
-                        position=pos,
-                        element=ele,
-                    )
+                    residue_tracker[residue_tag] = 0
+                residue_number = residue_tracker[residue_tag]
 
+                site = Atom(
+                    name=particle.name,
+                    position=pos,
+                    element=ele,
+                    molecule=(molecule_tag.name, molecule_number),
+                    residue=(residue_tag.name, residue_number),
+                )
                 site_map[particle] = site
                 top.add_site(site)
 
@@ -139,8 +144,6 @@ def from_mbuild(
             bond_type=None,
         )
         top.add_connection(new_bond, update_types=False)
-
-    top.update_topology()
 
     if box:
         top.box = from_mbuild_box(box)
@@ -200,49 +203,6 @@ def to_mbuild(topology):
             )
 
     return compound
-
-
-def _parse_label(particle, trackers, group):
-    """Parse molecule name/number and residue name/number of an mBuild particle."""
-    if isinstance(group, mb.Compound):
-        group_name = group.name
-    else:
-        group_name = "-".join(sorted(cmp.name for cmp in group))
-
-    molecule = particle
-    while not molecule.is_independent():
-        molecule = molecule.parent
-
-    molecule_name = group_name if molecule == molecule.root else molecule.name
-
-    if molecule_name in trackers["molecule"]:
-        if molecule in trackers["molecule"][molecule_name]:
-            molecule_number = trackers["molecule"][molecule_name][molecule]
-        else:
-            molecule_number = trackers["molecule"][molecule_name][
-                molecule
-            ] = len(trackers["molecule"][molecule_name])
-    else:
-        trackers["molecule"][molecule_name] = {molecule: 0}
-        molecule_number = 0
-
-    # Determining residue and residue number
-    residue = particle.parent
-    residue_name = residue.name
-    if residue_name in trackers["residue"]:
-        if residue in trackers["residue"][residue_name]:
-            residue_number = trackers["residue"][residue_name][residue]
-        else:
-            residue_number = trackers["residue"][residue_name][residue] = len(
-                trackers["residue"][residue_name]
-            )
-    else:
-        trackers["residue"][residue_name] = {residue: 0}
-        residue_number = 0
-
-    molecule_label = (molecule_name, molecule_number)
-    residue_label = (residue_name, residue_number)
-    return group_name, molecule_label, residue_label
 
 
 def from_mbuild_box(mb_box):
