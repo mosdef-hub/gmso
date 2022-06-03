@@ -1,4 +1,5 @@
 """Convert to and from a TRIPOS mol2 file."""
+import itertools
 import warnings
 from pathlib import Path
 
@@ -110,17 +111,21 @@ def _parse_lj(top, section):
 
 def _parse_atom(top, section):
     """Parse atom information from the mol2 file."""
-    parse_ele = (
-        lambda ele: element_by_symbol(ele)
-        if element_by_symbol(ele)
-        else element_by_name(ele)
-    )
+
+    def parse_ele(*symbols):
+        methods = [element_by_name, element_by_symbol]
+        elem = None
+        for symbol, method in itertools.product(symbols, methods):
+            elem = method(symbol)
+            if elem:
+                break
+        return elem
 
     for line in section:
         if line.strip():
             content = line.split()
             position = [float(x) for x in content[2:5]] * u.Å
-            element = parse_ele(content[5])
+            element = parse_ele(content[5], content[1])
 
             if not element:
                 warnings.warn(
