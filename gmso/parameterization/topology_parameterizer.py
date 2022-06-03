@@ -209,8 +209,8 @@ class TopologyParameterizer(GMSOBase):
                         is_subtop=True,
                     )
                     self._parameterize(
-                        typemap,
                         subtop,
+                        typemap,
                         is_subtop=True,  # This will be removed from the future iterations
                     )
         else:
