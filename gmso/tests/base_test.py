@@ -53,7 +53,7 @@ class BaseTest:
 
     @pytest.fixture
     def ar_system(self, n_ar_system):
-        return from_mbuild(n_ar_system())
+        return from_mbuild(n_ar_system(), parse_label=True)
 
     @pytest.fixture
     def n_ar_system(self):
@@ -494,8 +494,7 @@ class BaseTest:
         for i in range(1, 26):
             atom = Atom(
                 name=f"atom_{i + 1}",
-                residue_number=i % 5,
-                residue_name="MY_RES_EVEN" if i % 2 == 0 else f"MY_RES_ODD",
+                residue=("MY_RES_EVEN" if i % 2 == 0 else f"MY_RES_ODD", i % 5),
             )
             top.add_site(atom, update_types=False)
         top.update_topology()

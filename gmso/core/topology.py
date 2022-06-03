@@ -1134,25 +1134,29 @@ class Topology(object):
             if getattr(site, key) == value:
                 yield site
 
-    def iter_sites_by_residue_name(self, name):
-        """Iterate through this topology's sites which contain this specific residue `name`.
+    def iter_sites_by_residue(self, name):
+        """Iterate through this topology's sites which contain this specific residue name.
 
         See Also
         --------
         gmso.core.topology.Topology.iter_sites
             The method to iterate over Topology's sites
         """
-        return self.iter_sites("residue_name", name)
+        for site in self._sites:
+            if getattr(site, "residue")[0] == name:
+                yield site
 
-    def iter_sites_by_residue_number(self, number):
-        """Iterate through this topology's sites which contain this specific residue `number`.
+    def iter_sites_by_molecule(self, name):
+        """Iterate through this topology's sites which contain this specific molecule name.
 
         See Also
         --------
         gmso.core.topology.Topology.iter_sites
             The method to iterate over Topology's sites
         """
-        return self.iter_sites("residue_number", number)
+        for site in self._sites:
+            if getattr(site, "molecule")[0] == name:
+                yield site
 
     def save(self, filename, overwrite=False, **kwargs):
         """Save the topology to a file.

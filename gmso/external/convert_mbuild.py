@@ -93,9 +93,14 @@ def from_mbuild(
         connected_subgraph = compound.bond_graph.connected_components()
         molecule_tracker = dict()
         for molecule in connected_subgraph:
-            ancestors = IndexedSet(molecule[0].ancestors())
-            for particle in molecule:
-                ancestors.intersection(IndexedSet(particle.ancestors()))
+            if len(molecule) == 1:
+                ancestors = [molecule[0]]
+            else:
+                ancestors = IndexedSet(molecule[0].ancestors())
+                for particle in molecule:
+                    ancestors = ancestors.intersection(
+                        IndexedSet(particle.ancestors())
+                    )
 
             # This works because particle.ancestors traversed, and hence
             # the lower level will be in the front.
@@ -105,11 +110,12 @@ def from_mbuild(
             # that is a molecule
             """Parse molecule information"""
             molecule_tag = ancestors[0]
-            if molecule_tag in molecule_tracker:
-                molecule_tracker[molecule_tag] += 1
+            # The duplication is determined solely by name
+            if molecule_tag.name in molecule_tracker:
+                molecule_tracker[molecule_tag.name] += 1
             else:
-                molecule_tracker[molecule_tag] = 0
-            molecule_number = molecule_tracker[molecule_tag]
+                molecule_tracker[molecule_tag.name] = 0
+            molecule_number = molecule_tracker[molecule_tag.name]
             """End of molecule parsing"""
 
             residue_tracker = dict()
@@ -122,11 +128,15 @@ def from_mbuild(
 
                 """Parse residue information"""
                 residue_tag = particle.parent
-                if residue_tag in residue_tracker:
-                    residue_tracker[residue_tag] += 1
+                if residue_tag.name in residue_tracker:
+                    if residue_tag not in residue_tracker[residue_tag.name]:
+                        residue_tracker[residue_tag.name][residue_tag] = len(
+                            residue_tracker[residue_tag.name]
+                        )
                 else:
-                    residue_tracker[residue_tag] = 0
-                residue_number = residue_tracker[residue_tag]
+                    residue_tracker[residue_tag.name] = {residue_tag: 0}
+
+                residue_number = residue_tracker[residue_tag.name][residue_tag]
 
                 site = Atom(
                     name=particle.name,

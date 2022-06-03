@@ -33,9 +33,6 @@ class TestConvertMBuild(BaseTest):
             assert isinstance(top.sites[i].element, gmso.Element)
             assert top.sites[i].name == top.sites[i].element.symbol
 
-        for site in top.sites:
-            assert site.molecule[0] == site.group == "CH3-CH3"
-
     def test_from_mbuild_argon(self, ar_system):
         # ar_system is a 3x3x3nm box filled with 100 argon sites using
         # mBuild, and then converted to topology via from_mbuild.
@@ -49,14 +46,15 @@ class TestConvertMBuild(BaseTest):
             assert top.sites[i].name == top.sites[i].element.symbol
 
         for site in top.sites:
-            assert site.molecule[0] == site.group == "ar"
+            assert site.molecule[0] == "ar"
 
     def test_from_mbuild_single_particle(self):
         compound = mb.Compound()
-        top = from_mbuild(compound)
+        top = from_mbuild(compound, parse_label=False)
 
         assert top.n_sites == 1
         assert top.n_connections == 0
+        assert top.sites[0].residue == top.sites[0].molecule == None
 
     def test_to_mbuild_name_none(self):
         top = Top()
@@ -86,10 +84,9 @@ class TestConvertMBuild(BaseTest):
 
         top_cmpnd.periodicity = [True, True, True]
 
-        top = from_mbuild(top_cmpnd)
+        top = from_mbuild(top_cmpnd, parse_label=True)
 
         assert top.n_sites == 1
-        assert top.sites[0].group == "mid"
         assert top.sites[0].molecule == ("bot", 0)
         assert top.sites[0].residue == ("bot", 0)
 
@@ -119,10 +116,9 @@ class TestConvertMBuild(BaseTest):
 
         l0_cmpnd.periodicity = [True, True, True]
 
-        top = from_mbuild(l0_cmpnd)
+        top = from_mbuild(l0_cmpnd, parse_label=True)
 
         assert top.n_sites == 1
-        assert top.sites[0].group == "l1"
         assert top.sites[0].molecule == ("particle", 0)
 
     def test_uneven_hierarchy(self):
@@ -137,31 +133,30 @@ class TestConvertMBuild(BaseTest):
 
         top_cmpnd.periodicity = [True, True, True]
 
-        top = from_mbuild(top_cmpnd)
+        top = from_mbuild(top_cmpnd, parse_label=True)
 
         assert top.n_sites == 2
         for site in top.sites:
             if site.name == "particle2":
-                assert site.group == "mid"
                 assert site.molecule == ("particle2", 0)
             elif site.name == "particle1":
-                assert site.group == site.molecule == ("particle1", 0)
+                assert site.molecule == ("particle1", 0)
 
     def test_pass_box(self, mb_ethane):
         mb_box = Box(lengths=[3, 3, 3])
 
-        top = from_mbuild(mb_ethane, box=mb_box)
+        top = from_mbuild(mb_ethane, box=mb_box, parse_label=True)
         assert_allclose_units(
             top.box.lengths, [3, 3, 3] * u.nm, rtol=1e-5, atol=1e-8
         )
 
     def test_pass_failed_box(self, mb_ethane):
         with pytest.raises(ValueError):
-            top = from_mbuild(mb_ethane, box=[3, 3, 3])
+            top = from_mbuild(mb_ethane, box=[3, 3, 3], parse_label=True)
 
     def test_pass_box_bounding(self, mb_ethane):
         mb_ethane.periodicity = [False, False, False]
-        top = from_mbuild(mb_ethane)
+        top = from_mbuild(mb_ethane, parse_label=True)
         assert_allclose_units(
             top.box.lengths,
             (mb_ethane.get_boundingbox().lengths) * u.nm,
@@ -173,11 +168,3 @@ class TestConvertMBuild(BaseTest):
         compound = mb.load("CCOC", smiles=True)
         top = from_mbuild(compound)
         assert top.name is not None
-
-    def test_convert_performance(self, mb_ethane):
-        mb_eth_box = mb.fill_box(mb_ethane, n_compounds=10000, box=[10, 10, 10])
-        import time
-
-        start = time.time()
-        from_mbuild(mb_eth_box, parse_label=True)
-        assert time.time() - start <= 3
