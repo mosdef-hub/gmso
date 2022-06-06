@@ -203,7 +203,7 @@ class TestPotentialTemplates(BaseTest):
         assert buckingham_potential.expected_parameters_dimensions == {
             "a": ud.energy,
             "b": 1 / ud.length,
-            "c": ud.energy,
+            "c": ud.energy * ud.length**6,
         }
 
     def test_available_template(self, templates):
