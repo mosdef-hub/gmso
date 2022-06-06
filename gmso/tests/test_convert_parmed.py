@@ -407,6 +407,7 @@ class TestConvertParmEd(BaseTest):
             struct.dihedral_types.append(dtype)
 
         gmso_top = from_parmed(struct)
-        assert len(gmso_top.impropers) == 10
+        assert len(gmso_top.impropers) == 5
+        assert len(gmso_top.dihedrals) == 5
         assert len(gmso_top.improper_types) == 5
         assert len(gmso_top.dihedral_types) == 5

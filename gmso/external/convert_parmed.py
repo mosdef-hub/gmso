@@ -450,7 +450,7 @@ def _dihedral_types_from_pmd(structure, dihedral_types_member_map=None):
         top_dihedraltype = gmso.DihedralType(
             potential_expression=expr, member_types=member_types
         )
-        pmd_top_dihedraltypes[dihedraltype] = top_dihedraltype
+        pmd_top_dihedraltypes[id(dihedraltype)] = top_dihedraltype
 
     for dihedraltype in structure.rb_torsion_types:
         dihedral_params = {
