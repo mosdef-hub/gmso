@@ -1,3 +1,5 @@
+import random
+
 import foyer
 import mbuild as mb
 import numpy as np
@@ -373,3 +375,28 @@ class TestConvertParmEd(BaseTest):
             gmso_top.impropers[0].improper_type.name
             == "PeriodicImproperPotential"
         )
+
+    def test_simple_pmd__impropers(self):
+        struct = pmd.Structure()
+        all_atoms = []
+        for j in range(25):
+            atom = pmd.Atom(
+                atomic_number=j + 1,
+                type=f"atom_type_{j + 1}",
+                charge=random.randint(1, 10),
+                mass=1.0,
+            )
+            atom.xx, atom.xy, atom.xz = (
+                random.random(),
+                random.random(),
+                random.random(),
+            )
+            all_atoms.append(atom)
+            struct.add_atom(atom, "RES", 1)
+
+        for j in range(10):
+            struct.dihedrals.append(
+                pmd.Dihedral(*random.sample(struct.atoms, 4), improper=True)
+            )
+        gmso_top = from_parmed(struct)
+        assert len(gmso_top.impropers) == 10
