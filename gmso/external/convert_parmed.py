@@ -274,8 +274,35 @@ def from_parmed(structure, refer_type=True):
             )
         top.add_connection(top_connection, update_types=False)
 
-    # TODO: Need to iterate over structure.impropers to also get
-    # harmonic type impropers from a parmed improper.
+    for improper in structure.impropers:
+        if refer_type and isinstance(improper.type, pmd.ImproperType):
+            # TODO: Improper atom order is not always clear in a Parmed object.
+            # This reader assumes the order of impropers is central atom first,
+            # so that is where the central atom is located. This decision comes
+            # from .top files in utils/files/NN-dimethylformamide.top, which
+            # clearly places the periodic impropers with central atom listed first,
+            # and that is where the atom is placed in the parmed.dihedrals object.
+            top_connection = gmso.Improper(
+                connection_members=[
+                    site_map[improper.atom1],
+                    site_map[improper.atom2],
+                    site_map[improper.atom3],
+                    site_map[improper.atom4],
+                ],
+                improper_type=pmd_top_impropertypes[improper.type],
+            )
+            # No bond parameters, make Connection with no connection_type
+        else:
+            top_connection = gmso.Improper(
+                connection_members=[
+                    site_map[improper.atom1],
+                    site_map[improper.atom2],
+                    site_map[improper.atom3],
+                    site_map[improper.atom4],
+                ],
+                improper_type=None,
+            )
+        top.add_connection(top_connection, update_types=False)
 
     top.update_topology()
 
