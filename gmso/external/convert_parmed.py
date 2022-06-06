@@ -13,11 +13,13 @@ from gmso.core.element import (
     element_by_name,
     element_by_symbol,
 )
-from gmso.utils.io import has_parmed, import_
 from gmso.lib.potential_templates import PotentialTemplateLibrary
+from gmso.utils.io import has_parmed, import_
 
 if has_parmed:
     pmd = import_("parmed")
+
+lib = PotentialTemplateLibrary()
 
 
 def from_parmed(structure, refer_type=True):
@@ -505,12 +507,12 @@ def _improper_types_from_pmd(structure, improper_types_member_map=None):
             "phi_eq": (dihedraltype.phase * u.degree),
             "n": dihedraltype.per * u.dimensionless,
         }
-        expr = gmso.ImproperType._default_potential_expr()
-        expr.parameters = improper_params
+        expr = lib["PeriodicImproperPotential"]
         member_types = improper_types_member_map.get(id(dihedraltype))
-        top_impropertype = gmso.ImproperType(
-            potential_expression=expr, member_types=member_types
+        top_impropertype = gmso.ImproperType.from_template(
+            potential_template=expr, parameters=improper_params
         )
+        top_impropertype.member_types = member_types
         pmd_top_impropertypes[dihedraltype] = top_impropertype
 
     for impropertype in structure.improper_types:
@@ -518,13 +520,12 @@ def _improper_types_from_pmd(structure, improper_types_member_map=None):
             "k": (impropertype.psi_k * u.Unit("kcal/mol")),
             "phi_eq": (impropertype.psi_eq * u.Unit("kcal/mol")),
         }
-        lib = PotenialTemplatesLibrary()
         expr = lib["HarmonicImproperPotential"]
-        expr.parameters = improper_params
         member_types = improper_types_member_map.get(id(impropertype))
-        top_impropertype = gmso.ImproperType(
-            potential_expression=expr, member_types=member_types
+        top_impropertype = gmso.ImproperType.from_template(
+            potential_template=expr, parameters=improper_params
         )
+        top_impropertype.member_types = member_types
         pmd_top_impropertypes[impropertype] = top_impropertype
     return pmd_top_impropertypes
 
