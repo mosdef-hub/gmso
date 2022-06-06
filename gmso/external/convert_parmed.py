@@ -14,6 +14,7 @@ from gmso.core.element import (
     element_by_symbol,
 )
 from gmso.utils.io import has_parmed, import_
+from gmso.lib.potential_templates import PotentialTemplateLibrary
 
 if has_parmed:
     pmd = import_("parmed")
@@ -184,6 +185,12 @@ def from_parmed(structure, refer_type=True):
                 + "topology.Improper with a periodic improper expression"
             )
             if refer_type and isinstance(dihedral.type, pmd.DihedralType):
+                # TODO: Improper atom order is not always clear in a Parmed object.
+                # This reader assumes the order of impropers is central atom first,
+                # so that is where the central atom is located. This decision comes
+                # from .top files in utils/files/NN-dimethylformamide.top, which
+                # clearly places the periodic impropers with central atom listed first,
+                # and that is where the atom is placed in the parmed.dihedrals object.
                 top_connection = gmso.Improper(
                     connection_members=[
                         site_map[dihedral.atom1],
@@ -264,6 +271,9 @@ def from_parmed(structure, refer_type=True):
                 dihedral_type=None,
             )
         top.add_connection(top_connection, update_types=False)
+
+    # TODO: Need to iterate over structure.impropers to also get
+    # harmonic type impropers from a parmed improper.
 
     top.update_topology()
 
@@ -503,19 +513,17 @@ def _improper_types_from_pmd(structure, improper_types_member_map=None):
         )
         pmd_top_impropertypes[dihedraltype] = top_impropertype
 
-    for impropertype in structure.impropers:
+    for impropertype in structure.improper_types:
         improper_params = {
-            "xi_k": (impropertype.psi_k * u.Unit("kcal/mol")),
-            "xi_eq": (impropertype.psi_eq * u.Unit("kcal/mol")),
+            "k": (impropertype.psi_k * u.Unit("kcal/mol")),
+            "phi_eq": (impropertype.psi_eq * u.Unit("kcal/mol")),
         }
-
+        lib = PotenialTemplatesLibrary()
+        expr = lib["HarmonicImproperPotential"]
+        expr.parameters = improper_params
         member_types = improper_types_member_map.get(id(impropertype))
-
         top_impropertype = gmso.ImproperType(
-            parameters=improper_params,
-            expression="0.5 * xi_k * (xi-xi_eq)**2",
-            independent_variables="xi",
-            member_types=member_types,
+            potential_expression=expr, member_types=member_types
         )
         pmd_top_impropertypes[impropertype] = top_impropertype
     return pmd_top_impropertypes
