@@ -382,8 +382,14 @@ class TestConvertParmEd(BaseTest):
             struct.add_atom(atom, "RES", 1)
 
         for j in range(10):
-            struct.dihedrals.append(
-                pmd.Dihedral(*random.sample(struct.atoms, 4), improper=True)
+            dih = pmd.Dihedral(*random.sample(struct.atoms, 4), improper=True)
+            dtype = pmd.DihedralType(
+                random.random(), random.random(), random.random()
             )
+            struct.dihedrals.append(dih)
+            dih.type = dtype
+            struct.dihedral_types.append(dtype)
+
         gmso_top = from_parmed(struct)
         assert len(gmso_top.impropers) == 10
+        assert len(gmso_top.improper_types) == 10
