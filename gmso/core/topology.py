@@ -323,6 +323,22 @@ class Topology(object):
         return self._impropers
 
     @property
+    def molecule_tags(self):
+        """Return a list of all molecule tags in the Topology."""
+        molecule_tags = IndexedSet()
+        for site in self.sites:
+            molecule_tags.add(site.molecule[0])
+        return molecule_tags
+
+    @property
+    def residue_tags(self):
+        """Return a list of all residue tgas in the Topology."""
+        residue_tags = IndexedSet()
+        for site in self.sites:
+            residue_tags.add(site.residue[0])
+        return residue_tags
+
+    @property
     def atom_types(self):
         """Return all atom_types in the topology.
 

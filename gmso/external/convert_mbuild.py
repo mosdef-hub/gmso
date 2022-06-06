@@ -193,25 +193,39 @@ def to_mbuild(topology):
         compound.name = topology.name
 
     particle_map = dict()
-    for site in topology.sites:
-        if site.element:
-            element = site.element.symbol
-        else:
-            element = None
-        particle = mb.Compound(
-            name=site.name, pos=site.position, element=element
-        )
-        particle_map[site] = particle
-        compound.add(particle)
-
-    for connect in topology.connections:
-        if isinstance(connect, Bond):
-            compound.add_bond(
-                (
-                    particle_map[connect.connection_members[0]],
-                    particle_map[connect.connection_members[1]],
+    for molecule_tag in topology.molecule_tags:
+        mb_molecule = mb.Compound(name=molecule_tag)
+        for site_group in topology.iter_sites_by_molecule(molecule_tag()):
+            residue_dict = dict()
+            for site in site_group:
+                if site.element:
+                    element = site.element.symbol
+                else:
+                    element = None
+                particle = mb.Compound(
+                    name=site.name, pos=site.position, element=element
                 )
+                particle_map[site] = particle
+
+                # Try to add the particle to a residue level
+                residue_tag = (
+                    site.residue if site.residue else ("DefaultResidue", 0)
+                )  # the 0 idx is place holder and does nothing
+                if residue_tag in residue_dict:
+                    residue_dict[residue_tag].add(particle)
+                else:
+                    residue_dict[residue_tag] = mb.Compound(name=residue_tag[0])
+            for key, item in residue_dict.items():
+                mb_molecule.add(item)
+        compound.add(mb_molecule)
+
+    for connect in topology.bonds:
+        particle_map[connect.connection_members[0]].parent.parent.add_bond(
+            (
+                particle_map[connect.connection_members[0]],
+                particle_map[connect.connection_members[1]],
             )
+        )
 
     return compound
 
