@@ -346,6 +346,7 @@ class TestConvertParmEd(BaseTest):
             parametrize=False,
         )
         assert all(dihedral.improper for dihedral in pmd_structure.dihedrals)
+        assert len(pmd_structure.rb_torsions) == 16
 
         gmso_top = from_parmed(pmd_structure)
         assert len(gmso_top.impropers) == 2
@@ -362,8 +363,20 @@ class TestConvertParmEd(BaseTest):
                 map(lambda a: a.name, gmso_improper.connection_members)
             )
             assert pmd_member_names == gmso_member_names
+        pmd_structure = pmd.load_file(
+            get_fn("{}.top".format(mol)),
+            xyz=get_fn("{}.gro".format(mol)),
+            parametrize=False,
+        )
+        assert all(dihedral.improper for dihedral in pmd_structure.dihedrals)
+        assert len(pmd_structure.rb_torsions) == 16
+        gmso_top = from_parmed(pmd_structure)
+        assert (
+            gmso_top.impropers[0].improper_type.name
+            == "PeriodicImproperPotential"
+        )
 
-    def test_from_pmd_impropers(self):
+    def test_simple_pmd_impropers(self):
         struct = pmd.Structure()
         all_atoms = []
         for j in range(25):
