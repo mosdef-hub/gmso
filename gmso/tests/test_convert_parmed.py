@@ -376,7 +376,7 @@ class TestConvertParmEd(BaseTest):
             == "PeriodicImproperPotential"
         )
 
-    def test_simple_pmd_impropers(self):
+    def test_simple_pmd_dihedrals_impropers(self):
         struct = pmd.Structure()
         all_atoms = []
         for j in range(25):
@@ -395,11 +395,22 @@ class TestConvertParmEd(BaseTest):
             struct.add_atom(atom, "RES", 1)
 
         for j in range(10):
-            struct.dihedrals.append(
-                pmd.Dihedral(*random.sample(struct.atoms, 4), improper=True)
+            dih = pmd.Dihedral(
+                *random.sample(struct.atoms, 4),
+                improper=True if j % 2 == 0 else False,
             )
+            struct.dihedrals.append(dih)
+            dtype = pmd.DihedralType(
+                random.random(), random.random(), random.random()
+            )
+            dih.type = dtype
+            struct.dihedral_types.append(dtype)
+
         gmso_top = from_parmed(struct)
-        assert len(gmso_top.impropers) == 10
+        assert len(gmso_top.impropers) == 5
+        assert len(gmso_top.dihedrals) == 5
+        assert len(gmso_top.improper_types) == 5
+        assert len(gmso_top.dihedral_types) == 5
 
     def test_pmd_improper_types(self):
         struct = pmd.Structure()

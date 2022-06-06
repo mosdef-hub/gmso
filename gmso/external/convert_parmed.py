@@ -179,6 +179,7 @@ def from_parmed(structure, refer_type=True):
         # Which are the default expression in top.DihedralType
         # These periodic torsion dihedrals get stored in top.dihedrals
         # and periodic torsion impropers get stored in top.impropers
+
         if dihedral.improper:
             warnings.warn(
                 "ParmEd improper dihedral {} ".format(dihedral)
@@ -186,6 +187,7 @@ def from_parmed(structure, refer_type=True):
                 + "expression detected, currently accounted for as "
                 + "topology.Improper with a periodic improper expression"
             )
+
             if refer_type and isinstance(dihedral.type, pmd.DihedralType):
                 # TODO: Improper atom order is not always clear in a Parmed object.
                 # This reader assumes the order of impropers is central atom first,
@@ -200,7 +202,7 @@ def from_parmed(structure, refer_type=True):
                         site_map[dihedral.atom3],
                         site_map[dihedral.atom4],
                     ],
-                    improper_type=pmd_top_impropertypes[dihedral.type],
+                    improper_type=pmd_top_impropertypes[id(dihedral.type)],
                 )
             # No bond parameters, make Connection with no connection_type
             else:
@@ -224,7 +226,7 @@ def from_parmed(structure, refer_type=True):
                         site_map[dihedral.atom3],
                         site_map[dihedral.atom4],
                     ],
-                    dihedral_type=pmd_top_dihedraltypes[dihedral.type],
+                    dihedral_type=pmd_top_dihedraltypes[id(dihedral.type)],
                 )
             # No bond parameters, make Connection with no connection_type
             else:
@@ -259,7 +261,7 @@ def from_parmed(structure, refer_type=True):
                     site_map[rb_torsion.atom3],
                     site_map[rb_torsion.atom4],
                 ],
-                dihedral_type=pmd_top_dihedraltypes[rb_torsion.type],
+                dihedral_type=pmd_top_dihedraltypes[id(rb_torsion.type)],
             )
         # No bond parameters, make Connection with no connection_type
         else:
@@ -475,7 +477,7 @@ def _dihedral_types_from_pmd(structure, dihedral_types_member_map=None):
         top_dihedraltype = gmso.DihedralType(
             potential_expression=expr, member_types=member_types
         )
-        pmd_top_dihedraltypes[dihedraltype] = top_dihedraltype
+        pmd_top_dihedraltypes[id(dihedraltype)] = top_dihedraltype
 
     for dihedraltype in structure.rb_torsion_types:
         dihedral_params = {
@@ -497,7 +499,7 @@ def _dihedral_types_from_pmd(structure, dihedral_types_member_map=None):
             independent_variables="phi",
             member_types=member_types,
         )
-        pmd_top_dihedraltypes[dihedraltype] = top_dihedraltype
+        pmd_top_dihedraltypes[id(dihedraltype)] = top_dihedraltype
     return pmd_top_dihedraltypes
 
 
@@ -539,8 +541,8 @@ def _improper_types_from_pmd(structure, improper_types_member_map=None):
         top_impropertype = gmso.ImproperType.from_template(
             potential_template=expr, parameters=improper_params
         )
+        pmd_top_impropertypes[id(dihedraltype)] = top_impropertype
         top_impropertype.member_types = member_types
-        pmd_top_impropertypes[dihedraltype] = top_impropertype
 
     for impropertype in structure.improper_types:
         improper_params = {
