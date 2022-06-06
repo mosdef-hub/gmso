@@ -327,7 +327,7 @@ class Topology(object):
         """Return a list of all molecule tags in the Topology."""
         molecule_tags = IndexedSet()
         for site in self.sites:
-            molecule_tags.add(site.molecule[0])
+            molecule_tags.add(site.molecule[0] if site.molecule else None)
         return molecule_tags
 
     @property
@@ -1158,9 +1158,14 @@ class Topology(object):
         gmso.core.topology.Topology.iter_sites
             The method to iterate over Topology's sites
         """
-        for site in self._sites:
-            if getattr(site, "residue")[0] == name:
-                yield site
+        if name is None:
+            for site in self._sites:
+                if not site.residue:
+                    yield site
+        else:
+            for site in self._sites:
+                if site.residue and getattr(site, "residue")[0] == name:
+                    yield site
 
     def iter_sites_by_molecule(self, name):
         """Iterate through this topology's sites which contain this specific molecule name.
@@ -1170,9 +1175,14 @@ class Topology(object):
         gmso.core.topology.Topology.iter_sites
             The method to iterate over Topology's sites
         """
-        for site in self._sites:
-            if getattr(site, "molecule")[0] == name:
-                yield site
+        if name is None:
+            for site in self._sites:
+                if not site.molecule:
+                    yield site
+        else:
+            for site in self._sites:
+                if site.molecule and getattr(site, "molecule")[0] == name:
+                    yield site
 
     def save(self, filename, overwrite=False, **kwargs):
         """Save the topology to a file.

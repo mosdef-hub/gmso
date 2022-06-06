@@ -75,7 +75,6 @@ def from_mbuild(
 
     site_map = dict()
     if not parse_label:
-
         for particle in compound.particles():
             pos = particle.xyz[0] * u.nanometer
             if particle.element:
@@ -127,7 +126,9 @@ def from_mbuild(
                     ele = search_method(particle.name)
 
                 """Parse residue information"""
-                residue_tag = particle.parent
+                residue_tag = (
+                    particle if particle.is_independent() else particle.parent
+                )
                 if residue_tag.name in residue_tracker:
                     if residue_tag not in residue_tracker[residue_tag.name]:
                         residue_tracker[residue_tag.name][residue_tag] = len(
@@ -137,7 +138,6 @@ def from_mbuild(
                     residue_tracker[residue_tag.name] = {residue_tag: 0}
 
                 residue_number = residue_tracker[residue_tag.name][residue_tag]
-
                 site = Atom(
                     name=particle.name,
                     position=pos,
@@ -145,6 +145,7 @@ def from_mbuild(
                     molecule=(molecule_tag.name, molecule_number),
                     residue=(residue_tag.name, residue_number),
                 )
+
                 site_map[particle] = site
                 top.add_site(site)
 
@@ -195,28 +196,29 @@ def to_mbuild(topology):
     particle_map = dict()
     for molecule_tag in topology.molecule_tags:
         mb_molecule = mb.Compound(name=molecule_tag)
-        for site_group in topology.iter_sites_by_molecule(molecule_tag()):
-            residue_dict = dict()
-            for site in site_group:
-                if site.element:
-                    element = site.element.symbol
-                else:
-                    element = None
-                particle = mb.Compound(
-                    name=site.name, pos=site.position, element=element
-                )
-                particle_map[site] = particle
+        residue_dict = dict()
+        for site in topology.iter_sites_by_molecule(molecule_tag):
+            if site.element:
+                element = site.element.symbol
+            else:
+                element = None
+            particle = mb.Compound(
+                name=site.name, pos=site.position, element=element
+            )
+            particle_map[site] = particle
 
-                # Try to add the particle to a residue level
-                residue_tag = (
-                    site.residue if site.residue else ("DefaultResidue", 0)
-                )  # the 0 idx is place holder and does nothing
-                if residue_tag in residue_dict:
-                    residue_dict[residue_tag].add(particle)
-                else:
-                    residue_dict[residue_tag] = mb.Compound(name=residue_tag[0])
-            for key, item in residue_dict.items():
-                mb_molecule.add(item)
+            # Try to add the particle to a residue level
+            residue_tag = (
+                site.residue if site.residue else ("DefaultResidue", 0)
+            )  # the 0 idx is place holder and does nothing
+            if residue_tag in residue_dict:
+                residue_dict[residue_tag].add(particle)
+            else:
+                residue_dict[residue_tag] = mb.Compound(name=residue_tag[0])
+                residue_dict[residue_tag].add(particle)
+
+        for key, item in residue_dict.items():
+            mb_molecule.add(item)
         compound.add(mb_molecule)
 
     for connect in topology.bonds:
