@@ -435,6 +435,9 @@ class TestConvertParmEd(BaseTest):
                 pmd.Improper(*random.sample(struct.atoms, 4))
             )
         for improp in struct.impropers:
-            improp.improper_type = pmd.ImproperType(1, 1)
+            improp.type = pmd.ImproperType(random.random(), random.random())
+            struct.improper_types.append(improp.type)
+
         gmso_top = from_parmed(struct)
         assert len(gmso_top.impropers) == len(struct.impropers)
+        assert len(gmso_top.improper_types) == len(struct.improper_types)
