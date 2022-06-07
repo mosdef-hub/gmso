@@ -1,3 +1,5 @@
+import random
+
 import foyer
 import mbuild as mb
 import numpy as np
@@ -344,6 +346,7 @@ class TestConvertParmEd(BaseTest):
             parametrize=False,
         )
         assert all(dihedral.improper for dihedral in pmd_structure.dihedrals)
+        assert len(pmd_structure.rb_torsions) == 16
 
         gmso_top = from_parmed(pmd_structure)
         assert len(gmso_top.impropers) == 2
@@ -360,3 +363,78 @@ class TestConvertParmEd(BaseTest):
                 map(lambda a: a.name, gmso_improper.connection_members)
             )
             assert pmd_member_names == gmso_member_names
+        pmd_structure = pmd.load_file(
+            get_fn("{}.top".format(mol)),
+            xyz=get_fn("{}.gro".format(mol)),
+            parametrize=False,
+        )
+        assert all(dihedral.improper for dihedral in pmd_structure.dihedrals)
+        assert len(pmd_structure.rb_torsions) == 16
+        gmso_top = from_parmed(pmd_structure)
+        assert (
+            gmso_top.impropers[0].improper_type.name
+            == "PeriodicImproperPotential"
+        )
+
+    def test_simple_pmd_dihedrals_impropers(self):
+        struct = pmd.Structure()
+        all_atoms = []
+        for j in range(25):
+            atom = pmd.Atom(
+                atomic_number=j + 1,
+                type=f"atom_type_{j + 1}",
+                charge=random.randint(1, 10),
+                mass=1.0,
+            )
+            atom.xx, atom.xy, atom.xz = (
+                random.random(),
+                random.random(),
+                random.random(),
+            )
+            all_atoms.append(atom)
+            struct.add_atom(atom, "RES", 1)
+
+        for j in range(10):
+            dih = pmd.Dihedral(
+                *random.sample(struct.atoms, 4),
+                improper=True if j % 2 == 0 else False,
+            )
+            struct.dihedrals.append(dih)
+            dtype = pmd.DihedralType(
+                random.random(), random.random(), random.random()
+            )
+            dih.type = dtype
+            struct.dihedral_types.append(dtype)
+
+        gmso_top = from_parmed(struct)
+        assert len(gmso_top.impropers) == 5
+        assert len(gmso_top.dihedrals) == 5
+        assert len(gmso_top.improper_types) == 5
+        assert len(gmso_top.dihedral_types) == 5
+
+    def test_pmd_improper_types(self):
+        struct = pmd.Structure()
+        all_atoms = []
+        for j in range(25):
+            atom = pmd.Atom(
+                atomic_number=j + 1,
+                type=f"atom_type_{j + 1}",
+                charge=random.randint(1, 10),
+                mass=1.0,
+            )
+            atom.xx, atom.xy, atom.xz = (
+                random.random(),
+                random.random(),
+                random.random(),
+            )
+            all_atoms.append(atom)
+            struct.add_atom(atom, "RES", 1)
+
+        for j in range(10):
+            struct.impropers.append(
+                pmd.Improper(*random.sample(struct.atoms, 4))
+            )
+        for improp in struct.impropers:
+            improp.improper_type = pmd.ImproperType(1, 1)
+        gmso_top = from_parmed(struct)
+        assert len(gmso_top.impropers) == len(struct.impropers)
