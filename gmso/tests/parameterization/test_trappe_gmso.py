@@ -1,9 +1,7 @@
 import glob
 from pathlib import Path
 
-import foyer
 import pytest
-import unyt as u
 from pkg_resources import resource_filename
 
 from gmso.core.topology import Topology

@@ -1,6 +1,5 @@
 import foyer
 import mbuild as mb
-import mbuild.recipes
 import numpy as np
 import pytest
 import unyt as u
@@ -11,7 +10,6 @@ from gmso.core.atom_type import AtomType
 from gmso.core.bond import Bond
 from gmso.core.box import Box
 from gmso.core.dihedral import Dihedral
-from gmso.core.element import Hydrogen, Oxygen
 from gmso.core.forcefield import ForceField
 from gmso.core.improper import Improper
 from gmso.core.pairpotential_type import PairPotentialType
