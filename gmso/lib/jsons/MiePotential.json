@@ -1,5 +1,11 @@
 {
   "name": "MiePotential",
   "expression": "(n/(n-m)) * (n/m)**(m/(n-m)) * epsilon * ((sigma/r)**n - (sigma/r)**m)",
-  "independent_variables": "r"
+  "independent_variables": "r",
+  "expected_parameters_dimensions": {
+    "n": "dimensionless",
+    "m": "dimensionless",
+    "epsilon": "energy",
+    "sigma": "length"
+  }
 }

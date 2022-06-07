@@ -209,16 +209,18 @@ class TestPotential(BaseTest):
 
     def test_class_method(self):
         template = PotentialTemplateLibrary()["HarmonicBondPotential"]
-        params = {"k": 1.0 * u.dimensionless, "r_eq": 1.0 * u.dimensionless}
+        params = {"k": 1.0 * u.kcal / u.nm**2, "r_eq": 1.0 * u.nm}
         harmonic_potential_from_template = ParametricPotential.from_template(
             template, params
         )
+
         harmonic_potential = ParametricPotential(
             name="HarmonicBondPotential",
             expression="0.5 * k * (r-r_eq)**2",
             independent_variables={"r"},
             parameters=params,
         )
+
         assert harmonic_potential.name == harmonic_potential_from_template.name
         assert (
             harmonic_potential.expression
@@ -231,8 +233,20 @@ class TestPotential(BaseTest):
 
     def test_class_method_with_error(self):
         template = object()
-        with pytest.raises(GMSOError):
+        with pytest.raises(TypeError):
             ParametricPotential.from_template(template, parameters=None)
+
+    def test_template_parameterization_dimension_mismatch(self):
+        template = PotentialTemplateLibrary()["HarmonicBondPotential"]
+        params = {
+            "k": 1.0 * u.kcal * u.dimensionless / u.nm,
+            "r_eq": 1.0 * u.nm,
+        }
+
+        with pytest.raises(AssertionError):
+            harmonic_potential_from_template = (
+                ParametricPotential.from_template(template, params)
+            )
 
     def test_bondtype_clone(self):
         top = Topology()

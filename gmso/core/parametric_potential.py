@@ -1,11 +1,9 @@
 from copy import copy, deepcopy
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 import unyt as u
-from pydantic import Field, validator
 
 from gmso.abc.abstract_potential import AbstractPotential
-from gmso.exceptions import GMSOError
 from gmso.utils.expression import PotentialExpression
 
 
@@ -199,17 +197,20 @@ class ParametricPotential(AbstractPotential):
         )
 
     @classmethod
-    def from_template(cls, potential_template, parameters, topology=None):
+    def from_template(cls, potential_template, parameters, name=None, **kwargs):
         """Create a potential object from the potential_template.
 
         Parameters
         ----------
         potential_template : gmso.lib.potential_templates.PotentialTemplate,
-                            The potential template object
+            The potential template object
         parameters : dict,
-                    The parameters of the potential object to create
-        topology : gmso.Topology, default=None
-                   The topology to which the created potential object belongs to
+            The parameters of the potential object to create
+        name: str, default=None,
+            The new name for the created parametric potential, defaults to the
+            template name.
+        **kwargs: dict
+            The remaining keyword arguments to the Parametric potential's constructor.
 
         Returns
         -------
@@ -224,15 +225,19 @@ class ParametricPotential(AbstractPotential):
         from gmso.lib.potential_templates import PotentialTemplate
 
         if not isinstance(potential_template, PotentialTemplate):
-            raise GMSOError(
-                f"Object {type(potential_template)} is not an instance of PotentialTemplate."
+            raise TypeError(
+                f"Object {potential_template} of type {type(potential_template)} is not an instance of "
+                f"PotentialTemplate."
             )
 
+        potential_template.assert_can_parameterize_with(parameters)
+        new_expression = PotentialExpression.from_non_parametric(
+            potential_template.potential_expression, parameters, valid=True
+        )
         return cls(
-            name=potential_template.name,
-            expression=potential_template.expression,
-            independent_variables=potential_template.independent_variables,
-            parameters=parameters,
+            name=name or potential_template.name,
+            potential_expression=new_expression,
+            **kwargs,
         )
 
     def __repr__(self):
