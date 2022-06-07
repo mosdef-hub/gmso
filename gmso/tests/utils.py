@@ -33,3 +33,38 @@ def allclose_units_mixed(u_iter1, u_iter2):
         if not u.allclose_units(q1, q2):
             return False
     return True
+
+
+def match_connection_parameters(
+    from_gmso_top, from_parmed_top, connection_type="bonds"
+):
+    """Match connection parameters between two gmso topologies."""
+    connection_types_original = {}
+    connection_types_mirror = {}
+    for connection in getattr(from_parmed_top, connection_type):
+        connection_types_mirror[
+            tuple(
+                from_parmed_top.get_index(member)
+                for member in connection.connection_members
+            )
+        ] = connection
+
+    for connection in getattr(from_gmso_top, connection_type):
+        connection_types_original[
+            tuple(
+                from_gmso_top.get_index(member)
+                for member in connection.connection_members
+            )
+        ] = connection
+
+    for key in connection_types_original:
+        conn = connection_types_original[key]
+        conn_mirror = connection_types_mirror[key]
+        conn_type_attr = connection_type[:-1] + "_type"
+        conn_type_mirror = getattr(conn_mirror, conn_type_attr)
+        conn_type = getattr(conn, conn_type_attr)
+        for param in conn_type.parameters:
+            assert u.allclose_units(
+                conn_type_mirror.parameters[param],
+                conn_type.parameters[param],
+            )

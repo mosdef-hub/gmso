@@ -558,3 +558,7 @@ class BaseTest:
     @pytest.fixture(scope="session")
     def trappe_ua_gmso(self, xml_loader):
         return xml_loader.load("trappe_ua", rel_to_module=True).to_gmso_ff()
+
+    @pytest.fixture(scope="session")
+    def oplsaa_foyer(self):
+        return foyer.forcefields.load_OPLSAA()

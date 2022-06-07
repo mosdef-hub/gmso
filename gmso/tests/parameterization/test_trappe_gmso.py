@@ -4,13 +4,13 @@ from pathlib import Path
 import foyer
 import pytest
 import unyt as u
-from forcefield_utilities.xml_loader import FoyerFFs
 from pkg_resources import resource_filename
 
-import gmso
+from gmso.core.topology import Topology
 from gmso.external.convert_parmed import from_parmed, to_parmed
 from gmso.parameterization.parameterize import apply
 from gmso.tests.base_test import BaseTest
+from gmso.tests.utils import match_connection_parameters
 
 
 def get_foyer_trappe_test_dirs():
@@ -31,38 +31,6 @@ def get_foyer_trappe_test_dirs():
     return parent_dirs
 
 
-def _match_connection_parameters(
-    from_gmso_top, from_parmed_top, connection_type="bonds"
-):
-    connection_types_original = {}
-    connection_types_mirror = {}
-    for connection in getattr(from_parmed_top, connection_type):
-        connection_types_mirror[
-            tuple(
-                from_parmed_top.get_index(member)
-                for member in connection.connection_members
-            )
-        ] = connection
-
-    for connection in getattr(from_gmso_top, connection_type):
-        connection_types_original[
-            tuple(
-                from_gmso_top.get_index(member)
-                for member in connection.connection_members
-            )
-        ] = connection
-
-    for key in connection_types_original:
-        conn = connection_types_original[key]
-        print(key)
-        conn_mirror = connection_types_mirror[key]
-        for param in conn_mirror.bond_type.parameters:
-            assert u.allclose_units(
-                conn_mirror.bond_type.parameters[param],
-                conn.bond_type.parameters[param],
-            )
-
-
 class TestTrappeGMSO(BaseTest):
     @pytest.fixture(scope="session")
     def trappe_ua_openmm_foyer(self):
@@ -79,7 +47,7 @@ class TestTrappeGMSO(BaseTest):
         are_equivalent_connections,
     ):
         mol2_file = system_dir / f"{system_dir.name}.mol2"
-        gmso_top = gmso.Topology.load(mol2_file)
+        gmso_top = Topology.load(mol2_file)
         struct_pmd = trappe_ua_openmm_foyer.apply(to_parmed(gmso_top))
         apply(gmso_top, trappe_ua_gmso, identify_connected_components=False)
         gmso_top_from_parmeterized_pmd = from_parmed(struct_pmd)
@@ -96,10 +64,10 @@ class TestTrappeGMSO(BaseTest):
             for k in atom_params:
                 assert u.allclose_units(atom_params[k], mirror_params[k])
 
-        _match_connection_parameters(gmso_top, gmso_top_from_parmeterized_pmd)
-        _match_connection_parameters(
+        match_connection_parameters(gmso_top, gmso_top_from_parmeterized_pmd)
+        match_connection_parameters(
             gmso_top, gmso_top_from_parmeterized_pmd, "angles"
         )
-        _match_connection_parameters(
+        match_connection_parameters(
             gmso_top, gmso_top_from_parmeterized_pmd, "dihedrals"
         )
