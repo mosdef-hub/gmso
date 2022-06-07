@@ -1,5 +1,13 @@
 {
   "name": "RyckaertBellemansTorsionPotential",
   "expression": "c0 * cos(phi)**0 + c1 * cos(phi)**1 + c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + c5 * cos(phi)**5",
-  "independent_variables": "phi"
+  "independent_variables": "phi",
+  "expected_parameters_dimensions": {
+    "c0": "energy",
+    "c1": "energy",
+    "c2": "energy",
+    "c3": "energy",
+    "c4": "energy",
+    "c5": "energy"
+  }
 }
