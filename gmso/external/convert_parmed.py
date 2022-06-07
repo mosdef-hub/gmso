@@ -546,8 +546,8 @@ def _improper_types_from_pmd(structure, improper_types_member_map=None):
 
     for impropertype in structure.improper_types:
         improper_params = {
-            "k": (impropertype.psi_k * u.Unit("kcal/mol")),
-            "phi_eq": (impropertype.psi_eq * u.Unit("kcal/mol")),
+            "k": (impropertype.psi_k * u.kcal / (u.mol * u.radian**2)),
+            "phi_eq": (impropertype.psi_eq * u.degree),
         }
         expr = lib["HarmonicImproperPotential"]
         member_types = improper_types_member_map.get(id(impropertype))
