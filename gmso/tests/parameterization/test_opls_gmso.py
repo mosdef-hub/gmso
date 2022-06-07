@@ -28,7 +28,6 @@ def get_foyer_opls_test_dirs():
     return parent_dirs
 
 
-@pytest.mark.skip
 class TestOPLSGMSO(BaseTest):
     @pytest.mark.parametrize(
         "system_dir", get_foyer_opls_test_dirs(), ids=lambda p: p.name
