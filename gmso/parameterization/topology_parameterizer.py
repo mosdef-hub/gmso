@@ -181,8 +181,36 @@ class TopologyParameterizer(GMSOBase):
             subtop_or_top, forcefield, is_subtop=is_subtop
         )
 
+    def _verify_forcefields_metadata(self):
+        """Verify all the provided forcefields have the same scaling factors and combining rule."""
+        if isinstance(self.forcefields, dict):
+            ffs = list(self.forcefields.values())
+            init_scaling_factors = ffs[0].scaling_factors
+            init_combining_rule = ffs[0].combining_rule
+            for ff in ffs[1:]:
+                if ff.scaling_factors != init_scaling_factors:
+                    raise GMSOParameterizationError(
+                        "Scaling factors of the provided forcefields do not"
+                        "match, please provide forcefields with same scaling"
+                        "factors that apply to a Topology"
+                    )
+
+                if ff.combining_rule != init_combining_rule:
+                    raise GMSOParameterizationError(
+                        "Combining rules of the provided forcefields do not"
+                        "match, please provide forcefields with same scaling"
+                        "factors that apply to a Topology"
+                    )
+            return init_scaling_factors, init_combining_rule
+        else:
+            return (
+                self.forcefields.scaling_factors,
+                self.forcefields.combining_rule,
+            )
+
     def run_parameterization(self):
         """Run parameterization of the topology with give forcefield(s) and configuration."""
+        scaling_factors, combining_rule = self._verify_forcefields_metadata()
         if self.topology.is_typed():
             raise GMSOParameterizationError(
                 "Cannot parameterize a typed topology. Please provide a topology without any types"
@@ -225,6 +253,9 @@ class TopologyParameterizer(GMSOBase):
                 typemap,
                 is_subtop=False,  # This will be removed from the future iterations
             )
+
+        self.topology.scaling_factors.update(scaling_factors)
+        self.topology.combining_rule = combining_rule
         self.topology.update_topology()
 
     @staticmethod
