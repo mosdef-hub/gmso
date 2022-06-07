@@ -376,6 +376,37 @@ class TestConvertParmEd(BaseTest):
             == "PeriodicImproperPotential"
         )
 
+    def test_simple_pmd_dihedrals_no_types(self):
+        struct = pmd.Structure()
+        all_atoms = []
+        for j in range(25):
+            atom = pmd.Atom(
+                atomic_number=j + 1,
+                type=f"atom_type_{j + 1}",
+                charge=random.randint(1, 10),
+                mass=1.0,
+            )
+            atom.xx, atom.xy, atom.xz = (
+                random.random(),
+                random.random(),
+                random.random(),
+            )
+            all_atoms.append(atom)
+            struct.add_atom(atom, "RES", 1)
+
+        for j in range(10):
+            dih = pmd.Dihedral(
+                *random.sample(struct.atoms, 4),
+                improper=True if j % 2 == 0 else False,
+            )
+            struct.dihedrals.append(dih)
+
+        gmso_top = from_parmed(struct)
+        assert len(gmso_top.impropers) == 5
+        assert len(gmso_top.dihedrals) == 5
+        assert len(gmso_top.improper_types) == 0
+        assert len(gmso_top.dihedral_types) == 0
+
     def test_simple_pmd_dihedrals_impropers(self):
         struct = pmd.Structure()
         all_atoms = []
@@ -441,3 +472,30 @@ class TestConvertParmEd(BaseTest):
         gmso_top = from_parmed(struct)
         assert len(gmso_top.impropers) == len(struct.impropers)
         assert len(gmso_top.improper_types) == len(struct.improper_types)
+
+    def test_pmd_improper_no_types(self):
+        struct = pmd.Structure()
+        all_atoms = []
+        for j in range(25):
+            atom = pmd.Atom(
+                atomic_number=j + 1,
+                type=f"atom_type_{j + 1}",
+                charge=random.randint(1, 10),
+                mass=1.0,
+            )
+            atom.xx, atom.xy, atom.xz = (
+                random.random(),
+                random.random(),
+                random.random(),
+            )
+            all_atoms.append(atom)
+            struct.add_atom(atom, "RES", 1)
+
+        for j in range(10):
+            struct.impropers.append(
+                pmd.Improper(*random.sample(struct.atoms, 4))
+            )
+
+        gmso_top = from_parmed(struct)
+        assert len(gmso_top.impropers) == 10
+        assert len(gmso_top.improper_types) == 0
