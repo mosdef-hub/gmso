@@ -3,13 +3,13 @@ from pathlib import Path
 
 import parmed as pmd
 import pytest
-import unyt as u
 from pkg_resources import resource_filename
 
 from gmso.external.convert_parmed import from_parmed
 from gmso.parameterization.parameterize import apply
-from gmso.tests.base_test import BaseTest
-from gmso.tests.utils import match_connection_parameters
+from gmso.tests.parameterization.parameterization_base_test import (
+    ParameterizationBaseTest,
+)
 
 
 def get_foyer_opls_test_dirs():
@@ -27,37 +27,30 @@ def get_foyer_opls_test_dirs():
             parent_dirs,
         )
     )
-    return parent_dirs[0:5]
+    return parent_dirs
 
 
-class TestOPLSGMSO(BaseTest):
+class TestOPLSGMSO(ParameterizationBaseTest):
     @pytest.mark.parametrize(
         "system_dir", get_foyer_opls_test_dirs(), ids=lambda p: p.name
     )
     def test_foyer_oplsaa_files(
-        self, system_dir, oplsaa_gmso, oplsaa_foyer, are_equivalent_topologies
+        self,
+        system_dir,
+        oplsaa_gmso,
+        oplsaa_foyer,
+        assert_same_connection_params,
+        assert_same_atom_params,
     ):
         top_file = str(system_dir / f"{system_dir.name}.top")
         gro_file = str(system_dir / f"{system_dir.name}.gro")
-        struct = pmd.load_file(top_file, xyz=gro_file)
+        struct = oplsaa_foyer.apply(pmd.load_file(top_file, xyz=gro_file))
+
+        gmso_top_from_pmd = from_parmed(struct, refer_type=True)
         gmso_top = from_parmed(struct, refer_type=False)
         apply(gmso_top, oplsaa_gmso, identify_connected_components=False)
 
-        pmd_struct_param = oplsaa_foyer.apply(struct)
-        gmso_top_from_pmd = from_parmed(pmd_struct_param, refer_type=True)
-
-        for atom, mirror in zip(gmso_top.sites, gmso_top_from_pmd.sites):
-            assert atom.name == mirror.name
-            assert u.allclose_units(atom.mass, mirror.mass, 1e-3)
-
-            assert u.allclose_units(atom.atom_type.charge, mirror.charge, 1e-3)
-
-            atom_params = atom.atom_type.get_parameters()
-            mirror_params = mirror.atom_type.get_parameters()
-
-            for k in atom_params:
-                assert u.allclose_units(atom_params[k], mirror_params[k])
-
-        match_connection_parameters(gmso_top, gmso_top_from_pmd)
-        match_connection_parameters(gmso_top, gmso_top_from_pmd, "angles")
-        match_connection_parameters(gmso_top, gmso_top_from_pmd, "dihedrals")
+        assert_same_atom_params(gmso_top, gmso_top_from_pmd)
+        assert_same_connection_params(gmso_top, gmso_top_from_pmd)
+        assert_same_connection_params(gmso_top, gmso_top_from_pmd, "angles")
+        assert_same_connection_params(gmso_top, gmso_top_from_pmd, "dihedrals")

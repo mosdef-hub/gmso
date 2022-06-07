@@ -10,11 +10,13 @@ from gmso.parameterization.subtopology_utils import (
     subtop_dihedrals,
     subtop_impropers,
 )
-from gmso.tests.base_test import BaseTest
+from gmso.tests.parameterization.parameterization_base_test import (
+    ParameterizationBaseTest,
+)
 from gmso.utils.connectivity import identify_connections
 
 
-class TestSubTopologyUtils(BaseTest):
+class TestSubTopologyUtils(ParameterizationBaseTest):
     @pytest.fixture(scope="session")
     def ethane_box_gmso(self):
         ethane_box = mb.fill_box(

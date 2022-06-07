@@ -4,7 +4,6 @@ import mbuild.recipes
 import numpy as np
 import pytest
 import unyt as u
-from forcefield_utilities.xml_loader import FoyerFFs
 
 from gmso.core.angle import Angle
 from gmso.core.atom import Atom
@@ -546,19 +545,3 @@ class BaseTest:
     @pytest.fixture(scope="session")
     def pentane_ua_gmso(self, pentane_ua_mbuild):
         return from_mbuild(pentane_ua_mbuild)
-
-    @pytest.fixture(scope="session")
-    def xml_loader(self):
-        return FoyerFFs()
-
-    @pytest.fixture(scope="session")
-    def oplsaa_gmso(self, xml_loader):
-        return xml_loader.load("oplsaa", rel_to_module=True).to_gmso_ff()
-
-    @pytest.fixture(scope="session")
-    def trappe_ua_gmso(self, xml_loader):
-        return xml_loader.load("trappe_ua", rel_to_module=True).to_gmso_ff()
-
-    @pytest.fixture(scope="session")
-    def oplsaa_foyer(self):
-        return foyer.forcefields.load_OPLSAA()

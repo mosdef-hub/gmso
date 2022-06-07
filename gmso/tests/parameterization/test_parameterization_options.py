@@ -11,10 +11,12 @@ from gmso.parameterization.parameterize import apply
 from gmso.parameterization.topology_parameterizer import (
     GMSOParameterizationError,
 )
-from gmso.tests.base_test import BaseTest
+from gmso.tests.parameterization.parameterization_base_test import (
+    ParameterizationBaseTest,
+)
 
 
-class TestParameterizationOptions(BaseTest):
+class TestParameterizationOptions(ParameterizationBaseTest):
     @pytest.fixture(scope="session")
     def ethane_methane_top(self):
         cmpd = mb.Compound()

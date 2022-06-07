@@ -9,8 +9,9 @@ from pkg_resources import resource_filename
 from gmso.core.topology import Topology
 from gmso.external.convert_parmed import from_parmed, to_parmed
 from gmso.parameterization.parameterize import apply
-from gmso.tests.base_test import BaseTest
-from gmso.tests.utils import match_connection_parameters
+from gmso.tests.parameterization.parameterization_base_test import (
+    ParameterizationBaseTest,
+)
 
 
 def get_foyer_trappe_test_dirs():
@@ -31,43 +32,29 @@ def get_foyer_trappe_test_dirs():
     return parent_dirs
 
 
-class TestTrappeGMSO(BaseTest):
-    @pytest.fixture(scope="session")
-    def trappe_ua_openmm_foyer(self):
-        return foyer.forcefields.load_TRAPPE_UA()
-
+class TestTrappeGMSO(ParameterizationBaseTest):
     @pytest.mark.parametrize(
         "system_dir", get_foyer_trappe_test_dirs(), ids=lambda p: p.name
     )
     def test_foyer_trappe_files(
         self,
         system_dir,
-        trappe_ua_openmm_foyer,
+        trappe_ua_foyer,
         trappe_ua_gmso,
-        are_equivalent_connections,
+        assert_same_connection_params,
+        assert_same_atom_params,
     ):
         mol2_file = system_dir / f"{system_dir.name}.mol2"
         gmso_top = Topology.load(mol2_file)
-        struct_pmd = trappe_ua_openmm_foyer.apply(to_parmed(gmso_top))
+        struct_pmd = trappe_ua_foyer.apply(to_parmed(gmso_top))
         apply(gmso_top, trappe_ua_gmso, identify_connected_components=False)
         gmso_top_from_parmeterized_pmd = from_parmed(struct_pmd)
-        for atom, mirror in zip(
-            gmso_top.sites, gmso_top_from_parmeterized_pmd.sites
-        ):
-            assert atom.name == mirror.name
-            assert u.allclose_units(atom.mass, mirror.mass, 1e-4)
 
-            assert u.allclose_units(atom.atom_type.charge, mirror.charge, 1e-4)
-
-            atom_params = atom.atom_type.get_parameters()
-            mirror_params = mirror.atom_type.get_parameters()
-            for k in atom_params:
-                assert u.allclose_units(atom_params[k], mirror_params[k])
-
-        match_connection_parameters(gmso_top, gmso_top_from_parmeterized_pmd)
-        match_connection_parameters(
+        assert_same_atom_params(gmso_top_from_parmeterized_pmd, gmso_top)
+        assert_same_connection_params(gmso_top, gmso_top_from_parmeterized_pmd)
+        assert_same_connection_params(
             gmso_top, gmso_top_from_parmeterized_pmd, "angles"
         )
-        match_connection_parameters(
+        assert_same_connection_params(
             gmso_top, gmso_top_from_parmeterized_pmd, "dihedrals"
         )
