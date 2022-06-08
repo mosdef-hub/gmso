@@ -323,11 +323,15 @@ class Topology(object):
         return self._impropers
 
     @property
-    def molecule_tags(self):
+    def molecule_tags(self, name_only=True):
         """Return a list of all molecule tags in the Topology."""
         molecule_tags = IndexedSet()
-        for site in self.sites:
-            molecule_tags.add(site.molecule[0] if site.molecule else None)
+        if name_only:
+            for site in self.sites:
+                molecule_tags.add(site.molecule[0] if site.molecule else None)
+        else:
+            for site in self.sites:
+                molecule_tags.add(site.molecule if site.molecule else None)
         return molecule_tags
 
     @property

@@ -118,6 +118,8 @@ def from_mbuild(
             """End of molecule parsing"""
 
             residue_tracker = dict()
+            # If we wished to retain the order of particle in mbuild, which might not be grouped
+            # into molecule, we might need build up a map (dict) and do the adding in a subsequent step
             for particle in molecule:
                 pos = particle.xyz[0] * u.nanometer
                 if particle.element:
