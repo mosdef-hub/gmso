@@ -125,7 +125,7 @@ class BaseTest:
             compound=water, n_compounds=2, box=mb.Box([2, 2, 2])
         )
 
-        return from_mbuild(packed_system)
+        return from_mbuild(packed_system, parse_label=True)
 
     @pytest.fixture
     def ethane(self):

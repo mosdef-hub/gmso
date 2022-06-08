@@ -322,25 +322,23 @@ class Topology(object):
         """Return all impropers in the topology."""
         return self._impropers
 
-    @property
-    def molecule_tags(self, name_only=True):
-        """Return a list of all molecule tags in the Topology."""
-        molecule_tags = IndexedSet()
+    def unique_site_labels(self, label_type="molecule", name_only=True):
+        """Return a list of all molecule/residue labels in the Topology."""
+        # Not super happy with this method name, open for suggestion.
+        unique_tags = IndexedSet()
         if name_only:
             for site in self.sites:
-                molecule_tags.add(site.molecule[0] if site.molecule else None)
+                unique_tags.add(
+                    site.__getattribute__(label_type)[0]
+                    if site.molecule
+                    else None
+                )
         else:
             for site in self.sites:
-                molecule_tags.add(site.molecule if site.molecule else None)
-        return molecule_tags
-
-    @property
-    def residue_tags(self):
-        """Return a list of all residue tgas in the Topology."""
-        residue_tags = IndexedSet()
-        for site in self.sites:
-            residue_tags.add(site.residue[0])
-        return residue_tags
+                unique_tags.add(
+                    site.__getattribute__(label_type) if site.molecule else None
+                )
+        return unique_tags
 
     @property
     def atom_types(self):

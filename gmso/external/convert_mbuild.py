@@ -91,6 +91,7 @@ def from_mbuild(
     else:
         connected_subgraph = compound.bond_graph.connected_components()
         molecule_tracker = dict()
+        residue_tracker = dict()
         for molecule in connected_subgraph:
             if len(molecule) == 1:
                 ancestors = [molecule[0]]
@@ -117,7 +118,6 @@ def from_mbuild(
             molecule_number = molecule_tracker[molecule_tag.name]
             """End of molecule parsing"""
 
-            residue_tracker = dict()
             # If we wished to retain the order of particle in mbuild, which might not be grouped
             # into molecule, we might need build up a map (dict) and do the adding in a subsequent step
             for particle in molecule:
@@ -196,7 +196,7 @@ def to_mbuild(topology):
         compound.name = topology.name
 
     particle_map = dict()
-    for molecule_tag in topology.molecule_tags:
+    for molecule_tag in topology.unique_site_labels(label_type="molecule"):
         mb_molecule = mb.Compound(name=molecule_tag)
         residue_dict = dict()
         for site in topology.iter_sites_by_molecule(molecule_tag):
@@ -212,7 +212,7 @@ def to_mbuild(topology):
             # Try to add the particle to a residue level
             residue_tag = (
                 site.residue if site.residue else ("DefaultResidue", 0)
-            )  # the 0 idx is place holder and does nothing
+            )  # the 0 idx is placeholder and does nothing
             if residue_tag in residue_dict:
                 residue_dict[residue_tag].add(particle)
             else:

@@ -63,9 +63,10 @@ class TestConvertNetworkX(BaseTest):
 
         # The number fragments in the networkX representation == n_subtops
         # TODO: create subtops for each fragment in `from_networkx()`
-        assert (
-            nx.number_connected_components(water_to_nx)
-            == water_system.n_subtops
+        assert nx.number_connected_components(water_to_nx) == len(
+            water_system.unique_site_labels(
+                label_type="molecule", name_only=False
+            )
         )
 
     def test_from_networkx_without_connections(self):
