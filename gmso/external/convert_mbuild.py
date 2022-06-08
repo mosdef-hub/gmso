@@ -23,7 +23,7 @@ if has_mbuild:
 
 
 def from_mbuild(
-    compound, box=None, search_method=element_by_symbol, parse_label=False
+    compound, box=None, search_method=element_by_symbol, parse_label=True
 ):
     """Convert an mbuild.Compound to a gmso.Topology.
 
@@ -73,88 +73,33 @@ def from_mbuild(
     top = Topology()
     top.typed = False
 
-    site_map = dict()
-    if not parse_label:
-        for particle in compound.particles():
-            pos = particle.xyz[0] * u.nanometer
-            if particle.element:
-                ele = search_method(particle.element.symbol)
-            else:
-                ele = search_method(particle.name)
-            site = Atom(
-                name=particle.name,
-                position=pos,
-                element=ele,
-            )
-            site_map[particle] = site
-            top.add_site(site)
-    else:
-        connected_subgraph = compound.bond_graph.connected_components()
-        molecule_tracker = dict()
-        residue_tracker = dict()
-        for molecule in connected_subgraph:
-            if len(molecule) == 1:
-                ancestors = [molecule[0]]
-            else:
-                ancestors = IndexedSet(molecule[0].ancestors())
-                for particle in molecule:
-                    ancestors = ancestors.intersection(
-                        IndexedSet(particle.ancestors())
-                    )
+    site_map = {
+        particle: {"site": None, "residue": None, "molecule": None}
+        for particle in compound.particles()
+    }
+    if parse_label:
+        _parse_label(site_map, compound)
 
-            # This works because particle.ancestors traversed, and hence
-            # the lower level will be in the front.
-            # The intersection will only remove, not add to the IndexedSet
-            # of the first particle we used as reference.
-            # Hence, this called will return the lowest-level Compound
-            # that is a molecule
-            """Parse molecule information"""
-            molecule_tag = ancestors[0]
-            # The duplication is determined solely by name
-            if molecule_tag.name in molecule_tracker:
-                molecule_tracker[molecule_tag.name] += 1
-            else:
-                molecule_tracker[molecule_tag.name] = 0
-            molecule_number = molecule_tracker[molecule_tag.name]
-            """End of molecule parsing"""
-
-            # If we wished to retain the order of particle in mbuild, which might not be grouped
-            # into molecule, we might need build up a map (dict) and do the adding in a subsequent step
-            for particle in molecule:
-                pos = particle.xyz[0] * u.nanometer
-                if particle.element:
-                    ele = search_method(particle.element.symbol)
-                else:
-                    ele = search_method(particle.name)
-
-                """Parse residue information"""
-                residue_tag = (
-                    particle if particle.is_independent() else particle.parent
-                )
-                if residue_tag.name in residue_tracker:
-                    if residue_tag not in residue_tracker[residue_tag.name]:
-                        residue_tracker[residue_tag.name][residue_tag] = len(
-                            residue_tracker[residue_tag.name]
-                        )
-                else:
-                    residue_tracker[residue_tag.name] = {residue_tag: 0}
-
-                residue_number = residue_tracker[residue_tag.name][residue_tag]
-                site = Atom(
-                    name=particle.name,
-                    position=pos,
-                    element=ele,
-                    molecule=(molecule_tag.name, molecule_number),
-                    residue=(residue_tag.name, residue_number),
-                )
-
-                site_map[particle] = site
-                top.add_site(site)
+    for particle in site_map:
+        pos = particle.xyz[0] * u.nanometer
+        if particle.element:
+            ele = search_method(particle.element.symbol)
+        else:
+            ele = search_method(particle.name)
+        site = Atom(
+            name=particle.name,
+            position=pos,
+            element=ele,
+            molecule=(site_map[particle]["molecule"]),
+            residue=(site_map[particle]["residue"]),
+        )
+        site_map[particle]["site"] = site
+        top.add_site(site)
 
     for b1, b2 in compound.bonds():
-        assert site_map[b1].molecule == site_map[b2].molecule
+        assert site_map[b1]["site"].molecule == site_map[b2]["site"].molecule
         new_bond = Bond(
-            connection_members=[site_map[b1], site_map[b2]],
+            connection_members=[site_map[b1]["site"], site_map[b2]["site"]],
             bond_type=None,
         )
         top.add_connection(new_bond, update_types=False)
@@ -264,3 +209,59 @@ def from_mbuild_box(mb_box):
     )
 
     return box
+
+
+def _parse_label(site_map, compound):
+    """Parse information necessary for residue and molecule labels when converting from mbuild."""
+    molecule_tracker = dict()
+
+    connected_subgraph = compound.bond_graph.connected_components()
+    molecule_tracker = dict()
+    residue_tracker = dict()
+    for molecule in connected_subgraph:
+        if len(molecule) == 1:
+            ancestors = [molecule[0]]
+        else:
+            ancestors = IndexedSet(molecule[0].ancestors())
+            for particle in molecule:
+                ancestors = ancestors.intersection(
+                    IndexedSet(particle.ancestors())
+                )
+
+        # This works because particle.ancestors traversed, and hence
+        # the lower level will be in the front.
+        # The intersection will only remove, not add to the IndexedSet
+        # of the first particle we used as reference.
+        # Hence, this called will return the lowest-level Compound
+        # that is a molecule
+        """Parse molecule information"""
+        molecule_tag = ancestors[0]
+        # The duplication is determined solely by name
+        if molecule_tag.name in molecule_tracker:
+            molecule_tracker[molecule_tag.name] += 1
+        else:
+            molecule_tracker[molecule_tag.name] = 0
+        molecule_number = molecule_tracker[molecule_tag.name]
+        """End of molecule parsing"""
+
+        for particle in molecule:
+            """Parse residue information"""
+            residue_tag = (
+                particle if particle.is_independent() else particle.parent
+            )
+            if residue_tag.name in residue_tracker:
+                if residue_tag not in residue_tracker[residue_tag.name]:
+                    residue_tracker[residue_tag.name][residue_tag] = len(
+                        residue_tracker[residue_tag.name]
+                    )
+            else:
+                residue_tracker[residue_tag.name] = {residue_tag: 0}
+
+            residue_number = residue_tracker[residue_tag.name][residue_tag]
+            site_map[particle]["residue"] = (residue_tag.name, residue_number)
+            site_map[particle]["molecule"] = (
+                molecule_tag.name,
+                molecule_number,
+            )
+
+    return site_map
