@@ -5,6 +5,7 @@ from pydantic import Field
 
 from gmso.core.parametric_potential import ParametricPotential
 from gmso.utils._constants import PAIRPOTENTIAL_TYPE_DICT
+from gmso.utils.expression import PotentialExpression
 
 
 class PairPotentialType(ParametricPotential):
@@ -43,14 +44,6 @@ class PairPotentialType(ParametricPotential):
         topology=None,
         tags=None,
     ):
-        if potential_expression is None:
-            if expression is None:
-                expression = "4 * eps * ((sigma / r)**12 - (sigma / r)**6)"
-            if parameters is None:
-                parameters = {"eps": 1 * u.Unit("kJ / mol"), "sigma": 1 * u.nm}
-            if independent_variables is None:
-                independent_variables = {"r"}
-
         super(PairPotentialType, self).__init__(
             name=name,
             expression=expression,
@@ -66,6 +59,14 @@ class PairPotentialType(ParametricPotential):
     @property
     def member_types(self):
         return self.__dict__.get("member_types_")
+
+    @staticmethod
+    def _default_potential_expr():
+        return PotentialExpression(
+            expression="4 * eps * ((sigma / r)**12 - (sigma / r)**6)",
+            independent_variables={"r"},
+            parameters={"eps": 1 * u.Unit("kJ / mol"), "sigma": 1 * u.nm},
+        )
 
     class Config:
         fields = {"member_types_": "member_types"}

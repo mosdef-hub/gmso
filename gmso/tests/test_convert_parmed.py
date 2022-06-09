@@ -263,16 +263,34 @@ class TestConvertParmEd(BaseTest):
 
         top_from_struc = from_parmed(struc)
         assert len(top_from_struc.subtops) == len(struc.residues)
-        for i in range(len(top_from_struc.subtops)):
-            assert len(top_from_struc.subtops[i].sites) == 20
-            assert top_from_struc.subtops[i].name == "HEX[{}]".format(i)
+
+        for site in top_from_struc.sites:
+            assert site.residue_name == "HEX"
+            assert site.residue_number in list(range(6))
 
         struc_from_top = to_parmed(top_from_struc)
         assert len(struc_from_top.residues) == len(struc.residues)
-        for i in range(len(top_from_struc.subtops)):
-            assert len(struc_from_top.residues[i].atoms) == 20
-            assert struc_from_top.residues[i].name == "HEX"
-            assert struc_from_top.residues[i].idx == i
+
+        for residue_og, residue_cp in zip(
+            struc.residues, struc_from_top.residues
+        ):
+            assert residue_og.name == residue_cp.name
+            assert residue_og.number == residue_cp.number
+            assert len(residue_og.atoms) == len(residue_cp.atoms)
+
+    def test_default_residue_info(selfself, parmed_hexane_box):
+        struc = parmed_hexane_box
+        top_from_struc = from_parmed(struc)
+        assert len(top_from_struc.subtops) == len(struc.residues)
+
+        for site in top_from_struc.sites:
+            site.residue_name = None
+            site.residue_number = None
+
+        struc_from_top = to_parmed(top_from_struc)
+        assert len(struc_from_top.residues) == 1
+        assert struc_from_top.residues[0].name == "RES"
+        assert len(struc_from_top.atoms) == len(struc.atoms)
 
     def test_box_info(self, parmed_hexane_box):
         struc = parmed_hexane_box
@@ -305,3 +323,15 @@ class TestConvertParmEd(BaseTest):
         ]:
             for potential in potential_types:
                 assert potential.member_types
+
+    def test_parmed_element(self):
+        struc = pmd.load_file(get_fn("ethane.top"), xyz=get_fn("ethane.gro"))
+        top = from_parmed(struc)
+        for gmso_atom, pmd_atom in zip(top.sites, struc.atoms):
+            assert gmso_atom.element.atomic_number == pmd_atom.element
+
+    def test_parmed_element_non_atomistic(self, pentane_ua_parmed):
+        top = from_parmed(pentane_ua_parmed)
+        for gmso_atom, pmd_atom in zip(top.sites, pentane_ua_parmed.atoms):
+            assert gmso_atom.element is None
+            assert pmd_atom.element == 0

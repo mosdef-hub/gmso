@@ -6,6 +6,7 @@ from unyt.testing import assert_allclose_units
 from gmso import Topology
 from gmso.formats.mol2 import from_mol2
 from gmso.tests.base_test import BaseTest
+from gmso.tests.utils import get_path
 from gmso.utils.io import get_fn
 
 
@@ -56,14 +57,14 @@ class TestMol2(BaseTest):
 
         with pytest.warns(
             UserWarning,
-            match=r"No charges were detected for site C with index 1",
+            match=r"No charge was detected for site C with index 1",
         ):
             top = Topology.load(get_fn("ethane.mol2"))
         assert list(top.sites)[0].charge is None
 
         with pytest.warns(
             UserWarning,
-            match=r"No element detected for site C with index1\, consider manually adding the element to the topology",
+            match=r"No element detected for site C with index 1, consider manually adding the element to the topology",
         ):
             Topology.load(get_fn("benzene.mol2"))
 
@@ -102,6 +103,15 @@ class TestMol2(BaseTest):
         top = Topology.load(get_fn("methane.mol2"), site_type="lj")
         assert np.all([site.element == None for site in top.sites])
 
+    def test_no_charge_lj(self):
+        with pytest.warns(
+            UserWarning,
+            match="No charge was detected for site .* with index \d+$",
+        ):
+            top = Topology.load(
+                get_path("methane_missing_charge.mol2"), site_type="lj"
+            )
+
     def test_wrong_path(self):
         with pytest.raises(
             OSError, match=r"Provided path to file that does not exist"
@@ -114,7 +124,7 @@ class TestMol2(BaseTest):
     def test_broken_files(self):
         with pytest.warns(
             UserWarning,
-            match=r"The record type indicator @<TRIPOS>MOLECULE_extra_text\n is not supported. Skipping current section and moving to the next RTI header.",
+            match=r"The record type indicator @<TRIPOS>MOLECULE_extra_text is not supported. Skipping current section and moving to the next RTI header.",
         ):
             Topology.load(get_fn("broken.mol2"))
         with pytest.warns(

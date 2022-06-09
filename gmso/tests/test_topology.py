@@ -118,8 +118,12 @@ class TestTopology(BaseTest):
 
         ref = deepcopy(top)
         wrong_atom_type = deepcopy(top)
-        ref.add_site(Atom(atom_type=AtomType(expression="epsilon*sigma*r")))
-        wrong_atom_type.add_site(Atom(atom_type=AtomType(expression="sigma*r")))
+        at1 = AtomType()
+        at1.expression = "epsilon*sigma*r"
+        at2 = AtomType()
+        at2.expression = "sigma*r"
+        ref.add_site(Atom(atom_type=at1))
+        wrong_atom_type.add_site(Atom(atom_type=at2))
         assert ref != wrong_atom_type
 
     @pytest.mark.skipif(not has_parmed, reason="ParmEd is not installed")
@@ -263,7 +267,8 @@ class TestTopology(BaseTest):
         assert len(top.connection_types) == 1
         assert len(top.connection_type_expressions) == 1
 
-        atom1.atom_type = AtomType(expression="sigma*epsilon*r")
+        atom1.atom_type = AtomType()
+        atom1.atom_type.expression = "sigma*epsilon*r"
         assert top.n_sites == 2
         assert len(top.atom_types) == 1
         assert len(top.atom_type_expressions) == 1
@@ -285,8 +290,10 @@ class TestTopology(BaseTest):
         assert top.n_bonds == 0
         assert top.n_connections == 0
 
-        atype1 = AtomType(expression="sigma + epsilon*r")
-        atype2 = AtomType(expression="sigma * epsilon*r")
+        atype1 = AtomType()
+        atype1.expression = "sigma + epsilon*r"
+        atype2 = AtomType()
+        atype2.expression = "sigma * epsilon*r"
         atom1 = Atom(name="a", atom_type=atype1)
         atom2 = Atom(name="b", atom_type=atype2)
         top.add_site(atom1)
@@ -299,8 +306,10 @@ class TestTopology(BaseTest):
     def test_bond_bondtype_update(self):
         top = Topology()
 
-        atype1 = AtomType(expression="sigma + epsilon*r")
-        atype2 = AtomType(expression="sigma * epsilon*r")
+        atype1 = AtomType()
+        atype1.expression = "sigma + epsilon*r"
+        atype2 = AtomType()
+        atype2.expression = "sigma * epsilon*r"
         atom1 = Atom(name="a", atom_type=atype1)
         atom2 = Atom(name="b", atom_type=atype2)
         btype = BondType()
@@ -316,8 +325,10 @@ class TestTopology(BaseTest):
     def test_angle_angletype_update(self):
         top = Topology()
 
-        atype1 = AtomType(expression="sigma + epsilon*r")
-        atype2 = AtomType(expression="sigma * epsilon*r")
+        atype1 = AtomType()
+        atype1.expression = "sigma + epsilon*r"
+        atype2 = AtomType()
+        atype2.expression = "sigma * epsilon*r"
         atom1 = Atom(name="a", atom_type=atype1)
         atom2 = Atom(name="b", atom_type=atype2)
         atom3 = Atom(name="c", atom_type=atype2)
@@ -340,8 +351,10 @@ class TestTopology(BaseTest):
     def test_dihedral_dihedraltype_update(self):
         top = Topology()
 
-        atype1 = AtomType(expression="sigma + epsilon*r")
-        atype2 = AtomType(expression="sigma * epsilon*r")
+        atype1 = AtomType()
+        atype1.expression = "sigma + epsilon*r"
+        atype2 = AtomType()
+        atype2.expression = "sigma * epsilon*r"
         atom1 = Atom(name="a", atom_type=atype1)
         atom2 = Atom(name="b", atom_type=atype2)
         atom3 = Atom(name="c", atom_type=atype2)
@@ -364,8 +377,10 @@ class TestTopology(BaseTest):
     def test_improper_impropertype_update(self):
         top = Topology()
 
-        atype1 = AtomType(expression="sigma + epsilon*r")
-        atype2 = AtomType(expression="sigma * epsilon*r")
+        atype1 = AtomType()
+        atype1.expression = "sigma + epsilon*r"
+        atype2 = AtomType()
+        atype2.expression = "sigma * epsilon*r"
         atom1 = Atom(name="a", atom_type=atype1)
         atom2 = Atom(name="b", atom_type=atype2)
         atom3 = Atom(name="c", atom_type=atype2)

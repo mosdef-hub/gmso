@@ -466,8 +466,10 @@ class BaseTest:
     @pytest.fixture(scope="session")
     def pairpotentialtype_top(self):
         top = Topology()
-        atype1 = AtomType(name="a1", expression="sigma + epsilon*r")
-        atype2 = AtomType(name="a2", expression="sigma * epsilon*r")
+        atype1 = AtomType(name="a1")
+        atype1.expression = "sigma + epsilon*r"
+        atype2 = AtomType(name="a2")
+        atype2.expression = "sigma * epsilon * r"
         atom1 = Atom(name="a", atom_type=atype1)
         atom2 = Atom(name="b", atom_type=atype2)
         top.add_site(atom1)
@@ -498,3 +500,48 @@ class BaseTest:
         top.update_topology()
 
         return top
+
+    @pytest.fixture(scope="session")
+    def pentane_ua_mbuild(self):
+        class PentaneUA(mb.Compound):
+            """Create a united-atom pentane compound."""
+
+            def __init__(self):
+                super(PentaneUA, self).__init__()
+                # Calculate the angle between the two ports
+                angle = np.deg2rad(114)
+                x = 0
+                y = 0.077
+                z = 0
+                vec = [
+                    x,
+                    y * np.cos(angle) - z * np.sin(angle),
+                    y * np.sin(angle) + z * np.cos(angle),
+                ]
+                # Create the end group compound
+                ch3 = mb.Compound()
+                ch3.add(mb.Particle(name="_CH3"))
+                ch3.add(mb.Port(anchor=ch3[0]), "up")
+                ch3["up"].translate([x, y, z])
+                # Create the internal monomer
+                ch2 = mb.Compound()
+                ch2.add(mb.Particle(name="_CH2"))
+                ch2.add(mb.Port(anchor=ch2[0]), "up")
+                ch2["up"].translate([x, y, z])
+                ch2.add(mb.Port(anchor=ch2[0], orientation=vec), "down")
+                ch2["down"].translate(vec)
+                pentane = mb.recipes.Polymer(
+                    monomers=[ch2], end_groups=[ch3, mb.clone(ch3)]
+                )
+                pentane.build(n=3)
+                self.add(pentane, label="PNT")
+
+        return PentaneUA()
+
+    @pytest.fixture(scope="session")
+    def pentane_ua_parmed(self, pentane_ua_mbuild):
+        return mb.conversion.to_parmed(pentane_ua_mbuild)
+
+    @pytest.fixture(scope="session")
+    def pentane_ua_gmso(self, pentane_ua_mbuild):
+        return from_mbuild(pentane_ua_mbuild)

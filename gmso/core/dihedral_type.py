@@ -5,6 +5,7 @@ from pydantic import Field
 
 from gmso.core.parametric_potential import ParametricPotential
 from gmso.utils._constants import DIHEDRAL_TYPE_DICT
+from gmso.utils.expression import PotentialExpression
 
 
 class DihedralType(ParametricPotential):
@@ -54,18 +55,6 @@ class DihedralType(ParametricPotential):
         topology=None,
         tags=None,
     ):
-        if potential_expression is None:
-            if expression is None:
-                expression = "k * (1 + cos(n * phi - phi_eq))**2"
-
-            if parameters is None:
-                parameters = {
-                    "k": 1000 * u.Unit("kJ / (deg**2)"),
-                    "phi_eq": 180 * u.deg,
-                    "n": 1 * u.dimensionless,
-                }
-            if independent_variables is None:
-                independent_variables = {"phi"}
 
         super(DihedralType, self).__init__(
             name=name,
@@ -87,6 +76,18 @@ class DihedralType(ParametricPotential):
     @property
     def member_classes(self):
         return self.__dict__.get("member_classes_")
+
+    @staticmethod
+    def _default_potential_expr():
+        return PotentialExpression(
+            expression="k * (1 + cos(n * phi - phi_eq))**2",
+            parameters={
+                "k": 1000 * u.Unit("kJ / (deg**2)"),
+                "phi_eq": 180 * u.deg,
+                "n": 1 * u.dimensionless,
+            },
+            independent_variables={"phi"},
+        )
 
     class Config:
         fields = {

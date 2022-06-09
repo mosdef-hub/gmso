@@ -321,7 +321,10 @@ def parse_ff_metadata(element):
         "Units": _parse_default_units,
         "ScalingFactors": _parse_scaling_factors,
     }
-    ff_meta = {"scaling_factors": parsers["ScalingFactors"](element)}
+    ff_meta = {
+        "scaling_factors": parsers["ScalingFactors"](element),
+        "combining_rule": element.get("combiningRule", "geometric"),
+    }
     for metatype in element:
         if metatype.tag in metatypes:
             ff_meta[metatype.tag] = parsers[metatype.tag](metatype)

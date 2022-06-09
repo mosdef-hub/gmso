@@ -4,7 +4,7 @@ from pathlib import Path
 
 from gmso.abc.abstract_potential import AbstractPotential
 from gmso.exceptions import GMSOError
-from gmso.utils.expression import _PotentialExpression
+from gmso.utils.expression import PotentialExpression
 from gmso.utils.singleton import Singleton
 
 POTENTIAL_JSONS = list(Path(__file__).parent.glob("jsons/*.json"))
@@ -51,7 +51,7 @@ class PotentialTemplate(AbstractPotential):
             independent_variables = set(independent_variables.split(","))
 
         if potential_expression is None:
-            _potential_expression = _PotentialExpression(
+            _potential_expression = PotentialExpression(
                 expression=expression,
                 independent_variables=independent_variables,
             )
