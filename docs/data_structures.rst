@@ -1,4 +1,4 @@
-Data Structures in GMSO 
+Data Structures in GMSO
 ---------------------------
 Following data structures are available within GMSO.
 
@@ -24,7 +24,7 @@ Core Classes
 Topology
 ********
     .. autoclass:: gmso.Topology
-        :members: add_site, add_bond, add_angle
+        :members: add_site, add_connection, update_topology
 
 SubTopology
 ***********
@@ -85,7 +85,15 @@ ImproperType
     .. autoclass:: gmso.ImproperType
         :members:
 
+PairPotentialType
+************
+    .. autoclass:: gmso.PairPotentialType
+        :members:
+
 ForceField
 ==========
     .. autoclass:: gmso.ForceField
         :members:
+
+
+=======

@@ -1,13 +1,20 @@
+## GMSO: General Molecular Simulation Object
 ![](https://anaconda.org/conda-forge/gmso/badges/license.svg)
 [![](https://anaconda.org/conda-forge/gmso/badges/version.svg)](https://anaconda.org/conda-forge/gmso)
-[![Build Status](https://dev.azure.com/mosdef/mosdef/_apis/build/status/mosdef-hub.gmso?branchName=master)](https://dev.azure.com/mosdef/mosdef/_build/latest?definitionId=9&branchName=master)
+[![CI](https://github.com/mosdef-hub/gmso/actions/workflows/CI.yaml/badge.svg)](https://github.com/mosdef-hub/gmso/actions/workflows/CI.yaml)
 [![codecov](https://codecov.io/gh/mosdef-hub/gmso/branch/master/graph/badge.svg?token=rqPGwmXDzu)](undefined)
 
-## GMSO: General Molecular Simulation Object
+`GMSO`is a flexible storage of chemical topology for molecular simulation.
+With a few lines of `GMSO` code, together with [`mBuild`](https://mbuild.mosdef.org) and [`foyer`](https://foyer.mosdef.org), users can rapidly prototype arbitrary parameterized chemical systems and generate data files for a wide variety of simulation engines.
 
-Flexible storage of chemical topology for molecular simulation.
-With few lines of `GMSO` code, together with [`mBuild`](https://mbuild.mosdef.org) and [`foyer`](https://foyer.mosdef.org), users can rapidly prototype arbitrary parameterized chemical systems and generate data files for a wide variety of simulation engines.
+To learn more, get started, or contribute, check out our [Documentation](https://gmso.mosdef.org).
 
+#### GMSO within the MoSDeF Ecosystem
+<p align="center">
+  <img src="docs/images/mosdef_graphic_gmso.png?raw=true" alt="GMSO within the MoSDeF Ecosystem" width="500" height="500"/>
+</p>
+
+This is an example using `mBuild` and `Foyer` to build a `GMSO` topology through [`ParmEd`](https://parmed.github.io/ParmEd/html/index.html) and write out to [`LAMMPS`](https://docs.lammps.org/).
 ```python
 import foyer
 from mbuild.lib.molecules import Ethane
@@ -30,7 +37,11 @@ Introduction
 `GMSO` is designed to be a general and flexible representation of chemical topolgies for molecular simulation.
 With an emphasis on assuming as little as possible about the chemical system, model, or engine, `GMSO` can enable support for a variety of systems.
 `GMSO` is a part of the [MoSDeF (Molecular Simulation and Design Framework)](https://mosdef.org) ecosystem, and is intended to be the backend replacement for the [`foyer` package](https://foyer.mosdef.org).
-
+Libraries in the MoSDeF ecosystem are designed to provide utilities neccessary to streamline
+a researcher's simulation workflow. When setting up simulation studies,
+we also recommend users to follow the [TRUE](https://www.tandfonline.com/doi/full/10.1080/00268976.2020.1742938)
+(Transparent, Reproducible, Usable-by-others, and Extensible) standard, which is a set of common
+practices meant to improve the reproducibility of computational simulation research.
 
 Goals and Features
 ------------------

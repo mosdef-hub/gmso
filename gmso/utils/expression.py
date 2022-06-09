@@ -1,18 +1,18 @@
+"""Manage Potential functional expressions and variables."""
 import warnings
 
 import sympy
-
 import unyt as u
 
+from gmso.utils.decorators import register_pydantic_json
 from gmso.utils.misc import unyt_to_hashable
 
-__all__ = [
-    '_PotentialExpression'
-]
+__all__ = ["PotentialExpression"]
 
 
-class _PotentialExpression:
-    """A general Expression class with parameters
+@register_pydantic_json(method="json")
+class PotentialExpression:
+    """A general Expression class with parameters.
 
     This class is used by `gmso.core.potential.Potential` class and its
     descendants to manage expression and independent variables for the
@@ -35,83 +35,76 @@ class _PotentialExpression:
     parameters: dict, default=None
         A dictionary of parameter whose key is a string and values are parameters
     """
+
     __slots__ = (
-        '_parameters',
-        '_expression',
-        '_independent_variables',
-        '_is_parametric'
+        "_parameters",
+        "_expression",
+        "_independent_variables",
+        "_is_parametric",
     )
 
-    def __init__(self,
-                 expression,
-                 independent_variables,
-                 parameters=None):
+    def __init__(self, expression, independent_variables, parameters=None):
         self._expression = self._validate_expression(expression)
-        self._independent_variables = self._validate_independent_variables(independent_variables)
+        self._independent_variables = self._validate_independent_variables(
+            independent_variables
+        )
         self._is_parametric = False
 
         if parameters is not None:
             self._is_parametric = True
             self._parameters = self._validate_parameters(parameters)
             self._verify_validity(
-                self._expression,
-                self._independent_variables,
-                self._parameters
+                self._expression, self._independent_variables, self._parameters
             )
         else:
             self._verify_validity(
-                self._expression,
-                self.independent_variables,
-                None
+                self._expression, self.independent_variables, None
             )
 
     @property
     def expression(self):
+        """Return the expression of the functional form."""
         return self._expression
 
     @expression.setter
     def expression(self, expr):
-        self.set(
-            expression=expr
-        )
+        """Set the functional form's expression."""
+        self.set(expression=expr)
 
     @property
     def parameters(self):
+        """Return the parameters of the expression, if applicable."""
         if not self._is_parametric:
             raise AttributeError(
-                f'Object of type {self.__class__.__name__} has no attribute parameters'
+                f"Object of type {self.__class__.__name__} has no attribute parameters"
             )
         return self._parameters
 
     @parameters.setter
     def parameters(self, new_params):
+        """Set the parameters of the expression, if applicable."""
         if not self._is_parametric:
             raise AttributeError(
-                f'Object of type {self.__class__.__name__} has no attribute parameters'
+                f"Object of type {self.__class__.__name__} has no attribute parameters"
             )
-        self.set(
-            parameters=new_params
-        )
+        self.set(parameters=new_params)
 
     @property
     def independent_variables(self):
+        """Return the independent variables involved in the expression."""
         return self._independent_variables
 
     @independent_variables.setter
     def independent_variables(self, indep_vars):
-        self.set(
-            independent_variables=indep_vars
-        )
+        """Set the independent variables for the potential expression."""
+        self.set(independent_variables=indep_vars)
 
     @property
     def is_parametric(self):
+        """Is the expression parametric."""
         return self._is_parametric
 
-    def set(self,
-            expression=None,
-            parameters=None,
-            independent_variables=None
-            ):
+    def set(self, expression=None, parameters=None, independent_variables=None):
         """Set the expression, parameters, and independent variables for this potential.
 
         Parameters
@@ -137,22 +130,26 @@ class _PotentialExpression:
             expression = self._expression
 
         if independent_variables is not None:
-            independent_variables = self._validate_independent_variables(independent_variables)
+            independent_variables = self._validate_independent_variables(
+                independent_variables
+            )
         else:
             independent_variables = self.independent_variables
 
         if self._is_parametric:
             if parameters is not None:
                 parameters = self._validate_parameters(parameters)
-                total_free_symbols = self._expression.free_symbols.union(expression.free_symbols)
+                total_free_symbols = self._expression.free_symbols.union(
+                    expression.free_symbols
+                )
                 for key in list(parameters.keys()):
                     if sympy.Symbol(key) not in total_free_symbols:
                         parameters.pop(key)
                 if len(parameters) == 0:
                     raise ValueError(
-                        f'`parameters` argument includes no '
-                        f'variables found in expression. Expected '
-                        f'at least one of {self._parameters.keys()}'
+                        f"`parameters` argument includes no "
+                        f"variables found in expression. Expected "
+                        f"at least one of {self._parameters.keys()}"
                     )
                 for key in self._parameters:
                     if key not in parameters:
@@ -160,9 +157,7 @@ class _PotentialExpression:
             else:
                 parameters = self._parameters
 
-            self._verify_validity(expression,
-                                  independent_variables,
-                                  parameters)
+            self._verify_validity(expression, independent_variables, parameters)
 
             self._parameters.update(parameters)
         else:
@@ -177,6 +172,7 @@ class _PotentialExpression:
                     self._parameters.pop(key)
 
     def __hash__(self):
+        """Return hash of the potential expression."""
         if self._is_parametric:
             return hash(
                 tuple(
@@ -184,65 +180,71 @@ class _PotentialExpression:
                         self.expression,
                         tuple(self.independent_variables),
                         tuple(self.parameters.keys()),
-                        tuple(unyt_to_hashable(val) for val in self.parameters.values())
+                        tuple(
+                            unyt_to_hashable(val)
+                            for val in self.parameters.values()
+                        ),
                     )
                 )
             )
         else:
             return hash(
-                tuple(
-                    (
-                        self.expression,
-                        tuple(self.independent_variables)
-                    )
-                )
+                tuple((self.expression, tuple(self.independent_variables)))
             )
 
     def __eq__(self, other):
+        """Determine if two expressions are equivalent."""
         return hash(self) == hash(other)
 
     def __repr__(self):
-        descr = list(f'<PotentialExpression, ')
-        descr.append(f'expression: {self.expression}, ')
-        descr.append(f'{len(self.independent_variables)} independent variables>')
+        """Representation of the potential expression."""
+        descr = list(f"<PotentialExpression, ")
+        descr.append(f"expression: {self.expression}, ")
+        descr.append(
+            f"{len(self.independent_variables)} independent variables>"
+        )
 
-        return ''.join(descr)
+        return "".join(descr)
 
     @staticmethod
     def _validate_expression(expression):
-        """Check to see that an expression is a valid sympy expression"""
+        """Check to see that an expression is a valid sympy expression."""
         if expression is None or isinstance(expression, sympy.Expr):
             pass
         elif isinstance(expression, str):
             expression = sympy.sympify(expression)
         else:
             raise ValueError(
-                'Please enter a string, sympy expression or None for expression'
+                "Please enter a string, sympy expression or None for expression"
             )
 
         return expression
 
     @staticmethod
     def _validate_parameters(parameters):
-        """Check to see that parameters is a valid dictionary with units"""
+        """Check to see that parameters is a valid dictionary with units."""
         if not isinstance(parameters, dict):
             raise ValueError("Please enter a dictionary for parameters")
         for key, val in parameters.items():
             if isinstance(val, list):
                 for params in val:
                     if not isinstance(params, u.unyt_array):
-                        raise ValueError('Parameter value {} lacks a unyt'.format(val))
+                        raise ValueError(
+                            "Parameter value {} lacks a unyt".format(val)
+                        )
             else:
                 if not isinstance(val, u.unyt_array):
-                    raise ValueError('Parameter value {} lacks a unyt'.format(val))
+                    raise ValueError(
+                        "Parameter value {} lacks a unyt".format(val)
+                    )
             if not isinstance(key, str):
-                raise ValueError('Parameter key {} is not a str'.format(key))
+                raise ValueError("Parameter key {} is not a str".format(key))
 
         return parameters
 
     @staticmethod
     def _validate_independent_variables(indep_vars):
-        """Check to see that independent_variables is a set of valid sympy symbols"""
+        """Check to see that independent_variables is a set of valid sympy symbols."""
         if isinstance(indep_vars, str):
             indep_vars = {sympy.symbols(indep_vars)}
         elif isinstance(indep_vars, sympy.Symbol):
@@ -254,54 +256,79 @@ class _PotentialExpression:
                 indep_vars = set([sympy.symbols(val) for val in indep_vars])
             else:
                 raise ValueError(
-                    '`independent_variables` argument was a list '
-                    'or set of mixed variables. Please enter a '
-                    'list or set of either only strings or only '
-                    'sympy symbols'
+                    "`independent_variables` argument was a list "
+                    "or set of mixed variables. Please enter a "
+                    "list or set of either only strings or only "
+                    "sympy symbols"
                 )
         else:
             raise ValueError(
-                'Please enter a string, sympy expression, '
-                'list or set thereof for independent_variables'
+                "Please enter a string, sympy expression, "
+                "list or set thereof for independent_variables"
             )
 
         return indep_vars
 
     @staticmethod
-    def _verify_validity(expression,
-                         independent_variables_symbols,
-                         parameters=None):
-        """Verify whether or not the parameters, independent_variables and expression are consistent"""
+    def json(potential_expression):
+        """Convert the provided potential expression to a json serializable dictionary."""
+        if not isinstance(potential_expression, PotentialExpression):
+            raise TypeError(
+                f"{potential_expression} is not of type _PotentialExpression"
+            )
+        else:
+            json_dict = {
+                "expression": str(potential_expression.expression),
+                "independent_variables": list(
+                    str(idep)
+                    for idep in potential_expression.independent_variables
+                ),
+            }
+            if potential_expression.is_parametric:
+                json_dict["parameters"] = potential_expression.parameters
 
+        return json_dict
+
+    @staticmethod
+    def _verify_validity(
+        expression, independent_variables_symbols, parameters=None
+    ):
+        """Verify whether or not the parameters, independent_variables and expression are consistent."""
         for sym in independent_variables_symbols:
             if sym not in expression.free_symbols:
                 raise ValueError(
-                    f'symbol {sym} is not in expression\'s free symbols. '
-                    f'Cannot use an independent variable which doesn\'t '
-                    f'exist in the expression\'s free symbols {expression.free_symbols}'
+                    f"symbol {sym} is not in expression's free symbols. "
+                    f"Cannot use an independent variable which doesn't "
+                    f"exist in the expression's free symbols {expression.free_symbols}"
                 )
         if parameters is not None:
             parameter_symbols = sympy.symbols(set(parameters.keys()))
-            used_symbols = parameter_symbols.union(independent_variables_symbols)
+            used_symbols = parameter_symbols.union(
+                independent_variables_symbols
+            )
             unused_symbols = expression.free_symbols - used_symbols
             if len(unused_symbols) > 0:
                 warnings.warn(
-                    f'You supplied parameters with '
-                    f'unused symbols {unused_symbols}'
+                    f"You supplied parameters with "
+                    f"unused symbols {unused_symbols}"
                 )
 
             if used_symbols != expression.free_symbols:
                 symbols = sympy.symbols(set(parameters.keys()))
                 if symbols != expression.free_symbols:
-                    missing_syms = expression.free_symbols - symbols - independent_variables_symbols
+                    missing_syms = (
+                        expression.free_symbols
+                        - symbols
+                        - independent_variables_symbols
+                    )
                     if missing_syms:
                         raise ValueError(
-                            f'Missing necessary dependencies to evaluate '
-                            f'potential expression. Missing symbols: {missing_syms}'
+                            f"Missing necessary dependencies to evaluate "
+                            f"potential expression. Missing symbols: {missing_syms}"
                         )
 
                     extra_syms = symbols ^ expression.free_symbols
                     warnings.warn(
-                        f'Potential expression and parameter symbols do not agree, '
-                        f'extraneous symbols: {extra_syms}'
+                        f"Potential expression and parameter symbols do not agree, "
+                        f"extraneous symbols: {extra_syms}"
                     )

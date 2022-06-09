@@ -89,7 +89,7 @@
             </Parameters>
         </ImproperType>
     </DihedralTypes>
-    
+
     <DihedralTypes name="RBProper" expression="c0 * cos(phi)**0 + c1 * cos(phi)**1 + c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + c5 * cos(phi)**5">
         <ParametersUnitDef parameter="c5" unit="kJ/mol"/>
         <ParametersUnitDef parameter="c4" unit="kJ/mol"/>
@@ -108,6 +108,17 @@
             </Parameters>
         </DihedralType>
     </DihedralTypes>
+
+    <PairPotentialTypes name = "LJ" expression="4*k * ((sigma/r)**12 - (sigma/r)**6)">
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <ParametersUnitDef parameter="k" unit="kJ/mol"/>
+    <PairPotentialType name="PairPotentialType-LJ-1" type1="Xe" type2="Xe">
+        <Parameters>
+            <Parameter name="k" value="10"/>
+            <Parameter name="sigma" value="0.1"/>
+        </Parameters>
+    </PairPotentialType>
+  </PairPotentialTypes>
 
 
 </ForceField>

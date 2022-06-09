@@ -1,10 +1,12 @@
-from typing import Tuple, Optional
-import unyt as u
+"""Defined interactions between two bonded partners."""
+from typing import Optional, Tuple
 
+import unyt as u
 from pydantic import Field
 
 from gmso.core.parametric_potential import ParametricPotential
 from gmso.utils._constants import BOND_TYPE_DICT
+from gmso.utils.expression import PotentialExpression
 
 
 class BondType(ParametricPotential):
@@ -26,46 +28,70 @@ class BondType(ParametricPotential):
 
     member_types_: Optional[Tuple[str, str]] = Field(
         None,
-        description='List-like of of gmso.AtomType.name or gmso.AtomType.atomclass '
-                    'defining the members of this bond type'
+        description="List-like of of gmso.AtomType.name "
+        "defining the members of this bond type",
     )
 
-    def __init__(self,
-                 name='BondType',
-                 expression='0.5 * k * (r-r_eq)**2',
-                 parameters=None,
-                 independent_variables=None,
-                 member_types=None,
-                 topology=None,
-                 tags=None):
-        if parameters is None:
-            parameters = {
-                'k': 1000 * u.Unit('kJ / (nm**2)'),
-                'r_eq': 0.14 * u.nm
-            }
-        if independent_variables is None:
-            independent_variables = {'r'}
+    member_classes_: Optional[Tuple[str, str]] = Field(
+        None,
+        description="List-like of of gmso.AtomType.atomclass "
+        "defining the members of this bond type",
+    )
 
+    def __init__(
+        self,
+        name="BondType",
+        expression=None,
+        parameters=None,
+        independent_variables=None,
+        potential_expression=None,
+        member_types=None,
+        member_classes=None,
+        topology=None,
+        tags=None,
+    ):
         super(BondType, self).__init__(
             name=name,
             expression=expression,
             parameters=parameters,
             independent_variables=independent_variables,
+            potential_expression=potential_expression,
             topology=topology,
             member_types=member_types,
+            member_classes=member_classes,
             set_ref=BOND_TYPE_DICT,
-            tags=tags
+            tags=tags,
         )
 
     @property
     def member_types(self):
-        return self.__dict__.get('member_types_')
+        """Return the members involved in this bondtype."""
+        return self.__dict__.get("member_types_")
+
+    @property
+    def member_classes(self):
+        return self.__dict__.get("member_classes_")
+
+    @staticmethod
+    def _default_potential_expr():
+        return PotentialExpression(
+            expression="0.5 * k * (r-r_eq)**2",
+            independent_variables={"r"},
+            parameters={
+                "k": 1000 * u.Unit("kJ / (nm**2)"),
+                "r_eq": 0.14 * u.nm,
+            },
+        )
 
     class Config:
+        """Pydantic configuration for class attributes."""
+
         fields = {
-            'member_types_': 'member_types'
+            "member_types_": "member_types",
+            "member_classes_": "member_classes",
         }
 
         alias_to_fields = {
-            'member_types': 'member_types_'
+            "member_types": "member_types_",
+            "member_classes": "member_classes_",
         }

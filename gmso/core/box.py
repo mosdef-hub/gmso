@@ -1,57 +1,73 @@
+"""Represent box regions in gmso."""
 import warnings
 
 import numpy as np
 import unyt as u
 from unyt.array import allclose_units
 
+
 def _validate_lengths(lengths):
     """Ensure the lengths of the box are positive and check dimension."""
-
     if not isinstance(lengths, u.unyt_array):
         if all(isinstance(length, u.unyt_quantity) for length in lengths):
             print("Converting list of unyt quantities to a unyt array")
             lengths = u.unyt_array([l for l in lengths], str(lengths[0].units))
         else:
-            warnings.warn('Lengths are assumed to be in nm')
+            warnings.warn("Lengths are assumed to be in nm")
             lengths *= u.nm
     input_unit = lengths.units
 
-    lengths = np.asarray(lengths, dtype=float, order='C')
-    np.reshape(lengths, newshape=(3,), order='C')
+    lengths = np.asarray(lengths, dtype=float, order="C")
+    np.reshape(lengths, newshape=(3,), order="C")
 
     lengths *= input_unit
     lengths.convert_to_units(u.nm)
 
-    if np.any(np.less(lengths, [0, 0, 0], )):
-        raise ValueError('Negative length(s) passed. Lengths must be a value '
-                         'greater than 0.0. You passed {}'.format(lengths))
+    if np.any(
+        np.less(
+            lengths,
+            [0, 0, 0],
+        )
+    ):
+        raise ValueError(
+            "Negative length(s) passed. Lengths must be a value "
+            "greater than 0.0. You passed {}".format(lengths)
+        )
 
-    if np.any(np.equal(lengths, [0, 0, 0], )):
+    if np.any(
+        np.equal(
+            lengths,
+            [0, 0, 0],
+        )
+    ):
         if lengths[0] > 0 and lengths[1] > 0:
-            warnings.warn('A c value of 0 was passed. This will be '
-                          'interpreted as a 2-D box.')
+            warnings.warn(
+                "A c value of 0 was passed. This will be "
+                "interpreted as a 2-D box."
+            )
         else:
-            raise ValueError('Length(s) of value 0 were passed. Lengths must '
-                             'be a value greater than 0.0. You passed '
-                             '{}'.format(lengths))
+            raise ValueError(
+                "Length(s) of value 0 were passed. Lengths must "
+                "be a value greater than 0.0. You passed "
+                "{}".format(lengths)
+            )
     return lengths
 
 
 def _validate_angles(angles):
     """Convert angles to degree units and reshape to expected input."""
-
     if angles is None:
-        angles = np.asarray([90, 90, 90], dtype=float, order='C')
+        angles = np.asarray([90, 90, 90], dtype=float, order="C")
         angles *= u.degree
     else:
         if not isinstance(angles, u.unyt_array):
-            warnings.warn('Angles are assumed to be in degrees')
+            warnings.warn("Angles are assumed to be in degrees")
             angles *= u.degree
 
         input_unit = angles.units
 
-        angles = np.asarray(angles, dtype=float, order='C')
-        np.reshape(angles, newshape=(3, 1), order='C')
+        angles = np.asarray(angles, dtype=float, order="C")
+        np.reshape(angles, newshape=(3, 1), order="C")
 
         angles *= input_unit
         angles.convert_to_units(u.degree)
@@ -103,29 +119,31 @@ class Box(object):
 
     def __init__(self, lengths, angles=None):
         """Construct a `Box` based on lengths and angles."""
-
         self._lengths = _validate_lengths(lengths)
         self._angles = _validate_angles(angles)
 
     @property
     def lengths(self):
+        """Return edge lengths of the box."""
         return self._lengths
 
     @property
     def angles(self):
+        """Return angles of the box."""
         return self._angles
 
     @lengths.setter
     def lengths(self, lengths):
+        """Set the lengths of the box."""
         self._lengths = _validate_lengths(lengths)
 
     @angles.setter
     def angles(self, angles):
+        """Set the angles of the box."""
         self._angles = _validate_angles(angles)
 
     def _unit_vectors_from_angles(self):
-        """From the `Box` parameters, return unit vectors describing prism."""
-
+        """Return unit vectors describing prism from angles."""
         (alpha, beta, gamma) = self.angles
 
         cosa = np.cos(alpha)
@@ -134,46 +152,58 @@ class Box(object):
         cosg = np.cos(gamma)
         sing = np.sin(gamma)
         mat_coef_y = (cosa - cosb * cosg) / sing
-        mat_coef_z = np.power(sinb, 2, dtype=float) - \
-            np.power(mat_coef_y, 2, dtype=float)
+        mat_coef_z = np.power(sinb, 2, dtype=float) - np.power(
+            mat_coef_y, 2, dtype=float
+        )
 
-        if mat_coef_z > 0.:
+        if mat_coef_z > 0.0:
             mat_coef_z = np.sqrt(mat_coef_z)
         else:
-            raise Warning('Non-positive z-vector. Angles {} '
-                          'do not generate a box with the z-vector in the'
-                          'positive z direction'.format(self._angles))
+            raise Warning(
+                "Non-positive z-vector. Angles {} "
+                "do not generate a box with the z-vector in the"
+                "positive z direction".format(self._angles)
+            )
 
         # Note that our box vectors are always aligned along the x-axis
         #    and then the xy plane, with the z-axis
-        box_vec = [[1, 0, 0],
-                   [cosg, sing, 0],
-                   [cosb, mat_coef_y, mat_coef_z]]
+        box_vec = [[1, 0, 0], [cosg, sing, 0], [cosb, mat_coef_y, mat_coef_z]]
 
         return u.unyt_array(box_vec, u.dimensionless, dtype=np.float)
 
     def get_vectors(self):
-        """ Return the vectors of the box."""
+        """Return the vectors of the box."""
         return (self._lengths * self.get_unit_vectors().T).T
 
     def get_unit_vectors(self):
-        """ Return the normalized vectors of the box."""
+        """Return the normalized vectors of the box."""
         return self._unit_vectors_from_angles()
 
+    def json_dict(self):
+        from gmso.abc.serialization_utils import unyt_to_dict
+
+        return {
+            "lengths": unyt_to_dict(self._lengths),
+            "angles": unyt_to_dict(self._angles),
+        }
+
     def __repr__(self):
-        return "Box(a={}, b={}, c={}, alpha={}, beta={}, gamma={})"\
-            .format(*self._lengths, *self._angles)
+        """Return formatted representation of the box."""
+        return "Box(a={}, b={}, c={}, alpha={}, beta={}, gamma={})".format(
+            *self._lengths, *self._angles
+        )
 
     def __eq__(self, other):
         """Compare two boxes for equivalence."""
-
         if self is other:
             return True
 
         if not isinstance(other, Box):
             return False
 
-        if not allclose_units(self.lengths, other.lengths, rtol=1e-5, atol=1e-8):
+        if not allclose_units(
+            self.lengths, other.lengths, rtol=1e-5, atol=1e-8
+        ):
             return False
 
         if not allclose_units(self.angles, other.angles, rtol=1e-5, atol=1e-8):

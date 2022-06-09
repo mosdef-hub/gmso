@@ -1,10 +1,11 @@
-from typing import Tuple, Optional
-import unyt as u
+from typing import Optional, Tuple
 
+import unyt as u
 from pydantic import Field
 
 from gmso.core.parametric_potential import ParametricPotential
 from gmso.utils._constants import DIHEDRAL_TYPE_DICT
+from gmso.utils.expression import PotentialExpression
 
 
 class DihedralType(ParametricPotential):
@@ -20,7 +21,7 @@ class DihedralType(ParametricPotential):
 
     The connectivity of a dihedral is:
 
-           m1–m2–m3–m4
+       m1–m2–m3–m4
 
     where m1, m2, m3, and m4 are connection members 1-4, respectively.
 
@@ -32,47 +33,69 @@ class DihedralType(ParametricPotential):
 
     member_types_: Optional[Tuple[str, str, str, str]] = Field(
         None,
-        description='List-like of of gmso.AtomType.name or gmso.AtomType.atomclass '
-                    'defining the members of this dihedral type'
+        description="List-like of of gmso.AtomType.name "
+        "defining the members of this dihedral type",
     )
 
-    def __init__(self,
-                 name='DihedralType',
-                 expression='k * (1 + cos(n * phi - phi_eq))**2',
-                 parameters=None,
-                 independent_variables=None,
-                 member_types=None,
-                 topology=None,
-                 tags=None):
-        if parameters is None:
-            parameters = {
-                'k': 1000 * u.Unit('kJ / (deg**2)'),
-                'phi_eq': 180 * u.deg,
-                'n': 1 * u.dimensionless
-            }
-        if independent_variables is None:
-            independent_variables = {'phi'}
+    member_classes_: Optional[Tuple[str, str, str, str]] = Field(
+        None,
+        description="List-like of of gmso.AtomType.atomclass defining the "
+        "members of this dihedral type",
+    )
+
+    def __init__(
+        self,
+        name="DihedralType",
+        expression=None,
+        parameters=None,
+        independent_variables=None,
+        potential_expression=None,
+        member_types=None,
+        member_classes=None,
+        topology=None,
+        tags=None,
+    ):
 
         super(DihedralType, self).__init__(
             name=name,
             expression=expression,
             parameters=parameters,
             independent_variables=independent_variables,
+            potential_expression=potential_expression,
             topology=topology,
             member_types=member_types,
+            member_classes=member_classes,
             set_ref=DIHEDRAL_TYPE_DICT,
-            tags=tags
+            tags=tags,
         )
 
     @property
     def member_types(self):
-        return self.__dict__.get('member_types_')
+        return self.__dict__.get("member_types_")
+
+    @property
+    def member_classes(self):
+        return self.__dict__.get("member_classes_")
+
+    @staticmethod
+    def _default_potential_expr():
+        return PotentialExpression(
+            expression="k * (1 + cos(n * phi - phi_eq))**2",
+            parameters={
+                "k": 1000 * u.Unit("kJ / (deg**2)"),
+                "phi_eq": 180 * u.deg,
+                "n": 1 * u.dimensionless,
+            },
+            independent_variables={"phi"},
+        )
 
     class Config:
         fields = {
-            'member_types_': 'member_types'
+            "member_types_": "member_types",
+            "member_classes_": "member_classes",
         }
 
         alias_to_fields = {
-            'member_types': 'member_types_'
+            "member_types": "member_types_",
+            "member_classes": "member_classes_",
         }
