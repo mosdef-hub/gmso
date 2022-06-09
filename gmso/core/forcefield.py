@@ -1,4 +1,5 @@
 """Module for working with GMSO forcefields."""
+import itertools
 import warnings
 from collections import ChainMap
 from typing import Iterable
@@ -409,14 +410,18 @@ class ForceField(object):
             )
 
         forward = FF_TOKENS_SEPARATOR.join(atom_types)
-        reverse = FF_TOKENS_SEPARATOR.join(
-            [atom_types[0], atom_types[2], atom_types[1], atom_types[3]]
-        )
+        equivalent = [
+            FF_TOKENS_SEPARATOR.join(
+                [atom_types[0], atom_types[i], atom_types[j], atom_types[k]]
+            )
+            for (i, j, k) in itertools.permutations((1, 2, 3), 3)
+        ]
 
         if forward in self.improper_types:
             return self.improper_types[forward]
-        if reverse in self.improper_types:
-            return self.improper_types[reverse]
+        for eq in equivalent:
+            if eq in self.improper_types:
+                return self.improper_types[eq]
 
         match = None
         for i in range(1, 5):
