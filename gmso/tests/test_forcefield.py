@@ -5,6 +5,7 @@ from lxml.etree import DocumentInvalid
 from sympy import sympify
 
 from gmso.core.forcefield import ForceField
+from gmso.core.improper_type import ImproperType
 from gmso.exceptions import (
     ForceFieldParseError,
     MissingAtomTypesError,
@@ -596,3 +597,19 @@ class TestForceField(BaseTest):
             ).definition
             == "[_CH2;X2]([_CH3,_CH2])[_CH3,_CH2]"
         )
+
+    def test_forcefield_get_impropers_combinations(self):
+        ff_with_impropers = ForceField()
+        ff_with_impropers.name = "imp_ff"
+        ff_with_impropers.improper_types = {
+            "CT~CT~HC~HC": ImproperType(name="imp1"),
+            "CT~HC~HC~HC": ImproperType(name="imp2"),
+        }
+        imp1 = ff_with_impropers.get_potential(
+            "improper_type", ["CT", "HC", "HC", "CT"]
+        )
+        imp2 = ff_with_impropers.get_potential(
+            "improper_type", ["CT", "HC", "CT", "HC"]
+        )
+        assert imp1.name == imp2.name
+        assert imp1 is imp2
