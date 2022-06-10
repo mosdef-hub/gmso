@@ -328,16 +328,11 @@ class Topology(object):
         unique_tags = IndexedSet()
         if name_only:
             for site in self.sites:
-                unique_tags.add(
-                    site.__getattribute__(label_type)[0]
-                    if site.molecule
-                    else None
-                )
+                label = getattr(site, label_type)
+                unique_tags.add(label[0] if label else None)
         else:
             for site in self.sites:
-                unique_tags.add(
-                    site.__getattribute__(label_type) if site.molecule else None
-                )
+                unique_tags.add(getattr(site, label_type))
         return unique_tags
 
     @property
