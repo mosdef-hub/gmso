@@ -109,8 +109,7 @@ def from_parmed(structure, refer_type=True):
                         [atom.xx, atom.xy, atom.xz] * u.angstrom
                     ).in_units(u.nm),
                     atom_type=pmd_top_atomtypes[atom.atom_type],
-                    residue_name=residue.name,
-                    residue_number=residue.idx,
+                    residue=(residue.name, residue.idx),
                     element=element,
                 )
             else:
@@ -121,8 +120,7 @@ def from_parmed(structure, refer_type=True):
                         [atom.xx, atom.xy, atom.xz] * u.angstrom
                     ).in_units(u.nm),
                     atom_type=None,
-                    residue_name=residue.name,
-                    residue_number=residue.idx,
+                    residue=(residue.name, residue.idx),
                     element=element,
                 )
             site_map[atom] = site
@@ -624,9 +622,9 @@ def to_parmed(top, refer_type=True):
         ).value
 
         # Add atom to structure
-        if site.residue_name:
+        if site.residue:
             structure.add_atom(
-                pmd_atom, resname=site.residue_name, resnum=site.residue_number
+                pmd_atom, resname=site.residue[0], resnum=site.residue[1]
             )
         else:
             structure.add_atom(pmd_atom, resname="RES", resnum=-1)

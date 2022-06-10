@@ -322,6 +322,19 @@ class Topology(object):
         """Return all impropers in the topology."""
         return self._impropers
 
+    def unique_site_labels(self, label_type="molecule", name_only=True):
+        """Return a list of all molecule/residue labels in the Topology."""
+        # Not super happy with this method name, open for suggestion.
+        unique_tags = IndexedSet()
+        if name_only:
+            for site in self.sites:
+                label = getattr(site, label_type)
+                unique_tags.add(label[0] if label else None)
+        else:
+            for site in self.sites:
+                unique_tags.add(getattr(site, label_type))
+        return unique_tags
+
     @property
     def atom_types(self):
         """Return all atom_types in the topology.
@@ -1134,25 +1147,39 @@ class Topology(object):
             if getattr(site, key) == value:
                 yield site
 
-    def iter_sites_by_residue_name(self, name):
-        """Iterate through this topology's sites which contain this specific residue `name`.
+    def iter_sites_by_residue(self, name):
+        """Iterate through this topology's sites which contain this specific residue name.
 
         See Also
         --------
         gmso.core.topology.Topology.iter_sites
             The method to iterate over Topology's sites
         """
-        return self.iter_sites("residue_name", name)
+        if name is None:
+            for site in self._sites:
+                if not site.residue:
+                    yield site
+        else:
+            for site in self._sites:
+                if site.residue and getattr(site, "residue")[0] == name:
+                    yield site
 
-    def iter_sites_by_residue_number(self, number):
-        """Iterate through this topology's sites which contain this specific residue `number`.
+    def iter_sites_by_molecule(self, name):
+        """Iterate through this topology's sites which contain this specific molecule name.
 
         See Also
         --------
         gmso.core.topology.Topology.iter_sites
             The method to iterate over Topology's sites
         """
-        return self.iter_sites("residue_number", number)
+        if name is None:
+            for site in self._sites:
+                if not site.molecule:
+                    yield site
+        else:
+            for site in self._sites:
+                if site.molecule and getattr(site, "molecule")[0] == name:
+                    yield site
 
     def save(self, filename, overwrite=False, **kwargs):
         """Save the topology to a file.

@@ -267,8 +267,8 @@ class TestConvertParmEd(BaseTest):
         assert len(top_from_struc.subtops) == len(struc.residues)
 
         for site in top_from_struc.sites:
-            assert site.residue_name == "HEX"
-            assert site.residue_number in list(range(6))
+            assert site.residue[0] == "HEX"
+            assert site.residue[1] in list(range(6))
 
         struc_from_top = to_parmed(top_from_struc)
         assert len(struc_from_top.residues) == len(struc.residues)
@@ -286,8 +286,7 @@ class TestConvertParmEd(BaseTest):
         assert len(top_from_struc.subtops) == len(struc.residues)
 
         for site in top_from_struc.sites:
-            site.residue_name = None
-            site.residue_number = None
+            site.residue = None
 
         struc_from_top = to_parmed(top_from_struc)
         assert len(struc_from_top.residues) == 1
