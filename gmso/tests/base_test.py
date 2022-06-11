@@ -210,9 +210,14 @@ class BaseTest:
         for bond in top.bonds:
             bond.bond_type = ff.bond_types["opls_111~opls_112"]
 
-        for subtop in top.subtops:
+        molecule_tags = top.unique_site_labels(
+            label_type="molecule", name_only=False
+        )
+        for tag in molecule_tags:
             angle = Angle(
-                connection_members=[site for site in subtop.sites],
+                connection_members=[
+                    site for site in top.iter_sites("molecule", tag)
+                ],
                 name="opls_112~opls_111~opls_112",
                 angle_type=ff.angle_types["opls_112~opls_111~opls_112"],
             )
@@ -494,8 +499,7 @@ class BaseTest:
         for i in range(1, 26):
             atom = Atom(
                 name=f"atom_{i + 1}",
-                residue_number=i % 5,
-                residue_name="MY_RES_EVEN" if i % 2 == 0 else f"MY_RES_ODD",
+                residue=("MY_RES_EVEN" if i % 2 == 0 else f"MY_RES_ODD", i % 5),
             )
             top.add_site(atom, update_types=False)
         top.update_topology()
