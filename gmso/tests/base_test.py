@@ -213,11 +213,9 @@ class BaseTest:
         molecule_tags = top.unique_site_labels(
             label_type="molecule", name_only=False
         )
-        for tag in molecule_tags:
+        for subtop in top.subtops:
             angle = Angle(
-                connection_members=[
-                    site for site in top.iter_sites("molecule", tag)
-                ],
+                connection_members=[site for site in subtop.sites],
                 name="opls_112~opls_111~opls_112",
                 angle_type=ff.angle_types["opls_112~opls_111~opls_112"],
             )
