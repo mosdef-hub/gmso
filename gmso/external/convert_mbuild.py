@@ -119,14 +119,15 @@ def from_mbuild(
     return top
 
 
-def to_mbuild(topology):
+def to_mbuild(topology, infer_hierarchy=True):
     """Convert a gmso.Topology to mbuild.Compound.
 
     Parameters
     ----------
     topology : gmso.Topology
         topology instance that need to be converted
-
+    infer_hierarchy : bool, optional, default=True
+        Option to infer the hierarchy from Topology's labels
     Returns
     -------
     compound : mbuild.Compound
@@ -142,32 +143,29 @@ def to_mbuild(topology):
         compound.name = topology.name
 
     particle_map = dict()
-    for molecule_tag in topology.unique_site_labels(label_type="molecule"):
-        mb_molecule = mb.Compound(name=molecule_tag)
-        residue_dict = dict()
-        for site in topology.iter_sites_by_molecule(molecule_tag):
-            if site.element:
-                element = site.element.symbol
-            else:
-                element = None
-            particle = mb.Compound(
-                name=site.name, pos=site.position, element=element
-            )
-            particle_map[site] = particle
+    if not infer_hierarchy:
+        for site in topology.sites:
+            particle = _parse_particle(particle_map=particle_map, site=site)
+    else:
+        for molecule_tag in topology.unique_site_labels(label_type="molecule"):
+            mb_molecule = mb.Compound(name=molecule_tag)
+            residue_dict = dict()
+            for site in topology.iter_sites_by_molecule(molecule_tag):
+                particle = _parse_particle(particle_map, site)
 
-            # Try to add the particle to a residue level
-            residue_tag = (
-                site.residue if site.residue else ("DefaultResidue", 0)
-            )  # the 0 idx is placeholder and does nothing
-            if residue_tag in residue_dict:
-                residue_dict[residue_tag].add(particle)
-            else:
-                residue_dict[residue_tag] = mb.Compound(name=residue_tag[0])
-                residue_dict[residue_tag].add(particle)
+                # Try to add the particle to a residue level
+                residue_tag = (
+                    site.residue if site.residue else ("DefaultResidue", 0)
+                )  # the 0 idx is placeholder and does nothing
+                if residue_tag in residue_dict:
+                    residue_dict[residue_tag].add(particle)
+                else:
+                    residue_dict[residue_tag] = mb.Compound(name=residue_tag[0])
+                    residue_dict[residue_tag].add(particle)
 
-        for key, item in residue_dict.items():
-            mb_molecule.add(item)
-        compound.add(mb_molecule)
+            for key, item in residue_dict.items():
+                mb_molecule.add(item)
+            compound.add(mb_molecule)
 
     for connect in topology.bonds:
         particle_map[connect.connection_members[0]].parent.parent.add_bond(
@@ -210,6 +208,21 @@ def from_mbuild_box(mb_box):
     )
 
     return box
+
+
+def _parse_particle(particle_map, site):
+    """Parse information for a mb.Particle from a gmso.Site and add it to particle map."""
+    if site.element:
+        element = site.element.symbol
+    else:
+        element = None
+    particle = mb.Compound(
+        name=site.name,
+        pos=site.position.to_value(u.nm),
+        element=element,
+    )
+    particle_map[site] = particle
+    return particle
 
 
 def _parse_label(site_map, compound):
