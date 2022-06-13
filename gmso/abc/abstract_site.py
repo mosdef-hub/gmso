@@ -1,6 +1,6 @@
 """Basic interaction site in GMSO that all other sites will derive from."""
 import warnings
-from typing import Any, ClassVar, Optional, Sequence, Tuple, TypeVar, Union
+from typing import Any, ClassVar, NamedTuple, Optional, Sequence, TypeVar, Union
 
 import numpy as np
 import unyt as u
@@ -11,7 +11,9 @@ from gmso.abc.gmso_base import GMSOBase
 from gmso.exceptions import GMSOError
 
 PositionType = Union[Sequence[float], np.ndarray, u.unyt_array]
-MoleculeType = Tuple[StrictStr, StrictInt]
+MoleculeType = NamedTuple("Molecule", name=StrictStr, number=StrictInt)
+ResidueType = NamedTuple("Residue", name=StrictStr, number=StrictInt)
+
 SiteT = TypeVar("SiteT", bound="Site")
 
 BASE_DOC_ATTR = "__base_doc__"
@@ -54,7 +56,7 @@ class Site(GMSOBase):
     label_: str = Field("", description="Label to be assigned to the site")
 
     group_: Optional[StrictStr] = Field(
-        None, description="Molecule Group label for the site"
+        None, description="Flexible alternative label relative to site"
     )
 
     molecule_: Optional[MoleculeType] = Field(
@@ -62,7 +64,7 @@ class Site(GMSOBase):
         description="Molecule label for the site, format of (molecule_name, molecule_number)",
     )
 
-    residue_: Optional[MoleculeType] = Field(
+    residue_: Optional[ResidueType] = Field(
         None,
         description="Residue label for the site, format of (residue_name, residue_number)",
     )

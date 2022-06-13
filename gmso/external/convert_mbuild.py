@@ -31,16 +31,17 @@ def from_mbuild(
 
         * All positional and box dimension values in compound are in nanometers.
 
-        * The hierarchical structure of the Compound will be flattened a translated to a
-        system of label in GMSO Sites. The directly supported labels include `Site.group`,
-        `Site.molecule_name`, and `Site.residue_name`. `group` is determined as the
-        second-highest level Compound; `molecule_name` is determined by traversing through
-        hierarchy of the mb.Compound, starting from the particle level, until the lowest
-        independent mb.Compound is reached (determined as an mb.Compound that does not have
-        any bond outside its boundary); `residue_name` is the `mb.Compound` level right above
-        particle level. `molecule_number` and `residue_number` can be used to distinguish between
-        different molecules and residues of the same name. There may be overlap between these labels.
-
+        * The hierarchical structure of the Compound will be flattened and translated to labels
+         in GMSO Sites. The directly supported labels include `Site.group`,
+        `Site.molecule_name`, and `Site.residue_name`.
+            * `group` is determined as te second-highest level Compound;
+            * `molecule` is determined by traversing through
+            hierarchy of the mb.Compound, starting from the particle level, until the lowest
+            independent mb.Compound is reached (determined as an mb.Compound that does not have
+            any bond outside its boundary);
+            * `residue` is the `mb.Compound` level right above particle level. `
+            * `molecule` and `residue` take the format of (name, index), where the latter can be used
+            to distinguish between molecule/residue of the same name.
         * Only `Bonds` are added for each bond in the `Compound`. If `Angles`\
           and `Dihedrals` are desired in the resulting `Topology`, they must be\
           added separately from this function.
