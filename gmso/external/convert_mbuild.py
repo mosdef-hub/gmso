@@ -146,6 +146,7 @@ def to_mbuild(topology, infer_hierarchy=True):
     if not infer_hierarchy:
         for site in topology.sites:
             particle = _parse_particle(particle_map=particle_map, site=site)
+            compound.add(particle)
     else:
         for molecule_tag in topology.unique_site_labels(label_type="molecule"):
             mb_molecule = mb.Compound(name=molecule_tag)
@@ -168,7 +169,7 @@ def to_mbuild(topology, infer_hierarchy=True):
             compound.add(mb_molecule)
 
     for connect in topology.bonds:
-        particle_map[connect.connection_members[0]].parent.parent.add_bond(
+        compound.add_bond(
             (
                 particle_map[connect.connection_members[0]],
                 particle_map[connect.connection_members[1]],
