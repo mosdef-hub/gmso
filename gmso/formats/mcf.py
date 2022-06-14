@@ -625,7 +625,8 @@ def _write_intrascaling_information(mcf, top):
         The 1-4 scaling parameter for Coulombic interactions
 
     """
-    sf = top.scaling_factors
+    nbonded_sf = top.lj_scale()
+    electstatic_sf = top.electrostatics_scale()
     header = (
         "\n!Intra Scaling\n"
         "!vdw_scaling    1-2 1-3 1-4 1-N\n"
@@ -634,20 +635,8 @@ def _write_intrascaling_information(mcf, top):
     )
 
     mcf.write(header)
-    mcf.write(
-        "{:.4f} {:.4f} {:.4f} 1.0000\n".format(
-            sf["nonBonded12Scale"],
-            sf["nonBonded13Scale"],
-            sf["nonBonded14Scale"],
-        )
-    )
-    mcf.write(
-        "{:.4f} {:.4f} {:.4f} 1.0000\n".format(
-            sf["electrostatics12Scale"],
-            sf["electrostatics13Scale"],
-            sf["electrostatics14Scale"],
-        )
-    )
+    mcf.write("{:.4f} {:.4f} {:.4f} 1.0000\n".format(*nbonded_sf))
+    mcf.write("{:.4f} {:.4f} {:.4f} 1.0000\n".format(*electstatic_sf))
 
 
 def _check_compatibility(top):

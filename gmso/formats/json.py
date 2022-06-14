@@ -4,6 +4,7 @@ import warnings
 from copy import deepcopy
 from pathlib import Path
 
+import numpy as np
 import unyt as u
 
 from gmso.core.angle import Angle
@@ -63,7 +64,9 @@ def _to_json(top, types=False, update=True):
 
     json_dict = {
         "name": top._name,
-        "scaling_factors": top.scaling_factors,
+        "scaling_factors": {
+            k: v.tolist() for k, v in top.scaling_factors.items()
+        },
         "subtopologies": [],
         "box": top.box.json_dict() if top.box else None,
         "atoms": [],
@@ -170,7 +173,10 @@ def _from_json(json_dict):
     top = Topology(
         name=json_dict["name"],
     )
-    top.scaling_factors = json_dict["scaling_factors"]
+    top._scaling_factors = {
+        k: np.asarray(v, dtype=float)
+        for k, v in json_dict["scaling_factors"].items()
+    }
     id_to_type_map = {}
     for atom_dict in json_dict["atoms"]:
         atom_type_id = atom_dict.pop("atom_type", None)

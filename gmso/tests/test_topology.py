@@ -3,6 +3,7 @@ from copy import deepcopy
 import numpy as np
 import pytest
 import unyt as u
+from sympy.plotting.intervalmath import interval
 from unyt.testing import assert_allclose_units
 
 from gmso.core.angle import Angle
@@ -630,38 +631,52 @@ class TestTopology(BaseTest):
         )
 
     def test_topology_scale_factors(self, typed_methylnitroaniline):
-        sf = typed_methylnitroaniline.scaling_factors
-        assert np.allclose(sf["nonBonded12Scale"], 0.0)
-        assert np.allclose(sf["nonBonded13Scale"], 0.0)
-        assert np.allclose(sf["nonBonded14Scale"], 0.5)
-        assert np.allclose(sf["electrostatics12Scale"], 0.0)
-        assert np.allclose(sf["electrostatics13Scale"], 0.0)
-        assert np.allclose(sf["electrostatics14Scale"], 0.5)
+        assert np.allclose(
+            typed_methylnitroaniline.lj_scale(interaction="12"), 0.0
+        )
+        assert np.allclose(
+            typed_methylnitroaniline.lj_scale(interaction="13"), 0.0
+        )
+        assert np.allclose(
+            typed_methylnitroaniline.lj_scale(interaction="14"), 0.5
+        )
+        assert np.allclose(
+            typed_methylnitroaniline.electrostatics_scale(interaction="12"), 0.0
+        )
+        assert np.allclose(
+            typed_methylnitroaniline.electrostatics_scale(interaction="13"), 0.0
+        )
+        assert np.allclose(
+            typed_methylnitroaniline.electrostatics_scale(interaction="14"), 0.5
+        )
 
     def test_topology_change_scale_factors(self, typed_methylnitroaniline):
-        typed_methylnitroaniline.scaling_factors = {
-            "nonBonded12Scale": 0.5,
-            "nonBonded13Scale": 0.5,
-            "nonBonded14Scale": 1.0,
-            "electrostatics12Scale": 1.0,
-            "electrostatics13Scale": 1.0,
-            "electrostatics14Scale": 1.0,
-        }
-        sf = typed_methylnitroaniline.scaling_factors
-        assert np.allclose(sf["nonBonded12Scale"], 0.5)
-        assert np.allclose(sf["nonBonded13Scale"], 0.5)
-        assert np.allclose(sf["nonBonded14Scale"], 1.0)
-        assert np.allclose(sf["electrostatics12Scale"], 1.0)
-        assert np.allclose(sf["electrostatics13Scale"], 1.0)
-        assert np.allclose(sf["electrostatics14Scale"], 1.0)
-        typed_methylnitroaniline.scaling_factors["nonBonded12Scale"] = 1.0
-        assert np.allclose(sf["nonBonded12Scale"], 1.0)
+        typed_methylnitroaniline.set_lj_scale([0.5, 0.5, 1.0])
+        typed_methylnitroaniline.set_electrostatics_scale([1.0, 1.0, 1.0])
+        assert np.allclose(
+            typed_methylnitroaniline.lj_scale(interaction="12"), 0.5
+        )
+        assert np.allclose(
+            typed_methylnitroaniline.lj_scale(interaction="13"), 0.5
+        )
+        assert np.allclose(
+            typed_methylnitroaniline.lj_scale(interaction="14"), 1.0
+        )
+        assert np.allclose(
+            typed_methylnitroaniline.electrostatics_scale(interaction="12"), 1.0
+        )
+        assert np.allclose(
+            typed_methylnitroaniline.electrostatics_scale(interaction="13"), 1.0
+        )
+        assert np.allclose(
+            typed_methylnitroaniline.electrostatics_scale(interaction="14"), 1.0
+        )
+        typed_methylnitroaniline.set_lj_scale(1.0, interaction="12")
+        assert np.allclose(typed_methylnitroaniline.lj_scale(), [1.0, 0.5, 1.0])
 
     def test_topology_invalid_scaling_factors(self, typed_methylnitroaniline):
         with pytest.raises(GMSOError):
-            typed_methylnitroaniline.scaling_factors = (0.5, 1.0)
-        with pytest.raises(GMSOError):
-            typed_methylnitroaniline.scaling_factors = {"lj_12": 0.0}
+            typed_methylnitroaniline.lj_scale(interaction="16")
 
     def test_is_typed_check(self, typed_chloroethanol):
         groups = [

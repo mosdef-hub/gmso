@@ -417,10 +417,11 @@ class BaseTest:
                 return False, "Unequal number of impropers"
             if top1.name != top2.name:
                 return False, "Dissimilar names"
-
-            if top1.scaling_factors != top2.scaling_factors:
-                return False, f"Mismatch in scaling factors"
-
+            for k, v in top1.scaling_factors.items():
+                if k not in top2.scaling_factors:
+                    return False, "Mismatch in scaling factors"
+                elif not np.allclose(v, top2.scaling_factors[k]):
+                    return False, "Mismatch in scaling factors"
             if not have_equivalent_boxes(top1, top2):
                 return (
                     False,
