@@ -625,8 +625,8 @@ def _write_intrascaling_information(mcf, top):
         The 1-4 scaling parameter for Coulombic interactions
 
     """
-    nbonded_sf = top.lj_scale()
-    electstatic_sf = top.electrostatics_scale()
+    nbonded_sf = top.get_lj_scale()
+    electstatic_sf = top.get_electrostatics_scale()
     header = (
         "\n!Intra Scaling\n"
         "!vdw_scaling    1-2 1-3 1-4 1-N\n"

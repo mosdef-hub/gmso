@@ -155,14 +155,14 @@ class Topology(object):
         self._subtops = IndexedSet()
         self._combining_rule = "lorentz"
         self._pairpotential_types = IndexedSet()
-        self._scaling_factors = {
-            self.name: np.array(
-                [
-                    [0.0, 0.0, 0.5],  # lj scales
-                    [0.0, 0.0, 0.5],  # electrostatics scale
-                ]
-            )
-        }
+        self._global_scaling_factors = np.array(
+            [
+                [0.0, 0.0, 0.5],  # lj scales
+                [0.0, 0.0, 0.5],  # electrostatics scale
+            ],
+            dtype=float,
+        )
+        self._molecule_scaling_factors = {}
         self.is_updated = True
         self._potentials_count = {
             "atom_types": 0,
@@ -218,8 +218,12 @@ class Topology(object):
         self._combining_rule = rule
 
     @property
-    def scaling_factors(self):
-        return self._scaling_factors
+    def global_scaling_factors(self):
+        return self._global_scaling_factors.copy()
+
+    @property
+    def molecule_scaling_factors(self):
+        return {k: v.copy() for k, v in self._molecule_scaling_factors.items()}
 
     @property
     def positions(self):
@@ -614,7 +618,7 @@ class Topology(object):
             set([ptype.expression for ptype in self._pairpotential_types])
         )
 
-    def lj_scale(self, *, molecule_id=None, interaction=None):
+    def get_lj_scale(self, *, molecule_id=None, interaction=None):
         """Return the selected lj_scales defined for this topology."""
         return self._get_scaling_factor(molecule_id, interaction, "lj_scale", 0)
 
@@ -622,8 +626,55 @@ class Topology(object):
         """Set the correct lj_scaling factors for this topology."""
         self._set_scaling_factor(value, molecule_id, interaction, "lj_scale", 0)
 
-    def electrostatics_scale(self, *, molecule_id=None, interaction=None):
-        """Return the selected electrostatics_scale defined for this topology."""
+    def get_scaling_factors(self, *, molecule_id=None):
+        """Get the scaling factor of this topology or for a particular molecule"""
+        return np.vstack(
+            [
+                self.get_lj_scale(molecule_id=molecule_id),
+                self.get_electrostatics_scale(molecule_id=molecule_id),
+            ]
+        )
+
+    def set_scaling_factors(self, lj, electrostatics, *, molecule_id=None):
+        """Set both lj and electrostatics scaling factors."""
+        lj = np.array(lj, dtype=float)
+        electrostatics = np.array(electrostatics, dtype=float)
+        assert lj.shape == (
+            3,
+        ), f"Expected lj: {lj} to have a shape (3,), found {lj.shape}"
+        assert electrostatics.shape == (3,), (
+            f"Expected electrostatics: {electrostatics} to have a shape (3,), "
+            f"found {electrostatics.shape}"
+        )
+        self.set_lj_scale(
+            lj,
+            molecule_id=molecule_id,
+            interaction=None,
+        )
+
+        self.set_electrostatics_scale(
+            electrostatics,
+            molecule_id=molecule_id,
+        )
+
+    def get_electrostatics_scale(self, *, molecule_id=None, interaction=None):
+        """Return the selected electrostatics_scale defined for this topology.
+
+        Parameters
+        ----------
+        molecule_id: str, default=None
+            The molecule id that this scaling factor applies to, if None
+            this will return the Topology's global scaling factors
+
+        interaction: str, one of {'12', '13', '14'}, default=None
+            The interaction for which to return the scaling factor for, if None
+            a 3 tuple
+
+        Raises
+        ------
+        GMSOError
+            If the specified parameters can't return a scaling factor
+        """
         return self._get_scaling_factor(
             molecule_id, interaction, "electrostatics_scale", 1
         )
@@ -631,7 +682,26 @@ class Topology(object):
     def set_electrostatics_scale(
         self, value, *, molecule_id=None, interaction=None
     ):
-        """Set the correct lj_scaling factors for this topology."""
+        """Set the correct lj_scaling factors for this topology.
+
+        Parameters
+        ----------
+        value: float, numpy.ndarray, list, or tuple of floats
+            The value to set for this scale
+
+        molecule_id: str, default=None
+            The molecule id that this scaling factor applies to, if None
+            this will return the Topology's global scaling factors
+
+        interaction: str, one of {'12', '13', '14'}, default=None
+            The interaction for which to return the scaling factor for, if None
+            a 3 tuple
+
+        Raises
+        ------
+        GMSOError
+            If the specified parameters can't return a scaling factor
+        """
         self._set_scaling_factor(
             value, molecule_id, interaction, "electrostatics_scale", 1
         )
@@ -639,39 +709,53 @@ class Topology(object):
     def _get_scaling_factor(self, molecule_id, interaction, name, index):
         """Get the scaling factor according to molecule_id, interaction, and name."""
         if molecule_id is None:
-            molecule_id = self.name
-
-        if molecule_id not in self._scaling_factors:
-            raise GMSOError(
-                f"Scaling factors for molecule {molecule_id} is not defined "
-                f"in the topology. Please use appropriate molecule_id"
-            )
-        all_scales = self._scaling_factors[molecule_id]
+            all_scales = self._global_scaling_factors
+        else:
+            if molecule_id not in self._molecule_scaling_factors:
+                raise GMSOError(
+                    f"Scaling factors for molecule `{molecule_id}` is not defined "
+                    f"in the topology. Please use appropriate molecule_id"
+                )
+            all_scales = self._molecule_scaling_factors[molecule_id]
 
         if interaction is None:
-            return all_scales[index]
+            return all_scales[index].copy()
         else:
             if interaction not in scaling_interaction_idxes:
-                raise GMSOError(f"Unknown {name} interaction {interaction}")
+                raise GMSOError(f"Unknown `{name}` interaction `{interaction}`")
             return all_scales[index][scaling_interaction_idxes[interaction]]
 
     def _set_scaling_factor(self, value, molecule_id, interaction, name, index):
         """Set the scaling factor according to molecule_id, interaction, and name."""
-        value = np.array(value)
-        if molecule_id is None:
-            molecule_id = self.name
+        org_value = value
+        value = np.array(value, dtype=float).reshape(-1)
 
-        if molecule_id not in self._scaling_factors:
-            self._scaling_factors[molecule_id] = np.array(
-                [[0.0, 0.0, 0.5], [0.0, 0.0, 0.5]]
+        if any(np.isnan(value)):
+            raise ValueError(
+                f"Cannot assign a nan/NoneType to `{name}`. "
+                f"Provided value: {org_value}"
             )
 
-        all_scales = self._scaling_factors[molecule_id]
+        if value.shape != (1,) and value.shape != (3,):
+            raise ValueError(
+                f"Cannot determine the appropriate shape for {org_value} to "
+                f"assign it to `{name}`"
+            )
+
+        if molecule_id is None:
+            all_scales = self._global_scaling_factors
+        else:
+            if molecule_id not in self._molecule_scaling_factors:
+                self._molecule_scaling_factors[
+                    molecule_id
+                ] = self._global_scaling_factors.copy()
+            all_scales = self._molecule_scaling_factors[molecule_id]
+
         if interaction is None:
             all_scales[index] = value
         else:
             if interaction not in scaling_interaction_idxes:
-                raise GMSOError(f"Unknown {name} interaction {interaction}")
+                raise GMSOError(f"Unknown `{name}` interaction `{interaction}`")
             all_scales[index][scaling_interaction_idxes[interaction]] = value
 
     def add_site(self, site, update_types=False):
