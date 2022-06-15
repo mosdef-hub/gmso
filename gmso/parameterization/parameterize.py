@@ -24,9 +24,11 @@ def apply(
     ----------
     top: gmso.core.topology.Topology, required
         The GMSO topology on which to apply forcefields
-    forcefields: dict, required
-        The keys are labels that match the subtopology label or site residue_name, and the
-        values are gmso Forcefield objects that gets applied to the specified molecule
+
+    forcefields: Forcefield or dict, required
+        The forcefield to apply. If a dictionary is used the keys are labels that match
+        the subtopology name, and the values are gmso Forcefield objects that gets applied
+        to the specified subtopology
 
     identify_connections: bool, optional, default=False
         If true, add connections identified using networkx graph matching to match
@@ -36,18 +38,23 @@ def apply(
     identify_connected_components: bool, optional, default=True
         A flag to determine whether or not to search the topology for repeated disconnected
         structures, otherwise known as molecules and type each molecule only once.
+
     use_residue_info: bool, optional, default=False
         A flag to determine whether or not to look at site.residue_name to look parameterize
-        each molecule only once. Will only be used if identify_connected_components=False
+        each molecule only once. Currently unused.
+
     assert_bond_params : bool, optional, default=True
         If True, an error is raised if parameters are not found for all system
         bonds.
+
     assert_angle_params : bool, optional, default=True
         If True, an error is raised if parameters are not found for all system
         angles.
+
     assert_dihedral_params : bool, optional, default=True
         If True, an error is raised if parameters are not found for all system
         proper dihedrals.
+
     assert_improper_params : bool, optional, default=False
         If True, an error is raised if parameters are not found for all system
         improper dihedrals.
