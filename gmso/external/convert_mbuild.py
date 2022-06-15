@@ -34,14 +34,15 @@ def from_mbuild(
         * The hierarchical structure of the Compound will be flattened and translated to labels
          in GMSO Sites. The directly supported labels include `Site.group`,
         `Site.molecule_name`, and `Site.residue_name`.
-            * `group` is determined as te second-highest level Compound;
+            * `group` is determined as te second-highest level Compound and is automatically generated;
             * `molecule` is determined by traversing through
             hierarchy of the mb.Compound, starting from the particle level, until the lowest
             independent mb.Compound is reached (determined as an mb.Compound that does not have
             any bond outside its boundary);
             * `residue` is the `mb.Compound` level right above particle level. `
             * `molecule` and `residue` take the format of (name, index), where the latter can be used
-            to distinguish between molecule/residue of the same name.
+            to distinguish between molecule/residue of the same name. These two labels are only generated
+            if parse_label=True.
         * Only `Bonds` are added for each bond in the `Compound`. If `Angles`\
           and `Dihedrals` are desired in the resulting `Topology`, they must be\
           added separately from this function.
@@ -81,20 +82,18 @@ def from_mbuild(
     if parse_label:
         _parse_label(site_map, compound)
 
-    for particle in site_map:
-        pos = particle.xyz[0] * u.nanometer
-        if particle.element:
-            ele = search_method(particle.element.symbol)
-        else:
-            ele = search_method(particle.name)
-        site = Atom(
-            name=particle.name,
-            position=pos,
-            element=ele,
-            molecule=(site_map[particle]["molecule"]),
-            residue=(site_map[particle]["residue"]),
-        )
-        site_map[particle]["site"] = site
+    if compound.children:
+        for child in compound.children:
+            if not child.children:
+                site = _parse_site(site_map, child, search_method)
+                top.add_site(site)
+            else:
+                for particle in child.particles():
+                    site = _parse_site(site_map, particle, search_method)
+                    site.group = child.name
+                    top.add_site(site)
+    else:
+        site = _parse_site(site_map, compound, search_method)
         top.add_site(site)
 
     for b1, b2 in compound.bonds():
@@ -224,6 +223,24 @@ def _parse_particle(particle_map, site):
     )
     particle_map[site] = particle
     return particle
+
+
+def _parse_site(site_map, particle, search_method):
+    """Parse information for a gmso.Site from a mBuild.Compound adn add it to the site map."""
+    pos = particle.xyz[0] * u.nm
+    if particle.element:
+        ele = search_method(particle.element.symbol)
+    else:
+        ele = search_method(particle.name)
+    site = Atom(
+        name=particle.name,
+        position=pos,
+        element=ele,
+        molecule=(site_map[particle]["molecule"]),
+        residue=(site_map[particle]["residue"]),
+    )
+    site_map[particle]["site"] = site
+    return site
 
 
 def _parse_label(site_map, compound):
