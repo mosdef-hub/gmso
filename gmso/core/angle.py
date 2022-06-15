@@ -61,32 +61,6 @@ class Angle(Connection):
             [self.connection_members, tuple(reversed(self.connection_members))]
         )
 
-    def _equivalent_members_hash(self):
-        """Return a unique hash representing the connection.
-
-        Returns
-        -------
-        int
-            A unique hash to represent the connection members
-
-        Notes
-        -----
-        For an angle:
-            i, j, k == k, j, i
-        where i, j, and k are the connection members.
-        Here, j is fixed and i and k are replaceable.
-        """
-        return hash(
-            tuple(
-                [
-                    self.connection_members[1],
-                    frozenset(
-                        [self.connection_members[0], self.connection_members[2]]
-                    ),
-                ]
-            )
-        )
-
     def __setattr__(self, key, value):
         """Set the attributes of the angle."""
         if key == "connection_type":
