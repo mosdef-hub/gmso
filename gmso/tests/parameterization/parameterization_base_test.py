@@ -101,7 +101,7 @@ class ParameterizationBaseTest(BaseTest):
 
         return _assert_same_atom_params
 
-    @pytest.fixture(scope="session")
+    @pytest.fixture
     def ethane_methane_top(self):
         cmpd = mb.Compound()
         cmpd.add(Ethane())
@@ -110,7 +110,7 @@ class ParameterizationBaseTest(BaseTest):
         gmso_top.identify_connections()
         return gmso_top
 
-    @pytest.fixture(scope="session")
+    @pytest.fixture
     def ethane_box_with_methane(self):
         cmpd_box = mb.fill_box([Ethane(), Methane()], [50, 50], density=1.0)
         return from_mbuild(cmpd_box)

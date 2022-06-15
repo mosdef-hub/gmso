@@ -2,6 +2,7 @@
 from collections import namedtuple
 
 from foyer.atomtyper import AtomTypingRulesProvider, find_atomtypes
+from foyer.exceptions import FoyerError
 from foyer.topology_graph import TopologyGraph
 
 from gmso.core.atom import Atom
@@ -31,6 +32,12 @@ def get_topology_graph(gmso_topology, atomdata_populator=None):
     """
     top_graph = TopologyGraph()
     atom_index_map = {}
+
+    if len(gmso_topology.sites) == 0:
+        raise FoyerError(
+            "Cannot create a topology graph from a topology with no sites."
+        )
+
     for j, atom in enumerate(gmso_topology.sites):
         atom_index_map[id(atom)] = j
         if isinstance(atom, Atom):

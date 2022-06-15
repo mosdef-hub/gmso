@@ -2,12 +2,13 @@ import random
 
 import forcefield_utilities as ffutils
 import pytest
+from foyer.exceptions import FoyerError
 
 from gmso.core.forcefield import ForceField
+from gmso.core.subtopology import SubTopology
+from gmso.core.topology import Topology
 from gmso.parameterization.parameterize import apply
-from gmso.parameterization.topology_parameterizer import (
-    GMSOParameterizationError,
-)
+from gmso.parameterization.topology_parameterizer import ParameterizationError
 from gmso.tests.parameterization.parameterization_base_test import (
     ParameterizationBaseTest,
 )
@@ -30,7 +31,7 @@ class TestParameterizationOptions(ParameterizationBaseTest):
             "columbic14Scale": 2.0,
         }
 
-        with pytest.raises(GMSOParameterizationError):
+        with pytest.raises(ParameterizationError):
             apply(ethane_methane_top, {"Ethane": ff1, "Methane": ff2})
 
     def test_parameterization_different_combining_rule(
@@ -52,7 +53,7 @@ class TestParameterizationOptions(ParameterizationBaseTest):
 
         ff2.combining_rule = "geometric"
 
-        with pytest.raises(GMSOParameterizationError):
+        with pytest.raises(ParameterizationError):
             apply(ethane_methane_top, {"Ethane": ff1, "Methane": ff2})
 
     def test_different_ffs_apply(self, ethane_methane_top):
@@ -62,6 +63,38 @@ class TestParameterizationOptions(ParameterizationBaseTest):
         assert ethane_methane_top.combining_rule == "geometric"
         for key, v in opls.scaling_factors.items():
             assert ethane_methane_top.scaling_factors[key] == v
+
+    def test_no_subtops_dict_ff(self, oplsaa_gmso):
+        top = Topology(name="topWithNoSubTops")
+        with pytest.raises(ParameterizationError):
+            apply(top, {"subtopA": oplsaa_gmso})
+
+    def test_missing_subtop_name_ff(self, oplsaa_gmso):
+        top = Topology(name="top1")
+        for j in range(0, 10, 2):
+            top.add_subtopology(SubTopology(name=f"subtop{j+1}"))
+        with pytest.warns(
+            UserWarning,
+            match=r"Subtopology subtop\d will not be parameterized,"
+            r" as the forcefield to parameterize it is missing.",
+        ):
+            apply(top, {"subtopA": oplsaa_gmso})
+
+    def test_diff_combining_rules_error(self, ethane_methane_top):
+        ff1 = ForceField()
+        ff1.combining_rule = "lorrentz"
+        ff2 = ForceField()
+        ff2.combining_rule = "geometric"
+        with pytest.raises(ParameterizationError, match=""):
+            apply(ethane_methane_top, {"Ethane": ff1, "Methane": ff2})
+
+    def test_empty_ff_foyer_error(self, ethane_methane_top):
+        with pytest.raises(FoyerError):
+            apply(ethane_methane_top, ForceField())
+
+    def test_empty_top_parameterization(self, oplsaa_gmso):
+        with pytest.raises(FoyerError):
+            apply(top=Topology(), forcefields=oplsaa_gmso)
 
     def test_isomporhic_speedups(self, ethane_box_with_methane, oplsaa_gmso):
         ethane_box_with_methane.identify_connections()

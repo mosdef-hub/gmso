@@ -7,9 +7,7 @@ from gmso.core.topology import Topology
 from gmso.core.views import PotentialFilters
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.parameterization.parameterize import apply
-from gmso.parameterization.topology_parameterizer import (
-    GMSOParameterizationError,
-)
+from gmso.parameterization.topology_parameterizer import ParameterizationError
 from gmso.tests.parameterization.parameterization_base_test import (
     ParameterizationBaseTest,
 )
@@ -62,7 +60,7 @@ class TestImpropersParameterization(ParameterizationBaseTest):
                 )
 
     def test_improper_assertion_error(self, ethane_methane_top, oplsaa_gmso):
-        with pytest.raises(GMSOParameterizationError):
+        with pytest.raises(ParameterizationError):
             apply(ethane_methane_top, oplsaa_gmso, assert_improper_params=True)
 
     @pytest.mark.parametrize(

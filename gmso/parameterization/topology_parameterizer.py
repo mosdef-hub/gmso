@@ -26,7 +26,7 @@ from gmso.parameterization.subtopology_utils import (
 from gmso.parameterization.utils import POTENTIAL_GROUPS
 
 
-class GMSOParameterizationError(GMSOError):
+class ParameterizationError(GMSOError):
     """Raise when parameterization fails."""
 
 
@@ -166,7 +166,7 @@ class TopologyParameterizer(GMSOBase):
                     break
 
             if not match and error_on_missing:
-                raise GMSOParameterizationError(
+                raise ParameterizationError(
                     f"No parameters found for connection {connection}, group: {group}, "
                     f"identifiers: {connection_identifiers} in the Forcefield."
                 )
@@ -189,14 +189,14 @@ class TopologyParameterizer(GMSOBase):
             init_combining_rule = ffs[0].combining_rule
             for ff in ffs[1:]:
                 if ff.scaling_factors != init_scaling_factors:
-                    raise GMSOParameterizationError(
+                    raise ParameterizationError(
                         "Scaling factors of the provided forcefields do not"
                         "match, please provide forcefields with same scaling"
                         "factors that apply to a Topology"
                     )
 
                 if ff.combining_rule != init_combining_rule:
-                    raise GMSOParameterizationError(
+                    raise ParameterizationError(
                         "Combining rules of the provided forcefields do not"
                         "match, please provide forcefields with same scaling"
                         "factors that apply to a Topology"
@@ -212,7 +212,7 @@ class TopologyParameterizer(GMSOBase):
         """Run parameterization of the topology with give forcefield(s) and configuration."""
         scaling_factors, combining_rule = self._verify_forcefields_metadata()
         if self.topology.is_typed():
-            raise GMSOParameterizationError(
+            raise ParameterizationError(
                 "Cannot parameterize a typed topology. Please provide a topology without any types"
             )
 
@@ -222,6 +222,14 @@ class TopologyParameterizer(GMSOBase):
             self.topology.identify_connections()
 
         if isinstance(self.forcefields, Dict):
+            if self.topology.n_subtops == 0:
+                raise ParameterizationError(
+                    f"The provided gmso topology doesn't have any subtopologies."
+                    f"Either use a single forcefield to apply to to whole topology "
+                    f"or provide an appropriate topology whose sub-topology names are "
+                    f"the keys of the `forcefields` dictionary. Provided Forcefields: "
+                    f"{self.forcefields}, Topology: {self.topology}"
+                )
             for subtop in self.topology.subtops:
                 if subtop.name not in self.forcefields:
                     warnings.warn(
