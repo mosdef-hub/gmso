@@ -22,4 +22,5 @@ dependencies:
   - ipywidgets
   - ele >= 0.2.0
   - pre-commit
-  - forcefield-utilities
+  - pip:
+        - "--editable=git+https://github.com/mosdef-hub/forcefield-utilities.git#egg=forcefield-utilities"
