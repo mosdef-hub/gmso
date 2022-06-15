@@ -18,17 +18,20 @@ def apply(
     assert_dihedral_params=True,
     assert_improper_params=False,
 ):
-    """Set Topology parameter types from GMSO Forcefields.
+    """Set Topology parameter types from GMSO ForceFields.
 
     Parameters
     ----------
     top: gmso.core.topology.Topology, required
         The GMSO topology on which to apply forcefields
 
-    forcefields: Forcefield or dict, required
+    forcefields: ForceField or dict, required
         The forcefield to apply. If a dictionary is used the keys are labels that match
-        the subtopology name, and the values are gmso Forcefield objects that gets applied
-        to the specified subtopology
+        the subtopology name, and the values are gmso ForceField objects that gets applied
+        to the specified subtopology.
+        Note: if a Topology with no subtopologies is provided, this option will only take
+        a ForceField object. If a dictionary of ForceFields is provided, this method will
+        fail.
 
     identify_connections: bool, optional, default=False
         If true, add connections identified using networkx graph matching to match
