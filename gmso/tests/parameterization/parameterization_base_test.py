@@ -1,8 +1,11 @@
 import foyer
+import mbuild as mb
 import pytest
 import unyt as u
 from forcefield_utilities.xml_loader import FoyerFFs
+from mbuild.lib.molecules import Ethane, Methane
 
+from gmso.external.convert_mbuild import from_mbuild
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
 
@@ -24,6 +27,13 @@ class ParameterizationBaseTest(BaseTest):
     def fake_improper_ff_gmso(self, xml_loader):
         return xml_loader.load(
             get_path("fake_ethane_impropers.xml"), rel_to_module=True
+        ).to_gmso_ff()
+
+    @pytest.fixture(scope="session")
+    def benzene_alkane_aa_ff_gmso(self, xml_loader):
+        return xml_loader.load(
+            get_path("benzene_and_alkane_branched_benzene_aa.xml"),
+            rel_to_module=True,
         ).to_gmso_ff()
 
     @pytest.fixture(scope="session")
@@ -90,3 +100,17 @@ class ParameterizationBaseTest(BaseTest):
                     assert u.allclose_units(atom_params[k], mirror_params[k])
 
         return _assert_same_atom_params
+
+    @pytest.fixture(scope="session")
+    def ethane_methane_top(self):
+        cmpd = mb.Compound()
+        cmpd.add(Ethane())
+        cmpd.add(Methane())
+        gmso_top = from_mbuild(cmpd)
+        gmso_top.identify_connections()
+        return gmso_top
+
+    @pytest.fixture(scope="session")
+    def ethane_box_with_methane(self):
+        cmpd_box = mb.fill_box([Ethane(), Methane()], [50, 50], density=1.0)
+        return from_mbuild(cmpd_box)

@@ -1,15 +1,9 @@
 import random
 
 import forcefield_utilities as ffutils
-import mbuild as mb
 import pytest
-import unyt as u
-from mbuild.lib.molecules import Ethane, Methane
 
 from gmso.core.forcefield import ForceField
-from gmso.core.views import PotentialFilters
-from gmso.external.convert_mbuild import from_mbuild
-from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.parameterization.parameterize import apply
 from gmso.parameterization.topology_parameterizer import (
     GMSOParameterizationError,
@@ -20,20 +14,6 @@ from gmso.tests.parameterization.parameterization_base_test import (
 
 
 class TestParameterizationOptions(ParameterizationBaseTest):
-    @pytest.fixture(scope="session")
-    def ethane_methane_top(self):
-        cmpd = mb.Compound()
-        cmpd.add(Ethane())
-        cmpd.add(Methane())
-        gmso_top = from_mbuild(cmpd)
-        gmso_top.identify_connections()
-        return gmso_top
-
-    @pytest.fixture(scope="session")
-    def ethane_box_with_methane(self):
-        cmpd_box = mb.fill_box([Ethane(), Methane()], [50, 50], density=1.0)
-        return from_mbuild(cmpd_box)
-
     def test_parameterization_error_different_scaling_factors(
         self, ethane_methane_top
     ):
@@ -115,51 +95,3 @@ class TestParameterizationOptions(ParameterizationBaseTest):
         for atom_a, atom_b in zip(methane_a.sites, methane_b.sites):
             assert atom_a.atom_type == atom_b.atom_type
             assert atom_a.atom_type is not None
-
-    def test_improper_parameterization(self, fake_improper_ff_gmso, ethane):
-        ethane.identify_connections()
-        apply(ethane, fake_improper_ff_gmso, assert_improper_params=True)
-
-        lib = PotentialTemplateLibrary()
-        template_improper_type = lib["PeriodicImproperPotential"]
-
-        assert (
-            len(
-                ethane.improper_types(
-                    filter_by=PotentialFilters.UNIQUE_NAME_CLASS
-                )
-            )
-            == 2
-        )
-        for improper_type in ethane.improper_types:
-            assert improper_type.expression == template_improper_type.expression
-            assert improper_type.member_classes in {
-                ("CT", "CT", "HC", "HC"),
-                ("CT", "HC", "HC", "HC"),
-            }
-
-            if improper_type.member_classes == ("CT", "CT", "HC", "HC"):
-                assert u.allclose_units(
-                    improper_type.parameters["phi_eq"], [180.0] * u.degree
-                )
-                assert u.allclose_units(
-                    improper_type.parameters["k"], [4.6024] * u.kJ / u.mol
-                )
-                assert u.allclose_units(
-                    improper_type.parameters["n"], [2] * u.dimensionless
-                )
-
-            elif improper_type.member_classes == ("CT", "CT", "HC", "HC"):
-                assert u.allclose_units(
-                    improper_type.parameters["phi_eq"], [180.0] * u.degree
-                )
-                assert u.allclose_units(
-                    improper_type.parameters["k"], [2.5560] * u.kJ / u.mol
-                )
-                assert u.allclose_units(
-                    improper_type.parameters["n"], [2] * u.dimensionless
-                )
-
-    def test_improper_assertion_error(self, ethane_methane_top, oplsaa_gmso):
-        with pytest.raises(GMSOParameterizationError):
-            apply(ethane_methane_top, oplsaa_gmso)
