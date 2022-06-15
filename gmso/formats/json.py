@@ -4,7 +4,6 @@ import warnings
 from copy import deepcopy
 from pathlib import Path
 
-import numpy as np
 import unyt as u
 
 from gmso.core.angle import Angle
@@ -65,7 +64,7 @@ def _to_json(top, types=False, update=True):
     json_dict = {
         "name": top._name,
         "scaling_factors": {
-            "global_scaling_factors": top.global_scaling_factors.tolist(),
+            "scaling_factors": top.scaling_factors.tolist(),
             "molecule_scaling_factors": {
                 k: v.tolist() for k, v in top.molecule_scaling_factors.items()
             },
@@ -153,7 +152,7 @@ def _to_json(top, types=False, update=True):
 
 def _set_scaling_factors(top, scaling_factors):
     """Set the global/permolecule scaling factors."""
-    global_scaling_factor = scaling_factors["global_scaling_factors"]
+    global_scaling_factor = scaling_factors["scaling_factors"]
     top.set_scaling_factors(global_scaling_factor[0], global_scaling_factor[1])
     for k, v in scaling_factors["molecule_scaling_factors"].items():
         top.set_scaling_factors(v[0], v[1], molecule_id=k)

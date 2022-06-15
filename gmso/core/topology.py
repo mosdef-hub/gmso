@@ -155,7 +155,7 @@ class Topology(object):
         self._subtops = IndexedSet()
         self._combining_rule = "lorentz"
         self._pairpotential_types = IndexedSet()
-        self._global_scaling_factors = np.array(
+        self._scaling_factors = np.array(
             [
                 [0.0, 0.0, 0.5],  # lj scales
                 [0.0, 0.0, 0.5],  # electrostatics scale
@@ -218,8 +218,8 @@ class Topology(object):
         self._combining_rule = rule
 
     @property
-    def global_scaling_factors(self):
-        return self._global_scaling_factors.copy()
+    def scaling_factors(self):
+        return self._scaling_factors.copy()
 
     @property
     def molecule_scaling_factors(self):
@@ -709,7 +709,7 @@ class Topology(object):
     def _get_scaling_factor(self, molecule_id, interaction, name, index):
         """Get the scaling factor according to molecule_id, interaction, and name."""
         if molecule_id is None:
-            all_scales = self._global_scaling_factors
+            all_scales = self._scaling_factors
         else:
             if molecule_id not in self._molecule_scaling_factors:
                 raise GMSOError(
@@ -743,12 +743,12 @@ class Topology(object):
             )
 
         if molecule_id is None:
-            all_scales = self._global_scaling_factors
+            all_scales = self._scaling_factors
         else:
             if molecule_id not in self._molecule_scaling_factors:
                 self._molecule_scaling_factors[
                     molecule_id
-                ] = self._global_scaling_factors.copy()
+                ] = self._scaling_factors.copy()
             all_scales = self._molecule_scaling_factors[molecule_id]
 
         if interaction is None:

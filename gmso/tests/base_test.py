@@ -417,9 +417,7 @@ class BaseTest:
                 return False, "Unequal number of impropers"
             if top1.name != top2.name:
                 return False, "Dissimilar names"
-            if not np.allclose(
-                top1.global_scaling_factors, top2.global_scaling_factors
-            ):
+            if not np.allclose(top1.scaling_factors, top2.scaling_factors):
                 return False, "Mismatch in scaling factors"
             for k, v in top1.molecule_scaling_factors.items():
                 if k not in top2.scaling_factors:
