@@ -21,7 +21,7 @@ class ParameterizationBaseTest(BaseTest):
 
     @pytest.fixture(scope="session")
     def trappe_ua_gmso(self, xml_loader):
-        return xml_loader.load("trappe_ua").to_gmso_ff()
+        return xml_loader.load("trappe-ua").to_gmso_ff()
 
     @pytest.fixture(scope="session")
     def fake_improper_ff_gmso(self, xml_loader):
