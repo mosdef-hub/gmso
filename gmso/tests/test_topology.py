@@ -681,9 +681,14 @@ class TestTopology(BaseTest):
             typed_methylnitroaniline.get_lj_scale(), [1.0, 0.5, 1.0]
         )
 
-    def test_topology_invalid_scaling_factors(self, typed_methylnitroaniline):
+    def test_topology_invalid_interactions_scaling_factors(
+        self, typed_methylnitroaniline
+    ):
         with pytest.raises(GMSOError):
             typed_methylnitroaniline.get_lj_scale(interaction="16")
+
+        with pytest.raises(GMSOError):
+            typed_methylnitroaniline.set_lj_scale(2, interaction="16")
 
     def test_topology_scaling_factors_by_molecule_id(
         self, typed_methylnitroaniline
@@ -704,19 +709,26 @@ class TestTopology(BaseTest):
 
     def test_topology_set_scaling_factors(self):
         top = Topology()
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValueError):
             top.set_scaling_factors([1.0, 2.0, 3.0], [2.1, 3.2])
-
         top.set_scaling_factors([1.0, 2.0, 3.0], [2.1, 2.2, 2.3])
+        top.set_scaling_factors(
+            [2.0, 2.0, 3.2], [0.0, 0.0, 0.5], molecule_id="MOLA"
+        )
         assert np.allclose(
-            np.vstack([top.get_lj_scale(), top.get_electrostatics_scale()]),
+            top.get_scaling_factors(),
             [[1.0, 2.0, 3.0], [2.1, 2.2, 2.3]],
+        )
+
+        assert np.allclose(
+            top.get_scaling_factors(molecule_id="MOLA"),
+            [[2.0, 2.0, 3.2], [0.0, 0.0, 0.5]],
         )
 
     def test_topology_set_scaling_factors_none(self):
         top = Topology()
-        # with pytest.raises(ValueError):
-        #     pas
+        with pytest.raises(ValueError):
+            top.set_scaling_factors(None, None)
 
     def test_is_typed_check(self, typed_chloroethanol):
         groups = [

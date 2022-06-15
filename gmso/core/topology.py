@@ -637,15 +637,6 @@ class Topology(object):
 
     def set_scaling_factors(self, lj, electrostatics, *, molecule_id=None):
         """Set both lj and electrostatics scaling factors."""
-        lj = np.array(lj, dtype=float)
-        electrostatics = np.array(electrostatics, dtype=float)
-        assert lj.shape == (
-            3,
-        ), f"Expected lj: {lj} to have a shape (3,), found {lj.shape}"
-        assert electrostatics.shape == (3,), (
-            f"Expected electrostatics: {electrostatics} to have a shape (3,), "
-            f"found {electrostatics.shape}"
-        )
         self.set_lj_scale(
             lj,
             molecule_id=molecule_id,
