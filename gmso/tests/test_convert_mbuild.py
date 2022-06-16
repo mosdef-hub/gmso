@@ -5,7 +5,6 @@ from unyt.testing import assert_allclose_units
 
 import gmso
 from gmso.core.atom import Atom
-from gmso.core.subtopology import SubTopology as SubTop
 from gmso.core.topology import Topology as Top
 from gmso.external.convert_mbuild import from_mbuild, to_mbuild
 from gmso.tests.base_test import BaseTest
@@ -89,20 +88,6 @@ class TestConvertMBuild(BaseTest):
         assert top.n_sites == 1
         assert top.sites[0].molecule == ("bot", 0)
         assert top.sites[0].residue == ("bot", 0)
-
-    def test_3_layer_top(self):
-        top_top = Top()
-        mid_top = SubTop()
-        site = Atom(position=[0.0, 0.0, 0.0])
-
-        top_top.add_subtopology(mid_top)
-        mid_top.add_site(site)
-
-        compound = to_mbuild(top_top)
-
-        assert len(compound.children) == 1
-        assert compound.children[0].n_particles == 1
-        assert compound.n_particles == 1
 
     def test_4_layer_compound(self):
         l0_cmpnd = mb.Compound(name="l0")

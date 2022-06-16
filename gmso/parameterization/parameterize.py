@@ -27,9 +27,9 @@ def apply(
 
     forcefields: ForceField or dict, required
         The forcefield to apply. If a dictionary is used the keys are labels that match
-        the subtopology name, and the values are gmso ForceField objects that gets applied
-        to the specified subtopology.
-        Note: if a Topology with no subtopologies is provided, this option will only take
+        the molecule name (specified as a label of site), and the values are gmso ForceField objects that gets applied
+        to the specified molecule.
+        Note: if a Topology with no molecule is provided, this option will only take
         a ForceField object. If a dictionary of ForceFields is provided, this method will
         fail.
 

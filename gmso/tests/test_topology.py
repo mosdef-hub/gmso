@@ -16,7 +16,6 @@ from gmso.core.dihedral import Dihedral
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
-from gmso.core.subtopology import SubTopology
 from gmso.core.topology import Topology
 from gmso.exceptions import GMSOError
 from gmso.external.convert_parmed import from_parmed
@@ -410,14 +409,6 @@ class TestTopology(BaseTest):
 
         pairpotentialtype_top.remove_pairpotentialtype(["a1", "a2"])
         assert len(pairpotentialtype_top.pairpotential_types) == 0
-
-    def test_add_subtopology(self):
-        top = Topology()
-        subtop = SubTopology()
-
-        assert top.n_subtops == 0
-        top.add_subtopology(subtop)
-        assert top.n_subtops == 1
 
     def test_parametrization(self):
         top = Topology()

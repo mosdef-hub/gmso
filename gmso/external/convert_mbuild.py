@@ -14,7 +14,6 @@ from gmso.core.element import (
     element_by_name,
     element_by_symbol,
 )
-from gmso.core.subtopology import SubTopology
 from gmso.core.topology import Topology
 from gmso.utils.io import has_mbuild
 

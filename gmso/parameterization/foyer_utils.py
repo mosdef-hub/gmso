@@ -6,7 +6,7 @@ from foyer.exceptions import FoyerError
 from foyer.topology_graph import TopologyGraph
 
 from gmso.core.atom import Atom
-from gmso.parameterization.subtopology_utils import subtop_bonds
+from gmso.parameterization.molecule_utils import molecule_bonds
 
 
 def get_topology_graph(gmso_topology, atomdata_populator=None):
@@ -73,11 +73,14 @@ def get_topology_graph(gmso_topology, atomdata_populator=None):
     return top_graph
 
 
-def get_topology_graph_from_subtop(subtopology):
+def get_topology_graph_from_molecule(topology, molecule):
     """Get an equivalent topology graph for a sub-topology."""
-    subtop_named_tuple = namedtuple("subtopology", ("sites", "bonds"))
+    pseudo_top = namedtuple("molecule", ("sites", "bonds"))
     return get_topology_graph(
-        subtop_named_tuple(subtopology.sites, subtop_bonds(subtopology))
+        pseudo_top(
+            topology.iter_sites("molecule", molecule),
+            molecule_bonds(topology, molecule),
+        )
     )
 
 

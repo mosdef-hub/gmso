@@ -73,9 +73,6 @@ class Topology(object):
     n_impropers : int
         Number of impropers in the topology
 
-    n_subtops : int
-        Number of subtopolgies in the topology
-
     connections : tuple of gmso.Connection objects
         A collection of bonds, angles, dihedrals, and impropers in the topology
 
@@ -132,11 +129,6 @@ class Topology(object):
 
     pairpotential_type_expressions : list of gmso.PairPotentialType.expression objects
         A collection of all the expression for the PairPotentialTypes in the topology
-
-    See Also
-    --------
-    gmso.SubTopology :
-        A topology within a topology
     """
 
     def __init__(self, name="Topology", box=None):
@@ -150,7 +142,6 @@ class Topology(object):
         self._angles = IndexedSet()
         self._dihedrals = IndexedSet()
         self._impropers = IndexedSet()
-        self._subtops = IndexedSet()
         self._combining_rule = "lorentz"
         self._pairpotential_types = IndexedSet()
         self._scaling_factors = {
@@ -281,16 +272,6 @@ class Topology(object):
     def n_impropers(self):
         """Return the number of impropers in the topology."""
         return len(self._impropers)
-
-    @property
-    def subtops(self):
-        """Return the subtopologies in the topology."""
-        return self._subtops
-
-    @property
-    def n_subtops(self):
-        """Return number of subtopolgies."""
-        return len(self._subtops)
 
     @property
     def sites(self):
@@ -837,29 +818,6 @@ class Topology(object):
             warnings.warn(
                 "No pair potential specified for such pair of AtomTypes/atomclasses"
             )
-
-    def add_subtopology(self, subtop, update=True):
-        """Add a sub-topology to this topology.
-
-        This methods adds a gmso.Core.SubTopology object to the topology
-        All the sites in this sub-topology are added to the collection of current
-        sites in this topology.
-
-        Parameters
-        ----------
-        subtop : gmso.SubTopology
-            The sub-topology object to be added.
-        update : bool, default=True
-
-        See Also
-        --------
-        gmso.SubTopology : A topology within a topology
-        """
-        self._subtops.add(subtop)
-        subtop.parent = self
-        self._sites = self._sites.union(subtop.sites)
-        if update:
-            self.update_topology()
 
     def is_typed(self, updated=False):
         """Verify if the topology is parametrized."""

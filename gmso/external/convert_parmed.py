@@ -13,6 +13,7 @@ from gmso.core.element import (
     element_by_name,
     element_by_symbol,
 )
+from gmso.exceptions import GMSOError
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.io import has_parmed, import_
 
@@ -54,12 +55,6 @@ def from_parmed(structure, refer_type=True):
             (structure.box[0:3] * u.angstrom).in_units(u.nm),
             angles=u.degree * structure.box[3:6],
         )
-    # TO DO: come up with a solution to deal with partially parametrized
-    # Parmed Structure
-    # Old code:
-    # simple check if our pmd.Structure is fully parametrized
-    # is_parametrized = True if (isinstance(structure.atoms[i].atom_type,
-    #        pmd.AtomType) for i in range(len(structure.atoms))) else False
 
     # Consolidate parmed atomtypes and relate topology atomtypes
     if refer_type:
@@ -93,39 +88,31 @@ def from_parmed(structure, refer_type=True):
             structure, improper_types_member_map=improper_types_map
         )
 
-    subtops = list()
+    ind_res = _check_independent_residues(structure)
     for residue in structure.residues:
-        subtop_name = ("{}[{}]").format(residue.name, residue.idx)
-        subtops.append(gmso.SubTopology(name=subtop_name, parent=top))
         for atom in residue.atoms:
             element = (
                 element_by_atomic_number(atom.element) if atom.element else None
             )
-            if refer_type and isinstance(atom.atom_type, pmd.AtomType):
-                site = gmso.Atom(
-                    name=atom.name,
-                    charge=atom.charge * u.elementary_charge,
-                    position=(
-                        [atom.xx, atom.xy, atom.xz] * u.angstrom
-                    ).in_units(u.nm),
-                    atom_type=pmd_top_atomtypes[atom.atom_type],
-                    residue=(residue.name, residue.idx),
-                    element=element,
-                )
-            else:
-                site = gmso.Atom(
-                    name=atom.name,
-                    charge=atom.charge * u.elementary_charge,
-                    position=(
-                        [atom.xx, atom.xy, atom.xz] * u.angstrom
-                    ).in_units(u.nm),
-                    atom_type=None,
-                    residue=(residue.name, residue.idx),
-                    element=element,
-                )
+            site = gmso.Atom(
+                name=atom.name,
+                charge=atom.charge * u.elementary_charge,
+                position=([atom.xx, atom.xy, atom.xz] * u.angstrom).in_units(
+                    u.nm
+                ),
+                atom_type=None,
+                residue=(residue.name, residue.idx),
+                element=element,
+            )
+            site.molecule = (residue.name, residue.idx) if ind_res else None
+            site.atom_type = atom_type = (
+                pmd_top_atomtypes[atom.atom_type]
+                if refer_type and isinstance(atom.atom_type, pmd.AtomType)
+                else None
+            )
+
             site_map[atom] = site
-            subtops[-1].add_site(site)
-        top.add_subtopology(subtops[-1])
+            top.add_site(site)
 
     for bond in structure.bonds:
         # Generate bond parameters for BondType that gets passed
@@ -561,11 +548,8 @@ def to_parmed(top, refer_type=True):
     """Convert a gmso.topology.Topology to a parmed.Structure.
 
     At this point we only assume a three level structure for topology
-    Topology - Subtopology - Sites, which transform to three level of
-    Parmed Structure - Residue - Atoms.
-    If we decide to support multiple level Subtopology in the future,
-    this method will need some re-work. Tentative plan is to have the
-    Parmed Residue to be equivalent to the Subtopology right above Site.
+    Topology - Molecule - Residue - Sites, which transform to three level of
+    Parmed Structure - Residue - Atoms (gmso Molecule level will be skipped).
 
     Parameters
     ----------
@@ -598,7 +582,6 @@ def to_parmed(top, refer_type=True):
     )
 
     # Maps
-    subtop_map = dict()  # Map site to subtop
     atom_map = dict()  # Map site to atom
     bond_map = dict()  # Map top's bond to structure's bond
     angle_map = dict()  # Map top's angle to strucutre's angle
@@ -626,7 +609,7 @@ def to_parmed(top, refer_type=True):
         # Add atom to structure
         if site.residue:
             structure.add_atom(
-                pmd_atom, resname=site.residue[0], resnum=site.residue[1]
+                pmd_atom, resname=site.residue.name, resnum=site.residue.number
             )
         else:
             structure.add_atom(pmd_atom, resname="RES", resnum=-1)
@@ -686,6 +669,24 @@ def to_parmed(top, refer_type=True):
             _dihedral_types_from_gmso(top, structure, dihedral_map)
 
     return structure
+
+
+def _check_independent_residues(structure):
+    """Check to see if residues will constitute independent graphs."""
+    # Copy from foyer forcefield.py
+    for res in structure.residues:
+        atoms_in_residue = set([*res.atoms])
+        bond_partners_in_residue = [
+            item
+            for sublist in [atom.bond_partners for atom in res.atoms]
+            for item in sublist
+        ]
+        # Handle the case of a 'residue' with no neighbors
+        if not bond_partners_in_residue:
+            continue
+        if set(atoms_in_residue) != set(bond_partners_in_residue):
+            return False
+    return True
 
 
 def _atom_types_from_gmso(top, structure, atom_map):
@@ -885,7 +886,7 @@ def _dihedral_types_from_gmso(top, structure, dihedral_map):
             # Add RBTorsionType to structure.rb_torsion_types
             structure.rb_torsion_types.append(dtype)
         else:
-            raise GMSOException("msg")
+            raise GMSOError("msg")
         dtype_map[dihedral_type] = dtype
 
     for dihedral in top.dihedrals:

@@ -5,7 +5,6 @@ import pytest
 from foyer.exceptions import FoyerError
 
 from gmso.core.forcefield import ForceField
-from gmso.core.subtopology import SubTopology
 from gmso.core.topology import Topology
 from gmso.parameterization.parameterize import apply
 from gmso.parameterization.topology_parameterizer import ParameterizationError
@@ -63,6 +62,8 @@ class TestParameterizationOptions(ParameterizationBaseTest):
         assert ethane_methane_top.combining_rule == "geometric"
         for key, v in opls.scaling_factors.items():
             assert ethane_methane_top.scaling_factors[key] == v
+
+    """ Change to molecule"""
 
     def test_no_subtops_dict_ff(self, oplsaa_gmso):
         top = Topology(name="topWithNoSubTops")

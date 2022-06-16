@@ -264,7 +264,9 @@ class TestConvertParmEd(BaseTest):
         struc = parmed_hexane_box
 
         top_from_struc = from_parmed(struc)
-        assert len(top_from_struc.subtops) == len(struc.residues)
+        assert len(
+            top_from_struc.unique_site_labels("residue", name_only=False)
+        ) == len(struc.residues)
 
         for site in top_from_struc.sites:
             assert site.residue[0] == "HEX"
@@ -283,7 +285,9 @@ class TestConvertParmEd(BaseTest):
     def test_default_residue_info(selfself, parmed_hexane_box):
         struc = parmed_hexane_box
         top_from_struc = from_parmed(struc)
-        assert len(top_from_struc.subtops) == len(struc.residues)
+        assert len(
+            top_from_struc.unique_site_labels("residue", name_only=False)
+        ) == len(struc.residues)
 
         for site in top_from_struc.sites:
             site.residue = None
