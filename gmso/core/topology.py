@@ -727,7 +727,7 @@ class Topology(object):
             is in the topology
         """
         # Check if an equivalent connection is in the topology
-        equivalent_members = connection._equivalent_members_hash()
+        equivalent_members = connection.equivalent_members()
         if equivalent_members in self._unique_connections:
             warnings.warn(
                 "An equivalent connection already exists. "
@@ -857,7 +857,7 @@ class Topology(object):
         """
         self._subtops.add(subtop)
         subtop.parent = self
-        self._sites.union(subtop.sites)
+        self._sites = self._sites.union(subtop.sites)
         if update:
             self.update_topology()
 

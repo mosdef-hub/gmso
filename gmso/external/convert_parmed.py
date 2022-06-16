@@ -586,10 +586,12 @@ def to_parmed(top, refer_type=True):
     # Set up Parmed structure and define general properties
     structure = pmd.Structure()
     structure.title = top.name
-    structure.box = np.concatenate(
-        (
-            top.box.lengths.to("angstrom").value,
-            top.box.angles.to("degree").value,
+    structure.box = (
+        np.concatenate(
+            (
+                top.box.lengths.to("angstrom").value,
+                top.box.angles.to("degree").value,
+            )
         )
         if top.box
         else None

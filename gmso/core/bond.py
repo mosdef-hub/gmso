@@ -62,24 +62,6 @@ class Bond(Connection):
             [self.connection_members, tuple(reversed(self.connection_members))]
         )
 
-    def _equivalent_members_hash(self):
-        """Return a unique hash representing the connection.
-
-        Returns
-        -------
-        int
-            A unique hash to represent the connection members
-        Notes
-        -----
-        For a bond:
-            i, j == j, i
-        where i and j are the connection members.
-        Here, i and j are interchangeable.
-        """
-        return hash(
-            frozenset([self.connection_members[0], self.connection_members[1]])
-        )
-
     def __setattr__(self, key, value):
         """Handle attribute assignment."""
         if key == "connection_type":
