@@ -147,11 +147,13 @@ def to_mbuild(topology, infer_hierarchy=True):
             compound.add(particle)
     else:
         for molecule_tag in topology.unique_site_labels(label_type="molecule"):
-            mb_molecule = mb.Compound(name=molecule_tag)
+            mb_molecule = mb.Compound()
+            mb_molecule.name = (
+                molecule_tag.name if molecule_tag else "DefaultMolecule"
+            )
             residue_dict = dict()
-            for site in topology.iter_sites_by_molecule(molecule_tag):
+            for site in topology.iter_sites("molecule", molecule_tag):
                 particle = _parse_particle(particle_map, site)
-
                 # Try to add the particle to a residue level
                 residue_tag = (
                     site.residue if site.residue else ("DefaultResidue", 0)

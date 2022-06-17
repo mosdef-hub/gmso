@@ -119,7 +119,7 @@ class TestMCF(BaseTest):
         top.save("ar.mcf")
 
     def test_scaling_factors(self, n_typed_ar_system):
-        top = n_typed_ar_system()
+        top = n_typed_ar_system(n_sites=1)
         top.save("ar.mcf")
         mcf_data = []
         with open("ar.mcf") as f:

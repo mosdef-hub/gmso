@@ -12,7 +12,7 @@ def apply(
     forcefields,
     identify_connections=False,
     identify_connected_components=True,
-    use_residue_info=False,
+    use_molecule_info=False,
     assert_bond_params=True,
     assert_angle_params=True,
     assert_dihedral_params=True,
@@ -42,7 +42,7 @@ def apply(
         A flag to determine whether or not to search the topology for repeated disconnected
         structures, otherwise known as molecules and type each molecule only once.
 
-    use_residue_info: bool, optional, default=False
+    use_molecule_info: bool, optional, default=False
         A flag to determine whether or not to look at site.residue_name to look parameterize
         each molecule only once. Currently unused.
 
@@ -66,7 +66,7 @@ def apply(
         dict(
             identify_connections=identify_connections,
             identify_connected_components=identify_connected_components,
-            use_residue_info=use_residue_info,
+            use_molecule_info=use_molecule_info,
             assert_bond_params=assert_bond_params,
             assert_angle_params=assert_angle_params,
             assert_dihedral_params=assert_dihedral_params,

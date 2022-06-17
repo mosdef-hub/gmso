@@ -37,13 +37,13 @@ def molecule_impropers(top, molecule):
 
 
 def assert_no_boundary_bonds(top, molecule):
-    """Given a subtopology, assert that no bonds exist between its sites and external sites."""
+    """Given a molecule tag, assert that no bonds exist between its sites and external sites."""
     for bond in top.bonds:
         site_pairs = bond.connection_members
         assertion_msg = (
             "Site {} is in the molecule {}, but its bonded partner {} is not."
         )
-        molecule_sites = top.iter_sites("moelcule", molecule)
+        molecule_sites = top.iter_sites("molecule", molecule)
         if site_pairs[0] in molecule_sites:
             assert site_pairs[1] in molecule_sites, assertion_msg.format(
                 site_pairs[0].name, molecule.name, site_pairs[1].name

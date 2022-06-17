@@ -79,7 +79,9 @@ def write_top(top, filename, top_vars=None):
         out_file.write("\n[ moleculetype ]\n" "; name\t\tnrexcl\n")
 
         # TODO: Better parsing of site.molecule and site.residue into residues/molecules
-        n_unique_molecule = top.unique_site_labels("molecule", name=True)
+        n_unique_molecule = len(
+            top.unique_site_labels("molecule", name_only=True)
+        )
         if n_unique_molecule > 1:
             raise NotImplementedError
         # Treat top without molecule as one residue-like "molecule"
@@ -147,7 +149,7 @@ def write_top(top, filename, top_vars=None):
 
         out_file.write("\n[ system ]\n" "; name\n" "{0}\n\n".format(top.name))
 
-        if len(top.unique_site_labels("molecule"), name_only=True) > 1:
+        if len(top.unique_site_labels("molecule", name_only=True)) > 1:
             raise NotImplementedError
 
         # TODO: Write out atom types for each unique `molecule` (name_only) in `atoms` section

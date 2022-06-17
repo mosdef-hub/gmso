@@ -52,7 +52,7 @@ def write_mcf(top, filename):
     # TODO: What oh what to do about subtops?
     # For now refuse topologies with subtops as MCF writer is for
     # single molecules
-    if top.unique_site_labels("molecule") > 0:
+    if len(top.unique_site_labels("molecule")) > 1:
         raise GMSOError(
             "MCF writer does not support multiple molecules. "
             "Please provide a single molecule as an gmso.Topology "
