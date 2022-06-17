@@ -64,7 +64,6 @@ def _to_json(top, types=False, update=True):
     json_dict = {
         "name": top._name,
         "scaling_factors": top.scaling_factors,
-        "subtopologies": [],
         "box": top.box.json_dict() if top.box else None,
         "atoms": [],
         "bonds": [],
@@ -138,10 +137,6 @@ def _to_json(top, types=False, update=True):
                 pairpotential_type.json_dict()
             )
 
-    for subtop in top.subtops:
-        subtop_dict = subtop.json_dict()
-        json_dict["subtopologies"].append(subtop_dict)
-
     return json_dict
 
 
@@ -158,7 +153,6 @@ def _from_json(json_dict):
     gmso.Topology
         the equivalent Topology representation from the dictionary
     """
-    from gmso.core.subtopology import SubTopology
     from gmso.core.topology import Topology
 
     # FixMe: DeepCopying a dictionary might not be the most efficient
@@ -251,12 +245,6 @@ def _from_json(json_dict):
             if connection_type_id in id_to_type_map:
                 for associated_connection in id_to_type_map[connection_type_id]:
                     setattr(associated_connection, attr, connection_type)
-
-    for subtop_dict in json_dict["subtopologies"]:
-        subtop = SubTopology(name=subtop_dict["name"])
-        for atom_idx in subtop_dict["atoms"]:
-            subtop.add_site(top.sites[atom_idx])
-        top.add_subtopology(subtop, update=False)
 
     if json_dict.get("box") is not None:
         box_dict = json_dict["box"]

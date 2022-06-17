@@ -2,13 +2,13 @@ import mbuild as mb
 import pytest
 
 from gmso.external.convert_mbuild import from_mbuild
-from gmso.parameterization.subtopology_utils import (
-    _members_in_subtop,
+from gmso.parameterization.molecule_utils import (
+    _conn_in_molecule,
     assert_no_boundary_bonds,
-    subtop_angles,
-    subtop_bonds,
-    subtop_dihedrals,
-    subtop_impropers,
+    molecule_angles,
+    molecule_bonds,
+    molecule_dihedrals,
+    molecule_impropers,
 )
 from gmso.tests.parameterization.parameterization_base_test import (
     ParameterizationBaseTest,
@@ -31,15 +31,15 @@ class TestSubTopologyUtils(ParameterizationBaseTest):
             assert_no_boundary_bonds(ethane.subtops[0])
 
     def test_no_boundary_bonds_ethane_box(self, ethane_box_gmso):
-        for subtop in ethane_box_gmso.subtops:
-            assert_no_boundary_bonds(subtop)
+        for molecule in ethane_box_gmso.unique_site_labels("molecule"):
+            assert_no_boundary_bonds(ethane_box_gmso, molecule)
 
-    def test_subtopology_bonds(self, ethane_box_gmso):
-        for subtop in ethane_box_gmso.subtops:
-            bonds = list(subtop_bonds(subtop))
+    def test_molecule_bonds(self, ethane_box_gmso):
+        for molecule in ethane_box_gmso.unique_sites_labels("molecule"):
+            bonds = list(molecule_bonds(ethane_box_gmso, molecule))
             assert len(bonds) == 7
             for bond in bonds:
-                assert _members_in_subtop(bond, subtop)
+                assert _conn_in_molecule(bond, molecule)
 
             bond_members = map(
                 lambda b: tuple(map(lambda s: s.name, b.connection_members)),
@@ -50,12 +50,12 @@ class TestSubTopologyUtils(ParameterizationBaseTest):
                 b_member in expected_members for b_member in bond_members
             )
 
-    def test_subtopology_angles(self, ethane_box_gmso):
-        for subtop in ethane_box_gmso.subtops:
-            angles = list(subtop_angles(subtop))
+    def test_molecule_angles(self, ethane_box_gmso):
+        for molecule in ethane_box_gmso.unique_site_labels("molecule"):
+            angles = list(molecule_angles(ethane_box_gmso, molecule))
             assert len(list(angles)) == 12
             for angle in angles:
-                assert _members_in_subtop(angle, subtop)
+                assert _conn_in_molecule(angle, molecule)
 
             angle_members = map(
                 lambda a: tuple(map(lambda s: s.name, a.connection_members)),
@@ -70,12 +70,12 @@ class TestSubTopologyUtils(ParameterizationBaseTest):
                 a_member in expected_members for a_member in angle_members
             )
 
-    def test_subtopology_dihedrals(self, ethane_box_gmso):
-        for subtop in ethane_box_gmso.subtops:
-            dihedrals = list(subtop_dihedrals(subtop))
+    def test_molecule_dihedrals(self, ethane_box_gmso):
+        for molecule in ethane_box_gmso.unique_site_labels("molecule"):
+            dihedrals = list(molecule_dihedrals(ethane_box_gmso, molecule))
             assert len(dihedrals) == 9
             for dihedral in dihedrals:
-                assert _members_in_subtop(dihedral, subtop)
+                assert _conn_in_molecule(dihedral, molecule)
 
             dihedral_members = map(
                 lambda d: tuple(map(lambda s: s.name, d.connection_members)),
@@ -86,12 +86,12 @@ class TestSubTopologyUtils(ParameterizationBaseTest):
                 a_member in expected_members for a_member in dihedral_members
             )
 
-    def test_subtopology_impropers(self, ethane_box_gmso):
-        for subtop in ethane_box_gmso.subtops:
-            impropers = list(subtop_impropers(subtop))
+    def test_molecule_impropers(self, ethane_box_gmso):
+        for molecule in ethane_box_gmso.unique_site_labels("molecule"):
+            impropers = list(molecule_impropers(ethane_box_gmso, molecule))
             assert len(impropers) == 8
             for improper in impropers:
-                assert _members_in_subtop(improper, subtop)
+                assert _conn_in_molecule(improper, molecule)
 
             improper_members = list(
                 map(

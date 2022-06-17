@@ -4,6 +4,7 @@ import forcefield_utilities as ffutils
 import pytest
 from foyer.exceptions import FoyerError
 
+import gmso
 from gmso.core.forcefield import ForceField
 from gmso.core.topology import Topology
 from gmso.parameterization.parameterize import apply
@@ -65,25 +66,27 @@ class TestParameterizationOptions(ParameterizationBaseTest):
 
     """ Change to molecule"""
 
-    def test_no_subtops_dict_ff(self, oplsaa_gmso):
-        top = Topology(name="topWithNoSubTops")
+    def test_no_molecule_dict_ff(self, oplsaa_gmso):
+        top = Topology(name="topWithNoMolecule")
         with pytest.raises(ParameterizationError):
-            apply(top, {"subtopA": oplsaa_gmso})
+            apply(top, {"moleculeA": oplsaa_gmso})
 
-    def test_missing_subtop_name_ff(self, oplsaa_gmso):
+    def test_missing_molecule_name_ff(self, oplsaa_gmso):
         top = Topology(name="top1")
         for j in range(0, 10, 2):
-            top.add_subtopology(SubTopology(name=f"subtop{j+1}"))
+            top.add_site(
+                gmso.Atom(name=f"Atom_{j+1}", molecule=("moleculeB", j + 1))
+            )
         with pytest.warns(
             UserWarning,
-            match=r"Subtopology subtop\d will not be parameterized,"
+            match=r"Molecule moleculeB will not be parameterized,"
             r" as the forcefield to parameterize it is missing.",
         ):
-            apply(top, {"subtopA": oplsaa_gmso})
+            apply(top, {"moleculeA": oplsaa_gmso})
 
     def test_diff_combining_rules_error(self, ethane_methane_top):
         ff1 = ForceField()
-        ff1.combining_rule = "lorrentz"
+        ff1.combining_rule = "lorentz"
         ff2 = ForceField()
         ff2.combining_rule = "geometric"
         with pytest.raises(ParameterizationError, match=""):
@@ -106,26 +109,30 @@ class TestParameterizationOptions(ParameterizationBaseTest):
             identify_connected_components=True,
         )
 
-        ethane_subtops = list(
-            filter(
-                lambda subtop: subtop.name == "Ethane",
-                ethane_box_with_methane.subtops,
-            )
+        molecule_labels = ethane_box_with_methane.unique_site_labels("molecule")
+        ethane_molecules = [
+            label for label in molecule_labels if label.name == "Ethane"
+        ]
+        methane_molecules = [
+            label for label in molecule_labels if label.name == "Methane"
+        ]
+
+        ethane_a = ethane_box_with_methane.iter_sites(
+            "molecule", random.choice(ethane_molecules)
         )
-        methane_subtops = list(
-            filter(
-                lambda subtop: subtop.name == "Methane",
-                ethane_box_with_methane.subtops,
-            )
+        ethane_b = ethane_box_with_methane.iter_sites(
+            "molecule", random.choice(ethane_molecules)
         )
-        ethane_a = random.choice(ethane_subtops)
-        ethane_b = random.choice(ethane_subtops)
         for atom_a, atom_b in zip(ethane_a.sites, ethane_b.sites):
             assert atom_a.atom_type == atom_b.atom_type
             assert atom_a.atom_type is not None
 
-        methane_a = random.choice(methane_subtops)
-        methane_b = random.choice(methane_subtops)
+        methane_a = ethane_box_with_methane.iter_sites(
+            "molecule", random.choice(methane_molecules)
+        )
+        methane_b = ethane_box_with_methane.iter_sites(
+            "molecule", random.choice(methane_molecules)
+        )
         for atom_a, atom_b in zip(methane_a.sites, methane_b.sites):
             assert atom_a.atom_type == atom_b.atom_type
             assert atom_a.atom_type is not None

@@ -303,7 +303,7 @@ class Topology(object):
         """Return all impropers in the topology."""
         return self._impropers
 
-    def unique_site_labels(self, label_type="molecule", name_only=True):
+    def unique_site_labels(self, label_type="molecule", name_only=False):
         """Return a list of all molecule/residue labels in the Topology."""
         # Not super happy with this method name, open for suggestion.
         unique_tags = IndexedSet()

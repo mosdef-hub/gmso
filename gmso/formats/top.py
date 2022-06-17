@@ -78,12 +78,12 @@ def write_top(top, filename, top_vars=None):
 
         out_file.write("\n[ moleculetype ]\n" "; name\t\tnrexcl\n")
 
-        # TODO: Better parsing of subtops into residues/molecules
-        n_unique_subtops = len(set([s.name for s in top.subtops]))
-        if n_unique_subtops > 1:
+        # TODO: Better parsing of site.molecule and site.residue into residues/molecules
+        n_unique_molecule = top.unique_site_labels("molecule", name=True)
+        if n_unique_molecule > 1:
             raise NotImplementedError
-        # Treat top without subtops as one residue-like "molecule"
-        elif n_unique_subtops == 0:
+        # Treat top without molecule as one residue-like "molecule"
+        elif n_unique_molecule == 0:
             out_file.write(
                 "{0}\t\t\t"
                 "{1}\n\n".format(
@@ -91,8 +91,8 @@ def write_top(top, filename, top_vars=None):
                     top_vars["nrexcl"],  # Typically exclude 3 nearest neighbors
                 )
             )
-        # TODO: Lookup and join nrexcl from each subtop object
-        elif n_unique_subtops == 1:
+        # TODO: Lookup and join nrexcl from each molecule object
+        elif n_unique_molecule == 1:
             out_file.write("{0}\t\t\t" "{1}\n\n".format(top.name, 3))
 
         out_file.write(
@@ -111,8 +111,8 @@ def write_top(top, filename, top_vars=None):
                 "{7:.5f}\n".format(
                     top.get_index(site) + 1,
                     site.atom_type.name,
-                    1,  # TODO: subtop idx
-                    top.name,  # TODO: subtop.name
+                    1,  # TODO: molecule number
+                    top.name,  # TODO: molecule.name
                     _lookup_element_symbol(site.atom_type),
                     1,  # TODO: care about charge groups
                     site.charge.in_units(u.elementary_charge).value,
@@ -147,10 +147,10 @@ def write_top(top, filename, top_vars=None):
 
         out_file.write("\n[ system ]\n" "; name\n" "{0}\n\n".format(top.name))
 
-        if len(set([s.name for s in top.subtops])) > 1:
+        if len(top.unique_site_labels("molecule"), name_only=True) > 1:
             raise NotImplementedError
 
-        # TODO: Write out atom types for each unique `subtop` in `atoms` section
+        # TODO: Write out atom types for each unique `molecule` (name_only) in `atoms` section
         # and write out number of molecules in `molecules` section
         # if len(top.subtops) == 0:
         out_file.write(

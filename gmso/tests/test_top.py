@@ -61,9 +61,11 @@ class TestTop(BaseTest):
 
         top.update_bond_types()
 
-        for subtop in top.subtops:
+        for molecule in top.unique_site_labels("molecule"):
             angle = gmso.core.angle.Angle(
-                connection_members=[site for site in subtop.sites],
+                connection_members=[
+                    site for site in top.iter_sites("molecule", molecule)
+                ],
                 name="opls_112~opls_111~opls_112",
                 angle_type=ff.angle_types["opls_112~opls_111~opls_112"],
             )
