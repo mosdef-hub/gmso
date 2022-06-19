@@ -180,7 +180,7 @@ class TopologyParameterizer(GMSOBase):
             sites = tuple(top.iter_sites("molecule", of_molecule))
         else:
             forcefield = self.get_ff(top.name)
-            sites = tuple(top.iter_sites("molecule", of_molecule))
+            sites = top.sites
 
         self._parameterize_sites(sites, typemap, forcefield)
         self._parameterize_connections(top, forcefield, of_molecule=of_molecule)
