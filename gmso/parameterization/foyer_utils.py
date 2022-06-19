@@ -78,8 +78,8 @@ def get_topology_graph_from_molecule(topology, molecule):
     pseudo_top = namedtuple("molecule", ("sites", "bonds"))
     return get_topology_graph(
         pseudo_top(
-            topology.iter_sites("molecule", molecule),
-            molecule_bonds(topology, molecule),
+            tuple(topology.iter_sites("molecule", molecule)),
+            tuple(molecule_bonds(topology, molecule)),
         )
     )
 

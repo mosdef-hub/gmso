@@ -175,8 +175,14 @@ class TopologyParameterizer(GMSOBase):
 
     def _parameterize(self, top, typemap, of_molecule=None):
         """Parameterize a topology/subtopology based on an atomtype map."""
-        forcefield = self.get_ff(top.name)
-        self._parameterize_sites(top.sites, typemap, forcefield)
+        if of_molecule:
+            forcefield = self.get_ff(of_molecule.name)
+            sites = tuple(top.iter_sites("molecule", of_molecule))
+        else:
+            forcefield = self.get_ff(top.name)
+            sites = tuple(top.iter_sites("molecule", of_molecule))
+
+        self._parameterize_sites(sites, typemap, forcefield)
         self._parameterize_connections(top, forcefield, of_molecule=of_molecule)
 
     def _verify_forcefields_metadata(self):
@@ -220,7 +226,7 @@ class TopologyParameterizer(GMSOBase):
             self.topology.identify_connections()
 
         if isinstance(self.forcefields, Dict):
-            if self.topology.unique_site_labels("molecule") == 0:
+            if len(self.topology.unique_site_labels("molecule")) == 0:
                 raise ParameterizationError(
                     f"The provided gmso topology doesn't have any molecule."
                     f"Either use a single forcefield to apply to to whole topology "
@@ -247,7 +253,7 @@ class TopologyParameterizer(GMSOBase):
                         of_molecule=molecule,
                     )
                     self._parameterize(
-                        molecule,
+                        self.topology,
                         typemap,
                         of_molecule=molecule,  # This will be removed from the future iterations
                     )

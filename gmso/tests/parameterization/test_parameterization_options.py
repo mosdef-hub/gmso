@@ -117,22 +117,30 @@ class TestParameterizationOptions(ParameterizationBaseTest):
             label for label in molecule_labels if label.name == "Methane"
         ]
 
-        ethane_a = ethane_box_with_methane.iter_sites(
-            "molecule", random.choice(ethane_molecules)
+        ethane_a = tuple(
+            ethane_box_with_methane.iter_sites(
+                "molecule", random.choice(ethane_molecules)
+            )
         )
-        ethane_b = ethane_box_with_methane.iter_sites(
-            "molecule", random.choice(ethane_molecules)
+        ethane_b = tuple(
+            ethane_box_with_methane.iter_sites(
+                "molecule", random.choice(ethane_molecules)
+            )
         )
-        for atom_a, atom_b in zip(ethane_a.sites, ethane_b.sites):
+        for atom_a, atom_b in zip(ethane_a, ethane_b):
             assert atom_a.atom_type == atom_b.atom_type
             assert atom_a.atom_type is not None
 
-        methane_a = ethane_box_with_methane.iter_sites(
-            "molecule", random.choice(methane_molecules)
+        methane_a = tuple(
+            ethane_box_with_methane.iter_sites(
+                "molecule", random.choice(methane_molecules)
+            )
         )
-        methane_b = ethane_box_with_methane.iter_sites(
-            "molecule", random.choice(methane_molecules)
+        methane_b = tuple(
+            ethane_box_with_methane.iter_sites(
+                "molecule", random.choice(methane_molecules)
+            )
         )
-        for atom_a, atom_b in zip(methane_a.sites, methane_b.sites):
+        for atom_a, atom_b in zip(methane_a, methane_b):
             assert atom_a.atom_type == atom_b.atom_type
             assert atom_a.atom_type is not None

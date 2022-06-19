@@ -1,4 +1,5 @@
 """Utilities for application of a particular forcefield to a molecule."""
+from gmso.abc.abstract_site import MoleculeType, ResidueType
 
 
 def _conn_in_molecule(connection, molecule):
@@ -36,19 +37,21 @@ def molecule_impropers(top, molecule):
     return _molecule_connections(top, molecule, "impropers")
 
 
-def assert_no_boundary_bonds(top, molecule):
+def assert_no_boundary_bonds(top, mol_or_res):
     """Given a molecule tag, assert that no bonds exist between its sites and external sites."""
+    namedtuple_types = {MoleculeType: "molecule", ResidueType: "residue"}
+    key = namedtuple_types[type(mol_or_res)]
     for bond in top.bonds:
         site_pairs = bond.connection_members
         assertion_msg = (
             "Site {} is in the molecule {}, but its bonded partner {} is not."
         )
-        molecule_sites = top.iter_sites("molecule", molecule)
-        if site_pairs[0] in molecule_sites:
+        molecule_sites = top.iter_sites(key, mol_or_res)
+        if site_pairs[0] in top.iter_sites(key, mol_or_res):
             assert site_pairs[1] in molecule_sites, assertion_msg.format(
-                site_pairs[0].name, molecule.name, site_pairs[1].name
+                site_pairs[0].name, mol_or_res.name, site_pairs[1].name
             )
-        elif site_pairs[1] in molecule_sites:
+        elif site_pairs[1] in top.iter_sites(key, mol_or_res):
             assert site_pairs[0] in molecule_sites, assertion_msg.format(
-                site_pairs[1].name, molecule.name, site_pairs[0].name
+                site_pairs[1].name, mol_or_res.name, site_pairs[0].name
             )
