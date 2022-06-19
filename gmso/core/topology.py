@@ -1113,25 +1113,12 @@ class Topology(object):
         gmso.core.topology.Topology.iter_sites
             The method to iterate over Topology's sites
         """
-        if residue_tag is None:
+        if isinstance(residue_tag, str):
             for site in self._sites:
-                if not site.residue:
+                if site.residue and getattr(site, "residue")[0] == residue_tag:
                     yield site
         else:
-            """I don't understand why but this block doesn't work
-                (the self.iter_sites()) is not even called (?)
-            if isinstance(residue_tag, (ResidueType, tuple)):
-                return self.iter_sites("residue", residue_tag)
-            """
-            if isinstance(residue_tag, str):
-                for site in self._sites:
-                    if (
-                        site.residue
-                        and getattr(site, "residue")[0] == residue_tag
-                    ):
-                        yield site
-            else:
-                raise TypeError("Input residue_tag is of incorrect type.")
+            return self.iter_sites("residue", residue_tag)
 
     def iter_sites_by_molecule(self, molecule_tag):
         """Iterate through this topology's sites which contain this specific molecule name.
@@ -1141,25 +1128,15 @@ class Topology(object):
         gmso.core.topology.Topology.iter_sites
             The method to iterate over Topology's sites
         """
-        if molecule_tag is None:
+        if isinstance(molecule_tag, str):
             for site in self._sites:
-                if not site.molecule:
+                if (
+                    site.molecule
+                    and getattr(site, "molecule")[0] == molecule_tag
+                ):
                     yield site
         else:
-            """I don't understand why but this block doesn't work
-                (the self.iter_sites()) is not even called (?)
-            if isinstance(molecule_tag, (MoleculeType, tuple)):
-                return self.iter_sites("molecule", molecule_tag)
-            """
-            if isinstance(molecule_tag, str):
-                for site in self._sites:
-                    if (
-                        site.molecule
-                        and getattr(site, "molecule")[0] == molecule_tag
-                    ):
-                        yield site
-            else:
-                raise TypeError("Input molecule_tag is of incorrect type.")
+            return self.iter_sites("molecule", molecule_tag)
 
     def save(self, filename, overwrite=False, **kwargs):
         """Save the topology to a file.
