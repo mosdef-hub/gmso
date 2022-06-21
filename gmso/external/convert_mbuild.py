@@ -281,7 +281,7 @@ def _parse_label(site_map, compound):
         for particle in molecule:
             """Parse residue information"""
             residue_tag = (
-                particle if particle.is_independent() else particle.parent
+                particle if not particle.n_direct_bonds else particle.parent
             )
             if residue_tag.name in residue_tracker:
                 if residue_tag not in residue_tracker[residue_tag.name]:

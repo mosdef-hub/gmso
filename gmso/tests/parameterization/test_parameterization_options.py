@@ -100,7 +100,7 @@ class TestParameterizationOptions(ParameterizationBaseTest):
         with pytest.raises(FoyerError):
             apply(top=Topology(), forcefields=oplsaa_gmso)
 
-    def test_isomporhic_speedups(self, ethane_box_with_methane, oplsaa_gmso):
+    def test_isomorphic_speedups(self, ethane_box_with_methane, oplsaa_gmso):
         ethane_box_with_methane.identify_connections()
         apply(
             ethane_box_with_methane,
