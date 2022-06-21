@@ -9,14 +9,17 @@ from gmso.core.atom import Atom
 from gmso.parameterization.molecule_utils import molecule_bonds
 
 
-def get_topology_graph(gmso_topology, atomdata_populator=None):
+def get_topology_graph(
+    gmso_topology, of_molecule=None, atomdata_populator=None
+):
     """Return a TopologyGraph with relevant attributes from an GMSO topology.
 
     Parameters
     ----------
     gmso_topology: gmso.Topology-like
         The GMSO Topology
-
+    of_molecule: None or tuple
+        The molecule tag if trying to get topology graph of a molecule
     atomdata_populator: callable, default=None
         A function that will be called with the following arguments `gmso_topology` as well as `atom` to pass extra
         arguments to the foyer.topology_graph.AtomData object
@@ -32,6 +35,13 @@ def get_topology_graph(gmso_topology, atomdata_populator=None):
     """
     top_graph = TopologyGraph()
     atom_index_map = {}
+
+    if of_molecule:
+        pseudo_top = namedtuple("molecule", ("sites", "bonds"))
+        gmso_topology = pseudo_top(
+            tuple(gmso_topology.iter_sites("molecule", of_molecule)),
+            tuple(molecule_bonds(gmso_topology, of_molecule)),
+        )
 
     if len(gmso_topology.sites) == 0:
         raise FoyerError(
@@ -71,17 +81,6 @@ def get_topology_graph(gmso_topology, atomdata_populator=None):
         top_graph.add_bond(atoms_indices[0], atoms_indices[1])
 
     return top_graph
-
-
-def get_topology_graph_from_molecule(topology, molecule):
-    """Get an equivalent topology graph for a sub-topology."""
-    pseudo_top = namedtuple("molecule", ("sites", "bonds"))
-    return get_topology_graph(
-        pseudo_top(
-            tuple(topology.iter_sites("molecule", molecule)),
-            tuple(molecule_bonds(topology, molecule)),
-        )
-    )
 
 
 def get_atomtyping_rules_provider(gmso_ff):

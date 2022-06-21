@@ -51,7 +51,6 @@ class TestTop(BaseTest):
         for site in top.sites:
             site.atom_type = ff.atom_types[site.name]
 
-        top.update_sites()
         top.update_atom_types()
 
         for bond in top.bonds:

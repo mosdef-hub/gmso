@@ -13,7 +13,6 @@ from gmso.exceptions import GMSOError
 from gmso.parameterization.foyer_utils import (
     get_atomtyping_rules_provider,
     get_topology_graph,
-    get_topology_graph_from_molecule,
     typemap_dict,
 )
 from gmso.parameterization.isomorph import partition_isomorphic_topology_graphs
@@ -236,6 +235,7 @@ class TopologyParameterizer(GMSOBase):
                     f"the keys of the `forcefields` dictionary. Provided Forcefields: "
                     f"{self.forcefields}, Topology: {self.topology}"
                 )
+            assert_no_boundary_bonds(self.topology)
             for molecule in molecule_labels:
                 if molecule.name not in self.forcefields:
                     warnings.warn(
@@ -243,9 +243,6 @@ class TopologyParameterizer(GMSOBase):
                         f"is missing."
                     )  # FixMe: Will warning be enough?
                 else:
-                    assert_no_boundary_bonds(
-                        self.topology, molecule
-                    )  # FixMe: Is this check still necessary
                     typemap = self._get_atomtypes(
                         self.get_ff(molecule.name),
                         self.topology,
@@ -296,12 +293,7 @@ class TopologyParameterizer(GMSOBase):
         """Run atom-typing in foyer and return the typemap."""
         atom_typing_rules_provider = get_atomtyping_rules_provider(forcefield)
 
-        if of_molecule:
-            foyer_topology_graph = get_topology_graph_from_molecule(
-                topology, of_molecule
-            )
-        else:
-            foyer_topology_graph = get_topology_graph(topology)
+        foyer_topology_graph = get_topology_graph(topology, of_molecule)
 
         if use_isomprohic_checks:
             isomorphic_substructures = partition_isomorphic_topology_graphs(

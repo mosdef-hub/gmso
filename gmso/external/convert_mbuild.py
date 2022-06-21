@@ -99,7 +99,6 @@ def from_mbuild(
         assert site_map[b1]["site"].molecule == site_map[b2]["site"].molecule
         new_bond = Bond(
             connection_members=[site_map[b1]["site"], site_map[b2]["site"]],
-            bond_type=None,
         )
         top.add_connection(new_bond, update_types=False)
 
@@ -219,10 +218,8 @@ def from_mbuild_box(mb_box):
 
 def _parse_particle(particle_map, site):
     """Parse information for a mb.Particle from a gmso.Site and add it to particle map."""
-    if site.element:
-        element = site.element.symbol
-    else:
-        element = None
+    element = site.element.symbol if site.element else None
+
     particle = mb.Compound(
         name=site.name,
         pos=site.position.to_value(u.nm),
@@ -243,8 +240,8 @@ def _parse_site(site_map, particle, search_method):
         name=particle.name,
         position=pos,
         element=ele,
-        molecule=(site_map[particle]["molecule"]),
-        residue=(site_map[particle]["residue"]),
+        molecule=site_map[particle]["molecule"],
+        residue=site_map[particle]["residue"],
     )
     site_map[particle]["site"] = site
     return site
@@ -261,16 +258,16 @@ def _parse_label(site_map, compound):
         else:
             ancestors = IndexedSet(molecule[0].ancestors())
             for particle in molecule[1:]:
+                # This works because particle.ancestors traversed, and hence
+                # the lower level will be in the front.
+                # The intersection will be left at the end,
+                # ancestor of the first particle is used as reference.
+                # Hence, this called will return the lowest-level Compound]
+                # that is a molecule
                 ancestors = ancestors.intersection(
                     IndexedSet(particle.ancestors())
                 )
 
-        # This works because particle.ancestors traversed, and hence
-        # the lower level will be in the front.
-        # The intersection will be left at the end,
-        # ancestor of the first particle is used as reference.
-        # Hence, this called will return the lowest-level Compound
-        # that is a molecule
         """Parse molecule information"""
         molecule_tag = ancestors[0]
         # The duplication is determined solely by name

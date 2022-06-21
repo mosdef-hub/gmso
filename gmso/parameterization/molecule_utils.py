@@ -37,21 +37,11 @@ def molecule_impropers(top, molecule):
     return _molecule_connections(top, molecule, "impropers")
 
 
-def assert_no_boundary_bonds(top, mol_or_res):
-    """Given a molecule tag, assert that no bonds exist between its sites and external sites."""
-    namedtuple_types = {MoleculeType: "molecule", ResidueType: "residue"}
-    key = namedtuple_types[type(mol_or_res)]
+def assert_no_boundary_bonds(top):
+    """Assert that all bonds in the topology belongs to only one molecule."""
+    assertion_msg = "Site {} is in the molecule {}, but its bonded partner {} is in the molecule {}."
     for bond in top.bonds:
-        site_pairs = bond.connection_members
-        assertion_msg = (
-            "Site {} is in the molecule {}, but its bonded partner {} is not."
+        site1, site2 = bond.connection_members
+        assert site1.molecule == site2.molecule, assertion_msg.format(
+            site1.name, site1.molecule, site2.name, site2.molecule
         )
-        molecule_sites = top.iter_sites(key, mol_or_res)
-        if site_pairs[0] in top.iter_sites(key, mol_or_res):
-            assert site_pairs[1] in molecule_sites, assertion_msg.format(
-                site_pairs[0].name, mol_or_res.name, site_pairs[1].name
-            )
-        elif site_pairs[1] in top.iter_sites(key, mol_or_res):
-            assert site_pairs[0] in molecule_sites, assertion_msg.format(
-                site_pairs[1].name, mol_or_res.name, site_pairs[0].name
-            )

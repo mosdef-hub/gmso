@@ -654,34 +654,6 @@ class Topology(object):
         if update_types:
             self.update_topology()
 
-    def update_sites(self):
-        """Update the sites of the topology.
-
-        This method will update the sites in the topology
-        based on the connection members, For example- if you
-        add a bond to a topology, without adding the constituent
-        sites, this method can be called to add the sites which are the
-        connection members of the bond as shown below.
-
-            >>> import gmso
-            >>> site1 = gmso.Site(name='MySite1')
-            >>> site2 = gmso.Site(name='MySite2')
-            >>> bond1 = gmso.Bond(name='site1-site2', connection_members=[site1, site2])
-            >>> this_topology = gmso.Topology('TwoSitesTopology')
-            >>> this_topology.add_connection(bond1)
-            >>> this_topology.update_sites()
-
-        See Also
-        --------
-        gmso.Topology.add_site : Add a site to the topology.
-        gmso.Topology.add_connection : Add a Bond, an Angle or a Dihedral to the topology.
-        gmso.Topology.update_topology : Update the entire topology.
-        """
-        for connection in self.connections:
-            for member in connection.connection_members:
-                if member not in self._sites:
-                    self.add_site(member)
-
     def add_connection(self, connection, update_types=False):
         """Add a gmso.Connection object to the topology.
 
