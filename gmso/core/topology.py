@@ -137,7 +137,6 @@ class Topology(object):
         self._box = box
         self._sites = IndexedSet()
         self._typed = False
-        self._connections = IndexedSet()
         self._bonds = IndexedSet()
         self._angles = IndexedSet()
         self._dihedrals = IndexedSet()
@@ -251,7 +250,7 @@ class Topology(object):
     @property
     def n_connections(self):
         """Return the number of connections in the topology."""
-        return len(self._connections)
+        return len(self.connections)
 
     @property
     def n_bonds(self):
@@ -281,7 +280,9 @@ class Topology(object):
     @property
     def connections(self):
         """Return all connections in topology."""
-        return self._connections
+        return IndexedSet(
+            [*self._bonds, *self._angles, *self._dihedrals, *self._impropers]
+        )
 
     @property
     def bonds(self):
@@ -676,7 +677,7 @@ class Topology(object):
         gmso.Topology.add_connection : Add a Bond, an Angle or a Dihedral to the topology.
         gmso.Topology.update_topology : Update the entire topology.
         """
-        for connection in self._connections:
+        for connection in self.connections:
             for member in connection.connection_members:
                 if member not in self._sites:
                     self.add_site(member)
@@ -717,20 +718,17 @@ class Topology(object):
             connection = self._unique_connections[equivalent_members]
 
         for conn_member in connection.connection_members:
-            if conn_member not in self._sites:
-                self.add_site(conn_member)
+            self.add_site(conn_member)
 
-        self._connections.add(connection)
         self._unique_connections.update({equivalent_members: connection})
 
-        if isinstance(connection, Bond):
-            self._bonds.add(connection)
-        if isinstance(connection, Angle):
-            self._angles.add(connection)
-        if isinstance(connection, Dihedral):
-            self._dihedrals.add(connection)
-        if isinstance(connection, Improper):
-            self._impropers.add(connection)
+        connections_sets = {
+            Bond: self._bonds,
+            Angle: self._angles,
+            Dihedral: self._dihedrals,
+            Improper: self._impropers,
+        }
+        connections_sets[type(connection)].add(connection)
 
         if update_types:
             self.update_topology()
@@ -742,11 +740,11 @@ class Topology(object):
         _identify_connections(self)
 
     def update_atom_types(self):
-        """Keep an uptodate length of all the connection types."""
+        """Keep an up-to-date length of all the connection types."""
         self.update_topology()
 
     def update_connection_types(self):
-        """Keep an upto date length of all the connection types."""
+        """Keep an up-to-date length of all the connection types."""
         self.update_topology()
 
     def update_topology(self):
