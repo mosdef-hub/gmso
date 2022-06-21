@@ -3,6 +3,7 @@
 import warnings
 from typing import Dict, Union
 
+from boltons.setutils import IndexedSet
 from pydantic import Field
 
 from gmso.abc.gmso_base import GMSOBase
@@ -226,7 +227,8 @@ class TopologyParameterizer(GMSOBase):
             self.topology.identify_connections()
 
         if isinstance(self.forcefields, Dict):
-            if len(self.topology.unique_site_labels("molecule")) == 0:
+            molecule_labels = self.topology.unique_site_labels("molecule")
+            if not molecule_labels or molecule_labels == IndexedSet([None]):
                 raise ParameterizationError(
                     f"The provided gmso topology doesn't have any molecule."
                     f"Either use a single forcefield to apply to to whole topology "
