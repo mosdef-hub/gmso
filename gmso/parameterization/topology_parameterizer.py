@@ -236,9 +236,7 @@ class TopologyParameterizer(GMSOBase):
                     f"the keys of the `forcefields` dictionary. Provided Forcefields: "
                     f"{self.forcefields}, Topology: {self.topology}"
                 )
-            for molecule in self.topology.unique_site_labels(
-                "molecule", name_only=False
-            ):
+            for molecule in molecule_labels:
                 if molecule.name not in self.forcefields:
                     warnings.warn(
                         f"Molecule {molecule.name} will not be parameterized, as the forcefield to parameterize it "

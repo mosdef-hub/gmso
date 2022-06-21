@@ -252,8 +252,6 @@ def _parse_site(site_map, particle, search_method):
 
 def _parse_label(site_map, compound):
     """Parse information necessary for residue and molecule labels when converting from mbuild."""
-    molecule_tracker = dict()
-
     connected_subgraph = compound.bond_graph.connected_components()
     molecule_tracker = dict()
     residue_tracker = dict()
@@ -262,15 +260,15 @@ def _parse_label(site_map, compound):
             ancestors = [molecule[0]]
         else:
             ancestors = IndexedSet(molecule[0].ancestors())
-            for particle in molecule:
+            for particle in molecule[1:]:
                 ancestors = ancestors.intersection(
                     IndexedSet(particle.ancestors())
                 )
 
         # This works because particle.ancestors traversed, and hence
         # the lower level will be in the front.
-        # The intersection will only remove, not add to the IndexedSet
-        # of the first particle we used as reference.
+        # The intersection will be left at the end,
+        # ancestor of the first particle is used as reference.
         # Hence, this called will return the lowest-level Compound
         # that is a molecule
         """Parse molecule information"""

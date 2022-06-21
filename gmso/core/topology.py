@@ -310,7 +310,7 @@ class Topology(object):
         if name_only:
             for site in self.sites:
                 label = getattr(site, label_type)
-                unique_tags.add(label[0] if label else None)
+                unique_tags.add(label.name if label else None)
         else:
             for site in self.sites:
                 unique_tags.add(getattr(site, label_type))
@@ -1115,7 +1115,10 @@ class Topology(object):
         """
         if isinstance(residue_tag, str):
             for site in self._sites:
-                if site.residue and getattr(site, "residue")[0] == residue_tag:
+                if (
+                    site.residue
+                    and getattr(site, "residue").name == residue_tag
+                ):
                     yield site
         else:
             return self.iter_sites("residue", residue_tag)
@@ -1132,7 +1135,7 @@ class Topology(object):
             for site in self._sites:
                 if (
                     site.molecule
-                    and getattr(site, "molecule")[0] == molecule_tag
+                    and getattr(site, "molecule").name == molecule_tag
                 ):
                     yield site
         else:

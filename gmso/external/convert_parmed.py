@@ -2,17 +2,11 @@
 import warnings
 
 import numpy as np
-import sympy as sym
 import unyt as u
 from sympy.parsing.sympy_parser import parse_expr
 
 import gmso
-from gmso.core.element import (
-    element_by_atom_type,
-    element_by_atomic_number,
-    element_by_name,
-    element_by_symbol,
-)
+from gmso.core.element import element_by_atom_type, element_by_atomic_number
 from gmso.exceptions import GMSOError
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.io import has_parmed, import_
@@ -97,15 +91,13 @@ def from_parmed(structure, refer_type=True):
             site = gmso.Atom(
                 name=atom.name,
                 charge=atom.charge * u.elementary_charge,
-                position=([atom.xx, atom.xy, atom.xz] * u.angstrom).in_units(
-                    u.nm
-                ),
+                position=[atom.xx, atom.xy, atom.xz] * u.angstrom,
                 atom_type=None,
                 residue=(residue.name, residue.idx),
                 element=element,
             )
             site.molecule = (residue.name, residue.idx) if ind_res else None
-            site.atom_type = atom_type = (
+            site.atom_type = (
                 pmd_top_atomtypes[atom.atom_type]
                 if refer_type and isinstance(atom.atom_type, pmd.AtomType)
                 else None
@@ -117,44 +109,25 @@ def from_parmed(structure, refer_type=True):
     for bond in structure.bonds:
         # Generate bond parameters for BondType that gets passed
         # to Bond
+        top_connection = gmso.Bond(
+            connection_members=[site_map[bond.atom1], site_map[bond.atom2]]
+        )
         if refer_type and isinstance(bond.type, pmd.BondType):
-            top_connection = gmso.Bond(
-                connection_members=[site_map[bond.atom1], site_map[bond.atom2]],
-                bond_type=pmd_top_bondtypes[bond.type],
-            )
-
-        # No bond parameters, make Connection with no connection_type
-        else:
-            top_connection = gmso.Bond(
-                connection_members=[site_map[bond.atom1], site_map[bond.atom2]],
-                bond_type=None,
-            )
-
+            top_connection.bond_type = pmd_top_bondtypes[bond.type]
         top.add_connection(top_connection, update_types=False)
-    top.update_topology()
 
     for angle in structure.angles:
         # Generate angle parameters for AngleType that gets passed
         # to Angle
+        top_connection = gmso.Angle(
+            connection_members=[
+                site_map[angle.atom1],
+                site_map[angle.atom2],
+                site_map[angle.atom3],
+            ]
+        )
         if refer_type and isinstance(angle.type, pmd.AngleType):
-            top_connection = gmso.Angle(
-                connection_members=[
-                    site_map[angle.atom1],
-                    site_map[angle.atom2],
-                    site_map[angle.atom3],
-                ],
-                angle_type=pmd_top_angletypes[angle.type],
-            )
-        # No bond parameters, make Connection with no connection_type
-        else:
-            top_connection = gmso.Angle(
-                connection_members=[
-                    site_map[angle.atom1],
-                    site_map[angle.atom2],
-                    site_map[angle.atom3],
-                ],
-                angle_type=None,
-            )
+            top_connection.angle_type = pmd_top_angletypes[angle.type]
         top.add_connection(top_connection, update_types=False)
 
     for dihedral in structure.dihedrals:
@@ -172,59 +145,39 @@ def from_parmed(structure, refer_type=True):
                 + "expression detected, currently accounted for as "
                 + "topology.Improper with a periodic improper expression"
             )
-
+            # TODO: Improper atom order is not always clear in a Parmed object.
+            # This reader assumes the order of impropers is central atom first,
+            # so that is where the central atom is located. This decision comes
+            # from .top files in utils/files/NN-dimethylformamide.top, which
+            # clearly places the periodic impropers with central atom listed first,
+            # and that is where the atom is placed in the parmed.dihedrals object.
+            top_connection = gmso.Improper(
+                connection_members=[
+                    site_map[dihedral.atom1],
+                    site_map[dihedral.atom2],
+                    site_map[dihedral.atom3],
+                    site_map[dihedral.atom4],
+                ],
+            )
             if refer_type and isinstance(dihedral.type, pmd.DihedralType):
-                # TODO: Improper atom order is not always clear in a Parmed object.
-                # This reader assumes the order of impropers is central atom first,
-                # so that is where the central atom is located. This decision comes
-                # from .top files in utils/files/NN-dimethylformamide.top, which
-                # clearly places the periodic impropers with central atom listed first,
-                # and that is where the atom is placed in the parmed.dihedrals object.
-                top_connection = gmso.Improper(
-                    connection_members=[
-                        site_map[dihedral.atom1],
-                        site_map[dihedral.atom2],
-                        site_map[dihedral.atom3],
-                        site_map[dihedral.atom4],
-                    ],
-                    improper_type=pmd_top_impropertypes[id(dihedral.type)],
-                )
-            # No bond parameters, make Connection with no connection_type
-            else:
-                top_connection = gmso.Improper(
-                    connection_members=[
-                        site_map[dihedral.atom1],
-                        site_map[dihedral.atom2],
-                        site_map[dihedral.atom3],
-                        site_map[dihedral.atom4],
-                    ],
-                    improper_type=None,
-                )
-            top.add_connection(top_connection, update_types=False)
-
+                top_connection.improper_type = pmd_top_impropertypes[
+                    id(dihedral.type)
+                ]
         else:
+            top_connection = gmso.Dihedral(
+                connection_members=[
+                    site_map[dihedral.atom1],
+                    site_map[dihedral.atom2],
+                    site_map[dihedral.atom3],
+                    site_map[dihedral.atom4],
+                ]
+            )
             if refer_type and isinstance(dihedral.type, pmd.DihedralType):
-                top_connection = gmso.Dihedral(
-                    connection_members=[
-                        site_map[dihedral.atom1],
-                        site_map[dihedral.atom2],
-                        site_map[dihedral.atom3],
-                        site_map[dihedral.atom4],
-                    ],
-                    dihedral_type=pmd_top_dihedraltypes[id(dihedral.type)],
-                )
+                top_connection.dihedral_type = pmd_top_dihedraltypes[
+                    id(dihedral.type)
+                ]
             # No bond parameters, make Connection with no connection_type
-            else:
-                top_connection = gmso.Dihedral(
-                    connection_members=[
-                        site_map[dihedral.atom1],
-                        site_map[dihedral.atom2],
-                        site_map[dihedral.atom3],
-                        site_map[dihedral.atom4],
-                    ],
-                    dihedral_type=None,
-                )
-            top.add_connection(top_connection, update_types=False)
+        top.add_connection(top_connection, update_types=False)
 
     for rb_torsion in structure.rb_torsions:
         # Generate dihedral parameters for DihedralType that gets passed
@@ -238,61 +191,41 @@ def from_parmed(structure, refer_type=True):
                 + "expression detected, currently accounted for as "
                 + "topology.Dihedral with a RB torsion expression"
             )
+
+        top_connection = gmso.Dihedral(
+            connection_members=[
+                site_map[rb_torsion.atom1],
+                site_map[rb_torsion.atom2],
+                site_map[rb_torsion.atom3],
+                site_map[rb_torsion.atom4],
+            ],
+        )
         if refer_type and isinstance(rb_torsion.type, pmd.RBTorsionType):
-            top_connection = gmso.Dihedral(
-                connection_members=[
-                    site_map[rb_torsion.atom1],
-                    site_map[rb_torsion.atom2],
-                    site_map[rb_torsion.atom3],
-                    site_map[rb_torsion.atom4],
-                ],
-                dihedral_type=pmd_top_dihedraltypes[id(rb_torsion.type)],
-            )
-        # No bond parameters, make Connection with no connection_type
-        else:
-            top_connection = gmso.Dihedral(
-                connection_members=[
-                    site_map[rb_torsion.atom1],
-                    site_map[rb_torsion.atom2],
-                    site_map[rb_torsion.atom3],
-                    site_map[rb_torsion.atom4],
-                ],
-                dihedral_type=None,
-            )
+            top_connection.dihedral_type = pmd_top_dihedraltypes[
+                id(rb_torsion.type)
+            ]
         top.add_connection(top_connection, update_types=False)
 
     for improper in structure.impropers:
+        # TODO: Improper atom order is not always clear in a Parmed object.
+        # This reader assumes the order of impropers is central atom first,
+        # so that is where the central atom is located. This decision comes
+        # from .top files in utils/files/NN-dimethylformamide.top, which
+        # clearly places the periodic impropers with central atom listed first,
+        # and that is where the atom is placed in the parmed.dihedrals object.
+        top_connection = gmso.Improper(
+            connection_members=[
+                site_map[improper.atom1],
+                site_map[improper.atom2],
+                site_map[improper.atom3],
+                site_map[improper.atom4],
+            ],
+        )
         if refer_type and isinstance(improper.type, pmd.ImproperType):
-            # TODO: Improper atom order is not always clear in a Parmed object.
-            # This reader assumes the order of impropers is central atom first,
-            # so that is where the central atom is located. This decision comes
-            # from .top files in utils/files/NN-dimethylformamide.top, which
-            # clearly places the periodic impropers with central atom listed first,
-            # and that is where the atom is placed in the parmed.dihedrals object.
-            top_connection = gmso.Improper(
-                connection_members=[
-                    site_map[improper.atom1],
-                    site_map[improper.atom2],
-                    site_map[improper.atom3],
-                    site_map[improper.atom4],
-                ],
-                improper_type=pmd_top_impropertypes[improper.type],
-            )
-            # No bond parameters, make Connection with no connection_type
-        else:
-            top_connection = gmso.Improper(
-                connection_members=[
-                    site_map[improper.atom1],
-                    site_map[improper.atom2],
-                    site_map[improper.atom3],
-                    site_map[improper.atom4],
-                ],
-                improper_type=None,
-            )
+            top_connection.improper_type = pmd_top_impropertypes[improper.type]
         top.add_connection(top_connection, update_types=False)
 
     top.update_topology()
-
     top.combining_rule = structure.combining_rule
     return top
 
