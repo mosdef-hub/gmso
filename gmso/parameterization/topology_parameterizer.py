@@ -16,7 +16,10 @@ from gmso.parameterization.foyer_utils import (
     get_topology_graph,
     typemap_dict,
 )
-from gmso.parameterization.isomorph import partition_isomorphic_topology_graphs
+from gmso.parameterization.isomorph import (
+    partition_isomorphic_topology_graphs,
+    top_node_match,
+)
 from gmso.parameterization.molecule_utils import (
     assert_no_boundary_bonds,
     molecule_angles,
@@ -118,7 +121,10 @@ class TopologyParameterizer(GMSOBase):
             ).clone()  # Always properly indexed or not?
 
     def _parameterize_connections(
-        self, top, ff, of_group=None, use_molecule_info=None
+        self,
+        top,
+        ff,
+        of_group=None,
     ):
         """Parameterize connections with appropriate potentials from the forcefield."""
         if of_group:
@@ -133,20 +139,20 @@ class TopologyParameterizer(GMSOBase):
             impropers = top.impropers
 
         self._apply_connection_parameters(
-            bonds, ff, use_molecule_info, self.config.assert_bond_params
+            bonds, ff, self.config.assert_bond_params
         )
         self._apply_connection_parameters(
-            angles, ff, use_molecule_info, self.config.assert_angle_params
+            angles, ff, self.config.assert_angle_params
         )
         self._apply_connection_parameters(
-            dihedrals, ff, use_molecule_info, self.config.assert_dihedral_params
+            dihedrals, ff, self.config.assert_dihedral_params
         )
         self._apply_connection_parameters(
-            impropers, ff, use_molecule_info, self.config.assert_improper_params
+            impropers, ff, self.config.assert_improper_params
         )
 
     def _apply_connection_parameters(
-        self, connections, ff, use_molecule_info, error_on_missing=True
+        self, connections, ff, error_on_missing=True
     ):
         """Find and assign potentials from the forcefield for the provided connections."""
         visited = dict()
@@ -194,7 +200,6 @@ class TopologyParameterizer(GMSOBase):
             top,
             forcefield,
             of_group=of_group,
-            use_molecule_info=use_molecule_info,
         )
 
     def _verify_forcefields_metadata(self):
@@ -338,25 +343,35 @@ class TopologyParameterizer(GMSOBase):
 
         elif use_molecule_info:
             typemap = {}
-            ref_typemap = dict()
+            reference = dict()
             for connected_component in nx.connected_components(
                 foyer_topology_graph
             ):
                 subgraph = foyer_topology_graph.subgraph(connected_component)
-                molecule = subgraph.nodes[0]["atom_data"].molecule
-                if molecule.name not in ref_typemap:
-                    ref_typemap[molecule.name] = typemap_dict(
-                        atomtyping_rules_provider=atom_typing_rules_provider,
-                        topology_graph=subgraph,
-                    )
-                    typemap.update(ref_typemap[molecule.name])
+                nodes_idx = tuple(subgraph.nodes)
+                molecule = subgraph.nodes[nodes_idx[0]]["atom_data"].molecule
+                if molecule.name not in reference:
+                    reference[molecule.name] = {
+                        "typemap": typemap_dict(
+                            atomtyping_rules_provider=atom_typing_rules_provider,
+                            topology_graph=subgraph,
+                        ),
+                        "graph": subgraph,
+                    }
+                    typemap.update(reference[molecule.name]["typemap"])
                 else:
                     # Assume same order, 1-1 match
-                    # Fixme: do we want to play safe and do is_isomorphic/matcher here?
-                    for ref_id, node in zip(
-                        ref_typemap[molecule.name], subgraph.nodes
-                    ):
-                        typemap[node] = typemap[ref_id]
+                    matcher = nx.algorithms.isomorphism.GraphMatcher(
+                        subgraph,
+                        reference[molecule.name]["graph"],
+                        node_match=top_node_match,
+                    )
+                    assert matcher.is_isomorphic()
+                    for node in subgraph.nodes:
+                        typemap[node] = reference[molecule.name]["typemap"][
+                            matcher.mapping[node]
+                        ]
+
             return typemap
         else:
             foyer_topology_graph = get_topology_graph(topology, of_group)
