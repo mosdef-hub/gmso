@@ -2,10 +2,12 @@
 from gmso.abc.abstract_site import MoleculeType, ResidueType
 
 
-def _conn_in_molecule(connection, molecule):
+def _conn_in_molecule(connection, molecule, group=False):
     """Check if all the members in a connection belong to a molecule (namedtuple)."""
+    attr = "group" if isinstance(molecule, str) else "molecule"
     return all(
-        site.molecule == molecule for site in connection.connection_members
+        getattr(site, attr) == molecule
+        for site in connection.connection_members
     )
 
 

@@ -10,7 +10,7 @@ from gmso.parameterization.molecule_utils import molecule_bonds
 
 
 def get_topology_graph(
-    gmso_topology, of_molecule=None, atomdata_populator=None
+    gmso_topology, of_group_or_molecule=None, atomdata_populator=None
 ):
     """Return a TopologyGraph with relevant attributes from an GMSO topology.
 
@@ -18,8 +18,8 @@ def get_topology_graph(
     ----------
     gmso_topology: gmso.Topology-like
         The GMSO Topology
-    of_molecule: None or tuple
-        The molecule tag if trying to get topology graph of a molecule
+    of_group: None or str (group) or tuple (molecule)
+        The molecule tag if trying to get topology graph of a group/molecule
     atomdata_populator: callable, default=None
         A function that will be called with the following arguments `gmso_topology` as well as `atom` to pass extra
         arguments to the foyer.topology_graph.AtomData object
@@ -36,11 +36,16 @@ def get_topology_graph(
     top_graph = TopologyGraph()
     atom_index_map = {}
 
-    if of_molecule:
-        pseudo_top = namedtuple("molecule", ("sites", "bonds"))
+    if of_group_or_molecule:
+        pseudo_top = namedtuple("PseudoTop", ("sites", "bonds"))
+        sites_iter = (
+            gmso_topology.iter_sites("group", of_group_or_molecule)
+            if isinstance(of_group_or_molecule, str)
+            else gmso_topology.iter_sites("molecule", of_group_or_molecule)
+        )
         gmso_topology = pseudo_top(
-            tuple(gmso_topology.iter_sites("molecule", of_molecule)),
-            tuple(molecule_bonds(gmso_topology, of_molecule)),
+            tuple(sites_iter),
+            tuple(molecule_bonds(gmso_topology, of_group_or_molecule)),
         )
 
     if len(gmso_topology.sites) == 0:
@@ -71,6 +76,8 @@ def get_topology_graph(
                     index=j,  # Assumes order is preserved
                     atomic_number=atom.element.atomic_number,
                     element=atom.element.symbol,
+                    group=atom.group,
+                    molecule=atom.molecule,
                     **kwargs,
                 )
 
