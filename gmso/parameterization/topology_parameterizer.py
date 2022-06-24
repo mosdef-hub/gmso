@@ -316,7 +316,7 @@ class TopologyParameterizer(GMSOBase):
         use_molecule_info=False,
     ):
         """Run atom-typing in foyer and return the typemap."""
-        #if use_isomorphic_checks and use_molecule_info:
+        # if use_isomorphic_checks and use_molecule_info:
         #    raise GMSOError(
         #        "Cannot set `use_isomorphic_checks=True` "
         #        "and `use_molecule_info=True` at the same time."
@@ -375,7 +375,9 @@ class TopologyParameterizer(GMSOBase):
                     else:
                         # Assume molecule sites are in the same order
                         for node in subgraph.nodes:
-                            typemap[node] = reference[molecule.name]["typemap"][node]
+                            typemap[node] = reference[molecule.name]["typemap"][
+                                node
+                            ]
 
             return typemap
         else:
