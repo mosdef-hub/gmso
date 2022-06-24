@@ -133,15 +133,8 @@ class TestMCF(BaseTest):
         assert np.allclose(float(mcf_data[-4][1]), 0.0)
         assert np.allclose(float(mcf_data[-4][2]), 0.5)
         assert np.allclose(float(mcf_data[-4][3]), 1.0)
-
-        top.scaling_factors = {
-            "nonBonded12Scale": 0.1,
-            "nonBonded13Scale": 0.2,
-            "nonBonded14Scale": 0.5,
-            "electrostatics12Scale": 0.2,
-            "electrostatics13Scale": 0.4,
-            "electrostatics14Scale": 0.6,
-        }
+        top.set_lj_scale([0.1, 0.2, 0.5])
+        top.set_electrostatics_scale([0.2, 0.4, 0.6])
 
         top.save("ar.mcf", overwrite=True)
         mcf_data = []
