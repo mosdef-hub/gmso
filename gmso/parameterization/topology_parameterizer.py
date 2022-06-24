@@ -187,8 +187,8 @@ class TopologyParameterizer(GMSOBase):
     ):
         """Parameterize a topology/subtopology based on an atomtype map."""
         if of_group:
-            forcefield = self.get_ff(of_group)
-            sites = top.iter_sites("group", of_group)
+            forcefield = self.get_ff(of_group.name)
+            sites = top.iter_sites("molecule", of_group)
         else:
             forcefield = self.get_ff(top.name)
             sites = top.sites
@@ -243,7 +243,7 @@ class TopologyParameterizer(GMSOBase):
             self.topology.identify_connections()
 
         if isinstance(self.forcefields, Dict):
-            group_labels = self.topology.unique_site_labels("group")
+            group_labels = self.topology.unique_site_labels("molecule")
             if not group_labels or group_labels == IndexedSet([None]):
                 raise ParameterizationError(
                     f"The provided gmso topology doesn't have any group."
@@ -254,14 +254,14 @@ class TopologyParameterizer(GMSOBase):
                 )
             assert_no_boundary_bonds(self.topology)
             for group in group_labels:
-                if group not in self.forcefields:
+                if group.name not in self.forcefields:
                     warnings.warn(
-                        f"Group {group} will not be parameterized, as the forcefield to parameterize it "
+                        f"Group {group.name} will not be parameterized, as the forcefield to parameterize it "
                         f"is missing."
                     )  # FixMe: Will warning be enough?
                 else:
                     typemap = self._get_atomtypes(
-                        self.get_ff(group),
+                        self.get_ff(group.name),
                         self.topology,
                         self.config.identify_connected_components,
                         of_group=group,
@@ -316,11 +316,11 @@ class TopologyParameterizer(GMSOBase):
         use_molecule_info=False,
     ):
         """Run atom-typing in foyer and return the typemap."""
-        if use_isomorphic_checks and use_molecule_info:
-            raise GMSOError(
-                "Cannot set `use_isomorphic_checks=True` "
-                "and `use_molecule_info=True` at the same time."
-            )
+        #if use_isomorphic_checks and use_molecule_info:
+        #    raise GMSOError(
+        #        "Cannot set `use_isomorphic_checks=True` "
+        #        "and `use_molecule_info=True` at the same time."
+        #    )
         atom_typing_rules_provider = get_atomtyping_rules_provider(forcefield)
         foyer_topology_graph = get_topology_graph(topology, of_group)
 
@@ -360,17 +360,22 @@ class TopologyParameterizer(GMSOBase):
                     }
                     typemap.update(reference[molecule.name]["typemap"])
                 else:
-                    # Assume same order, 1-1 match
-                    matcher = nx.algorithms.isomorphism.GraphMatcher(
-                        subgraph,
-                        reference[molecule.name]["graph"],
-                        node_match=top_node_match,
-                    )
-                    assert matcher.is_isomorphic()
-                    for node in subgraph.nodes:
-                        typemap[node] = reference[molecule.name]["typemap"][
-                            matcher.mapping[node]
-                        ]
+                    if use_isomorphic_checks:
+                        # Check for isomorphism submatching to typemap
+                        matcher = nx.algorithms.isomorphism.GraphMatcher(
+                            subgraph,
+                            reference[molecule.name]["graph"],
+                            node_match=top_node_match,
+                        )
+                        assert matcher.is_isomorphic()
+                        for node in subgraph.nodes:
+                            typemap[node] = reference[molecule.name]["typemap"][
+                                matcher.mapping[node]
+                            ]
+                    else:
+                        # Assume molecule sites are in the same order
+                        for node in subgraph.nodes:
+                            typemap[node] = reference[molecule.name]["typemap"][node]
 
             return typemap
         else:
