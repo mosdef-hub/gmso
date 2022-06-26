@@ -283,8 +283,8 @@ class TopologyParameterizer(GMSOBase):
             typemap = self._get_atomtypes(
                 self.get_ff(),
                 self.topology,
+                self.config.use_molecule_info,
                 self.config.identify_connected_components,
-                use_molecule_info=self.config.use_molecule_info,
             )
             self._parameterize(
                 self.topology,
