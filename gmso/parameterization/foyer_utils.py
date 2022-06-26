@@ -77,7 +77,7 @@ def get_topology_graph(
                     atomic_number=atom.element.atomic_number,
                     element=atom.element.symbol,
                     group=atom.group,
-                    molecule=atom.molecule,
+                    molecule=atom.molecule.name,
                     **kwargs,
                 )
 

@@ -42,6 +42,10 @@ class TopologyParameterizationConfig(GMSOBase):
         description="If true, clone the topology and apply parameters to the cloned one.",
     )  # Unused
 
+    match_ff_by: str = Field(
+        default="molecule",
+        description="The site's' label used to matched with the provided dictionary.",
+    )
     identify_connections: bool = Field(
         default=False,
         description="If true, add connections identified using networkx graph matching to match"
@@ -243,7 +247,9 @@ class TopologyParameterizer(GMSOBase):
             self.topology.identify_connections()
 
         if isinstance(self.forcefields, Dict):
-            group_labels = self.topology.unique_site_labels("group")
+            group_labels = self.topology.unique_site_labels(
+                self.config.match_ff_by, name_only=True
+            )
             if not group_labels or group_labels == IndexedSet([None]):
                 raise ParameterizationError(
                     f"The provided gmso topology doesn't have any group."
@@ -263,9 +269,9 @@ class TopologyParameterizer(GMSOBase):
                     typemap = self._get_atomtypes(
                         self.get_ff(group),
                         self.topology,
+                        self.config.use_molecule_info,
                         self.config.identify_connected_components,
-                        of_group=group,
-                        use_molecule_info=self.config.use_molecule_info,
+                        group,
                     )
                     self._parameterize(
                         self.topology,
@@ -311,20 +317,54 @@ class TopologyParameterizer(GMSOBase):
     def _get_atomtypes(
         forcefield,
         topology,
+        use_molecule_info=False,
         use_isomorphic_checks=False,
         of_group=None,
-        use_molecule_info=False,
     ):
         """Run atom-typing in foyer and return the typemap."""
-        # if use_isomorphic_checks and use_molecule_info:
-        #    raise GMSOError(
-        #        "Cannot set `use_isomorphic_checks=True` "
-        #        "and `use_molecule_info=True` at the same time."
-        #    )
         atom_typing_rules_provider = get_atomtyping_rules_provider(forcefield)
         foyer_topology_graph = get_topology_graph(topology, of_group)
 
-        if use_isomorphic_checks:
+        if use_molecule_info:
+            typemap, reference = dict(), dict()
+            for connected_component in nx.connected_components(
+                foyer_topology_graph
+            ):
+                subgraph = foyer_topology_graph.subgraph(connected_component)
+                nodes_idx = tuple(subgraph.nodes)
+                molecule = subgraph.nodes[nodes_idx[0]]["atom_data"].molecule
+                if molecule not in reference:
+                    reference[molecule] = {
+                        "typemap": typemap_dict(
+                            atomtyping_rules_provider=atom_typing_rules_provider,
+                            topology_graph=subgraph,
+                        ),
+                        "graph": subgraph,
+                    }
+                    typemap.update(reference[molecule]["typemap"])
+                else:
+                    # Check for isomorphism submatching to typemap
+                    if use_isomorphic_checks:
+                        matcher = nx.algorithms.isomorphism.GraphMatcher(
+                            subgraph,
+                            reference[molecule]["graph"],
+                            node_match=top_node_match,
+                        )
+                        assert matcher.is_isomorphic()
+                        for node in subgraph.nodes:
+                            typemap[node] = reference[molecule]["typemap"][
+                                matcher.mapping[node]
+                            ]
+                    else:
+                        for node, ref_node in zip(
+                            sorted(subgraph.nodes),
+                            reference[molecule]["typemap"],
+                        ):
+                            typemap[node] = reference[molecule]["typemap"][
+                                ref_node
+                            ]
+            return typemap
+        elif use_isomorphic_checks:
             isomorphic_substructures = partition_isomorphic_topology_graphs(
                 foyer_topology_graph
             )
@@ -341,37 +381,6 @@ class TopologyParameterizer(GMSOBase):
                         typemap[node] = typemap[mapping[node]]
             return typemap
 
-        elif use_molecule_info:
-            typemap = {}
-            reference = dict()
-            for connected_component in nx.connected_components(
-                foyer_topology_graph
-            ):
-                subgraph = foyer_topology_graph.subgraph(connected_component)
-                nodes_idx = tuple(subgraph.nodes)
-                molecule = subgraph.nodes[nodes_idx[0]]["atom_data"].molecule
-                if molecule.name not in reference:
-                    reference[molecule.name] = {
-                        "typemap": typemap_dict(
-                            atomtyping_rules_provider=atom_typing_rules_provider,
-                            topology_graph=subgraph,
-                        ),
-                        "graph": subgraph,
-                    }
-                    typemap.update(reference[molecule.name]["typemap"])
-                else:
-                    # Check for isomorphism submatching to typemap
-                    matcher = nx.algorithms.isomorphism.GraphMatcher(
-                        subgraph,
-                        reference[molecule.name]["graph"],
-                        node_match=top_node_match,
-                    )
-                    assert matcher.is_isomorphic()
-                    for node in subgraph.nodes:
-                        typemap[node] = reference[molecule.name]["typemap"][
-                            matcher.mapping[node]
-                        ]
-            return typemap
         else:
             foyer_topology_graph = get_topology_graph(topology, of_group)
             return typemap_dict(

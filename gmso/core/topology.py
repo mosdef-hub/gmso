@@ -308,7 +308,7 @@ class Topology(object):
         """Return a list of all molecule/residue labels in the Topology."""
         # Not super happy with this method name, open for suggestion.
         unique_tags = IndexedSet()
-        if name_only:
+        if name_only and label_type in ("molecule", "residue"):
             for site in self.sites:
                 label = getattr(site, label_type)
                 unique_tags.add(label.name if label else None)

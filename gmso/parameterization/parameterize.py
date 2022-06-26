@@ -10,6 +10,7 @@ __all__ = ["apply"]
 def apply(
     top,
     forcefields,
+    match_ff_by="molecule",
     identify_connections=False,
     identify_connected_components=True,
     use_molecule_info=False,
@@ -32,6 +33,10 @@ def apply(
         Note: if a Topology with no molecule is provided, this option will only take
         a ForceField object. If a dictionary of ForceFields is provided, this method will
         fail.
+
+    match_ff_by: str, optional, default="molecule"
+        They site's tag used to match the forcefields provided above to the Topology.
+        Options include "molecule" and "group".
 
     identify_connections: bool, optional, default=False
         If true, add connections identified using networkx graph matching to match
@@ -64,6 +69,7 @@ def apply(
     """
     config = TopologyParameterizationConfig.parse_obj(
         dict(
+            match_ff_by=match_ff_by,
             identify_connections=identify_connections,
             identify_connected_components=identify_connected_components,
             use_molecule_info=use_molecule_info,
