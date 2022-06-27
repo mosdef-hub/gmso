@@ -310,14 +310,14 @@ class TopologyParameterizer(GMSOBase):
                 if not self.topology.bonds[i].bond_type:
                     self.topology._bonds.pop(i)
             for i in range(self.topology.n_angles - 1, -1, -1):
-                if not self.topologyop.angles[i].angle_type:
-                    self.topologyop._angles.pop(i)
+                if not self.topology.angles[i].angle_type:
+                    self.topology._angles.pop(i)
             for i in range(self.topology.n_dihedrals - 1, -1, -1):
                 if not self.topology.dihedrals[i].dihedral_type:
                     self.topology._dihedrals.pop(i)
             for i in range(self.topology.n_impropers - 1, -1, -1):
                 if not self.topology.impropers[i].improper_type:
-                    self.topologyop._impropers.pop(i)
+                    self.topology._impropers.pop(i)
 
     @staticmethod
     def connection_identifier(
