@@ -18,6 +18,7 @@ def apply(
     assert_angle_params=True,
     assert_dihedral_params=True,
     assert_improper_params=False,
+    remove_untyped=False,
 ):
     """Set Topology parameter types from GMSO ForceFields.
 
@@ -82,6 +83,7 @@ def apply(
             assert_angle_params=assert_angle_params,
             assert_dihedral_params=assert_dihedral_params,
             assert_improper_params=assert_improper_params,
+            remove_untyped=remove_untyped,
         )
     )
     parameterizer = TopologyParameterizer(
