@@ -1070,7 +1070,10 @@ class Topology(object):
             raise ValueError(
                 "Expected `value` to be something other than None. Provided None."
             )
-
+        if key in ("molecule", "reisdue") and isinstance(value, str):
+            for site in self._sites:
+                if getattr(site, key) and getattr(site, key).name == value:
+                    yield site
         for site in self._sites:
             if getattr(site, key) == value:
                 yield site

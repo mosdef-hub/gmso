@@ -59,7 +59,7 @@ class TestParameterizationOptions(ParameterizationBaseTest):
     def test_different_ffs_apply(self, ethane_methane_top):
         opls = ffutils.FoyerFFs().load(ffname="oplsaa").to_gmso_ff()
         ethane_methane_top.identify_connections()
-        apply(ethane_methane_top, {"Ethane": opls, "Methane": opls})
+        apply(ethane_methane_top, {"Ethane": opls, "Methane": opls}, "molecule")
         assert ethane_methane_top.combining_rule == "geometric"
         for key, v in opls.scaling_factors.items():
             assert ethane_methane_top.scaling_factors[key] == v
@@ -80,7 +80,7 @@ class TestParameterizationOptions(ParameterizationBaseTest):
             match=r"Group groupB will not be parameterized, as the forcefield "
             r"to parameterize it is missing.",
         ):
-            apply(top, {"groupA": oplsaa_gmso})
+            apply(top, {"groupA": oplsaa_gmso}, match_ff_by="group")
 
     def test_diff_combining_rules_error(self, ethane_methane_top):
         ff1 = ForceField()

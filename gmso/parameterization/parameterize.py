@@ -10,7 +10,7 @@ __all__ = ["apply"]
 def apply(
     top,
     forcefields,
-    match_ff_by="molecule",
+    match_ff_by=None,
     identify_connections=False,
     identify_connected_components=True,
     use_molecule_info=False,
@@ -34,9 +34,10 @@ def apply(
         a ForceField object. If a dictionary of ForceFields is provided, this method will
         fail.
 
-    match_ff_by: str, optional, default="molecule"
+    match_ff_by: str, optional, default=None
         They site's tag used to match the forcefields provided above to the Topology.
-        Options include "molecule" and "group".
+        Options include "molecule" and "group". This option is only valid if forcefields are provided
+        as a dict.
 
     identify_connections: bool, optional, default=False
         If true, add connections identified using networkx graph matching to match
@@ -66,6 +67,10 @@ def apply(
     assert_improper_params : bool, optional, default=False
         If True, an error is raised if parameters are not found for all system
         improper dihedrals.
+
+    remove_untyped : bool, optional, default=False
+        If True, after the atomtyping and parameterization step, remove all connection
+        that has no connection_type.
     """
     config = TopologyParameterizationConfig.parse_obj(
         dict(

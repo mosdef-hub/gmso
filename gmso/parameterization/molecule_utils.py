@@ -2,41 +2,52 @@
 from gmso.abc.abstract_site import MoleculeType, ResidueType
 
 
-def _conn_in_molecule(connection, molecule, group=False):
+def _conn_in_molecule(connection, label, is_group=False):
     """Check if all the members in a connection belong to a molecule (namedtuple)."""
-    attr = "group" if isinstance(molecule, str) else "molecule"
-    return all(
-        getattr(site, attr) == molecule
-        for site in connection.connection_members
-    )
+    if is_group:
+        return all(
+            getattr(site, "group") == label
+            for site in connection.connection_members
+        )
+    else:
+        if isinstance(label, str):
+            return all(
+                getattr(site, "molecule").name == label
+                for site in connection.connection_members
+            )
+        else:
+            return all(
+                getattr(site, "molecule") == label
+                for site in connection.connection_members
+            )
 
 
-def _molecule_connections(top, molecule, attr):
+def _molecule_connections(top, molecule, attr, is_group=False):
     """Return all the connections belonging to a molecule."""
     return filter(
-        lambda conn: _conn_in_molecule(conn, molecule),
+        lambda conn: _conn_in_molecule(conn, molecule, is_group),
         getattr(top, attr),
     )
 
 
-def molecule_bonds(top, molecule):
+def molecule_bonds(top, molecule, is_group=False):
     """Given a molecule (namedtuple), return its bonds."""
-    return _molecule_connections(top, molecule, "bonds")
+    return _molecule_connections(top, molecule, "bonds", is_group)
 
 
-def molecule_angles(top, molecule):
+def molecule_angles(top, molecule, is_group=False):
     """Given a molecule (namedtuple), return its angles."""
-    return _molecule_connections(top, molecule, "angles")
+    return _molecule_connections(top, molecule, "angles", is_group)
 
 
-def molecule_dihedrals(top, molecule):
+def molecule_dihedrals(top, molecule, is_group=False):
     """Given a molecule (namedtuple), return its dihedrals."""
-    return _molecule_connections(top, molecule, "dihedrals")
+    return _molecule_connections(top, molecule, "dihedrals", is_group)
 
 
-def molecule_impropers(top, molecule):
+def molecule_impropers(top, molecule, is_group=False):
     """Given a molecule (namedtuple), return its impropers."""
-    return _molecule_connections(top, molecule, "impropers")
+    return _molecule_connections(top, molecule, "impropers", is_group)
 
 
 def assert_no_boundary_bonds(top):

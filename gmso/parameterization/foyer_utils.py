@@ -10,7 +10,7 @@ from gmso.parameterization.molecule_utils import molecule_bonds
 
 
 def get_topology_graph(
-    gmso_topology, of_group_or_molecule=None, atomdata_populator=None
+    gmso_topology, group_or_molecule=None, label=None, atomdata_populator=None
 ):
     """Return a TopologyGraph with relevant attributes from an GMSO topology.
 
@@ -18,8 +18,10 @@ def get_topology_graph(
     ----------
     gmso_topology: gmso.Topology-like
         The GMSO Topology
-    of_group: None or str (group) or tuple (molecule)
-        The molecule tag if trying to get topology graph of a group/molecule
+    group_or_molecule: str, optional, default=None
+        The type of label used to query the sites-group of interest. Accepted options include "group" and "molecule"
+    label: str, optional, default=None
+        The label used to query the sites-group of interest
     atomdata_populator: callable, default=None
         A function that will be called with the following arguments `gmso_topology` as well as `atom` to pass extra
         arguments to the foyer.topology_graph.AtomData object
@@ -36,16 +38,13 @@ def get_topology_graph(
     top_graph = TopologyGraph()
     atom_index_map = {}
 
-    if of_group_or_molecule:
+    if group_or_molecule:
+        assert group_or_molecule in ("group", "molecule")
+        is_group = True if group_or_molecule == "group" else False
         pseudo_top = namedtuple("PseudoTop", ("sites", "bonds"))
-        sites_iter = (
-            gmso_topology.iter_sites("group", of_group_or_molecule)
-            if isinstance(of_group_or_molecule, str)
-            else gmso_topology.iter_sites("molecule", of_group_or_molecule)
-        )
         gmso_topology = pseudo_top(
-            tuple(sites_iter),
-            tuple(molecule_bonds(gmso_topology, of_group_or_molecule)),
+            tuple(gmso_topology.iter_sites(group_or_molecule, label)),
+            tuple(molecule_bonds(gmso_topology, label, is_group)),
         )
 
     if len(gmso_topology.sites) == 0:
@@ -77,7 +76,7 @@ def get_topology_graph(
                     atomic_number=atom.element.atomic_number,
                     element=atom.element.symbol,
                     group=atom.group,
-                    molecule=atom.molecule.name,
+                    molecule=atom.molecule.name if atom.molecule else None,
                     **kwargs,
                 )
 

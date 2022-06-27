@@ -43,7 +43,7 @@ class TopologyParameterizationConfig(GMSOBase):
     )  # Unused
 
     match_ff_by: str = Field(
-        default="molecule",
+        default=None,
         description="The site's' label used to matched with the provided dictionary.",
     )
     identify_connections: bool = Field(
@@ -91,6 +91,12 @@ class TopologyParameterizationConfig(GMSOBase):
         default=False,
         description="If True, an error is raised if parameters are not found for "
         "all system impropers.",
+    )
+
+    remove_untyped: bool = Field(
+        default=False,
+        description="If True, after the atomtyping and parameterization step, "
+        "remove all connection that has no connection_type",
     )
 
 
@@ -269,6 +275,7 @@ class TopologyParameterizer(GMSOBase):
                     typemap = self._get_atomtypes(
                         self.get_ff(group),
                         self.topology,
+                        self.config.match_ff_by,
                         self.config.use_molecule_info,
                         self.config.identify_connected_components,
                         group,
@@ -283,6 +290,7 @@ class TopologyParameterizer(GMSOBase):
             typemap = self._get_atomtypes(
                 self.get_ff(),
                 self.topology,
+                None,  # If only one ff is provided, this keyword is invalid and must be set to None
                 self.config.use_molecule_info,
                 self.config.identify_connected_components,
             )
@@ -295,6 +303,21 @@ class TopologyParameterizer(GMSOBase):
         self.topology.scaling_factors.update(scaling_factors)
         self.topology.combining_rule = combining_rule
         self.topology.update_topology()
+
+        if self.config.remove_untyped:
+            # TEMP CODE: copied from foyer/general_forcefield.py, will update later
+            for i in range(self.topology.n_bonds - 1, -1, -1):
+                if not self.topology.bonds[i].bond_type:
+                    self.topology._bonds.pop(i)
+            for i in range(self.topology.n_angles - 1, -1, -1):
+                if not self.topologyop.angles[i].angle_type:
+                    self.topologyop._angles.pop(i)
+            for i in range(self.topology.n_dihedrals - 1, -1, -1):
+                if not self.topology.dihedrals[i].dihedral_type:
+                    self.topology._dihedrals.pop(i)
+            for i in range(self.topology.n_impropers - 1, -1, -1):
+                if not self.topology.impropers[i].improper_type:
+                    self.topologyop._impropers.pop(i)
 
     @staticmethod
     def connection_identifier(
@@ -317,13 +340,16 @@ class TopologyParameterizer(GMSOBase):
     def _get_atomtypes(
         forcefield,
         topology,
+        molecule_or_group,
         use_molecule_info=False,
         use_isomorphic_checks=False,
         of_group=None,
     ):
         """Run atom-typing in foyer and return the typemap."""
         atom_typing_rules_provider = get_atomtyping_rules_provider(forcefield)
-        foyer_topology_graph = get_topology_graph(topology, of_group)
+        foyer_topology_graph = get_topology_graph(
+            topology, molecule_or_group, of_group
+        )
 
         if use_molecule_info:
             typemap, reference = dict(), dict()
