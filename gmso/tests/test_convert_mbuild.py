@@ -31,6 +31,16 @@ class TestConvertMBuild(BaseTest):
         for i in range(top.n_sites):
             assert isinstance(top.sites[i].element, gmso.Element)
             assert top.sites[i].name == top.sites[i].element.symbol
+            assert top.sites[i].residue.name == "CH3"
+            assert top.sites[i].molecule.name == "Ethane"
+
+        unlabeled_top = from_mbuild(mb_ethane, parse_label=False)
+        assert unlabeled_top.n_sites == 8
+        assert unlabeled_top.n_connections == 7
+        for site in unlabeled_top.sites:
+            assert site.name == site.element.symbol
+            assert site.residue is None
+            assert site.molecule is None
 
     def test_from_mbuild_argon(self, ar_system):
         # ar_system is a 3x3x3nm box filled with 100 argon sites using

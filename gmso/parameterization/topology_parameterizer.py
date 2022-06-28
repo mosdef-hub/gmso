@@ -234,27 +234,43 @@ class TopologyParameterizer(GMSOBase):
         # ToDo: Set other scaling factors by extending the forcefield schema
         # ToDo: What to do when all the scaling factors matchup? Should we promote them to be global?
         # ToDo: Do we want to also parse other interaction if provided?
+        lj_scales = {
+            f"nonBonded{interaction}Scale": interaction
+            for interaction in ["12", "13", "14"]
+        }
+        electrostatics_scales = {
+            f"electrostatics{interaction}Scale": interaction
+            for interaction in ["12", "13", "14"]
+        }
         if isinstance(self.forcefields, Dict):
             for group_or_molecule, ff in self.forcefields.items():
-                self.topology.set_lj_scale(
-                    ff.scaling_factors["nonBonded14Scale"],
-                    interaction="14",
-                    molecule_id=group_or_molecule,
-                )
-                self.topology.set_electrostatics_scale(
-                    ff.scaling_factors["electrostatics14Scale"],
-                    interaction="14",
-                    molecule_id=group_or_molecule,
-                )
+                for name, interaction in lj_scales.items():
+                    if ff.scaling_factors.get(name):
+                        self.topology.set_lj_scale(
+                            ff.scaling_factors[name],
+                            interaction=interaction,
+                            molecule_id=group_or_molecule,
+                        )
+                for name, interaction in electrostatics_scales.items():
+                    if ff.scaling_factors.get(name):
+                        self.topology.set_electrostatics_scale(
+                            ff.scaling_factors[name],
+                            interaction=interaction,
+                            molecule_id=group_or_molecule,
+                        )
         else:
-            self.topology.set_lj_scale(
-                self.forcefields.scaling_factors["nonBonded14Scale"],
-                interaction="14",
-            )
-            self.topology.set_electrostatics_scale(
-                self.forcefields.scaling_factors["electrostatics14Scale"],
-                interaction="14",
-            )
+            for name, interaction in lj_scales.items():
+                if self.forcefields.scaling_factors.get(name):
+                    self.topology.set_lj_scale(
+                        self.forcefields.scaling_factors[name],
+                        interaction=interaction,
+                    )
+            for name, interaction in electrostatics_scales.items():
+                if self.forcefields.scaling_factors.get(name):
+                    self.topology.set_electrostatics_scale(
+                        self.forcefields.scaling_factors[name],
+                        interaction=interaction,
+                    )
 
     def run_parameterization(self):
         """Run parameterization of the topology with give forcefield(s) and configuration."""
