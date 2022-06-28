@@ -1,6 +1,7 @@
 import random
 
 import forcefield_utilities as ffutils
+import mbuild as mb
 import pytest
 from foyer.exceptions import FoyerError
 
@@ -98,13 +99,24 @@ class TestParameterizationOptions(ParameterizationBaseTest):
         with pytest.raises(FoyerError):
             apply(top=Topology(), forcefields=oplsaa_gmso)
 
-    def test_isomorphic_speedups(self, ethane_box_with_methane, oplsaa_gmso):
+    @pytest.mark.parametrize(
+        "identify_connected_components, use_molecule_info",
+        [(False, False), (True, False), (False, True), (True, True)],
+    )
+    def test_speedup_options(
+        self,
+        ethane_box_with_methane,
+        oplsaa_gmso,
+        identify_connected_components,
+        use_molecule_info,
+    ):
         ethane_box_with_methane.identify_connections()
         apply(
             ethane_box_with_methane,
             oplsaa_gmso,
             identify_connections=False,
-            identify_connected_components=True,
+            identify_connected_components=identify_connected_components,
+            use_molecule_info=use_molecule_info,
         )
 
         molecule_labels = ethane_box_with_methane.unique_site_labels("molecule")
@@ -142,3 +154,47 @@ class TestParameterizationOptions(ParameterizationBaseTest):
         for atom_a, atom_b in zip(methane_a, methane_b):
             assert atom_a.atom_type == atom_b.atom_type
             assert atom_a.atom_type is not None
+
+    def test_remove_untyped(self, oplsaa_gmso):
+        isopropane = mb.load("C(C)C", smiles=True)
+        top1 = gmso.external.from_mbuild(isopropane)
+        top1.identify_connections()
+        assert top1.n_impropers != 0
+        apply(top1, oplsaa_gmso, remove_untyped=False)
+        assert top1.n_impropers != 0
+
+        top2 = gmso.external.from_mbuild(isopropane)
+        top2.identify_connections()
+        assert top2.n_impropers != 0
+        apply(top2, oplsaa_gmso, remove_untyped=True)
+        assert top2.n_impropers == 0
+
+    def test_match_ff_by_molecule(self, ethane_box_with_methane, oplsaa_gmso):
+        ethane_box_with_methane.identify_connections()
+        ff_dict = {"Ethane": oplsaa_gmso, "Methane": oplsaa_gmso}
+        apply(
+            ethane_box_with_methane,
+            ff_dict,
+            match_ff_by="molecule",
+            identify_connections=False,
+            identify_connected_components=True,
+            use_molecule_info=True,
+        )
+        assert ethane_box_with_methane.atom_types is not None
+
+    def test_match_ff_by_group(self, ethane_box_with_methane, oplsaa_gmso):
+        ethane_box_with_methane.identify_connections()
+        for site in ethane_box_with_methane.sites:
+            site.group = "Alkane"
+        ff_dict = {
+            "Alkane": oplsaa_gmso,
+        }
+        apply(
+            ethane_box_with_methane,
+            ff_dict,
+            match_ff_by="group",
+            identify_connections=False,
+            identify_connected_components=True,
+            use_molecule_info=True,
+        )
+        assert ethane_box_with_methane.atom_types is not None

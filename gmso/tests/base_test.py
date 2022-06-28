@@ -491,12 +491,17 @@ class BaseTest:
         return top
 
     @pytest.fixture(scope="session")
-    def residue_top(self):
+    def labeled_top(self):
         top = Topology()
         for i in range(1, 26):
             atom = Atom(
                 name=f"atom_{i + 1}",
                 residue=("MY_RES_EVEN" if i % 2 == 0 else f"MY_RES_ODD", i % 5),
+                molecule=(
+                    "MY_MOL_EVEN" if i % 2 == 0 else f"MY_RES_ODD",
+                    i % 5,
+                ),
+                group="MY_GROUP",
             )
             top.add_site(atom, update_types=False)
         top.update_topology()

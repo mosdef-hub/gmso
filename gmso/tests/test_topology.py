@@ -693,24 +693,45 @@ class TestTopology(BaseTest):
         with pytest.raises(ValueError):
             clone.get_untyped(group="foo")
 
-    def test_iter_sites(self, residue_top):
-        for site in residue_top.iter_sites_by_residue("MY_RES_EVEN"):
-            assert site.residue[0] == "MY_RES_EVEN"
+    @pytest.mark.parametrize("key", ["group", "residue", "molecule"])
+    def test_iter_sites(self, labeled_top, key):
+        unique_labels = labeled_top.unique_site_labels(key)
+        for label in unique_labels:
+            for site in labeled_top.iter_sites(key, label):
+                assert getattr(site, key) == label
 
-        for site in residue_top.iter_sites_by_residue("MY_RES_ODD"):
-            assert site.residue[0] == "MY_RES_ODD"
-
-    def test_iter_sites_non_iterable_attribute(self, residue_top):
+    def test_iter_sites_non_iterable_attribute(self, labeled_top):
         with pytest.raises(ValueError):
-            for site in residue_top.iter_sites("atom_type", "abc"):
+            for site in labeled_top.iter_sites("atom_type", "abc"):
                 pass
 
-    def test_iter_sites_none(self, residue_top):
+    def test_iter_sites_none(self, labeled_top):
         with pytest.raises(ValueError):
-            for site in residue_top.iter_sites("residue", None):
+            for site in labeled_top.iter_sites("residue", None):
                 pass
 
-    def test_iter_sites_by_residue_name(self, pairpotentialtype_top):
-        assert (
-            len(list(pairpotentialtype_top.iter_sites_by_residue("AAA"))) == 0
+    def test_iter_sites_by_residue(self, labeled_top):
+        residues = labeled_top.unique_site_labels("residue", name_only=False)
+        for residue in residues:
+            for site in labeled_top.iter_sites_by_residue(residue):
+                assert site.residue == residue
+
+        residue_names = labeled_top.unique_site_labels(
+            "residue", name_only=True
         )
+        for residue_name in residue_names:
+            for site in labeled_top.iter_sites_by_residue(residue_name):
+                assert site.residue.name == residue_name
+
+    def test_iter_sites_by_molecule(self, labeled_top):
+        molecules = labeled_top.unique_site_labels("molecule", name_only=False)
+        for molecule in molecules:
+            for site in labeled_top.iter_sites_by_molecule(molecule):
+                assert site.residue == molecule
+
+        molecule_names = labeled_top.unique_site_labels(
+            "molecule", name_only=True
+        )
+        for molecule_name in molecule_names:
+            for site in labeled_top.iter_sites_by_molecule(molecule_name):
+                assert site.molecule.name == molecule_name
