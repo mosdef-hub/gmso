@@ -46,7 +46,11 @@ class TestParameterizationOptions(ParameterizationBaseTest):
             "electrostatics14Scale": 1.5,
         }
         ethane_methane_top.identify_connections()
-        apply(ethane_methane_top, {"Ethane": opls, "Methane": opls}, "molecule")
+        apply(
+            ethane_methane_top,
+            {"Ethane": opls, "Methane": opls_copy},
+            "molecule",
+        )
 
         assert ethane_methane_top.combining_rule == "geometric"
         assert (

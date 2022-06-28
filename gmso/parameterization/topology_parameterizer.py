@@ -233,17 +233,18 @@ class TopologyParameterizer(GMSOBase):
         """Set either per-molecule or global scaling factors for the topology based on the forcefields provided."""
         # ToDo: Set other scaling factors by extending the forcefield schema
         # ToDo: What to do when all the scaling factors matchup? Should we promote them to be global?
+        # ToDo: Do we want to also parse other interaction if provided?
         if isinstance(self.forcefields, Dict):
-            for subtop_id, ff in self.forcefields.items():
+            for group_or_molecule, ff in self.forcefields.items():
                 self.topology.set_lj_scale(
                     ff.scaling_factors["nonBonded14Scale"],
                     interaction="14",
-                    molecule_id=subtop_id,
+                    molecule_id=group_or_molecule,
                 )
                 self.topology.set_electrostatics_scale(
                     ff.scaling_factors["electrostatics14Scale"],
                     interaction="14",
-                    molecule_id=subtop_id,
+                    molecule_id=group_or_molecule,
                 )
         else:
             self.topology.set_lj_scale(
