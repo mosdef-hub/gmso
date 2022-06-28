@@ -212,40 +212,57 @@ class TopologyParameterizer(GMSOBase):
             of_group=of_group,
         )
 
-    def _verify_forcefields_metadata(self):
-        """Verify all the provided forcefields have the same scaling factors and combining rule."""
+    def _set_combining_rule(self):
+        """Verify all the provided forcefields have the same combining rule and set it for the Topology."""
         if isinstance(self.forcefields, dict):
-            ffs = list(self.forcefields.values())
-            init_scaling_factors = ffs[0].scaling_factors
-            init_combining_rule = ffs[0].combining_rule
-            for ff in ffs[1:]:
-                if ff.scaling_factors != init_scaling_factors:
-                    raise ParameterizationError(
-                        "Scaling factors of the provided forcefields do not"
-                        "match, please provide forcefields with same scaling"
-                        "factors that apply to a Topology"
-                    )
-
-                if ff.combining_rule != init_combining_rule:
-                    raise ParameterizationError(
-                        "Combining rules of the provided forcefields do not"
-                        "match, please provide forcefields with same scaling"
-                        "factors that apply to a Topology"
-                    )
-            return init_scaling_factors, init_combining_rule
+            all_comb_rules = set(
+                ff.combining_rule for ff in self.forcefields.values()
+            )
         else:
-            return (
-                self.forcefields.scaling_factors,
-                self.forcefields.combining_rule,
+            all_comb_rules = {self.forcefields.combining_rule}
+
+        if not len(all_comb_rules) == 1:
+            raise ParameterizationError(
+                "Combining rules of the provided forcefields do not"
+                "match, please provide forcefields with same scaling"
+                "factors that apply to a Topology"
+            )
+        self.topology.combining_rule = all_comb_rules.pop()
+
+    def _set_scaling_factors(self):
+        """Set either per-molecule or global scaling factors for the topology based on the forcefields provided."""
+        # ToDo: Set other scaling factors by extending the forcefield schema
+        # ToDo: What to do when all the scaling factors matchup? Should we promote them to be global?
+        if isinstance(self.forcefields, Dict):
+            for subtop_id, ff in self.forcefields.items():
+                self.topology.set_lj_scale(
+                    ff.scaling_factors["nonBonded14Scale"],
+                    interaction="14",
+                    molecule_id=subtop_id,
+                )
+                self.topology.set_electrostatics_scale(
+                    ff.scaling_factors["electrostatics14Scale"],
+                    interaction="14",
+                    molecule_id=subtop_id,
+                )
+        else:
+            self.topology.set_lj_scale(
+                self.forcefields.scaling_factors["nonBonded14Scale"],
+                interaction="14",
+            )
+            self.topology.set_electrostatics_scale(
+                self.forcefields.scaling_factors["electrostatics14Scale"],
+                interaction="14",
             )
 
     def run_parameterization(self):
         """Run parameterization of the topology with give forcefield(s) and configuration."""
-        scaling_factors, combining_rule = self._verify_forcefields_metadata()
         if self.topology.is_typed():
             raise ParameterizationError(
                 "Cannot parameterize a typed topology. Please provide a topology without any types"
             )
+
+        self._set_combining_rule()  # Fail Early if no match
 
         if self.config.identify_connections:
             """ToDo: This mutates the topology and is agnostic to downstream
@@ -300,8 +317,7 @@ class TopologyParameterizer(GMSOBase):
                 use_molecule_info=self.config.use_molecule_info,
             )
 
-        self.topology.scaling_factors.update(scaling_factors)
-        self.topology.combining_rule = combining_rule
+        self._set_scaling_factors()  # Set global or per molecule scaling factors
         self.topology.update_topology()
 
         if self.config.remove_untyped:

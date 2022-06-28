@@ -16,25 +16,6 @@ from gmso.tests.parameterization.parameterization_base_test import (
 
 
 class TestParameterizationOptions(ParameterizationBaseTest):
-    def test_parameterization_error_different_scaling_factors(
-        self, ethane_methane_top
-    ):
-        ff1 = ForceField()
-        ff1.name = "FF1"
-        ff1.scaling_factors = {
-            "electrostatic14Scale": 1.0,
-            "columbic14Scale": 2.0,
-        }
-        ff2 = ForceField()
-        ff2.name = "FF2"
-        ff2.scaling_factors = {
-            "electrostatic14Scale": 3.0,
-            "columbic14Scale": 2.0,
-        }
-
-        with pytest.raises(ParameterizationError):
-            apply(ethane_methane_top, {"Ethane": ff1, "Methane": ff2})
-
     def test_parameterization_different_combining_rule(
         self, ethane_methane_top
     ):
@@ -59,11 +40,44 @@ class TestParameterizationOptions(ParameterizationBaseTest):
 
     def test_different_ffs_apply(self, ethane_methane_top):
         opls = ffutils.FoyerFFs().load(ffname="oplsaa").to_gmso_ff()
+        opls_copy = ffutils.FoyerFFs().load(ffname="oplsaa").to_gmso_ff()
+        opls_copy.scaling_factors = {
+            "nonBonded14Scale": 1.2,
+            "electrostatics14Scale": 1.5,
+        }
         ethane_methane_top.identify_connections()
         apply(ethane_methane_top, {"Ethane": opls, "Methane": opls}, "molecule")
+
         assert ethane_methane_top.combining_rule == "geometric"
-        for key, v in opls.scaling_factors.items():
-            assert ethane_methane_top.scaling_factors[key] == v
+        assert (
+            ethane_methane_top.get_lj_scale(
+                molecule_id="Ethane", interaction="14"
+            )
+            == opls.scaling_factors["nonBonded14Scale"]
+            == 0.5
+        )
+        assert (
+            ethane_methane_top.get_electrostatics_scale(
+                molecule_id="Ethane", interaction="14"
+            )
+            == opls.scaling_factors["electrostatics14Scale"]
+            == 0.5
+        )
+
+        assert (
+            ethane_methane_top.get_lj_scale(
+                molecule_id="Methane", interaction="14"
+            )
+            == opls_copy.scaling_factors["nonBonded14Scale"]
+            == 1.2
+        )
+        assert (
+            ethane_methane_top.get_electrostatics_scale(
+                molecule_id="Methane", interaction="14"
+            )
+            == opls_copy.scaling_factors["electrostatics14Scale"]
+            == 1.5
+        )
 
     """ Change to molecule"""
 

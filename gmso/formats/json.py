@@ -63,7 +63,12 @@ def _to_json(top, types=False, update=True):
 
     json_dict = {
         "name": top._name,
-        "scaling_factors": top.scaling_factors,
+        "scaling_factors": {
+            "scaling_factors": top.scaling_factors.tolist(),
+            "molecule_scaling_factors": {
+                k: v.tolist() for k, v in top.molecule_scaling_factors.items()
+            },
+        },
         "box": top.box.json_dict() if top.box else None,
         "atoms": [],
         "bonds": [],
@@ -140,6 +145,14 @@ def _to_json(top, types=False, update=True):
     return json_dict
 
 
+def _set_scaling_factors(top, scaling_factors):
+    """Set the global/permolecule scaling factors."""
+    global_scaling_factor = scaling_factors["scaling_factors"]
+    top.set_scaling_factors(global_scaling_factor[0], global_scaling_factor[1])
+    for k, v in scaling_factors["molecule_scaling_factors"].items():
+        top.set_scaling_factors(v[0], v[1], molecule_id=k)
+
+
 def _from_json(json_dict):
     """Convert a json_dict into a topology.
 
@@ -164,7 +177,7 @@ def _from_json(json_dict):
     top = Topology(
         name=json_dict["name"],
     )
-    top.scaling_factors = json_dict["scaling_factors"]
+    _set_scaling_factors(top, json_dict["scaling_factors"])
     id_to_type_map = {}
     for atom_dict in json_dict["atoms"]:
         atom_type_id = atom_dict.pop("atom_type", None)
