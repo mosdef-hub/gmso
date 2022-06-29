@@ -291,13 +291,16 @@ class TopologyParameterizer(GMSOBase):
                 self.config.match_ff_by, name_only=True
             )
             if not group_labels or group_labels == IndexedSet([None]):
-                raise ParameterizationError(
+                # raise ParameterizationError(
+                warnings.warn(
                     f"The provided gmso topology doesn't have any group."
                     f"Either use a single forcefield to apply to to whole topology "
                     f"or provide an appropriate topology whose molecule names are "
                     f"the keys of the `forcefields` dictionary. Provided Forcefields: "
                     f"{self.forcefields}, Topology: {self.topology}"
                 )
+                return self.topology
+
             assert_no_boundary_bonds(self.topology)
             for group in group_labels:
                 if group not in self.forcefields:
