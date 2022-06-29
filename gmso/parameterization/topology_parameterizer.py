@@ -299,7 +299,6 @@ class TopologyParameterizer(GMSOBase):
                     f"the keys of the `forcefields` dictionary. Provided Forcefields: "
                     f"{self.forcefields}, Topology: {self.topology}"
                 )
-                return self.topology
 
             assert_no_boundary_bonds(self.topology)
             for group in group_labels:
