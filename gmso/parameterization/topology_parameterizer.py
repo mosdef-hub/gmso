@@ -242,17 +242,18 @@ class TopologyParameterizer(GMSOBase):
             f"electrostatics{interaction}Scale": interaction
             for interaction in ["12", "13", "14"]
         }
+
         if isinstance(self.forcefields, Dict):
             for group_or_molecule, ff in self.forcefields.items():
                 for name, interaction in lj_scales.items():
-                    if ff.scaling_factors.get(name):
+                    if ff.scaling_factors.get(name) is not None:
                         self.topology.set_lj_scale(
                             ff.scaling_factors[name],
                             interaction=interaction,
                             molecule_id=group_or_molecule,
                         )
                 for name, interaction in electrostatics_scales.items():
-                    if ff.scaling_factors.get(name):
+                    if ff.scaling_factors.get(name) is not None:
                         self.topology.set_electrostatics_scale(
                             ff.scaling_factors[name],
                             interaction=interaction,
