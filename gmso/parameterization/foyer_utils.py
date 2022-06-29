@@ -66,6 +66,8 @@ def get_topology_graph(
                     index=j,  # Assumes order is preserved
                     atomic_number=None,
                     element=atom.name,
+                    group=atom.group,
+                    molecule=atom.molecule.name if atom.molecule else None,
                     **kwargs,
                 )
 
