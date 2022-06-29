@@ -699,7 +699,7 @@ class Topology(object):
             all_scales = self._scaling_factors
         else:
             if molecule_id not in self._molecule_scaling_factors:
-                warnings.warng(
+                warnings.warn(
                     f"Scaling factors for molecule `{molecule_id}` is not defined "
                     f"in the topology. Returning None."
                 )
