@@ -89,6 +89,21 @@ class Atom(Site):
         """Return the atom_type associated with the atom."""
         return self.__dict__.get("atom_type_", None)
 
+    def clone(self):
+        """Clone this atom."""
+        return Atom(
+            name=self.name,
+            label=self.label,
+            group=self.group,
+            molecule=self.molecule,
+            residue=self.residue,
+            position=self.position,
+            charge=self.charge_,
+            mass=self.mass_,
+            element=self.element_,
+            atom_type=None if not self.atom_type else self.atom_type.clone(),
+        )
+
     def __le__(self, other):
         """Less than or equal to operator."""
         if isinstance(other, Atom):

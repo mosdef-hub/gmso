@@ -7,6 +7,7 @@ import numpy as np
 import unyt as u
 from boltons.setutils import IndexedSet
 
+import gmso
 from gmso.abc.abstract_site import MoleculeType, ResidueType, Site
 from gmso.core.angle import Angle
 from gmso.core.angle_type import AngleType
@@ -1226,6 +1227,110 @@ class Topology(object):
                     yield site
         else:
             return self.iter_sites("molecule", molecule_tag)
+
+    def create_subtop(self, label_type, label):
+        """Create a new Topology object from a molecule or graup of the current Topology.
+
+        Parameters
+        ----------
+        label_type: str
+            Category of the label ("group" or "molecule")
+        label: str (group) or tuple (molecule)
+            The label of molecule or group that need to be cloned.
+
+        Returns
+        -------
+        gmso.Topology
+        """
+        from gmso.parameterization.molecule_utils import (
+            molecule_angles,
+            molecule_bonds,
+            molecule_dihedrals,
+            molecule_impropers,
+        )
+
+        of_group = True if label_type == "group" else False
+        sites_dict = {
+            site: (idx, site.clone())
+            for idx, site in enumerate(self.iter_sites(label_type, label))
+        }
+        bonds_dict = {
+            bond: tuple(
+                sites_dict[bond.connection_members[i]][0] for i in range(2)
+            )
+            for bond in molecule_bonds(self, label, of_group)
+        }
+
+        angles_dict = {
+            angle: tuple(
+                sites_dict[angle.connection_members[i]][0] for i in range(3)
+            )
+            for angle in molecule_angles(self, label, of_group)
+        }
+
+        dihedrals_dict = {
+            dihedral: tuple(
+                sites_dict[dihedral.connection_members[i]][0] for i in range(4)
+            )
+            for dihedral in molecule_dihedrals(self, label, of_group)
+        }
+
+        impropers_dict = {
+            improper: tuple(
+                sites_dict[improper.connection_members[i]][0] for i in range(4)
+            )
+            for improper in molecule_impropers(self, label, of_group)
+        }
+
+        new_top = gmso.Topology(
+            name=label if isinstance(label, str) else label[0]
+        )
+
+        for ref_site, new_site in sites_dict.items():
+            new_top.add_site(new_site[1])
+        for ref_conn, conn_idx in bonds_dict.items():
+            bond = gmso.Bond(
+                connection_members=[
+                    new_top.sites[conn_idx[i]] for i in range(2)
+                ],
+                bond_type=None
+                if not ref_conn.connection_type
+                else ref_conn.connection_type.clone(),
+            )
+            new_top.add_connection(bond)
+        for ref_conn, conn_idx in angles_dict.items():
+            angle = gmso.Angle(
+                connection_members=[
+                    new_top.sites[conn_idx[i]] for i in range(3)
+                ],
+                angle_type=None
+                if not ref_conn.connection_type
+                else ref_conn.connection_type.clone(),
+            )
+            new_top.add_connection(angle)
+        for ref_conn, conn_idx in dihedrals_dict.items():
+            dihedral = gmso.Dihedral(
+                connection_members=[
+                    new_top.sites[conn_idx[i]] for i in range(4)
+                ],
+                dihedral_type=None
+                if not ref_conn.connection_type
+                else ref_conn.connection_type.clone(),
+            )
+            new_top.add_connection(dihedral)
+        for ref_conn, conn_idx in impropers_dict.items():
+            improper = gmso.Improper(
+                connection_members=[
+                    new_top.sites[conn_idx[i]] for i in range(4)
+                ],
+                improper_type=None
+                if not ref_conn.connection_type
+                else ref_conn.connection_type.clone(),
+            )
+            new_top.add_connection(improper)
+
+        new_top.update_topology()
+        return new_top
 
     def save(self, filename, overwrite=False, **kwargs):
         """Save the topology to a file.
