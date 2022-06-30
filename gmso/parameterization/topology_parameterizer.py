@@ -129,19 +129,29 @@ class TopologyParameterizer(GMSOBase):
             site.atom_type = ff.get_potential(
                 "atom_type", typemap[j]["atomtype"]
             ).clone()  # Always properly indexed or not?
+            assert site.atom_type, site
 
     def _parameterize_connections(
         self,
         top,
         ff,
-        of_group=None,
+        label_type=None,
+        label=None,
     ):
         """Parameterize connections with appropriate potentials from the forcefield."""
-        if of_group:
-            bonds = molecule_bonds(top, of_group)
-            angles = molecule_angles(top, of_group)
-            dihedrals = molecule_dihedrals(top, of_group)
-            impropers = molecule_impropers(top, of_group)
+        if label_type and label:
+            bonds = molecule_bonds(
+                top, label, True if label_type == "group" else False
+            )
+            angles = molecule_angles(
+                top, label, True if label_type == "group" else False
+            )
+            dihedrals = molecule_dihedrals(
+                top, label, True if label_type == "group" else False
+            )
+            impropers = molecule_impropers(
+                top, label, True if label_type == "group" else False
+            )
         else:
             bonds = top.bonds
             angles = top.angles
@@ -193,12 +203,12 @@ class TopologyParameterizer(GMSOBase):
                 setattr(connection, group, match.clone())
 
     def _parameterize(
-        self, top, typemap, of_group=None, use_molecule_info=False
+        self, top, typemap, label_type=None, label=None, use_molecule_info=False
     ):
         """Parameterize a topology/subtopology based on an atomtype map."""
-        if of_group:
-            forcefield = self.get_ff(of_group)
-            sites = top.iter_sites("group", of_group)
+        if label and label_type:
+            forcefield = self.get_ff(label)
+            sites = top.iter_sites(label_type, label)
         else:
             forcefield = self.get_ff(top.name)
             sites = top.sites
@@ -209,7 +219,8 @@ class TopologyParameterizer(GMSOBase):
         self._parameterize_connections(
             top,
             forcefield,
-            of_group=of_group,
+            label_type,
+            label,
         )
 
     def _set_combining_rule(self):
@@ -288,13 +299,13 @@ class TopologyParameterizer(GMSOBase):
             self.topology.identify_connections()
 
         if isinstance(self.forcefields, Dict):
-            group_labels = self.topology.unique_site_labels(
+            labels = self.topology.unique_site_labels(
                 self.config.match_ff_by, name_only=True
             )
-            if not group_labels or group_labels == IndexedSet([None]):
+            if not labels or labels == IndexedSet([None]):
                 # raise ParameterizationError(
                 warnings.warn(
-                    f"The provided gmso topology doesn't have any group."
+                    f"The provided gmso topology doesn't have any group/molecule."
                     f"Either use a single forcefield to apply to to whole topology "
                     f"or provide an appropriate topology whose molecule names are "
                     f"the keys of the `forcefields` dictionary. Provided Forcefields: "
@@ -302,34 +313,35 @@ class TopologyParameterizer(GMSOBase):
                 )
 
             assert_no_boundary_bonds(self.topology)
-            for group in group_labels:
-                if group not in self.forcefields:
+            for label in labels:
+                if label not in self.forcefields:
                     warnings.warn(
                         f"Group {group} will not be parameterized, as the forcefield to parameterize it "
                         f"is missing."
                     )  # FixMe: Will warning be enough?
                 else:
                     typemap = self._get_atomtypes(
-                        self.get_ff(group),
+                        self.get_ff(label),
                         self.topology,
                         self.config.match_ff_by,
+                        label,
                         self.config.use_molecule_info,
                         self.config.identify_connected_components,
-                        group,
                     )
+
                     self._parameterize(
                         self.topology,
                         typemap,
-                        of_group=group,
+                        label_type=self.config.match_ff_by,
+                        label=label,
                         use_molecule_info=self.config.use_molecule_info,  # This will be removed from the future iterations
                     )
         else:
             typemap = self._get_atomtypes(
                 self.get_ff(),
                 self.topology,
-                None,  # If only one ff is provided, this keyword is invalid and must be set to None
-                self.config.use_molecule_info,
-                self.config.identify_connected_components,
+                use_molecule_info=self.config.use_molecule_info,
+                use_isomorphic_checks=self.config.identify_connected_components,
             )
             self._parameterize(
                 self.topology,
@@ -376,15 +388,17 @@ class TopologyParameterizer(GMSOBase):
     def _get_atomtypes(
         forcefield,
         topology,
-        molecule_or_group,
+        label_type=None,
+        label=None,
         use_molecule_info=False,
         use_isomorphic_checks=False,
-        of_group=None,
     ):
         """Run atom-typing in foyer and return the typemap."""
         atom_typing_rules_provider = get_atomtyping_rules_provider(forcefield)
         foyer_topology_graph = get_topology_graph(
-            topology, molecule_or_group, of_group
+            topology,
+            label_type,
+            label,
         )
 
         if use_molecule_info:
@@ -444,7 +458,6 @@ class TopologyParameterizer(GMSOBase):
             return typemap
 
         else:
-            foyer_topology_graph = get_topology_graph(topology, of_group)
             return typemap_dict(
                 topology_graph=foyer_topology_graph,
                 atomtyping_rules_provider=atom_typing_rules_provider,

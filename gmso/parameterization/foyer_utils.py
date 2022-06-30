@@ -10,7 +10,7 @@ from gmso.parameterization.molecule_utils import molecule_bonds
 
 
 def get_topology_graph(
-    gmso_topology, group_or_molecule=None, label=None, atomdata_populator=None
+    gmso_topology, label_type=None, label=None, atomdata_populator=None
 ):
     """Return a TopologyGraph with relevant attributes from an GMSO topology.
 
@@ -18,7 +18,7 @@ def get_topology_graph(
     ----------
     gmso_topology: gmso.Topology-like
         The GMSO Topology
-    group_or_molecule: str, optional, default=None
+    label_type: str, optional, default=None
         The type of label used to query the sites-group of interest. Accepted options include "group" and "molecule"
     label: str, optional, default=None
         The label used to query the sites-group of interest
@@ -38,12 +38,12 @@ def get_topology_graph(
     top_graph = TopologyGraph()
     atom_index_map = {}
 
-    if group_or_molecule:
-        assert group_or_molecule in ("group", "molecule")
-        is_group = True if group_or_molecule == "group" else False
+    if label_type:
+        assert label_type in ("group", "molecule"), label_type
+        is_group = True if label_type == "group" else False
         pseudo_top = namedtuple("PseudoTop", ("sites", "bonds"))
         gmso_topology = pseudo_top(
-            tuple(gmso_topology.iter_sites(group_or_molecule, label)),
+            tuple(gmso_topology.iter_sites(label_type, label)),
             tuple(molecule_bonds(gmso_topology, label, is_group)),
         )
 
