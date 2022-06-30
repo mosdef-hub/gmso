@@ -6,9 +6,9 @@ from pathlib import Path
 import unyt as u
 
 from gmso import Atom, Bond, Box, Topology
+from gmso.abc.abstract_site import MoleculeType, ResidueType
 from gmso.core.element import element_by_name, element_by_symbol
 from gmso.formats.formats_registry import loads_as
-from gmso.abc.abstract_site import MoleculeType, ResidueType
 
 
 @loads_as(".mol2")
@@ -147,7 +147,7 @@ def _parse_atom(top, section):
                 element=element,
                 charge=charge,
                 residue=ResidueType(content[7], int(content[6])),
-                molecule=MoleculeType(molecule, 1)
+                molecule=MoleculeType(molecule, 1),
             )
             top.add_site(atom)
 
@@ -180,6 +180,8 @@ def _parse_box(top, section):
                 lengths=[float(x) for x in content[0:3]] * u.Å,
                 angles=[float(x) for x in content[3:6]] * u.degree,
             )
+
+
 def _parse_molecule(top, section):
     """Parse molecule information from the mol2 file."""
     top.label = str(section[0].strip())

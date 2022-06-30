@@ -136,16 +136,24 @@ class TestMol2(BaseTest):
 
     def test_mol2_residues(self):
         top = Topology.load(get_fn("parmed.mol2"))
-        assert np.all(np.array([site.residue.name for site in top.sites]) == "RES")
-        assert np.all(np.array([site.residue.number for site in top.sites]) == 1)
+        assert np.all(
+            np.array([site.residue.name for site in top.sites]) == "RES"
+        )
+        assert np.all(
+            np.array([site.residue.number for site in top.sites]) == 1
+        )
 
     def test_mol2_molecules(self):
         top = Topology.load(get_fn("methane.mol2"))
-        assert np.all(np.array([site.molecule.name for site in top.sites]) == "MET")
-        assert np.all(np.array([site.molecule.number for site in top.sites]) == 1)
+        assert np.all(
+            np.array([site.molecule.name for site in top.sites]) == "MET"
+        )
+        assert np.all(
+            np.array([site.molecule.number for site in top.sites]) == 1
+        )
 
     def test_mol2_group(self):
-        #Is there a place to read from mol2 file?
+        # Is there a place to read from mol2 file?
         top = Topology.load(get_fn("ethane.mol2"))
         for site in top.sites:
             site.group = "ethane"
