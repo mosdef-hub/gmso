@@ -10,7 +10,7 @@ __all__ = ["apply"]
 def apply(
     top,
     forcefields,
-    match_ff_by=None,
+    match_ff_by="molecule",
     identify_connections=False,
     identify_connected_components=True,
     use_molecule_info=False,
@@ -35,7 +35,7 @@ def apply(
         a ForceField object. If a dictionary of ForceFields is provided, this method will
         fail.
 
-    match_ff_by: str, optional, default=None
+    match_ff_by: str, optional, default="molecule"
         They site's tag used to match the forcefields provided above to the Topology.
         Options include "molecule" and "group". This option is only valid if forcefields are provided
         as a dict.
