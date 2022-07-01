@@ -695,8 +695,9 @@ class TestTopology(BaseTest):
             top.get_lj_scale(molecule_id="RESA"), [1.2, 1.3, 1.4]
         )
 
-        with pytest.raises(GMSOError):
-            top.get_electrostatics_scale(molecule_id="MissingMolecule")
+        assert (
+            top.get_electrostatics_scale(molecule_id="MissingMolecule") == None
+        )
 
     def test_topology_set_scaling_factors(self):
         top = Topology()

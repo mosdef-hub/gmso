@@ -323,7 +323,7 @@ class TopologyParameterizer(GMSOBase):
             for label in labels:
                 if label not in self.forcefields:
                     warnings.warn(
-                        f"Group {group} will not be parameterized, as the forcefield to parameterize it "
+                        f"Group/molecule {label} will not be parameterized, as the forcefield to parameterize it "
                         f"is missing."
                     )  # FixMe: Will warning be enough?
                 else:

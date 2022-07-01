@@ -87,8 +87,9 @@ class TestParameterizationOptions(ParameterizationBaseTest):
 
     def test_no_molecule_dict_ff(self, oplsaa_gmso):
         top = Topology(name="topWithNoMolecule")
-        with pytest.raises(ParameterizationError):
+        with pytest.warns(UserWarning):
             apply(top, {"moleculeA": oplsaa_gmso})
+        assert not top.is_typed()
 
     def test_missing_group_name_ff(self, oplsaa_gmso):
         top = Topology(name="top1")
@@ -96,7 +97,7 @@ class TestParameterizationOptions(ParameterizationBaseTest):
             top.add_site(gmso.Atom(name=f"Atom_{j+1}", group="groupB"))
         with pytest.warns(
             UserWarning,
-            match=r"Group groupB will not be parameterized, as the forcefield "
+            match=r"Group/molecule groupB will not be parameterized, as the forcefield "
             r"to parameterize it is missing.",
         ):
             apply(top, {"groupA": oplsaa_gmso}, match_ff_by="group")
