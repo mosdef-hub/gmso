@@ -272,12 +272,12 @@ class TopologyParameterizer(GMSOBase):
                         )
         else:
             for name, interaction in lj_scales.items():
-                if self.forcefields.scaling_factors.get(name):
+                if self.forcefields.scaling_factors.get(name) is not None:
                     self.topology.set_lj_scale(
                         self.forcefields.scaling_factors[name],
                         interaction=interaction,
                     )
-            for name, interaction in electrostatics_scales.items():
+            for name, interaction in electrostatics_scales.items() is not None:
                 if self.forcefields.scaling_factors.get(name):
                     self.topology.set_electrostatics_scale(
                         self.forcefields.scaling_factors[name],
