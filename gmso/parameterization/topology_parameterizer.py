@@ -219,9 +219,7 @@ class TopologyParameterizer(GMSOBase):
         else:
             forcefield = self.get_ff(top.name)
             sites = top.sites
-        import time
 
-        start = time.time()
         self._parameterize_sites(
             sites, typemap, forcefield, use_molecule_info=use_molecule_info
         )
