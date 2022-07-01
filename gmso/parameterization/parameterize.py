@@ -19,6 +19,7 @@ def apply(
     assert_dihedral_params=True,
     assert_improper_params=False,
     remove_untyped=False,
+    fast_copy=True,
 ):
     """Set Topology parameter types from GMSO ForceFields.
 
@@ -72,6 +73,15 @@ def apply(
     remove_untyped : bool, optional, default=False
         If True, after the atomtyping and parameterization step, remove all connection
         that has no connection_type.
+
+    fast_copy : bool, optional, default=True
+        If True, sympy expressions and parameters will not be deep copied during replicated
+        parameterization. This can lead to the potentials for multiple sites/connections
+        to be changed if a single parameter_type independent variable or expression is
+        modified after the topology is parameterized. However, this leads to much faster
+        application of forcefield parameters, and so is defaulted to True. Note that
+        this should be changed to False if further modification of expressions are
+        necessary post parameterization.
     """
     config = TopologyParameterizationConfig.parse_obj(
         dict(
@@ -84,6 +94,7 @@ def apply(
             assert_dihedral_params=assert_dihedral_params,
             assert_improper_params=assert_improper_params,
             remove_untyped=remove_untyped,
+            fast_copy=True,
         )
     )
     parameterizer = TopologyParameterizer(

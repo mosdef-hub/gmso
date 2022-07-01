@@ -46,6 +46,7 @@ class TopologyParameterizationConfig(GMSOBase):
         default=None,
         description="The site's' label used to matched with the provided dictionary.",
     )
+
     identify_connections: bool = Field(
         default=False,
         description="If true, add connections identified using networkx graph matching to match"
@@ -99,6 +100,12 @@ class TopologyParameterizationConfig(GMSOBase):
         "remove all connection that has no connection_type",
     )
 
+    fast_copy: bool = Field(
+        default=True,
+        description="If True, don't deepcopy sympy expression and sympy independent, "
+        "variables to save time on parameterization step.",
+    )
+
 
 class TopologyParameterizer(GMSOBase):
     """Utility class to parameterize a topology with gmso Forcefield."""
@@ -128,7 +135,7 @@ class TopologyParameterizer(GMSOBase):
         for j, site in enumerate(sites):
             site.atom_type = ff.get_potential(
                 "atom_type", typemap[j]["atomtype"]
-            ).clone()  # Always properly indexed or not?
+            ).clone(self.config.fast_copy)
             assert site.atom_type, site
 
     def _parameterize_connections(
@@ -200,7 +207,7 @@ class TopologyParameterizer(GMSOBase):
                     f"identifiers: {connection_identifiers} in the Forcefield."
                 )
             elif match:
-                setattr(connection, group, match.clone())
+                setattr(connection, group, match.clone(self.config.fast_copy))
 
     def _parameterize(
         self, top, typemap, label_type=None, label=None, use_molecule_info=False
@@ -212,7 +219,9 @@ class TopologyParameterizer(GMSOBase):
         else:
             forcefield = self.get_ff(top.name)
             sites = top.sites
+        import time
 
+        start = time.time()
         self._parameterize_sites(
             sites, typemap, forcefield, use_molecule_info=use_molecule_info
         )
@@ -328,7 +337,6 @@ class TopologyParameterizer(GMSOBase):
                         self.config.use_molecule_info,
                         self.config.identify_connected_components,
                     )
-
                     self._parameterize(
                         self.topology,
                         typemap,
@@ -402,6 +410,7 @@ class TopologyParameterizer(GMSOBase):
         )
 
         if use_molecule_info:
+            # Iterate through foyer_topology_graph, which is a subgraph of label_type
             typemap, reference = dict(), dict()
             for connected_component in nx.connected_components(
                 foyer_topology_graph
@@ -419,8 +428,8 @@ class TopologyParameterizer(GMSOBase):
                     }
                     typemap.update(reference[molecule]["typemap"])
                 else:
-                    # Check for isomorphism submatching to typemap
                     if use_isomorphic_checks:
+                        # Check for isomorphism submatching to typemap
                         matcher = nx.algorithms.isomorphism.GraphMatcher(
                             subgraph,
                             reference[molecule]["graph"],
@@ -432,6 +441,7 @@ class TopologyParameterizer(GMSOBase):
                                 matcher.mapping[node]
                             ]
                     else:
+                        # Assume nodes in repeated structures are in the same order
                         for node, ref_node in zip(
                             sorted(subgraph.nodes),
                             reference[molecule]["typemap"],
@@ -441,6 +451,7 @@ class TopologyParameterizer(GMSOBase):
                             ]
             return typemap
         elif use_isomorphic_checks:
+            # Iterate through each isomorphic connected component
             isomorphic_substructures = partition_isomorphic_topology_graphs(
                 foyer_topology_graph
             )

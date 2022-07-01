@@ -176,7 +176,7 @@ class ParametricPotential(AbstractPotential):
 
         return params
 
-    def clone(self):
+    def clone(self, fast_copy=False):
         """Clone this parametric potential, faster alternative to deepcopying."""
         Creator = self.__class__
         kwargs = {"tags": deepcopy(self.tags_)}
@@ -192,7 +192,7 @@ class ParametricPotential(AbstractPotential):
 
         return Creator(
             name=self.name,
-            potential_expression=self.potential_expression_.clone(),
+            potential_expression=self.potential_expression_.clone(fast_copy),
             **kwargs,
         )
 
