@@ -555,3 +555,47 @@ class BaseTest:
     @pytest.fixture(scope="session")
     def pentane_ua_gmso(self, pentane_ua_mbuild):
         return from_mbuild(pentane_ua_mbuild)
+
+    @pytest.fixture(scope="session")
+    def hierarchical_compound(self):
+        # Build Polymer
+        monomer = mb.load("CCO", smiles=True)
+        monomer.name = "monomer"
+        polymer = mb.lib.recipes.Polymer()
+        polymer.add_monomer(monomer, indices=(3, 7))
+        polymer.build(n=10)
+        polymer.name = "polymer"
+
+        # Build Solvent 1
+        cyclopentane = mb.load("C1CCCC1", smiles=True)
+        cyclopentane.name = "cyclopentane"
+
+        # Build Solvent 2
+        water = mb.load("O", smiles=True)
+        water.name = "water"
+
+        # Build Partitioned Box
+        filled_box1 = mb.packing.solvate(
+            solvent=cyclopentane,
+            solute=polymer,
+            box=mb.Box([5, 5, 5]),
+            n_solvent=5,
+        )
+        filled_box1.name = "sol1"
+        filled_box2 = mb.packing.fill_box(
+            compound=water,
+            box=mb.Box([5, 5, 5]),
+            n_compounds=5,
+        )
+        filled_box2.name = "sol2"
+        partitioned_box = mb.Compound()
+        partitioned_box.add(filled_box1)
+        partitioned_box.add(filled_box2)
+        partitioned_box.name = "Topology"
+        return partitioned_box
+
+    @pytest.fixture(scope="session")
+    def hierarchical_top(self, hierarchical_compound):
+        top = from_mbuild(hierarchical_compound)  # Create GMSO topology
+        top.identify_connections()
+        return top

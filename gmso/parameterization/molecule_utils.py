@@ -1,5 +1,4 @@
 """Utilities for application of a particular forcefield to a molecule."""
-from gmso.abc.abstract_site import MoleculeType, ResidueType
 
 
 def _conn_in_molecule(connection, label, is_group=False):

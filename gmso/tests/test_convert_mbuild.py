@@ -164,3 +164,13 @@ class TestConvertMBuild(BaseTest):
         compound = mb.load("CCOC", smiles=True)
         top = from_mbuild(compound)
         assert top.name is not None
+
+    def test_hierarchical_structure(self, hierarchical_top):
+        for label in ("polymer", "water", "cyclopentane"):
+            assert label in hierarchical_top.unique_site_labels(
+                "molecule", name_only=True
+            )
+        for label in ("sol1", "sol2"):
+            assert label in hierarchical_top.unique_site_labels(
+                "group", name_only=True
+            )

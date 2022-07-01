@@ -8,7 +8,7 @@ import unyt as u
 from boltons.setutils import IndexedSet
 
 import gmso
-from gmso.abc.abstract_site import MoleculeType, ResidueType, Site
+from gmso.abc.abstract_site import Site
 from gmso.core.angle import Angle
 from gmso.core.angle_type import AngleType
 from gmso.core.atom import Atom
