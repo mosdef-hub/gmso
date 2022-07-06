@@ -207,7 +207,12 @@ class TopologyParameterizer(GMSOBase):
                     f"identifiers: {connection_identifiers} in the Forcefield."
                 )
             elif match:
-                setattr(connection, group, match.clone(self.config.fast_copy))
+                dup_match = match.clone(self.config.fast_copy)
+                (
+                    dup_match.member_classes,
+                    dup_match.member_types,
+                ) = connection_identifiers
+                setattr(connection, group, dup_match)
 
     def _parameterize(
         self, top, typemap, label_type=None, label=None, use_molecule_info=False
