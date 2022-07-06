@@ -64,34 +64,32 @@ class TestViews(BaseTest):
         atom_types = n_typed_ar_system().atom_types()
         assert len(atom_types) == 1
         atom_types_unique = n_typed_ar_system().atom_types(
-            filter_by=PotentialFilters.UNIQUE_NAME_CLASS
+            filter_by=PotentialFilters.UNIQUE_NAME
         )
         assert len(atom_types_unique) == 1
 
     def test_ethane_views(self, typed_ethane):
         atom_types = typed_ethane.atom_types
-        unique_atomtypes = atom_types(
-            filter_by=PotentialFilters.UNIQUE_NAME_CLASS
-        )
+        unique_atomtypes = atom_types(filter_by=PotentialFilters.UNIQUE_NAME)
         assert len(atom_types) == len(unique_atomtypes)
 
         bond_types = typed_ethane.bond_types
         unique_bondtypes = typed_ethane.bond_types(
-            filter_by=PotentialFilters.UNIQUE_NAME_CLASS
+            filter_by=PotentialFilters.UNIQUE_NAME
         )
         assert len(bond_types) == len(unique_bondtypes)
         assert typed_ethane._potentials_count["bond_types"] == len(bond_types)
 
         angle_types = typed_ethane.angle_types
         unique_angletypes = typed_ethane.angle_types(
-            filter_by=PotentialFilters.UNIQUE_NAME_CLASS
+            filter_by=PotentialFilters.UNIQUE_NAME
         )
         assert len(angle_types) == len(unique_angletypes)
         assert typed_ethane._potentials_count["angle_types"] == len(bond_types)
 
         dihedral_types = typed_ethane.dihedral_types
         unique_dihedraltypes = typed_ethane.dihedral_types(
-            filter_by=PotentialFilters.UNIQUE_NAME_CLASS
+            filter_by=PotentialFilters.UNIQUE_NAME
         )
         assert len(unique_dihedraltypes) == len(dihedral_types)
         assert typed_ethane._potentials_count["dihedral_types"] == len(
@@ -127,7 +125,7 @@ class TestViews(BaseTest):
             filter_by=PotentialFilters.UNIQUE_PARAMETERS
         )
         bond_types_name_class = bond_types(
-            filter_by=PotentialFilters.UNIQUE_NAME_CLASS
+            filter_by=PotentialFilters.UNIQUE_CLASS
         )
 
         bond_types_repeat = bond_types(
