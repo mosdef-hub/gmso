@@ -27,22 +27,12 @@ class MissingFilterError(KeyError):
     """Error to be raised when there's a missing builtin filter."""
 
 
-def get_class(potential):
+def get_name_or_class(potential):
     """Get identifier for a topology potential based on name or membertype/class."""
     if isinstance(potential, AtomType):
-        return potential.atomclass
-    if isinstance(potential, (BondType, AngleType, DihedralType, ImproperType)):
-        return potential.member_classes
-
-
-def get_name(potential):
-    """Get idenitifer for a topology potential based on name/member names."""
-    if isinstance(potential, AtomType):
         return potential.name
-    elif isinstance(
-        potential, (BondType, AngleType, DihedralType, ImproperType)
-    ):
-        return potential.member_types
+    if isinstance(potential, (BondType, AngleType, DihedralType, ImproperType)):
+        return potential.member_types or potential.member_classes
 
 
 def get_parameters(potential):
@@ -67,8 +57,7 @@ def filtered_potentials(potential_types, identifier):
 
 
 class PotentialFilters:
-    UNIQUE_NAME = "unique_name"
-    UNIQUE_CLASS = "unique_class"
+    UNIQUE_NAME_CLASS = "unique_name_class"
     UNIQUE_EXPRESSION = "unique_expression"
     UNIQUE_PARAMETERS = "unique_parameters"
     UNIQUE_ID = "unique_id"
@@ -84,8 +73,7 @@ class PotentialFilters:
 
 
 potential_identifiers = {
-    PotentialFilters.UNIQUE_NAME: get_name,
-    PotentialFilters.UNIQUE_CLASS: get_class,
+    PotentialFilters.UNIQUE_NAME_CLASS: get_name_or_class,
     PotentialFilters.UNIQUE_EXPRESSION: lambda p: str(p.expression),
     PotentialFilters.UNIQUE_PARAMETERS: get_parameters,
     PotentialFilters.UNIQUE_ID: lambda p: id(p),

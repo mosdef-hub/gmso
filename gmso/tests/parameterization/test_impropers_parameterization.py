@@ -23,7 +23,11 @@ class TestImpropersParameterization(ParameterizationBaseTest):
         template_improper_type = lib["PeriodicImproperPotential"]
 
         assert (
-            len(ethane.improper_types(filter_by=PotentialFilters.UNIQUE_CLASS))
+            len(
+                ethane.improper_types(
+                    filter_by=PotentialFilters.UNIQUE_NAME_CLASS
+                )
+            )
             == 2
         )
         for improper_type in ethane.improper_types:
