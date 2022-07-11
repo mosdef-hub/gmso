@@ -6,17 +6,22 @@ from foyer.exceptions import FoyerError
 from foyer.topology_graph import TopologyGraph
 
 from gmso.core.atom import Atom
-from gmso.parameterization.subtopology_utils import subtop_bonds
+from gmso.parameterization.molecule_utils import molecule_bonds
 
 
-def get_topology_graph(gmso_topology, atomdata_populator=None):
+def get_topology_graph(
+    gmso_topology, label_type=None, label=None, atomdata_populator=None
+):
     """Return a TopologyGraph with relevant attributes from an GMSO topology.
 
     Parameters
     ----------
     gmso_topology: gmso.Topology-like
         The GMSO Topology
-
+    label_type: str, optional, default=None
+        The type of label used to query the sites-group of interest. Accepted options include "group" and "molecule"
+    label: str, optional, default=None
+        The label used to query the sites-group of interest
     atomdata_populator: callable, default=None
         A function that will be called with the following arguments `gmso_topology` as well as `atom` to pass extra
         arguments to the foyer.topology_graph.AtomData object
@@ -32,6 +37,15 @@ def get_topology_graph(gmso_topology, atomdata_populator=None):
     """
     top_graph = TopologyGraph()
     atom_index_map = {}
+
+    if label_type:
+        assert label_type in ("group", "molecule"), label_type
+        is_group = True if label_type == "group" else False
+        pseudo_top = namedtuple("PseudoTop", ("sites", "bonds"))
+        gmso_topology = pseudo_top(
+            tuple(gmso_topology.iter_sites(label_type, label)),
+            tuple(molecule_bonds(gmso_topology, label, is_group)),
+        )
 
     if len(gmso_topology.sites) == 0:
         raise FoyerError(
@@ -52,6 +66,8 @@ def get_topology_graph(gmso_topology, atomdata_populator=None):
                     index=j,  # Assumes order is preserved
                     atomic_number=None,
                     element=atom.name,
+                    group=atom.group,
+                    molecule=atom.molecule.name if atom.molecule else None,
                     **kwargs,
                 )
 
@@ -61,6 +77,8 @@ def get_topology_graph(gmso_topology, atomdata_populator=None):
                     index=j,  # Assumes order is preserved
                     atomic_number=atom.element.atomic_number,
                     element=atom.element.symbol,
+                    group=atom.group,
+                    molecule=atom.molecule.name if atom.molecule else None,
                     **kwargs,
                 )
 
@@ -71,14 +89,6 @@ def get_topology_graph(gmso_topology, atomdata_populator=None):
         top_graph.add_bond(atoms_indices[0], atoms_indices[1])
 
     return top_graph
-
-
-def get_topology_graph_from_subtop(subtopology):
-    """Get an equivalent topology graph for a sub-topology."""
-    subtop_named_tuple = namedtuple("subtopology", ("sites", "bonds"))
-    return get_topology_graph(
-        subtop_named_tuple(subtopology.sites, subtop_bonds(subtopology))
-    )
 
 
 def get_atomtyping_rules_provider(gmso_ff):

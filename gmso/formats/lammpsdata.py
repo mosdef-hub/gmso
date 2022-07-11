@@ -569,8 +569,6 @@ def _get_atoms(filename, topology, unit_style, type_list):
         site.element = element
         topology.add_site(site)
 
-    topology.update_sites()
-
     return topology
 
 

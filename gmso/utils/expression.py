@@ -306,21 +306,36 @@ class PotentialExpression:
 
         return indep_vars
 
-    def clone(self):
+    def clone(self, fast_copy=False):
         """Return a clone of this potential expression, faster alternative to deepcopying."""
-        return PotentialExpression(
-            deepcopy(self._expression),
-            deepcopy(self._independent_variables),
-            {
-                k: u.unyt_quantity(v.value, v.units)
-                if v.value.shape == ()
-                else u.unyt_array(v.value, v.units)
-                for k, v in self._parameters.items()
-            }
-            if self._is_parametric
-            else None,
-            verify_validity=False,
-        )
+        if not fast_copy:
+            return PotentialExpression(
+                deepcopy(self._expression),
+                deepcopy(self._independent_variables),
+                {
+                    k: u.unyt_quantity(v.value, v.units)
+                    if v.value.shape == ()
+                    else u.unyt_array(v.value, v.units)
+                    for k, v in self._parameters.items()
+                }
+                if self._is_parametric
+                else None,
+                verify_validity=False,
+            )
+        elif fast_copy:
+            return PotentialExpression(
+                self._expression,
+                self._independent_variables,
+                {
+                    k: u.unyt_quantity(v.value, v.units)
+                    if v.value.shape == ()
+                    else u.unyt_array(v.value, v.units)
+                    for k, v in self._parameters.items()
+                }
+                if self._is_parametric
+                else None,
+                verify_validity=False,
+            )
 
     @staticmethod
     def json(potential_expression):

@@ -63,33 +63,27 @@ class TestMol2(BaseTest):
 
     def test_residue(self):
         top = Topology.load(get_fn("ethanol_aa.mol2"))
-        assert np.all([site.residue_name == "ETO" for site in top.sites])
-        assert np.all([site.residue_number == 1 for site in top.sites])
+        assert np.all([site.residue[0] == "ETO" for site in top.sites])
+        assert np.all([site.residue[1] == 1 for site in top.sites])
 
         top = Topology.load(get_fn("benzene_ua.mol2"), site_type="lj")
         assert np.all(
             [
-                site.residue_name == "BEN1"
-                for site in top.iter_sites("residue_name", "BEN1")
+                site.residue[0] == "BEN1"
+                for site in top.iter_sites_by_residue("BEN1")
             ]
         )
         assert np.all(
-            [
-                site.residue_number == 1
-                for site in top.iter_sites("residue_name", "BEN1")
-            ]
+            [site.residue[1] == 1 for site in top.iter_sites_by_residue("BEN1")]
         )
         assert np.all(
             [
-                site.residue_name == "BEN2"
-                for site in top.iter_sites("residue_name", "BEN2")
+                site.residue[0] == "BEN2"
+                for site in top.iter_sites_by_residue("BEN2")
             ]
         )
         assert np.all(
-            [
-                site.residue_number == 2
-                for site in top.iter_sites("residue_name", "BEN2")
-            ]
+            [site.residue[1] == 2 for site in top.iter_sites_by_residue("BEN2")]
         )
 
     def test_lj_system(self):

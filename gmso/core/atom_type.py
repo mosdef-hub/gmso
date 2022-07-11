@@ -124,14 +124,14 @@ class AtomType(ParametricPotential):
         """Return the SMARTS string of the atom_type."""
         return self.__dict__.get("definition_")
 
-    def clone(self):
+    def clone(self, fast_copy=False):
         """Clone this AtomType, faster alternative to deepcopying."""
         return AtomType(
             name=str(self.name),
             expression=None,
             parameters=None,
             independent_variables=None,
-            potential_expression=self.potential_expression_.clone(),
+            potential_expression=self.potential_expression_.clone(fast_copy),
             mass=u.unyt_quantity(self.mass_.value, self.mass_.units),
             charge=u.unyt_quantity(self.charge_.value, self.charge_.units),
             atomclass=self.atomclass_,

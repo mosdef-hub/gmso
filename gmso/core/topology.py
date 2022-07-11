@@ -7,6 +7,7 @@ import numpy as np
 import unyt as u
 from boltons.setutils import IndexedSet
 
+import gmso
 from gmso.abc.abstract_site import Site
 from gmso.core.angle import Angle
 from gmso.core.angle_type import AngleType
@@ -75,9 +76,6 @@ class Topology(object):
     n_impropers : int
         Number of impropers in the topology
 
-    n_subtops : int
-        Number of subtopolgies in the topology
-
     connections : tuple of gmso.Connection objects
         A collection of bonds, angles, dihedrals, and impropers in the topology
 
@@ -134,11 +132,6 @@ class Topology(object):
 
     pairpotential_type_expressions : list of gmso.PairPotentialType.expression objects
         A collection of all the expression for the PairPotentialTypes in the topology
-
-    See Also
-    --------
-    gmso.SubTopology :
-        A topology within a topology
     """
 
     def __init__(self, name="Topology", box=None):
@@ -147,12 +140,10 @@ class Topology(object):
         self._box = box
         self._sites = IndexedSet()
         self._typed = False
-        self._connections = IndexedSet()
         self._bonds = IndexedSet()
         self._angles = IndexedSet()
         self._dihedrals = IndexedSet()
         self._impropers = IndexedSet()
-        self._subtops = IndexedSet()
         self._combining_rule = "lorentz"
         self._pairpotential_types = IndexedSet()
         self._scaling_factors = np.array(
@@ -241,7 +232,7 @@ class Topology(object):
     @property
     def n_connections(self):
         """Return the number of connections in the topology."""
-        return len(self._connections)
+        return len(self.connections)
 
     @property
     def n_bonds(self):
@@ -264,16 +255,6 @@ class Topology(object):
         return len(self._impropers)
 
     @property
-    def subtops(self):
-        """Return the subtopologies in the topology."""
-        return self._subtops
-
-    @property
-    def n_subtops(self):
-        """Return number of subtopolgies."""
-        return len(self._subtops)
-
-    @property
     def sites(self):
         """Return all sites in the topology."""
         return self._sites
@@ -281,7 +262,9 @@ class Topology(object):
     @property
     def connections(self):
         """Return all connections in topology."""
-        return self._connections
+        return IndexedSet(
+            [*self._bonds, *self._angles, *self._dihedrals, *self._impropers]
+        )
 
     @property
     def bonds(self):
@@ -302,6 +285,19 @@ class Topology(object):
     def impropers(self):
         """Return all impropers in the topology."""
         return self._impropers
+
+    def unique_site_labels(self, label_type="molecule", name_only=False):
+        """Return a list of all molecule/residue labels in the Topology."""
+        # Not super happy with this method name, open for suggestion.
+        unique_tags = IndexedSet()
+        if name_only and label_type in ("molecule", "residue"):
+            for site in self.sites:
+                label = getattr(site, label_type)
+                unique_tags.add(label.name if label else None)
+        else:
+            for site in self.sites:
+                unique_tags.add(getattr(site, label_type))
+        return unique_tags
 
     @property
     def atom_types(self):
@@ -703,10 +699,11 @@ class Topology(object):
             all_scales = self._scaling_factors
         else:
             if molecule_id not in self._molecule_scaling_factors:
-                raise GMSOError(
+                warnings.warn(
                     f"Scaling factors for molecule `{molecule_id}` is not defined "
-                    f"in the topology. Please use appropriate molecule_id"
+                    f"in the topology. Returning None."
                 )
+                return None
             all_scales = self._molecule_scaling_factors[molecule_id]
 
         if interaction is None:
@@ -771,34 +768,6 @@ class Topology(object):
         if update_types:
             self.update_topology()
 
-    def update_sites(self):
-        """Update the sites of the topology.
-
-        This method will update the sites in the topology
-        based on the connection members, For example- if you
-        add a bond to a topology, without adding the constituent
-        sites, this method can be called to add the sites which are the
-        connection members of the bond as shown below.
-
-            >>> import gmso
-            >>> site1 = gmso.Site(name='MySite1')
-            >>> site2 = gmso.Site(name='MySite2')
-            >>> bond1 = gmso.Bond(name='site1-site2', connection_members=[site1, site2])
-            >>> this_topology = gmso.Topology('TwoSitesTopology')
-            >>> this_topology.add_connection(bond1)
-            >>> this_topology.update_sites()
-
-        See Also
-        --------
-        gmso.Topology.add_site : Add a site to the topology.
-        gmso.Topology.add_connection : Add a Bond, an Angle or a Dihedral to the topology.
-        gmso.Topology.update_topology : Update the entire topology.
-        """
-        for connection in self._connections:
-            for member in connection.connection_members:
-                if member not in self._sites:
-                    self.add_site(member)
-
     def add_connection(self, connection, update_types=False):
         """Add a gmso.Connection object to the topology.
 
@@ -835,20 +804,17 @@ class Topology(object):
             connection = self._unique_connections[equivalent_members]
 
         for conn_member in connection.connection_members:
-            if conn_member not in self._sites:
-                self.add_site(conn_member)
+            self.add_site(conn_member)
 
-        self._connections.add(connection)
         self._unique_connections.update({equivalent_members: connection})
 
-        if isinstance(connection, Bond):
-            self._bonds.add(connection)
-        if isinstance(connection, Angle):
-            self._angles.add(connection)
-        if isinstance(connection, Dihedral):
-            self._dihedrals.add(connection)
-        if isinstance(connection, Improper):
-            self._impropers.add(connection)
+        connections_sets = {
+            Bond: self._bonds,
+            Angle: self._angles,
+            Dihedral: self._dihedrals,
+            Improper: self._impropers,
+        }
+        connections_sets[type(connection)].add(connection)
 
         if update_types:
             self.update_topology()
@@ -860,11 +826,11 @@ class Topology(object):
         _identify_connections(self)
 
     def update_atom_types(self):
-        """Keep an uptodate length of all the connection types."""
+        """Keep an up-to-date length of all the connection types."""
         self.update_topology()
 
     def update_connection_types(self):
-        """Keep an upto date length of all the connection types."""
+        """Keep an up-to-date length of all the connection types."""
         self.update_topology()
 
     def update_topology(self):
@@ -936,29 +902,6 @@ class Topology(object):
             warnings.warn(
                 "No pair potential specified for such pair of AtomTypes/atomclasses"
             )
-
-    def add_subtopology(self, subtop, update=True):
-        """Add a sub-topology to this topology.
-
-        This methods adds a gmso.Core.SubTopology object to the topology
-        All the sites in this sub-topology are added to the collection of current
-        sites in this topology.
-
-        Parameters
-        ----------
-        subtop : gmso.SubTopology
-            The sub-topology object to be added.
-        update : bool, default=True
-
-        See Also
-        --------
-        gmso.SubTopology : A topology within a topology
-        """
-        self._subtops.add(subtop)
-        subtop.parent = self
-        self._sites = self._sites.union(subtop.sites)
-        if update:
-            self.update_topology()
 
     def is_typed(self, updated=False):
         """Verify if the topology is parametrized."""
@@ -1241,30 +1184,153 @@ class Topology(object):
             raise ValueError(
                 "Expected `value` to be something other than None. Provided None."
             )
-
+        if key in ("molecule", "reisdue") and isinstance(value, str):
+            for site in self._sites:
+                if getattr(site, key) and getattr(site, key).name == value:
+                    yield site
         for site in self._sites:
             if getattr(site, key) == value:
                 yield site
 
-    def iter_sites_by_residue_name(self, name):
-        """Iterate through this topology's sites which contain this specific residue `name`.
+    def iter_sites_by_residue(self, residue_tag):
+        """Iterate through this topology's sites which contain this specific residue name.
 
         See Also
         --------
         gmso.core.topology.Topology.iter_sites
             The method to iterate over Topology's sites
         """
-        return self.iter_sites("residue_name", name)
+        if isinstance(residue_tag, str):
+            for site in self._sites:
+                if (
+                    site.residue
+                    and getattr(site, "residue").name == residue_tag
+                ):
+                    yield site
+        else:
+            return self.iter_sites("residue", residue_tag)
 
-    def iter_sites_by_residue_number(self, number):
-        """Iterate through this topology's sites which contain this specific residue `number`.
+    def iter_sites_by_molecule(self, molecule_tag):
+        """Iterate through this topology's sites which contain this specific molecule name.
 
         See Also
         --------
         gmso.core.topology.Topology.iter_sites
             The method to iterate over Topology's sites
         """
-        return self.iter_sites("residue_number", number)
+        if isinstance(molecule_tag, str):
+            for site in self._sites:
+                if (
+                    site.molecule
+                    and getattr(site, "molecule").name == molecule_tag
+                ):
+                    yield site
+        else:
+            return self.iter_sites("molecule", molecule_tag)
+
+    def create_subtop(self, label_type, label):
+        """Create a new Topology object from a molecule or graup of the current Topology.
+
+        Parameters
+        ----------
+        label_type: str
+            Category of the label ("group" or "molecule")
+        label: str (group) or tuple (molecule)
+            The label of molecule or group that need to be cloned.
+
+        Returns
+        -------
+        gmso.Topology
+        """
+        from gmso.parameterization.molecule_utils import (
+            molecule_angles,
+            molecule_bonds,
+            molecule_dihedrals,
+            molecule_impropers,
+        )
+
+        of_group = True if label_type == "group" else False
+        sites_dict = {
+            site: (idx, site.clone())
+            for idx, site in enumerate(self.iter_sites(label_type, label))
+        }
+        bonds_dict = {
+            bond: tuple(
+                sites_dict[bond.connection_members[i]][0] for i in range(2)
+            )
+            for bond in molecule_bonds(self, label, of_group)
+        }
+
+        angles_dict = {
+            angle: tuple(
+                sites_dict[angle.connection_members[i]][0] for i in range(3)
+            )
+            for angle in molecule_angles(self, label, of_group)
+        }
+
+        dihedrals_dict = {
+            dihedral: tuple(
+                sites_dict[dihedral.connection_members[i]][0] for i in range(4)
+            )
+            for dihedral in molecule_dihedrals(self, label, of_group)
+        }
+
+        impropers_dict = {
+            improper: tuple(
+                sites_dict[improper.connection_members[i]][0] for i in range(4)
+            )
+            for improper in molecule_impropers(self, label, of_group)
+        }
+
+        new_top = gmso.Topology(
+            name=label if isinstance(label, str) else label[0]
+        )
+
+        for ref_site, new_site in sites_dict.items():
+            new_top.add_site(new_site[1])
+        for ref_conn, conn_idx in bonds_dict.items():
+            bond = gmso.Bond(
+                connection_members=[
+                    new_top.sites[conn_idx[i]] for i in range(2)
+                ],
+                bond_type=None
+                if not ref_conn.connection_type
+                else ref_conn.connection_type.clone(),
+            )
+            new_top.add_connection(bond)
+        for ref_conn, conn_idx in angles_dict.items():
+            angle = gmso.Angle(
+                connection_members=[
+                    new_top.sites[conn_idx[i]] for i in range(3)
+                ],
+                angle_type=None
+                if not ref_conn.connection_type
+                else ref_conn.connection_type.clone(),
+            )
+            new_top.add_connection(angle)
+        for ref_conn, conn_idx in dihedrals_dict.items():
+            dihedral = gmso.Dihedral(
+                connection_members=[
+                    new_top.sites[conn_idx[i]] for i in range(4)
+                ],
+                dihedral_type=None
+                if not ref_conn.connection_type
+                else ref_conn.connection_type.clone(),
+            )
+            new_top.add_connection(dihedral)
+        for ref_conn, conn_idx in impropers_dict.items():
+            improper = gmso.Improper(
+                connection_members=[
+                    new_top.sites[conn_idx[i]] for i in range(4)
+                ],
+                improper_type=None
+                if not ref_conn.connection_type
+                else ref_conn.connection_type.clone(),
+            )
+            new_top.add_connection(improper)
+
+        new_top.update_topology()
+        return new_top
 
     def save(self, filename, overwrite=False, **kwargs):
         """Save the topology to a file.

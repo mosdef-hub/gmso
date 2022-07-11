@@ -3,6 +3,8 @@
 import warnings
 from typing import Dict, Union
 
+import networkx as nx
+from boltons.setutils import IndexedSet
 from pydantic import Field
 
 from gmso.abc.gmso_base import GMSOBase
@@ -12,16 +14,18 @@ from gmso.exceptions import GMSOError
 from gmso.parameterization.foyer_utils import (
     get_atomtyping_rules_provider,
     get_topology_graph,
-    get_topology_graph_from_subtop,
     typemap_dict,
 )
-from gmso.parameterization.isomorph import partition_isomorphic_topology_graphs
-from gmso.parameterization.subtopology_utils import (
+from gmso.parameterization.isomorph import (
+    partition_isomorphic_topology_graphs,
+    top_node_match,
+)
+from gmso.parameterization.molecule_utils import (
     assert_no_boundary_bonds,
-    subtop_angles,
-    subtop_bonds,
-    subtop_dihedrals,
-    subtop_impropers,
+    molecule_angles,
+    molecule_bonds,
+    molecule_dihedrals,
+    molecule_impropers,
 )
 from gmso.parameterization.utils import POTENTIAL_GROUPS
 
@@ -38,6 +42,11 @@ class TopologyParameterizationConfig(GMSOBase):
         description="If true, clone the topology and apply parameters to the cloned one.",
     )  # Unused
 
+    match_ff_by: str = Field(
+        default=None,
+        description="The site's' label used to matched with the provided dictionary.",
+    )
+
     identify_connections: bool = Field(
         default=False,
         description="If true, add connections identified using networkx graph matching to match"
@@ -52,9 +61,9 @@ class TopologyParameterizationConfig(GMSOBase):
         "molecules and type each molecule only once.",
     )
 
-    use_residue_info: bool = Field(
+    use_molecule_info: bool = Field(
         default=False,
-        description="A flag to determine whether or not to look at site.residue_name "
+        description="A flag to determine whether or not to look at site.molecule "
         "to look parameterize each molecule only once. Will only be used if "
         "identify_connected_components=False",
     )  # Unused
@@ -85,6 +94,18 @@ class TopologyParameterizationConfig(GMSOBase):
         "all system impropers.",
     )
 
+    remove_untyped: bool = Field(
+        default=False,
+        description="If True, after the atomtyping and parameterization step, "
+        "remove all connection that has no connection_type",
+    )
+
+    fast_copy: bool = Field(
+        default=True,
+        description="If True, don't deepcopy sympy expression and sympy independent, "
+        "variables to save time on parameterization step.",
+    )
+
 
 class TopologyParameterizer(GMSOBase):
     """Utility class to parameterize a topology with gmso Forcefield."""
@@ -94,8 +115,8 @@ class TopologyParameterizer(GMSOBase):
     forcefields: Union[ForceField, Dict[str, ForceField]] = Field(
         ...,
         description="The gmso forcefield/ a dictionary of gmso "
-        "forcefields per sub-topology, where the keys "
-        "should match the subtopology names",
+        "forcefields per molecule/group, where the keys "
+        "should match the molecule/group names",
     )
 
     config: TopologyParameterizationConfig = Field(
@@ -109,25 +130,40 @@ class TopologyParameterizer(GMSOBase):
         else:
             return self.forcefields
 
-    def _parameterize_sites(self, sites, typemap, ff):
+    def _parameterize_sites(self, sites, typemap, ff, use_molecule_info=None):
         """Parameterize sites with appropriate atom-types from the forcefield."""
         for j, site in enumerate(sites):
             site.atom_type = ff.get_potential(
                 "atom_type", typemap[j]["atomtype"]
-            ).clone()  # Always properly indexed or not?
+            ).clone(self.config.fast_copy)
+            assert site.atom_type, site
 
-    def _parameterize_connections(self, top_or_subtop, ff, is_subtop=False):
+    def _parameterize_connections(
+        self,
+        top,
+        ff,
+        label_type=None,
+        label=None,
+    ):
         """Parameterize connections with appropriate potentials from the forcefield."""
-        if is_subtop:
-            bonds = subtop_bonds(top_or_subtop)
-            angles = subtop_angles(top_or_subtop)
-            dihedrals = subtop_dihedrals(top_or_subtop)
-            impropers = subtop_impropers(top_or_subtop)
+        if label_type and label:
+            bonds = molecule_bonds(
+                top, label, True if label_type == "group" else False
+            )
+            angles = molecule_angles(
+                top, label, True if label_type == "group" else False
+            )
+            dihedrals = molecule_dihedrals(
+                top, label, True if label_type == "group" else False
+            )
+            impropers = molecule_impropers(
+                top, label, True if label_type == "group" else False
+            )
         else:
-            bonds = top_or_subtop.bonds
-            angles = top_or_subtop.angles
-            dihedrals = top_or_subtop.dihedrals
-            impropers = top_or_subtop.impropers
+            bonds = top.bonds
+            angles = top.angles
+            dihedrals = top.dihedrals
+            impropers = top.impropers
 
         self._apply_connection_parameters(
             bonds, ff, self.config.assert_bond_params
@@ -171,14 +207,27 @@ class TopologyParameterizer(GMSOBase):
                     f"identifiers: {connection_identifiers} in the Forcefield."
                 )
             elif match:
-                setattr(connection, group, match.clone())
+                setattr(connection, group, match.clone(self.config.fast_copy))
 
-    def _parameterize(self, subtop_or_top, typemap, is_subtop=False):
+    def _parameterize(
+        self, top, typemap, label_type=None, label=None, use_molecule_info=False
+    ):
         """Parameterize a topology/subtopology based on an atomtype map."""
-        forcefield = self.get_ff(subtop_or_top.name)
-        self._parameterize_sites(subtop_or_top.sites, typemap, forcefield)
+        if label and label_type:
+            forcefield = self.get_ff(label)
+            sites = top.iter_sites(label_type, label)
+        else:
+            forcefield = self.get_ff(top.name)
+            sites = top.sites
+
+        self._parameterize_sites(
+            sites, typemap, forcefield, use_molecule_info=use_molecule_info
+        )
         self._parameterize_connections(
-            subtop_or_top, forcefield, is_subtop=is_subtop
+            top,
+            forcefield,
+            label_type,
+            label,
         )
 
     def _set_combining_rule(self):
@@ -202,27 +251,45 @@ class TopologyParameterizer(GMSOBase):
         """Set either per-molecule or global scaling factors for the topology based on the forcefields provided."""
         # ToDo: Set other scaling factors by extending the forcefield schema
         # ToDo: What to do when all the scaling factors matchup? Should we promote them to be global?
+        # ToDo: Do we want to also parse other interaction if provided?
+        lj_scales = {
+            f"nonBonded{interaction}Scale": interaction
+            for interaction in ["12", "13", "14"]
+        }
+        electrostatics_scales = {
+            f"electrostatics{interaction}Scale": interaction
+            for interaction in ["12", "13", "14"]
+        }
+
         if isinstance(self.forcefields, Dict):
-            for subtop_id, ff in self.forcefields.items():
-                self.topology.set_lj_scale(
-                    ff.scaling_factors["nonBonded14Scale"],
-                    interaction="14",
-                    molecule_id=subtop_id,
-                )
-                self.topology.set_electrostatics_scale(
-                    ff.scaling_factors["electrostatics14Scale"],
-                    interaction="14",
-                    molecule_id=subtop_id,
-                )
+            for group_or_molecule, ff in self.forcefields.items():
+                for name, interaction in lj_scales.items():
+                    if ff.scaling_factors.get(name) is not None:
+                        self.topology.set_lj_scale(
+                            ff.scaling_factors[name],
+                            interaction=interaction,
+                            molecule_id=group_or_molecule,
+                        )
+                for name, interaction in electrostatics_scales.items():
+                    if ff.scaling_factors.get(name) is not None:
+                        self.topology.set_electrostatics_scale(
+                            ff.scaling_factors[name],
+                            interaction=interaction,
+                            molecule_id=group_or_molecule,
+                        )
         else:
-            self.topology.set_lj_scale(
-                self.forcefields.scaling_factors["nonBonded14Scale"],
-                interaction="14",
-            )
-            self.topology.set_electrostatics_scale(
-                self.forcefields.scaling_factors["electrostatics14Scale"],
-                interaction="14",
-            )
+            for name, interaction in lj_scales.items():
+                if self.forcefields.scaling_factors.get(name) is not None:
+                    self.topology.set_lj_scale(
+                        self.forcefields.scaling_factors[name],
+                        interaction=interaction,
+                    )
+            for name, interaction in electrostatics_scales.items():
+                if self.forcefields.scaling_factors.get(name) is not None:
+                    self.topology.set_electrostatics_scale(
+                        self.forcefields.scaling_factors[name],
+                        interaction=interaction,
+                    )
 
     def run_parameterization(self):
         """Run parameterization of the topology with give forcefield(s) and configuration."""
@@ -239,48 +306,72 @@ class TopologyParameterizer(GMSOBase):
             self.topology.identify_connections()
 
         if isinstance(self.forcefields, Dict):
-            if self.topology.n_subtops == 0:
-                raise ParameterizationError(
-                    f"The provided gmso topology doesn't have any subtopologies."
+            labels = self.topology.unique_site_labels(
+                self.config.match_ff_by, name_only=True
+            )
+            if not labels or labels == IndexedSet([None]):
+                # raise ParameterizationError(
+                warnings.warn(
+                    f"The provided gmso topology doesn't have any group/molecule."
                     f"Either use a single forcefield to apply to to whole topology "
-                    f"or provide an appropriate topology whose sub-topology names are "
+                    f"or provide an appropriate topology whose molecule names are "
                     f"the keys of the `forcefields` dictionary. Provided Forcefields: "
                     f"{self.forcefields}, Topology: {self.topology}"
                 )
-            for subtop in self.topology.subtops:
-                if subtop.name not in self.forcefields:
+
+            assert_no_boundary_bonds(self.topology)
+            for label in labels:
+                if label not in self.forcefields:
                     warnings.warn(
-                        f"Subtopology {subtop.name} will not be parameterized, as the forcefield to parameterize it "
+                        f"Group/molecule {label} will not be parameterized, as the forcefield to parameterize it "
                         f"is missing."
                     )  # FixMe: Will warning be enough?
                 else:
-                    assert_no_boundary_bonds(subtop)
                     typemap = self._get_atomtypes(
-                        self.get_ff(subtop.name),
-                        subtop,
+                        self.get_ff(label),
+                        self.topology,
+                        self.config.match_ff_by,
+                        label,
+                        self.config.use_molecule_info,
                         self.config.identify_connected_components,
-                        is_subtop=True,
                     )
                     self._parameterize(
-                        subtop,
+                        self.topology,
                         typemap,
-                        is_subtop=True,  # This will be removed from the future iterations
+                        label_type=self.config.match_ff_by,
+                        label=label,
+                        use_molecule_info=self.config.use_molecule_info,  # This will be removed from the future iterations
                     )
         else:
             typemap = self._get_atomtypes(
                 self.get_ff(),
                 self.topology,
-                self.config.identify_connected_components,
-                is_subtop=False,
+                use_molecule_info=self.config.use_molecule_info,
+                use_isomorphic_checks=self.config.identify_connected_components,
             )
             self._parameterize(
                 self.topology,
                 typemap,
-                is_subtop=False,  # This will be removed from the future iterations
+                use_molecule_info=self.config.use_molecule_info,
             )
 
         self._set_scaling_factors()  # Set global or per molecule scaling factors
         self.topology.update_topology()
+
+        if self.config.remove_untyped:
+            # TEMP CODE: copied from foyer/general_forcefield.py, will update later
+            for i in range(self.topology.n_bonds - 1, -1, -1):
+                if not self.topology.bonds[i].bond_type:
+                    self.topology._bonds.pop(i)
+            for i in range(self.topology.n_angles - 1, -1, -1):
+                if not self.topology.angles[i].angle_type:
+                    self.topology._angles.pop(i)
+            for i in range(self.topology.n_dihedrals - 1, -1, -1):
+                if not self.topology.dihedrals[i].dihedral_type:
+                    self.topology._dihedrals.pop(i)
+            for i in range(self.topology.n_impropers - 1, -1, -1):
+                if not self.topology.impropers[i].improper_type:
+                    self.topology._impropers.pop(i)
 
     @staticmethod
     def connection_identifier(
@@ -301,17 +392,64 @@ class TopologyParameterizer(GMSOBase):
 
     @staticmethod
     def _get_atomtypes(
-        forcefield, topology, use_isomprohic_checks=False, is_subtop=False
+        forcefield,
+        topology,
+        label_type=None,
+        label=None,
+        use_molecule_info=False,
+        use_isomorphic_checks=False,
     ):
         """Run atom-typing in foyer and return the typemap."""
         atom_typing_rules_provider = get_atomtyping_rules_provider(forcefield)
+        foyer_topology_graph = get_topology_graph(
+            topology,
+            label_type,
+            label,
+        )
 
-        if is_subtop:
-            foyer_topology_graph = get_topology_graph_from_subtop(topology)
-        else:
-            foyer_topology_graph = get_topology_graph(topology)
-
-        if use_isomprohic_checks:
+        if use_molecule_info:
+            # Iterate through foyer_topology_graph, which is a subgraph of label_type
+            typemap, reference = dict(), dict()
+            for connected_component in nx.connected_components(
+                foyer_topology_graph
+            ):
+                subgraph = foyer_topology_graph.subgraph(connected_component)
+                nodes_idx = tuple(subgraph.nodes)
+                molecule = subgraph.nodes[nodes_idx[0]]["atom_data"].molecule
+                if molecule not in reference:
+                    reference[molecule] = {
+                        "typemap": typemap_dict(
+                            atomtyping_rules_provider=atom_typing_rules_provider,
+                            topology_graph=subgraph,
+                        ),
+                        "graph": subgraph,
+                    }
+                    typemap.update(reference[molecule]["typemap"])
+                else:
+                    if use_isomorphic_checks:
+                        # Check for isomorphism submatching to typemap
+                        matcher = nx.algorithms.isomorphism.GraphMatcher(
+                            subgraph,
+                            reference[molecule]["graph"],
+                            node_match=top_node_match,
+                        )
+                        assert matcher.is_isomorphic()
+                        for node in subgraph.nodes:
+                            typemap[node] = reference[molecule]["typemap"][
+                                matcher.mapping[node]
+                            ]
+                    else:
+                        # Assume nodes in repeated structures are in the same order
+                        for node, ref_node in zip(
+                            sorted(subgraph.nodes),
+                            reference[molecule]["typemap"],
+                        ):
+                            typemap[node] = reference[molecule]["typemap"][
+                                ref_node
+                            ]
+            return typemap
+        elif use_isomorphic_checks:
+            # Iterate through each isomorphic connected component
             isomorphic_substructures = partition_isomorphic_topology_graphs(
                 foyer_topology_graph
             )

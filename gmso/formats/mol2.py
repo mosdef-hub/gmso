@@ -103,8 +103,7 @@ def _parse_lj(top, section):
                 name=content[1],
                 position=position.to("nm"),
                 charge=charge,
-                residue_name=content[7],
-                residue_number=int(content[6]),
+                residue=(content[7], int(content[6])),
             )
             top.add_site(atom)
 
@@ -146,8 +145,7 @@ def _parse_atom(top, section):
                 position=position.to("nm"),
                 element=element,
                 charge=charge,
-                residue_name=content[7],
-                residue_number=int(content[6]),
+                residue=(content[7], int(content[6])),
             )
             top.add_site(atom)
 

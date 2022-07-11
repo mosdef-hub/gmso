@@ -16,7 +16,6 @@ from gmso.core.dihedral import Dihedral
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
-from gmso.core.subtopology import SubTopology
 from gmso.core.topology import Topology
 from gmso.exceptions import GMSOError
 from gmso.external.convert_parmed import from_parmed
@@ -411,14 +410,6 @@ class TestTopology(BaseTest):
         pairpotentialtype_top.remove_pairpotentialtype(["a1", "a2"])
         assert len(pairpotentialtype_top.pairpotential_types) == 0
 
-    def test_add_subtopology(self):
-        top = Topology()
-        subtop = SubTopology()
-
-        assert top.n_subtops == 0
-        top.add_subtopology(subtop)
-        assert top.n_subtops == 1
-
     def test_parametrization(self):
         top = Topology()
 
@@ -704,8 +695,9 @@ class TestTopology(BaseTest):
             top.get_lj_scale(molecule_id="RESA"), [1.2, 1.3, 1.4]
         )
 
-        with pytest.raises(GMSOError):
-            top.get_electrostatics_scale(molecule_id="MissingMolecule")
+        assert (
+            top.get_electrostatics_scale(molecule_id="MissingMolecule") == None
+        )
 
     def test_topology_set_scaling_factors(self):
         top = Topology()
@@ -769,32 +761,45 @@ class TestTopology(BaseTest):
         with pytest.raises(ValueError):
             clone.get_untyped(group="foo")
 
-    def test_iter_sites(self, residue_top):
-        for site in residue_top.iter_sites("residue_name", "MY_RES_EVEN"):
-            assert site.residue_name == "MY_RES_EVEN"
+    @pytest.mark.parametrize("key", ["group", "residue", "molecule"])
+    def test_iter_sites(self, labeled_top, key):
+        unique_labels = labeled_top.unique_site_labels(key)
+        for label in unique_labels:
+            for site in labeled_top.iter_sites(key, label):
+                assert getattr(site, key) == label
 
-        for site in residue_top.iter_sites("residue_name", "MY_RES_ODD"):
-            assert site.residue_name == "MY_RES_ODD"
-
-        sites = list(residue_top.iter_sites("residue_number", 4))
-        assert len(sites) == 5
-
-    def test_iter_sites_non_iterable_attribute(self, residue_top):
+    def test_iter_sites_non_iterable_attribute(self, labeled_top):
         with pytest.raises(ValueError):
-            for site in residue_top.iter_sites("atom_type", "abc"):
+            for site in labeled_top.iter_sites("atom_type", "abc"):
                 pass
 
-    def test_iter_sites_none(self, residue_top):
+    def test_iter_sites_none(self, labeled_top):
         with pytest.raises(ValueError):
-            for site in residue_top.iter_sites("residue_name", None):
+            for site in labeled_top.iter_sites("residue", None):
                 pass
 
-    def test_iter_sites_by_residue_name(self, pairpotentialtype_top):
-        assert (
-            len(list(pairpotentialtype_top.iter_sites_by_residue_name("AAA")))
-            == 0
+    def test_iter_sites_by_residue(self, labeled_top):
+        residues = labeled_top.unique_site_labels("residue", name_only=False)
+        for residue in residues:
+            for site in labeled_top.iter_sites_by_residue(residue):
+                assert site.residue == residue
+
+        residue_names = labeled_top.unique_site_labels(
+            "residue", name_only=True
         )
+        for residue_name in residue_names:
+            for site in labeled_top.iter_sites_by_residue(residue_name):
+                assert site.residue.name == residue_name
 
-    def test_iter_sites_by_residue_number(self, residue_top):
-        sites = list(residue_top.iter_sites_by_residue_number(4))
-        assert len(sites) == 5
+    def test_iter_sites_by_molecule(self, labeled_top):
+        molecules = labeled_top.unique_site_labels("molecule", name_only=False)
+        for molecule in molecules:
+            for site in labeled_top.iter_sites_by_molecule(molecule):
+                assert site.residue == molecule
+
+        molecule_names = labeled_top.unique_site_labels(
+            "molecule", name_only=True
+        )
+        for molecule_name in molecule_names:
+            for site in labeled_top.iter_sites_by_molecule(molecule_name):
+                assert site.molecule.name == molecule_name

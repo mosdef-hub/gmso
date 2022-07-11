@@ -1,17 +1,21 @@
 import random
+from copy import deepcopy
 
 import forcefield_utilities as ffutils
+import mbuild as mb
 import pytest
 from foyer.exceptions import FoyerError
 
+import gmso
 from gmso.core.forcefield import ForceField
-from gmso.core.subtopology import SubTopology
 from gmso.core.topology import Topology
+from gmso.external.convert_mbuild import from_mbuild
 from gmso.parameterization.parameterize import apply
 from gmso.parameterization.topology_parameterizer import ParameterizationError
 from gmso.tests.parameterization.parameterization_base_test import (
     ParameterizationBaseTest,
 )
+from gmso.tests.utils import get_path
 
 
 class TestParameterizationOptions(ParameterizationBaseTest):
@@ -45,7 +49,12 @@ class TestParameterizationOptions(ParameterizationBaseTest):
             "electrostatics14Scale": 1.5,
         }
         ethane_methane_top.identify_connections()
-        apply(ethane_methane_top, {"Ethane": opls, "Methane": opls_copy})
+        apply(
+            ethane_methane_top,
+            {"Ethane": opls, "Methane": opls_copy},
+            "molecule",
+        )
+
         assert ethane_methane_top.combining_rule == "geometric"
         assert (
             ethane_methane_top.get_lj_scale(
@@ -77,25 +86,28 @@ class TestParameterizationOptions(ParameterizationBaseTest):
             == 1.5
         )
 
-    def test_no_subtops_dict_ff(self, oplsaa_gmso):
-        top = Topology(name="topWithNoSubTops")
-        with pytest.raises(ParameterizationError):
-            apply(top, {"subtopA": oplsaa_gmso})
+    """ Change to molecule"""
 
-    def test_missing_subtop_name_ff(self, oplsaa_gmso):
+    def test_no_molecule_dict_ff(self, oplsaa_gmso):
+        top = Topology(name="topWithNoMolecule")
+        with pytest.warns(UserWarning):
+            apply(top, {"moleculeA": oplsaa_gmso})
+        assert not top.is_typed()
+
+    def test_missing_group_name_ff(self, oplsaa_gmso):
         top = Topology(name="top1")
         for j in range(0, 10, 2):
-            top.add_subtopology(SubTopology(name=f"subtop{j+1}"))
+            top.add_site(gmso.Atom(name=f"Atom_{j+1}", group="groupB"))
         with pytest.warns(
             UserWarning,
-            match=r"Subtopology subtop\d will not be parameterized,"
-            r" as the forcefield to parameterize it is missing.",
+            match=r"Group/molecule groupB will not be parameterized, as the forcefield "
+            r"to parameterize it is missing.",
         ):
-            apply(top, {"subtopA": oplsaa_gmso})
+            apply(top, {"groupA": oplsaa_gmso}, match_ff_by="group")
 
     def test_diff_combining_rules_error(self, ethane_methane_top):
         ff1 = ForceField()
-        ff1.combining_rule = "lorrentz"
+        ff1.combining_rule = "lorentz"
         ff2 = ForceField()
         ff2.combining_rule = "geometric"
         with pytest.raises(ParameterizationError, match=""):
@@ -109,35 +121,142 @@ class TestParameterizationOptions(ParameterizationBaseTest):
         with pytest.raises(FoyerError):
             apply(top=Topology(), forcefields=oplsaa_gmso)
 
-    def test_isomporhic_speedups(self, ethane_box_with_methane, oplsaa_gmso):
+    @pytest.mark.parametrize(
+        "identify_connected_components, use_molecule_info",
+        [(False, False), (True, False), (False, True), (True, True)],
+    )
+    def test_speedup_options(
+        self,
+        ethane_box_with_methane,
+        oplsaa_gmso,
+        identify_connected_components,
+        use_molecule_info,
+    ):
         ethane_box_with_methane.identify_connections()
         apply(
             ethane_box_with_methane,
             oplsaa_gmso,
             identify_connections=False,
+            identify_connected_components=identify_connected_components,
+            use_molecule_info=use_molecule_info,
+        )
+
+        molecule_labels = ethane_box_with_methane.unique_site_labels("molecule")
+        ethane_molecules = [
+            label for label in molecule_labels if label.name == "Ethane"
+        ]
+        methane_molecules = [
+            label for label in molecule_labels if label.name == "Methane"
+        ]
+
+        ethane_a = tuple(
+            ethane_box_with_methane.iter_sites(
+                "molecule", random.choice(ethane_molecules)
+            )
+        )
+        ethane_b = tuple(
+            ethane_box_with_methane.iter_sites(
+                "molecule", random.choice(ethane_molecules)
+            )
+        )
+        for atom_a, atom_b in zip(ethane_a, ethane_b):
+            assert atom_a.atom_type == atom_b.atom_type
+            assert atom_a.atom_type is not None
+
+        methane_a = tuple(
+            ethane_box_with_methane.iter_sites(
+                "molecule", random.choice(methane_molecules)
+            )
+        )
+        methane_b = tuple(
+            ethane_box_with_methane.iter_sites(
+                "molecule", random.choice(methane_molecules)
+            )
+        )
+        for atom_a, atom_b in zip(methane_a, methane_b):
+            assert atom_a.atom_type == atom_b.atom_type
+            assert atom_a.atom_type is not None
+
+    def test_remove_untyped(self, oplsaa_gmso):
+        isopropane = mb.load("C(C)C", smiles=True)
+        top1 = gmso.external.from_mbuild(isopropane)
+        top1.identify_connections()
+        assert top1.n_impropers != 0
+        apply(top1, oplsaa_gmso, remove_untyped=False)
+        assert top1.n_impropers != 0
+
+        top2 = gmso.external.from_mbuild(isopropane)
+        top2.identify_connections()
+        assert top2.n_impropers != 0
+        apply(top2, oplsaa_gmso, remove_untyped=True)
+        assert top2.n_impropers == 0
+
+    def test_match_ff_by_molecule(self, ethane_box_with_methane, oplsaa_gmso):
+        ethane_box_with_methane.identify_connections()
+        ff_dict = {"Ethane": oplsaa_gmso, "Methane": oplsaa_gmso}
+        apply(
+            ethane_box_with_methane,
+            ff_dict,
+            match_ff_by="molecule",
+            identify_connections=False,
             identify_connected_components=True,
+            use_molecule_info=True,
         )
+        assert ethane_box_with_methane.atom_types is not None
 
-        ethane_subtops = list(
-            filter(
-                lambda subtop: subtop.name == "Ethane",
-                ethane_box_with_methane.subtops,
-            )
+    def test_match_ff_by_group(self, ethane_box_with_methane, oplsaa_gmso):
+        ethane_box_with_methane.identify_connections()
+        for site in ethane_box_with_methane.sites:
+            site.group = "Alkane"
+        ff_dict = {
+            "Alkane": oplsaa_gmso,
+        }
+        apply(
+            ethane_box_with_methane,
+            ff_dict,
+            match_ff_by="group",
+            identify_connections=False,
+            identify_connected_components=True,
+            use_molecule_info=True,
         )
-        methane_subtops = list(
-            filter(
-                lambda subtop: subtop.name == "Methane",
-                ethane_box_with_methane.subtops,
-            )
-        )
-        ethane_a = random.choice(ethane_subtops)
-        ethane_b = random.choice(ethane_subtops)
-        for atom_a, atom_b in zip(ethane_a.sites, ethane_b.sites):
-            assert atom_a.atom_type == atom_b.atom_type
-            assert atom_a.atom_type is not None
+        assert ethane_box_with_methane.atom_types is not None
 
-        methane_a = random.choice(methane_subtops)
-        methane_b = random.choice(methane_subtops)
-        for atom_a, atom_b in zip(methane_a.sites, methane_b.sites):
-            assert atom_a.atom_type == atom_b.atom_type
-            assert atom_a.atom_type is not None
+    @pytest.mark.parametrize(
+        "identify_connected_components, use_molecule_info, match_ff_by",
+        [
+            (False, False, "group"),
+            (True, False, "group"),
+            (False, True, "group"),
+            (True, True, "group"),
+            (False, False, "molecule"),
+            (True, False, "molecule"),
+            (False, True, "molecule"),
+            (True, True, "molecule"),
+        ],
+    )
+    def test_hierarchical_mol_structure(
+        self,
+        oplsaa_gmso,
+        hierarchical_top,
+        identify_connected_components,
+        use_molecule_info,
+        match_ff_by,
+    ):
+        top = deepcopy(hierarchical_top)
+        # Load forcefield dicts
+        tip3p = ForceField(get_path("tip3p.xml"))
+        if match_ff_by == "molecule":
+            ff_dict = {
+                "polymer": oplsaa_gmso,
+                "cyclopentane": oplsaa_gmso,
+                "water": tip3p,
+            }
+        elif match_ff_by == "group":
+            ff_dict = {"sol1": oplsaa_gmso, "sol2": tip3p}
+        apply(
+            top,
+            ff_dict,
+            identify_connected_components=identify_connected_components,
+            use_molecule_info=use_molecule_info,
+            match_ff_by=match_ff_by,
+        )
