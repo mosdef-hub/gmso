@@ -106,6 +106,7 @@ class TopologyParameterizationConfig(GMSOBase):
         "variables to save time on parameterization step.",
     )
 
+
 class TopologyParameterizer(GMSOBase):
     """Utility class to parameterize a topology with gmso Forcefield."""
 
