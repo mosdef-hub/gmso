@@ -10,7 +10,7 @@ __all__ = ["apply"]
 def apply(
     top,
     forcefields,
-    match_ff_by=None,
+    match_ff_by="molecule",
     identify_connections=False,
     identify_connected_components=True,
     use_molecule_info=False,
@@ -19,6 +19,7 @@ def apply(
     assert_dihedral_params=True,
     assert_improper_params=False,
     remove_untyped=False,
+    fast_copy=True,
 ):
     """Set Topology parameter types from GMSO ForceFields.
 
@@ -35,7 +36,7 @@ def apply(
         a ForceField object. If a dictionary of ForceFields is provided, this method will
         fail.
 
-    match_ff_by: str, optional, default=None
+    match_ff_by: str, optional, default="molecule"
         They site's tag used to match the forcefields provided above to the Topology.
         Options include "molecule" and "group". This option is only valid if forcefields are provided
         as a dict.
@@ -72,6 +73,15 @@ def apply(
     remove_untyped : bool, optional, default=False
         If True, after the atomtyping and parameterization step, remove all connection
         that has no connection_type.
+
+    fast_copy : bool, optional, default=True
+        If True, sympy expressions and parameters will not be deep copied during replicated
+        parameterization. This can lead to the potentials for multiple sites/connections
+        to be changed if a single parameter_type independent variable or expression is
+        modified after the topology is parameterized. However, this leads to much faster
+        application of forcefield parameters, and so is defaulted to True. Note that
+        this should be changed to False if further modification of expressions are
+        necessary post parameterization.
     """
     config = TopologyParameterizationConfig.parse_obj(
         dict(
@@ -84,6 +94,7 @@ def apply(
             assert_dihedral_params=assert_dihedral_params,
             assert_improper_params=assert_improper_params,
             remove_untyped=remove_untyped,
+            fast_copy=True,
         )
     )
     parameterizer = TopologyParameterizer(

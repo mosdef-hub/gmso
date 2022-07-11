@@ -1,4 +1,5 @@
 import random
+from copy import deepcopy
 
 import forcefield_utilities as ffutils
 import mbuild as mb
@@ -8,11 +9,13 @@ from foyer.exceptions import FoyerError
 import gmso
 from gmso.core.forcefield import ForceField
 from gmso.core.topology import Topology
+from gmso.external.convert_mbuild import from_mbuild
 from gmso.parameterization.parameterize import apply
 from gmso.parameterization.topology_parameterizer import ParameterizationError
 from gmso.tests.parameterization.parameterization_base_test import (
     ParameterizationBaseTest,
 )
+from gmso.tests.utils import get_path
 
 
 class TestParameterizationOptions(ParameterizationBaseTest):
@@ -87,8 +90,9 @@ class TestParameterizationOptions(ParameterizationBaseTest):
 
     def test_no_molecule_dict_ff(self, oplsaa_gmso):
         top = Topology(name="topWithNoMolecule")
-        with pytest.raises(ParameterizationError):
+        with pytest.warns(UserWarning):
             apply(top, {"moleculeA": oplsaa_gmso})
+        assert not top.is_typed()
 
     def test_missing_group_name_ff(self, oplsaa_gmso):
         top = Topology(name="top1")
@@ -96,7 +100,7 @@ class TestParameterizationOptions(ParameterizationBaseTest):
             top.add_site(gmso.Atom(name=f"Atom_{j+1}", group="groupB"))
         with pytest.warns(
             UserWarning,
-            match=r"Group groupB will not be parameterized, as the forcefield "
+            match=r"Group/molecule groupB will not be parameterized, as the forcefield "
             r"to parameterize it is missing.",
         ):
             apply(top, {"groupA": oplsaa_gmso}, match_ff_by="group")
@@ -216,3 +220,43 @@ class TestParameterizationOptions(ParameterizationBaseTest):
             use_molecule_info=True,
         )
         assert ethane_box_with_methane.atom_types is not None
+
+    @pytest.mark.parametrize(
+        "identify_connected_components, use_molecule_info, match_ff_by",
+        [
+            (False, False, "group"),
+            (True, False, "group"),
+            (False, True, "group"),
+            (True, True, "group"),
+            (False, False, "molecule"),
+            (True, False, "molecule"),
+            (False, True, "molecule"),
+            (True, True, "molecule"),
+        ],
+    )
+    def test_hierarchical_mol_structure(
+        self,
+        oplsaa_gmso,
+        hierarchical_top,
+        identify_connected_components,
+        use_molecule_info,
+        match_ff_by,
+    ):
+        top = deepcopy(hierarchical_top)
+        # Load forcefield dicts
+        tip3p = ForceField(get_path("tip3p.xml"))
+        if match_ff_by == "molecule":
+            ff_dict = {
+                "polymer": oplsaa_gmso,
+                "cyclopentane": oplsaa_gmso,
+                "water": tip3p,
+            }
+        elif match_ff_by == "group":
+            ff_dict = {"sol1": oplsaa_gmso, "sol2": tip3p}
+        apply(
+            top,
+            ff_dict,
+            identify_connected_components=identify_connected_components,
+            use_molecule_info=use_molecule_info,
+            match_ff_by=match_ff_by,
+        )
