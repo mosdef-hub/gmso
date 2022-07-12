@@ -467,7 +467,6 @@ class TopologyParameterizer(GMSOBase):
             return typemap
 
         else:
-            foyer_topology_graph = get_topology_graph(topology, of_group)
             return typemap_dict(
                 topology_graph=foyer_topology_graph,
                 atomtyping_rules_provider=atom_typing_rules_provider,
