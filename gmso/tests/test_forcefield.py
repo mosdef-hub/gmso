@@ -6,6 +6,7 @@ from sympy import sympify
 
 from gmso.core.forcefield import ForceField
 from gmso.exceptions import (
+    ForceFieldError,
     ForceFieldParseError,
     MissingAtomTypesError,
     MissingPotentialError,
@@ -560,3 +561,23 @@ class TestForceField(BaseTest):
             opls_ethane_foyer._get_improper_type(
                 ["opls_359", "opls_600", "opls_700", "opls_800"], warn=True
             )
+
+    def test_write_xml(self, opls_ethane_foyer):
+        opls_ethane_foyer.xml("test_xml_writer.xml")
+        reloaded_xml = ForceField("test_xml_writer.xml")
+        get_names = lambda ff, param: [
+            typed for typed in getattr(ff, param).keys()
+        ]
+        for param in [
+            "atom_types",
+            "bond_types",
+            "angle_types",
+            "dihedral_types",
+        ]:
+            assert get_names(opls_ethane_foyer, param) == get_names(
+                reloaded_xml, param
+            )
+
+    def test_write_not_xml(self, opls_ethane_foyer):
+        with pytest.raises(ForceFieldError):
+            opls_ethane_foyer.xml("bad_path")

@@ -1,6 +1,7 @@
 """Module for working with GMSO forcefields."""
 import warnings
 from collections import ChainMap
+from pathlib import Path
 from typing import Iterable
 
 from lxml import etree
@@ -454,6 +455,125 @@ class ForceField(object):
     def __str__(self):
         """Return a string representation of the ForceField."""
         return f"<ForceField {self.name}, id: {id(self)}>"
+
+    def xml(self, filename, overwrite=False):
+        """Get an lxml ElementTree representation of this ForceField
+
+        Parameters
+        ----------
+        filename: Union[str, pathlib.Path], default=None
+            The filename to write the XML file to
+
+        overwrite: bool, default=False
+            If True, overwrite an existing file if it exists
+        """
+        ff_el = etree.Element(
+            "ForceField", attrib={"name": self.name, "version": self.version}
+        )
+
+        metadata = etree.SubElement(ff_el, "FFMetaData")
+        if self.scaling_factors.get("electrostatics14Scale"):
+            metadata.attrib["electrostatics14Scale"] = str(
+                self.scaling_factors.get("electrostatics14Scale")
+            )
+        if self.scaling_factors.get("nonBonded14Scale"):
+            metadata.attrib["nonBonded14Scale"] = str(
+                self.scaling_factors.get("nonBonded14Scale")
+            )
+
+        # ToDo: ParameterUnitsDefintions and DefaultUnits
+
+        etree.SubElement(
+            metadata,
+            "Units",
+            attrib={
+                "energy": "K*kb",
+                "distance": "nm",
+                "mass": "amu",
+                "charge": "coulomb",
+            },
+        )
+
+        at_groups = self.group_atom_types_by_expression()
+        for expr, atom_types in at_groups.items():
+            atypes = etree.SubElement(
+                ff_el, "AtomTypes", attrib={"expression": expr}
+            )
+            params_units_def = None
+            for atom_type in atom_types:
+                if params_units_def is None:
+                    params_units_def = {}
+                    for param, value in atom_type.parameters.items():
+                        params_units_def[param] = value.units
+                        etree.SubElement(
+                            atypes,
+                            "ParametersUnitDef",
+                            attrib={
+                                "parameter": param,
+                                "unit": str(value.units),
+                            },
+                        )
+
+                atypes.append(atom_type.etree(units=params_units_def))
+
+        bond_types_groups = self.group_bond_types_by_expression()
+        angle_types_groups = self.group_angle_types_by_expression()
+        dihedral_types_groups = self.group_dihedral_types_by_expression()
+        improper_types_groups = self.group_improper_types_by_expression()
+
+        for tag, potential_group in [
+            ("BondTypes", bond_types_groups),
+            ("AngleTypes", angle_types_groups),
+            ("DihedralTypes", dihedral_types_groups),
+            ("ImproperTypes", improper_types_groups),
+        ]:
+            for expr, potentials in potential_group.items():
+                potential_group = etree.SubElement(
+                    ff_el, tag, attrib={"expression": expr}
+                )
+                params_units_def = None
+                for potential in potentials:
+                    if params_units_def is None:
+                        params_units_def = {}
+                        for param, value in potential.parameters.items():
+                            params_units_def[param] = value.units
+                            etree.SubElement(
+                                potential_group,
+                                "ParametersUnitDef",
+                                attrib={
+                                    "parameter": param,
+                                    "unit": str(value.units),
+                                },
+                            )
+
+                    potential_group.append(potential.etree(params_units_def))
+
+        ff_etree = etree.ElementTree(element=ff_el)
+
+        if not isinstance(filename, Path):
+            filename = Path(filename)
+
+        if filename.suffix != ".xml":
+            from gmso.exceptions import ForceFieldError
+
+            raise ForceFieldError(
+                f"The filename {str(filename)} is not an XML file. "
+                f"Please provide filename with .xml extension"
+            )
+
+        if not overwrite and filename.exists():
+            raise FileExistsError(
+                f"File {filename} already exists. Consider "
+                f"using overwrite=True if you want to overwrite "
+                f"the existing file."
+            )
+
+        ff_etree.write(
+            str(filename),
+            pretty_print=True,
+            xml_declaration=True,
+            encoding="utf-8",
+        )
 
     @classmethod
     def from_xml(cls, xmls_or_etrees, strict=True, greedy=True):
