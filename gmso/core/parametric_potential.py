@@ -8,6 +8,7 @@ from gmso.abc.abstract_potential import AbstractPotential
 from gmso.exceptions import GMSOError
 from gmso.utils.decorators import confirm_dict_existence
 from gmso.utils.expression import PotentialExpression
+from gmso.utils.misc import get_xml_representation
 
 
 class ParametricPotential(AbstractPotential):
