@@ -797,5 +797,3 @@ class TestTopology(BaseTest):
         top = Topology()
         with pytest.raises(GMSOError):
             top.get_forcefield()
-
-
