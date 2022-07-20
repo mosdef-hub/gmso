@@ -3,7 +3,6 @@ from typing import Any, Union
 
 import unyt as u
 from lxml import etree
-from pydantic import Field, validator
 
 from gmso.abc.abstract_potential import AbstractPotential
 from gmso.utils.expression import PotentialExpression
