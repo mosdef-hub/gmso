@@ -114,3 +114,13 @@ def mask_with(iterable, window_size=1, mask="*"):
 
         idx += 1
         yield to_yield
+
+
+def get_xml_representation(value):
+    """Given a value, get its XML representation."""
+    if isinstance(value, u.unyt_quantity):
+        return str(value.value)
+    elif isinstance(value, set):
+        return ",".join(value)
+    else:
+        return str(value)

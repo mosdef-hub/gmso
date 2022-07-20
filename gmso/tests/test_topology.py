@@ -803,3 +803,11 @@ class TestTopology(BaseTest):
         for molecule_name in molecule_names:
             for site in labeled_top.iter_sites_by_molecule(molecule_name):
                 assert site.molecule.name == molecule_name
+
+    def test_write_forcefield(self, typed_water_system):
+        forcefield = typed_water_system.get_forcefield()
+        assert "opls_111" in forcefield.atom_types
+        assert "opls_112" in forcefield.atom_types
+        top = Topology()
+        with pytest.raises(GMSOError):
+            top.get_forcefield()

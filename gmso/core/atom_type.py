@@ -162,6 +162,12 @@ class AtomType(ParametricPotential):
             and self.description == other.description
         )
 
+    def _etree_attrib(self):
+        attrib = super()._etree_attrib()
+        if self.overrides == set():
+            attrib.pop("overrides")
+        return attrib
+
     def __repr__(self):
         """Return a formatted representation of the atom type."""
         desc = (
