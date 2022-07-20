@@ -789,3 +789,11 @@ class TestTopology(BaseTest):
     def test_iter_sites_by_residue_number(self, residue_top):
         sites = list(residue_top.iter_sites_by_residue_number(4))
         assert len(sites) == 5
+
+    def test_write_forcefield(self, typed_water_system):
+        forcefield = typed_water_system.get_forcefield()
+        assert "opls_111" in forcefield.atom_types
+        assert "opls_112" in forcefield.atom_types
+        top = Topology()
+        with pytest.raises(GMSOError):
+            top.get_forcefield()

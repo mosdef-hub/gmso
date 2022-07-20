@@ -979,6 +979,51 @@ class Topology(object):
         for i, ref_member in enumerate(self._set_refs[ref].keys()):
             self._index_refs[ref][ref_member] = i
 
+    def get_forcefield(self):
+        """Get an instance of gmso.ForceField out of this topology
+
+        Raises
+        ------
+        GMSOError
+            If the topology is untyped
+        """
+        if not self.is_typed():
+            raise GMSOError(
+                "Cannot create a ForceField from an untyped topology."
+            )
+        else:
+            from gmso import ForceField
+            from gmso.utils._constants import FF_TOKENS_SEPARATOR
+
+            ff = ForceField()
+            ff.name = self.name + "_ForceField"
+            ff.scaling_factors = {
+                "electrostatics14Scale": self.scaling_factors.get(
+                    "coul_14", 0.5
+                ),
+                "nonBonded14Scale": self.scaling_factors.get("vdw_14", 0.5),
+            }
+            for atom_type in self.atom_types:
+                ff.atom_types[atom_type.name] = atom_type.copy(
+                    deep=True, exclude={"topology_", "set_ref_"}
+                )
+
+            ff_conn_types = {
+                BondType: ff.bond_types,
+                AngleType: ff.angle_types,
+                DihedralType: ff.dihedral_types,
+                ImproperType: ff.improper_types,
+            }
+
+            for connection_type in self._connection_types:
+                ff_conn_types[type(connection_type)][
+                    FF_TOKENS_SEPARATOR.join(connection_type.member_types)
+                ] = connection_type.copy(
+                    deep=True, exclude={"topology_", "set_ref_"}
+                )
+
+        return ff
+
     def iter_sites(self, key, value):
         """Iterate through this topology's sites based on certain attribute and their values.
 

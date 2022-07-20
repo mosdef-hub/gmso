@@ -1,12 +1,14 @@
 from typing import Any, Optional, Union
 
 import unyt as u
+from lxml import etree
 from pydantic import Field, validator
 
 from gmso.abc.abstract_potential import AbstractPotential
 from gmso.exceptions import GMSOError
 from gmso.utils.decorators import confirm_dict_existence
 from gmso.utils.expression import PotentialExpression
+from gmso.utils.misc import get_xml_representation
 
 
 class ParametricPotential(AbstractPotential):
@@ -205,6 +207,67 @@ class ParametricPotential(AbstractPotential):
             params = self.parameters
 
         return params
+
+    def _etree_attrib(self):
+        """Return the XML equivalent representation of this ParametricPotential"""
+        attrib = {
+            key: get_xml_representation(value)
+            for key, value in self.dict(
+                by_alias=True,
+                exclude_none=True,
+                exclude={
+                    "topology_",
+                    "set_ref_",
+                    "member_types_",
+                    "potential_expression_",
+                    "tags_",
+                },
+            ).items()
+            if value != ""
+        }
+
+        return attrib
+
+    def etree(self, units=None):
+        """Return an lxml.ElementTree for the parametric potential adhering to gmso XML schema"""
+
+        attrib = self._etree_attrib()
+
+        if hasattr(self, "member_types") and hasattr(self, "member_classes"):
+            if self.member_types:
+                iterating_attribute = self.member_types
+                prefix = "type"
+            elif self.member_classes:
+                iterating_attribute = self.member_classes
+                prefix = "class"
+            else:
+                raise GMSOError(
+                    f"Cannot convert {self.__class__.__name__} into an XML."
+                    f"Please specify member_classes or member_types attribute."
+                )
+            for idx, value in enumerate(iterating_attribute):
+                attrib[f"{prefix}{idx+1}"] = str(value)
+
+        xml_element = etree.Element(self.__class__.__name__, attrib=attrib)
+        params = etree.SubElement(xml_element, "Parameters")
+
+        for key, value in self.parameters.items():
+            value_unit = None
+            if units is not None:
+                value_unit = units[key]
+
+            etree.SubElement(
+                params,
+                "Parameter",
+                attrib={
+                    "name": key,
+                    "value": get_xml_representation(
+                        value.in_units(value_unit) if value_unit else value
+                    ),
+                },
+            )
+
+        return xml_element
 
     @classmethod
     def from_template(cls, potential_template, parameters, topology=None):

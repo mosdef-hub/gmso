@@ -127,6 +127,12 @@ class AtomType(ParametricPotential):
         """Return the SMARTS string of the atom_type."""
         return self.__dict__.get("definition_")
 
+    def _etree_attrib(self):
+        attrib = super()._etree_attrib()
+        if self.overrides == set():
+            attrib.pop("overrides")
+        return attrib
+
     def __hash__(self):
         """Return the hash of the atom_type."""
         return hash(
