@@ -4,7 +4,7 @@ channels:
 dependencies:
   - numpy
   - sympy
-  - unyt >= 2.4
+  - unyt <= 2.8
   - boltons
   - lxml
   - pydantic < 1.9.0
