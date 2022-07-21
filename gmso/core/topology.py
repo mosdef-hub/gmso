@@ -1189,8 +1189,8 @@ class Topology(object):
             ff = ForceField()
             ff.name = self.name + "_ForceField"
             ff.scaling_factors = {
-                "electrostatics14Scale": self.scaling_factors[1,2],
-                "nonBonded14Scale": self.scaling_factors[0,2],
+                "electrostatics14Scale": self.scaling_factors[1, 2],
+                "nonBonded14Scale": self.scaling_factors[0, 2],
             }
             for atom_type in self.atom_types:
                 ff.atom_types[atom_type.name] = atom_type.copy(
