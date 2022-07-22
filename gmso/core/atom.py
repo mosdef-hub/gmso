@@ -44,7 +44,7 @@ class Atom(Site):
     )
 
     mass_: Optional[Union[u.unyt_quantity, float]] = Field(
-        0.0, description="Mass of the atom. Defaults to 1.0 if not set."
+        0.0, description="Mass of the atom. Defaults to 0.0 if not set."
     )
 
     element_: Optional[Element] = Field(
