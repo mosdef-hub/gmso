@@ -39,12 +39,12 @@ class Atom(Site):
         the gmso.abc.abstract site class
     """
     charge_: Optional[Union[u.unyt_quantity, float]] = Field(
-        None,
-        description="Charge of the atom",
+        0.0,
+        description="Charge of the atom. Defaults to 0.0 if not set.",
     )
 
     mass_: Optional[Union[u.unyt_quantity, float]] = Field(
-        None, description="Mass of the atom"
+        0.0, description="Mass of the atom. Defaults to 1.0 if not set."
     )
 
     element_: Optional[Element] = Field(
