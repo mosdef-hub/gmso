@@ -1,8 +1,8 @@
 import pytest
 import unyt as u
 
-from gmso.external.convert_parmed import from_parmed
 from gmso.external.convert_mbuild import from_mbuild
+from gmso.external.convert_parmed import from_parmed
 from gmso.tests.base_test import BaseTest
 from gmso.utils.io import get_fn, has_gsd, has_parmed, import_
 
