@@ -17,7 +17,6 @@ from gmso.utils.io import has_gsd
 __all__ = ["write_gsd"]
 
 if has_gsd:
-    import gsd
     import gsd.hoomd
 
 
@@ -32,7 +31,7 @@ def write_gsd(
     shift_coords=True,
     write_special_pairs=True,
 ):
-    """Output a GSD file (HOOMD v2 default data format).
+    """Output a GSD file (HOOMD v3 default data format).
 
     The `GSD` binary file format is the native format of HOOMD-Blue. This file
     can be used as a starting point for a HOOMD-Blue simulation, for analysis,
