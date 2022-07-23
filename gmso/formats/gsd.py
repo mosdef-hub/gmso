@@ -210,8 +210,11 @@ def _write_bond_information(gsd_snapshot, top):
                     bond.connection_members[0].name,
                     bond.connection_members[1].name,
                 )
-            t1, t2 = sorted([t1, t2], key=lambda x: x)
-            bond_type = "-".join((t1, t2))
+                t1, t2 = sorted([t1, t2], key=lambda x: x)
+                bond_type = "-".join((t1, t2))
+            else:
+                t1, t2 = sorted([t1, t2], key=lambda x: x.name)
+                bond_type = "-".join((t1.name, t2.name))
 
             unique_bond_types.add(bond_type)
     unique_bond_types = sorted(list(unique_bond_types))
@@ -233,9 +236,16 @@ def _write_bond_information(gsd_snapshot, top):
                     bond.connection_members[0].name,
                     bond.connection_members[1].name,
                 )
-            t1, t2 = sorted([t1, t2], key=lambda x: x)
+                t1, t2 = sorted([t1, t2], key=lambda x: x)
+                bond_type = "-".join((t1, t2))
+            else:
+                t1, t2 = (
+                    bond.connection_members[0].name,
+                    bond.connection_members[1].name,
+                )
+                t1, t2 = sorted([t1, t2], key=lambda x: x)
 
-            bond_type = "-".join((t1, t2))
+                bond_type = "-".join((t1, t2))
             bond_typeids.append(unique_bond_types.index(bond_type))
             bond_groups.append(
                 (
