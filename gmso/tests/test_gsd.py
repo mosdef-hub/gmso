@@ -13,7 +13,6 @@ if has_parmed:
 @pytest.mark.skipif(not has_gsd, reason="gsd is not installed")
 @pytest.mark.skipif(not has_parmed, reason="ParmEd is not installed")
 class TestGsd(BaseTest):
-    # TODO: Have these tests not depend on parmed
     def test_write_gsd(self, hierarchical_compound):
         top = from_mbuild(hierarchical_compound)
         top.save("out.gsd")
@@ -29,5 +28,4 @@ class TestGsd(BaseTest):
             pmd.load_file(get_fn("ethane.top"), xyz=get_fn("ethane.gro"))
         )
         top.box.angles = u.degree * [90, 90, 120]
-
         top.save("out.gsd")
