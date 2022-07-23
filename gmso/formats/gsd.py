@@ -98,8 +98,8 @@ def write_gsd(
         _write_bond_information(gsd_snapshot, top)
     if top.n_angles > 0:
         _write_angle_information(gsd_snapshot, top)
-    # if structure.rb_torsions:
-    #    _write_dihedral_information(gsd_snapshot, top)
+    if top.n_dihedrals > 0:
+        _write_dihedral_information(gsd_snapshot, top)
 
     with gsd.hoomd.open(filename, mode="wb") as gsd_file:
         gsd_file.append(gsd_snapshot)
@@ -234,7 +234,7 @@ def _write_angle_information(gsd_snapshot, top):
         Topology object holding system information
 
     """
-    gsd_snapshot.angles.N = len(top.angles)
+    gsd_snapshot.angles.N = top.n_angles
     unique_angle_types = set()
     angle_typeids = []
     angle_groups = []
@@ -265,23 +265,61 @@ def _write_angle_information(gsd_snapshot, top):
     warnings.warn(f"{len(unique_angle_types)} unique angle types detected")
 
 
-def _write_dihedral_information(gsd_snapshot, structure):
+def _write_dihedral_information(gsd_snapshot, top):
     """Write the dihedrals in the system.
 
     Parameters
     ----------
     gsd_snapshot :
         The file object of the GSD file being written
-    structure : parmed.Structure
-        Parmed structure object holding system information
 
     Warnings
     --------
     Not yet implemented for gmso.core.topology objects
 
     """
-    # gsd_snapshot.dihedrals.N = len(structure.rb_torsions)
+    gsd_snapshot.dihedrals.N = top.n_dihedrals
+    unique_dihedral_types = set()
+    dihedral_typeids = []
+    dihedral_groups = []
 
+    for dihedral in top.dihedrals:
+        t1, t2, t3, t4 = list(dihedral.connection_members) 
+        if all([t.atom_type for t in [t1, t2, t3, t4]]):
+            _t1, _t4 = sorted(
+                    [t1.atom_type.name, t4.atom_type.name], key=natural_sort
+            )
+            _t3 = t3.atom_type.name
+            _t2 = t2.atom_type.name
+        else:
+            _t1, _t4 = sorted([t1.name, t4.name], key=natural_sort)
+            _t2 = t2.name
+            _t3 = t3.name
+
+        dihedral_type = ('-'.join((_t1, _t2, _t3, _t4)))
+        unique_dihedral_types.add(dihedral_type)
+        dihedral_typeids.append(
+                list(unique_dihedral_types).index(dihedral_type)
+        )
+        dihedral_groups.append(
+            (
+                top.sites.index(t1),
+                top.sites.index(t2),
+                top.sites.index(t3),
+                top.sites.index(t4)
+            )
+        )
+
+    gsd_snapshot.dihedrals.types = list(unique_dihedral_types)
+    gsd_snapshot.dihedrals.typeid = dihedral_typeids
+    gsd_snapshot.dihedrals.group = dihedral_groups
+
+    warnings.warn(f"{top.n_dihedrals} dihedrals detected")
+    warnings.warn(
+            f"{len(unique_dihedral_types)} unique dihedral types detected"
+    )
+    
+    # gsd_snapshot.dihedrals.N = len(structure.rb_torsions)
     # unique_dihedral_types = set()
     # for dihedral in structure.rb_torsions:
     #    t1, t2 = dihedral.atom1.type, dihedral.atom2.type
