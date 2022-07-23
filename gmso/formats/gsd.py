@@ -11,8 +11,8 @@ from gmso.core.bond import Bond
 from gmso.exceptions import NotYetImplementedWarning
 from gmso.formats.formats_registry import saves_as
 from gmso.utils.geometry import coord_shift
-from gmso.utils.sorting import natural_sort
 from gmso.utils.io import has_gsd
+from gmso.utils.sorting import natural_sort
 
 __all__ = ["write_gsd"]
 
@@ -203,9 +203,9 @@ def _write_bond_information(gsd_snapshot, top):
     bond_typeids = []
 
     for bond in top.bonds:
-        t1, t2 = list(bond.connection_members) 
+        t1, t2 = list(bond.connection_members)
         if all([t1.atom_type, t2.atom_type]):
-            _t1 = t1.atom_type.name 
+            _t1 = t1.atom_type.name
             _t2 = t2.atom_type.name
         else:
             _t1 = t1.name
@@ -240,17 +240,17 @@ def _write_angle_information(gsd_snapshot, top):
     angle_groups = []
 
     for angle in top.angles:
-        t1, t2, t3 = list(angle.connection_members) 
+        t1, t2, t3 = list(angle.connection_members)
         if all([t1.atom_type, t2.atom_type, t3.atom_type]):
             _t1, _t3 = sorted(
-                    [t1.atom_type.name, t3.atom_type.name], key=natural_sort
+                [t1.atom_type.name, t3.atom_type.name], key=natural_sort
             )
             _t2 = t2.atom_type.name
         else:
             _t1, _t3 = sorted([t1.name, t3.name], key=natural_sort)
             _t2 = t2.name
 
-        angle_type = ('-'.join((_t1, _t2, _t3)))
+        angle_type = "-".join((_t1, _t2, _t3))
         unique_angle_types.add(angle_type)
         angle_typeids.append(list(unique_angle_types).index(angle_type))
         angle_groups.append(
@@ -282,10 +282,10 @@ def _write_dihedral_information(gsd_snapshot, top):
     dihedral_groups = []
 
     for dihedral in top.dihedrals:
-        t1, t2, t3, t4 = list(dihedral.connection_members) 
+        t1, t2, t3, t4 = list(dihedral.connection_members)
         if all([t.atom_type for t in [t1, t2, t3, t4]]):
             _t1, _t4 = sorted(
-                    [t1.atom_type.name, t4.atom_type.name], key=natural_sort
+                [t1.atom_type.name, t4.atom_type.name], key=natural_sort
             )
             _t3 = t3.atom_type.name
             _t2 = t2.atom_type.name
@@ -295,20 +295,20 @@ def _write_dihedral_information(gsd_snapshot, top):
             _t3 = t3.name
 
         if [_t2, _t3] == sorted([_t2, _t3], key=natural_sort):
-            dihedral_type = ('-'.join((_t1, _t2, _t3, _t4)))
+            dihedral_type = "-".join((_t1, _t2, _t3, _t4))
         else:
-            dihedral_type = ('-'.join((_t4, _t3, _t2, _t1)))
+            dihedral_type = "-".join((_t4, _t3, _t2, _t1))
 
         unique_dihedral_types.add(dihedral_type)
         dihedral_typeids.append(
-                list(unique_dihedral_types).index(dihedral_type)
+            list(unique_dihedral_types).index(dihedral_type)
         )
         dihedral_groups.append(
             (
                 top.sites.index(t1),
                 top.sites.index(t2),
                 top.sites.index(t3),
-                top.sites.index(t4)
+                top.sites.index(t4),
             )
         )
 
@@ -318,9 +318,9 @@ def _write_dihedral_information(gsd_snapshot, top):
 
     warnings.warn(f"{top.n_dihedrals} dihedrals detected")
     warnings.warn(
-            f"{len(unique_dihedral_types)} unique dihedral types detected"
+        f"{len(unique_dihedral_types)} unique dihedral types detected"
     )
-    
+
 
 def _prepare_box_information(top):
     """Prepare the box information for writing to gsd."""
