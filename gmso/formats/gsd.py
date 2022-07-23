@@ -86,8 +86,8 @@ def write_gsd(
     gsd_snapshot.configuration.box = np.array([lx, ly, lz, xy, xz, yz])
 
     warnings.warn(
-        "Only writing particle and bond information."
-        " Angle and dihedral is not currently written to GSD files",
+        "Only writing particle, bond, and angle information."
+        " Dihedrals are not currently written to GSD files",
         NotYetImplementedWarning,
     )
     _write_particle_information(
@@ -111,7 +111,7 @@ def _write_particle_information(
 ):
     """Write out the particle information."""
     gsd_snapshot.particles.N = top.n_sites
-    warnings.warn("{} particles detected".format(top.n_sites))
+    warnings.warn(f"{top.n_sites} particles detected")
     gsd_snapshot.particles.position = xyz / ref_distance
 
     types = [
@@ -122,7 +122,7 @@ def _write_particle_information(
     unique_types = list(set(types))
     unique_types = sorted(unique_types)
     gsd_snapshot.particles.types = unique_types
-    warnings.warn("{} unique particle types detected".format(len(unique_types)))
+    warnings.warn("{len(unique_types)} unique particle types detected")
 
     typeids = np.array([unique_types.index(t) for t in types])
     gsd_snapshot.particles.typeid = typeids
@@ -204,28 +204,18 @@ def _write_bond_information(gsd_snapshot, top):
     bond_typeids = []
 
     for bond in top.bonds:
-        t1, t2 = (
-            bond.connection_members[0].atom_type,
-            bond.connection_members[1].atom_type,
-        )
-        if t1 is None or t2 is None:
-            t1, t2 = (
-                bond.connection_members[0].name,
-                bond.connection_members[1].name,
-            )
-            t1, t2 = sorted([t1, t2], key=lambda x: x)
-            bond_type = "-".join((t1, t2))
+        t1, t2 = list(bond.connection_members) 
+        if all([t1.atom_type, t2.atom_type]):
+            _t1 = t1.atom_type.name 
+            _t2 = t2.atom_type.name
         else:
-            t1, t2 = sorted([t1, t2], key=lambda x: x.name)
-            bond_type = "-".join((t1.name, t2.name))
+            _t1 = t1.name
+            _t2 = t2.name
+        _t1, _t2 = sorted([_t1, _t2], key=lambda x: x)
+        bond_type = "-".join((_t1, _t2))
 
         unique_bond_types.add(bond_type)
-        bond_groups.append(
-            (
-                top.sites.index(bond.connection_members[0]),
-                top.sites.index(bond.connection_members[1]),
-            )
-        )
+        bond_groups.append((top.sites.index(t1), top.sites.index(t2)))
         bond_typeids.append(list(unique_bond_types).index(bond_type))
 
     gsd_snapshot.bonds.types = list(unique_bond_types)
@@ -253,11 +243,14 @@ def _write_angle_information(gsd_snapshot, top):
     for angle in top.angles:
         t1, t2, t3 = list(angle.connection_members) 
         if all([t1.atom_type, t2.atom_type, t3.atom_type]):
-            _t1, _t3 = sorted([t1.atom_type, t3.atom_type], key=natural_sort)
-            _t2 = t2.atom_type
+            _t1, _t3 = sorted(
+                    [t1.atom_type.name, t3.atom_type.name], key=natural_sort
+            )
+            _t2 = t2.atom_type.name
         else:
             _t1, _t3 = sorted([t1.name, t3.name], key=natural_sort)
             _t2 = t2.name
+
         angle_type = ('-'.join((_t1, _t2, _t3)))
         unique_angle_types.add(angle_type)
         angle_typeids.append(list(unique_angle_types).index(angle_type))
