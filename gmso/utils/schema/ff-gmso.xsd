@@ -193,8 +193,11 @@
             <xsd:sequence>
                 <xsd:element name="Parameter" minOccurs="0" maxOccurs="unbounded">
                     <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element name="Value" minOccurs="0" maxOccurs="unbounded" type="xsd:float"/>
+                        </xsd:sequence>
                         <xsd:attribute name="name" use="required" type="xsd:string"/>
-                        <xsd:attribute name="value" use="required" type="xsd:float"/>
+                        <xsd:attribute name="value" use="optional" type="xsd:float"/>
                     </xsd:complexType>
                 </xsd:element>
             </xsd:sequence>
