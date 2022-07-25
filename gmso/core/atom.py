@@ -40,11 +40,11 @@ class Atom(Site):
     """
     charge_: Optional[Union[u.unyt_quantity, float]] = Field(
         None,
-        description="Charge of the atom.",
+        description="Charge of the atom",
     )
 
     mass_: Optional[Union[u.unyt_quantity, float]] = Field(
-        None, description="Mass of the atom."
+        None, description="Mass of the atom"
     )
 
     element_: Optional[Element] = Field(
