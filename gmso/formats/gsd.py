@@ -121,7 +121,7 @@ def _write_particle_information(
     unique_types = list(set(types))
     unique_types = sorted(unique_types)
     gsd_snapshot.particles.types = unique_types
-    warnings.warn("{len(unique_types)} unique particle types detected")
+    warnings.warn(f"{len(unique_types)} unique particle types detected")
 
     typeids = np.array([unique_types.index(t) for t in types])
     gsd_snapshot.particles.typeid = typeids
