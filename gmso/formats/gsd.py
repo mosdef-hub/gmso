@@ -128,9 +128,11 @@ def _write_particle_information(
 
     masses = np.array([site.mass for site in top.sites])
     masses[masses == 0] = 1.0
+    masses[masses == None] = 1.0
     gsd_snapshot.particles.mass = masses / ref_mass
 
     charges = np.array([site.charge for site in top.sites])
+    charges[charges == None] = 0.0
     e0 = u.physical_constants.eps_0.in_units(
         u.elementary_charge**2 / u.Unit("kcal*angstrom/mol")
     )
