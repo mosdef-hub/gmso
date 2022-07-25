@@ -6,6 +6,7 @@ from pathlib import Path
 import unyt as u
 
 from gmso import Atom, Bond, Box, Topology
+from gmso.abc.abstract_site import MoleculeType, ResidueType
 from gmso.core.element import element_by_name, element_by_symbol
 from gmso.formats.formats_registry import loads_as
 
@@ -69,6 +70,7 @@ def from_mol2(filename, site_type="atom"):
         "@<TRIPOS>BOND": _parse_bond,
         "@<TRIPOS>CRYSIN": _parse_box,
         "@<TRIPOS>FF_PBC": _parse_box,
+        "@<TRIPOS>MOLECULE": _parse_molecule,
     }
     for section in sections:
         if section not in supported_rti:
@@ -79,7 +81,6 @@ def from_mol2(filename, site_type="atom"):
         else:
             supported_rti[section](topology, sections[section])
 
-    topology.update_topology()
     # TODO: read in parameters to correct attribute as well. This can be saved in various rti sections.
     return topology
 
@@ -139,13 +140,14 @@ def _parse_atom(top, section):
                     f"No charge was detected for site {content[1]} with index {content[0]}"
                 )
                 charge = None
-
+            molecule = top.label if top.__dict__.get("label") else top.name
             atom = Atom(
                 name=content[1],
                 position=position.to("nm"),
                 element=element,
                 charge=charge,
-                residue=(content[7], int(content[6])),
+                residue=ResidueType(content[7], int(content[6])),
+                molecule=MoleculeType(molecule, 1),
             )
             top.add_site(atom)
 
@@ -178,3 +180,8 @@ def _parse_box(top, section):
                 lengths=[float(x) for x in content[0:3]] * u.Å,
                 angles=[float(x) for x in content[3:6]] * u.degree,
             )
+
+
+def _parse_molecule(top, section):
+    """Parse molecule information from the mol2 file."""
+    top.label = str(section[0].strip())
