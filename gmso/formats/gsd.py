@@ -199,10 +199,9 @@ def _write_bond_information(gsd_snapshot, top):
     """
     gsd_snapshot.bonds.N = top.n_bonds
     warnings.warn(f"{top.n_bonds} bonds detected")
-
-    unique_bond_types = set()
     bond_groups = []
     bond_typeids = []
+    bond_types = []
 
     for bond in top.bonds:
         t1, t2 = list(bond.connection_members)
@@ -214,12 +213,14 @@ def _write_bond_information(gsd_snapshot, top):
             _t2 = t2.name
         _t1, _t2 = sorted([_t1, _t2], key=lambda x: x)
         bond_type = "-".join((_t1, _t2))
+        bond_types.append(bond_type)
+        bond_groups.append(
+            sorted([top.sites.index(t1), top.sites.index(t2)])
+        )
 
-        unique_bond_types.add(bond_type)
-        bond_groups.append((top.sites.index(t1), top.sites.index(t2)))
-        bond_typeids.append(list(unique_bond_types).index(bond_type))
-
-    gsd_snapshot.bonds.types = list(unique_bond_types)
+    unique_bond_types = list(set(bond_types))
+    bond_typeids = [unique_bond_types.index(i) for i in bond_types]
+    gsd_snapshot.bonds.types = unique_bond_types
     gsd_snapshot.bonds.typeid = bond_typeids
     gsd_snapshot.bonds.group = bond_groups
     warnings.warn(f"{len(unique_bond_types)} unique bond types detected")
@@ -240,6 +241,7 @@ def _write_angle_information(gsd_snapshot, top):
     unique_angle_types = set()
     angle_typeids = []
     angle_groups = []
+    angle_types = []
 
     for angle in top.angles:
         t1, t2, t3 = list(angle.connection_members)
@@ -253,13 +255,14 @@ def _write_angle_information(gsd_snapshot, top):
             _t2 = t2.name
 
         angle_type = "-".join((_t1, _t2, _t3))
-        unique_angle_types.add(angle_type)
-        angle_typeids.append(list(unique_angle_types).index(angle_type))
+        angle_types.append(angle_type)
         angle_groups.append(
             (top.sites.index(t1), top.sites.index(t2), top.sites.index(t3))
         )
 
-    gsd_snapshot.angles.types = list(unique_angle_types)
+    unique_angle_types = list(set(angle_types))
+    angle_typeids = [unique_angle_types.index(i) for i in angle_types]
+    gsd_snapshot.angles.types = unique_angle_types
     gsd_snapshot.angles.typeid = angle_typeids
     gsd_snapshot.angles.group = angle_groups
 
@@ -279,9 +282,8 @@ def _write_dihedral_information(gsd_snapshot, top):
 
     """
     gsd_snapshot.dihedrals.N = top.n_dihedrals
-    unique_dihedral_types = set()
-    dihedral_typeids = []
     dihedral_groups = []
+    dihedral_types = []
 
     for dihedral in top.dihedrals:
         t1, t2, t3, t4 = list(dihedral.connection_members)
@@ -301,10 +303,7 @@ def _write_dihedral_information(gsd_snapshot, top):
         else:
             dihedral_type = "-".join((_t4, _t3, _t2, _t1))
 
-        unique_dihedral_types.add(dihedral_type)
-        dihedral_typeids.append(
-            list(unique_dihedral_types).index(dihedral_type)
-        )
+        dihedral_types.append(dihedral_type)
         dihedral_groups.append(
             (
                 top.sites.index(t1),
@@ -314,7 +313,9 @@ def _write_dihedral_information(gsd_snapshot, top):
             )
         )
 
-    gsd_snapshot.dihedrals.types = list(unique_dihedral_types)
+    unique_dihedral_types = list(set(dihedral_types))
+    dihedral_typeids = [unique_dihedral_types.index(i) for i in dihedral_types]
+    gsd_snapshot.dihedrals.types = unique_dihedral_types
     gsd_snapshot.dihedrals.typeid = dihedral_typeids
     gsd_snapshot.dihedrals.group = dihedral_groups
 
