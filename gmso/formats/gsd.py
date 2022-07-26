@@ -214,9 +214,7 @@ def _write_bond_information(gsd_snapshot, top):
         _t1, _t2 = sorted([_t1, _t2], key=lambda x: x)
         bond_type = "-".join((_t1, _t2))
         bond_types.append(bond_type)
-        bond_groups.append(
-            sorted([top.sites.index(t1), top.sites.index(t2)])
-        )
+        bond_groups.append(sorted([top.sites.index(t1), top.sites.index(t2)]))
 
     unique_bond_types = list(set(bond_types))
     bond_typeids = [unique_bond_types.index(i) for i in bond_types]
