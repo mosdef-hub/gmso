@@ -38,12 +38,11 @@
 	<ParametersUnitDef parameter="theta_0" unit="radian"/>
         <DihedralType name="DihedralType1" type1="" type2="C" type3="C" type4="">
             <Parameters>
-		<Parameter name='k'>
-            <Value>38</Value>
-            <Value>45</Value>
-        </Parameter>
-
-		<Parameter name='n' value="2"/>
+                <Parameter name='k'>
+                    <Value>38</Value>
+                    <Value>45</Value>
+                </Parameter>
+                <Parameter name='n' value="2"/>
                 <Parameter name='theta_0'>
                     <Value>25</Value>
                     <Value>32</Value>
