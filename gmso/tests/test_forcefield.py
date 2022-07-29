@@ -634,3 +634,11 @@ class TestForceField(BaseTest):
     def test_write_not_xml(self, opls_ethane_foyer):
         with pytest.raises(ForceFieldError):
             opls_ethane_foyer.xml("bad_path")
+
+    def test_valid_sequence(self):
+        for j in range(10):
+            ff = ForceField(get_path("sequence_of_parameters_ff.xml"), "r")
+            dih_with_list = ff.dihedral_types["*~C~C~*"]
+            params = dih_with_list.get_parameters()
+            assert u.allclose_units(params["theta_0"], [25, 32] * u.radian)
+            assert u.allclose_units(params["k"], [38, 45] * u.kJ / u.mol)
