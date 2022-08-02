@@ -195,7 +195,7 @@ class TopologyParameterizer(GMSOBase):
                     break
 
                 match = ff.get_potential(
-                    group=group, key=identifier_key, warn=True
+                    group=group, key=identifier_key, return_match_order=True, warn=True
                 )
                 if match:
                     visited[tuple(identifier_key)] = match
@@ -207,7 +207,15 @@ class TopologyParameterizer(GMSOBase):
                     f"identifiers: {connection_identifiers} in the Forcefield."
                 )
             elif match:
-                setattr(connection, group, match.clone(self.config.fast_copy))
+                setattr(connection, group, match[0].clone(self.config.fast_copy))
+                matched_order = [connection.connection_members[i] for i in match[1]]
+                connection.connection_members = matched_order
+                if not match[0].member_types:
+                    connection.connection_type.member_types = tuple(
+                        member.atom_type.name for member in connection.connection_members)
+                if not match[0].member_classes:
+                    connection.connection_type.member_classes = tuple(
+                        member.atom_type.atomclass for member in connection.connection_members)
 
     def _parameterize(
         self, top, typemap, label_type=None, label=None, use_molecule_info=False
