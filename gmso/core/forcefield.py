@@ -6,9 +6,10 @@ from pathlib import Path
 from typing import Iterable
 
 from lxml import etree
+#from forcefield_utilities import GMSOFFs
 
 from gmso.core.element import element_by_symbol
-from gmso.exceptions import MissingPotentialError
+from gmso.exceptions import MissingPotentialError, GMSOError
 from gmso.utils._constants import FF_TOKENS_SEPARATOR
 from gmso.utils.ff_utils import (
     parse_ff_atomtypes,
@@ -477,7 +478,25 @@ class ForceField(object):
         """Return a string representation of the ForceField."""
         return f"<ForceField {self.name}, id: {id(self)}>"
 
-    def xml(self, filename, overwrite=False):
+    def __eq__(self, other):
+        return all(
+            [
+                self.name == other.name,
+                self.version == other.version,
+                #self.atom_types == other.atom_types,
+                #self.bond_types == other.bond_types,
+                #self.angle_types == other.angle_types,
+                #self.dihedral_types == other.dihedral_types,
+                #self.improper_types == other.improper_types,
+                #self.pairpotential_types == other.pairpotential_types,
+                #self.potential_groups == other.potential_groups,
+                #self.scaling_factors == other.scaling_factors,
+                #self.combining_rule == other.combining_rule,
+                #self.units == other.units,
+            ]
+        )
+
+    def to_xml(self, filename, overwrite=False, backend="gmso"):
         """Get an lxml ElementTree representation of this ForceField
 
         Parameters
@@ -487,79 +506,57 @@ class ForceField(object):
 
         overwrite: bool, default=False
             If True, overwrite an existing file if it exists
+
+        backend: str, default="gmso"
+            Can be "gmso" or "forcefield-utilities". This will define the methods to
+            write the xml.
         """
-        ff_el = etree.Element(
-            "ForceField", attrib={"name": self.name, "version": self.version}
-        )
-
-        metadata = etree.SubElement(ff_el, "FFMetaData")
-        if self.scaling_factors.get("electrostatics14Scale"):
-            metadata.attrib["electrostatics14Scale"] = str(
-                self.scaling_factors.get("electrostatics14Scale")
-            )
-        if self.scaling_factors.get("nonBonded14Scale"):
-            metadata.attrib["nonBonded14Scale"] = str(
-                self.scaling_factors.get("nonBonded14Scale")
+        if not isinstance(backend, str):
+            raise(GMSOError(f"Backend provided does not exist. Please provide one of `'gmso'` or \
+            `'forcefield-utilities'`"))
+            #elif backend == "forcefield-utilities" or backend == "forcefield_utilities":
+            #    GMSOffs.write_xml(self)
+        elif backend == "gmso":
+            ff_el = etree.Element(
+                "ForceField", attrib={"name": str(self.name), "version": str(self.version)}
             )
 
-        # ToDo: ParameterUnitsDefintions and DefaultUnits
+            metadata = etree.SubElement(ff_el, "FFMetaData")
+            if self.scaling_factors.get("electrostatics14Scale"):
+                metadata.attrib["electrostatics14Scale"] = str(
+                    self.scaling_factors.get("electrostatics14Scale")
+                )
+            if self.scaling_factors.get("nonBonded14Scale"):
+                metadata.attrib["nonBonded14Scale"] = str(
+                    self.scaling_factors.get("nonBonded14Scale")
+                )
 
-        etree.SubElement(
-            metadata,
-            "Units",
-            attrib={
-                "energy": "K*kb",
-                "distance": "nm",
-                "mass": "amu",
-                "charge": "coulomb",
-            },
-        )
+            # ToDo: ParameterUnitsDefintions and DefaultUnits
 
-        at_groups = self.group_atom_types_by_expression()
-        for expr, atom_types in at_groups.items():
-            atypes = etree.SubElement(
-                ff_el, "AtomTypes", attrib={"expression": expr}
+            etree.SubElement(
+                metadata,
+                "Units",
+                attrib={
+                    "energy": "kJ",
+                    "distance": "nm",
+                    "mass": "amu",
+                    "charge": "coulomb",
+                },
             )
-            params_units_def = None
-            for atom_type in atom_types:
-                if params_units_def is None:
-                    params_units_def = {}
-                    for param, value in atom_type.parameters.items():
-                        params_units_def[param] = value.units
-                        etree.SubElement(
-                            atypes,
-                            "ParametersUnitDef",
-                            attrib={
-                                "parameter": param,
-                                "unit": str(value.units),
-                            },
-                        )
 
-                atypes.append(atom_type.etree(units=params_units_def))
-
-        bond_types_groups = self.group_bond_types_by_expression()
-        angle_types_groups = self.group_angle_types_by_expression()
-        dihedral_types_groups = self.group_dihedral_types_by_expression()
-        improper_types_groups = self.group_improper_types_by_expression()
-
-        for tag, potential_group in [
-            ("BondTypes", bond_types_groups),
-            ("AngleTypes", angle_types_groups),
-            ("DihedralTypes", dihedral_types_groups),
-            ("ImproperTypes", improper_types_groups),
-        ]:
-            for expr, potentials in potential_group.items():
-                potential_group = etree.SubElement(
-                    ff_el, tag, attrib={"expression": expr}
+            at_groups = self.group_atom_types_by_expression()
+            for expr, atom_types in at_groups.items():
+                atypes = etree.SubElement(
+                    ff_el, "AtomTypes", attrib={"expression": expr}
                 )
                 params_units_def = None
-                for potential in potentials:
+                for atom_type in atom_types:
                     if params_units_def is None:
                         params_units_def = {}
-                        for param, value in potential.parameters.items():
+                        for param, value in atom_type.parameters.items():
                             params_units_def[param] = value.units
                             etree.SubElement(
-                                potential_group,
+                                atypes,
                                 "ParametersUnitDef",
                                 attrib={
                                     "parameter": param,
@@ -567,37 +564,69 @@ class ForceField(object):
                                 },
                             )
 
-                    potential_group.append(potential.etree(params_units_def))
+                    atypes.append(atom_type.etree(units=params_units_def))
 
-        ff_etree = etree.ElementTree(element=ff_el)
+            bond_types_groups = self.group_bond_types_by_expression()
+            angle_types_groups = self.group_angle_types_by_expression()
+            dihedral_types_groups = self.group_dihedral_types_by_expression()
+            improper_types_groups = self.group_improper_types_by_expression()
 
-        if not isinstance(filename, Path):
-            filename = Path(filename)
+            for tag, potential_group in [
+                ("BondTypes", bond_types_groups),
+                ("AngleTypes", angle_types_groups),
+                ("DihedralTypes", dihedral_types_groups),
+                ("ImproperTypes", improper_types_groups),
+            ]:
+                for expr, potentials in potential_group.items():
+                    potential_group = etree.SubElement(
+                        ff_el, tag, attrib={"expression": expr}
+                    )
+                    params_units_def = None
+                    for potential in potentials:
+                        if params_units_def is None:
+                            params_units_def = {}
+                            for param, value in potential.parameters.items():
+                                params_units_def[param] = value.units
+                                etree.SubElement(
+                                    potential_group,
+                                    "ParametersUnitDef",
+                                    attrib={
+                                        "parameter": param,
+                                        "unit": str(value.units),
+                                    },
+                                )
 
-        if filename.suffix != ".xml":
-            from gmso.exceptions import ForceFieldError
+                        potential_group.append(potential.etree(params_units_def))
 
-            raise ForceFieldError(
-                f"The filename {str(filename)} is not an XML file. "
-                f"Please provide filename with .xml extension"
+            ff_etree = etree.ElementTree(element=ff_el)
+
+            if not isinstance(filename, Path):
+                filename = Path(filename)
+
+            if filename.suffix != ".xml":
+                from gmso.exceptions import ForceFieldError
+
+                raise ForceFieldError(
+                    f"The filename {str(filename)} is not an XML file. "
+                    f"Please provide filename with .xml extension"
+                )
+
+            if not overwrite and filename.exists():
+                raise FileExistsError(
+                    f"File {filename} already exists. Consider "
+                    f"using overwrite=True if you want to overwrite "
+                    f"the existing file."
+                )
+
+            ff_etree.write(
+                str(filename),
+                pretty_print=True,
+                xml_declaration=True,
+                encoding="utf-8",
             )
-
-        if not overwrite and filename.exists():
-            raise FileExistsError(
-                f"File {filename} already exists. Consider "
-                f"using overwrite=True if you want to overwrite "
-                f"the existing file."
-            )
-
-        ff_etree.write(
-            str(filename),
-            pretty_print=True,
-            xml_declaration=True,
-            encoding="utf-8",
-        )
 
     @classmethod
-    def from_xml(cls, xmls_or_etrees, strict=True, greedy=True):
+    def from_xml(cls, xmls_or_etrees, strict=True, greedy=True, backend="gmso"):
         """Create a gmso.Forcefield object from XML File(s).
 
         This class method creates a ForceField object from the reference
@@ -613,6 +642,9 @@ class ForceField(object):
             If true, perform a strict validation of the forcefield XML file
         greedy: bool, default=True
             If True, when using strict mode, fail on the first error/mismatch
+        backend: str, default="gmso"
+            Can be "gmso" or "forcefield-utilities". This will define the methods to
+            load the forcefield.
 
         Returns
         -------
@@ -620,146 +652,153 @@ class ForceField(object):
             A gmso.Forcefield object with a collection of Potential objects
             created using the information in the XML file
         """
-        if not isinstance(xmls_or_etrees, Iterable) or isinstance(
-            xmls_or_etrees, str
-        ):
-            xmls_or_etrees = [xmls_or_etrees]
 
-        should_parse_xml = False
-        if not (
-            all(map(lambda x: isinstance(x, str), xmls_or_etrees))
-            or all(
-                map(lambda x: isinstance(x, etree._ElementTree), xmls_or_etrees)
-            )
-        ):
-            raise TypeError(
-                "Please provide an iterable of strings "
-                "as locations of the XML files "
-                "or equivalent element Trees"
-            )
+        if not isinstance(backend, str):
+            raise(GMSOError(f"Backend provided does not exist. Please provide one of `'gmso'` or \
+            `'forcefield-utilities'`"))
+            #elif backend == "forcefield-utilities" or backend == "forcefield_utilities":
+            #return GMSOffs().load_xml(xml_or_etrees).to_xml
+        elif backend == "gmso":
+            if not isinstance(xmls_or_etrees, Iterable) or isinstance(
+                xmls_or_etrees, str
+            ):
+                xmls_or_etrees = [xmls_or_etrees]
 
-        if all(map(lambda x: isinstance(x, str), xmls_or_etrees)):
-            should_parse_xml = True
+            should_parse_xml = False
+            if not (
+                all(map(lambda x: isinstance(x, str), xmls_or_etrees))
+                or all(
+                    map(lambda x: isinstance(x, etree._ElementTree), xmls_or_etrees)
+                )
+            ):
+                raise TypeError(
+                    "Please provide an iterable of strings "
+                    "as locations of the XML files "
+                    "or equivalent element Trees"
+                )
 
-        versions = []
-        names = []
-        ff_atomtypes_list = []
-        ff_bondtypes_list = []
-        ff_angletypes_list = []
-        ff_dihedraltypes_list = []
-        ff_pairpotentialtypes_list = []
+            if all(map(lambda x: isinstance(x, str), xmls_or_etrees)):
+                should_parse_xml = True
 
-        atom_types_dict = ChainMap()
-        bond_types_dict = {}
-        angle_types_dict = {}
-        dihedral_types_dict = {}
-        improper_types_dict = {}
-        pairpotential_types_dict = {}
-        potential_groups = {}
+            versions = []
+            names = []
+            ff_atomtypes_list = []
+            ff_bondtypes_list = []
+            ff_angletypes_list = []
+            ff_dihedraltypes_list = []
+            ff_pairpotentialtypes_list = []
 
-        for loc_or_etree in set(xmls_or_etrees):
-            validate(loc_or_etree, strict=strict, greedy=greedy)
-            ff_tree = loc_or_etree
+            atom_types_dict = ChainMap()
+            bond_types_dict = {}
+            angle_types_dict = {}
+            dihedral_types_dict = {}
+            improper_types_dict = {}
+            pairpotential_types_dict = {}
+            potential_groups = {}
 
-            if should_parse_xml:
-                ff_tree = etree.parse(loc_or_etree)
+            for loc_or_etree in set(xmls_or_etrees):
+                validate(loc_or_etree, strict=strict, greedy=greedy)
+                ff_tree = loc_or_etree
 
-            ff_el = ff_tree.getroot()
-            versions.append(ff_el.attrib["version"])
-            names.append(ff_el.attrib["name"])
-            ff_meta_tree = ff_tree.find("FFMetaData")
+                if should_parse_xml:
+                    ff_tree = etree.parse(loc_or_etree)
 
-            if ff_meta_tree is not None:
-                ff_meta_map = parse_ff_metadata(ff_meta_tree)
+                ff_el = ff_tree.getroot()
+                versions.append(ff_el.attrib["version"])
+                names.append(ff_el.attrib["name"])
+                ff_meta_tree = ff_tree.find("FFMetaData")
 
-            ff_atomtypes_list.extend(ff_tree.findall("AtomTypes"))
-            ff_bondtypes_list.extend(ff_tree.findall("BondTypes"))
-            ff_angletypes_list.extend(ff_tree.findall("AngleTypes"))
-            ff_dihedraltypes_list.extend(ff_tree.findall("DihedralTypes"))
-            ff_pairpotentialtypes_list.extend(
-                ff_tree.findall("PairPotentialTypes")
-            )
+                if ff_meta_tree is not None:
+                    ff_meta_map = parse_ff_metadata(ff_meta_tree)
 
-        # Consolidate AtomTypes
-        for atom_types in ff_atomtypes_list:
-            this_atom_types_group = parse_ff_atomtypes(atom_types, ff_meta_map)
-            this_atom_group_name = atom_types.attrib.get("name", None)
-            if this_atom_group_name:
-                potential_groups[this_atom_group_name] = this_atom_types_group
-            atom_types_dict.update(this_atom_types_group)
+                ff_atomtypes_list.extend(ff_tree.findall("AtomTypes"))
+                ff_bondtypes_list.extend(ff_tree.findall("BondTypes"))
+                ff_angletypes_list.extend(ff_tree.findall("AngleTypes"))
+                ff_dihedraltypes_list.extend(ff_tree.findall("DihedralTypes"))
+                ff_pairpotentialtypes_list.extend(
+                    ff_tree.findall("PairPotentialTypes")
+                )
 
-        # Consolidate BondTypes
-        for bond_types in ff_bondtypes_list:
-            this_bond_types_group = parse_ff_connection_types(
-                bond_types, child_tag="BondType"
-            )
-            this_bond_types_group_name = bond_types.attrib.get("name", None)
+            # Consolidate AtomTypes
+            for atom_types in ff_atomtypes_list:
+                this_atom_types_group = parse_ff_atomtypes(atom_types, ff_meta_map)
+                this_atom_group_name = atom_types.attrib.get("name", None)
+                if this_atom_group_name:
+                    potential_groups[this_atom_group_name] = this_atom_types_group
+                atom_types_dict.update(this_atom_types_group)
 
-            if this_bond_types_group_name:
-                potential_groups[
-                    this_bond_types_group_name
-                ] = this_bond_types_group
+            # Consolidate BondTypes
+            for bond_types in ff_bondtypes_list:
+                this_bond_types_group = parse_ff_connection_types(
+                    bond_types, child_tag="BondType"
+                )
+                this_bond_types_group_name = bond_types.attrib.get("name", None)
 
-            bond_types_dict.update(this_bond_types_group)
+                if this_bond_types_group_name:
+                    potential_groups[
+                        this_bond_types_group_name
+                    ] = this_bond_types_group
 
-        # Consolidate AngleTypes
-        for angle_types in ff_angletypes_list:
-            this_angle_types_group = parse_ff_connection_types(
-                angle_types, child_tag="AngleType"
-            )
-            this_angle_types_group_name = angle_types.attrib.get("name", None)
+                bond_types_dict.update(this_bond_types_group)
 
-            if this_angle_types_group_name:
-                potential_groups[
-                    this_angle_types_group_name
-                ] = this_angle_types_group
+            # Consolidate AngleTypes
+            for angle_types in ff_angletypes_list:
+                this_angle_types_group = parse_ff_connection_types(
+                    angle_types, child_tag="AngleType"
+                )
+                this_angle_types_group_name = angle_types.attrib.get("name", None)
 
-            angle_types_dict.update(this_angle_types_group)
+                if this_angle_types_group_name:
+                    potential_groups[
+                        this_angle_types_group_name
+                    ] = this_angle_types_group
 
-        # Consolidate DihedralTypes
-        for dihedral_types in ff_dihedraltypes_list:
-            this_dihedral_types_group = parse_ff_connection_types(
-                dihedral_types, child_tag="DihedralType"
-            )
-            this_improper_types_group = parse_ff_connection_types(
-                dihedral_types, child_tag="ImproperType"
-            )
-            this_group_name = dihedral_types.attrib.get("name", None)
+                angle_types_dict.update(this_angle_types_group)
 
-            dihedral_types_dict.update(this_dihedral_types_group)
-            improper_types_dict.update(this_improper_types_group)
+            # Consolidate DihedralTypes
+            for dihedral_types in ff_dihedraltypes_list:
+                this_dihedral_types_group = parse_ff_connection_types(
+                    dihedral_types, child_tag="DihedralType"
+                )
+                this_improper_types_group = parse_ff_connection_types(
+                    dihedral_types, child_tag="ImproperType"
+                )
+                this_group_name = dihedral_types.attrib.get("name", None)
 
-            if this_group_name:
-                this_dihedral_types_group.update(this_improper_types_group)
-                potential_groups[this_group_name] = this_dihedral_types_group
+                dihedral_types_dict.update(this_dihedral_types_group)
+                improper_types_dict.update(this_improper_types_group)
 
-        # Consolidate PairPotentialType
-        for pairpotential_types in ff_pairpotentialtypes_list:
-            this_pairpotential_types_group = parse_ff_pairpotential_types(
-                pairpotential_types
-            )
-            this_pairpotential_types_group_name = (
-                pairpotential_types.attrib.get("name", None)
-            )
+                if this_group_name:
+                    this_dihedral_types_group.update(this_improper_types_group)
+                    potential_groups[this_group_name] = this_dihedral_types_group
 
-            if this_pairpotential_types_group_name:
-                potential_groups[
-                    this_pairpotential_types_group_name
-                ] = this_pairpotential_types_group
+            # Consolidate PairPotentialType
+            for pairpotential_types in ff_pairpotentialtypes_list:
+                this_pairpotential_types_group = parse_ff_pairpotential_types(
+                    pairpotential_types
+                )
+                this_pairpotential_types_group_name = (
+                    pairpotential_types.attrib.get("name", None)
+                )
 
-            pairpotential_types_dict.update(this_pairpotential_types_group)
+                if this_pairpotential_types_group_name:
+                    potential_groups[
+                        this_pairpotential_types_group_name
+                    ] = this_pairpotential_types_group
 
-        ff = cls()
-        ff.name = names[0]
-        ff.version = versions[0]
-        ff.scaling_factors = ff_meta_map["scaling_factors"]
-        ff.combining_rule = ff_meta_map["combining_rule"]
-        ff.units = ff_meta_map["Units"]
-        ff.atom_types = atom_types_dict.maps[0]
-        ff.bond_types = bond_types_dict
-        ff.angle_types = angle_types_dict
-        ff.dihedral_types = dihedral_types_dict
-        ff.improper_types = improper_types_dict
-        ff.pairpotential_types = pairpotential_types_dict
-        ff.potential_groups = potential_groups
-        return ff
+                pairpotential_types_dict.update(this_pairpotential_types_group)
+
+            ff = cls()
+            ff.name = names[0]
+            ff.version = versions[0]
+            ff.scaling_factors = ff_meta_map["scaling_factors"]
+            ff.combining_rule = ff_meta_map["combining_rule"]
+            ff.units = ff_meta_map["Units"]
+            ff.atom_types = atom_types_dict.maps[0]
+            ff.bond_types = bond_types_dict
+            ff.angle_types = angle_types_dict
+            ff.dihedral_types = dihedral_types_dict
+            ff.improper_types = improper_types_dict
+            ff.pairpotential_types = pairpotential_types_dict
+            ff.potential_groups = potential_groups
+            return ff
