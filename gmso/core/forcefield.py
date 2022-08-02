@@ -271,7 +271,9 @@ class ForceField(object):
             str,
         )
 
-        return potential_extractors[group](key, return_match_order=return_match_order, warn=warn)
+        return potential_extractors[group](
+            key, return_match_order=return_match_order, warn=warn
+        )
 
     def get_parameters(self, group, key, warn=False, copy=False):
         """Return parameters for a specific potential by key in this ForceField.
@@ -362,7 +364,9 @@ class ForceField(object):
         else:
             raise MissingPotentialError(msg)
 
-    def _get_dihedral_type(self, atom_types, return_match_order=False, warn=False):
+    def _get_dihedral_type(
+        self, atom_types, return_match_order=False, warn=False
+    ):
         """Get a particular dihedral_type between `atom_types` from this ForceField."""
         if len(atom_types) != 4:
             raise ValueError(
@@ -421,7 +425,9 @@ class ForceField(object):
         else:
             raise MissingPotentialError(msg)
 
-    def _get_improper_type(self, atom_types, return_match_order=False, warn=False):
+    def _get_improper_type(
+        self, atom_types, return_match_order=False, warn=False
+    ):
         """Get a particular improper_type between `atom_types` from this ForceField."""
         if len(atom_types) != 4:
             raise ValueError(
@@ -430,7 +436,9 @@ class ForceField(object):
             )
 
         forward = FF_TOKENS_SEPARATOR.join(atom_types)
-        equiv_idx = [(0, i, j, k) for (i, j, k) in itertools.permutations((1, 2, 3), 3)]
+        equiv_idx = [
+            (0, i, j, k) for (i, j, k) in itertools.permutations((1, 2, 3), 3)
+        ]
         equivalent = [
             FF_TOKENS_SEPARATOR.join(
                 [atom_types[m], atom_types[n], atom_types[o], atom_types[p]]
@@ -446,7 +454,7 @@ class ForceField(object):
         for eq, order in zip(equivalent, equiv_idx):
             if eq in self.improper_types:
                 if return_match_order:
-                   return self.improper_types[eq], order
+                    return self.improper_types[eq], order
                 else:
                     return self.improper_types[eq]
 
@@ -468,7 +476,9 @@ class ForceField(object):
                 for eq, order in zip(equivalent, equiv_idx):
                     equiv_patterns = mask_with(eq, i)
                     for equiv_pattern in equiv_patterns:
-                        equiv_match_key = FF_TOKENS_SEPARATOR.join(equiv_pattern)
+                        equiv_match_key = FF_TOKENS_SEPARATOR.join(
+                            equiv_pattern
+                        )
                         if equiv_match_key in self.improper_types:
                             match = self.improper_types[equiv_match_key], order
                             break
