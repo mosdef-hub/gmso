@@ -174,3 +174,12 @@ class TestConvertMBuild(BaseTest):
             assert label in hierarchical_top.unique_site_labels(
                 "group", name_only=True
             )
+
+    @pytest.mark.skipif(not has_mbuild, reason="mBuild is not installed")
+    def test_group_2_level_compound(self):
+        mb_cpd = mb.Compound(name="_CH4", mass=12)
+        filled_box = mb.fill_box(mb_cpd, n_compounds=2, density=0.01)
+        filled_box.name = "group1"
+        top = from_mbuild(filled_box)
+        for site in top.sites:
+            assert site.group == filled_box.name
