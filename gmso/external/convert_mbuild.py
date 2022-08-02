@@ -60,7 +60,7 @@ def from_mbuild(
         Valid functions are element_by_symbol, element_by_name,
         element_by_atomic_number, and element_by_mass, which can be imported
         from `gmso.core.element'
-    parse_label : bool, optional, default=False
+    parse_label : bool, optional, default=True
         Option to parse hierarchy info of the compound into system of top label,
         including, group, molecule and residue labels.
 
@@ -85,6 +85,7 @@ def from_mbuild(
         for child in compound.children:
             if not child.children:
                 site = _parse_site(site_map, child, search_method)
+                site.group = compound.name
                 top.add_site(site)
             else:
                 for particle in child.particles():
@@ -93,6 +94,7 @@ def from_mbuild(
                     top.add_site(site)
     else:
         site = _parse_site(site_map, compound, search_method)
+        site.group = compound.name
         top.add_site(site)
 
     for b1, b2 in compound.bonds():
