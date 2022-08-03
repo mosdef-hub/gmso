@@ -41,6 +41,21 @@ class TestParameterizationOptions(ParameterizationBaseTest):
         with pytest.raises(ParameterizationError):
             apply(ethane_methane_top, {"Ethane": ff1, "Methane": ff2})
 
+    def test_populating_member_types(self, ethane):
+        ethane.identify_connections()
+        opls = ffutils.FoyerFFs().load(ffname="oplsaa").to_gmso_ff()
+        apply(top=ethane, forcefields=opls, remove_untyped=True)
+        for connection in ethane.connections:
+            connection_type = connection.connection_type
+            assert (
+                connection_type.member_types and connection_type.member_classes
+            )
+            for i in range(len(connection_type.member_classes)):
+                assert (
+                    opls.atom_types[connection_type.member_types[i]].atomclass
+                    == connection_type.member_classes[i]
+                )
+
     def test_different_ffs_apply(self, ethane_methane_top):
         opls = ffutils.FoyerFFs().load(ffname="oplsaa").to_gmso_ff()
         opls_copy = ffutils.FoyerFFs().load(ffname="oplsaa").to_gmso_ff()
