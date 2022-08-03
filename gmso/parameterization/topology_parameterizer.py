@@ -216,16 +216,14 @@ class TopologyParameterizer(GMSOBase):
                 matched_order = [
                     connection.connection_members[i] for i in match[1]
                 ]
-                connection.connection_members = matched_order
+                # connection.connection_members = matched_order
                 if not match[0].member_types:
                     connection.connection_type.member_types = tuple(
-                        member.atom_type.name
-                        for member in connection.connection_members
+                        member.atom_type.name for member in matched_order
                     )
                 if not match[0].member_classes:
                     connection.connection_type.member_classes = tuple(
-                        member.atom_type.atomclass
-                        for member in connection.connection_members
+                        member.atom_type.atomclass for member in matched_order
                     )
 
     def _parameterize(
