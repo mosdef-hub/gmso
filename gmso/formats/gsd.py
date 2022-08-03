@@ -86,7 +86,7 @@ def write_gsd(
 
     warnings.warn(
         "Only writing particle, bond, angle, and dihedral information."
-        " Special pairs are not currently written to GSD files",
+        "Impropers and special pairs are not currently written to GSD files",
         NotYetImplementedWarning,
     )
     _write_particle_information(
