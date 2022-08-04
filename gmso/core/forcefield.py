@@ -436,51 +436,52 @@ class ForceField(object):
             )
 
         forward = FF_TOKENS_SEPARATOR.join(atom_types)
-        equiv_idx = [
-            (0, i, j, k) for (i, j, k) in itertools.permutations((1, 2, 3), 3)
-        ]
-        equivalent = [
-            FF_TOKENS_SEPARATOR.join(
-                [atom_types[m], atom_types[n], atom_types[o], atom_types[p]]
-            )
-            for (m, n, o, p) in equiv_idx
-        ]
 
         if forward in self.improper_types:
             if return_match_order:
                 return self.improper_types[forward], (0, 1, 2, 3)
             else:
                 return self.improper_types[forward]
+
+        equiv_idx = [
+            (0, i, j, k) for (i, j, k) in itertools.permutations((1, 2, 3), 3)
+        ]
+        equivalent = [
+            [atom_types[m], atom_types[n], atom_types[o], atom_types[p]]
+            for (m, n, o, p) in equiv_idx
+        ]
         for eq, order in zip(equivalent, equiv_idx):
-            if eq in self.improper_types:
+            eq_key = FF_TOKENS_SEPARATOR.join(eq)
+            if eq_key in self.improper_types:
                 if return_match_order:
-                    return self.improper_types[eq], order
+                    return self.improper_types[eq_key], order
                 else:
-                    return self.improper_types[eq]
+                    return self.improper_types[eq_key]
 
         match = None
         for i in range(1, 5):
             forward_patterns = mask_with(atom_types, i)
             for forward_pattern in forward_patterns:
                 forward_match_key = FF_TOKENS_SEPARATOR.join(forward_pattern)
-
                 if forward_match_key in self.improper_types:
                     match = self.improper_types[forward_match_key], (0, 1, 2, 3)
                     break
-
             if match:
                 break
-
         if not match:
             for i in range(1, 5):
                 for eq, order in zip(equivalent, equiv_idx):
                     equiv_patterns = mask_with(eq, i)
                     for equiv_pattern in equiv_patterns:
-                        equiv_match_key = FF_TOKENS_SEPARATOR.join(
+
+                        equiv_pattern_key = FF_TOKENS_SEPARATOR.join(
                             equiv_pattern
                         )
-                        if equiv_match_key in self.improper_types:
-                            match = self.improper_types[equiv_match_key], order
+                        if equiv_pattern_key in self.improper_types:
+                            match = (
+                                self.improper_types[equiv_pattern_key],
+                                order,
+                            )
                             break
                     if match:
                         break
