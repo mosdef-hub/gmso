@@ -31,6 +31,10 @@ class Angle(Connection):
         default=None, description="AngleType of this angle."
     )
 
+    restraint_: Optional[dict] = Field(
+        default=None, description="Restraint for this angle."
+    )
+
     @property
     def angle_type(self):
         """Return the angle type if the angle is parametrized."""
@@ -40,6 +44,11 @@ class Angle(Connection):
     def connection_type(self):
         """Return the angle type if the angle is parametrized."""
         return self.__dict__.get("angle_type_")
+
+    @property
+    def restraint(self):
+        """Return the restraint of this angle."""
+        return self.__dict__.get("restraint_")
 
     def equivalent_members(self):
         """Return a set of the equivalent connection member tuples.
@@ -74,8 +83,10 @@ class Angle(Connection):
         fields = {
             "connection_members_": "connection_members",
             "angle_type_": "angle_type",
+            "restraint_": "restraint",
         }
         alias_to_fields = {
             "connection_members": "connection_members_",
             "angle_type": "angle_type_",
+            "restraint": "restraint_",
         }

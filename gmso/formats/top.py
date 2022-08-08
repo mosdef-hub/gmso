@@ -136,9 +136,18 @@ def write_top(top, filename, top_vars=None):
                 _write_connection(top, angle, pot_types[angle.connection_type])
             )
 
+        angle_restraints = [angle for angle in top.angles if angle.restraint]
+        if angle_restraints:
+            out_file.write(
+                "\n[ angle_restraints ]\n"
+                ";\tai \taj \tai \tak \tfunct \ttheta_eq \tk \tmultiplicity \n"
+            )
+            for angle in angle_restraints:
+                out_file.write(_write_restraint(top, angle, "angle"))
+
         out_file.write(
             "\n[ dihedrals ]\n"
-            ";   ai     aj      ak      al  funct   c0      c1      c2\n"
+            ";\tai \taj \tai \tak \tfunct \tc0 \tc1 \tc2 \tc3 \tc4 \n"
         )
         for dihedral in top.dihedrals:
             out_file.write(
@@ -146,6 +155,17 @@ def write_top(top, filename, top_vars=None):
                     top, dihedral, pot_types[dihedral.connection_type]
                 )
             )
+
+        dihedral_restraints = [
+            dihedral for dihedral in top.dihedrals if dihedral.restraint
+        ]
+        if dihedral_restraints:
+            out_file.write(
+                "\n[ dihedral_restraints ]\n"
+                ";\tai \taj \tak \tal \tfunct \ttheta_eq \tdelta_theta \tkd\n"
+            )
+            for dihedral in dihedral_restraints:
+                out_file.write(_write_restraint(top, dihedral, "dihedral"))
 
         out_file.write("\n[ system ]\n" "; name\n" "{0}\n\n".format(top.name))
 
@@ -311,5 +331,45 @@ def _periodic_torsion_writer(top, dihedral):
         .in_units(u.Unit("kJ/(mol)"))
         .value,
         dihedral.connection_type.parameters["n"].value,
+    )
+    return line
+
+
+def _write_restraint(top, connection, type):
+    """Worker function to write various connection restraint information."""
+    worker_functions = {
+        "angle": _angle_restraint_writer,
+        "dihedral": _dihedral_restraint_writer,
+    }
+
+    return worker_functions[type](top, connection)
+
+
+def _angle_restraint_writer(top, angle):
+    """Write angle restraint information."""
+    line = "\t{0}\t{1}\t{2}\t{3}\t{4}\t{5:.5f}\t{6:.5f}\t{6}\n".format(
+        top.get_index(angle.connection_members[1]) + 1,
+        top.get_index(angle.connection_members[0]) + 1,
+        top.get_index(angle.connection_members[1]) + 1,
+        top.get_index(angle.connection_members[2]) + 1,
+        "1",
+        angle.restraint["theta_eq"].in_units(u.degree).value,
+        angle.restraint["k"].in_units(u.Unit("kJ/(mol)")).value,
+        angle.restraint["n"],
+    )
+    return line
+
+
+def _dihedral_restraint_writer(top, dihedral):
+    """Write dihedral restraint information."""
+    line = "\t{0}\t{1}\t{2}\t{3}\t{4}\t{5:.5f}\t{6:.5f}\t{7}\n".format(
+        top.get_index(dihedral.connection_members[0]) + 1,
+        top.get_index(dihedral.connection_members[1]) + 1,
+        top.get_index(dihedral.connection_members[2]) + 1,
+        top.get_index(dihedral.connection_members[3]) + 1,
+        "1",
+        dihedral.restraint["phi_eq"].in_units(u.degree).value,
+        dihedral.restraint["delta_phi"].in_units(u.degree).value,
+        dihedral.restraint["k"].in_units(u.Unit("kJ/(mol * rad**2)")).value,
     )
     return line

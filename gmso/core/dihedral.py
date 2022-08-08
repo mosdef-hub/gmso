@@ -35,6 +35,10 @@ class Dihedral(Connection):
         default=None, description="DihedralType of this dihedral."
     )
 
+    restraint_: Optional[dict] = Field(
+        default=None, description="Restraint for this dihedral."
+    )
+
     @property
     def dihedral_type(self):
         return self.__dict__.get("dihedral_type_")
@@ -43,6 +47,11 @@ class Dihedral(Connection):
     def connection_type(self):
         # ToDo: Deprecate this?
         return self.__dict__.get("dihedral_type_")
+
+    @property
+    def restraint(self):
+        """Return the restraint of this dihedral."""
+        return self.__dict__.get("restraint_")
 
     def equivalent_members(self):
         """Get a set of the equivalent connection member tuples
@@ -74,8 +83,10 @@ class Dihedral(Connection):
         fields = {
             "dihedral_type_": "dihedral_type",
             "connection_members_": "connection_members",
+            "restraint_": "restraint",
         }
         alias_to_fields = {
             "dihedral_type": "dihedral_type_",
             "connection_members": "connection_members_",
+            "restraint": "restraint_",
         }
