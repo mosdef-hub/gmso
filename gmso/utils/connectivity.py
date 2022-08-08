@@ -1,5 +1,6 @@
 """Module supporting various connectivity methods and operations."""
 import networkx as nx
+import numpy as np
 
 from gmso.core.angle import Angle
 from gmso.core.dihedral import Dihedral
@@ -203,7 +204,10 @@ def _format_subgraph_improper(m):
     (sort_by_n_connections, _) = _get_sorted_by_n_connections(m)
     if len(sort_by_n_connections) == 4:
         central = sort_by_n_connections[3]
-        branch1, branch2, branch3 = sorted(sort_by_n_connections[:3])
+        branch1, branch2, branch3 = sorted(
+            sort_by_n_connections[:3],
+            key=lambda x: (x.name, np.linalg.norm(x.position.value)),
+        )
         return [central, branch1, branch2, branch3]
     return None
 
