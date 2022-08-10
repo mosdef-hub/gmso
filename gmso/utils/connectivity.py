@@ -1,5 +1,6 @@
 """Module supporting various connectivity methods and operations."""
 import networkx as nx
+import numpy as np
 
 from gmso.core.angle import Angle
 from gmso.core.dihedral import Dihedral
@@ -48,12 +49,12 @@ def identify_connections(top, index_only=False):
 
     compound_line_graph = nx.line_graph(compound)
 
-    angle_matches = _detect_connections(compound_line_graph, type_="angle")
+    angle_matches = _detect_connections(compound_line_graph, top, type_="angle")
     dihedral_matches = _detect_connections(
-        compound_line_graph, type_="dihedral"
+        compound_line_graph, top, type_="dihedral"
     )
     improper_matches = _detect_connections(
-        compound_line_graph, type_="improper"
+        compound_line_graph, top, type_="improper"
     )
 
     if not index_only:
@@ -89,7 +90,7 @@ def _add_connections(top, matches, conn_type):
         top.add_connection(to_add_conn, update_types=False)
 
 
-def _detect_connections(compound_line_graph, type_="angle"):
+def _detect_connections(compound_line_graph, top, type_="angle"):
     """Detect available connections in the topology based on bonds."""
     connection = nx.Graph()
     for edge in EDGES[type_]:
@@ -108,7 +109,7 @@ def _detect_connections(compound_line_graph, type_="angle"):
 
     conn_matches = []
     for m in matcher.subgraph_isomorphisms_iter():
-        new_connection = formatter_fns[type_](m)
+        new_connection = formatter_fns[type_](m, top)
         conn_matches.append(new_connection)
 
     if conn_matches:
@@ -125,7 +126,7 @@ def _get_sorted_by_n_connections(m):
     return sorted(small.adj, key=lambda x: len(small[x])), small
 
 
-def _format_subgraph_angle(m):
+def _format_subgraph_angle(m, top):
     """Format the angle subgraph.
 
     Since we are matching compound line graphs,
@@ -136,6 +137,8 @@ def _format_subgraph_angle(m):
     m : dict
         keys are the compound line graph nodes
         Values are the sub-graph matches (to the angle, dihedral, or improper)
+    top : gmso.Topology
+        The original Topology
 
     Returns
     -------
@@ -143,13 +146,15 @@ def _format_subgraph_angle(m):
         (start, middle, end)
     """
     (sort_by_n_connections, _) = _get_sorted_by_n_connections(m)
-    start = sort_by_n_connections[0]
-    end = sort_by_n_connections[1]
+    ends = sorted(
+        [sort_by_n_connections[0], sort_by_n_connections[1]],
+        key=lambda x: top.get_index(x),
+    )
     middle = sort_by_n_connections[2]
-    return [start, middle, end]
+    return [ends[0], middle, ends[1]]
 
 
-def _format_subgraph_dihedral(m):
+def _format_subgraph_dihedral(m, top):
     """Format the dihedral subgraph.
 
     Since we are matching compound line graphs,
@@ -160,6 +165,8 @@ def _format_subgraph_dihedral(m):
     m : dict
         keys are the compound line graph nodes
         Values are the sub-graph matches (to the angle, dihedral, or improper)
+    top : gmso.Topology
+        The original Topology
 
     Returns
     -------
@@ -179,7 +186,7 @@ def _format_subgraph_dihedral(m):
     return [start, mid1, mid2, end]
 
 
-def _format_subgraph_improper(m):
+def _format_subgraph_improper(m, top):
     """Format the improper dihedral subgraph.
 
     Since we are matching compound line graphs,
@@ -190,6 +197,8 @@ def _format_subgraph_improper(m):
     m : dict
         keys are the compound line graph nodes
         Values are the sub-graph matches (to the angle, dihedral, or improper)
+    top : gmso.Topology
+        The original Topology
 
     Returns
     -------
@@ -203,7 +212,10 @@ def _format_subgraph_improper(m):
     (sort_by_n_connections, _) = _get_sorted_by_n_connections(m)
     if len(sort_by_n_connections) == 4:
         central = sort_by_n_connections[3]
-        branch1, branch2, branch3 = sorted(sort_by_n_connections[:3])
+        branch1, branch2, branch3 = sorted(
+            sort_by_n_connections[:3],
+            key=lambda x: top.get_index(x),
+        )
         return [central, branch1, branch2, branch3]
     return None
 

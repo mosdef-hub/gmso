@@ -94,7 +94,7 @@ def apply(
             assert_dihedral_params=assert_dihedral_params,
             assert_improper_params=assert_improper_params,
             remove_untyped=remove_untyped,
-            fast_copy=True,
+            fast_copy=fast_copy,
         )
     )
     parameterizer = TopologyParameterizer(
