@@ -334,7 +334,7 @@ def _parse_group(site_map, compound, custom_groups):
             applied_groups = set(map(lambda x: x["group"], site_map.values()))
             assert applied_groups == set(custom_groups)
         except AssertionError:
-            raise GMSOError(
+            warn(
                 f"""Not all custom groups ({custom_groups}, is are being used when
             traversing compound hierachy. Only {applied_groups} are used.)"""
             )

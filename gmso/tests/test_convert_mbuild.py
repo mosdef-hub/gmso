@@ -253,7 +253,7 @@ class TestConvertMBuild(BaseTest):
             [mb_cpd1, mb_cpd2], n_compounds=[2, 2], box=[1, 1, 1]
         )
 
-        with pytest.raises(GMSOError):
+        with pytest.warns(Warning):
             top = from_mbuild(
                 filled_box, custom_groups=["_CH4", "_CH3", "_CH5"]
             )
