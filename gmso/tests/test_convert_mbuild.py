@@ -266,3 +266,10 @@ class TestConvertMBuild(BaseTest):
 
         with pytest.raises(TypeError):
             top = from_mbuild(filled_box, custom_groups=[mb_cpd1])
+
+    @pytest.mark.skipif(not has_mbuild, reason="mBuild is not installed")
+    def test_nontop_level_compound(self, mb_ethane):
+        cpd = mb.Compound(name="top")
+        cpd.add(mb_ethane)
+        with pytest.raises(AssertionError):
+            from_mbuild(mb_ethane)

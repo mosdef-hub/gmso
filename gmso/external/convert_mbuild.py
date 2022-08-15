@@ -82,6 +82,9 @@ def from_mbuild(
     """
     msg = "Argument compound is not an mbuild.Compound"
     assert isinstance(compound, mb.Compound), msg
+    msg = "Compound is not a top level compound. Make a copy to pass to the `compound` \
+    argument that has no parents"
+    assert not compound.parent, msg
 
     top = Topology()
     top.typed = False
