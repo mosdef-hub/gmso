@@ -1,14 +1,14 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <ForceField name="oplsaa" version="0.0.1">
   <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.5">
-    <Units energy="kJ/mol" mass="amu" charge="coulomb" distance="nm"/>
+    <Units energy="kJ" distance="nm" mass="amu" charge="coulomb"/>
   </FFMetaData>
-  <AtomTypes expression="ep * ((sigma/r)**12 - (sigma/r)**6) + q / (e0 * r)">
-    <ParametersUnitDef parameter="q" unit="coulomb"/>
-    <ParametersUnitDef parameter="e0" unit="A**2*s**4/(kg*m**3)"/>
-    <ParametersUnitDef parameter="sigma" unit="nm"/>
+  <AtomTypes expression="ep*(-sigma**6/r**6 + sigma**12/r**12) + q/(e0*r)">
     <ParametersUnitDef parameter="ep" unit="kJ/mol"/>
-    <AtomType name="opls_135" atomclass="CT" element="C" charge="0.0" mass="12.01078" definition="[C;X4](C)(H)(H)H" description="" doi="10.1021/ja9621760" overrides="">
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <ParametersUnitDef parameter="e0" unit="A**2*s**4/(kg*m**3)"/>
+    <ParametersUnitDef parameter="q" unit="C"/>
+    <AtomType name="opls_135" mass="12.01078" charge="0.0" atomclass="CT" doi="10.1021/ja9621760" definition="[C;X4](C)(H)(H)H">
       <Parameters>
         <Parameter name="ep" value="0.276144"/>
         <Parameter name="sigma" value="0.35"/>
@@ -16,7 +16,7 @@
         <Parameter name="q" value="-0.18"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_140" atomclass="HC" element="H" charge="0.0" mass="1.007947" definition="H[C;X4]" description="" doi="10.1021/ja9621760" overrides="">
+    <AtomType name="opls_140" mass="1.007947" charge="0.0" atomclass="HC" doi="10.1021/ja9621760" definition="H[C;X4]">
       <Parameters>
         <Parameter name="ep" value="0.12552"/>
         <Parameter name="sigma" value="0.25"/>
@@ -25,9 +25,9 @@
       </Parameters>
     </AtomType>
   </AtomTypes>
-  <BondTypes expression="k * (r-r_eq)**2">
-    <ParametersUnitDef parameter="r_eq" unit="nm"/>
+  <BondTypes expression="k*(r - r_eq)**2">
     <ParametersUnitDef parameter="k" unit="kJ/nm**2"/>
+    <ParametersUnitDef parameter="r_eq" unit="nm"/>
     <BondType name="BondType-Harmonic-1" type1="opls_135" type2="opls_135">
       <Parameters>
         <Parameter name="k" value="224262.4"/>
@@ -41,9 +41,9 @@
       </Parameters>
     </BondType>
   </BondTypes>
-  <AngleTypes expression="k * (theta - theta_eq)**2">
-    <ParametersUnitDef parameter="theta_eq" unit="radian"/>
-    <ParametersUnitDef parameter="k" unit="kJ/radian**2"/>
+  <AngleTypes expression="k*(theta - theta_eq)**2">
+    <ParametersUnitDef parameter="k" unit="kJ/rad**2"/>
+    <ParametersUnitDef parameter="theta_eq" unit="rad"/>
     <AngleType name="AngleType-Harmonic-1" type1="opls_135" type2="opls_135" type3="opls_140">
       <Parameters>
         <Parameter name="k" value="313.8"/>
@@ -57,13 +57,13 @@
       </Parameters>
     </AngleType>
   </AngleTypes>
-  <DihedralTypes expression="c0 * cos(phi)**0 + c1 * cos(phi)**1 + c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + c5 * cos(phi)**5">
-    <ParametersUnitDef parameter="c5" unit="kJ/mol"/>
-    <ParametersUnitDef parameter="c4" unit="kJ/mol"/>
-    <ParametersUnitDef parameter="c3" unit="kJ/mol"/>
-    <ParametersUnitDef parameter="c2" unit="kJ/mol"/>
-    <ParametersUnitDef parameter="c1" unit="kJ/mol"/>
+  <DihedralTypes expression="c0 + c1*cos(phi) + c2*cos(phi)**2 + c3*cos(phi)**3 + c4*cos(phi)**4 + c5*cos(phi)**5">
     <ParametersUnitDef parameter="c0" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c1" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c2" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c3" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c4" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c5" unit="kJ/mol"/>
     <DihedralType name="DihedralType-RB-Proper-1" type1="opls_140" type2="opls_135" type3="opls_135" type4="opls_140">
       <Parameters>
         <Parameter name="c0" value="0.6276"/>

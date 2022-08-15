@@ -616,7 +616,7 @@ class TestForceField(BaseTest):
         assert imp1 is imp2
 
     def test_write_xml(self, opls_ethane_foyer):
-        opls_ethane_foyer.xml("test_xml_writer.xml")
+        opls_ethane_foyer.to_xml("test_xml_writer.xml")
         reloaded_xml = ForceField("test_xml_writer.xml")
         get_names = lambda ff, param: [
             typed for typed in getattr(ff, param).keys()
@@ -633,7 +633,7 @@ class TestForceField(BaseTest):
 
     def test_write_not_xml(self, opls_ethane_foyer):
         with pytest.raises(ForceFieldError):
-            opls_ethane_foyer.xml("bad_path")
+            opls_ethane_foyer.to_xml("bad_path")
 
     def test_valid_sequence(self):
         for j in range(10):

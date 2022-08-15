@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Iterable
 
 from lxml import etree
-#from forcefield_utilities import GMSOFFs
 
+from gmso.utils.decorators import deprecate_kwargs
 from gmso.core.element import element_by_symbol
 from gmso.exceptions import MissingPotentialError, GMSOError
 from gmso.utils._constants import FF_TOKENS_SEPARATOR
@@ -536,6 +536,12 @@ class ForceField(object):
             ]
         )
 
+    def load_backend_forcefield_utilities(self, filename, backend="forcefield-utilities"):
+        from forcefield_utilities.xml_loader import GMSOFFs
+        loader = GMSOFFs()
+        self = loader.load(filename).to_gmso_ff()
+
+
     def to_xml(self, filename, overwrite=False, backend="gmso"):
         """Get an lxml ElementTree representation of this ForceField
 
@@ -666,6 +672,7 @@ class ForceField(object):
             )
 
     @classmethod
+    @deprecate_kwargs(deprecated_kwargs={"backend='gmso'"})
     def from_xml(cls, xmls_or_etrees, strict=True, greedy=True, backend="gmso"):
         """Create a gmso.Forcefield object from XML File(s).
 
@@ -696,8 +703,10 @@ class ForceField(object):
         if not isinstance(backend, str):
             raise(GMSOError(f"Backend provided does not exist. Please provide one of `'gmso'` or \
             `'forcefield-utilities'`"))
-            #elif backend == "forcefield-utilities" or backend == "forcefield_utilities":
-            #return GMSOffs().load_xml(xml_or_etrees).to_xml
+        elif backend == "forcefield-utilities" or backend == "forcefield_utilities":
+            from forcefield_utilities.xml_loader import GMSOFFs
+            loader = GMSOFFs()
+            return loader.load_xml(xml_or_etrees).to_gmso_ff()
         elif backend == "gmso":
             if not isinstance(xmls_or_etrees, Iterable) or isinstance(
                 xmls_or_etrees, str
