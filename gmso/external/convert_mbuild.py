@@ -102,15 +102,11 @@ def from_mbuild(
         _parse_molecule_residue(site_map, compound)
         _parse_group(site_map, compound, custom_groups)
 
-    def _assign_site_info(compound, top, site_map, search_method):
-        """Use site map to apply Compound info to Topology."""
-        for part in compound.particles():
-            site = _parse_site(site_map, part, search_method)
-            top.add_site(site)
+    # Use site map to apply Compound info to Topology.
+    for part in compound.particles():
+        site = _parse_site(site_map, part, search_method)
+        top.add_site(site)
 
-        return
-
-    _assign_site_info(compound, top, site_map, search_method)
 
     for b1, b2 in compound.bonds():
         assert site_map[b1]["site"].molecule == site_map[b2]["site"].molecule
