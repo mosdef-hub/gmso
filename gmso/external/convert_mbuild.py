@@ -107,7 +107,6 @@ def from_mbuild(
         site = _parse_site(site_map, part, search_method)
         top.add_site(site)
 
-
     for b1, b2 in compound.bonds():
         assert site_map[b1]["site"].molecule == site_map[b2]["site"].molecule
         new_bond = Bond(
