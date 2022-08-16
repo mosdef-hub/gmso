@@ -231,11 +231,17 @@ def from_mbuild_box(mb_box):
 def _parse_particle(particle_map, site):
     """Parse information for a mb.Particle from a gmso.Site and add it to particle map."""
     element = site.element.symbol if site.element else None
+    charge = (
+        site.charge.in_units(u.elementary_charge).value if site.charge else None
+    )
+    mass = site.mass.in_units(u.amu).value if site.mass else None
 
     particle = mb.Compound(
         name=site.name,
         pos=site.position.to_value(u.nm),
         element=element,
+        charge=charge,
+        mass=mass,
     )
     particle_map[site] = particle
     return particle
@@ -244,14 +250,20 @@ def _parse_particle(particle_map, site):
 def _parse_site(site_map, particle, search_method):
     """Parse information for a gmso.Site from a mBuild.Compound adn add it to the site map."""
     pos = particle.xyz[0] * u.nm
-    if particle.element:
-        ele = search_method(particle.element.symbol)
-    else:
-        ele = search_method(particle.name)
+    ele = (
+        search_method(particle.element.symbol)
+        if particle.element
+        else search_method(particle.name)
+    )
+    charge = particle.charge * u.elementary_charge if particle.charge else None
+    mass = particle.mass * u.amu if particle.mass else None
+
     site = Atom(
         name=particle.name,
         position=pos,
         element=ele,
+        charge=charge,
+        mass=mass,
         molecule=site_map[particle]["molecule"],
         residue=site_map[particle]["residue"],
         group=site_map[particle]["group"],
