@@ -15,6 +15,7 @@ from gmso.core.element import (
     element_by_symbol,
 )
 from gmso.core.topology import Topology
+from gmso.exceptions import GMSOError
 from gmso.utils.io import has_mbuild
 
 if has_mbuild:
@@ -22,7 +23,11 @@ if has_mbuild:
 
 
 def from_mbuild(
-    compound, box=None, search_method=element_by_symbol, parse_label=True
+    compound,
+    box=None,
+    search_method=element_by_symbol,
+    parse_label=True,
+    custom_groups=None,
 ):
     """Convert an mbuild.Compound to a gmso.Topology.
 
@@ -63,6 +68,13 @@ def from_mbuild(
     parse_label : bool, optional, default=True
         Option to parse hierarchy info of the compound into system of top label,
         including, group, molecule and residue labels.
+    custom_groups : list or str, optional, default=None
+        Allows user to identify the groups assigned to each site in the topology
+        based on the compound.name attributes found traversing down the hierarchy. Be
+        sure to supply names such that every particle will be pass through one
+        matching name on the way down from compound.children. Only the first match
+        while moving downwards will be assigned to the site. If parse_label=False,
+        this argument does nothing.
 
     Returns
     -------
@@ -70,31 +82,29 @@ def from_mbuild(
     """
     msg = "Argument compound is not an mbuild.Compound"
     assert isinstance(compound, mb.Compound), msg
+    msg = "Compound is not a top level compound. Make a copy to pass to the `compound` \
+    argument that has no parents"
+    assert not compound.parent, msg
 
     top = Topology()
     top.typed = False
 
     site_map = {
-        particle: {"site": None, "residue": None, "molecule": None}
+        particle: {
+            "site": None,
+            "residue": None,
+            "molecule": None,
+            "group": None,
+        }
         for particle in compound.particles()
     }
     if parse_label:
-        _parse_label(site_map, compound)
+        _parse_molecule_residue(site_map, compound)
+        _parse_group(site_map, compound, custom_groups)
 
-    if compound.children:
-        for child in compound.children:
-            if not child.children:
-                site = _parse_site(site_map, child, search_method)
-                site.group = compound.name
-                top.add_site(site)
-            else:
-                for particle in child.particles():
-                    site = _parse_site(site_map, particle, search_method)
-                    site.group = child.name
-                    top.add_site(site)
-    else:
-        site = _parse_site(site_map, compound, search_method)
-        site.group = compound.name
+    # Use site map to apply Compound info to Topology.
+    for part in compound.particles():
+        site = _parse_site(site_map, part, search_method)
         top.add_site(site)
 
     for b1, b2 in compound.bonds():
@@ -256,12 +266,13 @@ def _parse_site(site_map, particle, search_method):
         mass=mass,
         molecule=site_map[particle]["molecule"],
         residue=site_map[particle]["residue"],
+        group=site_map[particle]["group"],
     )
     site_map[particle]["site"] = site
     return site
 
 
-def _parse_label(site_map, compound):
+def _parse_molecule_residue(site_map, compound):
     """Parse information necessary for residue and molecule labels when converting from mbuild."""
     connected_subgraph = compound.bond_graph.connected_components()
     molecule_tracker = dict()
@@ -312,4 +323,54 @@ def _parse_label(site_map, compound):
                 molecule_number,
             )
 
-    return site_map
+
+def _parse_group(site_map, compound, custom_groups):
+    """Parse group information."""
+    if custom_groups:
+        if isinstance(custom_groups, str):
+            custom_groups = [custom_groups]
+        elif not hasattr(custom_groups, "__iter__"):
+            raise TypeError(
+                f"Please pass groups {custom_groups} as a list of strings."
+            )
+        elif not np.all([isinstance(g, str) for g in custom_groups]):
+            raise TypeError(
+                f"Please pass groups {custom_groups} as a list of strings."
+            )
+        for part in _traverse_down_hierarchy(compound, custom_groups):
+            for particle in part.particles():
+                site_map[particle]["group"] = part.name
+        try:
+            applied_groups = set(map(lambda x: x["group"], site_map.values()))
+            assert applied_groups == set(custom_groups)
+        except AssertionError:
+            warn(
+                f"""Not all custom groups ({custom_groups}, is are being used when
+            traversing compound hierachy. Only {applied_groups} are used.)"""
+            )
+    elif not compound.children:
+        for particle in compound.particles():
+            site_map[particle]["group"] = compound.name
+    elif not np.any(
+        list(map(lambda c: len(c.children), compound.children))
+    ):  # compound is a 2 level hierarchy
+        for particle in compound.particles():
+            site_map[particle]["group"] = compound.name
+    else:  # set compund name to se
+        for child in compound.children:
+            for particle in child.particles():
+                site_map[particle]["group"] = child.name
+
+
+def _traverse_down_hierarchy(compound, group_names):
+    if compound.name in group_names:
+        yield compound
+    elif compound.children:
+        for child in compound.children:
+            yield from _traverse_down_hierarchy(child, group_names)
+    else:
+        raise GMSOError(
+            f"""A particle named {compound.name} cannot be associated with the
+        custom_groups {group_names}. Be sure to specify a list of group names that will cover
+        all particles in the compound. This particle is one level below {compound.parent.name}."""
+        )
