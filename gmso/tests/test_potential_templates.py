@@ -39,7 +39,8 @@ class TestPotentialTemplates(BaseTest):
         opls_torsion_potential = templates["OPLSTorsionPotential"]
         assert opls_torsion_potential.name == "OPLSTorsionPotential"
         assert opls_torsion_potential.expression == sympy.sympify(
-            "0.5 * k0 + 0.5 * k1 * (1 + cos(phi)) +"
+            "0.5 * k0 + "
+            "0.5 * k1 * (1 + cos(phi)) +"
             "0.5 * k2 * (1 - cos(2*phi)) +"
             "0.5 * k3 * (1 + cos(3*phi)) +"
             "0.5 * k4 * (1 - cos(4*phi))"
@@ -52,7 +53,12 @@ class TestPotentialTemplates(BaseTest):
         periodic_torsion_potential = templates["PeriodicTorsionPotential"]
         assert periodic_torsion_potential.name == "PeriodicTorsionPotential"
         assert periodic_torsion_potential.expression == sympy.sympify(
-            "k * (1 + cos(n * phi - phi_eq))"
+            "k0 + "
+            "k1 * (1 + cos(1 * phi - phi_eq1)) + "
+            "k2 * (1 + cos(2 * phi - phi_eq2)) + "
+            "k3 * (1 + cos(3 * phi - phi_eq3)) + "
+            "k4 * (1 + cos(4 * phi - phi_eq4)) + "
+            "k5 * (1 + cos(5 * phi - phi_eq5))"
         )
         assert periodic_torsion_potential.independent_variables == {
             sympy.sympify("phi")
@@ -67,12 +73,12 @@ class TestPotentialTemplates(BaseTest):
             == "RyckaertBellemansTorsionPotential"
         )
         assert ryckaert_bellemans_torsion_potential.expression == sympy.sympify(
-            "c0 * cos(phi)**0 + c1 * cos(phi)**1 +"
-            " c2 * cos(phi)**2 + c3 * cos(phi)**3 +"
-            " c4 * cos(phi)**4 + c5 * cos(phi)**5"
+            "c0 + c1 * cos(psi)**1 +"
+            " c2 * cos(psi)**2 + c3 * cos(psi)**3 +"
+            " c4 * cos(psi)**4 + c5 * cos(psi)**5"
         )
         assert ryckaert_bellemans_torsion_potential.independent_variables == {
-            sympy.sympify("phi")
+            sympy.sympify("psi")
         }
 
     def test_harmonic_torsion_potential(self, templates):

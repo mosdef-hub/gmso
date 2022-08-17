@@ -451,7 +451,7 @@ class TestForceFieldFromXML(BaseTest):
                 "4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
                 "0.5 * k * (r-r_eq)**2",
                 "0.5 * k * (theta-theta_eq)**2",
-                "c_0 + c_1 * cos(psi) + c_2 * cos(psi)**2 + c_3 * cos(psi)**3 + c_4 * cos(psi)**4 + c_5 * cos(psi)**5",
+                "c0 + c1 * cos(psi) + c2 * cos(psi)**2 + c3 * cos(psi)**3 + c4 * cos(psi)**4 + c5 * cos(psi)**5",
             ]
         ]
 

@@ -484,9 +484,9 @@ def _write_rb_torsions(forcefield, ff_kwargs):
         forcefield,
         "DihedralTypes",
         attrib_dict={
-            "expression": "c0 * cos(phi)**0 + c1 * cos(phi)**1 + "
-            "c2 * cos(phi)**2 + c3 * cos(phi)**3 + "
-            "c4 * cos(phi)**4 + c5 * cos(phi)**5",
+            "expression": "c0 + c1 * cos(psi)**1 + "
+            "c2 * cos(psi)**2 + c3 * cos(psi)**3 + "
+            "c4 * cos(psi)**4 + c5 * cos(psi)**5",
         },
     )
 

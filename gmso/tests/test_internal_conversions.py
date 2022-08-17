@@ -33,7 +33,7 @@ class TestInternalConversions(BaseTest):
 
         name = ryckaert_bellemans_torsion_potential.name
         expression = (
-            str(ryckaert_bellemans_torsion_potential.expression) + " + 3 * psi"
+            str(ryckaert_bellemans_torsion_potential.expression) + " + 3 * phi"
         )
         variables = ["phi", "psi"]
 
@@ -49,7 +49,7 @@ class TestInternalConversions(BaseTest):
                 ryckaert_connection_type
             )
 
-        expression = "c0+c1+c2+c3+c4+c5+phi"
+        expression = "c0+c1+c2+c3+c4+c5+psi"
         variables = ryckaert_bellemans_torsion_potential.independent_variables
         ryckaert_connection_type = DihedralType(
             name=name,
@@ -149,7 +149,7 @@ class TestInternalConversions(BaseTest):
                             (param, val)
                             for param, val in {
                                 **ryckaert_connection_type.parameters,
-                                "phi": angle - np.pi,
+                                "psi": angle - np.pi,
                             }.items()
                         ]
                     )
@@ -206,7 +206,7 @@ class TestInternalConversions(BaseTest):
                             (param, val)
                             for param, val in {
                                 **ryckaert_connection_type.parameters,
-                                "phi": angle - np.pi,
+                                "psi": angle - np.pi,
                             }.items()
                         ]
                     )

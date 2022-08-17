@@ -79,9 +79,17 @@ class TestTop(BaseTest):
 
         per_torsion = PotentialTemplateLibrary()["PeriodicTorsionPotential"]
         params = {
-            "k": 10 * u.Unit("kJ / mol"),
-            "phi_eq": 15 * u.Unit("degree"),
-            "n": 3 * u.Unit("dimensionless"),
+            "k0": 10 * u.Unit("kJ / mol"),
+            "k1": 1 * u.Unit("kJ / mol"),
+            "phi_eq1": 180 * u.Unit("degree"),
+            "k2": 2 * u.Unit("kJ / mol"),
+            "phi_eq2": 0 * u.Unit("degree"),
+            "k3": 3 * u.Unit("kJ / mol"),
+            "phi_eq3": 180 * u.Unit("degree"),
+            "k4": 4 * u.Unit("kJ / mol"),
+            "phi_eq4": 0 * u.Unit("degree"),
+            "k5": 5 * u.Unit("kJ / mol"),
+            "phi_eq5": 180 * u.Unit("degree"),
         }
         periodic_dihedral_type = ParametricPotential.from_template(
             potential_template=per_torsion, parameters=params
