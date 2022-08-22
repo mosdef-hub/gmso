@@ -136,6 +136,8 @@ def write_top(top, filename, top_vars=None):
                 _write_connection(top, angle, pot_types[angle.connection_type])
             )
 
+        # Note: GROMACS angle restraint is defined between two vectors.
+        # Here, we are using two vectors originate from the middle node pointing out ward.
         angle_restraints = [angle for angle in top.angles if angle.restraint]
         if angle_restraints:
             out_file.write(
@@ -147,7 +149,7 @@ def write_top(top, filename, top_vars=None):
 
         out_file.write(
             "\n[ dihedrals ]\n"
-            ";\tai \taj \tai \tak \tfunct \tc0 \tc1 \tc2 \tc3 \tc4 \n"
+            ";\tai \taj \tak \tal \tfunct \tc0 \tc1 \tc2 \tc3 \tc4 \n"
         )
         for dihedral in top.dihedrals:
             out_file.write(
