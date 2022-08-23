@@ -6,6 +6,7 @@ from unyt.testing import assert_allclose_units
 import gmso
 from gmso.core.atom import Atom
 from gmso.core.topology import Topology as Top
+from gmso.exceptions import GMSOError
 from gmso.external.convert_mbuild import from_mbuild, to_mbuild
 from gmso.tests.base_test import BaseTest
 from gmso.utils.io import get_fn, has_mbuild
@@ -183,3 +184,92 @@ class TestConvertMBuild(BaseTest):
         top = from_mbuild(filled_box)
         for site in top.sites:
             assert site.group == filled_box.name
+
+    @pytest.mark.skipif(not has_mbuild, reason="mBuild is not installed")
+    def test_custom_groups_from_compound(self):
+        mb_cpd1 = mb.Compound(name="_CH4")
+
+        first_bead = mb.Compound(name="_CH3")
+        middle_bead = mb.Compound(name="_CH2")
+        last_bead = mb.Compound(name="_CH3")
+        mb_cpd2 = mb.Compound(name="Alkane")
+        [mb_cpd2.add(cpd) for cpd in [first_bead, middle_bead, last_bead]]
+        mb_cpd2.add_bond((first_bead, middle_bead))
+        mb_cpd2.add_bond((last_bead, middle_bead))
+
+        mb_cpd3 = mb.load("O", smiles=True)
+        mb_cpd3.name = "O"
+
+        filled_box1 = mb.fill_box(
+            [mb_cpd1, mb_cpd2], n_compounds=[2, 2], box=[1, 1, 1]
+        )
+        filled_box1.name = "box1"
+        filled_box2 = mb.fill_box(mb_cpd3, n_compounds=2, box=[1, 1, 1])
+        filled_box2.name = "box2"
+
+        top_box = mb.Compound()
+        top_box.add(filled_box1)
+        top_box.add(filled_box2)
+        top_box.name = "top"
+
+        list_of_groups = [
+            (["top"], [14]),  # top level of hierarchy
+            (["box1", "box2"], [8, 6]),  # middle level of hierarchy
+            (["_CH4", "_CH2", "_CH3", "O"], [2, 2, 4, 6]),  # particle level
+            (
+                ["box2", "Alkane", "_CH4"],
+                [6, 6, 2],
+            ),  # multiple different levels
+        ]
+        for groups, n_groups in list_of_groups:
+            top = from_mbuild(top_box, custom_groups=groups)
+            assert np.all([site.group in groups for site in top.sites])
+            for n, gname in zip(n_groups, groups):
+                assert (
+                    len([True for site in top.sites if site.group == gname])
+                    == n
+                )
+
+    @pytest.mark.skipif(not has_mbuild, reason="mBuild is not installed")
+    def test_single_custom_group(self):
+        mb_cpd1 = mb.Compound(name="_CH4")
+        mb_cpd2 = mb.Compound(name="_CH3")
+        filled_box = mb.fill_box(
+            [mb_cpd1, mb_cpd2], n_compounds=[2, 2], box=[1, 1, 1]
+        )
+        filled_box.name = "box1"
+
+        top = from_mbuild(filled_box, custom_groups=filled_box.name)
+        assert (
+            len([True for site in top.sites if site.group == filled_box.name])
+            == filled_box.n_particles
+        )
+
+    @pytest.mark.skipif(not has_mbuild, reason="mBuild is not installed")
+    def test_bad_custom_groups_from_compound(self):
+        mb_cpd1 = mb.Compound(name="_CH4")
+        mb_cpd2 = mb.Compound(name="_CH3")
+        filled_box = mb.fill_box(
+            [mb_cpd1, mb_cpd2], n_compounds=[2, 2], box=[1, 1, 1]
+        )
+
+        with pytest.warns(Warning):
+            top = from_mbuild(
+                filled_box, custom_groups=["_CH4", "_CH3", "_CH5"]
+            )
+
+        with pytest.raises(GMSOError):
+            top = from_mbuild(filled_box, custom_groups=["_CH4"])
+
+        with pytest.raises(TypeError):
+            top = from_mbuild(filled_box, custom_groups=mb_cpd1)
+
+        with pytest.raises(TypeError):
+            top = from_mbuild(filled_box, custom_groups=[mb_cpd1])
+
+    @pytest.mark.skipif(not has_mbuild, reason="mBuild is not installed")
+    def test_nontop_level_compound(self, mb_ethane):
+        cpd = mb.Compound(name="top")
+        cpd.add(mb_ethane)
+        with pytest.raises(AssertionError):
+            from_mbuild(mb_ethane)
