@@ -173,7 +173,7 @@
     <ParametersUnitDef parameter="c3" unit="kJ/mol"/>
     <ParametersUnitDef parameter="c4" unit="kJ/mol"/>
     <ParametersUnitDef parameter="c5" unit="kJ/mol"/>
-    <DihedralType name="opls_proper_1" type1="opls_140" type2="" type3="" type4="opls_140">
+    <DihedralType name="opls_proper_1" type1="opls_140" type2="*" type3="*" type4="opls_140">
       <Parameters>
         <Parameter name="c0" value="0.6276"/>
         <Parameter name="c1" value="1.8828"/>

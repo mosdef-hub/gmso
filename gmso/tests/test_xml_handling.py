@@ -23,7 +23,7 @@ from forcefield_utilities import GMSOFFs
 
 # Make source directory for all xmls to grab from
 XML_DIR = get_fn("gmso_xmls")
-TEST_XMLS = glob.glob(os.path.join(XML_DIR, "*.xml"))
+TEST_XMLS = glob.glob(os.path.join(XML_DIR, "*/*.xml"))
 
 def compare_xml_files(fn1, fn2):
     """Hash files to check for lossless conversion."""
@@ -98,17 +98,16 @@ class TestXMLHandling(BaseTest):
     @pytest.mark.parametrize("xml", TEST_XMLS)
     def test_load_write_xmls_gmso_backend(self, xml):
         """Validate loaded xmls written out match original file."""
-        ff1 = ForceField(xml)
+        ff1 = ForceField(xml, backend="forcefield_utilities")
         ff1.to_xml("tmp.xml", overwrite=True)
         ff2 = ForceField("tmp.xml")
-        assert validate_xmls("tmp.xml", xml)
+        assert compare_xml_files("tmp.xml", xml)
         assert ff1 == ff2
 
     @pytest.mark.parametrize("xml", TEST_XMLS)
     def test_load_write_xmls_ffutils_backend(self, xml):
         """Validate loaded xmls written out match original file."""
-        ff1 = ForceField()
-        ff1.load_backend_forcefield_utilities(xml)
+        ff1 = ForceField(xml, backend="forcefield-utilities")
         ff1.to_xml("tmp.xml", overwrite=True)
         ff2 = GMSOFFs().load_xml("tmp.xml").to_gmso_ff()
         assert compare_xml_files("tmp.xml", xml)

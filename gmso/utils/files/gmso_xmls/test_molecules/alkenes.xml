@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<ForceField name="ethylene_snippet" version="0.0.1">
+<ForceField name="alkenes_oplsaa" version="0.0.1">
   <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.5">
     <Units energy="kJ" distance="nm" mass="amu" charge="coulomb"/>
   </FFMetaData>

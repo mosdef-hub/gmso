@@ -1,0 +1,83 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ForceField name="charmm36-snippet" version="0.0.1">
+  <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.5">
+    <Units energy="kJ" distance="nm" mass="amu" charge="electron_charge"/>
+  </FFMetaData>
+  <AtomTypes expression="epsilon*(-2*rmin**6/r**6 + rmin**12/r**12)">
+    <ParametersUnitDef parameter="epsilon" unit="kcal/mol"/>
+    <ParametersUnitDef parameter="rmin" unit="angstrom"/>
+    <AtomType name="H" mass="1.00800" charge="0.00" atomclass="H" definition="H">
+      <Parameters>
+        <Parameter name="epsilon" value="-0.046"/>
+        <Parameter name="sigma" value="0.4449"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+  <BondTypes expression="kb*(b-b0)**2">    
+    <ParametersUnitDef parameter="kb" unit="kcal/(mol*angstrom**2)"/>
+    <ParametersUnitDef parameter="b0" unit="angstrom"/>  
+    <BondType name="BondType-Harmonic" type1="H" type2="H">
+      <Parameters>
+        <Parameter name="kb" value="240.0"/>
+        <Parameter name="b0" value="1.455"/>
+      </Parameters>
+    </BondType>
+  </BondTypes>
+  <AngleTypes expression="ktheta*(theta - theta0)**2">
+    <ParametersUnitDef parameter="k" unit="kcal/(mol*rad**2)"/>
+    <ParametersUnitDef parameter="theta_eq" unit="degrees"/>
+    <AngleType name="AngleType-Harmonic-1" type1="H" type2="H" type3="H">
+      <Parameters>
+        <Parameter name="ktheta" value="50.000"/>
+        <Parameter name="theta0" value="111.00"/>
+      </Parameters>
+  </AngleType>
+  </AngleTypes>
+  <AngleTypes expression="Kub*(S-S0)**2">
+    <ParametersUnitDef parameter="Kub" unit="kcal/(mol*angstrom**2)"/>
+    <ParametersUnitDef parameter="S0" unit="angstrom"/>
+    <AngleType name="AngleType-Urey_Bradley-1" type1="H" type2="H" type3="H">
+      <Parameters>
+        <Parameter name="Kub" value="50"/>
+        <Parameter name="S0" value="2.14"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="AngleType-Harmonic-3" type1="CT" type2="CT" type3="CT">
+      <Parameters>
+        <Parameter name="k" value="488.273"/>
+        <Parameter name="theta_eq" value="1.966986067"/>
+      </Parameters>
+    </AngleType>
+  </AngleTypes>
+  <DihedralTypes expression="Kchi(1 + cos(n(chi) - delta))">
+    <ParametersUnitDef parameter="Kchi" unit="kcal/mol"/>
+    <ParametersUnitDef parameter="n" unit="dimensionless"/>
+    <ParametersUnitDef parameter="delta" unit="degrees"/>
+    <DihedralType name="DihedralType-Charmm-periodic" type1="H" type2="H" type3="H" type4="H">
+      <Parameters>
+        <Parameter name="Kchi">
+          <Value>1.6</Value>
+          <Value>2.5</Value>
+        </Parameter>
+        <Parameter name="n">
+          <Value>1</Value>
+          <Value>2</Value>
+        </Parameter>
+        <Parameter name="chi">
+          <Value>0</Value>
+          <Value>180</Value>
+        </Parameter>
+      </Parameters>
+    </DihedralType>
+  </DihedralTypes>
+  <ImproperTypes expression="Kpsi(psi-psi0)**2">
+    <ParametersUnitDef parameter="Kspi" unit="kcal/mol/rad**2"/>
+    <ParametersUnitDef parameter="psi0" unit="degrees"/>
+    <ImproperType name="ImproperType-Charmm-harmonic" type1="H" type2="H" type3="H" type4="H">
+        <Parameters>
+        <Parameter name="Kpsi" value="3"/>
+        <Parameter name="psi0" value="0"/>
+      </Parameters>
+    </ImproperType>
+  </ImproperTypes>
+</ForceField>

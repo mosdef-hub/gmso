@@ -37,7 +37,7 @@
     <ParametersUnitDef parameter="k" unit="kJ/mol"/>
     <ParametersUnitDef parameter="n" unit="dimensionless"/>
     <ParametersUnitDef parameter="theta_0" unit="rad"/>
-    <DihedralType name="DihedralType1" type1="" type2="C" type3="C" type4="">
+    <DihedralType name="DihedralType1" type1="*" type2="C" type3="C" type4="*">
       <Parameters>
         <Parameter name="k" value="27.8236"/>
         <Parameter name="n" value="2.0"/>

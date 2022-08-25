@@ -52,6 +52,9 @@ class ForceField(object):
         If true, perform a strict validation of the forcefield XML file
     greedy: bool, default=True
         If True, when using strict mode, fail on the first error/mismatch
+    backend: str, default="gmso"
+        Can be "gmso" or "forcefield-utilities". This will define the methods to
+        load the forcefield.
 
     Attributes
     ----------
@@ -81,9 +84,15 @@ class ForceField(object):
 
     """
 
-    def __init__(self, xml_loc=None, strict=True, greedy=True):
+    def __init__(self, xml_loc=None, strict=True, greedy=True, backend="forcefield-utilities"):
         if xml_loc is not None:
-            ff = ForceField.from_xml(xml_loc, strict, greedy)
+            if backend in ["gmso", "GMSO"]:
+                ff = ForceField.from_xml(xml_loc, strict, greedy)
+            elif backend in ["forcefield-utilities", "forcefield_utilities", "ff-utils", "ffutils"]:
+                ff = ForceField.load_backend_forcefield_utilities(xml_loc)
+            else:
+                raise(GMSOError(f"Backend provided does not exist. Please provide one of `'gmso'` or \
+                `'forcefield-utilities'`"))
             self.name = ff.name
             self.version = ff.version
             self.atom_types = ff.atom_types
@@ -535,11 +544,12 @@ class ForceField(object):
                 #self.units == other.units,
             ]
         )
-
-    def load_backend_forcefield_utilities(self, filename, backend="forcefield-utilities"):
+    @classmethod
+    def load_backend_forcefield_utilities(cls, filename):
         from forcefield_utilities.xml_loader import GMSOFFs
         loader = GMSOFFs()
-        self = loader.load(filename).to_gmso_ff()
+        ff = loader.load(filename).to_gmso_ff()
+        return ff
 
 
     def to_xml(self, filename, overwrite=False, backend="gmso"):
@@ -672,8 +682,7 @@ class ForceField(object):
             )
 
     @classmethod
-    @deprecate_kwargs(deprecated_kwargs={"backend='gmso'"})
-    def from_xml(cls, xmls_or_etrees, strict=True, greedy=True, backend="gmso"):
+    def from_xml(cls, xmls_or_etrees, strict=True, greedy=True):
         """Create a gmso.Forcefield object from XML File(s).
 
         This class method creates a ForceField object from the reference
@@ -689,9 +698,6 @@ class ForceField(object):
             If true, perform a strict validation of the forcefield XML file
         greedy: bool, default=True
             If True, when using strict mode, fail on the first error/mismatch
-        backend: str, default="gmso"
-            Can be "gmso" or "forcefield-utilities". This will define the methods to
-            load the forcefield.
 
         Returns
         -------
@@ -700,154 +706,146 @@ class ForceField(object):
             created using the information in the XML file
         """
 
-        if not isinstance(backend, str):
-            raise(GMSOError(f"Backend provided does not exist. Please provide one of `'gmso'` or \
-            `'forcefield-utilities'`"))
-        elif backend == "forcefield-utilities" or backend == "forcefield_utilities":
-            from forcefield_utilities.xml_loader import GMSOFFs
-            loader = GMSOFFs()
-            return loader.load_xml(xml_or_etrees).to_gmso_ff()
-        elif backend == "gmso":
-            if not isinstance(xmls_or_etrees, Iterable) or isinstance(
-                xmls_or_etrees, str
-            ):
-                xmls_or_etrees = [xmls_or_etrees]
+        if not isinstance(xmls_or_etrees, Iterable) or isinstance(
+            xmls_or_etrees, str
+        ):
+            xmls_or_etrees = [xmls_or_etrees]
 
-            should_parse_xml = False
-            if not (
-                all(map(lambda x: isinstance(x, str), xmls_or_etrees))
-                or all(
-                    map(lambda x: isinstance(x, etree._ElementTree), xmls_or_etrees)
-                )
-            ):
-                raise TypeError(
-                    "Please provide an iterable of strings "
-                    "as locations of the XML files "
-                    "or equivalent element Trees"
-                )
+        should_parse_xml = False
+        if not (
+            all(map(lambda x: isinstance(x, str), xmls_or_etrees))
+            or all(
+                map(lambda x: isinstance(x, etree._ElementTree), xmls_or_etrees)
+            )
+        ):
+            raise TypeError(
+                "Please provide an iterable of strings "
+                "as locations of the XML files "
+                "or equivalent element Trees"
+            )
 
-            if all(map(lambda x: isinstance(x, str), xmls_or_etrees)):
-                should_parse_xml = True
+        if all(map(lambda x: isinstance(x, str), xmls_or_etrees)):
+            should_parse_xml = True
 
-            versions = []
-            names = []
-            ff_atomtypes_list = []
-            ff_bondtypes_list = []
-            ff_angletypes_list = []
-            ff_dihedraltypes_list = []
-            ff_pairpotentialtypes_list = []
+        versions = []
+        names = []
+        ff_atomtypes_list = []
+        ff_bondtypes_list = []
+        ff_angletypes_list = []
+        ff_dihedraltypes_list = []
+        ff_pairpotentialtypes_list = []
 
-            atom_types_dict = ChainMap()
-            bond_types_dict = {}
-            angle_types_dict = {}
-            dihedral_types_dict = {}
-            improper_types_dict = {}
-            pairpotential_types_dict = {}
-            potential_groups = {}
+        atom_types_dict = ChainMap()
+        bond_types_dict = {}
+        angle_types_dict = {}
+        dihedral_types_dict = {}
+        improper_types_dict = {}
+        pairpotential_types_dict = {}
+        potential_groups = {}
 
-            for loc_or_etree in set(xmls_or_etrees):
-                validate(loc_or_etree, strict=strict, greedy=greedy)
-                ff_tree = loc_or_etree
+        for loc_or_etree in set(xmls_or_etrees):
+            validate(loc_or_etree, strict=strict, greedy=greedy)
+            ff_tree = loc_or_etree
 
-                if should_parse_xml:
-                    ff_tree = etree.parse(loc_or_etree)
+            if should_parse_xml:
+                ff_tree = etree.parse(loc_or_etree)
 
-                ff_el = ff_tree.getroot()
-                versions.append(ff_el.attrib["version"])
-                names.append(ff_el.attrib["name"])
-                ff_meta_tree = ff_tree.find("FFMetaData")
+            ff_el = ff_tree.getroot()
+            versions.append(ff_el.attrib["version"])
+            names.append(ff_el.attrib["name"])
+            ff_meta_tree = ff_tree.find("FFMetaData")
 
-                if ff_meta_tree is not None:
-                    ff_meta_map = parse_ff_metadata(ff_meta_tree)
+            if ff_meta_tree is not None:
+                ff_meta_map = parse_ff_metadata(ff_meta_tree)
 
-                ff_atomtypes_list.extend(ff_tree.findall("AtomTypes"))
-                ff_bondtypes_list.extend(ff_tree.findall("BondTypes"))
-                ff_angletypes_list.extend(ff_tree.findall("AngleTypes"))
-                ff_dihedraltypes_list.extend(ff_tree.findall("DihedralTypes"))
-                ff_pairpotentialtypes_list.extend(
-                    ff_tree.findall("PairPotentialTypes")
-                )
+            ff_atomtypes_list.extend(ff_tree.findall("AtomTypes"))
+            ff_bondtypes_list.extend(ff_tree.findall("BondTypes"))
+            ff_angletypes_list.extend(ff_tree.findall("AngleTypes"))
+            ff_dihedraltypes_list.extend(ff_tree.findall("DihedralTypes"))
+            ff_pairpotentialtypes_list.extend(
+                ff_tree.findall("PairPotentialTypes")
+            )
 
-            # Consolidate AtomTypes
-            for atom_types in ff_atomtypes_list:
-                this_atom_types_group = parse_ff_atomtypes(atom_types, ff_meta_map)
-                this_atom_group_name = atom_types.attrib.get("name", None)
-                if this_atom_group_name:
-                    potential_groups[this_atom_group_name] = this_atom_types_group
-                atom_types_dict.update(this_atom_types_group)
+        # Consolidate AtomTypes
+        for atom_types in ff_atomtypes_list:
+            this_atom_types_group = parse_ff_atomtypes(atom_types, ff_meta_map)
+            this_atom_group_name = atom_types.attrib.get("name", None)
+            if this_atom_group_name:
+                potential_groups[this_atom_group_name] = this_atom_types_group
+            atom_types_dict.update(this_atom_types_group)
 
-            # Consolidate BondTypes
-            for bond_types in ff_bondtypes_list:
-                this_bond_types_group = parse_ff_connection_types(
-                    bond_types, child_tag="BondType"
-                )
-                this_bond_types_group_name = bond_types.attrib.get("name", None)
+        # Consolidate BondTypes
+        for bond_types in ff_bondtypes_list:
+            this_bond_types_group = parse_ff_connection_types(
+                bond_types, child_tag="BondType"
+            )
+            this_bond_types_group_name = bond_types.attrib.get("name", None)
 
-                if this_bond_types_group_name:
-                    potential_groups[
-                        this_bond_types_group_name
-                    ] = this_bond_types_group
+            if this_bond_types_group_name:
+                potential_groups[
+                    this_bond_types_group_name
+                ] = this_bond_types_group
 
-                bond_types_dict.update(this_bond_types_group)
+            bond_types_dict.update(this_bond_types_group)
 
-            # Consolidate AngleTypes
-            for angle_types in ff_angletypes_list:
-                this_angle_types_group = parse_ff_connection_types(
-                    angle_types, child_tag="AngleType"
-                )
-                this_angle_types_group_name = angle_types.attrib.get("name", None)
+        # Consolidate AngleTypes
+        for angle_types in ff_angletypes_list:
+            this_angle_types_group = parse_ff_connection_types(
+                angle_types, child_tag="AngleType"
+            )
+            this_angle_types_group_name = angle_types.attrib.get("name", None)
 
-                if this_angle_types_group_name:
-                    potential_groups[
-                        this_angle_types_group_name
-                    ] = this_angle_types_group
+            if this_angle_types_group_name:
+                potential_groups[
+                    this_angle_types_group_name
+                ] = this_angle_types_group
 
-                angle_types_dict.update(this_angle_types_group)
+            angle_types_dict.update(this_angle_types_group)
 
-            # Consolidate DihedralTypes
-            for dihedral_types in ff_dihedraltypes_list:
-                this_dihedral_types_group = parse_ff_connection_types(
-                    dihedral_types, child_tag="DihedralType"
-                )
-                this_improper_types_group = parse_ff_connection_types(
-                    dihedral_types, child_tag="ImproperType"
-                )
-                this_group_name = dihedral_types.attrib.get("name", None)
+        # Consolidate DihedralTypes
+        for dihedral_types in ff_dihedraltypes_list:
+            this_dihedral_types_group = parse_ff_connection_types(
+                dihedral_types, child_tag="DihedralType"
+            )
+            this_improper_types_group = parse_ff_connection_types(
+                dihedral_types, child_tag="ImproperType"
+            )
+            this_group_name = dihedral_types.attrib.get("name", None)
 
-                dihedral_types_dict.update(this_dihedral_types_group)
-                improper_types_dict.update(this_improper_types_group)
+            dihedral_types_dict.update(this_dihedral_types_group)
+            improper_types_dict.update(this_improper_types_group)
 
-                if this_group_name:
-                    this_dihedral_types_group.update(this_improper_types_group)
-                    potential_groups[this_group_name] = this_dihedral_types_group
+            if this_group_name:
+                this_dihedral_types_group.update(this_improper_types_group)
+                potential_groups[this_group_name] = this_dihedral_types_group
 
-            # Consolidate PairPotentialType
-            for pairpotential_types in ff_pairpotentialtypes_list:
-                this_pairpotential_types_group = parse_ff_pairpotential_types(
-                    pairpotential_types
-                )
-                this_pairpotential_types_group_name = (
-                    pairpotential_types.attrib.get("name", None)
-                )
+        # Consolidate PairPotentialType
+        for pairpotential_types in ff_pairpotentialtypes_list:
+            this_pairpotential_types_group = parse_ff_pairpotential_types(
+                pairpotential_types
+            )
+            this_pairpotential_types_group_name = (
+                pairpotential_types.attrib.get("name", None)
+            )
 
-                if this_pairpotential_types_group_name:
-                    potential_groups[
-                        this_pairpotential_types_group_name
-                    ] = this_pairpotential_types_group
+            if this_pairpotential_types_group_name:
+                potential_groups[
+                    this_pairpotential_types_group_name
+                ] = this_pairpotential_types_group
 
-                pairpotential_types_dict.update(this_pairpotential_types_group)
+            pairpotential_types_dict.update(this_pairpotential_types_group)
 
-            ff = cls()
-            ff.name = names[0]
-            ff.version = versions[0]
-            ff.scaling_factors = ff_meta_map["scaling_factors"]
-            ff.combining_rule = ff_meta_map["combining_rule"]
-            ff.units = ff_meta_map["Units"]
-            ff.atom_types = atom_types_dict.maps[0]
-            ff.bond_types = bond_types_dict
-            ff.angle_types = angle_types_dict
-            ff.dihedral_types = dihedral_types_dict
-            ff.improper_types = improper_types_dict
-            ff.pairpotential_types = pairpotential_types_dict
-            ff.potential_groups = potential_groups
-            return ff
+        ff = cls()
+        ff.name = names[0]
+        ff.version = versions[0]
+        ff.scaling_factors = ff_meta_map["scaling_factors"]
+        ff.combining_rule = ff_meta_map["combining_rule"]
+        ff.units = ff_meta_map["Units"]
+        ff.atom_types = atom_types_dict.maps[0]
+        ff.bond_types = bond_types_dict
+        ff.angle_types = angle_types_dict
+        ff.dihedral_types = dihedral_types_dict
+        ff.improper_types = improper_types_dict
+        ff.pairpotential_types = pairpotential_types_dict
+        ff.potential_groups = potential_groups
+        return ff
