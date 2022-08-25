@@ -13,9 +13,9 @@
       </Parameters>
     </AtomType>
   </AtomTypes>
-  <BondTypes expression="kb*(b-b0)**2">    
+  <BondTypes expression="kb*(b-b0)**2">
     <ParametersUnitDef parameter="kb" unit="kcal/(mol*angstrom**2)"/>
-    <ParametersUnitDef parameter="b0" unit="angstrom"/>  
+    <ParametersUnitDef parameter="b0" unit="angstrom"/>
     <BondType name="BondType-Harmonic" type1="H" type2="H">
       <Parameters>
         <Parameter name="kb" value="240.0"/>

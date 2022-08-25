@@ -43,9 +43,9 @@
       </Parameters>
     </AtomType>
   </AtomTypes>
-  <BondTypes expression="0.5*k*(r-r_eq)**2">    
+  <BondTypes expression="0.5*k*(r-r_eq)**2">
     <ParametersUnitDef parameter="k" unit="kJ/(mol*nm**2)"/>
-    <ParametersUnitDef parameter="r_eq" unit="nm"/>  
+    <ParametersUnitDef parameter="r_eq" unit="nm"/>
     <BondType name="BondType-Harmonic" type1="CT" type2="HC">
       <Parameters>
         <Parameter name="k" value="284512.0"/>
