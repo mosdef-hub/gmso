@@ -2,7 +2,7 @@
 import json
 import warnings
 from abc import ABC
-from typing import Any, ClassVar, Optional, Type, Union
+from typing import Any, ClassVar, Type
 
 from pydantic import BaseModel
 from pydantic.validators import dict_validator
