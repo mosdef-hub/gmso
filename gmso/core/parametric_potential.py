@@ -258,14 +258,18 @@ class ParametricPotential(AbstractPotential):
                 )
             elif isinstance(value, u.array.unyt_array):
                 params_list = etree.SubElement(
-                     params,
-                     "Parameter",
-                     attrib={
-                         "name": key,
-                     }
-                 )
+                    params,
+                    "Parameter",
+                    attrib={
+                        "name": key,
+                    },
+                )
                 for listed_val in value:
-                    xml_repr = get_xml_representation(listed_val.in_units(value_unit) if value_unit else listed_val)
+                    xml_repr = get_xml_representation(
+                        listed_val.in_units(value_unit)
+                        if value_unit
+                        else listed_val
+                    )
                     etree.SubElement(params_list, "Value").text = xml_repr
 
         return xml_element

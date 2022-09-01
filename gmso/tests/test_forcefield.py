@@ -261,7 +261,9 @@ class TestForceField(BaseTest):
     def test_missing_params(self):
         # TODO: raise same error if backend loader is forcefield-utilities
         with pytest.raises(ForceFieldParseError):
-            ForceField(get_path("ff-example-missing-parameter.xml"), backend="gmso")
+            ForceField(
+                get_path("ff-example-missing-parameter.xml"), backend="gmso"
+            )
 
     def test_elementary_charge_to_coulomb(self, ff):
         elementary_charge = ff.atom_types["Li"].charge.to(u.elementary_charge)
@@ -280,8 +282,8 @@ class TestForceField(BaseTest):
                 ff.dihedral_types["opls_140~*~*~opls_140"].parameters["c0"]
             )
         assert len(ff.dihedral_types["NH2~CT1~C~O"].parameters["delta"]) == 1
-        #ff = ForceField(get_path("opls_charmm_buck.xml"), backend="forcefield-utilities")
-        #assert len(ff.dihedral_types["NH2~CT1~C~O"].parameters["delta"]) == 1
+        # ff = ForceField(get_path("opls_charmm_buck.xml"), backend="forcefield-utilities")
+        # assert len(ff.dihedral_types["NH2~CT1~C~O"].parameters["delta"]) == 1
 
     def test_ff_from_etree(self):
         # TODO: load using backend forcefield-utilities from etree
@@ -364,14 +366,14 @@ class TestForceField(BaseTest):
         with pytest.raises(MissingAtomTypesError):
             ff = ForceField(
                 get_path(filename=get_path("ff_missing_atom_types.xml")),
-                backend="gmso"
+                backend="gmso",
             )
 
     def test_forcefield_missing_atom_types_non_strict(self):
         ff = ForceField(
             get_path(filename=get_path("ff_missing_atom_types.xml")),
             strict=False,
-            backend="gmso"
+            backend="gmso",
         )
 
     def test_forcefeld_get_potential_atom_type(self, opls_ethane_foyer):

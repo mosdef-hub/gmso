@@ -8,10 +8,6 @@ import unyt as u
 from forcefield_utilities import GMSOFFs
 from lxml.etree import DocumentInvalid
 from sympy import sympify
-import os
-import glob
-import filecmp
-from forcefield_utilities import GMSOFFs
 
 from gmso.core.forcefield import ForceField
 from gmso.core.improper_type import ImproperType
@@ -23,7 +19,6 @@ from gmso.exceptions import (
 )
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import allclose_units_mixed, get_path
-from gmso.tests.utils import get_path
 from gmso.utils.io import get_fn
 
 # Make source directory for all xmls to grab from
@@ -33,15 +28,15 @@ TEST_XMLS = glob.glob(os.path.join(XML_DIR, "*/*.xml"))
 
 def compare_xml_files(fn1, fn2):
     """Hash files to check for lossless conversion."""
-    with open(fn1,"r") as f:
+    with open(fn1, "r") as f:
         line2 = f.readlines()
-    with open(fn2,"r") as f:
+    with open(fn2, "r") as f:
         line1 = f.readlines()
     for l1, l2 in zip(line1, line2):
-        assert l1.replace(" ", "") == l2.replace(" ", ""), (l1,l2)
+        assert l1.replace(" ", "") == l2.replace(" ", ""), (l1, l2)
     return True
     # TODO: this requires the files look the same, might be a smarter way
-    #return filecmp.cmp(fn1, fn2)
+    # return filecmp.cmp(fn1, fn2)
 
 
 def are_equivalent_ffs(ff1, ff2):

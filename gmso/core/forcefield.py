@@ -1,10 +1,10 @@
 """Module for working with GMSO forcefields."""
+import copy
 import itertools
 import warnings
 from collections import ChainMap
 from pathlib import Path
 from typing import Iterable
-import copy
 
 from lxml import etree
 
@@ -614,11 +614,7 @@ class ForceField(object):
                 str_unytDict = copy.copy(self.units)
                 for key, value in str_unytDict.items():
                     str_unytDict[key] = str(value)
-                etree.SubElement(
-                    metadata,
-                    "Units",
-                    attrib=str_unytDict
-                )
+                etree.SubElement(metadata, "Units", attrib=str_unytDict)
             else:
                 etree.SubElement(
                     metadata,
