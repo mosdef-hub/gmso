@@ -164,6 +164,7 @@ def write_top(top, filename, top_vars=None):
         if dihedral_restraints:
             out_file.write(
                 "\n[ dihedral_restraints ]\n"
+                "#ifdef DIHRES\n"
                 ";\tai \taj \tak \tal \tfunct \ttheta_eq \tdelta_theta \tkd\n"
             )
             for dihedral in dihedral_restraints:
