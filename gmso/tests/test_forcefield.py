@@ -19,11 +19,12 @@ from gmso.tests.utils import allclose_units_mixed, get_path
 class TestForceField(BaseTest):
     @pytest.fixture
     def ff(self):
-        return ForceField(get_path("ff-example0.xml"))
+        # TODO: number of units 4 instead of 7 with backed ffutils
+        return ForceField(get_path("ff-example0.xml"), backend="gmso")
 
     @pytest.fixture
     def named_groups_ff(self):
-        return ForceField(get_path("ff-example1.xml"))
+        return ForceField(get_path("ff-example1.xml"), backend="gmso")
 
     @pytest.fixture
     def opls_ethane_foyer(self):
@@ -228,12 +229,14 @@ class TestForceField(BaseTest):
         assert ff.pairpotential_types["Xe~Xe"].member_types == ("Xe", "Xe")
 
     def test_ff_charmm_xml(self):
-        charm_ff = ForceField(get_path("trimmed_charmm.xml"))
+        charm_ff = ForceField(get_path("trimmed_charmm.xml"), backend="gmso")
 
         assert charm_ff.name == "topologyCharmm"
         assert "*~CS~SS~*" in charm_ff.dihedral_types
 
         # Test list of parameters
+        print(charm_ff.dihedral_types["*~CE1~CE1~*"].parameters)
+        # TODO: when loaded using ffutils, should see a list of K parameters
         assert isinstance(
             charm_ff.dihedral_types["*~CE1~CE1~*"].parameters["k"], list
         )
@@ -256,8 +259,9 @@ class TestForceField(BaseTest):
             ForceField(get_path("ff-example-nonunique-params.xml"))
 
     def test_missing_params(self):
+        # TODO: raise same error if backend loader is forcefield-utilities
         with pytest.raises(ForceFieldParseError):
-            ForceField(get_path("ff-example-missing-parameter.xml"))
+            ForceField(get_path("ff-example-missing-parameter.xml"), backend="gmso")
 
     def test_elementary_charge_to_coulomb(self, ff):
         elementary_charge = ff.atom_types["Li"].charge.to(u.elementary_charge)
@@ -268,25 +272,30 @@ class TestForceField(BaseTest):
         assert len(ff.atom_class_groups["CT"]) == 2
 
     def test_ff_periodic_dihedrals_from_alphanumeric_symbols(self):
-        ff = ForceField(get_path("opls_charmm_buck.xml"))
+        # TODO: load using backend forcefield-utilities to get parameters "delta" instead of "delta1"
+        ff = ForceField(get_path("opls_charmm_buck.xml"), backend="gmso")
         assert "A" in ff.atom_types["buck_O"].parameters
         with pytest.raises(TypeError):
             assert len(
                 ff.dihedral_types["opls_140~*~*~opls_140"].parameters["c0"]
             )
         assert len(ff.dihedral_types["NH2~CT1~C~O"].parameters["delta"]) == 1
+        #ff = ForceField(get_path("opls_charmm_buck.xml"), backend="forcefield-utilities")
+        #assert len(ff.dihedral_types["NH2~CT1~C~O"].parameters["delta"]) == 1
 
     def test_ff_from_etree(self):
+        # TODO: load using backend forcefield-utilities from etree
         ff_etree = lxml.etree.parse(get_path("opls_charmm_buck.xml"))
-        ff = ForceField(ff_etree)
+        ff = ForceField(ff_etree, backend="gmso")
         assert ff
 
     def test_ff_from_etree_iterable(self):
+        # TODO: load using backend forcefield-utilities from etree
         ff_etrees = [
             lxml.etree.parse(get_path("opls_charmm_buck.xml")),
             lxml.etree.parse(get_path("trimmed_charmm.xml")),
         ]
-        ff = ForceField(ff_etrees)
+        ff = ForceField(ff_etrees, backend="gmso")
         assert ff
 
     def test_ff_mixed_type_error(self):
@@ -294,6 +303,7 @@ class TestForceField(BaseTest):
             ff = ForceField([5, "20"])
 
     def test_named_potential_groups(self, named_groups_ff):
+        # TODO: get potential groups using backend forcefield-utilities
         assert named_groups_ff.potential_groups["BuckinghamPotential"]
         assert (
             named_groups_ff.angle_types["Xe~Xe~Xe"]
@@ -353,13 +363,15 @@ class TestForceField(BaseTest):
     def test_forcefield_missing_atom_types(self):
         with pytest.raises(MissingAtomTypesError):
             ff = ForceField(
-                get_path(filename=get_path("ff_missing_atom_types.xml"))
+                get_path(filename=get_path("ff_missing_atom_types.xml")),
+                backend="gmso"
             )
 
     def test_forcefield_missing_atom_types_non_strict(self):
         ff = ForceField(
             get_path(filename=get_path("ff_missing_atom_types.xml")),
             strict=False,
+            backend="gmso"
         )
 
     def test_forcefeld_get_potential_atom_type(self, opls_ethane_foyer):

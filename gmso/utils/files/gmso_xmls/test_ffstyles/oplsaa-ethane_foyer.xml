@@ -1,13 +1,13 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <ForceField name="oplsaa" version="0.0.1">
   <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.5">
-    <Units energy="kJ" distance="nm" mass="amu" charge="coulomb"/>
+    <Units energy="kJ" distance="nm" mass="amu" charge="electron_charge"/>
   </FFMetaData>
   <AtomTypes expression="ep*(-sigma**6/r**6 + sigma**12/r**12) + q/(e0*r)">
     <ParametersUnitDef parameter="ep" unit="kJ/mol"/>
     <ParametersUnitDef parameter="sigma" unit="nm"/>
     <ParametersUnitDef parameter="e0" unit="A**2*s**4/(kg*m**3)"/>
-    <ParametersUnitDef parameter="q" unit="C"/>
+    <ParametersUnitDef parameter="q" unit="electron_charge"/>
     <AtomType name="opls_135" mass="12.01078" charge="0.0" atomclass="CT" doi="10.1021/ja9621760" definition="[C;X4](C)(H)(H)H">
       <Parameters>
         <Parameter name="ep" value="0.276144"/>

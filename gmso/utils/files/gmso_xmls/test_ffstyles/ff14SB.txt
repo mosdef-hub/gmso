@@ -1,15 +1,15 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<ForceField name="charmm36-snippet" version="0.0.1">
-  <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.5">
+<ForceField name="FF14SB-snippet" version="0.0.1">
+  <FFMetaData electrostatics14Scale="0.8333" nonBonded14Scale="0.5">
     <Units energy="kJ" distance="nm" mass="amu" charge="electron_charge"/>
   </FFMetaData>
   <AtomTypes expression="epsilon*(-2*rmin**6/r**6 + rmin**12/r**12)">
     <ParametersUnitDef parameter="epsilon" unit="kcal/mol"/>
-    <ParametersUnitDef parameter="rmin" unit="Å"/>
-    <AtomType name="H" mass="1.008" charge="0.0" atomclass="H" definition="H">
+    <ParametersUnitDef parameter="sigma" unit="Å"/>
+    <AtomType name="C" mass="12.01" charge="0.0" atomclass="C" definition="Carbon atom">
       <Parameters>
-        <Parameter name="epsilon" value="-0.046"/>
-        <Parameter name="rmin" value="0.4449"/>
+        <Parameter name="epsilon" value="0.359824"/>
+        <Parameter name="sigma" value="0.339967"/>
       </Parameters>
     </AtomType>
   </AtomTypes>

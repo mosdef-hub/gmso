@@ -30,13 +30,13 @@
         <Parameter name="sigma" value="0.276144"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_139" mass="12.01078" charge="0.00" atomclass="CT" definition="[C;X4](C)(C)(C)C">
+    <AtomType name="opls_139" mass="12.01078" charge="0.0" atomclass="CT" definition="[C;X4](C)(C)(C)C">
       <Parameters>
         <Parameter name="epsilon" value="0.35"/>
         <Parameter name="sigma" value="0.276144"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_140" mass="1.00800" charge="0.06" atomclass="HC" definition="H[C;X4]">
+    <AtomType name="opls_140" mass="1.008" charge="0.06" atomclass="HC" definition="H[C;X4]">
       <Parameters>
         <Parameter name="epsilon" value="0.25"/>
         <Parameter name="sigma" value="0.12552"/>

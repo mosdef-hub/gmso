@@ -4,6 +4,7 @@ import warnings
 from collections import ChainMap
 from pathlib import Path
 from typing import Iterable
+import copy
 
 from lxml import etree
 
@@ -578,27 +579,36 @@ class ForceField(object):
             )
 
             metadata = etree.SubElement(ff_el, "FFMetaData")
-            if self.scaling_factors.get("electrostatics14Scale"):
+            if not self.scaling_factors.get("electrostatics14Scale") is None:
                 metadata.attrib["electrostatics14Scale"] = str(
                     self.scaling_factors.get("electrostatics14Scale")
                 )
-            if self.scaling_factors.get("nonBonded14Scale"):
+            if not self.scaling_factors.get("nonBonded14Scale") is None:
                 metadata.attrib["nonBonded14Scale"] = str(
                     self.scaling_factors.get("nonBonded14Scale")
                 )
 
             # ToDo: ParameterUnitsDefintions and DefaultUnits
-
-            etree.SubElement(
-                metadata,
-                "Units",
-                attrib={
-                    "energy": "kJ",
-                    "distance": "nm",
-                    "mass": "amu",
-                    "charge": "coulomb",
-                },
-            )
+            if self.units:
+                str_unytDict = copy.copy(self.units)
+                for key, value in str_unytDict.items():
+                    str_unytDict[key] = str(value)
+                etree.SubElement(
+                    metadata,
+                    "Units",
+                    attrib=str_unytDict
+                )
+            else:
+                etree.SubElement(
+                    metadata,
+                    "Units",
+                    attrib={
+                        "energy": "kJ",
+                        "distance": "nm",
+                        "mass": "amu",
+                        "charge": "coulomb",
+                    },
+                )
 
             at_groups = self.group_atom_types_by_expression()
             for expr, atom_types in at_groups.items():
@@ -631,7 +641,7 @@ class ForceField(object):
                 ("BondTypes", bond_types_groups),
                 ("AngleTypes", angle_types_groups),
                 ("DihedralTypes", dihedral_types_groups),
-                ("ImproperTypes", improper_types_groups),
+                ("DihedralTypes", improper_types_groups),
             ]:
                 for expr, potentials in potential_group.items():
                     potential_group = etree.SubElement(

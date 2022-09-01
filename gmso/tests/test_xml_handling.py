@@ -6,6 +6,7 @@ from sympy import sympify
 import os
 import glob
 import filecmp
+from forcefield_utilities import GMSOFFs
 
 from gmso.core.forcefield import ForceField
 from gmso.core.improper_type import ImproperType
@@ -18,8 +19,8 @@ from gmso.exceptions import (
 from gmso.utils.io import get_fn
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import allclose_units_mixed, get_path
+from gmso.tests.utils import get_path
 
-from forcefield_utilities import GMSOFFs
 
 # Make source directory for all xmls to grab from
 XML_DIR = get_fn("gmso_xmls")
@@ -27,8 +28,15 @@ TEST_XMLS = glob.glob(os.path.join(XML_DIR, "*/*.xml"))
 
 def compare_xml_files(fn1, fn2):
     """Hash files to check for lossless conversion."""
+    with open(fn1,"r") as f:
+        line2 = f.readlines()
+    with open(fn2,"r") as f:
+        line1 = f.readlines()
+    for l1, l2 in zip(line1, line2):
+        assert l1.replace(" ", "") == l2.replace(" ", ""), (l1,l2)
+    return True
     # TODO: this requires the files look the same, might be a smarter way
-    return filecmp.cmp(fn1, fn2)
+    #return filecmp.cmp(fn1, fn2)
 
 def are_equivalent_ffs(ff1, ff2):
     """Compare forcefields for equivalency"""
@@ -92,7 +100,7 @@ class TestXMLHandling(BaseTest):
 
     @pytest.mark.parametrize("xml", TEST_XMLS)
     def test_gmso_backend(self, xml):
-        ff = ForceField(xml)
+        ff = ForceField(xml, strict=False)
         assert isinstance(ff, ForceField)
 
     @pytest.mark.parametrize("xml", TEST_XMLS)
@@ -100,8 +108,8 @@ class TestXMLHandling(BaseTest):
         """Validate loaded xmls written out match original file."""
         ff1 = ForceField(xml, backend="forcefield_utilities")
         ff1.to_xml("tmp.xml", overwrite=True)
-        ff2 = ForceField("tmp.xml")
-        assert compare_xml_files("tmp.xml", xml)
+        ff2 = ForceField("tmp.xml", strict=False)
+        assert compare_xml_files(xml, "tmp.xml")
         assert ff1 == ff2
 
     @pytest.mark.parametrize("xml", TEST_XMLS)
@@ -116,4 +124,9 @@ class TestXMLHandling(BaseTest):
     def test_xml_error_handling(self):
         """Validate bad xml formatting in xmls."""
         pass
+
+    def test_kb_in_ffutils(self):
+        xml_path = get_path("ff-example0.xml")
+        ff = ForceField(xml_path, backend="forcefield-utilities")
+        assert ff
 
