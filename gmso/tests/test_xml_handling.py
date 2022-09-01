@@ -1,6 +1,11 @@
+import filecmp
+import glob
+import os
+
 import lxml
 import pytest
 import unyt as u
+from forcefield_utilities import GMSOFFs
 from lxml.etree import DocumentInvalid
 from sympy import sympify
 import os
@@ -16,15 +21,15 @@ from gmso.exceptions import (
     MissingAtomTypesError,
     MissingPotentialError,
 )
-from gmso.utils.io import get_fn
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import allclose_units_mixed, get_path
 from gmso.tests.utils import get_path
-
+from gmso.utils.io import get_fn
 
 # Make source directory for all xmls to grab from
 XML_DIR = get_fn("gmso_xmls")
 TEST_XMLS = glob.glob(os.path.join(XML_DIR, "*/*.xml"))
+
 
 def compare_xml_files(fn1, fn2):
     """Hash files to check for lossless conversion."""
@@ -38,10 +43,12 @@ def compare_xml_files(fn1, fn2):
     # TODO: this requires the files look the same, might be a smarter way
     #return filecmp.cmp(fn1, fn2)
 
+
 def are_equivalent_ffs(ff1, ff2):
     """Compare forcefields for equivalency"""
     # TODO: write __eq__ method for a forcefield
     return ff1 == ff2
+
 
 class TestXMLHandling(BaseTest):
     @pytest.fixture
@@ -129,4 +136,3 @@ class TestXMLHandling(BaseTest):
         xml_path = get_path("ff-example0.xml")
         ff = ForceField(xml_path, backend="forcefield-utilities")
         assert ff
-

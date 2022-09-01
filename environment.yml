@@ -7,7 +7,7 @@ dependencies:
   - unyt <= 2.8
   - boltons
   - lxml
-  - pydantic < 1.9.0
+  - pydantic>1.8
   - networkx
   - ele >= 0.2.0
   - forcefield-utilities

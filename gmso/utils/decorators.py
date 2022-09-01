@@ -3,6 +3,7 @@ import functools
 
 from gmso.abc import GMSOJSONHandler
 
+
 class register_pydantic_json(object):
     """Provides a way to register json encoders for a non-JSON serializable class."""
 
@@ -14,6 +15,7 @@ class register_pydantic_json(object):
         json_method = getattr(cls, self.method)
         GMSOJSONHandler.register(cls, json_method)
         return cls
+
 
 def deprecate_kwargs(deprecated_kwargs=None):
     if deprecated_kwargs is None:

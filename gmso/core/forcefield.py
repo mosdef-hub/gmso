@@ -8,10 +8,10 @@ import copy
 
 from lxml import etree
 
-from gmso.utils.decorators import deprecate_kwargs
 from gmso.core.element import element_by_symbol
-from gmso.exceptions import MissingPotentialError, GMSOError
+from gmso.exceptions import GMSOError, MissingPotentialError
 from gmso.utils._constants import FF_TOKENS_SEPARATOR
+from gmso.utils.decorators import deprecate_kwargs
 from gmso.utils.ff_utils import (
     parse_ff_atomtypes,
     parse_ff_connection_types,
@@ -85,15 +85,30 @@ class ForceField(object):
 
     """
 
-    def __init__(self, xml_loc=None, strict=True, greedy=True, backend="forcefield-utilities"):
+    def __init__(
+        self,
+        xml_loc=None,
+        strict=True,
+        greedy=True,
+        backend="forcefield-utilities",
+    ):
         if xml_loc is not None:
             if backend in ["gmso", "GMSO"]:
                 ff = ForceField.from_xml(xml_loc, strict, greedy)
-            elif backend in ["forcefield-utilities", "forcefield_utilities", "ff-utils", "ffutils"]:
+            elif backend in [
+                "forcefield-utilities",
+                "forcefield_utilities",
+                "ff-utils",
+                "ffutils",
+            ]:
                 ff = ForceField.load_backend_forcefield_utilities(xml_loc)
             else:
-                raise(GMSOError(f"Backend provided does not exist. Please provide one of `'gmso'` or \
-                `'forcefield-utilities'`"))
+                raise (
+                    GMSOError(
+                        f"Backend provided does not exist. Please provide one of `'gmso'` or \
+                `'forcefield-utilities'`"
+                    )
+                )
             self.name = ff.name
             self.version = ff.version
             self.atom_types = ff.atom_types
@@ -533,25 +548,26 @@ class ForceField(object):
             [
                 self.name == other.name,
                 self.version == other.version,
-                #self.atom_types == other.atom_types,
-                #self.bond_types == other.bond_types,
-                #self.angle_types == other.angle_types,
-                #self.dihedral_types == other.dihedral_types,
-                #self.improper_types == other.improper_types,
-                #self.pairpotential_types == other.pairpotential_types,
-                #self.potential_groups == other.potential_groups,
-                #self.scaling_factors == other.scaling_factors,
-                #self.combining_rule == other.combining_rule,
-                #self.units == other.units,
+                # self.atom_types == other.atom_types,
+                # self.bond_types == other.bond_types,
+                # self.angle_types == other.angle_types,
+                # self.dihedral_types == other.dihedral_types,
+                # self.improper_types == other.improper_types,
+                # self.pairpotential_types == other.pairpotential_types,
+                # self.potential_groups == other.potential_groups,
+                # self.scaling_factors == other.scaling_factors,
+                # self.combining_rule == other.combining_rule,
+                # self.units == other.units,
             ]
         )
+
     @classmethod
     def load_backend_forcefield_utilities(cls, filename):
         from forcefield_utilities.xml_loader import GMSOFFs
+
         loader = GMSOFFs()
         ff = loader.load(filename).to_gmso_ff()
         return ff
-
 
     def to_xml(self, filename, overwrite=False, backend="gmso"):
         """Get an lxml ElementTree representation of this ForceField
@@ -569,13 +585,18 @@ class ForceField(object):
             write the xml.
         """
         if not isinstance(backend, str):
-            raise(GMSOError(f"Backend provided does not exist. Please provide one of `'gmso'` or \
-            `'forcefield-utilities'`"))
-            #elif backend == "forcefield-utilities" or backend == "forcefield_utilities":
+            raise (
+                GMSOError(
+                    f"Backend provided does not exist. Please provide one of `'gmso'` or \
+            `'forcefield-utilities'`"
+                )
+            )
+            # elif backend == "forcefield-utilities" or backend == "forcefield_utilities":
             #    GMSOffs.write_xml(self)
         elif backend == "gmso":
             ff_el = etree.Element(
-                "ForceField", attrib={"name": str(self.name), "version": str(self.version)}
+                "ForceField",
+                attrib={"name": str(self.name), "version": str(self.version)},
             )
 
             metadata = etree.SubElement(ff_el, "FFMetaData")
@@ -662,7 +683,9 @@ class ForceField(object):
                                     },
                                 )
 
-                        potential_group.append(potential.etree(params_units_def))
+                        potential_group.append(
+                            potential.etree(params_units_def)
+                        )
 
             ff_etree = etree.ElementTree(element=ff_el)
 
