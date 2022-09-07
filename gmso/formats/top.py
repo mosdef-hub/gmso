@@ -32,10 +32,10 @@ def write_top(top, filename, top_vars=None):
             "fudgeQQ\n"
         )
         out_file.write(
-            "{0}\t\t\t"
-            "{1}\t\t\t"
-            "{2}\t\t\t"
-            "{3}\t\t"
+            "{0}\t"
+            "{1}\t"
+            "{2}\t"
+            "{3}\t"
             "{4}\n\n".format(
                 top_vars["nbfunc"],
                 top_vars["comb-rule"],
@@ -47,22 +47,22 @@ def write_top(top, filename, top_vars=None):
 
         out_file.write(
             "[ atomtypes ]\n"
-            "; name\t\t"
-            "at.num\t\t"
-            "mass\t\t"
-            "charge\t\t"
-            "ptype\t\t"
-            "sigma\t\t"
+            "; name\t"
+            "at.num\t"
+            "mass\t"
+            "charge\t"
+            "ptype\t"
+            "sigma\t"
             "epsilon\n"
         )
         for atom_type in top.atom_types:
             out_file.write(
-                "{0}\t\t\t"
-                "{1}\t\t\t"
-                "{2:.5f}\t\t"
-                "{3:.5f}\t\t"
-                "{4}\t\t\t"
-                "{5:.5f}\t\t\t"
+                "{0}\t"
+                "{1}\t"
+                "{2:.5f}\t"
+                "{3:.5f}\t"
+                "{4}\t"
+                "{5:.5f}\t"
                 "{6:.5f}\n".format(
                     atom_type.name,
                     _lookup_atomic_number(atom_type),
@@ -76,7 +76,7 @@ def write_top(top, filename, top_vars=None):
                 )
             )
 
-        out_file.write("\n[ moleculetype ]\n" "; name\t\tnrexcl\n")
+        out_file.write("\n[ moleculetype ]\n" "; name\tnrexcl\n")
 
         # TODO: Better parsing of site.molecule and site.residue into residues/molecules
         n_unique_molecule = len(
@@ -87,7 +87,7 @@ def write_top(top, filename, top_vars=None):
         # Treat top without molecule as one residue-like "molecule"
         elif n_unique_molecule == 0:
             out_file.write(
-                "{0}\t\t\t"
+                "{0}\t"
                 "{1}\n\n".format(
                     top.name,
                     top_vars["nrexcl"],  # Typically exclude 3 nearest neighbors
@@ -95,21 +95,21 @@ def write_top(top, filename, top_vars=None):
             )
         # TODO: Lookup and join nrexcl from each molecule object
         elif n_unique_molecule == 1:
-            out_file.write("{0}\t\t\t" "{1}\n\n".format(top.name, 3))
+            out_file.write("{0}\t" "{1}\n\n".format(top.name, 3))
 
         out_file.write(
             "[ atoms ]\n"
-            "; nr\t\ttype\tresnr\tresidue\t\tatom\tcgnr\tcharge\t\tmass\n"
+            "; nr\ttype\tresnr\tresidue\tatom\tcgnr\tcharge\tmass\n"
         )
         for site in top.sites:
             out_file.write(
-                "{0}\t\t\t"
-                "{1}\t\t"
-                "{2}\t\t"
+                "{0}\t"
+                "{1}\t"
+                "{2}\t"
                 "{3}\t"
-                "{4}\t\t"
-                "{5}\t\t"
-                "{6:.5f}\t\t"
+                "{4}\t"
+                "{5}\t"
+                "{6:.5f}\t"
                 "{7:.5f}\n".format(
                     top.get_index(site) + 1,
                     site.atom_type.name,
@@ -181,13 +181,13 @@ def write_top(top, filename, top_vars=None):
         out_file.write(
             "[ molecules ]\n"
             "; molecule\tnmols\n"
-            "{0}\t\t{1}".format(top.name, 1)
+            "{0}\t{1}".format(top.name, 1)
         )
         # elif len(top.subtops) > 0:
         #    out_file.write(
         #        '[ molecules ]\n'
         #        '; molecule\tnmols\n'
-        #        '{0}\t\t{1}'.format(top.subtops[0].name, top.n_subtops)
+        #        '{0}\t{1}'.format(top.subtops[0].name, top.n_subtops)
         #    )
 
 
