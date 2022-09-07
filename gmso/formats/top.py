@@ -350,7 +350,7 @@ def _write_restraint(top, connection, type):
 
 def _angle_restraint_writer(top, angle):
     """Write angle restraint information."""
-    line = "\t{0}\t{1}\t{2}\t{3}\t{4}\t{5:.5f}\t{6:.5f}\t{6}\n".format(
+    line = "\t{0}\t{1}\t{2}\t{3}\t{4}\t{5:.5f}\t{6:.5f}\t{7}\n".format(
         top.get_index(angle.connection_members[1]) + 1,
         top.get_index(angle.connection_members[0]) + 1,
         top.get_index(angle.connection_members[1]) + 1,
