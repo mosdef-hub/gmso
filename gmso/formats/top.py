@@ -219,11 +219,11 @@ def _get_top_vars(top, top_vars):
     """Generate a dictionary of values for the defaults directive."""
     combining_rule_to_gmx = {"lorentz": 2, "geometric": 3}
     default_top_vars = dict()
-    default_top_vars["nbfunc"] = 1
+    default_top_vars["nbfunc"] = 1  # modify this to check for lj or buckingham
     default_top_vars["comb-rule"] = combining_rule_to_gmx[top.combining_rule]
     default_top_vars["gen-pairs"] = "no"
-    default_top_vars["fudgeLJ"] = 1
-    default_top_vars["fudgeQQ"] = 1
+    default_top_vars["fudgeLJ"] = top.scaling_factors[0][2]
+    default_top_vars["fudgeQQ"] = top.scaling_factors[1][2]
     default_top_vars["nrexcl"] = 3
 
     if isinstance(top_vars, dict):
