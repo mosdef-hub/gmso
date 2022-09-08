@@ -49,6 +49,40 @@ jobs:
           name: GMSO-Coverage
           verbose: true
 
+  bleeding-edge-test:
+    if: github.event.pull_request.draft == false
+    name: Bleeding Edge mosdef Tests for GMSO
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - uses: action/checkout@v2
+        name: Checkout Branch / Pull Request
+
+      - name: Install Mamba
+        uses: mamba-org/provision-with-micromamba@main
+        with:
+          environment-file: environment-dev.yml
+          extra-specs: |
+            python=3.8
+
+      - name: Update Environment with mbuild/foyer Dependencies
+        run: |
+          micromamba update --name gmso-dev --file mbuild/environment.yml
+          micromamba update --name gmso-dev --file foyer/environment.yml
+
+      - name: Install Packages from Source
+        run: |
+          pip install -e mbuild
+          pip install -e foyer
+          pip install -e .
+
+      - name: Run Bleeding Edge Tests
+        run: |
+          python -m pytest -v --color yes --pyargs gmso
+
   docker:
     runs-on: ubuntu-latest
     needs: test
