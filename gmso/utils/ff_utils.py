@@ -367,7 +367,7 @@ def parse_ff_atomtypes(atomtypes_el, ff_meta):
             "independent_variables": None,
             "atomclass": "",
             "doi": "",
-            "overrides": "",
+            "overrides": set(),
             "definition": "",
             "description": "",
             "element": "",

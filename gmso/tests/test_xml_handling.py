@@ -8,10 +8,6 @@ import unyt as u
 from forcefield_utilities import GMSOFFs
 from lxml.etree import DocumentInvalid
 from sympy import sympify
-import os
-import glob
-import filecmp
-from forcefield_utilities import GMSOFFs
 
 from gmso.core.forcefield import ForceField
 from gmso.core.improper_type import ImproperType
@@ -23,7 +19,6 @@ from gmso.exceptions import (
 )
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import allclose_units_mixed, get_path
-from gmso.tests.utils import get_path
 from gmso.utils.io import get_fn
 
 # Make source directory for all xmls to grab from
@@ -33,21 +28,13 @@ TEST_XMLS = glob.glob(os.path.join(XML_DIR, "*/*.xml"))
 
 def compare_xml_files(fn1, fn2):
     """Hash files to check for lossless conversion."""
-    with open(fn1,"r") as f:
+    with open(fn1, "r") as f:
         line2 = f.readlines()
-    with open(fn2,"r") as f:
+    with open(fn2, "r") as f:
         line1 = f.readlines()
     for l1, l2 in zip(line1, line2):
-        assert l1.replace(" ", "") == l2.replace(" ", ""), (l1,l2)
+        assert l1.replace(" ", "") == l2.replace(" ", "")
     return True
-    # TODO: this requires the files look the same, might be a smarter way
-    #return filecmp.cmp(fn1, fn2)
-
-
-def are_equivalent_ffs(ff1, ff2):
-    """Compare forcefields for equivalency"""
-    # TODO: write __eq__ method for a forcefield
-    return ff1 == ff2
 
 
 class TestXMLHandling(BaseTest):
@@ -97,17 +84,15 @@ class TestXMLHandling(BaseTest):
 
     @pytest.mark.parametrize("xml", TEST_XMLS)
     def test_ffutils_backend(self, xml):
-        ff = ForceField()
-        ff.load_backend_forcefield_utilities(xml)
-        assert isinstance(ff, ForceField)
-        ff = ForceField().load_backend_forcefield_utilities(xml)
-        assert isinstance(ff, ForceField)
-        ff = ForceField(xml, backend="forcefield-utilities")
-        assert isinstance(ff, ForceField)
+        ff1 = ForceField(xml)
+        assert isinstance(ff1, ForceField)
+        ff2 = ForceField(xml, backend="gmso", strict=False)
+        assert isinstance(ff2, ForceField)
+        assert ff1 == ff2
 
     @pytest.mark.parametrize("xml", TEST_XMLS)
     def test_gmso_backend(self, xml):
-        ff = ForceField(xml, strict=False)
+        ff = ForceField(xml, backend="gmso", strict=False)
         assert isinstance(ff, ForceField)
 
     @pytest.mark.parametrize("xml", TEST_XMLS)
@@ -126,7 +111,7 @@ class TestXMLHandling(BaseTest):
         ff1.to_xml("tmp.xml", overwrite=True)
         ff2 = GMSOFFs().load_xml("tmp.xml").to_gmso_ff()
         assert compare_xml_files("tmp.xml", xml)
-        assert are_equivalent_ffs(ff1, ff2)
+        assert ff1 == ff2
 
     def test_xml_error_handling(self):
         """Validate bad xml formatting in xmls."""

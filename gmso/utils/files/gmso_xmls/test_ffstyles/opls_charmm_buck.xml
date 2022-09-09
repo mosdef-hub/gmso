@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <ForceField name="LJ_Buck" version="0.0.1">
   <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.5">
-    <Units energy="kJ" distance="nm" mass="amu" charge="electron_charge"/>
+    <Units energy="kJ" distance="nm" mass="amu" charge="elementary_charge"/>
   </FFMetaData>
   <AtomTypes expression="ep*(-sigma**6/r**6 + sigma**12/r**12)">
     <ParametersUnitDef parameter="ep" unit="kJ/mol"/>
@@ -185,14 +185,14 @@
     </DihedralType>
   </DihedralTypes>
   <DihedralTypes expression="k*(cos(delta - n*shi) + 1)">
-    <ParametersUnitDef parameter="k1" unit="kJ"/>
-    <ParametersUnitDef parameter="n1" unit="dimensionless"/>
-    <ParametersUnitDef parameter="delta1" unit="degree"/>
+    <ParametersUnitDef parameter="k" unit="kJ"/>
+    <ParametersUnitDef parameter="n" unit="dimensionless"/>
+    <ParametersUnitDef parameter="delta" unit="degree"/>
     <DihedralType name="charm_proper_1" type1="NH2" type2="CT1" type3="C" type4="O">
       <Parameters>
-        <Parameter name="k1" value="0.0"/>
-        <Parameter name="n1" value="1.0"/>
-        <Parameter name="delta1" value="0.0"/>
+        <Parameter name="k" value="0.0"/>
+        <Parameter name="n" value="1.0"/>
+        <Parameter name="delta" value="0.0"/>
       </Parameters>
     </DihedralType>
   </DihedralTypes>

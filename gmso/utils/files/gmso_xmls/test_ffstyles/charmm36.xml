@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <ForceField name="charmm36-snippet" version="0.0.1">
   <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.5">
-    <Units energy="kJ" distance="nm" mass="amu" charge="electron_charge"/>
+    <Units energy="kJ" distance="nm" mass="amu" charge="elementary_charge"/>
   </FFMetaData>
   <AtomTypes expression="epsilon*(-2*rmin**6/r**6 + rmin**12/r**12)">
     <ParametersUnitDef parameter="epsilon" unit="kcal/mol"/>
@@ -13,9 +13,9 @@
       </Parameters>
     </AtomType>
   </AtomTypes>
-  <BondTypes expression="kb*(b-b0)**2">    
+  <BondTypes expression="kb*(b-b0)**2">
     <ParametersUnitDef parameter="kb" unit="kcal/(mol*Å**2)"/>
-    <ParametersUnitDef parameter="b0" unit="Å"/>  
+    <ParametersUnitDef parameter="b0" unit="Å"/>
     <BondType name="BondType-Harmonic" type1="H" type2="H">
       <Parameters>
         <Parameter name="kb" value="240.0"/>

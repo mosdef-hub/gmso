@@ -6,7 +6,7 @@ from lxml import etree
 
 from gmso.abc.abstract_potential import AbstractPotential
 from gmso.utils.expression import PotentialExpression
-from gmso.utils.misc import get_xml_representation
+from gmso.utils.misc import get_xml_representation, unyt_compare
 
 
 class ParametricPotential(AbstractPotential):
@@ -163,7 +163,10 @@ class ParametricPotential(AbstractPotential):
             self.expression == other.expression
             and self.independent_variables == other.independent_variables
             and self.name == other.name
-            and self.parameters == other.parameters
+            and self.parameters.keys() == other.parameters.keys()
+            and unyt_compare(
+                self.parameters.values(), other.parameters.values()
+            )
         )
 
     def get_parameters(self, copy=False):
@@ -258,14 +261,18 @@ class ParametricPotential(AbstractPotential):
                 )
             elif isinstance(value, u.array.unyt_array):
                 params_list = etree.SubElement(
-                     params,
-                     "Parameter",
-                     attrib={
-                         "name": key,
-                     }
-                 )
+                    params,
+                    "Parameter",
+                    attrib={
+                        "name": key,
+                    },
+                )
                 for listed_val in value:
-                    xml_repr = get_xml_representation(listed_val.in_units(value_unit) if value_unit else listed_val)
+                    xml_repr = get_xml_representation(
+                        listed_val.in_units(value_unit)
+                        if value_unit
+                        else listed_val
+                    )
                     etree.SubElement(params_list, "Value").text = xml_repr
 
         return xml_element

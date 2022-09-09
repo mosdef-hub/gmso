@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <ForceField name="Flexible carbon" version="0.0.0">
   <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.5">
-    <Units energy="kJ" distance="nm" mass="amu" charge="electron_charge"/>
+    <Units energy="kJ" distance="nm" mass="amu" charge="elementary_charge"/>
   </FFMetaData>
   <AtomTypes expression="4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)">
     <ParametersUnitDef parameter="sigma" unit="nm"/>

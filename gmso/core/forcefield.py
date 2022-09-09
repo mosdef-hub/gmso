@@ -1,10 +1,10 @@
 """Module for working with GMSO forcefields."""
+import copy
 import itertools
 import warnings
 from collections import ChainMap
 from pathlib import Path
 from typing import Iterable
-import copy
 
 from lxml import etree
 
@@ -19,7 +19,7 @@ from gmso.utils.ff_utils import (
     parse_ff_pairpotential_types,
     validate,
 )
-from gmso.utils.misc import mask_with, validate_type
+from gmso.utils.misc import mask_with, unyt_compare, validate_type
 
 
 def _group_by_expression(potential_types):
@@ -84,7 +84,8 @@ class ForceField(object):
         Function to validate the gmso XML file
 
     """
-    @deprecate_kwargs([("backend","gmso"), ("backend", "GMSO")])
+
+    @deprecate_kwargs([("backend", "gmso"), ("backend", "GMSO")])
     def __init__(
         self,
         xml_loc=None,
@@ -544,19 +545,20 @@ class ForceField(object):
         return f"<ForceField {self.name}, id: {id(self)}>"
 
     def __eq__(self, other):
+        # TODO: units don't match between gmso and ffutils loading
         return all(
             [
                 self.name == other.name,
                 self.version == other.version,
-                # self.atom_types == other.atom_types,
-                # self.bond_types == other.bond_types,
-                # self.angle_types == other.angle_types,
-                # self.dihedral_types == other.dihedral_types,
-                # self.improper_types == other.improper_types,
-                # self.pairpotential_types == other.pairpotential_types,
-                # self.potential_groups == other.potential_groups,
-                # self.scaling_factors == other.scaling_factors,
-                # self.combining_rule == other.combining_rule,
+                self.atom_types == other.atom_types,
+                self.bond_types == other.bond_types,
+                self.angle_types == other.angle_types,
+                self.dihedral_types == other.dihedral_types,
+                self.improper_types == other.improper_types,
+                self.pairpotential_types == other.pairpotential_types,
+                self.potential_groups == other.potential_groups,
+                self.scaling_factors == other.scaling_factors,
+                self.combining_rule == other.combining_rule,
                 # self.units == other.units,
             ]
         )
@@ -614,11 +616,7 @@ class ForceField(object):
                 str_unytDict = copy.copy(self.units)
                 for key, value in str_unytDict.items():
                     str_unytDict[key] = str(value)
-                etree.SubElement(
-                    metadata,
-                    "Units",
-                    attrib=str_unytDict
-                )
+                etree.SubElement(metadata, "Units", attrib=str_unytDict)
             else:
                 etree.SubElement(
                     metadata,

@@ -8,7 +8,11 @@ from pydantic import Field, validator
 from gmso.core.parametric_potential import ParametricPotential
 from gmso.utils._constants import UNIT_WARNING_STRING
 from gmso.utils.expression import PotentialExpression
-from gmso.utils.misc import ensure_valid_dimensions, unyt_to_hashable
+from gmso.utils.misc import (
+    ensure_valid_dimensions,
+    unyt_compare,
+    unyt_to_hashable,
+)
 
 
 class AtomType(ParametricPotential):
@@ -152,7 +156,10 @@ class AtomType(ParametricPotential):
             self.name == other.name
             and self.expression == other.expression
             and self.independent_variables == other.independent_variables
-            and self.parameters == other.parameters
+            and self.parameters.keys() == other.parameters.keys()
+            and unyt_compare(
+                self.parameters.values(), other.parameters.values()
+            )
             and self.charge == other.charge
             and self.atomclass == other.atomclass
             and self.mass == other.mass
