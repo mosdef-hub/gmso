@@ -1,9 +1,9 @@
 import lxml
 import pytest
 import unyt as u
-from unyt.testing import assert_allclose_units
 from lxml.etree import DocumentInvalid
 from sympy import sympify
+from unyt.testing import assert_allclose_units
 
 from gmso.core.forcefield import ForceField
 from gmso.core.improper_type import ImproperType
@@ -246,7 +246,8 @@ class TestForceField(BaseTest):
         assert_allclose_units(
             charm_ff.dihedral_types["*~CE1~CE1~*"].parameters["k"],
             [0.6276, 35.564] * u.kJ,
-            rtol=1e-5, atol=1e-8
+            rtol=1e-5,
+            atol=1e-8,
         )
 
     def test_non_unique_params(self):
@@ -275,7 +276,9 @@ class TestForceField(BaseTest):
             assert len(
                 ff.dihedral_types["opls_140~*~*~opls_140"].parameters["c0"]
             )
-        assert ff.dihedral_types["NH2~CT1~C~O"].parameters["delta"] == u.unyt_quantity(0.0, 'degree')
+        assert ff.dihedral_types["NH2~CT1~C~O"].parameters[
+            "delta"
+        ] == u.unyt_quantity(0.0, "degree")
 
     def test_ff_from_etree(self):
         # TODO: load using backend forcefield-utilities from etree
@@ -298,7 +301,9 @@ class TestForceField(BaseTest):
 
     def test_named_potential_groups(self):
         # TODO: get potential groups using backend forcefield-utilities
-        named_groups_ff = ForceField(get_path("ff-example1.xml"), backend="gmso")
+        named_groups_ff = ForceField(
+            get_path("ff-example1.xml"), backend="gmso"
+        )
         assert named_groups_ff.potential_groups["BuckinghamPotential"]
         assert (
             named_groups_ff.angle_types["Xe~Xe~Xe"]

@@ -236,7 +236,7 @@ class BaseTest:
 
     @pytest.fixture
     def foyer_periodic(self):
-        #TODO: this errors out with backend="ffutils"
+        # TODO: this errors out with backend="ffutils"
         if has_foyer:
             import foyer
             from foyer.tests.utils import get_fn

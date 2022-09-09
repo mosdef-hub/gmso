@@ -36,6 +36,7 @@ def compare_xml_files(fn1, fn2):
         assert l1.replace(" ", "") == l2.replace(" ", "")
     return True
 
+
 class TestXMLHandling(BaseTest):
     @pytest.fixture
     def ff(self):

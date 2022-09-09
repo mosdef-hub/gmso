@@ -54,7 +54,10 @@ def _deprecate_kwargs(kwargs, deprecated_kwargs):
         )
     if added_args:
         warnings.warn(
-            message.format(dep_args=", ".join(added_args), dep_params=", ".join(added_params)),
+            message.format(
+                dep_args=", ".join(added_args),
+                dep_params=", ".join(added_params),
+            ),
             DeprecationWarning,
             3,
         )
