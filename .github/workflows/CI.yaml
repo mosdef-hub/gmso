@@ -68,6 +68,11 @@ jobs:
           extra-specs: |
             python=3.8
 
+      - name: Clone mbuild and foyer
+        run: |
+          git clone https://github.com/mosdef-hub/mbuild.git
+          git clone https://github.com/mosdef-hub/foyer.git
+
       - name: Update Environment with mbuild/foyer Dependencies
         run: |
           micromamba update --name gmso-dev --file mbuild/environment.yml
