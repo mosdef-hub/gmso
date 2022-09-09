@@ -1,6 +1,7 @@
 import lxml
 import pytest
 import unyt as u
+from unyt.testing import assert_allclose_units
 from lxml.etree import DocumentInvalid
 from sympy import sympify
 
@@ -19,12 +20,11 @@ from gmso.tests.utils import allclose_units_mixed, get_path
 class TestForceField(BaseTest):
     @pytest.fixture
     def ff(self):
-        # TODO: number of units 4 instead of 7 with backed ffutils
-        return ForceField(get_path("ff-example0.xml"), backend="gmso")
+        return ForceField(get_path("ff-example0.xml"))
 
     @pytest.fixture
     def named_groups_ff(self):
-        return ForceField(get_path("ff-example1.xml"), backend="gmso")
+        return ForceField(get_path("ff-example1.xml"))
 
     @pytest.fixture
     def opls_ethane_foyer(self):
@@ -51,17 +51,14 @@ class TestForceField(BaseTest):
     @pytest.mark.parametrize(
         "unit_name,unit_value",
         [
-            ("energy", u.Unit(u.K * u.kb)),
+            ("energy", u.Unit(u.kb)),
             ("mass", u.gram / u.mol),
-            ("temperature", u.K),
             ("charge", u.coulomb),
-            ("angle", u.rad),
-            ("time", u.ps),
             ("distance", u.nm),
         ],
     )
     def test_units_from_xml(self, ff, unit_name, unit_value):
-        assert len(ff.units.keys()) == 7
+        assert len(ff.units.keys()) == 4
         assert ff.units[unit_name] == unit_value
 
     def test_ff_atomtypes_from_xml(self, ff):
@@ -234,11 +231,8 @@ class TestForceField(BaseTest):
         assert charm_ff.name == "topologyCharmm"
         assert "*~CS~SS~*" in charm_ff.dihedral_types
 
-        # Test list of parameters
-        print(charm_ff.dihedral_types["*~CE1~CE1~*"].parameters)
-        # TODO: when loaded using ffutils, should see a list of K parameters
         assert isinstance(
-            charm_ff.dihedral_types["*~CE1~CE1~*"].parameters["k"], list
+            charm_ff.dihedral_types["*~CE1~CE1~*"].parameters["k"], u.unyt_array
         )
 
         # This ensures that even though the parameters is a list, they can be hashed (by equality checks)
@@ -249,10 +243,11 @@ class TestForceField(BaseTest):
         assert len(charm_ff.dihedral_types["*~CE1~CE1~*"].parameters["k"]) == 2
 
         # Test Correct Parameter Values
-        assert charm_ff.dihedral_types["*~CE1~CE1~*"].parameters["k"] == [
-            u.unyt_quantity(0.6276, u.kJ),
-            u.unyt_quantity(35.564, u.kJ),
-        ]
+        assert_allclose_units(
+            charm_ff.dihedral_types["*~CE1~CE1~*"].parameters["k"],
+            [0.6276, 35.564] * u.kJ,
+            rtol=1e-5, atol=1e-8
+        )
 
     def test_non_unique_params(self):
         with pytest.raises(DocumentInvalid):
@@ -272,28 +267,25 @@ class TestForceField(BaseTest):
         assert len(ff.atom_class_groups["CT"]) == 2
 
     def test_ff_periodic_dihedrals_from_alphanumeric_symbols(self):
-        # TODO: load using backend forcefield-utilities to get parameters "delta" instead of "delta1"
-        ff = ForceField(get_path("opls_charmm_buck.xml"), backend="gmso")
+        ff = ForceField(get_path("opls_charmm_buck.xml"))
         assert "A" in ff.atom_types["buck_O"].parameters
         with pytest.raises(TypeError):
             assert len(
                 ff.dihedral_types["opls_140~*~*~opls_140"].parameters["c0"]
             )
-        assert len(ff.dihedral_types["NH2~CT1~C~O"].parameters["delta"]) == 1
-        #ff = ForceField(get_path("opls_charmm_buck.xml"), backend="forcefield-utilities")
-        #assert len(ff.dihedral_types["NH2~CT1~C~O"].parameters["delta"]) == 1
+        assert ff.dihedral_types["NH2~CT1~C~O"].parameters["delta"] == u.unyt_quantity(0.0, 'degree')
 
     def test_ff_from_etree(self):
         # TODO: load using backend forcefield-utilities from etree
-        ff_etree = lxml.etree.parse(get_path("opls_charmm_buck.xml"))
+        ff_etree = lxml.etree.parse(get_path("ethylene.xml"))
         ff = ForceField(ff_etree, backend="gmso")
         assert ff
 
     def test_ff_from_etree_iterable(self):
         # TODO: load using backend forcefield-utilities from etree
         ff_etrees = [
-            lxml.etree.parse(get_path("opls_charmm_buck.xml")),
-            lxml.etree.parse(get_path("trimmed_charmm.xml")),
+            lxml.etree.parse(get_path("carbon.xml")),
+            lxml.etree.parse(get_path("ethylene.xml")),
         ]
         ff = ForceField(ff_etrees, backend="gmso")
         assert ff
@@ -302,8 +294,9 @@ class TestForceField(BaseTest):
         with pytest.raises(TypeError):
             ff = ForceField([5, "20"])
 
-    def test_named_potential_groups(self, named_groups_ff):
+    def test_named_potential_groups(self):
         # TODO: get potential groups using backend forcefield-utilities
+        named_groups_ff = ForceField(get_path("ff-example1.xml"), backend="gmso")
         assert named_groups_ff.potential_groups["BuckinghamPotential"]
         assert (
             named_groups_ff.angle_types["Xe~Xe~Xe"]
@@ -654,3 +647,7 @@ class TestForceField(BaseTest):
             params = dih_with_list.get_parameters()
             assert u.allclose_units(params["theta_0"], [25, 32] * u.radian)
             assert u.allclose_units(params["k"], [38, 45] * u.kJ / u.mol)
+
+    def test_deprecated_gmso(self):
+        with pytest.warns(DeprecationWarning):
+            ForceField(get_path("ff-example0.xml"), backend="gmso")

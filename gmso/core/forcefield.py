@@ -84,7 +84,7 @@ class ForceField(object):
         Function to validate the gmso XML file
 
     """
-
+    @deprecate_kwargs([("backend","gmso"), ("backend", "GMSO")])
     def __init__(
         self,
         xml_loc=None,
@@ -101,7 +101,7 @@ class ForceField(object):
                 "ff-utils",
                 "ffutils",
             ]:
-                ff = ForceField.load_backend_forcefield_utilities(xml_loc)
+                ff = ForceField.xml_from_forcefield_utilities(xml_loc)
             else:
                 raise (
                     GMSOError(
@@ -562,7 +562,7 @@ class ForceField(object):
         )
 
     @classmethod
-    def load_backend_forcefield_utilities(cls, filename):
+    def xml_from_forcefield_utilities(cls, filename):
         from forcefield_utilities.xml_loader import GMSOFFs
 
         loader = GMSOFFs()
