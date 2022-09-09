@@ -256,7 +256,9 @@ class TestForceField(BaseTest):
     def test_missing_params(self):
         # TODO: raise same error if backend loader is forcefield-utilities
         with pytest.raises(ForceFieldParseError):
-            ForceField(get_path("ff-example-missing-parameter.xml"), backend="gmso")
+            ForceField(
+                get_path("ff-example-missing-parameter.xml"), backend="gmso"
+            )
 
     def test_elementary_charge_to_coulomb(self, ff):
         elementary_charge = ff.atom_types["Li"].charge.to(u.elementary_charge)
@@ -357,14 +359,14 @@ class TestForceField(BaseTest):
         with pytest.raises(MissingAtomTypesError):
             ff = ForceField(
                 get_path(filename=get_path("ff_missing_atom_types.xml")),
-                backend="gmso"
+                backend="gmso",
             )
 
     def test_forcefield_missing_atom_types_non_strict(self):
         ff = ForceField(
             get_path(filename=get_path("ff_missing_atom_types.xml")),
             strict=False,
-            backend="gmso"
+            backend="gmso",
         )
 
     def test_forcefeld_get_potential_atom_type(self, opls_ethane_foyer):
