@@ -66,7 +66,7 @@ jobs:
           extra-specs: |
             python=3.8
 
-      - name: Clone mbuild and foyer
+      - name: Clone mBuild and Foyer
         run: |
           git clone https://github.com/mosdef-hub/mbuild.git
           git clone https://github.com/mosdef-hub/foyer.git
