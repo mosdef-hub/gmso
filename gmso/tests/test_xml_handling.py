@@ -1,24 +1,12 @@
-import filecmp
 import glob
 import os
 
-import lxml
 import pytest
-import unyt as u
 from forcefield_utilities import GMSOFFs
-from lxml.etree import DocumentInvalid
-from sympy import sympify
 
 from gmso.core.forcefield import ForceField
-from gmso.core.improper_type import ImproperType
-from gmso.exceptions import (
-    ForceFieldError,
-    ForceFieldParseError,
-    MissingAtomTypesError,
-    MissingPotentialError,
-)
 from gmso.tests.base_test import BaseTest
-from gmso.tests.utils import allclose_units_mixed, get_path
+from gmso.tests.utils import get_path
 from gmso.utils.io import get_fn
 
 # Make source directory for all xmls to grab from

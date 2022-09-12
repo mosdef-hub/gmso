@@ -19,7 +19,7 @@ from gmso.utils.ff_utils import (
     parse_ff_pairpotential_types,
     validate,
 )
-from gmso.utils.misc import mask_with, unyt_compare, validate_type
+from gmso.utils.misc import mask_with, validate_type
 
 
 def _group_by_expression(potential_types):
@@ -594,7 +594,7 @@ class ForceField(object):
             "forcefield-utilities",
             "ffutils",
         ]:
-            raise NotImplemented(
+            raise NotImplementedError(
                 "The forcefield utilities module does not have an xml writer as of yet."
             )
         else:
