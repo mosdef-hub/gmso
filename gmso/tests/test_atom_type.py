@@ -145,7 +145,6 @@ class TestAtomType(BaseTest):
         assert first_type != different_name
         assert first_type != different_charge
         assert first_type != different_function
-        print(first_type == different_params)
         assert first_type != different_params
         assert first_type != different_mass
 

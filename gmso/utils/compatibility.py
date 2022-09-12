@@ -50,7 +50,6 @@ def check_compatibility(topology, accepted_potentials):
 def _check_single_potential(potential, accepted_potentials):
     """Check to see if a single given potential is in the list of accepted potentials."""
     for ref in accepted_potentials:
-        print(ref.independent_variables, potential.independent_variables)
         if ref.independent_variables == potential.independent_variables:
             if sympy.simplify(ref.expression - potential.expression) == 0:
                 return {potential: ref.name}

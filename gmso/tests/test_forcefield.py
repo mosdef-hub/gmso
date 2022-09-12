@@ -282,15 +282,15 @@ class TestForceField(BaseTest):
 
     def test_ff_from_etree(self):
         # TODO: load using backend forcefield-utilities from etree
-        ff_etree = lxml.etree.parse(get_path("ethylene.xml"))
+        ff_etree = lxml.etree.parse(get_path("opls_charmm_buck.xml"))
         ff = ForceField(ff_etree, backend="gmso")
         assert ff
 
     def test_ff_from_etree_iterable(self):
         # TODO: load using backend forcefield-utilities from etree
         ff_etrees = [
-            lxml.etree.parse(get_path("carbon.xml")),
-            lxml.etree.parse(get_path("ethylene.xml")),
+            lxml.etree.parse(get_path("opls_charmm_buck.xml")),
+            lxml.etree.parse(get_path("trimmed_charmm.xml")),
         ]
         ff = ForceField(ff_etrees, backend="gmso")
         assert ff
