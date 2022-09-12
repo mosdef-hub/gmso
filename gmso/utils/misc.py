@@ -13,9 +13,9 @@ def unyt_compare(units1, units2):
     for unit1, unit2 in zip(units1, units2):
         try:
             u.testing.assert_allclose_units(unit1, unit2, rtol=1e-5, atol=1e-8)
-            return True
         except AssertionError:
             return False
+    return True
 
 
 def unyt_to_hashable(unyt_or_unyt_iter):
