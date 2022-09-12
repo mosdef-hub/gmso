@@ -2,9 +2,10 @@ name: gmso
 channels:
   - conda-forge
 dependencies:
+  - python>=3.8
   - numpy
   - sympy
-  - unyt <= 2.8
+  - unyt
   - boltons
   - lxml
   - pydantic>1.8
