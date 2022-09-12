@@ -589,8 +589,14 @@ class ForceField(object):
         """
         if backend == "gmso" or backend == "GMSO":
             self._xml_from_gmso(filename, overwrite)
-        elif backend in ["forcefield_utilities", "forcefield-utilities", "ffutils"]:
-            raise NotImplemented("The forcefield utilities module does not have an xml writer as of yet.")
+        elif backend in [
+            "forcefield_utilities",
+            "forcefield-utilities",
+            "ffutils",
+        ]:
+            raise NotImplemented(
+                "The forcefield utilities module does not have an xml writer as of yet."
+            )
         else:
             raise (
                 GMSOError(
@@ -686,9 +692,7 @@ class ForceField(object):
                                 },
                             )
 
-                    potential_group.append(
-                        potential.etree(params_units_def)
-                    )
+                    potential_group.append(potential.etree(params_units_def))
 
         ff_etree = etree.ElementTree(element=ff_el)
 
