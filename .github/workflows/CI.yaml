@@ -76,7 +76,7 @@ jobs:
         run: |
           micromamba update --name gmso-dev --file mbuild/environment.yml
           micromamba update --name gmso-dev --file foyer/environment.yml
-          micromamba update --name gmso-dev --file forcefield-utilities/environment.yml
+          micromamba update --name gmso-dev --file forcefield-utilities/environment-dev.yml
 
       - name: Install Packages from Source
         run: |
