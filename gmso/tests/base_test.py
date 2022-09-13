@@ -236,22 +236,24 @@ class BaseTest:
 
     @pytest.fixture
     def foyer_periodic(self):
+        # TODO: this errors out with backend="ffutils"
         if has_foyer:
             import foyer
             from foyer.tests.utils import get_fn
         from_foyer_xml(get_fn("oplsaa-periodic.xml"), overwrite=True)
-        gmso_ff = ForceField("oplsaa-periodic_gmso.xml")
+        gmso_ff = ForceField("oplsaa-periodic_gmso.xml", backend="gmso")
 
         return gmso_ff
 
     @pytest.fixture
     def foyer_urey_bradley(self):
+        # TODO: this errors out with backend="ffutils"
         if has_foyer:
             import foyer
             from foyer.tests.utils import get_fn
 
             from_foyer_xml(get_fn("charmm36_cooh.xml"), overwrite=True)
-            gmso_ff = ForceField("charmm36_cooh_gmso.xml")
+            gmso_ff = ForceField("charmm36_cooh_gmso.xml", backend="gmso")
 
             return gmso_ff
 

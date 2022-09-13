@@ -27,7 +27,9 @@ def check_compatibility(topology, accepted_potentials):
     for atom_type in topology.atom_types:
         potential_form = _check_single_potential(atom_type, accepted_potentials)
         if not potential_form:
-            raise EngineIncompatibilityError
+            raise EngineIncompatibilityError(
+                f"Potential {atom_type} is not in the list of accepted_potentials {accepted_potentials}"
+            )
         else:
             potential_forms_dict.update(potential_form)
 
@@ -36,7 +38,9 @@ def check_compatibility(topology, accepted_potentials):
             connection_type, accepted_potentials
         )
         if not potential_form:
-            raise EngineIncompatibilityError
+            raise EngineIncompatibilityError(
+                f"Potential {connection_type} is not in the list of accepted_potentials {accepted_potentials}"
+            )
         else:
             potential_forms_dict.update(potential_form)
 

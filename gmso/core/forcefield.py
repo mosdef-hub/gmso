@@ -1,4 +1,5 @@
 """Module for working with GMSO forcefields."""
+import copy
 import itertools
 import warnings
 from collections import ChainMap
@@ -8,8 +9,9 @@ from typing import Iterable
 from lxml import etree
 
 from gmso.core.element import element_by_symbol
-from gmso.exceptions import MissingPotentialError
+from gmso.exceptions import GMSOError, MissingPotentialError
 from gmso.utils._constants import FF_TOKENS_SEPARATOR
+from gmso.utils.decorators import deprecate_kwargs
 from gmso.utils.ff_utils import (
     parse_ff_atomtypes,
     parse_ff_connection_types,
@@ -51,6 +53,9 @@ class ForceField(object):
         If true, perform a strict validation of the forcefield XML file
     greedy: bool, default=True
         If True, when using strict mode, fail on the first error/mismatch
+    backend: str, default="gmso"
+        Can be "gmso" or "forcefield-utilities". This will define the methods to
+        load the forcefield.
 
     Attributes
     ----------
@@ -80,9 +85,32 @@ class ForceField(object):
 
     """
 
-    def __init__(self, xml_loc=None, strict=True, greedy=True):
+    @deprecate_kwargs([("backend", "gmso"), ("backend", "GMSO")])
+    def __init__(
+        self,
+        xml_loc=None,
+        strict=True,
+        greedy=True,
+        backend="forcefield-utilities",
+    ):
         if xml_loc is not None:
-            ff = ForceField.from_xml(xml_loc, strict, greedy)
+            if backend in ["gmso", "GMSO"]:
+                ff = ForceField.from_xml(xml_loc, strict, greedy)
+            elif backend in [
+                "forcefield-utilities",
+                "forcefield_utilities",
+                "ff-utils",
+                "ff_utils",
+                "ffutils",
+            ]:
+                ff = ForceField.xml_from_forcefield_utilities(xml_loc)
+            else:
+                raise (
+                    GMSOError(
+                        f"Backend provided does not exist. Please provide one of `'gmso'` or \
+                `'forcefield-utilities'`"
+                    )
+                )
             self.name = ff.name
             self.version = ff.version
             self.atom_types = ff.atom_types
@@ -517,7 +545,34 @@ class ForceField(object):
         """Return a string representation of the ForceField."""
         return f"<ForceField {self.name}, id: {id(self)}>"
 
-    def xml(self, filename, overwrite=False):
+    def __eq__(self, other):
+        # TODO: units don't match between gmso and ffutils loading
+        return all(
+            [
+                self.name == other.name,
+                self.version == other.version,
+                self.atom_types == other.atom_types,
+                self.bond_types == other.bond_types,
+                self.angle_types == other.angle_types,
+                self.dihedral_types == other.dihedral_types,
+                self.improper_types == other.improper_types,
+                self.pairpotential_types == other.pairpotential_types,
+                self.potential_groups == other.potential_groups,
+                self.scaling_factors == other.scaling_factors,
+                self.combining_rule == other.combining_rule,
+                # self.units == other.units,
+            ]
+        )
+
+    @classmethod
+    def xml_from_forcefield_utilities(cls, filename):
+        from forcefield_utilities.xml_loader import GMSOFFs
+
+        loader = GMSOFFs()
+        ff = loader.load(filename).to_gmso_ff()
+        return ff
+
+    def to_xml(self, filename, overwrite=False, backend="gmso"):
         """Get an lxml ElementTree representation of this ForceField
 
         Parameters
@@ -527,33 +582,63 @@ class ForceField(object):
 
         overwrite: bool, default=False
             If True, overwrite an existing file if it exists
+
+        backend: str, default="gmso"
+            Can be "gmso" or "forcefield-utilities". This will define the methods to
+            write the xml.
         """
+        if backend == "gmso" or backend == "GMSO":
+            self._xml_from_gmso(filename, overwrite)
+        elif backend in [
+            "forcefield_utilities",
+            "forcefield-utilities",
+            "ffutils",
+        ]:
+            raise NotImplementedError(
+                "The forcefield utilities module does not have an xml writer as of yet."
+            )
+        else:
+            raise (
+                GMSOError(
+                    f"Backend provided does not exist. Please provide one of `'gmso'` or \
+            `'forcefield-utilities'`"
+                )
+            )
+
+    def _xml_from_gmso(self, filename, overwrite=False):
+        """Write out an xml file with GMSO as the backend."""
         ff_el = etree.Element(
-            "ForceField", attrib={"name": self.name, "version": self.version}
+            "ForceField",
+            attrib={"name": str(self.name), "version": str(self.version)},
         )
 
         metadata = etree.SubElement(ff_el, "FFMetaData")
-        if self.scaling_factors.get("electrostatics14Scale"):
+        if not self.scaling_factors.get("electrostatics14Scale") is None:
             metadata.attrib["electrostatics14Scale"] = str(
                 self.scaling_factors.get("electrostatics14Scale")
             )
-        if self.scaling_factors.get("nonBonded14Scale"):
+        if not self.scaling_factors.get("nonBonded14Scale") is None:
             metadata.attrib["nonBonded14Scale"] = str(
                 self.scaling_factors.get("nonBonded14Scale")
             )
 
         # ToDo: ParameterUnitsDefintions and DefaultUnits
-
-        etree.SubElement(
-            metadata,
-            "Units",
-            attrib={
-                "energy": "K*kb",
-                "distance": "nm",
-                "mass": "amu",
-                "charge": "coulomb",
-            },
-        )
+        if self.units:
+            str_unytDict = copy.copy(self.units)
+            for key, value in str_unytDict.items():
+                str_unytDict[key] = str(value)
+            etree.SubElement(metadata, "Units", attrib=str_unytDict)
+        else:
+            etree.SubElement(
+                metadata,
+                "Units",
+                attrib={
+                    "energy": "kJ",
+                    "distance": "nm",
+                    "mass": "amu",
+                    "charge": "coulomb",
+                },
+            )
 
         at_groups = self.group_atom_types_by_expression()
         for expr, atom_types in at_groups.items():
@@ -586,7 +671,7 @@ class ForceField(object):
             ("BondTypes", bond_types_groups),
             ("AngleTypes", angle_types_groups),
             ("DihedralTypes", dihedral_types_groups),
-            ("ImproperTypes", improper_types_groups),
+            ("DihedralTypes", improper_types_groups),
         ]:
             for expr, potentials in potential_group.items():
                 potential_group = etree.SubElement(
@@ -660,6 +745,7 @@ class ForceField(object):
             A gmso.Forcefield object with a collection of Potential objects
             created using the information in the XML file
         """
+
         if not isinstance(xmls_or_etrees, Iterable) or isinstance(
             xmls_or_etrees, str
         ):
