@@ -32,10 +32,10 @@ def write_top(top, filename, top_vars=None):
             "fudgeQQ\n"
         )
         out_file.write(
-            "{0}\t"
-            "{1}\t"
-            "{2}\t"
-            "{3}\t"
+            "{0}\t\t\t"
+            "{1}\t\t\t"
+            "{2}\t\t"
+            "{3}\t\t"
             "{4}\n\n".format(
                 top_vars["nbfunc"],
                 top_vars["comb-rule"],
@@ -55,37 +55,44 @@ def write_top(top, filename, top_vars=None):
             "sigma\t"
             "epsilon\n"
         )
-        for atom_type in top.atom_types:
-            out_file.write(
-                "{0}\t"
-                "{1}\t"
-                "{2:.5f}\t"
-                "{3:.5f}\t"
-                "{4}\t"
-                "{5:.5f}\t"
-                "{6:.5f}\n".format(
-                    atom_type.name,
-                    _lookup_atomic_number(atom_type),
-                    atom_type.mass.in_units(u.amu).value,
-                    atom_type.charge.in_units(u.elementary_charge).value,
-                    "A",
-                    atom_type.parameters["sigma"].in_units(u.nanometer).value,
-                    atom_type.parameters["epsilon"]
-                    .in_units(u.Unit("kJ/mol"))
-                    .value,
+
+        # Define unique molecule by name only
+        unique_tag = {
+            tag: list()
+            for tag in top.unique_site_labels("molecule", name_only=True)
+        }
+        for tag in top.unique_site_labels("molecule", name_only=True):
+            unique_tag[tag.name].append(tag)
+
+        for tag in unique_tag:
+            for atom in top.iter_site_by_molecule(unique_tag[tag][0]):
+                atom_type = atom.atom_type
+                out_file.write(
+                    "{0}\t"
+                    "{1}\t"
+                    "{2:.5f}\t"
+                    "{3:.5f}\t"
+                    "{4}\t"
+                    "{5:.5f}\t"
+                    "{6:.5f}\n".format(
+                        atom_type.name,
+                        _lookup_atomic_number(atom_type),
+                        atom_type.mass.in_units(u.amu).value,
+                        atom_type.charge.in_units(u.elementary_charge).value,
+                        tag,
+                        atom_type.parameters["sigma"]
+                        .in_units(u.nanometer)
+                        .value,
+                        atom_type.parameters["epsilon"]
+                        .in_units(u.Unit("kJ/mol"))
+                        .value,
+                    )
                 )
-            )
 
         out_file.write("\n[ moleculetype ]\n" "; name\tnrexcl\n")
 
-        # TODO: Better parsing of site.molecule and site.residue into residues/molecules
-        n_unique_molecule = len(
-            top.unique_site_labels("molecule", name_only=True)
-        )
-        if n_unique_molecule > 1:
-            raise NotImplementedError
         # Treat top without molecule as one residue-like "molecule"
-        elif n_unique_molecule == 0:
+        if len(unique_tag) == 0:
             out_file.write(
                 "{0}\t"
                 "{1}\n\n".format(
@@ -94,8 +101,9 @@ def write_top(top, filename, top_vars=None):
                 )
             )
         # TODO: Lookup and join nrexcl from each molecule object
-        elif n_unique_molecule == 1:
-            out_file.write("{0}\t" "{1}\n\n".format(top.name, 3))
+        else:
+            for tag in unique_tag:
+                out_file.write("{0}\t" "{1}\n".format(tag, 3))
 
         out_file.write(
             "[ atoms ]\n"
