@@ -1,0 +1,83 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ForceField name="FF14SB-snippet" version="0.0.1">
+  <FFMetaData electrostatics14Scale="0.8333" nonBonded14Scale="0.5">
+    <Units energy="kJ" distance="nm" mass="amu" charge="electron_charge"/>
+  </FFMetaData>
+  <AtomTypes expression="epsilon*(-2*rmin**6/r**6 + rmin**12/r**12)">
+    <ParametersUnitDef parameter="epsilon" unit="kcal/mol"/>
+    <ParametersUnitDef parameter="sigma" unit="Å"/>
+    <AtomType name="C" mass="12.01" charge="0.0" atomclass="C" definition="Carbon atom">
+      <Parameters>
+        <Parameter name="epsilon" value="0.359824"/>
+        <Parameter name="sigma" value="0.339967"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+  <BondTypes expression="kb*(b-b0)**2">
+    <ParametersUnitDef parameter="kb" unit="kcal/(mol*Å**2)"/>
+    <ParametersUnitDef parameter="b0" unit="Å"/>
+    <BondType name="BondType-Harmonic" type1="H" type2="H">
+      <Parameters>
+        <Parameter name="kb" value="240.0"/>
+        <Parameter name="b0" value="1.455"/>
+      </Parameters>
+    </BondType>
+  </BondTypes>
+  <AngleTypes expression="ktheta * (theta - theta0)**2">
+    <ParametersUnitDef parameter="ktheta" unit="kcal/(mol*rad**2)"/>
+    <ParametersUnitDef parameter="theta0" unit="degree"/>
+    <AngleType name="AngleType-Harmonic-1" type1="H" type2="H" type3="H">
+      <Parameters>
+        <Parameter name="ktheta" value="50.0"/>
+        <Parameter name="theta0" value="111.0"/>
+      </Parameters>
+  </AngleType>
+  </AngleTypes>
+  <AngleTypes expression="Kub * (AS - S0)**2">
+    <ParametersUnitDef parameter="Kub" unit="kcal/(mol*Å**2)"/>
+    <ParametersUnitDef parameter="S0" unit="Å"/>
+    <AngleType name="AngleType-Urey_Bradley-1" type1="H" type2="H" type3="C">
+      <Parameters>
+        <Parameter name="Kub" value="50.0"/>
+        <Parameter name="S0" value="2.14"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="AngleType-Harmonic-3" type1="CT" type2="CT" type3="CT">
+      <Parameters>
+        <Parameter name="Kub" value="488.273"/>
+        <Parameter name="S0" value="1.966986067"/>
+      </Parameters>
+    </AngleType>
+  </AngleTypes>
+  <DihedralTypes expression="Kchi*(cos(chi*n - delta) + 1)">
+    <ParametersUnitDef parameter="Kchi" unit="kcal/mol"/>
+    <ParametersUnitDef parameter="n" unit="dimensionless"/>
+    <ParametersUnitDef parameter="delta" unit="degree"/>
+    <DihedralType name="DihedralType-Charmm-periodic" type1="H" type2="H" type3="H" type4="H">
+      <Parameters>
+        <Parameter name="Kchi">
+          <Value>1.6</Value>
+          <Value>2.5</Value>
+        </Parameter>
+        <Parameter name="n">
+          <Value>1.0</Value>
+          <Value>2.0</Value>
+        </Parameter>
+        <Parameter name="delta">
+          <Value>0.0</Value>
+          <Value>180.0</Value>
+        </Parameter>
+      </Parameters>
+    </DihedralType>
+  </DihedralTypes>
+  <DihedralTypes expression="Kpsi * (psi - psi0)**2">
+    <ParametersUnitDef parameter="Kpsi" unit="kcal/(mol*rad**2)"/>
+    <ParametersUnitDef parameter="psi0" unit="degree"/>
+    <ImproperType name="ImproperType-Charmm-harmonic" type1="H" type2="H" type3="H" type4="C">
+        <Parameters>
+        <Parameter name="Kpsi" value="3.0"/>
+        <Parameter name="psi0" value="0.0"/>
+      </Parameters>
+    </ImproperType>
+  </DihedralTypes>
+</ForceField>
