@@ -19,6 +19,7 @@ class register_pydantic_json(object):
 
 
 def deprecate_kwargs(deprecated_kwargs=None):
+    """Decorate functions with deprecated/deprecating kwargs."""
     if deprecated_kwargs is None:
         deprecated_kwargs = set()
 
