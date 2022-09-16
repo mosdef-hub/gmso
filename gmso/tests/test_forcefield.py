@@ -10,6 +10,7 @@ from gmso.core.improper_type import ImproperType
 from gmso.exceptions import (
     ForceFieldError,
     ForceFieldParseError,
+    GMSOError,
     MissingAtomTypesError,
     MissingPotentialError,
 )
@@ -658,3 +659,15 @@ class TestForceField(BaseTest):
     def test_deprecated_gmso(self):
         with pytest.warns(DeprecationWarning):
             ForceField(get_path("ff-example0.xml"), backend="gmso")
+
+    def test_not_supoprted_backend(self, opls_ethane_foyer):
+        # Unsupported ff parser backend
+        with pytest.raises(GMSOError):
+            ForceField(get_path("ff-example0.xml"), backend="bogus")
+
+        # Unsupported ff writer backend
+        with pytest.raises(NotImplementedError):
+            opls_ethane_foyer.to_xml("test_xml_writer.xml", backend="ffutils")
+
+        with pytest.raises(GMSOError):
+            opls_ethane_foyer.to_xml("test_xml_writer.xml", backend="bogus")

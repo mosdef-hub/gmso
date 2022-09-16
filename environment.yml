@@ -10,5 +10,6 @@ dependencies:
   - lxml
   - pydantic>1.8
   - networkx
-  - ele >= 0.2.0
-  - forcefield-utilities
+  - ele>=0.2.0
+  - foyer>=0.11.3
+  - forcefield-utilities>=0.2.1
