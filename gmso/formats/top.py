@@ -4,9 +4,16 @@ import datetime
 import unyt as u
 
 from gmso.core.element import element_by_atom_type
+from gmso.core.views import PotentialFilters
 from gmso.exceptions import GMSOError
 from gmso.formats.formats_registry import saves_as
 from gmso.lib.potential_templates import PotentialTemplateLibrary
+from gmso.parameterization.molecule_utils import (
+    molecule_angles,
+    molecule_bonds,
+    molecule_dihedrals,
+    molecule_impropers,
+)
 from gmso.utils.compatibility import check_compatibility
 
 
@@ -27,7 +34,7 @@ def write_top(top, filename, top_vars=None):
             "[ defaults ]\n"
             "; nbfunc\t"
             "comb-rule\t"
-            "gen-pairs\t"
+            "gen-pairs\t\t"
             "fudgeLJ\t"
             "fudgeQQ\n"
         )
@@ -56,147 +63,179 @@ def write_top(top, filename, top_vars=None):
             "epsilon\n"
         )
 
-        # Define unique molecule by name only
-        unique_tag = {
-            tag: list()
-            for tag in top.unique_site_labels("molecule", name_only=True)
-        }
-        for tag in top.unique_site_labels("molecule", name_only=True):
-            unique_tag[tag.name].append(tag)
-
-        for tag in unique_tag:
-            for atom in top.iter_site_by_molecule(unique_tag[tag][0]):
-                atom_type = atom.atom_type
-                out_file.write(
-                    "{0}\t"
-                    "{1}\t"
-                    "{2:.5f}\t"
-                    "{3:.5f}\t"
-                    "{4}\t"
-                    "{5:.5f}\t"
-                    "{6:.5f}\n".format(
-                        atom_type.name,
-                        _lookup_atomic_number(atom_type),
-                        atom_type.mass.in_units(u.amu).value,
-                        atom_type.charge.in_units(u.elementary_charge).value,
-                        tag,
-                        atom_type.parameters["sigma"]
-                        .in_units(u.nanometer)
-                        .value,
-                        atom_type.parameters["epsilon"]
-                        .in_units(u.Unit("kJ/mol"))
-                        .value,
-                    )
-                )
-
-        out_file.write("\n[ moleculetype ]\n" "; name\tnrexcl\n")
-
-        # Treat top without molecule as one residue-like "molecule"
-        if len(unique_tag) == 0:
-            out_file.write(
-                "{0}\t"
-                "{1}\n\n".format(
-                    top.name,
-                    top_vars["nrexcl"],  # Typically exclude 3 nearest neighbors
-                )
-            )
-        # TODO: Lookup and join nrexcl from each molecule object
-        else:
-            for tag in unique_tag:
-                out_file.write("{0}\t" "{1}\n".format(tag, 3))
-
-        out_file.write(
-            "[ atoms ]\n"
-            "; nr\ttype\tresnr\tresidue\tatom\tcgnr\tcharge\tmass\n"
-        )
-        for site in top.sites:
+        for atom_type in top.atom_types(PotentialFilters.UNIQUE_NAME_CLASS):
             out_file.write(
                 "{0}\t"
                 "{1}\t"
-                "{2}\t"
-                "{3}\t"
+                "{2:.5f}\t"
+                "{3:.5f}\t"
                 "{4}\t"
-                "{5}\t"
-                "{6:.5f}\t"
-                "{7:.5f}\n".format(
-                    top.get_index(site) + 1,
-                    site.atom_type.name,
-                    1,  # TODO: molecule number
-                    top.name,  # TODO: molecule.name
-                    _lookup_element_symbol(site.atom_type),
-                    1,  # TODO: care about charge groups
-                    site.charge.in_units(u.elementary_charge).value,
-                    site.atom_type.mass.in_units(u.amu).value,
+                "{5:.5f}\t"
+                "{6:.5f}\n".format(
+                    atom_type.name,
+                    _lookup_atomic_number(atom_type),
+                    atom_type.mass.in_units(u.amu).value,
+                    atom_type.charge.in_units(u.elementary_charge).value,
+                    "A",
+                    atom_type.parameters["sigma"].in_units(u.nanometer).value,
+                    atom_type.parameters["epsilon"]
+                    .in_units(u.Unit("kJ/mol"))
+                    .value,
                 )
             )
 
-        out_file.write("\n[ bonds ]\n" ";   ai     aj  funct   c0      c1\n")
-        for bond in top.bonds:
-            out_file.write(
-                _write_connection(top, bond, pot_types[bond.connection_type])
+        out_file.write("\n[ moleculetype ]\n" "; name\tnrexcl\n")
+
+        # Define unique molecule by name only
+        unique_molecules = {
+            tag: {
+                "subtags": list(),
+            }
+            for tag in top.unique_site_labels("molecule", name_only=True)
+        }
+
+        for molecule in top.unique_site_labels("molecule", name_only=False):
+            unique_molecules[molecule.name]["subtags"].append(molecule)
+
+        if len(unique_molecules) == 0:
+            unique_molecules[top.name] = dict()
+            unique_molecules[top.name]["subtags"] = [top.name]
+            unique_molecules[top.name]["sites"] = list(top.sites)
+            unique_molecules[top.name]["bonds"] = list(top.bonds)
+            unique_molecules[top.name]["angles"] = list(top.angles)
+            unique_molecules[top.name]["angle_restraints"] = list(
+                angle for angle in top.angles if angle.restraint
             )
+            unique_molecules[top.name]["dihedrals"] = list(top.angles)
+            unique_molecules[top.name]["dihedral_restraints"] = list(
+                dihedral for dihedral in top.dihedrals if dihedral.restraint
+            )
+            unique_molecules[molecule.name]["improper"] = list(top.impropers)
+
+        else:
+            for tag in unique_molecules:
+                molecule = unique_molecules[tag]["subtags"][0]
+                unique_molecules[tag]["sites"] = list(
+                    top.iter_sites(key="molecule", value=molecule)
+                )
+                unique_molecules[tag]["bonds"] = list(
+                    molecule_bonds(top, molecule)
+                )
+                unique_molecules[tag]["angles"] = list(
+                    molecule_angles(top, molecule)
+                )
+                unique_molecules[tag]["angle_restraints"] = list(
+                    angle
+                    for angle in molecule_angles(top, molecule)
+                    if angle.restraint
+                )
+                unique_molecules[tag]["dihedrals"] = list(
+                    molecule_dihedrals(top, molecule)
+                )
+                unique_molecules[tag]["dihedral_restraints"] = list(
+                    dihedral
+                    for dihedral in molecule_dihedrals(top, molecule)
+                    if dihedral.restraint
+                )
+                unique_molecules[tag]["improper"] = list(
+                    molecule_impropers(top, molecule)
+                )
+
+        # TODO: Lookup and join nrexcl from each molecule object
+        for tag in unique_molecules:
+            out_file.write("{0}\t" "{1}\n".format(tag, top_vars["nrexcl"]))
+
+        out_file.write(
+            "[ atoms ]\n"
+            "; nr\ttype\tresnr\tresidue\t\tatom\tcgnr\tcharge\tmass\n"
+        )
+        for tag in unique_molecules:
+            for site in unique_molecules[tag]["sites"]:
+                out_file.write(
+                    "{0}\t"
+                    "{1}\t"
+                    "{2}\t"
+                    "{3}\t"
+                    "{4}\t"
+                    "{5}\t"
+                    "{6:.5f}\t"
+                    "{7:.5f}\n".format(
+                        top.get_index(site) + 1,
+                        site.atom_type.name,
+                        site.molecule.number + 1 if site.molecule else 1,
+                        tag,
+                        site.element.symbol if site.element else site.name,
+                        1,  # TODO: care about charge groups
+                        site.charge.in_units(u.elementary_charge).value,
+                        site.atom_type.mass.in_units(u.amu).value,
+                    )
+                )
+
+        out_file.write("\n[ bonds ]\n" ";   ai     aj  funct   c0      c1\n")
+        # Handle case with and without tags when writing bonds
+        for tag in unique_molecules:
+            for bond in unique_molecules[tag]["bonds"]:
+                out_file.write(
+                    _write_connection(
+                        top, bond, pot_types[bond.connection_type]
+                    )
+                )
 
         out_file.write(
             "\n[ angles ]\n" ";   ai     aj      ak      funct   c0      c1\n"
         )
-        for angle in top.angles:
-            out_file.write(
-                _write_connection(top, angle, pot_types[angle.connection_type])
-            )
+        for tag in unique_molecules:
+            for angle in unique_molecules[tag]["angles"]:
+                out_file.write(
+                    _write_connection(
+                        top, angle, pot_types[angle.connection_type]
+                    )
+                )
 
         # Note: GROMACS angle restraint is defined between two vectors.
         # Here, we are using two vectors originate from the middle node pointing out ward.
-        angle_restraints = [angle for angle in top.angles if angle.restraint]
+        angle_restraints = any([angle.restraint for angle in top.angles])
         if angle_restraints:
             out_file.write(
                 "\n[ angle_restraints ]\n"
                 ";\tai \taj \tai \tak \tfunct \ttheta_eq \tk \tmultiplicity \n"
             )
-            for angle in angle_restraints:
-                out_file.write(_write_restraint(top, angle, "angle"))
+            for tag in unique_molecules:
+                for angle in unique_molecules[tag]["angle_restraints"]:
+                    out_file.write(_write_restraint(top, angle, "angle"))
 
         out_file.write(
             "\n[ dihedrals ]\n"
             ";\tai \taj \tak \tal \tfunct \tc0 \tc1 \tc2 \tc3 \tc4 \n"
         )
-        for dihedral in top.dihedrals:
-            out_file.write(
-                _write_connection(
-                    top, dihedral, pot_types[dihedral.connection_type]
+        for tag in unique_molecules:
+            for dihedral in unique_molecules[tag]["dihedrals"]:
+                out_file.write(
+                    _write_connection(
+                        top, dihedral, pot_types[dihedral.connection_type]
+                    )
                 )
-            )
 
-        dihedral_restraints = [
-            dihedral for dihedral in top.dihedrals if dihedral.restraint
-        ]
+        dihedral_restraints = any(
+            [dihedral.restraint for dihedral in top.dihedrals]
+        )
         if dihedral_restraints:
             out_file.write(
                 "\n[ dihedral_restraints ]\n"
                 "#ifdef DIHRES\n"
                 ";\tai \taj \tak \tal \tfunct \ttheta_eq \tdelta_theta \tkd\n"
             )
-            for dihedral in dihedral_restraints:
-                out_file.write(_write_restraint(top, dihedral, "dihedral"))
+            for tag in unique_molecules:
+                for dihedral in unique_molecules[tag]["dihedral_restraints"]:
+                    out_file.write(_write_restraint(top, dihedral, "dihedral"))
 
         out_file.write("\n[ system ]\n" "; name\n" "{0}\n\n".format(top.name))
 
-        if len(top.unique_site_labels("molecule", name_only=True)) > 1:
-            raise NotImplementedError
-
-        # TODO: Write out atom types for each unique `molecule` (name_only) in `atoms` section
-        # and write out number of molecules in `molecules` section
-        # if len(top.subtops) == 0:
-        out_file.write(
-            "[ molecules ]\n"
-            "; molecule\tnmols\n"
-            "{0}\t{1}".format(top.name, 1)
-        )
-        # elif len(top.subtops) > 0:
-        #    out_file.write(
-        #        '[ molecules ]\n'
-        #        '; molecule\tnmols\n'
-        #        '{0}\t{1}'.format(top.subtops[0].name, top.n_subtops)
-        #    )
+        out_file.write("[ molecules ]\n" "; molecule\tnmols\n")
+        for tag in unique_molecules:
+            out_file.write(
+                "{0}\t{1}".format(tag, len(unique_molecules[tag]["subtags"]))
+            )
 
 
 def _accepted_potentials():
