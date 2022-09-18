@@ -1,5 +1,6 @@
 """Read and write Gromos87 (.GRO) file format."""
 import datetime
+import re
 import warnings
 
 import numpy as np
@@ -58,6 +59,7 @@ def read_gro(filename):
         coords = u.nm * np.zeros(shape=(n_atoms, 3))
         for row, _ in enumerate(coords):
             line = gro_file.readline()
+            content = line.split()
             if not line:
                 msg = (
                     "Incorrect number of lines in .gro file. Based on the "
@@ -65,20 +67,24 @@ def read_gro(filename):
                     "atoms were expected, but at least one fewer was found."
                 )
                 raise ValueError(msg.format(n_atoms))
-            resid = int(line[:5])
-            res_name = line[5:10].strip()
-            atom_name = line[10:15].strip()
-            atom_id = int(line[15:20])
+
+            res = content[0]
+            atom_name = content[1]
+            atom_id = content[2]
+            print(content)
             coords[row] = u.nm * np.array(
                 [
-                    float(line[20:28]),
-                    float(line[28:36]),
-                    float(line[36:44]),
+                    float(content[3]),
+                    float(content[4]),
+                    float(content[5]),
                 ]
             )
             site = Atom(name=atom_name, position=coords[row])
-            site.molecule = (res_name, resid - 1)
-            site.residue = (res_name, resid - 1)
+
+            r = re.compile("([0-9]+)([a-zA-Z]+)")
+            m = r.match(res)
+            site.molecule = (m.group(2), int(m.group(1)) - 1)
+            site.residue = (m.group(2), int(m.group(1)) - 1)
             top.add_site(site, update_types=False)
         top.update_topology()
 
@@ -100,7 +106,7 @@ def read_gro(filename):
 
 
 @saves_as(".gro")
-def write_gro(top, filename):
+def write_gro(top, filename, precision=3):
     """Write a topology to a gro file.
 
     The Gromos87 (gro) format is a common plain text structure file used
@@ -116,7 +122,8 @@ def write_gro(top, filename):
         The `topology` to write out to the gro file.
     filename : str or file object
         The location and name of file to save to disk.
-
+    precision : int, optional, default=3
+        The number of sig fig to write out the position in.
 
     Notes
     -----
@@ -138,7 +145,7 @@ def write_gro(top, filename):
             )
         )
         out_file.write("{:d}\n".format(top.n_sites))
-        out_file.write(_prepare_atoms(top, pos_array))
+        out_file.write(_prepare_atoms(top, pos_array, precision))
         out_file.write(_prepare_box(top))
 
 
@@ -157,7 +164,7 @@ def _validate_positions(pos_array):
     return pos_array
 
 
-def _prepare_atoms(top, updated_positions):
+def _prepare_atoms(top, updated_positions, precision):
     out_str = str()
     warnings.warn(
         "Residue information is parsed from site.molecule,"
@@ -182,13 +189,13 @@ def _prepare_atoms(top, updated_positions):
         atom_id = idx + 1
         out_str = (
             out_str
-            + "    {0:5s} {1:5s}{2:5d}   {3:8.3f}   {4:8.3f}   {5:8.3f}\n".format(
+            + "    {0:5s} {1:5s}{2:5d}   {3:8f}   {4:8f}   {5:8f}\n".format(
                 mol_str,
                 atom_name,
                 atom_id,
-                pos[0].in_units(u.nm).value,
-                pos[1].in_units(u.nm).value,
-                pos[2].in_units(u.nm).value,
+                np.round(pos[0].in_units(u.nm).value, precision),
+                np.round(pos[1].in_units(u.nm).value, precision),
+                np.round(pos[2].in_units(u.nm).value, precision),
             )
         )
     return out_str

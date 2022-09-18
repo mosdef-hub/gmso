@@ -34,7 +34,7 @@ class TestGro(BaseTest):
         )
 
     def test_wrong_n_atoms(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(IndexError):
             Topology.load(get_fn("too_few_atoms.gro"))
         with pytest.raises(ValueError):
             Topology.load(get_fn("too_many_atoms.gro"))
