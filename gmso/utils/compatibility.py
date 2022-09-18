@@ -1,6 +1,7 @@
 """Determine if the parametrized gmso.topology can be written to an engine."""
 import sympy
 
+from gmso.core.views import PotentialFilters
 from gmso.exceptions import EngineIncompatibilityError
 
 
@@ -24,7 +25,9 @@ def check_compatibility(topology, accepted_potentials):
 
     """
     potential_forms_dict = dict()
-    for atom_type in topology.atom_types:
+    for atom_type in topology.atom_types(
+        filter=PotentialFilters.UNIQUE_NAME_CLASS
+    ):
         potential_form = _check_single_potential(atom_type, accepted_potentials)
         if not potential_form:
             raise EngineIncompatibilityError(
@@ -33,7 +36,9 @@ def check_compatibility(topology, accepted_potentials):
         else:
             potential_forms_dict.update(potential_form)
 
-    for connection_type in topology.connection_types:
+    for connection_type in topology.connection_types(
+        filter=PotentialFilters.UNIQUE_NAME_CLASS
+    ):
         potential_form = _check_single_potential(
             connection_type, accepted_potentials
         )

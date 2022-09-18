@@ -228,6 +228,7 @@ def write_top(top, filename, top_vars=None):
             for tag in unique_molecules:
                 for dihedral in unique_molecules[tag]["dihedral_restraints"]:
                     out_file.write(_write_restraint(top, dihedral, "dihedral"))
+            out_file.write("#endif DIHRES\n")
 
         out_file.write("\n[ system ]\n" "; name\n" "{0}\n\n".format(top.name))
 

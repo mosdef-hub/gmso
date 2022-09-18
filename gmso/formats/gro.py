@@ -181,22 +181,27 @@ def _prepare_atoms(top, updated_positions, precision):
         else:
             res_id = 1
             res_name = "MOL"
+        if len(res_name) > 3:
+            mol_str = mol_str[:3]
 
-        mol_str = f"{res_id}{res_name}"
-        if len(mol_str) > 4:
-            mol_str = mol_str[:4]
         atom_name = site.name
         atom_id = idx + 1
-        out_str = (
-            out_str
-            + "    {0:5s} {1:5s}{2:5d}   {3:8f}   {4:8f}   {5:8f}\n".format(
-                mol_str,
-                atom_name,
-                atom_id,
-                np.round(pos[0].in_units(u.nm).value, precision),
-                np.round(pos[1].in_units(u.nm).value, precision),
-                np.round(pos[2].in_units(u.nm).value, precision),
-            )
+
+        varwidth = 5 + precision
+        crdfmt = f"{{:{varwidth}.{precision}f}}"
+
+        # preformat pos str
+        crt_x = crdfmt.format(pos[0].in_units(u.nm).value)[:varwidth]
+        crt_y = crdfmt.format(pos[1].in_units(u.nm).value)[:varwidth]
+        crt_z = crdfmt.format(pos[2].in_units(u.nm).value)[:varwidth]
+        out_str = out_str + "{0:5d}{1:5s}{2:5s}{3:5d}{4}{5}{6}\n".format(
+            res_id,
+            res_name,
+            atom_name,
+            atom_id,
+            crt_x,
+            crt_y,
+            crt_z,
         )
     return out_str
 
