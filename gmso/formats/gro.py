@@ -7,6 +7,7 @@ import unyt as u
 from unyt.array import allclose_units
 
 import gmso
+from gmso.abc.abstract_site import MoleculeType, ResidueType
 from gmso.core.atom import Atom
 from gmso.core.box import Box
 from gmso.core.topology import Topology
@@ -65,8 +66,8 @@ def read_gro(filename):
                 )
                 raise ValueError(msg.format(n_atoms))
             resid = int(line[:5])
-            res_name = line[5:10]
-            atom_name = line[10:15]
+            res_name = line[5:10].strip()
+            atom_name = line[10:15].strip()
             atom_id = int(line[15:20])
             coords[row] = u.nm * np.array(
                 [
@@ -76,6 +77,8 @@ def read_gro(filename):
                 ]
             )
             site = Atom(name=atom_name, position=coords[row])
+            site.molecule = (res_name, resid - 1)
+            site.residue = (res_name, resid - 1)
             top.add_site(site, update_types=False)
         top.update_topology()
 
@@ -167,17 +170,20 @@ def _prepare_atoms(top, updated_positions):
             res_name = site.molecule.name
         elif site.residue:
             res_id = site.residue.number + 1
-            res_name = site.molecule.name
+            res_name = site.molecule.name[:3]
         else:
             res_id = 1
             res_name = "MOL"
+
+        mol_str = f"{res_id}{res_name}"
+        if len(mol_str) > 4:
+            mol_str = mol_str[:4]
         atom_name = site.name
         atom_id = idx + 1
         out_str = (
             out_str
-            + "{0:5d}{1:5s}{2:5s}{3:5d}{4:8.3f}{5:8.3f}{6:8.3f}\n".format(
-                res_id,
-                res_name,
+            + "    {0:5s} {1:5s}{2:5d}   {3:8.3f}   {4:8.3f}   {5:8.3f}\n".format(
+                mol_str,
                 atom_name,
                 atom_id,
                 pos[0].in_units(u.nm).value,

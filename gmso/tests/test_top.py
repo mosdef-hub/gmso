@@ -1,3 +1,4 @@
+import forcefield_utilities as ffutils
 import parmed as pmd
 import pytest
 import unyt as u
@@ -5,9 +6,10 @@ import unyt as u
 import gmso
 from gmso.exceptions import EngineIncompatibilityError
 from gmso.formats.top import write_top
+from gmso.parameterization import apply
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
-from gmso.utils.io import get_fn
+from gmso.utils.io import get_fn, has_mbuild
 
 
 class TestTop(BaseTest):
@@ -105,3 +107,26 @@ class TestTop(BaseTest):
         assert struct.defaults.gen_pairs == "yes"
         assert struct.defaults.fudgeLJ == 0.5
         assert struct.defaults.fudgeQQ == 0.5
+
+    @pytest.mark.skipif(not has_mbuild, reason="mBuild not installed.")
+    def test_benzene_top(self):
+        import mbuild as mb
+        from mbuild.packing import fill_box
+
+        from gmso.external import from_mbuild
+
+        benzene = mb.load(get_fn("benzene.mol2"))
+        benzene.children[0].name = "Benzene"
+        box_of_benzene = fill_box(compound=benzene, n_compounds=5, density=1)
+        top = from_mbuild(box_of_benzene)
+        oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
+        top = apply(top=top, forcefields=oplsaa)
+        top.save("benzene.top")
+
+        with open("benzene.top") as f:
+            f_cont = f.readlines()
+
+        with open(get_path("benzene.top")) as ref:
+            ref_cont = ref.readlines()
+
+        assert len(f_cont) == len(ref_cont)

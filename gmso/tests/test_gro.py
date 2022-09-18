@@ -7,7 +7,8 @@ from gmso import Topology
 from gmso.external.convert_parmed import from_parmed
 from gmso.formats.gro import read_gro, write_gro
 from gmso.tests.base_test import BaseTest
-from gmso.utils.io import get_fn, has_parmed, import_
+from gmso.tests.utils import get_path
+from gmso.utils.io import get_fn, has_mbuild, has_parmed, import_
 
 if has_parmed:
     pmd = import_("parmed")
@@ -46,3 +47,28 @@ class TestGro(BaseTest):
         top = from_parmed(pmd.load_file(get_fn("ethane.gro"), structure=True))
         top.box.angles = u.degree * [90, 90, 120]
         top.save("out.gro")
+
+    @pytest.mark.skipif(not has_mbuild, reason="mBuild not installed.")
+    def test_benzene_gro(self):
+        import mbuild as mb
+        from mbuild.packing import fill_box
+
+        from gmso.external import from_mbuild
+
+        benzene = mb.load(get_fn("benzene.mol2"))
+        benzene.children[0].name = "Benzene"
+        box_of_benzene = fill_box(compound=benzene, n_compounds=5, density=1)
+        top = from_mbuild(box_of_benzene)
+        top.save("benzene.gro")
+
+        reread = Topology.load("benzene.gro")
+        for site, ref_site in zip(reread.sites, top.sites):
+            assert site.molecule.name == ref_site.molecule.name[:3]
+            assert site.molecule.number == ref_site.molecule.number
+
+    def test_gro_read_molecule(self):
+        top = Topology.load(get_path("benzene.gro"))
+        for site in top.sites:
+            assert site.molecule
+            assert site.molecule.name == "Ben"
+        assert len(top.unique_site_labels("molecule")) == 5
