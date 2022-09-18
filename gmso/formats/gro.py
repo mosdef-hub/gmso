@@ -156,15 +156,21 @@ def _validate_positions(pos_array):
 
 def _prepare_atoms(top, updated_positions):
     out_str = str()
+    warnings.warn(
+        "Residue information is parsed from site.molecule,"
+        "or site.residue if site.molecule does not exist."
+        "Note that the residue idx will be bump by 1 since GROMACS utilize 1-index."
+    )
     for idx, (site, pos) in enumerate(zip(top.sites, updated_positions)):
-        warnings.warn(
-            "Residue information is not currently "
-            "stored or written to GRO files.",
-            NotYetImplementedWarning,
-        )
-        # TODO: assign residues
-        res_id = 1
-        res_name = "X"
+        if site.molecule:
+            res_id = site.molecule.number + 1
+            res_name = site.molecule.name
+        elif site.residue:
+            res_id = site.residue.number + 1
+            res_name = site.molecule.name
+        else:
+            res_id = 1
+            res_name = "MOL"
         atom_name = site.name
         atom_id = idx + 1
         out_str = (
