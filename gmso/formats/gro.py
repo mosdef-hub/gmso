@@ -182,7 +182,7 @@ def _prepare_atoms(top, updated_positions, precision):
             res_id = 1
             res_name = "MOL"
         if len(res_name) > 3:
-            mol_str = mol_str[:3]
+            res_name = res_name[:3]
 
         atom_name = site.name
         atom_id = idx + 1
