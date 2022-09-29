@@ -92,6 +92,10 @@ class TestTop(BaseTest):
         for dihedral in typed_ethane.dihedrals:
             dihedral.connection_type = periodic_dihedral_type
 
+        for i in range(typed_ethane.n_impropers - 1, -1, -1):
+            if not typed_ethane.impropers[i].improper_type:
+                typed_ethane._impropers.pop(i)
+
         typed_ethane.update_connection_types()
 
         typed_ethane.save("system.top")

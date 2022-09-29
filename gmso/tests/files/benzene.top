@@ -1,52 +1,46 @@
-; File Topology written by GMSO at 2022-09-18 00:25:03.140105
+; File Topology written by GMSO at 2022-09-28 20:12:32.333250
 
 [ defaults ]
 ; nbfunc	comb-rule	gen-pairs		fudgeLJ	fudgeQQ
 1			3			no		0.5		0.5
 
 [ atomtypes ]
-; name	at.num	mass	charge	ptype	sigma	epsilon
-opls_145	6	12.01100	-0.11500	A	0.35500	0.29288
-opls_146	1	1.00800	0.11500	A	0.24200	0.12552
+; name		at.num	mass		charge		ptype	sigma	epsilon
+opls_145    6       12.01100    -0.11500	A        0.35500     0.29288
+opls_146    1        1.00800     0.11500	A        0.24200     0.12552
 
 [ moleculetype ]
 ; name	nrexcl
 Benzene	3
 [ atoms ]
 ; nr	type	resnr	residue		atom	cgnr	charge	mass
-1	opls_145	1	Benzene	C	1	-0.11500	12.01100
-2	opls_145	1	Benzene	C	1	-0.11500	12.01100
-3	opls_145	1	Benzene	C	1	-0.11500	12.01100
-4	opls_145	1	Benzene	C	1	-0.11500	12.01100
-5	opls_145	1	Benzene	C	1	-0.11500	12.01100
-6	opls_145	1	Benzene	C	1	-0.11500	12.01100
-7	opls_146	1	Benzene	H	1	0.11500	1.00800
-8	opls_146	1	Benzene	H	1	0.11500	1.00800
-9	opls_146	1	Benzene	H	1	0.11500	1.00800
-10	opls_146	1	Benzene	H	1	0.11500	1.00800
-11	opls_146	1	Benzene	H	1	0.11500	1.00800
-12	opls_146	1	Benzene	H	1	0.11500	1.00800
+1       opls_145    1       Benzene     C       1       -0.11500    12.01100
+2       opls_145    1       Benzene     C       1       -0.11500    12.01100
+3       opls_145    1       Benzene     C       1       -0.11500    12.01100
+4       opls_145    1       Benzene     C       1       -0.11500    12.01100
+5       opls_145    1       Benzene     C       1       -0.11500    12.01100
+6       opls_145    1       Benzene     C       1       -0.11500    12.01100
+7       opls_146    1       Benzene     H       1        0.11500     1.00800
+8       opls_146    1       Benzene     H       1        0.11500     1.00800
+9       opls_146    1       Benzene     H       1        0.11500     1.00800
+10      opls_146    1       Benzene     H       1        0.11500     1.00800
+11      opls_146    1       Benzene     H       1        0.11500     1.00800
+12      opls_146    1       Benzene     H       1        0.11500     1.00800
 
 [ bonds ]
-;   ai     aj  funct   c0      c1
-	2	1	1	0.14000	392459.20000
-	6	1	1	0.14000	392459.20000
-	7	1	1	0.10800	307105.60000
-	3	2	1	0.14000	392459.20000
-	8	2	1	0.10800	307105.60000
-	4	3	1	0.14000	392459.20000
-	9	3	1	0.10800	307105.60000
-	5	4	1	0.14000	392459.20000
-	10	4	1	0.10800	307105.60000
-	6	5	1	0.14000	392459.20000
-	11	5	1	0.10800	307105.60000
-	12	6	1	0.10800	307105.60000
-
-[ angles ]
-;   ai     aj      ak      funct   c0      c1
-
-[ dihedrals ]
-;	ai 	aj 	ak 	al 	funct 	c0 	c1 	c2 	c3 	c4
+; ai	aj	funct	c0	c1
+2       1       1           0.14000   392459.20000
+6       1       1           0.14000   392459.20000
+7       1       1           0.10800   307105.60000
+3       2       1           0.14000   392459.20000
+8       2       1           0.10800   307105.60000
+4       3       1           0.14000   392459.20000
+9       3       1           0.10800   307105.60000
+5       4       1           0.14000   392459.20000
+10      4       1           0.10800   307105.60000
+6       5       1           0.14000   392459.20000
+11      5       1           0.10800   307105.60000
+12      6       1           0.10800   307105.60000
 
 [ system ]
 ; name

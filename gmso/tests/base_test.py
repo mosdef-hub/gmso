@@ -56,7 +56,7 @@ class BaseTest:
     @pytest.fixture
     def n_ar_system(self):
         def _topology(n_sites=100):
-            ar = mb.Compound(name="Ar")
+            ar = mb.Compound(name="Ar", element="Ar")
 
             packed_system = mb.fill_box(
                 compound=ar,
