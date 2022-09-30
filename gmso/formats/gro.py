@@ -184,7 +184,7 @@ def _prepare_atoms(top, updated_positions, precision):
         if len(res_name) > 3:
             res_name = res_name[:3]
 
-        atom_name = site.name
+        atom_name = site.name if len(site.name) <= 3 else site.name[:3]
         atom_id = idx + 1
 
         varwidth = 5 + precision
