@@ -4,6 +4,7 @@ import inspect
 import os
 import sys
 import textwrap
+from tempfile import TemporaryFile
 from unittest import SkipTest
 
 from pkg_resources import resource_filename
@@ -23,7 +24,7 @@ MESSAGES[
     "matplotlib"
 ] = """
 The code at {filename}:{line_number} requires the "matplotlib" package
-matplotlib can be installed using:
+matplotlib can be installed using:f
 # conda install -c conda-forge matplotlib
 or
 # pip install matplotlib
@@ -147,6 +148,13 @@ try:
     del gsd
 except ImportError:
     has_gsd = False
+
+try:
+    import hoomd
+
+    del hoomd
+except:
+    has_hoomd = True
 
 try:
     import parmed

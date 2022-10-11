@@ -2,23 +2,29 @@
 from __future__ import division
 
 import warnings
+from calendar import c
+from enum import unique
 
+import hoomd
 import numpy as np
 import unyt as u
 from unyt.array import allclose_units
 
 from gmso.core.bond import Bond
+from gmso.core.views import PotentialFilters
 from gmso.exceptions import NotYetImplementedWarning
 from gmso.formats.formats_registry import saves_as
 from gmso.utils.geometry import coord_shift
-from gmso.utils.io import has_gsd
+from gmso.utils.io import has_gsd, has_hoomd
 from gmso.utils.sorting import natural_sort
 
 if has_gsd:
     import gsd.hoomd
+if has_hoomd:
+    import hoomd
 
 
-def to_gsd(
+def to_hoomd_snapshot(
     top,
     ref_distance=1.0 * u.nm,
     ref_mass=1.0 * u.Unit("g/mol"),
@@ -355,3 +361,124 @@ def _prepare_box_information(top):
         xz = u_vectors[2][0]
         yz = u_vectors[2][1]
     return lx, ly, lz, xy, xz, yz
+
+
+def to_hoomd_forcefield(
+    top, r_cut=1 * u.nm, nlist_buffer=0.4, unit_system=False
+):
+    """Convert the potential portion of a typed GMSO to hoomd forces."""
+    potential_types = _validate_compatibility(top)
+    # convert nonbonded potentials
+    _parse_nonbonded_forces(top, nlist_buffer, unit_system)
+
+    _parse_bond_forces(top)
+
+    _parse_angle_forces(top)
+
+    _parse_dihedral_forces(top)
+
+    _parse_improper_forces(top)
+
+    return None
+
+
+def _validate_compatibility(top):
+    from gmso.lib.potential_templates import PotentialTemplateLibrary
+    from gmso.utils.compatibility import check_compatibility
+
+    templates = PotentialTemplateLibrary()
+    lennard_jones_potential = templates["LennardJonesPotential"]
+    harmonic_bond_potential = templates["HarmonicBondPotential"]
+    harmonic_angle_potential = templates["HarmonicAnglePotential"]
+    periodic_torsion_potential = templates["PeriodicTorsionPotential"]
+    rb_torsion_potential = templates["RyckaertBellemansTorsionPotential"]
+    accepted_potentials = [
+        lennard_jones_potential,
+        harmonic_bond_potential,
+        harmonic_angle_potential,
+        periodic_torsion_potential,
+        rb_torsion_potential,
+    ]
+    potential_types = check_compatibility(top, accepted_potentials)
+    return potential_types
+
+
+def _parse_nonbonded_forces(top, nlist_buffer):
+    """Parse nonbonded forces."""
+    unique_atypes = top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS)
+    for atype in unique_atypes:
+        continue
+
+    def _parse_lj(atype):
+        return None
+
+    def _parse_buckingham(atype):
+        return None
+
+    def _parse_lj0804(atype):
+        return None
+
+    def _parse_lj1208(atype):
+        return None
+
+    def _parse_mie(atype):
+        return None
+
+    return None
+
+
+def _parse_bond_forces(top):
+    """Parse bond forces."""
+    unique_btypes = top.bond_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS)
+    for btype in unique_btypes:
+        continue
+
+    def _parse_harmonic(btype):
+        return None
+
+    return None
+
+
+def _parse_angle_forces(top):
+    """Parse angle forces."""
+    unique_agtypes = top.angle_types(
+        filter_by=PotentialFilters.UNIQUE_NAME_CLASS
+    )
+    for agtype in unique_agtypes:
+        continue
+
+    def _parse_harmonic(agtype):
+        return None
+
+    return None
+
+
+def _parse_dihedral_forces(top):
+    """Parse dihedral forces."""
+    unique_dtypes = top.dihedral_types(
+        filter_by=PotentialFilters.UNIQUE_NAME_CLASS
+    )
+    for dtype in unique_dtypes:
+        continue
+
+    def _parse_periodic(dtype):
+        return None
+
+    def _parse_opls(dtype):
+        return None
+
+    return None
+
+
+def _parse_improper_forces(top):
+    """Parse improper forces."""
+    unique_itypes = top.improper_types(
+        filter_by=PotentialFilters.UNIQUE_NAME_CLASS
+    )
+    for itype in unique_itypes:
+        continue
+
+    def _parse_periodic(itype):
+        return None
+
+    return None
