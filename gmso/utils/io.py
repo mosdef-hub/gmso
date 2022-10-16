@@ -153,8 +153,9 @@ try:
     import hoomd
 
     del hoomd
-except:
     has_hoomd = True
+except:
+    has_hoomd = False
 
 try:
     import parmed
