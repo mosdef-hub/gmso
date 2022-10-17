@@ -1,6 +1,7 @@
 """Convert GMSO Topology to GSD snapshot."""
 from __future__ import division
 
+import itertools
 import warnings
 from calendar import c
 from enum import unique
@@ -10,6 +11,7 @@ import numpy as np
 import unyt as u
 from unyt.array import allclose_units
 
+import gmso
 from gmso.core.bond import Bond
 from gmso.core.views import PotentialFilters
 from gmso.exceptions import NotYetImplementedWarning
@@ -369,15 +371,15 @@ def to_hoomd_forcefield(
     """Convert the potential portion of a typed GMSO to hoomd forces."""
     potential_types = _validate_compatibility(top)
     # convert nonbonded potentials
-    _parse_nonbonded_forces(top, nlist_buffer, unit_system)
+    _parse_nonbonded_forces(top, nlist_buffer, potential_types, unit_system)
 
-    _parse_bond_forces(top)
+    _parse_bond_forces(top, potential_types, unit_system)
 
-    _parse_angle_forces(top)
+    _parse_angle_forces(top, potential_types, unit_system)
 
-    _parse_dihedral_forces(top)
+    _parse_dihedral_forces(top, potential_types, unit_system)
 
-    _parse_improper_forces(top)
+    _parse_improper_forces(top, potential_types, unit_system)
 
     return None
 
@@ -403,13 +405,44 @@ def _validate_compatibility(top):
     return potential_types
 
 
-def _parse_nonbonded_forces(top, nlist_buffer):
+def _parse_nonbonded_forces(top, nlist_buffer, potential_types, unit_systems):
     """Parse nonbonded forces."""
     unique_atypes = top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS)
+    # Grouping atomtype by group name
+    groups = dict()
     for atype in unique_atypes:
-        continue
+        group = potential_types[atype]
+        if group not in groups:
+            groups[group] = [atype]
+        else:
+            groups[group].append(atype)
 
-    def _parse_lj(atype):
+    atype_group_map = {
+        "LennardJonesPotential": {
+            "container": hoomd.md.pair.LJ,
+            "parser": _parse_lj,
+        },
+        "BuckinghamPotential": {
+            "container": hoomd.md.pair.Buckingham,
+            "parser": _parse_buckingham,
+        },
+        "MiePotential": {"container": hoomd.md.pair.Mie, "parser": _parse_mie},
+    }
+
+    nlist = hoomd.md.nlist.Cell(exclusions=["bond", "1-3"], buffer=nlist_buffer)
+
+    nbonded_forces = list()
+    for group in groups:
+        container = atype_group_map[group]["container"](nlist=nlist)
+        parser = atype_group_map[group]["parser"]
+        # Add same-type interactions
+        container.params[(atype.name, atype.name)] = parser(
+            atyeps=groups[group],
+            units_system=unit_systems,
+            combining_rule=top.combining_rule,
+        )
+
+    def _parse_lj(atypes, units_system, combining_rule):
         return None
 
     def _parse_buckingham(atype):

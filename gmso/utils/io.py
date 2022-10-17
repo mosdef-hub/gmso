@@ -152,9 +152,9 @@ except ImportError:
 try:
     import hoomd
 
-    del hoomd
     has_hoomd = True
-except:
+    del hoomd
+except ImportError:
     has_hoomd = False
 
 try:
