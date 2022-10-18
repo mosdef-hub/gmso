@@ -2,6 +2,7 @@
 from __future__ import division
 
 import itertools
+import statistics
 import warnings
 from calendar import c
 from enum import unique
@@ -365,21 +366,30 @@ def _prepare_box_information(top):
     return lx, ly, lz, xy, xz, yz
 
 
-def to_hoomd_forcefield(
-    top, r_cut=1 * u.nm, nlist_buffer=0.4, unit_system=False
-):
-    """Convert the potential portion of a typed GMSO to hoomd forces."""
+def to_hoomd_forcefield(top, r_cut=1 * u.nm, nlist_buffer=0.4, ref_units=None):
+    """Convert the potential portion of a typed GMSO to hoomd forces.
+
+    Parameters
+    ----------
+    top : gmso.Topology
+        The typed topology to be converted
+    r_cut
+    nlist_buffer
+    ref_units : dict, optional, default=None
+        The dictionary of units to be converted to.
+
+    Returns
+    -------
+    hoomd forces
+
+    """
     potential_types = _validate_compatibility(top)
     # convert nonbonded potentials
-    _parse_nonbonded_forces(top, nlist_buffer, potential_types, unit_system)
-
-    _parse_bond_forces(top, potential_types, unit_system)
-
-    _parse_angle_forces(top, potential_types, unit_system)
-
-    _parse_dihedral_forces(top, potential_types, unit_system)
-
-    _parse_improper_forces(top, potential_types, unit_system)
+    _parse_nonbonded_forces(top, nlist_buffer, potential_types, ref_units)
+    _parse_bond_forces(top, potential_types, ref_units)
+    _parse_angle_forces(top, potential_types, ref_units)
+    _parse_dihedral_forces(top, potential_types, ref_units)
+    _parse_improper_forces(top, potential_types, ref_units)
 
     return None
 
@@ -393,20 +403,64 @@ def _validate_compatibility(top):
     harmonic_bond_potential = templates["HarmonicBondPotential"]
     harmonic_angle_potential = templates["HarmonicAnglePotential"]
     periodic_torsion_potential = templates["PeriodicTorsionPotential"]
+    opls_torsion_potential = templates["OPLSTorsionPotential"]
     rb_torsion_potential = templates["RyckaertBellemansTorsionPotential"]
     accepted_potentials = [
         lennard_jones_potential,
         harmonic_bond_potential,
         harmonic_angle_potential,
         periodic_torsion_potential,
+        opls_torsion_potential,
         rb_torsion_potential,
     ]
     potential_types = check_compatibility(top, accepted_potentials)
     return potential_types
 
 
-def _parse_nonbonded_forces(top, nlist_buffer, potential_types, unit_systems):
+def _parse_nonbonded_forces(top, nlist_buffer, potential_types, ref_units):
     """Parse nonbonded forces."""
+    # Set up helper methods to parse different nonbonded forces.
+    def _parse_lj(container, atypes, ref_units, combining_rule):
+        """Parse LJ forces."""
+        for atype1, atype2 in itertools.combinations_with_replacement(
+            atypes, 2
+        ):
+            comb_epsilon = statistics.geometric_mean(
+                [atype1.parameters["epsilon"], atype2.parameters["epsilon"]]
+            )
+            if top.combining_rule == "lorentz":
+                comb_sigma = np.mean(
+                    [atype1.parameters["sigma"], atype2.parameters["sigma"]]
+                )
+            elif top.combining_rule == "geometric":
+                comb_sigma = statistics.geometric_mean(
+                    [atype1.parameters["sigma"], atype2.parameters["sigma"]]
+                )
+            else:
+                raise ValueError(
+                    f"Invalid combining rule provided ({combining_rule})"
+                )
+
+            # TODO: Do unit conversion here
+            container.params[(atype1.name, atype2.name)] = {
+                "sigma": comb_sigma,
+                "epsilon": comb_epsilon,
+            }
+
+        return container
+
+    def _parse_buckingham(container, atypes, ref_units):
+        return None
+
+    def _parse_lj0804(container, atypes, ref_units):
+        return None
+
+    def _parse_lj1208(container, atypes, ref_units):
+        return None
+
+    def _parse_mie(container, atypes, ref_units):
+        return None
+
     unique_atypes = top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS)
     # Grouping atomtype by group name
     groups = dict()
@@ -433,85 +487,197 @@ def _parse_nonbonded_forces(top, nlist_buffer, potential_types, unit_systems):
 
     nbonded_forces = list()
     for group in groups:
-        container = atype_group_map[group]["container"](nlist=nlist)
-        parser = atype_group_map[group]["parser"]
-        # Add same-type interactions
-        container.params[(atype.name, atype.name)] = parser(
-            atyeps=groups[group],
-            units_system=unit_systems,
-            combining_rule=top.combining_rule,
+        nbonded_forces.append(
+            atype_group_map[group]["parser"](
+                container=atype_group_map[group]["container"](nlist=nlist),
+                atypes=groups[group],
+                ref_units=ref_units,
+                combining_rule=top.combining_rule,
+            )
         )
 
-    def _parse_lj(atypes, units_system, combining_rule):
-        return None
-
-    def _parse_buckingham(atype):
-        return None
-
-    def _parse_lj0804(atype):
-        return None
-
-    def _parse_lj1208(atype):
-        return None
-
-    def _parse_mie(atype):
-        return None
-
-    return None
+    return nbonded_forces
 
 
-def _parse_bond_forces(top):
+def _parse_bond_forces(top, potential_types, ref_units):
     """Parse bond forces."""
+
+    def _parse_harmonic(container, btypes, ref_units):
+        for btype in btypes:
+            # TODO: Unit conversion
+            container.params[btype.member_types] = {
+                "k": btype.parameters["k"],
+                "r0": btype.parameteres["r_eq"],
+            }
+        return container
+
     unique_btypes = top.bond_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS)
+    groups = dict()
     for btype in unique_btypes:
-        continue
+        group = potential_types[btype]
+        if group not in groups:
+            groups[group] = [btype]
+        else:
+            groups[group].append(btype)
 
-    def _parse_harmonic(btype):
-        return None
+    btype_group_map = {
+        "HarmonicBondPotential": {
+            "container": hoomd.md.bond.Harmonic,
+            "parser": _parse_harmonic,
+        },
+    }
+    bond_forces = list()
+    for group in groups:
+        bond_forces.append(
+            btype_group_map[group]["parser"](
+                container=btype_group_map["container"](),
+                btypes=groups[group],
+                ref_units=ref_units,
+            )
+        )
 
-    return None
+    return bond_forces
 
 
-def _parse_angle_forces(top):
+def _parse_angle_forces(top, potential_types, ref_units):
     """Parse angle forces."""
+
+    def _parse_harmonic(container, agtypes, ref_units):
+        for agtype in agtypes:
+            # TODO: Unit conversion
+            container.params[agtype.member_types] = {
+                "k": agtype.parameters["k"],
+                "t0": agtype.parameters["theta_eq"],
+            }
+        return container
+
     unique_agtypes = top.angle_types(
         filter_by=PotentialFilters.UNIQUE_NAME_CLASS
     )
+    groups = dict()
     for agtype in unique_agtypes:
-        continue
+        group = potential_types[agtype]
+        if group not in groups:
+            groups[group] = [agtype]
+        else:
+            groups[group].append(agtype)
 
-    def _parse_harmonic(agtype):
-        return None
+    agtype_group_map = {
+        "HarmonicAnglePotential": {
+            "container": hoomd.md.angle.Harmonic,
+            "parser": _parse_harmonic,
+        },
+    }
+    angle_forces = list()
+    for group in groups:
+        angle_forces.append(
+            agtype_group_map[group]["parser"](
+                container=agtype_group_map["container"](),
+                agtypes=groups[group],
+                ref_units=ref_units,
+            )
+        )
 
-    return None
+    return angle_forces
 
 
-def _parse_dihedral_forces(top):
+def _parse_dihedral_forces(top, potential_types, ref_units):
     """Parse dihedral forces."""
-    unique_dtypes = top.dihedral_types(
+
+    def _parse_periodic(container, dtypes, ref_units):
+        for dtype in dtypes:
+            # TODO: Unit conversion
+            container.params[dtype.member_types] = {
+                "k": dtype.parameters["k"],
+                "d": 1,
+                "n": dtype.parameters["n"],
+                "phi0": dtype.parameters["phi_eq"],
+            }
+        return container
+
+    def _parse_opls(container, dtypes, ref_units):
+        for dtype in dtypes:
+            # TODO: Unit conversion
+            # TODO: The range of ks is mismatched (GMSO go from k0 to k5)
+            # May need to do a check that k0 == k5 == 0 or raise a warning
+            container.params[dtype.member_types] = {
+                "k1": dtype.parameters["k1"],
+                "k2": dtype.parameters["k2"],
+                "k3": dtype.parameters["k3"],
+                "k4": dtype.parameters["k4"],
+            }
+        return container
+
+    unique_dtypes = top.angle_types(
         filter_by=PotentialFilters.UNIQUE_NAME_CLASS
     )
+    groups = dict()
     for dtype in unique_dtypes:
-        continue
+        group = potential_types[dtype]
+        if group not in groups:
+            groups[group] = [dtype]
+        else:
+            groups[group].append(dtype)
 
-    def _parse_periodic(dtype):
-        return None
+    dtype_group_map = {
+        "PeriodicTorsionPotential": {
+            "container": hoomd.md.dihedral.Harmonic,  # Should this be periodic, ask Josh
+            "parser": _parse_periodic,
+        },
+        "OPLSTorsionPotential": {
+            "container": hoomd.md.dihedral.OPLS,
+            "parser": _parse_opls,
+        },
+    }
+    dihedral_forces = list()
+    for group in groups:
+        dihedral_forces.append(
+            dtype_group_map[group]["parser"](
+                container=dtype_group_map["container"](),
+                dtypes=groups[group],
+                ref_units=ref_units,
+            )
+        )
 
-    def _parse_opls(dtype):
-        return None
-
-    return None
+    return dihedral_forces
 
 
-def _parse_improper_forces(top):
+def _parse_improper_forces(top, potential_types, ref_units):
     """Parse improper forces."""
-    unique_itypes = top.improper_types(
+
+    def _parse_harmonic(container, itypes, ref_units):
+        for itype in itypes:
+            # TODO: Unit conversion
+            container.params[itype.member_types] = {
+                "k": itype.parameters["k"],
+                "chi0": itype.parameters["phi_eq"],  # diff nomenclature?
+            }
+        return container
+
+    unique_dtypes = top.angle_types(
         filter_by=PotentialFilters.UNIQUE_NAME_CLASS
     )
-    for itype in unique_itypes:
-        continue
+    groups = dict()
+    for itype in unique_dtypes:
+        group = potential_types[itype]
+        if group not in groups:
+            groups[group] = [itype]
+        else:
+            groups[group].append(itype)
 
-    def _parse_periodic(itype):
-        return None
-
-    return None
+    itype_group_map = {
+        "HarmonicImproperPotenial": {
+            "container": hoomd.md.dihedral.Harmonic,  # Should this be periodic, ask Josh
+            "parser": _parse_harmonic,
+        },
+    }
+    improper_forces = list()
+    for group in groups:
+        improper_forces.append(
+            itype_group_map[group]["parser"](
+                container=itype_group_map["container"](),
+                itypes=groups[group],
+                ref_units=ref_units,
+            )
+        )
+    return improper_forces
