@@ -2,6 +2,7 @@
 from __future__ import division
 
 import itertools
+import re
 import statistics
 import warnings
 from calendar import c
@@ -17,6 +18,10 @@ from gmso.core.bond import Bond
 from gmso.core.views import PotentialFilters
 from gmso.exceptions import NotYetImplementedWarning
 from gmso.formats.formats_registry import saves_as
+from gmso.utils.conversions import (
+    convert_opls_to_ryckaert,
+    convert_ryckaert_to_opls,
+)
 from gmso.utils.geometry import coord_shift
 from gmso.utils.io import has_gsd, has_hoomd
 from gmso.utils.sorting import natural_sort
@@ -25,6 +30,18 @@ if has_gsd:
     import gsd.hoomd
 if has_hoomd:
     import hoomd
+
+MD_UNITS = {
+    "energy": u.kj / u.mol,
+    "length": u.nm,
+    "mass": u.g / u.mol,  # aka amu
+}
+
+AKMA_UNITS = {
+    "energy": u.kcal / u.mol,
+    "length": u.angstrom,
+    "mass": u.g / u.mol,  # aka amu
+}
 
 
 def to_hoomd_snapshot(
@@ -366,32 +383,58 @@ def _prepare_box_information(top):
     return lx, ly, lz, xy, xz, yz
 
 
-def to_hoomd_forcefield(top, r_cut=1 * u.nm, nlist_buffer=0.4, ref_units=None):
+def to_hoomd_forcefield(top, nlist_buffer=0.4, ref_units=None):
     """Convert the potential portion of a typed GMSO to hoomd forces.
 
     Parameters
     ----------
     top : gmso.Topology
         The typed topology to be converted
-    r_cut
-    nlist_buffer
-    ref_units : dict, optional, default=None
-        The dictionary of units to be converted to.
+    nlist_buffer : float, optional, default=0.4
+        Neighborlist buffer for simulation cell. Its unit is the same as that
+        used to defined GMSO Topology Box.
+    ref_units : dict or str, optional, default=None
+        The dictionary of base units to be converted to. Entries restricted to
+        "energy", "length", and "mass". There is also option to used predefined
+        unit systems ("MD" or "AKMA" provided as string). If None is provided,
+        this method will perform no units conversion.
 
     Returns
     -------
-    hoomd forces
-
+    forces : dict
+        Each entry
     """
     potential_types = _validate_compatibility(top)
-    # convert nonbonded potentials
-    _parse_nonbonded_forces(top, nlist_buffer, potential_types, ref_units)
-    _parse_bond_forces(top, potential_types, ref_units)
-    _parse_angle_forces(top, potential_types, ref_units)
-    _parse_dihedral_forces(top, potential_types, ref_units)
-    _parse_improper_forces(top, potential_types, ref_units)
+    unit_systems = {"MD": MD_UNITS, "AKMA": AKMA_UNITS}
+    if isinstance(ref_units, str):
+        ref_units = unit_systems[ref_units]
+    elif isinstance(ref_units, dict):
+        for key in ref_units:
+            if key not in ["energy", "mass", "length"]:
+                warnings.warn(
+                    "Only base unit will be used during the conversion"
+                    "i.e., energy, mass, and length, other units provided"
+                    "will not be considered."
+                )
+        missing = list()
+        for base in ["energy", "mass", "length"]:
+            if base not in ref_units:
+                missing.append(base)
+        if missing:
+            raise (f"ref_units is not fully provided, missing {missing}")
 
-    return None
+    # convert nonbonded potentials
+    forces = {
+        "pairs": _parse_nonbonded_forces(
+            top, nlist_buffer, potential_types, ref_units
+        ),
+        "bonds": _parse_bond_forces(top, potential_types, ref_units),
+        "angles": _parse_angle_forces(top, potential_types, ref_units),
+        "dihedrals": _parse_dihedral_forces(top, potential_types, ref_units),
+        "impropers": _parse_improper_forces(top, potential_types, ref_units),
+    }
+
+    return forces
 
 
 def _validate_compatibility(top):
@@ -507,7 +550,7 @@ def _parse_bond_forces(top, potential_types, ref_units):
             # TODO: Unit conversion
             container.params[btype.member_types] = {
                 "k": btype.parameters["k"],
-                "r0": btype.parameteres["r_eq"],
+                "r0": btype.parameters["r_eq"],
             }
         return container
 
@@ -530,7 +573,7 @@ def _parse_bond_forces(top, potential_types, ref_units):
     for group in groups:
         bond_forces.append(
             btype_group_map[group]["parser"](
-                container=btype_group_map["container"](),
+                container=btype_group_map[group]["container"](),
                 btypes=groups[group],
                 ref_units=ref_units,
             )
@@ -572,7 +615,7 @@ def _parse_angle_forces(top, potential_types, ref_units):
     for group in groups:
         angle_forces.append(
             agtype_group_map[group]["parser"](
-                container=agtype_group_map["container"](),
+                container=agtype_group_map[group]["container"](),
                 agtypes=groups[group],
                 ref_units=ref_units,
             )
@@ -608,7 +651,24 @@ def _parse_dihedral_forces(top, potential_types, ref_units):
             }
         return container
 
-    unique_dtypes = top.angle_types(
+    def _parse_rb(container, dtypes, ref_units):
+        warnings.warn(
+            "RyckaertBellemansTorsionPotential will be converted to OPLSTorsionPotential."
+        )
+        for dtype in dtypes:
+            opls = convert_ryckaert_to_opls(dtype)
+            # TODO: Unit conversion
+            # TODO: The range of ks is mismatched (GMSO go from k0 to k5)
+            # May need to do a check that k0 == k5 == 0 or raise a warning
+            container.params[dtype.member_types] = {
+                "k1": opls.parameters["k1"],
+                "k2": opls.parameters["k2"],
+                "k3": opls.parameters["k3"],
+                "k4": opls.parameters["k4"],
+            }
+        return container
+
+    unique_dtypes = top.dihedral_types(
         filter_by=PotentialFilters.UNIQUE_NAME_CLASS
     )
     groups = dict()
@@ -628,12 +688,16 @@ def _parse_dihedral_forces(top, potential_types, ref_units):
             "container": hoomd.md.dihedral.OPLS,
             "parser": _parse_opls,
         },
+        "RyckaertBellemansTorsionPotential": {
+            "container": hoomd.md.dihedral.OPLS,  # RBTorsion will converted to OPLS
+            "parser": _parse_rb,
+        },
     }
     dihedral_forces = list()
     for group in groups:
         dihedral_forces.append(
             dtype_group_map[group]["parser"](
-                container=dtype_group_map["container"](),
+                container=dtype_group_map[group]["container"](),
                 dtypes=groups[group],
                 ref_units=ref_units,
             )
@@ -654,7 +718,7 @@ def _parse_improper_forces(top, potential_types, ref_units):
             }
         return container
 
-    unique_dtypes = top.angle_types(
+    unique_dtypes = top.improper_types(
         filter_by=PotentialFilters.UNIQUE_NAME_CLASS
     )
     groups = dict()
@@ -675,7 +739,7 @@ def _parse_improper_forces(top, potential_types, ref_units):
     for group in groups:
         improper_forces.append(
             itype_group_map[group]["parser"](
-                container=itype_group_map["container"](),
+                container=itype_group_map[group]["container"](),
                 itypes=groups[group],
                 ref_units=ref_units,
             )
