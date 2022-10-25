@@ -50,6 +50,44 @@ class BaseTest:
         return Topology(name="mytop")
 
     @pytest.fixture
+    def benzene_ua(self):
+        compound = mb.load(get_fn("benzene_ua.mol2"))
+        compound.children[0].name = "BenzeneUA"
+        top = from_mbuild(compound)
+        top.identify_connections()
+        return top
+
+    @pytest.fixture
+    def benzene_ua_box(self):
+        compound = mb.load(get_fn("benzene_ua.mol2"))
+        compound.children[0].name = "BenzeneUA"
+        compound_box = mb.packing.fill_box(
+            compound=compound, n_compounds=5, density=1
+        )
+        top = from_mbuild(compound_box)
+        top.identify_connections()
+        return top
+
+    @pytest.fixture
+    def benzene_aa(self):
+        compound = mb.load(get_fn("benzene.mol2"))
+        compound.children[0].name = "BenzeneAA"
+        top = from_mbuild(compound)
+        top.identify_connections()
+        return top
+
+    @pytest.fixture
+    def benzene_aa_box(self):
+        compound = mb.load(get_fn("benzene.mol2"))
+        compound.children[0].name = "BenzeneAA"
+        compound_box = mb.packing.fill_box(
+            compound=compound, n_compounds=5, density=1
+        )
+        top = from_mbuild(compound_box)
+        top.identify_connections()
+        return top
+
+    @pytest.fixture
     def ar_system(self, n_ar_system):
         return from_mbuild(n_ar_system(), parse_label=True)
 

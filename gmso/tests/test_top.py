@@ -1,3 +1,5 @@
+from ssl import OP_NO_TLSv1
+
 import forcefield_utilities as ffutils
 import parmed as pmd
 import pytest
@@ -112,25 +114,49 @@ class TestTop(BaseTest):
         assert struct.defaults.fudgeLJ == 0.5
         assert struct.defaults.fudgeQQ == 0.5
 
-    @pytest.mark.skipif(not has_mbuild, reason="mBuild not installed.")
-    def test_benzene_top(self):
-        import mbuild as mb
-        from mbuild.packing import fill_box
-
-        from gmso.external import from_mbuild
-
-        benzene = mb.load(get_fn("benzene.mol2"))
-        benzene.children[0].name = "Benzene"
-        box_of_benzene = fill_box(compound=benzene, n_compounds=5, density=1)
-        top = from_mbuild(box_of_benzene)
+    def test_benzene_top(self, benzene_aa_box):
+        top = benzene_aa_box
         oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
-        top = apply(top=top, forcefields=oplsaa)
+        top = apply(top=top, forcefields=oplsaa, remove_untyped=True)
         top.save("benzene.top")
 
         with open("benzene.top") as f:
             f_cont = f.readlines()
 
         with open(get_path("benzene.top")) as ref:
+            ref_cont = ref.readlines()
+
+        assert len(f_cont) == len(ref_cont)
+
+    def test_benzene_restraints(self, benzene_ua_box):
+        top = benzene_ua_box
+        trappe_benzene = (
+            ffutils.FoyerFFs()
+            .load(get_path("benzene_trappe-ua.xml"))
+            .to_gmso_ff()
+        )
+        top = apply(top=top, forcefields=trappe_benzene, remove_untyped=True)
+        for angle in top.angles:
+            # Apply restraint for angle
+            angle.restraint = {
+                "theta_eq": angle.angle_type.parameters["theta_eq"],
+                "k": 1000 * u.kJ / u.mol,
+                "n": 1,
+            }
+
+        for dihedral in top.dihedrals:
+            # Apply restraint fot dihedral
+            dihedral.restraint = {
+                "phi_eq": 0 * u.degree,
+                "delta_phi": 0 * u.degree,
+                "k": 1000 * u.kJ / (u.mol * u.rad**2),
+            }
+        top.save("restrained_benzene_ua.top")
+
+        with open("restrained_benzene_ua.top") as f:
+            f_cont = f.readlines()
+
+        with open(get_path("restrained_benzene_ua.top")) as ref:
             ref_cont = ref.readlines()
 
         assert len(f_cont) == len(ref_cont)
