@@ -39,10 +39,10 @@ def to_openmm(topology, openmm_object="topology"):
     residue = openmm_top.addResidue(name="RES", chain=chain)
 
     for site in topology.sites:
+        element = Element.getByAtomicNumber(site.element.atomic_number)
         openmm_top.addAtom(
-            name=site.name, element=site.element.name, residue=residue
+            name=site.name, element=element, residue=residue
         )
-
     # Set box
     box = topology.box
     box.lengths.convert_to_units(u.nanometer)
