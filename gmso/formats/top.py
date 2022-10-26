@@ -3,6 +3,7 @@ import datetime
 from enum import unique
 
 import unyt as u
+from requests import ConnectTimeout
 
 from gmso.core.dihedral import Dihedral
 from gmso.core.element import element_by_atom_type
@@ -99,21 +100,21 @@ def write_top(top, filename, top_vars=None, simplify_check=False):
 
         # Section headers
         headers = {
-            "bonds": "\n[ bonds ]\n" "; ai\taj\tfunct\tc0\tc1\n",
-            "angles": "\n[ angles ]\n" "; ai\taj\tak\tfunct\tc0\tc1\n",
+            "bonds": "\n[ bonds ]\n" "; ai\taj\t\tfunct\tb0\t\tkb\n",
+            "angles": "\n[ angles ]\n" "; ai\taj\t\tak\t\tfunct\tphi_0\tk0\n",
             "angle_restraints": (
                 "\n[ angle_restraints ]\n"
-                "; ai\taj\tai\tak\tfunct\ttheta_eq\tk\tmultiplicity\n"
+                "; ai\taj\t\tai\t\tak\t\tfunct\ttheta_eq\tk\tmultiplicity\n"
             ),
             "dihedrals": {
                 "RyckaertBellemansTorsionPotential": "\n[ dihedrals ]\n"
-                "; ai\taj\tak\tal\tfunct\tc0\tc1\tc2\tc3\tc4\n",
+                "; ai\taj\t\tak\t\tal\t\tfunct\t\tc0\t\tc1\t\tc2\t\tc3\t\tc4\t\tc5\n",
                 "PeriodicTorsionPotential": "\n[ dihedrals ]\n"
-                "; ai\taj\tak\tal\tfunct\tphi\tk_phi\tmulitplicity\n",
+                "; ai\taj\t\tak\t\tal\t\tfunct\tphi\tk_phi\tmulitplicity\n",
             },
             "dihedral_restraints": "\n[ dihedral_restraints ]\n"
             "#ifdef DIHRES\n"
-            "; ai\taj\tak\tal\tfunct\ttheta_eq\tdelta_theta\tkd\n",
+            "; ai\taj\t\tak\t\tal\t\tfunct\ttheta_eq\tdelta_theta\t\tkd\n",
         }
         for tag in unique_molecules:
             """Write out nrexcl for each unique molecule."""
@@ -202,6 +203,20 @@ def write_top(top, filename, top_vars=None, simplify_check=False):
                                     shifted_idx_map,
                                 ):
                                     out_file.write(line)
+                    elif conn_group in [
+                        "angle_restraints",
+                        "dihedral_restraints",
+                    ]:
+                        out_file.write(headers[conn_group])
+                        for conn in unique_molecules[tag][conn_group]:
+                            out_file.write(
+                                _write_restraint(
+                                    top,
+                                    conn,
+                                    conn_group,
+                                    shifted_idx_map,
+                                )
+                            )
                     else:
                         out_file.write(headers[conn_group])
                         for conn in unique_molecules[tag][conn_group]:
@@ -464,8 +479,8 @@ def _periodic_torsion_writer(top, dihedral, shifted_idx_map):
 def _write_restraint(top, connection, type, shifted_idx_map):
     """Worker function to write various connection restraint information."""
     worker_functions = {
-        "angle": _angle_restraint_writer,
-        "dihedral": _dihedral_restraint_writer,
+        "angle_restraints": _angle_restraint_writer,
+        "dihedral_restraints": _dihedral_restraint_writer,
     }
 
     return worker_functions[type](top, connection, shifted_idx_map)
@@ -480,7 +495,7 @@ def _angle_restraint_writer(top, angle, shifted_idx_map):
         str(shifted_idx_map[top.get_index(angle.connection_members[2])] + 1),
         "1",
         angle.restraint["theta_eq"].in_units(u.degree).value,
-        angle.restraint["k"].in_units(u.Unit("kJ/(mol)")).value,
+        angle.restraint["k"].in_units(u.Unit("kJ/mol")).value,
         angle.restraint["n"],
     )
     return line
@@ -488,7 +503,7 @@ def _angle_restraint_writer(top, angle, shifted_idx_map):
 
 def _dihedral_restraint_writer(top, dihedral, shifted_idx_map):
     """Write dihedral restraint information."""
-    line = "{0:8s}{1:8s}{2:8s}{3:8s}{4:4s}{5:15.5f}{6:15.5f}{7:4}\n".format(
+    line = "{0:8s}{1:8s}{2:8s}{3:8s}{4:4s}{5:15.5f}{6:15.5f}{7:15.5f}\n".format(
         str(shifted_idx_map[top.get_index(dihedral.connection_members[0])] + 1),
         str(shifted_idx_map[top.get_index(dihedral.connection_members[1])] + 1),
         str(shifted_idx_map[top.get_index(dihedral.connection_members[2])] + 1),
