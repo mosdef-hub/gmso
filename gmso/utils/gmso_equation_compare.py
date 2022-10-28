@@ -35,29 +35,19 @@ def evaluate_nonbonded_lj_format_with_scaler(new_lj_form, base_lj_form):
         (
             eqn_ratio,
             epsilon,
-            ep,
             sigma,
-            sig,
             r,
             Rmin,
-            rmin,
-            r_min,
             two,
-        ) = sympy.symbols(
-            "eqn_ratio epsilon ep sigma sig r Rmin rmin r_min two"
-        )
+        ) = sympy.symbols("eqn_ratio epsilon sigma r Rmin two")
         values = sympy.nonlinsolve(
             [
                 eqn_ratio
                 - sympy.sympify(new_lj_form) / sympy.sympify(base_lj_form),
-                ep - epsilon,
-                sig - sigma,
-                r_min - Rmin,
-                rmin - Rmin,
                 Rmin - sigma * two ** (1 / 6),
                 two - 2,
             ],
-            [eqn_ratio],
+            [eqn_ratio, Rmin, two],
         )
 
         form_scalar = float(list(values)[0][0])
@@ -97,27 +87,14 @@ def evaluate_nonbonded_mie_format_with_scaler(new_mie_form, base_mie_form):
         (
             eqn_ratio,
             epsilon,
-            ep,
             sigma,
-            sig,
             r,
-            rmin,
-            r_min,
-            Rmin,
-            N,
             n,
-        ) = sympy.symbols(
-            "eqn_ratio epsilon ep sigma sig r rmin r_min Rmin N n"
-        )
+        ) = sympy.symbols("eqn_ratio epsilon sigma r n")
         values = sympy.nonlinsolve(
             [
                 eqn_ratio
                 - sympy.sympify(new_mie_form) / sympy.sympify(base_mie_form),
-                ep - epsilon,
-                sig - sigma,
-                r_min - Rmin,
-                rmin - Rmin,
-                N - n,
             ],
             [eqn_ratio],
         )
@@ -159,29 +136,15 @@ def evaluate_nonbonded_exp6_format_with_scaler(new_exp6_form, base_exp6_form):
         (
             eqn_ratio,
             epsilon,
-            ep,
             sigma,
-            sig,
             r,
             Rmin,
-            rmin,
-            r_min,
-            N,
-            n,
-            alp,
             alpha,
-        ) = sympy.symbols(
-            "eqn_ratio epsilon ep sigma sig r Rmin rmin r_min N n alp alpha"
-        )
+        ) = sympy.symbols("eqn_ratio epsilon sigma r Rmin alpha")
         values = sympy.nonlinsolve(
             [
                 eqn_ratio
                 - sympy.sympify(new_exp6_form) / sympy.sympify(base_exp6_form),
-                ep - epsilon,
-                r_min - Rmin,
-                rmin - Rmin,
-                N - n,
-                alp - alpha,
             ],
             [eqn_ratio],
         )
