@@ -32,7 +32,13 @@ class Angle(Connection):
     )
 
     restraint_: Optional[dict] = Field(
-        default=None, description="Restraint for this angle."
+        default=None,
+        description="""
+        Restraint for this angle, must be a dict with the following keys:
+        'k' (unit of energy/mol), 'theta_eq' (unit of angle), 'n' (multiplicity, unitless).
+        Refer to https://manual.gromacs.org/current/reference-manual/topologies/topology-file-formats.html
+        for more information.
+        """,
     )
 
     @property

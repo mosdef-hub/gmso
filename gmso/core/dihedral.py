@@ -36,7 +36,13 @@ class Dihedral(Connection):
     )
 
     restraint_: Optional[dict] = Field(
-        default=None, description="Restraint for this dihedral."
+        default=None,
+        description="""
+        Restraint for this dihedral, must be a dict with the following keys:
+        'k' (unit of energy/(mol * angle**2)), 'phi_eq' (unit of angle), 'delta_phi' (unit of angle).
+        Refer to https://manual.gromacs.org/current/reference-manual/topologies/topology-file-formats.html
+        for more information.
+        """,
     )
 
     @property

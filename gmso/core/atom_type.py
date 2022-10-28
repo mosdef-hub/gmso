@@ -132,6 +132,7 @@ class AtomType(ParametricPotential):
         """Clone this AtomType, faster alternative to deepcopying."""
         return AtomType(
             name=str(self.name),
+            tags=self.tags,
             expression=None,
             parameters=None,
             independent_variables=None,

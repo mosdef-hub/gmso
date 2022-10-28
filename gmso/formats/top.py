@@ -1,9 +1,8 @@
 """Write a GROMACS topology (.TOP) file."""
 import datetime
-from enum import unique
+import warnings
 
 import unyt as u
-from requests import ConnectTimeout
 
 from gmso.core.dihedral import Dihedral
 from gmso.core.element import element_by_atom_type
@@ -147,7 +146,7 @@ def write_top(top, filename, top_vars=None, simplify_check=False):
                         site.atom_type.name,
                         str(site.molecule.number + 1 if site.molecule else 1),
                         tag,
-                        site.element.symbol if site.element else site.name,
+                        site.atom_type.tags["element"],
                         "1",  # TODO: care about charge groups
                         site.charge.in_units(u.elementary_charge).value,
                         site.atom_type.mass.in_units(u.amu).value,
@@ -203,10 +202,22 @@ def write_top(top, filename, top_vars=None, simplify_check=False):
                                     shifted_idx_map,
                                 ):
                                     out_file.write(line)
-                    elif conn_group in [
-                        "angle_restraints",
-                        "dihedral_restraints",
-                    ]:
+                    elif conn_group == "angle_restraints":
+                        out_file.write(headers[conn_group])
+                        for conn in unique_molecules[tag][conn_group]:
+                            out_file.write(
+                                _write_restraint(
+                                    top,
+                                    conn,
+                                    conn_group,
+                                    shifted_idx_map,
+                                )
+                            )
+                    elif conn_group == "dihedral_restraints":
+                        warnings.warn(
+                            "The diehdral_restraints writer is designed to work with"
+                            "`define = DDIHRES` clause in the GROMACS input file (.mdp)"
+                        )
                         out_file.write(headers[conn_group])
                         for conn in unique_molecules[tag][conn_group]:
                             out_file.write(
