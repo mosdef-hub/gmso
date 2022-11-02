@@ -3,7 +3,6 @@ import warnings
 
 import numpy as np
 import unyt as u
-from matplotlib.widgets import EllipseSelector
 from sympy.parsing.sympy_parser import parse_expr
 
 import gmso
