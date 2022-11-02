@@ -72,3 +72,9 @@ class TestGro(BaseTest):
             assert site.molecule
             assert site.molecule.name == "Ben"
         assert len(top.unique_site_labels("molecule")) == 5
+
+    def test_gro_ua_molecule(self):
+        top = Topology.load(get_path("restrained_benzene_ua.gro"))
+        for site in top.sites:
+            assert site.molecule.name == "Com"
+            assert site.name == "_CH"

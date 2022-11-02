@@ -1,5 +1,3 @@
-from ssl import OP_NO_TLSv1
-
 import forcefield_utilities as ffutils
 import parmed as pmd
 import pytest
@@ -160,3 +158,43 @@ class TestTop(BaseTest):
             ref_cont = ref.readlines()
 
         assert len(f_cont) == len(ref_cont)
+
+        ref_sections = dict()
+        sections = dict()
+        current_section = None
+        for line, ref in zip(f_cont[1:], ref_cont[1:]):
+            if line.startswith("["):
+                assert line == ref
+                current_section = line
+                sections[current_section] = set()
+                ref_sections[current_section] = set()
+            elif line.startswith("#"):
+                assert line == ref
+            elif current_section is not None:
+                sections[current_section].add(line)
+                ref_sections[current_section].add(ref)
+
+        for section, ref_section in zip(sections, ref_sections):
+            assert section == ref_section
+            if "dihedral" in section:
+                # Need to deal with these separatelt due to member's order issue
+                # Each dict will have the keys be members and values be their parameters
+                print(section)
+                members = dict()
+                ref_members = dict()
+                for line, ref in zip(
+                    sections[section], ref_sections[ref_section]
+                ):
+                    line = line.split()
+                    ref = ref.split()
+                    members["-".join(line[:4])] = line[4:]
+                    members["-".join(reversed(line[:4]))] = line[4:]
+                    ref_members["-".join(ref[:4])] = ref[4:]
+                    ref_members["-".join(reversed(ref[:4]))] = ref[4:]
+
+                assert members == ref_members
+                for member in members:
+                    assert members[member] == ref_members[member]
+
+            else:
+                assert sections[section] == ref_sections[ref_section]

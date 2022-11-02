@@ -71,7 +71,6 @@ def read_gro(filename):
             res = content[0]
             atom_name = content[1]
             atom_id = content[2]
-            print(content)
             coords[row] = u.nm * np.array(
                 [
                     float(content[3]),
