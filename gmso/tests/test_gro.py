@@ -66,26 +66,30 @@ class TestGro(BaseTest):
             assert site.molecule.name == ref_site.molecule.name[:3]
             assert site.molecule.number == ref_site.molecule.number
 
-    def test_gro_read_molecule(self):
-        top = Topology.load(get_path("benzene.gro"))
-        for site in top.sites:
-            assert site.molecule
-            assert site.molecule.name == "Ben"
-        assert len(top.unique_site_labels("molecule")) == 5
-
-    def test_gro_ua_molecule(self, benzene_ua_box):
-        top = benzene_ua_box
-        top.save("benzene_ua.gro")
+    @pytest.mark.parametrize("top", ["benzene_ua_box", "benzene_aa_box"])
+    def test_gro_ua_molecule(self, top, request):
+        top = request.getfixturevalue(top)
+        top.save("benzene.gro")
 
         # Re-read in and compare with reference
-        top = Topology.load("benzene_ua.gro")
-        ref = Topology.load(get_path("restrained_benzene_ua.gro"))
+        top = Topology.load("benzene.gro")
+
+        refs = {
+            "benzene_ua_box": "benzene.gro",
+            "benzene_aa_box": "restrained_benzene_ua.gro",
+        }
+        ref = Topology.load(get_path(refs[top]))
 
         assert len(top.sites) == len(ref.sites)
         assert top.unique_site_labels("molecule") == ref.unique_site_labels(
             "molecule"
         )
 
-        for site in top.sites:
-            assert site.molecule.name == "Com"
-            assert site.name == "_CH"
+        if top == "benzene_ua_box":
+            for site in top.sites:
+                assert site.molecule.name == "Com"
+                assert site.name == "_CH"
+        elif top == "benzene_aa_box":
+            for site in top.sites:
+                assert site.molecule.name == "Ben"
+                assert site.name in ["C", "H"]
