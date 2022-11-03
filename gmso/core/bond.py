@@ -30,6 +30,15 @@ class Bond(Connection):
     bond_type_: Optional[BondType] = Field(
         default=None, description="BondType of this bond."
     )
+    restraint_: Optional[dict] = Field(
+        default=None,
+        description="""
+        Restraint for this bond, must be a dict with the following keys:
+        'b0' (unit of length), 'kb' (unit of energy/(mol * length**2)).
+        Refer to https://manual.gromacs.org/current/reference-manual/topologies/topology-file-formats.html
+        for more information.
+        """,
+    )
 
     @property
     def bond_type(self):
@@ -41,6 +50,11 @@ class Bond(Connection):
         """Return parameters of the potential type."""
         # ToDo: Deprecate this?
         return self.__dict__.get("bond_type_")
+
+    @property
+    def restraint(self):
+        """Return the restraint of this bond."""
+        return self.__dict__.get("restraint_")
 
     def equivalent_members(self):
         """Get a set of the equivalent connection member tuples.
@@ -75,8 +89,10 @@ class Bond(Connection):
         fields = {
             "bond_type_": "bond_type",
             "connection_members_": "connection_members",
+            "restraint_": "restraint",
         }
         alias_to_fields = {
             "bond_type": "bond_type_",
             "connection_members": "connection_members_",
+            "restraint": "restraint_",
         }

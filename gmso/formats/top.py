@@ -155,6 +155,7 @@ def write_top(top, filename, top_vars=None, simplify_check=False):
 
             for conn_group in [
                 "bonds",
+                "bond_restraints",
                 "angles",
                 "angle_restraints",
                 "dihedrals",
@@ -490,11 +491,24 @@ def _periodic_torsion_writer(top, dihedral, shifted_idx_map):
 def _write_restraint(top, connection, type, shifted_idx_map):
     """Worker function to write various connection restraint information."""
     worker_functions = {
+        "bond_restraints": _bond_restraint_writer,
         "angle_restraints": _angle_restraint_writer,
         "dihedral_restraints": _dihedral_restraint_writer,
     }
 
     return worker_functions[type](top, connection, shifted_idx_map)
+
+
+def _bond_restraint_writer(top, bond, shifted_idx_map):
+    """Write bond restraint information."""
+    line = "{0:8s}{1:8s}{2:4s}{3:15.5f}{4:15.5f}\n".format(
+        str(shifted_idx_map[top.get_index(bond.connection_members[1])] + 1),
+        str(shifted_idx_map[top.get_index(bond.connection_members[0])] + 1),
+        "6",
+        bond.restraint["r_eq"].in_units(u.nm).value,
+        bond.restraint["k"].in_units(u.Unit("kJ/(mol * nm**2)")).value,
+    )
+    return line
 
 
 def _angle_restraint_writer(top, angle, shifted_idx_map):
