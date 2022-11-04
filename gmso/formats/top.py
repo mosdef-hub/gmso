@@ -100,6 +100,8 @@ def write_top(top, filename, top_vars=None, simplify_check=False):
         # Section headers
         headers = {
             "bonds": "\n[ bonds ]\n" "; ai\taj\t\tfunct\tb0\t\tkb\n",
+            "bond_restraints": "\n[ bonds ] ;Harmonic potential restraint\n"
+            "; ai\taj\t\tfunct\tb0\t\tkb\n",
             "angles": "\n[ angles ]\n" "; ai\taj\t\tak\t\tfunct\tphi_0\tk0\n",
             "angle_restraints": (
                 "\n[ angle_restraints ]\n"
@@ -309,6 +311,9 @@ def _get_unique_molecules(top):
         unique_molecules[top.name]["subtags"] = [top.name]
         unique_molecules[top.name]["sites"] = list(top.sites)
         unique_molecules[top.name]["bonds"] = list(top.bonds)
+        unique_molecules[top.name]["bond_restraints"] = list(
+            bond for bond in top.bonds if bond.restraint
+        )
         unique_molecules[top.name]["angles"] = list(top.angles)
         unique_molecules[top.name]["angle_restraints"] = list(
             angle for angle in top.angles if angle.restraint
@@ -326,6 +331,9 @@ def _get_unique_molecules(top):
                 top.iter_sites(key="molecule", value=molecule)
             )
             unique_molecules[tag]["bonds"] = list(molecule_bonds(top, molecule))
+            unique_molecules[tag]["bond_restraints"] = list(
+                bond for bond in molecule_bonds(top, molecule) if bond.restraint
+            )
             unique_molecules[tag]["angles"] = list(
                 molecule_angles(top, molecule)
             )

@@ -134,6 +134,12 @@ class TestTop(BaseTest):
             .to_gmso_ff()
         )
         top = apply(top=top, forcefields=trappe_benzene, remove_untyped=True)
+
+        for bond in top.bonds:
+            bond.restraints = {
+                "r_eq": bond.bond_type.parameters["r_eq"],
+                "k": 1000 * u.kJ / (u.mol * u.nm**2),
+            }
         for angle in top.angles:
             # Apply restraint for angle
             angle.restraint = {
