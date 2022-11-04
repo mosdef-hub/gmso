@@ -8,11 +8,9 @@ import unyt as u
 from unyt.array import allclose_units
 
 import gmso
-from gmso.abc.abstract_site import MoleculeType, ResidueType
 from gmso.core.atom import Atom
 from gmso.core.box import Box
 from gmso.core.topology import Topology
-from gmso.exceptions import NotYetImplementedWarning
 from gmso.formats.formats_registry import loads_as, saves_as
 
 
