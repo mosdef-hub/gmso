@@ -9,7 +9,10 @@ from gmso.formats.top import write_top
 from gmso.parameterization import apply
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
-from gmso.utils.io import get_fn, has_mbuild
+from gmso.utils.io import get_fn, has_mbuild, import_
+
+if has_mbuild:
+    mb = import_("mbuild")
 
 
 class TestTop(BaseTest):

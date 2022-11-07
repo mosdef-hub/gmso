@@ -205,22 +205,12 @@ def write_top(top, filename, top_vars=None, simplify_check=False):
                                     shifted_idx_map,
                                 ):
                                     out_file.write(line)
-                    elif conn_group == "angle_restraints":
-                        out_file.write(headers[conn_group])
-                        for conn in unique_molecules[tag][conn_group]:
-                            out_file.write(
-                                _write_restraint(
-                                    top,
-                                    conn,
-                                    conn_group,
-                                    shifted_idx_map,
-                                )
+                    elif "restraints" in conn_group:
+                        if conn_group == "dihedral_restraints":
+                            warnings.warn(
+                                "The diehdral_restraints writer is designed to work with"
+                                "`define = DDIHRES` clause in the GROMACS input file (.mdp)"
                             )
-                    elif conn_group == "dihedral_restraints":
-                        warnings.warn(
-                            "The diehdral_restraints writer is designed to work with"
-                            "`define = DDIHRES` clause in the GROMACS input file (.mdp)"
-                        )
                         out_file.write(headers[conn_group])
                         for conn in unique_molecules[tag][conn_group]:
                             out_file.write(

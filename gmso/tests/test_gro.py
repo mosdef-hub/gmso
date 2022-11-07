@@ -13,6 +13,9 @@ from gmso.utils.io import get_fn, has_mbuild, has_parmed, import_
 if has_parmed:
     pmd = import_("parmed")
 
+if has_mbuild:
+    mb = import_("mbuild")
+
 
 @pytest.mark.skipif(not has_parmed, reason="ParmEd is not installed")
 class TestGro(BaseTest):
@@ -66,19 +69,19 @@ class TestGro(BaseTest):
             assert site.molecule.name == ref_site.molecule.name[:3]
             assert site.molecule.number == ref_site.molecule.number
 
-    @pytest.mark.parametrize("top", ["benzene_ua_box", "benzene_aa_box"])
-    def test_gro_ua_molecule(self, top, request):
-        top = request.getfixturevalue(top)
+    @pytest.mark.parametrize("fixture", ["benzene_ua_box", "benzene_aa_box"])
+    def test_full_loop_gro_molecule(self, fixture, request):
+        top = request.getfixturevalue(fixture)
         top.save("benzene.gro")
 
         # Re-read in and compare with reference
         top = Topology.load("benzene.gro")
 
         refs = {
-            "benzene_ua_box": "benzene.gro",
-            "benzene_aa_box": "restrained_benzene_ua.gro",
+            "benzene_aa_box": "benzene.gro",
+            "benzene_ua_box": "restrained_benzene_ua.gro",
         }
-        ref = Topology.load(get_path(refs[top]))
+        ref = Topology.load(get_path(refs[fixture]))
 
         assert len(top.sites) == len(ref.sites)
         assert top.unique_site_labels("molecule") == ref.unique_site_labels(

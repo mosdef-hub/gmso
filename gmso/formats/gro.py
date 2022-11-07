@@ -211,7 +211,7 @@ def _prepare_box(top):
         rtol=1e-5,
         atol=0.1 * u.degree,
     ):
-        out_str = out_str + " {:0.5f} {:0.5f} {:0.5f} \n".format(
+        out_str = out_str + " {:0.5f} {:0.5f} {:0.5f}\n".format(
             top.box.lengths[0].in_units(u.nm).value.round(6),
             top.box.lengths[1].in_units(u.nm).value.round(6),
             top.box.lengths[2].in_units(u.nm).value.round(6),
