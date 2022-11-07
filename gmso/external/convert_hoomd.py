@@ -46,9 +46,7 @@ AKMA_UNITS = {
 
 def to_hoomd_snapshot(
     top,
-    ref_distance=1.0 * u.nm,
-    ref_mass=1.0 * u.Unit("g/mol"),
-    ref_energy=1.0 * u.Unit("kcal/mol"),
+    base_units=None,
     rigid_bodies=None,
     shift_coords=True,
 ):
@@ -64,12 +62,11 @@ def to_hoomd_snapshot(
         gmso.Topology object
     filename : str
         Path of the output file.
-    ref_distance : float, optional, default=1.0
-        Reference distance for conversion to reduced units
-    ref_mass : float, optional, default=1.0
-        Reference mass for conversion to reduced units
-    ref_energy : float, optional, default=1.0
-        Reference energy for conversion to reduced units
+    base_units : dict, optinoal, default=None
+        The dictionary of base units to be converted to. Entries restricted to
+        "energy", "length", and "mass". There is also option to used predefined
+        unit systems ("MD" or "AKMA" provided as string). If None is provided,
+        this method will perform no units conversion.
     rigid_bodies : list of int, optional, default=None
         List of rigid body information. An integer value is required for each
         atom corresponding to the index of the rigid body the particle is to be
@@ -88,6 +85,7 @@ def to_hoomd_snapshot(
     read force field parameters from a Foyer XML file.
 
     """
+    base_units = _validate_base_units(base_units)
     xyz = u.unyt_array([site.position for site in top.sites])
     if shift_coords:
         warnings.warn("Shifting coordinates to [-L/2, L/2]")
@@ -100,9 +98,9 @@ def to_hoomd_snapshot(
 
     # Write box information
     (lx, ly, lz, xy, xz, yz) = _prepare_box_information(top)
-    lx = lx / ref_distance
-    ly = ly / ref_distance
-    lz = lz / ref_distance
+    lx = lx / base_units["length"]
+    ly = ly / base_units["length"]
+    lz = lz / base_units["lenght"]
     gsd_snapshot.configuration.box = np.array([lx, ly, lz, xy, xz, yz])
 
     warnings.warn(
@@ -112,7 +110,13 @@ def to_hoomd_snapshot(
     )
 
     _parse_particle_information(
-        gsd_snapshot, top, xyz, ref_distance, ref_mass, ref_energy, rigid_bodies
+        gsd_snapshot,
+        top,
+        xyz,
+        base_units["lengths"],
+        base_units["mass"],
+        base_units["energy"],
+        rigid_bodies,
     )
 
     if top.n_bonds > 0:
@@ -383,7 +387,7 @@ def _prepare_box_information(top):
     return lx, ly, lz, xy, xz, yz
 
 
-def to_hoomd_forcefield(top, nlist_buffer=0.4, ref_units=None):
+def to_hoomd_forcefield(top, nlist_buffer=0.4, base_units=None):
     """Convert the potential portion of a typed GMSO to hoomd forces.
 
     Parameters
@@ -393,7 +397,7 @@ def to_hoomd_forcefield(top, nlist_buffer=0.4, ref_units=None):
     nlist_buffer : float, optional, default=0.4
         Neighborlist buffer for simulation cell. Its unit is the same as that
         used to defined GMSO Topology Box.
-    ref_units : dict or str, optional, default=None
+    base_units : dict or str, optional, default=None
         The dictionary of base units to be converted to. Entries restricted to
         "energy", "length", and "mass". There is also option to used predefined
         unit systems ("MD" or "AKMA" provided as string). If None is provided,
@@ -405,33 +409,17 @@ def to_hoomd_forcefield(top, nlist_buffer=0.4, ref_units=None):
         Each entry
     """
     potential_types = _validate_compatibility(top)
-    unit_systems = {"MD": MD_UNITS, "AKMA": AKMA_UNITS}
-    if isinstance(ref_units, str):
-        ref_units = unit_systems[ref_units]
-    elif isinstance(ref_units, dict):
-        for key in ref_units:
-            if key not in ["energy", "mass", "length"]:
-                warnings.warn(
-                    "Only base unit will be used during the conversion"
-                    "i.e., energy, mass, and length, other units provided"
-                    "will not be considered."
-                )
-        missing = list()
-        for base in ["energy", "mass", "length"]:
-            if base not in ref_units:
-                missing.append(base)
-        if missing:
-            raise (f"ref_units is not fully provided, missing {missing}")
+    base_units = _validate_base_units(base_units)
 
     # convert nonbonded potentials
     forces = {
         "pairs": _parse_nonbonded_forces(
-            top, nlist_buffer, potential_types, ref_units
+            top, nlist_buffer, potential_types, base_units
         ),
-        "bonds": _parse_bond_forces(top, potential_types, ref_units),
-        "angles": _parse_angle_forces(top, potential_types, ref_units),
-        "dihedrals": _parse_dihedral_forces(top, potential_types, ref_units),
-        "impropers": _parse_improper_forces(top, potential_types, ref_units),
+        "bonds": _parse_bond_forces(top, potential_types, base_units),
+        "angles": _parse_angle_forces(top, potential_types, base_units),
+        "dihedrals": _parse_dihedral_forces(top, potential_types, base_units),
+        "impropers": _parse_improper_forces(top, potential_types, base_units),
     }
 
     return forces
@@ -460,10 +448,10 @@ def _validate_compatibility(top):
     return potential_types
 
 
-def _parse_nonbonded_forces(top, nlist_buffer, potential_types, ref_units):
+def _parse_nonbonded_forces(top, nlist_buffer, potential_types, base_units):
     """Parse nonbonded forces."""
     # Set up helper methods to parse different nonbonded forces.
-    def _parse_lj(container, atypes, ref_units, combining_rule):
+    def _parse_lj(container, atypes, base_units, combining_rule):
         """Parse LJ forces."""
         for atype1, atype2 in itertools.combinations_with_replacement(
             atypes, 2
@@ -492,16 +480,16 @@ def _parse_nonbonded_forces(top, nlist_buffer, potential_types, ref_units):
 
         return container
 
-    def _parse_buckingham(container, atypes, ref_units):
+    def _parse_buckingham(container, atypes, base_units):
         return None
 
-    def _parse_lj0804(container, atypes, ref_units):
+    def _parse_lj0804(container, atypes, base_units):
         return None
 
-    def _parse_lj1208(container, atypes, ref_units):
+    def _parse_lj1208(container, atypes, base_units):
         return None
 
-    def _parse_mie(container, atypes, ref_units):
+    def _parse_mie(container, atypes, base_units):
         return None
 
     unique_atypes = top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS)
@@ -534,7 +522,7 @@ def _parse_nonbonded_forces(top, nlist_buffer, potential_types, ref_units):
             atype_group_map[group]["parser"](
                 container=atype_group_map[group]["container"](nlist=nlist),
                 atypes=groups[group],
-                ref_units=ref_units,
+                base_units=base_units,
                 combining_rule=top.combining_rule,
             )
         )
@@ -542,10 +530,10 @@ def _parse_nonbonded_forces(top, nlist_buffer, potential_types, ref_units):
     return nbonded_forces
 
 
-def _parse_bond_forces(top, potential_types, ref_units):
+def _parse_bond_forces(top, potential_types, base_units):
     """Parse bond forces."""
 
-    def _parse_harmonic(container, btypes, ref_units):
+    def _parse_harmonic(container, btypes, base_units):
         for btype in btypes:
             # TODO: Unit conversion
             container.params[btype.member_types] = {
@@ -575,17 +563,17 @@ def _parse_bond_forces(top, potential_types, ref_units):
             btype_group_map[group]["parser"](
                 container=btype_group_map[group]["container"](),
                 btypes=groups[group],
-                ref_units=ref_units,
+                base_units=base_units,
             )
         )
 
     return bond_forces
 
 
-def _parse_angle_forces(top, potential_types, ref_units):
+def _parse_angle_forces(top, potential_types, base_units):
     """Parse angle forces."""
 
-    def _parse_harmonic(container, agtypes, ref_units):
+    def _parse_harmonic(container, agtypes, base_units):
         for agtype in agtypes:
             # TODO: Unit conversion
             container.params[agtype.member_types] = {
@@ -617,17 +605,17 @@ def _parse_angle_forces(top, potential_types, ref_units):
             agtype_group_map[group]["parser"](
                 container=agtype_group_map[group]["container"](),
                 agtypes=groups[group],
-                ref_units=ref_units,
+                base_units=base_units,
             )
         )
 
     return angle_forces
 
 
-def _parse_dihedral_forces(top, potential_types, ref_units):
+def _parse_dihedral_forces(top, potential_types, base_units):
     """Parse dihedral forces."""
 
-    def _parse_periodic(container, dtypes, ref_units):
+    def _parse_periodic(container, dtypes, base_units):
         for dtype in dtypes:
             # TODO: Unit conversion
             container.params[dtype.member_types] = {
@@ -638,7 +626,7 @@ def _parse_dihedral_forces(top, potential_types, ref_units):
             }
         return container
 
-    def _parse_opls(container, dtypes, ref_units):
+    def _parse_opls(container, dtypes, base_units):
         for dtype in dtypes:
             # TODO: Unit conversion
             # TODO: The range of ks is mismatched (GMSO go from k0 to k5)
@@ -651,7 +639,7 @@ def _parse_dihedral_forces(top, potential_types, ref_units):
             }
         return container
 
-    def _parse_rb(container, dtypes, ref_units):
+    def _parse_rb(container, dtypes, base_units):
         warnings.warn(
             "RyckaertBellemansTorsionPotential will be converted to OPLSTorsionPotential."
         )
@@ -699,17 +687,17 @@ def _parse_dihedral_forces(top, potential_types, ref_units):
             dtype_group_map[group]["parser"](
                 container=dtype_group_map[group]["container"](),
                 dtypes=groups[group],
-                ref_units=ref_units,
+                base_units=base_units,
             )
         )
 
     return dihedral_forces
 
 
-def _parse_improper_forces(top, potential_types, ref_units):
+def _parse_improper_forces(top, potential_types, base_units):
     """Parse improper forces."""
 
-    def _parse_harmonic(container, itypes, ref_units):
+    def _parse_harmonic(container, itypes, base_units):
         for itype in itypes:
             # TODO: Unit conversion
             container.params[itype.member_types] = {
@@ -741,7 +729,42 @@ def _parse_improper_forces(top, potential_types, ref_units):
             itype_group_map[group]["parser"](
                 container=itype_group_map[group]["container"](),
                 itypes=groups[group],
-                ref_units=ref_units,
+                base_units=base_units,
             )
         )
     return improper_forces
+
+
+def _validate_base_units(base_units):
+    """Validate the provided base units."""
+    ref = {
+        "energy": u.dimensions.energy,
+        "length": u.dimensions.lenght,
+        "mass": u.dimensions.mass,
+    }
+
+    unit_systems = {"MD": MD_UNITS, "AKMA": AKMA_UNITS}
+    if isinstance(base_units, str):
+        base_units = unit_systems[base_units]
+    elif isinstance(base_units, dict):
+        for key in base_units:
+            if key not in ["energy", "mass", "length"]:
+                warnings.warn(
+                    "Only base unit will be used during the conversion"
+                    "i.e., energy, mass, and length, other units provided"
+                    "will not be considered."
+                )
+            else:
+                msg = "{key} is in wrong unit dimension"
+                assert base_units[key].dimensions == ref[key], msg
+
+        missing = list()
+        for base in ["energy", "mass", "length"]:
+            if base not in base_units:
+                missing.append(base)
+        if missing:
+            raise (f"base_units is not fully provided, missing {missing}")
+    else:
+        base_units = {"length": 1, "mass": 1, "energy": 1}
+
+    return base_units
