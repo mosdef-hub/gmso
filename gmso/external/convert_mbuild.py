@@ -250,11 +250,7 @@ def _parse_particle(particle_map, site):
 def _parse_site(site_map, particle, search_method):
     """Parse information for a gmso.Site from a mBuild.Compound adn add it to the site map."""
     pos = particle.xyz[0] * u.nm
-    ele = (
-        search_method(particle.element.symbol)
-        if particle.element
-        else search_method(particle.name)
-    )
+    ele = search_method(particle.element.symbol) if particle.element else None
     charge = particle.charge * u.elementary_charge if particle.charge else None
     mass = particle.mass * u.amu if particle.mass else None
 
