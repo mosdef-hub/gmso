@@ -62,3 +62,16 @@ def _deprecate_kwargs(kwargs, deprecated_kwargs):
             DeprecationWarning,
             3,
         )
+
+
+def mark_WIP():
+    """Decorate functions with WIP marking"""
+
+    def decorate_WIP(func):
+        @functools.wraps(func)
+        def wrapper(self_or_cls, *args, **kwargs):
+            return func(self_or_cls, *args, **kwargs)
+
+        return wrapper
+
+    return decorate_WIP

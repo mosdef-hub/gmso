@@ -4,9 +4,23 @@ from unyt.testing import assert_allclose_units
 
 import gmso
 from gmso.core.box import Box
+from gmso.external import to_parmed
 from gmso.formats.lammpsdata import read_lammpsdata, write_lammpsdata
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
+
+def compare_lammps_files(fn1, fn2):
+    """Check for line by line equality between lammps files."""
+    header_line_nbr = 1 # line number which will differ
+    with open(fn1, "r") as f:
+        line2 = f.readlines()[header_line_nbr:]
+    with open(fn2, "r") as f:
+        line1 = f.readlines()[header_line_nbr:]
+    for l1, l2 in zip(line1, line2):
+        assert l1.replace(" ", "") == l2.replace(" ", ""),\
+        f"The following two lines have not been found to have equality {l1} and {l2}"
+        print(l1, "\n\n", l2)
+    return True
 
 
 class TestLammpsWriter(BaseTest):
@@ -180,10 +194,30 @@ class TestLammpsWriter(BaseTest):
         )
 
 
-"""
+    """
     def test_read_n_diherals(self, typed_ethane):
         typed_ethane.save("ethane.lammps")
         read = gmso.Topology.load("ethane.lammps")
 
         assert read.n_dihedrals == 9
-"""
+    """
+    # TODO: would be good to create a library of molecules and styles to test
+    def test_lammps_vs_parmed_writer_ethane(self, typed_ethane):
+        pass
+
+    def test_lammps_vs_parmed_writer_trappe(self, typed_ethane):
+        typed_ethane.save("gmso.lammps")
+        pmd_ethane = to_parmed(typed_ethane)
+        pmd_ethane.impropers = []
+        from mbuild.formats.lammpsdata import write_lammpsdata
+        write_lammpsdata(
+            filename="pmd.lammps",
+            structure=pmd_ethane,
+            detect_forcefield_style=False,
+            use_dihedrals=False,
+            use_rb_torsions=True,
+            mins=[0, 0, 0],
+            maxs=typed_ethane.box.lengths.convert_to_units(u.nm)
+        )
+
+        assert compare_lammps_files("gmso.lammps", "pmd.lammps")

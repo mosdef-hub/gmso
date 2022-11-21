@@ -15,6 +15,7 @@ from gmso.core.atom import Atom
 from gmso.core.atom_type import AtomType
 from gmso.core.bond import Bond
 from gmso.core.bond_type import BondType
+from gmso.core.views import PotentialFilters as pfilters
 from gmso.core.box import Box
 from gmso.core.element import element_by_mass
 from gmso.core.topology import Topology
@@ -24,9 +25,11 @@ from gmso.utils.conversions import (
     convert_opls_to_ryckaert,
     convert_ryckaert_to_opls,
 )
+from gmso.utils.decorators import mark_WIP
 
 
 @saves_as(".lammps", ".lammpsdata", ".data")
+@mark_WIP()
 def write_lammpsdata(topology, filename, atom_style="full"):
     """Output a LAMMPS data file.
 
@@ -54,7 +57,8 @@ def write_lammpsdata(topology, filename, atom_style="full"):
     See https://github.com/mdtraj/mdtraj/blob/master/mdtraj/formats/lammpstrj.py for details.
 
     """
-    if atom_style not in ["atomic", "charge", "molecular", "full"]:
+    # TODO: Support atomstyles ["atomic", "charge", "molecular", "full"]
+    if atom_style not in ["full"]:
         raise ValueError(
             'Atom style "{}" is invalid or is not currently supported'.format(
                 atom_style
@@ -62,6 +66,9 @@ def write_lammpsdata(topology, filename, atom_style="full"):
         )
 
     # TODO: Support various unit styles
+    # TODO: Generate list of support functional forms
+    # TODO: Write checkers to handle conversions of functional forms
+    # TODO: improve handling of various filenames
 
     box = topology.box
 
@@ -74,23 +81,17 @@ def write_lammpsdata(topology, filename, atom_style="full"):
         )
         data.write("{:d} atoms\n".format(topology.n_sites))
         if atom_style in ["full", "molecular"]:
-            if topology.n_bonds != 0:
-                data.write("{:d} bonds\n".format(topology.n_bonds))
-            else:
-                data.write("0 bonds\n")
-            if topology.n_angles != 0:
-                data.write("{:d} angles\n".format(topology.n_angles))
-            else:
-                data.write("0 angles\n")
-            if topology.n_dihedrals != 0:
-                data.write("{:d} dihedrals\n\n".format(topology.n_dihedrals))
-            else:
-                data.write("0 dihedrals\n\n")
+            data.write("{:d} bonds\n".format(topology.n_bonds))
+            data.write("{:d} angles\n".format(topology.n_angles))
+            data.write("{:d} dihedrals\n\n".format(topology.n_dihedrals))
+            data.write("{:d} impropers\n\n".format(topology.n_impropers))
 
-        data.write("\n{:d} atom types\n".format(len(topology.atom_types)))
-        data.write("{:d} bond types\n".format(len(topology.bond_types)))
-        data.write("{:d} angle types\n".format(len(topology.angle_types)))
-        data.write("{:d} dihedral types\n".format(len(topology.dihedral_types)))
+        # TODO: allow users to specify filter_by syntax
+        data.write("\n{:d} atom types\n".format(len(topology.atom_types(filter_by=pfilters.UNIQUE_NAME_CLASS))))
+        data.write("{:d} bond types\n".format(len(topology.bond_types(filter_by=pfilters.UNIQUE_NAME_CLASS))))
+        data.write("{:d} angle types\n".format(len(topology.angle_types(filter_by=pfilters.UNIQUE_NAME_CLASS))))
+        data.write("{:d} dihedral types\n".format(len(topology.dihedral_types(filter_by=pfilters.UNIQUE_NAME_CLASS))))
+        data.write("{:d} improper types\n".format(len(topology.improper_types(filter_by=pfilters.UNIQUE_NAME_CLASS))))
 
         data.write("\n")
 
@@ -101,7 +102,8 @@ def write_lammpsdata(topology, filename, atom_style="full"):
             rtol=1e-5,
             atol=1e-8,
         ):
-            warnings.warn("Orthorhombic box detected")
+            # TODO: is this warning necessary?
+            #warnings.warn("Orthorhombic box detected")
             box.lengths.convert_to_units(u.angstrom)
             for i, dim in enumerate(["x", "y", "z"]):
                 data.write(
@@ -110,7 +112,9 @@ def write_lammpsdata(topology, filename, atom_style="full"):
                     )
                 )
         else:
-            warnings.warn("Non-orthorhombic box detected")
+            # TODO: is this warning necessary
+            #warnings.warn("Non-orthorhombic box detected")
+            # TODO: Put this into a separate function
             box.lengths.convert_to_units(u.angstrom)
             box.angles.convert_to_units(u.radian)
             vectors = box.get_vectors()
@@ -167,7 +171,7 @@ def write_lammpsdata(topology, filename, atom_style="full"):
             )
 
         # TODO: Get a dictionary of indices and atom types
-        if topology.is_typed():
+        if topology.is_typed(): #TODO: should this be is_fully_typed?
             # Write out mass data
             data.write("\nMasses\n\n")
             for atom_type in topology.atom_types:
@@ -183,6 +187,7 @@ def write_lammpsdata(topology, filename, atom_style="full"):
             # Pair coefficients
             data.write("\nPair Coeffs # lj\n\n")
             for idx, param in enumerate(topology.atom_types):
+                # TODO: grab expression from topology
                 # expected expression for lammps for standard LJ
                 lj_expression = "4.0 * epsilon * ((sigma/r)**12 - (sigma/r)**6)"
                 scaling_factor = simplify(lj_expression) / simplify(
@@ -202,12 +207,14 @@ def write_lammpsdata(topology, filename, atom_style="full"):
                             .value,
                         )
                     )
-                else:
+
+                else: # TODO: This should be moved to the top within validate checks
                     raise ValueError(
                         'Pair Style "{}" is invalid or is not currently supported'.format(
                             param.expression
                         )
                     )
+            # TODO: abstract to a function
             if topology.bonds:
                 data.write("\nBond Coeffs\n\n")
                 for idx, bond_type in enumerate(topology.bond_types):
@@ -232,13 +239,14 @@ def write_lammpsdata(topology, filename, atom_style="full"):
                                 .value,
                             )
                         )
-                    else:
+                    else: # TODO: This should be moved to the top within validate checks
                         raise ValueError(
                             'Bond Style "{}" is invalid or is not currently supported'.format(
                                 bond_type.expression
                             )
                         )
 
+            # TODO: This should be a separate function
             if topology.angles:
                 data.write("\nAngle Coeffs\n\n")
                 for idx, angle_type in enumerate(topology.angle_types):
@@ -261,13 +269,14 @@ def write_lammpsdata(topology, filename, atom_style="full"):
                                 .value,
                             )
                         )
-                    else:
+                    else: # TODO: This should be moved to the top within validate checks
                         raise ValueError(
                             'Angle Style "{}" is invalid or is not currently supported'.format(
                                 angle_type.expression
                             )
                         )
             # TODO: Write out multiple dihedral styles
+            # TODO: This should be a separate function
             if topology.dihedrals:
                 data.write("\nDihedral Coeffs\n\n")
                 for idx, dihedral_type in enumerate(topology.dihedral_types):
@@ -309,6 +318,7 @@ def write_lammpsdata(topology, filename, atom_style="full"):
         elif atom_style == "full":
             atom_line = "{index:d}\t{zero:d}\t{type_index:d}\t{charge:.6f}\t{x:.6f}\t{y:.6f}\t{z:.6f}\n"
 
+        # TODO: test for speedups in various looping methods
         for i, site in enumerate(topology.sites):
             data.write(
                 atom_line.format(
@@ -322,6 +332,7 @@ def write_lammpsdata(topology, filename, atom_style="full"):
                 )
             )
 
+        # TODO: test for speedups in various looping methods
         if topology.bonds:
             data.write("\nBonds\n\n")
             for i, bond in enumerate(topology.bonds):
@@ -334,6 +345,7 @@ def write_lammpsdata(topology, filename, atom_style="full"):
                     )
                 )
 
+        # TODO: test for speedups in various looping methods
         if topology.angles:
             data.write("\nAngles\n\n")
             for i, angle in enumerate(topology.angles):
@@ -347,6 +359,7 @@ def write_lammpsdata(topology, filename, atom_style="full"):
                     )
                 )
 
+        # TODO: test for speedups in various looping methods
         if topology.dihedrals:
             data.write("\nDihedrals\n\n")
             for i, dihedral in enumerate(topology.dihedrals):
@@ -366,7 +379,7 @@ def write_lammpsdata(topology, filename, atom_style="full"):
                     )
                 )
 
-
+@mark_WIP()
 @loads_as(".lammps", ".lammpsdata", ".data")
 def read_lammpsdata(
     filename, atom_style="full", unit_style="real", potential="lj"
@@ -404,6 +417,7 @@ def read_lammpsdata(
     Currently not supporting improper dihedrals.
 
     """
+    # TODO: This whole function probably needs to be revamped
     # TODO: Add argument to ask if user wants to infer bond type
     top = Topology()
 

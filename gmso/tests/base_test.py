@@ -179,9 +179,17 @@ class BaseTest:
 
     @pytest.fixture
     def typed_chloroethanol(self):
-        compound = mb.load("C(CCl)O", smiles=True)
+        compound = mb.load("C(CCl)O")
         oplsaa = foyer.Forcefield(name="oplsaa")
         pmd_structure = oplsaa.apply(compound)
+        top = from_parmed(pmd_structure)
+        return top
+
+    @pytest.fixture
+    def typed_methaneUA(self):
+        compound = mb.Compound(name="_CH4", charge=0.0)
+        trappe = foyer.Forcefield(name="trappe-ua")
+        pmd_structure = trappe.apply(compound)
         top = from_parmed(pmd_structure)
         return top
 
