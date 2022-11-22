@@ -20,6 +20,7 @@ from gmso.core.element import element_by_mass
 from gmso.core.topology import Topology
 from gmso.formats.formats_registry import loads_as, saves_as
 from gmso.lib.potential_templates import PotentialTemplateLibrary
+from gmso.utils.compatibility import check_compatibility
 from gmso.utils.conversions import (
     convert_opls_to_ryckaert,
     convert_ryckaert_to_opls,
@@ -27,7 +28,9 @@ from gmso.utils.conversions import (
 
 
 @saves_as(".lammps", ".lammpsdata", ".data")
-def write_lammpsdata(topology, filename, atom_style="full"):
+def write_lammpsdata(
+    topology, filename, atom_style="full", simplify_check=True
+):
     """Output a LAMMPS data file.
 
     Outputs a LAMMPS data file in the 'full' atom style format.
@@ -36,14 +39,17 @@ def write_lammpsdata(topology, filename, atom_style="full"):
 
     Parameters
     ----------
-    Topology : `Topology`
-        A Topology Object
+    top : gmso.Topology
+        A typed Topology Object
     filename : str
         Path of the output file
     atom_style : str, optional, default='full'
         Defines the style of atoms to be saved in a LAMMPS data file.
         The following atom styles are currently supported: 'full', 'atomic', 'charge', 'molecular'
         see http://lammps.sandia.gov/doc/atom_style.html for more information on atom styles.
+    simplify_check : bool, optional, defaul=True
+        Simplify/speedup the engine compatibility_check by running string match instead of
+        sympy.sympify during the potential equation comparision step.
 
     Notes
     -----

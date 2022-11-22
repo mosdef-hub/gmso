@@ -1158,18 +1158,6 @@ class Topology(object):
 
         return index
 
-    def _reindex_connection_types(self, ref):
-        """Re-generate the indices of the connection types in the topology."""
-        if ref not in self._index_refs:
-            raise GMSOError(
-                f"cannot reindex {ref}. It should be one of "
-                f"{ANGLE_TYPE_DICT}, {BOND_TYPE_DICT}, "
-                f"{ANGLE_TYPE_DICT}, {DIHEDRAL_TYPE_DICT}, {IMPROPER_TYPE_DICT},"
-                f"{PAIRPOTENTIAL_TYPE_DICT}"
-            )
-        for i, ref_member in enumerate(self._set_refs[ref].keys()):
-            self._index_refs[ref][ref_member] = i
-
     def get_forcefield(self):
         """Get an instance of gmso.ForceField out of this topology
 
@@ -1387,18 +1375,24 @@ class Topology(object):
         new_top.update_topology()
         return new_top
 
-    def save(self, filename, overwrite=False, **kwargs):
+    def save(self, filename, overwrite=False, simplify_check=True, **kwargs):
         """Save the topology to a file.
 
         Parameters
         ----------
         filename: str, pathlib.Path
             The file to save the topology as
+        simplify_check : bool, default=True
+            Simplify/speedup the engine compatibility check by running string match
+            instead of sympy.symify. Only relevant when writing out potential types
+            information, and would do nothing otherwise.
         overwrite: bool, default=True
             If True, overwrite the existing file if it exists
         **kwargs:
             The arguments to specific file savers listed below(as extensions):
             * json: types, update, indent
+            * gro: precision
+            * top: simplify_check
         """
         if not isinstance(filename, Path):
             filename = Path(filename).resolve()

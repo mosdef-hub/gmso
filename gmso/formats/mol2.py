@@ -12,7 +12,7 @@ from gmso.formats.formats_registry import loads_as
 
 
 @loads_as(".mol2")
-def from_mol2(filename, site_type="atom"):
+def read_mol2(filename, site_type="atom"):
     """Read in a TRIPOS mol2 file format into a gmso topology object.
 
     Creates a Topology from a mol2 file structure. This will read in the
