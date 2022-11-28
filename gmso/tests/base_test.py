@@ -147,6 +147,13 @@ class BaseTest:
         return top
 
     @pytest.fixture
+    def typed_ethane_opls(self, typed_ethane):
+        for dihedral in typed_ethane.dihedrals:
+            dihedral.dihedral_type.name = "RyckaertBellemansTorsionPotential"
+        typed_ethane.convert_expressions({"dihedrals": "OPLSTorsionPotential"})
+        return typed_ethane
+
+    @pytest.fixture
     def parmed_ethane(self):
         from mbuild.lib.molecules import Ethane
 

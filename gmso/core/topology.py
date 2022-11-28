@@ -1437,3 +1437,29 @@ class Topology(object):
 
         loader = LoadersRegistry.get_callable(filename.suffix)
         return loader(filename, **kwargs)
+
+    def convert_expressions(self, expressMap={}):
+        """Convert from one parameter form to another.
+        Parameters
+        ----------
+        expressMap : dict, default={}
+            map with keys of the potential type and the potential to change to
+
+        Examples
+        ________
+        # Convert from RB torsions to OPLS torsions
+        top.convert_expressions({"dihedrals": "OPLSTorsionPotential"})
+        """
+        # TODO: Move most of this functionality to gmso.utils.conversions
+        # TODO: Raise errors
+        from gmso.utils.conversions import convert_ryckaert_to_opls, convert_opls_to_ryckaert
+        conversions_map = {
+            ("OPLSTorsionPotential", "RyckaertBellemansTorsionPotential"): convert_opls_to_ryckaert,
+            ("RyckaertBellemansTorsionPotential", "OPLSTorsionPotential"): convert_ryckaert_to_opls,
+        } #Map of all accessible conversions currently supported
+        for conv in expressMap:
+            for conn in getattr(self, conv):
+                current_expression = getattr(conn, conv[:-1] + "_type")
+                conversions = (current_expression.name, expressMap[conv])
+                new_conn_type = conversions_map.get(conversions)(current_expression)
+                setattr(conn, conv[:-1] + "_type", new_conn_type)
