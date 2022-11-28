@@ -21,7 +21,7 @@ from gmso.utils.compatibility import check_compatibility
 
 
 @saves_as(".top")
-def write_top(top, filename, top_vars=None, simplify_check=False):
+def write_top(top, filename, top_vars=None):
     """Write a gmso.core.Topology object to a GROMACS topology (.TOP) file.
 
     Parameters
@@ -30,9 +30,6 @@ def write_top(top, filename, top_vars=None, simplify_check=False):
         A typed Topology Object
     filename : str
         Path of the output file
-    simplify_check : bool, optional, defaul=True
-        Simplify/speedup the engine compatibility_check by running string match instead of
-        sympy.sympify during the potential equation comparision step.
 
     Notes
     -----
@@ -40,7 +37,7 @@ def write_top(top, filename, top_vars=None, simplify_check=False):
     a full description of the top file format. This method is a work in progress and do not currently
     support the full GROMACS specs.
     """
-    pot_types = _validate_compatibility(top, simplify_check)
+    pot_types = _validate_compatibility(top)
     top_vars = _get_top_vars(top, top_vars)
 
     # Sanity checks
@@ -279,9 +276,9 @@ def _accepted_potentials():
     return accepted_potentials
 
 
-def _validate_compatibility(top, simplify_check):
+def _validate_compatibility(top):
     """Check compatability of topology object with GROMACS TOP format."""
-    pot_types = check_compatibility(top, _accepted_potentials(), simplify_check)
+    pot_types = check_compatibility(top, _accepted_potentials())
     return pot_types
 
 

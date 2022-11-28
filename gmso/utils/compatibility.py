@@ -5,7 +5,7 @@ from gmso.core.views import PotentialFilters
 from gmso.exceptions import EngineIncompatibilityError
 
 
-def check_compatibility(topology, accepted_potentials, simplify_check=False):
+def check_compatibility(topology, accepted_potentials):
     """
     Compare the potentials in a topology against a list of accepted potential templates.
 
@@ -15,8 +15,7 @@ def check_compatibility(topology, accepted_potentials, simplify_check=False):
         The topology whose potentials to check.
     accepted_potentials: list
         A list of gmso.Potential objects to check against
-    simplify_check : bool, optional, default=False
-        Simplify the sympy expression check, aka, only compare the expression string
+
     Returns
     -------
     potential_forms_dict: dict
@@ -30,7 +29,8 @@ def check_compatibility(topology, accepted_potentials, simplify_check=False):
         # filter_by=PotentialFilters.UNIQUE_NAME_CLASS
     ):
         potential_form = _check_single_potential(
-            atom_type, accepted_potentials, simplify_check
+            atom_type,
+            accepted_potentials,
         )
         if not potential_form:
             raise EngineIncompatibilityError(
@@ -43,7 +43,8 @@ def check_compatibility(topology, accepted_potentials, simplify_check=False):
         # filter_by=PotentialFilters.UNIQUE_NAME_CLASS
     ):
         potential_form = _check_single_potential(
-            connection_type, accepted_potentials, simplify_check
+            connection_type,
+            accepted_potentials,
         )
         if not potential_form:
             raise EngineIncompatibilityError(
@@ -55,13 +56,12 @@ def check_compatibility(topology, accepted_potentials, simplify_check=False):
     return potential_forms_dict
 
 
-def _check_single_potential(potential, accepted_potentials, simplify_check):
+def _check_single_potential(potential, accepted_potentials):
     """Check to see if a single given potential is in the list of accepted potentials."""
     for ref in accepted_potentials:
         if ref.independent_variables == potential.independent_variables:
-            if simplify_check:
-                if str(ref.expression) == str(potential.expression):
-                    return {potential: ref.name}
+            if str(ref.expression) == str(potential.expression):
+                return {potential: ref.name}
             else:
                 if sympy.simplify(ref.expression - potential.expression) == 0:
                     return {potential: ref.name}

@@ -6,7 +6,7 @@ import warnings
 
 import numpy as np
 import unyt as u
-from sympy import simplify, sympify
+from sympy import simplify
 from unyt.array import allclose_units
 
 from gmso.core.angle import Angle
@@ -18,6 +18,7 @@ from gmso.core.bond_type import BondType
 from gmso.core.box import Box
 from gmso.core.element import element_by_mass
 from gmso.core.topology import Topology
+from gmso.core.views import PotentialFilters
 from gmso.formats.formats_registry import loads_as, saves_as
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.compatibility import check_compatibility
@@ -28,9 +29,7 @@ from gmso.utils.conversions import (
 
 
 @saves_as(".lammps", ".lammpsdata", ".data")
-def write_lammpsdata(
-    topology, filename, atom_style="full", simplify_check=True
-):
+def write_lammpsdata(topology, filename, atom_style="full"):
     """Output a LAMMPS data file.
 
     Outputs a LAMMPS data file in the 'full' atom style format.
@@ -39,7 +38,7 @@ def write_lammpsdata(
 
     Parameters
     ----------
-    top : gmso.Topology
+    Topology : gmso.Topology
         A typed Topology Object
     filename : str
         Path of the output file
@@ -47,9 +46,6 @@ def write_lammpsdata(
         Defines the style of atoms to be saved in a LAMMPS data file.
         The following atom styles are currently supported: 'full', 'atomic', 'charge', 'molecular'
         see http://lammps.sandia.gov/doc/atom_style.html for more information on atom styles.
-    simplify_check : bool, optional, defaul=True
-        Simplify/speedup the engine compatibility_check by running string match instead of
-        sympy.sympify during the potential equation comparision step.
 
     Notes
     -----
@@ -71,6 +67,7 @@ def write_lammpsdata(
 
     box = topology.box
 
+    pot_types = _validate_compatibility(topology)
     with open(filename, "w") as data:
         data.write(
             "{} written by topology at {}\n\n".format(
@@ -175,8 +172,11 @@ def write_lammpsdata(
         # TODO: Get a dictionary of indices and atom types
         if topology.is_typed():
             # Write out mass data
+            unique_atypes = topology.atom_types(
+                PotentialFilters.UNIQUE_NAME_CLASS
+            )
             data.write("\nMasses\n\n")
-            for atom_type in topology.atom_types:
+            for atom_type in unique_atypes:
                 data.write(
                     "{:d}\t{:.6f}\t# {}\n".format(
                         topology.atom_types.index(atom_type) + 1,
@@ -188,7 +188,7 @@ def write_lammpsdata(
             # TODO: Modified cross-interactions
             # Pair coefficients
             data.write("\nPair Coeffs # lj\n\n")
-            for idx, param in enumerate(topology.atom_types):
+            for idx, param in enumerate(unique_atypes):
                 # expected expression for lammps for standard LJ
                 lj_expression = "4.0 * epsilon * ((sigma/r)**12 - (sigma/r)**6)"
                 scaling_factor = simplify(lj_expression) / simplify(
@@ -215,8 +215,11 @@ def write_lammpsdata(
                         )
                     )
             if topology.bonds:
+                unique_btypes = topology.bond_types(
+                    PotentialFilters.UNIQUE_NAME_CLASS
+                )
                 data.write("\nBond Coeffs\n\n")
-                for idx, bond_type in enumerate(topology.bond_types):
+                for idx, bond_type in enumerate(unique_btypes):
 
                     # expected harmonic potential expression for lammps
                     bond_expression = "k * (r-r_eq)**2"
@@ -246,8 +249,11 @@ def write_lammpsdata(
                         )
 
             if topology.angles:
+                unique_agtypes = topology.angle_types(
+                    PotentialFilters.UNIQUE_NAME_CLASS
+                )
                 data.write("\nAngle Coeffs\n\n")
-                for idx, angle_type in enumerate(topology.angle_types):
+                for idx, angle_type in enumerate(unique_agtypes):
                     # expected lammps harmonic angle expression
                     angle_expression = "k * (theta - theta_eq)**2"
                     scaling_factor = simplify(angle_expression) / simplify(
@@ -275,17 +281,18 @@ def write_lammpsdata(
                         )
             # TODO: Write out multiple dihedral styles
             if topology.dihedrals:
+                unique_dtypes = topology.dihedral_types(
+                    PotentialFilters.UNIQUE_NAME_CLASS
+                )
                 data.write("\nDihedral Coeffs\n\n")
-                for idx, dihedral_type in enumerate(topology.dihedral_types):
-                    rbtorsion = PotentialTemplateLibrary()[
-                        "RyckaertBellemansTorsionPotential"
-                    ]
+                for idx, dihedral_type in enumerate(unique_dtypes):
                     if (
-                        dihedral_type.expression
-                        == sympify(rbtorsion.expression)
-                        or dihedral_type.name == rbtorsion.name
+                        pot_types[dihedral_type]
+                        == "RyckaertBellemansTorsionPotential"
                     ):
                         dihedral_type = convert_ryckaert_to_opls(dihedral_type)
+                    elif pot_types[dihedral_type] == "OPLSTorsionPotential":
+                        continue
                     data.write(
                         "{}\t{:.5f}\t{:5f}\t{:5f}\t{:.5f}\n".format(
                             idx + 1,
@@ -315,11 +322,25 @@ def write_lammpsdata(
         elif atom_style == "full":
             atom_line = "{index:d}\t{zero:d}\t{type_index:d}\t{charge:.6f}\t{x:.6f}\t{y:.6f}\t{z:.6f}\n"
 
+        # Create an atom type map to do indexing
+
+        atypes = list(topology.atom_types())
+        atypes_map = dict()
+        for i, uatype in enumerate(unique_atypes):
+            matched_idx = list()
+            for idx, atype in enumerate(atypes):
+                if atype == uatype:
+                    atypes_map[atype] = i
+                    matched_idx.append(idx)
+            for idx in reversed(matched_idx):
+                atypes.pop(idx)
+
         for i, site in enumerate(topology.sites):
+            # Determine index of the site's atom type
             data.write(
                 atom_line.format(
                     index=topology.sites.index(site) + 1,
-                    type_index=topology.atom_types.index(site.atom_type) + 1,
+                    type_index=atypes_map[atype] + 1,
                     zero=0,
                     charge=site.charge.to(u.elementary_charge).value,
                     x=site.position[0].in_units(u.angstrom).value,
@@ -328,13 +349,26 @@ def write_lammpsdata(
                 )
             )
 
+        # Make connection types map to extract index later
+        uc_types = topology.connection_types(PotentialFilters.UNIQUE_NAME_CLASS)
+        c_types = [ctype for ctype in topology.connection_types]
+        c_typesmap = dict()
+        for uc_type in uc_types:
+            matched_idx = list()
+            for idx, c_type in enumerate(c_types):
+                if c_type == uc_type:
+                    c_typesmap[c_type] = uc_type
+                    matched_idx.append(idx)
+            for idx in reversed(matched_idx):
+                c_types.pop(idx)
+
         if topology.bonds:
             data.write("\nBonds\n\n")
             for i, bond in enumerate(topology.bonds):
                 data.write(
                     "{:d}\t{:d}\t{:d}\t{:d}\n".format(
                         i + 1,
-                        topology.bond_types.index(bond.connection_type) + 1,
+                        unique_btypes.index(c_typesmap[bond.bond_type]) + 1,
                         topology.sites.index(bond.connection_members[0]) + 1,
                         topology.sites.index(bond.connection_members[1]) + 1,
                     )
@@ -346,7 +380,7 @@ def write_lammpsdata(
                 data.write(
                     "{:d}\t{:d}\t{:d}\t{:d}\t{:d}\n".format(
                         i + 1,
-                        topology.angle_types.index(angle.connection_type) + 1,
+                        unique_agtypes.index(c_typesmap[angle.angle_type]) + 1,
                         topology.sites.index(angle.connection_members[0]) + 1,
                         topology.sites.index(angle.connection_members[1]) + 1,
                         topology.sites.index(angle.connection_members[2]) + 1,
@@ -359,7 +393,7 @@ def write_lammpsdata(
                 data.write(
                     "{:d}\t{:d}\t{:d}\t{:d}\t{:d}\t{:d}\n".format(
                         i + 1,
-                        topology.dihedral_types.index(dihedral.connection_type)
+                        unique_dtypes.index(c_typesmap[dihedral.dihedral_type])
                         + 1,
                         topology.sites.index(dihedral.connection_members[0])
                         + 1,
@@ -629,6 +663,34 @@ def _get_box_coordinates(filename, unit_style, topology):
             topology.box = Box(lengths)
 
         return topology
+
+
+def _validate_compatibility(topology):
+    """Check compatibility of topology object with LAMMPS format."""
+    pot_types = check_compatibility(topology, _accepted_potentials())
+    return pot_types
+
+
+def _accepted_potentials():
+    """List of accepted potentials that LAMMPS can support."""
+    templates = PotentialTemplateLibrary()
+    lennard_jones_potential = templates["LennardJonesPotential"]
+    harmonic_bond_potential = templates["HarmonicBondPotential"]
+    harmonic_angle_potential = templates["HarmonicAnglePotential"]
+    # periodic_torsion_potential = templates["PeriodicTorsionPotential"]
+    rb_torsion_potential = templates["RyckaertBellemansTorsionPotential"]
+    opls_torsion_potential = templates["OPLSTorsionPotential"]
+    improper_periodic_potential = templates["PeriodicImproperPotential"]
+    accepted_potentials = [
+        lennard_jones_potential,
+        harmonic_bond_potential,
+        harmonic_angle_potential,
+        #   periodic_torsion_potential,
+        rb_torsion_potential,
+        opls_torsion_potential,
+        improper_periodic_potential,
+    ]
+    return accepted_potentials
 
 
 def _get_ff_information(filename, unit_style, topology):

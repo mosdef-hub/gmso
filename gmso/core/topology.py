@@ -1382,17 +1382,13 @@ class Topology(object):
         ----------
         filename: str, pathlib.Path
             The file to save the topology as
-        simplify_check : bool, default=True
-            Simplify/speedup the engine compatibility check by running string match
-            instead of sympy.symify. Only relevant when writing out potential types
-            information, and would do nothing otherwise.
         overwrite: bool, default=True
             If True, overwrite the existing file if it exists
         **kwargs:
             The arguments to specific file savers listed below(as extensions):
             * json: types, update, indent
             * gro: precision
-            * top: simplify_check
+            * lammps/lammpsdata: atom_style
         """
         if not isinstance(filename, Path):
             filename = Path(filename).resolve()
