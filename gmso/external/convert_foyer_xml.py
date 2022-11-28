@@ -529,16 +529,6 @@ def _create_sub_element(root_el, name, attrib_dict=None):
 
 
 def _validate_foyer(xml_path):
-    import warnings
+    from foyer.validator import Validator
 
-    from gmso.utils.io import has_foyer
-
-    if not has_foyer:
-        warnings.warn(
-            "Cannot validate the xml using foyer, since foyer is not installed."
-            "Please install foyer using conda install -c conda-forge foyer."
-        )
-    else:
-        from foyer.validator import Validator
-
-        Validator(xml_path)
+    Validator(xml_path)

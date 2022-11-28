@@ -3,6 +3,7 @@ import mbuild as mb
 import numpy as np
 import pytest
 import unyt as u
+from foyer.tests.utils import get_fn
 
 from gmso.core.angle import Angle
 from gmso.core.atom import Atom
@@ -17,7 +18,7 @@ from gmso.core.topology import Topology
 from gmso.external import from_mbuild, from_parmed
 from gmso.external.convert_foyer_xml import from_foyer_xml
 from gmso.tests.utils import get_path
-from gmso.utils.io import get_fn, has_foyer
+from gmso.utils.io import get_fn
 
 
 class BaseTest:
@@ -50,13 +51,51 @@ class BaseTest:
         return Topology(name="mytop")
 
     @pytest.fixture
+    def benzene_ua(self):
+        compound = mb.load(get_fn("benzene_ua.mol2"))
+        compound.children[0].name = "BenzeneUA"
+        top = from_mbuild(compound)
+        top.identify_connections()
+        return top
+
+    @pytest.fixture
+    def benzene_ua_box(self):
+        compound = mb.load(get_fn("benzene_ua.mol2"))
+        compound.children[0].name = "BenzeneUA"
+        compound_box = mb.packing.fill_box(
+            compound=compound, n_compounds=5, density=1
+        )
+        top = from_mbuild(compound_box)
+        top.identify_connections()
+        return top
+
+    @pytest.fixture
+    def benzene_aa(self):
+        compound = mb.load(get_fn("benzene.mol2"))
+        compound.children[0].name = "BenzeneAA"
+        top = from_mbuild(compound)
+        top.identify_connections()
+        return top
+
+    @pytest.fixture
+    def benzene_aa_box(self):
+        compound = mb.load(get_fn("benzene.mol2"))
+        compound.children[0].name = "BenzeneAA"
+        compound_box = mb.packing.fill_box(
+            compound=compound, n_compounds=5, density=1
+        )
+        top = from_mbuild(compound_box)
+        top.identify_connections()
+        return top
+
+    @pytest.fixture
     def ar_system(self, n_ar_system):
         return from_mbuild(n_ar_system(), parse_label=True)
 
     @pytest.fixture
     def n_ar_system(self):
         def _topology(n_sites=100):
-            ar = mb.Compound(name="Ar")
+            ar = mb.Compound(name="Ar", element="Ar")
 
             packed_system = mb.fill_box(
                 compound=ar,
@@ -241,9 +280,8 @@ class BaseTest:
 
     @pytest.fixture
     def foyer_fullerene(self):
-        if has_foyer:
-            import foyer
-            from foyer.tests.utils import get_fn
+        from foyer.tests.utils import get_fn
+
         from_foyer_xml(get_fn("fullerene.xml"), overwrite=True)
         gmso_ff = ForceField("fullerene_gmso.xml")
 
@@ -252,9 +290,8 @@ class BaseTest:
     @pytest.fixture
     def foyer_periodic(self):
         # TODO: this errors out with backend="ffutils"
-        if has_foyer:
-            import foyer
-            from foyer.tests.utils import get_fn
+        from foyer.tests.utils import get_fn
+
         from_foyer_xml(get_fn("oplsaa-periodic.xml"), overwrite=True)
         gmso_ff = ForceField("oplsaa-periodic_gmso.xml", backend="gmso")
 
@@ -263,27 +300,23 @@ class BaseTest:
     @pytest.fixture
     def foyer_urey_bradley(self):
         # TODO: this errors out with backend="ffutils"
-        if has_foyer:
-            import foyer
-            from foyer.tests.utils import get_fn
+        from foyer.tests.utils import get_fn
 
-            from_foyer_xml(get_fn("charmm36_cooh.xml"), overwrite=True)
-            gmso_ff = ForceField("charmm36_cooh_gmso.xml", backend="gmso")
+        from_foyer_xml(get_fn("charmm36_cooh.xml"), overwrite=True)
+        gmso_ff = ForceField("charmm36_cooh_gmso.xml", backend="gmso")
 
-            return gmso_ff
+        return gmso_ff
 
     @pytest.fixture
     def foyer_rb_torsion(self):
-        if has_foyer:
-            import foyer
-            from foyer.tests.utils import get_fn
+        from foyer.tests.utils import get_fn
 
-            from_foyer_xml(
-                get_fn("refs-multi.xml"), overwrite=True, validate_foyer=True
-            )
-            gmso_ff = ForceField("refs-multi_gmso.xml")
+        from_foyer_xml(
+            get_fn("refs-multi.xml"), overwrite=True, validate_foyer=True
+        )
+        gmso_ff = ForceField("refs-multi_gmso.xml")
 
-            return gmso_ff
+        return gmso_ff
 
     @pytest.fixture
     def methane(self):

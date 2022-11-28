@@ -459,7 +459,7 @@ class TopologyParameterizer(GMSOBase):
                         # Assume nodes in repeated structures are in the same order
                         for node, ref_node in zip(
                             sorted(subgraph.nodes),
-                            reference[molecule]["typemap"],
+                            sorted(reference[molecule]["typemap"]),
                         ):
                             typemap[node] = reference[molecule]["typemap"][
                                 ref_node
