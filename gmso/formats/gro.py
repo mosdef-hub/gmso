@@ -1,5 +1,6 @@
 """Read and write Gromos87 (.GRO) file format."""
 import datetime
+import re
 import warnings
 
 import numpy as np
@@ -10,7 +11,6 @@ import gmso
 from gmso.core.atom import Atom
 from gmso.core.box import Box
 from gmso.core.topology import Topology
-from gmso.exceptions import NotYetImplementedWarning
 from gmso.formats.formats_registry import loads_as, saves_as
 
 
@@ -57,6 +57,7 @@ def read_gro(filename):
         coords = u.nm * np.zeros(shape=(n_atoms, 3))
         for row, _ in enumerate(coords):
             line = gro_file.readline()
+            content = line.split()
             if not line:
                 msg = (
                     "Incorrect number of lines in .gro file. Based on the "
@@ -64,18 +65,23 @@ def read_gro(filename):
                     "atoms were expected, but at least one fewer was found."
                 )
                 raise ValueError(msg.format(n_atoms))
-            resid = int(line[:5])
-            res_name = line[5:10]
-            atom_name = line[10:15]
-            atom_id = int(line[15:20])
+
+            res = content[0]
+            atom_name = content[1]
+            atom_id = content[2]
             coords[row] = u.nm * np.array(
                 [
-                    float(line[20:28]),
-                    float(line[28:36]),
-                    float(line[36:44]),
+                    float(content[3]),
+                    float(content[4]),
+                    float(content[5]),
                 ]
             )
             site = Atom(name=atom_name, position=coords[row])
+
+            r = re.compile("([0-9]+)([a-zA-Z]+)")
+            m = r.match(res)
+            site.molecule = (m.group(2), int(m.group(1)) - 1)
+            site.residue = (m.group(2), int(m.group(1)) - 1)
             top.add_site(site, update_types=False)
         top.update_topology()
 
@@ -97,7 +103,7 @@ def read_gro(filename):
 
 
 @saves_as(".gro")
-def write_gro(top, filename):
+def write_gro(top, filename, precision=3):
     """Write a topology to a gro file.
 
     The Gromos87 (gro) format is a common plain text structure file used
@@ -113,7 +119,8 @@ def write_gro(top, filename):
         The `topology` to write out to the gro file.
     filename : str or file object
         The location and name of file to save to disk.
-
+    precision : int, optional, default=3
+        The number of sig fig to write out the position in.
 
     Notes
     -----
@@ -135,7 +142,7 @@ def write_gro(top, filename):
             )
         )
         out_file.write("{:d}\n".format(top.n_sites))
-        out_file.write(_prepare_atoms(top, pos_array))
+        out_file.write(_prepare_atoms(top, pos_array, precision))
         out_file.write(_prepare_box(top))
 
 
@@ -154,30 +161,44 @@ def _validate_positions(pos_array):
     return pos_array
 
 
-def _prepare_atoms(top, updated_positions):
+def _prepare_atoms(top, updated_positions, precision):
     out_str = str()
+    warnings.warn(
+        "Residue information is parsed from site.molecule,"
+        "or site.residue if site.molecule does not exist."
+        "Note that the residue idx will be bump by 1 since GROMACS utilize 1-index."
+    )
     for idx, (site, pos) in enumerate(zip(top.sites, updated_positions)):
-        warnings.warn(
-            "Residue information is not currently "
-            "stored or written to GRO files.",
-            NotYetImplementedWarning,
-        )
-        # TODO: assign residues
-        res_id = 1
-        res_name = "X"
-        atom_name = site.name
+        if site.molecule:
+            res_id = site.molecule.number + 1
+            res_name = site.molecule.name
+        elif site.residue:
+            res_id = site.residue.number + 1
+            res_name = site.molecule.name[:3]
+        else:
+            res_id = 1
+            res_name = "MOL"
+        if len(res_name) > 3:
+            res_name = res_name[:3]
+
+        atom_name = site.name if len(site.name) <= 3 else site.name[:3]
         atom_id = idx + 1
-        out_str = (
-            out_str
-            + "{0:5d}{1:5s}{2:5s}{3:5d}{4:8.3f}{5:8.3f}{6:8.3f}\n".format(
-                res_id,
-                res_name,
-                atom_name,
-                atom_id,
-                pos[0].in_units(u.nm).value,
-                pos[1].in_units(u.nm).value,
-                pos[2].in_units(u.nm).value,
-            )
+
+        varwidth = 5 + precision
+        crdfmt = f"{{:{varwidth}.{precision}f}}"
+
+        # preformat pos str
+        crt_x = crdfmt.format(pos[0].in_units(u.nm).value)[:varwidth]
+        crt_y = crdfmt.format(pos[1].in_units(u.nm).value)[:varwidth]
+        crt_z = crdfmt.format(pos[2].in_units(u.nm).value)[:varwidth]
+        out_str = out_str + "{0:5d}{1:5s}{2:5s}{3:5d}{4}{5}{6}\n".format(
+            res_id,
+            res_name,
+            atom_name,
+            atom_id,
+            crt_x,
+            crt_y,
+            crt_z,
         )
     return out_str
 
@@ -190,7 +211,7 @@ def _prepare_box(top):
         rtol=1e-5,
         atol=0.1 * u.degree,
     ):
-        out_str = out_str + " {:0.5f} {:0.5f} {:0.5f} \n".format(
+        out_str = out_str + " {:0.5f} {:0.5f} {:0.5f}\n".format(
             top.box.lengths[0].in_units(u.nm).value.round(6),
             top.box.lengths[1].in_units(u.nm).value.round(6),
             top.box.lengths[2].in_units(u.nm).value.round(6),
