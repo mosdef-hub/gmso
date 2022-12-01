@@ -634,3 +634,23 @@ class BaseTest:
         top = from_mbuild(hierarchical_compound)  # Create GMSO topology
         top.identify_connections()
         return top
+
+    @pytest.fixture
+    def ethane_gomc(self):
+        ethane_gomc = mb.load("CC", smiles=True)
+        ethane_gomc.name = "ETH"
+
+        return ethane_gomc
+
+    @pytest.fixture
+    def ethanol_gomc(self):
+        ethanol_gomc = mb.load("CCO", smiles=True)
+        ethanol_gomc.name = "ETO"
+
+        return ethanol_gomc
+
+    @pytest.fixture
+    def methane_ua_gomc(self):
+        methane_ua_gomc = mb.Compound(name="_CH4")
+
+        return methane_ua_gomc

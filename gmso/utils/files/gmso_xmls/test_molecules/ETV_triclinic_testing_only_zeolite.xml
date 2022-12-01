@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ForceField name="spce" version="0.0.1">
+  <FFMetaData electrostatics14Scale="0" nonBonded14Scale="0.0" combiningRule="geometric">
+    <Units energy="kJ/mol" mass="amu" charge="elementary_charge" distance="nm"/>
+  </FFMetaData>
+  <AtomTypes expression="4 * epsilon * ((sigma/r)**12 - (sigma/r)**6)">
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <AtomType name="Si" atomclass="Si" element="Si" charge="0.80" mass="28.0855" definition="Si" doi="Physic are wrong, for testing only">
+      <Parameters>
+        <Parameter name="epsilon" value="0.232805"/>
+        <Parameter name="sigma" value="0.34"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="O" atomclass="O" element="O" charge="-0.4" mass="15.9994" definition="O" doi="Physic are wrong, for testing only">
+      <Parameters>
+        <Parameter name="epsilon" value="1.23054"/>
+        <Parameter name="sigma" value="0.373"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+</ForceField>
