@@ -1,10 +1,11 @@
 import mbuild as mb
 import pytest
 from foyer.forcefields import forcefields
-from gmso.exceptions import GMSOError
 from mbuild import Box, Compound
-from mbuild.utils.io import has_foyer
 from mbuild.lattice import load_cif
+from mbuild.utils.io import has_foyer
+
+from gmso.exceptions import GMSOError
 from gmso.tests.base_test import BaseTest
 from gmso.utils.gmso_specific_ff_to_residue import specific_ff_to_residue
 from gmso.utils.io import get_fn, has_mbuild, has_parmed, import_
@@ -430,7 +431,7 @@ class TestSpecificFFToResidue(BaseTest):
             )
 
     def test_specific_ff_params_benzene_water_aa(self):
-        benzene_aa = mb.load(get_fn('benzene_aa.mol2'))
+        benzene_aa = mb.load(get_fn("benzene_aa.mol2"))
         benzene_aa.name = "BEN"
         water_aa = mb.load("O", smiles=True)
         water_aa.name = "WAT"
@@ -453,7 +454,7 @@ class TestSpecificFFToResidue(BaseTest):
             test_box,
             forcefield_selection={
                 benzene_aa.name: f"{get_fn('gmso_xmls/test_molecules/gmso_benzene_GAFF.xml')}",
-                water_aa.name: f"{get_fn('gmso_xmls/test_molecules/gmso_spce_water__lorentz_combining.xml')}"
+                water_aa.name: f"{get_fn('gmso_xmls/test_molecules/gmso_spce_water__lorentz_combining.xml')}",
             },
             residues=[benzene_aa.name, water_aa.name],
             boxes_for_simulation=1,
@@ -467,36 +468,95 @@ class TestSpecificFFToResidue(BaseTest):
         assert test_electrostatics14Scale_dict == {"BEN": 0.833333333, "WAT": 0}
         assert test_nonBonded14Scale_dict == {"BEN": 0.5, "WAT": 0}
         assert test_residues_applied_list == ["BEN", "WAT"]
-        assert test_combining_rule_dict == 'lorentz'
+        assert test_combining_rule_dict == "lorentz"
 
         # atom tests
-        assert str(test_atom_types_dict['BEN']["expression"]) == '4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)'
-        assert len(list(test_atom_types_dict['BEN']["atom_types"].yield_view())) == 2
+        assert (
+            str(test_atom_types_dict["BEN"]["expression"])
+            == "4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)"
+        )
+        assert (
+            len(list(test_atom_types_dict["BEN"]["atom_types"].yield_view()))
+            == 2
+        )
 
-        assert str(test_atom_types_dict['WAT']["expression"]) == '4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)'
-        assert len(list(test_atom_types_dict['WAT']["atom_types"].yield_view())) == 2
+        assert (
+            str(test_atom_types_dict["WAT"]["expression"])
+            == "4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)"
+        )
+        assert (
+            len(list(test_atom_types_dict["WAT"]["atom_types"].yield_view()))
+            == 2
+        )
 
         # bond tests
-        assert str(test_bond_types_dict['BEN']["expression"]) == "k*(r - r_eq)**2/2"
-        assert len(list(test_bond_types_dict['BEN']["bond_types"].yield_view())) == 2
+        assert (
+            str(test_bond_types_dict["BEN"]["expression"])
+            == "k*(r - r_eq)**2/2"
+        )
+        assert (
+            len(list(test_bond_types_dict["BEN"]["bond_types"].yield_view()))
+            == 2
+        )
 
-        assert str(test_bond_types_dict['WAT']["expression"]) == "k*(r - r_eq)**2"
-        assert len(list(test_bond_types_dict['WAT']["bond_types"].yield_view())) == 1
+        assert (
+            str(test_bond_types_dict["WAT"]["expression"]) == "k*(r - r_eq)**2"
+        )
+        assert (
+            len(list(test_bond_types_dict["WAT"]["bond_types"].yield_view()))
+            == 1
+        )
 
         # angle tests
-        assert str(test_angle_types_dict['BEN']["expression"]) == "k*(theta - theta_eq)**2/2"
-        assert len(list(test_angle_types_dict['BEN']["angle_types"].yield_view())) == 2
+        assert (
+            str(test_angle_types_dict["BEN"]["expression"])
+            == "k*(theta - theta_eq)**2/2"
+        )
+        assert (
+            len(list(test_angle_types_dict["BEN"]["angle_types"].yield_view()))
+            == 2
+        )
 
-        assert str(test_angle_types_dict['WAT']["expression"]) == "k*(theta - theta_eq)**2"
-        assert len(list(test_angle_types_dict['WAT']["angle_types"].yield_view())) == 1
+        assert (
+            str(test_angle_types_dict["WAT"]["expression"])
+            == "k*(theta - theta_eq)**2"
+        )
+        assert (
+            len(list(test_angle_types_dict["WAT"]["angle_types"].yield_view()))
+            == 1
+        )
 
         # dihedral tests
-        assert str(test_dihedral_types_dict['BEN']["expression"]) == 'k*(cos(n*phi - phi_eq) + 1)'
-        assert len(list(test_dihedral_types_dict['BEN']["dihedral_types"].yield_view())) == 3
+        assert (
+            str(test_dihedral_types_dict["BEN"]["expression"])
+            == "k*(cos(n*phi - phi_eq) + 1)"
+        )
+        assert (
+            len(
+                list(
+                    test_dihedral_types_dict["BEN"][
+                        "dihedral_types"
+                    ].yield_view()
+                )
+            )
+            == 3
+        )
 
         # improper tests
-        assert str(test_improper_types_dict['BEN']["expression"]) == 'k*(cos(n*phi - phi_eq) + 1)'
-        assert len(list(test_improper_types_dict['BEN']["improper_types"].yield_view())) == 1
+        assert (
+            str(test_improper_types_dict["BEN"]["expression"])
+            == "k*(cos(n*phi - phi_eq) + 1)"
+        )
+        assert (
+            len(
+                list(
+                    test_improper_types_dict["BEN"][
+                        "improper_types"
+                    ].yield_view()
+                )
+            )
+            == 1
+        )
 
     def test_specific_ff_params_using_group(self):
         lattice_cif_ETV_triclinic = load_cif(
@@ -536,11 +596,14 @@ class TestSpecificFFToResidue(BaseTest):
         assert test_electrostatics14Scale_dict == {"ETV": 0}
         assert test_nonBonded14Scale_dict == {"ETV": 0}
         assert test_residues_applied_list == ["ETV"]
-        assert test_combining_rule_dict == 'geometric'
+        assert test_combining_rule_dict == "geometric"
 
         # atom tests
-        assert str(test_atom_types_dict['ETV']["expression"]) == '4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)'
-        assert len(list(test_atom_types_dict['BEN']["atom_types"].yield_view())) == 2
-
-
-
+        assert (
+            str(test_atom_types_dict["ETV"]["expression"])
+            == "4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)"
+        )
+        assert (
+            len(list(test_atom_types_dict["BEN"]["atom_types"].yield_view()))
+            == 2
+        )
