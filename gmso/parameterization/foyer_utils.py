@@ -60,7 +60,7 @@ def get_topology_graph(
                 if atomdata_populator
                 else {}
             )
-            if atom.name.startswith("_"):
+            if atom.name.startswith("_") or not atom.element:
                 top_graph.add_atom(
                     name=atom.name,
                     index=j,  # Assumes order is preserved
@@ -70,7 +70,6 @@ def get_topology_graph(
                     molecule=atom.molecule.name if atom.molecule else None,
                     **kwargs,
                 )
-
             else:
                 top_graph.add_atom(
                     name=atom.name,

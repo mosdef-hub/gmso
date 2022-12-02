@@ -562,6 +562,7 @@ class TestSpecificFFToResidue(BaseTest):
         lattice_cif_ETV_triclinic = load_cif(
             file_or_path=get_fn("ETV_triclinic.cif")
         )
+        print(lattice_cif_ETV_triclinic.lattice_points.items())
         ETV_triclinic = lattice_cif_ETV_triclinic.populate(x=1, y=1, z=1)
         ETV_triclinic.name = "ETV"
         print(f"ETV_triclinic.name = {ETV_triclinic.name}")
