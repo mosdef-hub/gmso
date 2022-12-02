@@ -108,7 +108,9 @@ def from_mbuild(
 
     # Use site map to apply Compound info to Topology.
     for part in compound.particles():
-        site = _parse_site(site_map, part, search_method, infer_element=infer_elements)
+        site = _parse_site(
+            site_map, part, search_method, infer_element=infer_elements
+        )
         top.add_site(site)
 
     for b1, b2 in compound.bonds():
@@ -254,7 +256,7 @@ def _parse_particle(particle_map, site):
 def _parse_site(site_map, particle, search_method, infer_element=False):
     """Parse information for a gmso.Site from a mBuild.Compound and add it to the site map."""
     pos = particle.xyz[0] * u.nm
-    if infer_element: #how to check for element info
+    if infer_element:  # how to check for element info
         ele = search_method(particle.name)
     elif particle.element:
         ele = search_method(particle.element.symbol)
