@@ -1,9 +1,6 @@
 import mbuild as mb
 import pytest
-from foyer.forcefields import forcefields
-from mbuild import Box, Compound
 from mbuild.utils.io import has_foyer
-from gmso.external.convert_mbuild import from_mbuild as mb_convert
 from gmso.utils.specific_ff_to_residue import specific_ff_to_residue
 from gmso.utils.io import get_fn
 from gmso.tests.base_test import BaseTest

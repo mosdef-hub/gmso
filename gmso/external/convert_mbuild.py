@@ -28,6 +28,7 @@ def from_mbuild(
     search_method=element_by_symbol,
     parse_label=True,
     custom_groups=None,
+    infer_elements=False,
 ):
     """Convert an mbuild.Compound to a gmso.Topology.
 
@@ -75,6 +76,9 @@ def from_mbuild(
         matching name on the way down from compound.children. Only the first match
         while moving downwards will be assigned to the site. If parse_label=False,
         this argument does nothing.
+    infer_elements : bool, default=False
+        Allows the reader to try to load element info from the mbuild Particle.name
+        instead of only from the populated Particle.element
 
     Returns
     -------
@@ -104,7 +108,9 @@ def from_mbuild(
 
     # Use site map to apply Compound info to Topology.
     for part in compound.particles():
-        site = _parse_site(site_map, part, search_method)
+        site = _parse_site(
+            site_map, part, search_method, infer_element=infer_elements
+        )
         top.add_site(site)
 
     for b1, b2 in compound.bonds():
@@ -247,10 +253,15 @@ def _parse_particle(particle_map, site):
     return particle
 
 
-def _parse_site(site_map, particle, search_method):
-    """Parse information for a gmso.Site from a mBuild.Compound adn add it to the site map."""
+def _parse_site(site_map, particle, search_method, infer_element=False):
+    """Parse information for a gmso.Site from a mBuild.Compound and add it to the site map."""
     pos = particle.xyz[0] * u.nm
-    ele = search_method(particle.element.symbol) if particle.element else None
+    if infer_element:  # how to check for element info
+        ele = search_method(particle.name)
+    elif particle.element:
+        ele = search_method(particle.element.symbol)
+    else:
+        ele = None
     charge = particle.charge * u.elementary_charge if particle.charge else None
     mass = particle.mass * u.amu if particle.mass else None
 
