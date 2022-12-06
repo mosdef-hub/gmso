@@ -212,7 +212,6 @@ def get_atom_type_expressions_and_scalars(atom_types_dict):
         'epsilon_units': 'kJ/mol'}
         }
     """
-
     eqn_gomc_std_forms_dict = {
         "LJ": "4*epsilon * ((sigma/r)**12 - (sigma/r)**6)",
         "Mie": "(n/(n-m)) * (n/m)**(m/(n-m)) * epsilon * ((sigma/r)**n - (sigma/r)**m)",
