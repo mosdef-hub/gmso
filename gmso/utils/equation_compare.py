@@ -23,7 +23,7 @@ def evaluate_nonbonded_lj_format_with_scaler(new_lj_form, base_lj_form):
         The base LJ form, which is the standard form.
 
     Returns
-    ----------
+    -------
     list, [form_output, form_scalar]
         form_output : str
             'LJ', if the new_lj_form variable is a LJ non-bonded form.
@@ -76,7 +76,7 @@ def evaluate_nonbonded_mie_format_with_scaler(new_mie_form, base_mie_form):
         The base Mie form, which is the standard form.
 
     Returns
-    ----------
+    -------
     list, [form_output, form_scalar]
         form_output : str
             'Mie', if the new_mie_form variable is a Mie non-bonded form.
@@ -126,7 +126,7 @@ def evaluate_nonbonded_exp6_format_with_scaler(new_exp6_form, base_exp6_form):
         The base Exp6 form, which is the standard form.
 
     Returns
-    ----------
+    -------
     list, [form_output, form_scalar]
         form_output : str
             'Exp6', if the new_exp6_form variable is an Exp6 non-bonded form.
@@ -197,7 +197,7 @@ def get_atom_type_expressions_and_scalars(atom_types_dict):
         }
 
     Returns
-    ----------
+    -------
     atom_types_data_expression_data_dict : dict
         The dictionary to append with the residue name and the GMSO force field expressions and units.
 
@@ -351,7 +351,7 @@ def evaluate_harmonic_bond_format_with_scaler(new_bond_form, base_bond_form):
         The base bond form, which is the standard form.
 
     Returns
-    ----------
+    -------
     list, [form_output, form_scalar]
         form_output : str
             'HarmonicBondPotential', if the new_bond_form variable is a harmonic bond.
@@ -394,7 +394,7 @@ def evaluate_harmonic_angle_format_with_scaler(new_angle_form, base_angle_form):
         The base angle form, which is the standard form.
 
     Returns
-    ----------
+    -------
     list, [form_output, form_scalar]
         form_output : str
             'HarmonicAnglePotential', if the new_angle_form variable a harmonic angle.
@@ -443,7 +443,7 @@ def evaluate_harmonic_torsion_format_with_scaler(
         The base harmonic torsion form, which is the standard form.
 
     Returns
-    ----------
+    -------
     list, [form_output, form_scalar]
         form_output : str
             'HarmonicTorsionPotential', if the new_torsion_form variable is a harmonic torsion.
@@ -490,7 +490,7 @@ def evaluate_OPLS_torsion_format_with_scaler(
         The base OPLS torsion form, which is the standard form.
 
     Returns
-    ----------
+    -------
     list, [form_output, form_scalar]
         form_output : str
             'OPLSTorsionPotential', if the new_torsion_form variable is an OPLS torsion.
@@ -539,7 +539,7 @@ def evaluate_periodic_torsion_format_with_scaler(
         The base periodic torsion form, which is the standard form.
 
     Returns
-    ----------
+    -------
     list, [form_output, form_scalar]
         form_output : str
             'PeriodicTorsionPotential', if the new_torsion_form variable is a periodic torsion.
@@ -584,7 +584,7 @@ def evaluate_RB_torsion_format_with_scaler(new_torsion_form, base_torsion_form):
         The base RB torsion form, which is the standard form.
 
     Returns
-    ----------
+    -------
     list, [form_output, form_scalar]
         form_output : str
             'RyckaertBellemansTorsionPotential', if the new_torsion_form variable is an RB torsion.
@@ -633,7 +633,7 @@ def evaluate_harmonic_improper_format_with_scaler(
         The base harmonic improper form, which is the standard form.
 
     Returns
-    ----------
+    -------
     list, [form_output, form_scalar]
         form_output : str
             'HarmonicImproperPotential', if the new_improper_form variable is a harmonic improper.
@@ -680,7 +680,7 @@ def evaluate_periodic_improper_format_with_scaler(
         The base periodic improper form, which is the standard form.
 
     Returns
-    ----------
+    -------
     list, [form_output, form_scalar]
         form_output : str
             'PeriodicImproperPotential', if the new_improper_form variable is a periodic improper.
