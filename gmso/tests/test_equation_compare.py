@@ -121,8 +121,8 @@ class TestEqnCompare(BaseTest):
         ] = specific_ff_to_residue(
             test_box,
             forcefield_selection={
-                "ETH": f"{get_fn('gmso_xmls/test_molecules/ethane_propane_ua_lorentz_combining.xml')}",
-                "ETHM": f"{get_fn('gmso_xmls/test_molecules/ethane_propane_ua_Mie_lorentz_combining.xml')}",
+                "ETH": f"{get_fn('gmso_xmls/test_ffstyles/ethane_propane_ua_lorentz_combining.xml')}",
+                "ETHM": f"{get_fn('gmso_xmls/test_ffstyles/ethane_propane_ua_Mie_lorentz_combining.xml')}",
             },
             residues=["ETH", "ETHM"],
             boxes_for_simulation=1,
@@ -191,8 +191,8 @@ class TestEqnCompare(BaseTest):
             ] = specific_ff_to_residue(
                 test_box,
                 forcefield_selection={
-                    "ETH": f"{get_fn('gmso_xmls/test_molecules/ethane_propane_ua_lorentz_combining.xml')}",
-                    "ETHM": f"{get_fn('gmso_xmls/test_molecules/ethane_propane_ua_bad_eqn_lorentz_combining.xml')}",
+                    "ETH": f"{get_fn('gmso_xmls/test_ffstyles/ethane_propane_ua_lorentz_combining.xml')}",
+                    "ETHM": f"{get_fn('gmso_xmls/test_ffstyles/ethane_propane_ua_bad_eqn_lorentz_combining.xml')}",
                 },
                 residues=["ETH", "ETHM"],
                 boxes_for_simulation=1,

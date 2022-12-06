@@ -6,7 +6,7 @@ from mbuild.utils.io import has_foyer
 
 from gmso.exceptions import GMSOError
 from gmso.tests.base_test import BaseTest
-from gmso.utils.io import get_fn, has_mbuild, has_parmed, import_
+from gmso.utils.io import get_fn
 from gmso.utils.specific_ff_to_residue import specific_ff_to_residue
 
 
@@ -452,8 +452,8 @@ class TestSpecificFFToResidue(BaseTest):
         ] = specific_ff_to_residue(
             test_box,
             forcefield_selection={
-                benzene_aa.name: f"{get_fn('gmso_xmls/test_molecules/gmso_benzene_GAFF.xml')}",
-                water_aa.name: f"{get_fn('gmso_xmls/test_molecules/gmso_spce_water__lorentz_combining.xml')}",
+                benzene_aa.name: f"{get_fn('gmso_xmls/test_ffstyles/benzene_GAFF.xml')}",
+                water_aa.name: f"{get_fn('gmso_xmls/test_ffstyles/spce_water__lorentz_combining.xml')}",
             },
             residues=[benzene_aa.name, water_aa.name],
             boxes_for_simulation=1,
