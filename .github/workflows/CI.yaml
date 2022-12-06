@@ -16,10 +16,11 @@ jobs:
     name: GMSO Tests
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [macOS-latest, ubuntu-latest]
         python-version: ["3.8", "3.9"]
-        fail-fast: false
+
     defaults:
       run:
         shell: bash -l {0}
