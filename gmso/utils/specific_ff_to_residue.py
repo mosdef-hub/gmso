@@ -2,10 +2,12 @@
 import os
 from warnings import warn
 from xml.dom import minidom
+
 import mbuild as mb
 from forcefield_utilities.xml_loader import FoyerFFs, GMSOFFs
 from mbuild.compound import Compound
 from mbuild.utils.io import has_foyer
+
 import gmso
 from gmso.core.views import PotentialFilters
 from gmso.external.convert_mbuild import from_mbuild as mb_convert
