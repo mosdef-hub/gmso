@@ -1,11 +1,9 @@
 # GMSO equation or expression comparisons
 import os
-
-# import signac
 import xml.etree.ElementTree as ET
-
 import sympy
 import unyt as u
+from gmso.utils.io import get_fn
 
 
 # compare Lennard-Jones (LJ) non-bonded equations

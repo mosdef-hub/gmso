@@ -2,12 +2,10 @@ import mbuild as mb
 import pytest
 from foyer.forcefields import forcefields
 from mbuild import Box, Compound
-from mbuild.lattice import load_cif
 from mbuild.utils.io import has_foyer
-
 from gmso.exceptions import GMSOError
 from gmso.tests.base_test import BaseTest
-from gmso.utils.gmso_specific_ff_to_residue import specific_ff_to_residue
+from gmso.utils.specific_ff_to_residue import specific_ff_to_residue
 from gmso.utils.io import get_fn, has_mbuild, has_parmed, import_
 
 
@@ -558,14 +556,13 @@ class TestSpecificFFToResidue(BaseTest):
             == 1
         )
 
-    def test_specific_ff_params_using_group(self):
-        lattice_cif_ETV_triclinic = load_cif(
-            file_or_path=get_fn("ETV_triclinic.cif")
+    def test_specific_ff_params_benzene_aa_grouped(self):
+        methane_ua_bead_name = "_CH4"
+        methane_child_bead = mb.Compound(name=methane_ua_bead_name)
+        methane_box = mb.fill_box(
+            compound=methane_child_bead, n_compounds=4, box=[1, 2, 3]
         )
-        ETV_triclinic = lattice_cif_ETV_triclinic.populate(x=1, y=1, z=1)
-        ETV_triclinic.name = "ETV"
-        print(f"ETV_triclinic.name = {ETV_triclinic.name}")
-        print(f"type(ETV_triclinic) = {type(ETV_triclinic)}")
+        methane_box.name = "MET"
 
         [
             test_topology,
@@ -579,31 +576,31 @@ class TestSpecificFFToResidue(BaseTest):
             test_improper_types_dict,
             test_combining_rule_dict,
         ] = specific_ff_to_residue(
-            ETV_triclinic,
+            methane_box,
             forcefield_selection={
-                ETV_triclinic.name: f"{get_fn('gmso_xmls/test_molecules/ETV_triclinic_testing_only_zeolite.xml')}",
+                methane_box.name: "trappe-ua",
             },
-            residues=[ETV_triclinic.name],
-            boxes_for_simulation=1,
+            residues=[methane_box.name],
             gmso_match_ff_by="group",
+            boxes_for_simulation=1,
         )
-        assert test_topology.n_sites == 15
+        assert test_topology.n_sites == 4
         assert test_topology.n_bonds == 0
         assert test_topology.n_angles == 0
         assert test_topology.n_dihedrals == 0
         assert test_topology.n_impropers == 0
 
-        assert test_electrostatics14Scale_dict == {"ETV": 0}
-        assert test_nonBonded14Scale_dict == {"ETV": 0}
-        assert test_residues_applied_list == ["ETV"]
-        assert test_combining_rule_dict == "geometric"
+        assert test_electrostatics14Scale_dict == {"MET": 0}
+        assert test_nonBonded14Scale_dict == {"MET": 0}
+        assert test_residues_applied_list == ["MET"]
+        assert test_combining_rule_dict == "lorentz"
 
         # atom tests
         assert (
-            str(test_atom_types_dict["ETV"]["expression"])
+            str(test_atom_types_dict["MET"]["expression"])
             == "4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)"
         )
         assert (
-            len(list(test_atom_types_dict["BEN"]["atom_types"].yield_view()))
-            == 2
+            len(list(test_atom_types_dict["MET"]["atom_types"].yield_view()))
+            == 1
         )
