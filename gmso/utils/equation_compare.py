@@ -11,6 +11,7 @@ from gmso.utils.io import get_fn
 # compare Lennard-Jones (LJ) non-bonded equations
 def evaluate_nonbonded_lj_format_with_scaler(new_lj_form, base_lj_form):
     """Compare a new Lennard-Jones (LJ) form to a base LJ form (new LJ form / base LJ form).
+
     If the new form is the same as the base form, other than a scaling factor,
     it labels the form and provides its scalar from the base form.
 
@@ -63,6 +64,7 @@ def evaluate_nonbonded_lj_format_with_scaler(new_lj_form, base_lj_form):
 # compare Mie non-bonded equations
 def evaluate_nonbonded_mie_format_with_scaler(new_mie_form, base_mie_form):
     """Compare a new Mie form to a base Mie form (new Mie form / base Mie form).
+
     If the new form is the same as the base form, other than a scaling factor,
     it labels the form and provides its scalar from the base form.
 
@@ -112,6 +114,7 @@ def evaluate_nonbonded_mie_format_with_scaler(new_mie_form, base_mie_form):
 # compare Exp6 non-bonded equations
 def evaluate_nonbonded_exp6_format_with_scaler(new_exp6_form, base_exp6_form):
     """Compare a new Exp6 form to a base Exp6 form (new Mie form / base Mie form).
+
     If the new form is the same as the base form, other than a scaling factor,
     it labels the form and provides its scalar from the base form.
 
@@ -335,8 +338,8 @@ def get_atom_type_expressions_and_scalars(atom_types_dict):
 
 # compare harmonic bond equations or expressions
 def evaluate_harmonic_bond_format_with_scaler(new_bond_form, base_bond_form):
-    """Compare a new harmonic bond form to a base harmonic bond form
-    (new bond form / base bond form).
+    """Compare a new harmonic bond form to a base harmonic bond form (new bond form / base bond form).
+
     If the new form is the same as the base form, other than a scaling factor,
     it labels the form and provides its scalar from the base form.
 
@@ -378,8 +381,8 @@ def evaluate_harmonic_bond_format_with_scaler(new_bond_form, base_bond_form):
 
 # compare harmonic angle equations or expressions
 def evaluate_harmonic_angle_format_with_scaler(new_angle_form, base_angle_form):
-    """Compare a new harmonic angle form to a base harmonic angle form
-    (new angle form / base angle form).
+    """Compare a new harmonic angle form to a base harmonic angle form (new angle form / base angle form).
+
     If the new form is the same as the base form, other than a scaling factor,
     it labels the form and provides its scalar from the base form.
 
@@ -427,8 +430,8 @@ def evaluate_harmonic_angle_format_with_scaler(new_angle_form, base_angle_form):
 def evaluate_harmonic_torsion_format_with_scaler(
     new_torsion_form, base_torsion_form
 ):
-    """Compare a new harmonic torsion form to a base harmonic torsion form
-    (new torsion form / base torsion form).
+    """Compare a new harmonic torsion form to a base harmonic torsion form (new torsion form / base torsion form).
+
     If the new form is the same as the base form, other than a scaling factor,
     it labels the form and provides its scalar from the base form.
 
@@ -474,8 +477,8 @@ def evaluate_harmonic_torsion_format_with_scaler(
 def evaluate_OPLS_torsion_format_with_scaler(
     new_torsion_form, base_torsion_form
 ):
-    """Compare a new OPLS torsion form to a base OPLS torsion form
-    (new torsion form / base torsion form).
+    """Compare a new OPLS torsion form to a base OPLS torsion form (new torsion form / base torsion form).
+
     If the new form is the same as the base form, other than a scaling factor,
     it labels the form and provides its scalar from the base form.
 
@@ -523,8 +526,8 @@ def evaluate_OPLS_torsion_format_with_scaler(
 def evaluate_periodic_torsion_format_with_scaler(
     new_torsion_form, base_torsion_form
 ):
-    """Compare a new periodic torsion form to a base periodic torsion form
-    (new torsion form / base torsion form).
+    """Compare a new periodic torsion form to a base periodic torsion form (new torsion form / base torsion form).
+
     If the new form is the same as the base form, other than a scaling factor,
     it labels the form and provides its scalar from the base form.
 
@@ -568,8 +571,8 @@ def evaluate_periodic_torsion_format_with_scaler(
 
 # check for the RyckaertBellemans (RB) torsion potential equations or expressions
 def evaluate_RB_torsion_format_with_scaler(new_torsion_form, base_torsion_form):
-    """Compare a new Ryckaert-Bellemans (RB) torsion form to a base torsion form
-    (new torsion form / base torsion form).
+    """Compare a new Ryckaert-Bellemans (RB) torsion form to a base torsion form (new torsion form / base torsion form).
+
     If the new form is the same as the base form, other than a scaling factor,
     it labels the form and provides its scalar from the base form.
 
@@ -617,8 +620,8 @@ def evaluate_RB_torsion_format_with_scaler(new_torsion_form, base_torsion_form):
 def evaluate_harmonic_improper_format_with_scaler(
     new_improper_form, base_improper_form
 ):
-    """Compare a new harmonic improper form to a base harmonic improper form
-    (new improper form / base improper form).
+    """Compare a new harmonic improper form to a base harmonic improper form (new improper form / base improper form).
+
     If the new form is the same as the base form, other than a scaling factor,
     it labels the form and provides its scalar from the base form.
 
@@ -664,8 +667,8 @@ def evaluate_harmonic_improper_format_with_scaler(
 def evaluate_periodic_improper_format_with_scaler(
     new_improper_form, base_improper_form
 ):
-    """Compare a new periodic improper form to a base periodic improper form
-    (new improper form / base improper form).
+    """Compare a new periodic improper form to a base periodic improper form (new improper form / base improper form).
+
     If the new form is the same as the base form, other than a scaling factor,
     it labels the form and provides its scalar from the base form.
 
