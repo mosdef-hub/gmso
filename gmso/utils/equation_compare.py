@@ -1,8 +1,10 @@
 # GMSO equation or expression comparisons
 import os
 import xml.etree.ElementTree as ET
+
 import sympy
 import unyt as u
+
 from gmso.utils.io import get_fn
 
 

@@ -3,10 +3,11 @@ import pytest
 from foyer.forcefields import forcefields
 from mbuild import Box, Compound
 from mbuild.utils.io import has_foyer
+
 from gmso.exceptions import GMSOError
 from gmso.tests.base_test import BaseTest
-from gmso.utils.specific_ff_to_residue import specific_ff_to_residue
 from gmso.utils.io import get_fn, has_mbuild, has_parmed, import_
+from gmso.utils.specific_ff_to_residue import specific_ff_to_residue
 
 
 @pytest.mark.skipif(not has_foyer, reason="Foyer package not installed")
