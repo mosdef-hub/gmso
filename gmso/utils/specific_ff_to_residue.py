@@ -21,10 +21,9 @@ def specific_ff_to_residue(
     residues=None,
     boxes_for_simulation=1,
 ):
-
     """
-    Takes the mbuild Compound or mbuild Box and applies the selected
-    force field to the corresponding residue via foyer and GMSO.
+    Takes the mbuild Compound or mbuild Box and applies the selected FF to the corresponding residue via foyer and GMSO.
+
     Note: a residue is defined as a molecule in this case, so it is not
     designed for applying a force field to a protein.
 
@@ -191,6 +190,7 @@ def specific_ff_to_residue(
 
     Returns
     -------
+
     list, [
         topology,
         residues_applied_list,
@@ -241,8 +241,10 @@ def specific_ff_to_residue(
         NOTE: Arithmetic means the 'lorentz' combining or mixing rule.
         NOTE: GMSO default to the 'lorentz' mixing rule if none is provided,
         and this writers default is the GMSO default.
+
     Notes
     -----
+
     To write the NAMD/GOMC force field, pdb, psf, and force field
     (.inp) files, the residues and forcefields must be provided in
     a str or dictionary. If a dictionary is provided all residues must
@@ -259,7 +261,6 @@ def specific_ff_to_residue(
     For example: a protein molecule with many residue names is not currently supported,
     but is planned to be supported in the future.
     """
-
     if has_foyer:
         from foyer import Forcefield
         from foyer.forcefields import forcefields
