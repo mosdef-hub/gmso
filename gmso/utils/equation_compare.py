@@ -1,4 +1,4 @@
-# GMSO equation or expression comparisons
+"""GMSO equation or expression comparisons"""
 import os
 import xml.etree.ElementTree as ET
 

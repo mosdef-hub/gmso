@@ -1,4 +1,4 @@
-# GMSO and foyer use specific residues to apply force fields and mapping molecule number to atom numbers
+"""GMSO and foyer use specific residues to apply force fields and mapping molecule number to atom numbers"""
 import os
 from warnings import warn
 from xml.dom import minidom
