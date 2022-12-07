@@ -586,7 +586,7 @@ def get_edges(networkx_graph, atom_name1, atom_name2):
         for nodes in list(networkx_graph.edges.items()):
             if nodes[1]["connection"].bond_type is None:
                 selectable_dict = create_dict_of_labels_for_edges(
-                    selectable_dict, edge
+                    selectable_dict, nodes[0]
                 )
                 mia_bond_flag = 1
         if not mia_bond_flag:
