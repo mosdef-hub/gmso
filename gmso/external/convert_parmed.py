@@ -256,9 +256,14 @@ def _atom_types_from_pmd(structure):
     unique_atom_types = list(unique_atom_types)
     pmd_top_atomtypes = {}
     for atom_type in unique_atom_types:
+        if atom_type.atomic_number:
+            element = element_by_atomic_number(atom_type.atomic_number).symbol
+        else:
+            element = atom_type.name
         top_atomtype = gmso.AtomType(
             name=atom_type.name,
             charge=atom_type.charge * u.elementary_charge,
+            tags={"element": element},
             expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
             parameters={
                 "sigma": atom_type.sigma * u.angstrom,
