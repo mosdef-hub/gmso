@@ -325,7 +325,6 @@ def _write_dihedral_information(gsd_snapshot, top):
 
 def _prepare_box_information(top):
     """Prepare the box information for writing to gsd."""
-    lx = ly = lz = xy = xz = yz = 0.0
     if allclose_units(
         top.box.angles, np.array([90, 90, 90]) * u.degree, rtol=1e-5, atol=1e-8
     ):
