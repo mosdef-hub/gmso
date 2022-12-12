@@ -32,7 +32,7 @@ if has_hoomd:
     import hoomd
 
 MD_UNITS = {
-    "energy": u.kj / u.mol,
+    "energy": u.kJ / u.mol,
     "length": u.nm,
     "mass": u.g / u.mol,  # aka amu
 }
@@ -86,10 +86,6 @@ def to_hoomd_snapshot(
 
     """
     base_units = _validate_base_units(base_units)
-    xyz = u.unyt_array([site.position for site in top.sites])
-    if shift_coords:
-        warnings.warn("Shifting coordinates to [-L/2, L/2]")
-        xyz = coord_shift(xyz, top.box)
 
     gsd_snapshot = gsd.hoomd.Snapshot()
 
@@ -100,7 +96,7 @@ def to_hoomd_snapshot(
     (lx, ly, lz, xy, xz, yz) = _prepare_box_information(top)
     lx = lx / base_units["length"]
     ly = ly / base_units["length"]
-    lz = lz / base_units["lenght"]
+    lz = lz / base_units["length"]
     gsd_snapshot.configuration.box = np.array([lx, ly, lz, xy, xz, yz])
 
     warnings.warn(
@@ -112,11 +108,9 @@ def to_hoomd_snapshot(
     _parse_particle_information(
         gsd_snapshot,
         top,
-        xyz,
-        base_units["lengths"],
-        base_units["mass"],
-        base_units["energy"],
+        base_units,
         rigid_bodies,
+        shift_coords,
     )
 
     if top.n_bonds > 0:
@@ -132,41 +126,52 @@ def to_hoomd_snapshot(
 
 
 def _parse_particle_information(
-    gsd_snapshot, top, xyz, ref_distance, ref_mass, ref_energy, rigid_bodies
+    gsd_snapshot,
+    top,
+    base_units,
+    rigid_bodies,
+    shift_coords,
 ):
-    gsd_snapshot.particles.N = top.n_sites
-    warnings.warn(f"{top.n_sites} particles detected")
-    gsd_snapshot.particles.position = xyz / ref_distance
+    # Set up all require
+    xyz = u.unyt_array([site.position for site in top.sites])
+    if shift_coords:
+        warnings.warn("Shifting coordinates to [-L/2, L/2]")
+        xyz = coord_shift(xyz, top.box)
 
     types = [
         site.name if site.atom_type is None else site.atom_type.name
         for site in top.sites
     ]
-
-    unique_types = list(set(types))
-    unique_types = sorted(unique_types)
-    gsd_snapshot.particles.types = unique_types
-    warnings.warn(f"{len(unique_types)} unique particle types detected")
-
+    unique_types = sorted(list(set(types)))
     typeids = np.array([unique_types.index(t) for t in types])
-    gsd_snapshot.particles.typeid = typeids
 
-    masses = np.array([site.mass for site in top.sites])
-    masses[masses == 0] = 1.0
-    masses[masses == None] = 1.0
-    gsd_snapshot.particles.mass = masses / ref_mass
+    masses = u.unyt_array([site.mass for site in top.sites])
+    masses[masses == 0 or None] = 1.0 * u.amu
 
     charges = np.array([site.charge for site in top.sites])
     charges[charges == None] = 0.0
-    e0 = u.physical_constants.eps_0.in_units(
-        u.elementary_charge**2 / u.Unit("kcal*angstrom/mol")
-    )
 
+    # e0 = u.physical_constants.eps_0.in_units(
+    #    u.elementary_charge**2 / u.Unit("kcal*angstrom/mol")
+    # )
+    e0 = u.physical_constants.eps_0.in_units(
+        u.elementary_charge**2 / (base_units["energy"] * base_units["length"])
+    )
+    charge_factor = (
+        4.0 * np.pi * e0 * 1 * base_units["length"] * 1 * base_units["eneryg"]
+    ) ** 2
     """
     Permittivity of free space = 2.39725e-4 e^2/((kcal/mol)(angstrom)),
     where e is the elementary charge
     """
-    charge_factor = (4.0 * np.pi * e0 * ref_distance * ref_energy) ** 0.5
+    # charge_factor = (4.0 * np.pi * e0 * ref_distance * ref_energy) ** 0.5
+    charge_factor = 1
+
+    gsd_snapshot.particles.N = top.n_sites
+    gsd_snapshot.particles.position = xyz.in_units(base_units["length"]).value
+    gsd_snapshot.particles.types = sorted((set(types)))
+    gsd_snapshot.particles.typeid = typeids
+    gsd_snapshot.particles.mass = masses.in_units(base_units["mass"]).value
     gsd_snapshot.particles.charge = charges / charge_factor
 
     if rigid_bodies:
@@ -739,7 +744,7 @@ def _validate_base_units(base_units):
     """Validate the provided base units."""
     ref = {
         "energy": u.dimensions.energy,
-        "length": u.dimensions.lenght,
+        "length": u.dimensions.length,
         "mass": u.dimensions.mass,
     }
 
