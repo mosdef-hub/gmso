@@ -59,7 +59,11 @@ def check_compatibility(topology, accepted_potentials):
 def _check_single_potential(potential, accepted_potentials):
     """Check to see if a single given potential is in the list of accepted potentials."""
     for ref in accepted_potentials:
-        if ref.independent_variables == potential.independent_variables:
+        if len(ref.independent_variables) == len(
+            potential.independent_variables
+        ) and len(ref.expected_parameters_dimensions.keys()) == len(
+            potential.parameters.keys()
+        ):
             if str(ref.expression) == str(potential.expression):
                 return {potential: ref.name}
             else:
