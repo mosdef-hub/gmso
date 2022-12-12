@@ -1375,7 +1375,7 @@ class Topology(object):
         new_top.update_topology()
         return new_top
 
-    def save(self, filename, overwrite=False, simplify_check=True, **kwargs):
+    def save(self, filename, overwrite=False, **kwargs):
         """Save the topology to a file.
 
         Parameters
