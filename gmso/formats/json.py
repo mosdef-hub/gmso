@@ -282,7 +282,7 @@ def _from_json(json_dict):
 
 
 @saves_as(".json")
-def save_json(top, filename, **kwargs):
+def write_json(top, filename, **kwargs):
     """Save the topology as a JSON file.
 
     Parameters
