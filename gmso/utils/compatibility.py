@@ -58,15 +58,16 @@ def check_compatibility(topology, accepted_potentials):
 
 def _check_single_potential(potential, accepted_potentials):
     """Check to see if a single given potential is in the list of accepted potentials."""
+    ind_var = potential.independent_variables
+    u_dims = {para.units.dimensions for para in potential.parameters.values()}
     for ref in accepted_potentials:
-        if len(ref.independent_variables) == len(
-            potential.independent_variables
-        ) and len(ref.expected_parameters_dimensions.keys()) == len(
-            potential.parameters.keys()
-        ):
+        ref_ind_var = ref.independent_variables
+        ref_u_dims = set(ref.expected_parameters_dimensions.values())
+        if len(ind_var) == len(ref_ind_var) and u_dims == ref_u_dims:
             if str(ref.expression) == str(potential.expression):
                 return {potential: ref.name}
             else:
+                print("Simpify", ref, potential)
                 if sympy.simplify(ref.expression - potential.expression) == 0:
                     return {potential: ref.name}
     return False
