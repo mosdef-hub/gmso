@@ -14,22 +14,25 @@ To learn more, get started, or contribute, check out our [Documentation](https:/
   <img src="docs/images/mosdef_graphic_gmso.png?raw=true" alt="GMSO within the MoSDeF Ecosystem" width="500" height="500"/>
 </p>
 
-This is an example using `mBuild` and `Foyer` to build a `GMSO` topology through [`ParmEd`](https://parmed.github.io/ParmEd/html/index.html) and write out to [`LAMMPS`](https://docs.lammps.org/).
+This is an example using `mBuild` and `Foyer` to build a `GMSO` topology and write out to [`LAMMPS`](https://docs.lammps.org/).
 ```python
 import foyer
+import forcefield_utilities as ffutils
 from mbuild.lib.molecules import Ethane
-from gmso.external.convert_parmed import from_parmed
+from gmso.external.convert_mbuild import from_mbuild
+from gmso.parameterization import apply
 from gmso.formats.lammpsdata import write_lammpsdata
 # Start with a mBuild compound
 mb_ethane = Ethane()
-oplsaa = foyer.Forcefield(name='oplsaa')
+oplsaa = ffutils.FoyerFFs().load('oplsaa').to_gmso_ff()
 # atomtype the system with foyer, and convert the resulting structure to a topology
-typed_ethane = from_parmed(oplsaa.apply(mb_ethane))
-typed_ethane.name = 'ethane'
+gmso_ethane = from_mbuild(mb_ethane)
+apply(top=gmso_ethane,
+      forcefields=oplsaa,
+      identify_connections=True)
 # Write out lammps datafile
-write_lammpsdata(typed_ethane, filename='ethane.lammps', atom_style='full')
+write_lammpsdata(gmso_ethane, filename='ethane.lammps', atom_style='full')
 ```
-
 
 Introduction
 ------------
@@ -107,19 +110,36 @@ For full, detailed instructions, refer to the [documentation for installation](h
 conda install -c conda-forge gmso
 ```
 
-### `pip` installation quickstart
-_Note: `GMSO` is not on `pypi` currently, but its dependencies are._
+### Installing from source
 
-```bash
-git clone  https://github.com/mosdef-hub/gmso.git
+Dependencies of GMSO are listed in the files ``environment.yml`` (lightweight environment specification containing minimal dependencies) and ``environment-dev.yml`` (comprehensive environment specification including optional and testing packages for developers).
+The ``gmso`` or ``gmso-dev`` conda environments can be created with
+
+
+```.. code-block:: bash
+git clone https://github.com/mosdef-hub/gmso.git
 cd gmso
-pip install -r requirements.txt
-pip install -e .
+# for gmso conda environment
+conda env create -f environment.yml
+conda activate gmso
+
+# for gmso-dev
+conda env create -f environment-dev.yml
+conda activate gmso
+
+# install a non-editable version of gmso
+pip install .
 ```
 
-`pip` quickstart will install `GMSO` in [`editable` mode](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs), which means that as you edit the source code of `GMSO` those edits will be reflected in your installation.
+### Install an editable version from source
 
+Once all dependencies have been installed and the ``conda`` environment has been created, the ``GMSO`` itself can be installed.
 
+``` code-block:: bash
+cd gmso
+conda activate gmso-dev # or gmso depending on your installation
+pip install -e .
+```
 Documentation
 -------------
 
