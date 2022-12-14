@@ -125,7 +125,7 @@ conda activate gmso
 
 # for gmso-dev
 conda env create -f environment-dev.yml
-conda activate gmso
+conda activate gmso-dev
 
 # install a non-editable version of gmso
 pip install .
