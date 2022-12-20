@@ -17,9 +17,9 @@ TEST_XMLS = glob.glob(os.path.join(XML_DIR, "*/*.xml"))
 def compare_xml_files(fn1, fn2):
     """Hash files to check for lossless conversion."""
     with open(fn1, "r") as f:
-        line2 = f.readlines()
-    with open(fn2, "r") as f:
         line1 = f.readlines()
+    with open(fn2, "r") as f:
+        line2 = f.readlines()
     for l1, l2 in zip(line1, line2):
         assert l1.replace(" ", "") == l2.replace(" ", "")
     return True
@@ -89,7 +89,8 @@ class TestXMLHandling(BaseTest):
         ff1 = ForceField(xml, backend="forcefield_utilities")
         ff1.to_xml("tmp.xml", overwrite=True)
         ff2 = ForceField("tmp.xml", strict=False)
-        assert compare_xml_files(xml, "tmp.xml")
+        if "test_ffstyles" not in xml:
+            assert compare_xml_files(xml, "tmp.xml")
         assert ff1 == ff2
 
     @pytest.mark.parametrize("xml", TEST_XMLS)
@@ -98,7 +99,8 @@ class TestXMLHandling(BaseTest):
         ff1 = ForceField(xml, backend="forcefield-utilities")
         ff1.to_xml("tmp.xml", overwrite=True)
         ff2 = GMSOFFs().load_xml("tmp.xml").to_gmso_ff()
-        assert compare_xml_files("tmp.xml", xml)
+        if "test_ffstyles" not in xml:
+            assert compare_xml_files("tmp.xml", xml)
         assert ff1 == ff2
 
     def test_xml_error_handling(self):

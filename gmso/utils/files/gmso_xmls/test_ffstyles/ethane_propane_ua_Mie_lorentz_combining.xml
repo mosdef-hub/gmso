@@ -1,4 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
+<!-- For testing purpose only-->
 <ForceField name="testing only bad values - Mie Ethane and Propane only, united atom" version="0.0.1">
   <FFMetaData electrostatics14Scale="0" nonBonded14Scale="0.0" combiningRule="lorentz">
     <Units energy="kJ/mol" mass="amu" charge="elementary_charge" distance="nm"/>
@@ -20,6 +21,8 @@
       <Parameters>
         <Parameter name="epsilon" value="0.382465"/>
         <Parameter name="sigma" value="0.395"/>
+        <Parameter name="m" value="6"/>
+        <Parameter name="n" value="13"/>
       </Parameters>
     </AtomType>
   </AtomTypes>

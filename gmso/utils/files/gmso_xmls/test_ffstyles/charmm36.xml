@@ -1,6 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
+<!-- For testing purpose only-->
 <ForceField name="charmm36-snippet" version="0.0.1">
-  <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.5">
+  <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.5" combiningRule="geometric">
     <Units energy="kJ" distance="nm" mass="amu" charge="elementary_charge"/>
   </FFMetaData>
   <AtomTypes expression="epsilon*(-2*rmin**6/r**6 + rmin**12/r**12)">
@@ -10,6 +11,18 @@
       <Parameters>
         <Parameter name="epsilon" value="-0.046"/>
         <Parameter name="rmin" value="0.4449"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="C" mass="12.01078" charge="0.0" atomclass="C" definition="C">
+      <Parameters>
+        <Parameter name="epsilon" value="-1.046"/>
+        <Parameter name="rmin" value="1.4449"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="CT" mass="12.01078" charge="0.0" atomclass="CT" definition="CT">
+      <Parameters>
+        <Parameter name="epsilon" value="-2.046"/>
+        <Parameter name="rmin" value="2.4449"/>
       </Parameters>
     </AtomType>
   </AtomTypes>

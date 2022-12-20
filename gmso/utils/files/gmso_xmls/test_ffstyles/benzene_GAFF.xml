@@ -1,18 +1,18 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <ForceField name="GAFF benzene" version="0.0.1">
   <FFMetaData electrostatics14Scale="0.833333333" nonBonded14Scale="0.5" combiningRule="lorentz">
-    <Units energy="kJ/mol" mass="amu" charge="elementary_charge" distance="nm"/>
+    <Units energy="kJ/mol" distance="nm" mass="amu" charge="elementary_charge"/>
   </FFMetaData>
   <AtomTypes expression="4 * epsilon * ((sigma/r)**12 - (sigma/r)**6)">
     <ParametersUnitDef parameter="sigma" unit="nm"/>
     <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
-    <AtomType name="ca" atomclass="ca" element="C" charge="0.0" mass="12.01" definition="[C;X3;r6]1[C&amp;X3,N&amp;X2,P&amp;X2][C&amp;X3,N&amp;X2,P&amp;X2][C&amp;X3,N&amp;X2,P&amp;X2][C&amp;X3,N&amp;X2,P&amp;X2][C&amp;X3,N&amp;X2,P&amp;X2]1" description="Sp2 C for total aromatic systems" doi="10.1002/jcc/20035" overrides="">
+    <AtomType name="ca" atomclass="ca" element="C" charge="0.0" mass="12.01" definition="[C;X3;r6]1[C;X3,N;X2,P;X2][C;X3,N;X2,P;X2][C;X3,N;X2,P;X2][C;X3,N;X2,P;X2][C;X3,N;X2,P;X2]1" description="Sp2 C for total aromatic systems" doi="10.1002/jcc/20035">
       <Parameters>
         <Parameter name="epsilon" value="0.359824"/>
         <Parameter name="sigma" value="0.33996695084235345"/>
       </Parameters>
     </AtomType>
-    <AtomType name="ha" atomclass="ha" element="H" charge="0.0" mass="1.008" definition="H[C;!X4]" description="H in aromatic carbon" doi="10.1002/jcc/20035" overrides="">
+    <AtomType name="ha" atomclass="ha" element="H" charge="0.0" mass="1.008" definition="H[C;!X4]" description="H in aromatic carbon" doi="10.1002/jcc/20035">
       <Parameters>
         <Parameter name="epsilon" value="0.06276"/>
         <Parameter name="sigma" value="0.259964245953351"/>

@@ -613,14 +613,16 @@ class ForceField(object):
         )
 
         metadata = etree.SubElement(ff_el, "FFMetaData")
-        if not self.scaling_factors.get("electrostatics14Scale") is None:
+        if self.scaling_factors.get("electrostatics14Scale") is not None:
             metadata.attrib["electrostatics14Scale"] = str(
                 self.scaling_factors.get("electrostatics14Scale")
             )
-        if not self.scaling_factors.get("nonBonded14Scale") is None:
+        if self.scaling_factors.get("nonBonded14Scale") is not None:
             metadata.attrib["nonBonded14Scale"] = str(
                 self.scaling_factors.get("nonBonded14Scale")
             )
+        if self.combining_rule is not None:
+            metadata.attrib["combiningRule"] = str(self.combining_rule)
 
         # ToDo: ParameterUnitsDefintions and DefaultUnits
         if self.units:
