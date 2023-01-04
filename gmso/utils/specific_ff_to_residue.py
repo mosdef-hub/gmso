@@ -462,6 +462,7 @@ def specific_ff_to_residue(
     # push the FF paths and/or name to the GMSO format and create the new GMSO topology format
     gmso_compatable_forcefield_selection = {}
     for ff_key_iter, ff_value_iter in forcefield_selection_with_paths.items():
+        print(ff_key_iter, ff_value_iter)
         # try to load the Foyer and GMSO FFs, if Foyer convert to GMSO; otherwise, it is an error.
         try:
             try:

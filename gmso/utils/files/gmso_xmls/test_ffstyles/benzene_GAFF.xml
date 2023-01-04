@@ -6,7 +6,7 @@
   <AtomTypes expression="4 * epsilon * ((sigma/r)**12 - (sigma/r)**6)">
     <ParametersUnitDef parameter="sigma" unit="nm"/>
     <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
-    <AtomType name="ca" atomclass="ca" element="C" charge="0.0" mass="12.01" definition="[C;X3;r6]1[C;X3,N;X2,P;X2][C;X3,N;X2,P;X2][C;X3,N;X2,P;X2][C;X3,N;X2,P;X2][C;X3,N;X2,P;X2]1" description="Sp2 C for total aromatic systems" doi="10.1002/jcc/20035">
+    <AtomType name="ca" atomclass="ca" element="C" charge="0.0" mass="12.01" definition="[C;X3;r6]1[C;X3;r6][C;X3;r6][C;X3;r6][C;X3;r6][C;X3;r6]1" description="Sp2 C for total aromatic systems" doi="10.1002/jcc/20035">
       <Parameters>
         <Parameter name="epsilon" value="0.359824"/>
         <Parameter name="sigma" value="0.33996695084235345"/>
