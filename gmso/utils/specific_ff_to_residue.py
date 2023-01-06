@@ -321,30 +321,34 @@ def specific_ff_to_residue(
         raise TypeError(print_error_message)
 
     if boxes_for_simulation not in [1, 2]:
-        boxes_for_simulation_error_msg = "boxes_for_simulation must be either 1 or 2."
+        boxes_for_simulation_error_msg = (
+            "boxes_for_simulation must be either 1 or 2."
+        )
         raise ValueError(boxes_for_simulation_error_msg)
 
     forcefield_keys_list = list(forcefield_selection.keys())
 
     if len(forcefield_keys_list) != len(residues):
-        errror_msg = f"Mismatch between provided forcefield_selection and residues."
+        errror_msg = (
+            f"Mismatch between provided forcefield_selection and residues."
+        )
         raise ValueError(error_msg)
 
     user_entered_ff_with_path_dict = {}
     # True means user entered the path, False is a standard foyer FF with no path
     for residue in residues:
         if residue in forcefield_keys_list:
-            ff_extension = os.path.splitext(forcefield_selection[residue])[1] 
+            ff_extension = os.path.splitext(forcefield_selection[residue])[1]
             if ff_extension == ".xml":
                 user_entered_ff_with_path_dict[residue] = True
             elif ff_extension == "":
-                user_entered_ff_with_path_dict[residue] = False            
+                user_entered_ff_with_path_dict[residue] = False
             else:
                 print_error_message = (
-                        r"Please make sure you are entering the correct "
-                        "foyer FF name or a path to a FF file (with .xml extention)."
-                    )
-                raise ValueError(print_error_message) 
+                    r"Please make sure you are entering the correct "
+                    "foyer FF name or a path to a FF file (with .xml extention)."
+                )
+                raise ValueError(print_error_message)
 
     # check if FF files exist and create a forcefield selection with directory paths
     # forcefield_selection_with_paths
@@ -355,7 +359,9 @@ def specific_ff_to_residue(
             ff_names_path_iteration = forcefield_selection[residue]
             try:
                 read_xlm_iteration = minidom.parse(ff_names_path_iteration)
-                forcefield_selection_with_paths[residue] = ff_names_path_iteration
+                forcefield_selection_with_paths[
+                    residue
+                ] = ff_names_path_iteration
 
             except:
                 print_error_message = (
@@ -369,10 +375,14 @@ def specific_ff_to_residue(
                 raise ValueError(print_error_message)
         elif not user_entered_ff_with_path_dict[residue]:
             ff_for_residue = forcefield_selection[residue]
-            ff_names_path_iteration = f"{forcefields.get_ff_path()[0]}/xml/{ff_for_residue}.xml"
+            ff_names_path_iteration = (
+                f"{forcefields.get_ff_path()[0]}/xml/{ff_for_residue}.xml"
+            )
             try:
                 read_xlm_iteration = minidom.parse(ff_names_path_iteration)
-                forcefield_selection_with_paths[residue] = ff_names_path_iteration
+                forcefield_selection_with_paths[
+                    residue
+                ] = ff_names_path_iteration
             except:
                 print_error_message = (
                     "Please make sure you are entering the correct foyer FF name, or the "
