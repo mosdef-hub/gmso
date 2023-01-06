@@ -36,21 +36,21 @@ def specific_ff_to_residue(
         Apply a force field to the output file by selecting a force field xml file with
         its path or by using the standard force field name provided the `foyer` package.
         Example dict for FF file: {'ETH': 'oplsaa.xml', 'OCT': 'path_to file/trappe-ua.xml'}
-        Example str for FF file: 'path_to file/trappe-ua.xml'
+        Example str for FF file: 'path_to_file/trappe-ua.xml'
         Example dict for standard FF names: {'ETH': 'oplsaa', 'OCT': 'trappe-ua'}
         Example str for standard FF names: 'trappe-ua'
-        Example of a mixed dict with both: {'ETH': 'oplsaa', 'OCT': 'path_to file/'trappe-ua.xml'}
+        Example of a mixed dict with both: {'ETH': 'oplsaa', 'OCT': 'path_to_file/'trappe-ua.xml'}
     gmso_match_ff_by: str ("group" or "molecule"), default = "molecule"
-        How the GMSO force field is applied, using the molecules name/residue name (mbuild.Compound().name)
-        for GOMC and NAMD.  This is regardless number of levels in the (mbuild.Compound().name or mbuild.Box()).
+        How the GMSO force field is applied, using the molecules name/residue name (mbuild.Compound.name)
+        for GOMC and NAMD.  This is regardless number of levels in the mbuild.Compound.
 
         * "molecule" applies the force field using the molecule's name or atom's name for a
         single atom molecule (1 atom/bead  = molecule).
-            -  Molecule > 1 atom ----> uses the "mbuild.Compound().name" (1 level above the atoms/beads)
-            is the molecule's name.  This "mb.Compound().name" (1 level above the atoms/beads) needs
+            -  Molecule > 1 atom ----> uses the "mbuild.Compound.name" (1 level above the atoms/beads)
+            as the molecule's name.  This "mb.Compound.name" (1 level above the atoms/beads) needs
             to be used in the Charmm object's residue_list and forcefield_selection (if >1 force field), and
             will be the residue name in the PSF, PDB, and FF files.
-            -  Molecule = 1 atom/bead  ----> uses the "atom/bead's name" is the molecule's name.
+            -  Molecule = 1 atom/bead  ----> uses the "atom/bead's name" as the molecule's name.
             This "atom/bead's name" needs to be used in the Charmm object's residue_list and
             forcefield_selection (if >1 force field), and will be the residue name in the PSF, PDB, and FF files.
 
@@ -109,15 +109,14 @@ def specific_ff_to_residue(
             ETV_triclinic = lattice_cif_ETV_triclinic.populate(x=1, y=1, z=1)
             ETV_triclinic.name = "ETV"
 
-        * "group" applies the force field 1 level under the top level (mbuild.Compound().name or mbuild.Box())
-        or to the 2nd level (mbuild.Compound().name or mbuild.Box()) if only 2 levels exist,
-        taking the next levels name mbuild.Compound().name, respectively.  Or in other words:
+        * "group" applies the force field 1 level under the top level mbuild.Compound, if only 2 levels exist,
+        taking the top levels name mbuild.Compound. Or in other words:
             - For only 2 level (mbuild container-particles) group will grab the name of the mbuild container
             - For > 2 levels (e.g., mbuild container-etc-molecule-residue-particle),
             group will grab 1 level down from top
 
         This is ideal to use when you are building simulation box(es) using mbuild.fill_box(),
-        with molecules, and it allows you to add another level to single single atom molecules
+        with molecules, and it allows you to add another level to single atom molecules
         (1 atom/bead  = molecule) to rename the mbuild.Compound().name, changing the residue's
         name and allowing keeping the atom/bead name so the force field is applied properly.
 
@@ -183,7 +182,7 @@ def specific_ff_to_residue(
         checking against Compound.name.  Only supply residue names as 4 characters
         strings, as the residue names are truncated to 4 characters to fit in the
         psf and pdb file.
-    boxes_for_simulation: int [1, 2], default = 1
+    boxes_for_simulation: either 1 or 2, default=1
         Gibbs (GEMC) or grand canonical (GCMC) ensembles are examples of where the boxes_for_simulation would be 2.
         Canonical (NVT) or isothermal–isobaric (NPT) ensembles are example with the boxes_for_simulation equal to 1.
         Note: the only valid options are 1 or 2.
@@ -192,6 +191,7 @@ def specific_ff_to_residue(
     -------
     list, [
         topology,
+        unique_topology_groups_lists,
         residues_applied_list,
         electrostatics14Scale_dict,
         nonBonded14Scale_dict,
@@ -206,7 +206,7 @@ def specific_ff_to_residue(
     topology: gmso.Topology
         gmso Topology with applied force field
     unique_topology_groups_list: list
-        list of residues (i.e., list of stings).
+        list of residues (i.e., list of strings).
         These are all the residues in which the force field actually applied.
     electrostatics14Scale_dict: dict
         A dictionary with the 1,4-electrostatic/Coulombic scalars for each residue,
@@ -293,7 +293,6 @@ def specific_ff_to_residue(
         )
         raise TypeError(print_error_message)
 
-    print("forcefield_selection = " + str(forcefield_selection))
     if forcefield_selection is None:
         print_error_message = (
             "Please the force field selection (forcefield_selection) as a dictionary "
@@ -304,9 +303,7 @@ def specific_ff_to_residue(
         )
         raise TypeError(print_error_message)
 
-    elif forcefield_selection is not None and not isinstance(
-        forcefield_selection, dict
-    ):
+    elif not isinstance(forcefield_selection, dict):
         print_error_message = (
             "The force field selection (forcefield_selection) "
             "is not a dictionary. Please enter a dictionary "
@@ -323,80 +320,42 @@ def specific_ff_to_residue(
         )
         raise TypeError(print_error_message)
 
-    print_error_message_for_boxes_for_simulatiion = (
-        "ERROR: Please enter boxes_for_simulation equal " "the integer 1 or 2."
-    )
-    if not isinstance(boxes_for_simulation, int):
-        raise TypeError(print_error_message_for_boxes_for_simulatiion)
+    if boxes_for_simulation not in [1, 2]:
+        boxes_for_simulation_error_msg = "boxes_for_simulation must be either 1 or 2."
+        raise ValueError(boxes_for_simulation_error_msg)
 
-    elif isinstance(boxes_for_simulation, int) and boxes_for_simulation not in [
-        1,
-        2,
-    ]:
-        raise ValueError(print_error_message_for_boxes_for_simulatiion)
+    forcefield_keys_list = list(forcefield_selection.keys())
 
-    forcefield_keys_list = []
-    if forcefield_selection is not None:
-        for res in forcefield_selection.keys():
-            forcefield_keys_list.append(res)
-        ff_data = forcefield_selection
+    if len(forcefield_keys_list) != len(residues):
+        errror_msg = f"Mismatch between provided forcefield_selection and residues."
+        raise ValueError(error_msg)
 
-    if forcefield_keys_list == [] and len(residues) != 0:
-        print_error_message = "The forcefield_selection variable are not provided, but there are residues provided."
-        raise ValueError(print_error_message)
-
-    elif forcefield_keys_list != [] and len(residues) == 0:
-        print_error_message = (
-            "The residues variable is an empty list but there are "
-            "forcefield_selection variables provided."
-        )
-        raise ValueError(print_error_message)
-
-    user_entered_ff_with_path_dict = (
-        {}
-    )  # True means user entered the path, False is a standard foyer FF with no path
-    for z in range(0, len(forcefield_keys_list)):
-        for res_i in range(0, len(residues)):
-            if residues[res_i] == forcefield_keys_list[z]:
-                if (
-                    os.path.splitext(ff_data[forcefield_keys_list[z]])[1]
-                    == ".xml"
-                    and len(residues) != 0
-                ):
-                    user_entered_ff_with_path_dict.update(
-                        {residues[res_i]: True}
-                    )
-                elif (
-                    os.path.splitext(ff_data[forcefield_keys_list[z]])[1] == ""
-                    and len(residues) != 0
-                ):
-                    user_entered_ff_with_path_dict.update(
-                        {residues[res_i]: False}
-                    )
-                else:
-                    print_error_message = (
+    user_entered_ff_with_path_dict = {}
+    # True means user entered the path, False is a standard foyer FF with no path
+    for residue in residues:
+        if residue in forcefield_keys_list:
+            ff_extension = os.path.splitext(forcefield_selection[residue])[1] 
+            if ff_extension == ".xml":
+                user_entered_ff_with_path_dict[residue] = True
+            elif ff_extension == "":
+                user_entered_ff_with_path_dict[residue] = False            
+            else:
+                print_error_message = (
                         r"Please make sure you are entering the correct "
-                        "foyer FF name and not a path to a FF file. "
-                        "If you are entering a path to a FF file, "
-                        "please use the forcefield_files variable with the "
-                        "proper XML extension (.xml)."
+                        "foyer FF name or a path to a FF file (with .xml extention)."
                     )
-                    raise ValueError(print_error_message)
+                raise ValueError(print_error_message) 
 
     # check if FF files exist and create a forcefield selection with directory paths
     # forcefield_selection_with_paths
     forcefield_selection_with_paths = {}
-    for j in range(0, len(forcefield_keys_list)):
-        residue_iteration = forcefield_keys_list[j]
-        ff_for_residue_iteration = ff_data[residue_iteration]
-        if user_entered_ff_with_path_dict[residue_iteration]:
-            ff_names_path_iteration = ff_data[residue_iteration]
-
+    for residue in forcefield_keys_list:
+        ff_for_residue = forcefield_selection[residue]
+        if user_entered_ff_with_path_dict[residue]:
+            ff_names_path_iteration = forcefield_selection[residue]
             try:
                 read_xlm_iteration = minidom.parse(ff_names_path_iteration)
-                forcefield_selection_with_paths.update(
-                    {residue_iteration: ff_names_path_iteration}
-                )
+                forcefield_selection_with_paths[residue] = ff_names_path_iteration
 
             except:
                 print_error_message = (
@@ -408,19 +367,12 @@ def specific_ff_to_residue(
                     "there may be errors in the FF file itself."
                 )
                 raise ValueError(print_error_message)
-        elif not user_entered_ff_with_path_dict[residue_iteration]:
-            ff_for_residue_iteration = ff_data[residue_iteration]
-            ff_names_path_iteration = (
-                forcefields.get_ff_path()[0]
-                + "/xml/"
-                + ff_for_residue_iteration
-                + ".xml"
-            )
+        elif not user_entered_ff_with_path_dict[residue]:
+            ff_for_residue = forcefield_selection[residue]
+            ff_names_path_iteration = f"{forcefields.get_ff_path()[0]}/xml/{ff_for_residue}.xml"
             try:
                 read_xlm_iteration = minidom.parse(ff_names_path_iteration)
-                forcefield_selection_with_paths.update(
-                    {residue_iteration: ff_names_path_iteration}
-                )
+                forcefield_selection_with_paths[residue] = ff_names_path_iteration
             except:
                 print_error_message = (
                     "Please make sure you are entering the correct foyer FF name, or the "
