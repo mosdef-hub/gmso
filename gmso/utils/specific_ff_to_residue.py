@@ -263,132 +263,20 @@ def specific_ff_to_residue(
         from foyer import Forcefield
         from foyer.forcefields import forcefields
     else:
-        print_error_message = (
+        error_msg = (
             "Package foyer is not installed. "
             "Please install it using conda install -c conda-forge foyer"
         )
-        raise ImportError(print_error_message)
+        raise ImportError(error_msg)
 
-    if isinstance(structure, (Compound, mb.Box)):
-        print_error_message = "ERROR: The structure, {} or {}, needs to have have box lengths and angles.".format(
-            type(Compound()),
-            type(mb.Box(lengths=[1, 1, 1])),
-        )
-        if isinstance(structure, Compound):
-            if structure.box is None:
-                raise TypeError(print_error_message)
+    # Validate inputs
+    _validate_structure(structure)
+    _validate_forcefield_selection_and_residues(forcefield_selection, residues)
+    _validate_boxes_for_simulation(boxes_for_simulation)
 
-        elif isinstance(structure, mb.Box):
-            if structure.lengths is None or structure.angles is None:
-                raise TypeError(print_error_message)
-
-    else:
-        print_error_message = (
-            "ERROR: The structure expected to be of type: "
-            "{} or {}, received: {}".format(
-                type(Compound()),
-                type(mb.Box(lengths=[1, 1, 1])),
-                type(structure),
-            )
-        )
-        raise TypeError(print_error_message)
-
-    if forcefield_selection is None:
-        print_error_message = (
-            "Please the force field selection (forcefield_selection) as a dictionary "
-            "with all the residues specified to a force field "
-            '-> Ex: {"Water": "oplsaa", "OCT": "path/trappe-ua.xml"}, '
-            "Note: the file path must be specified the force field file "
-            "or by using the standard force field name provided the `foyer` package."
-        )
-        raise TypeError(print_error_message)
-
-    elif not isinstance(forcefield_selection, dict):
-        print_error_message = (
-            "The force field selection (forcefield_selection) "
-            "is not a dictionary. Please enter a dictionary "
-            "with all the residues specified to a force field "
-            '-> Ex: {"Water": "oplsaa", "OCT": "path/trappe-ua.xml"}, '
-            "Note: the file path must be specified the force field file "
-            "or by using the standard force field name provided the `foyer` package."
-        )
-        raise TypeError(print_error_message)
-
-    if residues is None or not isinstance(residues, list):
-        print_error_message = (
-            "Please enter the residues in the Specific_FF_to_residue function."
-        )
-        raise TypeError(print_error_message)
-
-    if boxes_for_simulation not in [1, 2]:
-        boxes_for_simulation_error_msg = (
-            "boxes_for_simulation must be either 1 or 2."
-        )
-        raise ValueError(boxes_for_simulation_error_msg)
-
-    forcefield_keys_list = list(forcefield_selection.keys())
-
-    if len(forcefield_keys_list) != len(residues):
-        errror_msg = (
-            f"Mismatch between provided forcefield_selection and residues."
-        )
-        raise ValueError(error_msg)
-
-    user_entered_ff_with_path_dict = {}
-    # True means user entered the path, False is a standard foyer FF with no path
-    for residue in residues:
-        if residue in forcefield_keys_list:
-            ff_extension = os.path.splitext(forcefield_selection[residue])[1]
-            if ff_extension == ".xml":
-                user_entered_ff_with_path_dict[residue] = True
-            elif ff_extension == "":
-                user_entered_ff_with_path_dict[residue] = False
-            else:
-                print_error_message = (
-                    r"Please make sure you are entering the correct "
-                    "foyer FF name or a path to a FF file (with .xml extention)."
-                )
-                raise ValueError(print_error_message)
-
-    # check if FF files exist and create a forcefield selection with directory paths
-    # forcefield_selection_with_paths
-    forcefield_selection_with_paths = {}
-    for residue in forcefield_keys_list:
-        ff_for_residue = forcefield_selection[residue]
-        if user_entered_ff_with_path_dict[residue]:
-            ff_names_path_iteration = forcefield_selection[residue]
-            try:
-                read_xlm_iteration = minidom.parse(ff_names_path_iteration)
-                forcefield_selection_with_paths[
-                    residue
-                ] = ff_names_path_iteration
-
-            except:
-                print_error_message = (
-                    "Please make sure you are entering the correct foyer FF path, "
-                    "including the FF file name.xml. "
-                    "If you are using the pre-build FF files in foyer, "
-                    "only use the string name without any extension. "
-                    "The selected FF file could also could not formated properly, or "
-                    "there may be errors in the FF file itself."
-                )
-                raise ValueError(print_error_message)
-        elif not user_entered_ff_with_path_dict[residue]:
-            ff_for_residue = forcefield_selection[residue]
-            ff_names_path_iteration = (
-                f"{forcefields.get_ff_path()[0]}/xml/{ff_for_residue}.xml"
-            )
-            try:
-                read_xlm_iteration = minidom.parse(ff_names_path_iteration)
-                forcefield_selection_with_paths[
-                    residue
-                ] = ff_names_path_iteration
-            except:
-                print_error_message = (
-                    "Please make sure you are entering the correct foyer FF name, or the "
-                    "correct file extension (i.e., .xml, if required)."
-                )
-                raise ValueError(print_error_message)
+    gmso_compatible_forcefield_selection = _validate_forcefields(
+        forcefield_selection, residues
+    )
 
     # Check to see if it is an empty mbuild.Compound and set intial atoms to 0
     # note empty mbuild.Compound will read 1 atoms but there is really noting there
@@ -399,18 +287,17 @@ def specific_ff_to_residue(
     if isinstance(structure, Compound):
         if len(structure.children) == 0:
             # there are no real atoms in the Compound so the test fails. User should use mbuild.Box
-            print_error_message = (
-                "ERROR: If you are not providing an empty box, "
+            error_msg = (
+                "If you are not providing an empty box, "
                 "you need to specify the atoms/beads as children in the mb.Compound. "
                 "If you are providing and empty box, please do so by specifying and "
-                "mbuild Box ({})".format(type(mb.Box(lengths=[1, 1, 1])))
+                f"mbuild Box ({mb.Box})"
             )
-            raise TypeError(print_error_message)
+            raise TypeError(error_msg)
 
         else:
             initial_no_atoms = len(structure.to_parmed().atoms)
             new_gmso_topology = mb_convert(structure, custom_groups=residues)
-
     elif isinstance(structure, mb.Box):
         initial_no_atoms = 0
         lengths = structure.lengths
@@ -421,38 +308,11 @@ def specific_ff_to_residue(
         new_gmso_topology = gmso.Topology()
         new_gmso_topology.box = gmso.Box(lengths=lengths, angles=angles)
 
-    # push the FF paths and/or name to the GMSO format and create the new GMSO topology format
-    gmso_compatable_forcefield_selection = {}
-    for ff_key_iter, ff_value_iter in forcefield_selection_with_paths.items():
-        print(ff_key_iter, ff_value_iter)
-        # try to load the Foyer and GMSO FFs, if Foyer convert to GMSO; otherwise, it is an error.
-        try:
-            try:
-                ff_new_gmso_value_iter = FoyerFFs.get_ff(
-                    ff_value_iter
-                ).to_gmso_ff()
-            except:
-                ff_new_gmso_value_iter = GMSOFFs.get_ff(
-                    ff_value_iter
-                ).to_gmso_ff()
-
-        except:
-            print_error = (
-                f"ERROR: The supplied force field xml for the "
-                f"{ff_key_iter} residue is not a foyer or gmso xml, "
-                f"or the xml has errors and it not able to load properly."
-            )
-            raise TypeError(print_error)
-
-        gmso_compatable_forcefield_selection.update(
-            {ff_key_iter: ff_new_gmso_value_iter}
-        )
-
     # can use  match_ff_by="group" or "molecule", group was only chosen so everything is using the
     # user selected mb.Compound.name...
     gmso_apply(
         new_gmso_topology,
-        gmso_compatable_forcefield_selection,
+        gmso_compatible_forcefield_selection,
         identify_connected_components=True,
         identify_connections=True,
         match_ff_by=gmso_match_ff_by,
@@ -480,16 +340,16 @@ def specific_ff_to_residue(
     improper_types_dict = {}
     nonBonded14Scale_dict = {}
     electrostatics14Scale_dict = {}
+
     for unique_top_group in new_gmso_topology.unique_site_labels(
         gmso_match_ff_by, name_only=True
     ):
         if unique_top_group is not None:
-            if unique_top_group not in list(unique_topology_groups_list):
-                unique_topology_groups_list.append(unique_top_group)
+            unique_topology_groups_list.append(unique_top_group)
 
     for unique_group in unique_topology_groups_list:
         unique_subtop_group = new_gmso_topology.create_subtop(
-            label_type=gmso_match_ff_by, label=unique_group
+            label_type=gmso_match_ff_by, label=unique_top_group
         )
         unique_topologies_groups_dict[unique_group] = unique_subtop_group
 
@@ -499,50 +359,16 @@ def specific_ff_to_residue(
         electro_scalers_list = new_gmso_topology.get_electrostatics_scale(
             molecule_id=unique_group
         )
+        nonBonded14Scale_dict[unique_group] = (
+            None if nb_scalers_list is None else nb_scalers_list[2]
+        )
+        electrostatics14Scale_dict[unique_group] = (
+            None if electro_scalers_list is None else electro_scalers_list[2]
+        )
 
-        if nb_scalers_list is not None:
-            nonBonded14Scale_dict[unique_group] = nb_scalers_list[2]
-        elif nb_scalers_list is None:
-            nonBonded14Scale_dict[unique_group] = None
-
-        if electro_scalers_list is not None:
-            electrostatics14Scale_dict[unique_group] = electro_scalers_list[2]
-        elif nb_scalers_list is None:
-            electrostatics14Scale_dict[unique_group] = None
-
-    # Check that all residues in box are in the residue names
-    if isinstance(structure, mb.Compound):
-        for applied_res_i in unique_topology_groups_list:
-            if applied_res_i not in residues:
-                print_error_message_all_res_not_specified = (
-                    f"ERROR: All the residues are not specified in the residue list, or "
-                    f"the {applied_res_i} residue does not match the residues that "
-                    f"were found in the foyer and GMSO force field application. "
-                )
-                raise ValueError(print_error_message_all_res_not_specified)
-
-    # check if all the molecules/residues were found in in the mb.Compound/allowable input
-    text_to_print_2 = (
-        "All the residues were not used from the forcefield_selection "
-        "string or dictionary. There may be residues below other "
-        "specified residues in the mbuild.Compound hierarchy. "
-        "If so, all the highest listed residues pass down the force "
-        "fields through the hierarchy. Alternatively, residues that "
-        "are not in the structure may have been specified. "
+    _cross_check_residues_and_unique_site_labels(
+        structure, residues, unique_topology_groups_list, boxes_for_simulation
     )
-    text_to_print_3 = (
-        f"NOTE: This warning will appear if you are using the CHARMM pdb and psf writers "
-        f"2 boxes, and the boxes do not contain all the residues in each box."
-    )
-    for res_i in residues:
-        if res_i not in unique_topology_groups_list:
-            text_to_print_1 = f"The {res_i} residues were not used from the forcefield_selection string or dictionary. "
-            if boxes_for_simulation == 1:
-                raise ValueError(f"ERROR: {text_to_print_1}{text_to_print_2}")
-            if boxes_for_simulation == 2:
-                warn(
-                    f"WARNING: {text_to_print_1}{text_to_print_2}{text_to_print_3}"
-                )
 
     # get all the bonded atoms, which is used for the bonded map to identify molecules
     bonded_atom_number_set = set()
@@ -554,82 +380,43 @@ def specific_ff_to_residue(
         bonded_atom_1_iter = new_gmso_topology.get_index(
             bond.connection_members[1]
         )
-        if bonded_atom_0_iter < bonded_atom_1_iter:
-            bonded_atom_tuple_iter = (bonded_atom_0_iter, bonded_atom_1_iter)
-        else:
-            bonded_atom_tuple_iter = (bonded_atom_1_iter, bonded_atom_0_iter)
+        bonded_atom_tuple_iter = sorted(
+            [bonded_atom_0_iter, bonded_atom_1_iter]
+        )
+        bonded_atom_number_set.add(tuple(bonded_atom_tuple_iter))
+        all_bonded_atoms_list.update(bonded_atom_tuple_iter)
 
-        bonded_atom_number_set.add(bonded_atom_tuple_iter)
-        all_bonded_atoms_list.add(bonded_atom_0_iter)
-        all_bonded_atoms_list.add(bonded_atom_1_iter)
-
-    """
-    build_molecule_list_time_start = time.time()
-    """
-
+    # TODO: Refactor this section, might be able to use unique_site_by_labels(name_only=False)?
     # map all bonded atoms as molecules
     molecules_atom_number_list = []
-    for site_j, site in enumerate(new_gmso_topology.sites):
-        atom_iter_k = new_gmso_topology.get_index(site)
-
-        if atom_iter_k in all_bonded_atoms_list:
+    for site_idx, site in enumerate(new_gmso_topology.sites):
+        if site_idx in all_bonded_atoms_list:
             for bonded_atoms_n in bonded_atom_number_set:
-                if atom_iter_k in bonded_atoms_n:
-                    bonded_atoms_n_list_iter = list(bonded_atoms_n)
-                    atom_found_iter = False
+                if site_idx in bonded_atoms_n:
                     if len(molecules_atom_number_list) != 0:
-                        for molecule_j in range(
-                            0, len(molecules_atom_number_list)
-                        ):
-                            if (
-                                atom_iter_k
-                                in molecules_atom_number_list[molecule_j]
+                        for initiated_molecule in molecules_atom_number_list:
+                            if site_idx in initiated_molecule:
+                                initiated_molecule.update(bonded_atoms_n)
+                                break
+                            elif (
+                                initiated_molecule
+                                == molecules_atom_number_list[-1]
                             ):
-                                molecules_atom_number_list[molecule_j].add(
-                                    bonded_atoms_n_list_iter[0]
-                                )
-                                molecules_atom_number_list[molecule_j].add(
-                                    bonded_atoms_n_list_iter[1]
-                                )
-                                atom_found_iter = True
-
-                            if (
-                                molecule_j
-                                == len(molecules_atom_number_list) - 1
-                            ) and atom_found_iter is False:
                                 molecules_atom_number_list.append(
-                                    {
-                                        bonded_atoms_n_list_iter[0],
-                                        bonded_atoms_n_list_iter[1],
-                                    }
+                                    {bonded_atoms_n[0], bonded_atoms_n[1]}
                                 )
+                                break
                     else:
                         molecules_atom_number_list.append(
-                            {
-                                bonded_atoms_n_list_iter[0],
-                                bonded_atoms_n_list_iter[1],
-                            }
+                            {bonded_atoms_n[0], bonded_atoms_n[1]}
                         )
         else:
-            molecules_atom_number_list.append({atom_iter_k})
-
-    """
-    build_molecule_list_time_end = time.time()
-    final_build_molecule_list_time_s = build_molecule_list_time_end - build_molecule_list_time_start
-    final_build_molecule_list_time_min = (final_build_molecule_list_time_s) / 60
-    final_build_molecule_list_time_hr = (final_build_molecule_list_time_s) / 60 / 60
-
-    print(f"final_build_molecule_list_time_s = {final_build_molecule_list_time_s}")
-    print(f"final_build_molecule_list_time_min = {final_build_molecule_list_time_min}")
-    print(f"final_build_molecule_list_time_hr = {final_build_molecule_list_time_hr}")
-    """
+            molecules_atom_number_list.append({site_idx})
 
     # create a molecule number to atom number dict
     # Example:  {molecule_number_x: {atom_number_1, ..., atom_number_y}, ...}
-    for molecule_iter in range(0, len(molecules_atom_number_list)):
-        molecules_atom_number_dict.update(
-            {molecule_number: molecules_atom_number_list[molecule_iter]}
-        )
+    for molecule in molecules_atom_number_list:
+        molecules_atom_number_dict.update({molecule_number: molecule})
         molecule_number += 1
 
     for site in new_gmso_topology.sites:
@@ -655,13 +442,13 @@ def specific_ff_to_residue(
     ) in unique_topologies_groups_dict.items():
         # get the unique non-bonded data, equations, and other info
         atom_type_expression_set = set()
-        for atom_type_k in unique_top_iter.atom_types(
+        for atom_type in unique_top_iter.atom_types(
             filter_by=PotentialFilters.UNIQUE_NAME_CLASS
         ):
-            atom_type_k.__dict__["tags_"] = {
+            atom_type.__dict__["tags_"] = {
                 "resname": unique_top_group_name_iter
             }
-            atom_type_expression_set.add(atom_type_k.expression)
+            atom_type_expression_set.add(atom_type.expression)
         if len(atom_type_expression_set) == 1:
             atom_types_dict.update(
                 {
@@ -677,19 +464,18 @@ def specific_ff_to_residue(
             atom_types_dict.update({unique_top_group_name_iter: None})
         else:
             raise ValueError(
-                "ERROR: There is more than 1 {} equation types per residue or molecules "
-                "".format("non-bonded")
+                "There is more than 1 nonbonded equation types per residue or molecules "
             )
 
         # get the unique bond data, equations, and other info
         bond_type_expression_set = set()
-        for bond_type_k in unique_top_iter.bond_types(
+        for bond_type in unique_top_iter.bond_types(
             filter_by=PotentialFilters.UNIQUE_NAME_CLASS
         ):
-            bond_type_k.__dict__["tags_"] = {
+            bond_type.__dict__["tags_"] = {
                 "resname": unique_top_group_name_iter
             }
-            bond_type_expression_set.add(bond_type_k.expression)
+            bond_type_expression_set.add(bond_type.expression)
         if len(bond_type_expression_set) == 1:
             bond_types_dict.update(
                 {
@@ -705,19 +491,18 @@ def specific_ff_to_residue(
             bond_types_dict.update({unique_top_group_name_iter: None})
         else:
             raise ValueError(
-                "ERROR: There is more than 1 {} equation types per residue or molecules "
-                "".format("bond")
+                "There is more than 1 bond equation types per residue or molecules "
             )
 
         # get the unique angle data, equations, and other info
         angle_type_expression_set = set()
-        for angle_type_k in unique_top_iter.angle_types(
+        for angle_type in unique_top_iter.angle_types(
             filter_by=PotentialFilters.UNIQUE_NAME_CLASS
         ):
-            angle_type_k.__dict__["tags_"] = {
+            angle_type.__dict__["tags_"] = {
                 "resname": unique_top_group_name_iter
             }
-            angle_type_expression_set.add(angle_type_k.expression)
+            angle_type_expression_set.add(angle_type.expression)
         if len(angle_type_expression_set) == 1:
             angle_types_dict.update(
                 {
@@ -733,19 +518,18 @@ def specific_ff_to_residue(
             angle_types_dict.update({unique_top_group_name_iter: None})
         else:
             raise ValueError(
-                "ERROR: There is more than 1 {} equation types per residue or molecules "
-                "".format("angle")
+                "There is more than 1 angle equation types per residue or molecules "
             )
 
         # get the unique dihedral data, equations, and other info
         dihedral_type_expression_set = set()
-        for dihedral_type_k in unique_top_iter.dihedral_types(
+        for dihedral_type in unique_top_iter.dihedral_types(
             filter_by=PotentialFilters.UNIQUE_NAME_CLASS
         ):
-            dihedral_type_k.__dict__["tags_"] = {
+            dihedral_type.__dict__["tags_"] = {
                 "resname": unique_top_group_name_iter
             }
-            dihedral_type_expression_set.add(dihedral_type_k.expression)
+            dihedral_type_expression_set.add(dihedral_type.expression)
         if len(dihedral_type_expression_set) == 1:
             dihedral_types_dict.update(
                 {
@@ -761,19 +545,18 @@ def specific_ff_to_residue(
             dihedral_types_dict.update({unique_top_group_name_iter: None})
         else:
             raise ValueError(
-                "ERROR: There is more than 1 {} equation types per residue or molecules "
-                "".format("dihedral")
+                "There is more than 1 dihedral equation types per residue or molecules "
             )
 
         # get the unique improper data, equations, and other info
         improper_type_expression_set = set()
-        for improper_type_k in unique_top_iter.improper_types(
+        for improper_type in unique_top_iter.improper_types(
             filter_by=PotentialFilters.UNIQUE_NAME_CLASS
         ):
-            improper_type_k.__dict__["tags_"] = {
+            improper_type.__dict__["tags_"] = {
                 "resname": unique_top_group_name_iter
             }
-            improper_type_expression_set.add(improper_type_k.expression)
+            improper_type_expression_set.add(improper_type.expression)
         if len(improper_type_expression_set) == 1:
             improper_types_dict.update(
                 {
@@ -789,8 +572,7 @@ def specific_ff_to_residue(
             improper_types_dict.update({unique_top_group_name_iter: None})
         else:
             raise ValueError(
-                "ERROR: There is more than 1 {} equation types per residue or molecules "
-                "".format("improper")
+                "There is more than 1 improper equation types per residue or molecules "
             )
 
         # check to see if the non-bonded and electrostatic 1-4 interactions are in each group/molecule/residue
@@ -809,17 +591,16 @@ def specific_ff_to_residue(
     final_no_atoms = topology.n_sites
 
     if final_no_atoms != initial_no_atoms:
-        print_error_message = (
-            "ERROR: The initial number of atoms sent to the force field analysis is "
+        error_msg = (
+            "The initial number of atoms sent to the force field analysis is "
             "not the same as the final number of atoms analyzed. "
-            "The initial number of atoms was {} and the final number of atoms was {}. "
+            f"The initial number of atoms was {initial_no_atoms}"
+            f"and the final number of atoms was {final_no_atoms}. "
             "Please ensure that all the residues names that are in the initial "
             "Compound are listed in the residues list "
-            "(i.e., the residues variable).".format(
-                initial_no_atoms, final_no_atoms
-            )
+            "(i.e., the residues variable)."
         )
-        raise ValueError(print_error_message)
+        raise ValueError(error_msg)
 
     return [
         topology,
@@ -833,3 +614,199 @@ def specific_ff_to_residue(
         improper_types_dict,
         combining_rule,
     ]
+
+
+def _validate_structure(structure):
+    """Validate if input is an mb.Compound with initialized box or mb.Box."""
+    if isinstance(structure, (Compound, mb.Box)):
+        error_msg = f"The structure, {mb.Compound} or {mb.Box}, needs to have have box lengths and angles."
+        if isinstance(structure, Compound):
+            if structure.box is None:
+                raise TypeError(error_msg)
+
+        elif isinstance(structure, mb.Box):
+            if structure.lengths is None or structure.angles is None:
+                raise TypeError(error_msg)
+    else:
+        error_msg = (
+            "The structure expected to be of type: "
+            f"{mb.Compound} or {mb.Box}, received: {type(structure)}"
+        )
+        raise TypeError(error_msg)
+
+
+def _validate_forcefield_selection_and_residues(forcefield_selection, residues):
+    """Validate if input forcefield_selection and reisudes is of the correct form."""
+    if forcefield_selection is None:
+        error_msg = (
+            "Please the force field selection (forcefield_selection) as a dictionary "
+            "with all the residues specified to a force field "
+            '-> Ex: {"Water": "oplsaa", "OCT": "path/trappe-ua.xml"}, '
+            "Note: the file path must be specified the force field file "
+            "or by using the standard force field name provided the `foyer` package."
+        )
+        raise TypeError(error_msg)
+
+    elif not isinstance(forcefield_selection, dict):
+        error_msg = (
+            "The force field selection (forcefield_selection) "
+            "is not a dictionary. Please enter a dictionary "
+            "with all the residues specified to a force field "
+            '-> Ex: {"Water": "oplsaa", "OCT": "path/trappe-ua.xml"}, '
+            "Note: the file path must be specified the force field file "
+            "or by using the standard force field name provided the `foyer` package."
+        )
+        raise TypeError(error_msg)
+
+    if not isinstance(residues, (list, tuple)):
+        error_msg = (
+            "Please enter the residues list in the specific_ff_to_residue."
+        )
+        raise TypeError(error_msg)
+
+    forcefield_keys_list = list(forcefield_selection.keys())
+    if forcefield_keys_list == [] and len(residues) != 0:
+        print_error_message = "The forcefield_selection variable are not provided, but there are residues provided."
+        raise ValueError(print_error_message)
+
+    elif forcefield_keys_list != [] and len(residues) == 0:
+        print_error_message = (
+            "The residues variable is an empty list but there are "
+            "forcefield_selection variables provided."
+        )
+        raise ValueError(print_error_message)
+
+
+def _validate_boxes_for_simulation(boxes_for_simulation):
+    """Validate if input boxes_for_simulation is of the correct form."""
+    if boxes_for_simulation not in [1, 2]:
+        boxes_for_simulation_error_msg = (
+            "boxes_for_simulation must be either 1 or 2."
+        )
+        raise ValueError(boxes_for_simulation_error_msg)
+
+
+def _validate_forcefields(forcefield_selection, residues):
+    """Validate and create GMSO ForceField object from the forcefield_selection."""
+    if has_foyer:
+        from foyer import Forcefield
+        from foyer.forcefields import forcefields
+
+    forcefield_keys_list = list(forcefield_selection.keys())
+    user_entered_ff_with_path_dict = {}
+    # True means user entered the path, False is a standard foyer FF with no path
+    for residue in residues:
+        if residue in forcefield_keys_list:
+            ff_extension = os.path.splitext(forcefield_selection[residue])[1]
+            if ff_extension == ".xml":
+                user_entered_ff_with_path_dict[residue] = True
+            elif ff_extension == "":
+                user_entered_ff_with_path_dict[residue] = False
+            else:
+                error_msg = "Please make sure you are enterning the correct FF name or path with xml extension"
+                # "Please make sure you are entering the correct foyer FF name or a path to a FF file (with .xml extension)."
+                raise ValueError(error_msg)
+
+    # check if FF files exist and create a forcefield selection with directory paths
+    # forcefield_selection_with_paths
+    forcefield_selection_with_paths = {}
+    for residue in forcefield_keys_list:
+        ff_for_residue = forcefield_selection[residue]
+        if user_entered_ff_with_path_dict[residue]:
+            ff_names_path_iteration = forcefield_selection[residue]
+            try:
+                read_xlm_iteration = minidom.parse(ff_names_path_iteration)
+                forcefield_selection_with_paths[
+                    residue
+                ] = ff_names_path_iteration
+
+            except:
+                error_msg = (
+                    "Please make sure you are entering the correct foyer FF path, "
+                    "including the FF file name.xml. "
+                    "If you are using the pre-build FF files in foyer, "
+                    "only use the string name without any extension. "
+                    "The selected FF file could also could not formated properly, or "
+                    "there may be errors in the FF file itself."
+                )
+                raise ValueError(error_msg)
+        elif not user_entered_ff_with_path_dict[residue]:
+            ff_for_residue = forcefield_selection[residue]
+            ff_names_path_iteration = (
+                f"{forcefields.get_ff_path()[0]}/xml/{ff_for_residue}.xml"
+            )
+            try:
+                read_xlm_iteration = minidom.parse(ff_names_path_iteration)
+                forcefield_selection_with_paths[
+                    residue
+                ] = ff_names_path_iteration
+            except:
+                error_msg = (
+                    "Please make sure you are entering the correct foyer FF name, or the "
+                    "correct file extension (i.e., .xml, if required)."
+                )
+                raise ValueError(error_msg)
+
+    # push the FF paths and/or name to the GMSO format and create the new GMSO topology format
+    gmso_compatable_forcefield_selection = {}
+    for ff_key_iter, ff_value_iter in forcefield_selection_with_paths.items():
+        # try to load the Foyer and GMSO FFs, if Foyer convert to GMSO; otherwise, it is an error.
+        try:
+            try:
+                ff_new_gmso_value_iter = FoyerFFs.get_ff(
+                    ff_value_iter
+                ).to_gmso_ff()
+            except:
+                ff_new_gmso_value_iter = GMSOFFs.get_ff(
+                    ff_value_iter
+                ).to_gmso_ff()
+
+        except:
+            error_msg = (
+                f"ERROR: The supplied force field xml for the "
+                f"{ff_key_iter} residue is not a foyer or gmso xml, "
+                f"or the xml has errors and it not able to load properly."
+            )
+            raise TypeError(error_msg)
+
+        gmso_compatable_forcefield_selection.update(
+            {ff_key_iter: ff_new_gmso_value_iter}
+        )
+    return gmso_compatable_forcefield_selection
+
+
+def _cross_check_residues_and_unique_site_labels(
+    structure, residues, unique_topology_groups_list, boxes_for_simulation
+):
+    """Cross checking the residues list and unique_site_labels list."""
+    # Check that all residues in box are in the residue names
+    if isinstance(structure, mb.Compound):
+        for applied_res_i in unique_topology_groups_list:
+            if applied_res_i not in residues:
+                error_msg_all_res_not_specified = (
+                    f"All the residues are not specified in the residue list, or "
+                    f"the {applied_res_i} residue does not match the residues that "
+                    f"were found in the foyer and GMSO force field application. "
+                )
+                raise ValueError(error_msg_all_res_not_specified)
+
+    # check if all the molecules/residues were found in in the mb.Compound/allowable input
+    msg2 = (
+        "All the residues were not used from the forcefield_selection "
+        "string or dictionary. There may be residues below other "
+        "specified residues in the mbuild.Compound hierarchy. "
+        "If so, all the highest listed residues pass down the force "
+        "fields through the hierarchy. Alternatively, residues that "
+        "are not in the structure may have been specified. "
+    )
+    msg3 = (
+        f"NOTE: This warning will appear if you are using the CHARMM pdb and psf writers "
+        f"2 boxes, and the boxes do not contain all the residues in each box."
+    )
+    for res_i in residues:
+        if res_i not in unique_topology_groups_list:
+            msg1 = f"The {res_i} residues were not used from the forcefield_selection string or dictionary. "
+            if boxes_for_simulation == 1:
+                raise ValueError(f"{msg1}{msg2}")
+            if boxes_for_simulation == 2:
+                warn(f"{msg1}{msg2}{msg3}")

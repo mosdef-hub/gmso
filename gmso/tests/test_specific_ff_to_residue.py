@@ -33,14 +33,10 @@ class TestSpecificFFToResidue(BaseTest):
                 boxes_for_simulation=1,
             )
 
-    def test_specific_ff_wrong_ff_extention(self, ethane_gomc):
+    def test_specific_ff_wrong_ff_extension(self, ethane_gomc):
         with pytest.raises(
             ValueError,
-            match=r"Please make sure you are entering the correct "
-            r"foyer FF name and not a path to a FF file. "
-            r"If you are entering a path to a FF file, "
-            r"please use the forcefield_files variable with the "
-            r"proper XML extension \(.xml\).",
+            match="Please make sure you are enterning the correct FF name or path with xml extension",
         ):
             box_0 = mb.fill_box(
                 compound=[ethane_gomc], n_compounds=[1], box=[4, 4, 4]
@@ -98,7 +94,7 @@ class TestSpecificFFToResidue(BaseTest):
     def test_specific_ff_to_residue_is_none(self, ethane_gomc):
         with pytest.raises(
             TypeError,
-            match=r"Please enter the residues in the Specific_FF_to_residue function.",
+            match=r"Please enter the residues list in the specific_ff_to_residue.",
         ):
             box_0 = mb.fill_box(
                 compound=[ethane_gomc], n_compounds=[1], box=[4, 4, 4]
@@ -114,7 +110,7 @@ class TestSpecificFFToResidue(BaseTest):
     def test_specific_ff_to_simulation_boxes_not_1_or_2(self, ethane_gomc):
         with pytest.raises(
             ValueError,
-            match=r"Please enter boxes_for_simulation equal the integer 1 or 2.",
+            match=r"boxes_for_simulation must be either 1 or 2",
         ):
             test_box_ethane_gomc = mb.fill_box(
                 compound=[ethane_gomc], n_compounds=[1], box=[2, 3, 4]
@@ -173,7 +169,7 @@ class TestSpecificFFToResidue(BaseTest):
     def test_specific_ff_to_residue_input_string_as_compound(self, ethane_gomc):
         with pytest.raises(
             TypeError,
-            match=r"ERROR: The structure expected to be of type: "
+            match=r"The structure expected to be of type: "
             r"<class 'mbuild.compound.Compound'> or <class 'mbuild.box.Box'>, "
             r"received: <class 'str'>",
         ):
@@ -188,9 +184,7 @@ class TestSpecificFFToResidue(BaseTest):
         self, ethane_gomc
     ):
         with pytest.raises(
-            TypeError,
-            match=r"ERROR: Please enter boxes_for_simulation equal "
-            "the integer 1 or 2.",
+            ValueError, match=r"boxes_for_simulation must be either 1 or 2."
         ):
             box_0 = mb.fill_box(
                 compound=[ethane_gomc], n_compounds=[1], box=[4, 4, 4]
@@ -206,8 +200,7 @@ class TestSpecificFFToResidue(BaseTest):
     def test_specific_ff_to_residues_no_ff(self, ethane_gomc):
         with pytest.raises(
             ValueError,
-            match=r"The forcefield_selection variable are not provided, "
-            r"but there are residues provided.",
+            match="The forcefield_selection variable are not provided, but there are residues provided.",
         ):
             box_0 = mb.fill_box(
                 compound=[ethane_gomc], n_compounds=[1], box=[4, 4, 4]
@@ -254,7 +247,7 @@ class TestSpecificFFToResidue(BaseTest):
                 boxes_for_simulation=1,
             )
 
-    def test_specific_ff_to_residue_ffselection_run(self, ethane_gomc):
+    def test_specific_ff_to_residue_ff_selection_run(self, ethane_gomc):
         test_box_ethane_gomc = mb.fill_box(
             compound=[ethane_gomc], n_compounds=[1], box=[4, 5, 6]
         )
@@ -285,10 +278,7 @@ class TestSpecificFFToResidue(BaseTest):
     def test_specific_ff_to_no_atoms_no_box_dims_in_residue(self):
         with pytest.raises(
             TypeError,
-            match=r"ERROR: The structure, {} or {}, needs to have have box lengths and angles.".format(
-                type(Compound()),
-                type(Box(lengths=[1, 1, 1])),
-            ),
+            match=f"The structure, {mb.Compound} or {mb.Box}, needs to have have box lengths and angles.",
         ):
             empty_compound = mb.Compound()
 
@@ -316,13 +306,14 @@ class TestSpecificFFToResidue(BaseTest):
             )
 
     # this test is not usable until the individual mb.Compounds can be force fielded in MosDeF-GOMC
+
     def test_charmm_empty_compound_test_no_children(self, methane_ua_gomc):
         empty_box = mb.Compound()
         empty_box.box = mb.Box(lengths=[4, 4, 4])
 
         with pytest.raises(
             TypeError,
-            match=r"ERROR: If you are not providing an empty box, "
+            match=r"If you are not providing an empty box, "
             r"you need to specify the atoms/beads as children in the mb.Compound. "
             r"If you are providing and empty box, please do so by specifying and "
             r"mbuild Box \({}\)".format(type(Box(lengths=[1, 1, 1]))),
@@ -399,7 +390,10 @@ class TestSpecificFFToResidue(BaseTest):
             )
             specific_ff_to_residue(
                 box_reservior_0,
-                forcefield_selection={ethanol_gomc.name: "oplsaa"},
+                forcefield_selection={
+                    ethanol_gomc.name: "oplsaa",
+                    ethane_gomc.name: "oplsaa",
+                },
                 residues=[ethanol_gomc.name, ethane_gomc.name],
                 boxes_for_simulation=1,
             )
@@ -424,7 +418,10 @@ class TestSpecificFFToResidue(BaseTest):
             )
             specific_ff_to_residue(
                 box_reservior_0,
-                forcefield_selection={ethanol_gomc.name: "oplsaa"},
+                forcefield_selection={
+                    ethanol_gomc.name: "oplsaa",
+                    ethane_gomc.name: "oplsaa",
+                },
                 residues=[ethanol_gomc.name, ethane_gomc.name],
                 boxes_for_simulation=2,
             )
