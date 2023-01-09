@@ -341,15 +341,15 @@ def specific_ff_to_residue(
     nonBonded14Scale_dict = {}
     electrostatics14Scale_dict = {}
 
-    for unique_top_group in new_gmso_topology.unique_site_labels(
+    for unique_group in new_gmso_topology.unique_site_labels(
         gmso_match_ff_by, name_only=True
     ):
-        if unique_top_group is not None:
-            unique_topology_groups_list.append(unique_top_group)
+        if unique_group is not None:
+            unique_topology_groups_list.append(unique_group)
 
     for unique_group in unique_topology_groups_list:
         unique_subtop_group = new_gmso_topology.create_subtop(
-            label_type=gmso_match_ff_by, label=unique_top_group
+            label_type=gmso_match_ff_by, label=unique_group
         )
         unique_topologies_groups_dict[unique_group] = unique_subtop_group
 
@@ -582,7 +582,7 @@ def specific_ff_to_residue(
             electrostatics14Scale_dict.keys()
         ):
             raise ValueError(
-                f"ERROR: The {unique_top_group_name_iter} residue is not provided for the "
+                f"The {unique_top_group_name_iter} residue is not provided for the "
                 f'{"nonBonded14Scale"} and {"electrostatics14Scale"} values'
             )
 
@@ -763,7 +763,7 @@ def _validate_forcefields(forcefield_selection, residues):
 
         except:
             error_msg = (
-                f"ERROR: The supplied force field xml for the "
+                f"The supplied force field xml for the "
                 f"{ff_key_iter} residue is not a foyer or gmso xml, "
                 f"or the xml has errors and it not able to load properly."
             )
