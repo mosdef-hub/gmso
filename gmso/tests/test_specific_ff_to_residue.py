@@ -285,7 +285,7 @@ class TestSpecificFFToResidue(BaseTest):
             specific_ff_to_residue(
                 empty_compound,
                 forcefield_selection={"empty_compound": "oplsaa"},
-                residues=[],
+                residues=["empty_compound"],
                 boxes_for_simulation=1,
             )
 

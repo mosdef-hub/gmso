@@ -270,43 +270,14 @@ def specific_ff_to_residue(
         raise ImportError(error_msg)
 
     # Validate inputs
-    _validate_structure(structure)
-    _validate_forcefield_selection_and_residues(forcefield_selection, residues)
     _validate_boxes_for_simulation(boxes_for_simulation)
-
+    _validate_forcefield_selection_and_residues(forcefield_selection, residues)
+    new_gmso_topology, initial_no_atoms = _validate_structure(
+        structure, residues
+    )
     gmso_compatible_forcefield_selection = _validate_forcefields(
         forcefield_selection, residues
     )
-
-    # Check to see if it is an empty mbuild.Compound and set intial atoms to 0
-    # note empty mbuild.Compound will read 1 atoms but there is really noting there
-    # calculate the initial number of atoms for later comparison
-    # flatten the mbuild.compound, which is needed to get the mbuild.compound.names correctly from
-    # unflattend mbuild.compound.
-    # if mbuild.box do not flatten as it must be an empty box.
-    if isinstance(structure, Compound):
-        if len(structure.children) == 0:
-            # there are no real atoms in the Compound so the test fails. User should use mbuild.Box
-            error_msg = (
-                "If you are not providing an empty box, "
-                "you need to specify the atoms/beads as children in the mb.Compound. "
-                "If you are providing and empty box, please do so by specifying and "
-                f"mbuild Box ({mb.Box})"
-            )
-            raise TypeError(error_msg)
-
-        else:
-            initial_no_atoms = len(structure.to_parmed().atoms)
-            new_gmso_topology = mb_convert(structure, custom_groups=residues)
-    elif isinstance(structure, mb.Box):
-        initial_no_atoms = 0
-        lengths = structure.lengths
-        angles = structure.angles
-
-        # create a new empty gmso topology.  This is needed because an empty mbuild.Compound
-        # can not be converted to gmso.Topology without counting at 1 atom
-        new_gmso_topology = gmso.Topology()
-        new_gmso_topology.box = gmso.Box(lengths=lengths, angles=angles)
 
     # can use  match_ff_by="group" or "molecule", group was only chosen so everything is using the
     # user selected mb.Compound.name...
@@ -322,10 +293,11 @@ def specific_ff_to_residue(
     new_gmso_topology.update_topology()
 
     # find mixing rule.  If an empty.box mixing rule is set to None
-    if isinstance(structure, Compound):
-        combining_rule = new_gmso_topology._combining_rule
-    elif isinstance(structure, mb.Box):
-        combining_rule = None
+    combining_rule = (
+        new_gmso_topology._combining_rule
+        if isinstance(structure, Compound)
+        else None
+    )
 
     # identify the bonded atoms and hence the molecule, label the GMSO objects
     # and create the function outputs.
@@ -616,7 +588,7 @@ def specific_ff_to_residue(
     ]
 
 
-def _validate_structure(structure):
+def _validate_structure(structure, residues):
     """Validate if input is an mb.Compound with initialized box or mb.Box."""
     if isinstance(structure, (Compound, mb.Box)):
         error_msg = f"The structure, {mb.Compound} or {mb.Box}, needs to have have box lengths and angles."
@@ -633,6 +605,38 @@ def _validate_structure(structure):
             f"{mb.Compound} or {mb.Box}, received: {type(structure)}"
         )
         raise TypeError(error_msg)
+
+    # Check to see if it is an empty mbuild.Compound and set intial atoms to 0
+    # note empty mbuild.Compound will read 1 atoms but there is really noting there
+    # calculate the initial number of atoms for later comparison
+    # flatten the mbuild.compound, which is needed to get the mbuild.compound.names correctly from
+    # unflattend mbuild.compound.
+    # if mbuild.box do not flatten as it must be an empty box.
+    if isinstance(structure, Compound):
+        if len(structure.children) == 0:
+            # there are no real atoms in the Compound so the test fails. User should use mbuild.Box
+            error_msg = (
+                "If you are not providing an empty box, "
+                "you need to specify the atoms/beads as children in the mb.Compound. "
+                "If you are providing and empty box, please do so by specifying and "
+                f"mbuild Box ({mb.Box})"
+            )
+            raise TypeError(error_msg)
+
+        else:
+            initial_no_atoms = len(structure.to_parmed().atoms)
+            new_gmso_topology = mb_convert(structure, custom_groups=residues)
+    else:
+        initial_no_atoms = 0
+        lengths = structure.lengths
+        angles = structure.angles
+
+        # create a new empty gmso topology.  This is needed because an empty mbuild.Compound
+        # can not be converted to gmso.Topology without counting at 1 atom
+        new_gmso_topology = gmso.Topology()
+        new_gmso_topology.box = gmso.Box(lengths=lengths, angles=angles)
+
+    return new_gmso_topology, initial_no_atoms
 
 
 def _validate_forcefield_selection_and_residues(forcefield_selection, residues):
