@@ -1,0 +1,49 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- For testing purpose only-->
+<ForceField name="TraPPE Ethane and Propane only, united atom" version="0.0.1">
+  <FFMetaData electrostatics14Scale="0" nonBonded14Scale="0.0" combiningRule="lorentz">
+    <Units energy="kJ/mol" mass="amu" charge="elementary_charge" distance="nm"/>
+  </FFMetaData>
+  <AtomTypes expression="4 * epsilon * ((sigma/r)**12 - (sigma/r)**6)">
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <AtomType name="CH3" atomclass="CH3" element="_CH3" charge="0.0" mass="15.0350" definition="_CH3" doi="10.1021/jp972543+">
+      <Parameters>
+        <Parameter name="epsilon" value="0.814817"/>
+        <Parameter name="sigma" value="0.375"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="CH2" atomclass="CH2" element="_CH2" charge="0.0" mass="14.02700" definition="_CH2" doi="10.1021/jp972543+">
+      <Parameters>
+        <Parameter name="epsilon" value="0.382465"/>
+        <Parameter name="sigma" value="0.395"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+  <BondTypes expression="k * (r-r_eq)**2">
+    <ParametersUnitDef parameter="k" unit="kJ/mol/nm**2"/>
+    <ParametersUnitDef parameter="r_eq" unit="nm"/>
+    <BondType name="BondType1" class1="CH3" class2="CH3">
+      <Parameters>
+        <Parameter name="k" value="502416.0"/>
+        <Parameter name="r_eq" value="0.1540"/>
+      </Parameters>
+    </BondType>
+        <BondType name="BondType2" class1="CH3" class2="CH2">
+      <Parameters>
+        <Parameter name="k" value="502416.0"/>
+        <Parameter name="r_eq" value="0.1540"/>
+      </Parameters>
+    </BondType>
+  </BondTypes>
+  <AngleTypes expression="k * (theta - theta_eq)**2">
+    <ParametersUnitDef parameter="k" unit="kJ/mol/rad**2"/>
+    <ParametersUnitDef parameter="theta_eq" unit="radian"/>
+    <AngleType name="AngleType1" class1="CH3" class2="CH2" class3="CH3">
+      <Parameters>
+        <Parameter name="k" value="519.65389"/>
+        <Parameter name="theta_eq" value="1.98967"/>
+      </Parameters>
+    </AngleType>
+  </AngleTypes>
+</ForceField>
