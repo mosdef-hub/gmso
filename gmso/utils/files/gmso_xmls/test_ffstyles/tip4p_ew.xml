@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <ForceField name="TIP4P-Ew" version="0.0.1">
-  <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.5">
+  <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.5" combiningRule="geometric">
     <Units energy="kJ" distance="nm" mass="amu" charge="C"/>
   </FFMetaData>
   <AtomTypes expression="4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)">
