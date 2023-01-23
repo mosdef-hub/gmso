@@ -67,7 +67,6 @@ def _check_single_potential(potential, accepted_potentials):
             if str(ref.expression) == str(potential.expression):
                 return {potential: ref.name}
             else:
-                print("Simpify", ref, potential)
                 if sympy.simplify(ref.expression - potential.expression) == 0:
                     return {potential: ref.name}
     return False
