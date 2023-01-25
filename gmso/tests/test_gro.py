@@ -66,7 +66,7 @@ class TestGro(BaseTest):
 
         reread = Topology.load("benzene.gro")
         for site, ref_site in zip(reread.sites, top.sites):
-            assert site.molecule.name == ref_site.molecule.name[:3]
+            assert site.molecule.name == ref_site.molecule.name[:5]
             assert site.molecule.number == ref_site.molecule.number
 
     @pytest.mark.parametrize("fixture", ["benzene_ua_box", "benzene_aa_box"])
@@ -94,5 +94,5 @@ class TestGro(BaseTest):
                 assert site.name == "_CH"
         elif top == "benzene_aa_box":
             for site in top.sites:
-                assert site.molecule.name == "Ben"
+                assert site.molecule.name == "Benze"
                 assert site.name in ["C", "H"]
