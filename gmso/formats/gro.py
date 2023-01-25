@@ -166,24 +166,102 @@ def _prepare_atoms(top, updated_positions, precision):
     warnings.warn(
         "Residue information is parsed from site.molecule,"
         "or site.residue if site.molecule does not exist."
-        "Note that the residue idx will be bump by 1 since GROMACS utilize 1-index."
+        "Note that the residue idx will be bumped by 1 since GROMACS utilize 1-index."
     )
+    
+    # we need to sort through the sites to provide a unique number
+    # for each molecule and residue
+    # we will store the unique id in dictionary
+    # where the key is the idx
+    
+    last_res_id = -1
+    last_mol_id = -1
+    site_res_id = {}
+    res_nr = 1
+    last_name = ''
+    
+    for idx, site in enumerate(top.sites):
+        if site.molecule:
+            if last_mol_id == -1:
+                last_name = site.molecule.name
+                last_mol_id = site.molecule.number
+                if idx == 0:
+                    res_nr = 1
+                else:
+                    res_nr = res_nr + 1
+                site_res_id[idx] = res_nr
+
+            elif site.molecule.name == last_name:
+                if last_mol_id == site.molecule.number:
+                    site_res_id[idx] = res_nr
+                else:
+                    res_nr += 1
+                    site_res_id[idx] = res_nr
+                    last_mol_id = site.molecule.number
+            else:
+                res_nr += 1
+                site_res_id[idx] = res_nr
+                last_mol_id = site.molecule.number
+                last_name = site.molecule.name
+                
+        elif site.residue:
+            if last_res_id == -1:
+                last_name = site.molecule.name
+                if idx == 0:
+                    res_nr = 1
+                else:
+                    res_nr = res_nr + 1
+                    
+                last_res_id = site.residue.number
+
+                site_res_id[idx] = res_nr
+
+            elif site.molecule.name == last_name:
+                if last_res_id == site.residue.number:
+                    site_res_id[idx] = res_nr
+                else:
+                    res_nr += 1
+                    site_res_id[idx] = res_nr
+                    last_res_id = site.residue.number
+            else:
+                res_nr += 1
+                site_res_id[idx] = res_nr
+                last_res_id = site.residue.number
+                last_name = site.molecule.name
+
+
+
+    
     for idx, (site, pos) in enumerate(zip(top.sites, updated_positions)):
         if site.molecule:
-            res_id = site.molecule.number + 1
-            res_name = site.molecule.name
+            res_id = site_res_id[idx] #site.molecule.number + 1
+            site.label = f'res_id: {res_id}'
+            res_name = site.molecule.name[:5]
         elif site.residue:
-            res_id = site.residue.number + 1
-            res_name = site.molecule.name[:3]
+            res_id = site_res_id[idx] #site.residue.number + 1
+            site.label = f'res_id: {res_id}'
+            res_name = site.molecule.name[:5]
         else:
-            res_id = 1
+            res_id = res_nr+1
+            site.label = f'res_id: {res_id}'
             res_name = "MOL"
-        if len(res_name) > 3:
-            res_name = res_name[:3]
+            
+        if len(res_name) > 5:
+            res_name = res_name[:5]
 
-        atom_name = site.name if len(site.name) <= 3 else site.name[:3]
+        atom_name = site.name if len(site.name) <= 5 else site.name[:5]
         atom_id = idx + 1
-
+    
+        # gromacs doesn't actually use the atom id in the .gro file
+        # so we will just loop back to 1 once we exceed 99999
+        # as is suggested in the FAQ in the manual.
+        
+        if atom_id > 99999:
+            atom_id = atom_id-99999
+            
+        if res_id > 99999:
+            res_id = res_id-99999
+            
         varwidth = 5 + precision
         crdfmt = f"{{:{varwidth}.{precision}f}}"
 
@@ -191,7 +269,7 @@ def _prepare_atoms(top, updated_positions, precision):
         crt_x = crdfmt.format(pos[0].in_units(u.nm).value)[:varwidth]
         crt_y = crdfmt.format(pos[1].in_units(u.nm).value)[:varwidth]
         crt_z = crdfmt.format(pos[2].in_units(u.nm).value)[:varwidth]
-        out_str = out_str + "{0:5d}{1:5s}{2:5s}{3:5d}{4}{5}{6}\n".format(
+        out_str = out_str + "{0:5d}{1:5s}{2:>5s}{3:5d}{4}{5}{6}\n".format(
             res_id,
             res_name,
             atom_name,
@@ -200,6 +278,8 @@ def _prepare_atoms(top, updated_positions, precision):
             crt_y,
             crt_z,
         )
+            
+            
     return out_str
 
 
