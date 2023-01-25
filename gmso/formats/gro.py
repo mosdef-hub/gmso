@@ -206,7 +206,7 @@ def _prepare_atoms(top, updated_positions, precision):
                 
         elif site.residue:
             if last_res_id == -1:
-                last_name = site.molecule.name
+                last_name = site.residue.name
                 if idx == 0:
                     res_nr = 1
                 else:
@@ -216,7 +216,7 @@ def _prepare_atoms(top, updated_positions, precision):
 
                 site_res_id[idx] = res_nr
 
-            elif site.molecule.name == last_name:
+            elif site.residue.name == last_name:
                 if last_res_id == site.residue.number:
                     site_res_id[idx] = res_nr
                 else:
@@ -227,7 +227,7 @@ def _prepare_atoms(top, updated_positions, precision):
                 res_nr += 1
                 site_res_id[idx] = res_nr
                 last_res_id = site.residue.number
-                last_name = site.molecule.name
+                last_name = site.residue.name
 
 
 
@@ -235,19 +235,19 @@ def _prepare_atoms(top, updated_positions, precision):
     for idx, (site, pos) in enumerate(zip(top.sites, updated_positions)):
         if site.molecule:
             res_id = site_res_id[idx] #site.molecule.number + 1
-            site.label = f'res_id: {res_id}'
-            res_name = site.molecule.name[:5]
+            res_name = site.molecule.name if len(site.molecule.name) <= 5 else site.molecule.name[:5]
+
+            site.label = f'res_id: {res_id}, ' + site.label
         elif site.residue:
             res_id = site_res_id[idx] #site.residue.number + 1
-            site.label = f'res_id: {res_id}'
-            res_name = site.molecule.name[:5]
+            res_name = site.residue.name if len(site.residue.name) <= 5 else site.residue.name[:5]
+            site.label = f'res_id: {res_id}, ' + site.label
         else:
             res_id = res_nr+1
-            site.label = f'res_id: {res_id}'
             res_name = "MOL"
-            
-        if len(res_name) > 5:
-            res_name = res_name[:5]
+           
+            site.label = f'res_id: {res_id}, ' + site.label
+
 
         atom_name = site.name if len(site.name) <= 5 else site.name[:5]
         atom_id = idx + 1
