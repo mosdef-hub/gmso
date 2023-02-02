@@ -112,14 +112,14 @@ def from_mbuild(
             site_map, part, search_method, infer_element=infer_elements
         )
         top.add_site(site)
-    
+
     for b1, b2 in compound.bonds():
         assert site_map[b1]["site"].molecule == site_map[b2]["site"].molecule
         new_bond = Bond(
             connection_members=[site_map[b1]["site"], site_map[b2]["site"]],
         )
         top.add_connection(new_bond, update_types=False)
-    
+
     if box:
         top.box = from_mbuild_box(box)
     # Assumes 2-D systems are not supported in mBuild
