@@ -414,7 +414,9 @@ def _dihedral_types_from_pmd(structure, dihedral_types_member_map=None):
 
         member_types = dihedral_types_member_map.get(id(dihedraltype))
 
-        ryckaert_bellemans_torsion_potential = lib["RyckaertBellemansTorsionPotential"]
+        ryckaert_bellemans_torsion_potential = lib[
+            "RyckaertBellemansTorsionPotential"
+        ]
         name = ryckaert_bellemans_torsion_potential.name
         expression = ryckaert_bellemans_torsion_potential.expression
         variables = ryckaert_bellemans_torsion_potential.independent_variables

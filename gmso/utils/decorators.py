@@ -63,22 +63,30 @@ def _deprecate_kwargs(kwargs, deprecated_kwargs):
             3,
         )
 
+
 def mark_WIP(message=""):
     """Decorate functions with WIP marking"""
+
     def _function_wrapper(function):
         @functools.wraps(function)
         def _inner(*args, **kwargs):
-            warnings.simplefilter('always', UserWarning)  # turn off filter
-            warnings.warn("Call to function {} is WIP.".format(function.__name__),
-                          category=UserWarning,
-                          stacklevel=2)
-            warnings.simplefilter('default', UserWarning)  # reset filter
+            warnings.simplefilter("always", UserWarning)  # turn off filter
+            warnings.warn(
+                "Call to function {} is WIP.".format(function.__name__),
+                category=UserWarning,
+                stacklevel=2,
+            )
+            warnings.simplefilter("default", UserWarning)  # reset filter
             return function(*args, **kwargs)
+
         return _inner
+
     return _function_wrapper
+
 
 class mark_WIP2:
     """Decorate functions with WIP marking"""
+
     def __init__(self, function):
         self.function = function
         warnings.warn("hello", UserWarning, 2)
@@ -87,10 +95,8 @@ class mark_WIP2:
         raise Exception
         print("Inside decorator")
         warnings.warn(
-           f"Function {func.__name__} is WIP",
-           UserWarning,
-           3,
+            f"Function {func.__name__} is WIP",
+            UserWarning,
+            3,
         )
         return self.function(*args, **kwargs)
-
-

@@ -27,7 +27,7 @@ def check_compatibility(topology, accepted_potentials, simplify_check=False):
     """
     potential_forms_dict = dict()
     for atom_type in topology.atom_types(
-        #filter_by=PotentialFilters.UNIQUE_NAME_CLASS
+        # filter_by=PotentialFilters.UNIQUE_NAME_CLASS
     ):
         potential_form = _check_single_potential(
             atom_type, accepted_potentials, simplify_check
@@ -40,7 +40,7 @@ def check_compatibility(topology, accepted_potentials, simplify_check=False):
             potential_forms_dict.update(potential_form)
 
     for connection_type in topology.connection_types(
-        #filter_by=PotentialFilters.UNIQUE_NAME_CLASS
+        # filter_by=PotentialFilters.UNIQUE_NAME_CLASS
     ):
         print(connection_type.name)
         potential_form = _check_single_potential(

@@ -3,12 +3,12 @@ from __future__ import division
 
 import datetime
 import warnings
+from pathlib import Path
 
 import numpy as np
 import unyt as u
 from sympy import simplify, sympify
 from unyt.array import allclose_units
-from pathlib import Path
 
 from gmso.core.angle import Angle
 from gmso.core.angle_type import AngleType
@@ -16,23 +16,30 @@ from gmso.core.atom import Atom
 from gmso.core.atom_type import AtomType
 from gmso.core.bond import Bond
 from gmso.core.bond_type import BondType
-from gmso.core.views import PotentialFilters as pfilters
 from gmso.core.box import Box
 from gmso.core.element import element_by_mass
 from gmso.core.topology import Topology
+from gmso.core.views import PotentialFilters as pfilters
 from gmso.formats.formats_registry import loads_as, saves_as
 from gmso.lib.potential_templates import PotentialTemplateLibrary
+from gmso.utils.compatibility import check_compatibility
 from gmso.utils.conversions import (
     convert_opls_to_ryckaert,
     convert_ryckaert_to_opls,
 )
-from gmso.utils.compatibility import check_compatibility
 from gmso.utils.decorators import mark_WIP
 
 
 @saves_as(".lammps", ".lammpsdata", ".data")
 @mark_WIP("Testing in progress")
-def write_lammpsdata(top, filename, atom_style="full", unit_style="real", strict_potentials=False, strict_units=False):
+def write_lammpsdata(
+    top,
+    filename,
+    atom_style="full",
+    unit_style="real",
+    strict_potentials=False,
+    strict_units=False,
+):
     """Output a LAMMPS data file.
 
     Outputs a LAMMPS data file in the 'full' atom style format.
@@ -79,12 +86,12 @@ def write_lammpsdata(top, filename, atom_style="full", unit_style="real", strict
         )
     # Use gmso unit packages to get into correct lammps formats
     default_unit_maps = {"real": "TODO"}
-    default_parameter_maps = { # Add more as needed
-        "dihedrals":"OPLSTorsionPotential",
-        "angles":"HarmonicAnglePotential",
-        "bonds":"HarmonicBondPotential",
-        #"atoms":"LennardJonesPotential",
-        #"electrostatics":"CoulombicPotential"
+    default_parameter_maps = {  # Add more as needed
+        "dihedrals": "OPLSTorsionPotential",
+        "angles": "HarmonicAnglePotential",
+        "bonds": "HarmonicBondPotential",
+        # "atoms":"LennardJonesPotential",
+        # "electrostatics":"CoulombicPotential"
     }
 
     # TODO: Use strict_x to validate depth of topology checking
@@ -92,7 +99,6 @@ def write_lammpsdata(top, filename, atom_style="full", unit_style="real", strict
         _validate_unit_compatibility(top, default_unit_maps[unit_style])
     else:
         top = _try_default_unit_conversions(top, default_unit_maps[unit_style])
-
 
     if strict_potentials:
         print("I'm strict about potential forms")
@@ -103,24 +109,29 @@ def write_lammpsdata(top, filename, atom_style="full", unit_style="real", strict
     # TODO: improve handling of various filenames
     path = Path(filename)
     if not path.parent.exists():
-         msg = "Provided path to file that does not exist"
-         raise FileNotFoundError(msg)
+        msg = "Provided path to file that does not exist"
+        raise FileNotFoundError(msg)
 
     with open(path, "w") as out_file:
         _write_header(out_file, top, atom_style)
         _write_box(out_file, top)
-        if top.is_typed(): #TODO: should this be is_fully_typed?
+        if top.is_typed():  # TODO: should this be is_fully_typed?
             _write_atomtypes(out_file, top)
             _write_pairtypes(out_file, top)
-            if top.bonds: _write_bondtypes(out_file, top)
-            if top.angles: _write_angletypes(out_file, top)
-            if top.dihedrals: _write_dihedraltypes(out_file, top)
-            if top.impropers: _write_impropertypes(out_file, top)
+            if top.bonds:
+                _write_bondtypes(out_file, top)
+            if top.angles:
+                _write_angletypes(out_file, top)
+            if top.dihedrals:
+                _write_dihedraltypes(out_file, top)
+            if top.impropers:
+                _write_impropertypes(out_file, top)
 
         _write_site_data(out_file, top, atom_style)
         for conn in ["bonds", "angles", "dihedrals", "impropers"]:
             connIter = getattr(top, conn)
-            if connIter: _write_conn_data(out_file, top, connIter, conn)
+            if connIter:
+                _write_conn_data(out_file, top, connIter, conn)
 
 
 @loads_as(".lammps", ".lammpsdata", ".data")
@@ -424,6 +435,7 @@ def _get_ff_information(filename, unit_style, topology):
 
     return topology, type_list
 
+
 def _accepted_potentials():
     """List of accepted potentials that LAMMPS can support."""
     templates = PotentialTemplateLibrary()
@@ -447,10 +459,12 @@ def _validate_potential_compatibility(top):
     pot_types = check_compatibility(top, _accepted_potentials())
     return pot_types
 
+
 def _validate_unit_compatibility(top, unitSet):
     """Check compatability of topology object units with LAMMPSDATA format."""
     # TODO: Check to make sure all units are in the correct format
     return True
+
 
 # All writer worker function belows
 def _write_header(out_file, top, atom_style):
@@ -469,17 +483,38 @@ def _write_header(out_file, top, atom_style):
         out_file.write("{:d} impropers\n".format(top.n_impropers))
 
     # TODO: allow users to specify filter_by syntax
-    out_file.write("\n{:d} atom types\n".format(len(top.atom_types(filter_by=pfilters.UNIQUE_NAME_CLASS))))
+    out_file.write(
+        "\n{:d} atom types\n".format(
+            len(top.atom_types(filter_by=pfilters.UNIQUE_NAME_CLASS))
+        )
+    )
     if top.n_bonds > 0:
-        out_file.write("{:d} bond types\n".format(len(top.bond_types(filter_by=pfilters.UNIQUE_NAME_CLASS))))
+        out_file.write(
+            "{:d} bond types\n".format(
+                len(top.bond_types(filter_by=pfilters.UNIQUE_NAME_CLASS))
+            )
+        )
     if top.n_angles > 0:
-        out_file.write("{:d} angle types\n".format(len(top.angle_types(filter_by=pfilters.UNIQUE_NAME_CLASS))))
+        out_file.write(
+            "{:d} angle types\n".format(
+                len(top.angle_types(filter_by=pfilters.UNIQUE_NAME_CLASS))
+            )
+        )
     if top.n_dihedrals > 0:
-        out_file.write("{:d} dihedral types\n".format(len(top.dihedral_types(filter_by=pfilters.UNIQUE_NAME_CLASS))))
+        out_file.write(
+            "{:d} dihedral types\n".format(
+                len(top.dihedral_types(filter_by=pfilters.UNIQUE_NAME_CLASS))
+            )
+        )
     if top.n_impropers > 0:
-        out_file.write("{:d} improper types\n".format(len(top.improper_types(filter_by=pfilters.UNIQUE_NAME_CLASS))))
+        out_file.write(
+            "{:d} improper types\n".format(
+                len(top.improper_types(filter_by=pfilters.UNIQUE_NAME_CLASS))
+            )
+        )
 
     out_file.write("\n")
+
 
 def _write_box(out_file, top):
     """Write GMSO Topology box to LAMMPS file."""
@@ -522,37 +557,28 @@ def _write_box(out_file, top):
         ylo = u.unyt_array(0, xy.units)
         zlo = u.unyt_array(0, xy.units)
 
-        xlo_bound = xlo + u.unyt_array(
-            np.min([0.0, xy, xz, xy + xz]), xy.units
-        )
-        xhi_bound = xhi + u.unyt_array(
-            np.max([0.0, xy, xz, xy + xz]), xy.units
-        )
+        xlo_bound = xlo + u.unyt_array(np.min([0.0, xy, xz, xy + xz]), xy.units)
+        xhi_bound = xhi + u.unyt_array(np.max([0.0, xy, xz, xy + xz]), xy.units)
         ylo_bound = ylo + u.unyt_array(np.min([0.0, yz]), xy.units)
         yhi_bound = yhi + u.unyt_array(np.max([0.0, yz]), xy.units)
         zlo_bound = zlo
         zhi_bound = zhi
 
         out_file.write(
-            "{0:.6f} {1:.6f} xlo xhi\n".format(
-                xlo_bound.value, xhi_bound.value
-            )
+            "{0:.6f} {1:.6f} xlo xhi\n".format(xlo_bound.value, xhi_bound.value)
         )
         out_file.write(
-            "{0:.6f} {1:.6f} ylo yhi\n".format(
-                ylo_bound.value, yhi_bound.value
-            )
+            "{0:.6f} {1:.6f} ylo yhi\n".format(ylo_bound.value, yhi_bound.value)
         )
         out_file.write(
-            "{0:.6f} {1:.6f} zlo zhi\n".format(
-                zlo_bound.value, zhi_bound.value
-            )
+            "{0:.6f} {1:.6f} zlo zhi\n".format(zlo_bound.value, zhi_bound.value)
         )
         out_file.write(
             "{0:.6f} {1:.6f} {2:.6f} xy xz yz\n".format(
                 xy.value, xz.value, yz.value
             )
         )
+
 
 def _write_atomtypes(out_file, top):
     """Write out atomtypes in GMSO topology to LAMMPS file."""
@@ -570,30 +596,35 @@ def _write_atomtypes(out_file, top):
             )
         )
 
+
 def _write_pairtypes(out_file, top):
     """Write out pair interaction to LAMMPS file."""
     # TODO: Modified cross-interactions
     # TODO: Utilize unit styles and nonbonded equations properly
     # Pair coefficients
     test_atmtype = top.sites[0].atom_type
-    out_file.write(f"\nPair Coeffs # lj\n") # TODO: This should be pulled from the test_atmtype
+    out_file.write(
+        f"\nPair Coeffs # lj\n"
+    )  # TODO: This should be pulled from the test_atmtype
     # TODO: use unit style specified for writer
-    param_labels = map(lambda x: f"{x} ({test_atmtype.parameters[x].units})", test_atmtype.parameters)
+    param_labels = map(
+        lambda x: f"{x} ({test_atmtype.parameters[x].units})",
+        test_atmtype.parameters,
+    )
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
-    for idx, param in enumerate(top.atom_types(filter_by=pfilters.UNIQUE_NAME_CLASS)):
+    for idx, param in enumerate(
+        top.atom_types(filter_by=pfilters.UNIQUE_NAME_CLASS)
+    ):
         # TODO: grab expression from top
         out_file.write(
             "{}\t{:7.5f}\t\t{:7.5f}\t\t#{}\n".format(
                 idx + 1,
-                param.parameters["epsilon"]
-                .in_units(u.Unit("kcal/mol"))
-                .value,
-                param.parameters["sigma"]
-                .in_units(u.angstrom)
-                .value,
+                param.parameters["epsilon"].in_units(u.Unit("kcal/mol")).value,
+                param.parameters["sigma"].in_units(u.angstrom).value,
                 param.name,
             )
         )
+
 
 def _write_bondtypes(out_file, top):
     """Write out bonds to LAMMPS file."""
@@ -601,22 +632,26 @@ def _write_bondtypes(out_file, top):
     # TODO: Use any accepted lammps parameters
     test_bontype = top.bonds[0].bond_type
     out_file.write(f"\nBond Coeffs #{test_bontype.name}\n")
-    param_labels = map(lambda x: f"{x} ({test_bontype.parameters[x].units})", test_bontype.parameters)
+    param_labels = map(
+        lambda x: f"{x} ({test_bontype.parameters[x].units})",
+        test_bontype.parameters,
+    )
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
-    for idx, bond_type in enumerate(top.bond_types(filter_by=pfilters.UNIQUE_NAME_CLASS)):
+    for idx, bond_type in enumerate(
+        top.bond_types(filter_by=pfilters.UNIQUE_NAME_CLASS)
+    ):
         out_file.write(
             "{}\t{:7.5f}\t{:7.5f}\t\t# {}\t{}\n".format(
                 idx + 1,
                 bond_type.parameters["k"]
                 .in_units(u.Unit("kcal/mol/angstrom**2"))
                 .value,
-                bond_type.parameters["r_eq"]
-                .in_units(u.Unit("angstrom"))
-                .value,
+                bond_type.parameters["r_eq"].in_units(u.Unit("angstrom")).value,
                 bond_type.member_types[0],
-                bond_type.member_types[1]
+                bond_type.member_types[1],
             )
         )
+
 
 def _write_angletypes(out_file, top):
     """Write out angles to LAMMPS file."""
@@ -624,9 +659,14 @@ def _write_angletypes(out_file, top):
     # TODO: Use any accepted lammps parameters
     test_angtype = top.angles[0].angle_type
     out_file.write(f"\nAngle Coeffs #{test_angtype.name}\n")
-    param_labels = map(lambda x: f"{x} ({test_angtype.parameters[x].units})", test_angtype.parameters)
+    param_labels = map(
+        lambda x: f"{x} ({test_angtype.parameters[x].units})",
+        test_angtype.parameters,
+    )
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
-    for idx, angle_type in enumerate(top.angle_types(filter_by=pfilters.UNIQUE_NAME_CLASS)):
+    for idx, angle_type in enumerate(
+        top.angle_types(filter_by=pfilters.UNIQUE_NAME_CLASS)
+    ):
         out_file.write(
             "{}\t{:7.5f}\t{:7.5f}\n".format(
                 idx + 1,
@@ -639,16 +679,22 @@ def _write_angletypes(out_file, top):
             )
         )
 
+
 def _write_dihedraltypes(out_file, top):
     """Write out dihedrals to LAMMPS file."""
     test_dihtype = top.dihedrals[0].dihedral_type
     print(test_dihtype.parameters)
     out_file.write(f"\nDihedral Coeffs #{test_dihtype.name}\n")
-    param_labels = map(lambda x: f"{x} ({test_dihtype.parameters[x].units})", test_dihtype.parameters)
+    param_labels = map(
+        lambda x: f"{x} ({test_dihtype.parameters[x].units})",
+        test_dihtype.parameters,
+    )
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
-    #out_file.write("#\tf1(kcal/mol)\tf2(kcal/mol)\tf3(kcal/mol)\tf4(kcal/mol)\n")
-    #out_file.write(f"#\tk ({test_dihtype.parameters[0].units})\t\tthetaeq ({test_dihtype.parameters[1].units}})\n") #check for unit styles
-    for idx, dihedral_type in enumerate(top.dihedral_types(filter_by=pfilters.UNIQUE_NAME_CLASS)):
+    # out_file.write("#\tf1(kcal/mol)\tf2(kcal/mol)\tf3(kcal/mol)\tf4(kcal/mol)\n")
+    # out_file.write(f"#\tk ({test_dihtype.parameters[0].units})\t\tthetaeq ({test_dihtype.parameters[1].units}})\n") #check for unit styles
+    for idx, dihedral_type in enumerate(
+        top.dihedral_types(filter_by=pfilters.UNIQUE_NAME_CLASS)
+    ):
         out_file.write(
             "{}\t{:8.5f}\t{:8.5f}\t{:8.5f}\t{:8.5f}\n".format(
                 idx + 1,
@@ -667,15 +713,21 @@ def _write_dihedraltypes(out_file, top):
             )
         )
 
+
 def _write_impropertypes(out_file, top):
     """Write out impropers to LAMMPS file."""
     # TODO: Make sure to perform unit conversions
     # TODO: Use any accepted lammps parameters
     test_imptype = top.impropers[0].improper_type
     out_file.write(f"\nImproper Coeffs #{test_imptype.name}\n")
-    param_labels = map(lambda x: f"{x} ({test_imptype.parameters[x].units})", test_imptype.parameters)
+    param_labels = map(
+        lambda x: f"{x} ({test_imptype.parameters[x].units})",
+        test_imptype.parameters,
+    )
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
-    for idx, improper_type in enumerate(top.improper_types(filter_by=pfilters.UNIQUE_NAME_CLASS)):
+    for idx, improper_type in enumerate(
+        top.improper_types(filter_by=pfilters.UNIQUE_NAME_CLASS)
+    ):
         out_file.write(
             "{}\t{:7.5f}\t{:7.5f}\n".format(
                 idx + 1,
@@ -688,6 +740,7 @@ def _write_impropertypes(out_file, top):
             )
         )
 
+
 def _write_site_data(out_file, top, atom_style):
     """Write atomic positions and charges to LAMMPS file.."""
     # TODO: Allow for unit system to be passed through
@@ -697,7 +750,9 @@ def _write_site_data(out_file, top, atom_style):
     elif atom_style == "charge":
         atom_line = "{index:d}\t{type_index:d}\t{charge:.6f}\t{x:.6f}\t{y:.6f}\t{z:.6f}\n"
     elif atom_style == "molecular":
-        atom_line = "{index:d}\t{zero:d}\t{type_index:d}\t{x:.6f}\t{y:.6f}\t{z:.6f}\n"
+        atom_line = (
+            "{index:d}\t{zero:d}\t{type_index:d}\t{x:.6f}\t{y:.6f}\t{z:.6f}\n"
+        )
     elif atom_style == "full":
         atom_line = "{index:d}\t{zero:d}\t{type_index:d}\t{charge:.6f}\t{x:.6f}\t{y:.6f}\t{z:.6f}\n"
 
@@ -706,8 +761,11 @@ def _write_site_data(out_file, top, atom_style):
         out_file.write(
             atom_line.format(
                 index=top.sites.index(site) + 1,
-                type_index=top.atom_types(filter_by=pfilters.UNIQUE_NAME_CLASS).equality_index(site.atom_type) + 1,
-                zero=0, #What is this zero?
+                type_index=top.atom_types(
+                    filter_by=pfilters.UNIQUE_NAME_CLASS
+                ).equality_index(site.atom_type)
+                + 1,
+                zero=0,  # What is this zero?
                 charge=site.charge.to(u.elementary_charge).value,
                 x=site.position[0].in_units(u.angstrom).value,
                 y=site.position[1].in_units(u.angstrom).value,
@@ -715,33 +773,47 @@ def _write_site_data(out_file, top, atom_style):
             )
         )
 
+
 def _write_conn_data(out_file, top, connIter, connStr):
     """Write all connections to LAMMPS datafile"""
     # TODO: Test for speedups in various looping methods
     # TODO: Allow for unit system passing
     # TODO: Validate that all connections are written in the correct order
     out_file.write(f"\n{connStr.capitalize()}\n\n")
-    indexList = list(map(id, getattr(top, connStr[:-1] + '_types')(filter_by=pfilters.UNIQUE_NAME_CLASS)))
+    indexList = list(
+        map(
+            id,
+            getattr(top, connStr[:-1] + "_types")(
+                filter_by=pfilters.UNIQUE_NAME_CLASS
+            ),
+        )
+    )
     print(f"Indexed list for {connStr} is {indexList}")
     for i, conn in enumerate(getattr(top, connStr)):
-        print(f"{connStr}: id:{id(conn.connection_type)} of form {conn.connection_type}")
+        print(
+            f"{connStr}: id:{id(conn.connection_type)} of form {conn.connection_type}"
+        )
         typeStr = f"{i+1:d}\t{getattr(top, connStr[:-1] + '_types')(filter_by=pfilters.UNIQUE_NAME_CLASS).equality_index(conn.connection_type) + 1:1}\t"
-        indexStr = "\t".join(map(lambda x: str(top.sites.index(x)+1), conn.connection_members))
+        indexStr = "\t".join(
+            map(lambda x: str(top.sites.index(x) + 1), conn.connection_members)
+        )
         out_file.write(typeStr + indexStr + "\n")
+
 
 def _try_default_potential_conversions(top, potentialsDict):
     # TODO: Docstrings
     return top.convert_potential_styles(potentialsDict)
 
+
 def _try_default_unit_conversions(top, unitSet):
     # TODO: Docstrings
     try:
-        return top # TODO: Remote this once implemented
+        return top  # TODO: Remote this once implemented
         top = top.convert_unit_styles(unitSet)
     except:
         raise ValueError(
-             'Unit style "{}" cannot be converted from units used in potential expressions. Check the forcefield for consisten units'.format(
-                 unit_style
-             )
+            'Unit style "{}" cannot be converted from units used in potential expressions. Check the forcefield for consisten units'.format(
+                unit_style
+            )
         )
     return top

@@ -5,10 +5,10 @@ from unyt.testing import assert_allclose_units
 import gmso
 from gmso import Topology
 from gmso.core.box import Box
-from gmso.external import to_parmed
-from gmso.formats.lammpsdata import read_lammpsdata, write_lammpsdata
-from gmso.formats.formats_registry import UnsupportedFileFormatError
 from gmso.exceptions import EngineIncompatibilityError
+from gmso.external import to_parmed
+from gmso.formats.formats_registry import UnsupportedFileFormatError
+from gmso.formats.lammpsdata import read_lammpsdata, write_lammpsdata
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
 
@@ -21,11 +21,14 @@ def compare_lammps_files(fn1, fn2, skip_linesList=[]):
         line2 = f.readlines()
     for lnum, (l1, l2) in enumerate(zip(line1, line2)):
         print(lnum, l1, l2, "\n\n")
-        if lnum in skip_linesList or "mass" in l1 or "lj" in l2: # mass in GMSO adds units
+        if (
+            lnum in skip_linesList or "mass" in l1 or "lj" in l2
+        ):  # mass in GMSO adds units
             continue
-        #assert l1.replace(" ", "")[0:2] == l2.replace(" ", "")[0:2],\
-        assert "".join(l1.split()) == "".join(l2.split()),\
-        f"The following two lines have not been found to have equality {l1} and {l2}"
+        # assert l1.replace(" ", "")[0:2] == l2.replace(" ", "")[0:2],\
+        assert "".join(l1.split()) == "".join(
+            l2.split()
+        ), f"The following two lines have not been found to have equality {l1} and {l2}"
     return True
 
 
@@ -141,7 +144,7 @@ class TestLammpsWriter(BaseTest):
 
     def test_read_bond_params(self, typed_ethane_opls):
         if True:
-            return# TODO: these tests are failing, check read
+            return  # TODO: these tests are failing, check read
         typed_ethane_opls.save("ethane.lammps")
         read = gmso.Topology.load("ethane.lammps")
         bond_params = [i.parameters for i in read.bond_types]
@@ -173,7 +176,7 @@ class TestLammpsWriter(BaseTest):
 
     def test_read_angle_params(self, typed_ethane_opls):
         if True:
-            return # TODO: these tests are failing, check read
+            return  # TODO: these tests are failing, check read
         typed_ethane_opls.save("ethane.lammps")
         read = gmso.Topology.load("ethane.lammps")
         angle_params = [i.parameters for i in read.angle_types]
@@ -203,18 +206,23 @@ class TestLammpsWriter(BaseTest):
             atol=1e-8,
         )
 
-
     def test_read_n_diherals(self, typed_ethane_opls):
         typed_ethane_opls.save("ethane.lammps")
         read = gmso.Topology.load("ethane.lammps")
 
-        #assert read.n_dihedrals == 9 TODO: Dihedrals don't work
+        # assert read.n_dihedrals == 9 TODO: Dihedrals don't work
 
     # TODO: would be good to create a library of molecules and styles to test
     # Test potential styles that are directly comparable to ParmEd.
     @pytest.mark.parametrize(
-         "top", ["typed_ethane", "typed_methylnitroaniline", "typed_methaneUA", "typed_water_system"]
-     )
+        "top",
+        [
+            "typed_ethane",
+            "typed_methylnitroaniline",
+            "typed_methaneUA",
+            "typed_water_system",
+        ],
+    )
     def test_lammps_vs_parmed_by_mol(self, top, request):
         """Parmed LAMMPSDATA Compare outputs.
 
@@ -231,21 +239,28 @@ class TestLammpsWriter(BaseTest):
         print(pmd_top.atoms[0].mass)
         for dihedral in top.dihedrals:
             dihedral.dihedral_type.name = "RyckaertBellemansTorsionPotential"
-        top = top.convert_potential_styles({"dihedrals": "OPLSTorsionPotential"})
+        top = top.convert_potential_styles(
+            {"dihedrals": "OPLSTorsionPotential"}
+        )
         top.save("gmso.lammps")
         pmd_top.impropers = []
-        from mbuild.formats.lammpsdata import write_lammpsdata as mb_write_lammps
+        from mbuild.formats.lammpsdata import (
+            write_lammpsdata as mb_write_lammps,
+        )
+
         mb_write_lammps(
-             structure=pmd_top,
-             filename="pmd.lammps",
-             detect_forcefield_style=True,
-             use_dihedrals=False,
-             use_rb_torsions=True,
-             mins=[0, 0, 0],
-             maxs=top.box.lengths.convert_to_units(u.nm)
-         )
+            structure=pmd_top,
+            filename="pmd.lammps",
+            detect_forcefield_style=True,
+            use_dihedrals=False,
+            use_rb_torsions=True,
+            mins=[0, 0, 0],
+            maxs=top.box.lengths.convert_to_units(u.nm),
+        )
         # TODO: line by line comparison isn't exact, need to modify compare_lammps_files function to be more realistic
-        assert compare_lammps_files("gmso.lammps", "pmd.lammps", skip_linesList=[0, 12, 20, 21, 22])
+        assert compare_lammps_files(
+            "gmso.lammps", "pmd.lammps", skip_linesList=[0, 12, 20, 21, 22]
+        )
 
     def test_lammps_vs_parmed_by_styles(self):
         """Test all support styles in lammps writer.
@@ -267,22 +282,25 @@ class TestLammpsWriter(BaseTest):
         pairs:
         additional: All styles to zero and none
         """
-        typed_ethane.save('opls.lammps')
+        typed_ethane.save("opls.lammps")
         with open("opls.lammps", "r") as f:
             lines = f.readlines()
         assert lines[38:41] == [
             "Dihedral Coeffs #FourierTorsionPotential\n",
             "#\tk1 (kcal/mol)\tk2 (kcal/mol)\tk3 (kcal/mol)\tk4 (kcal/mol)\n",
-            "1\t 0.00000\t-0.00000\t 0.30000\t-0.00000\n"
+            "1\t 0.00000\t-0.00000\t 0.30000\t-0.00000\n",
         ]
         with pytest.raises(UnsupportedFileFormatError):
             typed_ethane.save("error_lammps")
 
         # TODO: tests for default unit handling
+
     def test_lammps_strict_true(self, typed_ethane):
         with pytest.raises(EngineIncompatibilityError):
             typed_ethane.save("error.lammps", strict_potentials=True)
-        typed_ethane = typed_ethane.convert_potential_styles({"dihedrals": "FourierTorsionPotential"})
+        typed_ethane = typed_ethane.convert_potential_styles(
+            {"dihedrals": "FourierTorsionPotential"}
+        )
         typed_ethane.save("test2.lammps", strict_potentials=True)
 
     # TODO: Test potential styles that are not supported by parmed
@@ -305,7 +323,6 @@ class TestLammpsWriter(BaseTest):
         typed_ethane.save("test.lammps")
         # TODO: Read and check test.lammps for correct writing
 
-
     # TODO: Test unit conversions using different styles
     def test_lammps_units(self, typed_ethane_opls):
         """Generate topoogy with different units and check the output.
@@ -316,24 +333,29 @@ class TestLammpsWriter(BaseTest):
         """
         # check the initial set of units
         print(typed_ethane_opls.dihedrals[0].dihedral_type)
-        assert typed_ethane_opls.dihedrals[0].dihedral_type.parameters["k1"].units == u.Unit("kcal/mol")
+        assert typed_ethane_opls.dihedrals[0].dihedral_type.parameters[
+            "k1"
+        ].units == u.Unit("kcal/mol")
         # real units should be in: [g/mol, angstroms, fs, kcal/mol, kelvin, electon charge, ...]
         typed_ethane_opls.save("ethane.lammps", unit_style="real")
-        #real_top = Topology().load("ethane.lammps") # TODO: Reading suppor
-        #assert real_top.dihedrals[0].dihedral_type.parameters["k1"] == u.Unit("kcal/mol")
+        # real_top = Topology().load("ethane.lammps") # TODO: Reading suppor
+        # assert real_top.dihedrals[0].dihedral_type.parameters["k1"] == u.Unit("kcal/mol")
 
         # TODO: Check more units after reading back in
 
-
     # TODO: Test for warning handling
     def test_lammps_warnings(self, typed_ethane_opls):
-        with pytest.warns(UserWarning, match="Call to function write_lammpsdata is WIP."):
+        with pytest.warns(
+            UserWarning, match="Call to function write_lammpsdata is WIP."
+        ):
             """check for warning about WIP"""
             typed_ethane_opls.save("warning.lammps")
 
     # TODO: Test for error handling
     from gmso.exceptions import EngineIncompatibilityError
+
     def test_lammps_errors(self, typed_ethane):
         from gmso.exceptions import EngineIncompatibilityError
+
         with pytest.raises(EngineIncompatibilityError):
             typed_ethane.save("error.lammps", strict_potentials=True)

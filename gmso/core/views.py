@@ -149,6 +149,7 @@ class TopologyPotentialView:
         for j, potential in enumerate(self.yield_view()):
             if potential == item:
                 return j
+
     def _collect_potentials(self):
         """Collect potentials from the iterator"""
         for item in self.iterator:

@@ -189,7 +189,9 @@ class BaseTest:
     def typed_ethane_opls(self, typed_ethane):
         for dihedral in typed_ethane.dihedrals:
             dihedral.dihedral_type.name = "RyckaertBellemansTorsionPotential"
-        top = typed_ethane.convert_potential_styles({"dihedrals": "FourierTorsionPotential"})
+        top = typed_ethane.convert_potential_styles(
+            {"dihedrals": "FourierTorsionPotential"}
+        )
         return top
 
     @pytest.fixture
