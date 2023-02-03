@@ -414,12 +414,16 @@ def _dihedral_types_from_pmd(structure, dihedral_types_member_map=None):
 
         member_types = dihedral_types_member_map.get(id(dihedraltype))
 
+        ryckaert_bellemans_torsion_potential = lib["RyckaertBellemansTorsionPotential"]
+        name = ryckaert_bellemans_torsion_potential.name
+        expression = ryckaert_bellemans_torsion_potential.expression
+        variables = ryckaert_bellemans_torsion_potential.independent_variables
+
         top_dihedraltype = gmso.DihedralType(
+            name=name,
             parameters=dihedral_params,
-            expression="c0 * cos(phi)**0 + c1 * cos(phi)**1 + "
-            + "c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + "
-            + "c5 * cos(phi)**5",
-            independent_variables="phi",
+            expression=expression,
+            independent_variables=variables,
             member_types=member_types,
         )
         pmd_top_dihedraltypes[id(dihedraltype)] = top_dihedraltype
@@ -661,11 +665,15 @@ def _atom_types_from_gmso(top, structure, atom_map):
         )
         atype_element = element_by_atom_type(atom_type)
         atype_rmin = atype_sigma * 2 ** (1 / 6) / 2  # to rmin/2
+        if atom_type.mass:
+            atype_mass = atom_type.mass.to("amu").value
+        else:
+            atype_mass = atype_element.mass.to("amu").value
         # Create unique Parmed AtomType object
         atype = pmd.AtomType(
             atype_name,
             None,
-            atype_element.mass,
+            atype_mass,
             atype_element.atomic_number,
             atype_charge,
         )

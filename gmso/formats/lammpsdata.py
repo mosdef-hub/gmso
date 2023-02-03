@@ -32,7 +32,7 @@ from gmso.utils.decorators import mark_WIP
 
 @saves_as(".lammps", ".lammpsdata", ".data")
 @mark_WIP("Testing in progress")
-def write_lammpsdata(top, filename, atom_style="full", unit_style="real"):
+def write_lammpsdata(top, filename, atom_style="full", unit_style="real", strict_potentials=False, strict_units=False):
     """Output a LAMMPS data file.
 
     Outputs a LAMMPS data file in the 'full' atom style format.
@@ -49,6 +49,9 @@ def write_lammpsdata(top, filename, atom_style="full", unit_style="real"):
         Defines the style of atoms to be saved in a LAMMPS data file.
         The following atom styles are currently supported: 'full', 'atomic', 'charge', 'molecular'
         see http://lammps.sandia.gov/doc/atom_style.html for more information on atom styles.
+    strict : bool, optional, default False
+        Tells the writer how to treat conversions. If strict=False, then check for conversions
+        of unit styles in #TODO
 
     Notes
     -----
@@ -70,25 +73,38 @@ def write_lammpsdata(top, filename, atom_style="full", unit_style="real"):
     # TODO: Support various unit styles ["metal", "si", "cgs", "electron", "micro", "nano"]
     if unit_style not in ["real"]:
         raise ValueError(
-            'Atom style "{}" is invalid or is not currently supported'.format(
+            'Unit style "{}" is invalid or is not currently supported'.format(
                 unit_style
             )
         )
-    else:
-        # Use gmso unit packages to get into correct lammps formats
-        unit_maps = {"real": "TODO"}
-        #top = top.convert_potentials({"all": unit_maps[unit_style]})
+    # Use gmso unit packages to get into correct lammps formats
+    default_unit_maps = {"real": "TODO"}
+    default_parameter_maps = { # Add more as needed
+        "dihedrals":"OPLSTorsionPotential",
+        "angles":"HarmonicAnglePotential",
+        "bonds":"HarmonicBondPotential",
+        #"atoms":"LennardJonesPotential",
+        #"electrostatics":"CoulombicPotential"
+    }
 
-    # Check for use of correct potential forms for lammps writer
-    pot_types = _validate_compatibility(top)
+    # TODO: Use strict_x to validate depth of topology checking
+    if strict_units:
+        _validate_unit_compatibility(top, default_unit_maps[unit_style])
+    else:
+        top = _try_default_unit_conversions(top, default_unit_maps[unit_style])
+
+
+    if strict_potentials:
+        print("I'm strict about potential forms")
+        _validate_potential_compatibility(top)
+    else:
+        top = _try_default_potential_conversions(top, default_parameter_maps)
 
     # TODO: improve handling of various filenames
     path = Path(filename)
     if not path.parent.exists():
          msg = "Provided path to file that does not exist"
          raise FileNotFoundError(msg)
-
-    # TODO: More validating/preparing of top before writing stage
 
     with open(path, "w") as out_file:
         _write_header(out_file, top, atom_style)
@@ -415,21 +431,26 @@ def _accepted_potentials():
     harmonic_bond_potential = templates["HarmonicBondPotential"]
     harmonic_angle_potential = templates["HarmonicAnglePotential"]
     periodic_torsion_potential = templates["PeriodicTorsionPotential"]
-    opls_torsion_potential = templates["OPLSTorsionPotential"]
-    accepted_potentials = [
+    fourier_torsion_potential = templates["FourierTorsionPotential"]
+    accepted_potentialsList = [
         lennard_jones_potential,
         harmonic_bond_potential,
         harmonic_angle_potential,
         periodic_torsion_potential,
-        opls_torsion_potential,
+        fourier_torsion_potential,
     ]
-    return accepted_potentials
+    return accepted_potentialsList
 
 
-def _validate_compatibility(top):
-    """Check compatability of topology object with GROMACS TOP format."""
+def _validate_potential_compatibility(top):
+    """Check compatability of topology object potentials with LAMMPSDATA format."""
     pot_types = check_compatibility(top, _accepted_potentials())
     return pot_types
+
+def _validate_unit_compatibility(top, unitSet):
+    """Check compatability of topology object units with LAMMPSDATA format."""
+    # TODO: Check to make sure all units are in the correct format
+    return True
 
 # All writer worker function belows
 def _write_header(out_file, top, atom_style):
@@ -449,10 +470,14 @@ def _write_header(out_file, top, atom_style):
 
     # TODO: allow users to specify filter_by syntax
     out_file.write("\n{:d} atom types\n".format(len(top.atom_types(filter_by=pfilters.UNIQUE_NAME_CLASS))))
-    out_file.write("{:d} bond types\n".format(len(top.bond_types(filter_by=pfilters.UNIQUE_NAME_CLASS))))
-    out_file.write("{:d} angle types\n".format(len(top.angle_types(filter_by=pfilters.UNIQUE_NAME_CLASS))))
-    out_file.write("{:d} dihedral types\n".format(len(top.dihedral_types(filter_by=pfilters.UNIQUE_NAME_CLASS))))
-    out_file.write("{:d} improper types\n".format(len(top.improper_types(filter_by=pfilters.UNIQUE_NAME_CLASS))))
+    if top.n_bonds > 0:
+        out_file.write("{:d} bond types\n".format(len(top.bond_types(filter_by=pfilters.UNIQUE_NAME_CLASS))))
+    if top.n_angles > 0:
+        out_file.write("{:d} angle types\n".format(len(top.angle_types(filter_by=pfilters.UNIQUE_NAME_CLASS))))
+    if top.n_dihedrals > 0:
+        out_file.write("{:d} dihedral types\n".format(len(top.dihedral_types(filter_by=pfilters.UNIQUE_NAME_CLASS))))
+    if top.n_impropers > 0:
+        out_file.write("{:d} improper types\n".format(len(top.improper_types(filter_by=pfilters.UNIQUE_NAME_CLASS))))
 
     out_file.write("\n")
 
@@ -551,7 +576,7 @@ def _write_pairtypes(out_file, top):
     # TODO: Utilize unit styles and nonbonded equations properly
     # Pair coefficients
     test_atmtype = top.sites[0].atom_type
-    out_file.write(f"\nPair Coeffs #{test_atmtype.name}\n")
+    out_file.write(f"\nPair Coeffs # lj\n") # TODO: This should be pulled from the test_atmtype
     # TODO: use unit style specified for writer
     param_labels = map(lambda x: f"{x} ({test_atmtype.parameters[x].units})", test_atmtype.parameters)
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
@@ -616,9 +641,8 @@ def _write_angletypes(out_file, top):
 
 def _write_dihedraltypes(out_file, top):
     """Write out dihedrals to LAMMPS file."""
-    # TODO: Make sure to perform unit conversions
-    # TODO: Use any accepted lammps parameters
     test_dihtype = top.dihedrals[0].dihedral_type
+    print(test_dihtype.parameters)
     out_file.write(f"\nDihedral Coeffs #{test_dihtype.name}\n")
     param_labels = map(lambda x: f"{x} ({test_dihtype.parameters[x].units})", test_dihtype.parameters)
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
@@ -697,8 +721,27 @@ def _write_conn_data(out_file, top, connIter, connStr):
     # TODO: Allow for unit system passing
     # TODO: Validate that all connections are written in the correct order
     out_file.write(f"\n{connStr.capitalize()}\n\n")
+    indexList = list(map(id, getattr(top, connStr[:-1] + '_types')(filter_by=pfilters.UNIQUE_NAME_CLASS)))
+    print(f"Indexed list for {connStr} is {indexList}")
     for i, conn in enumerate(getattr(top, connStr)):
+        print(f"{connStr}: id:{id(conn.connection_type)} of form {conn.connection_type}")
         typeStr = f"{i+1:d}\t{getattr(top, connStr[:-1] + '_types')(filter_by=pfilters.UNIQUE_NAME_CLASS).equality_index(conn.connection_type) + 1:1}\t"
         indexStr = "\t".join(map(lambda x: str(top.sites.index(x)+1), conn.connection_members))
         out_file.write(typeStr + indexStr + "\n")
 
+def _try_default_potential_conversions(top, potentialsDict):
+    # TODO: Docstrings
+    return top.convert_potential_styles(potentialsDict)
+
+def _try_default_unit_conversions(top, unitSet):
+    # TODO: Docstrings
+    try:
+        return top # TODO: Remote this once implemented
+        top = top.convert_unit_styles(unitSet)
+    except:
+        raise ValueError(
+             'Unit style "{}" cannot be converted from units used in potential expressions. Check the forcefield for consisten units'.format(
+                 unit_style
+             )
+        )
+    return top

@@ -10,6 +10,20 @@ from gmso.utils.conversions import convert_kelvin_to_energy_units
 
 
 class TestKelvinToEnergy(BaseTest):
+    def test_convert_potential_styles(self, typed_ethane):
+        from sympy import sympify
+        rb_expr = sympify("c0 * cos(phi)**0 + c1 * cos(phi)**1 + c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + c5 * cos(phi)**5")
+        assert typed_ethane.dihedrals[0].dihedral_type.expression == rb_expr
+        for dihedral in typed_ethane.dihedrals:
+            dihedral.dihedral_type.name = "RyckaertBellemansTorsionPotential"
+        typed_ethane.convert_potential_styles({"dihedrals": "OPLSTorsionPotential"})
+        opls_expr = sympify(
+            "0.5 * k0 + 0.5 * k1 * (1 + cos(phi)) + 0.5 * k2 * (1 - cos(2*phi)) + \
+            0.5 * k3 * (1 + cos(3*phi)) + 0.5 * k4 * (1 - cos(4*phi))"
+        )
+        assert typed_ethane.dihedrals[0].dihedral_type.expression == opls_expr
+        assert typed_ethane.dihedrals[0].dihedral_type.name == "OPLSTorsionPotential"
+
     def test_K_to_kcal(self):
         input_value = 1 * u.Kelvin / u.nm**2
         new_value = convert_kelvin_to_energy_units(

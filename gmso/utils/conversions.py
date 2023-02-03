@@ -1,13 +1,99 @@
 """Module for standard conversions needed in molecular simulations."""
+import copy
+
 import sympy
 import unyt as u
 from unyt.dimensions import length, mass, time
+import numpy as np
+from functools import lru_cache
 
 import gmso
 from gmso.exceptions import GMSOError
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 
 
+
+@lru_cache(maxsize=128)
+def _constant_multiplier(expression1, expression2):
+    # TODO: Doc string
+    # TODO: Test outputs
+    # TODO: Check speed
+    try:
+        constant = sympy.cancel(expression1, expression)
+        if constant.is_integer:
+            return expression1 / constant
+    except:
+        return None
+
+sympy_conversionsList = [
+    _constant_multiplier
+]
+
+def _try_sympy_conversions(expression1, expression2):
+    # TODO: Doc string
+    # TODO: Test outputs
+    # TODO: Check speed
+    convertersList = []
+    for conversion in sympy_conversionsList:
+        convertersList.append(conversion(expression1, expression2))
+    completed_conversions = np.where(convertersList)[0]
+    if len(completed_conversions) > 0: # check to see if any conversions worked
+        return completed_conversion[0] # return first completed value
+
+def convert_topology_expressions(top, expressionMap={}):
+    """Convert from one parameter form to another.
+    Parameters
+    ----------
+    expressionMap : dict, default={}
+        map with keys of the potential type and the potential to change to
+
+    Examples
+    ________
+    # Convert from RB torsions to OPLS torsions
+    top.convert_expressions({"dihedrals": "OPLSTorsionPotential"})
+    """
+    # TODO: Raise errors
+
+    # Apply from predefined conversions or easy sympy conversions
+    from gmso.utils.conversions import convert_ryckaert_to_opls, convert_opls_to_ryckaert
+    conversions_map = {
+        ("OPLSTorsionPotential", "RyckaertBellemansTorsionPotential"): convert_opls_to_ryckaert,
+        ("RyckaertBellemansTorsionPotential", "OPLSTorsionPotential"): convert_ryckaert_to_opls,
+        ("RyckaertBellemansTorsionPotential", "FourierTorsionPotential"): convert_ryckaert_to_opls,
+    } # map of all accessible conversions currently supported
+
+    #top = copy.deepcopy(main_top) # TODO: Do we need this?
+    for conv in expressionMap:
+        # check all connections with these types for compatibility
+        for conn in getattr(top, conv):
+            current_expression = getattr(conn, conv[:-1] + "_type")
+            if current_expression.name == expressionMap[conv]: # check to see if we can skip this one
+                # TODO: Do something instead of just comparing the names
+                print("No change to dihedrals")
+                continue
+
+            # convert it using pre-defined conversion functions
+            conversion_from_conversion_toTuple = (current_expression.name, expressionMap[conv])
+            if conversion_from_conversion_toTuple in conversions_map: # Try mapped conversions
+                new_conn_type = conversions_map.get(conversion_from_conversion_toTuple)(current_expression)
+                setattr(conn, conv[:-1] + "_type", new_conn_type)
+                print("Default Conversions")
+                continue
+
+            # convert it using sympy expression conversion
+            default_conversted_connection = _try_sympy_conversions(*conversion_from_conversion_toTuple)
+            if default_conversted_connection: # try sympy conversions list
+                new_conn_type = default_converted_connection
+                setattr(conn, conv[:-1] + "_type", new_conn_type)
+                print("Sympy Conversions")
+
+    return top
+
+def convert_topology_units(top, unitSet):
+    # TODO: Take a unitSet and convert all units within it to a new function
+    return top
+
+@lru_cache(maxsize=128)
 def convert_opls_to_ryckaert(opls_connection_type):
     """Convert an OPLS dihedral to Ryckaert-Bellemans dihedral.
 
@@ -72,6 +158,7 @@ def convert_opls_to_ryckaert(opls_connection_type):
     return ryckaert_connection_type
 
 
+@lru_cache(maxsize=128)
 def convert_ryckaert_to_opls(ryckaert_connection_type):
     """Convert Ryckaert-Bellemans dihedral to OPLS.
 
@@ -83,7 +170,7 @@ def convert_ryckaert_to_opls(ryckaert_connection_type):
     ryckaert_bellemans_torsion_potential = templates[
         "RyckaertBellemansTorsionPotential"
     ]
-    opls_torsion_potential = templates["OPLSTorsionPotential"]
+    opls_torsion_potential = templates["FourierTorsionPotential"]
 
     valid_connection_type = False
     if (
@@ -119,7 +206,7 @@ def convert_ryckaert_to_opls(ryckaert_connection_type):
         )
 
     converted_params = {
-        "k0": 2.0 * (c0 + c1 + c2 + c3 + c4),
+        #"k0": 2.0 * (c0 + c1 + c2 + c3 + c4),
         "k1": (-2.0 * c1 - (3.0 / 2.0) * c3),
         "k2": (-c2 - c4),
         "k3": ((-1.0 / 2.0) * c3),

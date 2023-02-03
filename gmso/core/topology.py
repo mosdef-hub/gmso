@@ -1438,28 +1438,33 @@ class Topology(object):
         loader = LoadersRegistry.get_callable(filename.suffix)
         return loader(filename, **kwargs)
 
-    def convert_expressions(self, expressMap={}):
+    def convert_potential_styles(self, expressionMap={}):
         """Convert from one parameter form to another.
         Parameters
         ----------
-        expressMap : dict, default={}
+        expressionMap : dict, default={}
             map with keys of the potential type and the potential to change to
 
         Examples
         ________
         # Convert from RB torsions to OPLS torsions
-        top.convert_expressions({"dihedrals": "OPLSTorsionPotential"})
+        top.convert_potential_styles({"dihedrals": "OPLSTorsionPotential"})
         """
-        # TODO: Move most of this functionality to gmso.utils.conversions
-        # TODO: Raise errors
-        from gmso.utils.conversions import convert_ryckaert_to_opls, convert_opls_to_ryckaert
-        conversions_map = {
-            ("OPLSTorsionPotential", "RyckaertBellemansTorsionPotential"): convert_opls_to_ryckaert,
-            ("RyckaertBellemansTorsionPotential", "OPLSTorsionPotential"): convert_ryckaert_to_opls,
-        } #Map of all accessible conversions currently supported
-        for conv in expressMap:
-            for conn in getattr(self, conv):
-                current_expression = getattr(conn, conv[:-1] + "_type")
-                conversions = (current_expression.name, expressMap[conv])
-                new_conn_type = conversions_map.get(conversions)(current_expression)
-                setattr(conn, conv[:-1] + "_type", new_conn_type)
+        from gmso.utils.conversions import convert_topology_expressions
+
+        return convert_topology_expressions(self, expressionMap)
+
+    def convert_unit_styles(self, unitSet=set):
+        """Convert from one set of base units to another.
+        Parameters
+        ----------
+        unitSet : dict, default=set
+            set of base units to use for all expressions of the topology
+
+        Examples
+        ________
+        # TODO
+        """
+        from gmso.utils.conversions import convert_topology_units
+
+        return convert_topology_units(self, unitSet)
