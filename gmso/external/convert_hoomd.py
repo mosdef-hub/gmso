@@ -115,7 +115,7 @@ def to_hoomd_snapshot(
         shift_coords,
         u.unyt_array([lx, ly, lz]),
     )
-
+    _parse_pairs_information(gsd_snapshot, top)
     if top.n_bonds > 0:
         _parse_bond_information(gsd_snapshot, top)
     if top.n_angles > 0:
@@ -128,6 +128,37 @@ def to_hoomd_snapshot(
     return gsd_snapshot
 
 
+def _parse_pairs_information(
+    gsd_snapshot,
+    top,
+):
+    """Parse scaled pair types."""
+    pair_types = list()
+    pair_typeids = list()
+    pairs = list()
+
+    scaled_pairs = list()
+    for pair_type in _generate_pairs_list(top):
+        scaled_pairs.extend(pair_type)
+
+    for pair in scaled_pairs:
+        if pair[0].atom_type and pair[1].atom_type:
+            pair.sort(key=lambda site: site.atom_type.name)
+            pair_type = (pair[0].atom_type.name, pair[1].atom_type.name)
+        else:
+            pair.sort(key=lambda site: site.name)
+            pair_type = (pair[0].name, pair[1].name)
+        if pair_type not in pair_types:
+            pair_types.append(pair_type)
+        pair_typeids.append(pair_types.index(pair_type))
+        pairs.append((top.get_index(pair[0]), top.get_index(pair[1])))
+
+    gsd_snapshot.pairs.N = len(pairs)
+    gsd_snapshot.pairs.group = np.reshape(pairs, (-1, 2))
+    gsd_snapshot.pairs.types = pair_types
+    gsd_snapshot.pairs.typeid = pair_typeids
+
+
 def _parse_particle_information(
     gsd_snapshot,
     top,
@@ -136,6 +167,7 @@ def _parse_particle_information(
     shift_coords,
     box_lengths,
 ):
+    """Parse site information."""
     # Set up all require
     xyz = u.unyt_array([site.position for site in top.sites]).to(
         base_units["length"]
@@ -399,7 +431,13 @@ def _prepare_box_information(top):
     return lx, ly, lz, xy, xz, yz
 
 
-def to_hoomd_forcefield(top, nlist_buffer=0.4, base_units=None):
+def to_hoomd_forcefield(
+    top,
+    nlist_buffer=0.4,
+    r_cut=0,
+    ppp_kwargs={"resolution": (8, 8, 8), "order": 4},
+    base_units=None,
+):
     """Convert the potential portion of a typed GMSO to hoomd forces.
 
     Parameters
@@ -409,6 +447,8 @@ def to_hoomd_forcefield(top, nlist_buffer=0.4, base_units=None):
     nlist_buffer : float, optional, default=0.4
         Neighborlist buffer for simulation cell. Its unit is the same as that
         used to defined GMSO Topology Box.
+    r_cut : float
+        r_cut for the nonbonded forces.
     base_units : dict or str, optional, default=None
         The dictionary of base units to be converted to. Entries restricted to
         "energy", "length", and "mass". There is also option to used predefined
@@ -432,8 +472,14 @@ def to_hoomd_forcefield(top, nlist_buffer=0.4, base_units=None):
 
     # convert nonbonded potentials
     forces = {
-        "pairs": _parse_nonbonded_forces(
-            top, nlist_buffer, potential_types, potential_refs, base_units
+        "nonbonded": _parse_nonbonded_forces(
+            top,
+            nlist_buffer,
+            r_cut,
+            potential_types,
+            potential_refs,
+            ppp_kwargs,
+            base_units,
         ),
         "bonds": _parse_bond_forces(
             top,
@@ -474,61 +520,144 @@ def _validate_compatibility(top):
     periodic_torsion_potential = templates["PeriodicTorsionPotential"]
     opls_torsion_potential = templates["OPLSTorsionPotential"]
     rb_torsion_potential = templates["RyckaertBellemansTorsionPotential"]
-    accepted_potentials = [
+    accepted_potentials = (
         lennard_jones_potential,
         harmonic_bond_potential,
         harmonic_angle_potential,
         periodic_torsion_potential,
         opls_torsion_potential,
         rb_torsion_potential,
-    ]
+    )
     potential_types = check_compatibility(top, accepted_potentials)
     return potential_types
 
 
 def _parse_nonbonded_forces(
-    top, nlist_buffer, potential_types, potential_refs, base_units
+    top,
+    nlist_buffer,
+    r_cut,
+    potential_types,
+    potential_refs,
+    pppm_kwargs,
+    base_units,
 ):
     """Parse nonbonded forces."""
     # Set up helper methods to parse different nonbonded forces.
-    def _parse_lj(container, atypes, combining_rule):
-        """Parse LJ forces."""
-        for atype1, atype2 in itertools.combinations_with_replacement(
-            atypes, 2
-        ):
+    def _parse_coulombic(
+        top,
+        nlist,
+        scaling_factors,
+        resolution,
+        order,
+        r_cut,
+    ):
+        """Parse coulombic forces."""
+        charge_groups = any(
+            [site.charge.to_value(u.elementary_charge) for site in top.sites]
+        )
+        if not charge_groups:
+            print("No charged group detected, skipping electrostatics.")
+            return None
+        else:
+            coulombic = hoomd.md.long_range.pppm.make_pppm_coulomb_forces(
+                nlist=nlist, resolution=resolution, order=order, r_cut=r_cut
+            )
+
+        # Handle 1-2, 1-3, and 1-4 scaling
+        # TODO: Fiure out a more general way to do this and handle molecule scaling factors
+        special_coulombic = hoomd.md.special_pair.Coulomb()
+
+        # Use same method as to_hoomd_snapshot to generate pairs list
+        for i, pairs in enumerate(_generate_pairs_list(top)):
+            if scaling_factors[i] and pairs:
+                for pair in pairs:
+                    pair_name = (pair[0].atom_type.name, pair[1].atom_type.name)
+                    special_coulombic.params[pair_name] = dict(
+                        alpha=scaling_factors[i]
+                    )
+                    special_coulombic.r_cut[pair_name] = r_cut
+
+        return [*coulombic, special_coulombic]
+
+    def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
+        """Parse LJ forces and special pairs LJ forces."""
+        lj = hoomd.md.pair.LJ(nlist=nlist)
+        calculated_params = dict()
+        for pairs in itertools.combinations_with_replacement(atypes, 2):
+            pairs = list(pairs)
+            pairs.sort(key=lambda atype: atype.name)
+            type_name = (pairs[0].name, pairs[1].name)
             comb_epsilon = statistics.geometric_mean(
-                [atype1.parameters["epsilon"], atype2.parameters["epsilon"]]
+                [pairs[0].parameters["epsilon"], pairs[1].parameters["epsilon"]]
             )
             if top.combining_rule == "lorentz":
                 comb_sigma = np.mean(
-                    [atype1.parameters["sigma"], atype2.parameters["sigma"]]
+                    [pairs[0].parameters["sigma"], pairs[1].parameters["sigma"]]
                 )
             elif top.combining_rule == "geometric":
                 comb_sigma = statistics.geometric_mean(
-                    [atype1.parameters["sigma"], atype2.parameters["sigma"]]
+                    [pairs[0].parameters["sigma"], pairs[1].parameters["sigma"]]
                 )
             else:
                 raise ValueError(
                     f"Invalid combining rule provided ({combining_rule})"
                 )
 
-            container.params[(atype1.name, atype2.name)] = {
+            calculated_params[type_name] = {
                 "sigma": comb_sigma,
                 "epsilon": comb_epsilon,
             }
+            lj.params[type_name] = calculated_params[type_name]
+            lj.r_cut[(type_name)] = r_cut
 
-        return container
+        # Handle 1-2, 1-3, and 1-4 scaling
+        # TODO: Fiure out a more general way to do this and handle molecule scaling factors
+        special_lj = hoomd.md.special_pair.LJ()
 
-    def _parse_buckingham(container, atypes):
+        for i, pairs in enumerate(_generate_pairs_list(top)):
+            if scaling_factors[i] and pairs:
+                for pair in pairs:
+                    if (
+                        pair[0].atom_type in atypes
+                        and pair[1].atom_type in atypes
+                    ):
+                        pair.sort(key=lambda site: site.atom_type.name)
+                        pair_name = (
+                            pair[0].atom_type.name,
+                            pair[1].atom_type.name,
+                        )
+                        scaled_epsilon = (
+                            scaling_factors[i]
+                            * calculated_params[pair_name]["epsilon"]
+                        )
+                        scaled_sigma = (
+                            scaling_factors[i]
+                            * calculated_params[pair_name]["sigma"]
+                        )
+                        special_lj.params[pair_name] = {
+                            "sigma": scaled_sigma,
+                            "epsilon": scaled_epsilon,
+                        }
+                        special_lj.r_cut[pair_name] = r_cut
+
+        return [lj, special_lj]
+
+    def _parse_buckingham(
+        top, atypes, combining_rule, r_cut, nlist, scaling_factors
+    ):
         return None
 
-    def _parse_lj0804(container, atypes):
+    def _parse_lj0804(
+        top, atypes, combining_rule, r_cut, nlist, scaling_factors
+    ):
         return None
 
-    def _parse_lj1208(container, atypes):
+    def _parse_lj1208(
+        top, atypes, combining_rule, r_cut, nlist, scaling_factors
+    ):
         return None
 
-    def _parse_mie(container, atypes):
+    def _parse_mie(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
         return None
 
     unique_atypes = top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS)
@@ -548,33 +677,50 @@ def _parse_nonbonded_forces(
             "expected_parameters_dimensions"
         ]
         groups[group] = _convert_params_units(
-            groups[group], expected_units_dim, base_units
+            groups[group],
+            expected_units_dim,
+            base_units,
         )
 
-    atype_group_map = {
-        "LennardJonesPotential": {
-            "container": hoomd.md.pair.LJ,
-            "parser": _parse_lj,
-        },
-        "BuckinghamPotential": {
-            "container": hoomd.md.pair.Buckingham,
-            "parser": _parse_buckingham,
-        },
-        "MiePotential": {"container": hoomd.md.pair.Mie, "parser": _parse_mie},
+    atype_parsers = {
+        "LennardJonesPotential": _parse_lj,
+        "BuckinghamPotential": _parse_buckingham,
+        "MiePotential": _parse_mie,
     }
 
-    nlist = hoomd.md.nlist.Cell(exclusions=["bond", "1-3"], buffer=nlist_buffer)
+    # Use Topology scaling factor to determine exclusion
+    # TODO: Use molecule scaling factor
+    nb_scalings, coulombic_scalings = top.scaling_factors
+    exclusions = list()
+    for i in range(len(nb_scalings)):
+        if i == 0:
+            exclusions.append("bond")
+        else:
+            exclusions.append(f"1-{i+2}")
+    nlist = hoomd.md.nlist.Cell(exclusions=exclusions, buffer=nlist_buffer)
 
     nbonded_forces = list()
+    nbonded_forces.extend(
+        _parse_coulombic(
+            top=top,
+            nlist=nlist,
+            scaling_factors=coulombic_scalings,
+            resolution=pppm_kwargs["resolution"],
+            order=pppm_kwargs["order"],
+            r_cut=r_cut,
+        )
+    )
     for group in groups:
-        nbonded_forces.append(
-            atype_group_map[group]["parser"](
-                container=atype_group_map[group]["container"](nlist=nlist),
+        nbonded_forces.extend(
+            atype_parsers[group](
+                top=top,
                 atypes=groups[group],
                 combining_rule=top.combining_rule,
+                r_cut=r_cut,
+                nlist=nlist,
+                scaling_factors=nb_scalings,
             )
         )
-
     return nbonded_forces
 
 
@@ -879,3 +1025,35 @@ def _convert_params_units(potentials, expected_units_dim, base_units):
         potential.parameters = converted_params
         converted_potentials.append(potential)
     return converted_potentials
+
+
+def _generate_pairs_list(top):
+    """Return a list of pairs that have non-zero scaling factor."""
+    nb_scalings, coulombic_scalings = top.scaling_factors
+
+    pairs12 = list()
+    if nb_scalings[0] or coulombic_scalings[0]:
+        for bond in top.bonds:
+            pairs12.append(sorted(bond.connection_members))
+
+    pairs13 = list()
+    if nb_scalings[1] or coulombic_scalings[1]:
+        for angle in top.angles:
+            pairs13.append(
+                sorted(
+                    [angle.connection_members[0], angle.connection_members[2]]
+                )
+            )
+
+    pairs14 = list()
+    if nb_scalings[2] or coulombic_scalings[2]:
+        for dihedral in top.dihedrals:
+            pairs14.append(
+                sorted(
+                    [
+                        dihedral.connection_members[0],
+                        dihedral.connection_members[-1],
+                    ]
+                )
+            )
+    return pairs12, pairs13, pairs14
