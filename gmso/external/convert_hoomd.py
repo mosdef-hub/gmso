@@ -12,7 +12,7 @@ import numpy as np
 import unyt as u
 from unyt.array import allclose_units
 
-from gmso.core.bond import Bond
+import gmso
 from gmso.core.views import PotentialFilters
 from gmso.exceptions import NotYetImplementedWarning
 from gmso.formats.formats_registry import saves_as
@@ -23,7 +23,11 @@ from gmso.utils.conversions import (
 )
 from gmso.utils.geometry import coord_shift
 from gmso.utils.io import has_gsd, has_hoomd
-from gmso.utils.sorting import natural_sort
+from gmso.utils.sorting import (
+    natural_sort,
+    sort_connection_members,
+    sort_member_types,
+)
 
 if has_gsd:
     import gsd.hoomd
@@ -42,6 +46,128 @@ AKMA_UNITS = {
     "length": u.angstrom,
     "mass": u.g / u.mol,  # aka amu
 }
+
+
+def to_gsd_snapshot(
+    top,
+    base_units=None,
+    rigid_bodies=None,
+    shift_coords=True,
+):
+    """Create a gsd.snapshot objcet (HOOMD v3 default data format).
+
+    The gsd snapshot is molecular structure of HOOMD-Blue. This file
+    can be used as a starting point for a HOOMD-Blue simulation, for analysis,
+    and for visualization in various tools.
+
+    Parameters
+    ----------
+    top : gmso.Topology
+        gmso.Topology object
+    filename : str
+        Path of the output file.
+    base_units : dict, optinoal, default=None
+        The dictionary of base units to be converted to. Entries restricted to
+        "energy", "length", and "mass". There is also option to used predefined
+        unit systems ("MD" or "AKMA" provided as string). If None is provided,
+        this method will perform no units conversion.
+    rigid_bodies : list of int, optional, default=None
+        List of rigid body information. An integer value is required for each
+        atom corresponding to the index of the rigid body the particle is to be
+        associated with. A value of None indicates the atom is not part of a
+        rigid body.
+    shift_coords : bool, optional, default=True
+        Shift coordinates from (0, L) to (-L/2, L/2) if necessary.
+    write_special_pairs : bool, optional, default=True
+        Writes out special pair information necessary to correctly use the OPLS
+        fudged 1,4 interactions in HOOMD.
+
+    Notes
+    -----
+    Force field parameters are not written to the GSD file and must be included
+    manually in a HOOMD input script. Work on a HOOMD plugin is underway to
+    read force field parameters from a Foyer XML file.
+
+    """
+    base_units = _validate_base_units(base_units, top)
+    gsd_snapshot = gsd.hoomd.Snapshot()
+
+    gsd_snapshot.configuration.step = 0
+    gsd_snapshot.configuration.dimensions = 3
+
+    # Write box information
+    (lx, ly, lz, xy, xz, yz) = _prepare_box_information(top)
+
+    lx = lx.to(base_units["length"])
+    ly = ly.to(base_units["length"])
+    lz = lz.to(base_units["length"])
+
+    gsd_snapshot.configuration.box = np.array([lx, ly, lz, xy, xz, yz])
+
+    warnings.warn(
+        "Only writing particle, bond, angle, proper and improper dihedral information."
+        "Special pairs are not currently written to GSD files",
+        NotYetImplementedWarning,
+    )
+
+    _parse_particle_information(
+        gsd_snapshot,
+        top,
+        base_units,
+        rigid_bodies,
+        shift_coords,
+        u.unyt_array([lx, ly, lz]),
+    )
+    _parse_pairs_information(gsd_snapshot, top)
+    if top.n_bonds > 0:
+        _parse_bond_information(gsd_snapshot, top)
+    if top.n_angles > 0:
+        _parse_angle_information(gsd_snapshot, top)
+    if top.n_dihedrals > 0:
+        _parse_dihedral_information(gsd_snapshot, top)
+    if top.n_impropers > 0:
+        _parse_improper_information(gsd_snapshot, top)
+
+    return gsd_snapshot
+
+
+def _parse_pairs_information(
+    snapshot,
+    top,
+):
+    """Parse scaled pair types."""
+    pair_types = list()
+    pair_typeids = list()
+    pairs = list()
+
+    scaled_pairs = list()
+    for pair_type in _generate_pairs_list(top):
+        scaled_pairs.extend(pair_type)
+
+    for pair in scaled_pairs:
+        if pair[0].atom_type and pair[1].atom_type:
+            pair.sort(key=lambda site: site.atom_type.name)
+            pair_type = "-".join(
+                [pair[0].atom_type.name, pair[1].atom_type.name]
+            )
+        else:
+            pair.sort(key=lambda site: site.name)
+            pair_type = "-".join([(pair[0].name, pair[1].name)])
+        if pair_type not in pair_types:
+            pair_types.append(pair_type)
+        pair_typeids.append(pair_types.index(pair_type))
+        pairs.append((top.get_index(pair[0]), top.get_index(pair[1])))
+
+    if isinstance(snapshot, hoomd.Snapshot):
+        snapshot.pairs.N = len(pairs)
+        snapshot.pairs.group[:] = np.reshape(pairs, (-1, 2))
+        snapshot.pairs.types = pair_types
+        snapshot.pairs.typeid[:] = pair_typeids
+    elif isinstance(snapshot, gsd.hoomd.Snapshot):
+        snapshot.pairs.N = len(pairs)
+        snapshot.pairs.group = np.reshape(pairs, (-1, 2))
+        snapshot.pairs.types = pair_types
+        snapshot.pairs.typeid = pair_typeids
 
 
 def to_hoomd_snapshot(
@@ -86,11 +212,7 @@ def to_hoomd_snapshot(
 
     """
     base_units = _validate_base_units(base_units, top)
-
-    gsd_snapshot = gsd.hoomd.Snapshot()
-
-    gsd_snapshot.configuration.step = 0
-    gsd_snapshot.configuration.dimensions = 3
+    hoomd_snapshot = hoomd.Snapshot()
 
     # Write box information
     (lx, ly, lz, xy, xz, yz) = _prepare_box_information(top)
@@ -99,7 +221,9 @@ def to_hoomd_snapshot(
     ly = ly.to(base_units["length"])
     lz = lz.to(base_units["length"])
 
-    gsd_snapshot.configuration.box = np.array([lx, ly, lz, xy, xz, yz])
+    hoomd_snapshot.configuration.box = hoomd.Box(
+        Lx=lx, Ly=ly, Lz=lz, xy=xy, xz=xz, yz=yz
+    )
 
     warnings.warn(
         "Only writing particle, bond, angle, proper and improper dihedral information."
@@ -108,59 +232,29 @@ def to_hoomd_snapshot(
     )
 
     _parse_particle_information(
-        gsd_snapshot,
+        hoomd_snapshot,
         top,
         base_units,
         rigid_bodies,
         shift_coords,
         u.unyt_array([lx, ly, lz]),
     )
-    _parse_pairs_information(gsd_snapshot, top)
+    _parse_pairs_information(hoomd_snapshot, top)
     if top.n_bonds > 0:
-        _parse_bond_information(gsd_snapshot, top)
+        _parse_bond_information(hoomd_snapshot, top)
     if top.n_angles > 0:
-        _parse_angle_information(gsd_snapshot, top)
+        _parse_angle_information(hoomd_snapshot, top)
     if top.n_dihedrals > 0:
-        _parse_dihedral_information(gsd_snapshot, top)
+        _parse_dihedral_information(hoomd_snapshot, top)
     if top.n_impropers > 0:
-        _parse_improper_information(gsd_snapshot, top)
+        _parse_improper_information(hoomd_snapshot, top)
 
-    return gsd_snapshot
-
-
-def _parse_pairs_information(
-    gsd_snapshot,
-    top,
-):
-    """Parse scaled pair types."""
-    pair_types = list()
-    pair_typeids = list()
-    pairs = list()
-
-    scaled_pairs = list()
-    for pair_type in _generate_pairs_list(top):
-        scaled_pairs.extend(pair_type)
-
-    for pair in scaled_pairs:
-        if pair[0].atom_type and pair[1].atom_type:
-            pair.sort(key=lambda site: site.atom_type.name)
-            pair_type = (pair[0].atom_type.name, pair[1].atom_type.name)
-        else:
-            pair.sort(key=lambda site: site.name)
-            pair_type = (pair[0].name, pair[1].name)
-        if pair_type not in pair_types:
-            pair_types.append(pair_type)
-        pair_typeids.append(pair_types.index(pair_type))
-        pairs.append((top.get_index(pair[0]), top.get_index(pair[1])))
-
-    gsd_snapshot.pairs.N = len(pairs)
-    gsd_snapshot.pairs.group = np.reshape(pairs, (-1, 2))
-    gsd_snapshot.pairs.types = pair_types
-    gsd_snapshot.pairs.typeid = pair_typeids
+    hoomd_snapshot.wrap()
+    return hoomd_snapshot
 
 
 def _parse_particle_information(
-    gsd_snapshot,
+    snapshot,
     top,
     base_units,
     rigid_bodies,
@@ -182,13 +276,12 @@ def _parse_particle_information(
     ]
     unique_types = sorted(list(set(types)))
     typeids = np.array([unique_types.index(t) for t in types])
-
     masses = list()
     charges = list()
     for site in top.sites:
         masses.append(site.mass if site.mass else 1 * base_units["mass"])
         charges.append(site.charge if site.charge else 0 * u.elementary_charge)
-    masses = u.unyt_array(masses).to(base_units["mass"])
+    masses = u.unyt_array(masses).in_units(base_units["mass"]).value
 
     """
     Permittivity of free space = 2.39725e-4 e^2/((kcal/mol)(angstrom)),
@@ -203,16 +296,25 @@ def _parse_particle_information(
         u.elementary_charge**2 / (base_units["energy"] * base_units["length"])
     )
     charge_factor = (
-        4.0 * np.pi * e0 * 1 * base_units["length"] * 1 * base_units["energy"]
-    ) ** 2
+        4.0 * np.pi * e0 * base_units["length"] * base_units["energy"]
+    ) ** 0.5
 
-    gsd_snapshot.particles.N = top.n_sites
-    gsd_snapshot.particles.position = xyz.in_units(base_units["length"]).value
-    gsd_snapshot.particles.types = sorted((set(types)))
-    gsd_snapshot.particles.typeid = typeids
-    gsd_snapshot.particles.mass = masses.in_units(base_units["mass"]).value
-    gsd_snapshot.particles.charge = charges / charge_factor
-
+    if isinstance(snapshot, hoomd.Snapshot):
+        snapshot.particles.N = top.n_sites
+        snapshot.particles.types = unique_types
+        snapshot.particles.position[0:] = xyz.in_units(
+            base_units["length"]
+        ).value
+        snapshot.particles.typeid[0:] = typeids
+        snapshot.particles.mass[0:] = masses
+        snapshot.particles.charge[0:] = charges / charge_factor
+    elif isinstance(snapshot, gsd.hoomd.Snapshot):
+        snapshot.particles.N = top.n_sites
+        snapshot.particles.types = unique_types
+        snapshot.particles.position = xyz.in_units(base_units["length"]).value
+        snapshot.particles.typeid = typeids
+        snapshot.particles.mass = masses
+        snapshot.particles.charge = charges / charge_factor
     if rigid_bodies:
         warnings.warn(
             "Rigid bodies detected, but not yet implemented for GSD",
@@ -220,45 +322,54 @@ def _parse_particle_information(
         )
 
 
-def _parse_bond_information(gsd_snapshot, top):
+def _parse_bond_information(snapshot, top):
     """Write the bonds in the system.
 
     Parameters
     ----------
-    gsd_snapshot :
-        The file object of the GSD file being written
+    snapshot :
+        The gsd.hoomd.Snapshot or hoomd.Snapshot object
     top : gmso.Topology
         Topology object holding system information
 
     """
-    gsd_snapshot.bonds.N = top.n_bonds
+    snapshot.bonds.N = top.n_bonds
     warnings.warn(f"{top.n_bonds} bonds detected")
     bond_groups = []
     bond_typeids = []
     bond_types = []
 
     for bond in top.bonds:
-        t1, t2 = list(bond.connection_members)
-        if all([t1.atom_type, t2.atom_type]):
-            _t1 = t1.atom_type.name
-            _t2 = t2.atom_type.name
+        if all([site.atom_type for site in bond.connection_members]):
+            connection_members = sort_connection_members(bond, "atom_type")
+            bond_type = "-".join(
+                [site.atom_type.name for site in connection_members]
+            )
         else:
-            _t1 = t1.name
-            _t2 = t2.nam
-        _t1, _t2 = sorted([_t1, _t2], key=lambda x: x)
-        bond_type = "-".join((_t1, _t2))
+            connection_members = sort_connection_members(bond, "name")
+            bond_type = "-".join([site.name for site in connection_members])
+
         bond_types.append(bond_type)
-        bond_groups.append(sorted([top.sites.index(t1), top.sites.index(t2)]))
+        bond_groups.append(
+            tuple(top.get_index(site) for site in connection_members)
+        )
 
     unique_bond_types = list(set(bond_types))
     bond_typeids = [unique_bond_types.index(i) for i in bond_types]
-    gsd_snapshot.bonds.types = unique_bond_types
-    gsd_snapshot.bonds.typeid = bond_typeids
-    gsd_snapshot.bonds.group = bond_groups
+
+    if isinstance(snapshot, hoomd.Snapshot):
+        snapshot.bonds.types = unique_bond_types
+        snapshot.bonds.typeid[0:] = bond_typeids
+        snapshot.bonds.group[0:] = bond_groups
+    elif isinstance(snapshot, gsd.hoomd.Snapshot):
+        snapshot.bonds.types = unique_bond_types
+        snapshot.bonds.typeid = bond_typeids
+        snapshot.bonds.group = bond_groups
+
     warnings.warn(f"{len(unique_bond_types)} unique bond types detected")
 
 
-def _parse_angle_information(gsd_snapshot, top):
+def _parse_angle_information(snapshot, top):
     """Write the angles in the system.
 
     Parameters
@@ -269,40 +380,44 @@ def _parse_angle_information(gsd_snapshot, top):
         Topology object holding system information
 
     """
-    gsd_snapshot.angles.N = top.n_angles
+    snapshot.angles.N = top.n_angles
     unique_angle_types = set()
     angle_typeids = []
     angle_groups = []
     angle_types = []
 
     for angle in top.angles:
-        t1, t2, t3 = list(angle.connection_members)
-        if all([t1.atom_type, t2.atom_type, t3.atom_type]):
-            _t1, _t3 = sorted(
-                [t1.atom_type.name, t3.atom_type.name], key=natural_sort
+        if all([site.atom_type for site in angle.connection_members]):
+            connection_members = sort_connection_members(angle, "atom_type")
+            angle_type = "-".join(
+                [site.atom_type.name for site in connection_members]
             )
-            _t2 = t2.atom_type.name
         else:
-            _t1, _t3 = sorted([t1.name, t3.name], key=natural_sort)
-            _t2 = t2.name
+            connection_members = sort_connection_members(angle, "name")
+            angle_type = "-".join([site.name for site in connection_members])
 
-        angle_type = "-".join((_t1, _t2, _t3))
         angle_types.append(angle_type)
         angle_groups.append(
-            (top.sites.index(t1), top.sites.index(t2), top.sites.index(t3))
+            tuple(top.get_index(site) for site in connection_members)
         )
 
     unique_angle_types = list(set(angle_types))
     angle_typeids = [unique_angle_types.index(i) for i in angle_types]
-    gsd_snapshot.angles.types = unique_angle_types
-    gsd_snapshot.angles.typeid = angle_typeids
-    gsd_snapshot.angles.group = angle_groups
+
+    if isinstance(snapshot, hoomd.Snapshot):
+        snapshot.angles.types = unique_angle_types
+        snapshot.angles.typeid[0:] = angle_typeids
+        snapshot.angles.group[0:] = np.reshape(angle_groups, (-1, 3))
+    elif isinstance(snapshot, gsd.hoomd.Snapshot):
+        snapshot.angles.types = unique_angle_types
+        snapshot.angles.typeid = angle_typeids
+        snapshot.angles.group = np.reshape(angle_groups, (-1, 3))
 
     warnings.warn(f"{top.n_angles} angles detected")
     warnings.warn(f"{len(unique_angle_types)} unique angle types detected")
 
 
-def _parse_dihedral_information(gsd_snapshot, top):
+def _parse_dihedral_information(snapshot, top):
     """Write the dihedrals in the system.
 
     Parameters
@@ -313,43 +428,36 @@ def _parse_dihedral_information(gsd_snapshot, top):
         Topology object holding system information
 
     """
-    gsd_snapshot.dihedrals.N = top.n_dihedrals
+    snapshot.dihedrals.N = top.n_dihedrals
     dihedral_groups = []
     dihedral_types = []
 
     for dihedral in top.dihedrals:
-        t1, t2, t3, t4 = list(dihedral.connection_members)
-        if all([t.atom_type for t in [t1, t2, t3, t4]]):
-            _t1, _t4 = sorted(
-                [t1.atom_type.name, t4.atom_type.name], key=natural_sort
+        if all([site.atom_type for site in dihedral.connection_members]):
+            connection_members = sort_connection_members(dihedral, "atom_type")
+            dihedral_type = "-".join(
+                [site.atom_type.name for site in connection_members]
             )
-            _t3 = t3.atom_type.name
-            _t2 = t2.atom_type.name
         else:
-            _t1, _t4 = sorted([t1.name, t4.name], key=natural_sort)
-            _t2 = t2.name
-            _t3 = t3.name
-
-        if [_t2, _t3] == sorted([_t2, _t3], key=natural_sort):
-            dihedral_type = "-".join((_t1, _t2, _t3, _t4))
-        else:
-            dihedral_type = "-".join((_t4, _t3, _t2, _t1))
+            connection_members = sort_connection_members(dihedral, "name")
+            dihedral_type = "-".join([site.name for site in connection_members])
 
         dihedral_types.append(dihedral_type)
         dihedral_groups.append(
-            (
-                top.sites.index(t1),
-                top.sites.index(t2),
-                top.sites.index(t3),
-                top.sites.index(t4),
-            )
+            tuple(top.get_index(site) for site in connection_members)
         )
 
     unique_dihedral_types = list(set(dihedral_types))
     dihedral_typeids = [unique_dihedral_types.index(i) for i in dihedral_types]
-    gsd_snapshot.dihedrals.types = unique_dihedral_types
-    gsd_snapshot.dihedrals.typeid = dihedral_typeids
-    gsd_snapshot.dihedrals.group = dihedral_groups
+
+    if isinstance(snapshot, hoomd.Snapshot):
+        snapshot.dihedrals.types = unique_dihedral_types
+        snapshot.dihedrals.typeid[0:] = dihedral_typeids
+        snapshot.dihedrals.group[0:] = np.reshape(dihedral_groups, (-1, 4))
+    elif isinstance(snapshot, gsd.hoomd.Snapshot):
+        snapshot.dihedrals.types = unique_dihedral_types
+        snapshot.dihedrals.typeid = dihedral_typeids
+        snapshot.dihedrals.group = np.reshape(dihedral_groups, (-1, 4))
 
     warnings.warn(f"{top.n_dihedrals} dihedrals detected")
     warnings.warn(
@@ -357,54 +465,47 @@ def _parse_dihedral_information(gsd_snapshot, top):
     )
 
 
-def _parse_improper_information(gsd_snapshot, top):
+def _parse_improper_information(snapshot, top):
     """Write the dihedrals in the system.
 
     Parameters
     ----------
-    gsd_snapshot :
+    snapshot :
         The file object of the GSD file being written
     top : gmso.Topology
         Topology object holding system information
 
     """
-    gsd_snapshot.impropers.N = top.n_impropers
+    snapshot.impropers.N = top.n_impropers
     improper_groups = []
     improper_types = []
 
     for improper in top.impropers:
-        t1, t2, t3, t4 = list(improper.connection_members)
-        if all([t.atom_type for t in [t1, t2, t3, t4]]):
-            _t1, _t4 = sorted(
-                [t1.atom_type.name, t4.atom_type.name], key=natural_sort
+        if all([site.atom_type for site in improper.connection_members]):
+            connection_members = sort_connection_members(improper, "atom_type")
+            improper_type = "-".join(
+                [site.atom_type.name for site in connection_members]
             )
-            _t3 = t3.atom_type.name
-            _t2 = t2.atom_type.name
         else:
-            _t1, _t4 = sorted([t1.name, t4.name], key=natural_sort)
-            _t2 = t2.name
-            _t3 = t3.name
-
-        if [_t2, _t3] == sorted([_t2, _t3], key=natural_sort):
-            improper_type = "-".join((_t1, _t2, _t3, _t4))
-        else:
-            improper_type = "-".join((_t4, _t3, _t2, _t1))
+            connection_members = sort_connection_members(improper, "name")
+            improper_type = "-".join([site.name for site in connection_members])
 
         improper_types.append(improper_type)
         improper_groups.append(
-            (
-                top.sites.index(t1),
-                top.sites.index(t2),
-                top.sites.index(t3),
-                top.sites.index(t4),
-            )
+            tuple(top.get_index(site) for site in connection_members)
         )
 
     unique_improper_types = list(set(improper_types))
     improper_typeids = [unique_improper_types.index(i) for i in improper_types]
-    gsd_snapshot.impropers.types = unique_improper_types
-    gsd_snapshot.impropers.typeid = improper_typeids
-    gsd_snapshot.impropers.group = improper_groups
+
+    if isinstance(snapshot, hoomd.Snapshot):
+        snapshot.impropers.types = unique_improper_types
+        snapshot.impropers.typeid[0:] = improper_typeids
+        snapshot.impropers.group[0:] = np.reshape(improper_groups, (-1, 4))
+    elif isinstance(snapshot, gsd.hoomd.Snapshot):
+        snapshot.impropers.types = unique_improper_types
+        snapshot.impropers.typeid[0:] = improper_typeids
+        snapshot.impropers.group[0:] = np.reshape(improper_groups, (-1, 4))
 
     warnings.warn(f"{top.n_impropers} impropers detected")
     warnings.warn(
@@ -435,7 +536,7 @@ def to_hoomd_forcefield(
     top,
     nlist_buffer=0.4,
     r_cut=0,
-    ppp_kwargs={"resolution": (8, 8, 8), "order": 4},
+    pppm_kwargs={"resolution": (8, 8, 8), "order": 4},
     base_units=None,
 ):
     """Convert the potential portion of a typed GMSO to hoomd forces.
@@ -478,7 +579,7 @@ def to_hoomd_forcefield(
             r_cut,
             potential_types,
             potential_refs,
-            ppp_kwargs,
+            pppm_kwargs,
             base_units,
         ),
         "bonds": _parse_bond_forces(
@@ -571,7 +672,9 @@ def _parse_nonbonded_forces(
         for i, pairs in enumerate(_generate_pairs_list(top)):
             if scaling_factors[i] and pairs:
                 for pair in pairs:
-                    pair_name = (pair[0].atom_type.name, pair[1].atom_type.name)
+                    pair_name = "-".join(
+                        [pair[0].atom_type.name, pair[1].atom_type.name]
+                    )
                     special_coulombic.params[pair_name] = dict(
                         alpha=scaling_factors[i]
                     )
@@ -621,24 +724,21 @@ def _parse_nonbonded_forces(
                         pair[0].atom_type in atypes
                         and pair[1].atom_type in atypes
                     ):
+                        adjscale = scaling_factors[i]
                         pair.sort(key=lambda site: site.atom_type.name)
                         pair_name = (
                             pair[0].atom_type.name,
                             pair[1].atom_type.name,
                         )
                         scaled_epsilon = (
-                            scaling_factors[i]
-                            * calculated_params[pair_name]["epsilon"]
+                            adjscale * calculated_params[pair_name]["epsilon"]
                         )
-                        scaled_sigma = (
-                            scaling_factors[i]
-                            * calculated_params[pair_name]["sigma"]
-                        )
-                        special_lj.params[pair_name] = {
-                            "sigma": scaled_sigma,
+                        sigma = calculated_params[pair_name]["sigma"]
+                        special_lj.params["-".join(pair_name)] = {
+                            "sigma": sigma,
                             "epsilon": scaled_epsilon,
                         }
-                        special_lj.r_cut[pair_name] = r_cut
+                        special_lj.r_cut["-".join(pair_name)] = r_cut
 
         return [lj, special_lj]
 
@@ -730,7 +830,8 @@ def _parse_bond_forces(top, potential_types, potential_refs, base_units):
     def _parse_harmonic(container, btypes):
         for btype in btypes:
             # TODO: Unit conversion
-            container.params["-".join(btype.member_types)] = {
+            member_types = sort_member_types(btype)
+            container.params["-".join(member_types)] = {
                 "k": btype.parameters["k"],
                 "r0": btype.parameters["r_eq"],
             }
@@ -776,8 +877,8 @@ def _parse_angle_forces(top, potential_types, potential_refs, base_units):
 
     def _parse_harmonic(container, agtypes):
         for agtype in agtypes:
-            # TODO: Unit conversion
-            container.params["-".join(agtype.member_types)] = {
+            member_types = sort_member_types(agtype)
+            container.params["-".join(member_types)] = {
                 "k": agtype.parameters["k"],
                 "t0": agtype.parameters["theta_eq"],
             }
@@ -794,7 +895,7 @@ def _parse_angle_forces(top, potential_types, potential_refs, base_units):
         else:
             groups[group].append(agtype)
 
-    base_units["angle"] = u.degree
+    base_units["angle"] = u.radian
     for group in groups:
         expected_units_dim = potential_refs[group][
             "expected_parameters_dimensions"
@@ -826,8 +927,8 @@ def _parse_dihedral_forces(top, potential_types, potential_refs, base_units):
 
     def _parse_periodic(container, dtypes):
         for dtype in dtypes:
-            # TODO: Unit conversion
-            container.params["-".join(dtype.member_types)] = {
+            member_types = sort_member_types(dtype)
+            container.params["-".join(member_types)] = {
                 "k": dtype.parameters["k"],
                 "d": 1,
                 "n": dtype.parameters["n"],
@@ -837,10 +938,9 @@ def _parse_dihedral_forces(top, potential_types, potential_refs, base_units):
 
     def _parse_opls(container, dtypes):
         for dtype in dtypes:
-            # TODO: Unit conversion
             # TODO: The range of ks is mismatched (GMSO go from k0 to k5)
             # May need to do a check that k0 == k5 == 0 or raise a warning
-            container.params[dtype.member_types] = {
+            container.params["-".join(dtype.member_types)] = {
                 "k1": dtype.parameters["k1"],
                 "k2": dtype.parameters["k2"],
                 "k3": dtype.parameters["k3"],
@@ -854,10 +954,10 @@ def _parse_dihedral_forces(top, potential_types, potential_refs, base_units):
         )
         for dtype in dtypes:
             opls = convert_ryckaert_to_opls(dtype)
-            # TODO: Unit conversion
+            member_types = sort_member_types(dtype)
             # TODO: The range of ks is mismatched (GMSO go from k0 to k5)
             # May need to do a check that k0 == k5 == 0 or raise a warning
-            container.params["-".join(dtype.member_types)] = {
+            container.params["-".join(member_types)] = {
                 "k1": opls.parameters["k1"],
                 "k2": opls.parameters["k2"],
                 "k3": opls.parameters["k3"],
@@ -915,8 +1015,8 @@ def _parse_improper_forces(top, potential_types, potential_refs, base_units):
 
     def _parse_harmonic(container, itypes):
         for itype in itypes:
-            # TODO: Unit conversion
-            container.params["-".join(itype.member_types)] = {
+            member_types = sort_member_types(itype)
+            container.params["-".join(member_types)] = {
                 "k": itype.parameters["k"],
                 "chi0": itype.parameters["phi_eq"],  # diff nomenclature?
             }
