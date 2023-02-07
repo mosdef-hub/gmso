@@ -257,7 +257,6 @@ class TestExpression(BaseTest):
         )
 
     def test_from_non_parametric_errors(self):
-
         with pytest.raises(
             TypeError,
             match="Expected <object object at .*> to be of type "

@@ -107,7 +107,6 @@ class TestInternalConversions(BaseTest):
             )
 
     def test_ryckaert_to_opls(self, templates):
-
         # Pick some RB parameters at random
         params = {
             "c0": 1.53 * u.Unit("kJ/mol"),
@@ -168,7 +167,6 @@ class TestInternalConversions(BaseTest):
             )
 
     def test_opls_to_ryckaert(self, templates):
-
         # Pick some OPLS parameters at random
         params = {
             "k0": 1.38 * u.Unit("kJ/mol"),
@@ -225,7 +223,6 @@ class TestInternalConversions(BaseTest):
             )
 
     def test_double_conversion(self, templates):
-
         # Pick some OPLS parameters at random
         params = {
             "k0": 1.38 * u.Unit("kJ/mol"),
