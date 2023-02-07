@@ -501,7 +501,6 @@ class ForceField(object):
                 for eq, order in zip(equivalent, equiv_idx):
                     equiv_patterns = mask_with(eq, i)
                     for equiv_pattern in equiv_patterns:
-
                         equiv_pattern_key = FF_TOKENS_SEPARATOR.join(
                             equiv_pattern
                         )

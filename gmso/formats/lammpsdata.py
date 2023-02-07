@@ -211,7 +211,6 @@ def write_lammpsdata(topology, filename, atom_style="full"):
             if topology.bonds:
                 data.write("\nBond Coeffs\n\n")
                 for idx, bond_type in enumerate(topology.bond_types):
-
                     # expected harmonic potential expression for lammps
                     bond_expression = "k * (r-r_eq)**2"
 

@@ -318,7 +318,6 @@ class TestSpecificFFToResidue(BaseTest):
             r"If you are providing and empty box, please do so by specifying and "
             r"mbuild Box \({}\)".format(type(Box(lengths=[1, 1, 1]))),
         ):
-
             specific_ff_to_residue(
                 empty_box,
                 forcefield_selection={"AAA": "trappe-ua"},
