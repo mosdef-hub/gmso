@@ -643,6 +643,7 @@ def _parse_nonbonded_forces(
     base_units,
 ):
     """Parse nonbonded forces."""
+
     # Set up helper methods to parse different nonbonded forces.
     def _parse_coulombic(
         top,
