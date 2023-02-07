@@ -47,7 +47,6 @@ class AngleType(ParametricPotential):
         member_classes=None,
         tags=None,
     ):
-
         super(AngleType, self).__init__(
             name=name,
             expression=expression,

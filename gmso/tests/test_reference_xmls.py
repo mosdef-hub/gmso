@@ -329,7 +329,7 @@ class TestForceFieldFromXML(BaseTest):
         assert len(ff.angle_types) == 0
         assert len(ff.dihedral_types) == 0
 
-        for (name, atom_type) in ff.atom_types.items():
+        for name, atom_type in ff.atom_types.items():
             assert sympy.simplify(atom_type.expression - ref_expr) == 0
 
         assert_allclose_units(

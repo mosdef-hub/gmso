@@ -135,7 +135,6 @@ class Topology(object):
     """
 
     def __init__(self, name="Topology", box=None):
-
         self.name = name
         self._box = box
         self._sites = IndexedSet()
@@ -1217,7 +1216,6 @@ class Topology(object):
             The site where getattr(site, key) == value
         """
         if key not in Site.__iterable_attributes__:
-
             raise ValueError(
                 f"`{key}` is not an iterable attribute for Site. "
                 f"To check what the iterable attributes are see gmso.abc.abstract_site module."

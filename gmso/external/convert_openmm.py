@@ -53,7 +53,6 @@ def to_openmm(topology, openmm_object="topology"):
     # TODO: Convert connections to OpenMM Bonds
 
     if openmm_object == "topology":
-
         return openmm_top
 
     else:
