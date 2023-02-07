@@ -260,11 +260,9 @@ def _prepare_atoms(top, updated_positions, precision):
         # so we will just loop back to 1 once we exceed 99999
         # as is suggested in the FAQ in the manual.
 
-        if atom_id > 99999:
-            atom_id = atom_id - 99999
-
-        if res_id > 99999:
-            res_id = res_id - 99999
+        max_val=99999
+        atom_id = atom_id%max_val
+        res_id =  res_id%max_val
 
         varwidth = 5 + precision
         crdfmt = f"{{:{varwidth}.{precision}f}}"
