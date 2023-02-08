@@ -7,7 +7,6 @@ import re
 import statistics
 import warnings
 
-import hoomd
 import numpy as np
 import unyt as u
 from unyt.array import allclose_units
@@ -261,7 +260,23 @@ def _parse_particle_information(
     shift_coords,
     box_lengths,
 ):
-    """Parse site information."""
+    """Parse site information from topology.
+
+    Parameters
+    ----------
+    snapshot : gsd.hoomd.Snapshot or hoomd.Snapshot
+        The target Snapshot object.
+    top : gmso.Topology
+        Topology object holding system information.
+    base_units : dict
+        The dictionary holding base units (mass, length, and energy)
+    rigid_bodies : bool
+        Flag to parse rigid bodies information, to be implemented
+    shift_coords : bool
+        If True, shift coordinates from (0, L) to (-L/2, L/2) if neccessary.
+    box_lengths : list() of length 3
+        Lengths of box in x, y, z
+    """
     # Set up all require
     xyz = u.unyt_array([site.position for site in top.sites]).to(
         base_units["length"]
@@ -323,12 +338,12 @@ def _parse_particle_information(
 
 
 def _parse_bond_information(snapshot, top):
-    """Write the bonds in the system.
+    """Parse bonds information from topology.
 
     Parameters
     ----------
-    snapshot :
-        The gsd.hoomd.Snapshot or hoomd.Snapshot object
+    snapshot : gsd.hoomd.Snapshot or hoomd.Snapshot
+        The target Snapshot object.
     top : gmso.Topology
         Topology object holding system information
 
@@ -370,12 +385,12 @@ def _parse_bond_information(snapshot, top):
 
 
 def _parse_angle_information(snapshot, top):
-    """Write the angles in the system.
+    """Parse angles information from topology.
 
     Parameters
     ----------
-    gsd_snapshot :
-        The file object of the GSD file being written
+    snapshot : gsd.hoomd.Snapshot or hoomd.Snapshot
+        The target Snapshot object.
     top : gmso.Topology
         Topology object holding system information
 
@@ -418,12 +433,12 @@ def _parse_angle_information(snapshot, top):
 
 
 def _parse_dihedral_information(snapshot, top):
-    """Write the dihedrals in the system.
+    """Parse dihedral information from topology.
 
     Parameters
     ----------
-    gsd_snapshot :
-        The file object of the GSD file being written
+    snapshot : gsd.hoomd.Snapshot or hoomd.Snapshot
+        The target Snapshot object.
     top : gmso.Topology
         Topology object holding system information
 
@@ -466,12 +481,12 @@ def _parse_dihedral_information(snapshot, top):
 
 
 def _parse_improper_information(snapshot, top):
-    """Write the dihedrals in the system.
+    """Parse impropers information from topology.
 
     Parameters
     ----------
-    snapshot :
-        The file object of the GSD file being written
+    snapshot : gsd.hoomd.Snaphot or hoomd.Snapshot
+        The target Snapshot object.
     top : gmso.Topology
         Topology object holding system information
 
@@ -550,6 +565,8 @@ def to_hoomd_forcefield(
         used to defined GMSO Topology Box.
     r_cut : float
         r_cut for the nonbonded forces.
+    pppm_kwargs : dict
+        Keyword arguments to pass to hoomd.md.long_range.make_pppm_coulomb_forces().
     base_units : dict or str, optional, default=None
         The dictionary of base units to be converted to. Entries restricted to
         "energy", "length", and "mass". There is also option to used predefined
@@ -612,6 +629,7 @@ def to_hoomd_forcefield(
 
 
 def _validate_compatibility(top):
+    """Check and sort all the potential objects in the topology."""
     from gmso.utils.compatibility import check_compatibility
 
     templates = PotentialTemplateLibrary()
@@ -642,7 +660,25 @@ def _parse_nonbonded_forces(
     pppm_kwargs,
     base_units,
 ):
-    """Parse nonbonded forces."""
+    """Parse nonbonded forces from topology.
+
+    Parameters
+    ----------
+    top : gmso.Topology
+        Topology object holding system information.
+    nlist_buffer : float
+        Buffer argument ot pass to hoomd.md.nlist.Cell.
+    r_cut : float
+        Cut-off radius in simulation units
+    potential_types : dict
+        Output from _validate_compatibility().
+    potential_refs : dict
+        Reference json potential from gmso.lib.potential_templates.
+    pppm_kwargs : dict
+        Keyword arguments to pass to hoomd.md.long_range.make_pppm_coulomb_forces().
+    base_units : dict
+        The dictionary holding base units (mass, length, and energy)
+    """
     # Set up helper methods to parse different nonbonded forces.
     def _parse_coulombic(
         top,
@@ -825,7 +861,19 @@ def _parse_nonbonded_forces(
 
 
 def _parse_bond_forces(top, potential_types, potential_refs, base_units):
-    """Parse bond forces."""
+    """Parse bond forces from topology.
+
+    Parameters
+    ----------
+    top : gmso.Topology
+        Topology object holding system information
+    potential_types : dict
+        Output from _validate_compatibility().
+    potential_refs : dict
+        Reference json potential from gmso.lib.potential_templates.
+    base_units : dict
+        The dictionary holding base units (mass, length, and energy)
+    """
 
     def _parse_harmonic(container, btypes):
         for btype in btypes:
@@ -873,7 +921,19 @@ def _parse_bond_forces(top, potential_types, potential_refs, base_units):
 
 
 def _parse_angle_forces(top, potential_types, potential_refs, base_units):
-    """Parse angle forces."""
+    """Parse angle forces from topology.
+
+    Parameters
+    ----------
+    top : gmso.Topology
+        Topology object holding system information
+    potential_types : dict
+        Output from _validate_compatibility().
+    potential_refs : dict
+        Reference json potential from gmso.lib.potential_templates.
+    base_units : dict
+        The dictionary holding base units (mass, length, and energy)
+    """
 
     def _parse_harmonic(container, agtypes):
         for agtype in agtypes:
@@ -923,7 +983,19 @@ def _parse_angle_forces(top, potential_types, potential_refs, base_units):
 
 
 def _parse_dihedral_forces(top, potential_types, potential_refs, base_units):
-    """Parse dihedral forces."""
+    """Parse dihedral forces from topology.
+
+    Parameters
+    ----------
+    top : gmso.Topology
+        Topology object holding system information
+    potential_types : dict
+        Output from _validate_compatibility().
+    potential_refs : dict
+        Reference json potential from gmso.lib.potential_templates.
+    base_units : dict
+        The dictionary holding base units (mass, length, and energy)
+    """
 
     def _parse_periodic(container, dtypes):
         for dtype in dtypes:
@@ -983,10 +1055,9 @@ def _parse_dihedral_forces(top, potential_types, potential_refs, base_units):
         groups[group] = _convert_params_units(
             groups[group], expected_units_dim, base_units
         )
-
     dtype_group_map = {
         "PeriodicTorsionPotential": {
-            "container": hoomd.md.dihedral.Harmonic,  # Should this be periodic, ask Josh
+            "container": hoomd.md.dihedral.Periodic,  # Should this be periodic, ask Josh
             "parser": _parse_periodic,
         },
         "OPLSTorsionPotential": {
@@ -998,6 +1069,23 @@ def _parse_dihedral_forces(top, potential_types, potential_refs, base_units):
             "parser": _parse_rb,
         },
     }
+    hoomd_version = hoomd.version.version.split(",")
+    if int(hoomd_version[1]) >= 8:
+        dtype_group_map["PeriodicTorsionPotential"] = (
+            {
+                "container": hoomd.md.dihedral.Periodic,
+                "parser": _parse_periodic,
+            },
+        )
+    else:
+        # Should this be periodic, deprecated starting from 3.8.0
+        dtype_group_map["PeriodicTorsionPotential"] = (
+            {
+                "container": hoomd.md.dihedral.Harmonic,
+                "parser": _parse_periodic,
+            },
+        )
+
     dihedral_forces = list()
     for group in groups:
         dihedral_forces.append(
@@ -1011,7 +1099,19 @@ def _parse_dihedral_forces(top, potential_types, potential_refs, base_units):
 
 
 def _parse_improper_forces(top, potential_types, potential_refs, base_units):
-    """Parse improper forces."""
+    """Parse improper forces from topology.
+
+    Parameters
+    ----------
+    top : gmso.Topology
+        Topology object holding system information
+    potential_types : dict
+        Output from _validate_compatibility().
+    potential_refs : dict
+        Reference json potential from gmso.lib.potential_templates.
+    base_units : dict
+        The dictionary holding base units (mass, length, and energy)
+    """
 
     def _parse_harmonic(container, itypes):
         for itype in itypes:
@@ -1040,13 +1140,22 @@ def _parse_improper_forces(top, potential_types, potential_refs, base_units):
         groups[group] = _convert_params_units(
             groups[group], expected_units_dim, base_units
         )
-
-    itype_group_map = {
-        "HarmonicImproperPotenial": {
-            "container": hoomd.md.dihedral.Harmonic,  # Should this be periodic, ask Josh
-            "parser": _parse_harmonic,
-        },
-    }
+    hoomd_version = hoomd.version.version.split(",")
+    if int(hoomd_version[1]) >= 8:
+        itype_group_map = {
+            "HarmonicImproperPotenial": {
+                "container": hoomd.md.dihedral.Periodic,
+                "parser": _parse_harmonic,
+            },
+        }
+    else:
+        # Should this be periodic, deprecated starting from 3.8.0
+        itype_group_map = {
+            "HarmonicImproperPotenial": {
+                "container": hoomd.md.dihedral.Harmonic,
+                "parser": _parse_harmonic,
+            },
+        }
     improper_forces = list()
     for group in groups:
         improper_forces.append(
@@ -1095,7 +1204,7 @@ def _validate_base_units(base_units, top):
 
 
 def _infer_units(top):
-    """Try to infer unit from top."""
+    """Try to infer unit from topology."""
     mass_unit = u.unyt_array([site.mass for site in top.sites]).units
     length_unit = u.unyt_array([site.position for site in top.sites]).units
 
