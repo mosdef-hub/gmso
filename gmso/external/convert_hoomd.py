@@ -678,6 +678,7 @@ def _parse_nonbonded_forces(
     base_units : dict
         The dictionary holding base units (mass, length, and energy)
     """
+
     # Set up helper methods to parse different nonbonded forces.
     def _parse_coulombic(
         top,
