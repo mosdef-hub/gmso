@@ -68,6 +68,26 @@ class TestGro(BaseTest):
         for site, ref_site in zip(reread.sites, top.sites):
             assert site.molecule.name == ref_site.molecule.name[:5]
             assert site.molecule.number == ref_site.molecule.number
+    
+    @pytest.mark.skipif(not has_mbuild, reason="mBuild not installed.")
+    def test_resid_gro(self):
+        #
+        import mbuild as mb
+        from mbuild.packing import fill_box
+
+        from gmso.external import from_mbuild
+
+        benzene = mb.load(get_fn("benzene.mol2"))
+        benzene.children[0].name = "Benzene"
+        box_of_benzene = fill_box(compound=benzene, n_compounds=5, density=1)
+        top = from_mbuild(box_of_benzene)
+        top.save("benzene.gro")
+
+        reread = Topology.load("benzene.gro")
+        for site, ref_site in zip(reread.sites, top.sites):
+            assert site.molecule.name == ref_site.molecule.name[:5]
+            assert site.molecule.number == ref_site.molecule.number
+
 
     @pytest.mark.parametrize("fixture", ["benzene_ua_box", "benzene_aa_box"])
     def test_full_loop_gro_molecule(self, fixture, request):
