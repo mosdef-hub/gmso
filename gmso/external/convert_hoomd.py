@@ -208,7 +208,6 @@ def to_hoomd_snapshot(
     Force field parameters are not written to the GSD file and must be included
     manually in a HOOMD input script. Work on a HOOMD plugin is underway to
     read force field parameters from a Foyer XML file.
-
     """
     base_units = _validate_base_units(base_units, top)
     hoomd_snapshot = hoomd.Snapshot()
