@@ -68,7 +68,7 @@ class TestGro(BaseTest):
         for site, ref_site in zip(reread.sites, top.sites):
             assert site.molecule.name == ref_site.molecule.name[:5]
             assert site.molecule.number == ref_site.molecule.number
-    
+
     @pytest.mark.skipif(not has_mbuild, reason="mBuild not installed.")
     def test_resid_gro(self):
         #
@@ -87,7 +87,6 @@ class TestGro(BaseTest):
         for site, ref_site in zip(reread.sites, top.sites):
             assert site.molecule.name == ref_site.molecule.name[:5]
             assert site.molecule.number == ref_site.molecule.number
-
 
     @pytest.mark.parametrize("fixture", ["benzene_ua_box", "benzene_aa_box"])
     def test_full_loop_gro_molecule(self, fixture, request):
