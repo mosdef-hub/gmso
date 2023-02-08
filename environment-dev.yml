@@ -26,3 +26,4 @@ dependencies:
   - pre-commit
   - symengine
   - python-symengine
+  - hoomd>=3
