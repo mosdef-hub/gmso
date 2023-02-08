@@ -53,7 +53,6 @@ class DihedralType(ParametricPotential):
         member_classes=None,
         tags=None,
     ):
-
         super(DihedralType, self).__init__(
             name=name,
             expression=expression,
