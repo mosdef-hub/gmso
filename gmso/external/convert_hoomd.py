@@ -11,10 +11,8 @@ import numpy as np
 import unyt as u
 from unyt.array import allclose_units
 
-import gmso
 from gmso.core.views import PotentialFilters
 from gmso.exceptions import NotYetImplementedWarning
-from gmso.formats.formats_registry import saves_as
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.conversions import (
     convert_opls_to_ryckaert,
@@ -52,6 +50,7 @@ def to_gsd_snapshot(
     base_units=None,
     rigid_bodies=None,
     shift_coords=True,
+    parse_special_pairs=True,
 ):
     """Create a gsd.snapshot objcet (HOOMD v3 default data format).
 
@@ -77,7 +76,7 @@ def to_gsd_snapshot(
         rigid body.
     shift_coords : bool, optional, default=True
         Shift coordinates from (0, L) to (-L/2, L/2) if necessary.
-    write_special_pairs : bool, optional, default=True
+    parse_special_pairs : bool, optional, default=True
         Writes out special pair information necessary to correctly use the OPLS
         fudged 1,4 interactions in HOOMD.
 
@@ -86,7 +85,6 @@ def to_gsd_snapshot(
     Force field parameters are not written to the GSD file and must be included
     manually in a HOOMD input script. Work on a HOOMD plugin is underway to
     read force field parameters from a Foyer XML file.
-
     """
     base_units = _validate_base_units(base_units, top)
     gsd_snapshot = gsd.hoomd.Snapshot()
@@ -117,7 +115,8 @@ def to_gsd_snapshot(
         shift_coords,
         u.unyt_array([lx, ly, lz]),
     )
-    _parse_pairs_information(gsd_snapshot, top)
+    if parse_special_pairs:
+        _parse_pairs_information(gsd_snapshot, top)
     if top.n_bonds > 0:
         _parse_bond_information(gsd_snapshot, top)
     if top.n_angles > 0:
@@ -151,7 +150,7 @@ def _parse_pairs_information(
             )
         else:
             pair.sort(key=lambda site: site.name)
-            pair_type = "-".join([(pair[0].name, pair[1].name)])
+            pair_type = "-".join([pair[0].name, pair[1].name])
         if pair_type not in pair_types:
             pair_types.append(pair_type)
         pair_typeids.append(pair_types.index(pair_type))
@@ -174,6 +173,7 @@ def to_hoomd_snapshot(
     base_units=None,
     rigid_bodies=None,
     shift_coords=True,
+    parse_special_pairs=True,
 ):
     """Create a gsd.snapshot objcet (HOOMD v3 default data format).
 
@@ -199,7 +199,7 @@ def to_hoomd_snapshot(
         rigid body.
     shift_coords : bool, optional, default=True
         Shift coordinates from (0, L) to (-L/2, L/2) if necessary.
-    write_special_pairs : bool, optional, default=True
+    parse_special_pairs : bool, optional, default=True
         Writes out special pair information necessary to correctly use the OPLS
         fudged 1,4 interactions in HOOMD.
 
@@ -237,7 +237,8 @@ def to_hoomd_snapshot(
         shift_coords,
         u.unyt_array([lx, ly, lz]),
     )
-    _parse_pairs_information(hoomd_snapshot, top)
+    if parse_special_pairs:
+        _parse_pairs_information(hoomd_snapshot, top)
     if top.n_bonds > 0:
         _parse_bond_information(hoomd_snapshot, top)
     if top.n_angles > 0:
@@ -518,8 +519,8 @@ def _parse_improper_information(snapshot, top):
         snapshot.impropers.group[0:] = np.reshape(improper_groups, (-1, 4))
     elif isinstance(snapshot, gsd.hoomd.Snapshot):
         snapshot.impropers.types = unique_improper_types
-        snapshot.impropers.typeid[0:] = improper_typeids
-        snapshot.impropers.group[0:] = np.reshape(improper_groups, (-1, 4))
+        snapshot.impropers.typeid = improper_typeids
+        snapshot.impropers.group = np.reshape(improper_groups, (-1, 4))
 
     warnings.warn(f"{top.n_impropers} impropers detected")
     warnings.warn(
@@ -678,8 +679,69 @@ def _parse_nonbonded_forces(
     base_units : dict
         The dictionary holding base units (mass, length, and energy)
     """
+    unique_atypes = top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS)
 
-    # Set up helper methods to parse different nonbonded forces.
+    # Grouping atomtype by group name
+    groups = dict()
+    for atype in unique_atypes:
+        group = potential_types[atype]
+        if group not in groups:
+            groups[group] = [atype]
+        else:
+            groups[group].append(atype)
+
+    # Perform units conversion based on the provided base_units
+    for group in groups:
+        expected_units_dim = potential_refs[group][
+            "expected_parameters_dimensions"
+        ]
+        groups[group] = _convert_params_units(
+            groups[group],
+            expected_units_dim,
+            base_units,
+        )
+
+    atype_parsers = {
+        "LennardJonesPotential": _parse_lj,
+        "BuckinghamPotential": _parse_buckingham,
+        "MiePotential": _parse_mie,
+    }
+
+    # Use Topology scaling factor to determine exclusion
+    # TODO: Use molecule scaling factor
+    nb_scalings, coulombic_scalings = top.scaling_factors
+    exclusions = list()
+    for i in range(len(nb_scalings)):
+        if i == 0:
+            exclusions.append("bond")
+        else:
+            exclusions.append(f"1-{i+2}")
+    nlist = hoomd.md.nlist.Cell(exclusions=exclusions, buffer=nlist_buffer)
+
+    nbonded_forces = list()
+    nbonded_forces.extend(
+        _parse_coulombic(
+            top=top,
+            nlist=nlist,
+            scaling_factors=coulombic_scalings,
+            resolution=pppm_kwargs["resolution"],
+            order=pppm_kwargs["order"],
+            r_cut=r_cut,
+        )
+    )
+    for group in groups:
+        nbonded_forces.extend(
+            atype_parsers[group](
+                top=top,
+                atypes=groups[group],
+                combining_rule=top.combining_rule,
+                r_cut=r_cut,
+                nlist=nlist,
+                scaling_factors=nb_scalings,
+            )
+        )
+
+    # Helper methods to parse different nonbonded forces.
     def _parse_coulombic(
         top,
         nlist,
@@ -796,67 +858,6 @@ def _parse_nonbonded_forces(
     def _parse_mie(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
         return None
 
-    unique_atypes = top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS)
-
-    # Grouping atomtype by group name
-    groups = dict()
-    for atype in unique_atypes:
-        group = potential_types[atype]
-        if group not in groups:
-            groups[group] = [atype]
-        else:
-            groups[group].append(atype)
-
-    # Perform units conversion based on the provided base_units
-    for group in groups:
-        expected_units_dim = potential_refs[group][
-            "expected_parameters_dimensions"
-        ]
-        groups[group] = _convert_params_units(
-            groups[group],
-            expected_units_dim,
-            base_units,
-        )
-
-    atype_parsers = {
-        "LennardJonesPotential": _parse_lj,
-        "BuckinghamPotential": _parse_buckingham,
-        "MiePotential": _parse_mie,
-    }
-
-    # Use Topology scaling factor to determine exclusion
-    # TODO: Use molecule scaling factor
-    nb_scalings, coulombic_scalings = top.scaling_factors
-    exclusions = list()
-    for i in range(len(nb_scalings)):
-        if i == 0:
-            exclusions.append("bond")
-        else:
-            exclusions.append(f"1-{i+2}")
-    nlist = hoomd.md.nlist.Cell(exclusions=exclusions, buffer=nlist_buffer)
-
-    nbonded_forces = list()
-    nbonded_forces.extend(
-        _parse_coulombic(
-            top=top,
-            nlist=nlist,
-            scaling_factors=coulombic_scalings,
-            resolution=pppm_kwargs["resolution"],
-            order=pppm_kwargs["order"],
-            r_cut=r_cut,
-        )
-    )
-    for group in groups:
-        nbonded_forces.extend(
-            atype_parsers[group](
-                top=top,
-                atypes=groups[group],
-                combining_rule=top.combining_rule,
-                r_cut=r_cut,
-                nlist=nlist,
-                scaling_factors=nb_scalings,
-            )
-        )
     return nbonded_forces
 
 
@@ -874,17 +875,6 @@ def _parse_bond_forces(top, potential_types, potential_refs, base_units):
     base_units : dict
         The dictionary holding base units (mass, length, and energy)
     """
-
-    def _parse_harmonic(container, btypes):
-        for btype in btypes:
-            # TODO: Unit conversion
-            member_types = sort_member_types(btype)
-            container.params["-".join(member_types)] = {
-                "k": btype.parameters["k"],
-                "r0": btype.parameters["r_eq"],
-            }
-        return container
-
     unique_btypes = top.bond_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS)
     groups = dict()
     for btype in unique_btypes:
@@ -917,6 +907,16 @@ def _parse_bond_forces(top, potential_types, potential_refs, base_units):
             )
         )
 
+    def _parse_harmonic(container, btypes):
+        for btype in btypes:
+            # TODO: Unit conversion
+            member_types = sort_member_types(btype)
+            container.params["-".join(member_types)] = {
+                "k": btype.parameters["k"],
+                "r0": btype.parameters["r_eq"],
+            }
+        return container
+
     return bond_forces
 
 
@@ -934,16 +934,6 @@ def _parse_angle_forces(top, potential_types, potential_refs, base_units):
     base_units : dict
         The dictionary holding base units (mass, length, and energy)
     """
-
-    def _parse_harmonic(container, agtypes):
-        for agtype in agtypes:
-            member_types = sort_member_types(agtype)
-            container.params["-".join(member_types)] = {
-                "k": agtype.parameters["k"],
-                "t0": agtype.parameters["theta_eq"],
-            }
-        return container
-
     unique_agtypes = top.angle_types(
         filter_by=PotentialFilters.UNIQUE_NAME_CLASS
     )
@@ -955,7 +945,6 @@ def _parse_angle_forces(top, potential_types, potential_refs, base_units):
         else:
             groups[group].append(agtype)
 
-    base_units["angle"] = u.radian
     for group in groups:
         expected_units_dim = potential_refs[group][
             "expected_parameters_dimensions"
@@ -979,6 +968,15 @@ def _parse_angle_forces(top, potential_types, potential_refs, base_units):
             )
         )
 
+    def _parse_harmonic(container, agtypes):
+        for agtype in agtypes:
+            member_types = sort_member_types(agtype)
+            container.params["-".join(member_types)] = {
+                "k": agtype.parameters["k"],
+                "t0": agtype.parameters["theta_eq"],
+            }
+        return container
+
     return angle_forces
 
 
@@ -996,47 +994,6 @@ def _parse_dihedral_forces(top, potential_types, potential_refs, base_units):
     base_units : dict
         The dictionary holding base units (mass, length, and energy)
     """
-
-    def _parse_periodic(container, dtypes):
-        for dtype in dtypes:
-            member_types = sort_member_types(dtype)
-            container.params["-".join(member_types)] = {
-                "k": dtype.parameters["k"],
-                "d": 1,
-                "n": dtype.parameters["n"],
-                "phi0": dtype.parameters["phi_eq"],
-            }
-        return container
-
-    def _parse_opls(container, dtypes):
-        for dtype in dtypes:
-            # TODO: The range of ks is mismatched (GMSO go from k0 to k5)
-            # May need to do a check that k0 == k5 == 0 or raise a warning
-            container.params["-".join(dtype.member_types)] = {
-                "k1": dtype.parameters["k1"],
-                "k2": dtype.parameters["k2"],
-                "k3": dtype.parameters["k3"],
-                "k4": dtype.parameters["k4"],
-            }
-        return container
-
-    def _parse_rb(container, dtypes):
-        warnings.warn(
-            "RyckaertBellemansTorsionPotential will be converted to OPLSTorsionPotential."
-        )
-        for dtype in dtypes:
-            opls = convert_ryckaert_to_opls(dtype)
-            member_types = sort_member_types(dtype)
-            # TODO: The range of ks is mismatched (GMSO go from k0 to k5)
-            # May need to do a check that k0 == k5 == 0 or raise a warning
-            container.params["-".join(member_types)] = {
-                "k1": opls.parameters["k1"],
-                "k2": opls.parameters["k2"],
-                "k3": opls.parameters["k3"],
-                "k4": opls.parameters["k4"],
-            }
-        return container
-
     unique_dtypes = top.dihedral_types(
         filter_by=PotentialFilters.UNIQUE_NAME_CLASS
     )
@@ -1095,6 +1052,46 @@ def _parse_dihedral_forces(top, potential_types, potential_refs, base_units):
             )
         )
 
+    def _parse_periodic(container, dtypes):
+        for dtype in dtypes:
+            member_types = sort_member_types(dtype)
+            container.params["-".join(member_types)] = {
+                "k": dtype.parameters["k"],
+                "d": 1,
+                "n": dtype.parameters["n"],
+                "phi0": dtype.parameters["phi_eq"],
+            }
+        return container
+
+    def _parse_opls(container, dtypes):
+        for dtype in dtypes:
+            # TODO: The range of ks is mismatched (GMSO go from k0 to k5)
+            # May need to do a check that k0 == k5 == 0 or raise a warning
+            container.params["-".join(dtype.member_types)] = {
+                "k1": dtype.parameters["k1"],
+                "k2": dtype.parameters["k2"],
+                "k3": dtype.parameters["k3"],
+                "k4": dtype.parameters["k4"],
+            }
+        return container
+
+    def _parse_rb(container, dtypes):
+        warnings.warn(
+            "RyckaertBellemansTorsionPotential will be converted to OPLSTorsionPotential."
+        )
+        for dtype in dtypes:
+            opls = convert_ryckaert_to_opls(dtype)
+            member_types = sort_member_types(dtype)
+            # TODO: The range of ks is mismatched (GMSO go from k0 to k5)
+            # May need to do a check that k0 == k5 == 0 or raise a warning
+            container.params["-".join(member_types)] = {
+                "k1": opls.parameters["k1"],
+                "k2": opls.parameters["k2"],
+                "k3": opls.parameters["k3"],
+                "k4": opls.parameters["k4"],
+            }
+        return container
+
     return dihedral_forces
 
 
@@ -1112,16 +1109,6 @@ def _parse_improper_forces(top, potential_types, potential_refs, base_units):
     base_units : dict
         The dictionary holding base units (mass, length, and energy)
     """
-
-    def _parse_harmonic(container, itypes):
-        for itype in itypes:
-            member_types = sort_member_types(itype)
-            container.params["-".join(member_types)] = {
-                "k": itype.parameters["k"],
-                "chi0": itype.parameters["phi_eq"],  # diff nomenclature?
-            }
-        return container
-
     unique_dtypes = top.improper_types(
         filter_by=PotentialFilters.UNIQUE_NAME_CLASS
     )
@@ -1164,6 +1151,16 @@ def _parse_improper_forces(top, potential_types, potential_refs, base_units):
                 itypes=groups[group],
             )
         )
+
+    def _parse_harmonic(container, itypes):
+        for itype in itypes:
+            member_types = sort_member_types(itype)
+            container.params["-".join(member_types)] = {
+                "k": itype.parameters["k"],
+                "chi0": itype.parameters["phi_eq"],  # diff nomenclature?
+            }
+        return container
+
     return improper_forces
 
 
@@ -1199,6 +1196,9 @@ def _validate_base_units(base_units, top):
     else:
         base_units = _infer_units(top)
         # base_units = {"length": None, "mass": None, "energy": None}
+
+    # Add angle unit (since HOOMD will use radian across the board)
+    base_units["angle"] = u.radian
 
     return base_units
 
