@@ -27,7 +27,7 @@ from gmso.utils.sorting import (
 )
 
 if has_gsd:
-    import gsd.hoomd
+    import gsd
 if has_hoomd:
     import hoomd
 
@@ -741,124 +741,125 @@ def _parse_nonbonded_forces(
             )
         )
 
-    # Helper methods to parse different nonbonded forces.
-    def _parse_coulombic(
-        top,
-        nlist,
-        scaling_factors,
-        resolution,
-        order,
-        r_cut,
-    ):
-        """Parse coulombic forces."""
-        charge_groups = any(
-            [site.charge.to_value(u.elementary_charge) for site in top.sites]
-        )
-        if not charge_groups:
-            print("No charged group detected, skipping electrostatics.")
-            return None
-        else:
-            coulombic = hoomd.md.long_range.pppm.make_pppm_coulomb_forces(
-                nlist=nlist, resolution=resolution, order=order, r_cut=r_cut
-            )
-
-        # Handle 1-2, 1-3, and 1-4 scaling
-        # TODO: Fiure out a more general way to do this and handle molecule scaling factors
-        special_coulombic = hoomd.md.special_pair.Coulomb()
-
-        # Use same method as to_hoomd_snapshot to generate pairs list
-        for i, pairs in enumerate(_generate_pairs_list(top)):
-            if scaling_factors[i] and pairs:
-                for pair in pairs:
-                    pair_name = "-".join(
-                        [pair[0].atom_type.name, pair[1].atom_type.name]
-                    )
-                    special_coulombic.params[pair_name] = dict(
-                        alpha=scaling_factors[i]
-                    )
-                    special_coulombic.r_cut[pair_name] = r_cut
-
-        return [*coulombic, special_coulombic]
-
-    def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
-        """Parse LJ forces and special pairs LJ forces."""
-        lj = hoomd.md.pair.LJ(nlist=nlist)
-        calculated_params = dict()
-        for pairs in itertools.combinations_with_replacement(atypes, 2):
-            pairs = list(pairs)
-            pairs.sort(key=lambda atype: atype.name)
-            type_name = (pairs[0].name, pairs[1].name)
-            comb_epsilon = statistics.geometric_mean(
-                [pairs[0].parameters["epsilon"], pairs[1].parameters["epsilon"]]
-            )
-            if top.combining_rule == "lorentz":
-                comb_sigma = np.mean(
-                    [pairs[0].parameters["sigma"], pairs[1].parameters["sigma"]]
-                )
-            elif top.combining_rule == "geometric":
-                comb_sigma = statistics.geometric_mean(
-                    [pairs[0].parameters["sigma"], pairs[1].parameters["sigma"]]
-                )
-            else:
-                raise ValueError(
-                    f"Invalid combining rule provided ({combining_rule})"
-                )
-
-            calculated_params[type_name] = {
-                "sigma": comb_sigma,
-                "epsilon": comb_epsilon,
-            }
-            lj.params[type_name] = calculated_params[type_name]
-            lj.r_cut[(type_name)] = r_cut
-
-        # Handle 1-2, 1-3, and 1-4 scaling
-        # TODO: Fiure out a more general way to do this and handle molecule scaling factors
-        special_lj = hoomd.md.special_pair.LJ()
-
-        for i, pairs in enumerate(_generate_pairs_list(top)):
-            if scaling_factors[i] and pairs:
-                for pair in pairs:
-                    if (
-                        pair[0].atom_type in atypes
-                        and pair[1].atom_type in atypes
-                    ):
-                        adjscale = scaling_factors[i]
-                        pair.sort(key=lambda site: site.atom_type.name)
-                        pair_name = (
-                            pair[0].atom_type.name,
-                            pair[1].atom_type.name,
-                        )
-                        scaled_epsilon = (
-                            adjscale * calculated_params[pair_name]["epsilon"]
-                        )
-                        sigma = calculated_params[pair_name]["sigma"]
-                        special_lj.params["-".join(pair_name)] = {
-                            "sigma": sigma,
-                            "epsilon": scaled_epsilon,
-                        }
-                        special_lj.r_cut["-".join(pair_name)] = r_cut
-
-        return [lj, special_lj]
-
-    def _parse_buckingham(
-        top, atypes, combining_rule, r_cut, nlist, scaling_factors
-    ):
-        return None
-
-    def _parse_lj0804(
-        top, atypes, combining_rule, r_cut, nlist, scaling_factors
-    ):
-        return None
-
-    def _parse_lj1208(
-        top, atypes, combining_rule, r_cut, nlist, scaling_factors
-    ):
-        return None
-
-    def _parse_mie(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
-        return None
-
     return nbonded_forces
+
+
+# Helper methods to parse different nonbonded forces.
+
+
+def _parse_coulombic(
+    top,
+    nlist,
+    scaling_factors,
+    resolution,
+    order,
+    r_cut,
+):
+    """Parse coulombic forces."""
+    charge_groups = any(
+        [site.charge.to_value(u.elementary_charge) for site in top.sites]
+    )
+    if not charge_groups:
+        print("No charged group detected, skipping electrostatics.")
+        return None
+    else:
+        coulombic = hoomd.md.long_range.pppm.make_pppm_coulomb_forces(
+            nlist=nlist, resolution=resolution, order=order, r_cut=r_cut
+        )
+
+    # Handle 1-2, 1-3, and 1-4 scaling
+    # TODO: Fiure out a more general way to do this and handle molecule scaling factors
+    special_coulombic = hoomd.md.special_pair.Coulomb()
+
+    # Use same method as to_hoomd_snapshot to generate pairs list
+    for i, pairs in enumerate(_generate_pairs_list(top)):
+        if scaling_factors[i] and pairs:
+            for pair in pairs:
+                pair_name = "-".join(
+                    [pair[0].atom_type.name, pair[1].atom_type.name]
+                )
+                special_coulombic.params[pair_name] = dict(
+                    alpha=scaling_factors[i]
+                )
+                special_coulombic.r_cut[pair_name] = r_cut
+
+    return [*coulombic, special_coulombic]
+
+
+def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
+    """Parse LJ forces and special pairs LJ forces."""
+    lj = hoomd.md.pair.LJ(nlist=nlist)
+    calculated_params = dict()
+    for pairs in itertools.combinations_with_replacement(atypes, 2):
+        pairs = list(pairs)
+        pairs.sort(key=lambda atype: atype.name)
+        type_name = (pairs[0].name, pairs[1].name)
+        comb_epsilon = statistics.geometric_mean(
+            [pairs[0].parameters["epsilon"], pairs[1].parameters["epsilon"]]
+        )
+        if top.combining_rule == "lorentz":
+            comb_sigma = np.mean(
+                [pairs[0].parameters["sigma"], pairs[1].parameters["sigma"]]
+            )
+        elif top.combining_rule == "geometric":
+            comb_sigma = statistics.geometric_mean(
+                [pairs[0].parameters["sigma"], pairs[1].parameters["sigma"]]
+            )
+        else:
+            raise ValueError(
+                f"Invalid combining rule provided ({combining_rule})"
+            )
+
+        calculated_params[type_name] = {
+            "sigma": comb_sigma,
+            "epsilon": comb_epsilon,
+        }
+        lj.params[type_name] = calculated_params[type_name]
+        lj.r_cut[(type_name)] = r_cut
+
+    # Handle 1-2, 1-3, and 1-4 scaling
+    # TODO: Fiure out a more general way to do this and handle molecule scaling factors
+    special_lj = hoomd.md.special_pair.LJ()
+
+    for i, pairs in enumerate(_generate_pairs_list(top)):
+        if scaling_factors[i] and pairs:
+            for pair in pairs:
+                if pair[0].atom_type in atypes and pair[1].atom_type in atypes:
+                    adjscale = scaling_factors[i]
+                    pair.sort(key=lambda site: site.atom_type.name)
+                    pair_name = (
+                        pair[0].atom_type.name,
+                        pair[1].atom_type.name,
+                    )
+                    scaled_epsilon = (
+                        adjscale * calculated_params[pair_name]["epsilon"]
+                    )
+                    sigma = calculated_params[pair_name]["sigma"]
+                    special_lj.params["-".join(pair_name)] = {
+                        "sigma": sigma,
+                        "epsilon": scaled_epsilon,
+                    }
+                    special_lj.r_cut["-".join(pair_name)] = r_cut
+
+    return [lj, special_lj]
+
+
+def _parse_buckingham(
+    top, atypes, combining_rule, r_cut, nlist, scaling_factors
+):
+    return None
+
+
+def _parse_lj0804(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
+    return None
+
+
+def _parse_lj1208(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
+    return None
+
+
+def _parse_mie(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
+    return None
 
 
 def _parse_bond_forces(top, potential_types, potential_refs, base_units):
@@ -895,7 +896,7 @@ def _parse_bond_forces(top, potential_types, potential_refs, base_units):
     btype_group_map = {
         "HarmonicBondPotential": {
             "container": hoomd.md.bond.Harmonic,
-            "parser": _parse_harmonic,
+            "parser": _parse_harmonic_bond,
         },
     }
     bond_forces = list()
@@ -906,18 +907,18 @@ def _parse_bond_forces(top, potential_types, potential_refs, base_units):
                 btypes=groups[group],
             )
         )
-
-    def _parse_harmonic(container, btypes):
-        for btype in btypes:
-            # TODO: Unit conversion
-            member_types = sort_member_types(btype)
-            container.params["-".join(member_types)] = {
-                "k": btype.parameters["k"],
-                "r0": btype.parameters["r_eq"],
-            }
-        return container
-
     return bond_forces
+
+
+def _parse_harmonic_bond(container, btypes):
+    for btype in btypes:
+        # TODO: Unit conversion
+        member_types = sort_member_types(btype)
+        container.params["-".join(member_types)] = {
+            "k": btype.parameters["k"],
+            "r0": btype.parameters["r_eq"],
+        }
+    return container
 
 
 def _parse_angle_forces(top, potential_types, potential_refs, base_units):
@@ -956,7 +957,7 @@ def _parse_angle_forces(top, potential_types, potential_refs, base_units):
     agtype_group_map = {
         "HarmonicAnglePotential": {
             "container": hoomd.md.angle.Harmonic,
-            "parser": _parse_harmonic,
+            "parser": _parse_harmonic_angle,
         },
     }
     angle_forces = list()
@@ -967,17 +968,17 @@ def _parse_angle_forces(top, potential_types, potential_refs, base_units):
                 agtypes=groups[group],
             )
         )
-
-    def _parse_harmonic(container, agtypes):
-        for agtype in agtypes:
-            member_types = sort_member_types(agtype)
-            container.params["-".join(member_types)] = {
-                "k": agtype.parameters["k"],
-                "t0": agtype.parameters["theta_eq"],
-            }
-        return container
-
     return angle_forces
+
+
+def _parse_harmonic_angle(container, agtypes):
+    for agtype in agtypes:
+        member_types = sort_member_types(agtype)
+        container.params["-".join(member_types)] = {
+            "k": agtype.parameters["k"],
+            "t0": agtype.parameters["theta_eq"],
+        }
+    return container
 
 
 def _parse_dihedral_forces(top, potential_types, potential_refs, base_units):
@@ -1013,25 +1014,22 @@ def _parse_dihedral_forces(top, potential_types, potential_refs, base_units):
             groups[group], expected_units_dim, base_units
         )
     dtype_group_map = {
-        "PeriodicTorsionPotential": {
-            "container": hoomd.md.dihedral.Periodic,  # Should this be periodic, ask Josh
-            "parser": _parse_periodic,
-        },
         "OPLSTorsionPotential": {
             "container": hoomd.md.dihedral.OPLS,
-            "parser": _parse_opls,
+            "parser": _parse_opls_dihedral,
         },
         "RyckaertBellemansTorsionPotential": {
             "container": hoomd.md.dihedral.OPLS,  # RBTorsion will converted to OPLS
-            "parser": _parse_rb,
+            "parser": _parse_rb_dihedral,
         },
     }
-    hoomd_version = hoomd.version.version.split(",")
+
+    hoomd_version = hoomd.version.version.split(".")
     if int(hoomd_version[1]) >= 8:
         dtype_group_map["PeriodicTorsionPotential"] = (
             {
                 "container": hoomd.md.dihedral.Periodic,
-                "parser": _parse_periodic,
+                "parser": _parse_periodic_dihedral,
             },
         )
     else:
@@ -1039,7 +1037,7 @@ def _parse_dihedral_forces(top, potential_types, potential_refs, base_units):
         dtype_group_map["PeriodicTorsionPotential"] = (
             {
                 "container": hoomd.md.dihedral.Harmonic,
-                "parser": _parse_periodic,
+                "parser": _parse_periodic_dihedral,
             },
         )
 
@@ -1051,48 +1049,50 @@ def _parse_dihedral_forces(top, potential_types, potential_refs, base_units):
                 dtypes=groups[group],
             )
         )
-
-    def _parse_periodic(container, dtypes):
-        for dtype in dtypes:
-            member_types = sort_member_types(dtype)
-            container.params["-".join(member_types)] = {
-                "k": dtype.parameters["k"],
-                "d": 1,
-                "n": dtype.parameters["n"],
-                "phi0": dtype.parameters["phi_eq"],
-            }
-        return container
-
-    def _parse_opls(container, dtypes):
-        for dtype in dtypes:
-            # TODO: The range of ks is mismatched (GMSO go from k0 to k5)
-            # May need to do a check that k0 == k5 == 0 or raise a warning
-            container.params["-".join(dtype.member_types)] = {
-                "k1": dtype.parameters["k1"],
-                "k2": dtype.parameters["k2"],
-                "k3": dtype.parameters["k3"],
-                "k4": dtype.parameters["k4"],
-            }
-        return container
-
-    def _parse_rb(container, dtypes):
-        warnings.warn(
-            "RyckaertBellemansTorsionPotential will be converted to OPLSTorsionPotential."
-        )
-        for dtype in dtypes:
-            opls = convert_ryckaert_to_opls(dtype)
-            member_types = sort_member_types(dtype)
-            # TODO: The range of ks is mismatched (GMSO go from k0 to k5)
-            # May need to do a check that k0 == k5 == 0 or raise a warning
-            container.params["-".join(member_types)] = {
-                "k1": opls.parameters["k1"],
-                "k2": opls.parameters["k2"],
-                "k3": opls.parameters["k3"],
-                "k4": opls.parameters["k4"],
-            }
-        return container
-
     return dihedral_forces
+
+
+def _parse_periodic_dihedral(container, dtypes):
+    for dtype in dtypes:
+        member_types = sort_member_types(dtype)
+        container.params["-".join(member_types)] = {
+            "k": dtype.parameters["k"],
+            "d": 1,
+            "n": dtype.parameters["n"],
+            "phi0": dtype.parameters["phi_eq"],
+        }
+    return container
+
+
+def _parse_opls_dihedral(container, dtypes):
+    for dtype in dtypes:
+        # TODO: The range of ks is mismatched (GMSO go from k0 to k5)
+        # May need to do a check that k0 == k5 == 0 or raise a warning
+        container.params["-".join(dtype.member_types)] = {
+            "k1": dtype.parameters["k1"],
+            "k2": dtype.parameters["k2"],
+            "k3": dtype.parameters["k3"],
+            "k4": dtype.parameters["k4"],
+        }
+    return container
+
+
+def _parse_rb_dihedral(container, dtypes):
+    warnings.warn(
+        "RyckaertBellemansTorsionPotential will be converted to OPLSTorsionPotential."
+    )
+    for dtype in dtypes:
+        opls = convert_ryckaert_to_opls(dtype)
+        member_types = sort_member_types(dtype)
+        # TODO: The range of ks is mismatched (GMSO go from k0 to k5)
+        # May need to do a check that k0 == k5 == 0 or raise a warning
+        container.params["-".join(member_types)] = {
+            "k1": opls.parameters["k1"],
+            "k2": opls.parameters["k2"],
+            "k3": opls.parameters["k3"],
+            "k4": opls.parameters["k4"],
+        }
+    return container
 
 
 def _parse_improper_forces(top, potential_types, potential_refs, base_units):
@@ -1127,12 +1127,12 @@ def _parse_improper_forces(top, potential_types, potential_refs, base_units):
         groups[group] = _convert_params_units(
             groups[group], expected_units_dim, base_units
         )
-    hoomd_version = hoomd.version.version.split(",")
+    hoomd_version = hoomd.version.version.split(".")
     if int(hoomd_version[1]) >= 8:
         itype_group_map = {
             "HarmonicImproperPotenial": {
                 "container": hoomd.md.dihedral.Periodic,
-                "parser": _parse_harmonic,
+                "parser": _parse_harmonic_improper,
             },
         }
     else:
@@ -1140,7 +1140,7 @@ def _parse_improper_forces(top, potential_types, potential_refs, base_units):
         itype_group_map = {
             "HarmonicImproperPotenial": {
                 "container": hoomd.md.dihedral.Harmonic,
-                "parser": _parse_harmonic,
+                "parser": _parse_harmonic_improper,
             },
         }
     improper_forces = list()
@@ -1151,17 +1151,17 @@ def _parse_improper_forces(top, potential_types, potential_refs, base_units):
                 itypes=groups[group],
             )
         )
-
-    def _parse_harmonic(container, itypes):
-        for itype in itypes:
-            member_types = sort_member_types(itype)
-            container.params["-".join(member_types)] = {
-                "k": itype.parameters["k"],
-                "chi0": itype.parameters["phi_eq"],  # diff nomenclature?
-            }
-        return container
-
     return improper_forces
+
+
+def _parse_harmonic_improper(container, itypes):
+    for itype in itypes:
+        member_types = sort_member_types(itype)
+        container.params["-".join(member_types)] = {
+            "k": itype.parameters["k"],
+            "chi0": itype.parameters["phi_eq"],  # diff nomenclature?
+        }
+    return container
 
 
 def _validate_base_units(base_units, top):
@@ -1179,8 +1179,8 @@ def _validate_base_units(base_units, top):
         for key in base_units:
             if key not in ["energy", "mass", "length"]:
                 warnings.warn(
-                    "Only base unit will be used during the conversion"
-                    "i.e., energy, mass, and length, other units provided"
+                    "Only base unit will be used during the conversion "
+                    "i.e., energy, mass, and length, other units provided "
                     "will not be considered."
                 )
             else:

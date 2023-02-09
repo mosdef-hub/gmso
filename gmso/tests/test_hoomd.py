@@ -66,7 +66,7 @@ class TestGsd(BaseTest):
             pppm_kwargs={"Nx": 64, "Ny": 64, "Nz": 64, "order": 7},
         )
 
-        assert mb_snapshot.paricles.N == gmso_snapshot.particles.N
+        assert mb_snapshot.particles.N == gmso_snapshot.particles.N
         assert np.allclose(
             mb_snapshot.particles.position, gmso_snapshot.particles.position
         )
@@ -81,7 +81,7 @@ class TestGsd(BaseTest):
             mb_forcefield, key=lambda cls: str(cls.__class__)
         )
         for mb_force, gmso_force in zip(sorted_mbuild_ff, sorted_gmso_ff):
-            if not isinstance(hoomd.md.long_range.pppm.Coulomb):
+            if not isinstance(mb_force, hoomd.md.long_range.pppm.Coulomb):
                 keys = mb_force.params.param_dict.keys()
                 for key in keys:
                     mb_params = mb_force.params.param_dict[key]
