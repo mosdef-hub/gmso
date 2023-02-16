@@ -179,7 +179,7 @@ def _prepare_atoms(top, updated_positions, precision):
     site_res_id = {}
     res_nr = 1
     last_name = ""
-
+    unaffiliated = -1
     for idx, site in enumerate(top.sites):
         if site.molecule:
             if last_mol_id == -1:
@@ -228,10 +228,18 @@ def _prepare_atoms(top, updated_positions, precision):
                 site_res_id[idx] = res_nr
                 last_res_id = site.residue.number
                 last_name = site.residue.name
+        else:
+            if idx == 0:
+                unaffiliated = 1
+                site_res_id[idx] = 1
+            elif unaffiliated == -1:
+                res_nr = res_nr + 1
+                unaffiliated = res_nr
+
 
     for idx, (site, pos) in enumerate(zip(top.sites, updated_positions)):
         if site.molecule:
-            res_id = site_res_id[idx]  # site.molecule.number + 1
+            res_id = site_res_id[idx]
             res_name = (
                 site.molecule.name
                 if len(site.molecule.name) <= 5
@@ -240,7 +248,7 @@ def _prepare_atoms(top, updated_positions, precision):
 
             site.label = f"res_id: {res_id}, " + site.label
         elif site.residue:
-            res_id = site_res_id[idx]  # site.residue.number + 1
+            res_id = site_res_id[idx]
             res_name = (
                 site.residue.name
                 if len(site.residue.name) <= 5
@@ -248,7 +256,7 @@ def _prepare_atoms(top, updated_positions, precision):
             )
             site.label = f"res_id: {res_id}, " + site.label
         else:
-            res_id = res_nr + 1
+            res_id = unaffiliated
             res_name = "MOL"
 
             site.label = f"res_id: {res_id}, " + site.label
