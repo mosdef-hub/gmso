@@ -71,7 +71,7 @@ class TestGro(BaseTest):
 
     @pytest.mark.skipif(not has_mbuild, reason="mBuild not installed.")
     def test_resid_gro(self):
-        #test adding different molecules to the system
+        # test adding different molecules to the system
         import mbuild as mb
 
         from gmso.external import from_mbuild
@@ -79,7 +79,7 @@ class TestGro(BaseTest):
         ethane = mb.lib.molecules.Ethane()
         methane = mb.lib.molecules.Methane()
         system = mb.Compound()
-        
+
         system.add(mb.clone(ethane))
         system.add(mb.clone(ethane))
         system.add(mb.clone(methane))
@@ -90,8 +90,7 @@ class TestGro(BaseTest):
 
         reread = Topology.load("ethane_methane.gro")
         nums = set([site.molecule.number for site in reread.sites])
-        assert nums == {0,1,2,3}
-
+        assert nums == {0, 1, 2, 3}
 
     @pytest.mark.parametrize("fixture", ["benzene_ua_box", "benzene_aa_box"])
     def test_full_loop_gro_molecule(self, fixture, request):
