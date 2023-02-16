@@ -74,8 +74,22 @@ class TestGro(BaseTest):
             assert site.molecule.name == ref_site.molecule.name[:5]
             assert site.molecule.number == ref_site.molecule.number
 
-    @pytest.mark.skipif(not has_mbuild, reason="mBuild not installed.")
+    def test_prepare_atoms(self):
+        top = Topology()
+        ref = Atom(name="atom1", position=[0.0, 0.0, 3.0], molecule=('mol', 0))
+        top.add_site(ref)
 
+        line =  gmso.formats.gro._prepare_atoms(top, top.positions, 5)
+        assert line == '    1mol  atom1    1   0.00000   0.00000   3.00000\n'
+        
+        top = Topology()
+        ref = Atom(name="atom2", position=[0.0, 0.0, 0.0])
+        top.add_site(ref)
+
+        line =  gmso.formats.gro._prepare_atoms(top, top.positions, 5)
+        assert line == '    1MOL   atom    1   0.00000   0.00000   0.00000\n'
+
+    @pytest.mark.skipif(not has_mbuild, reason="mBuild not installed.")
     def test_resid_for_mol(self):
         #test adding different molecules to the system
 
