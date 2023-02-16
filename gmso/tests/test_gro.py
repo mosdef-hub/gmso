@@ -80,7 +80,7 @@ class TestGro(BaseTest):
         assert line == '    1mol  atom1    1   0.00000   0.00000   3.00000\n'
         
         top = Topology()
-        ref = Atom(name="atom2", position=[0.0, 0.0, 0.0])
+        ref = Atom(name="atom", position=[0.0, 0.0, 0.0])
         top.add_site(ref)
 
         line =  _prepare_atoms(top, top.positions, 5)
