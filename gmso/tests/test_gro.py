@@ -75,8 +75,10 @@ class TestGro(BaseTest):
             assert site.molecule.number == ref_site.molecule.number
 
     @pytest.mark.skipif(not has_mbuild, reason="mBuild not installed.")
+
     def test_resid_for_mol(self):
         #test adding different molecules to the system
+
         import mbuild as mb
 
         from gmso.external import from_mbuild
@@ -84,7 +86,7 @@ class TestGro(BaseTest):
         ethane = mb.lib.molecules.Ethane()
         methane = mb.lib.molecules.Methane()
         system = mb.Compound()
-        
+
         system.add(mb.clone(ethane))
         system.add(mb.clone(ethane))
         system.add(mb.clone(methane))
