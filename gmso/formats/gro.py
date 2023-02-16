@@ -236,7 +236,6 @@ def _prepare_atoms(top, updated_positions, precision):
                 res_nr = res_nr + 1
                 unaffiliated = res_nr
 
-
     for idx, (site, pos) in enumerate(zip(top.sites, updated_positions)):
         if site.molecule:
             res_id = site_res_id[idx]
