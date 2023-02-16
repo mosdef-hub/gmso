@@ -68,7 +68,7 @@ class TestGro(BaseTest):
         for site, ref_site in zip(reread.sites, top.sites):
             assert site.molecule.name == ref_site.molecule.name[:5]
             assert site.molecule.number == ref_site.molecule.number
-    
+
     @pytest.mark.skipif(not has_mbuild, reason="mBuild not installed.")
     def test_resid_gro(self):
         #test adding different molecules to the system
@@ -91,7 +91,6 @@ class TestGro(BaseTest):
         reread = Topology.load("ethane_methane.gro")
         nums = set([site.molecule.number for site in reread.sites])
         assert nums == {0,1,2,3}
-
 
 
     @pytest.mark.parametrize("fixture", ["benzene_ua_box", "benzene_aa_box"])
