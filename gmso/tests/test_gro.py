@@ -5,7 +5,7 @@ from unyt.testing import assert_allclose_units
 
 from gmso import Topology
 from gmso.external.convert_parmed import from_parmed
-from gmso.formats.gro import read_gro, write_gro
+from gmso.formats.gro import read_gro, write_gro, _prepare_atoms
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
 from gmso.utils.io import get_fn, has_mbuild, has_parmed, import_
@@ -79,14 +79,14 @@ class TestGro(BaseTest):
         ref = Atom(name="atom1", position=[0.0, 0.0, 3.0], molecule=('mol', 0))
         top.add_site(ref)
 
-        line =  gmso.formats.gro._prepare_atoms(top, top.positions, 5)
+        line =  _prepare_atoms(top, top.positions, 5)
         assert line == '    1mol  atom1    1   0.00000   0.00000   3.00000\n'
         
         top = Topology()
         ref = Atom(name="atom2", position=[0.0, 0.0, 0.0])
         top.add_site(ref)
 
-        line =  gmso.formats.gro._prepare_atoms(top, top.positions, 5)
+        line =  _prepare_atoms(top, top.positions, 5)
         assert line == '    1MOL   atom    1   0.00000   0.00000   0.00000\n'
 
     @pytest.mark.skipif(not has_mbuild, reason="mBuild not installed.")
