@@ -173,8 +173,8 @@ def _prepare_atoms(top, updated_positions, precision):
     site_res_id = dict()
     seen = dict()
     for idx, site in enumerate(top.sites):
-        if site.molecule: 
-            if site.molecule not in seen: 
+        if site.molecule:
+            if site.molecule not in seen:
                 seen[site.molecule] = len(seen) + 1
             site_res_id[idx] = seen[site.molecule]
         elif site.residue:
