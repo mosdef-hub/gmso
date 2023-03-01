@@ -168,73 +168,23 @@ def _prepare_atoms(top, updated_positions, precision):
         "or site.residue if site.molecule does not exist."
         "Note that the residue idx will be bumped by 1 since GROMACS utilize 1-index."
     )
-
-    # we need to sort through the sites to provide a unique number
-    # for each molecule and residue
-    # we will store the unique id in dictionary
-    # where the key is the idx
-
-    last_res_id = -1
-    last_mol_id = -1
-    site_res_id = {}
-    res_nr = 1
-    last_name = ""
-    unaffiliated = -1
+    # we need to sort through the sites to provide a unique number for each molecule/residue
+    # we will store the unique id in dictionary where the key is the idx
+    site_res_id = dict()
+    seen = dict()
     for idx, site in enumerate(top.sites):
-        if site.molecule:
-            if last_mol_id == -1:
-                last_name = site.molecule.name
-                last_mol_id = site.molecule.number
-                if idx == 0:
-                    res_nr = 1
-                else:
-                    res_nr = res_nr + 1
-                site_res_id[idx] = res_nr
-
-            elif site.molecule.name == last_name:
-                if last_mol_id == site.molecule.number:
-                    site_res_id[idx] = res_nr
-                else:
-                    res_nr += 1
-                    site_res_id[idx] = res_nr
-                    last_mol_id = site.molecule.number
-            else:
-                res_nr += 1
-                site_res_id[idx] = res_nr
-                last_mol_id = site.molecule.number
-                last_name = site.molecule.name
-
+        if site.molecule: 
+            if site.molecule not in seen: 
+                seen[site.molecule] = len(seen) + 1
+            site_res_id[idx] = seen[site.molecule]
         elif site.residue:
-            if last_res_id == -1:
-                last_name = site.residue.name
-                if idx == 0:
-                    res_nr = 1
-                else:
-                    res_nr = res_nr + 1
-
-                last_res_id = site.residue.number
-
-                site_res_id[idx] = res_nr
-
-            elif site.residue.name == last_name:
-                if last_res_id == site.residue.number:
-                    site_res_id[idx] = res_nr
-                else:
-                    res_nr += 1
-                    site_res_id[idx] = res_nr
-                    last_res_id = site.residue.number
-            else:
-                res_nr += 1
-                site_res_id[idx] = res_nr
-                last_res_id = site.residue.number
-                last_name = site.residue.name
+            if site.residue not in seen:
+                seen[site.residue] = len(seen) + 1
+            site_res_id[idx] = seen[site.residue]
         else:
-            if idx == 0:
-                unaffiliated = 1
-                site_res_id[idx] = 1
-            elif unaffiliated == -1:
-                res_nr = res_nr + 1
-                unaffiliated = res_nr
+            if "MOL" not in seen:
+                seen["MOL"] = len(site_res_id) + 1
+            site_res_id[idx] = seen["MOL"]
 
     for idx, (site, pos) in enumerate(zip(top.sites, updated_positions)):
         if site.molecule:
@@ -255,7 +205,7 @@ def _prepare_atoms(top, updated_positions, precision):
             )
             site.label = f"res_id: {res_id}, " + site.label
         else:
-            res_id = unaffiliated
+            res_id = site_res_id[idx]
             res_name = "MOL"
 
             site.label = f"res_id: {res_id}, " + site.label
