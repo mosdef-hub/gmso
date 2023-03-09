@@ -183,7 +183,7 @@ def _prepare_atoms(top, updated_positions, precision):
             site_res_id[idx] = seen[site.residue]
         else:
             if "MOL" not in seen:
-                seen["MOL"] = len(site_res_id) + 1
+                seen["MOL"] = len(seen) + 1
             site_res_id[idx] = seen["MOL"]
 
     for idx, (site, pos) in enumerate(zip(top.sites, updated_positions)):
