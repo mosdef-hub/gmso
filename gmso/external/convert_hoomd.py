@@ -129,6 +129,199 @@ def to_gsd_snapshot(
     return gsd_snapshot
 
 
+def to_hoomd_snapshot(
+    top,
+    base_units=None,
+    rigid_bodies=None,
+    shift_coords=True,
+    parse_special_pairs=True,
+    auto_scale=False,
+):
+    """Create a gsd.snapshot objcet (HOOMD v3 default data format).
+
+    The gsd snapshot is molecular structure of HOOMD-Blue. This file
+    can be used as a starting point for a HOOMD-Blue simulation, for analysis,
+    and for visualization in various tools.
+
+    Parameters
+    ----------
+    top : gmso.Topology
+        gmso.Topology object
+    filename : str
+        Path of the output file.
+    base_units : dict, optinoal, default=None
+        The dictionary of base units to be converted to. Entries restricted to
+        "energy", "length", and "mass". There is also option to used predefined
+        unit systems ("MD" or "AKMA" provided as string). If None is provided,
+        this method will perform no units conversion.
+    rigid_bodies : list of int, optional, default=None
+        List of rigid body information. An integer value is required for each
+        atom corresponding to the index of the rigid body the particle is to be
+        associated with. A value of None indicates the atom is not part of a
+        rigid body.
+    shift_coords : bool, optional, default=True
+        Shift coordinates from (0, L) to (-L/2, L/2) if necessary.
+    parse_special_pairs : bool, optional, default=True
+        Writes out special pair information necessary to correctly use the OPLS
+        fudged 1,4 interactions in HOOMD.
+    auto_scale : bool or dict, optional, default=False
+        Automatically scaling relevant length, energy and mass units.
+        Referenced mass unit is obtained from sites' masses.
+        Referenced energy and distance are refered from sites' atom types (when applicable).
+        If the referenced scaling values cannot be determined (e.g., when the topology is not typed),
+        all reference scaling values is set to 1.
+        A dictionary specifying the referenced scaling values may also be provided for this argument.
+
+    Notes
+    -----
+    Force field parameters are not written to the GSD file and must be included
+    manually in a HOOMD input script. Work on a HOOMD plugin is underway to
+    read force field parameters from a Foyer XML file.
+    """
+    base_units = _validate_base_units(base_units, top)
+    ref_values = _infer_ref_values(top, auto_scale, base_units)
+
+    hoomd_snapshot = hoomd.Snapshot()
+
+    # Write box information
+    (lx, ly, lz, xy, xz, yz) = _prepare_box_information(top)
+
+    lx = lx.to(base_units["length"]) / ref_values["lengths"]
+    ly = ly.to(base_units["length"]) / ref_values["lengths"]
+    lz = lz.to(base_units["length"]) / ref_values["lengths"]
+
+    hoomd_snapshot.configuration.box = hoomd.Box(
+        Lx=lx, Ly=ly, Lz=lz, xy=xy, xz=xz, yz=yz
+    )
+
+    warnings.warn(
+        "Only writing particle, bond, angle, proper and improper dihedral information."
+        "Special pairs are not currently written to GSD files",
+        NotYetImplementedWarning,
+    )
+
+    _parse_particle_information(
+        hoomd_snapshot,
+        top,
+        base_units,
+        rigid_bodies,
+        shift_coords,
+        u.unyt_array([lx, ly, lz]),
+        ref_values,
+    )
+    if parse_special_pairs:
+        _parse_pairs_information(hoomd_snapshot, top)
+    if top.n_bonds > 0:
+        _parse_bond_information(hoomd_snapshot, top)
+    if top.n_angles > 0:
+        _parse_angle_information(hoomd_snapshot, top)
+    if top.n_dihedrals > 0:
+        _parse_dihedral_information(hoomd_snapshot, top)
+    if top.n_impropers > 0:
+        _parse_improper_information(hoomd_snapshot, top)
+
+    hoomd_snapshot.wrap()
+    return hoomd_snapshot
+
+
+def _parse_particle_information(
+    snapshot,
+    top,
+    base_units,
+    rigid_bodies,
+    shift_coords,
+    box_lengths,
+    ref_values,
+):
+    """Parse site information from topology.
+
+    Parameters
+    ----------
+    snapshot : gsd.hoomd.Snapshot or hoomd.Snapshot
+        The target Snapshot object.
+    top : gmso.Topology
+        Topology object holding system information.
+    base_units : dict
+        The dictionary holding base units (mass, length, and energy)
+    rigid_bodies : bool
+        Flag to parse rigid bodies information, to be implemented
+    shift_coords : bool
+        If True, shift coordinates from (0, L) to (-L/2, L/2) if neccessary.
+    box_lengths : list() of length 3
+        Lengths of box in x, y, z
+    ref_values : dict
+        Scaling factors for mass/length/energy
+    """
+    # Set up all require
+    xyz = u.unyt_array(
+        [
+            site.position.to(base_units["lengths"]) / ref_values["length"]
+            for site in top.sites
+        ]
+    )
+    if shift_coords:
+        warnings.warn("Shifting coordinates to [-L/2, L/2]")
+        xyz = coord_shift(xyz, box_lengths)
+
+    types = [
+        site.name if site.atom_type is None else site.atom_type.name
+        for site in top.sites
+    ]
+    unique_types = sorted(list(set(types)))
+    typeids = np.array([unique_types.index(t) for t in types])
+    masses = list()
+    charges = list()
+    for site in top.sites:
+        masses.append(
+            site.mass.to(base_units["mass"]) / ref_values["mass"]
+            if site.mass
+            else 1 / ref_values * base_units["mass"]
+        )
+        charges.append(site.charge if site.charge else 0 * u.elementary_charge)
+
+    """
+    Permittivity of free space = 2.39725e-4 e^2/((kcal/mol)(angstrom)),
+    where e is the elementary charge
+    """
+    # e0 = u.physical_constants.eps_0.in_units(
+    #    u.elementary_charge**2 / u.Unit("kcal*angstrom/mol")
+    # )
+    # charge_factor = (4.0 * np.pi * e0 * ref_distance * ref_energy) ** 0.5
+
+    e0 = u.physical_constants.eps_0.in_units(
+        u.elementary_charge**2 / (base_units["energy"] * base_units["length"])
+    )
+    charge_factor = (
+        4.0
+        * np.pi
+        * e0
+        * ref_values["length"]
+        * ref_values["energy"]
+        * base_units["length"]
+        * base_units["energy"]
+    ) ** 0.5
+
+    if isinstance(snapshot, hoomd.Snapshot):
+        snapshot.particles.N = top.n_sites
+        snapshot.particles.types = unique_types
+        snapshot.particles.position[0:] = xyz
+        snapshot.particles.typeid[0:] = typeids
+        snapshot.particles.mass[0:] = masses
+        snapshot.particles.charge[0:] = charges / charge_factor
+    elif isinstance(snapshot, gsd.hoomd.Snapshot):
+        snapshot.particles.N = top.n_sites
+        snapshot.particles.types = unique_types
+        snapshot.particles.position = xyz
+        snapshot.particles.typeid = typeids
+        snapshot.particles.mass = masses
+        snapshot.particles.charge = charges / charge_factor
+    if rigid_bodies:
+        warnings.warn(
+            "Rigid bodies detected, but not yet implemented for GSD",
+            NotYetImplementedWarning,
+        )
+
+
 def _parse_pairs_information(
     snapshot,
     top,
@@ -166,175 +359,6 @@ def _parse_pairs_information(
         snapshot.pairs.group = np.reshape(pairs, (-1, 2))
         snapshot.pairs.types = pair_types
         snapshot.pairs.typeid = pair_typeids
-
-
-def to_hoomd_snapshot(
-    top,
-    base_units=None,
-    rigid_bodies=None,
-    shift_coords=True,
-    parse_special_pairs=True,
-):
-    """Create a gsd.snapshot objcet (HOOMD v3 default data format).
-
-    The gsd snapshot is molecular structure of HOOMD-Blue. This file
-    can be used as a starting point for a HOOMD-Blue simulation, for analysis,
-    and for visualization in various tools.
-
-    Parameters
-    ----------
-    top : gmso.Topology
-        gmso.Topology object
-    filename : str
-        Path of the output file.
-    base_units : dict, optinoal, default=None
-        The dictionary of base units to be converted to. Entries restricted to
-        "energy", "length", and "mass". There is also option to used predefined
-        unit systems ("MD" or "AKMA" provided as string). If None is provided,
-        this method will perform no units conversion.
-    rigid_bodies : list of int, optional, default=None
-        List of rigid body information. An integer value is required for each
-        atom corresponding to the index of the rigid body the particle is to be
-        associated with. A value of None indicates the atom is not part of a
-        rigid body.
-    shift_coords : bool, optional, default=True
-        Shift coordinates from (0, L) to (-L/2, L/2) if necessary.
-    parse_special_pairs : bool, optional, default=True
-        Writes out special pair information necessary to correctly use the OPLS
-        fudged 1,4 interactions in HOOMD.
-
-    Notes
-    -----
-    Force field parameters are not written to the GSD file and must be included
-    manually in a HOOMD input script. Work on a HOOMD plugin is underway to
-    read force field parameters from a Foyer XML file.
-    """
-    base_units = _validate_base_units(base_units, top)
-    hoomd_snapshot = hoomd.Snapshot()
-
-    # Write box information
-    (lx, ly, lz, xy, xz, yz) = _prepare_box_information(top)
-
-    lx = lx.to(base_units["length"])
-    ly = ly.to(base_units["length"])
-    lz = lz.to(base_units["length"])
-
-    hoomd_snapshot.configuration.box = hoomd.Box(
-        Lx=lx, Ly=ly, Lz=lz, xy=xy, xz=xz, yz=yz
-    )
-
-    warnings.warn(
-        "Only writing particle, bond, angle, proper and improper dihedral information."
-        "Special pairs are not currently written to GSD files",
-        NotYetImplementedWarning,
-    )
-
-    _parse_particle_information(
-        hoomd_snapshot,
-        top,
-        base_units,
-        rigid_bodies,
-        shift_coords,
-        u.unyt_array([lx, ly, lz]),
-    )
-    if parse_special_pairs:
-        _parse_pairs_information(hoomd_snapshot, top)
-    if top.n_bonds > 0:
-        _parse_bond_information(hoomd_snapshot, top)
-    if top.n_angles > 0:
-        _parse_angle_information(hoomd_snapshot, top)
-    if top.n_dihedrals > 0:
-        _parse_dihedral_information(hoomd_snapshot, top)
-    if top.n_impropers > 0:
-        _parse_improper_information(hoomd_snapshot, top)
-
-    hoomd_snapshot.wrap()
-    return hoomd_snapshot
-
-
-def _parse_particle_information(
-    snapshot,
-    top,
-    base_units,
-    rigid_bodies,
-    shift_coords,
-    box_lengths,
-):
-    """Parse site information from topology.
-
-    Parameters
-    ----------
-    snapshot : gsd.hoomd.Snapshot or hoomd.Snapshot
-        The target Snapshot object.
-    top : gmso.Topology
-        Topology object holding system information.
-    base_units : dict
-        The dictionary holding base units (mass, length, and energy)
-    rigid_bodies : bool
-        Flag to parse rigid bodies information, to be implemented
-    shift_coords : bool
-        If True, shift coordinates from (0, L) to (-L/2, L/2) if neccessary.
-    box_lengths : list() of length 3
-        Lengths of box in x, y, z
-    """
-    # Set up all require
-    xyz = u.unyt_array([site.position for site in top.sites]).to(
-        base_units["length"]
-    )
-    if shift_coords:
-        warnings.warn("Shifting coordinates to [-L/2, L/2]")
-        xyz = coord_shift(xyz, box_lengths)
-
-    types = [
-        site.name if site.atom_type is None else site.atom_type.name
-        for site in top.sites
-    ]
-    unique_types = sorted(list(set(types)))
-    typeids = np.array([unique_types.index(t) for t in types])
-    masses = list()
-    charges = list()
-    for site in top.sites:
-        masses.append(site.mass if site.mass else 1 * base_units["mass"])
-        charges.append(site.charge if site.charge else 0 * u.elementary_charge)
-    masses = u.unyt_array(masses).in_units(base_units["mass"]).value
-
-    """
-    Permittivity of free space = 2.39725e-4 e^2/((kcal/mol)(angstrom)),
-    where e is the elementary charge
-    """
-    # e0 = u.physical_constants.eps_0.in_units(
-    #    u.elementary_charge**2 / u.Unit("kcal*angstrom/mol")
-    # )
-    # charge_factor = (4.0 * np.pi * e0 * ref_distance * ref_energy) ** 0.5
-
-    e0 = u.physical_constants.eps_0.in_units(
-        u.elementary_charge**2 / (base_units["energy"] * base_units["length"])
-    )
-    charge_factor = (
-        4.0 * np.pi * e0 * base_units["length"] * base_units["energy"]
-    ) ** 0.5
-
-    if isinstance(snapshot, hoomd.Snapshot):
-        snapshot.particles.N = top.n_sites
-        snapshot.particles.types = unique_types
-        snapshot.particles.position[0:] = xyz.in_units(
-            base_units["length"]
-        ).value
-        snapshot.particles.typeid[0:] = typeids
-        snapshot.particles.mass[0:] = masses
-        snapshot.particles.charge[0:] = charges / charge_factor
-    elif isinstance(snapshot, gsd.hoomd.Snapshot):
-        snapshot.particles.N = top.n_sites
-        snapshot.particles.types = unique_types
-        snapshot.particles.position = xyz.in_units(base_units["length"]).value
-        snapshot.particles.typeid = typeids
-        snapshot.particles.mass = masses
-        snapshot.particles.charge = charges / charge_factor
-    if rigid_bodies:
-        warnings.warn(
-            "Rigid bodies detected, but not yet implemented for GSD",
-            NotYetImplementedWarning,
-        )
 
 
 def _parse_bond_information(snapshot, top):
@@ -553,6 +577,7 @@ def to_hoomd_forcefield(
     r_cut=0,
     pppm_kwargs={"resolution": (8, 8, 8), "order": 4},
     base_units=None,
+    auto_scale=False,
 ):
     """Convert the potential portion of a typed GMSO to hoomd forces.
 
@@ -572,6 +597,13 @@ def to_hoomd_forcefield(
         "energy", "length", and "mass". There is also option to used predefined
         unit systems ("MD" or "AKMA" provided as string). If None is provided,
         this method will perform no units conversion.
+    auto_scale : bool or dict, optional, default=False
+        Automatically scaling relevant length, energy and mass units.
+        Referenced mass unit is obtained from sites' masses.
+        Referenced energy and distance are refered from sites' atom types (when applicable).
+        If the referenced scaling values cannot be determined (e.g., when the topology is not typed),
+        all reference scaling values is set to 1.
+        A dictionary specifying the referenced scaling values may also be provided for this argument.
 
     Returns
     -------
@@ -580,6 +612,7 @@ def to_hoomd_forcefield(
     """
     potential_types = _validate_compatibility(top)
     base_units = _validate_base_units(base_units, top)
+    ref_values = _infer_ref_values(top, auto_scale, base_units, potential_types)
 
     # Reference json dict of all the potential in the PotentialTemplate
     potential_refs = dict()
@@ -598,30 +631,35 @@ def to_hoomd_forcefield(
             potential_refs,
             pppm_kwargs,
             base_units,
+            ref_values,
         ),
         "bonds": _parse_bond_forces(
             top,
             potential_types,
             potential_refs,
             base_units,
+            ref_values,
         ),
         "angles": _parse_angle_forces(
             top,
             potential_types,
             potential_refs,
             base_units,
+            ref_values,
         ),
         "dihedrals": _parse_dihedral_forces(
             top,
             potential_types,
             potential_refs,
             base_units,
+            ref_values,
         ),
         "impropers": _parse_improper_forces(
             top,
             potential_types,
             potential_refs,
             base_units,
+            ref_values,
         ),
     }
 
@@ -659,6 +697,7 @@ def _parse_nonbonded_forces(
     potential_refs,
     pppm_kwargs,
     base_units,
+    ref_values,
 ):
     """Parse nonbonded forces from topology.
 
@@ -678,6 +717,8 @@ def _parse_nonbonded_forces(
         Keyword arguments to pass to hoomd.md.long_range.make_pppm_coulomb_forces().
     base_units : dict
         The dictionary holding base units (mass, length, and energy)
+    ref_values : dict
+        Scaling factors for mass/length/energy
     """
     unique_atypes = top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS)
 
@@ -738,13 +779,11 @@ def _parse_nonbonded_forces(
                 r_cut=r_cut,
                 nlist=nlist,
                 scaling_factors=nb_scalings,
+                ref_values=ref_values,
             )
         )
 
     return nbonded_forces
-
-
-# Helper methods to parse different nonbonded forces.
 
 
 def _parse_coulombic(
@@ -786,7 +825,9 @@ def _parse_coulombic(
     return [*coulombic, special_coulombic]
 
 
-def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
+def _parse_lj(
+    top, atypes, combining_rule, r_cut, nlist, scaling_factors, ref_values
+):
     """Parse LJ forces and special pairs LJ forces."""
     lj = hoomd.md.pair.LJ(nlist=nlist)
     calculated_params = dict()
@@ -811,14 +852,15 @@ def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
             )
 
         calculated_params[type_name] = {
-            "sigma": comb_sigma,
-            "epsilon": comb_epsilon,
+            "sigma": comb_sigma / ref_values["length"],
+            "epsilon": comb_epsilon / ref_values["energy"],
         }
         lj.params[type_name] = calculated_params[type_name]
         lj.r_cut[(type_name)] = r_cut
 
     # Handle 1-2, 1-3, and 1-4 scaling
-    # TODO: Fiure out a more general way to do this and handle molecule scaling factors
+    # TODO: Figure out a more general way to do this
+    # and handle molecule scaling factors
     special_lj = hoomd.md.special_pair.LJ()
 
     for i, pairs in enumerate(_generate_pairs_list(top)):
@@ -845,24 +887,32 @@ def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
 
 
 def _parse_buckingham(
-    top, atypes, combining_rule, r_cut, nlist, scaling_factors
+    top, atypes, combining_rule, r_cut, nlist, scaling_factors, ref_values
 ):
     return None
 
 
-def _parse_lj0804(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
+def _parse_lj0804(
+    top, atypes, combining_rule, r_cut, nlist, scaling_factors, ref_values
+):
     return None
 
 
-def _parse_lj1208(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
+def _parse_lj1208(
+    top, atypes, combining_rule, r_cut, nlist, scaling_factors, ref_values
+):
     return None
 
 
-def _parse_mie(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
+def _parse_mie(
+    top, atypes, combining_rule, r_cut, nlist, scaling_factors, ref_values
+):
     return None
 
 
-def _parse_bond_forces(top, potential_types, potential_refs, base_units):
+def _parse_bond_forces(
+    top, potential_types, potential_refs, base_units, ref_values
+):
     """Parse bond forces from topology.
 
     Parameters
@@ -890,7 +940,7 @@ def _parse_bond_forces(top, potential_types, potential_refs, base_units):
             "expected_parameters_dimensions"
         ]
         groups[group] = _convert_params_units(
-            groups[group], expected_units_dim, base_units
+            groups[group], expected_units_dim, base_units, ref_values
         )
 
     btype_group_map = {
@@ -905,12 +955,16 @@ def _parse_bond_forces(top, potential_types, potential_refs, base_units):
             btype_group_map[group]["parser"](
                 container=btype_group_map[group]["container"](),
                 btypes=groups[group],
+                ref_values=ref_values,
             )
         )
     return bond_forces
 
 
-def _parse_harmonic_bond(container, btypes):
+def _parse_harmonic_bond(
+    container,
+    btypes,
+):
     for btype in btypes:
         # TODO: Unit conversion
         member_types = sort_member_types(btype)
@@ -921,7 +975,9 @@ def _parse_harmonic_bond(container, btypes):
     return container
 
 
-def _parse_angle_forces(top, potential_types, potential_refs, base_units):
+def _parse_angle_forces(
+    top, potential_types, potential_refs, base_units, ref_values
+):
     """Parse angle forces from topology.
 
     Parameters
@@ -934,6 +990,8 @@ def _parse_angle_forces(top, potential_types, potential_refs, base_units):
         Reference json potential from gmso.lib.potential_templates.
     base_units : dict
         The dictionary holding base units (mass, length, and energy)
+    ref_values : dict
+        Scaling factors for mass/length/energy
     """
     unique_agtypes = top.angle_types(
         filter_by=PotentialFilters.UNIQUE_NAME_CLASS
@@ -951,7 +1009,7 @@ def _parse_angle_forces(top, potential_types, potential_refs, base_units):
             "expected_parameters_dimensions"
         ]
         groups[group] = _convert_params_units(
-            groups[group], expected_units_dim, base_units
+            groups[group], expected_units_dim, base_units, ref_values
         )
 
     agtype_group_map = {
@@ -971,7 +1029,10 @@ def _parse_angle_forces(top, potential_types, potential_refs, base_units):
     return angle_forces
 
 
-def _parse_harmonic_angle(container, agtypes):
+def _parse_harmonic_angle(
+    container,
+    agtypes,
+):
     for agtype in agtypes:
         member_types = sort_member_types(agtype)
         container.params["-".join(member_types)] = {
@@ -981,7 +1042,13 @@ def _parse_harmonic_angle(container, agtypes):
     return container
 
 
-def _parse_dihedral_forces(top, potential_types, potential_refs, base_units):
+def _parse_dihedral_forces(
+    top,
+    potential_types,
+    potential_refs,
+    base_units,
+    ref_values,
+):
     """Parse dihedral forces from topology.
 
     Parameters
@@ -994,6 +1061,8 @@ def _parse_dihedral_forces(top, potential_types, potential_refs, base_units):
         Reference json potential from gmso.lib.potential_templates.
     base_units : dict
         The dictionary holding base units (mass, length, and energy)
+    ref_values : dict
+        Scaling factors for mass/length/energy
     """
     unique_dtypes = top.dihedral_types(
         filter_by=PotentialFilters.UNIQUE_NAME_CLASS
@@ -1011,7 +1080,10 @@ def _parse_dihedral_forces(top, potential_types, potential_refs, base_units):
             "expected_parameters_dimensions"
         ]
         groups[group] = _convert_params_units(
-            groups[group], expected_units_dim, base_units
+            groups[group],
+            expected_units_dim,
+            base_units,
+            ref_values,
         )
     dtype_group_map = {
         "OPLSTorsionPotential": {
@@ -1052,7 +1124,10 @@ def _parse_dihedral_forces(top, potential_types, potential_refs, base_units):
     return dihedral_forces
 
 
-def _parse_periodic_dihedral(container, dtypes):
+def _parse_periodic_dihedral(
+    container,
+    dtypes,
+):
     for dtype in dtypes:
         member_types = sort_member_types(dtype)
         container.params["-".join(member_types)] = {
@@ -1064,7 +1139,10 @@ def _parse_periodic_dihedral(container, dtypes):
     return container
 
 
-def _parse_opls_dihedral(container, dtypes):
+def _parse_opls_dihedral(
+    container,
+    dtypes,
+):
     for dtype in dtypes:
         # TODO: The range of ks is mismatched (GMSO go from k0 to k5)
         # May need to do a check that k0 == k5 == 0 or raise a warning
@@ -1077,7 +1155,10 @@ def _parse_opls_dihedral(container, dtypes):
     return container
 
 
-def _parse_rb_dihedral(container, dtypes):
+def _parse_rb_dihedral(
+    container,
+    dtypes,
+):
     warnings.warn(
         "RyckaertBellemansTorsionPotential will be converted to OPLSTorsionPotential."
     )
@@ -1095,7 +1176,9 @@ def _parse_rb_dihedral(container, dtypes):
     return container
 
 
-def _parse_improper_forces(top, potential_types, potential_refs, base_units):
+def _parse_improper_forces(
+    top, potential_types, potential_refs, base_units, ref_values
+):
     """Parse improper forces from topology.
 
     Parameters
@@ -1125,7 +1208,10 @@ def _parse_improper_forces(top, potential_types, potential_refs, base_units):
             "expected_parameters_dimensions"
         ]
         groups[group] = _convert_params_units(
-            groups[group], expected_units_dim, base_units
+            groups[group],
+            expected_units_dim,
+            base_units,
+            ref_values,
         )
     hoomd_version = hoomd.version.version.split(".")
     if int(hoomd_version[1]) >= 8:
@@ -1154,7 +1240,10 @@ def _parse_improper_forces(top, potential_types, potential_refs, base_units):
     return improper_forces
 
 
-def _parse_harmonic_improper(container, itypes):
+def _parse_harmonic_improper(
+    container,
+    itypes,
+):
     for itype in itypes:
         member_types = sort_member_types(itype)
         container.params["-".join(member_types)] = {
@@ -1218,7 +1307,69 @@ def _infer_units(top):
     return {"length": length_unit, "energy": energy_unit, "mass": mass_unit}
 
 
-def _convert_params_units(potentials, expected_units_dim, base_units):
+def _infer_ref_values(top, auto_scale, base_units, potential_types=None):
+    """Try to infer energy/length/mass ."""
+    if isinstance(auto_scale, dict):
+        assert all(key in ["energy", "lenght", "mass"] for key in auto_scale)
+        msg = "Referenced scaling values must be either of type float or int."
+        assert all(
+            isinstance(val, (float, int)) for key, val in auto_scale.items()
+        ), msg
+        return auto_scale
+    else:
+        ref_values = {"energy": 1, "length": 1, "mass": 1}
+        if auto_scale is False:
+            return ref_values
+        elif auto_scale is True:
+            # Refer masses from sites' masses
+            masses = {site.mass.to(base_units["mass"]) for site in top.sites}
+            if masses:
+                ref_values["mass"] = max(masses)
+
+            # Refer lengths and energies from sites' atom types if possible
+            atypes = {atype for atype in top.atom_types}
+            if atypes:
+                if not potential_types:
+                    potential_types = _validate_compatibility(top)
+                atype_classes = dict()
+                # Separate atypes by their classes
+                for atype in atypes:
+                    if potential_types[atype] not in atype_classes:
+                        potential_types[atype] = [atype]
+                    else:
+                        potential_types[atype].append(atype)
+
+                # Appending lenghts and energy
+                lengths, energies = list(), list()
+                for atype_class in atype_classes:
+                    if atype_class == "LennardJonesPotential":
+                        for atype in atypes:
+                            lengths.append(
+                                atype.parameters["sigma"].to(
+                                    base_units["length"]
+                                )
+                            )
+                            energies.append(
+                                atype.parameters["epsilon"].to(
+                                    base_units["energy"]
+                                )
+                            )
+                    else:
+                        warnings.warn(
+                            f"Currently cannot infer referenced lengths and energies from {atype_class}"
+                        )
+                ref_values["length"] = max(lengths)
+                ref_values["energy"] = max(energies)
+            return ref_values
+        else:
+            raise TypeError(
+                f"Invalid auto_scale provided, auto_scale must be of type dict or bool."
+            )
+
+
+def _convert_params_units(
+    potentials, expected_units_dim, base_units, ref_values
+):
     """Convert parameters' units in the potential to that specified in the base_units."""
     converted_potentials = list()
     for potential in potentials:
@@ -1227,7 +1378,9 @@ def _convert_params_units(potentials, expected_units_dim, base_units):
             unit_dim = expected_units_dim[parameter]
             ind_units = re.sub("[^a-zA-Z]+", " ", unit_dim).split()
             for unit in ind_units:
-                unit_dim = unit_dim.replace(unit, str(base_units[unit]))
+                unit_dim = unit_dim.replace(
+                    unit, f"{str(ref_values[unit])} * {str(base_units[unit])}"
+                )
             converted_params[parameter] = potential.parameters[parameter].to(
                 unit_dim
             )
