@@ -48,6 +48,7 @@ AKMA_UNITS = {
 def to_gsd_snapshot(
     top,
     base_units=None,
+    auto_scale=False,
     rigid_bodies=None,
     shift_coords=True,
     parse_special_pairs=True,
@@ -87,6 +88,8 @@ def to_gsd_snapshot(
     read force field parameters from a Foyer XML file.
     """
     base_units = _validate_base_units(base_units, top)
+    ref_values = _infer_ref_values(top, auto_scale, base_units)
+
     gsd_snapshot = gsd.hoomd.Snapshot()
 
     gsd_snapshot.configuration.step = 0
@@ -95,14 +98,14 @@ def to_gsd_snapshot(
     # Write box information
     (lx, ly, lz, xy, xz, yz) = _prepare_box_information(top)
 
-    lx = lx.to(base_units["length"])
-    ly = ly.to(base_units["length"])
-    lz = lz.to(base_units["length"])
+    lx = lx.to_value(base_units["length"]) / ref_values["length"]
+    ly = ly.to_value(base_units["length"]) / ref_values["length"]
+    lz = lz.to_value(base_units["length"]) / ref_values["length"]
 
     gsd_snapshot.configuration.box = np.array([lx, ly, lz, xy, xz, yz])
 
     warnings.warn(
-        "Only writing particle, bond, angle, proper and improper dihedral information."
+        "Only writing particle, bond, sangle, proper and improper dihedral information."
         "Special pairs are not currently written to GSD files",
         NotYetImplementedWarning,
     )
@@ -114,6 +117,7 @@ def to_gsd_snapshot(
         rigid_bodies,
         shift_coords,
         u.unyt_array([lx, ly, lz]),
+        ref_values,
     )
     if parse_special_pairs:
         _parse_pairs_information(gsd_snapshot, top)
@@ -186,9 +190,9 @@ def to_hoomd_snapshot(
     # Write box information
     (lx, ly, lz, xy, xz, yz) = _prepare_box_information(top)
 
-    lx = lx.to(base_units["length"]) / ref_values["lengths"]
-    ly = ly.to(base_units["length"]) / ref_values["lengths"]
-    lz = lz.to(base_units["length"]) / ref_values["lengths"]
+    lx = lx.to_value(base_units["length"]) / ref_values["length"]
+    ly = ly.to_value(base_units["length"]) / ref_values["length"]
+    lz = lz.to_value(base_units["length"]) / ref_values["length"]
 
     hoomd_snapshot.configuration.box = hoomd.Box(
         Lx=lx, Ly=ly, Lz=lz, xy=xy, xz=xz, yz=yz
@@ -255,7 +259,7 @@ def _parse_particle_information(
     # Set up all require
     xyz = u.unyt_array(
         [
-            site.position.to(base_units["lengths"]) / ref_values["length"]
+            site.position.to_value(base_units["length"]) / ref_values["length"]
             for site in top.sites
         ]
     )
@@ -273,7 +277,7 @@ def _parse_particle_information(
     charges = list()
     for site in top.sites:
         masses.append(
-            site.mass.to(base_units["mass"]) / ref_values["mass"]
+            site.mass.to_value(base_units["mass"]) / ref_values["mass"]
             if site.mass
             else 1 / ref_values * base_units["mass"]
         )
@@ -737,9 +741,7 @@ def _parse_nonbonded_forces(
             "expected_parameters_dimensions"
         ]
         groups[group] = _convert_params_units(
-            groups[group],
-            expected_units_dim,
-            base_units,
+            groups[group], expected_units_dim, base_units, ref_values
         )
 
     atype_parsers = {
@@ -779,7 +781,6 @@ def _parse_nonbonded_forces(
                 r_cut=r_cut,
                 nlist=nlist,
                 scaling_factors=nb_scalings,
-                ref_values=ref_values,
             )
         )
 
@@ -825,9 +826,7 @@ def _parse_coulombic(
     return [*coulombic, special_coulombic]
 
 
-def _parse_lj(
-    top, atypes, combining_rule, r_cut, nlist, scaling_factors, ref_values
-):
+def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
     """Parse LJ forces and special pairs LJ forces."""
     lj = hoomd.md.pair.LJ(nlist=nlist)
     calculated_params = dict()
@@ -852,8 +851,8 @@ def _parse_lj(
             )
 
         calculated_params[type_name] = {
-            "sigma": comb_sigma / ref_values["length"],
-            "epsilon": comb_epsilon / ref_values["energy"],
+            "sigma": comb_sigma,
+            "epsilon": comb_epsilon,
         }
         lj.params[type_name] = calculated_params[type_name]
         lj.r_cut[(type_name)] = r_cut
@@ -887,25 +886,45 @@ def _parse_lj(
 
 
 def _parse_buckingham(
-    top, atypes, combining_rule, r_cut, nlist, scaling_factors, ref_values
+    top,
+    atypes,
+    combining_rule,
+    r_cut,
+    nlist,
+    scaling_factors,
 ):
     return None
 
 
 def _parse_lj0804(
-    top, atypes, combining_rule, r_cut, nlist, scaling_factors, ref_values
+    top,
+    atypes,
+    combining_rule,
+    r_cut,
+    nlist,
+    scaling_factors,
 ):
     return None
 
 
 def _parse_lj1208(
-    top, atypes, combining_rule, r_cut, nlist, scaling_factors, ref_values
+    top,
+    atypes,
+    combining_rule,
+    r_cut,
+    nlist,
+    scaling_factors,
 ):
     return None
 
 
 def _parse_mie(
-    top, atypes, combining_rule, r_cut, nlist, scaling_factors, ref_values
+    top,
+    atypes,
+    combining_rule,
+    r_cut,
+    nlist,
+    scaling_factors,
 ):
     return None
 
@@ -955,7 +974,6 @@ def _parse_bond_forces(
             btype_group_map[group]["parser"](
                 container=btype_group_map[group]["container"](),
                 btypes=groups[group],
-                ref_values=ref_values,
             )
         )
     return bond_forces
@@ -1310,7 +1328,7 @@ def _infer_units(top):
 def _infer_ref_values(top, auto_scale, base_units, potential_types=None):
     """Try to infer energy/length/mass ."""
     if isinstance(auto_scale, dict):
-        assert all(key in ["energy", "lenght", "mass"] for key in auto_scale)
+        assert all(key in ["energy", "length", "mass"] for key in auto_scale)
         msg = "Referenced scaling values must be either of type float or int."
         assert all(
             isinstance(val, (float, int)) for key, val in auto_scale.items()
@@ -1322,9 +1340,9 @@ def _infer_ref_values(top, auto_scale, base_units, potential_types=None):
             return ref_values
         elif auto_scale is True:
             # Refer masses from sites' masses
-            masses = {site.mass.to(base_units["mass"]) for site in top.sites}
+            masses = [site.mass.to(base_units["mass"]) for site in top.sites]
             if masses:
-                ref_values["mass"] = max(masses)
+                ref_values["mass"] = max(masses).value
 
             # Refer lengths and energies from sites' atom types if possible
             atypes = {atype for atype in top.atom_types}
@@ -1335,9 +1353,9 @@ def _infer_ref_values(top, auto_scale, base_units, potential_types=None):
                 # Separate atypes by their classes
                 for atype in atypes:
                     if potential_types[atype] not in atype_classes:
-                        potential_types[atype] = [atype]
+                        atype_classes[potential_types[atype]] = [atype]
                     else:
-                        potential_types[atype].append(atype)
+                        atype_classes[potential_types[atype]].append(atype)
 
                 # Appending lenghts and energy
                 lengths, energies = list(), list()
@@ -1358,8 +1376,8 @@ def _infer_ref_values(top, auto_scale, base_units, potential_types=None):
                         warnings.warn(
                             f"Currently cannot infer referenced lengths and energies from {atype_class}"
                         )
-                ref_values["length"] = max(lengths)
-                ref_values["energy"] = max(energies)
+                ref_values["length"] = max(lengths).value
+                ref_values["energy"] = max(energies).value
             return ref_values
         else:
             raise TypeError(
@@ -1378,9 +1396,13 @@ def _convert_params_units(
             unit_dim = expected_units_dim[parameter]
             ind_units = re.sub("[^a-zA-Z]+", " ", unit_dim).split()
             for unit in ind_units:
-                unit_dim = unit_dim.replace(
-                    unit, f"{str(ref_values[unit])} * {str(base_units[unit])}"
-                )
+                if unit != "angle":
+                    unit_dim = unit_dim.replace(
+                        unit,
+                        f"({str(ref_values[unit])} * {str(base_units[unit])})",
+                    )
+                else:
+                    unit_dim = unit_dim.replace(unit, str(base_units[unit]))
             converted_params[parameter] = potential.parameters[parameter].to(
                 unit_dim
             )
