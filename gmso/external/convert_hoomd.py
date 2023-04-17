@@ -27,7 +27,7 @@ from gmso.utils.sorting import (
 )
 
 if has_gsd:
-    import gsd
+    import gsd.hoomd
 if has_hoomd:
     import hoomd
 
