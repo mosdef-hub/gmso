@@ -81,6 +81,13 @@ def to_gsd_snapshot(
         Writes out special pair information necessary to correctly use the OPLS
         fudged 1,4 interactions in HOOMD.
 
+    Return
+    ------
+    gsd_snapshot : gsd.hoomd.Snapshot
+        Converted hoomd Snapshot.
+    base_units : dict
+        Based units dictionary utilized during the conversion.
+
     Notes
     -----
     Force field parameters are not written to the GSD file and must be included
@@ -88,7 +95,6 @@ def to_gsd_snapshot(
     read force field parameters from a Foyer XML file.
     """
     base_units = _validate_base_units(base_units, top, auto_scale)
-    # ref_values = _infer_ref_values(top, auto_scale, base_units)
 
     gsd_snapshot = gsd.hoomd.Snapshot()
 
@@ -129,7 +135,7 @@ def to_gsd_snapshot(
     if top.n_impropers > 0:
         _parse_improper_information(gsd_snapshot, top)
 
-    return gsd_snapshot
+    return gsd_snapshot, base_units
 
 
 def to_hoomd_snapshot(
@@ -175,6 +181,13 @@ def to_hoomd_snapshot(
         all reference scaling values is set to 1.
         A dictionary specifying the referenced scaling values may also be provided for this argument.
 
+    Return
+    ------
+    hoomd_snapshot : hoomd.Snapshot
+        Converted hoomd Snapshot.
+    base_units : dict
+        Based units dictionary utilized during the conversion.
+
     Notes
     -----
     Force field parameters are not written to the GSD file and must be included
@@ -182,7 +195,6 @@ def to_hoomd_snapshot(
     read force field parameters from a Foyer XML file.
     """
     base_units = _validate_base_units(base_units, top, auto_scale)
-    # ref_values = _infer_ref_values(top, auto_scale, base_units)
 
     hoomd_snapshot = hoomd.Snapshot()
 
@@ -223,7 +235,7 @@ def to_hoomd_snapshot(
         _parse_improper_information(hoomd_snapshot, top)
 
     hoomd_snapshot.wrap()
-    return hoomd_snapshot
+    return hoomd_snapshot, base_units
 
 
 def _parse_particle_information(
@@ -233,7 +245,6 @@ def _parse_particle_information(
     rigid_bodies,
     shift_coords,
     box_lengths,
-    # ref_values,
 ):
     """Parse site information from topology.
 
@@ -251,8 +262,6 @@ def _parse_particle_information(
         If True, shift coordinates from (0, L) to (-L/2, L/2) if neccessary.
     box_lengths : list() of length 3
         Lengths of box in x, y, z
-    ref_values : dict
-        Scaling factors for mass/length/energy
     """
     # Set up all require
     xyz = u.unyt_array(
@@ -282,10 +291,6 @@ def _parse_particle_information(
     Permittivity of free space = 2.39725e-4 e^2/((kcal/mol)(angstrom)),
     where e is the elementary charge
     """
-    # e0 = u.physical_constants.eps_0.in_units(
-    #    u.elementary_charge**2 / u.Unit("kcal*angstrom/mol")
-    # )
-    # charge_factor = (4.0 * np.pi * e0 * ref_distance * ref_energy) ** 0.5
 
     e0 = u.physical_constants.eps_0.in_units(
         u.elementary_charge**2 / (base_units["energy"] * base_units["length"])
@@ -601,14 +606,17 @@ def to_hoomd_forcefield(
     Returns
     -------
     forces : dict
-        Each entry
+        HOOMD forces converted from all available PotentialTypes of the provided
+        GMSO Topology. Converted are grouped by their category (as key of the
+        dictionary), namely, "nonbonded", "bonds", rangles", "dihedrals", and "impropers".
+    base_units : dict
+        Based units dictionary utilized during the conversion.
+
     """
     potential_types = _validate_compatibility(top)
     base_units = _validate_base_units(
         base_units, top, auto_scale, potential_types
     )
-    # ref_values = _infer_ref_values(
-    #     top, auto_scale, base_units, potential_types)
 
     # Reference json dict of all the potential in the PotentialTemplate
     potential_refs = dict()
@@ -654,7 +662,7 @@ def to_hoomd_forcefield(
         ),
     }
 
-    return forces
+    return forces, base_units
 
 
 def _validate_compatibility(top):
@@ -688,7 +696,6 @@ def _parse_nonbonded_forces(
     potential_refs,
     pppm_kwargs,
     base_units,
-    # ref_values,
 ):
     """Parse nonbonded forces from topology.
 
@@ -708,8 +715,6 @@ def _parse_nonbonded_forces(
         Keyword arguments to pass to hoomd.md.long_range.make_pppm_coulomb_forces().
     base_units : dict
         The dictionary holding base units (mass, length, and energy)
-    ref_values : dict
-        Scaling factors for mass/length/energy
     """
     unique_atypes = top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS)
 
@@ -1005,8 +1010,6 @@ def _parse_angle_forces(
         Reference json potential from gmso.lib.potential_templates.
     base_units : dict
         The dictionary holding base units (mass, length, and energy)
-    ref_values : dict
-        Scaling factors for mass/length/energy
     """
     unique_agtypes = top.angle_types(
         filter_by=PotentialFilters.UNIQUE_NAME_CLASS
@@ -1077,8 +1080,6 @@ def _parse_dihedral_forces(
         Reference json potential from gmso.lib.potential_templates.
     base_units : dict
         The dictionary holding base units (mass, length, and energy)
-    ref_values : dict
-        Scaling factors for mass/length/energy
     """
     unique_dtypes = top.dihedral_types(
         filter_by=PotentialFilters.UNIQUE_NAME_CLASS
@@ -1378,66 +1379,6 @@ def _infer_units(top):
         raise ValueError(f"Cannot infer energy unit from {length_unit}")
 
     return {"length": length_unit, "energy": energy_unit, "mass": mass_unit}
-
-
-# def _infer_ref_values(top, auto_scale, base_units, potential_types=None):
-#     """Try to infer energy/length/mass ."""
-#     if isinstance(auto_scale, dict):
-#         assert all(key in ["energy", "length", "mass"] for key in auto_scale)
-#         msg = "Referenced scaling values must be either of type float or int."
-#         assert all(
-#             isinstance(val, (float, int)) for key, val in auto_scale.items()
-#         ), msg
-#         return auto_scale
-#     else:
-#         ref_values = {"energy": 1, "length": 1, "mass": 1}
-#         if auto_scale is False:
-#             return ref_values
-#         elif auto_scale is True:
-#             # Refer masses from sites' masses
-#             masses = [site.mass.to(base_units["mass"]) for site in top.sites]
-#             if masses:
-#                 ref_values["mass"] = max(masses).value
-
-#             # Refer lengths and energies from sites' atom types if possible
-#             atypes = {atype for atype in top.atom_types}
-#             if atypes:
-#                 if not potential_types:
-#                     potential_types = _validate_compatibility(top)
-#                 atype_classes = dict()
-#                 # Separate atypes by their classes
-#                 for atype in atypes:
-#                     if potential_types[atype] not in atype_classes:
-#                         atype_classes[potential_types[atype]] = [atype]
-#                     else:
-#                         atype_classes[potential_types[atype]].append(atype)
-
-#                 # Appending lenghts and energy
-#                 lengths, energies = list(), list()
-#                 for atype_class in atype_classes:
-#                     if atype_class == "LennardJonesPotential":
-#                         for atype in atypes:
-#                             lengths.append(
-#                                 atype.parameters["sigma"].to(
-#                                     base_units["length"]
-#                                 )
-#                             )
-#                             energies.append(
-#                                 atype.parameters["epsilon"].to(
-#                                     base_units["energy"]
-#                                 )
-#                             )
-#                     else:
-#                         warnings.warn(
-#                             f"Currently cannot infer referenced lengths and energies from {atype_class}"
-#                         )
-#                 ref_values["length"] = max(lengths).value
-#                 ref_values["energy"] = max(energies).value
-#             return ref_values
-#         else:
-#             raise TypeError(
-#                 f"Invalid auto_scale provided, auto_scale must be of type dict or bool."
-#             )
 
 
 def _convert_params_units(
