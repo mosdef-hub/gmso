@@ -571,8 +571,8 @@ def _prepare_box_information(top):
 
 def to_hoomd_forcefield(
     top,
+    r_cut,
     nlist_buffer=0.4,
-    r_cut=0,
     pppm_kwargs={"resolution": (8, 8, 8), "order": 4},
     base_units=None,
     auto_scale=False,
@@ -583,11 +583,11 @@ def to_hoomd_forcefield(
     ----------
     top : gmso.Topology
         The typed topology to be converted
+    r_cut : float
+        r_cut for the nonbonded forces.
     nlist_buffer : float, optional, default=0.4
         Neighborlist buffer for simulation cell. Its unit is the same as that
         used to defined GMSO Topology Box.
-    r_cut : float
-        r_cut for the nonbonded forces.
     pppm_kwargs : dict
         Keyword arguments to pass to hoomd.md.long_range.make_pppm_coulomb_forces().
     base_units : dict or str, optional, default=None
@@ -629,8 +629,8 @@ def to_hoomd_forcefield(
     forces = {
         "nonbonded": _parse_nonbonded_forces(
             top,
-            nlist_buffer,
             r_cut,
+            nlist_buffer,
             potential_types,
             potential_refs,
             pppm_kwargs,
@@ -690,8 +690,8 @@ def _validate_compatibility(top):
 
 def _parse_nonbonded_forces(
     top,
-    nlist_buffer,
     r_cut,
+    nlist_buffer,
     potential_types,
     potential_refs,
     pppm_kwargs,
@@ -703,10 +703,10 @@ def _parse_nonbonded_forces(
     ----------
     top : gmso.Topology
         Topology object holding system information.
-    nlist_buffer : float
-        Buffer argument ot pass to hoomd.md.nlist.Cell.
     r_cut : float
         Cut-off radius in simulation units
+    nlist_buffer : float
+        Buffer argument ot pass to hoomd.md.nlist.Cell.
     potential_types : dict
         Output from _validate_compatibility().
     potential_refs : dict

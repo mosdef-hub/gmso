@@ -34,8 +34,10 @@ class TestGsd(BaseTest):
         oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
         top = apply(top, oplsaa, remove_untyped=True)
 
-        gmso_snapshot = to_hoomd_snapshot(top, base_units=base_units)
-        gmso_forces = to_hoomd_forcefield(
+        gmso_snapshot, snapshot_base_units = to_hoomd_snapshot(
+            top, base_units=base_units
+        )
+        gmso_forces, forces_base_units = to_hoomd_forcefield(
             top,
             r_cut=1.4,
             base_units=base_units,
@@ -104,8 +106,10 @@ class TestGsd(BaseTest):
         oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
         top = apply(top, oplsaa, remove_untyped=True)
 
-        gmso_snapshot = to_hoomd_snapshot(top, base_units=base_units)
-        gmso_forces = to_hoomd_forcefield(
+        gmso_snapshot, snapshot_base_units = to_hoomd_snapshot(
+            top, base_units=base_units
+        )
+        gmso_forces, forces_base_units = to_hoomd_forcefield(
             top,
             r_cut=1.4,
             base_units=base_units,

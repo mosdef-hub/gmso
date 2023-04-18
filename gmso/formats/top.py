@@ -266,13 +266,13 @@ def _accepted_potentials():
     harmonic_angle_potential = templates["HarmonicAnglePotential"]
     periodic_torsion_potential = templates["PeriodicTorsionPotential"]
     rb_torsion_potential = templates["RyckaertBellemansTorsionPotential"]
-    accepted_potentials = [
+    accepted_potentials = (
         lennard_jones_potential,
         harmonic_bond_potential,
         harmonic_angle_potential,
         periodic_torsion_potential,
         rb_torsion_potential,
-    ]
+    )
     return accepted_potentials
 
 
