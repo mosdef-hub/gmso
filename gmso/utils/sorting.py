@@ -50,6 +50,9 @@ def sort_connection_members(connection, sort_by="name"):
         def sorting_key(site):
             return site.atom_type.name
 
+    else:
+        raise ValueError("Unsupported sort_by value provided.")
+
     if isinstance(connection, gmso.Bond):
         site1, site2 = connection.connection_members
         site1, site2 = sorted([site1, site2], key=sorting_key)
