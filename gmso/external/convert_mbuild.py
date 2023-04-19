@@ -1,6 +1,7 @@
 """Convert to and from an mbuild.Compound."""
 from warnings import warn
 
+import mbuild as mb
 import numpy as np
 import unyt as u
 from boltons.setutils import IndexedSet

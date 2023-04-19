@@ -12,7 +12,7 @@ import unyt as u
 from unyt.array import allclose_units
 
 from gmso.core.views import PotentialFilters
-from gmso.exceptions import NotYetImplementedWarning
+from gmso.exceptions import GMSOError, NotYetImplementedWarning
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.conversions import (
     convert_opls_to_ryckaert,
@@ -552,7 +552,6 @@ def _parse_improper_information(snapshot, top):
 
 def _prepare_box_information(top):
     """Prepare the box information for writing to gsd."""
-    lx = ly = lz = xy = xz = yz = 0.0
     if allclose_units(
         top.box.angles, np.array([90, 90, 90]) * u.degree, rtol=1e-5, atol=1e-8
     ):
@@ -879,6 +878,7 @@ def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
     return [lj, special_lj]
 
 
+# TODO: adding supports for the following nonbonded potentials
 def _parse_buckingham(
     top,
     atypes,
@@ -1296,13 +1296,15 @@ def _validate_base_units(base_units, top, auto_scale, potential_types=None):
         if masses:
             base_units["mass"] = max(masses)
             # Refer lengths and energies from sites' atom types if possible
-        atypes = {atype for atype in top.atom_types}
-        if atypes:
+        unique_atypes = top.atom_types(
+            filter_by=PotentialFilters.UNIQUE_NAME_CLASS,
+        )
+        if unique_atypes:
             if not potential_types:
                 potential_types = _validate_compatibility(top)
             atype_classes = dict()
             # Separate atypes by their classes
-            for atype in atypes:
+            for atype in unique_atypes:
                 if potential_types[atype] not in atype_classes:
                     atype_classes[potential_types[atype]] = [atype]
                 else:
@@ -1312,7 +1314,7 @@ def _validate_base_units(base_units, top, auto_scale, potential_types=None):
         lengths, energies = list(), list()
         for atype_class in atype_classes:
             if atype_class == "LennardJonesPotential":
-                for atype in atypes:
+                for atype in unique_atypes:
                     lengths.append(
                         atype.parameters["sigma"].to(base_units["length"])
                     )
@@ -1320,7 +1322,7 @@ def _validate_base_units(base_units, top, auto_scale, potential_types=None):
                         atype.parameters["epsilon"].to(base_units["energy"])
                     )
             else:
-                warnings.warn(
+                raise NotYetImplementedWarning(
                     f"Currently cannot infer referenced lengths and energies from {atype_class}"
                 )
         base_units["length"] = max(lengths)

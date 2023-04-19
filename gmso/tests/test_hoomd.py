@@ -133,11 +133,67 @@ class TestGsd(BaseTest):
         integrator.forces = integrator_forces
         # integrator.forces = mb_forcefield
 
-        nvt = hoomd.md.methods.NVT(kT=1.5, filter=hoomd.filter.All(), tau=1.0)
+        nvt = hoomd.md.methods.NVT(kT=kT, filter=hoomd.filter.All(), tau=1.0)
         integrator.methods.append(nvt)
         sim.operations.integrator = integrator
 
-        sim.state.thermalize_particle_momenta(filter=hoomd.filter.All(), kT=1.5)
+        sim.state.thermalize_particle_momenta(filter=hoomd.filter.All(), kT=kT)
+        thermodynamic_properties = hoomd.md.compute.ThermodynamicQuantities(
+            filter=hoomd.filter.All()
+        )
+
+        sim.operations.computes.append(thermodynamic_properties)
+        sim.run(100)
+
+    def test_hoomd_simulation_auto_scaled(self):
+        compound = mb.load("CCC", smiles=True)
+        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=200)
+        base_units = {
+            "mass": u.g / u.mol,
+            "length": u.nm,
+            "energy": u.kJ / u.mol,
+        }
+
+        top = from_mbuild(com_box)
+        top.identify_connections()
+        oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
+        top = apply(top, oplsaa, remove_untyped=True)
+
+        gmso_snapshot, snapshot_base_units = to_hoomd_snapshot(
+            top,
+            base_units=base_units,
+            auto_scale=True,
+        )
+        gmso_forces, forces_base_units = to_hoomd_forcefield(
+            top,
+            r_cut=1.4,
+            base_units=base_units,
+            pppm_kwargs={"resolution": (64, 64, 64), "order": 7},
+            auto_scale=True,
+        )
+
+        integrator_forces = list()
+        for cat in gmso_forces:
+            for force in gmso_forces[cat]:
+                integrator_forces.append(force)
+
+        temp = 300 * u.K
+        kT = temp.to_equivalent("kJ/mol", "thermal").value
+
+        cpu = hoomd.device.CPU()
+        sim = hoomd.Simulation(device=cpu)
+        sim.create_state_from_snapshot(gmso_snapshot)
+
+        integrator = hoomd.md.Integrator(dt=0.001)
+        # cell = hoomd.md.nlist.Cell(buffer=0.4)
+        integrator.forces = integrator_forces
+        # integrator.forces = mb_forcefield
+
+        nvt = hoomd.md.methods.NVT(kT=kT, filter=hoomd.filter.All(), tau=1.0)
+        integrator.methods.append(nvt)
+        sim.operations.integrator = integrator
+
+        sim.state.thermalize_particle_momenta(filter=hoomd.filter.All(), kT=kT)
         thermodynamic_properties = hoomd.md.compute.ThermodynamicQuantities(
             filter=hoomd.filter.All()
         )

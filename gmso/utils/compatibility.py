@@ -71,7 +71,6 @@ def _check_single_potential(potential, accepted_potentials):
             if str(ref.expression) == str(potential.expression):
                 return {potential: ref.name}
             else:
-                print(symengine.expand(ref.expression - potential.expression))
                 if (
                     symengine.expand(ref.expression - potential.expression)
                     # sympy.simplify(ref.expression - potential.expression)
