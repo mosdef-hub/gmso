@@ -393,21 +393,28 @@ def _lookup_element_symbol(atom_type):
 
 def _generate_pairs_list(dihedrals_list):
     """Worker function to generate all 1-4 pairs from the topology."""
-    pairs_list = list()
+    pairs_list = set()
 
     for dihedral in dihedrals_list:
-        pairs_list.append(
-            (dihedral.connection_members[0], dihedral.connection_members[-1])
+        pairs = sorted(
+            [dihedral.connection_members[0], dihedral.connection_members[-1]]
         )
+        pairs_list.add(tuple(pairs))
 
     return pairs_list
 
 
 def _write_pairs(top, pair, shifted_idx_map):
     """Workder function to write out pairs information."""
+    pair_idx = sorted(
+        [
+            shifted_idx_map[top.get_index(pair[0])] + 1,
+            shifted_idx_map[top.get_index(pair[1])] + 1,
+        ]
+    )
     line = "{0:8s}{1:8s}{2:4s}\n".format(
-        str(shifted_idx_map[top.get_index(pair[0])] + 1),
-        str(shifted_idx_map[top.get_index(pair[1])] + 1),
+        str(pair_idx[0]),
+        str(pair_idx[1]),
         "1",
     )
     return line
