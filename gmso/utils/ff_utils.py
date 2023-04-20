@@ -2,6 +2,7 @@
 import os
 import re
 
+import numpy as np
 import unyt as u
 from lxml import etree
 from sympy import sympify
@@ -70,7 +71,24 @@ def _parse_params_values(parent_tag, units_dict, child_tag, expression=None):
             )
         param_name = param.attrib["name"]
         param_unit = units_dict[param_name]
-        param_value = u.unyt_quantity(float(param.attrib["value"]), param_unit)
+        if param.attrib.get("value"):
+            param_value = u.unyt_quantity(
+                float(param.attrib["value"]), param_unit
+            )
+        else:
+            children = param.getchildren()
+            if len(children) == 0:
+                raise ForceFieldParseError(
+                    f"Neither a single value nor a sequence of values "
+                    f"is specified for parameter {param_name}, please specify "
+                    f"either a single value as an attribute value or a sequence "
+                    f"of values."
+                )
+            value_array = np.array(
+                [value.text for value in children], dtype=float
+            )
+            param_value = u.unyt_array(value_array, param_unit)
+
         params_dict[param_name] = param_value
     param_ref_dict = units_dict
     if child_tag == "DihedralType":
@@ -349,10 +367,9 @@ def parse_ff_atomtypes(atomtypes_el, ff_meta):
             "independent_variables": None,
             "atomclass": "",
             "doi": "",
-            "overrides": "",
+            "overrides": set(),
             "definition": "",
             "description": "",
-            "topology": None,
             "element": "",
         }
 

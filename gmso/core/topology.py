@@ -1,4 +1,5 @@
 """Base data structure for GMSO chemical systems."""
+import itertools
 import warnings
 from pathlib import Path
 
@@ -6,6 +7,7 @@ import numpy as np
 import unyt as u
 from boltons.setutils import IndexedSet
 
+import gmso
 from gmso.abc.abstract_site import Site
 from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.core.angle import Angle
@@ -19,19 +21,13 @@ from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
 from gmso.core.pairpotential_type import PairPotentialType
-from gmso.core.parametric_potential import ParametricPotential
+from gmso.core.views import TopologyPotentialView
 from gmso.exceptions import GMSOError
-from gmso.utils._constants import (
-    ANGLE_TYPE_DICT,
-    ATOM_TYPE_DICT,
-    BOND_TYPE_DICT,
-    DIHEDRAL_TYPE_DICT,
-    IMPROPER_TYPE_DICT,
-    PAIRPOTENTIAL_TYPE_DICT,
-)
 from gmso.utils.connectivity import (
     identify_connections as _identify_connections,
 )
+
+scaling_interaction_idxes = {"12": 0, "13": 1, "14": 2}
 
 
 class Topology(object):
@@ -80,9 +76,6 @@ class Topology(object):
 
     n_impropers : int
         Number of impropers in the topology
-
-    n_subtops : int
-        Number of subtopolgies in the topology
 
     connections : tuple of gmso.Connection objects
         A collection of bonds, angles, dihedrals, and impropers in the topology
@@ -140,63 +133,35 @@ class Topology(object):
 
     pairpotential_type_expressions : list of gmso.PairPotentialType.expression objects
         A collection of all the expression for the PairPotentialTypes in the topology
-
-    See Also
-    --------
-    gmso.SubTopology :
-        A topology within a topology
     """
 
     def __init__(self, name="Topology", box=None):
-
         self.name = name
         self._box = box
         self._sites = IndexedSet()
         self._typed = False
-        self._connections = IndexedSet()
         self._bonds = IndexedSet()
         self._angles = IndexedSet()
         self._dihedrals = IndexedSet()
         self._impropers = IndexedSet()
-        self._subtops = IndexedSet()
-        self._atom_types = {}
-        self._atom_types_idx = {}
-        self._connection_types = {}
-        self._bond_types = {}
-        self._bond_types_idx = {}
-        self._angle_types = {}
-        self._angle_types_idx = {}
-        self._dihedral_types = {}
-        self._dihedral_types_idx = {}
-        self._improper_types = {}
-        self._improper_types_idx = {}
         self._combining_rule = "lorentz"
-        self._pairpotential_types = {}
-        self._pairpotential_types_idx = {}
-        self._scaling_factors = {
-            "nonBonded12Scale": 0.0,
-            "nonBonded13Scale": 0.0,
-            "nonBonded14Scale": 0.5,
-            "electrostatics12Scale": 0.0,
-            "electrostatics13Scale": 0.0,
-            "electrostatics14Scale": 0.5,
-        }
-        self._set_refs = {
-            ATOM_TYPE_DICT: self._atom_types,
-            BOND_TYPE_DICT: self._bond_types,
-            ANGLE_TYPE_DICT: self._angle_types,
-            DIHEDRAL_TYPE_DICT: self._dihedral_types,
-            IMPROPER_TYPE_DICT: self._improper_types,
-            PAIRPOTENTIAL_TYPE_DICT: self._pairpotential_types,
-        }
-
-        self._index_refs = {
-            ATOM_TYPE_DICT: self._atom_types_idx,
-            BOND_TYPE_DICT: self._bond_types_idx,
-            ANGLE_TYPE_DICT: self._angle_types_idx,
-            DIHEDRAL_TYPE_DICT: self._dihedral_types_idx,
-            IMPROPER_TYPE_DICT: self._improper_types_idx,
-            PAIRPOTENTIAL_TYPE_DICT: self._pairpotential_types_idx,
+        self._pairpotential_types = IndexedSet()
+        self._scaling_factors = np.array(
+            [
+                [0.0, 0.0, 0.5],  # lj scales
+                [0.0, 0.0, 0.5],  # electrostatics scale
+            ],
+            dtype=float,
+        )
+        self._molecule_scaling_factors = {}
+        self.is_updated = True
+        self._potentials_count = {
+            "atom_types": 0,
+            "bond_types": 0,
+            "angle_types": 0,
+            "dihedral_types": 0,
+            "improper_types": 0,
+            "pairpotential_types": 0,
         }
 
         self._unique_connections = {}
@@ -245,32 +210,11 @@ class Topology(object):
 
     @property
     def scaling_factors(self):
-        """Return the scaling factors for the topology."""
-        return self._scaling_factors
+        return self._scaling_factors.copy()
 
-    @scaling_factors.setter
-    def scaling_factors(self, scaling_factors):
-        """Set the scaling factors for the topology."""
-        expected_items = [
-            "nonBonded12Scale",
-            "nonBonded13Scale",
-            "nonBonded14Scale",
-            "electrostatics12Scale",
-            "electrostatics13Scale",
-            "electrostatics14Scale",
-        ]
-        if not isinstance(scaling_factors, dict):
-            raise GMSOError("Scaling factors should be a dictionary")
-        for item in expected_items:
-            if item not in scaling_factors.keys():
-                raise GMSOError(
-                    f"Expected {expected_items} as keys in the scaling factors"
-                )
-        for val in scaling_factors.values():
-            if val < 0.0 or val > 1.0:
-                raise GMSOError("Scaling factors should be between 0.0 and 1.0")
-
-        self._scaling_factors = scaling_factors
+    @property
+    def molecule_scaling_factors(self):
+        return {k: v.copy() for k, v in self._molecule_scaling_factors.items()}
 
     @property
     def positions(self):
@@ -283,7 +227,7 @@ class Topology(object):
     @property
     def n_sites(self):
         """Return the number of sites in the topology."""
-        return len(self.sites)
+        return len(self._sites)
 
     @property
     def n_connections(self):
@@ -293,96 +237,344 @@ class Topology(object):
     @property
     def n_bonds(self):
         """Return the number of bonds in the topology."""
-        return len(self.bonds)
+        return len(self._bonds)
 
     @property
     def n_angles(self):
         """Return the amount of angles in the topology."""
-        return len(self.angles)
+        return len(self._angles)
 
     @property
     def n_dihedrals(self):
         """Return the amount of dihedrals in the topology."""
-        return len(self.dihedrals)
+        return len(self._dihedrals)
 
     @property
     def n_impropers(self):
         """Return the number of impropers in the topology."""
-        return len(self.impropers)
-
-    @property
-    def subtops(self):
-        """Return the subtopologies in the topology."""
-        return self._subtops
-
-    @property
-    def n_subtops(self):
-        """Return number of subtopolgies."""
-        return len(self._subtops)
+        return len(self._impropers)
 
     @property
     def sites(self):
         """Return all sites in the topology."""
-        return tuple(self._sites)
+        return self._sites
 
     @property
     def connections(self):
         """Return all connections in topology."""
-        return tuple(self._connections)
+        return IndexedSet(
+            [*self._bonds, *self._angles, *self._dihedrals, *self._impropers]
+        )
 
     @property
     def bonds(self):
         """Return all bonds in the topology."""
-        return tuple(self._bonds)
+        return self._bonds
 
     @property
     def angles(self):
         """Return all angles in the topology."""
-        return tuple(self._angles)
+        return self._angles
 
     @property
     def dihedrals(self):
         """Return all dihedrals in the topology."""
-        return tuple(self._dihedrals)
+        return self._dihedrals
 
     @property
     def impropers(self):
         """Return all impropers in the topology."""
-        return tuple(self._impropers)
+        return self._impropers
+
+    def unique_site_labels(self, label_type="molecule", name_only=False):
+        """Return a list of all molecule/residue labels in the Topology."""
+        # Not super happy with this method name, open for suggestion.
+        unique_tags = IndexedSet()
+        if name_only and label_type in ("molecule", "residue"):
+            for site in self.sites:
+                label = getattr(site, label_type)
+                unique_tags.add(label.name if label else None)
+        else:
+            for site in self.sites:
+                unique_tags.add(getattr(site, label_type))
+        return unique_tags
 
     @property
     def atom_types(self):
-        """Return all atom_types in the topology."""
-        return tuple(self._atom_types.values())
+        """Return all atom_types in the topology.
+
+        Notes
+        -----
+        This returns a TopologyPotentialView object which can be used as
+        an iterator. By default, this will return a view with all the atom_types
+        in the topology (if multiple sites point to the same atom_type, only a
+        single reference is returned/iterated upon). Use, different filters(builtin or custom) to suit your needs.
+        See examples below.
+
+        Examples
+        --------
+        >>> from gmso.core.atom import Atom
+        >>> from gmso.core.atom_type import AtomType
+        >>> from gmso.core.topology import Topology
+        >>> from gmso.core.views import PotentialFilters
+        >>> top = Topology(name="my_top")
+        >>> atom_type = AtomType(name="my_atom_type")
+        >>> for j in range(100):
+        ...     atom = Atom(name=f"atom_{j+1}")
+        ...     atom.atom_type = atom_type
+        ...     top.add_site(atom)
+        >>> len(top.atom_types)
+        1
+        >>> len(top.atom_types(filter_by=PotentialFilters.REPEAT_DUPLICATES))
+        100
+        >>> len(top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS))
+        1
+
+        See Also
+        --------
+        gmso.core.views.TopologyPotentialView
+            An iterator/filter based view of Potentials in a gmso Topology.
+
+        gmso.core.views.PotentialFilters
+            Builtin filters for viewing potentials in a Topology.
+
+        Returns
+        -------
+        gmso.core.views.TopologyPotentialView
+            An iterator of the atom_types in the system filtered according to the
+            filter function supplied.
+        """
+        return TopologyPotentialView(self._sites)
 
     @property
     def connection_types(self):
-        """Return all connection_types in the topology."""
-        return tuple(self._connection_types.values())
+        """Return all connection_types in the topology.
+
+        Notes
+        -----
+        This returns a TopologyPotentialView object which can be used as
+        an iterator.
+
+        See Also
+        --------
+        gmso.core.views.TopologyPotentialView
+            An iterator/filter based view of Potentials in a gmso Topology.
+        """
+
+        return TopologyPotentialView(
+            itertools.chain(
+                self.bonds, self.angles, self.dihedrals, self.impropers
+            )
+        )
 
     @property
     def bond_types(self):
-        """Return all bond_types in the topology."""
-        return tuple(self._bond_types.values())
+        """Return all bond_types in the topology.
+
+        Notes
+        -----
+        This returns a TopologyPotentialView object which can be used as
+        an iterator.By default, this will return a view with all the bond_types
+        in the topology (if multiple bonds point to the same bond_type, only a
+        single reference is returned/iterated upon). Use, different filters(builtin or custom) to suit your needs.
+        See examples below.
+
+        Examples
+        --------
+        >>> from gmso.core.atom import Atom
+        >>> from gmso.core.bond import Bond
+        >>> from gmso.core.bond_type import BondType
+        >>> from gmso.core.topology import Topology
+        >>> from gmso.core.views import PotentialFilters
+        >>> top = Topology(name="my_top")
+        >>> for j in range(100):
+        ...     atom1 = Atom(name=f"atom_A_{j+1}")
+        ...     atom2 = Atom(name=f"atom_B_{j+1}")
+        ...     bond = Bond(connection_members=[atom1, atom2])
+        ...     bond.bond_type = BondType(name=f"bond_type", member_types=('atom_A', 'atom_B'))
+        ...     conn = top.add_connection(bond)
+        >>> len(top.bond_types)
+        100
+        >>> len(top.bond_types(filter_by=PotentialFilters.UNIQUE_ID))
+        100
+        >>> len(top.bond_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS))
+        1
+
+        See Also
+        --------
+        gmso.core.views.TopologyPotentialView
+            An iterator/filter based view of Potentials in a gmso Topology.
+
+        gmso.core.views.PotentialFilters
+            Builtin filters for viewing potentials in a Topology.
+
+        Returns
+        -------
+        gmso.core.views.TopologyPotentialView
+            An iterator of the bond_types in the system filtered according to the
+            filter function supplied.
+        """
+        return TopologyPotentialView(self._bonds)
 
     @property
     def angle_types(self):
-        """Return all angle_types in the topology."""
-        return tuple(self._angle_types.values())
+        """Return all angle_types in the topology.
+
+        Notes
+        -----
+        This returns a TopologyPotentialView object which can be used as
+        an iterator. By default, this will return a view with all the angle_types
+        in the topology (if multiple angles point to the same angle_type, only a
+        single reference is returned/iterated upon). Use, different filters(builtin or custom) to suit
+        your needs. See examples below.
+
+        Examples
+        --------
+        >>> from gmso.core.atom import Atom
+        >>> from gmso.core.angle import Angle
+        >>> from gmso.core.angle_type import AngleType
+        >>> from gmso.core.topology import Topology
+        >>> from gmso.core.views import PotentialFilters
+        >>> for j in range(100):
+        ...     atom1 = Atom(name=f"atom_A_{j+1}")
+        ...     atom2 = Atom(name=f"atom_B_{j+1}")
+        ...     atom3 = Atom(name=f"atom_C_{j+1}")
+        ...     angle = Angle(connection_members=[atom1, atom2, atom3])
+        ...     angle.angle_type = AngleType(name=f"angle_type", member_types=('atom_A', 'atom_B', 'atom_C'))
+        ...     conn = top.add_connection(angle)
+        >>> len(top.angle_types)
+        100
+        >>> len(top.angle_types(filter_by=PotentialFilters.UNIQUE_ID))
+        100
+        >>> len(top.angle_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS))
+        1
+
+
+        See Also
+        --------
+        gmso.core.views.TopologyPotentialView
+            An iterator/filter based view of Potentials in a gmso Topology.
+
+        gmso.core.views.PotentialFilters
+            Builtin filters for viewing potentials in a Topology.
+
+        Returns
+        -------
+        gmso.core.views.TopologyPotentialView
+            An iterator of the angle_types in the system filtered according to the
+            filter function supplied.
+        """
+        return TopologyPotentialView(self._angles)
 
     @property
     def dihedral_types(self):
-        """Return all dihedral_types in the topology."""
-        return tuple(self._dihedral_types.values())
+        """Return all dihedral_types in the topology.
+
+        Notes
+        -----
+        This returns a TopologyPotentialView object which can be used as
+        an iterator. By default, this will return a view with all the dihedral_types
+        in the topology (if multiple dihedrals point to the same dihedral types, only a
+        single reference is returned/iterated upon). Use, different filters(builtin or custom)
+        to suit your needs. See examples below.
+
+        Examples
+        --------
+        >>> from gmso.core.atom import Atom
+        >>> from gmso.core.dihedral import Dihedral
+        >>> from gmso.core.dihedral_type import DihedralType
+        >>> from gmso.core.topology import Topology
+        >>> from gmso.core.views import PotentialFilters
+        >>> for j in range(100):
+        ...     atom1 = Atom(name=f"atom_A_{j+1}")
+        ...     atom2 = Atom(name=f"atom_B_{j+1}")
+        ...     atom3 = Atom(name=f"atom_C_{j+1}")
+        ...     atom4 = Atom(name=f"atom_D_{j+1}")
+        ...     dihedral = Dihedral(connection_members=[atom1, atom2, atom3, atom4])
+        ...     dihedral.dihedral_type = DihedralType(
+        ...         name=f"dihedral_type",
+        ...         member_types=('atom_A', 'atom_B', 'atom_C', 'atom_D')
+        ...     )
+        ...     conn = top.add_connection(dihedral)
+        >>> len(top.dihedral_types)
+        100
+        >>> len(top.dihedral_types(filter_by=PotentialFilters.UNIQUE_ID))
+        100
+        >>> len(top.dihedral_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS))
+        1
+
+        See Also
+        --------
+        gmso.core.views.TopologyPotentialView
+            An iterator/filter based view of Potentials in a gmso Topology.
+
+        gmso.core.views.PotentialFilters
+            Builtin filters for viewing potentials in a Topology.
+
+        Returns
+        -------
+        gmso.core.views.TopologyPotentialView
+            An iterator of the dihedral_types in the system filtered according to the
+            filter function supplied.
+        """
+        return TopologyPotentialView(self._dihedrals)
 
     @property
     def improper_types(self):
-        """Return all improper_types in the topology."""
-        return tuple(self._improper_types.values())
+        """Return all improper_types in the topology.
+
+        Notes
+        -----
+        This returns a TopologyPotentialView object which can be used as
+        an iterator. By default, this will return a view with all the improper_types
+        in the topology (if multiple impropers point to the same improper_type, only a
+        single reference is returned/iterated upon). Use, different filters(builtin or custom) to
+        suit your needs. See examples below.
+
+        Examples
+        --------
+        >>> from gmso.core.atom import Atom
+        >>> from gmso.core.improper import Improper
+        >>> from gmso.core.improper_type import ImproperType
+        >>> from gmso.core.topology import Topology
+        >>> from gmso.core.views import PotentialFilters
+        >>> for j in range(100):
+        ...     atom1 = Atom(name=f"atom_A_{j+1}")
+        ...     atom2 = Atom(name=f"atom_B_{j+1}")
+        ...     atom3 = Atom(name=f"atom_C_{j+1}")
+        ...     atom4 = Atom(name=f"atom_D_{j+1}")
+        ...     improper = Improper(connection_members=[atom1, atom2, atom3, atom4])
+        ...     improper.improper_type = ImproperType(
+        ...         name=f"dihedral_type",
+        ...         member_types=('atom_A', 'atom_B', 'atom_C', 'atom_D')
+        ...     )
+        ...     conn = top.add_connection(improper)
+        >>> len(top.improper_types)
+        100
+        >>> len(top.improper_types(filter_by=PotentialFilters.UNIQUE_ID))
+        100
+        >>> len(top.improper_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS))
+        1
+
+        See Also
+        --------
+        gmso.core.views.TopologyPotentialView
+            An iterator/filter based view of Potentials in a gmso Topology.
+
+        gmso.core.views.PotentialFilters
+            Builtin filters for viewing potentials in a Topology.
+
+        Returns
+        -------
+        gmso.core.views.TopologyPotentialView
+            An iterator of the dihedral_types in the system filtered according to the
+            filter function supplied.
+        """
+        return TopologyPotentialView(self._impropers)
 
     @property
     def pairpotential_types(self):
-        return tuple(self._pairpotential_types.values())
+        return self._pairpotential_types
 
     @property
     def atom_type_expressions(self):
@@ -409,20 +601,152 @@ class Topology(object):
     @property
     def dihedral_type_expressions(self):
         """Return all dihedral_type expressions in the topology."""
-        return list(set([atype.expression for atype in self.dihedral_types]))
+        return list(set([dtype.expression for dtype in self.dihedral_types]))
 
     @property
     def improper_type_expressions(self):
         """Return all improper_type expressions in the topology."""
-        return list(set([atype.expression for atype in self.improper_types]))
+        return list(set([itype.expression for itype in self.improper_types]))
 
     @property
     def pairpotential_type_expressions(self):
         return list(
-            set([atype.expression for atype in self.pairpotential_types])
+            set([ptype.expression for ptype in self._pairpotential_types])
         )
 
-    def add_site(self, site, update_types=True):
+    def get_lj_scale(self, *, molecule_id=None, interaction=None):
+        """Return the selected lj_scales defined for this topology."""
+        return self._get_scaling_factor(molecule_id, interaction, "lj_scale", 0)
+
+    def set_lj_scale(self, value, *, molecule_id=None, interaction=None):
+        """Set the correct lj_scaling factors for this topology."""
+        self._set_scaling_factor(value, molecule_id, interaction, "lj_scale", 0)
+
+    def get_scaling_factors(self, *, molecule_id=None):
+        """Get the scaling factor of this topology or for a particular molecule"""
+        return np.vstack(
+            [
+                self.get_lj_scale(molecule_id=molecule_id),
+                self.get_electrostatics_scale(molecule_id=molecule_id),
+            ]
+        )
+
+    def set_scaling_factors(self, lj, electrostatics, *, molecule_id=None):
+        """Set both lj and electrostatics scaling factors."""
+        self.set_lj_scale(
+            lj,
+            molecule_id=molecule_id,
+            interaction=None,
+        )
+
+        self.set_electrostatics_scale(
+            electrostatics,
+            molecule_id=molecule_id,
+        )
+
+    def get_electrostatics_scale(self, *, molecule_id=None, interaction=None):
+        """Return the selected electrostatics_scale defined for this topology.
+
+        Parameters
+        ----------
+        molecule_id: str, default=None
+            The molecule id that this scaling factor applies to, if None
+            this will return the Topology's global scaling factors
+
+        interaction: str, one of {'12', '13', '14'}, default=None
+            The interaction for which to return the scaling factor for, if None
+            a 3 tuple
+
+        Raises
+        ------
+        GMSOError
+            If the specified parameters can't return a scaling factor
+        """
+        return self._get_scaling_factor(
+            molecule_id, interaction, "electrostatics_scale", 1
+        )
+
+    def set_electrostatics_scale(
+        self, value, *, molecule_id=None, interaction=None
+    ):
+        """Set the correct lj_scaling factors for this topology.
+
+        Parameters
+        ----------
+        value: float, numpy.ndarray, list, or tuple of floats
+            The value to set for this scale
+
+        molecule_id: str, default=None
+            The molecule id that this scaling factor applies to, if None
+            this will return the Topology's global scaling factors
+
+        interaction: str, one of {'12', '13', '14'}, default=None
+            The interaction for which to return the scaling factor for, if None
+            a 3 tuple
+
+        Raises
+        ------
+        GMSOError
+            If the specified parameters can't return a scaling factor
+        """
+        self._set_scaling_factor(
+            value, molecule_id, interaction, "electrostatics_scale", 1
+        )
+
+    def _get_scaling_factor(self, molecule_id, interaction, name, index):
+        """Get the scaling factor according to molecule_id, interaction, and name."""
+        if molecule_id is None:
+            all_scales = self._scaling_factors
+        else:
+            if molecule_id not in self._molecule_scaling_factors:
+                warnings.warn(
+                    f"Scaling factors for molecule `{molecule_id}` is not defined "
+                    f"in the topology. Returning None."
+                )
+                return None
+            all_scales = self._molecule_scaling_factors[molecule_id]
+
+        if interaction is None:
+            return all_scales[index].copy()
+        else:
+            if interaction not in scaling_interaction_idxes:
+                raise GMSOError(f"Unknown `{name}` interaction `{interaction}`")
+            return all_scales[index][scaling_interaction_idxes[interaction]]
+
+    def _set_scaling_factor(self, value, molecule_id, interaction, name, index):
+        """Set the scaling factor according to molecule_id, interaction, and name."""
+        org_value = value
+        value = np.array(value, dtype=float).reshape(-1)
+
+        if any(np.isnan(value)):
+            raise ValueError(
+                f"Cannot assign a nan/NoneType to `{name}`. "
+                f"Provided value: {org_value}"
+            )
+
+        if value.shape != (1,) and value.shape != (3,):
+            raise ValueError(
+                f"Cannot determine the appropriate shape for {org_value} to "
+                f"assign it to `{name}`"
+            )
+
+        if molecule_id is None:
+            all_scales = self._scaling_factors
+        else:
+            if molecule_id not in self._molecule_scaling_factors:
+                self._molecule_scaling_factors[
+                    molecule_id
+                ] = self._scaling_factors.copy()
+            all_scales = self._molecule_scaling_factors[molecule_id]
+
+        if interaction is None:
+            all_scales[index] = value
+        else:
+            if interaction not in scaling_interaction_idxes:
+                raise GMSOError(f"Unknown `{name}` interaction `{interaction}`")
+            all_scales[index][scaling_interaction_idxes[interaction]] = value
+
+    def add_site(self, site, update_types=False):
         """Add a site to the topology.
 
         This method will add a site to the existing topology, since
@@ -440,44 +764,11 @@ class Topology(object):
             If true, add this site's atom type to the topology's set of AtomTypes
         """
         self._sites.add(site)
-        if update_types and site.atom_type:
-            site.atom_type.topology = self
-            if site.atom_type in self._atom_types:
-                site.atom_type = self._atom_types[site.atom_type]
-            else:
-                self._atom_types[site.atom_type] = site.atom_type
-                self._atom_types_idx[site.atom_type] = len(self._atom_types) - 1
-            self.is_typed(updated=False)
+        self.is_updated = False
+        if update_types:
+            self.update_topology()
 
-    def update_sites(self):
-        """Update the sites of the topology.
-
-        This method will update the sites in the topology
-        based on the connection members, For example- if you
-        add a bond to a topology, without adding the constituent
-        sites, this method can be called to add the sites which are the
-        connection members of the bond as shown below.
-
-            >>> import gmso
-            >>> site1 = gmso.Site(name='MySite1')
-            >>> site2 = gmso.Site(name='MySite2')
-            >>> bond1 = gmso.Bond(name='site1-site2', connection_members=[site1, site2])
-            >>> this_topology = gmso.Topology('TwoSitesTopology')
-            >>> this_topology.add_connection(bond1)
-            >>> this_topology.update_sites()
-
-        See Also
-        --------
-        gmso.Topology.add_site : Add a site to the topology.
-        gmso.Topology.add_connection : Add a Bond, an Angle or a Dihedral to the topology.
-        gmso.Topology.update_topology : Update the entire topology.
-        """
-        for connection in self.connections:
-            for member in connection.connection_members:
-                if member not in self._sites:
-                    self.add_site(member)
-
-    def add_connection(self, connection, update_types=True):
+    def add_connection(self, connection, update_types=False):
         """Add a gmso.Connection object to the topology.
 
         This method will add a gmso.Connection object to the
@@ -504,7 +795,7 @@ class Topology(object):
             is in the topology
         """
         # Check if an equivalent connection is in the topology
-        equivalent_members = connection._equivalent_members_hash()
+        equivalent_members = connection.equivalent_members()
         if equivalent_members in self._unique_connections:
             warnings.warn(
                 "An equivalent connection already exists. "
@@ -513,20 +804,20 @@ class Topology(object):
             connection = self._unique_connections[equivalent_members]
 
         for conn_member in connection.connection_members:
-            if conn_member not in self.sites:
-                self.add_site(conn_member)
-        self._connections.add(connection)
+            self.add_site(conn_member)
+
         self._unique_connections.update({equivalent_members: connection})
-        if isinstance(connection, Bond):
-            self._bonds.add(connection)
-        if isinstance(connection, Angle):
-            self._angles.add(connection)
-        if isinstance(connection, Dihedral):
-            self._dihedrals.add(connection)
-        if isinstance(connection, Improper):
-            self._impropers.add(connection)
+
+        connections_sets = {
+            Bond: self._bonds,
+            Angle: self._angles,
+            Dihedral: self._dihedrals,
+            Improper: self._impropers,
+        }
+        connections_sets[type(connection)].add(connection)
+
         if update_types:
-            self.update_connection_types()
+            self.update_topology()
 
         return connection
 
@@ -534,59 +825,29 @@ class Topology(object):
         """Identify all connections in the topology."""
         _identify_connections(self)
 
+    def update_atom_types(self):
+        """Keep an up-to-date length of all the connection types."""
+        self.update_topology()
+
     def update_connection_types(self):
-        """Update the connection types based on the connection collection in the topology.
+        """Keep an up-to-date length of all the connection types."""
+        self.update_topology()
 
-        This method looks into all the connection objects (Bonds, Angles, Dihedrals, Impropers) to
-        check if any Potential object (BondType, AngleType, DihedralType, ImproperType) is not in the
-        topology's respective collection and will add those objects there.
+    def update_topology(self):
+        """Update the entire topology."""
+        self._bookkeep_potentials()
+        self.is_updated = True
+        self.is_typed(updated=True)
 
-        See Also
-        --------
-        gmso.Topology.update_atom_types : Update atom types in the topology.
-        """
-        for c in self.connections:
-            if c.connection_type is None:
-                warnings.warn(
-                    "Non-parametrized Connection {} detected".format(c)
-                )
-            elif not isinstance(c.connection_type, ParametricPotential):
-                raise GMSOError(
-                    "Non-Potential {} found"
-                    "in Connection {}".format(c.connection_type, c)
-                )
-            elif c.connection_type not in self._connection_types:
-                c.connection_type.topology = self
-                self._connection_types[c.connection_type] = c.connection_type
-                if isinstance(c.connection_type, BondType):
-                    self._bond_types[c.connection_type] = c.connection_type
-                    self._bond_types_idx[c.connection_type] = (
-                        len(self._bond_types) - 1
-                    )
-                if isinstance(c.connection_type, AngleType):
-                    self._angle_types[c.connection_type] = c.connection_type
-                    self._angle_types_idx[c.connection_type] = (
-                        len(self._angle_types) - 1
-                    )
-                if isinstance(c.connection_type, DihedralType):
-                    self._dihedral_types[c.connection_type] = c.connection_type
-                    self._dihedral_types_idx[c.connection_type] = (
-                        len(self._dihedral_types) - 1
-                    )
-                if isinstance(c.connection_type, ImproperType):
-                    self._improper_types[c.connection_type] = c.connection_type
-                    self._improper_types_idx[c.connection_type] = (
-                        len(self._improper_types) - 1
-                    )
-            elif c.connection_type in self.connection_types:
-                if isinstance(c.connection_type, BondType):
-                    c.connection_type = self._bond_types[c.connection_type]
-                if isinstance(c.connection_type, AngleType):
-                    c.connection_type = self._angle_types[c.connection_type]
-                if isinstance(c.connection_type, DihedralType):
-                    c.connection_type = self._dihedral_types[c.connection_type]
-                if isinstance(c.connection_type, ImproperType):
-                    c.connection_type = self._improper_types[c.connection_type]
+    def _bookkeep_potentials(self):
+        self._potentials_count = {
+            "atom_types": len(self.atom_types),
+            "bond_types": len(self.bond_types),
+            "angle_types": len(self.angle_types),
+            "dihedral_types": len(self.dihedral_types),
+            "improper_types": len(self.improper_types),
+            "pairpotential_types": len(self._pairpotential_types),
+        }
 
     def add_pairpotentialtype(self, pairpotentialtype, update=True):
         """add a PairPotentialType to the topology
@@ -607,24 +868,19 @@ class Topology(object):
         gmso.core.pairpotential_type: Pairwise potential that does not follow
         combination rules
         """
-        if update:
-            self.update_atom_types()
         if not isinstance(pairpotentialtype, PairPotentialType):
             raise GMSOError(
                 "Non-PairPotentialType {} provided".format(pairpotentialtype)
             )
         for atype in pairpotentialtype.member_types:
-            if atype not in [t.name for t in self.atom_types]:
-                if atype not in [t.atomclass for t in self.atom_types]:
+            if atype not in {t.name for t in self.atom_types}:
+                if atype not in {t.atomclass for t in self.atom_types}:
                     raise GMSOError(
                         "There is no name/atomclass of AtomType {} in current topology".format(
                             atype
                         )
                     )
-        self._pairpotential_types[pairpotentialtype] = pairpotentialtype
-        self._pairpotential_types_idx[pairpotentialtype] = (
-            len(self._pairpotential_types) - 1
-        )
+        self._pairpotential_types.add(pairpotentialtype)
 
     def remove_pairpotentialtype(self, pair_of_types):
         """Remove the custom pairwise potential between two AtomTypes/Atomclasses
@@ -641,76 +897,20 @@ class Topology(object):
                 to_delete.append(t)
         if len(to_delete) > 0:
             for t in to_delete:
-                del self._pairpotential_types[t]
-            self._reindex_connection_types(PAIRPOTENTIAL_TYPE_DICT)
+                self._pairpotential_types.remove(t)
         else:
             warnings.warn(
                 "No pair potential specified for such pair of AtomTypes/atomclasses"
             )
 
-    def update_atom_types(self):
-        """Update atom types in the topology.
-
-        This method checks all the sites in the topology which have an
-        associated AtomType and if that AtomType is not in the topology's
-        AtomTypes collection, it will add it there.
-
-        See Also
-        --------
-        gmso.Topology.update_connection_types :
-            Update the connection types based on the connection collection in the topology
-        """
-        for site in self._sites:
-            if site.atom_type is None:
-                warnings.warn("Non-parametrized site detected {}".format(site))
-            elif not isinstance(site.atom_type, AtomType):
-                raise GMSOError(
-                    "Non AtomType instance found in site {}".format(site)
-                )
-            elif site.atom_type not in self._atom_types:
-                site.atom_type.topology = self
-                self._atom_types[site.atom_type] = site.atom_type
-                self._atom_types_idx[site.atom_type] = len(self._atom_types) - 1
-            elif site.atom_type in self._atom_types:
-                site.atom_type = self._atom_types[site.atom_type]
-        self.is_typed(updated=True)
-
-    def add_subtopology(self, subtop, update=True):
-        """Add a sub-topology to this topology.
-
-        This methods adds a gmso.Core.SubTopology object to the topology
-        All the sites in this sub-topology are added to the collection of current
-        sites in this topology.
-
-        Parameters
-        ----------
-        subtop : gmso.SubTopology
-            The sub-topology object to be added.
-        update : bool, default=True
-
-        See Also
-        --------
-        gmso.SubTopology : A topology within a topology
-        """
-        self._subtops.add(subtop)
-        subtop.parent = self
-        self._sites.union(subtop.sites)
-        if update:
-            self.update_topology()
-
     def is_typed(self, updated=False):
         """Verify if the topology is parametrized."""
         if not updated:
-            self.update_connection_types()
-            self.update_atom_types()
-
-        if len(self.atom_types) > 0 or len(self.connection_types) > 0:
-            self._typed = True
-        else:
-            self._typed = False
+            self.update_topology()
+        self._typed = any(self._potentials_count.values())
         return self._typed
 
-    def is_fully_typed(self, updated=False, group="topology"):
+    def is_fully_typed(self, group="topology", updated=False):
         """Check if the topology or a specifc group of objects that make up the topology are fully typed
 
         Parameters
@@ -736,9 +936,9 @@ class Topology(object):
         `self._type` is set to True as long as the Topology is at least
         partially typed.
         """
+
         if not updated:
-            self.update_connection_types()
-            self.update_atom_types()
+            self.update_topology()
 
         typed_status = {
             "sites": lambda top: all(site.atom_type for site in top._sites),
@@ -894,13 +1094,6 @@ class Topology(object):
         """
         self.update_connection_types()
 
-    def update_topology(self):
-        """Update the entire topology."""
-        self.update_sites()
-        self.update_atom_types()
-        self.update_connection_types()
-        self.is_typed(updated=True)
-
     def _get_bonds_for(self, site):
         """Return a list of bonds in this Topology that the site is a part of."""
         bonds = []
@@ -946,12 +1139,12 @@ class Topology(object):
             Angle: self._angles,
             Dihedral: self._dihedrals,
             Improper: self._impropers,
-            AtomType: self._atom_types_idx,
-            BondType: self._bond_types_idx,
-            AngleType: self._angle_types_idx,
-            DihedralType: self._dihedral_types_idx,
-            ImproperType: self._improper_types_idx,
-            PairPotentialType: self._pairpotential_types_idx,
+            AtomType: self.atom_types,
+            BondType: self.bond_types,
+            AngleType: self.angle_types,
+            DihedralType: self.dihedral_types,
+            ImproperType: self.improper_types,
+            PairPotentialType: self.pairpotential_types,
         }
 
         member_type = type(member)
@@ -961,10 +1154,7 @@ class Topology(object):
                 f"Cannot index member of type {member_type.__name__}"
             )
 
-        try:
-            index = refs[member_type].index(member)
-        except AttributeError:
-            index = refs[member_type][member]
+        index = refs[member_type].index(member)
 
         return index
 
@@ -1047,14 +1237,49 @@ class Topology(object):
     def _reindex_connection_types(self, ref):
         """Re-generate the indices of the connection types in the topology."""
         if ref not in self._index_refs:
+
+    def get_forcefield(self):
+        """Get an instance of gmso.ForceField out of this topology
+
+        Raises
+        ------
+        GMSOError
+            If the topology is untyped
+        """
+        if not self.is_typed():
             raise GMSOError(
-                f"cannot reindex {ref}. It should be one of "
-                f"{ANGLE_TYPE_DICT}, {BOND_TYPE_DICT}, "
-                f"{ANGLE_TYPE_DICT}, {DIHEDRAL_TYPE_DICT}, {IMPROPER_TYPE_DICT},"
-                f"{PAIRPOTENTIAL_TYPE_DICT}"
+                "Cannot create a ForceField from an untyped topology."
             )
-        for i, ref_member in enumerate(self._set_refs[ref].keys()):
-            self._index_refs[ref][ref_member] = i
+        else:
+            from gmso import ForceField
+            from gmso.utils._constants import FF_TOKENS_SEPARATOR
+
+            ff = ForceField()
+            ff.name = self.name + "_ForceField"
+            ff.scaling_factors = {
+                "electrostatics14Scale": self.scaling_factors[1, 2],
+                "nonBonded14Scale": self.scaling_factors[0, 2],
+            }
+            for atom_type in self.atom_types:
+                ff.atom_types[atom_type.name] = atom_type.copy(
+                    deep=True, exclude={"topology_", "set_ref_"}
+                )
+
+            ff_conn_types = {
+                BondType: ff.bond_types,
+                AngleType: ff.angle_types,
+                DihedralType: ff.dihedral_types,
+                ImproperType: ff.improper_types,
+            }
+
+            for connection_type in self.connection_types:
+                ff_conn_types[type(connection_type)][
+                    FF_TOKENS_SEPARATOR.join(connection_type.member_types)
+                ] = connection_type.copy(
+                    deep=True, exclude={"topology_", "set_ref_"}
+                )
+
+        return ff
 
     def iter_sites(self, key, value):
         """Iterate through this topology's sites based on certain attribute and their values.
@@ -1072,7 +1297,6 @@ class Topology(object):
             The site where getattr(site, key) == value
         """
         if key not in Site.__iterable_attributes__:
-
             raise ValueError(
                 f"`{key}` is not an iterable attribute for Site. "
                 f"To check what the iterable attributes are see gmso.abc.abstract_site module."
@@ -1082,30 +1306,153 @@ class Topology(object):
             raise ValueError(
                 "Expected `value` to be something other than None. Provided None."
             )
-
-        for site in self.sites:
+        if key in ("molecule", "residue") and isinstance(value, str):
+            for site in self._sites:
+                if getattr(site, key) and getattr(site, key).name == value:
+                    yield site
+        for site in self._sites:
             if getattr(site, key) == value:
                 yield site
 
-    def iter_sites_by_residue_name(self, name):
-        """Iterate through this topology's sites which contain this specific residue `name`.
+    def iter_sites_by_residue(self, residue_tag):
+        """Iterate through this topology's sites which contain this specific residue name.
 
         See Also
         --------
         gmso.core.topology.Topology.iter_sites
             The method to iterate over Topology's sites
         """
-        return self.iter_sites("residue_name", name)
+        if isinstance(residue_tag, str):
+            for site in self._sites:
+                if (
+                    site.residue
+                    and getattr(site, "residue").name == residue_tag
+                ):
+                    yield site
+        else:
+            return self.iter_sites("residue", residue_tag)
 
-    def iter_sites_by_residue_number(self, number):
-        """Iterate through this topology's sites which contain this specific residue `number`.
+    def iter_sites_by_molecule(self, molecule_tag):
+        """Iterate through this topology's sites which contain this specific molecule name.
 
         See Also
         --------
         gmso.core.topology.Topology.iter_sites
             The method to iterate over Topology's sites
         """
-        return self.iter_sites("residue_number", number)
+        if isinstance(molecule_tag, str):
+            for site in self._sites:
+                if (
+                    site.molecule
+                    and getattr(site, "molecule").name == molecule_tag
+                ):
+                    yield site
+        else:
+            return self.iter_sites("molecule", molecule_tag)
+
+    def create_subtop(self, label_type, label):
+        """Create a new Topology object from a molecule or graup of the current Topology.
+
+        Parameters
+        ----------
+        label_type: str
+            Category of the label ("group" or "molecule")
+        label: str (group) or tuple (molecule)
+            The label of molecule or group that need to be cloned.
+
+        Returns
+        -------
+        gmso.Topology
+        """
+        from gmso.parameterization.molecule_utils import (
+            molecule_angles,
+            molecule_bonds,
+            molecule_dihedrals,
+            molecule_impropers,
+        )
+
+        of_group = True if label_type == "group" else False
+        sites_dict = {
+            site: (idx, site.clone())
+            for idx, site in enumerate(self.iter_sites(label_type, label))
+        }
+        bonds_dict = {
+            bond: tuple(
+                sites_dict[bond.connection_members[i]][0] for i in range(2)
+            )
+            for bond in molecule_bonds(self, label, of_group)
+        }
+
+        angles_dict = {
+            angle: tuple(
+                sites_dict[angle.connection_members[i]][0] for i in range(3)
+            )
+            for angle in molecule_angles(self, label, of_group)
+        }
+
+        dihedrals_dict = {
+            dihedral: tuple(
+                sites_dict[dihedral.connection_members[i]][0] for i in range(4)
+            )
+            for dihedral in molecule_dihedrals(self, label, of_group)
+        }
+
+        impropers_dict = {
+            improper: tuple(
+                sites_dict[improper.connection_members[i]][0] for i in range(4)
+            )
+            for improper in molecule_impropers(self, label, of_group)
+        }
+
+        new_top = gmso.Topology(
+            name=label if isinstance(label, str) else label[0]
+        )
+
+        for ref_site, new_site in sites_dict.items():
+            new_top.add_site(new_site[1])
+        for ref_conn, conn_idx in bonds_dict.items():
+            bond = gmso.Bond(
+                connection_members=[
+                    new_top.sites[conn_idx[i]] for i in range(2)
+                ],
+                bond_type=None
+                if not ref_conn.connection_type
+                else ref_conn.connection_type.clone(),
+            )
+            new_top.add_connection(bond)
+        for ref_conn, conn_idx in angles_dict.items():
+            angle = gmso.Angle(
+                connection_members=[
+                    new_top.sites[conn_idx[i]] for i in range(3)
+                ],
+                angle_type=None
+                if not ref_conn.connection_type
+                else ref_conn.connection_type.clone(),
+            )
+            new_top.add_connection(angle)
+        for ref_conn, conn_idx in dihedrals_dict.items():
+            dihedral = gmso.Dihedral(
+                connection_members=[
+                    new_top.sites[conn_idx[i]] for i in range(4)
+                ],
+                dihedral_type=None
+                if not ref_conn.connection_type
+                else ref_conn.connection_type.clone(),
+            )
+            new_top.add_connection(dihedral)
+        for ref_conn, conn_idx in impropers_dict.items():
+            improper = gmso.Improper(
+                connection_members=[
+                    new_top.sites[conn_idx[i]] for i in range(4)
+                ],
+                improper_type=None
+                if not ref_conn.connection_type
+                else ref_conn.connection_type.clone(),
+            )
+            new_top.add_connection(improper)
+
+        new_top.update_topology()
+        return new_top
 
     def save(self, filename, overwrite=False, **kwargs):
         """Save the topology to a file.
@@ -1119,6 +1466,8 @@ class Topology(object):
         **kwargs:
             The arguments to specific file savers listed below(as extensions):
             * json: types, update, indent
+            * gro: precision
+            * lammps/lammpsdata: atom_style
         """
         if not isinstance(filename, Path):
             filename = Path(filename).resolve()
@@ -1136,10 +1485,12 @@ class Topology(object):
 
     def __repr__(self):
         """Return custom format to represent topology."""
+        if not self.is_updated:
+            self.update_topology()
         return (
             f"<Topology {self.name}, {self.n_sites} sites,\n "
             f"{self.n_connections} connections,\n "
-            f"{len(self.connection_types)} potentials,\n "
+            f"{sum(self._potentials_count.values())} potentials,\n "
             f"id: {id(self)}>"
         )
 

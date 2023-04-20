@@ -3,7 +3,7 @@ import sympy
 import unyt as u
 
 from gmso.tests.base_test import BaseTest
-from gmso.utils.expression import PotentialExpression
+from gmso.utils.expression import PotentialExpression, _are_equal_parameters
 
 
 class TestExpression(BaseTest):
@@ -185,7 +185,6 @@ class TestExpression(BaseTest):
         )
 
         assert expression_1.expression == expression_2.expression
-        assert hash(expression_1) == hash(expression_2)
         assert expression_3 != expression_2
         assert expression_1 != expression_3
 
@@ -209,6 +208,141 @@ class TestExpression(BaseTest):
         )
 
         assert expression_1.expression == expression_2.expression
-        assert hash(expression_1) == hash(expression_2)
         assert expression_3 != expression_2
         assert expression_1 != expression_3
+
+    def test_clone(self):
+        expr = PotentialExpression(
+            expression="a^2+2*a*b+b^2+2*theta*phi",
+            independent_variables={"theta", "phi"},
+            parameters={"a": 2.0 * u.nm, "b": 2.0 * u.rad},
+        )
+
+        expr_clone = expr.clone()
+
+        assert expr_clone.expression == expr.expression
+        assert id(expr_clone.expression) != id(expr.expression)
+
+        assert expr_clone.parameters == expr.parameters
+        assert id(expr_clone.parameters) != id(expr.parameters)
+
+        assert expr_clone.independent_variables == expr.independent_variables
+        assert id(expr_clone.independent_variables) != id(
+            expr.independent_variables
+        )
+
+        assert expr == expr_clone
+
+    def test_from_non_parametric(self):
+        non_parametric = PotentialExpression(
+            expression="x**2+z*x*y+y**2", independent_variables={"z"}
+        )
+
+        parametric = PotentialExpression.from_non_parametric(
+            non_parametric,
+            parameters={"x": 2.9 * u.dimensionless, "y": 10000 * u.m},
+            valid=True,
+        )
+
+        assert parametric.expression == non_parametric.expression
+        assert id(parametric.expression) != id(non_parametric.expression)
+        assert (
+            parametric.independent_variables
+            == non_parametric.independent_variables
+        )
+        parametric.independent_variables.add("X")
+        assert (
+            parametric.independent_variables
+            != non_parametric.independent_variables
+        )
+
+    def test_from_non_parametric_errors(self):
+        with pytest.raises(
+            TypeError,
+            match="Expected <object object at .*> to be of type "
+            "<class 'gmso.utils.expression.PotentialExpression'> "
+            "but found <class 'object'>.",
+        ):
+            parametric = PotentialExpression.from_non_parametric(
+                non_parametric=object(), parameters={}
+            )
+
+        non_parametric = PotentialExpression(
+            expression="x**2+z*x*y+y**2", independent_variables={"z"}
+        )
+
+        parametric = PotentialExpression.from_non_parametric(
+            non_parametric,
+            parameters={"x": 2.9 * u.dimensionless, "y": 10000 * u.m},
+            valid=False,
+        )
+
+        with pytest.raises(
+            ValueError,
+            match="Cannot create a parametric expression from a parametric expression.",
+        ):
+            PotentialExpression.from_non_parametric(parametric, parameters={})
+
+        with pytest.raises(
+            ValueError,
+            match="Missing necessary dependencies to evaluate potential expression. Missing symbols: {y}",
+        ):
+            parametric = PotentialExpression.from_non_parametric(
+                non_parametric,
+                parameters={"x": 2.9 * u.dimensionless, "z": 10000 * u.m},
+                valid=False,
+            )
+
+        parametric = PotentialExpression.from_non_parametric(
+            non_parametric,
+            parameters={"x": 2.9 * u.dimensionless, "z": 10000 * u.m},
+            valid=True,
+        )
+
+    def test_clone_with_unyt_arrays(self):
+        expression = PotentialExpression(
+            expression="x**2 + y**2 + 2*x*y*theta",
+            independent_variables="theta",
+            parameters={
+                "x": [2.0, 4.5] * u.nm,
+                "y": [3.4, 4.5] * u.kcal / u.mol,
+            },
+        )
+
+        expression_clone = expression.clone()
+        assert expression_clone == expression
+
+    def test_expression_equality_different_params(self):
+        expr1 = PotentialExpression(
+            independent_variables="r",
+            parameters={"a": 2.0 * u.nm, "b": 3.0 * u.nm},
+            expression="a+r*b",
+        )
+
+        expr2 = PotentialExpression(
+            independent_variables="r",
+            parameters={"c": 2.0 * u.nm, "d": 3.0 * u.nm},
+            expression="c+r*d",
+        )
+
+        assert expr1 != expr2
+
+    def test_expression_equality_same_params_different_values(self):
+        expr1 = PotentialExpression(
+            independent_variables="r",
+            parameters={"a": 2.0 * u.nm, "b": 3.0 * u.nm},
+            expression="a+r*b",
+        )
+
+        expr2 = PotentialExpression(
+            independent_variables="r",
+            parameters={"a": 2.0 * u.nm, "b": 3.5 * u.nm},
+            expression="a+r*b",
+        )
+
+        assert expr1 != expr2
+
+    def test_are_equal_parameters(self):
+        u1 = {"a": 2.0 * u.nm, "b": 3.5 * u.nm}
+        u2 = {"c": 2.0 * u.nm, "d": 3.5 * u.nm}
+        assert _are_equal_parameters(u1, u2) is False

@@ -13,7 +13,6 @@ from .core.forcefield import ForceField
 from .core.improper import Improper
 from .core.improper_type import ImproperType
 from .core.pairpotential_type import PairPotentialType
-from .core.subtopology import SubTopology
 from .core.topology import Topology
 
-__version__ = "0.8.0"
+__version__ = "0.9.1"

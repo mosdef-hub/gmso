@@ -108,18 +108,18 @@ class TestMCF(BaseTest):
     def test_modified_potentials(self, n_typed_ar_system):
         top = n_typed_ar_system(n_sites=1)
 
-        top.atom_types[0].set_expression("sigma + epsilon*r")
+        next(iter(top.atom_types)).set_expression("sigma + epsilon*r")
 
         with pytest.raises(EngineIncompatibilityError):
             top.save("out.mcf")
 
         alternate_lj = "4*epsilon*sigma**12/r**12 - 4*epsilon*sigma**6/r**6"
-        top.atom_types[0].set_expression(alternate_lj)
+        next(iter(top.atom_types)).set_expression(alternate_lj)
 
         top.save("ar.mcf")
 
     def test_scaling_factors(self, n_typed_ar_system):
-        top = n_typed_ar_system()
+        top = n_typed_ar_system(n_sites=1)
         top.save("ar.mcf")
         mcf_data = []
         with open("ar.mcf") as f:
@@ -133,15 +133,8 @@ class TestMCF(BaseTest):
         assert np.allclose(float(mcf_data[-4][1]), 0.0)
         assert np.allclose(float(mcf_data[-4][2]), 0.5)
         assert np.allclose(float(mcf_data[-4][3]), 1.0)
-
-        top.scaling_factors = {
-            "nonBonded12Scale": 0.1,
-            "nonBonded13Scale": 0.2,
-            "nonBonded14Scale": 0.5,
-            "electrostatics12Scale": 0.2,
-            "electrostatics13Scale": 0.4,
-            "electrostatics14Scale": 0.6,
-        }
+        top.set_lj_scale([0.1, 0.2, 0.5])
+        top.set_electrostatics_scale([0.2, 0.4, 0.6])
 
         top.save("ar.mcf", overwrite=True)
         mcf_data = []

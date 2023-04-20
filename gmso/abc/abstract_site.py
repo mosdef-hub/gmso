@@ -1,6 +1,6 @@
 """Basic interaction site in GMSO that all other sites will derive from."""
 import warnings
-from typing import Any, ClassVar, Optional, Sequence, TypeVar, Union
+from typing import Any, ClassVar, NamedTuple, Optional, Sequence, TypeVar, Union
 
 import numpy as np
 import unyt as u
@@ -11,6 +11,9 @@ from gmso.abc.gmso_base import GMSOBase
 from gmso.exceptions import GMSOError
 
 PositionType = Union[Sequence[float], np.ndarray, u.unyt_array]
+MoleculeType = NamedTuple("Molecule", name=StrictStr, number=StrictInt)
+ResidueType = NamedTuple("Residue", name=StrictStr, number=StrictInt)
+
 SiteT = TypeVar("SiteT", bound="Site")
 
 BASE_DOC_ATTR = "__base_doc__"
@@ -24,8 +27,9 @@ def default_position():
 class Site(GMSOBase):
     __iterable_attributes__: ClassVar[set] = {
         "label",
-        "residue_name",
-        "residue_number",
+        "group",
+        "molecule",
+        "residue",
     }
 
     __base_doc__: ClassVar[
@@ -51,12 +55,18 @@ class Site(GMSOBase):
 
     label_: str = Field("", description="Label to be assigned to the site")
 
-    residue_number_: Optional[StrictInt] = Field(
-        None, description="Residue number for the site"
+    group_: Optional[StrictStr] = Field(
+        None, description="Flexible alternative label relative to site"
     )
 
-    residue_name_: Optional[StrictStr] = Field(
-        None, description="Residue label for the site"
+    molecule_: Optional[MoleculeType] = Field(
+        None,
+        description="Molecule label for the site, format of (molecule_name, molecule_number)",
+    )
+
+    residue_: Optional[ResidueType] = Field(
+        None,
+        description="Residue label for the site, format of (residue_name, residue_number)",
     )
 
     position_: PositionType = Field(
@@ -80,14 +90,19 @@ class Site(GMSOBase):
         return self.__dict__.get("label_")
 
     @property
-    def residue_name(self):
-        """Return the residue name assigned to the site."""
-        return self.__dict__.get("residue_name_")
+    def group(self) -> str:
+        """Return the group of the site."""
+        return self.__dict__.get("group_")
 
     @property
-    def residue_number(self):
-        """Return the reside number assigned to the site."""
-        return self.__dict__.get("residue_number_")
+    def molecule(self) -> tuple:
+        """Return the molecule of the site."""
+        return self.__dict__.get("molecule_")
+
+    @property
+    def residue(self):
+        """Return the residue assigned to the site."""
+        return self.__dict__.get("residue_")
 
     def __repr__(self):
         """Return the formatted representation of the site."""
@@ -155,16 +170,18 @@ class Site(GMSOBase):
             "name_": "name",
             "position_": "position",
             "label_": "label",
-            "residue_name_": "residue_name",
-            "residue_number_": "residue_number",
+            "group_": "group",
+            "molecule_": "molecule",
+            "residue_": "residue",
         }
 
         alias_to_fields = {
             "name": "name_",
             "position": "position_",
             "label": "label_",
-            "residue_name": "residue_name_",
-            "residue_number": "residue_number_",
+            "group": "group_",
+            "molecule": "molecule_",
+            "residue": "residue_",
         }
 
         validate_assignment = True

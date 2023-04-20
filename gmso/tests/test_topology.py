@@ -16,8 +16,6 @@ from gmso.core.dihedral import Dihedral
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
-from gmso.core.pairpotential_type import PairPotentialType
-from gmso.core.subtopology import SubTopology
 from gmso.core.topology import Topology
 from gmso.exceptions import GMSOError
 from gmso.external.convert_parmed import from_parmed
@@ -196,12 +194,16 @@ class TestTopology(BaseTest):
         top = Topology()
         assert len(top.atom_types) == 0
         top.add_site(typed_site, update_types=False)
-        assert len(top.atom_types) == 0
+        assert (
+            len(top.atom_types) == 1
+        )  # Always upto date now (except for repr)
+        assert top._potentials_count["atom_types"] == 0
 
         top = Topology()
         assert len(top.atom_types) == 0
         top.add_site(typed_site, update_types=True)
         assert len(top.atom_types) == 1
+        assert top._potentials_count["atom_types"] == 1
 
     def test_add_untyped_bond_update(self):
         atom1 = Atom(atom_type=None)
@@ -227,7 +229,7 @@ class TestTopology(BaseTest):
         top.add_site(atom1)
         top.add_site(atom2)
         top.add_connection(bond, update_types=False)
-        assert len(top.connection_types) == 0
+        assert len(top.connection_types) == 1
 
         top = Topology()
         top.add_connection(bond, update_types=True)
@@ -270,8 +272,8 @@ class TestTopology(BaseTest):
         atom1.atom_type = AtomType()
         atom1.atom_type.expression = "sigma*epsilon*r"
         assert top.n_sites == 2
-        assert len(top.atom_types) == 1
-        assert len(top.atom_type_expressions) == 1
+        assert len(top.atom_types) == 2
+        assert len(top.atom_type_expressions) == 2
         assert top.n_connections == 1
         assert len(top.connection_types) == 1
         assert len(top.connection_type_expressions) == 1
@@ -404,38 +406,19 @@ class TestTopology(BaseTest):
         self, pairpotentialtype_top
     ):
         assert len(pairpotentialtype_top.pairpotential_types) == 1
-        pptype12 = pairpotentialtype_top.pairpotential_types[0]
-        assert pairpotentialtype_top._pairpotential_types_idx[pptype12] == 0
 
         pairpotentialtype_top.remove_pairpotentialtype(["a1", "a2"])
         assert len(pairpotentialtype_top.pairpotential_types) == 0
-
-    def test_add_subtopology(self):
-        top = Topology()
-        subtop = SubTopology()
-
-        assert top.n_subtops == 0
-        top.add_subtopology(subtop)
-        assert top.n_subtops == 1
 
     def test_parametrization(self):
         top = Topology()
 
         assert top.typed == False
-        top.add_site(Atom(atom_type=AtomType()))
+        top.add_site(Atom(atom_type=AtomType()), update_types=True)
 
         assert top.typed == True
         assert top.is_typed() == True
         assert top.typed == True
-
-    def test_parametrization_setter(self):
-        top = Topology()
-
-        assert top.typed == False
-        assert top.is_typed() == False
-        top.typed = True
-        assert top.typed == True
-        assert top.is_typed() == False
 
     def test_topology_atom_type_changes(self):
         top = Topology()
@@ -445,10 +428,9 @@ class TestTopology(BaseTest):
             site.atom_type = atom_type
             top.add_site(site, update_types=False)
         top.update_topology()
-        assert len(top.atom_types) == 10
+        assert len(top.atom_types) == 100
         top.sites[0].atom_type.name = "atom_type_changed"
-        assert id(top.sites[0].atom_type) == id(top.sites[10].atom_type)
-        assert top.sites[10].atom_type.name == "atom_type_changed"
+        assert top.sites[10].atom_type.name != "atom_type_changed"
         assert top.is_typed()
 
     def test_add_duplicate_connected_atom(self):
@@ -562,19 +544,6 @@ class TestTopology(BaseTest):
             == 1
         )
 
-    def test_topology_get_index_atom_type_after_change(
-        self, typed_water_system
-    ):
-        typed_water_system.sites[0].atom_type.name = "atom_type_changed_name"
-        assert (
-            typed_water_system.get_index(typed_water_system.sites[0].atom_type)
-            == 1
-        )
-        assert (
-            typed_water_system.get_index(typed_water_system.sites[1].atom_type)
-            == 0
-        )
-
     def test_topology_get_index_bond_type(self, typed_methylnitroaniline):
         assert (
             typed_methylnitroaniline.get_index(
@@ -587,17 +556,6 @@ class TestTopology(BaseTest):
                 typed_methylnitroaniline.bonds[-1].connection_type
             ),
             int,
-        )
-
-    def test_topology_get_index_bond_type_after_change(
-        self, typed_methylnitroaniline
-    ):
-        typed_methylnitroaniline.bonds[0].connection_type.name = "changed name"
-        assert (
-            typed_methylnitroaniline.get_index(
-                typed_methylnitroaniline.bonds[0].connection_type
-            )
-            != 0
         )
 
     def test_topology_get_index_angle_type(self, typed_chloroethanol):
@@ -614,16 +572,6 @@ class TestTopology(BaseTest):
             == 1
         )
 
-    def test_topology_get_index_angle_type_after_change(
-        self, typed_methylnitroaniline
-    ):
-        angle_type_to_test = typed_methylnitroaniline.angles[0].connection_type
-        prev_idx = typed_methylnitroaniline.get_index(angle_type_to_test)
-        typed_methylnitroaniline.angles[0].connection_type.name = "changed name"
-        assert (
-            typed_methylnitroaniline.get_index(angle_type_to_test) != prev_idx
-        )
-
     def test_topology_get_index_dihedral_type(self, typed_chloroethanol):
         assert (
             typed_chloroethanol.get_index(
@@ -636,21 +584,6 @@ class TestTopology(BaseTest):
                 typed_chloroethanol.dihedrals[5].connection_type
             )
             == 3
-        )
-
-    def test_topology_get_index_dihedral_type_after_change(
-        self, typed_methylnitroaniline
-    ):
-        dihedral_type_to_test = typed_methylnitroaniline.dihedrals[
-            0
-        ].connection_type
-        prev_idx = typed_methylnitroaniline.get_index(dihedral_type_to_test)
-        typed_methylnitroaniline.dihedrals[
-            0
-        ].connection_type.name = "changed name"
-        assert (
-            typed_methylnitroaniline.get_index(dihedral_type_to_test)
-            != prev_idx
         )
 
     def test_topology_get_bonds_for(self, typed_methylnitroaniline):
@@ -688,38 +621,106 @@ class TestTopology(BaseTest):
         )
 
     def test_topology_scale_factors(self, typed_methylnitroaniline):
-        sf = typed_methylnitroaniline.scaling_factors
-        assert np.allclose(sf["nonBonded12Scale"], 0.0)
-        assert np.allclose(sf["nonBonded13Scale"], 0.0)
-        assert np.allclose(sf["nonBonded14Scale"], 0.5)
-        assert np.allclose(sf["electrostatics12Scale"], 0.0)
-        assert np.allclose(sf["electrostatics13Scale"], 0.0)
-        assert np.allclose(sf["electrostatics14Scale"], 0.5)
+        assert np.allclose(
+            typed_methylnitroaniline.get_lj_scale(interaction="12"), 0.0
+        )
+        assert np.allclose(
+            typed_methylnitroaniline.get_lj_scale(interaction="13"), 0.0
+        )
+        assert np.allclose(
+            typed_methylnitroaniline.get_lj_scale(interaction="14"), 0.5
+        )
+        assert np.allclose(
+            typed_methylnitroaniline.get_electrostatics_scale(interaction="12"),
+            0.0,
+        )
+        assert np.allclose(
+            typed_methylnitroaniline.get_electrostatics_scale(interaction="13"),
+            0.0,
+        )
+        assert np.allclose(
+            typed_methylnitroaniline.get_electrostatics_scale(interaction="14"),
+            0.5,
+        )
 
     def test_topology_change_scale_factors(self, typed_methylnitroaniline):
-        typed_methylnitroaniline.scaling_factors = {
-            "nonBonded12Scale": 0.5,
-            "nonBonded13Scale": 0.5,
-            "nonBonded14Scale": 1.0,
-            "electrostatics12Scale": 1.0,
-            "electrostatics13Scale": 1.0,
-            "electrostatics14Scale": 1.0,
-        }
-        sf = typed_methylnitroaniline.scaling_factors
-        assert np.allclose(sf["nonBonded12Scale"], 0.5)
-        assert np.allclose(sf["nonBonded13Scale"], 0.5)
-        assert np.allclose(sf["nonBonded14Scale"], 1.0)
-        assert np.allclose(sf["electrostatics12Scale"], 1.0)
-        assert np.allclose(sf["electrostatics13Scale"], 1.0)
-        assert np.allclose(sf["electrostatics14Scale"], 1.0)
-        typed_methylnitroaniline.scaling_factors["nonBonded12Scale"] = 1.0
-        assert np.allclose(sf["nonBonded12Scale"], 1.0)
+        typed_methylnitroaniline.set_lj_scale([0.5, 0.5, 1.0])
+        typed_methylnitroaniline.set_electrostatics_scale([1.0, 1.0, 1.0])
+        assert np.allclose(
+            typed_methylnitroaniline.get_lj_scale(interaction="12"), 0.5
+        )
+        assert np.allclose(
+            typed_methylnitroaniline.get_lj_scale(interaction="13"), 0.5
+        )
+        assert np.allclose(
+            typed_methylnitroaniline.get_lj_scale(interaction="14"), 1.0
+        )
+        assert np.allclose(
+            typed_methylnitroaniline.get_electrostatics_scale(interaction="12"),
+            1.0,
+        )
+        assert np.allclose(
+            typed_methylnitroaniline.get_electrostatics_scale(interaction="13"),
+            1.0,
+        )
+        assert np.allclose(
+            typed_methylnitroaniline.get_electrostatics_scale(interaction="14"),
+            1.0,
+        )
+        typed_methylnitroaniline.set_lj_scale(1.0, interaction="12")
+        assert np.allclose(
+            typed_methylnitroaniline.get_lj_scale(), [1.0, 0.5, 1.0]
+        )
 
-    def test_topology_invalid_scaling_factors(self, typed_methylnitroaniline):
+    def test_topology_invalid_interactions_scaling_factors(
+        self, typed_methylnitroaniline
+    ):
         with pytest.raises(GMSOError):
-            typed_methylnitroaniline.scaling_factors = (0.5, 1.0)
+            typed_methylnitroaniline.get_lj_scale(interaction="16")
+
         with pytest.raises(GMSOError):
-            typed_methylnitroaniline.scaling_factors = {"lj_12": 0.0}
+            typed_methylnitroaniline.set_lj_scale(2, interaction="16")
+
+    def test_topology_scaling_factors_by_molecule_id(
+        self, typed_methylnitroaniline
+    ):
+        top = Topology()
+        top.set_electrostatics_scale(0.4)
+        top.set_lj_scale(
+            [1.2, 1.3, 1.4],
+            molecule_id="RESA",
+        )
+        assert np.allclose(top.get_electrostatics_scale(), [0.4, 0.4, 0.4])
+        assert np.allclose(
+            top.get_lj_scale(molecule_id="RESA"), [1.2, 1.3, 1.4]
+        )
+
+        assert (
+            top.get_electrostatics_scale(molecule_id="MissingMolecule") == None
+        )
+
+    def test_topology_set_scaling_factors(self):
+        top = Topology()
+        with pytest.raises(ValueError):
+            top.set_scaling_factors([1.0, 2.0, 3.0], [2.1, 3.2])
+        top.set_scaling_factors([1.0, 2.0, 3.0], [2.1, 2.2, 2.3])
+        top.set_scaling_factors(
+            [2.0, 2.0, 3.2], [0.0, 0.0, 0.5], molecule_id="MOLA"
+        )
+        assert np.allclose(
+            top.get_scaling_factors(),
+            [[1.0, 2.0, 3.0], [2.1, 2.2, 2.3]],
+        )
+
+        assert np.allclose(
+            top.get_scaling_factors(molecule_id="MOLA"),
+            [[2.0, 2.0, 3.2], [0.0, 0.0, 0.5]],
+        )
+
+    def test_topology_set_scaling_factors_none(self):
+        top = Topology()
+        with pytest.raises(ValueError):
+            top.set_scaling_factors(None, None)
 
     @pytest.mark.skipif(not has_pandas, reason="Pandas is not installed")
     def test_to_dataframe(self, typed_ethane):
@@ -844,32 +845,53 @@ class TestTopology(BaseTest):
         with pytest.raises(ValueError):
             clone.get_untyped(group="foo")
 
-    def test_iter_sites(self, residue_top):
-        for site in residue_top.iter_sites("residue_name", "MY_RES_EVEN"):
-            assert site.residue_name == "MY_RES_EVEN"
+    @pytest.mark.parametrize("key", ["group", "residue", "molecule"])
+    def test_iter_sites(self, labeled_top, key):
+        unique_labels = labeled_top.unique_site_labels(key)
+        for label in unique_labels:
+            for site in labeled_top.iter_sites(key, label):
+                assert getattr(site, key) == label
 
-        for site in residue_top.iter_sites("residue_name", "MY_RES_ODD"):
-            assert site.residue_name == "MY_RES_ODD"
-
-        sites = list(residue_top.iter_sites("residue_number", 4))
-        assert len(sites) == 5
-
-    def test_iter_sites_non_iterable_attribute(self, residue_top):
+    def test_iter_sites_non_iterable_attribute(self, labeled_top):
         with pytest.raises(ValueError):
-            for site in residue_top.iter_sites("atom_type", "abc"):
+            for site in labeled_top.iter_sites("atom_type", "abc"):
                 pass
 
-    def test_iter_sites_none(self, residue_top):
+    def test_iter_sites_none(self, labeled_top):
         with pytest.raises(ValueError):
-            for site in residue_top.iter_sites("residue_name", None):
+            for site in labeled_top.iter_sites("residue", None):
                 pass
 
-    def test_iter_sites_by_residue_name(self, pairpotentialtype_top):
-        assert (
-            len(list(pairpotentialtype_top.iter_sites_by_residue_name("AAA")))
-            == 0
+    def test_iter_sites_by_residue(self, labeled_top):
+        residues = labeled_top.unique_site_labels("residue", name_only=False)
+        for residue in residues:
+            for site in labeled_top.iter_sites_by_residue(residue):
+                assert site.residue == residue
+
+        residue_names = labeled_top.unique_site_labels(
+            "residue", name_only=True
         )
+        for residue_name in residue_names:
+            for site in labeled_top.iter_sites_by_residue(residue_name):
+                assert site.residue.name == residue_name
 
-    def test_iter_sites_by_residue_number(self, residue_top):
-        sites = list(residue_top.iter_sites_by_residue_number(4))
-        assert len(sites) == 5
+    def test_iter_sites_by_molecule(self, labeled_top):
+        molecules = labeled_top.unique_site_labels("molecule", name_only=False)
+        for molecule in molecules:
+            for site in labeled_top.iter_sites_by_molecule(molecule):
+                assert site.residue == molecule
+
+        molecule_names = labeled_top.unique_site_labels(
+            "molecule", name_only=True
+        )
+        for molecule_name in molecule_names:
+            for site in labeled_top.iter_sites_by_molecule(molecule_name):
+                assert site.molecule.name == molecule_name
+
+    def test_write_forcefield(self, typed_water_system):
+        forcefield = typed_water_system.get_forcefield()
+        assert "opls_111" in forcefield.atom_types
+        assert "opls_112" in forcefield.atom_types
+        top = Topology()
+        with pytest.raises(GMSOError):
+            top.get_forcefield()

@@ -31,6 +31,16 @@ class Angle(Connection):
         default=None, description="AngleType of this angle."
     )
 
+    restraint_: Optional[dict] = Field(
+        default=None,
+        description="""
+        Restraint for this angle, must be a dict with the following keys:
+        'k' (unit of energy/mol), 'theta_eq' (unit of angle), 'n' (multiplicity, unitless).
+        Refer to https://manual.gromacs.org/current/reference-manual/topologies/topology-file-formats.html
+        for more information.
+        """,
+    )
+
     @property
     def angle_type(self):
         """Return the angle type if the angle is parametrized."""
@@ -40,6 +50,11 @@ class Angle(Connection):
     def connection_type(self):
         """Return the angle type if the angle is parametrized."""
         return self.__dict__.get("angle_type_")
+
+    @property
+    def restraint(self):
+        """Return the restraint of this angle."""
+        return self.__dict__.get("restraint_")
 
     def equivalent_members(self):
         """Return a set of the equivalent connection member tuples.
@@ -61,32 +76,6 @@ class Angle(Connection):
             [self.connection_members, tuple(reversed(self.connection_members))]
         )
 
-    def _equivalent_members_hash(self):
-        """Return a unique hash representing the connection.
-
-        Returns
-        -------
-        int
-            A unique hash to represent the connection members
-
-        Notes
-        -----
-        For an angle:
-            i, j, k == k, j, i
-        where i, j, and k are the connection members.
-        Here, j is fixed and i and k are replaceable.
-        """
-        return hash(
-            tuple(
-                [
-                    self.connection_members[1],
-                    frozenset(
-                        [self.connection_members[0], self.connection_members[2]]
-                    ),
-                ]
-            )
-        )
-
     def __setattr__(self, key, value):
         """Set the attributes of the angle."""
         if key == "connection_type":
@@ -100,8 +89,10 @@ class Angle(Connection):
         fields = {
             "connection_members_": "connection_members",
             "angle_type_": "angle_type",
+            "restraint_": "restraint",
         }
         alias_to_fields = {
             "connection_members": "connection_members_",
             "angle_type": "angle_type_",
+            "restraint": "restraint_",
         }

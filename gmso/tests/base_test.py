@@ -1,9 +1,9 @@
 import foyer
 import mbuild as mb
-import mbuild.recipes
 import numpy as np
 import pytest
 import unyt as u
+from foyer.tests.utils import get_fn
 
 from gmso.core.angle import Angle
 from gmso.core.atom import Atom
@@ -11,7 +11,6 @@ from gmso.core.atom_type import AtomType
 from gmso.core.bond import Bond
 from gmso.core.box import Box
 from gmso.core.dihedral import Dihedral
-from gmso.core.element import Hydrogen, Oxygen
 from gmso.core.forcefield import ForceField
 from gmso.core.improper import Improper
 from gmso.core.pairpotential_type import PairPotentialType
@@ -19,7 +18,7 @@ from gmso.core.topology import Topology
 from gmso.external import from_mbuild, from_parmed
 from gmso.external.convert_foyer_xml import from_foyer_xml
 from gmso.tests.utils import get_path
-from gmso.utils.io import get_fn, has_foyer
+from gmso.utils.io import get_fn
 
 
 class BaseTest:
@@ -52,13 +51,51 @@ class BaseTest:
         return Topology(name="mytop")
 
     @pytest.fixture
+    def benzene_ua(self):
+        compound = mb.load(get_fn("benzene_ua.mol2"))
+        compound.children[0].name = "BenzeneUA"
+        top = from_mbuild(compound)
+        top.identify_connections()
+        return top
+
+    @pytest.fixture
+    def benzene_ua_box(self):
+        compound = mb.load(get_fn("benzene_ua.mol2"))
+        compound.children[0].name = "BenzeneUA"
+        compound_box = mb.packing.fill_box(
+            compound=compound, n_compounds=5, density=1
+        )
+        top = from_mbuild(compound_box)
+        top.identify_connections()
+        return top
+
+    @pytest.fixture
+    def benzene_aa(self):
+        compound = mb.load(get_fn("benzene.mol2"))
+        compound.children[0].name = "BenzeneAA"
+        top = from_mbuild(compound)
+        top.identify_connections()
+        return top
+
+    @pytest.fixture
+    def benzene_aa_box(self):
+        compound = mb.load(get_fn("benzene.mol2"))
+        compound.children[0].name = "BenzeneAA"
+        compound_box = mb.packing.fill_box(
+            compound=compound, n_compounds=5, density=1
+        )
+        top = from_mbuild(compound_box)
+        top.identify_connections()
+        return top
+
+    @pytest.fixture
     def ar_system(self, n_ar_system):
-        return from_mbuild(n_ar_system())
+        return from_mbuild(n_ar_system(), parse_label=True)
 
     @pytest.fixture
     def n_ar_system(self):
         def _topology(n_sites=100):
-            ar = mb.Compound(name="Ar")
+            ar = mb.Compound(name="Ar", element="Ar")
 
             packed_system = mb.fill_box(
                 compound=ar,
@@ -125,7 +162,7 @@ class BaseTest:
             compound=water, n_compounds=2, box=mb.Box([2, 2, 2])
         )
 
-        return from_mbuild(packed_system)
+        return from_mbuild(packed_system, parse_label=True)
 
     @pytest.fixture
     def ethane(self):
@@ -210,9 +247,14 @@ class BaseTest:
         for bond in top.bonds:
             bond.bond_type = ff.bond_types["opls_111~opls_112"]
 
-        for subtop in top.subtops:
+        molecule_tags = top.unique_site_labels(
+            label_type="molecule", name_only=False
+        )
+        for tag in molecule_tags:
             angle = Angle(
-                connection_members=[site for site in subtop.sites],
+                connection_members=[
+                    site for site in top.iter_sites("molecule", tag)
+                ],
                 name="opls_112~opls_111~opls_112",
                 angle_type=ff.angle_types["opls_112~opls_111~opls_112"],
             )
@@ -223,9 +265,8 @@ class BaseTest:
 
     @pytest.fixture
     def foyer_fullerene(self):
-        if has_foyer:
-            import foyer
-            from foyer.tests.utils import get_fn
+        from foyer.tests.utils import get_fn
+
         from_foyer_xml(get_fn("fullerene.xml"), overwrite=True)
         gmso_ff = ForceField("fullerene_gmso.xml")
 
@@ -233,37 +274,34 @@ class BaseTest:
 
     @pytest.fixture
     def foyer_periodic(self):
-        if has_foyer:
-            import foyer
-            from foyer.tests.utils import get_fn
+        # TODO: this errors out with backend="ffutils"
+        from foyer.tests.utils import get_fn
+
         from_foyer_xml(get_fn("oplsaa-periodic.xml"), overwrite=True)
-        gmso_ff = ForceField("oplsaa-periodic_gmso.xml")
+        gmso_ff = ForceField("oplsaa-periodic_gmso.xml", backend="gmso")
 
         return gmso_ff
 
     @pytest.fixture
     def foyer_urey_bradley(self):
-        if has_foyer:
-            import foyer
-            from foyer.tests.utils import get_fn
+        # TODO: this errors out with backend="ffutils"
+        from foyer.tests.utils import get_fn
 
-            from_foyer_xml(get_fn("charmm36_cooh.xml"), overwrite=True)
-            gmso_ff = ForceField("charmm36_cooh_gmso.xml")
+        from_foyer_xml(get_fn("charmm36_cooh.xml"), overwrite=True)
+        gmso_ff = ForceField("charmm36_cooh_gmso.xml", backend="gmso")
 
-            return gmso_ff
+        return gmso_ff
 
     @pytest.fixture
     def foyer_rb_torsion(self):
-        if has_foyer:
-            import foyer
-            from foyer.tests.utils import get_fn
+        from foyer.tests.utils import get_fn
 
-            from_foyer_xml(
-                get_fn("refs-multi.xml"), overwrite=True, validate_foyer=True
-            )
-            gmso_ff = ForceField("refs-multi_gmso.xml")
+        from_foyer_xml(
+            get_fn("refs-multi.xml"), overwrite=True, validate_foyer=True
+        )
+        gmso_ff = ForceField("refs-multi_gmso.xml")
 
-            return gmso_ff
+        return gmso_ff
 
     @pytest.fixture
     def methane(self):
@@ -416,10 +454,13 @@ class BaseTest:
                 return False, "Unequal number of impropers"
             if top1.name != top2.name:
                 return False, "Dissimilar names"
-
-            if top1.scaling_factors != top2.scaling_factors:
-                return False, f"Mismatch in scaling factors"
-
+            if not np.allclose(top1.scaling_factors, top2.scaling_factors):
+                return False, "Mismatch in scaling factors"
+            for k, v in top1.molecule_scaling_factors.items():
+                if k not in top2.scaling_factors:
+                    return False, "Mismatch in scaling factors"
+                elif not np.allclose(v, top2.molecule_scaling_factors[k]):
+                    return False, "Mismatch in scaling factors"
             if not have_equivalent_boxes(top1, top2):
                 return (
                     False,
@@ -488,13 +529,17 @@ class BaseTest:
         return top
 
     @pytest.fixture(scope="session")
-    def residue_top(self):
+    def labeled_top(self):
         top = Topology()
         for i in range(1, 26):
             atom = Atom(
                 name=f"atom_{i + 1}",
-                residue_number=i % 5,
-                residue_name="MY_RES_EVEN" if i % 2 == 0 else f"MY_RES_ODD",
+                residue=("MY_RES_EVEN" if i % 2 == 0 else f"MY_RES_ODD", i % 5),
+                molecule=(
+                    "MY_MOL_EVEN" if i % 2 == 0 else f"MY_RES_ODD",
+                    i % 5,
+                ),
+                group="MY_GROUP",
             )
             top.add_site(atom, update_types=False)
         top.update_topology()
@@ -545,3 +590,67 @@ class BaseTest:
     @pytest.fixture(scope="session")
     def pentane_ua_gmso(self, pentane_ua_mbuild):
         return from_mbuild(pentane_ua_mbuild)
+
+    @pytest.fixture(scope="session")
+    def hierarchical_compound(self):
+        # Build Polymer
+        monomer = mb.load("CCO", smiles=True)
+        monomer.name = "monomer"
+        polymer = mb.lib.recipes.Polymer()
+        polymer.add_monomer(monomer, indices=(3, 7))
+        polymer.build(n=10)
+        polymer.name = "polymer"
+
+        # Build Solvent 1
+        cyclopentane = mb.load("C1CCCC1", smiles=True)
+        cyclopentane.name = "cyclopentane"
+
+        # Build Solvent 2
+        water = mb.load("O", smiles=True)
+        water.name = "water"
+
+        # Build Partitioned Box
+        filled_box1 = mb.packing.solvate(
+            solvent=cyclopentane,
+            solute=polymer,
+            box=mb.Box([5, 5, 5]),
+            n_solvent=5,
+        )
+        filled_box1.name = "sol1"
+        filled_box2 = mb.packing.fill_box(
+            compound=water,
+            box=mb.Box([5, 5, 5]),
+            n_compounds=5,
+        )
+        filled_box2.name = "sol2"
+        partitioned_box = mb.Compound()
+        partitioned_box.add(filled_box1)
+        partitioned_box.add(filled_box2)
+        partitioned_box.name = "Topology"
+        return partitioned_box
+
+    @pytest.fixture(scope="session")
+    def hierarchical_top(self, hierarchical_compound):
+        top = from_mbuild(hierarchical_compound)  # Create GMSO topology
+        top.identify_connections()
+        return top
+
+    @pytest.fixture
+    def ethane_gomc(self):
+        ethane_gomc = mb.load("CC", smiles=True)
+        ethane_gomc.name = "ETH"
+
+        return ethane_gomc
+
+    @pytest.fixture
+    def ethanol_gomc(self):
+        ethanol_gomc = mb.load("CCO", smiles=True)
+        ethanol_gomc.name = "ETO"
+
+        return ethanol_gomc
+
+    @pytest.fixture
+    def methane_ua_gomc(self):
+        methane_ua_gomc = mb.Compound(name="_CH4")
+
+        return methane_ua_gomc

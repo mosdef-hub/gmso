@@ -1,16 +1,18 @@
 """Convert to and from a TRIPOS mol2 file."""
+import itertools
 import warnings
 from pathlib import Path
 
 import unyt as u
 
 from gmso import Atom, Bond, Box, Topology
+from gmso.abc.abstract_site import MoleculeType, ResidueType
 from gmso.core.element import element_by_name, element_by_symbol
 from gmso.formats.formats_registry import loads_as
 
 
 @loads_as(".mol2")
-def from_mol2(filename, site_type="atom"):
+def read_mol2(filename, site_type="atom"):
     """Read in a TRIPOS mol2 file format into a gmso topology object.
 
     Creates a Topology from a mol2 file structure. This will read in the
@@ -68,6 +70,7 @@ def from_mol2(filename, site_type="atom"):
         "@<TRIPOS>BOND": _parse_bond,
         "@<TRIPOS>CRYSIN": _parse_box,
         "@<TRIPOS>FF_PBC": _parse_box,
+        "@<TRIPOS>MOLECULE": _parse_molecule,
     }
     for section in sections:
         if section not in supported_rti:
@@ -78,7 +81,6 @@ def from_mol2(filename, site_type="atom"):
         else:
             supported_rti[section](topology, sections[section])
 
-    topology.update_topology()
     # TODO: read in parameters to correct attribute as well. This can be saved in various rti sections.
     return topology
 
@@ -102,25 +104,28 @@ def _parse_lj(top, section):
                 name=content[1],
                 position=position.to("nm"),
                 charge=charge,
-                residue_name=content[7],
-                residue_number=int(content[6]),
+                residue=(content[7], int(content[6])),
             )
             top.add_site(atom)
 
 
 def _parse_atom(top, section):
     """Parse atom information from the mol2 file."""
-    parse_ele = (
-        lambda ele: element_by_symbol(ele)
-        if element_by_symbol(ele)
-        else element_by_name(ele)
-    )
+
+    def parse_ele(*symbols):
+        methods = [element_by_name, element_by_symbol]
+        elem = None
+        for symbol, method in itertools.product(symbols, methods):
+            elem = method(symbol)
+            if elem:
+                break
+        return elem
 
     for line in section:
         if line.strip():
             content = line.split()
             position = [float(x) for x in content[2:5]] * u.Å
-            element = parse_ele(content[5])
+            element = parse_ele(content[5], content[1])
 
             if not element:
                 warnings.warn(
@@ -135,14 +140,14 @@ def _parse_atom(top, section):
                     f"No charge was detected for site {content[1]} with index {content[0]}"
                 )
                 charge = None
-
+            molecule = top.label if top.__dict__.get("label") else top.name
             atom = Atom(
                 name=content[1],
                 position=position.to("nm"),
                 element=element,
                 charge=charge,
-                residue_name=content[7],
-                residue_number=int(content[6]),
+                residue=ResidueType(content[7], int(content[6])),
+                molecule=MoleculeType(molecule, 1),
             )
             top.add_site(atom)
 
@@ -175,3 +180,8 @@ def _parse_box(top, section):
                 lengths=[float(x) for x in content[0:3]] * u.Å,
                 angles=[float(x) for x in content[3:6]] * u.degree,
             )
+
+
+def _parse_molecule(top, section):
+    """Parse molecule information from the mol2 file."""
+    top.label = str(section[0].strip())

@@ -7,7 +7,6 @@ from gmso.abc.abstract_connection import Connection
 from gmso.abc.abstract_site import Site
 from gmso.core.bond import Bond
 from gmso.core.topology import Topology
-from gmso.exceptions import GMSOError
 
 
 def from_networkx(graph):

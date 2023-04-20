@@ -52,16 +52,15 @@ def write_mcf(top, filename):
     # TODO: What oh what to do about subtops?
     # For now refuse topologies with subtops as MCF writer is for
     # single molecules
-    if top.n_subtops > 0:
+    if len(top.unique_site_labels("molecule")) > 1:
         raise GMSOError(
-            "MCF writer does not support subtopologies. "
+            "MCF writer does not support multiple molecules. "
             "Please provide a single molecule as an gmso.Topology "
             "object to the MCF writer."
         )
 
     # Now we write the MCF file
     with open(filename, "w") as mcf:
-
         header = (
             "!***************************************"
             "****************************************\n"
@@ -279,7 +278,7 @@ def _write_atom_information(mcf, top, in_ring):
 
     mcf.write(header)
     mcf.write("{:d}\n".format(len(top.sites)))
-    for (idx, site) in enumerate(top.sites):
+    for idx, site in enumerate(top.sites):
         mcf.write(
             "{:<4d}  "
             "{:<6s}  "
@@ -438,7 +437,7 @@ def _write_dihedral_information(mcf, top):
 
     # TODO: Are impropers buried in dihedrals?
     mcf.write("{:d}\n".format(len(top.dihedrals)))
-    for (idx, dihedral) in enumerate(top.dihedrals):
+    for idx, dihedral in enumerate(top.dihedrals):
         mcf.write(
             "{:<4d}  "
             "{:<4d}  "
@@ -625,7 +624,8 @@ def _write_intrascaling_information(mcf, top):
         The 1-4 scaling parameter for Coulombic interactions
 
     """
-    sf = top.scaling_factors
+    nbonded_sf = top.get_lj_scale()
+    electstatic_sf = top.get_electrostatics_scale()
     header = (
         "\n!Intra Scaling\n"
         "!vdw_scaling    1-2 1-3 1-4 1-N\n"
@@ -634,20 +634,8 @@ def _write_intrascaling_information(mcf, top):
     )
 
     mcf.write(header)
-    mcf.write(
-        "{:.4f} {:.4f} {:.4f} 1.0000\n".format(
-            sf["nonBonded12Scale"],
-            sf["nonBonded13Scale"],
-            sf["nonBonded14Scale"],
-        )
-    )
-    mcf.write(
-        "{:.4f} {:.4f} {:.4f} 1.0000\n".format(
-            sf["electrostatics12Scale"],
-            sf["electrostatics13Scale"],
-            sf["electrostatics14Scale"],
-        )
-    )
+    mcf.write("{:.4f} {:.4f} {:.4f} 1.0000\n".format(*nbonded_sf))
+    mcf.write("{:.4f} {:.4f} {:.4f} 1.0000\n".format(*electstatic_sf))
 
 
 def _check_compatibility(top):

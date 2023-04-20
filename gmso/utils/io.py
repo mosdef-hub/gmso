@@ -133,14 +133,6 @@ except ImportError:
     has_mbuild = False
 
 try:
-    import foyer
-
-    has_foyer = True
-    del foyer
-except ImportError:
-    has_foyer = False
-
-try:
     import gsd
 
     has_gsd = True

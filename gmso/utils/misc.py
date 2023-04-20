@@ -5,6 +5,19 @@ import unyt as u
 from unyt.exceptions import UnitConversionError
 
 
+@lru_cache(maxsize=128)
+def unyt_compare(units1, units2):
+    """Check if two parameter values have the same units."""
+    units1 = list(units1)
+    units2 = list(units2)
+    for unit1, unit2 in zip(units1, units2):
+        try:
+            u.testing.assert_allclose_units(unit1, unit2, rtol=1e-5, atol=1e-8)
+        except AssertionError:
+            return False
+    return True
+
+
 def unyt_to_hashable(unyt_or_unyt_iter):
     """Convert a (list of) unyt array or quantity to a hashable tuple."""
     if unyt_or_unyt_iter is None:
@@ -114,3 +127,13 @@ def mask_with(iterable, window_size=1, mask="*"):
 
         idx += 1
         yield to_yield
+
+
+def get_xml_representation(value):
+    """Given a value, get its XML representation."""
+    if isinstance(value, u.unyt_quantity):
+        return str(value.value)
+    elif isinstance(value, set):
+        return ",".join(value)
+    else:
+        return str(value)

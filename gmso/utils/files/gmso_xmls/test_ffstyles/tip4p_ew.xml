@@ -1,0 +1,60 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ForceField name="TIP4P-Ew" version="0.0.1">
+  <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.5" combiningRule="geometric">
+    <Units energy="kJ" distance="nm" mass="amu" charge="C"/>
+  </FFMetaData>
+  <AtomTypes expression="4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)">
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <AtomType name="OW" mass="15.9994" charge="0.0" atomclass="OW" doi="10.1063/1.1683075" definition="[O;X3](H)(H)(_LP)" description="O in TIP4P 2005 ">
+      <Parameters>
+        <Parameter name="epsilon" value="0.680946"/>
+        <Parameter name="sigma" value="0.316435"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="HW" mass="1.008" charge="8.39893028155776e-20" atomclass="HW" doi="10.1063/1.1683075" definition="[H;X1][O;X3](H)(_LP)" description="H in TIP4P 2005 ">
+      <Parameters>
+        <Parameter name="epsilon" value="0.0"/>
+        <Parameter name="sigma" value="0.0"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="_LP" mass="0.0" charge="-1.679786056311552e-19" atomclass="_LP" doi="10.1063/1.1683075" definition="[_LP;X1][O;X3](H)(H)" description="Lone Pair in TIP4P 2005 mass is 1 in mol2 file ">
+      <Parameters>
+        <Parameter name="epsilon" value="0.0"/>
+        <Parameter name="sigma" value="0.0"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+  <BondTypes expression="0.5*k*(r - r_eq)**2">
+    <ParametersUnitDef parameter="k" unit="kJ/(mol*nm**2)"/>
+    <ParametersUnitDef parameter="r_eq" unit="nm"/>
+    <BondType name="HarmonicBondPotential-1" class1="OW" class2="HW">
+      <Parameters>
+        <Parameter name="k" value="502416.0"/>
+        <Parameter name="r_eq" value="0.09572"/>
+      </Parameters>
+    </BondType>
+    <BondType name="HarmonicBondPotential-2" class1="OW" class2="_LP">
+      <Parameters>
+        <Parameter name="k" value="753624.0"/>
+        <Parameter name="r_eq" value="0.0125"/>
+      </Parameters>
+    </BondType>
+  </BondTypes>
+  <AngleTypes expression="0.5*k*(theta - theta_eq)**2">
+    <ParametersUnitDef parameter="k" unit="kJ/(mol*rad**2)"/>
+    <ParametersUnitDef parameter="theta_eq" unit="rad"/>
+    <AngleType name="HarmonicAnglePotential-1" class1="HW" class2="OW" class3="HW">
+      <Parameters>
+        <Parameter name="k" value="628.02"/>
+        <Parameter name="theta_eq" value="1.8242181341844"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="HarmonicAnglePotential-2" class1="HW" class2="OW" class3="_LP">
+      <Parameters>
+        <Parameter name="k" value="418.68"/>
+        <Parameter name="theta_eq" value="0.9121090670922"/>
+      </Parameters>
+    </AngleType>
+  </AngleTypes>
+</ForceField>

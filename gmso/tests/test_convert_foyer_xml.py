@@ -9,32 +9,35 @@ from gmso.exceptions import ForceFieldParseError
 from gmso.external.convert_foyer_xml import from_foyer_xml
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
-from gmso.utils.io import has_foyer
-
-if has_foyer:
-    from foyer.tests.utils import get_fn
 
 parameterized_ffs = ["fullerene.xml", "oplsaa-periodic.xml", "lj.xml"]
 
 
-@pytest.mark.skipif(not has_foyer, reason="Foyer is not installed")
 class TestXMLConversion(BaseTest):
     @pytest.mark.parametrize("ff", parameterized_ffs)
     def test_from_foyer(self, ff):
+        from foyer.tests.utils import get_fn
+
         from_foyer_xml(get_fn(ff), overwrite=True)
 
     @pytest.mark.parametrize("ff", parameterized_ffs)
     def test_from_foyer_overwrite_false(self, ff):
+        from foyer.tests.utils import get_fn
+
         from_foyer_xml(get_fn(ff), overwrite=False)
         with pytest.raises(FileExistsError):
             from_foyer_xml(get_fn(ff), overwrite=False)
 
     @pytest.mark.parametrize("ff", parameterized_ffs)
     def test_from_foyer_different_name(self, ff):
+        from foyer.tests.utils import get_fn
+
         from_foyer_xml(get_fn(ff), f"{ff}-gmso-converted.xml", overwrite=True)
 
     @pytest.mark.parametrize("ff", parameterized_ffs)
     def test_from_foyer_validate_foyer(self, ff):
+        from foyer.tests.utils import get_fn
+
         from_foyer_xml(
             get_fn(ff),
             f"{ff}-gmso-converted.xml",
@@ -44,6 +47,8 @@ class TestXMLConversion(BaseTest):
 
     @pytest.mark.parametrize("ff", parameterized_ffs)
     def test_foyer_pathlib(self, ff):
+        from foyer.tests.utils import get_fn
+
         file_path = Path(get_fn(ff))
         from_foyer_xml(file_path, overwrite=True)
 

@@ -292,11 +292,9 @@ class TestAtomType(BaseTest):
         site2.atom_type = atom_type2
         top.add_site(site1)
         top.add_site(site2)
-        assert id(site1.atom_type) == id(site2.atom_type)
+        assert id(site1.atom_type) != id(site2.atom_type)
         assert site1.atom_type is not None
-        assert len(top.atom_types) == 1
-        assert site1.atom_type.topology == top
-        assert site2.atom_type.topology == top
+        assert len(top.atom_types) == 2
 
     def test_atom_type_with_topology_and_site_change_properties(self):
         site1 = Atom()
@@ -309,8 +307,8 @@ class TestAtomType(BaseTest):
         top.add_site(site1)
         top.add_site(site2)
         site1.atom_type.mass = 250
-        assert site2.atom_type.mass == 250
-        assert top.atom_types[0].mass == 250
+        assert site1.atom_type.mass == 250
+        assert next(iter(top.atom_types)).mass == 250
 
     def test_with_1000_atom_types(self):
         top = Topology()
@@ -320,7 +318,7 @@ class TestAtomType(BaseTest):
             site.atom_type = atom_type
             top.add_site(site, update_types=False)
         top.update_topology()
-        assert len(top.atom_types) == 1
+        assert len(top.atom_types) == 1000
         assert top.n_sites == 1000
 
     def test_atom_type_copy(self, typed_ethane):
@@ -367,3 +365,40 @@ class TestAtomType(BaseTest):
         atype_dict = atype.dict(exclude={"potential_expression"})
         assert "potential_expression" not in atype_dict
         assert "charge" in atype_dict
+
+    def test_atom_type_clone(self):
+        top = Topology()
+        atype = AtomType(
+            name="ff_255",
+            expression="a*x+b+c*y",
+            independent_variables={"x", "y"},
+            parameters={"a": 200 * u.g, "b": 300 * u.K, "c": 400 * u.J},
+            mass=2.0 * u.g / u.mol,
+            charge=2.0 * u.elementary_charge,
+            atomclass="CX",
+            overrides={"ff_234"},
+            definition="CC-C",
+            description="Dummy Description",
+        )
+        atype_clone = atype.clone()
+
+        atom1 = Atom(name="1")
+        atom2 = Atom(name="2")
+        atom1.atom_type = atype
+        atom2.atom_type = atype_clone
+
+        top.add_site(atom1)
+        top.add_site(atom2)
+        top.update_topology()
+
+        assert len(top.atom_types) == 2
+
+        atype_dict = atype.dict(exclude={"topology", "set_ref"})
+        atype_clone_dict = atype_clone.dict(exclude={"topology", "set_ref"})
+
+        for key, value in atype_dict.items():
+            cloned = atype_clone_dict[key]
+            assert value == cloned
+            if id(value) == id(cloned):
+                assert isinstance(value, str)
+                assert isinstance(cloned, str)

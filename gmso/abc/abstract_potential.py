@@ -126,14 +126,6 @@ class AbstractPotential(GMSOBase):
         """Set the functional form of the expression."""
         raise NotImplementedError
 
-    def __eq__(self, other):
-        """Compare two potentials for equivalence."""
-        return hash(self) == hash(other)
-
-    def __hash__(self):
-        """Create a unique hash for the potential."""
-        return hash(tuple((self.name, self.potential_expression)))
-
     def __setattr__(self, key: Any, value: Any) -> None:
         """Set attributes of the potential."""
         if key == "expression":
