@@ -1454,17 +1454,23 @@ class Topology(object):
 
         return convert_topology_expressions(self, expressionMap)
 
-    def convert_unit_styles(self, unitSet=set):
+    def convert_unit_styles(self, unitsystem, exp_unitsDict):
         """Convert from one set of base units to another.
         Parameters
         ----------
-        unitSet : dict, default=set
-            set of base units to use for all expressions of the topology
+        unitsystem : unyt.UnitSystem
+            set of base units to use for all expressions of the topology in unyt package
+        exp_unitsDict : dict
+            keys with topology attributes that should be converted and values with dictionary of parameter: expected_dimension
 
         Examples
         ________
         # TODO
         """
-        from gmso.utils.conversions import convert_topology_units
+        from gmso.utils.conversions import _convert_params_units
+        ref_values = {"energy":"kJ/mol", "length": "nm", "angle": "radians"}
 
-        return convert_topology_units(self, unitSet)
+        # all potContainer ["atom", "bond", "angle", "dihedral", "improper"]
+        for potStr in exp_unitsDict:
+            potContainer = getattr(self, potStr+"_types")
+            _convert_params_units(potContainer, expected_units_dim=exp_unitsDict[potStr], base_units=unitsystem, ref_values=ref_values)

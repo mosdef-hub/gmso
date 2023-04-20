@@ -1,0 +1,9 @@
+{
+  "name": "LAMMPSHarmonicAnglePotential",
+  "expression": "k * (theta-theta_eq)**2",
+  "independent_variables": "theta",
+  "expected_parameters_dimensions": {
+    "k":"energy/angle**2",
+    "theta_eq": "angle"
+  }
+}

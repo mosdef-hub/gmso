@@ -9,7 +9,7 @@ from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.tests.base_test import BaseTest
 from gmso.utils.conversions import (
     convert_opls_to_ryckaert,
-    convert_ryckaert_to_opls,
+    convert_ryckaert_to_fourier,
 )
 
 
@@ -106,7 +106,7 @@ class TestInternalConversions(BaseTest):
                 opls_connection_type
             )
 
-    def test_ryckaert_to_opls(self, templates):
+    def test_ryckaert_to_fourier(self, templates):
 
         # Pick some RB parameters at random
         params = {
@@ -133,8 +133,8 @@ class TestInternalConversions(BaseTest):
             parameters=params,
         )
 
-        # Convert connection to OPLS
-        opls_connection_type = convert_ryckaert_to_opls(
+        # Convert connection to Fourier
+        opls_connection_type = convert_ryckaert_to_fourier(
             ryckaert_connection_type
         )
 
@@ -178,7 +178,7 @@ class TestInternalConversions(BaseTest):
             "k4": 1.44 * u.Unit("kJ/mol"),
         }
 
-        opls_torsion_potential = templates["OPLSTorsionPotential"]
+        opls_torsion_potential = templates["FourierTorsionPotential"]
         name = opls_torsion_potential.name
         expression = opls_torsion_potential.expression
         variables = opls_torsion_potential.independent_variables
@@ -226,7 +226,7 @@ class TestInternalConversions(BaseTest):
 
     def test_double_conversion(self, templates):
 
-        # Pick some OPLS parameters at random
+        # Pick some Fourier parameters at random
         params = {
             "k0": 1.38 * u.Unit("kJ/mol"),
             "k1": -0.51 * u.Unit("kJ/mol"),
@@ -235,7 +235,7 @@ class TestInternalConversions(BaseTest):
             "k4": 1.44 * u.Unit("kJ/mol"),
         }
 
-        opls_torsion_potential = templates["OPLSTorsionPotential"]
+        opls_torsion_potential = templates["FourierTorsionPotential"]
 
         name = opls_torsion_potential.name
         expression = opls_torsion_potential.expression
@@ -254,7 +254,7 @@ class TestInternalConversions(BaseTest):
         )
 
         # Convert connection back to OPLS
-        final_connection_type = convert_ryckaert_to_opls(
+        final_connection_type = convert_ryckaert_to_fourier(
             ryckaert_connection_type
         )
 
