@@ -387,7 +387,7 @@ def _lookup_element_symbol(atom_type):
         return "X"
 
 
-def _generate_pairs_list(top, molecule):
+def _generate_pairs_list(top, molecule=None):
     """Worker function to generate all 1-4 pairs from the topology."""
     # TODO: Need to make this to be independent from top.dihedrals
     # https://github.com/ParmEd/ParmEd/blob/master/parmed/structure.py#L2730-L2785
