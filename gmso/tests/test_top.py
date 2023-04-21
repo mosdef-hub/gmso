@@ -21,12 +21,45 @@ class TestTop(BaseTest):
         top.save("ar.top")
 
     @pytest.mark.parametrize(
-        "top", ["typed_ar_system", "typed_water_system", "typed_ethane"]
+        "top",
+        [
+            "typed_ar_system",
+            "typed_water_system",
+            "typed_ethane",
+            "typed_benzene_aa_system",
+        ],
     )
     def test_pmd_loop(self, top, request):
+        fname = f"{top}.top"
         top = request.getfixturevalue(top)
-        top.save("system.top")
-        pmd.load_file("system.top")
+        top.save(fname, overwrite=True)
+        pmd.load_file(fname)
+
+    @pytest.mark.parametrize(
+        "top",
+        [
+            "typed_ar_system",
+            "typed_water_system",
+            "typed_ethane",
+            "typed_benzene_aa_system",
+        ],
+    )
+    def test_against_ref(self, top, request):
+        fname = top
+        top = request.getfixturevalue(top)
+        top.save(f"{fname}.top", overwrite=True)
+        with open(f"{fname}.top") as f:
+            conts = f.readlines()
+        import os
+
+        print(os.getcwd())
+        with open(get_path(f"{fname}_ref.top")) as f:
+            ref_conts = f.readlines()
+
+        assert len(conts) == len(ref_conts)
+
+        for cont, ref_cont in zip(conts[1:], ref_conts[1:]):
+            assert cont == ref_cont
 
     def test_modified_potentials(self, ar_system):
         top = ar_system
@@ -115,28 +148,8 @@ class TestTop(BaseTest):
         assert struct.defaults.fudgeLJ == 0.5
         assert struct.defaults.fudgeQQ == 0.5
 
-    def test_benzene_top(self, benzene_aa_box):
-        top = benzene_aa_box
-        oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
-        top = apply(top=top, forcefields=oplsaa, remove_untyped=True)
-        top.save("benzene.top")
-
-        with open("benzene.top") as f:
-            f_cont = f.readlines()
-
-        with open(get_path("benzene.top")) as ref:
-            ref_cont = ref.readlines()
-
-        assert len(f_cont) == len(ref_cont)
-
-    def test_benzene_restraints(self, benzene_ua_box):
-        top = benzene_ua_box
-        trappe_benzene = (
-            ffutils.FoyerFFs()
-            .load(get_path("benzene_trappe-ua.xml"))
-            .to_gmso_ff()
-        )
-        top = apply(top=top, forcefields=trappe_benzene, remove_untyped=True)
+    def test_benzene_restraints(self, typed_benzene_ua_system):
+        top = typed_benzene_ua_system
 
         for bond in top.bonds:
             bond.restraint = {

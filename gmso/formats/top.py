@@ -137,7 +137,7 @@ def write_top(top, filename, top_vars=None):
             out_file.write("\n[ moleculetype ]\n" "; name\tnrexcl\n")
 
             # TODO: Lookup and join nrexcl from each molecule object
-            out_file.write("{0}\t" "{1}\n".format(tag, top_vars["nrexcl"]))
+            out_file.write("{0}\t" "{1}\n\n".format(tag, top_vars["nrexcl"]))
 
             """Write out atoms for each unique molecule."""
             out_file.write(
@@ -171,9 +171,9 @@ def write_top(top, filename, top_vars=None):
                 )
 
             for conn_group in [
+                "pairs",
                 "bonds",
                 "bond_restraints",
-                "pairs",
                 "angles",
                 "angle_restraints",
                 "dihedrals",
@@ -321,12 +321,10 @@ def _get_unique_molecules(top):
         unique_molecules[top.name] = dict()
         unique_molecules[top.name]["subtags"] = [top.name]
         unique_molecules[top.name]["sites"] = list(top.sites)
+        unique_molecules[top.name]["pairs"] = _generate_pairs_list(top)
         unique_molecules[top.name]["bonds"] = list(top.bonds)
         unique_molecules[top.name]["bond_restraints"] = list(
             bond for bond in top.bonds if bond.restraint
-        )
-        unique_molecules[top.name]["pairs"] = _generate_pairs_list(
-            top.dihedrals
         )
         unique_molecules[top.name]["angles"] = list(top.angles)
         unique_molecules[top.name]["angle_restraints"] = list(
@@ -344,12 +342,10 @@ def _get_unique_molecules(top):
             unique_molecules[tag]["sites"] = list(
                 top.iter_sites(key="molecule", value=molecule)
             )
+            unique_molecules[tag]["pairs"] = _generate_pairs_list(top, molecule)
             unique_molecules[tag]["bonds"] = list(molecule_bonds(top, molecule))
             unique_molecules[tag]["bond_restraints"] = list(
                 bond for bond in molecule_bonds(top, molecule) if bond.restraint
-            )
-            unique_molecules[tag]["pairs"] = _generate_pairs_list(
-                molecule_dihedrals(top, molecule)
             )
             unique_molecules[tag]["angles"] = list(
                 molecule_angles(top, molecule)
@@ -391,27 +387,64 @@ def _lookup_element_symbol(atom_type):
         return "X"
 
 
-def _generate_pairs_list(dihedrals_list):
+def _generate_pairs_list(top, molecule):
     """Worker function to generate all 1-4 pairs from the topology."""
-    pairs_list = set()
+    # TODO: Need to make this to be independent from top.dihedrals
+    # https://github.com/ParmEd/ParmEd/blob/master/parmed/structure.py#L2730-L2785
+    # NOTE: This will only write out pairs corresponding to existing dihedrals
+    # depending on needs, a different routine (suggested here) may be used
+    # to get 1-4 pairs independent of top.dihedrals, however, this route may
+    # pose some issue with generate pairs list of molecule/subtopologys
+    """
+    if top.dihedrals:
+        # Grab dihedrals if it is available
+        dihedrals = top.dihedrals
+    else:
+        # Else, parse from graph
+        import networkx as nx
+        from gmso.utils.connectivity import _detect_connections
 
-    for dihedral in dihedrals_list:
-        pairs = sorted(
-            [dihedral.connection_members[0], dihedral.connection_members[-1]]
+        graph = nx.Graph()
+        for bond in top.bonds:
+            graph = graph.add_edge(b.connection_meners[0], b.connection_members[1])
+
+        line_graph = nx.line_graph(graph)
+
+        dihedral_matches = _detect_connections(line_graph, top, type_="dihedral")
+
+    pairs_list = list()
+    for dihedral in top.dihedrals:
+            pairs = sorted(
+                [dihedral.connection_members[0], dihedral.connection_members[-1]]
+            )
+        if pairs not in pairs_list:
+            pairs_list.append(pairs)
+    """
+
+    pairs_list = list()
+    dihedrals = molecule_dihedrals(top, molecule) if molecule else top.dihedrals
+    for dihedral in dihedrals:
+        pairs = (
+            dihedral.connection_members[0],
+            dihedral.connection_members[-1],
         )
-        pairs_list.add(tuple(pairs))
+        pairs = sorted(pairs, key=lambda site: top.get_index(site))
+        if pairs not in pairs_list:
+            pairs_list.append(pairs)
 
-    return pairs_list
+    return sorted(
+        pairs_list,
+        key=lambda pair: (top.get_index(pair[0]), top.get_index(pair[1])),
+    )
 
 
 def _write_pairs(top, pair, shifted_idx_map):
     """Workder function to write out pairs information."""
-    pair_idx = sorted(
-        [
-            shifted_idx_map[top.get_index(pair[0])] + 1,
-            shifted_idx_map[top.get_index(pair[1])] + 1,
-        ]
-    )
+    pair_idx = [
+        shifted_idx_map[top.get_index(pair[0])] + 1,
+        shifted_idx_map[top.get_index(pair[1])] + 1,
+    ]
+
     line = "{0:8s}{1:8s}{2:4s}\n".format(
         str(pair_idx[0]),
         str(pair_idx[1]),
