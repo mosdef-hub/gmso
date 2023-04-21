@@ -395,6 +395,7 @@ def _generate_pairs_list(top, molecule=None):
     # depending on needs, a different routine (suggested here) may be used
     # to get 1-4 pairs independent of top.dihedrals, however, this route may
     # pose some issue with generate pairs list of molecule/subtopologys
+    # NOTE: This function could be moved out to gmso.utils at some point
     """
     if top.dihedrals:
         # Grab dihedrals if it is available
@@ -432,6 +433,7 @@ def _generate_pairs_list(top, molecule=None):
         if pairs not in pairs_list:
             pairs_list.append(pairs)
 
+    # TODO: Also write out special 1-4 pairs (topology.pairpotential_types)
     return sorted(
         pairs_list,
         key=lambda pair: (top.get_index(pair[0]), top.get_index(pair[1])),
