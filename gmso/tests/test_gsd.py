@@ -27,7 +27,7 @@ class TestGsd(BaseTest):
             assert all([i in snap.bonds.types for i in ["C-C", "C-H"]])
             assert all([i in snap.angles.types for i in ["C-C-C", "C-C-H"]])
             assert all(
-                [i in snap.dihedrals.types for i in ["C-C-C-C", "H-C-C-C"]]
+                [i in snap.dihedrals.types for i in ["C-C-C-C", "C-C-C-H"]]
             )
 
     def test_write_gsd(self, hierarchical_compound):

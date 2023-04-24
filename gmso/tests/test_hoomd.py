@@ -200,3 +200,27 @@ class TestGsd(BaseTest):
 
         sim.operations.computes.append(thermodynamic_properties)
         sim.run(100)
+
+    def test_diff_base_units(self):
+        compound = mb.load("CC", smiles=True)
+        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=100)
+        base_units = {
+            "mass": u.amu,
+            "length": u.nm,
+            "energy": u.kJ / u.mol,
+        }
+
+        top = from_mbuild(com_box)
+        top.identify_connections()
+        oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
+        top = apply(top, oplsaa, remove_untyped=True)
+
+        gmso_snapshot, snapshot_base_units = to_hoomd_snapshot(
+            top, base_units=base_units
+        )
+        gmso_forces, forces_base_units = to_hoomd_forcefield(
+            top,
+            r_cut=1.4,
+            base_units=base_units,
+            pppm_kwargs={"resolution": (64, 64, 64), "order": 7},
+        )

@@ -1338,16 +1338,16 @@ def _validate_base_units(base_units, top, auto_scale, potential_types=None):
                     "i.e., energy, mass, and length, other units provided "
                     "will not be considered."
                 )
+            msg = "{key} is in wrong unit dimension"
+            if isinstance(base_units[key], u.Unit):
+                assert base_units[key].dimensions == ref[key], msg
+                base_units[key] = 1 * base_units[key]
+            elif isinstance(base_units[key], u.array.unyt_quantity):
+                assert base_units[key].units.dimensions == ref[key], msg
             else:
-                msg = "{key} is in wrong unit dimension"
-                if isinstance(base_units[key], u.Unit):
-                    assert base_units[key].dimensions == ref[key], msg
-                elif isinstance(base_units[key], u.Unit):
-                    assert base_units[key].units.dimensions == ref[key], msg
-                else:
-                    raise TypeError(
-                        f"Base unit of {key} must be of type u.Unit or u.unyt_quantity."
-                    )
+                raise TypeError(
+                    f"Base unit of {key} must be of type u.Unit or u.unyt_quantity."
+                )
 
         missing = list()
         for base in ["energy", "mass", "length"]:
@@ -1359,11 +1359,7 @@ def _validate_base_units(base_units, top, auto_scale, potential_types=None):
         base_units = _infer_units(top)
 
     # Add angle unit (since HOOMD will use radian across the board)
-    base_units["angle"] = u.radian
-
-    for key, unit in base_units.items():
-        if isinstance(unit, u.Unit):
-            base_units[key] = 1 * unit
+    base_units["angle"] = 1 * u.radian
 
     return base_units
 
