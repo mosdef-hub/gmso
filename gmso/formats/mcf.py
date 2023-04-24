@@ -646,14 +646,14 @@ def _check_compatibility(top):
         raise GMSOError(
             "MCF writing not supported without parameterized forcefield."
         )
-    accepted_potentials = [
+    accepted_potentials = (
         potential_templates["LennardJonesPotential"],
         potential_templates["MiePotential"],
         potential_templates["HarmonicAnglePotential"],
         potential_templates["PeriodicTorsionPotential"],
         potential_templates["OPLSTorsionPotential"],
         potential_templates["RyckaertBellemansTorsionPotential"],
-    ]
+    )
     check_compatibility(top, accepted_potentials)
 
 

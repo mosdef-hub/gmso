@@ -24,3 +24,6 @@ dependencies:
   - ipywidgets
   - ele>=0.2.0
   - pre-commit
+  - symengine
+  - python-symengine
+  - hoomd>=3
