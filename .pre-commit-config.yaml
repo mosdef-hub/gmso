@@ -14,7 +14,7 @@ repos:
     - id: check-yaml
     - id: end-of-file-fixer
     - id: trailing-whitespace
-      exclude: 'setup.cfg'
+      exclude: 'setup.cfg|gmso/tests/files/.*'
 - repo: https://github.com/psf/black
   rev: 23.3.0
   hooks:
@@ -26,6 +26,7 @@ repos:
     - id: isort
       name: isort (python)
       args: [--profile=black, --line-length=80]
+      exclude: "gmso/tests/files/.*"
 - repo: https://github.com/pycqa/pydocstyle
   rev: '6.3.0'
   hooks:

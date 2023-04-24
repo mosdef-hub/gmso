@@ -5,7 +5,8 @@ import unyt as u
 
 import gmso
 from gmso.exceptions import EngineIncompatibilityError
-from gmso.formats.top import write_top
+from gmso.external.convert_mbuild import from_mbuild
+from gmso.formats.top import _generate_pairs_list, write_top
 from gmso.parameterization import apply
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
@@ -21,12 +22,45 @@ class TestTop(BaseTest):
         top.save("ar.top")
 
     @pytest.mark.parametrize(
-        "top", ["typed_ar_system", "typed_water_system", "typed_ethane"]
+        "top",
+        [
+            "typed_ar_system",
+            "typed_water_system",
+            "typed_ethane",
+            "typed_benzene_aa_system",
+        ],
     )
     def test_pmd_loop(self, top, request):
+        fname = f"{top}.top"
         top = request.getfixturevalue(top)
-        top.save("system.top")
-        pmd.load_file("system.top")
+        top.save(fname, overwrite=True)
+        pmd.load_file(fname)
+
+    @pytest.mark.parametrize(
+        "top",
+        [
+            "typed_ar_system",
+            "typed_water_system",
+            "typed_ethane",
+            "typed_benzene_aa_system",
+        ],
+    )
+    def test_against_ref(self, top, request):
+        fname = top
+        top = request.getfixturevalue(top)
+        top.save(f"{fname}.top", overwrite=True)
+        with open(f"{fname}.top") as f:
+            conts = f.readlines()
+        import os
+
+        print(os.getcwd())
+        with open(get_path(f"{fname}_ref.top")) as f:
+            ref_conts = f.readlines()
+
+        assert len(conts) == len(ref_conts)
+
+        for cont, ref_cont in zip(conts[1:], ref_conts[1:]):
+            assert cont == ref_cont
 
     def test_modified_potentials(self, ar_system):
         top = ar_system
@@ -115,28 +149,8 @@ class TestTop(BaseTest):
         assert struct.defaults.fudgeLJ == 0.5
         assert struct.defaults.fudgeQQ == 0.5
 
-    def test_benzene_top(self, benzene_aa_box):
-        top = benzene_aa_box
-        oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
-        top = apply(top=top, forcefields=oplsaa, remove_untyped=True)
-        top.save("benzene.top")
-
-        with open("benzene.top") as f:
-            f_cont = f.readlines()
-
-        with open(get_path("benzene.top")) as ref:
-            ref_cont = ref.readlines()
-
-        assert len(f_cont) == len(ref_cont)
-
-    def test_benzene_restraints(self, benzene_ua_box):
-        top = benzene_ua_box
-        trappe_benzene = (
-            ffutils.FoyerFFs()
-            .load(get_path("benzene_trappe-ua.xml"))
-            .to_gmso_ff()
-        )
-        top = apply(top=top, forcefields=trappe_benzene, remove_untyped=True)
+    def test_benzene_restraints(self, typed_benzene_ua_system):
+        top = typed_benzene_ua_system
 
         for bond in top.bonds:
             bond.restraint = {
@@ -207,3 +221,26 @@ class TestTop(BaseTest):
 
             else:
                 assert sections[section] == ref_sections[ref_section]
+
+    def test_generate_pairs_list(self):
+        # Methane with no 1-4 pair
+        methane = mb.load("C", smiles=True)
+        methane_top = from_mbuild(methane)
+        methane_top.identify_connections()
+        methane_pairs = _generate_pairs_list(methane_top)
+        assert len(methane_pairs) == len(methane_top.dihedrals) == 0
+
+        # Ethane with 9 1-4 pairs
+        ethane = mb.load("CC", smiles=True)
+        ethane_top = from_mbuild(ethane)
+        ethane_top.identify_connections()
+        ethane_pairs = _generate_pairs_list(ethane_top)
+        assert len(ethane_pairs) == len(ethane_top.dihedrals) == 9
+
+        # Cyclobutadiene with 16 dihedrals and 12 pairs (due to cyclic structure)
+        cyclobutadiene = mb.load("C1=CC=C1", smiles=True)
+        cyclobutadiene_top = from_mbuild(cyclobutadiene)
+        cyclobutadiene_top.identify_connections()
+        cyclobutadiene_top_pairs = _generate_pairs_list(cyclobutadiene_top)
+        assert len(cyclobutadiene_top.dihedrals) == 16
+        assert len(cyclobutadiene_top_pairs) == 12

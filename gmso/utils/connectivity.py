@@ -85,8 +85,8 @@ def identify_connections(top, index_only=False):
 
 def _add_connections(top, matches, conn_type):
     """Add connections to the topology."""
-    for tuple_ in matches:
-        to_add_conn = CONNS[conn_type](connection_members=[*tuple_])
+    for sorted_conn in matches:
+        to_add_conn = CONNS[conn_type](connection_members=[*sorted_conn])
         top.add_connection(to_add_conn, update_types=False)
 
 
@@ -115,7 +115,51 @@ def _detect_connections(compound_line_graph, top, type_="angle"):
     if conn_matches:
         conn_matches = _trim_duplicates(conn_matches)
 
-    return conn_matches
+    # Do more sorting of individual connection
+    sorted_conn_matches = list()
+    for match in conn_matches:
+        if type_ in ("angle", "dihedral"):
+            if top.get_index(match[0]) < top.get_index(match[-1]):
+                sorted_conn = match
+            else:
+                sorted_conn = match[::-1]
+        elif type_ == "improper":
+            latter_sites = sorted(
+                match[1:], key=lambda site: top.get_index(site)
+            )
+            sorted_conn = [match[0]] + latter_sites
+        sorted_conn_matches.append(sorted_conn)
+
+    # Final sorting the whole list
+    if type_ == "angle":
+        return sorted(
+            sorted_conn_matches,
+            key=lambda angle: (
+                top.get_index(angle[1]),
+                top.get_index(angle[0]),
+                top.get_index(angle[2]),
+            ),
+        )
+    elif type_ == "dihedral":
+        return sorted(
+            sorted_conn_matches,
+            key=lambda dihedral: (
+                top.get_index(dihedral[1]),
+                top.get_index(dihedral[2]),
+                top.get_index(dihedral[0]),
+                top.get_index(dihedral[3]),
+            ),
+        )
+    elif type_ == "improper":
+        return sorted(
+            sorted_conn_matches,
+            key=lambda improper: (
+                top.get_index(improper[0]),
+                top.get_index(improper[1]),
+                top.get_index(improper[2]),
+                top.get_index(improper[3]),
+            ),
+        )
 
 
 def _get_sorted_by_n_connections(m):
