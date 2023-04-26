@@ -51,9 +51,6 @@ class TestTop(BaseTest):
         top.save(f"{fname}.top", overwrite=True)
         with open(f"{fname}.top") as f:
             conts = f.readlines()
-        import os
-
-        print(os.getcwd())
         with open(get_path(f"{fname}_ref.top")) as f:
             ref_conts = f.readlines()
 
