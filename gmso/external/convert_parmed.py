@@ -2,9 +2,6 @@
 import warnings
 
 import numpy as np
-
-# from sympy.parsing.sympy_parser import parse_expr
-import symengine
 import unyt as u
 from symengine import expand
 
