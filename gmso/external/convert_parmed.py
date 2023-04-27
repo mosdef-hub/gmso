@@ -63,36 +63,18 @@ def from_parmed(structure, refer_type=True):
     if refer_type:
         pmd_top_atomtypes = _atom_types_from_pmd(structure)
         # Consolidate parmed bondtypes and relate to topology bondtypes
-        bond_types_map = _get_types_map(structure, "bonds")
-        pmd_top_bondtypes = _bond_types_from_pmd(
-            structure, bond_types_members_map=bond_types_map
-        )
+        pmd_top_bondtypes = _bond_types_from_pmd(structure)
         # Consolidate parmed angletypes and relate to topology angletypes
-        angle_types_map = _get_types_map(structure, "angles")
-        pmd_top_angletypes = _angle_types_from_pmd(
-            structure, angle_types_member_map=angle_types_map
-        )
+        pmd_top_angletypes = _angle_types_from_pmd(structure)
         # Consolidate parmed dihedraltypes and relate to topology dihedraltypes
-        dihedral_types_map = _get_types_map(
-            structure, "dihedrals", impropers=False
-        )
-        dihedral_types_map.update(_get_types_map(structure, "rb_torsions"))
-        pmd_top_dihedraltypes = _dihedral_types_from_pmd(
-            structure, dihedral_types_member_map=dihedral_types_map
-        )
-        pmd_top_rbtorsiontypes = _rbtorsion_types_from_pmd(
-            structure, dihedral_types_member_map=dihedral_types_map
-        )
+        pmd_top_dihedraltypes = _dihedral_types_from_pmd(structure)
+        pmd_top_rbtorsiontypes = _rbtorsion_types_from_pmd(structure)
         # Consolidate parmed dihedral/impropertypes and relate to topology impropertypes
-        improper_types_map = _get_types_map(structure, "impropers")
-        improper_types_map.update(
-            _get_types_map(structure, "dihedrals"), impropers=True
-        )
         pmd_top_periodic_impropertypes = _improper_types_periodic_from_pmd(
-            structure, improper_types_member_map=improper_types_map
+            structure
         )
         pmd_top_harmonic_impropertypes = _improper_types_harmonic_from_pmd(
-            structure, improper_types_member_map=improper_types_map
+            structure
         )
 
     ind_res = _check_independent_residues(structure)
@@ -330,7 +312,7 @@ def _atom_types_from_pmd(structure):
     return pmd_top_atomtypes
 
 
-def _bond_types_from_pmd(structure, bond_types_members_map=None):
+def _bond_types_from_pmd(structure):
     """Convert ParmEd bondtypes to GMSO BondType.
 
     This function takes in a Parmed Structure, iterate through its
@@ -341,8 +323,7 @@ def _bond_types_from_pmd(structure, bond_types_members_map=None):
     ----------
     structure: pmd.Structure
         Parmed Structure that needed to be converted.
-    bond_types_members_map: optional, dict, default=None
-        The member types (atomtype string) for each atom associated with the bond_types the structure
+
     Returns
     -------
     pmd_top_bondtypes : dict
@@ -355,9 +336,6 @@ def _bond_types_from_pmd(structure, bond_types_members_map=None):
     expression = harmonicbond_potential.expression
     variables = harmonicbond_potential.independent_variables
 
-    bond_types_members_map = _assert_dict(
-        bond_types_members_map, "bond_types_members_map"
-    )
     if not structure.bond_types:
         return pmd_top_bondtypes
     unique_bond_types = list(
@@ -389,7 +367,7 @@ def _bond_types_from_pmd(structure, bond_types_members_map=None):
     return pmd_top_bondtypes
 
 
-def _angle_types_from_pmd(structure, angle_types_member_map=None):
+def _angle_types_from_pmd(structure):
     """Convert ParmEd angle types to  GMSO AngleType.
 
     This function takes in a Parmed Structure, iterates through its
@@ -400,8 +378,7 @@ def _angle_types_from_pmd(structure, angle_types_member_map=None):
     ----------
     structure: pmd.Structure
         Parmed Structure that needed to be converted.
-    angle_types_member_map: optional, dict, default=None
-        The member types (atomtype string) for each atom associated with the angle_types the structure
+
     Returns
     -------
     pmd_top_angletypes : dict
@@ -409,10 +386,6 @@ def _angle_types_from_pmd(structure, angle_types_member_map=None):
         corresponding GMSO.AngleType object.
     """
     pmd_top_angletypes = dict()
-    angle_types_member_map = _assert_dict(
-        angle_types_member_map, "angle_types_member_map"
-    )
-
     harmonicbond_potential = lib["HarmonicAnglePotential"]
     name = harmonicbond_potential.name
     expression = harmonicbond_potential.expression
@@ -444,7 +417,6 @@ def _angle_types_from_pmd(structure, angle_types_member_map=None):
         # For Urey Bradley:
         # k in (kcal/(angstrom**2 * mol))
         # r_eq in angstrom
-        member_types = angle_types_member_map.get(id(angletype))
         top_angletype = gmso.AngleType(
             name=name,
             parameters=angle_params,
@@ -456,7 +428,7 @@ def _angle_types_from_pmd(structure, angle_types_member_map=None):
     return pmd_top_angletypes
 
 
-def _dihedral_types_from_pmd(structure, dihedral_types_member_map=None):
+def _dihedral_types_from_pmd(structure):
     """Convert ParmEd dihedral types to GMSO DihedralType.
 
     This function take in a Parmed Structure, iterate through its
@@ -467,8 +439,7 @@ def _dihedral_types_from_pmd(structure, dihedral_types_member_map=None):
     ----------
     structure: pmd.Structure
         Parmed Structure that needed to be converted.
-    dihedral_types_member_map: optional, dict, default=None
-        The member types (atomtype string) for each atom associated with the dihedral_types the structure
+
     Returns
     -------
     pmd_top_dihedraltypes : dict
@@ -476,9 +447,6 @@ def _dihedral_types_from_pmd(structure, dihedral_types_member_map=None):
         object to its corresponding GMSO.DihedralType object.
     """
     pmd_top_dihedraltypes = dict()
-    dihedral_types_member_map = _assert_dict(
-        dihedral_types_member_map, "dihedral_types_member_map"
-    )
     proper_dihedralsList = [
         dihedral for dihedral in structure.dihedrals if not dihedral.improper
     ]
@@ -524,7 +492,7 @@ def _dihedral_types_from_pmd(structure, dihedral_types_member_map=None):
     return pmd_top_dihedraltypes
 
 
-def _rbtorsion_types_from_pmd(structure, dihedral_types_member_map=None):
+def _rbtorsion_types_from_pmd(structure):
     """Convert ParmEd rb_torsion types to GMSO DihedralType.
 
     This function take in a Parmed Structure, iterate through its
@@ -535,8 +503,7 @@ def _rbtorsion_types_from_pmd(structure, dihedral_types_member_map=None):
     ----------
     structure: pmd.Structure
         Parmed Structure that needed to be converted.
-    dihedral_types_member_map: optional, dict, default=None
-        The member types (atomtype string) for each atom associated with the dihedral_types the structure
+
     Returns
     -------
     pmd_top_dihedraltypes : dict
@@ -544,9 +511,6 @@ def _rbtorsion_types_from_pmd(structure, dihedral_types_member_map=None):
         object to its corresponding GMSO.DihedralType object.
     """
     pmd_top_rbtorsiontypes = dict()
-    dihedral_types_member_map = _assert_dict(
-        dihedral_types_member_map, "dihedral_types_member_map"
-    )
     if not structure.rb_torsion_types:
         return pmd_top_rbtorsiontypes
     unique_rb_types = list(
@@ -598,9 +562,7 @@ def _rbtorsion_types_from_pmd(structure, dihedral_types_member_map=None):
     return pmd_top_rbtorsiontypes
 
 
-def _improper_types_periodic_from_pmd(
-    structure, improper_types_member_map=None
-):
+def _improper_types_periodic_from_pmd(structure):
     """Convert ParmEd DihedralTypes to GMSO improperType.
 
     This function take in a Parmed Structure, iterate through its
@@ -611,8 +573,7 @@ def _improper_types_periodic_from_pmd(
     ----------
     structure: pmd.Structure
         Parmed Structure that needed to be converted.
-    improper_types_member_map: optional, dict, default=None
-        The member types (atomtype string) for each atom associated with the improper_types the structure
+
     Returns
     -------
     pmd_top_impropertypes : dict
@@ -620,9 +581,6 @@ def _improper_types_periodic_from_pmd(
         object to its corresponding GMSO.improperType object.
     """
     pmd_top_impropertypes = dict()
-    improper_types_member_map = _assert_dict(
-        improper_types_member_map, "improper_types_member_map"
-    )
     improper_dihedralsList = [
         dihedral for dihedral in structure.dihedrals if dihedral.improper
     ]
@@ -665,7 +623,7 @@ def _improper_types_periodic_from_pmd(
 
 
 def _improper_types_harmonic_from_pmd(
-    structure, improper_types_member_map=None
+    structure,
 ):
     """Convert ParmEd improper types to GMSO improperType.
 
@@ -677,8 +635,7 @@ def _improper_types_harmonic_from_pmd(
     ----------
     structure: pmd.Structure
         Parmed Structure that needed to be converted.
-    improper_types_member_map: optional, dict, default=None
-        The member types (atomtype string) for each atom associated with the improper_types the structure
+
     Returns
     -------
     pmd_top_impropertypes : dict
@@ -686,9 +643,6 @@ def _improper_types_harmonic_from_pmd(
         object to its corresponding GMSO.improperType object.
     """
     pmd_top_impropertypes = dict()
-    improper_types_member_map = _assert_dict(
-        improper_types_member_map, "improper_types_member_map"
-    )
     if not structure.improper_types:
         return pmd_top_impropertypes
     unique_improper_types = list(
@@ -1081,68 +1035,3 @@ def _dihedral_types_from_gmso(top, structure, dihedral_map):
         pmd_dihedral.type = dtype_map[dihedral.connection_type]
     structure.dihedral_types.claim()
     structure.rb_torsions.claim()
-
-
-def _get_types_map(structure, attr, impropers=False):
-    """Build `member_types` map for atoms, bonds, angles and dihedrals."""
-    assert attr in {
-        "atoms",
-        "bonds",
-        "angles",
-        "dihedrals",
-        "rb_torsions",
-        "impropers",
-    }
-    type_map = {}
-    for member in getattr(structure, attr):
-        conn_type_id, member_types = _get_member_types_map_for(
-            member, impropers
-        )
-        if conn_type_id not in type_map and all(member_types):
-            type_map[conn_type_id] = member_types
-    return type_map
-
-
-def _get_member_types_map_for(member, impropers=False):
-    if isinstance(member, pmd.Atom):
-        return id(member.atom_type), member.type
-    elif isinstance(member, pmd.Bond):
-        return id(member.type), (member.atom1.type, member.atom2.type)
-    elif isinstance(member, pmd.Angle):
-        return id(member.type), (
-            member.atom1.type,
-            member.atom2.type,
-            member.atom3.type,
-        )
-    elif not impropers:  # return dihedrals
-        if isinstance(member, pmd.Dihedral) and not member.improper:
-            return id(member.type), (
-                member.atom1.type,
-                member.atom2.type,
-                member.atom3.type,
-                member.atom4.type,
-            )
-    elif impropers:  # return impropers
-        if (isinstance(member, pmd.Dihedral) and member.improper) or isinstance(
-            member, pmd.Improper
-        ):
-            return id(member.type), (
-                member.atom1.type,
-                member.atom2.type,
-                member.atom3.type,
-                member.atom4.type,
-            )
-    return None, (None, None)
-
-
-def _assert_dict(input_dict, param):
-    """Provide default value for a dictionary and do a type check for a parameter."""
-    input_dict = {} if input_dict is None else input_dict
-
-    if not isinstance(input_dict, dict):
-        raise TypeError(
-            f"Expected `{param}` to be a dictionary. "
-            f"Got {type(input_dict)} instead."
-        )
-
-    return input_dict
