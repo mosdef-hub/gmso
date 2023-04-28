@@ -3,12 +3,14 @@ import datetime
 import warnings
 
 import unyt as u
+from networkx.algorithms import shortest_path_length
 
 from gmso.core.dihedral import Dihedral
 from gmso.core.element import element_by_atom_type
 from gmso.core.improper import Improper
 from gmso.core.views import PotentialFilters
 from gmso.exceptions import GMSOError
+from gmso.external import to_networkx
 from gmso.formats.formats_registry import saves_as
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.parameterization.molecule_utils import (
@@ -423,6 +425,8 @@ def _generate_pairs_list(top, molecule=None):
     """
 
     pairs_list = list()
+    graph = to_networkx(top, parse_angles=False, parse_dihedrals=False)
+
     dihedrals = molecule_dihedrals(top, molecule) if molecule else top.dihedrals
     for dihedral in dihedrals:
         pairs = (
@@ -430,6 +434,8 @@ def _generate_pairs_list(top, molecule=None):
             dihedral.connection_members[-1],
         )
         pairs = sorted(pairs, key=lambda site: top.get_index(site))
+        if shortest_path_length(graph, pairs[0], pairs[1]) < 3:
+            continue
         if pairs not in pairs_list:
             pairs_list.append(pairs)
 

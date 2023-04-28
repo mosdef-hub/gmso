@@ -234,10 +234,19 @@ class TestTop(BaseTest):
         ethane_pairs = _generate_pairs_list(ethane_top)
         assert len(ethane_pairs) == len(ethane_top.dihedrals) == 9
 
-        # Cyclobutadiene with 16 dihedrals and 12 pairs (due to cyclic structure)
+        # Cyclobutadiene with 16 dihedrals and 8 pairs (due to cyclic structure)
         cyclobutadiene = mb.load("C1=CC=C1", smiles=True)
         cyclobutadiene_top = from_mbuild(cyclobutadiene)
         cyclobutadiene_top.identify_connections()
         cyclobutadiene_top_pairs = _generate_pairs_list(cyclobutadiene_top)
         assert len(cyclobutadiene_top.dihedrals) == 16
-        assert len(cyclobutadiene_top_pairs) == 12
+        assert len(cyclobutadiene_top_pairs) == 8
+
+        # Cyclopentane with 45 dihedrals and 40 pairs (due to cyclic structure)
+        cyclopentane = mb.load("C1CCCC1", smiles=True)
+        cyclopentane_top = from_mbuild(cyclopentane)
+        cyclopentane_top.identify_connections()
+        cyclopentane_top_pairs = _generate_pairs_list(cyclopentane_top)
+
+        assert len(cyclopentane_top.dihedrals) == 45
+        assert len(cyclopentane_top_pairs) == 40
