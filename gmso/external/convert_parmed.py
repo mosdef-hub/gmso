@@ -563,7 +563,7 @@ def _rbtorsion_types_from_pmd(structure):
 
 
 def _improper_types_periodic_from_pmd(structure):
-    """Convert ParmEd DihedralTypes to GMSO improperType.
+    """Convert ParmEd DihedralTypes to GMSO ImproperType.
 
     This function take in a Parmed Structure, iterate through its
     dihedral_types with the improper flag, create a corresponding
