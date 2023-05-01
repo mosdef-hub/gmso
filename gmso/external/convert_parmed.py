@@ -1,6 +1,5 @@
 """Module support for converting to/from ParmEd objects."""
 import warnings
-from collections import OrderedDict
 
 import numpy as np
 import unyt as u
@@ -11,11 +10,9 @@ from gmso.core.element import element_by_atom_type, element_by_atomic_number
 from gmso.exceptions import GMSOError
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.io import has_parmed, import_
-from mbuild.utils.orderedset import OrderedSet
 
 if has_parmed:
     pmd = import_("parmed")
-
 
 lib = PotentialTemplateLibrary()
 
@@ -116,8 +113,7 @@ def from_parmed(structure, refer_type=True):
             connection_members=[site_map[bond.atom1], site_map[bond.atom2]]
         )
         if refer_type and isinstance(bond.type, pmd.BondType):
-            key = (bond.type.k, bond.type.req, tuple(sorted((bond.atom1.type, bond.atom2.type))))
-            top_connection.bond_type = pmd_top_bondtypes[key]
+            top_connection.bond_type = pmd_top_bondtypes[bond.type]
         top.add_connection(top_connection, update_types=False)
 
     for angle in structure.angles:
@@ -131,8 +127,7 @@ def from_parmed(structure, refer_type=True):
             ]
         )
         if refer_type and isinstance(angle.type, pmd.AngleType):
-            key = (angle.type.k, angle.type.theteq, (angle.atom1.type, angle.atom2.type, angle.atom3.type))
-            top_connection.angle_type = pmd_top_angletypes[key]
+            top_connection.angle_type = pmd_top_angletypes[angle.type]
         top.add_connection(top_connection, update_types=False)
 
     for dihedral in structure.dihedrals:
@@ -165,8 +160,9 @@ def from_parmed(structure, refer_type=True):
                 ],
             )
             if refer_type and isinstance(dihedral.type, pmd.DihedralType):
-                key = (dihedral.type.k, dihedral.type.req, tuple(sorted((dihedral.atom1.type, dihedral.atom2.type, dihedral.atom3.type, dihedral.atom4.type))))
-                top_connection.improper_type = pmd_top_impropertypes[key]
+                top_connection.improper_type = pmd_top_impropertypes[
+                    id(dihedral.type)
+                ]
         else:
             top_connection = gmso.Dihedral(
                 connection_members=[
@@ -205,8 +201,9 @@ def from_parmed(structure, refer_type=True):
             ],
         )
         if refer_type and isinstance(rb_torsion.type, pmd.RBTorsionType):
-            key = (rb_torsion.type.c0, rb_torsion.type.c1, rb_torsion.type.c2, rb_torsion.type.c3, rb_torsion.type.c4, rb_torsion.type.c5, (rb_torsion.atom1.type, rb_torsion.atom2.type, rb_torsion.atom3.type, rb_torsion.atom4.type))
-            top_connection.dihedral_type = pmd_top_dihedraltypes[key]
+            top_connection.dihedral_type = pmd_top_dihedraltypes[
+                id(rb_torsion.type)
+            ]
         top.add_connection(top_connection, update_types=False)
 
     for improper in structure.impropers:
@@ -301,36 +298,21 @@ def _bond_types_from_pmd(structure, bond_types_members_map=None):
         corresponding GMSO.BondType object.
     """
     pmd_top_bondtypes = dict()
-    harmonicbond_potential = lib["HarmonicBondPotential"]
-    name = harmonicbond_potential.name
-    expression = harmonicbond_potential.expression
-    variables = harmonicbond_potential.independent_variables
-
     bond_types_members_map = _assert_dict(
         bond_types_members_map, "bond_types_members_map"
     )
-    unique_bond_types = OrderedSet(
-                *[
-                    (bond.type.k,
-                    bond.type.req,
-                    tuple(sorted((bond.atom1.type, bond.atom2.type))
-                    ))
-                    for bond in structure.bonds
-                ]
-            )
-    for btype in unique_bond_types:
+    for btype in structure.bond_types:
         bond_params = {
-            "k": (2 * btype[0] * u.Unit("kcal / (angstrom**2 * mol)")),
-            "r_eq": btype[1] * u.angstrom,
+            "k": (2 * btype.k * u.Unit("kcal / (angstrom**2 * mol)")),
+            "r_eq": btype.req * u.angstrom,
         }
-        member_types = btype[2]
+        expr = gmso.BondType._default_potential_expr()
+        expr.set(parameters=bond_params)
+
+        member_types = bond_types_members_map.get(id(btype))
         top_bondtype = gmso.BondType(
-             name=name,
-             parameters=bond_params,
-             expression=expression,
-             independent_variables=variables,
-             member_types=member_types,
-         )
+            potential_expression=expr, member_types=member_types
+        )
         pmd_top_bondtypes[btype] = top_bondtype
     return pmd_top_bondtypes
 
@@ -361,36 +343,20 @@ def _angle_types_from_pmd(structure, angle_types_member_map=None):
         angle_types_member_map, "angle_types_member_map"
     )
 
-    harmonicbond_potential = lib["HarmonicAnglePotential"]
-    name = harmonicbond_potential.name
-    expression = harmonicbond_potential.expression
-    variables = harmonicbond_potential.independent_variables
-
-    unique_angle_types = OrderedSet(
-                *[
-                    (angle.type.k,
-                    angle.type.theteq,
-                    (angle.atom1.type, angle.atom2.type, angle.atom3.type)
-                    )
-                    for angle in structure.angles
-                ]
-            )
-    for angletype in unique_angle_types:
+    for angletype in structure.angle_types:
         angle_params = {
-            "k": (2 * angletype[0] * u.Unit("kcal / (rad**2 * mol)")),
-            "theta_eq": (angletype[1] * u.degree),
+            "k": (2 * angletype.k * u.Unit("kcal / (rad**2 * mol)")),
+            "theta_eq": (angletype.theteq * u.degree),
         }
+        expr = gmso.AngleType._default_potential_expr()
+        expr.parameters = angle_params
         # Do we need to worry about Urey Bradley terms
         # For Urey Bradley:
         # k in (kcal/(angstrom**2 * mol))
         # r_eq in angstrom
         member_types = angle_types_member_map.get(id(angletype))
         top_angletype = gmso.AngleType(
-             name=name,
-             parameters=angle_params,
-             expression=expression,
-             independent_variables=variables,
-             member_types=angletype[2],
+            potential_expression=expr, member_types=member_types
         )
         pmd_top_angletypes[angletype] = top_angletype
     return pmd_top_angletypes
@@ -421,45 +387,29 @@ def _dihedral_types_from_pmd(structure, dihedral_types_member_map=None):
     dihedral_types_member_map = _assert_dict(
         dihedral_types_member_map, "dihedral_types_member_map"
     )
-    unique_dihedral_types = OrderedSet(
-                *[
-                    (dihedral.type.k, dihedral.type.phase, dihedral.type.per,
-                    (dihedral.atom1.type, dihedral.atom2.type, dihedral.atom3.type, dihedral.atom4.type)
-                    )
-                    for dihedral in structure.dihedrals
-                ]
-            )
-    for dihedraltype in unique_dihedral_types:
+
+    for dihedraltype in structure.dihedral_types:
         dihedral_params = {
-            "k": (dihedraltype[0] * u.Unit("kcal / mol")),
-            "phi_eq": (dihedraltype[1] * u.degree),
-            "n": dihedraltype[2] * u.dimensionless,
+            "k": (dihedraltype.phi_k * u.Unit("kcal / mol")),
+            "phi_eq": (dihedraltype.phase * u.degree),
+            "n": dihedraltype.per * u.dimensionless,
         }
         expr = gmso.DihedralType._default_potential_expr()
         expr.parameters = dihedral_params
         member_types = dihedral_types_member_map.get(id(dihedraltype))
         top_dihedraltype = gmso.DihedralType(
-            potential_expression=expr, member_types=member_types[3]
+            potential_expression=expr, member_types=member_types
         )
-        pmd_top_dihedraltypes[dihedraltype] = top_dihedraltype
-    unique_rb_types = OrderedSet(
-                *[
-                    (dihedral.type.c0, dihedral.type.c1, dihedral.type.c2,
-                     dihedral.type.c3, dihedral.type.c4, dihedral.type.c5,
-                    (dihedral.atom1.type, dihedral.atom2.type, dihedral.atom3.type, dihedral.atom4.type)
-                    )
-                    for dihedral in structure.rb_torsions
-                ]
-            )
+        pmd_top_dihedraltypes[id(dihedraltype)] = top_dihedraltype
 
-    for dihedraltype in unique_rb_types:
+    for dihedraltype in structure.rb_torsion_types:
         dihedral_params = {
-            "c0": (dihedraltype[0] * u.Unit("kcal/mol")),
-            "c1": (dihedraltype[1] * u.Unit("kcal/mol")),
-            "c2": (dihedraltype[2] * u.Unit("kcal/mol")),
-            "c3": (dihedraltype[3] * u.Unit("kcal/mol")),
-            "c4": (dihedraltype[4] * u.Unit("kcal/mol")),
-            "c5": (dihedraltype[5] * u.Unit("kcal/mol")),
+            "c0": (dihedraltype.c0 * u.Unit("kcal/mol")),
+            "c1": (dihedraltype.c1 * u.Unit("kcal/mol")),
+            "c2": (dihedraltype.c2 * u.Unit("kcal/mol")),
+            "c3": (dihedraltype.c3 * u.Unit("kcal/mol")),
+            "c4": (dihedraltype.c4 * u.Unit("kcal/mol")),
+            "c5": (dihedraltype.c5 * u.Unit("kcal/mol")),
         }
 
         member_types = dihedral_types_member_map.get(id(dihedraltype))
@@ -476,9 +426,9 @@ def _dihedral_types_from_pmd(structure, dihedral_types_member_map=None):
             parameters=dihedral_params,
             expression=expression,
             independent_variables=variables,
-            member_types=dihedraltype[6],
+            member_types=member_types,
         )
-        pmd_top_dihedraltypes[dihedraltype] = top_dihedraltype
+        pmd_top_dihedraltypes[id(dihedraltype)] = top_dihedraltype
     return pmd_top_dihedraltypes
 
 
