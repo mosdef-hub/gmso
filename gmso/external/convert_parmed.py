@@ -577,7 +577,7 @@ def _improper_types_periodic_from_pmd(structure):
     Returns
     -------
     pmd_top_impropertypes : dict
-        A dictionary linking a pmd.improperType
+        A dictionary linking a pmd.ImproperType
         object to its corresponding GMSO.ImproperType object.
     """
     pmd_top_impropertypes = dict()
