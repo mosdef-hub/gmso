@@ -61,7 +61,6 @@ def write_mcf(top, filename):
 
     # Now we write the MCF file
     with open(filename, "w") as mcf:
-
         header = (
             "!***************************************"
             "****************************************\n"
@@ -279,7 +278,7 @@ def _write_atom_information(mcf, top, in_ring):
 
     mcf.write(header)
     mcf.write("{:d}\n".format(len(top.sites)))
-    for (idx, site) in enumerate(top.sites):
+    for idx, site in enumerate(top.sites):
         mcf.write(
             "{:<4d}  "
             "{:<6s}  "
@@ -438,7 +437,7 @@ def _write_dihedral_information(mcf, top):
 
     # TODO: Are impropers buried in dihedrals?
     mcf.write("{:d}\n".format(len(top.dihedrals)))
-    for (idx, dihedral) in enumerate(top.dihedrals):
+    for idx, dihedral in enumerate(top.dihedrals):
         mcf.write(
             "{:<4d}  "
             "{:<4d}  "
@@ -647,14 +646,14 @@ def _check_compatibility(top):
         raise GMSOError(
             "MCF writing not supported without parameterized forcefield."
         )
-    accepted_potentials = [
+    accepted_potentials = (
         potential_templates["LennardJonesPotential"],
         potential_templates["MiePotential"],
         potential_templates["HarmonicAnglePotential"],
         potential_templates["PeriodicTorsionPotential"],
         potential_templates["OPLSTorsionPotential"],
         potential_templates["RyckaertBellemansTorsionPotential"],
-    ]
+    )
     check_compatibility(top, accepted_potentials)
 
 

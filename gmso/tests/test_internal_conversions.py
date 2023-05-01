@@ -45,7 +45,7 @@ class TestInternalConversions(BaseTest):
         )
 
         with pytest.raises(GMSOError, match="Cannot use"):
-            opls_connection_type = convert_ryckaert_to_opls(
+            opls_connection_type = convert_ryckaert_to_fourier(
                 ryckaert_connection_type
             )
 
@@ -59,7 +59,7 @@ class TestInternalConversions(BaseTest):
         )
 
         with pytest.raises(GMSOError, match="Cannot use"):
-            opls_connection_type = convert_ryckaert_to_opls(
+            opls_connection_type = convert_ryckaert_to_fourier(
                 ryckaert_connection_type
             )
 
@@ -107,7 +107,6 @@ class TestInternalConversions(BaseTest):
             )
 
     def test_ryckaert_to_fourier(self, templates):
-
         # Pick some RB parameters at random
         params = {
             "c0": 1.53 * u.Unit("kJ/mol"),
@@ -168,7 +167,6 @@ class TestInternalConversions(BaseTest):
             )
 
     def test_opls_to_ryckaert(self, templates):
-
         # Pick some OPLS parameters at random
         params = {
             "k0": 1.38 * u.Unit("kJ/mol"),
@@ -225,8 +223,7 @@ class TestInternalConversions(BaseTest):
             )
 
     def test_double_conversion(self, templates):
-
-        # Pick some Fourier parameters at random
+        # Pick some OPLS parameters at random
         params = {
             "k0": 1.38 * u.Unit("kJ/mol"),
             "k1": -0.51 * u.Unit("kJ/mol"),

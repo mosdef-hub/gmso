@@ -40,7 +40,7 @@ def read_xyz(filename):
                     "were expected, but at least one fewer was found."
                 )
                 raise ValueError(msg.format(n_atoms))
-            tmp = np.array(line[1:4], dtype=np.float) * u.angstrom
+            tmp = np.array(line[1:4], dtype=float) * u.angstrom
             coords[row] = tmp.in_units(u.nanometer)
             site = Atom(name=line[0], position=coords[row])
             top.add_site(site)

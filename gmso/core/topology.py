@@ -135,7 +135,6 @@ class Topology(object):
     """
 
     def __init__(self, name="Topology", box=None):
-
         self.name = name
         self._box = box
         self._sites = IndexedSet()
@@ -1158,18 +1157,6 @@ class Topology(object):
 
         return index
 
-    def _reindex_connection_types(self, ref):
-        """Re-generate the indices of the connection types in the topology."""
-        if ref not in self._index_refs:
-            raise GMSOError(
-                f"cannot reindex {ref}. It should be one of "
-                f"{ANGLE_TYPE_DICT}, {BOND_TYPE_DICT}, "
-                f"{ANGLE_TYPE_DICT}, {DIHEDRAL_TYPE_DICT}, {IMPROPER_TYPE_DICT},"
-                f"{PAIRPOTENTIAL_TYPE_DICT}"
-            )
-        for i, ref_member in enumerate(self._set_refs[ref].keys()):
-            self._index_refs[ref][ref_member] = i
-
     def get_forcefield(self):
         """Get an instance of gmso.ForceField out of this topology
 
@@ -1229,7 +1216,6 @@ class Topology(object):
             The site where getattr(site, key) == value
         """
         if key not in Site.__iterable_attributes__:
-
             raise ValueError(
                 f"`{key}` is not an iterable attribute for Site. "
                 f"To check what the iterable attributes are see gmso.abc.abstract_site module."
@@ -1239,7 +1225,7 @@ class Topology(object):
             raise ValueError(
                 "Expected `value` to be something other than None. Provided None."
             )
-        if key in ("molecule", "reisdue") and isinstance(value, str):
+        if key in ("molecule", "residue") and isinstance(value, str):
             for site in self._sites:
                 if getattr(site, key) and getattr(site, key).name == value:
                     yield site
@@ -1399,6 +1385,8 @@ class Topology(object):
         **kwargs:
             The arguments to specific file savers listed below(as extensions):
             * json: types, update, indent
+            * gro: precision
+            * lammps/lammpsdata: atom_style
         """
         if not isinstance(filename, Path):
             filename = Path(filename).resolve()

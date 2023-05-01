@@ -5,7 +5,7 @@ dependencies:
   - python>=3.8
   - numpy
   - sympy
-  - unyt
+  - unyt<=2.9.2
   - boltons
   - lxml
   - pydantic>1.8
@@ -24,3 +24,6 @@ dependencies:
   - ipywidgets
   - ele>=0.2.0
   - pre-commit
+  - symengine
+  - python-symengine
+  - hoomd>=3

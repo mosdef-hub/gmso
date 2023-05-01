@@ -268,6 +268,9 @@ class TestParameterizationOptions(ParameterizationBaseTest):
             }
         elif match_ff_by == "group":
             ff_dict = {"sol1": oplsaa_gmso, "sol2": tip3p}
+        else:
+            raise ValueError("Unexpected value provided match_ff_by.")
+
         apply(
             top,
             ff_dict,

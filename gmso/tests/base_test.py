@@ -1,3 +1,4 @@
+import forcefield_utilities as ffutils
 import foyer
 import mbuild as mb
 import numpy as np
@@ -17,6 +18,7 @@ from gmso.core.pairpotential_type import PairPotentialType
 from gmso.core.topology import Topology
 from gmso.external import from_mbuild, from_parmed
 from gmso.external.convert_foyer_xml import from_foyer_xml
+from gmso.parameterization import apply
 from gmso.tests.utils import get_path
 from gmso.utils.io import get_fn
 
@@ -70,6 +72,17 @@ class BaseTest:
         return top
 
     @pytest.fixture
+    def typed_benzene_ua_system(self, benzene_ua_box):
+        top = benzene_ua_box
+        trappe_benzene = (
+            ffutils.FoyerFFs()
+            .load(get_path("benzene_trappe-ua.xml"))
+            .to_gmso_ff()
+        )
+        top = apply(top=top, forcefields=trappe_benzene, remove_untyped=True)
+        return top
+
+    @pytest.fixture
     def benzene_aa(self):
         compound = mb.load(get_fn("benzene.mol2"))
         compound.children[0].name = "BenzeneAA"
@@ -86,6 +99,13 @@ class BaseTest:
         )
         top = from_mbuild(compound_box)
         top.identify_connections()
+        return top
+
+    @pytest.fixture
+    def typed_benzene_aa_system(self, benzene_aa_box):
+        top = benzene_aa_box
+        oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
+        top = apply(top=top, forcefields=oplsaa, remove_untyped=True)
         return top
 
     @pytest.fixture
@@ -651,3 +671,23 @@ class BaseTest:
         top = from_mbuild(hierarchical_compound)  # Create GMSO topology
         top.identify_connections()
         return top
+
+    @pytest.fixture
+    def ethane_gomc(self):
+        ethane_gomc = mb.load("CC", smiles=True)
+        ethane_gomc.name = "ETH"
+
+        return ethane_gomc
+
+    @pytest.fixture
+    def ethanol_gomc(self):
+        ethanol_gomc = mb.load("CCO", smiles=True)
+        ethanol_gomc.name = "ETO"
+
+        return ethanol_gomc
+
+    @pytest.fixture
+    def methane_ua_gomc(self):
+        methane_ua_gomc = mb.Compound(name="_CH4")
+
+        return methane_ua_gomc
