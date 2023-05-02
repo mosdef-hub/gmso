@@ -569,7 +569,7 @@ class TestTopology(BaseTest):
             typed_chloroethanol.get_index(
                 typed_chloroethanol.angles[5].connection_type
             )
-            == 4
+            == 5
         )
 
     def test_topology_get_index_dihedral_type(self, typed_chloroethanol):
@@ -583,7 +583,7 @@ class TestTopology(BaseTest):
             typed_chloroethanol.get_index(
                 typed_chloroethanol.dihedrals[5].connection_type
             )
-            == 3
+            == 5
         )
 
     def test_topology_get_bonds_for(self, typed_methylnitroaniline):

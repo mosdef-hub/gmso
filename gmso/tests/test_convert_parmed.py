@@ -9,9 +9,12 @@ import pytest
 import unyt as u
 from unyt.testing import assert_allclose_units
 
+from gmso.core.views import PotentialFilters
 from gmso.external.convert_parmed import from_parmed, to_parmed
 from gmso.tests.base_test import BaseTest
 from gmso.utils.io import get_fn, has_parmed, import_
+
+pfilter = PotentialFilters.UNIQUE_SORTED_NAMES
 
 if has_parmed:
     pmd = import_("parmed")
@@ -87,9 +90,13 @@ class TestConvertParmEd(BaseTest):
         for i in range(len(struc.bonds)):
             assert (
                 struc_from_top.bonds[i].atom1.name == struc.bonds[i].atom1.name
+                or struc_from_top.bonds[i].atom2.name
+                == struc.bonds[i].atom1.name
             )
             assert (
                 struc_from_top.bonds[i].atom2.name == struc.bonds[i].atom2.name
+                or struc_from_top.bonds[i].atom2.name
+                == struc.bonds[i].atom1.name
             )
             assert struc_from_top.bonds[i].type == struc.bonds[i].type
 
@@ -131,17 +138,25 @@ class TestConvertParmEd(BaseTest):
             assert (
                 struc_from_top.rb_torsions[i].atom1.name
                 == struc.rb_torsions[i].atom1.name
+                or struc_from_top.rb_torsions[i].atom4.name
+                == struc.rb_torsions[i].atom1.name
             )
             assert (
                 struc_from_top.rb_torsions[i].atom2.name
+                == struc.rb_torsions[i].atom2.name
+                or struc_from_top.rb_torsions[i].atom3.name
                 == struc.rb_torsions[i].atom2.name
             )
             assert (
                 struc_from_top.rb_torsions[i].atom3.name
                 == struc.rb_torsions[i].atom3.name
+                or struc_from_top.rb_torsions[i].atom2.name
+                == struc.rb_torsions[i].atom3.name
             )
             assert (
                 struc_from_top.rb_torsions[i].atom4.name
+                == struc.rb_torsions[i].atom4.name
+                or struc_from_top.rb_torsions[i].atom1.name
                 == struc.rb_torsions[i].atom4.name
             )
             assert (
@@ -244,17 +259,25 @@ class TestConvertParmEd(BaseTest):
                 assert (
                     struc_from_top.rb_torsions[i].atom1.name
                     == struc.rb_torsions[i].atom1.name
+                    or struc_from_top.rb_torsions[i].atom4.name
+                    == struc.rb_torsions[i].atom1.name
                 )
                 assert (
                     struc_from_top.rb_torsions[i].atom2.name
+                    == struc.rb_torsions[i].atom2.name
+                    or struc_from_top.rb_torsions[i].atom3.name
                     == struc.rb_torsions[i].atom2.name
                 )
                 assert (
                     struc_from_top.rb_torsions[i].atom3.name
                     == struc.rb_torsions[i].atom3.name
+                    or struc_from_top.rb_torsions[i].atom2.name
+                    == struc.rb_torsions[i].atom3.name
                 )
                 assert (
                     struc_from_top.rb_torsions[i].atom4.name
+                    == struc.rb_torsions[i].atom4.name
+                    or struc_from_top.rb_torsions[i].atom1.name
                     == struc.rb_torsions[i].atom4.name
                 )
                 assert (
@@ -367,19 +390,12 @@ class TestConvertParmEd(BaseTest):
             gmso_member_names = list(
                 map(lambda a: a.name, gmso_improper.connection_members)
             )
-            assert pmd_member_names == gmso_member_names
-        pmd_structure = pmd.load_file(
-            get_fn("{}.top".format(mol)),
-            xyz=get_fn("{}.gro".format(mol)),
-            parametrize=False,
-        )
+            assert pmd_member_names[0] == gmso_member_names[0] and set(
+                pmd_member_names[1:]
+            ) == set(gmso_member_names[1:])
+
         assert all(dihedral.improper for dihedral in pmd_structure.dihedrals)
         assert len(pmd_structure.rb_torsions) == 16
-        gmso_top = from_parmed(pmd_structure)
-        assert (
-            gmso_top.impropers[0].improper_type.name
-            == "PeriodicImproperPotential"
-        )
 
     def test_simple_pmd_dihedrals_no_types(self):
         struct = pmd.Structure()
@@ -405,7 +421,7 @@ class TestConvertParmEd(BaseTest):
                 improper=True if j % 2 == 0 else False,
             )
             struct.dihedrals.append(dih)
-        gmso_top = from_parmed(struct)
+        gmso_top = from_parmed(struct, refer_type=False)
         assert len(gmso_top.impropers) == 5
         assert len(gmso_top.dihedrals) == 5
         assert len(gmso_top.improper_types) == 0
@@ -415,12 +431,14 @@ class TestConvertParmEd(BaseTest):
         struct = pmd.Structure()
         all_atoms = []
         for j in range(25):
+            atype = pmd.AtomType(f"atom_type_{j + 1}", j, 1, atomic_number=12)
+            atype.epsilon = atype.rmin = 1
             atom = pmd.Atom(
-                atomic_number=j + 1,
-                type=f"atom_type_{j + 1}",
+                atomic_number=12,
                 charge=random.randint(1, 10),
                 mass=1.0,
             )
+            atom.atom_type = atype
             atom.xx, atom.xy, atom.xz = (
                 random.random(),
                 random.random(),
@@ -451,12 +469,15 @@ class TestConvertParmEd(BaseTest):
         struct = pmd.Structure()
         all_atoms = []
         for j in range(25):
+            atype = pmd.AtomType(f"atom_type_{j + 1}", j, 1, atomic_number=12)
+            atype.epsilon = atype.rmin = 1
             atom = pmd.Atom(
                 atomic_number=j + 1,
                 type=f"atom_type_{j + 1}",
                 charge=random.randint(1, 10),
                 mass=1.0,
             )
+            atom.atom_type = atype
             atom.xx, atom.xy, atom.xz = (
                 random.random(),
                 random.random(),
@@ -481,12 +502,15 @@ class TestConvertParmEd(BaseTest):
         struct = pmd.Structure()
         all_atoms = []
         for j in range(25):
+            atype = pmd.AtomType(f"atom_type_{j + 1}", j, 1, atomic_number=12)
+            atype.epsilon = atype.rmin = 1
             atom = pmd.Atom(
                 atomic_number=j + 1,
                 type=f"atom_type_{j + 1}",
                 charge=random.randint(1, 10),
                 mass=1.0,
             )
+            atom.atom_atype = atype
             atom.xx, atom.xy, atom.xz = (
                 random.random(),
                 random.random(),
@@ -520,7 +544,7 @@ class TestConvertParmEd(BaseTest):
         bonds_list = list(
             map(attrgetter("atom1.type", "atom2.type"), struc.bonds)
         )
-        assert len(top.bond_types) == len(
+        assert len(top.bond_types(filter_by=pfilter)) == len(
             Counter(tuple(sorted(t)) for t in bonds_list)
         )
 
@@ -530,7 +554,7 @@ class TestConvertParmEd(BaseTest):
                 struc.angles,
             )
         )
-        assert len(top.angle_types) == len(
+        assert len(top.angle_types(filter_by=pfilter)) == len(
             Counter(
                 (t[1], tuple(sorted(itemgetter(*[0, 2])(t))))
                 for t in angles_list
@@ -548,7 +572,7 @@ class TestConvertParmEd(BaseTest):
         # order should be from smallest to largest id
         # reverse dihedral order if 1 > 2, or 1=2 and 0>4
         rev_order = lambda x: x[1] > x[2] or (x[1] == x[2] and x[0] > x[3])
-        assert len(top.dihedral_types) == len(
+        assert len(top.dihedral_types(filter_by=pfilter)) == len(
             Counter(
                 tuple(reversed(t)) if rev_order(t) else t
                 for t in dihedrals_list
@@ -569,13 +593,13 @@ class TestConvertParmEd(BaseTest):
             [dihedral for dihedral in struc.dihedrals if dihedral.improper]
         )
         # check typing
-        assert len(top.atom_types) == len(
+        assert len(top.atom_types(filter_by=pfilter)) == len(
             Counter(map(attrgetter("atom_type.name"), struc.atoms))
         )
         bonds_list = list(
             map(attrgetter("atom1.type", "atom2.type"), struc.bonds)
         )
-        assert len(top.bond_types) == len(
+        assert len(top.bond_types(filter_by=pfilter)) == len(
             Counter(tuple(sorted(t)) for t in bonds_list)
         )
         angles_list = list(
@@ -584,7 +608,7 @@ class TestConvertParmEd(BaseTest):
                 struc.angles,
             )
         )
-        assert len(top.angle_types) == len(
+        assert len(top.angle_types(filter_by=pfilter)) == len(
             Counter(
                 (t[1], tuple(sorted(itemgetter(*[0, 2])(t))))
                 for t in angles_list
@@ -605,7 +629,7 @@ class TestConvertParmEd(BaseTest):
         # order should be from smallest to largest id
         # reverse dihedral order if 1 > 2, or 1=2 and 0>4
         rev_order = lambda x: x[1] > x[2] or (x[1] == x[2] and x[0] > x[3])
-        assert len(top.dihedral_types) == len(
+        assert len(top.dihedral_types(filter_by=pfilter)) == len(
             Counter(
                 tuple(reversed(t)) if rev_order(t) else t
                 for t in dihedrals_list
@@ -622,7 +646,7 @@ class TestConvertParmEd(BaseTest):
                 dihedrals,
             )
         )
-        assert len(top.improper_types) == len(
+        assert len(top.improper_types(filter_by=pfilter)) == len(
             Counter(t for t in impropers_list)
         )
 
@@ -661,7 +685,7 @@ class TestConvertParmEd(BaseTest):
         bonds_list = list(
             map(attrgetter("atom1.type", "atom2.type"), struc.bonds)
         )
-        assert len(top.bond_types) == len(
+        assert len(top.bond_types(filter_by=pfilter)) == len(
             Counter(tuple(sorted(t)) for t in bonds_list)
         )
 
@@ -671,7 +695,7 @@ class TestConvertParmEd(BaseTest):
                 struc.angles,
             )
         )
-        assert len(top.angle_types) == len(
+        assert len(top.angle_types(filter_by=pfilter)) == len(
             Counter(
                 (t[1], tuple(sorted(itemgetter(*[0, 2])(t))))
                 for t in angles_list
@@ -686,7 +710,7 @@ class TestConvertParmEd(BaseTest):
             )
         )
         rev_order = lambda x: x[1] > x[2] or (x[1] == x[2] and x[0] > x[3])
-        assert len(top.dihedral_types) == len(
+        assert len(top.dihedral_types(filter_by=pfilter)) == len(
             Counter(
                 tuple(reversed(t)) if rev_order(t) else t
                 for t in dihedrals_list
