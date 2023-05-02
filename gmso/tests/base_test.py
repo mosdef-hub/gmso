@@ -197,9 +197,6 @@ class BaseTest:
 
         mb_ethane = Ethane()
         oplsaa = foyer.Forcefield(name="oplsaa")
-        # At this point, we still need to go through
-        # parmed Structure, until foyer can perform
-        # atomtyping on gmso Topology
         pmd_ethane = oplsaa.apply(mb_ethane)
         top = from_parmed(pmd_ethane)
         top.name = "ethane"
@@ -691,3 +688,14 @@ class BaseTest:
         methane_ua_gomc = mb.Compound(name="_CH4")
 
         return methane_ua_gomc
+
+    @pytest.fixture
+    def parmed_benzene(self):
+        untyped_benzene = mb.load(get_fn("benzene.mol2"))
+        ff_improper = foyer.Forcefield(
+            forcefield_files=get_fn("improper_dihedral.xml")
+        )
+        benzene = ff_improper.apply(
+            untyped_benzene, assert_dihedral_params=False
+        )
+        return benzene

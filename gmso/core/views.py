@@ -35,9 +35,31 @@ def get_name_or_class(potential):
         return potential.member_types or potential.member_classes
 
 
+def get_sorted_names(potential):
+    """Get identifier for a topology potential based on name or membertype/class."""
+    if isinstance(potential, AtomType):
+        return potential.name
+    if isinstance(potential, BondType):
+        return tuple(sorted(potential.member_types))
+    elif isinstance(potential, AngleType):
+        if potential.member_types[0] > potential.member_types[2]:
+            return tuple(reversed(potential.member_types))
+        else:
+            return potential.member_types
+    elif isinstance(potential, DihedralType):
+        if potential.member_types[1] > potential.member_types[2] or (
+            potential.member_types[1] == potential.member_types[2]
+            and potential.member_types[0] > potential.member_types[3]
+        ):
+            return tuple(reversed(potential.member_types))
+        else:
+            return potential.member_types
+    elif isinstance(potential, ImproperType):
+        return (potential.member_types[0], *sorted(potential.member_types[1:]))
+
+
 def get_parameters(potential):
     """Return hashable version of parameters for a potential."""
-
     return (
         tuple(potential.get_parameters().keys()),
         tuple(map(lambda x: x.to_value(), potential.get_parameters().values())),
@@ -58,6 +80,7 @@ def filtered_potentials(potential_types, identifier):
 
 class PotentialFilters:
     UNIQUE_NAME_CLASS = "unique_name_class"
+    UNIQUE_SORTED_NAMES = "unique_sorted_names"
     UNIQUE_EXPRESSION = "unique_expression"
     UNIQUE_PARAMETERS = "unique_parameters"
     UNIQUE_ID = "unique_id"
@@ -74,6 +97,7 @@ class PotentialFilters:
 
 potential_identifiers = {
     PotentialFilters.UNIQUE_NAME_CLASS: get_name_or_class,
+    PotentialFilters.UNIQUE_SORTED_NAMES: get_sorted_names,
     PotentialFilters.UNIQUE_EXPRESSION: lambda p: str(p.expression),
     PotentialFilters.UNIQUE_PARAMETERS: get_parameters,
     PotentialFilters.UNIQUE_ID: lambda p: id(p),
