@@ -1,4 +1,7 @@
 """Determine if the parametrized gmso.topology can be written to an engine."""
+from functools import lru_cache
+
+import symengine
 import sympy
 
 from gmso.core.views import PotentialFilters
@@ -26,7 +29,7 @@ def check_compatibility(topology, accepted_potentials):
     """
     potential_forms_dict = dict()
     for atom_type in topology.atom_types(
-        # filter_by=PotentialFilters.UNIQUE_NAME_CLASS
+        filter_by=PotentialFilters.UNIQUE_NAME_CLASS
     ):
         potential_form = _check_single_potential(
             atom_type,
@@ -56,6 +59,7 @@ def check_compatibility(topology, accepted_potentials):
     return potential_forms_dict
 
 
+# @lru_cache()
 def _check_single_potential(potential, accepted_potentials):
     """Check to see if a single given potential is in the list of accepted potentials."""
     ind_var = potential.independent_variables
@@ -67,7 +71,10 @@ def _check_single_potential(potential, accepted_potentials):
             if str(ref.expression) == str(potential.expression):
                 return {potential: ref.name}
             else:
-                print("Simpify", ref, potential)
-                if sympy.simplify(ref.expression - potential.expression) == 0:
+                if (
+                    symengine.expand(ref.expression - potential.expression)
+                    # sympy.simplify(ref.expression - potential.expression)
+                    == 0
+                ):
                     return {potential: ref.name}
     return False

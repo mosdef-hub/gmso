@@ -25,3 +25,6 @@ dependencies:
   - ele>=0.2.0
   - pre-commit
   - pandas
+  - symengine
+  - python-symengine
+  - hoomd>=3

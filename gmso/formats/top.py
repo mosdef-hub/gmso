@@ -3,12 +3,14 @@ import datetime
 import warnings
 
 import unyt as u
+from networkx.algorithms import shortest_path_length
 
 from gmso.core.dihedral import Dihedral
 from gmso.core.element import element_by_atom_type
 from gmso.core.improper import Improper
 from gmso.core.views import PotentialFilters
 from gmso.exceptions import GMSOError
+from gmso.external import to_networkx
 from gmso.formats.formats_registry import saves_as
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.parameterization.molecule_utils import (
@@ -58,13 +60,13 @@ def write_top(top, filename, top_vars=None):
             "[ defaults ]\n"
             "; nbfunc\t"
             "comb-rule\t"
-            "gen-pairs\t\t"
-            "fudgeLJ\t"
+            "gen-pairs\t"
+            "fudgeLJ\t\t"
             "fudgeQQ\n"
         )
         out_file.write(
-            "{0}\t\t\t"
-            "{1}\t\t\t"
+            "{0}\t\t"
+            "{1}\t\t"
             "{2}\t\t"
             "{3}\t\t"
             "{4}\n\n".format(
@@ -78,9 +80,9 @@ def write_top(top, filename, top_vars=None):
 
         out_file.write(
             "[ atomtypes ]\n"
-            "; name\t\t"
-            "at.num\t"
-            "mass\t\t"
+            "; name\t"
+            "at.num\t\t"
+            "mass\t"
             "charge\t\t"
             "ptype\t"
             "sigma\t"
@@ -113,30 +115,31 @@ def write_top(top, filename, top_vars=None):
 
         # Section headers
         headers = {
-            "bonds": "\n[ bonds ]\n" "; ai\taj\t\tfunct\tb0\t\tkb\n",
+            "bonds": "\n[ bonds ]\n; ai\taj\tfunct\tb0\t\tkb\n",
             "bond_restraints": "\n[ bonds ] ;Harmonic potential restraint\n"
-            "; ai\taj\t\tfunct\tb0\t\tkb\n",
-            "angles": "\n[ angles ]\n" "; ai\taj\t\tak\t\tfunct\tphi_0\tk0\n",
+            "; ai\taj\tfunct\tb0\t\tkb\n",
+            "pairs": "\n[ pairs ]\n; ai\taj\tfunct\n",
+            "angles": "\n[ angles ]\n" "; ai\taj\tak\tfunct\tphi_0\t\tk0\n",
             "angle_restraints": (
                 "\n[ angle_restraints ]\n"
-                "; ai\taj\t\tai\t\tak\t\tfunct\ttheta_eq\tk\tmultiplicity\n"
+                "; ai\taj\tai\tak\tfunct\ttheta_eq\tk\tmultiplicity\n"
             ),
             "dihedrals": {
                 "RyckaertBellemansTorsionPotential": "\n[ dihedrals ]\n"
-                "; ai\taj\t\tak\t\tal\t\tfunct\t\tc0\t\tc1\t\tc2\t\tc3\t\tc4\t\tc5\n",
+                "; ai\taj\tak\tal\tfunct\tc0\t\tc1\t\tc2\t\tc3\t\tc4\t\tc5\n",
                 "PeriodicTorsionPotential": "\n[ dihedrals ]\n"
-                "; ai\taj\t\tak\t\tal\t\tfunct\tphi\tk_phi\tmulitplicity\n",
+                "; ai\taj\tak\tal\tfunct\tphi\tk_phi\tmulitplicity\n",
             },
             "dihedral_restraints": "\n[ dihedral_restraints ]\n"
             "#ifdef DIHRES\n"
-            "; ai\taj\t\tak\t\tal\t\tfunct\ttheta_eq\tdelta_theta\t\tkd\n",
+            "; ai\taj\tak\tal\tfunct\ttheta_eq\tdelta_theta\t\tkd\n",
         }
         for tag in unique_molecules:
             """Write out nrexcl for each unique molecule."""
             out_file.write("\n[ moleculetype ]\n" "; name\tnrexcl\n")
 
             # TODO: Lookup and join nrexcl from each molecule object
-            out_file.write("{0}\t" "{1}\n".format(tag, top_vars["nrexcl"]))
+            out_file.write("{0}\t" "{1}\n\n".format(tag, top_vars["nrexcl"]))
 
             """Write out atoms for each unique molecule."""
             out_file.write(
@@ -170,6 +173,7 @@ def write_top(top, filename, top_vars=None):
                 )
 
             for conn_group in [
+                "pairs",
                 "bonds",
                 "bond_restraints",
                 "angles",
@@ -179,7 +183,13 @@ def write_top(top, filename, top_vars=None):
                 "impropers",
             ]:
                 if unique_molecules[tag][conn_group]:
-                    if conn_group in ["dihedrals", "impropers"]:
+                    if conn_group == "pairs":
+                        out_file.write(headers[conn_group])
+                        for conn in unique_molecules[tag][conn_group]:
+                            out_file.write(
+                                _write_pairs(top, conn, shifted_idx_map)
+                            )
+                    elif conn_group in ["dihedrals", "impropers"]:
                         proper_groups = {
                             "RyckaertBellemansTorsionPotential": list(),
                             "PeriodicTorsionPotential": list(),
@@ -220,11 +230,6 @@ def write_top(top, filename, top_vars=None):
                                 ):
                                     out_file.write(line)
                     elif "restraints" in conn_group:
-                        if conn_group == "dihedral_restraints":
-                            warnings.warn(
-                                "The diehdral_restraints writer is designed to work with"
-                                "`define = DDIHRES` clause in the GROMACS input file (.mdp)"
-                            )
                         out_file.write(headers[conn_group])
                         for conn in unique_molecules[tag][conn_group]:
                             out_file.write(
@@ -235,7 +240,13 @@ def write_top(top, filename, top_vars=None):
                                     shifted_idx_map,
                                 )
                             )
-                    else:
+                        if conn_group == "dihedral_restraints":
+                            warnings.warn(
+                                "The diehdral_restraints writer is designed to work with"
+                                "`define = DDIHRES` clause in the GROMACS input file (.mdp)"
+                            )
+                            out_file.write("#endif DIHRES\n")
+                    elif unique_molecules[tag][conn_group]:
                         out_file.write(headers[conn_group])
                         for conn in unique_molecules[tag][conn_group]:
                             out_file.write(
@@ -246,8 +257,6 @@ def write_top(top, filename, top_vars=None):
                                     shifted_idx_map,
                                 )
                             )
-                    if conn_group == "dihedral_restraints":
-                        out_file.write("#endif DIHRES\n")
 
         out_file.write("\n[ system ]\n" "; name\n" "{0}\n\n".format(top.name))
 
@@ -266,13 +275,13 @@ def _accepted_potentials():
     harmonic_angle_potential = templates["HarmonicAnglePotential"]
     periodic_torsion_potential = templates["PeriodicTorsionPotential"]
     rb_torsion_potential = templates["RyckaertBellemansTorsionPotential"]
-    accepted_potentials = [
+    accepted_potentials = (
         lennard_jones_potential,
         harmonic_bond_potential,
         harmonic_angle_potential,
         periodic_torsion_potential,
         rb_torsion_potential,
-    ]
+    )
     return accepted_potentials
 
 
@@ -288,7 +297,7 @@ def _get_top_vars(top, top_vars):
     default_top_vars = dict()
     default_top_vars["nbfunc"] = 1  # modify this to check for lj or buckingham
     default_top_vars["comb-rule"] = combining_rule_to_gmx[top.combining_rule]
-    default_top_vars["gen-pairs"] = "no"
+    default_top_vars["gen-pairs"] = "yes"
     default_top_vars["fudgeLJ"] = top.scaling_factors[0][2]
     default_top_vars["fudgeQQ"] = top.scaling_factors[1][2]
     default_top_vars["nrexcl"] = 3
@@ -314,6 +323,7 @@ def _get_unique_molecules(top):
         unique_molecules[top.name] = dict()
         unique_molecules[top.name]["subtags"] = [top.name]
         unique_molecules[top.name]["sites"] = list(top.sites)
+        unique_molecules[top.name]["pairs"] = _generate_pairs_list(top)
         unique_molecules[top.name]["bonds"] = list(top.bonds)
         unique_molecules[top.name]["bond_restraints"] = list(
             bond for bond in top.bonds if bond.restraint
@@ -322,7 +332,7 @@ def _get_unique_molecules(top):
         unique_molecules[top.name]["angle_restraints"] = list(
             angle for angle in top.angles if angle.restraint
         )
-        unique_molecules[top.name]["dihedrals"] = list(top.angles)
+        unique_molecules[top.name]["dihedrals"] = list(top.dihedrals)
         unique_molecules[top.name]["dihedral_restraints"] = list(
             dihedral for dihedral in top.dihedrals if dihedral.restraint
         )
@@ -334,6 +344,7 @@ def _get_unique_molecules(top):
             unique_molecules[tag]["sites"] = list(
                 top.iter_sites(key="molecule", value=molecule)
             )
+            unique_molecules[tag]["pairs"] = _generate_pairs_list(top, molecule)
             unique_molecules[tag]["bonds"] = list(molecule_bonds(top, molecule))
             unique_molecules[tag]["bond_restraints"] = list(
                 bond for bond in molecule_bonds(top, molecule) if bond.restraint
@@ -376,6 +387,78 @@ def _lookup_element_symbol(atom_type):
         return element.symbol
     except GMSOError:
         return "X"
+
+
+def _generate_pairs_list(top, molecule=None):
+    """Worker function to generate all 1-4 pairs from the topology."""
+    # TODO: Need to make this to be independent from top.dihedrals
+    # https://github.com/ParmEd/ParmEd/blob/master/parmed/structure.py#L2730-L2785
+    # NOTE: This will only write out pairs corresponding to existing dihedrals
+    # depending on needs, a different routine (suggested here) may be used
+    # to get 1-4 pairs independent of top.dihedrals, however, this route may
+    # pose some issue with generate pairs list of molecule/subtopologys
+    # NOTE: This function could be moved out to gmso.utils at some point
+    """
+    if top.dihedrals:
+        # Grab dihedrals if it is available
+        dihedrals = top.dihedrals
+    else:
+        # Else, parse from graph
+        import networkx as nx
+        from gmso.utils.connectivity import _detect_connections
+
+        graph = nx.Graph()
+        for bond in top.bonds:
+            graph = graph.add_edge(b.connection_meners[0], b.connection_members[1])
+
+        line_graph = nx.line_graph(graph)
+
+        dihedral_matches = _detect_connections(line_graph, top, type_="dihedral")
+
+    pairs_list = list()
+    for dihedral in top.dihedrals:
+            pairs = sorted(
+                [dihedral.connection_members[0], dihedral.connection_members[-1]]
+            )
+        if pairs not in pairs_list:
+            pairs_list.append(pairs)
+    """
+
+    pairs_list = list()
+    graph = to_networkx(top, parse_angles=False, parse_dihedrals=False)
+
+    dihedrals = molecule_dihedrals(top, molecule) if molecule else top.dihedrals
+    for dihedral in dihedrals:
+        pairs = (
+            dihedral.connection_members[0],
+            dihedral.connection_members[-1],
+        )
+        pairs = sorted(pairs, key=lambda site: top.get_index(site))
+        if shortest_path_length(graph, pairs[0], pairs[1]) < 3:
+            continue
+        if pairs not in pairs_list:
+            pairs_list.append(pairs)
+
+    # TODO: Also write out special 1-4 pairs (topology.pairpotential_types)
+    return sorted(
+        pairs_list,
+        key=lambda pair: (top.get_index(pair[0]), top.get_index(pair[1])),
+    )
+
+
+def _write_pairs(top, pair, shifted_idx_map):
+    """Workder function to write out pairs information."""
+    pair_idx = [
+        shifted_idx_map[top.get_index(pair[0])] + 1,
+        shifted_idx_map[top.get_index(pair[1])] + 1,
+    ]
+
+    line = "{0:8s}{1:8s}{2:4s}\n".format(
+        str(pair_idx[0]),
+        str(pair_idx[1]),
+        "1",
+    )
+    return line
 
 
 def _write_connection(top, connection, potential_name, shifted_idx_map):
