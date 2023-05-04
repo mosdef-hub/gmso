@@ -19,7 +19,7 @@ from gmso.parameterization.molecule_utils import (
     molecule_impropers,
 )
 from gmso.utils.compatibility import check_compatibility
-from gmso.utils.connectivity import generate_pairs_list
+from gmso.utils.connectivity import generate_pairs_lists
 
 
 @saves_as(".top")
