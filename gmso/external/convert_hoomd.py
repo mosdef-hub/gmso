@@ -331,7 +331,7 @@ def _parse_pairs_information(
     pairs = list()
 
     scaled_pairs = list()
-    pairs_dict = generate_pairs_lists(top)
+    pairs_dict = generate_pairs_lists(top, refer_from_scaling_factor=True)
     for pair_type in pairs_dict:
         scaled_pairs.extend(pairs_dict[pair_type])
 

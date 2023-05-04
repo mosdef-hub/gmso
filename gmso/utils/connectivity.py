@@ -282,7 +282,9 @@ def _trim_duplicates(all_matches):
     return trimmed_list
 
 
-def generate_pairs_lists(top, molecule=None, sort_key=None):
+def generate_pairs_lists(
+    top, molecule=None, sort_key=None, refer_from_scaling_factor=False
+):
     """Generate all the pairs lists of the topology or molecular of topology.
 
     Parameters
@@ -294,10 +296,15 @@ def generate_pairs_lists(top, molecule=None, sort_key=None):
     sort_key : function, optional, default=None
         Function used as key for sorting of site pairs. If None is provided
         will used topology.get_index
+    refer_from_scaling_factor : bool, optional, default=False
+        If True, only generate pair lists of pairs that have a non-zero scaling
+        factor value.
+
     Returns
     -------
     pairs_lists: dict of list
         {"pairs12": pairs12, "pairs13": pairs13, "pairs14": pairs14}
+
     NOTE: This method assume that the topology has already been loaded with
     angles and dihedrals (through top.identify_connections). In addition,
     this method will only generate pairs when the corresponding sclaing
@@ -317,7 +324,15 @@ def generate_pairs_lists(top, molecule=None, sort_key=None):
 
     graph = to_networkx(top)
 
-    pairs12, pairs13, pairs14 = list(), list(), list()
+    pairs_dict = dict()
+    if refer_from_scaling_factor:
+        for i in range(3):
+            if nb_scalings[i] or coulombic_scalings[i]:
+                pairs_dict[f"pairs1{i+2}"] = list()
+    else:
+        for i in range(3):
+            pairs_dict = {f"pairs1{i+2}": list() for i in range(3)}
+
     if molecule is None:
         bonds, angles, dihedrals = top.bonds, top.angles, top.dihedrals
     else:
@@ -325,21 +340,24 @@ def generate_pairs_lists(top, molecule=None, sort_key=None):
         angles = molecule_angles(top, molecule)
         dihedrals = molecule_dihedrals(top, molecule)
 
-    if nb_scalings[0] or coulombic_scalings[0]:
+    if "pairs12" in pairs_dict:
         for bond in bonds:
             pairs = sorted(bond.connection_members, key=sort_key)
-            pairs12.append(pairs)
+            pairs_dict["pairs12"].append(pairs)
 
-    if nb_scalings[1] or coulombic_scalings[1]:
+    if "pairs13" in pairs_dict:
         for angle in angles:
             pairs = sorted(
                 (angle.connection_members[0], angle.connection_members[-1]),
                 key=sort_key,
             )
-            if shortest_path_length(graph, pairs[0], pairs[1]) == 2:
-                pairs13.append(pairs)
+            if (
+                pairs not in pairs_dict["pairs13"]
+                and shortest_path_length(graph, pairs[0], pairs[1]) == 2
+            ):
+                pairs_dict["pairs13"].append(pairs)
 
-    if nb_scalings[2] or coulombic_scalings[2]:
+    if "pairs14" in pairs_dict:
         for dihedral in dihedrals:
             pairs = sorted(
                 (
@@ -348,7 +366,16 @@ def generate_pairs_lists(top, molecule=None, sort_key=None):
                 ),
                 key=sort_key,
             )
-            if shortest_path_length(graph, pairs[0], pairs[1]) == 3:
-                pairs14.append(pairs)
+            if (
+                pairs not in pairs_dict["pairs14"]
+                and shortest_path_length(graph, pairs[0], pairs[1]) == 3
+            ):
+                pairs_dict["pairs14"].append(pairs)
 
-    return {"pairs12": pairs12, "pairs13": pairs13, "pairs14": pairs14}
+    for key in pairs_dict:
+        pairs_dict[key] = sorted(
+            pairs_dict[key],
+            key=lambda pairs: (sort_key(pairs[0]), sort_key(pairs[1])),
+        )
+
+    return pairs_dict

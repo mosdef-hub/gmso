@@ -323,9 +323,9 @@ def _get_unique_molecules(top):
         unique_molecules[top.name] = dict()
         unique_molecules[top.name]["subtags"] = [top.name]
         unique_molecules[top.name]["sites"] = list(top.sites)
-        unique_molecules[top.name]["pairs"] = generate_pairs_lists(top)[
-            "pairs14"
-        ]
+        unique_molecules[top.name]["pairs"] = generate_pairs_lists(
+            top, refer_from_scaling_factor=True
+        )["pairs14"]
         unique_molecules[top.name]["bonds"] = list(top.bonds)
         unique_molecules[top.name]["bond_restraints"] = list(
             bond for bond in top.bonds if bond.restraint

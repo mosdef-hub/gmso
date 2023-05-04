@@ -202,7 +202,6 @@ class TestTop(BaseTest):
             if "dihedral" in section:
                 # Need to deal with these separatelt due to member's order issue
                 # Each dict will have the keys be members and values be their parameters
-                print(section)
                 members = dict()
                 ref_members = dict()
                 for line, ref in zip(
