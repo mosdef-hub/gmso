@@ -1,10 +1,12 @@
+import mbuild as mb
 import pytest
 
 from gmso.core.atom import Atom
 from gmso.core.bond import Bond
 from gmso.core.topology import Topology
+from gmso.external import from_mbuild
 from gmso.tests.base_test import BaseTest
-from gmso.utils.connectivity import identify_connections
+from gmso.utils.connectivity import generate_pairs_lists, identify_connections
 
 
 class TestConnectivity(BaseTest):
@@ -167,3 +169,43 @@ class TestConnectivity(BaseTest):
                 idx_tuple[0] == members_tuple[0]
                 for members_tuple in indices["impropers"]
             )
+
+    def test_generate_pairs_list(self):
+        # Methane with no 1-4 pair
+        methane = mb.load("C", smiles=True)
+        methane_top = from_mbuild(methane)
+        methane_top.identify_connections()
+        methane_pairs = generate_pairs_lists(
+            methane_top, refer_from_scaling_factor=False
+        )
+        assert len(methane_pairs["pairs14"]) == len(methane_top.dihedrals) == 0
+
+        # Ethane with 9 1-4 pairs
+        ethane = mb.load("CC", smiles=True)
+        ethane_top = from_mbuild(ethane)
+        ethane_top.identify_connections()
+        ethane_pairs = generate_pairs_lists(
+            ethane_top, refer_from_scaling_factor=False
+        )
+        assert len(ethane_pairs["pairs14"]) == len(ethane_top.dihedrals) == 9
+
+        # Cyclobutadiene with 16 dihedrals and 8 pairs (due to cyclic structure)
+        cyclobutadiene = mb.load("C1=CC=C1", smiles=True)
+        cyclobutadiene_top = from_mbuild(cyclobutadiene)
+        cyclobutadiene_top.identify_connections()
+        cyclobutadiene_top_pairs = generate_pairs_lists(
+            cyclobutadiene_top, refer_from_scaling_factor=False
+        )
+        assert len(cyclobutadiene_top.dihedrals) == 16
+        assert len(cyclobutadiene_top_pairs["pairs14"]) == 8
+
+        # Cyclopentane with 45 dihedrals and 40 pairs (due to cyclic structure)
+        cyclopentane = mb.load("C1CCCC1", smiles=True)
+        cyclopentane_top = from_mbuild(cyclopentane)
+        cyclopentane_top.identify_connections()
+        cyclopentane_top_pairs = generate_pairs_lists(
+            cyclopentane_top, refer_from_scaling_factor=False
+        )
+
+        assert len(cyclopentane_top.dihedrals) == 45
+        assert len(cyclopentane_top_pairs["pairs14"]) == 40
