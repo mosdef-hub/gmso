@@ -224,3 +224,24 @@ class TestGsd(BaseTest):
             base_units=base_units,
             pppm_kwargs={"resolution": (64, 64, 64), "order": 7},
         )
+
+    def test_default_units(self):
+        compound = mb.load("CC", smiles=True)
+        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=100)
+        base_units = {
+            "mass": u.amu,
+            "length": u.nm,
+            "energy": u.kJ / u.mol,
+        }
+
+        top = from_mbuild(com_box)
+        top.identify_connections()
+        oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
+        top = apply(top, oplsaa, remove_untyped=True)
+
+        gmso_snapshot, snapshot_base_units = to_hoomd_snapshot(top)
+        gmso_forces, forces_base_units = to_hoomd_forcefield(
+            top=top,
+            r_cut=1.4,
+            pppm_kwargs={"resolution": (64, 64, 64), "order": 7},
+        )
