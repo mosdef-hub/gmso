@@ -182,7 +182,7 @@ def to_mbuild(topology, infer_hierarchy=True):
                 sites_iter = (
                     site for site in topology.sites if not site.molecule
                 )
-                
+
             for site in sites_iter:
                 particle = _parse_particle(particle_map, site)
                 # Try to add the particle to a residue level
@@ -194,11 +194,11 @@ def to_mbuild(topology, infer_hierarchy=True):
                 else:
                     residue_dict[residue_tag] = mb.Compound(name=residue_tag[0])
                     residue_dict_particles[residue_tag] = [particle]
-            
+
             for key, item in residue_dict.items():
                 item.add(residue_dict_particles[key])
                 molecule_list.append(item)
-           
+
         compound.add(molecule_list)
     for connect in topology.bonds:
         compound.add_bond(
