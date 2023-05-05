@@ -6,7 +6,6 @@ import unyt as u
 import gmso
 from gmso.exceptions import EngineIncompatibilityError
 from gmso.external.convert_mbuild import from_mbuild
-from gmso.formats.top import write_top
 from gmso.parameterization import apply
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
