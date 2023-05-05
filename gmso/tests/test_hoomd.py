@@ -243,6 +243,5 @@ class TestGsd(BaseTest):
         gmso_forces, forces_base_units = to_hoomd_forcefield(
             top=top,
             r_cut=1.4,
-            base_units=base_units,
             pppm_kwargs={"resolution": (64, 64, 64), "order": 7},
         )
