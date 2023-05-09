@@ -4,7 +4,6 @@ from __future__ import division
 import itertools
 import json
 import re
-import statistics
 import warnings
 
 import numpy as np
@@ -834,17 +833,13 @@ def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
         pairs = list(pairs)
         pairs.sort(key=lambda atype: atype.name)
         type_name = (pairs[0].name, pairs[1].name)
-        comb_epsilon = statistics.geometric_mean(
-            [pairs[0].parameters["epsilon"], pairs[1].parameters["epsilon"]]
-        )
+        comb_epsilon = np.sqrt(pairs[0].parameters["epsilon"].value * pairs[1].parameters["epsilon"].value)
         if top.combining_rule == "lorentz":
             comb_sigma = np.mean(
                 [pairs[0].parameters["sigma"], pairs[1].parameters["sigma"]]
             )
         elif top.combining_rule == "geometric":
-            comb_sigma = statistics.geometric_mean(
-                [pairs[0].parameters["sigma"], pairs[1].parameters["sigma"]]
-            )
+            comb_sigma = np.sqrt(pairs[0].parameters["sigma"].value * pairs[1].parameters["sigma"].value)
         else:
             raise ValueError(
                 f"Invalid combining rule provided ({combining_rule})"
