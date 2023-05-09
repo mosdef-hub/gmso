@@ -12,7 +12,6 @@ from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
 from gmso.utils.io import has_hoomd, has_mbuild, import_
 
-
 if has_hoomd:
     hoomd = import_("hoomd")
 if has_mbuild:
