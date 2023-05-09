@@ -12,7 +12,6 @@ from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
 from gmso.utils.io import has_hoomd, has_mbuild, import_
 
-
 if has_hoomd:
     hoomd = import_("hoomd")
 if has_mbuild:
@@ -252,7 +251,11 @@ class TestGsd(BaseTest):
         ethane = mb.lib.molecules.Ethane()
         top = from_mbuild(ethane)
         top.identify_connections()
-        ff_zero_param = ffutils.FoyerFFs().load(get_path("ethane_zero_parameter.xml")).to_gmso_ff()
+        ff_zero_param = (
+            ffutils.FoyerFFs()
+            .load(get_path("ethane_zero_parameter.xml"))
+            .to_gmso_ff()
+        )
         top = apply(top, ff_zero_param, remove_untyped=True)
         base_units = {
             "mass": u.g / u.mol,
@@ -273,7 +276,7 @@ class TestGsd(BaseTest):
             if isinstance(force, hoomd.md.pair.LJ):
                 keys = force.params.param_dict.keys()
                 for key in keys:
-                    if 'opls_135' in list(key):
+                    if "opls_135" in list(key):
                         params = force.params.param_dict[key]
                         variables = params.keys()
                         for var in variables:
