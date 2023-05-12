@@ -5,7 +5,7 @@ from operator import attrgetter, itemgetter
 
 import numpy as np
 import unyt as u
-from sympy.parsing.sympy_parser import parse_expr
+from symengine import expand
 
 import gmso
 from gmso.core.element import (
@@ -495,17 +495,15 @@ def to_parmed(top, refer_type=True):
         pmd_dihedral = pmd.Dihedral(
             atom_map[site1], atom_map[site2], atom_map[site3], atom_map[site4]
         )
-        if (
-            dihedral.connection_type
-            and dihedral.connection_type.expression
-            == parse_expr(
-                "c0 * cos(phi)**0 + "
-                + "c1 * cos(phi)**1 + "
-                + "c2 * cos(phi)**2 + "
-                + "c3 * cos(phi)**3 + "
-                + "c4 * cos(phi)**4 + "
-                + "c5 * cos(phi)**5"
-            )
+        if dihedral.connection_type and expand(
+            dihedral.connection_type.expression
+        ) == expand(
+            "c0 * cos(phi)**0 + "
+            + "c1 * cos(phi)**1 + "
+            + "c2 * cos(phi)**2 + "
+            + "c3 * cos(phi)**3 + "
+            + "c4 * cos(phi)**4 + "
+            + "c5 * cos(phi)**5"
         ):
             structure.rb_torsions.append(pmd_dihedral)
         else:
@@ -564,7 +562,7 @@ def _atom_types_from_gmso(top, structure, atom_map):
         msg = "Atom type {} expression does not match Parmed AtomType default expression".format(
             atom_type.name
         )
-        assert atom_type.expression == parse_expr(
+        assert expand(atom_type.expression) == expand(
             "4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)"
         ), msg
         # Extract Topology atom type information
@@ -622,7 +620,9 @@ def _bond_types_from_gmso(top, structure, bond_map):
         msg = "Bond type {} expression does not match Parmed BondType default expression".format(
             bond_type.name
         )
-        assert bond_type.expression == parse_expr("0.5 * k * (r-r_eq)**2"), msg
+        assert expand(bond_type.expression) == expand(
+            "0.5 * k * (r-r_eq)**2"
+        ), msg
         # Extract Topology bond_type information
         btype_k = 0.5 * float(
             bond_type.parameters["k"].to("kcal / (angstrom**2 * mol)").value
@@ -660,7 +660,7 @@ def _angle_types_from_gmso(top, structure, angle_map):
         msg = "Angle type {} expression does not match Parmed AngleType default expression".format(
             angle_type.name
         )
-        assert angle_type.expression == parse_expr(
+        assert expand(angle_type.expression) == expand(
             "0.5 * k * (theta-theta_eq)**2"
         ), msg
         # Extract Topology angle_type information
@@ -709,7 +709,7 @@ def _dihedral_types_from_gmso(top, structure, dihedral_map):
         msg = "Dihedral type {} expression does not match Parmed DihedralType default expressions (Periodics, RBTorsions)".format(
             dihedral_type.name
         )
-        if dihedral_type.expression == parse_expr(
+        if expand(dihedral_type.expression) == expand(
             "k * (1 + cos(n * phi - phi_eq))**2"
         ):
             dtype_k = float(dihedral_type.parameters["k"].to("kcal/mol").value)
@@ -721,7 +721,7 @@ def _dihedral_types_from_gmso(top, structure, dihedral_map):
             dtype = pmd.DihedralType(dtype_k, dtype_n, dtype_phi_eq)
             # Add DihedralType to structure.dihedral_types
             structure.dihedral_types.append(dtype)
-        elif dihedral_type.expression == parse_expr(
+        elif expand(dihedral_type.expression) == expand(
             "c0 * cos(phi)**0 + "
             + "c1 * cos(phi)**1 + "
             + "c2 * cos(phi)**2 + "

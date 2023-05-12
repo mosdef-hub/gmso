@@ -160,22 +160,29 @@ def to_mbuild(topology, infer_hierarchy=True):
 
     particle_map = dict()
     if not infer_hierarchy:
+        particle_list = []
         for site in topology.sites:
             particle = _parse_particle(particle_map=particle_map, site=site)
-            compound.add(particle)
+            particle_list.append(particle)
+        compound.add(particle_list)
+
     else:
+        molecule_list = []
         for molecule_tag in topology.unique_site_labels(label_type="molecule"):
             mb_molecule = mb.Compound()
             mb_molecule.name = (
                 molecule_tag.name if molecule_tag else "DefaultMolecule"
             )
             residue_dict = dict()
+            residue_dict_particles = dict()
+
             if molecule_tag:
                 sites_iter = topology.iter_sites("molecule", molecule_tag)
             else:
                 sites_iter = (
                     site for site in topology.sites if not site.molecule
                 )
+
             for site in sites_iter:
                 particle = _parse_particle(particle_map, site)
                 # Try to add the particle to a residue level
@@ -183,15 +190,16 @@ def to_mbuild(topology, infer_hierarchy=True):
                     site.residue if site.residue else ("DefaultResidue", 0)
                 )  # the 0 idx is placeholder and does nothing
                 if residue_tag in residue_dict:
-                    residue_dict[residue_tag].add(particle)
+                    residue_dict_particles[residue_tag] += [particle]
                 else:
                     residue_dict[residue_tag] = mb.Compound(name=residue_tag[0])
-                    residue_dict[residue_tag].add(particle)
+                    residue_dict_particles[residue_tag] = [particle]
 
             for key, item in residue_dict.items():
-                mb_molecule.add(item)
-            compound.add(mb_molecule)
+                item.add(residue_dict_particles[key])
+                molecule_list.append(item)
 
+        compound.add(molecule_list)
     for connect in topology.bonds:
         compound.add_bond(
             (
