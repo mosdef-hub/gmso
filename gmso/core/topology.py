@@ -1456,9 +1456,15 @@ class Topology(object):
         # TODO
         """
         from gmso.utils.conversions import _convert_params_units
-        ref_values = {"energy":"kJ/mol", "length": "nm", "angle": "radians"}
+
+        ref_values = {"energy": "kJ/mol", "length": "nm", "angle": "radians"}
 
         # all potContainer ["atom", "bond", "angle", "dihedral", "improper"]
         for potStr in exp_unitsDict:
-            potContainer = getattr(self, potStr+"_types")
-            _convert_params_units(potContainer, expected_units_dim=exp_unitsDict[potStr], base_units=unitsystem, ref_values=ref_values)
+            potContainer = getattr(self, potStr + "_types")
+            _convert_params_units(
+                potContainer,
+                expected_units_dim=exp_unitsDict[potStr],
+                base_units=unitsystem,
+                ref_values=ref_values,
+            )
