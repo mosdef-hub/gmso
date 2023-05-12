@@ -12,8 +12,8 @@ import gmso
 from gmso.exceptions import GMSOError
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 
-
 templates = PotentialTemplateLibrary()
+
 
 @lru_cache(maxsize=128)
 def _constant_multiplier(pot1, pot2):
@@ -43,7 +43,9 @@ def _try_sympy_conversions(pot1, pot2):
         convertersList.append(conversion(pot1, pot2))
     completed_conversions = np.where(convertersList)[0]
     if len(completed_conversions) > 0:  # check to see if any conversions worked
-        return convertersList[completed_conversions[0]]  # return first completed value
+        return convertersList[
+            completed_conversions[0]
+        ]  # return first completed value
 
 
 def convert_topology_expressions(top, expressionMap={}):
@@ -186,10 +188,11 @@ def convert_opls_to_ryckaert(opls_connection_type):
         expression=expression,
         independent_variables=variables,
         parameters=converted_params,
-        member_types=opls_connection_type.member_types
+        member_types=opls_connection_type.member_types,
     )
 
     return ryckaert_connection_type
+
 
 @lru_cache(maxsize=128)
 def convert_ryckaert_to_opls(ryckaert_connection_type):
@@ -199,9 +202,14 @@ def convert_ryckaert_to_opls(ryckaert_connection_type):
     for OPLS and RB torsions. OPLS torsions are defined with
     phi_cis = 0 while RB torsions are defined as phi_trans = 0.
     """
-    fourier_connection_type = convert_ryckaert_to_fourier(ryckaert_connection_type)
+    fourier_connection_type = convert_ryckaert_to_fourier(
+        ryckaert_connection_type
+    )
     opls_torsion_potential = templates["OPLSTorsionPotential"]
-    converted_params = {k: fourier_connection_type.parameters.get(k, None) for k in ["k1", "k2", "k3", "k4"]}
+    converted_params = {
+        k: fourier_connection_type.parameters.get(k, None)
+        for k in ["k1", "k2", "k3", "k4"]
+    }
 
     name = opls_torsion_potential.name
     expression = opls_torsion_potential.expression
@@ -212,10 +220,11 @@ def convert_ryckaert_to_opls(ryckaert_connection_type):
         expression=expression,
         independent_variables=variables,
         parameters=converted_params,
-        member_types=ryckaert_connection_type.member_types
+        member_types=ryckaert_connection_type.member_types,
     )
 
     return opls_connection_type
+
 
 @lru_cache(maxsize=128)
 def convert_ryckaert_to_fourier(ryckaert_connection_type):
@@ -281,7 +290,7 @@ def convert_ryckaert_to_fourier(ryckaert_connection_type):
         expression=expression,
         independent_variables=variables,
         parameters=converted_params,
-        member_types=ryckaert_connection_type.member_types
+        member_types=ryckaert_connection_type.member_types,
     )
 
     return fourier_connection_type
@@ -367,8 +376,9 @@ def convert_kelvin_to_energy_units(
 
     return energy_output_unyt
 
+
 def _convert_params_units(
-    potentials, expected_units_dim, base_units, ref_values,
+    potentials, expected_units_dim, base_units, ref_values
 ):
     """Convert parameters' units in the potential to that specified in the base_units."""
     converted_potentials = list()
@@ -379,15 +389,13 @@ def _convert_params_units(
             ind_units = re.sub("[^a-zA-Z]+", " ", unit_dim).split()
             for unit in ind_units:
                 if unit != "angle":
-                    unit_dim = unit_dim.replace(
-                        unit, f"{str(base_units[unit])}"
-                    )
+                    unit_dim = unit_dim.replace(unit, f"{base_units[unit]}")
                 else:
-                    unit_dim = unit_dim.replace(
-                        unit, str(base_units[unit])
-                    )
+                    # angle doesn't show up, degree or radian does
+                    unit_dim = unit_dim.replace(unit, str(base_units[unit]))
+
             converted_params[parameter] = potential.parameters[parameter].to(
-                unit_dim
+                u.Unit(unit_dim, registry=base_units.registry)
             )
         potential.parameters = converted_params
         converted_potentials.append(potential)

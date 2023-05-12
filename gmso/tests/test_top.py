@@ -83,18 +83,15 @@ class TestTop(BaseTest):
         top = water_system
 
         ff = gmso.ForceField(get_path("tip3p.xml"))
+        top = apply(top, ff)
 
         for site in top.sites:
-            site.atom_type = ff.atom_types[site.name]
-
-        top.update_atom_types()
+            site.atom_type = ff.atom_types[site.atom_type.name]
 
         for bond in top.bonds:
             bond.bond_type = bond.connection_type = ff.bond_types[
                 "opls_111~opls_112"
             ]
-
-        top.update_bond_types()
 
         for molecule in top.unique_site_labels("molecule"):
             angle = gmso.core.angle.Angle(

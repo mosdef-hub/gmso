@@ -173,16 +173,9 @@ class BaseTest:
 
     @pytest.fixture
     def water_system(self):
-        water = mb.load(get_path("tip3p.mol2"))
-        water.name = "water"
-        water[0].name = "opls_111"
-        water[1].name = water[2].name = "opls_112"
-
-        packed_system = mb.fill_box(
-            compound=water, n_compounds=2, box=mb.Box([2, 2, 2])
-        )
-
-        return from_mbuild(packed_system, parse_label=True)
+        water = Topology(name="water")
+        water = water.load(get_path("tip3p.mol2"))
+        return water
 
     @pytest.fixture
     def ethane(self):
@@ -270,31 +263,9 @@ class BaseTest:
     @pytest.fixture
     def typed_water_system(self, water_system):
         top = water_system
-
+        top.identify_connections()
         ff = ForceField(get_path("tip3p.xml"))
-
-        element_map = {"O": "opls_111", "H": "opls_112"}
-
-        for atom in top.sites:
-            atom.atom_type = ff.atom_types[atom.name]
-
-        for bond in top.bonds:
-            bond.bond_type = ff.bond_types["opls_111~opls_112"]
-
-        molecule_tags = top.unique_site_labels(
-            label_type="molecule", name_only=False
-        )
-        for tag in molecule_tags:
-            angle = Angle(
-                connection_members=[
-                    site for site in top.iter_sites("molecule", tag)
-                ],
-                name="opls_112~opls_111~opls_112",
-                angle_type=ff.angle_types["opls_112~opls_111~opls_112"],
-            )
-            top.add_connection(angle)
-
-        top.update_topology()
+        top = apply(top, ff)
         return top
 
     @pytest.fixture

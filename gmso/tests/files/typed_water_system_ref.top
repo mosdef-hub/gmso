@@ -11,13 +11,13 @@ opls_112    1        1.01100     0.41700	A        1.00000     0.00000
 
 [ moleculetype ]
 ; name	nrexcl
-tip3p	3
+RES	3
 
 [ atoms ]
 ; nr	type	resnr	residue		atom	cgnr	charge	mass
-1       opls_111    1       tip3p       O       1       -0.83400    16.00000
-2       opls_112    1       tip3p       H       1        0.41700     1.01100
-3       opls_112    1       tip3p       H       1        0.41700     1.01100
+1       opls_111    1       RES         O       1       -0.83400    16.00000
+2       opls_112    1       RES         H       1        0.41700     1.01100
+3       opls_112    1       RES         H       1        0.41700     1.01100
 
 [ bonds ]
 ; ai	aj	funct	b0		kb
@@ -26,12 +26,12 @@ tip3p	3
 
 [ angles ]
 ; ai	aj	ak	funct	phi_0		k0
-1       2       3       1         104.52000      682.02000
+2       1       3       1         104.52000      682.02000
 
 [ system ]
 ; name
-Topology
+tip3p
 
 [ molecules ]
 ; molecule	nmols
-tip3p	2
+RES	1

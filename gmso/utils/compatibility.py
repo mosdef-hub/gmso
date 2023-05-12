@@ -45,7 +45,6 @@ def check_compatibility(topology, accepted_potentials):
     for connection_type in topology.connection_types(
         # filter_by=PotentialFilters.UNIQUE_NAME_CLASS
     ):
-        print(connection_type.name)
         potential_form = _check_single_potential(
             connection_type,
             accepted_potentials,

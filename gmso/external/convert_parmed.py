@@ -1,4 +1,5 @@
 """Module support for converting to/from ParmEd objects."""
+import copy
 import warnings
 from operator import attrgetter, itemgetter
 
@@ -7,7 +8,11 @@ import unyt as u
 from sympy.parsing.sympy_parser import parse_expr
 
 import gmso
-from gmso.core.element import element_by_atom_type, element_by_atomic_number
+from gmso.core.element import (
+    element_by_atom_type,
+    element_by_atomic_number,
+    element_by_symbol,
+)
 from gmso.core.views import PotentialFilters, get_parameters
 
 pfilter = PotentialFilters.UNIQUE_PARAMETERS
@@ -71,12 +76,12 @@ def from_parmed(structure, refer_type=True):
                 charge=atom.charge * u.elementary_charge,
                 position=[atom.xx, atom.xy, atom.xz] * u.angstrom,
                 atom_type=None,
-                residue=(residue.name, residue.idx),
+                residue=(residue.name, residue.idx + 1),
                 element=element,
             )
-            site.molecule = (residue.name, residue.idx) if ind_res else None
+            site.molecule = (residue.name, residue.idx + 1) if ind_res else None
             site.atom_type = (
-                pmd_top_atomtypes[atom.atom_type]
+                copy.deepcopy(pmd_top_atomtypes[atom.atom_type])
                 if refer_type and isinstance(atom.atom_type, pmd.AtomType)
                 else None
             )
@@ -287,11 +292,10 @@ def _atom_types_from_pmd(structure):
             A dictionary linking a pmd.AtomType object to its
             corresponding GMSO.AtomType object.
     """
-    unique_atom_types = set()
+    unique_atom_types = []
     for atom in structure.atoms:
         if isinstance(atom.atom_type, pmd.AtomType):
-            unique_atom_types.add(atom.atom_type)
-    unique_atom_types = list(unique_atom_types)
+            unique_atom_types.append(atom.atom_type)
     pmd_top_atomtypes = {}
     for atom_type in unique_atom_types:
         if atom_type.atomic_number:
@@ -308,7 +312,7 @@ def _atom_types_from_pmd(structure):
                 "epsilon": atom_type.epsilon * u.Unit("kcal / mol"),
             },
             independent_variables={"r"},
-            mass=atom_type.mass,
+            mass=copy.deepcopy(atom_type.mass),
         )
         pmd_top_atomtypes[atom_type] = top_atomtype
     return pmd_top_atomtypes
@@ -414,6 +418,9 @@ def to_parmed(top, refer_type=True):
     msg = "Provided argument is not a topology.Topology."
     assert isinstance(top, gmso.Topology)
 
+    # Copy structure to not overwrite object in memory
+    top = copy.deepcopy(top)
+
     # Set up Parmed structure and define general properties
     structure = pmd.Structure()
     structure.title = top.name
@@ -456,7 +463,9 @@ def to_parmed(top, refer_type=True):
         # Add atom to structure
         if site.residue:
             structure.add_atom(
-                pmd_atom, resname=site.residue.name, resnum=site.residue.number
+                pmd_atom,
+                resname=site.residue.name,
+                resnum=site.residue.number - 1,
             )
         else:
             structure.add_atom(pmd_atom, resname="RES", resnum=-1)
@@ -568,14 +577,20 @@ def _atom_types_from_gmso(top, structure, atom_map):
         atype_epsilon = float(
             atom_type.parameters["epsilon"].to("kcal/mol").value
         )
-        atype_element = element_by_atom_type(atom_type)
+        if atom_type.mass:
+            atype_mass = atom_type.mass.to("amu").value
+        else:
+            atype_mass = element_by_symbol(atom_type.name).mass.to("amu").value
+        atype_atomic_number = getattr(
+            element_by_symbol(atom_type.name), "atomic_number", None
+        )
         atype_rmin = atype_sigma * 2 ** (1 / 6) / 2  # to rmin/2
         # Create unique Parmed AtomType object
         atype = pmd.AtomType(
             atype_name,
             None,
-            atype_element.mass,
-            atype_element.atomic_number,
+            atype_mass,
+            atype_atomic_number,
             atype_charge,
         )
         atype.set_lj_params(atype_epsilon, atype_rmin)
@@ -734,10 +749,17 @@ def _dihedral_types_from_gmso(top, structure, dihedral_map):
             )
             # Create unique DihedralType object
             dtype = pmd.RBTorsionType(
-                dtype_c0, dtype_c1, dtype_c2, dtype_c3, dtype_c4, dtype_c5
+                dtype_c0,
+                dtype_c1,
+                dtype_c2,
+                dtype_c3,
+                dtype_c4,
+                dtype_c5,
+                list=structure.rb_torsion_types,
             )
             # Add RBTorsionType to structure.rb_torsion_types
             structure.rb_torsion_types.append(dtype)
+            # dtype._idx = len(structure.rb_torsion_types) - 1
         else:
             raise GMSOError("msg")
         dtype_map[get_parameters(dihedral_type)] = dtype

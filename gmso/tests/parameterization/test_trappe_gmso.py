@@ -45,7 +45,12 @@ class TestTrappeGMSO(ParameterizationBaseTest):
         mol2_file = system_dir / f"{system_dir.name}.mol2"
         gmso_top = Topology.load(mol2_file)
         struct_pmd = trappe_ua_foyer.apply(to_parmed(gmso_top))
-        apply(gmso_top, trappe_ua_gmso, identify_connected_components=False)
+        apply(
+            gmso_top,
+            trappe_ua_gmso,
+            identify_connected_components=False,
+            identify_connections=True,
+        )
         gmso_top_from_parmeterized_pmd = from_parmed(struct_pmd)
 
         assert_same_atom_params(gmso_top_from_parmeterized_pmd, gmso_top)
