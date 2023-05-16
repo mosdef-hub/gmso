@@ -306,9 +306,9 @@ def generate_pairs_lists(
         {"pairs12": pairs12, "pairs13": pairs13, "pairs14": pairs14}
 
     NOTE: This method assume that the topology has already been loaded with
-    angles and dihedrals (through top.identify_connections). In addition,
-    this method will only generate pairs when the corresponding sclaing
-    factor is not 0.
+    angles and dihedrals (through top.identify_connections()). In addition,
+    if the refer_from_scaling_factor is True, this method will only generate
+    pairs when the corresponding scaling factor is not 0.
     """
     from gmso.external import to_networkx
     from gmso.parameterization.molecule_utils import (
