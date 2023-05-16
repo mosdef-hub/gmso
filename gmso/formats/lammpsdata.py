@@ -1122,7 +1122,7 @@ def _try_default_potential_conversions(top, potentialsDict):
             top.convert_potential_styles(
                 {pot_container: potentialsDict[pot_container]}
             )
-        else:
+        elif getattr(top, pot_container):
             raise AttributeError(
                 f"Missing parameters in {pot_container} for {top.get_untyped(pot_container)}"
             )
