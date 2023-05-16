@@ -364,6 +364,17 @@ class TestLammpsWriter(BaseTest):
         from gmso.formats.lammpsdata import get_units
 
         # real units should be in: [g/mol, angstroms, fs, kcal/mol, kelvin, electon charge, ...]
+        mass_multiplierDict = {
+            "si": 1,
+            "cgs": 1 / 1000,
+            "micro": 1e-15,
+            "nano": 1e-21,
+        }
+        length_multiplierDict = {"si": 1e10, "cgs": 1e8}
+        if unit_style in ["si", "cgs", "micro", "nano"]:
+            typed_ethane.box.lengths *= length_multiplierDict.get(unit_style, 1)
+            for atype in typed_ethane.atom_types:
+                atype.mass = 12 * mass_multiplierDict[unit_style] * u.kg
         typed_ethane.save("ethane.lammps", unit_style=unit_style)
         real_top = Topology().load("ethane.lammps", unit_style=unit_style)
         energy_unit = get_units(unit_style, "energy")
@@ -398,15 +409,28 @@ class TestLammpsWriter(BaseTest):
                     )
                 )
             )
-            assert (
-                real_top.dihedrals[0].dihedral_type.parameters["k1"]
-                == typed_ethane.dihedrals[0].dihedral_type.paramaters["k1"]
-                / largest_eps
+            assert_allclose_units(
+                real_top.dihedrals[0].dihedral_type.parameters["k1"],
+                (
+                    typed_ethane.dihedrals[0].dihedral_type.parameters["k1"]
+                    / largest_eps
+                ),
+                rtol=1e-5,
+                atol=1e-8,
             )
             assert (
-                real_top.bonds[0].bond_type.parameters["r_eq"]
-                == typed_ethane.bonds[0].bond_type.paramaters["r_eq"]
-                / largest_sig
+                real_top.dihedrals[0].dihedral_type.parameters["k1"]
+                == typed_ethane.dihedrals[0].dihedral_type.parameters["k1"]
+                / largest_eps
+            )
+            assert_allclose_units(
+                real_top.bonds[0].bond_type.parameters["r_eq"],
+                (
+                    typed_ethane.bonds[0].bond_type.parameters["r_eq"]
+                    / largest_sig
+                ),
+                rtol=1e-5,
+                atol=1e-8,
             )
 
     # TODO: Test for warning handling
