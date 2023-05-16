@@ -9,7 +9,7 @@ from pathlib import Path
 
 import numpy as np
 import unyt as u
-from sympy import simplify, sympify
+from sympy import simplify, sympify, Symbol
 from unyt import UnitRegistry
 from unyt.array import allclose_units
 
@@ -147,17 +147,63 @@ def _unit_style_factory(style: str):
     return base_units
 
 
-def _expected_dim_factory(parametersMap):
+def _expected_dim_factory():
     # TODO: this should be a function that takes in the styles used for potential equations.
-    # TODO: currently no improper handling
     exp_unitsDict = dict(
         atom=dict(epsilon="energy", sigma="length"),
         bond=dict(k="energy/length**2", r_eq="length"),
         angle=dict(k="energy/angle**2", theta_eq="angle"),
         dihedral=dict(zip(["k1", "k2", "k3", "k4"], ["energy"] * 6)),
+        improper=dict(k="energy", n="dimensionless", phi_eq="angle_eq"),
     )
+
     return exp_unitsDict
 
+# f(parameter, base_unyts, parameter_styleDict) -> converted_parameter_value
+def _parameter_converted_to_float(parameter, base_unyts, conversion_factorDict=None):
+    """Take a given parameter, and return a float of the parameter in the given style."""
+    parameter_dims = parameter.units.dimensions*1
+    new_dims = _dimensions_to_energy(parameter_dims)
+    new_dims = _dimensions_to_charge(new_dims)
+    if conversion_factorDict and base_unyts is None:
+        # multiply object -> split into length, mass, energy, charge -> grab conversion factor from dict
+        # first replace energy for (length)**2*(mass)/(time)**2 u.dimensions.energy. Then iterate through the free symbols
+        # and figure out a way how to add those to the overall conversion factor
+        dim_info = new_dims.as_terms()
+        conversion_factor = 1 * u.Unit("dimensionless")
+        for exponent, ind_dim in zip(dim_info[0][0][1][1], dim_info[1]):
+            factor = conversion_factorDict.get(ind_dim.name[1:-1], 1*u.Unit("dimensionless")) #replace () in name
+            conversion_factor *= factor**exponent
+        return (parameter / conversion_factor).value # Assuming that conversion factor is in right units
+    new_dimStr = str(new_dims)
+    ind_units = re.sub("[^a-zA-Z]+", " ", new_dimStr).split()
+    for unit in ind_units:
+        new_dimStr = new_dimStr.replace(unit, str(base_unyts[unit]))
+    return parameter.to(new_dimStr, registry=base_unyts.registry).value
+
+def _dimensions_to_energy(dims):
+    """Take a set of dimensions and substitute in Symbol("energy") where possible."""
+    symsStr = str(dims.free_symbols)
+    energy_inBool = np.all([dimStr in symsStr for dimStr in ["mass", "length", "time"]])
+    if not energy_inBool:
+        return dims
+    energySym = Symbol("(energy)") # create dummy symbol to replace in equation
+    dim_info = dims.as_terms()
+    time_idx = np.where(list(map(lambda x: x.name == "(time)", dim_info[1])))[0][0]
+    energy_exp = dim_info[0][0][1][1][time_idx] // 2 # energy has 1/time**2 in it, so this is the hint of how many
+    return dims * u.dimensions.energy**energy_exp * energySym**(-1*energy_exp)
+
+def _dimensions_to_charge(dims):
+    """Take a set of dimensions and substitute in Symbol("charge") where possible."""
+    symsStr = str(dims.free_symbols)
+    charge_inBool = np.all([dimStr in symsStr for dimStr in ["current_mks"]])
+    if not charge_inBool:
+        return dims
+    chargeSym = Symbol("(charge)") # create dummy symbol to replace in equation
+    dim_info = dims.as_terms()
+    time_idx = np.where(list(map(lambda x: x.name == "(current_mks)", dim_info[1])))[0][0]
+    charge_exp = dim_info[0][0][1][1][time_idx] # charge has (current_mks) in it, so this is the hint of how many
+    return dims * u.dimensions.charge**(-1*charge_exp) * chargeSym**charge_exp
 
 @saves_as(".lammps", ".lammpsdata", ".data")
 @mark_WIP("Testing in progress")
@@ -223,7 +269,7 @@ def write_lammpsdata(
             )
         )
     # Use gmso unit packages to get into correct lammps formats
-    default_unitMaps = _unit_style_factory(unit_style)
+    base_unyts = _unit_style_factory(unit_style)
     default_parameterMaps = {  # Add more as needed
         "dihedrals": "OPLSTorsionPotential",
         "angles": "LAMMPSHarmonicAnglePotential",
@@ -240,18 +286,20 @@ def write_lammpsdata(
         _try_default_potential_conversions(top, default_parameterMaps)
 
     if strict_units:
-        _validate_unit_compatibility(top, default_unitMaps)
+        _validate_unit_compatibility(top, base_unyts)
     else:
         parametersMap = default_parameterMaps  # TODO: this should be an argument to the lammpswriter
         exp_unitsDict = _expected_dim_factory(parametersMap)
         if default_unitMaps:
-            _lammps_unit_conversions(top, default_unitMaps, exp_unitsDict)
+            pass
+            #_lammps_unit_conversions(top, default_unitMaps, exp_unitsDict)
+            lj_cfactorsDict = None
         else:  # LJ unit styles
-            for source_factor in ["sigma", "epsilon", "mass", "charge"]:
+            for source_factor in ["length", "energy", "mass", "charge"]:
                 lj_cfactorsDict[source_factor] = lj_cfactorsDict.get(
                     source_factor, _default_lj_val(top, source_factor)
                 )
-            _lammps_lj_unit_conversions(top, **lj_cfactorsDict)
+            #_lammps_lj_unit_conversions(top, **lj_cfactorsDict)
 
     # TODO: improve handling of various filenames
     path = Path(filename)
@@ -263,8 +311,8 @@ def write_lammpsdata(
         _write_header(out_file, top, atom_style)
         _write_box(out_file, top)
         if top.is_typed():  # TODO: should this be is_fully_typed?
-            _write_atomtypes(out_file, top)
-            _write_pairtypes(out_file, top)
+            _write_atomtypes(out_file, top, base_unyts, lj_cfactorsDict)
+            _write_pairtypes(out_file, top, base_unyts, lj_cfactorsDict)
             if top.bond_types:
                 _write_bondtypes(out_file, top)
             if top.angle_types:
@@ -795,7 +843,7 @@ def _write_box(out_file, top):
         )
 
 
-def _write_atomtypes(out_file, top):
+def _write_atomtypes(out_file, top, base_unyts, cfactorsDict):
     """Write out atomtypes in GMSO topology to LAMMPS file."""
     # TODO: Get a dictionary of indices and atom types
     # TODO: Allow for unit conversions for the unit styles
@@ -806,13 +854,13 @@ def _write_atomtypes(out_file, top):
         out_file.write(
             "{:d}\t{:.6f}\t# {}\n".format(
                 atypesView.index(atom_type) + 1,
-                atom_type.mass.in_units(u.g / u.mol).value,
+                _parameter_converted_to_float(atom_type.mass, base_unyts, cfactorsDict),
                 atom_type.name,
             )
         )
 
 
-def _write_pairtypes(out_file, top):
+def _write_pairtypes(out_file, top, base_unyts, cfactorsDict):
     """Write out pair interaction to LAMMPS file."""
     # TODO: Modified cross-interactions
     # TODO: Utilize unit styles and nonbonded equations properly
@@ -835,8 +883,8 @@ def _write_pairtypes(out_file, top):
         out_file.write(
             "{}\t{:7.5f}\t\t{:7.5f}\t\t# {}\n".format(
                 idx + 1,
-                param.parameters["epsilon"].in_units(u.Unit("kcal/mol")).value,
-                param.parameters["sigma"].in_units(u.angstrom).value,
+                _parameter_converted_to_float(param.parameters["epsilon"], base_unyts, cfactorsDict),
+                _parameter_converted_to_float(param.parameters["sigma"], base_unyts, cfactorsDict),
                 param.name,
             )
         )
@@ -1062,13 +1110,13 @@ def _lammps_unit_conversions(top, unitsystem, expected_unitsDict):
 
 
 def _default_lj_val(top, source):
-    if source == "sigma":
+    if source == "length":
         return copy.deepcopy(
-            max(list(map(lambda x: x.parameters[source], top.atom_types)))
+            max(list(map(lambda x: x.parameters["sigma"], top.atom_types)))
         )
-    elif source == "epsilon":
+    elif source == "energy":
         return copy.deepcopy(
-            max(list(map(lambda x: x.parameters[source], top.atom_types)))
+            max(list(map(lambda x: x.parameters["epsilon"], top.atom_types)))
         )
     elif source == "mass":
         return copy.deepcopy(max(list(map(lambda x: x.mass, top.atom_types))))
@@ -1085,8 +1133,8 @@ def _lammps_lj_unit_conversions(top, sigma, epsilon, mass, charge):
     for atype in top.atom_types:
         atype.parameters["sigma"] /= sigma
         atype.parameters["epsilon"] /= epsilon
-        atype.mass = atype.mass / mass
-        atype.charge /= charge
+        atype.mass = atype.mass / mass.value
+        atype.charge /= charge.value
     for btype in top.bond_types:
         btype.parameters["k"] /= epsilon
         btype.parameters["r_eq"] /= sigma

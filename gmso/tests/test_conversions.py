@@ -4,6 +4,7 @@ import pytest
 import sympy
 import unyt as u
 from unyt.testing import assert_allclose_units
+import numpy as np
 
 from gmso.tests.base_test import BaseTest
 from gmso.utils.conversions import convert_kelvin_to_energy_units, _convert_params_units
@@ -135,3 +136,44 @@ class TestKelvinToEnergy(BaseTest):
         potentials = _convert_potential_types(typed_ethane, "atom", expected_units_dim, base_units)
         assert str(potentials.iterator[0].atom_type.parameters["epsilon"].units.dimensions) == "(length)**2*(mass)/(time)**2"
         assert potentials.iterator[0].atom_type.parameters["epsilon"].units == u.Unit("kcal/mol")
+
+    def test_lammps_dimensions_to_energy(self):
+        from gmso.formats.lammpsdata import _dimensions_to_energy
+        units = u.Unit("kg")
+        outdims = _dimensions_to_energy(units.dimensions)
+        assert outdims == units.dimensions == u.dimensions.mass
+        units = u.Unit("J")
+        outdims = _dimensions_to_energy(units.dimensions)
+        assert outdims  == sympy.Symbol("(energy)")
+        assert units.dimensions == u.dimensions.length**2 * u.dimensions.mass / u.dimensions.time**2
+        units = u.Unit("kcal/nm")
+        outdims = _dimensions_to_energy(units.dimensions)
+        assert outdims  == sympy.Symbol("(energy)") / u.dimensions.length
+        assert units.dimensions == u.dimensions.length * u.dimensions.mass / u.dimensions.time**2
+
+    def test_lammps_conversion_parameters_base_units(self):
+        from gmso.formats.lammpsdata import _parameter_converted_to_float, _unit_style_factory
+        parameter = 100 * u.Unit("kcal/mol*fs/Å")
+        base_unyts = _unit_style_factory("real") # "lammps_real", "Å", "amu", "fs", "K", "rad"
+        float_param = _parameter_converted_to_float(parameter, base_unyts, conversion_factorDict=None)
+        assert float_param == 100
+        parameter = 100 * u.Unit("K*fs/amu/nm")
+        float_param = _parameter_converted_to_float(parameter, base_unyts, conversion_factorDict=None)
+        assert float_param == 10
+        parameter = 100 * u.Unit("km*g*ms*kJ*degree")
+        base_unyts = _unit_style_factory("si") # "lammps_si", "m", "kg", "s", "K", "rad",
+        float_param = _parameter_converted_to_float(parameter, base_unyts, conversion_factorDict=None)
+        assert float_param == 100 * np.pi / 180
+        parameter = 1 * u.Unit("g*kJ*Coulomb*m*degree")
+        base_unyts = _unit_style_factory("si") # "lammps_si", "m", "kg", "s", "K", "rad"
+        float_param = _parameter_converted_to_float(parameter, base_unyts, conversion_factorDict=None)
+        assert np.isclose(float_param, np.pi/180, 1e-5)
+
+    def test_lammps_conversion_parameters_lj(self):
+        from gmso.formats.lammpsdata import _parameter_converted_to_float, _unit_style_factory
+        parameter = 1 * u.Unit("g*kJ*Coulomb*m*degree")
+        conversion_factorDict = {"mass": 3 * u.Unit("g"), "energy":3 * u.Unit("kJ"), "charge": 3* u.Unit("Coulomb"), "length":3 * u.Unit("m")}
+        base_unyts = _unit_style_factory("lj")
+        float_param = _parameter_converted_to_float(parameter, base_unyts, conversion_factorDict=conversion_factorDict)
+        assert float_param == 1 / 3**4
+
