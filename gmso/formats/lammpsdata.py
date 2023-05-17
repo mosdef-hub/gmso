@@ -9,7 +9,7 @@ from pathlib import Path
 
 import numpy as np
 import unyt as u
-from sympy import Symbol, simplify, sympify
+from sympy import Symbol
 from unyt import UnitRegistry
 from unyt.array import allclose_units
 
@@ -302,14 +302,13 @@ def write_lammpsdata(
     if strict_units:
         _validate_unit_compatibility(top, base_unyts)
     else:
-        parametersMap = default_parameterMaps  # TODO: this should be an argument to the lammpswriter
-        if base_unyts:
-            pass
+        if base_unyts and unit_style != "lj":
             lj_cfactorsDict = None
         else:  # LJ unit styles
             for source_factor in ["length", "energy", "mass", "charge"]:
+                default_val_from_topology = _default_lj_val(top, source_factor)
                 lj_cfactorsDict[source_factor] = lj_cfactorsDict.get(
-                    source_factor, _default_lj_val(top, source_factor)
+                    source_factor, default_val_from_topology
                 )
 
     # TODO: improve handling of various filenames
@@ -826,12 +825,10 @@ def _write_box(out_file, top, base_unyts, cfactorsDict):
         a, b, c = top.box.lengths
         alpha, beta, gamma = top.box.angles
 
-        lx = a
         xy = b * np.cos(gamma)
         xz = c * np.cos(beta)
         ly = np.sqrt(b**2 - xy**2)
         yz = (b * c * np.cos(alpha) - xy * xz) / ly
-        lz = np.sqrt(c**2 - xz**2 - yz**2)
 
         xhi = vectors[0][0]
         yhi = vectors[1][1]
@@ -1101,7 +1098,7 @@ def _write_conn_data(out_file, top, connIter, connStr):
     out_file.write(f"\n{connStr.capitalize()}\n\n")
     indexList = list(
         map(
-            lambda x: get_sorted_names(x),
+            get_sorted_names,
             getattr(top, connStr[:-1] + "_types")(filter_by=pfilter),
         )
     )

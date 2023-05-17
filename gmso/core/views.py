@@ -56,6 +56,9 @@ def get_sorted_names(potential):
             return potential.member_types
     elif isinstance(potential, ImproperType):
         return (potential.member_types[0], *sorted(potential.member_types[1:]))
+    return ValueError(
+        f"Potential {potential} not one of {potential_attribute_map.values()}"
+    )
 
 
 def get_parameters(potential):
@@ -168,11 +171,13 @@ class TopologyPotentialView:
         for j, potential in enumerate(self.yield_view()):
             if potential is item:
                 return j
+        return
 
     def equality_index(self, item):
         for j, potential in enumerate(self.yield_view()):
             if potential == item:
                 return j
+        return
 
     def _collect_potentials(self):
         """Collect potentials from the iterator"""

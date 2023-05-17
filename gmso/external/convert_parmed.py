@@ -8,11 +8,7 @@ import unyt as u
 from symengine import expand
 
 import gmso
-from gmso.core.element import (
-    element_by_atom_type,
-    element_by_atomic_number,
-    element_by_symbol,
-)
+from gmso.core.element import element_by_atomic_number, element_by_symbol
 from gmso.core.views import PotentialFilters, get_parameters
 
 pfilter = PotentialFilters.UNIQUE_PARAMETERS

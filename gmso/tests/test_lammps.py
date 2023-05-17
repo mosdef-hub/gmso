@@ -30,7 +30,7 @@ def compare_lammps_files(fn1, fn2, skip_linesList=[]):
             try:
                 comp1 = float(arg1)
                 comp2 = float(arg2)
-            except:
+            except ValueError:
                 comp1 = str(arg1)
                 comp2 = str(arg2)
             if isinstance(comp1, float):
@@ -434,18 +434,16 @@ class TestLammpsWriter(BaseTest):
             )
 
     # TODO: Test for warning handling
-    def test_lammps_warnings(self, typed_ethane_opls):
+    def test_lammps_warnings(self, typed_ethane):
         with pytest.warns(
             UserWarning, match="Call to function write_lammpsdata is WIP."
         ):
             """check for warning about WIP"""
-            typed_ethane_opls.save("warning.lammps")
+            typed_ethane.save("warning.lammps")
 
     # TODO: Test for error handling
     from gmso.exceptions import EngineIncompatibilityError
 
     def test_lammps_errors(self, typed_ethane):
-        from gmso.exceptions import EngineIncompatibilityError
-
-        with pytest.raises(EngineIncompatibilityError):
-            typed_ethane.save("error.lammps", strict_potentials=True)
+        with pytest.raises(UnsupportedFileFormatError):
+            typed_ethane.save("error.lammmps")

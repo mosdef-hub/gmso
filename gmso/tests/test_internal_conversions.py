@@ -45,9 +45,7 @@ class TestInternalConversions(BaseTest):
         )
 
         with pytest.raises(GMSOError, match="Cannot use"):
-            opls_connection_type = convert_ryckaert_to_fourier(
-                ryckaert_connection_type
-            )
+            convert_ryckaert_to_fourier(ryckaert_connection_type)
 
         expression = "c0+c1+c2+c3+c4+c5+phi"
         variables = ryckaert_bellemans_torsion_potential.independent_variables
@@ -59,9 +57,7 @@ class TestInternalConversions(BaseTest):
         )
 
         with pytest.raises(GMSOError, match="Cannot use"):
-            opls_connection_type = convert_ryckaert_to_fourier(
-                ryckaert_connection_type
-            )
+            convert_ryckaert_to_fourier(ryckaert_connection_type)
 
         # Pick some OPLS parameters at random
         params = {

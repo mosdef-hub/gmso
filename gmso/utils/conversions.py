@@ -1,5 +1,4 @@
 """Module for standard conversions needed in molecular simulations."""
-import copy
 import re
 from functools import lru_cache
 
@@ -27,8 +26,9 @@ def _constant_multiplier(pot1, pot2):
                 if eq_term.is_symbol:
                     key = str(eq_term)
                     return {key: pot1.parameters[key] * float(constant)}
-    except:
-        return None
+    except Exception:
+        pass
+    return None
 
 
 sympy_conversionsList = [_constant_multiplier]
@@ -46,28 +46,25 @@ def _try_sympy_conversions(pot1, pot2):
         return convertersList[
             completed_conversions[0]
         ]  # return first completed value
+    return None
 
 
 def convert_topology_expressions(top, expressionMap={}):
     """Convert from one parameter form to another.
+
     Parameters
     ----------
     expressionMap : dict, default={}
         map with keys of the potential type and the potential to change to
 
     Examples
-    ________
-    # Convert from RB torsions to OPLS torsions
+    --------
+    Convert from RB torsions to OPLS torsions
     top.convert_expressions({"dihedrals": "OPLSTorsionPotential"})
     """
     # TODO: Raise errors
 
     # Apply from predefined conversions or easy sympy conversions
-    from gmso.utils.conversions import (
-        convert_opls_to_ryckaert,
-        convert_ryckaert_to_opls,
-    )
-
     conversions_map = {
         (
             "OPLSTorsionPotential",
@@ -83,7 +80,6 @@ def convert_topology_expressions(top, expressionMap={}):
         ): convert_ryckaert_to_opls,
     }  # map of all accessible conversions currently supported
 
-    # top = copy.deepcopy(main_top) # TODO: Do we need this?
     for conv in expressionMap:
         # check all connections with these types for compatibility
         for conn in getattr(top, conv):
@@ -120,11 +116,6 @@ def convert_topology_expressions(top, expressionMap={}):
                     modified_connection_parametersDict
                 )
 
-    return top
-
-
-def convert_topology_units(top, unitSet):
-    # TODO: Take a unitSet and convert all units within it to a new function
     return top
 
 

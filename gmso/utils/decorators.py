@@ -65,7 +65,7 @@ def _deprecate_kwargs(kwargs, deprecated_kwargs):
 
 
 def mark_WIP(message=""):
-    """Decorate functions with WIP marking"""
+    """Decorate functions with WIP marking."""
 
     def _function_wrapper(function):
         @functools.wraps(function)
@@ -82,21 +82,3 @@ def mark_WIP(message=""):
         return _inner
 
     return _function_wrapper
-
-
-class mark_WIP2:
-    """Decorate functions with WIP marking"""
-
-    def __init__(self, function):
-        self.function = function
-        warnings.warn("hello", UserWarning, 2)
-
-    def __call__(self, *args, **kwargs):
-        raise Exception
-        print("Inside decorator")
-        warnings.warn(
-            f"Function {func.__name__} is WIP",
-            UserWarning,
-            3,
-        )
-        return self.function(*args, **kwargs)
