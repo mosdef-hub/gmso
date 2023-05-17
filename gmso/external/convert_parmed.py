@@ -1,5 +1,6 @@
 """Module support for converting to/from ParmEd objects."""
 import warnings
+from operator import attrgetter, itemgetter
 
 import numpy as np
 import unyt as u
@@ -7,6 +8,9 @@ from symengine import expand
 
 import gmso
 from gmso.core.element import element_by_atom_type, element_by_atomic_number
+from gmso.core.views import PotentialFilters, get_parameters
+
+pfilter = PotentialFilters.UNIQUE_PARAMETERS
 from gmso.exceptions import GMSOError
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.io import has_parmed, import_
@@ -44,47 +48,21 @@ def from_parmed(structure, refer_type=True):
     site_map = dict()
 
     if np.all(structure.box):
-        # This is if we choose for topology to have abox
+        # add gmso box from structure
         top.box = gmso.Box(
             (structure.box[0:3] * u.angstrom).in_units(u.nm),
             angles=u.degree * structure.box[3:6],
         )
+    top.combining_rule = structure.combining_rule
 
     # Consolidate parmed atomtypes and relate topology atomtypes
     if refer_type:
         pmd_top_atomtypes = _atom_types_from_pmd(structure)
-        # Consolidate parmed bondtypes and relate to topology bondtypes
-        bond_types_map = _get_types_map(structure, "bonds")
-        pmd_top_bondtypes = _bond_types_from_pmd(
-            structure, bond_types_members_map=bond_types_map
-        )
-        # Consolidate parmed angletypes and relate to topology angletypes
-        angle_types_map = _get_types_map(structure, "angles")
-        pmd_top_angletypes = _angle_types_from_pmd(
-            structure, angle_types_member_map=angle_types_map
-        )
-        # Consolidate parmed dihedraltypes and relate to topology dihedraltypes
-        # TODO: CCC seperate structure dihedrals.improper = False
-        dihedral_types_map = _get_types_map(
-            structure, "dihedrals", impropers=False
-        )
-        dihedral_types_map.update(_get_types_map(structure, "rb_torsions"))
-        pmd_top_dihedraltypes = _dihedral_types_from_pmd(
-            structure, dihedral_types_member_map=dihedral_types_map
-        )
-        # Consolidate parmed dihedral/impropertypes and relate to topology impropertypes
-        # TODO: CCC seperate structure dihedrals.improper = True
-        improper_types_map = _get_types_map(structure, "impropers")
-        improper_types_map.update(
-            _get_types_map(structure, "dihedrals"), impropers=True
-        )
-        pmd_top_impropertypes = _improper_types_from_pmd(
-            structure, improper_types_member_map=improper_types_map
-        )
 
     ind_res = _check_independent_residues(structure)
     for residue in structure.residues:
         for atom in residue.atoms:
+            # add atom to sites in gmso
             element = (
                 element_by_atomic_number(atom.element) if atom.element else None
             )
@@ -102,131 +80,185 @@ def from_parmed(structure, refer_type=True):
                 if refer_type and isinstance(atom.atom_type, pmd.AtomType)
                 else None
             )
-
             site_map[atom] = site
             top.add_site(site)
 
+    harmonicbond_potential = lib["HarmonicBondPotential"]
+    name = harmonicbond_potential.name
+    expression = harmonicbond_potential.expression
+    variables = harmonicbond_potential.independent_variables
     for bond in structure.bonds:
-        # Generate bond parameters for BondType that gets passed
-        # to Bond
+        # Generate bonds and harmonic parameters
+        # If typed, assumed to be harmonic bonds
         top_connection = gmso.Bond(
-            connection_members=[site_map[bond.atom1], site_map[bond.atom2]]
+            connection_members=_sort_bond_members(
+                top, site_map, *attrgetter("atom1", "atom2")(bond)
+            )
         )
         if refer_type and isinstance(bond.type, pmd.BondType):
-            top_connection.bond_type = pmd_top_bondtypes[bond.type]
+            conn_params = {
+                "k": (2 * bond.type.k * u.Unit("kcal / (angstrom**2 * mol)")),
+                "r_eq": bond.type.req * u.angstrom,
+            }
+            _add_conn_type_from_pmd(
+                connStr="BondType",
+                gmso_conn=top_connection,
+                conn_params=conn_params,
+                name=name,
+                expression=expression,
+                variables=variables,
+            )
         top.add_connection(top_connection, update_types=False)
 
+    harmonicangle_potential = lib["HarmonicAnglePotential"]
+    name = harmonicangle_potential.name
+    expression = harmonicangle_potential.expression
+    variables = harmonicangle_potential.independent_variables
     for angle in structure.angles:
-        # Generate angle parameters for AngleType that gets passed
-        # to Angle
+        # Generate angles and harmonic parameters
+        # If typed, assumed to be harmonic angles
         top_connection = gmso.Angle(
-            connection_members=[
-                site_map[angle.atom1],
-                site_map[angle.atom2],
-                site_map[angle.atom3],
-            ]
+            connection_members=_sort_angle_members(
+                top, site_map, *attrgetter("atom1", "atom2", "atom3")(angle)
+            )
         )
         if refer_type and isinstance(angle.type, pmd.AngleType):
-            top_connection.angle_type = pmd_top_angletypes[angle.type]
+            conn_params = {
+                "k": (2 * angle.type.k * u.Unit("kcal / (rad**2 * mol)")),
+                "theta_eq": (angle.type.theteq * u.degree),
+            }
+            _add_conn_type_from_pmd(
+                connStr="AngleType",
+                gmso_conn=top_connection,
+                conn_params=conn_params,
+                name=name,
+                expression=expression,
+                variables=variables,
+            )
         top.add_connection(top_connection, update_types=False)
 
+    periodic_torsion_potential = lib["PeriodicTorsionPotential"]
+    name_proper = periodic_torsion_potential.name
+    expression_proper = periodic_torsion_potential.expression
+    variables_proper = periodic_torsion_potential.independent_variables
+    periodic_imp_potential = lib["PeriodicImproperPotential"]
+    name_improper = periodic_imp_potential.name
+    expression_improper = periodic_imp_potential.expression
+    variables_improper = periodic_imp_potential.independent_variables
     for dihedral in structure.dihedrals:
-        # Generate parameters for ImproperType or DihedralType that gets passed
-        # to corresponding Dihedral or Improper
-        # These all follow periodic torsions functions
-        # Which are the default expression in top.DihedralType
-        # These periodic torsion dihedrals get stored in top.dihedrals
-        # and periodic torsion impropers get stored in top.impropers
-
+        # Generate dihedrals and impropers from structure.dihedrals
+        # If typed, assumed to be periodic
         if dihedral.improper:
-            warnings.warn(
-                "ParmEd improper dihedral {} ".format(dihedral)
-                + "following periodic torsion "
-                + "expression detected, currently accounted for as "
-                + "topology.Improper with a periodic improper expression"
-            )
-            # TODO: Improper atom order is not always clear in a Parmed object.
-            # This reader assumes the order of impropers is central atom first,
-            # so that is where the central atom is located. This decision comes
-            # from .top files in utils/files/NN-dimethylformamide.top, which
-            # clearly places the periodic impropers with central atom listed first,
-            # and that is where the atom is placed in the parmed.dihedrals object.
             top_connection = gmso.Improper(
-                connection_members=[
-                    site_map[dihedral.atom1],
-                    site_map[dihedral.atom2],
-                    site_map[dihedral.atom3],
-                    site_map[dihedral.atom4],
-                ],
+                connection_members=_sort_improper_members(
+                    top,
+                    site_map,
+                    *attrgetter("atom1", "atom2", "atom3", "atom4")(dihedral),
+                )
             )
             if refer_type and isinstance(dihedral.type, pmd.DihedralType):
-                top_connection.improper_type = pmd_top_impropertypes[
-                    id(dihedral.type)
-                ]
+                conn_params = {
+                    "k": (dihedral.type.phi_k * u.Unit("kcal / mol")),
+                    "phi_eq": (dihedral.type.phase * u.degree),
+                    "n": dihedral.type.per * u.dimensionless,
+                }
+                _add_conn_type_from_pmd(
+                    connStr="ImproperType",
+                    gmso_conn=top_connection,
+                    conn_params=conn_params,
+                    name=name_improper,
+                    expression=expression_improper,
+                    variables=variables_improper,
+                )
         else:
             top_connection = gmso.Dihedral(
-                connection_members=[
-                    site_map[dihedral.atom1],
-                    site_map[dihedral.atom2],
-                    site_map[dihedral.atom3],
-                    site_map[dihedral.atom4],
-                ]
+                connection_members=_sort_dihedral_members(
+                    top,
+                    site_map,
+                    *attrgetter("atom1", "atom2", "atom3", "atom4")(dihedral),
+                )
             )
             if refer_type and isinstance(dihedral.type, pmd.DihedralType):
-                top_connection.dihedral_type = pmd_top_dihedraltypes[
-                    id(dihedral.type)
-                ]
-            # No bond parameters, make Connection with no connection_type
+                conn_params = {
+                    "k": (dihedral.type.phi_k * u.Unit("kcal / mol")),
+                    "phi_eq": (dihedral.type.phase * u.degree),
+                    "n": dihedral.type.per * u.dimensionless,
+                }
+                _add_conn_type_from_pmd(
+                    connStr="DihedralType",
+                    gmso_conn=top_connection,
+                    conn_params=conn_params,
+                    name=name_proper,
+                    expression=expression_proper,
+                    variables=variables_proper,
+                )
         top.add_connection(top_connection, update_types=False)
 
+    ryckaert_bellemans_torsion_potential = lib[
+        "RyckaertBellemansTorsionPotential"
+    ]
+    name = ryckaert_bellemans_torsion_potential.name
+    expression = ryckaert_bellemans_torsion_potential.expression
+    variables = ryckaert_bellemans_torsion_potential.independent_variables
     for rb_torsion in structure.rb_torsions:
-        # Generate dihedral parameters for DihedralType that gets passed
-        # to Dihedral
-        # These all follow RB torsion functions
-        # These RB torsion dihedrals get stored in top.dihedrals
-        if rb_torsion.improper:
-            warnings.warn(
-                "ParmEd improper dihedral {} ".format(rb_torsion)
-                + "following RB torsion "
-                + "expression detected, currently accounted for as "
-                + "topology.Dihedral with a RB torsion expression"
-            )
-
+        # Generate dihedrals from structure rb_torsions
+        # If typed, assumed to be ryckaert bellemans torsions
         top_connection = gmso.Dihedral(
-            connection_members=[
-                site_map[rb_torsion.atom1],
-                site_map[rb_torsion.atom2],
-                site_map[rb_torsion.atom3],
-                site_map[rb_torsion.atom4],
-            ],
+            connection_members=_sort_dihedral_members(
+                top,
+                site_map,
+                *attrgetter("atom1", "atom2", "atom3", "atom4")(rb_torsion),
+            )
         )
         if refer_type and isinstance(rb_torsion.type, pmd.RBTorsionType):
-            top_connection.dihedral_type = pmd_top_dihedraltypes[
-                id(rb_torsion.type)
-            ]
+            conn_params = {
+                "c0": (rb_torsion.type.c0 * u.Unit("kcal/mol")),
+                "c1": (rb_torsion.type.c1 * u.Unit("kcal/mol")),
+                "c2": (rb_torsion.type.c2 * u.Unit("kcal/mol")),
+                "c3": (rb_torsion.type.c3 * u.Unit("kcal/mol")),
+                "c4": (rb_torsion.type.c4 * u.Unit("kcal/mol")),
+                "c5": (rb_torsion.type.c5 * u.Unit("kcal/mol")),
+            }
+            _add_conn_type_from_pmd(
+                connStr="DihedralType",
+                gmso_conn=top_connection,
+                conn_params=conn_params,
+                name=name,
+                expression=expression,
+                variables=variables,
+            )
         top.add_connection(top_connection, update_types=False)
 
+    periodic_torsion_potential = lib["HarmonicTorsionPotential"]
+    name = periodic_torsion_potential.name
+    expression = periodic_torsion_potential.expression
+    variables = periodic_torsion_potential.independent_variables
     for improper in structure.impropers:
-        # TODO: Improper atom order is not always clear in a Parmed object.
-        # This reader assumes the order of impropers is central atom first,
-        # so that is where the central atom is located. This decision comes
-        # from .top files in utils/files/NN-dimethylformamide.top, which
-        # clearly places the periodic impropers with central atom listed first,
-        # and that is where the atom is placed in the parmed.dihedrals object.
+        # Generate impropers from structure impropers
+        # If typed, assumed to be harmonic torsions
         top_connection = gmso.Improper(
-            connection_members=[
-                site_map[improper.atom1],
-                site_map[improper.atom2],
-                site_map[improper.atom3],
-                site_map[improper.atom4],
-            ],
+            connection_members=_sort_improper_members(
+                top,
+                site_map,
+                *attrgetter("atom1", "atom2", "atom3", "atom4")(improper),
+            )
         )
         if refer_type and isinstance(improper.type, pmd.ImproperType):
-            top_connection.improper_type = pmd_top_impropertypes[improper.type]
+            conn_params = {
+                "k": (improper.type.psi_k * u.kcal / (u.mol * u.radian**2)),
+                "phi_eq": (improper.type.psi_eq * u.degree),
+            }
+            _add_conn_type_from_pmd(
+                connStr="ImproperType",
+                gmso_conn=top_connection,
+                conn_params=conn_params,
+                name=name,
+                expression=expression,
+                variables=variables,
+            )
         top.add_connection(top_connection, update_types=False)
 
     top.update_topology()
-    top.combining_rule = structure.combining_rule
     return top
 
 
@@ -276,210 +308,81 @@ def _atom_types_from_pmd(structure):
     return pmd_top_atomtypes
 
 
-def _bond_types_from_pmd(structure, bond_types_members_map=None):
-    """Convert ParmEd bondtypes to GMSO BondType.
-
-    This function takes in a Parmed Structure, iterate through its
-    bond_types, create a corresponding GMSO.BondType, and finally
-    return a dictionary containing all pairs of pmd.BondType
-    and GMSO.BondType
-
-    Parameters
-    ----------
-    structure: pmd.Structure
-        Parmed Structure that needed to be converted.
-    bond_types_members_map: optional, dict, default=None
-        The member types (atomtype string) for each atom associated with the bond_types the structure
-
-    Returns
-    -------
-    pmd_top_bondtypes : dict
-        A dictionary linking a pmd.BondType object to its
-        corresponding GMSO.BondType object.
-    """
-    pmd_top_bondtypes = dict()
-    bond_types_members_map = _assert_dict(
-        bond_types_members_map, "bond_types_members_map"
-    )
-    for btype in structure.bond_types:
-        bond_params = {
-            "k": (2 * btype.k * u.Unit("kcal / (angstrom**2 * mol)")),
-            "r_eq": btype.req * u.angstrom,
-        }
-        expr = gmso.BondType._default_potential_expr()
-        expr.set(parameters=bond_params)
-
-        member_types = bond_types_members_map.get(id(btype))
-        top_bondtype = gmso.BondType(
-            potential_expression=expr, member_types=member_types
-        )
-        pmd_top_bondtypes[btype] = top_bondtype
-    return pmd_top_bondtypes
-
-
-def _angle_types_from_pmd(structure, angle_types_member_map=None):
-    """Convert ParmEd angle types to  GMSO AngleType.
-
-    This function takes in a Parmed Structure, iterates through its
-    angle_types, create a corresponding GMSO.AngleType, and finally
-    return a dictionary containing all pairs of pmd.AngleType
-    and GMSO.AngleType
-
-    Parameters
-    ----------
-    structure: pmd.Structure
-        Parmed Structure that needed to be converted.
-    angle_types_member_map: optional, dict, default=None
-        The member types (atomtype string) for each atom associated with the angle_types the structure
-
-    Returns
-    -------
-    pmd_top_angletypes : dict
-        A dictionary linking a pmd.AngleType object to its
-        corresponding GMSO.AngleType object.
-    """
-    pmd_top_angletypes = dict()
-    angle_types_member_map = _assert_dict(
-        angle_types_member_map, "angle_types_member_map"
+def _sort_bond_members(top, site_map, atom1, atom2):
+    return sorted(
+        [site_map[atom1], site_map[atom2]], key=lambda x: top.get_index(x)
     )
 
-    for angletype in structure.angle_types:
-        angle_params = {
-            "k": (2 * angletype.k * u.Unit("kcal / (rad**2 * mol)")),
-            "theta_eq": (angletype.theteq * u.degree),
-        }
-        expr = gmso.AngleType._default_potential_expr()
-        expr.parameters = angle_params
-        # Do we need to worry about Urey Bradley terms
-        # For Urey Bradley:
-        # k in (kcal/(angstrom**2 * mol))
-        # r_eq in angstrom
-        member_types = angle_types_member_map.get(id(angletype))
-        top_angletype = gmso.AngleType(
-            potential_expression=expr, member_types=member_types
-        )
-        pmd_top_angletypes[angletype] = top_angletype
-    return pmd_top_angletypes
+
+def _sort_angle_members(top, site_map, atom1, atom2, atom3):
+    sorted_angles = sorted(
+        [site_map[atom1], site_map[atom3]], key=lambda x: top.get_index(x)
+    )
+    return (sorted_angles[0], site_map[atom2], sorted_angles[1])
 
 
-def _dihedral_types_from_pmd(structure, dihedral_types_member_map=None):
+# function to check reversibility of dihedral type
+rev_dih_order = lambda top, site_map, x, y: top.get_index(
+    site_map[x]
+) > top.get_index(site_map[y])
+
+
+def _sort_dihedral_members(top, site_map, atom1, atom2, atom3, atom4):
+    if rev_dih_order(top, site_map, atom2, atom3):
+        return itemgetter(atom4, atom3, atom2, atom1)(site_map)
+    return itemgetter(atom1, atom2, atom3, atom4)(site_map)
+
+
+def _sort_improper_members(top, site_map, atom1, atom2, atom3, atom4):
+    sorted_impropers = sorted(
+        [site_map[atom2], site_map[atom3], site_map[atom4]],
+        key=lambda x: top.get_index(x),
+    )
+    return (site_map[atom1], *sorted_impropers)
+
+
+def _add_conn_type_from_pmd(
+    connStr, gmso_conn, conn_params, name, expression, variables
+):
     """Convert ParmEd dihedral types to GMSO DihedralType.
 
     This function take in a Parmed Structure, iterate through its
-    dihedral_types and rb_torsion_types, create a corresponding
+    dihedral_types, create a corresponding
     GMSO.DihedralType, and finally return a dictionary containing all
-    pairs of pmd.Dihedraltype (or pmd.RBTorsionType) and GMSO.DihedralType
-
+    pairs of pmd.Dihedraltype and GMSO.DihedralType
     Parameters
     ----------
     structure: pmd.Structure
         Parmed Structure that needed to be converted.
-    dihedral_types_member_map: optional, dict, default=None
-        The member types (atomtype string) for each atom associated with the dihedral_types the structure
 
     Returns
     -------
     pmd_top_dihedraltypes : dict
-        A dictionary linking a pmd.DihedralType or pmd.RBTorsionType
+        A dictionary linking a pmd.DihedralType
         object to its corresponding GMSO.DihedralType object.
     """
-    pmd_top_dihedraltypes = dict()
-    dihedral_types_member_map = _assert_dict(
-        dihedral_types_member_map, "dihedral_types_member_map"
+    try:
+        member_types = list(
+            map(lambda x: x.atom_type.name, gmso_conn.connection_members)
+        )
+    except AttributeError:
+        member_types = list(
+            map(lambda x: f"{x}: {x.atom_type})", gmso_conn.connection_members)
+        )
+        raise AttributeError(
+            f"Parmed structure is missing atomtypes. One of the atomtypes in \
+            {member_types} is missing a type from the ParmEd structure.\
+            Try using refer_type=False to not look for a parameterized structure."
+        )
+    top_conntype = getattr(gmso, connStr)(
+        name=name,
+        parameters=conn_params,
+        expression=expression,
+        independent_variables=variables,
+        member_types=member_types,
     )
-
-    for dihedraltype in structure.dihedral_types:
-        dihedral_params = {
-            "k": (dihedraltype.phi_k * u.Unit("kcal / mol")),
-            "phi_eq": (dihedraltype.phase * u.degree),
-            "n": dihedraltype.per * u.dimensionless,
-        }
-        expr = gmso.DihedralType._default_potential_expr()
-        expr.parameters = dihedral_params
-        member_types = dihedral_types_member_map.get(id(dihedraltype))
-        top_dihedraltype = gmso.DihedralType(
-            potential_expression=expr, member_types=member_types
-        )
-        pmd_top_dihedraltypes[id(dihedraltype)] = top_dihedraltype
-
-    for dihedraltype in structure.rb_torsion_types:
-        dihedral_params = {
-            "c0": (dihedraltype.c0 * u.Unit("kcal/mol")),
-            "c1": (dihedraltype.c1 * u.Unit("kcal/mol")),
-            "c2": (dihedraltype.c2 * u.Unit("kcal/mol")),
-            "c3": (dihedraltype.c3 * u.Unit("kcal/mol")),
-            "c4": (dihedraltype.c4 * u.Unit("kcal/mol")),
-            "c5": (dihedraltype.c5 * u.Unit("kcal/mol")),
-        }
-
-        member_types = dihedral_types_member_map.get(id(dihedraltype))
-
-        top_dihedraltype = gmso.DihedralType(
-            parameters=dihedral_params,
-            expression="c0 * cos(phi)**0 + c1 * cos(phi)**1 + "
-            + "c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + "
-            + "c5 * cos(phi)**5",
-            independent_variables="phi",
-            member_types=member_types,
-        )
-        pmd_top_dihedraltypes[id(dihedraltype)] = top_dihedraltype
-    return pmd_top_dihedraltypes
-
-
-def _improper_types_from_pmd(structure, improper_types_member_map=None):
-    """Convert ParmEd improper types to GMSO ImproperType.
-
-    This function take in a Parmed Structure, iterate through its
-    improper_types and dihedral_types with the `improper=True` flag,
-    create a corresponding GMSO.ImproperType, and finally return
-    a dictionary containing all pairs of pmd.ImproperType
-    (or pmd.DihedralType) and GMSO.ImproperType
-
-    Parameters
-    ----------
-    structure: pmd.Structure
-        Parmed Structure that needed to be converted.
-    improper_types_member_map: optional, dict, default=None
-        The member types (atomtype string) for each atom associated with the improper_types the structure
-
-    Returns
-    -------
-    pmd_top_impropertypes : dict
-        A dictionary linking a pmd.ImproperType or pmd.DihedralType
-        object to its corresponding GMSO.ImproperType object.
-    """
-    pmd_top_impropertypes = dict()
-    improper_types_member_map = _assert_dict(
-        improper_types_member_map, "improper_types_member_map"
-    )
-
-    for dihedraltype in structure.dihedral_types:
-        improper_params = {
-            "k": (dihedraltype.phi_k * u.Unit("kcal / mol")),
-            "phi_eq": (dihedraltype.phase * u.degree),
-            "n": dihedraltype.per * u.dimensionless,
-        }
-        expr = lib["PeriodicImproperPotential"]
-        member_types = improper_types_member_map.get(id(dihedraltype))
-        top_impropertype = gmso.ImproperType.from_template(
-            potential_template=expr, parameters=improper_params
-        )
-        pmd_top_impropertypes[id(dihedraltype)] = top_impropertype
-        top_impropertype.member_types = member_types
-
-    for impropertype in structure.improper_types:
-        improper_params = {
-            "k": (impropertype.psi_k * u.kcal / (u.mol * u.radian**2)),
-            "phi_eq": (impropertype.psi_eq * u.degree),
-        }
-        expr = lib["HarmonicImproperPotential"]
-        member_types = improper_types_member_map.get(id(impropertype))
-        top_impropertype = gmso.ImproperType.from_template(
-            potential_template=expr, parameters=improper_params
-        )
-        top_impropertype.member_types = member_types
-        pmd_top_impropertypes[impropertype] = top_impropertype
-    return pmd_top_impropertypes
+    conntypeStr = connStr.lower()[:-4] + "_type"
+    setattr(gmso_conn, conntypeStr, top_conntype)
 
 
 def to_parmed(top, refer_type=True):
@@ -692,7 +595,7 @@ def _bond_types_from_gmso(top, structure, bond_map):
         The destination parmed Structure
     """
     btype_map = dict()
-    for bond_type in top.bond_types:
+    for bond_type in top.bond_types(filter_by=pfilter):
         msg = "Bond type {} expression does not match Parmed BondType default expression".format(
             bond_type.name
         )
@@ -706,15 +609,15 @@ def _bond_types_from_gmso(top, structure, bond_map):
         btype_r_eq = float(bond_type.parameters["r_eq"].to("angstrom").value)
         # Create unique Parmed BondType object
         btype = pmd.BondType(btype_k, btype_r_eq)
-        # Type map to match Topology BondType with Parmed BondType
-        btype_map[bond_type] = btype
+        # Type map to match Topology BondType parameters with Parmed BondType
+        btype_map[get_parameters(bond_type)] = btype
         # Add BondType to structure.bond_types
         structure.bond_types.append(btype)
 
     for bond in top.bonds:
         # Assign bond_type to bond
         pmd_bond = bond_map[bond]
-        pmd_bond.type = btype_map[bond.connection_type]
+        pmd_bond.type = btype_map[get_parameters(bond.bond_type)]
     structure.bond_types.claim()
 
 
@@ -732,7 +635,7 @@ def _angle_types_from_gmso(top, structure, angle_map):
         The destination parmed Structure
     """
     agltype_map = dict()
-    for angle_type in top.angle_types:
+    for angle_type in top.angle_types(filter_by=pfilter):
         msg = "Angle type {} expression does not match Parmed AngleType default expression".format(
             angle_type.name
         )
@@ -749,14 +652,20 @@ def _angle_types_from_gmso(top, structure, angle_map):
         # Create unique Parmed AngleType object
         agltype = pmd.AngleType(agltype_k, agltype_theta_eq)
         # Type map to match Topology AngleType with Parmed AngleType
-        agltype_map[angle_type] = agltype
+        #
+        for key, value in agltype_map.items():
+            if value == agltype:
+                agltype = value
+                break
+        agltype_map[get_parameters(angle_type)] = agltype
         # Add AngleType to structure.angle_types
-        structure.angle_types.append(agltype)
+        if agltype not in structure.angle_types:
+            structure.angle_types.append(agltype)
 
     for angle in top.angles:
         # Assign angle_type to angle
         pmd_angle = angle_map[angle]
-        pmd_angle.type = agltype_map[angle.connection_type]
+        pmd_angle.type = agltype_map[get_parameters(angle.connection_type)]
     structure.angle_types.claim()
 
 
@@ -775,7 +684,7 @@ def _dihedral_types_from_gmso(top, structure, dihedral_map):
         The destination parmed Structure
     """
     dtype_map = dict()
-    for dihedral_type in top.dihedral_types:
+    for dihedral_type in top.dihedral_types(filter_by=pfilter):
         msg = "Dihedral type {} expression does not match Parmed DihedralType default expressions (Periodics, RBTorsions)".format(
             dihedral_type.name
         )
@@ -825,75 +734,10 @@ def _dihedral_types_from_gmso(top, structure, dihedral_map):
             structure.rb_torsion_types.append(dtype)
         else:
             raise GMSOError("msg")
-        dtype_map[dihedral_type] = dtype
+        dtype_map[get_parameters(dihedral_type)] = dtype
 
     for dihedral in top.dihedrals:
         pmd_dihedral = dihedral_map[dihedral]
-        pmd_dihedral.type = dtype_map[dihedral.connection_type]
+        pmd_dihedral.type = dtype_map[get_parameters(dihedral.connection_type)]
     structure.dihedral_types.claim()
     structure.rb_torsions.claim()
-
-
-def _get_types_map(structure, attr, impropers=False):
-    """Build `member_types` map for atoms, bonds, angles and dihedrals."""
-    assert attr in {
-        "atoms",
-        "bonds",
-        "angles",
-        "dihedrals",
-        "rb_torsions",
-        "impropers",
-    }
-    type_map = {}
-    for member in getattr(structure, attr):
-        conn_type_id, member_types = _get_member_types_map_for(
-            member, impropers
-        )
-        if conn_type_id not in type_map and all(member_types):
-            type_map[conn_type_id] = member_types
-    return type_map
-
-
-def _get_member_types_map_for(member, impropers=False):
-    if isinstance(member, pmd.Atom):
-        return id(member.atom_type), member.type
-    elif isinstance(member, pmd.Bond):
-        return id(member.type), (member.atom1.type, member.atom2.type)
-    elif isinstance(member, pmd.Angle):
-        return id(member.type), (
-            member.atom1.type,
-            member.atom2.type,
-            member.atom3.type,
-        )
-    elif not impropers:  # return dihedrals
-        if isinstance(member, pmd.Dihedral) and not member.improper:
-            return id(member.type), (
-                member.atom1.type,
-                member.atom2.type,
-                member.atom3.type,
-                member.atom4.type,
-            )
-    elif impropers:  # return impropers
-        if (isinstance(member, pmd.Dihedral) and member.improper) or isinstance(
-            member, pmd.Improper
-        ):
-            return id(member.type), (
-                member.atom1.type,
-                member.atom2.type,
-                member.atom3.type,
-                member.atom4.type,
-            )
-    return None, (None, None)
-
-
-def _assert_dict(input_dict, param):
-    """Provide default value for a dictionary and do a type check for a parameter."""
-    input_dict = {} if input_dict is None else input_dict
-
-    if not isinstance(input_dict, dict):
-        raise TypeError(
-            f"Expected `{param}` to be a dictionary. "
-            f"Got {type(input_dict)} instead."
-        )
-
-    return input_dict
