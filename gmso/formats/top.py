@@ -3,7 +3,6 @@ import datetime
 import warnings
 
 import unyt as u
-from networkx.algorithms import shortest_path_length
 
 from gmso.core.dihedral import Dihedral
 from gmso.core.element import element_by_atom_type
@@ -20,6 +19,7 @@ from gmso.parameterization.molecule_utils import (
     molecule_impropers,
 )
 from gmso.utils.compatibility import check_compatibility
+from gmso.utils.connectivity import generate_pairs_lists
 
 
 @saves_as(".top")
@@ -323,7 +323,9 @@ def _get_unique_molecules(top):
         unique_molecules[top.name] = dict()
         unique_molecules[top.name]["subtags"] = [top.name]
         unique_molecules[top.name]["sites"] = list(top.sites)
-        unique_molecules[top.name]["pairs"] = _generate_pairs_list(top)
+        unique_molecules[top.name]["pairs"] = generate_pairs_lists(
+            top, refer_from_scaling_factor=True
+        )["pairs14"]
         unique_molecules[top.name]["bonds"] = list(top.bonds)
         unique_molecules[top.name]["bond_restraints"] = list(
             bond for bond in top.bonds if bond.restraint
@@ -344,7 +346,9 @@ def _get_unique_molecules(top):
             unique_molecules[tag]["sites"] = list(
                 top.iter_sites(key="molecule", value=molecule)
             )
-            unique_molecules[tag]["pairs"] = _generate_pairs_list(top, molecule)
+            unique_molecules[tag]["pairs"] = generate_pairs_lists(
+                top, molecule
+            )["pairs14"]
             unique_molecules[tag]["bonds"] = list(molecule_bonds(top, molecule))
             unique_molecules[tag]["bond_restraints"] = list(
                 bond for bond in molecule_bonds(top, molecule) if bond.restraint
@@ -387,63 +391,6 @@ def _lookup_element_symbol(atom_type):
         return element.symbol
     except GMSOError:
         return "X"
-
-
-def _generate_pairs_list(top, molecule=None):
-    """Worker function to generate all 1-4 pairs from the topology."""
-    # TODO: Need to make this to be independent from top.dihedrals
-    # https://github.com/ParmEd/ParmEd/blob/master/parmed/structure.py#L2730-L2785
-    # NOTE: This will only write out pairs corresponding to existing dihedrals
-    # depending on needs, a different routine (suggested here) may be used
-    # to get 1-4 pairs independent of top.dihedrals, however, this route may
-    # pose some issue with generate pairs list of molecule/subtopologys
-    # NOTE: This function could be moved out to gmso.utils at some point
-    """
-    if top.dihedrals:
-        # Grab dihedrals if it is available
-        dihedrals = top.dihedrals
-    else:
-        # Else, parse from graph
-        import networkx as nx
-        from gmso.utils.connectivity import _detect_connections
-
-        graph = nx.Graph()
-        for bond in top.bonds:
-            graph = graph.add_edge(b.connection_meners[0], b.connection_members[1])
-
-        line_graph = nx.line_graph(graph)
-
-        dihedral_matches = _detect_connections(line_graph, top, type_="dihedral")
-
-    pairs_list = list()
-    for dihedral in top.dihedrals:
-            pairs = sorted(
-                [dihedral.connection_members[0], dihedral.connection_members[-1]]
-            )
-        if pairs not in pairs_list:
-            pairs_list.append(pairs)
-    """
-
-    pairs_list = list()
-    graph = to_networkx(top, parse_angles=False, parse_dihedrals=False)
-
-    dihedrals = molecule_dihedrals(top, molecule) if molecule else top.dihedrals
-    for dihedral in dihedrals:
-        pairs = (
-            dihedral.connection_members[0],
-            dihedral.connection_members[-1],
-        )
-        pairs = sorted(pairs, key=lambda site: top.get_index(site))
-        if shortest_path_length(graph, pairs[0], pairs[1]) < 3:
-            continue
-        if pairs not in pairs_list:
-            pairs_list.append(pairs)
-
-    # TODO: Also write out special 1-4 pairs (topology.pairpotential_types)
-    return sorted(
-        pairs_list,
-        key=lambda pair: (top.get_index(pair[0]), top.get_index(pair[1])),
-    )
 
 
 def _write_pairs(top, pair, shifted_idx_map):

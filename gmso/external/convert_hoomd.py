@@ -13,6 +13,7 @@ from unyt.array import allclose_units
 from gmso.core.views import PotentialFilters
 from gmso.exceptions import GMSOError, NotYetImplementedWarning
 from gmso.lib.potential_templates import PotentialTemplateLibrary
+from gmso.utils.connectivity import generate_pairs_lists
 from gmso.utils.conversions import (
     convert_opls_to_ryckaert,
     convert_ryckaert_to_opls,
@@ -336,8 +337,9 @@ def _parse_pairs_information(
     pairs = list()
 
     scaled_pairs = list()
-    for pair_type in _generate_pairs_list(top):
-        scaled_pairs.extend(pair_type)
+    pairs_dict = generate_pairs_lists(top, refer_from_scaling_factor=True)
+    for pair_type in pairs_dict:
+        scaled_pairs.extend(pairs_dict[pair_type])
 
     for pair in scaled_pairs:
         if pair[0].atom_type and pair[1].atom_type:
@@ -811,11 +813,12 @@ def _parse_coulombic(
     special_coulombic = hoomd.md.special_pair.Coulomb()
 
     # Use same method as to_hoomd_snapshot to generate pairs list
-    for i, pairs in enumerate(_generate_pairs_list(top)):
-        if scaling_factors[i] and pairs:
-            for pair in pairs:
+    pairs_dict = generate_pairs_lists(top)
+    for i, pair_type in enumerate(pairs_dict):
+        if scaling_factors[i] and pairs_dict[pair_type]:
+            for pair in pairs_dict[pair_type]:
                 pair_name = "-".join(
-                    [pair[0].atom_type.name, pair[1].atom_type.name]
+                    sorted([pair[0].atom_type.name, pair[1].atom_type.name])
                 )
                 special_coulombic.params[pair_name] = dict(
                     alpha=scaling_factors[i]
@@ -863,9 +866,10 @@ def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
     # and handle molecule scaling factors
     special_lj = hoomd.md.special_pair.LJ()
 
-    for i, pairs in enumerate(_generate_pairs_list(top)):
-        if scaling_factors[i] and pairs:
-            for pair in pairs:
+    pairs_dict = generate_pairs_lists(top)
+    for i, pair_type in enumerate(pairs_dict):
+        if scaling_factors[i] and pairs_dict[pair_type]:
+            for pair in pairs_dict[pair_type]:
                 if pair[0].atom_type in atypes and pair[1].atom_type in atypes:
                     adjscale = scaling_factors[i]
                     pair.sort(key=lambda site: site.atom_type.name)
@@ -1417,35 +1421,3 @@ def _convert_params_units(
         potential.parameters = converted_params
         converted_potentials.append(potential)
     return converted_potentials
-
-
-def _generate_pairs_list(top):
-    """Return a list of pairs that have non-zero scaling factor."""
-    nb_scalings, coulombic_scalings = top.scaling_factors
-
-    pairs12 = list()
-    if nb_scalings[0] or coulombic_scalings[0]:
-        for bond in top.bonds:
-            pairs12.append(sorted(bond.connection_members))
-
-    pairs13 = list()
-    if nb_scalings[1] or coulombic_scalings[1]:
-        for angle in top.angles:
-            pairs13.append(
-                sorted(
-                    [angle.connection_members[0], angle.connection_members[2]]
-                )
-            )
-
-    pairs14 = list()
-    if nb_scalings[2] or coulombic_scalings[2]:
-        for dihedral in top.dihedrals:
-            pairs14.append(
-                sorted(
-                    [
-                        dihedral.connection_members[0],
-                        dihedral.connection_members[-1],
-                    ]
-                )
-            )
-    return pairs12, pairs13, pairs14
