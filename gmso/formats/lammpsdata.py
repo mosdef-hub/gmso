@@ -837,8 +837,6 @@ def _write_box(out_file, top, base_unyts, cfactorsDict):
         top.box.lengths.convert_to_units(u.angstrom)
         top.box.angles.convert_to_units(u.radian)
         vectors = top.box.get_vectors()
-        a, b, c = top.box.lengths
-        alpha, beta, gamma = top.box.angles
 
         xhi = vectors[0][0]
         yhi = vectors[1][1]
