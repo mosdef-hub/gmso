@@ -41,7 +41,7 @@ def get_sorted_names(potential):
     """Get identifier for a topology potential based on name or membertype/class."""
     if isinstance(potential, AtomType):
         return potential.name
-    if isinstance(potential, BondType):
+    elif isinstance(potential, BondType):
         return tuple(sorted(potential.member_types))
     elif isinstance(potential, AngleType):
         if potential.member_types[0] > potential.member_types[2]:
