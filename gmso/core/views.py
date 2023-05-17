@@ -31,7 +31,9 @@ def get_name_or_class(potential):
     """Get identifier for a topology potential based on name or membertype/class."""
     if isinstance(potential, AtomType):
         return potential.name
-    if isinstance(potential, (BondType, AngleType, DihedralType, ImproperType)):
+    elif isinstance(
+        potential, (BondType, AngleType, DihedralType, ImproperType)
+    ):
         return potential.member_types or potential.member_classes
 
 
