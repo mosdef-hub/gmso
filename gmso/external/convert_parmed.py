@@ -102,7 +102,6 @@ def from_parmed(structure, refer_type=True):
             }
             _add_conn_type_from_pmd(
                 connStr="BondType",
-                pmd_conn=bond,
                 gmso_conn=top_connection,
                 conn_params=conn_params,
                 name=name,
@@ -130,7 +129,6 @@ def from_parmed(structure, refer_type=True):
             }
             _add_conn_type_from_pmd(
                 connStr="AngleType",
-                pmd_conn=angle,
                 gmso_conn=top_connection,
                 conn_params=conn_params,
                 name=name,
@@ -166,7 +164,6 @@ def from_parmed(structure, refer_type=True):
                 }
                 _add_conn_type_from_pmd(
                     connStr="ImproperType",
-                    pmd_conn=dihedral,
                     gmso_conn=top_connection,
                     conn_params=conn_params,
                     name=name_improper,
@@ -189,7 +186,6 @@ def from_parmed(structure, refer_type=True):
                 }
                 _add_conn_type_from_pmd(
                     connStr="DihedralType",
-                    pmd_conn=dihedral,
                     gmso_conn=top_connection,
                     conn_params=conn_params,
                     name=name_proper,
@@ -225,7 +221,6 @@ def from_parmed(structure, refer_type=True):
             }
             _add_conn_type_from_pmd(
                 connStr="DihedralType",
-                pmd_conn=rb_torsion,
                 gmso_conn=top_connection,
                 conn_params=conn_params,
                 name=name,
@@ -255,7 +250,6 @@ def from_parmed(structure, refer_type=True):
             }
             _add_conn_type_from_pmd(
                 connStr="ImproperType",
-                pmd_conn=improper,
                 gmso_conn=top_connection,
                 conn_params=conn_params,
                 name=name,
@@ -348,7 +342,7 @@ def _sort_improper_members(top, site_map, atom1, atom2, atom3, atom4):
 
 
 def _add_conn_type_from_pmd(
-    connStr, pmd_conn, gmso_conn, conn_params, name, expression, variables
+    connStr, gmso_conn, conn_params, name, expression, variables
 ):
     """Convert ParmEd dihedral types to GMSO DihedralType.
 
