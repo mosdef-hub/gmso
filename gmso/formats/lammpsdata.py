@@ -228,7 +228,7 @@ def write_lammpsdata(
     unit_style="real",
     strict_potentials=False,
     strict_units=False,
-    lj_cfactorsDict={},
+    lj_cfactorsDict=None,
 ):
     """Output a LAMMPS data file.
 
@@ -246,9 +246,24 @@ def write_lammpsdata(
         Defines the style of atoms to be saved in a LAMMPS data file.
         The following atom styles are currently supported: 'full', 'atomic', 'charge', 'molecular'
         see http://lammps.sandia.gov/doc/atom_style.html for more information on atom styles.
-    strict : bool, optional, default False
-        Tells the writer how to treat conversions. If strict=False, then check for conversions
-        of unit styles in #TODO
+    unit_style : str, optional, default='real'
+        Can be any of "real", "lj", "metal", "si", "cgs", "electron", "micro", "nano". Otherwise
+        an error will be thrown. These are defined in _unit_style_factory. See
+        https://docs.lammps.org/units.html for LAMMPS documentation.
+    strict_potentials : bool, optional, default False
+        Tells the writer how to treat conversions. If False, then check for conversions
+        of to usable potential styles found in default_parameterMaps. If True, then error if
+        potentials are not compatible.
+    strict_units : bool, optional, default False
+        Tells the writer how to treat unit conversions. If False, then check for conversions
+        to unit styles defined in _unit_style_factory. If True, then error if parameter units
+        do not match.
+    lj_cfactorsDict : (None, dict), optional, default None
+        If using unit_style="lj" only, can pass a dictionary with keys of ("mass", "energy",
+        "length", "charge"), or any combination of these, and they will be used to non-
+        dimensionalize all values in the topology. If any key is not passed, default values
+        will be pulled from the topology (see _default_lj_val). These are the largest: sigma,
+        epsilon, atomtype.mass, and atomtype.charge from the topology.
 
     Notes
     -----
@@ -824,11 +839,6 @@ def _write_box(out_file, top, base_unyts, cfactorsDict):
         vectors = top.box.get_vectors()
         a, b, c = top.box.lengths
         alpha, beta, gamma = top.box.angles
-
-        xy = b * np.cos(gamma)
-        xz = c * np.cos(beta)
-        ly = np.sqrt(b**2 - xy**2)
-        yz = (b * c * np.cos(alpha) - xy * xz) / ly
 
         xhi = vectors[0][0]
         yhi = vectors[1][1]

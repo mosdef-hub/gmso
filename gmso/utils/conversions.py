@@ -27,6 +27,7 @@ def _constant_multiplier(pot1, pot2):
                     key = str(eq_term)
                     return {key: pot1.parameters[key] * float(constant)}
     except Exception:
+        # return nothing if the sympy conversion errors out
         pass
     return None
 
