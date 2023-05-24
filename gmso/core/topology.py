@@ -1561,12 +1561,12 @@ class Topology(object):
                     )
             elif attr == "positions" or attr == "position":
                 for i, dimension in enumerate(["x", "y", "z"]):
-                   df[dimension] = list(
-                       _return_float_for_unyt(
-                           getattr(site, "position")[i], unyts_bool
-                       )
-                       for site in self.sites
-                   )
+                    df[dimension] = list(
+                        _return_float_for_unyt(
+                            getattr(site, "position")[i], unyts_bool
+                        )
+                        for site in self.sites
+                    )
             elif attr == "charge" or attr == "charges":
                 df["charge (e)"] = list(
                     site.charge.to_value() / u.electron_charge.to_value()
