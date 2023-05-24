@@ -4,7 +4,6 @@ from __future__ import division
 import itertools
 import json
 import re
-import statistics
 import warnings
 
 import numpy as np
@@ -14,6 +13,7 @@ from unyt.array import allclose_units
 from gmso.core.views import PotentialFilters
 from gmso.exceptions import GMSOError, NotYetImplementedWarning
 from gmso.lib.potential_templates import PotentialTemplateLibrary
+from gmso.utils.connectivity import generate_pairs_lists
 from gmso.utils.conversions import (
     convert_opls_to_ryckaert,
     convert_ryckaert_to_opls,
@@ -48,10 +48,10 @@ AKMA_UNITS = {
 def to_gsd_snapshot(
     top,
     base_units=None,
-    auto_scale=False,
     rigid_bodies=None,
     shift_coords=True,
     parse_special_pairs=True,
+    auto_scale=False,
 ):
     """Create a gsd.snapshot objcet (HOOMD v3 default data format).
 
@@ -80,6 +80,13 @@ def to_gsd_snapshot(
     parse_special_pairs : bool, optional, default=True
         Writes out special pair information necessary to correctly use the OPLS
         fudged 1,4 interactions in HOOMD.
+    auto_scale : bool or dict, optional, default=False
+        Automatically scaling relevant length, energy and mass units.
+        Referenced mass unit is obtained from sites' masses.
+        Referenced energy and distance are refered from sites' atom types (when applicable).
+        If the referenced scaling values cannot be determined (e.g., when the topology is not typed),
+        all reference scaling values is set to 1.
+        A dictionary specifying the referenced scaling values may also be provided for this argument.
 
     Return
     ------
@@ -330,8 +337,9 @@ def _parse_pairs_information(
     pairs = list()
 
     scaled_pairs = list()
-    for pair_type in _generate_pairs_list(top):
-        scaled_pairs.extend(pair_type)
+    pairs_dict = generate_pairs_lists(top, refer_from_scaling_factor=True)
+    for pair_type in pairs_dict:
+        scaled_pairs.extend(pairs_dict[pair_type])
 
     for pair in scaled_pairs:
         if pair[0].atom_type and pair[1].atom_type:
@@ -805,11 +813,12 @@ def _parse_coulombic(
     special_coulombic = hoomd.md.special_pair.Coulomb()
 
     # Use same method as to_hoomd_snapshot to generate pairs list
-    for i, pairs in enumerate(_generate_pairs_list(top)):
-        if scaling_factors[i] and pairs:
-            for pair in pairs:
+    pairs_dict = generate_pairs_lists(top)
+    for i, pair_type in enumerate(pairs_dict):
+        if scaling_factors[i] and pairs_dict[pair_type]:
+            for pair in pairs_dict[pair_type]:
                 pair_name = "-".join(
-                    [pair[0].atom_type.name, pair[1].atom_type.name]
+                    sorted([pair[0].atom_type.name, pair[1].atom_type.name])
                 )
                 special_coulombic.params[pair_name] = dict(
                     alpha=scaling_factors[i]
@@ -827,16 +836,18 @@ def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
         pairs = list(pairs)
         pairs.sort(key=lambda atype: atype.name)
         type_name = (pairs[0].name, pairs[1].name)
-        comb_epsilon = statistics.geometric_mean(
-            [pairs[0].parameters["epsilon"], pairs[1].parameters["epsilon"]]
+        comb_epsilon = np.sqrt(
+            pairs[0].parameters["epsilon"].value
+            * pairs[1].parameters["epsilon"].value
         )
         if top.combining_rule == "lorentz":
             comb_sigma = np.mean(
                 [pairs[0].parameters["sigma"], pairs[1].parameters["sigma"]]
             )
         elif top.combining_rule == "geometric":
-            comb_sigma = statistics.geometric_mean(
-                [pairs[0].parameters["sigma"], pairs[1].parameters["sigma"]]
+            comb_sigma = np.sqrt(
+                pairs[0].parameters["sigma"].value
+                * pairs[1].parameters["sigma"].value
             )
         else:
             raise ValueError(
@@ -855,9 +866,10 @@ def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
     # and handle molecule scaling factors
     special_lj = hoomd.md.special_pair.LJ()
 
-    for i, pairs in enumerate(_generate_pairs_list(top)):
-        if scaling_factors[i] and pairs:
-            for pair in pairs:
+    pairs_dict = generate_pairs_lists(top)
+    for i, pair_type in enumerate(pairs_dict):
+        if scaling_factors[i] and pairs_dict[pair_type]:
+            for pair in pairs_dict[pair_type]:
                 if pair[0].atom_type in atypes and pair[1].atom_type in atypes:
                     adjscale = scaling_factors[i]
                     pair.sort(key=lambda site: site.atom_type.name)
@@ -1275,18 +1287,22 @@ def _validate_base_units(base_units, top, auto_scale, potential_types=None):
     """Validate the provided base units, infer units (based on top's positions and masses) if none is provided."""
     from copy import deepcopy
 
+    if base_units and auto_scale:
+        warnings.warn(
+            "Both base_units and auto_scale are provided, auto_scale will take precedent."
+        )
+    elif not (base_units or auto_scale):
+        warnings.warn(
+            "Neither base_units or auto_scale is provided, will infer base units from topology."
+        )
+
     base_units = deepcopy(base_units)
     ref = {
         "energy": u.dimensions.energy,
         "length": u.dimensions.length,
         "mass": u.dimensions.mass,
     }
-
     unit_systems = {"MD": MD_UNITS, "AKMA": AKMA_UNITS}
-    if base_units and auto_scale:
-        warnings.warn(
-            "Both base_units and auto_scale are provided, auto_scale will take precedent."
-        )
 
     if auto_scale:
         base_units = _infer_units(top)
@@ -1357,7 +1373,9 @@ def _validate_base_units(base_units, top, auto_scale, potential_types=None):
             raise (f"base_units is not fully provided, missing {missing}")
     else:
         base_units = _infer_units(top)
-
+        for key in base_units:
+            if isinstance(base_units[key], u.Unit):
+                base_units[key] = 1 * base_units[key]
     # Add angle unit (since HOOMD will use radian across the board)
     base_units["angle"] = 1 * u.radian
 
@@ -1403,35 +1421,3 @@ def _convert_params_units(
         potential.parameters = converted_params
         converted_potentials.append(potential)
     return converted_potentials
-
-
-def _generate_pairs_list(top):
-    """Return a list of pairs that have non-zero scaling factor."""
-    nb_scalings, coulombic_scalings = top.scaling_factors
-
-    pairs12 = list()
-    if nb_scalings[0] or coulombic_scalings[0]:
-        for bond in top.bonds:
-            pairs12.append(sorted(bond.connection_members))
-
-    pairs13 = list()
-    if nb_scalings[1] or coulombic_scalings[1]:
-        for angle in top.angles:
-            pairs13.append(
-                sorted(
-                    [angle.connection_members[0], angle.connection_members[2]]
-                )
-            )
-
-    pairs14 = list()
-    if nb_scalings[2] or coulombic_scalings[2]:
-        for dihedral in top.dihedrals:
-            pairs14.append(
-                sorted(
-                    [
-                        dihedral.connection_members[0],
-                        dihedral.connection_members[-1],
-                    ]
-                )
-            )
-    return pairs12, pairs13, pairs14

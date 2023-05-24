@@ -9,6 +9,7 @@ from gmso.external import from_mbuild
 from gmso.external.convert_hoomd import to_hoomd_forcefield, to_hoomd_snapshot
 from gmso.parameterization import apply
 from gmso.tests.base_test import BaseTest
+from gmso.tests.utils import get_path
 from gmso.utils.io import has_hoomd, has_mbuild, import_
 
 if has_hoomd:
@@ -224,3 +225,59 @@ class TestGsd(BaseTest):
             base_units=base_units,
             pppm_kwargs={"resolution": (64, 64, 64), "order": 7},
         )
+
+    def test_default_units(self):
+        compound = mb.load("CC", smiles=True)
+        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=100)
+        base_units = {
+            "mass": u.amu,
+            "length": u.nm,
+            "energy": u.kJ / u.mol,
+        }
+
+        top = from_mbuild(com_box)
+        top.identify_connections()
+        oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
+        top = apply(top, oplsaa, remove_untyped=True)
+
+        gmso_snapshot, snapshot_base_units = to_hoomd_snapshot(top)
+        gmso_forces, forces_base_units = to_hoomd_forcefield(
+            top=top,
+            r_cut=1.4,
+            pppm_kwargs={"resolution": (64, 64, 64), "order": 7},
+        )
+
+    def test_ff_zero_parameter(self):
+        ethane = mb.lib.molecules.Ethane()
+        top = from_mbuild(ethane)
+        top.identify_connections()
+        ff_zero_param = (
+            ffutils.FoyerFFs()
+            .load(get_path("ethane_zero_parameter.xml"))
+            .to_gmso_ff()
+        )
+        top = apply(top, ff_zero_param, remove_untyped=True)
+        base_units = {
+            "mass": u.g / u.mol,
+            "length": u.nm,
+            "energy": u.kJ / u.mol,
+        }
+        gmso_forces, forces_base_units = to_hoomd_forcefield(
+            top,
+            r_cut=1.4,
+            base_units=base_units,
+            pppm_kwargs={"resolution": (64, 64, 64), "order": 7},
+        )
+        integrator_forces = list()
+        for cat in gmso_forces:
+            for force in gmso_forces[cat]:
+                integrator_forces.append(force)
+        for force in integrator_forces:
+            if isinstance(force, hoomd.md.pair.LJ):
+                keys = force.params.param_dict.keys()
+                for key in keys:
+                    if "opls_135" in list(key):
+                        params = force.params.param_dict[key]
+                        variables = params.keys()
+                        for var in variables:
+                            assert params[var] == 0.0

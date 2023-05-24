@@ -4,6 +4,7 @@ from unyt.testing import assert_allclose_units
 
 import gmso
 from gmso.core.box import Box
+from gmso.core.views import PotentialFilters
 from gmso.formats.lammpsdata import read_lammpsdata, write_lammpsdata
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
@@ -122,7 +123,12 @@ class TestLammpsWriter(BaseTest):
     def test_read_bond_params(self, typed_ethane):
         typed_ethane.save("ethane.lammps")
         read = gmso.Topology.load("ethane.lammps")
-        bond_params = [i.parameters for i in read.bond_types]
+        bond_params = [
+            i.parameters
+            for i in read.bond_types(
+                filter_by=PotentialFilters.UNIQUE_PARAMETERS
+            )
+        ]
 
         assert_allclose_units(
             bond_params[0]["k"],
@@ -167,13 +173,13 @@ class TestLammpsWriter(BaseTest):
             atol=1e-8,
         )
         assert_allclose_units(
-            angle_params[1]["k"],
+            angle_params[-1]["k"],
             u.unyt_array(66, (u.kcal / u.mol / u.radian / u.radian)),
             rtol=1e-5,
             atol=1e-8,
         )
         assert_allclose_units(
-            angle_params[1]["theta_eq"],
+            angle_params[-1]["theta_eq"],
             u.unyt_array(107.8, (u.degree)),
             rtol=1e-5,
             atol=1e-8,
