@@ -1522,13 +1522,7 @@ class Topology(object):
         for site_index in np.arange(sites_per_connection):
             df["Atom" + str(site_index)] = list(
                 str(connection.connection_members[site_index].name)
-                + "("
-                + str(
-                    list_of_sites.index(
-                        connection.connection_members[site_index]
-                    )
-                )
-                + ")"
+                + f"({self.get_index(connection.connection_members[site_index])})"
                 for connection in getattr(self, parameter)
             )
         for attr in site_attrs:
