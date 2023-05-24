@@ -20,7 +20,7 @@ class TestElement(BaseTest):
     def test_element_by_name(self):
         for idx, name in enumerate(["Carbon", "carbon", " CarBon 12 "]):
             with pytest.warns(UserWarning if idx != 1 else None):
-                carbon = element.element_by_name(name)
+                carbon = element.element_by_name(name, verbose=True)
 
                 assert carbon.name == element.Carbon.name
                 assert carbon.symbol == element.Carbon.symbol
@@ -29,7 +29,7 @@ class TestElement(BaseTest):
     def test_element_by_symbol(self):
         for idx, symbol in enumerate(["N", "n", " N7"]):
             with pytest.warns(UserWarning if idx != 0 else None):
-                nitrogen = element.element_by_symbol(symbol)
+                nitrogen = element.element_by_symbol(symbol, verbose=True)
 
                 assert nitrogen.name == element.Nitrogen.name
                 assert nitrogen.symbol == element.Nitrogen.symbol
