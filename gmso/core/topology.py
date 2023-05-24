@@ -1164,7 +1164,7 @@ class Topology(object):
         Parameters
         ----------
         parameter : str, default='sites'
-            A string determining what aspects of the gmso topology will be reported. 
+            A string determining what aspects of the gmso topology will be reported.
             Options are: 'sites', 'bonds', 'angles', 'dihedrals', and 'impropers'. Defaults to 'sites'.
         site_attrs : list of str, default=None
              List of strings that are attributes of the topology site and can be included as entries in the pandas dataframe.
