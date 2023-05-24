@@ -21,6 +21,7 @@ from gmso.exceptions import GMSOError
 from gmso.external.convert_parmed import from_parmed
 from gmso.tests.base_test import BaseTest
 from gmso.utils.io import get_fn, has_pandas, has_parmed, import_
+from gmso.utils.units import GMSO_UnitRegsitry as UnitReg
 
 if has_parmed:
     pmd = import_("parmed")
@@ -728,13 +729,17 @@ class TestTopology(BaseTest):
         assert len(typed_ethane.to_dataframe(parameter="bonds")) == 7
         assert len(typed_ethane.to_dataframe(parameter="angles")) == 12
         assert len(typed_ethane.to_dataframe(parameter="dihedrals")) == 9
-        assert np.allclose(
+        assert np.isclose(
             float(
                 typed_ethane.to_dataframe(site_attrs=["charge", "position"])[
                     "charge (e)"
                 ][0]
             ),
-            0.18,
+            typed_ethane.sites[0]
+            .charge.in_units(
+                u.Unit("elementary_charge", registry=UnitReg.default_reg())
+            )
+            .to_value(),
         )
         assert (
             typed_ethane.to_dataframe(site_attrs=["atom_type.name"])[
@@ -756,25 +761,30 @@ class TestTopology(BaseTest):
                     parameter="bonds", site_attrs=["charge", "position"]
                 )["charge Atom0 (e)"][0]
             ),
-            -0.06,
+            typed_ethane.bonds[0]
+            .connection_members[0]
+            .charge.in_units(
+                u.Unit("elementary_charge", registry=UnitReg.default_reg())
+            )
+            .to_value(),
         )
         with pytest.raises(AttributeError) as e:
             typed_ethane.to_dataframe(site_attrs=["missingattr"])
         assert (
             str(e.value)
-            == "The attribute missingattr is not in this gmso object"
+            == "The attribute missingattr is not in this gmso object."
         )
         with pytest.raises(AttributeError) as e:
             typed_ethane.to_dataframe(site_attrs=["missingattr.missingattr"])
         assert (
             str(e.value)
-            == "The attribute missingattr.missingattr is not in this gmso object"
+            == "The attribute missingattr.missingattr is not in this gmso object."
         )
         with pytest.raises(AttributeError) as e:
             typed_ethane.to_dataframe(site_attrs=["missingattr.attr"])
         assert (
             str(e.value)
-            == "The attribute missingattr.attr is not in this gmso object"
+            == "The attribute missingattr.attr is not in this gmso object."
         )
         with pytest.raises(AttributeError) as e:
             typed_ethane.to_dataframe(
@@ -782,7 +792,7 @@ class TestTopology(BaseTest):
             )
         assert (
             str(e.value)
-            == "The attribute missingattr is not in this gmso object"
+            == "The attribute missingattr is not in this gmso object."
         )
         with pytest.raises(AttributeError) as e:
             typed_ethane.to_dataframe(
@@ -790,8 +800,15 @@ class TestTopology(BaseTest):
             )
         assert (
             str(e.value)
-            == "The attribute missingattr.attr is not in this gmso object"
+            == "The attribute missingattr.attr is not in this gmso object."
         )
+        with pytest.raises(GMSOError) as e:
+            top = Topology()
+            top.to_dataframe(parameter="bonds")
+            assert (
+                str(e.value)
+                == "There arent any bonds in the topology. The dataframe would be empty."
+            )
 
     @pytest.mark.skipif(not has_pandas, reason="Pandas is not installed")
     def test_pandas_from_parameters(self, typed_ethane):
@@ -801,9 +818,9 @@ class TestTopology(BaseTest):
             float(
                 typed_ethane._pandas_from_parameters(
                     df, "bonds", ["positions"]
-                )["x Atom0 (nm)"][0]
+                )["x Atom1 (nm)"][6]
             ),
-            -0.10699999,
+            -0.03570001,
         )
 
     def test_is_typed_check(self, typed_chloroethanol):

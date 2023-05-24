@@ -26,6 +26,7 @@ from gmso.exceptions import GMSOError
 from gmso.utils.connectivity import (
     identify_connections as _identify_connections,
 )
+from gmso.utils.units import GMSO_UnitRegsitry as UnitReg
 
 scaling_interaction_idxes = {"12": 0, "13": 1, "14": 2}
 
@@ -1205,7 +1206,7 @@ class Topology(object):
         if not site_attrs:
             site_attrs = []
         df = pd.DataFrame()
-        if not self.is_typed:
+        if not self.is_typed():
             raise GMSOError(
                 "This topology is not typed, please type this object before converting to a pandas dataframe"
             )
@@ -1217,6 +1218,10 @@ class Topology(object):
                     df, attr, parameter, unyts_bool
                 )
         elif parameter in ["bonds", "angles", "dihedrals", "impropers"]:
+            if len(getattr(self, parameter)) == 0:
+                raise GMSOError(
+                    f"There arent any {parameter} in the topology. The dataframe would be empty."
+                )
             df = self._pandas_from_parameters(
                 df,
                 parameter=parameter,
@@ -1549,9 +1554,7 @@ class Topology(object):
                     )
                 except AttributeError:
                     raise AttributeError(
-                        "The attribute {} is not in this gmso object".format(
-                            attr
-                        )
+                        f"The attribute {attr} is not in this gmso object."
                     )
             elif attr == "positions" or attr == "position":
                 for i, dimension in enumerate(["x", "y", "z"]):
@@ -1563,7 +1566,11 @@ class Topology(object):
                     )
             elif attr == "charge" or attr == "charges":
                 df["charge (e)"] = list(
-                    site.charge.to_value() / u.electron_charge.to_value()
+                    site.charge.in_units(
+                        u.Unit(
+                            "elementary_charge", registry=UnitReg.default_reg()
+                        )
+                    ).to_value()
                     for site in self.sites
                 )
             else:
@@ -1599,9 +1606,7 @@ class Topology(object):
                         )
                     except AttributeError:
                         raise AttributeError(
-                            "The attribute {} is not in this gmso object".format(
-                                attr
-                            )
+                            f"The attribute {attr} is not in this gmso object."
                         )
                 elif attr == "positions" or attr == "position":
                     df["x Atom" + str(site_index) + " (nm)"] = list(
@@ -1639,8 +1644,14 @@ class Topology(object):
                         getattr(
                             connection.connection_members[site_index],
                             "charge",
-                        ).to_value()
-                        / u.electron_charge.to_value()
+                        )
+                        .in_units(
+                            u.Unit(
+                                "elementary_charge",
+                                registry=UnitReg.default_reg(),
+                            )
+                        )
+                        .value
                         for connection in getattr(self, parameter)
                     )
                 else:
@@ -1674,18 +1685,7 @@ class Topology(object):
             ).parameters
         ):
             df[
-                "Parameter "
-                + str(i)
-                + " ("
-                + str(param)
-                + "): "
-                + str(
-                    getattr(
-                        getattr(self, parameter)[0], parameter[:-1] + "_type"
-                    )
-                    .parameters[param]
-                    .units
-                )
+                f"Parameter {i} ({param}) {getattr(getattr(self, parameter)[0], parameter[:-1]+'_type').parameters[param].units}"
             ] = list(
                 _return_float_for_unyt(
                     getattr(connection, parameter[:-1] + "_type").parameters[
