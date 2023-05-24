@@ -1580,9 +1580,7 @@ class Topology(object):
                     )
                 except AttributeError:
                     raise AttributeError(
-                        "The attribute {} is not in this gmso object".format(
-                            attr
-                        )
+                        f"The attribute {attr} is not in this gmso object."
                     )
 
         elif parameter in ["bonds", "angles", "dihedrals", "impropers"]:
