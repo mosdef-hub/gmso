@@ -1645,7 +1645,7 @@ class Topology(object):
                     )
                 else:
                     try:
-                        df[attr + " Atom" + str(site_index)] = list(
+                        df[f"{attr} Atom {site_index}"] = list(
                             _return_float_for_unyt(
                                 getattr(
                                     connection.connection_members[site_index],
