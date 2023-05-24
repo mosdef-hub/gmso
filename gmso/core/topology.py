@@ -1661,11 +1661,8 @@ class Topology(object):
                         )
         else:
             raise AttributeError(
-                "{} is not yet supported for adding labels to a dataframe. \
-                                 Please use  one of 'sites', 'bonds', 'angles', 'dihedrals', or \
-                                 'impropers'".format(
-                    str(parameter)
-                )
+                f"{parameter} is not yet supported for adding labels to a dataframe. \
+                 Please use  one of 'sites', 'bonds', 'angles', 'dihedrals', or 'impropers'"
             )
         return df
 
