@@ -1163,17 +1163,18 @@ class Topology(object):
 
         Parameters
         ----------
-        parameter : a string
-            A string determining what aspects of the gmso topology will be reported. Options are: 'sites','bonds','angles',
-        'dihedrals', and 'impropers'. Defaults to 'sites'.
-        site_attrs : List of strings that are attributes of the topology site and can be included as entries in the pandas dataframe.
+        parameter : str, default='sites'
+            A string determining what aspects of the gmso topology will be reported. 
+            Options are: 'sites', 'bonds', 'angles', 'dihedrals', and 'impropers'. Defaults to 'sites'.
+        site_attrs : list of str, default=None
+             List of strings that are attributes of the topology site and can be included as entries in the pandas dataframe.
             Examples of these can be found by printing `topology.sites[0].__dict__`.
             See https://gmso.mosdef.org/en/stable/data_structures.html#gmso.Atom for additional information on labeling.
         unyts_bool: bool, default=True
             Determine if numerical values are saved as unyt quantities or floats. See
-        https://unyt.readthedocs.io/en/stable/usage.html
-        for more information about manipulating unyt quantities.
-        Default is True.
+            https://unyt.readthedocs.io/en/stable/usage.html
+            for more information about manipulating unyt quantities.
+            Default is True.
 
         Returns
         -------
