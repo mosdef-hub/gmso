@@ -70,7 +70,7 @@ class GMSO_UnitRegsitry(object):
         return self.__dict__.get("reg_")
 
     @staticmethod
-    def default_reg(cls):
+    def default_reg():
         """Return a default registry with extra units defined outside of unyt.
 
         Returns
@@ -83,7 +83,8 @@ class GMSO_UnitRegsitry(object):
             1 * getattr(u.physical_constants, "elementary_charge").value
         )
         dimensionsList = [u.dimensions.current_mks, u.dimensions.time]
+        dim = np.prod(dimensionsList)
         name = "elementary_charge"
         symbol = r"\rm{e}"
-        cls.register_unit(reg, name, conversion, dimensionsList, symbol)
+        reg.add(name, conversion, dim, symbol)
         return reg
