@@ -17,20 +17,19 @@ class GMSO_UnitRegsitry(object):
     """
 
     def __init__(self):
-        self._reg = u.UnitRegistry()
+        self.reg_ = u.UnitRegistry()
         conversion = (
             1 * getattr(u.physical_constants, "elementary_charge").value
         )
         self.register_unit(
-            self._reg[u.dimensions.current_mks, u.dimensions.time],
-            conversion,
             "elementary_charge",
+            conversion,
+            [u.dimensions.current_mks, u.dimensions.time],
             r"\rm{e}",
         )
 
-    @staticmethod
     def register_unit(
-        registry,
+        self,
         name: str,
         conversion: float,
         dimensionsList: list,
@@ -58,14 +57,19 @@ class GMSO_UnitRegsitry(object):
         dim = np.prod(dimensionsList)
         if not tex_repr:
             tex_repr = r"\rm{name}"
-        registry.add(
-            "elementary_charge",
+        self.reg_.add(
+            symbol=name,
             base_value=conversion,
             dimensions=dim,
             tex_repr=tex_repr,
         )
 
-    @classmethod
+    @property
+    def reg(self):
+        """Return the UnitRegistry attribute for the class."""
+        return self.__dict__.get("reg_")
+
+    @staticmethod
     def default_reg(cls):
         """Return a default registry with extra units defined outside of unyt.
 

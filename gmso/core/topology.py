@@ -1240,18 +1240,6 @@ class Topology(object):
 
         return df
 
-    def _reindex_connection_types(self, ref):
-        """Re-generate the indices of the connection types in the topology."""
-        if ref not in self._index_refs:
-            raise GMSOError(
-                f"cannot reindex {ref}. It should be one of "
-                f"{ANGLE_TYPE_DICT}, {BOND_TYPE_DICT}, "
-                f"{ANGLE_TYPE_DICT}, {DIHEDRAL_TYPE_DICT}, {IMPROPER_TYPE_DICT},"
-                f"{PAIRPOTENTIAL_TYPE_DICT}"
-            )
-        for i, ref_member in enumerate(self._set_refs[ref].keys()):
-            self._index_refs[ref][ref_member] = i
-
     def get_forcefield(self):
         """Get an instance of gmso.ForceField out of this topology
 
@@ -1520,7 +1508,6 @@ class Topology(object):
         those sites in the site_attrs list"""
         if site_attrs is None:
             site_attrs = []
-        list_of_sites = list(site for site in self.sites)
         sites_per_connection = len(
             getattr(self, parameter)[0].connection_members
         )

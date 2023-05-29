@@ -912,3 +912,25 @@ class TestTopology(BaseTest):
         top = Topology()
         with pytest.raises(GMSOError):
             top.get_forcefield()
+
+    def test_units(self, typed_ethane):
+        reg = UnitReg()
+        assert np.isclose(
+            typed_ethane.sites[0]
+            .charge.in_units(u.Unit("elementary_charge", registry=reg.reg))
+            .to_value(),
+            -0.18,
+        )
+        conversion = (
+            10 * getattr(u.physical_constants, "elementary_charge").value
+        )
+        reg.register_unit(
+            "test_charge",
+            conversion,
+            [u.dimensions.current_mks, u.dimensions.time],
+        )
+        assert reg.reg["test_charge"]
+        assert_allclose_units(
+            1.60217662e-19 * u.Coulomb,
+            0.1 * u.Unit("test_charge", registry=reg.reg),
+        )
