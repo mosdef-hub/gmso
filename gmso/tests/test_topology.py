@@ -20,7 +20,8 @@ from gmso.core.topology import Topology
 from gmso.exceptions import GMSOError
 from gmso.external.convert_parmed import from_parmed
 from gmso.tests.base_test import BaseTest
-from gmso.utils.io import get_fn, has_parmed, import_
+from gmso.utils.io import get_fn, has_pandas, has_parmed, import_
+from gmso.utils.units import GMSO_UnitRegsitry as UnitReg
 
 if has_parmed:
     pmd = import_("parmed")
@@ -722,6 +723,106 @@ class TestTopology(BaseTest):
         with pytest.raises(ValueError):
             top.set_scaling_factors(None, None)
 
+    @pytest.mark.skipif(not has_pandas, reason="Pandas is not installed")
+    def test_to_dataframe(self, typed_ethane):
+        assert len(typed_ethane.to_dataframe()) == 8
+        assert len(typed_ethane.to_dataframe(parameter="bonds")) == 7
+        assert len(typed_ethane.to_dataframe(parameter="angles")) == 12
+        assert len(typed_ethane.to_dataframe(parameter="dihedrals")) == 9
+        assert np.isclose(
+            float(
+                typed_ethane.to_dataframe(site_attrs=["charge", "position"])[
+                    "charge (e)"
+                ][0]
+            ),
+            typed_ethane.sites[0]
+            .charge.in_units(
+                u.Unit("elementary_charge", registry=UnitReg.default_reg())
+            )
+            .to_value(),
+        )
+        assert (
+            typed_ethane.to_dataframe(site_attrs=["atom_type.name"])[
+                "atom_type.name"
+            ][0]
+            == "opls_135"
+        )
+        assert np.allclose(
+            float(
+                typed_ethane.to_dataframe(site_attrs=["charge", "position"])[
+                    "x"
+                ][0]
+            ),
+            0,
+        )
+        assert np.allclose(
+            float(
+                typed_ethane.to_dataframe(
+                    parameter="bonds", site_attrs=["charge", "position"]
+                )["charge Atom0 (e)"][0]
+            ),
+            typed_ethane.bonds[0]
+            .connection_members[0]
+            .charge.in_units(
+                u.Unit("elementary_charge", registry=UnitReg.default_reg())
+            )
+            .to_value(),
+        )
+        with pytest.raises(AttributeError) as e:
+            typed_ethane.to_dataframe(site_attrs=["missingattr"])
+        assert (
+            str(e.value)
+            == "The attribute missingattr is not in this gmso object."
+        )
+        with pytest.raises(AttributeError) as e:
+            typed_ethane.to_dataframe(site_attrs=["missingattr.missingattr"])
+        assert (
+            str(e.value)
+            == "The attribute missingattr.missingattr is not in this gmso object."
+        )
+        with pytest.raises(AttributeError) as e:
+            typed_ethane.to_dataframe(site_attrs=["missingattr.attr"])
+        assert (
+            str(e.value)
+            == "The attribute missingattr.attr is not in this gmso object."
+        )
+        with pytest.raises(AttributeError) as e:
+            typed_ethane.to_dataframe(
+                parameter="bonds", site_attrs=["missingattr"]
+            )
+        assert (
+            str(e.value)
+            == "The attribute missingattr is not in this gmso object."
+        )
+        with pytest.raises(AttributeError) as e:
+            typed_ethane.to_dataframe(
+                parameter="bonds", site_attrs=["missingattr.attr"]
+            )
+        assert (
+            str(e.value)
+            == "The attribute missingattr.attr is not in this gmso object."
+        )
+        with pytest.raises(GMSOError) as e:
+            top = Topology()
+            top.to_dataframe(parameter="bonds")
+            assert (
+                str(e.value)
+                == "There arent any bonds in the topology. The dataframe would be empty."
+            )
+
+    @pytest.mark.skipif(not has_pandas, reason="Pandas is not installed")
+    def test_pandas_from_parameters(self, typed_ethane):
+        pd = import_("pandas")
+        df = pd.DataFrame()
+        assert np.allclose(
+            float(
+                typed_ethane._pandas_from_parameters(
+                    df, "bonds", ["positions"]
+                )["x Atom1 (nm)"][6]
+            ),
+            -0.03570001,
+        )
+
     def test_is_typed_check(self, typed_chloroethanol):
         groups = [
             "sites",
@@ -811,3 +912,25 @@ class TestTopology(BaseTest):
         top = Topology()
         with pytest.raises(GMSOError):
             top.get_forcefield()
+
+    def test_units(self, typed_ethane):
+        reg = UnitReg()
+        assert np.isclose(
+            typed_ethane.sites[0]
+            .charge.in_units(u.Unit("elementary_charge", registry=reg.reg))
+            .to_value(),
+            -0.18,
+        )
+        conversion = (
+            10 * getattr(u.physical_constants, "elementary_charge").value
+        )
+        reg.register_unit(
+            "test_charge",
+            conversion,
+            [u.dimensions.current_mks, u.dimensions.time],
+        )
+        assert reg.reg["test_charge"]
+        assert_allclose_units(
+            1.60217662e-19 * u.Coulomb,
+            0.1 * u.Unit("test_charge", registry=reg.reg),
+        )
