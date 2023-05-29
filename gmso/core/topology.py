@@ -9,6 +9,7 @@ from boltons.setutils import IndexedSet
 
 import gmso
 from gmso.abc.abstract_site import Site
+from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.core.angle import Angle
 from gmso.core.angle_type import AngleType
 from gmso.core.atom import Atom
@@ -25,6 +26,7 @@ from gmso.exceptions import GMSOError
 from gmso.utils.connectivity import (
     identify_connections as _identify_connections,
 )
+from gmso.utils.units import GMSO_UnitRegsitry as UnitReg
 
 scaling_interaction_idxes = {"12": 0, "13": 1, "14": 2}
 
@@ -1157,6 +1159,87 @@ class Topology(object):
 
         return index
 
+    def to_dataframe(self, parameter="sites", site_attrs=None, unyts_bool=True):
+        """Return a pandas dataframe object for the sites in a topology
+
+        Parameters
+        ----------
+        parameter : str, default='sites'
+            A string determining what aspects of the gmso topology will be reported.
+            Options are: 'sites', 'bonds', 'angles', 'dihedrals', and 'impropers'. Defaults to 'sites'.
+        site_attrs : list of str, default=None
+             List of strings that are attributes of the topology site and can be included as entries in the pandas dataframe.
+            Examples of these can be found by printing `topology.sites[0].__dict__`.
+            See https://gmso.mosdef.org/en/stable/data_structures.html#gmso.Atom for additional information on labeling.
+        unyts_bool: bool, default=True
+            Determine if numerical values are saved as unyt quantities or floats. See
+            https://unyt.readthedocs.io/en/stable/usage.html
+            for more information about manipulating unyt quantities.
+            Default is True.
+
+        Returns
+        -------
+        Pandas Dataframe
+            A pandas.Dataframe object, see https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
+            for further information.
+
+        Examples
+        ________
+        >>> topology.to_dataframe(parameter = 'sites', site_attrs = ['charge'])
+            This will return a dataframe with a listing of the sites and include the charges that correspond to each site.
+        >>> topology.to_dataframe(parameter = 'dihedrals', site_attrs = ['positions'])
+            This will return a dataframe with a listing of the sites that make up each dihedral, the positions of each of
+            those sites, and the parameters that are associated with the dihedrals.
+
+        Notes
+        ____
+        A dataframe is easily manipulated. In order to change the rounding to two decimals places for a column named `label`:
+            >>> df['label'] = df['label'].round(2)
+        The column labels can also be easily modified. This line can take a dataframe `df` and rename a column labeled
+        `Atom0` to `newname` using a dictionary.
+            >>> df.rename(columns = {'Atom0':'newname'})
+        See https://pandas.pydata.org/pandas-docs/stable/getting_started/intro_tutorials/index.html for further information.
+        """
+        from gmso.utils.io import import_
+
+        pd = import_("pandas")
+        if not site_attrs:
+            site_attrs = []
+        df = pd.DataFrame()
+        if not self.is_typed():
+            raise GMSOError(
+                "This topology is not typed, please type this object before converting to a pandas dataframe"
+            )
+        if parameter == "sites":
+            df["atom_types"] = list(site.atom_type.name for site in self.sites)
+            df["names"] = list(site.name for site in self.sites)
+            for attr in site_attrs:
+                df = self._parse_dataframe_attrs(
+                    df, attr, parameter, unyts_bool
+                )
+        elif parameter in ["bonds", "angles", "dihedrals", "impropers"]:
+            if len(getattr(self, parameter)) == 0:
+                raise GMSOError(
+                    f"There arent any {parameter} in the topology. The dataframe would be empty."
+                )
+            df = self._pandas_from_parameters(
+                df,
+                parameter=parameter,
+                site_attrs=site_attrs,
+                unyts_bool=unyts_bool,
+            )
+            df = self._parse_parameter_expression(df, parameter, unyts_bool)
+        else:
+            raise AttributeError(
+                "{} is not yet supported for outputting parameters to a dataframe. \
+            Please use  one of 'sites', 'bonds', 'angles', 'dihedrals', or \
+            'impropers'".format(
+                    str(parameter)
+                )
+            )
+
+        return df
+
     def get_forcefield(self):
         """Get an instance of gmso.ForceField out of this topology
 
@@ -1417,6 +1500,190 @@ class Topology(object):
         """Return custom format to represent topology as a string."""
         return f"<Topology {self.name}, {self.n_sites} sites, id: {id(self)}>"
 
+    def _pandas_from_parameters(
+        self, df, parameter, site_attrs=None, unyts_bool=True
+    ):
+        """Add to a pandas dataframe the site indices for each connection member in a
+        multimember topology attribute such as a bond. Also include information about
+        those sites in the site_attrs list"""
+        if site_attrs is None:
+            site_attrs = []
+        sites_per_connection = len(
+            getattr(self, parameter)[0].connection_members
+        )
+        for site_index in np.arange(sites_per_connection):
+            df["Atom" + str(site_index)] = list(
+                str(connection.connection_members[site_index].name)
+                + f"({self.get_index(connection.connection_members[site_index])})"
+                for connection in getattr(self, parameter)
+            )
+        for attr in site_attrs:
+            df = self._parse_dataframe_attrs(
+                df, attr, parameter, sites_per_connection, unyts_bool
+            )
+        return df
+
+    def _parse_dataframe_attrs(
+        self, df, attr, parameter, sites_per_connection=1, unyts_bool=True
+    ):
+        """Parses an attribute string to correctly format and return the topology attribute
+        into a pandas dataframe"""
+        if parameter == "sites":
+            if "." in attr:
+                try:
+                    attr1, attr2 = attr.split(".")
+                    df[attr] = list(
+                        _return_float_for_unyt(
+                            getattr(getattr(site, attr1), attr2),
+                            unyts_bool,
+                        )
+                        for site in self.sites
+                    )
+                except AttributeError:
+                    raise AttributeError(
+                        f"The attribute {attr} is not in this gmso object."
+                    )
+            elif attr == "positions" or attr == "position":
+                for i, dimension in enumerate(["x", "y", "z"]):
+                    df[dimension] = list(
+                        _return_float_for_unyt(
+                            getattr(site, "position")[i], unyts_bool
+                        )
+                        for site in self.sites
+                    )
+            elif attr == "charge" or attr == "charges":
+                df["charge (e)"] = list(
+                    site.charge.in_units(
+                        u.Unit(
+                            "elementary_charge", registry=UnitReg.default_reg()
+                        )
+                    ).to_value()
+                    for site in self.sites
+                )
+            else:
+                try:
+                    df[attr] = list(
+                        _return_float_for_unyt(getattr(site, attr), unyts_bool)
+                        for site in self.sites
+                    )
+                except AttributeError:
+                    raise AttributeError(
+                        f"The attribute {attr} is not in this gmso object."
+                    )
+
+        elif parameter in ["bonds", "angles", "dihedrals", "impropers"]:
+            for site_index in np.arange(sites_per_connection):
+                if "." in attr:
+                    try:
+                        attr1, attr2 = attr.split(".")
+                        df[attr + " Atom" + str(site_index)] = list(
+                            _return_float_for_unyt(
+                                getattr(
+                                    getattr(
+                                        connection.connection_members[
+                                            site_index
+                                        ],
+                                        attr1,
+                                    ),
+                                    attr2,
+                                ),
+                                unyts_bool,
+                            )
+                            for connection in getattr(self, parameter)
+                        )
+                    except AttributeError:
+                        raise AttributeError(
+                            f"The attribute {attr} is not in this gmso object."
+                        )
+                elif attr == "positions" or attr == "position":
+                    df["x Atom" + str(site_index) + " (nm)"] = list(
+                        _return_float_for_unyt(
+                            getattr(
+                                connection.connection_members[site_index],
+                                "position",
+                            )[0],
+                            unyts_bool,
+                        )
+                        for connection in getattr(self, parameter)
+                    )
+                    df["y Atom" + str(site_index) + " (nm)"] = list(
+                        _return_float_for_unyt(
+                            getattr(
+                                connection.connection_members[site_index],
+                                "position",
+                            )[1],
+                            unyts_bool,
+                        )
+                        for connection in getattr(self, parameter)
+                    )
+                    df["z Atom" + str(site_index) + " (nm)"] = list(
+                        _return_float_for_unyt(
+                            getattr(
+                                connection.connection_members[site_index],
+                                "position",
+                            )[2],
+                            unyts_bool,
+                        )
+                        for connection in getattr(self, parameter)
+                    )
+                elif attr == "charge" or attr == "charges":
+                    df["charge Atom" + str(site_index) + " (e)"] = list(
+                        getattr(
+                            connection.connection_members[site_index],
+                            "charge",
+                        )
+                        .in_units(
+                            u.Unit(
+                                "elementary_charge",
+                                registry=UnitReg.default_reg(),
+                            )
+                        )
+                        .value
+                        for connection in getattr(self, parameter)
+                    )
+                else:
+                    try:
+                        df[f"{attr} Atom {site_index}"] = list(
+                            _return_float_for_unyt(
+                                getattr(
+                                    connection.connection_members[site_index],
+                                    attr,
+                                ),
+                                unyts_bool,
+                            )
+                            for connection in getattr(self, parameter)
+                        )
+                    except AttributeError:
+                        raise AttributeError(
+                            f"The attribute {attr} is not in this gmso object."
+                        )
+        else:
+            raise AttributeError(
+                f"{parameter} is not yet supported for adding labels to a dataframe. \
+                 Please use  one of 'sites', 'bonds', 'angles', 'dihedrals', or 'impropers'"
+            )
+        return df
+
+    def _parse_parameter_expression(self, df, parameter, unyts_bool):
+        """Take a given topology attribute and return the parameters associated with it"""
+        for i, param in enumerate(
+            getattr(
+                getattr(self, parameter)[0], parameter[:-1] + "_type"
+            ).parameters
+        ):
+            df[
+                f"Parameter {i} ({param}) {getattr(getattr(self, parameter)[0], parameter[:-1]+'_type').parameters[param].units}"
+            ] = list(
+                _return_float_for_unyt(
+                    getattr(connection, parameter[:-1] + "_type").parameters[
+                        param
+                    ],
+                    unyts_bool,
+                )
+                for connection in getattr(self, parameter)
+            )
+        return df
+
     @classmethod
     def load(cls, filename, **kwargs):
         """Load a file to a topology"""
@@ -1425,3 +1692,10 @@ class Topology(object):
 
         loader = LoadersRegistry.get_callable(filename.suffix)
         return loader(filename, **kwargs)
+
+
+def _return_float_for_unyt(unyt_quant, unyts_bool):
+    try:
+        return unyt_quant if unyts_bool else unyt_to_dict(unyt_quant)["array"]
+    except TypeError:
+        return unyt_quant
