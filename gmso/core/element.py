@@ -64,7 +64,7 @@ class Element(GMSOBase):
         allow_mutation = False
 
 
-def element_by_symbol(symbol):
+def element_by_symbol(symbol, verbose=False):
     """Search for an element by its symbol.
 
     Look up an element from a list of known elements by symbol.
@@ -73,7 +73,9 @@ def element_by_symbol(symbol):
     Parameters
     ----------
     symbol : str
-        Element symbol to look for, digits and spaces are removed before search
+        Element symbol to look for, digits and spaces are removed before search.
+    verbose : bool, optional, default=False
+        If True, raise warnings if symbol has been trimmed before search.
 
     Returns
     -------
@@ -83,7 +85,7 @@ def element_by_symbol(symbol):
     """
     symbol_trimmed = sub(r"[0-9 -]", "", symbol).capitalize()
 
-    if symbol_trimmed != symbol:
+    if symbol_trimmed != symbol and verbose:
         msg = (
             f"Numbers and spaces are not considered when searching by element symbol.\n"
             f"{symbol} became {symbol_trimmed}"
@@ -94,7 +96,7 @@ def element_by_symbol(symbol):
     return matched_element
 
 
-def element_by_name(name):
+def element_by_name(name, verbose=False):
     """Search for an element by its name.
 
     Look up an element from a list of known elements by name.
@@ -103,7 +105,9 @@ def element_by_name(name):
     Parameters
     ----------
     name : str
-        Element name to look for, digits and spaces are removed before search
+        Element name to look for, digits and spaces are removed before search.
+    verbose : bool, optional, default=False
+        If True, raise warnings if name has been trimmed before search.
 
     Returns
     -------
@@ -113,7 +117,7 @@ def element_by_name(name):
     """
     name_trimmed = sub(r"[0-9 -]", "", name).lower()
 
-    if name_trimmed != name:
+    if name_trimmed != name and verbose:
         msg = (
             "Numbers and spaces are not considered when searching by element name. \n"
             f"{name} became {name_trimmed}"
@@ -124,7 +128,7 @@ def element_by_name(name):
     return matched_element
 
 
-def element_by_atomic_number(atomic_number):
+def element_by_atomic_number(atomic_number, verbose=False):
     """Search for an element by its atomic number.
 
     Look up an element from a list of known elements by atomic number.
@@ -134,7 +138,9 @@ def element_by_atomic_number(atomic_number):
     ----------
     atomic_number : int
         Element atomic number that need to look for
-        if a string is provided, only numbers are considered during the search
+        if a string is provided, only numbers are considered during the search.
+    verbose : bool, optional, default=False
+        If True, raise warnings if atomic_number has been trimmed before search.
 
     Returns
     -------
@@ -146,7 +152,7 @@ def element_by_atomic_number(atomic_number):
         atomic_number_trimmed = int(
             sub("[a-z -]", "", atomic_number.lower()).lstrip("0")
         )
-        if str(atomic_number_trimmed) != atomic_number:
+        if str(atomic_number_trimmed) != atomic_number and verbose:
             msg = (
                 f"Letters and spaces are not considered when searching by element atomic number. \n "
                 f"{atomic_number} became {atomic_number_trimmed}"
@@ -162,7 +168,7 @@ def element_by_atomic_number(atomic_number):
     return matched_element
 
 
-def element_by_mass(mass, exact=True):
+def element_by_mass(mass, exact=True, verbose=False):
     """Search for an element by its mass.
 
     Look up an element from a list of known elements by mass.
@@ -173,11 +179,13 @@ def element_by_mass(mass, exact=True):
     ----------
     mass : int, float
         Element mass that need to look for, if a string is provided,
-        only numbers are considered during the search
-        Mass unyt is assumed to be u.amu, unless specfied (which will be converted to u.amu)
+        only numbers are considered during the search.
+        Mass unyt is assumed to be u.amu, unless specfied (which will be converted to u.amu).
     exact : bool, optional,  default=True
         This method can be used to search for an exact mass (up to the first decimal place)
-        or search for an element  mass closest to the mass entered
+        or search for an element  mass closest to the mass entered.
+    verbose : bool, optional, default=False
+        If True, raise warnings if mass has been trimmed before search.
 
     Returns
     -------
@@ -188,7 +196,7 @@ def element_by_mass(mass, exact=True):
     if isinstance(mass, str):
         # Convert to float if a string is provided
         mass_trimmed = np.round(float(sub(r"[a-z -]", "", mass.lower())))
-        if str(mass_trimmed) != mass:
+        if str(mass_trimmed) != mass and verbose:
             msg1 = (
                 f"Letters and spaces are not considered when searching by element mass.\n"
                 f"{mass} became {mass_trimmed}"
@@ -208,13 +216,14 @@ def element_by_mass(mass, exact=True):
         mass_closest = min(
             mass_dict.keys(), key=lambda k: abs(k - mass_trimmed)
         )
-        msg2 = f"Closest mass to {mass_trimmed}: {mass_closest}"
-        warnings.warn(msg2)
+        if verbose:
+            msg2 = f"Closest mass to {mass_trimmed}: {mass_closest}"
+            warnings.warn(msg2)
         matched_element = mass_dict.get(mass_closest)
     return matched_element
 
 
-def element_by_smarts_string(smarts_string):
+def element_by_smarts_string(smarts_string, verbose=False):
     """Search for an element by a given SMARTS string.
 
     Look up an element from a list of known elements by SMARTS string.
@@ -228,6 +237,8 @@ def element_by_smarts_string(smarts_string):
         and look up an Element. Note that this means some SMARTS grammar may
         not be parsed properly. For details, see
         https://github.com/mosdef-hub/foyer/issues/63
+    verbose : bool, optional, default=False
+        If True, raise warnings if smarts_string has been trimmed before search.
 
     Returns
     -------
@@ -267,7 +278,7 @@ def element_by_smarts_string(smarts_string):
     return matched_element
 
 
-def element_by_atom_type(atom_type):
+def element_by_atom_type(atom_type, verbose=False):
     """Search for an element by a given gmso AtomType object.
 
     Look up an element from a list of known elements by atom type.
@@ -280,6 +291,8 @@ def element_by_atom_type(atom_type):
         looked up in the order of mass, name, and finally definition (the
         SMARTS string).  Because of the loose structure of this class, a
         successful lookup is not guaranteed.
+    verbose : bool, optional, default=False
+        If True, raise warnings if atom_type has been trimmed before search.
 
     Returns
     -------
@@ -291,11 +304,15 @@ def element_by_atom_type(atom_type):
     matched_element = None
 
     if matched_element is None and atom_type.mass:
-        matched_element = element_by_mass(atom_type.mass, exact=False)
+        matched_element = element_by_mass(
+            atom_type.mass, exact=False, verbose=verbose
+        )
     if matched_element is None and atom_type.name:
-        matched_element = element_by_symbol(atom_type.name)
+        matched_element = element_by_symbol(atom_type.name, verbose=verbose)
     if matched_element is None and atom_type.definition:
-        matched_element = element_by_smarts_string(atom_type.definition)
+        matched_element = element_by_smarts_string(
+            atom_type.definition, verbose=verbose
+        )
 
     if matched_element is None:
         raise GMSOError(
