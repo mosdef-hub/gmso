@@ -103,7 +103,7 @@ def read_gro(filename):
 
 
 @saves_as(".gro")
-def write_gro(top, filename, precision=3):
+def write_gro(top, filename, precision=3, shift_coord=False):
     """Write a topology to a gro file.
 
     The Gromos87 (gro) format is a common plain text structure file used
@@ -121,6 +121,9 @@ def write_gro(top, filename, precision=3):
         The location and name of file to save to disk.
     precision : int, optional, default=3
         The number of sig fig to write out the position in.
+    shift_coord : bool, optional, default=False
+        If True, shift the coordinate to be all sites to ensure
+        all coordinates are non-negative.
 
     Notes
     -----
@@ -131,7 +134,8 @@ def write_gro(top, filename, precision=3):
 
     """
     pos_array = np.ndarray.copy(top.positions)
-    pos_array = _validate_positions(pos_array)
+    if shift_coord:
+        pos_array = _validate_positions(pos_array)
 
     with open(filename, "w") as out_file:
         out_file.write(
