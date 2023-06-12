@@ -27,4 +27,4 @@ dependencies:
   - pandas
   - symengine
   - python-symengine
-  - hoomd>=3
+  - hoomd<4
