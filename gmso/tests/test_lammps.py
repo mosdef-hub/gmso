@@ -433,14 +433,6 @@ class TestLammpsWriter(BaseTest):
                 atol=1e-8,
             )
 
-    # TODO: Test for warning handling
-    def test_lammps_warnings(self, typed_ethane):
-        with pytest.warns(
-            UserWarning, match="Call to function write_lammpsdata is WIP."
-        ):
-            """check for warning about WIP"""
-            typed_ethane.save("warning.lammps")
-
     # TODO: Test for error handling
     from gmso.exceptions import EngineIncompatibilityError
 
