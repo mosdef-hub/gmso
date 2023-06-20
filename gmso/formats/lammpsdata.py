@@ -10,7 +10,7 @@ from pathlib import Path
 
 import numpy as np
 import unyt as u
-from sympy import Symbol
+from sympy import Symbol, sympify
 from unyt import UnitRegistry
 from unyt.array import allclose_units
 
@@ -740,7 +740,7 @@ def _get_ff_information(filename, unit_style, topology):
                 pair.split()[1]
             ) * get_units(unit_style, "energy")
         elif len(pair.split()) == 4:
-            rwarn_ljcutBool = True
+            warn_ljcutBool = True
 
     if warn_ljcutBool:
         warnings.warn(
@@ -780,16 +780,22 @@ def _validate_potential_compatibility(top):
 def _validate_unit_compatibility(top, base_unyts):
     """Check compatability of topology object units with LAMMPSDATA format."""
     # TODO: Check to make sure all units are in the correct format
-    for attribute in ["sites", "bonds", "angles", "dihedrals", "impropers"]:
+    # skip angles because we still don't handle the strange k degrees output
+    for attribute in ["sites", "bonds", "dihedrals", "impropers"]:
         if attribute == "sites":
-            atype = "atom_type"
+            atype = "atom_types"
         else:
-            atype = attribute[:-1] + "_type"
-        attr_type = getattr(getattr(top, attribute), atype)
-        for parameter in attr_type.parameters:
-            ind_units = re.sub("[^a-zA-Z]+", " ", parameter.dimensions).split()
-            for unit in ind_units:
-                assert unit in base_unyts(unit.dimensions)
+            atype = attribute[:-1] + "_types"
+        parametersList = [
+            parametersDict
+            for attr_type in getattr(top, atype)
+            for parametersDict in attr_type.parameters.values()
+        ]
+        for parameter in parametersList:
+            assert (
+                _parameter_converted_to_float(parameter, base_unyts)
+                == parameter.value
+            ), f"Units System {base_unyts} is not compatible with {atype} with value {parameter}"
 
 
 def _write_header(out_file, top, atom_style):

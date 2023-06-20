@@ -439,3 +439,14 @@ class TestLammpsWriter(BaseTest):
     def test_lammps_errors(self, typed_ethane):
         with pytest.raises(UnsupportedFileFormatError):
             typed_ethane.save("error.lammmps")
+
+    def test_lammps_units(self, typed_methylnitroaniline):
+        from gmso.formats.lammpsdata import _validate_unit_compatibility
+
+        usys = u.unit_systems.mks_unit_system
+        with pytest.raises(AssertionError):
+            _validate_unit_compatibility(typed_methylnitroaniline, usys)
+        from gmso.formats.lammpsdata import _unit_style_factory
+
+        usys = _unit_style_factory("real")
+        _validate_unit_compatibility(typed_methylnitroaniline, usys)

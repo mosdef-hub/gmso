@@ -126,7 +126,7 @@ def from_parmed(structure, refer_type=True):
         )
         if refer_type and isinstance(angle.type, pmd.AngleType):
             conn_params = {
-                "k": (2 * angle.type.k * u.Unit("kcal / (rad**2 * mol)")),
+                "k": (2 * angle.type.k * u.Unit("kcal / (radian**2 * mol)")),
                 "theta_eq": (angle.type.theteq * u.degree),
             }
             _add_conn_type_from_pmd(
@@ -662,7 +662,7 @@ def _angle_types_from_gmso(top, structure, angle_map):
         ), msg
         # Extract Topology angle_type information
         agltype_k = 0.5 * float(
-            angle_type.parameters["k"].to("kcal / (rad**2 * mol)").value
+            angle_type.parameters["k"].to("kcal / (radian**2 * mol)").value
         )
         agltype_theta_eq = float(
             angle_type.parameters["theta_eq"].to("degree").value
