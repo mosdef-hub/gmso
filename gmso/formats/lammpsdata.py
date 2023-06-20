@@ -321,7 +321,7 @@ def write_lammpsdata(
             lj_cfactorsDict = None
         else:  # LJ unit styles
             if lj_cfactorsDict is None:
-                lj_cfactorsDicts = {}
+                lj_cfactorsDict = {}
             for source_factor in ["length", "energy", "mass", "charge"]:
                 default_val_from_topology = _default_lj_val(top, source_factor)
                 lj_cfactorsDict[source_factor] = lj_cfactorsDict.get(

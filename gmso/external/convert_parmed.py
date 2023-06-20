@@ -288,10 +288,11 @@ def _atom_types_from_pmd(structure):
             A dictionary linking a pmd.AtomType object to its
             corresponding GMSO.AtomType object.
     """
-    unique_atom_types = []
-    for atom in structure.atoms:
-        if isinstance(atom.atom_type, pmd.AtomType):
-            unique_atom_types.append(atom.atom_type)
+    unique_atom_types = [
+        atom.atom_type
+        for atom in structure.atoms
+        if isinstance(atom.atom_type, pmd.AtomType)
+    ]
     pmd_top_atomtypes = {}
     for atom_type in unique_atom_types:
         if atom_type.atomic_number:

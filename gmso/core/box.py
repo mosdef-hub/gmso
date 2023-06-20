@@ -21,7 +21,7 @@ def _validate_lengths(lengths):
     np.reshape(lengths, newshape=(3,), order="C")
 
     lengths *= input_unit
-    if not input_unit == u.Unit("dimensionless"):
+    if input_unit != u.Unit("dimensionless"):
         lengths.convert_to_units(u.nm)
 
     if np.any(

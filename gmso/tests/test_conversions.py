@@ -8,17 +8,15 @@ from unyt.testing import assert_allclose_units
 
 from gmso.tests.base_test import BaseTest
 from gmso.utils.conversions import (
-    _convert_params_units,
     convert_kelvin_to_energy_units,
+    convert_params_units,
 )
 
 
 def _convert_potential_types(top, connStr, expected_units_dim, base_units):
     potentials = getattr(top, connStr + "_types")
     ref_values = {"energy": "kJ/mol", "length": "nm", "angle": "radians"}
-    _convert_params_units(
-        potentials, expected_units_dim, base_units, ref_values
-    )
+    convert_params_units(potentials, expected_units_dim, base_units, ref_values)
     return potentials
 
 

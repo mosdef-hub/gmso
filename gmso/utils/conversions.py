@@ -369,7 +369,7 @@ def convert_kelvin_to_energy_units(
     return energy_output_unyt
 
 
-def _convert_params_units(
+def convert_params_units(
     potentials, expected_units_dim, base_units, ref_values
 ):
     """Convert parameters' units in the potential to that specified in the base_units."""
