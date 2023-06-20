@@ -58,7 +58,7 @@ class TestMol2(BaseTest):
             UserWarning,
             match=r"No charge was detected for site C with index 1",
         ):
-            top = Topology.load(get_fn("ethane.mol2"))
+            top = Topology.load(get_fn("ethane.mol2"), verbose=True)
         assert list(top.sites)[0].charge is None
 
     def test_residue(self):
@@ -96,7 +96,9 @@ class TestMol2(BaseTest):
             match=r"No charge was detected for site .* with index \d+$",
         ):
             top = Topology.load(
-                get_path("methane_missing_charge.mol2"), site_type="lj"
+                get_path("methane_missing_charge.mol2"),
+                site_type="lj",
+                verbose=True,
             )
 
     def test_wrong_path(self):
@@ -118,7 +120,7 @@ class TestMol2(BaseTest):
             UserWarning,
             match=r"This mol2 file has two boxes to be read in, only reading in one with dimensions Box\(a=0.72",
         ):
-            Topology.load(get_fn("broken.mol2"))
+            Topology.load(get_fn("broken.mol2"), verbose=True)
 
     def test_benzene_mol2_elements(self):
         top = Topology.load(get_fn("benzene.mol2"))
@@ -132,7 +134,7 @@ class TestMol2(BaseTest):
             match=r"No element detected for site .+ with index \d+, "
             r"consider manually adding the element to the topology$",
         ):
-            top = Topology.load(get_fn("neopentane.mol2"))
+            top = Topology.load(get_fn("neopentane.mol2"), verbose=True)
 
     def test_mol2_residues(self):
         top = Topology.load(get_fn("parmed.mol2"))

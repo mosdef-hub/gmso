@@ -1,5 +1,4 @@
-ARG PY_VERSION=3.8
-FROM continuumio/miniconda3:4.10.3-alpine AS builder
+FROM mambaorg/micromamba:1.4.3
 
 EXPOSE 8888
 
@@ -14,33 +13,17 @@ ADD . /gmso
 
 WORKDIR /gmso
 
-# Create a group and user
-RUN addgroup -S anaconda && adduser -S anaconda -G anaconda
+RUN apt-get update && apt-get install -y git
 
-RUN conda update conda -yq && \
-  conda config --set always_yes yes --set changeps1 no && \
-  . /opt/conda/etc/profile.d/conda.sh && \
-  sed -i -E "s/python.*$/python="$PY_VERSION"/" environment-dev.yml && \
-  conda install -c conda-forge mamba && \
-  mamba env create nomkl -f environment-dev.yml && \
-  conda activate gmso-dev && \
-  mamba install -c conda-forge nomkl jupyter && \
-  python setup.py install && \
-  echo "source activate gmso-dev" >> \
-  /home/anaconda/.profile && \
-  conda clean -afy && \
-  mkdir -p /home/anaconda/data && \
-  chown -R anaconda:anaconda /gmso && \
-  chown -R anaconda:anaconda /opt && \
-  chown -R anaconda:anaconda /home/anaconda
+RUN micromamba create --file environment-dev.yml
+ARG MAMBA_DOCKERFILE_ACTIVATE=1  # (otherwise python will not be found)
 
-WORKDIR /home/anaconda
+RUN  micromamba install -c conda-forge nomkl jupyter python="3.10"
+RUN  python setup.py install
+RUN  echo "source activate gmso-dev" >> /home/.bashrc
+RUN  micromamba clean -afy
+RUN  mkdir -p /home/data
 
-COPY devtools/docker-entrypoint.sh /entrypoint.sh
-
-RUN chmod a+x /entrypoint.sh
-
-USER anaconda
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["jupyter"]

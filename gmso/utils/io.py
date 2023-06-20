@@ -197,6 +197,14 @@ try:
 except ImportError:
     has_matplotlib = False
 
+try:
+    import pandas
+
+    has_pandas = True
+    del pandas
+except ImportError:
+    has_pandas = False
+
 
 def run_from_ipython():
     """Verify that the code is running in an ipython kernel."""

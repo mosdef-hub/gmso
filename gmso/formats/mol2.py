@@ -12,7 +12,7 @@ from gmso.formats.formats_registry import loads_as
 
 
 @loads_as(".mol2")
-def read_mol2(filename, site_type="atom"):
+def read_mol2(filename, site_type="atom", verbose=False):
     """Read in a TRIPOS mol2 file format into a gmso topology object.
 
     Creates a Topology from a mol2 file structure. This will read in the
@@ -28,6 +28,8 @@ def read_mol2(filename, site_type="atom"):
         tells the reader to consider the elements saved in the mol2 file, and
         if the type is 'lj', to not try to identify the element of the site,
         instead saving the site name.
+    verbose : bool, optional, default=False
+        If True, raise warnings for any assumptions made during the parsing.
 
     Returns
     -------
@@ -79,13 +81,13 @@ def read_mol2(filename, site_type="atom"):
                 "Skipping current section and moving to the next RTI header."
             )
         else:
-            supported_rti[section](topology, sections[section])
+            supported_rti[section](topology, sections[section], verbose)
 
     # TODO: read in parameters to correct attribute as well. This can be saved in various rti sections.
     return topology
 
 
-def _parse_lj(top, section):
+def _parse_lj(top, section, verbose):
     """Parse atom of lj style from mol2 file."""
     for line in section:
         if line.strip():
@@ -95,9 +97,10 @@ def _parse_lj(top, section):
             try:
                 charge = float(content[8])
             except IndexError:
-                warnings.warn(
-                    f"No charge was detected for site {content[1]} with index {content[0]}"
-                )
+                if verbose:
+                    warnings.warn(
+                        f"No charge was detected for site {content[1]} with index {content[0]}"
+                    )
                 charge = None
 
             atom = Atom(
@@ -109,7 +112,7 @@ def _parse_lj(top, section):
             top.add_site(atom)
 
 
-def _parse_atom(top, section):
+def _parse_atom(top, section, verbose):
     """Parse atom information from the mol2 file."""
 
     def parse_ele(*symbols):
@@ -127,7 +130,7 @@ def _parse_atom(top, section):
             position = [float(x) for x in content[2:5]] * u.Å
             element = parse_ele(content[5], content[1])
 
-            if not element:
+            if not element and verbose:
                 warnings.warn(
                     f"No element detected for site {content[1]} with index {content[0]}, "
                     "consider manually adding the element to the topology"
@@ -136,9 +139,10 @@ def _parse_atom(top, section):
             try:
                 charge = float(content[8])
             except IndexError:
-                warnings.warn(
-                    f"No charge was detected for site {content[1]} with index {content[0]}"
-                )
+                if verbose:
+                    warnings.warn(
+                        f"No charge was detected for site {content[1]} with index {content[0]}"
+                    )
                 charge = None
             molecule = top.label if top.__dict__.get("label") else top.name
             atom = Atom(
@@ -152,7 +156,7 @@ def _parse_atom(top, section):
             top.add_site(atom)
 
 
-def _parse_bond(top, section):
+def _parse_bond(top, section, verbose):
     """Parse bond information from the mol2 file."""
     for line in section:
         if line.strip():
@@ -171,7 +175,7 @@ def _parse_bond(top, section):
             top.add_connection(bond)
 
 
-def _parse_box(top, section):
+def _parse_box(top, section, verbose):
     """Parse box information from the mol2 file."""
     if top.box:
         warnings.warn(
@@ -187,6 +191,6 @@ def _parse_box(top, section):
             )
 
 
-def _parse_molecule(top, section):
+def _parse_molecule(top, section, verbose):
     """Parse molecule information from the mol2 file."""
     top.label = str(section[0].strip())
