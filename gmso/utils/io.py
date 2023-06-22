@@ -7,6 +7,7 @@ import textwrap
 from tempfile import TemporaryFile
 from unittest import SkipTest
 
+import packaging.version
 from pkg_resources import resource_filename
 
 MESSAGES = dict()
@@ -137,9 +138,14 @@ try:
     import gsd
 
     has_gsd = True
+    try: # gsd 3.0 version API
+        gsd_major = packaging.version.parse(gsd.version.version).major
+    except AttributeError: # gsd 2.0 version API
+        gsd_major = packaging.version.parse(gsd.version.__version__).major
     del gsd
 except ImportError:
     has_gsd = False
+    gsd_major = None
 
 try:
     import hoomd

@@ -19,7 +19,7 @@ from gmso.utils.conversions import (
     convert_ryckaert_to_opls,
 )
 from gmso.utils.geometry import coord_shift
-from gmso.utils.io import has_gsd, has_hoomd
+from gmso.utils.io import has_gsd, has_hoomd, gsd_major
 from gmso.utils.sorting import (
     natural_sort,
     sort_connection_members,
@@ -28,8 +28,13 @@ from gmso.utils.sorting import (
 
 if has_gsd:
     import gsd.hoomd
+    if gsd_major == 3:
+        snap_from_gsd = gsd.hoomd.Frame
+    else:
+        snap_from_gsd = gsd.hoomd.Snapshot
 if has_hoomd:
     import hoomd
+    snap_from_hoomd = hoomd.Snapshot
 
 # Note, charge will always be assumed to be in elementary_charge
 MD_UNITS = {
@@ -102,8 +107,10 @@ def to_gsd_snapshot(
     read force field parameters from a Foyer XML file.
     """
     base_units = _validate_base_units(base_units, top, auto_scale)
-
-    gsd_snapshot = gsd.hoomd.Snapshot()
+    if gsd_major == 2:
+        gsd_snapshot = gsd.hoomd.Snapshot()
+    elif gsd_major == 3:
+        gsd_snapshot = gsd.hoomd.Frame()
 
     gsd_snapshot.configuration.step = 0
     gsd_snapshot.configuration.dimensions = 3
@@ -202,7 +209,7 @@ def to_hoomd_snapshot(
     read force field parameters from a Foyer XML file.
     """
     base_units = _validate_base_units(base_units, top, auto_scale)
-
+    
     hoomd_snapshot = hoomd.Snapshot()
 
     # Write box information
@@ -306,14 +313,14 @@ def _parse_particle_information(
         4.0 * np.pi * e0 * base_units["length"] * base_units["energy"]
     ) ** 0.5
 
-    if isinstance(snapshot, hoomd.Snapshot):
+    if isinstance(snapshot, snap_from_hoomd):
         snapshot.particles.N = top.n_sites
         snapshot.particles.types = unique_types
         snapshot.particles.position[0:] = xyz
         snapshot.particles.typeid[0:] = typeids
         snapshot.particles.mass[0:] = masses
         snapshot.particles.charge[0:] = charges / charge_factor
-    elif isinstance(snapshot, gsd.hoomd.Snapshot):
+    elif isinstance(snapshot, snap_from_gsd):
         snapshot.particles.N = top.n_sites
         snapshot.particles.types = unique_types
         snapshot.particles.position = xyz
@@ -355,12 +362,12 @@ def _parse_pairs_information(
         pair_typeids.append(pair_types.index(pair_type))
         pairs.append((top.get_index(pair[0]), top.get_index(pair[1])))
 
-    if isinstance(snapshot, hoomd.Snapshot):
+    if isinstance(snapshot, snap_from_hoomd):
         snapshot.pairs.N = len(pairs)
         snapshot.pairs.group[:] = np.reshape(pairs, (-1, 2))
         snapshot.pairs.types = pair_types
         snapshot.pairs.typeid[:] = pair_typeids
-    elif isinstance(snapshot, gsd.hoomd.Snapshot):
+    elif isinstance(snapshot, snap_from_gsd):
         snapshot.pairs.N = len(pairs)
         snapshot.pairs.group = np.reshape(pairs, (-1, 2))
         snapshot.pairs.types = pair_types
@@ -402,11 +409,11 @@ def _parse_bond_information(snapshot, top):
     unique_bond_types = list(set(bond_types))
     bond_typeids = [unique_bond_types.index(i) for i in bond_types]
 
-    if isinstance(snapshot, hoomd.Snapshot):
+    if isinstance(snapshot, snap_from_hoomd):
         snapshot.bonds.types = unique_bond_types
         snapshot.bonds.typeid[0:] = bond_typeids
         snapshot.bonds.group[0:] = bond_groups
-    elif isinstance(snapshot, gsd.hoomd.Snapshot):
+    elif isinstance(snapshot, snap_from_gsd):
         snapshot.bonds.types = unique_bond_types
         snapshot.bonds.typeid = bond_typeids
         snapshot.bonds.group = bond_groups
@@ -449,11 +456,11 @@ def _parse_angle_information(snapshot, top):
     unique_angle_types = list(set(angle_types))
     angle_typeids = [unique_angle_types.index(i) for i in angle_types]
 
-    if isinstance(snapshot, hoomd.Snapshot):
+    if isinstance(snapshot, snap_from_hoomd):
         snapshot.angles.types = unique_angle_types
         snapshot.angles.typeid[0:] = angle_typeids
         snapshot.angles.group[0:] = np.reshape(angle_groups, (-1, 3))
-    elif isinstance(snapshot, gsd.hoomd.Snapshot):
+    elif isinstance(snapshot, snap_from_gsd):
         snapshot.angles.types = unique_angle_types
         snapshot.angles.typeid = angle_typeids
         snapshot.angles.group = np.reshape(angle_groups, (-1, 3))
@@ -495,11 +502,11 @@ def _parse_dihedral_information(snapshot, top):
     unique_dihedral_types = list(set(dihedral_types))
     dihedral_typeids = [unique_dihedral_types.index(i) for i in dihedral_types]
 
-    if isinstance(snapshot, hoomd.Snapshot):
+    if isinstance(snapshot, snap_from_hoomd):
         snapshot.dihedrals.types = unique_dihedral_types
         snapshot.dihedrals.typeid[0:] = dihedral_typeids
         snapshot.dihedrals.group[0:] = np.reshape(dihedral_groups, (-1, 4))
-    elif isinstance(snapshot, gsd.hoomd.Snapshot):
+    elif isinstance(snapshot, snap_from_gsd):
         snapshot.dihedrals.types = unique_dihedral_types
         snapshot.dihedrals.typeid = dihedral_typeids
         snapshot.dihedrals.group = np.reshape(dihedral_groups, (-1, 4))
@@ -543,11 +550,11 @@ def _parse_improper_information(snapshot, top):
     unique_improper_types = list(set(improper_types))
     improper_typeids = [unique_improper_types.index(i) for i in improper_types]
 
-    if isinstance(snapshot, hoomd.Snapshot):
+    if isinstance(snapshot, snap_from_hoomd):
         snapshot.impropers.types = unique_improper_types
         snapshot.impropers.typeid[0:] = improper_typeids
         snapshot.impropers.group[0:] = np.reshape(improper_groups, (-1, 4))
-    elif isinstance(snapshot, gsd.hoomd.Snapshot):
+    elif isinstance(snapshot, snap_from_gsd):
         snapshot.impropers.types = unique_improper_types
         snapshot.impropers.typeid = improper_typeids
         snapshot.impropers.group = np.reshape(improper_groups, (-1, 4))
