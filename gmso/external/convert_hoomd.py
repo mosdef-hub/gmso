@@ -201,7 +201,6 @@ def to_hoomd_snapshot(
     read force field parameters from a Foyer XML file.
     """
     base_units = _validate_base_units(base_units, top, auto_scale)
-    
     hoomd_snapshot = hoomd.Snapshot()
 
     # Write box information

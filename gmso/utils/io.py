@@ -140,7 +140,6 @@ try:
     del gsd
 except ImportError:
     has_gsd = False
-    gsd_major = None
 
 try:
     import hoomd
