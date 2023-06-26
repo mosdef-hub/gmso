@@ -670,3 +670,6 @@ class BaseTest:
             untyped_benzene, assert_dihedral_params=False
         )
         return benzene
+    
+    #TODO: now
+    # add in some fixtures for (connects) charmm, impropers, amber

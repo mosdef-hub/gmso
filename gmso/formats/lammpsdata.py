@@ -937,7 +937,7 @@ def _write_pairtypes(out_file, top, base_unyts, cfactorsDict):
     ) 
     nb_style_orderTuple = ("epsilon", "sigma") # this will vary with new pair styles
     param_labels = [
-        _write_out_parameter_w_units(key, test_atomtype.parameters[key].units.dimensions, base_unyts)
+        _write_out_parameter_w_units(key, test_atomtype.parameters[key], base_unyts)
         for key in nb_style_orderTuple
     ]
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
@@ -1153,7 +1153,7 @@ def _write_conn_data(out_file, top, connIter, connStr):
     indexList.sort(key=sorting_funcDict[connStr])
 
     for i, conn in enumerate(getattr(top, connStr)):
-        typeStr = f"{i+1:*<6d}\t{indexList.index(get_sorted_names(conn.connection_type))+1:*<6d}\t"
+        typeStr = f"{i+1:<6d}\t{indexList.index(get_sorted_names(conn.connection_type))+1:<6d}\t"
         indexStr = "\t".join(
             map(lambda x: str(top.sites.index(x) + 1).ljust(6), conn.connection_members)
         )

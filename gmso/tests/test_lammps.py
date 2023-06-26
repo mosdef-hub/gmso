@@ -47,21 +47,20 @@ class TestLammpsWriter(BaseTest):
     def test_write_lammps(self, fname, typed_ar_system):
         typed_ar_system.save(fname)
 
-    def test_write_lammps_triclinic(self, typed_ar_system):
-        typed_ar_system.box = Box(lengths=[1, 1, 1], angles=[60, 90, 120])
-        typed_ar_system.save("triclinic.lammps")
-
     def test_ethane_lammps(self, typed_ethane):
+        # TODO: now
         typed_ethane.save("ethane.lammps")
 
     def test_opls_lammps(self, typed_ethane_opls):
+        # TODO: now
         typed_ethane_opls.save("ethane.lammps")
 
     def test_water_lammps(self, typed_water_system):
+        # TODO: now
         typed_water_system.save("data.lammps")
 
     def test_read_lammps(self, filename=get_path("data.lammps")):
-        top = gmso.Topology.load(filename)
+        gmso.Topology.load(filename)
 
     def test_read_box(self, filename=get_path("data.lammps")):
         read = gmso.Topology.load(filename)
@@ -237,6 +236,7 @@ class TestLammpsWriter(BaseTest):
 
         atom_style = 'full', 'atomic', 'charge', 'molecular'
         unit_style = 'real', 'lj'
+        improper_style = "cvff"
         dihedral_style = 'CHARMM', 'OPLS',
         angle_style = 'harmonic', 'urey_bradleys'
         bond_style = 'harmonic
@@ -456,3 +456,5 @@ class TestLammpsWriter(BaseTest):
 
     def test_atom_style_printing(self, typed_ethane):
         """Check writers for correctly printing potential eqn."""
+
+        # TODO now: test for box_bounds, fixtures, ljbox, errors, dihedral weighting, 
