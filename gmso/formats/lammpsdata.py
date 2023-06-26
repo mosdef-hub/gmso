@@ -10,7 +10,7 @@ from pathlib import Path
 
 import numpy as np
 import unyt as u
-from sympy import Symbol, sympify
+from sympy import Symbol
 from unyt import UnitRegistry
 from unyt.array import allclose_units
 
@@ -157,7 +157,8 @@ class ljUnitSystem:
 
 
 def _parameter_converted_to_float(
-    parameter, base_unyts, conversion_factorDict=None
+    parameter, base_unyts, conversion_factorDict=None, n_decimals=3,
+    name="",
 ):
     """Take a given parameter, and return a float of the parameter in the given style.
 
@@ -166,6 +167,8 @@ def _parameter_converted_to_float(
     also generate dimensionless units via normalization from conversion_factorsDict.
     # TODO: move this to gmso.utils.units.py
     """
+    if name in ["theta_eq", "chieq"]: # eq angle are always in degrees
+        return round(float(parameter.to("degree").value), n_decimals)
     new_dims = _dimensions_to_energy(parameter.units.dimensions)
     new_dims = _dimensions_to_charge(new_dims)
     if conversion_factorDict and isinstance(base_unyts, ljUnitSystem):
@@ -187,7 +190,7 @@ def _parameter_converted_to_float(
     for unit in ind_units:
         new_dimStr = new_dimStr.replace(unit, str(base_unyts[unit]))
 
-    return float(parameter.to(u.Unit(new_dimStr, registry=base_unyts.registry)))
+    return round(float(parameter.to(u.Unit(new_dimStr, registry=base_unyts.registry))), n_decimals)
 
 
 def _dimensions_to_energy(dims):
@@ -787,14 +790,14 @@ def _validate_unit_compatibility(top, base_unyts):
         else:
             atype = attribute[:-1] + "_types"
         parametersList = [
-            parametersDict
+            parameter
             for attr_type in getattr(top, atype)
-            for parametersDict in attr_type.parameters.values()
+            for parameter in attr_type.parameters.values()
         ]
         for parameter in parametersList:
-            assert (
-                _parameter_converted_to_float(parameter, base_unyts)
-                == parameter.value
+            assert np.isclose(
+                _parameter_converted_to_float(parameter, base_unyts, n_decimals=6),
+                parameter.value, atol=1e-3
             ), f"Units System {base_unyts} is not compatible with {atype} with value {parameter}"
 
 
@@ -930,28 +933,27 @@ def _write_pairtypes(out_file, top, base_unyts, cfactorsDict):
     # Pair coefficients
     test_atomtype = top.sites[0].atom_type
     out_file.write(
-        f"\nPair Coeffs # lj\n"
-    )  # TODO: This should be pulled from the test_atomtype
-    # TODO: use unit style specified for writer
-    param_labels = map(
-        lambda x: f"{x} ({base_unyts[test_atomtype.parameters[x].units.dimensions]})",
-        ("epsilon", "sigma"),
-    )
+        f"\nPair Coeffs # {test_atomtype.expression}\n"
+    ) 
+    nb_style_orderTuple = ("epsilon", "sigma") # this will vary with new pair styles
+    param_labels = [
+        _write_out_parameter_w_units(key, test_atomtype.parameters[key].units.dimensions, base_unyts)
+        for key in nb_style_orderTuple
+    ]
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
     sorted_atomtypes = sorted(
         top.atom_types(filter_by=pfilter), key=lambda x: x.name
     )
     for idx, param in enumerate(sorted_atomtypes):
-        # TODO: grab expression from top
         out_file.write(
             "{}\t{:7.5f}\t\t{:7.5f}\t\t# {}\n".format(
                 idx + 1,
-                _parameter_converted_to_float(
-                    param.parameters["epsilon"], base_unyts, cfactorsDict
-                ),
-                _parameter_converted_to_float(
-                    param.parameters["sigma"], base_unyts, cfactorsDict
-                ),
+                *[
+                    _parameter_converted_to_float(
+                        param.parameters[key], base_unyts, cfactorsDict,
+                    )
+                    for key in nb_style_orderTuple
+                ],
                 param.name,
             )
         )
@@ -959,13 +961,15 @@ def _write_pairtypes(out_file, top, base_unyts, cfactorsDict):
 
 def _write_bondtypes(out_file, top, base_unyts, cfactorsDict):
     """Write out bonds to LAMMPS file."""
-    # TODO: Use any accepted lammps parameters
+    # TODO: Use any accepted lammps styles (only takes harmonic now)
     test_bondtype = top.bonds[0].bond_type
     out_file.write(f"\nBond Coeffs #{test_bondtype.name}\n")
-    param_labels = map(
-        lambda x: f"{x} ({base_unyts[test_bondtype.parameters[x].units.dimensions]})",
-        test_bondtype.parameters,
-    )
+    bond_style_orderTuple = ("k", "r_eq")
+    param_labels = [
+        _write_out_parameter_w_units(key, test_bondtype.parameters[key], base_unyts)
+        for key in bond_style_orderTuple
+    ]
+
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
     bond_types = list(top.bond_types(filter_by=pfilter))
     bond_types.sort(key=lambda x: sorted(x.member_types))
@@ -976,12 +980,12 @@ def _write_bondtypes(out_file, top, base_unyts, cfactorsDict):
         out_file.write(
             "{}\t{:7.5f}\t{:7.5f}\t\t# {}\t{}\n".format(
                 idx + 1,
-                _parameter_converted_to_float(
-                    bond_type.parameters["k"], base_unyts, cfactorsDict
-                ),
-                _parameter_converted_to_float(
-                    bond_type.parameters["r_eq"], base_unyts, cfactorsDict
-                ),
+                *[
+                    _parameter_converted_to_float(
+                        bond_type.parameters[key], base_unyts, cfactorsDict
+                    )
+                    for key in bond_style_orderTuple
+                ],
                 *member_types,
             )
         )
@@ -991,12 +995,12 @@ def _write_angletypes(out_file, top, base_unyts, cfactorsDict):
     """Write out angles to LAMMPS file."""
     # TODO: Use any accepted lammps parameters
     test_angletype = top.angles[0].angle_type
-    test_angletype.parameters["theta_eq"].convert_to_units("degree")
     out_file.write(f"\nAngle Coeffs #{test_angletype.name}\n")
-    param_labels = map(
-        lambda x: f"{x} ({base_unyts[test_angletype.parameters[x].units.dimensions]})",
-        test_angletype.parameters,
-    )
+    angle_style_orderTuple = ("k", "theta_eq") # this will vary with new angle styles
+    param_labels = [
+        _write_out_parameter_w_units(key, test_angletype.parameters[key], base_unyts)
+        for key in angle_style_orderTuple
+    ]
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
     indexList = list(top.angle_types(filter_by=pfilter))
     indexList.sort(
@@ -1008,14 +1012,15 @@ def _write_angletypes(out_file, top, base_unyts, cfactorsDict):
     )
     for idx, angle_type in enumerate(indexList):
         out_file.write(
-            "{}\t{:7.5f}\t{:7.5f}\t#{}\t{}\t{}\n".format(
+            "{}\t{:7.5f}\t{:7.5f}\t#{:11s}\t{:11s}\t{:11s}\n".format(
                 idx + 1,
-                _parameter_converted_to_float(
-                    angle_type.parameters["k"], base_unyts, cfactorsDict
-                ),
-                angle_type.parameters["theta_eq"]
-                .to(u.degree)
-                .value,  # write equilibrium values in degrees
+                *[
+                    _parameter_converted_to_float(
+                        angle_type.parameters[key],
+                        base_unyts, cfactorsDict, name=key
+                    )
+                    for key in angle_style_orderTuple
+                ],
                 *angle_type.member_types,
             )
         )
@@ -1025,10 +1030,11 @@ def _write_dihedraltypes(out_file, top, base_unyts, cfactorsDict):
     """Write out dihedrals to LAMMPS file."""
     test_dihedraltype = top.dihedrals[0].dihedral_type
     out_file.write(f"\nDihedral Coeffs #{test_dihedraltype.name}\n")
-    param_labels = map(
-        lambda x: f"{x} ({base_unyts[test_dihedraltype.parameters[x].units.dimensions]})",
-        test_dihedraltype.parameters,
-    )
+    dihedral_style_orderTuple = ("k1", "k2", "k3", "k4") # this will vary with new dihedral styles
+    param_labels = [
+        _write_out_parameter_w_units(key, test_dihedraltype.parameters[key], base_unyts)
+        for key in dihedral_style_orderTuple
+    ]
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
     indexList = list(top.dihedral_types(filter_by=pfilter))
     index_membersList = [
@@ -1046,7 +1052,7 @@ def _write_dihedraltypes(out_file, top, base_unyts, cfactorsDict):
                         base_unyts,
                         cfactorsDict,
                     )
-                    for parameterStr in ["k1", "k2", "k3", "k4"]
+                    for parameterStr in dihedral_style_orderTuple
                 ],
                 *members,
             )
@@ -1058,21 +1064,25 @@ def _write_impropertypes(out_file, top, base_unyts, cfactorsDict):
     # TODO: Use any accepted lammps parameters
     test_impropertype = top.impropers[0].improper_type
     out_file.write(f"\nImproper Coeffs #{test_impropertype.name}\n")
-    param_labels = map(
-        lambda x: f"{x} ({base_unyts[test_impropertype.parameters[x].units.dimensions]})",
-        test_impropertype.parameters,
-    )
+    improper_style_orderTuple = ("k", "chieq") # this will vary with new improper styles
+    param_labels = [
+        _write_out_parameter_w_units(key, test_impropertype.parameters[key], base_unyts)
+        for key in improper_style_orderTuple
+    ]
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
     for idx, improper_type in enumerate(top.improper_types(filter_by=pfilter)):
         out_file.write(
             "{}\t{:7.5f}\t{:7.5f}\n".format(
                 idx + 1,
-                _parameter_converted_to_float(
-                    improper_type.parameters["k"], base_unyts, cfactorsDict
-                ),
-                improper_type.parameters["chieq"]
-                .to(u.degree)
-                .value,  # write to degrees
+                *[
+                    _parameter_converted_to_float(
+                        improper_type.parameters[parameterStr],
+                        base_unyts,
+                        cfactorsDict,
+                        name=parameterStr
+                    )
+                    for parameterStr in improper_style_orderTuple
+                ],
                 *improper_type.members,
             )
         )
@@ -1080,7 +1090,7 @@ def _write_impropertypes(out_file, top, base_unyts, cfactorsDict):
 
 def _write_site_data(out_file, top, atom_style, base_unyts, cfactorsDict):
     """Write atomic positions and charges to LAMMPS file.."""
-    out_file.write("\nAtoms\n\n")
+    out_file.write(f"\nAtoms #{atom_style}\n\n")
     if atom_style == "atomic":
         atom_line = "{index:d}\t{type_index:d}\t{x:.6f}\t{y:.6f}\t{z:.6f}\n"
     elif atom_style == "charge":
@@ -1103,13 +1113,13 @@ def _write_site_data(out_file, top, atom_style, base_unyts, cfactorsDict):
                     site.charge, base_unyts, cfactorsDict
                 ),
                 x=_parameter_converted_to_float(
-                    site.position[0], base_unyts, cfactorsDict
+                    site.position[0], base_unyts, cfactorsDict, n_decimals=6
                 ),
                 y=_parameter_converted_to_float(
-                    site.position[1], base_unyts, cfactorsDict
+                    site.position[1], base_unyts, cfactorsDict, n_decimals=6
                 ),
                 z=_parameter_converted_to_float(
-                    site.position[2], base_unyts, cfactorsDict
+                    site.position[2], base_unyts, cfactorsDict, n_decimals=6
                 ),
             )
         )
@@ -1143,9 +1153,9 @@ def _write_conn_data(out_file, top, connIter, connStr):
     indexList.sort(key=sorting_funcDict[connStr])
 
     for i, conn in enumerate(getattr(top, connStr)):
-        typeStr = f"{i+1:d}\t{indexList.index(get_sorted_names(conn.connection_type))+1:d}\t"
+        typeStr = f"{i+1:*<6d}\t{indexList.index(get_sorted_names(conn.connection_type))+1:*<6d}\t"
         indexStr = "\t".join(
-            map(lambda x: str(top.sites.index(x) + 1), conn.connection_members)
+            map(lambda x: str(top.sites.index(x) + 1).ljust(6), conn.connection_members)
         )
         out_file.write(typeStr + indexStr + "\n")
 
@@ -1181,3 +1191,16 @@ def _default_lj_val(top, source):
         raise ValueError(
             f"Provided {source} for default LJ cannot be found in the topology."
         )
+    
+def _write_out_parameter_w_units(parameter_name, parameter, base_unyts):
+    if parameter_name in ["theta_eq", "chieq"]:
+        return f"{parameter_name} ({'degrees'})"
+    new_dims = _dimensions_to_energy(parameter.units.dimensions)
+    new_dims = _dimensions_to_charge(new_dims)
+    new_dimStr = str(new_dims)
+    ind_units = re.sub("[^a-zA-Z]+", " ", new_dimStr).split()
+    for unit in ind_units:
+        new_dimStr = new_dimStr.replace(unit, str(base_unyts[unit]))
+        
+    outputUnyt = str(parameter.to(u.Unit(new_dimStr, registry=base_unyts.registry)).units)
+    return f"{parameter_name} ({outputUnyt})"

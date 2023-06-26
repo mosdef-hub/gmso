@@ -450,3 +450,9 @@ class TestLammpsWriter(BaseTest):
 
         usys = _unit_style_factory("real")
         _validate_unit_compatibility(typed_methylnitroaniline, usys)
+
+    def test_units_in_headers(self, typed_ethane):
+        """Make sure units are written out properly."""
+
+    def test_atom_style_printing(self, typed_ethane):
+        """Check writers for correctly printing potential eqn."""
