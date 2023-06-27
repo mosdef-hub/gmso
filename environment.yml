@@ -3,6 +3,7 @@ channels:
   - conda-forge
 dependencies:
   - python>=3.8
+  - boltons
   - numpy
   - sympy
   - unyt<=2.9.2
