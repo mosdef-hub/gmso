@@ -1123,7 +1123,9 @@ def _parse_dihedral_forces(
     }
 
     hoomd_version = hoomd.version.version.split(".")
-    if int(hoomd_version[1]) >= 8:
+    if int(hoomd_version[0]) == 4 or (
+        int(hoomd_version[0]) == 3 and int(hoomd_version[1]) >= 8
+    ):
         dtype_group_map["PeriodicTorsionPotential"] = (
             {
                 "container": hoomd.md.dihedral.Periodic,
