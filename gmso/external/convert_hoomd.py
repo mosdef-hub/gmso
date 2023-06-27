@@ -90,7 +90,7 @@ def to_gsd_snapshot(
 
     Return
     ------
-    gsd_snapshot : gsd.hoomd.Snapshot
+    gsd_snapshot : gsd.hoomd.Frame
         Converted hoomd Snapshot.
     base_units : dict
         Based units dictionary utilized during the conversion.
@@ -102,8 +102,7 @@ def to_gsd_snapshot(
     read force field parameters from a Foyer XML file.
     """
     base_units = _validate_base_units(base_units, top, auto_scale)
-
-    gsd_snapshot = gsd.hoomd.Snapshot()
+    gsd_snapshot = gsd.hoomd.Frame()
 
     gsd_snapshot.configuration.step = 0
     gsd_snapshot.configuration.dimensions = 3
@@ -202,7 +201,6 @@ def to_hoomd_snapshot(
     read force field parameters from a Foyer XML file.
     """
     base_units = _validate_base_units(base_units, top, auto_scale)
-
     hoomd_snapshot = hoomd.Snapshot()
 
     # Write box information
@@ -257,7 +255,7 @@ def _parse_particle_information(
 
     Parameters
     ----------
-    snapshot : gsd.hoomd.Snapshot or hoomd.Snapshot
+    snapshot : gsd.hoomd.Frame or hoomd.Snapshot
         The target Snapshot object.
     top : gmso.Topology
         Topology object holding system information.
@@ -313,7 +311,7 @@ def _parse_particle_information(
         snapshot.particles.typeid[0:] = typeids
         snapshot.particles.mass[0:] = masses
         snapshot.particles.charge[0:] = charges / charge_factor
-    elif isinstance(snapshot, gsd.hoomd.Snapshot):
+    elif isinstance(snapshot, gsd.hoomd.Frame):
         snapshot.particles.N = top.n_sites
         snapshot.particles.types = unique_types
         snapshot.particles.position = xyz
@@ -360,7 +358,7 @@ def _parse_pairs_information(
         snapshot.pairs.group[:] = np.reshape(pairs, (-1, 2))
         snapshot.pairs.types = pair_types
         snapshot.pairs.typeid[:] = pair_typeids
-    elif isinstance(snapshot, gsd.hoomd.Snapshot):
+    elif isinstance(snapshot, gsd.hoomd.Frame):
         snapshot.pairs.N = len(pairs)
         snapshot.pairs.group = np.reshape(pairs, (-1, 2))
         snapshot.pairs.types = pair_types
@@ -372,7 +370,7 @@ def _parse_bond_information(snapshot, top):
 
     Parameters
     ----------
-    snapshot : gsd.hoomd.Snapshot or hoomd.Snapshot
+    snapshot : gsd.hoomd.Frame or hoomd.Snapshot
         The target Snapshot object.
     top : gmso.Topology
         Topology object holding system information
@@ -406,7 +404,7 @@ def _parse_bond_information(snapshot, top):
         snapshot.bonds.types = unique_bond_types
         snapshot.bonds.typeid[0:] = bond_typeids
         snapshot.bonds.group[0:] = bond_groups
-    elif isinstance(snapshot, gsd.hoomd.Snapshot):
+    elif isinstance(snapshot, gsd.hoomd.Frame):
         snapshot.bonds.types = unique_bond_types
         snapshot.bonds.typeid = bond_typeids
         snapshot.bonds.group = bond_groups
@@ -419,7 +417,7 @@ def _parse_angle_information(snapshot, top):
 
     Parameters
     ----------
-    snapshot : gsd.hoomd.Snapshot or hoomd.Snapshot
+    snapshot : gsd.hoomd.Frame or hoomd.Snapshot
         The target Snapshot object.
     top : gmso.Topology
         Topology object holding system information
@@ -453,7 +451,7 @@ def _parse_angle_information(snapshot, top):
         snapshot.angles.types = unique_angle_types
         snapshot.angles.typeid[0:] = angle_typeids
         snapshot.angles.group[0:] = np.reshape(angle_groups, (-1, 3))
-    elif isinstance(snapshot, gsd.hoomd.Snapshot):
+    elif isinstance(snapshot, gsd.hoomd.Frame):
         snapshot.angles.types = unique_angle_types
         snapshot.angles.typeid = angle_typeids
         snapshot.angles.group = np.reshape(angle_groups, (-1, 3))
@@ -467,7 +465,7 @@ def _parse_dihedral_information(snapshot, top):
 
     Parameters
     ----------
-    snapshot : gsd.hoomd.Snapshot or hoomd.Snapshot
+    snapshot : gsd.hoomd.Frame or hoomd.Snapshot
         The target Snapshot object.
     top : gmso.Topology
         Topology object holding system information
@@ -499,7 +497,7 @@ def _parse_dihedral_information(snapshot, top):
         snapshot.dihedrals.types = unique_dihedral_types
         snapshot.dihedrals.typeid[0:] = dihedral_typeids
         snapshot.dihedrals.group[0:] = np.reshape(dihedral_groups, (-1, 4))
-    elif isinstance(snapshot, gsd.hoomd.Snapshot):
+    elif isinstance(snapshot, gsd.hoomd.Frame):
         snapshot.dihedrals.types = unique_dihedral_types
         snapshot.dihedrals.typeid = dihedral_typeids
         snapshot.dihedrals.group = np.reshape(dihedral_groups, (-1, 4))
@@ -547,7 +545,7 @@ def _parse_improper_information(snapshot, top):
         snapshot.impropers.types = unique_improper_types
         snapshot.impropers.typeid[0:] = improper_typeids
         snapshot.impropers.group[0:] = np.reshape(improper_groups, (-1, 4))
-    elif isinstance(snapshot, gsd.hoomd.Snapshot):
+    elif isinstance(snapshot, gsd.hoomd.Frame):
         snapshot.impropers.types = unique_improper_types
         snapshot.impropers.typeid = improper_typeids
         snapshot.impropers.group = np.reshape(improper_groups, (-1, 4))
