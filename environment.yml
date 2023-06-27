@@ -4,7 +4,7 @@ channels:
 dependencies:
   - python>=3.8
   - boltons
-  - numpy
+  - numpy=1.24.2
   - sympy
   - unyt<=2.9.2
   - boltons
