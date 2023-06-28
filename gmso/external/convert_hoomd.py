@@ -1243,22 +1243,14 @@ def _parse_improper_forces(
             expected_units_dim,
             base_units,
         )
-    hoomd_version = hoomd.version.version.split(".")
-    if int(hoomd_version[1]) >= 8:
-        itype_group_map = {
-            "HarmonicImproperPotenial": {
-                "container": hoomd.md.dihedral.Periodic,
-                "parser": _parse_harmonic_improper,
-            },
-        }
-    else:
-        # Should this be periodic, deprecated starting from 3.8.0
-        itype_group_map = {
-            "HarmonicImproperPotenial": {
-                "container": hoomd.md.dihedral.Harmonic,
-                "parser": _parse_harmonic_improper,
-            },
-        }
+
+    itype_group_map = {
+        "HarmonicImproperPotenial": {
+            "container": hoomd.md.dihedral.Harmonic,
+            "parser": _parse_harmonic_improper,
+        },
+    }
+
     improper_forces = list()
     for group in groups:
         improper_forces.append(
