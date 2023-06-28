@@ -1246,7 +1246,7 @@ def _parse_improper_forces(
 
     itype_group_map = {
         "HarmonicImproperPotenial": {
-            "container": hoomd.md.dihedral.Harmonic,
+            "container": hoomd.md.improper.Harmonic,
             "parser": _parse_harmonic_improper,
         },
     }
