@@ -575,6 +575,7 @@ class TestLammpsWriter(BaseTest):
         with open("ethane.lammps", "r") as f:
             lines = f.readlines()
         start = 0
+        end = 1
         for i in range(len(lines)):
             if "Pair Coeffs" in lines[i]:
                 start = i
