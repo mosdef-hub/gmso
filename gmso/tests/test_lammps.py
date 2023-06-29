@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 import pytest
 import unyt as u
@@ -10,22 +12,44 @@ from gmso.core.views import PotentialFilters
 
 pfilter = PotentialFilters.UNIQUE_SORTED_NAMES
 from gmso.exceptions import EngineIncompatibilityError
-from gmso.external import to_parmed
+from gmso.external import from_parmed, to_parmed
 from gmso.formats.formats_registry import UnsupportedFileFormatError
 from gmso.formats.lammpsdata import read_lammpsdata, write_lammpsdata
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
 
 
-def compare_lammps_files(fn1, fn2, skip_linesList=[]):
-    """Check for line by line equality between lammps files, by any values."""
+def compare_lammps_files(fn1, fn2, skip_linesList=[], offsets=None):
+    """Check for line by line equality between lammps files, by any values.
+
+    offsets = [file1: [(start, step)], file2: [(start, step)]
+    """
     with open(fn1, "r") as f:
         line1 = f.readlines()
     with open(fn2, "r") as f:
         line2 = f.readlines()
-    for lnum, (l1, l2) in enumerate(zip(line1, line2)):
+    length1 = len(line1)
+    length2 = len(line2)
+    line_counter1 = 0
+    line_counter2 = 0
+    while True:
+        # check for offsets
+        if offsets:
+            if offsets[0][0][0] == line_counter1:
+                line_counter1 += offsets[0][0][1]
+                offsets[0].pop(0)
+            elif offsets[1][0][0] == line_counter2:
+                line_counter2 += offsets[1][0][1]
+                offsets[1].pop(0)
+        if line_counter1 in skip_linesList and line_counter1 == line_counter2:
+            line_counter1 += 1
+            line_counter2 += 1
+            continue
+        l1 = line1[line_counter1]
+        l2 = line2[line_counter2]
+        print(f"############### ({line_counter1}) ({line_counter2})")
         print(l1, l2)
-        print("###############")
+
         for arg1, arg2 in zip(l1.split(), l2.split()):
             try:
                 comp1 = float(arg1)
@@ -37,6 +61,10 @@ def compare_lammps_files(fn1, fn2, skip_linesList=[]):
                 assert np.isclose(
                     comp1, comp2, 1e-3
                 ), f"The following two lines have not been found to have equality {l1} and {l2}"
+        line_counter1 += 1
+        line_counter2 += 1
+        if line_counter1 >= length1 or line_counter2 >= length2:
+            break
     return True
 
 
@@ -47,30 +75,33 @@ class TestLammpsWriter(BaseTest):
     def test_write_lammps(self, fname, typed_ar_system):
         typed_ar_system.save(fname)
 
-    def test_ethane_lammps(self, typed_ethane):
-        # TODO: now
+    def test_ethane_lammps_conversion(
+        self, typed_ethane, are_equivalent_topologies
+    ):
         typed_ethane.save("ethane.lammps")
+        read_top = Topology.load("ethane.lammps")
+        assert are_equivalent_topologies(read_top, typed_ethane)
 
-    def test_opls_lammps(self, typed_ethane_opls):
-        # TODO: now
+    def test_opls_lammps(self, typed_ethane_opls, are_equivalent_topologies):
         typed_ethane_opls.save("ethane.lammps")
+        read_top = Topology.load("ethane.lammps")
+        assert are_equivalent_topologies(read_top, typed_ethane_opls)
 
-    def test_water_lammps(self, typed_water_system):
-        # TODO: now
-        typed_water_system.save("data.lammps")
+    def test_water_lammps(self, typed_water_system, are_equivalent_topologies):
+        typed_water_system.save("water.lammps")
+        read_top = Topology.load("water.lammps")
+        assert are_equivalent_topologies(read_top, typed_water_system)
 
     def test_read_lammps(self, filename=get_path("data.lammps")):
         gmso.Topology.load(filename)
 
     def test_read_box(self, filename=get_path("data.lammps")):
         read = gmso.Topology.load(filename)
-
         assert read.box == Box(lengths=[1, 1, 1])
 
     def test_read_n_sites(self, typed_ar_system):
         typed_ar_system.save("ar.lammps")
         read = gmso.Topology.load("ar.lammps")
-
         assert read.n_sites == 100
 
     def test_read_mass(self, filename=get_path("data.lammps")):
@@ -296,15 +327,16 @@ class TestLammpsWriter(BaseTest):
             skip_linesList=[0],
         )
 
-    # TODO: Test parameters that have intraconversions between them
-    def test_lammps_default_conversions(self, typed_ethane):
+    def test_lammps_default_conversions(
+        self, typed_ethane, harmonic_parmed_types_charmm
+    ):
         """Test for parameter intraconversions with potential styles.
 
         These include:
         bonds: factor of 2 harmonic k
         angles: factor of 2 harmonic k
         dihedrals: RB torsions to OPLS
-        impropers:
+        impropers: factor of 2 harmonic k
         pairs:
         additional: All styles to zero and none
         """
@@ -316,6 +348,32 @@ class TestLammpsWriter(BaseTest):
             "#\tk1 (kcal/mol)\tk2 (kcal/mol)\tk3 (kcal/mol)\tk4 (kcal/mol)\n",
             "1\t 0.00000\t-0.00000\t 0.30000\t-0.00000\t# opls_140\topls_135\topls_135\topls_140\n",
         ]
+
+        struc = harmonic_parmed_types_charmm
+        from mbuild.formats.lammpsdata import (
+            write_lammpsdata as mb_write_lammps,
+        )
+
+        mb_write_lammps(struc, "pmd.lammps")
+        top = from_parmed(struc)
+        top.save("gmso.lammps")
+        assert compare_lammps_files(
+            "gmso.lammps",
+            "pmd.lammps",
+            skip_linesList=[0],
+            offsets=[[[16, 1], ["none", "none"]], [["none", "none"]]],
+        )
+        out_lammps = open("gmso.lammps", "r").readlines()
+        found_impropers = False
+        for i, line in enumerate(out_lammps):
+            if "Improper Coeffs" in line:
+                assert "HarmonicImproperPotential" in line
+                assert "k" in out_lammps[i + 1]
+                assert "phi_eq" in out_lammps[i + 1]
+                assert len(out_lammps[i + 2].split("#")[0].split()) == 3
+                assert out_lammps[i + 2].split("#")[0].split()[0] == "1"
+                found_impropers = True
+        assert found_impropers
 
     def test_lammps_strict_true(self, typed_ethane):
         with pytest.raises(EngineIncompatibilityError):
@@ -329,7 +387,7 @@ class TestLammpsWriter(BaseTest):
         )
         typed_ethane.save("test2.lammps", strict_potentials=True)
 
-    # TODO: Test potential styles that are not supported by parmed
+    # TODO: Need to add a list of forcefield templates to check with
     def test_lammps_potential_styles(self, typed_ethane):
         """Test for parameter handling of potential styles.
 
@@ -355,8 +413,7 @@ class TestLammpsWriter(BaseTest):
     )
     def test_lammps_units(self, typed_ethane, unit_style):
         """Generate topoogy with different units and check the output.
-        Supporte styles are: ["real", "lj"]
-        TODO: ["metal", "si", "cgs", "electron", "micro", "nano"]
+        Supporte styles are: ["real", "lj", "metal", "si", "cgs", "electron", "micro", "nano"]
         _______References_______
         https://docs.lammps.org/units.html
         """
@@ -433,12 +490,22 @@ class TestLammpsWriter(BaseTest):
                 atol=1e-8,
             )
 
-    # TODO: Test for error handling
     from gmso.exceptions import EngineIncompatibilityError
 
     def test_lammps_errors(self, typed_ethane):
         with pytest.raises(UnsupportedFileFormatError):
-            typed_ethane.save("error.lammmps")
+            typed_ethane.save("e.lammmps")
+        missing_bonds_top = copy.deepcopy(typed_ethane)
+        for bond in missing_bonds_top.bonds:
+            bond.bond_type = None
+        with pytest.raises(AttributeError):
+            missing_bonds_top.save("e.lammps")
+        with pytest.raises(ValueError):
+            typed_ethane.save(
+                "e.lammps", unit_style="lj", lj_cfactorsDict={"bonds": 1}
+            )
+        with pytest.raises(ValueError):
+            typed_ethane.save("e.lammps", lj_cfactorsDict={"energy": "kJ/mol"})
 
     def test_lammps_units(self, typed_methylnitroaniline):
         from gmso.formats.lammpsdata import _validate_unit_compatibility
@@ -453,8 +520,73 @@ class TestLammpsWriter(BaseTest):
 
     def test_units_in_headers(self, typed_ethane):
         """Make sure units are written out properly."""
+        typed_ethane.save("ethane.lammps")
+        with open("ethane.lammps", "r") as f:
+            lines = f.readlines()
+
+        unitsDict = {
+            "Pair": {"epsilon": "kcal/mol", "sigma": "Å"},
+            "Bond": {"k": "kcal/(mol*Å**2)", "r_eq": "Å"},
+            "Angle": {"k": "kcal/(mol*rad**2)", "theta_eq": "degrees"},
+            "Dihedral": {"k1": "kcal/mol"},
+            "Improper": {"k": "kcal/(mol*rad**2)", "phi_eq": "degrees"},
+        }
+        for i, line in enumerate(lines):
+            if "Coeffs" in line:
+                units = lines[i + 1].split(" \n")
+                for i in range(len(units[1:-1:2])):
+                    assert units[i * 2 + 1] == unitsDict[units[i * 2 + 2]]
 
     def test_atom_style_printing(self, typed_ethane):
         """Check writers for correctly printing potential eqn."""
+        typed_ethane.save("ethane.lammps")
+        with open("ethane.lammps", "r") as f:
+            lines = f.readlines()
 
-        # TODO now: test for box_bounds, fixtures, ljbox, errors, dihedral weighting, 
+        stylesDict = {
+            "Pair": "4*epsilon*(-sigma**6/r**6+sigma**12/r**12)",
+            "Bond": "#LAMMPSHarmonicBondPotential",
+            "Angle": "#LAMMPSHarmonicAnglePotential",
+            "Dihedral": "#OPLSTorsionPotential",
+            "Improper": "#HarmonicImproperPotential",
+        }
+        for i, line in enumerate(lines):
+            if "Coeffs" in line:
+                styleLine = lines[i].split()
+                if styleLine[0] == "Pair":
+                    assert "".join(styleLine[-3:]) == stylesDict[styleLine[0]]
+                else:
+                    assert styleLine[-1] == stylesDict[styleLine[0]]
+
+    def test_lj_passed_units(self, typed_ethane):
+        largest_eps = max(
+            list(
+                map(
+                    lambda x: x.parameters["epsilon"],
+                    typed_ethane.atom_types,
+                )
+            )
+        )
+        typed_ethane.save(
+            "ethane.lammps",
+            unit_style="lj",
+            lj_cfactorsDict={"energy": largest_eps * 2},
+        )
+        with open("ethane.lammps", "r") as f:
+            lines = f.readlines()
+        start = 0
+        for i in range(len(lines)):
+            if "Pair Coeffs" in lines[i]:
+                start = i
+            if start > 0 and lines[i] == "\n":
+                end = i
+                break
+        largest_eps_written = max(
+            [
+                obj
+                for obj in map(
+                    lambda x: float(x.split()[1]), lines[start + 2 : end]
+                )
+            ]
+        )
+        assert largest_eps_written == 0.5

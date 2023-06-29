@@ -246,7 +246,7 @@ def from_parmed(structure, refer_type=True):
             connection_members=_sort_improper_members(
                 top,
                 site_map,
-                *attrgetter("atom1", "atom2", "atom3", "atom4")(improper),
+                *attrgetter("atom3", "atom2", "atom1", "atom4")(improper),
             )
         )
         if refer_type and isinstance(improper.type, pmd.ImproperType):

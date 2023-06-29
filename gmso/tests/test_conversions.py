@@ -235,17 +235,17 @@ class TestKelvinToEnergy(BaseTest):
             "si"
         )  # "lammps_si", "m", "kg", "s", "K", "rad",
         float_param = _parameter_converted_to_float(
-            parameter, base_unyts, conversion_factorDict=None
+            parameter, base_unyts, conversion_factorDict=None, n_decimals=6
         )
-        assert float_param == 100 * np.pi / 180
+        assert float_param == round(100 * np.pi / 180, 6)
         parameter = 1 * u.Unit("g*kJ*Coulomb*m*degree")
         base_unyts = _unit_style_factory(
             "si"
         )  # "lammps_si", "m", "kg", "s", "K", "rad"
         float_param = _parameter_converted_to_float(
-            parameter, base_unyts, conversion_factorDict=None
+            parameter, base_unyts, conversion_factorDict=None, n_decimals=6
         )
-        assert np.isclose(float_param, np.pi / 180, 1e-5)
+        assert np.isclose(float_param, np.pi / 180, 1e-3)
 
     def test_lammps_conversion_parameters_lj(self):
         from gmso.formats.lammpsdata import (
@@ -262,6 +262,9 @@ class TestKelvinToEnergy(BaseTest):
         }
         base_unyts = _unit_style_factory("lj")
         float_param = _parameter_converted_to_float(
-            parameter, base_unyts, conversion_factorDict=conversion_factorDict
+            parameter,
+            base_unyts,
+            conversion_factorDict=conversion_factorDict,
+            n_decimals=6,
         )
-        assert float_param == 1 / 3**4
+        assert np.isclose(float_param, 1 / 3**4, atol=1e-6)

@@ -670,6 +670,31 @@ class BaseTest:
             untyped_benzene, assert_dihedral_params=False
         )
         return benzene
-    
-    #TODO: now
-    # add in some fixtures for (connects) charmm, impropers, amber
+
+    # TODO: now
+    # add in some fixtures for (connects), amber
+
+    @pytest.fixture
+    def harmonic_parmed_types_charmm(self):
+        from mbuild.formats.lammpsdata import write_lammpsdata
+
+        system = mb.Compound()
+        first = mb.Particle(name="_CTL2", pos=[-1, 0, 0])
+        second = mb.Particle(name="_CL", pos=[0, 0, 0])
+        third = mb.Particle(name="_OBL", pos=[1, 0, 0])
+        fourth = mb.Particle(name="_OHL", pos=[0, 1, 0])
+
+        system.add([first, second, third, fourth])
+
+        system.add_bond((first, second))
+        system.add_bond((second, third))
+        system.add_bond((second, fourth))
+
+        ff = foyer.Forcefield(forcefield_files=[get_path("charmm36_cooh.xml")])
+        struc = ff.apply(
+            system,
+            assert_angle_params=False,
+            assert_dihedral_params=False,
+            assert_improper_params=False,
+        )
+        return struc

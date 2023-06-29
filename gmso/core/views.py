@@ -57,7 +57,10 @@ def get_sorted_names(potential):
         else:
             return potential.member_types
     elif isinstance(potential, ImproperType):
-        return (potential.member_types[0], *sorted(potential.member_types[1:]))
+        return (
+            potential.member_types[0],
+            *potential.member_types[1:],
+        )  # could sort using `sorted`
     return ValueError(
         f"Potential {potential} not one of {potential_attribute_map.values()}"
     )

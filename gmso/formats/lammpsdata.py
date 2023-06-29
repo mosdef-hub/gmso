@@ -93,7 +93,8 @@ def _unit_style_factory(style: str):
     #  NOTE: the when an angle is measured in lammps is not straightforwards. It depends not on the unit_style, but on the
     # angle_style, dihedral_style, or improper_style. For examples, harmonic angles, k is specificed in energy/radian, but the
     # theta_eq is written in degrees. For fourier dihedrals, d_eq is specified in degrees. When adding new styles, make sure that
-    # this behavior is accounted for when converting the specific potential_type.
+    # this behavior is accounted for when converting the specific potential_type in the function
+    # _parameter_converted_to_float
     if style == "real":
         base_units = u.UnitSystem(
             "lammps_real", "Å", "amu", "fs", "K", "rad", registry=reg
@@ -151,13 +152,20 @@ def _unit_style_factory(style: str):
 class ljUnitSystem:
     """Use this so the empty unitsystem has getitem magic method."""
 
+    def __init__(self):
+        self.registry = reg
+        self.name = "lj"
+
     def __getitem__(self, items):
         """Return dimensionless units."""
         return "dimensionless"
 
 
 def _parameter_converted_to_float(
-    parameter, base_unyts, conversion_factorDict=None, n_decimals=3,
+    parameter,
+    base_unyts,
+    conversion_factorDict=None,
+    n_decimals=3,
     name="",
 ):
     """Take a given parameter, and return a float of the parameter in the given style.
@@ -167,7 +175,8 @@ def _parameter_converted_to_float(
     also generate dimensionless units via normalization from conversion_factorsDict.
     # TODO: move this to gmso.utils.units.py
     """
-    if name in ["theta_eq", "chieq"]: # eq angle are always in degrees
+    # TODO: now I think phi_eq is what is really saved in the improper angle
+    if name in ["theta_eq", "chieq"]:  # eq angle are always in degrees
         return round(float(parameter.to("degree").value), n_decimals)
     new_dims = _dimensions_to_energy(parameter.units.dimensions)
     new_dims = _dimensions_to_charge(new_dims)
@@ -190,7 +199,10 @@ def _parameter_converted_to_float(
     for unit in ind_units:
         new_dimStr = new_dimStr.replace(unit, str(base_unyts[unit]))
 
-    return round(float(parameter.to(u.Unit(new_dimStr, registry=base_unyts.registry))), n_decimals)
+    return round(
+        float(parameter.to(u.Unit(new_dimStr, registry=base_unyts.registry))),
+        n_decimals,
+    )
 
 
 def _dimensions_to_energy(dims):
@@ -285,7 +297,9 @@ def write_lammpsdata(
     Notes
     -----
     See http://lammps.sandia.gov/doc/2001/data_format.html for a full description of the LAMMPS data format.
-    This is a work in progress, as only atoms, masses, and atom_type information can be written out.
+    This is a work in progress, as only a subset of everything LAMMPS supports is currently available.
+    However, please raise issues as the current writer has been set up to eventually grow to support
+    all LAMMPS styles.
 
     Some of this function has been adopted from `mdtraj`'s support of the LAMMPSTRJ trajectory format.
     See https://github.com/mdtraj/mdtraj/blob/master/mdtraj/formats/lammpstrj.py for details.
@@ -298,7 +312,6 @@ def write_lammpsdata(
             )
         )
 
-    # TODO: Support various unit styles ["metal", "si", "cgs", "electron", "micro", "nano"]
     if unit_style not in [
         "real",
         "lj",
@@ -314,9 +327,14 @@ def write_lammpsdata(
                 unit_style
             )
         )
-    # Use gmso unit packages to get into correct lammps formats
+    if unit_style != "lj" and lj_cfactorsDict:
+        raise ValueError(
+            "lj_cfactorsDict argument is only used if unit_style is lj."
+        )
     base_unyts = _unit_style_factory(unit_style)
-    default_parameterMaps = {  # Add more as needed
+    default_parameterMaps = {  # TODO: sites are not checked currently because gmso
+        # doesn't store pair potential eqn the same way as the connections.
+        "impropers": "HarmonicImproperPotential",
         "dihedrals": "OPLSTorsionPotential",
         "angles": "LAMMPSHarmonicAnglePotential",
         "bonds": "LAMMPSHarmonicBondPotential",
@@ -324,7 +342,7 @@ def write_lammpsdata(
         # "sites":"CoulombicPotential"
     }
 
-    # TODO: Use strict_x to validate depth of topology checking
+    # TODO: Use strict_x, (i.e. x=bonds) to validate what topology attrs to convert
 
     if strict_potentials:
         _validate_potential_compatibility(top)
@@ -339,13 +357,20 @@ def write_lammpsdata(
         else:  # LJ unit styles
             if lj_cfactorsDict is None:
                 lj_cfactorsDict = {}
-            for source_factor in ["length", "energy", "mass", "charge"]:
+            source_factorsList = list(lj_cfactorsDict.keys())
+            defaultsList = ["length", "energy", "mass", "charge"]
+            for source_factor in defaultsList + source_factorsList:
+                if source_factor not in defaultsList:
+                    raise ValueError(
+                        f"Conversion factor {source_factor} is not used. Pleas only provide some of {defaultsList}"
+                    )
+                if lj_cfactorsDict.get(source_factor):
+                    continue
                 default_val_from_topology = _default_lj_val(top, source_factor)
                 lj_cfactorsDict[source_factor] = lj_cfactorsDict.get(
                     source_factor, default_val_from_topology
                 )
 
-    # TODO: improve handling of various filenames
     path = Path(filename)
     if not path.parent.exists():
         msg = "Provided path to file that does not exist"
@@ -354,7 +379,7 @@ def write_lammpsdata(
     with open(path, "w") as out_file:
         _write_header(out_file, top, atom_style)
         _write_box(out_file, top, base_unyts, lj_cfactorsDict)
-        if top.is_fully_typed():  # TODO: should this be is_fully_typed?
+        if top.is_fully_typed():
             _write_atomtypes(out_file, top, base_unyts, lj_cfactorsDict)
             _write_pairtypes(out_file, top, base_unyts, lj_cfactorsDict)
             if top.bond_types:
@@ -384,9 +409,13 @@ def read_lammpsdata(
     filename : str
         LAMMPS data file
     atom_style : str, optional, default='full'
-        Inferred atom style defined by LAMMPS
+        Inferred atom style defined by LAMMPS, be certain that this is provided
+        accurately.
+    unit_style : str, optional, default='real
+        LAMMPS unit style used for writing the datafile. Can be "real", "lj",
+        "metal", "si", "cgs", "electron", "micro", "nano".
     potential: str, optional, default='lj'
-        Potential type defined in data file
+        Potential type defined in data file. Only supporting lj as of now.
 
     Returns
     -------
@@ -401,16 +430,17 @@ def read_lammpsdata(
 
     Currently supporting the following atom styles: 'full'
 
-    Currently supporting the following unit styles: 'real'
+    Currently supporting the following unit styles: 'real', "real", "lj", "metal", "si", "cgs",
+    "electron", "micro", "nano".
 
     Currently supporting the following potential styles: 'lj'
 
-    Proper dihedrals can be read in but is currently not tested.
-
-    Currently not supporting improper dihedrals.
+    Currently supporting the following bond styles: 'harmonic'
+    Currently supporting the following angle styles: 'harmonic'
+    Currently supporting the following dihedral styles: 'opls'
+    Currently supporting the following improper styles: 'harmonic'
 
     """
-    # TODO: Add argument to ask if user wants to infer bond type
     top = Topology()
 
     # Validate 'atom_style'
@@ -444,7 +474,7 @@ def read_lammpsdata(
     top, type_list = _get_ff_information(filename, unit_style, top)
     # Parse atom information
     _get_atoms(filename, top, unit_style, type_list)
-    # Parse connection (bonds, angles, dihedrals) information
+    # Parse connection (bonds, angles, dihedrals, impropers) information
     # TODO: Add more atom styles
     if atom_style in ["full"]:
         _get_connection(filename, top, unit_style, connection_type="bond")
@@ -551,13 +581,14 @@ def _get_connection(filename, topology, unit_style, connection_type):
                 independent_variables=variables,
             )
         elif connection_type == "improper":
-            template_potential = templates["PeriodicImproperPotential"]
+            template_potential = templates["HarmonicImproperPotential"]
             conn_params = {
-                "k": float(line.split()[2::2])
-                * get_units(unit_style, "energy"),
-                "n": float(line.split()[3::2]) * u.dimensionless,
-                "phi_eq": float(line.split()[4::2])
-                * get_units(unit_style, "angle"),
+                "k": float(line.split()[2])
+                * get_units(unit_style, "energy")
+                / get_units(unit_style, "energy") ** 2
+                * 2,
+                "phi_eq": float(line.split()[3])
+                * get_units(unit_style, "angle_eq"),
             }
             name = template_potential.name
             expression = template_potential.expression
@@ -640,7 +671,7 @@ def _get_atoms(filename, topology, unit_style, type_list):
         site = Atom(
             charge=charge,
             position=coord,
-            atom_type=type_list[int(atom_type) - 1],  # 0-index
+            atom_type=copy.deepcopy(type_list[int(atom_type) - 1]),  # 0-index
             molecule=MoleculeType(atom_line[1], int(atom_line[1])),
         )
         element = element_by_mass(site.atom_type.mass.value)
@@ -761,14 +792,14 @@ def _accepted_potentials():
     harmonic_bond_potential = templates["LAMMPSHarmonicBondPotential"]
     harmonic_angle_potential = templates["LAMMPSHarmonicAnglePotential"]
     periodic_torsion_potential = templates["PeriodicTorsionPotential"]
-    periodic_improper_potential = templates["PeriodicImproperPotential"]
+    harmonic_improper_potential = templates["HarmonicImproperPotential"]
     opls_torsion_potential = templates["OPLSTorsionPotential"]
     accepted_potentialsList = [
         lennard_jones_potential,
         harmonic_bond_potential,
         harmonic_angle_potential,
         periodic_torsion_potential,
-        periodic_improper_potential,
+        harmonic_improper_potential,
         opls_torsion_potential,
     ]
     return accepted_potentialsList
@@ -782,22 +813,23 @@ def _validate_potential_compatibility(top):
 
 def _validate_unit_compatibility(top, base_unyts):
     """Check compatability of topology object units with LAMMPSDATA format."""
-    # TODO: Check to make sure all units are in the correct format
-    # skip angles because we still don't handle the strange k degrees output
-    for attribute in ["sites", "bonds", "dihedrals", "impropers"]:
+    for attribute in ["sites", "bonds", "angles", "dihedrals", "impropers"]:
         if attribute == "sites":
             atype = "atom_types"
         else:
             atype = attribute[:-1] + "_types"
         parametersList = [
-            parameter
+            (parameter, name)
             for attr_type in getattr(top, atype)
-            for parameter in attr_type.parameters.values()
+            for name, parameter in attr_type.parameters.items()
         ]
-        for parameter in parametersList:
+        for parameter, name in parametersList:
             assert np.isclose(
-                _parameter_converted_to_float(parameter, base_unyts, n_decimals=6),
-                parameter.value, atol=1e-3
+                _parameter_converted_to_float(
+                    parameter, base_unyts, n_decimals=6, name=name
+                ),
+                parameter.value,
+                atol=1e-3,
             ), f"Units System {base_unyts} is not compatible with {atype} with value {parameter}"
 
 
@@ -847,7 +879,6 @@ def _write_header(out_file, top, atom_style):
 
 def _write_box(out_file, top, base_unyts, cfactorsDict):
     """Write GMSO Topology box to LAMMPS file."""
-    # TODO: unit conversions
     if allclose_units(
         top.box.angles,
         u.unyt_array([90, 90, 90], "degree"),
@@ -909,8 +940,6 @@ def _write_box(out_file, top, base_unyts, cfactorsDict):
 
 def _write_atomtypes(out_file, top, base_unyts, cfactorsDict):
     """Write out atomtypes in GMSO topology to LAMMPS file."""
-    # TODO: Get a dictionary of indices and atom types
-    # TODO: Allow for unit conversions for the unit styles
     out_file.write("\nMasses\n")
     out_file.write(f"#\tmass ({base_unyts['mass']})\n")
     atypesView = sorted(top.atom_types(filter_by=pfilter), key=lambda x: x.name)
@@ -928,16 +957,18 @@ def _write_atomtypes(out_file, top, base_unyts, cfactorsDict):
 
 def _write_pairtypes(out_file, top, base_unyts, cfactorsDict):
     """Write out pair interaction to LAMMPS file."""
-    # TODO: Modified cross-interactions
-    # TODO: Utilize unit styles and nonbonded equations properly
+    # TODO: Handling of modified cross-interactions is not considered from top.pairpotential_types
     # Pair coefficients
     test_atomtype = top.sites[0].atom_type
-    out_file.write(
-        f"\nPair Coeffs # {test_atomtype.expression}\n"
-    ) 
-    nb_style_orderTuple = ("epsilon", "sigma") # this will vary with new pair styles
+    out_file.write(f"\nPair Coeffs # {test_atomtype.expression}\n")
+    nb_style_orderTuple = (
+        "epsilon",
+        "sigma",
+    )  # this will vary with new pair styles
     param_labels = [
-        _write_out_parameter_w_units(key, test_atomtype.parameters[key], base_unyts)
+        _write_out_parameter_w_units(
+            key, test_atomtype.parameters[key], base_unyts
+        )
         for key in nb_style_orderTuple
     ]
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
@@ -950,7 +981,10 @@ def _write_pairtypes(out_file, top, base_unyts, cfactorsDict):
                 idx + 1,
                 *[
                     _parameter_converted_to_float(
-                        param.parameters[key], base_unyts, cfactorsDict,
+                        param.parameters[key],
+                        base_unyts,
+                        cfactorsDict,
+                        n_decimals=5,
                     )
                     for key in nb_style_orderTuple
                 ],
@@ -966,7 +1000,9 @@ def _write_bondtypes(out_file, top, base_unyts, cfactorsDict):
     out_file.write(f"\nBond Coeffs #{test_bondtype.name}\n")
     bond_style_orderTuple = ("k", "r_eq")
     param_labels = [
-        _write_out_parameter_w_units(key, test_bondtype.parameters[key], base_unyts)
+        _write_out_parameter_w_units(
+            key, test_bondtype.parameters[key], base_unyts
+        )
         for key in bond_style_orderTuple
     ]
 
@@ -993,12 +1029,17 @@ def _write_bondtypes(out_file, top, base_unyts, cfactorsDict):
 
 def _write_angletypes(out_file, top, base_unyts, cfactorsDict):
     """Write out angles to LAMMPS file."""
-    # TODO: Use any accepted lammps parameters
+    # TODO: Use any accepted lammps parameters, only harmonic now
     test_angletype = top.angles[0].angle_type
     out_file.write(f"\nAngle Coeffs #{test_angletype.name}\n")
-    angle_style_orderTuple = ("k", "theta_eq") # this will vary with new angle styles
+    angle_style_orderTuple = (
+        "k",
+        "theta_eq",
+    )  # this will vary with new angle styles
     param_labels = [
-        _write_out_parameter_w_units(key, test_angletype.parameters[key], base_unyts)
+        _write_out_parameter_w_units(
+            key, test_angletype.parameters[key], base_unyts
+        )
         for key in angle_style_orderTuple
     ]
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
@@ -1017,7 +1058,9 @@ def _write_angletypes(out_file, top, base_unyts, cfactorsDict):
                 *[
                     _parameter_converted_to_float(
                         angle_type.parameters[key],
-                        base_unyts, cfactorsDict, name=key
+                        base_unyts,
+                        cfactorsDict,
+                        name=key,
                     )
                     for key in angle_style_orderTuple
                 ],
@@ -1030,9 +1073,16 @@ def _write_dihedraltypes(out_file, top, base_unyts, cfactorsDict):
     """Write out dihedrals to LAMMPS file."""
     test_dihedraltype = top.dihedrals[0].dihedral_type
     out_file.write(f"\nDihedral Coeffs #{test_dihedraltype.name}\n")
-    dihedral_style_orderTuple = ("k1", "k2", "k3", "k4") # this will vary with new dihedral styles
+    dihedral_style_orderTuple = (
+        "k1",
+        "k2",
+        "k3",
+        "k4",
+    )  # this will vary with new dihedral styles
     param_labels = [
-        _write_out_parameter_w_units(key, test_dihedraltype.parameters[key], base_unyts)
+        _write_out_parameter_w_units(
+            key, test_dihedraltype.parameters[key], base_unyts
+        )
         for key in dihedral_style_orderTuple
     ]
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
@@ -1061,16 +1111,27 @@ def _write_dihedraltypes(out_file, top, base_unyts, cfactorsDict):
 
 def _write_impropertypes(out_file, top, base_unyts, cfactorsDict):
     """Write out impropers to LAMMPS file."""
-    # TODO: Use any accepted lammps parameters
+    # TODO: Use any accepted lammps parameters, only harmonic now
     test_impropertype = top.impropers[0].improper_type
     out_file.write(f"\nImproper Coeffs #{test_impropertype.name}\n")
-    improper_style_orderTuple = ("k", "chieq") # this will vary with new improper styles
+    improper_style_orderTuple = (
+        "k",
+        "phi_eq",
+    )  # this will vary with new improper styles
     param_labels = [
-        _write_out_parameter_w_units(key, test_impropertype.parameters[key], base_unyts)
+        _write_out_parameter_w_units(
+            key, test_impropertype.parameters[key], base_unyts
+        )
         for key in improper_style_orderTuple
     ]
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
-    for idx, improper_type in enumerate(top.improper_types(filter_by=pfilter)):
+    indexList = list(top.improper_types(filter_by=pfilter))
+    index_membersList = [
+        (improper_type, get_sorted_names(improper_type))
+        for improper_type in indexList
+    ]
+    index_membersList.sort(key=lambda x: ([x[1][i] for i in [0, 1, 2, 3]]))
+    for idx, (improper_type, members) in enumerate(index_membersList):
         out_file.write(
             "{}\t{:7.5f}\t{:7.5f}\n".format(
                 idx + 1,
@@ -1079,11 +1140,11 @@ def _write_impropertypes(out_file, top, base_unyts, cfactorsDict):
                         improper_type.parameters[parameterStr],
                         base_unyts,
                         cfactorsDict,
-                        name=parameterStr
+                        name=parameterStr,
                     )
                     for parameterStr in improper_style_orderTuple
                 ],
-                *improper_type.members,
+                *improper_type,
             )
         )
 
@@ -1133,11 +1194,15 @@ def _dihedral_order_sorter(dihedral_typesList):
     return [dihedral_typesList[i] for i in [1, 2, 0, 3]]
 
 
+def _improper_order_sorter(improper_typesList):
+    return [improper_typesList[i] for i in [0, 1, 2, 3]]
+
+
 sorting_funcDict = {
     "bonds": None,
     "angles": _angle_order_sorter,
     "dihedrals": _dihedral_order_sorter,
-    "impropers": None,
+    "impropers": _improper_order_sorter,
 }
 
 
@@ -1155,7 +1220,10 @@ def _write_conn_data(out_file, top, connIter, connStr):
     for i, conn in enumerate(getattr(top, connStr)):
         typeStr = f"{i+1:<6d}\t{indexList.index(get_sorted_names(conn.connection_type))+1:<6d}\t"
         indexStr = "\t".join(
-            map(lambda x: str(top.sites.index(x) + 1).ljust(6), conn.connection_members)
+            map(
+                lambda x: str(top.sites.index(x) + 1).ljust(6),
+                conn.connection_members,
+            )
         )
         out_file.write(typeStr + indexStr + "\n")
 
@@ -1191,16 +1259,21 @@ def _default_lj_val(top, source):
         raise ValueError(
             f"Provided {source} for default LJ cannot be found in the topology."
         )
-    
+
+
 def _write_out_parameter_w_units(parameter_name, parameter, base_unyts):
-    if parameter_name in ["theta_eq", "chieq"]:
+    if parameter_name in ["theta_eq", "phi_eq"]:
         return f"{parameter_name} ({'degrees'})"
+    if base_unyts.name == "lj":
+        return f"{parameter_name} ({'dimensionless'})"
     new_dims = _dimensions_to_energy(parameter.units.dimensions)
     new_dims = _dimensions_to_charge(new_dims)
     new_dimStr = str(new_dims)
     ind_units = re.sub("[^a-zA-Z]+", " ", new_dimStr).split()
     for unit in ind_units:
         new_dimStr = new_dimStr.replace(unit, str(base_unyts[unit]))
-        
-    outputUnyt = str(parameter.to(u.Unit(new_dimStr, registry=base_unyts.registry)).units)
+
+    outputUnyt = str(
+        parameter.to(u.Unit(new_dimStr, registry=base_unyts.registry)).units
+    )
     return f"{parameter_name} ({outputUnyt})"
