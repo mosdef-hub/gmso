@@ -585,16 +585,8 @@ def _atom_types_from_gmso(top, structure, atom_map):
         atype = pmd.AtomType(
             atype_name,
             None,
-<<<<<<< HEAD
             atype_mass,
             atype_atomic_number,
-||||||| e488a03
-            atype_element.mass,
-            atype_element.atomic_number,
-=======
-            atype_mass,
-            atype_element.atomic_number,
->>>>>>> 727d32a180bb171272445d6f2140174610f6ff47
             atype_charge,
         )
         atype.set_lj_params(atype_epsilon, atype_rmin)

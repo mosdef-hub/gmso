@@ -534,8 +534,8 @@ class TestLammpsWriter(BaseTest):
         for i, line in enumerate(lines):
             if "Coeffs" in line:
                 units = lines[i + 1].split(" \n")
-                for i in range(len(units[1:-1:2])):
-                    assert units[i * 2 + 1] == unitsDict[units[i * 2 + 2]]
+                for j in range(len(units[1:-1:2])):
+                    assert units[j * 2 + 1] == unitsDict[units[j * 2 + 2]]
 
     def test_atom_style_printing(self, typed_ethane):
         """Check writers for correctly printing potential eqn."""
