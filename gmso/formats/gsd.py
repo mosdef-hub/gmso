@@ -57,5 +57,5 @@ def write_gsd(
         shift_coords=shift_coords,
         parse_special_pairs=write_special_pairs,
     )[0]
-    with gsd.hoomd.open(filename, mode="wb") as gsd_file:
+    with gsd.hoomd.open(filename, mode="w") as gsd_file:
         gsd_file.append(gsd_snapshot)
