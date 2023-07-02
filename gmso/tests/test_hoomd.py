@@ -14,6 +14,8 @@ from gmso.utils.io import has_hoomd, has_mbuild, import_
 
 if has_hoomd:
     hoomd = import_("hoomd")
+    hoomd_version = hoomd.version.version.split(".")
+
 if has_mbuild:
     mb = import_("mbuild")
 
@@ -93,7 +95,131 @@ class TestGsd(BaseTest):
                     for var in variables:
                         assert np.isclose(mb_params[var], gmso_params[var])
 
-    def test_hoomd_simulation(self):
+    @pytest.mark.skipif(
+        hoomd_version[0] < 4, reason="Unsupported features in HOOMD 3"
+    )
+    def test_hoomd4_simulation(self):
+        compound = mb.load("CCC", smiles=True)
+        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=200)
+        base_units = {
+            "mass": u.g / u.mol,
+            "length": u.nm,
+            "energy": u.kJ / u.mol,
+        }
+
+        top = from_mbuild(com_box)
+        top.identify_connections()
+        oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
+        top = apply(top, oplsaa, remove_untyped=True)
+
+        gmso_snapshot, snapshot_base_units = to_hoomd_snapshot(
+            top, base_units=base_units
+        )
+        gmso_forces, forces_base_units = to_hoomd_forcefield(
+            top,
+            r_cut=1.4,
+            base_units=base_units,
+            pppm_kwargs={"resolution": (64, 64, 64), "order": 7},
+        )
+
+        integrator_forces = list()
+        for cat in gmso_forces:
+            for force in gmso_forces[cat]:
+                integrator_forces.append(force)
+
+        temp = 300 * u.K
+        kT = temp.to_equivalent("kJ/mol", "thermal").value
+
+        cpu = hoomd.device.CPU()
+        sim = hoomd.Simulation(device=cpu)
+        sim.create_state_from_snapshot(gmso_snapshot)
+
+        integrator = hoomd.md.Integrator(dt=0.001)
+        # cell = hoomd.md.nlist.Cell(buffer=0.4)
+        integrator.forces = integrator_forces
+        # integrator.forces = mb_forcefield
+
+        thermostats = hoomd.md.methods.thermostats.MTTK(kT=kT, tau=1.0)
+        nvt = hoomd.md.methods.ConstantVolume(
+            thermostats=thermostats, filter=hoomd.filter.All()
+        )
+        integrator.methods.append(nvt)
+        sim.operations.integrator = integrator
+
+        sim.state.thermalize_particle_momenta(filter=hoomd.filter.All(), kT=kT)
+        thermodynamic_properties = hoomd.md.compute.ThermodynamicQuantities(
+            filter=hoomd.filter.All()
+        )
+
+        sim.operations.computes.append(thermodynamic_properties)
+        sim.run(100)
+
+    @pytest.mark.skipif(
+        hoomd_version[0] < 4, reason="Deprecated features in HOOMD 4"
+    )
+    def test_hoomd4_simulation_auto_scaled(self):
+        compound = mb.load("CCC", smiles=True)
+        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=200)
+        base_units = {
+            "mass": u.g / u.mol,
+            "length": u.nm,
+            "energy": u.kJ / u.mol,
+        }
+
+        top = from_mbuild(com_box)
+        top.identify_connections()
+        oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
+        top = apply(top, oplsaa, remove_untyped=True)
+
+        gmso_snapshot, snapshot_base_units = to_hoomd_snapshot(
+            top,
+            base_units=base_units,
+            auto_scale=True,
+        )
+        gmso_forces, forces_base_units = to_hoomd_forcefield(
+            top,
+            r_cut=1.4,
+            base_units=base_units,
+            pppm_kwargs={"resolution": (64, 64, 64), "order": 7},
+            auto_scale=True,
+        )
+
+        integrator_forces = list()
+        for cat in gmso_forces:
+            for force in gmso_forces[cat]:
+                integrator_forces.append(force)
+
+        temp = 300 * u.K
+        kT = temp.to_equivalent("kJ/mol", "thermal").value
+
+        cpu = hoomd.device.CPU()
+        sim = hoomd.Simulation(device=cpu)
+        sim.create_state_from_snapshot(gmso_snapshot)
+
+        integrator = hoomd.md.Integrator(dt=0.001)
+        # cell = hoomd.md.nlist.Cell(buffer=0.4)
+        integrator.forces = integrator_forces
+        # integrator.forces = mb_forcefield
+
+        thermostats = hoomd.md.methods.MTTK(kT=kT, tau=1.0)
+        nvt = hoomd.md.methods.ConstantVolume(
+            thermostats=thermostats, filter=hoomd.filter.All()
+        )
+        integrator.methods.append(nvt)
+        sim.operations.integrator = integrator
+
+        sim.state.thermalize_particle_momenta(filter=hoomd.filter.All(), kT=kT)
+        thermodynamic_properties = hoomd.md.compute.ThermodynamicQuantities(
+            filter=hoomd.filter.All()
+        )
+
+        sim.operations.computes.append(thermodynamic_properties)
+        sim.run(100)
+
+    @pytest.mark.skipif(
+        hoomd_version[0] >= 4, reason="Deprecated features in HOOMD 4"
+    )
+    def test_hoomd3_simulation(self):
         compound = mb.load("CCC", smiles=True)
         com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=200)
         base_units = {
@@ -146,7 +272,10 @@ class TestGsd(BaseTest):
         sim.operations.computes.append(thermodynamic_properties)
         sim.run(100)
 
-    def test_hoomd_simulation_auto_scaled(self):
+    @pytest.mark.skipif(
+        hoomd_version[0] >= 4, reason="Deprecated features in HOOMD 4"
+    )
+    def test_hoomd3_simulation_auto_scaled(self):
         compound = mb.load("CCC", smiles=True)
         com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=200)
         base_units = {
