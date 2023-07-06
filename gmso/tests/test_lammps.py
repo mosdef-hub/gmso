@@ -506,7 +506,7 @@ class TestLammpsWriter(BaseTest):
             )
         with pytest.raises(ValueError):
             typed_ethane.save("e.lammps", lj_cfactorsDict={"energy": "kJ/mol"})
-        
+
         with pytest.raises(ValueError):
             typed_ethane.save("error.lammps", atom_style="None")
 
@@ -600,10 +600,18 @@ class TestLammpsWriter(BaseTest):
 
     def test_unit_style_factor(self):
         from gmso.formats.lammpsdata import _unit_style_factory
+
         for styleStr in [
-            "real", "metal", "si", "cgs", "electron", "micro", "nano"
+            "real",
+            "metal",
+            "si",
+            "cgs",
+            "electron",
+            "micro",
+            "nano",
         ]:
-            assert _unit_style_factory(styleStr).name == "lammps_"+styleStr
+            assert _unit_style_factory(styleStr).name == "lammps_" + styleStr
         from gmso.exceptions import NotYetImplementedWarning
+
         with pytest.raises(NotYetImplementedWarning):
             _unit_style_factory("None")
