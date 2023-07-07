@@ -29,3 +29,4 @@ dependencies:
   - symengine
   - python-symengine
   - hoomd
+  - importlib_resources
