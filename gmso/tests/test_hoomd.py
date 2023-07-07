@@ -96,7 +96,7 @@ class TestGsd(BaseTest):
                         assert np.isclose(mb_params[var], gmso_params[var])
 
     @pytest.mark.skipif(
-        hoomd_version[0] < 4, reason="Unsupported features in HOOMD 3"
+        int(hoomd_version[0]) < 4, reason="Unsupported features in HOOMD 3"
     )
     def test_hoomd4_simulation(self):
         compound = mb.load("CCC", smiles=True)
@@ -155,7 +155,7 @@ class TestGsd(BaseTest):
         sim.run(100)
 
     @pytest.mark.skipif(
-        hoomd_version[0] < 4, reason="Deprecated features in HOOMD 4"
+        int(hoomd_version[0]) < 4, reason="Deprecated features in HOOMD 4"
     )
     def test_hoomd4_simulation_auto_scaled(self):
         compound = mb.load("CCC", smiles=True)
@@ -217,7 +217,7 @@ class TestGsd(BaseTest):
         sim.run(100)
 
     @pytest.mark.skipif(
-        hoomd_version[0] >= 4, reason="Deprecated features in HOOMD 4"
+        int(hoomd_version[0]) >= 4, reason="Deprecated features in HOOMD 4"
     )
     def test_hoomd3_simulation(self):
         compound = mb.load("CCC", smiles=True)
@@ -273,7 +273,7 @@ class TestGsd(BaseTest):
         sim.run(100)
 
     @pytest.mark.skipif(
-        hoomd_version[0] >= 4, reason="Deprecated features in HOOMD 4"
+        int(hoomd_version[0]) >= 4, reason="Deprecated features in HOOMD 4"
     )
     def test_hoomd3_simulation_auto_scaled(self):
         compound = mb.load("CCC", smiles=True)
