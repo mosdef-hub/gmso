@@ -9,7 +9,7 @@ from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.tests.base_test import BaseTest
 from gmso.utils.conversions import (
     convert_opls_to_ryckaert,
-    convert_ryckaert_to_opls,
+    convert_ryckaert_to_fourier,
 )
 
 
@@ -45,9 +45,7 @@ class TestInternalConversions(BaseTest):
         )
 
         with pytest.raises(GMSOError, match="Cannot use"):
-            opls_connection_type = convert_ryckaert_to_opls(
-                ryckaert_connection_type
-            )
+            convert_ryckaert_to_fourier(ryckaert_connection_type)
 
         expression = "c0+c1+c2+c3+c4+c5+phi"
         variables = ryckaert_bellemans_torsion_potential.independent_variables
@@ -59,9 +57,7 @@ class TestInternalConversions(BaseTest):
         )
 
         with pytest.raises(GMSOError, match="Cannot use"):
-            opls_connection_type = convert_ryckaert_to_opls(
-                ryckaert_connection_type
-            )
+            convert_ryckaert_to_fourier(ryckaert_connection_type)
 
         # Pick some OPLS parameters at random
         params = {
@@ -106,7 +102,7 @@ class TestInternalConversions(BaseTest):
                 opls_connection_type
             )
 
-    def test_ryckaert_to_opls(self, templates):
+    def test_ryckaert_to_fourier(self, templates):
         # Pick some RB parameters at random
         params = {
             "c0": 1.53 * u.Unit("kJ/mol"),
@@ -132,8 +128,8 @@ class TestInternalConversions(BaseTest):
             parameters=params,
         )
 
-        # Convert connection to OPLS
-        opls_connection_type = convert_ryckaert_to_opls(
+        # Convert connection to Fourier
+        opls_connection_type = convert_ryckaert_to_fourier(
             ryckaert_connection_type
         )
 
@@ -176,7 +172,7 @@ class TestInternalConversions(BaseTest):
             "k4": 1.44 * u.Unit("kJ/mol"),
         }
 
-        opls_torsion_potential = templates["OPLSTorsionPotential"]
+        opls_torsion_potential = templates["FourierTorsionPotential"]
         name = opls_torsion_potential.name
         expression = opls_torsion_potential.expression
         variables = opls_torsion_potential.independent_variables
@@ -232,7 +228,7 @@ class TestInternalConversions(BaseTest):
             "k4": 1.44 * u.Unit("kJ/mol"),
         }
 
-        opls_torsion_potential = templates["OPLSTorsionPotential"]
+        opls_torsion_potential = templates["FourierTorsionPotential"]
 
         name = opls_torsion_potential.name
         expression = opls_torsion_potential.expression
@@ -251,7 +247,7 @@ class TestInternalConversions(BaseTest):
         )
 
         # Convert connection back to OPLS
-        final_connection_type = convert_ryckaert_to_opls(
+        final_connection_type = convert_ryckaert_to_fourier(
             ryckaert_connection_type
         )
 

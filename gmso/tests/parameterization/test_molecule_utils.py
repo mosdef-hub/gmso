@@ -26,11 +26,10 @@ class TestSubTopologyUtils(ParameterizationBaseTest):
         identify_connections(ethane_box_gmso)
         return ethane_box_gmso
 
-    def test_no_boundary_bonds_ethane(self, ethane):
-        for site in ethane.sites:
-            site.molecule = site.residue
+    def test_no_boundary_bonds(self, benzene_ua_box):
+        benzene_ua_box.sites[0].molecule = benzene_ua_box.sites[6].molecule
         with pytest.raises(AssertionError):
-            assert_no_boundary_bonds(ethane)
+            assert_no_boundary_bonds(benzene_ua_box)
 
     def test_no_boundary_bonds_ethane_box(self, ethane_box_gmso):
         assert_no_boundary_bonds(ethane_box_gmso)

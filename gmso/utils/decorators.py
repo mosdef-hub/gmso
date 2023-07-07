@@ -62,3 +62,23 @@ def _deprecate_kwargs(kwargs, deprecated_kwargs):
             DeprecationWarning,
             3,
         )
+
+
+def mark_WIP(message=""):
+    """Decorate functions with WIP marking."""
+
+    def _function_wrapper(function):
+        @functools.wraps(function)
+        def _inner(*args, **kwargs):
+            warnings.simplefilter("always", UserWarning)  # turn off filter
+            warnings.warn(
+                "Call to function {} is WIP.".format(function.__name__),
+                category=UserWarning,
+                stacklevel=2,
+            )
+            warnings.simplefilter("default", UserWarning)  # reset filter
+            return function(*args, **kwargs)
+
+        return _inner
+
+    return _function_wrapper

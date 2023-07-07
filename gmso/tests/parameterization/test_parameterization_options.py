@@ -259,15 +259,15 @@ class TestParameterizationOptions(ParameterizationBaseTest):
     ):
         top = deepcopy(hierarchical_top)
         # Load forcefield dicts
-        tip3p = ForceField(get_path("tip3p.xml"))
+        spce = ForceField(get_path("spce.xml"))
         if match_ff_by == "molecule":
             ff_dict = {
                 "polymer": oplsaa_gmso,
                 "cyclopentane": oplsaa_gmso,
-                "water": tip3p,
+                "water": spce,
             }
         elif match_ff_by == "group":
-            ff_dict = {"sol1": oplsaa_gmso, "sol2": tip3p}
+            ff_dict = {"sol1": oplsaa_gmso, "sol2": spce}
         else:
             raise ValueError("Unexpected value provided match_ff_by.")
 

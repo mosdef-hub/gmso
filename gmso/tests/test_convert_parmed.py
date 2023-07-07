@@ -295,7 +295,7 @@ class TestConvertParmEd(BaseTest):
 
         for site in top_from_struc.sites:
             assert site.residue[0] == "HEX"
-            assert site.residue[1] in list(range(6))
+            assert site.residue[1] in list(range(1, 7))
 
         struc_from_top = to_parmed(top_from_struc)
         assert len(struc_from_top.residues) == len(struc.residues)
@@ -538,7 +538,7 @@ class TestConvertParmEd(BaseTest):
         assert top.n_dihedrals == len(struc.rb_torsions)
 
         # check typing
-        assert len(top.atom_types) == len(
+        assert len(top.atom_types(filter_by=pfilter)) == len(
             Counter(map(attrgetter("atom_type.name"), struc.atoms))
         )
         bonds_list = list(

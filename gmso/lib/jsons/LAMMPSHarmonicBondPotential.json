@@ -1,0 +1,9 @@
+{
+   "name": "LAMMPSHarmonicBondPotential",
+   "expression": "k * (r-r_eq)**2",
+   "independent_variables": "r",
+   "expected_parameters_dimensions": {
+     "k": "energy/length**2",
+     "r_eq": "length"
+   }
+ }

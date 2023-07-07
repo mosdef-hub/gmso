@@ -26,6 +26,10 @@ from gmso.exceptions import GMSOError
 from gmso.utils.connectivity import (
     identify_connections as _identify_connections,
 )
+from gmso.utils.conversions import (
+    convert_params_units,
+    convert_topology_expressions,
+)
 from gmso.utils.units import GMSO_UnitRegsitry as UnitReg
 
 scaling_interaction_idxes = {"12": 0, "13": 1, "14": 2}
@@ -1692,6 +1696,62 @@ class Topology(object):
 
         loader = LoadersRegistry.get_callable(filename.suffix)
         return loader(filename, **kwargs)
+
+    def convert_potential_styles(self, expressionMap={}):
+        """Convert from one parameter form to another.
+
+        Parameters
+        ----------
+        expressionMap : dict, default={}
+            Map where the keys represent the current potential
+            type and the corresponding values represent the desired
+            potential type. The desired potential style can be
+            either a string with the corresponding name, or
+            a gmso.utils.expression.PotentialExpression type.
+
+        Examples
+        ________
+        # Convert from RB torsions to OPLS torsions
+        top.convert_potential_styles({"dihedrals": "OPLSTorsionPotential"})
+        # TODO: convert_potential_styles with PotentialExpression
+        """
+        # TODO: raise warnings for improper values or keys in expressionMap
+
+        return convert_topology_expressions(self, expressionMap)
+
+    def convert_unit_styles(self, unitsystem, exp_unitsDict):
+        """Convert from one set of base units to another.
+
+        Parameters
+        ----------
+        unitsystem : unyt.UnitSystem
+            set of base units to use for all expressions of the topology
+            in `unyt package <https://unyt.readthedocs.io/en/stable/>_`
+        exp_unitsDict : dict
+            keys with topology attributes that should be converted and
+            values with dictionary of parameter: expected_dimension
+
+        Examples
+        ________
+        top.convert_unit_styles(
+            u.UnitSystem(
+                "lammps_real", "Å", "amu", "fs", "K", "rad",
+            ),
+            {"bond":{"k":"energy/length**2", "r_eq":"length"}},
+        )
+        """
+
+        ref_values = {"energy": "kJ/mol", "length": "nm", "angle": "radians"}
+
+        # all potContainer ["atom", "bond", "angle", "dihedral", "improper"]
+        for potStr in exp_unitsDict:
+            potContainer = getattr(self, potStr + "_types")
+            convert_params_units(
+                potContainer,
+                expected_units_dim=exp_unitsDict[potStr],
+                base_units=unitsystem,
+                ref_values=ref_values,
+            )
 
 
 def _return_float_for_unyt(unyt_quant, unyts_bool):
