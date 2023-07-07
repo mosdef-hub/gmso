@@ -137,7 +137,8 @@ class Site(GMSOBase):
 
         try:
             position = np.reshape(position, newshape=(3,), order="C")
-            position.convert_to_units(u.nm)
+            if position.units != u.dimensionless:
+                position.convert_to_units(u.nm)
         except ValueError:
             raise ValueError(
                 f"Position of shape {position.shape} is not valid. "

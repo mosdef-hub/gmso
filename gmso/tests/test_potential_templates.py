@@ -48,11 +48,32 @@ class TestPotentialTemplates(BaseTest):
             "sigma": ud.length,
         }
 
+    def test_fourier_torsion_potential(self, templates):
+        fourier_torsion_potential = templates["FourierTorsionPotential"]
+        assert fourier_torsion_potential.name == "FourierTorsionPotential"
+        assert fourier_torsion_potential.expression == sympy.sympify(
+            "0.5 * k0 + 0.5 * k1 * (1 + cos(phi)) +"
+            "0.5 * k2 * (1 - cos(2*phi)) +"
+            "0.5 * k3 * (1 + cos(3*phi)) +"
+            "0.5 * k4 * (1 - cos(4*phi))"
+        )
+        assert fourier_torsion_potential.independent_variables == {
+            sympy.sympify("phi")
+        }
+
+        assert fourier_torsion_potential.expected_parameters_dimensions == {
+            "k0": ud.energy,
+            "k1": ud.energy,
+            "k2": ud.energy,
+            "k3": ud.energy,
+            "k4": ud.energy,
+        }
+
     def test_opls_torsion_potential(self, templates):
         opls_torsion_potential = templates["OPLSTorsionPotential"]
         assert opls_torsion_potential.name == "OPLSTorsionPotential"
         assert opls_torsion_potential.expression == sympy.sympify(
-            "0.5 * k0 + 0.5 * k1 * (1 + cos(phi)) +"
+            "0.5 * k1 * (1 + cos(phi)) +"
             "0.5 * k2 * (1 - cos(2*phi)) +"
             "0.5 * k3 * (1 + cos(3*phi)) +"
             "0.5 * k4 * (1 - cos(4*phi))"
@@ -62,12 +83,10 @@ class TestPotentialTemplates(BaseTest):
         }
 
         assert opls_torsion_potential.expected_parameters_dimensions == {
-            "k0": ud.energy,
             "k1": ud.energy,
             "k2": ud.energy,
             "k3": ud.energy,
             "k4": ud.energy,
-            "k5": ud.energy,
         }
 
     def test_periodic_torsion_potential(self, templates):

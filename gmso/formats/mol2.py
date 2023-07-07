@@ -162,9 +162,14 @@ def _parse_bond(top, section, verbose):
         if line.strip():
             content = line.split()
             bond = Bond(
-                connection_members=(
-                    top.sites[int(content[1]) - 1],
-                    top.sites[int(content[2]) - 1],
+                connection_members=tuple(
+                    sorted(
+                        [
+                            top.sites[int(content[1]) - 1],
+                            top.sites[int(content[2]) - 1],
+                        ],
+                        key=lambda x: top.get_index(x),
+                    )
                 )
             )
             top.add_connection(bond)
