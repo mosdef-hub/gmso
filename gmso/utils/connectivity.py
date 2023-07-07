@@ -119,8 +119,7 @@ def _detect_connections(compound_line_graph, top, type_="angle"):
             else:
                 sorted_conn = match[::-1]
         elif type_ == "improper":
-            latter_sites = sorted(match[1:])
-            sorted_conn = [match[0]] + latter_sites
+            sorted_conn = [match[0]] + sorted(match[1:])
         sorted_conn_matches.append(sorted_conn)
 
     # Final sorting the whole list
