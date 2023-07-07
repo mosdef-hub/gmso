@@ -139,9 +139,9 @@ class TestGsd(BaseTest):
         integrator.forces = integrator_forces
         # integrator.forces = mb_forcefield
 
-        thermostats = hoomd.md.methods.thermostats.MTTK(kT=kT, tau=1.0)
+        thermostat = hoomd.md.methods.thermostats.MTTK(kT=kT, tau=1.0)
         nvt = hoomd.md.methods.ConstantVolume(
-            thermostats=thermostats, filter=hoomd.filter.All()
+            thermostat=thermostat, filter=hoomd.filter.All()
         )
         integrator.methods.append(nvt)
         sim.operations.integrator = integrator
@@ -201,9 +201,9 @@ class TestGsd(BaseTest):
         integrator.forces = integrator_forces
         # integrator.forces = mb_forcefield
 
-        thermostats = hoomd.md.methods.MTTK(kT=kT, tau=1.0)
+        thermostat = hoomd.md.methods.thermostats.MTTK(kT=kT, tau=1.0)
         nvt = hoomd.md.methods.ConstantVolume(
-            thermostats=thermostats, filter=hoomd.filter.All()
+            thermostat=thermostat, filter=hoomd.filter.All()
         )
         integrator.methods.append(nvt)
         sim.operations.integrator = integrator
