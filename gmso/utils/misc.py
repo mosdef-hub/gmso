@@ -60,7 +60,9 @@ def ensure_valid_dimensions(
     quantity_1: u.unyt_quantity
     quantity_2: u.unyt_quantity
     """
-    if quantity_1.units.dimensions != quantity_2.units.dimensions:
+    if quantity_1.units == u.dimensionless:
+        return
+    elif quantity_1.units.dimensions != quantity_2.units.dimensions:
         raise UnitConversionError(
             quantity_1.units,
             quantity_1.units.dimensions,

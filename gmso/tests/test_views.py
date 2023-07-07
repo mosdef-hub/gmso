@@ -74,7 +74,7 @@ class TestViews(BaseTest):
         unique_atomtypes = atom_types(
             filter_by=PotentialFilters.UNIQUE_NAME_CLASS
         )
-        assert len(atom_types) == 2
+        assert len(atom_types) == 8
         assert len(unique_atomtypes) == 2
 
         bond_types = typed_ethane.bond_types

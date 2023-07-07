@@ -1,6 +1,7 @@
 """Module supporting various connectivity methods and operations."""
 import networkx as nx
 import numpy as np
+from boltons.setutils import IndexedSet
 from networkx.algorithms import shortest_path_length
 
 from gmso.core.angle import Angle
@@ -67,18 +68,9 @@ def identify_connections(top, index_only=False):
                 _add_connections(top, conn_matches, conn_type=conn_type)
     else:
         return {
-            "angles": [
-                tuple(map(lambda x: top.get_index(x), members))
-                for members in angle_matches
-            ],
-            "dihedrals": [
-                tuple(map(lambda x: top.get_index(x), members))
-                for members in dihedral_matches
-            ],
-            "impropers": [
-                tuple(map(lambda x: top.get_index(x), members))
-                for members in improper_matches
-            ],
+            "angles": angle_matches,
+            "dihedrals": dihedral_matches,
+            "impropers": improper_matches,
         }
 
     return top
@@ -87,7 +79,9 @@ def identify_connections(top, index_only=False):
 def _add_connections(top, matches, conn_type):
     """Add connections to the topology."""
     for sorted_conn in matches:
-        to_add_conn = CONNS[conn_type](connection_members=[*sorted_conn])
+        to_add_conn = CONNS[conn_type](
+            connection_members=[top.sites[idx] for idx in sorted_conn]
+        )
         top.add_connection(to_add_conn, update_types=False)
 
 
@@ -108,10 +102,10 @@ def _detect_connections(compound_line_graph, top, type_="angle"):
         "improper": _format_subgraph_improper,
     }
 
-    conn_matches = []
+    conn_matches = IndexedSet()
     for m in matcher.subgraph_isomorphisms_iter():
         new_connection = formatter_fns[type_](m, top)
-        conn_matches.append(new_connection)
+        conn_matches.add(new_connection)
 
     if conn_matches:
         conn_matches = _trim_duplicates(conn_matches)
@@ -120,15 +114,12 @@ def _detect_connections(compound_line_graph, top, type_="angle"):
     sorted_conn_matches = list()
     for match in conn_matches:
         if type_ in ("angle", "dihedral"):
-            if top.get_index(match[0]) < top.get_index(match[-1]):
+            if match[0] < match[-1]:
                 sorted_conn = match
             else:
                 sorted_conn = match[::-1]
         elif type_ == "improper":
-            latter_sites = sorted(
-                match[1:], key=lambda site: top.get_index(site)
-            )
-            sorted_conn = [match[0]] + latter_sites
+            sorted_conn = [match[0]] + sorted(match[1:])
         sorted_conn_matches.append(sorted_conn)
 
     # Final sorting the whole list
@@ -136,29 +127,29 @@ def _detect_connections(compound_line_graph, top, type_="angle"):
         return sorted(
             sorted_conn_matches,
             key=lambda angle: (
-                top.get_index(angle[1]),
-                top.get_index(angle[0]),
-                top.get_index(angle[2]),
+                angle[1],
+                angle[0],
+                angle[2],
             ),
         )
     elif type_ == "dihedral":
         return sorted(
             sorted_conn_matches,
             key=lambda dihedral: (
-                top.get_index(dihedral[1]),
-                top.get_index(dihedral[2]),
-                top.get_index(dihedral[0]),
-                top.get_index(dihedral[3]),
+                dihedral[1],
+                dihedral[2],
+                dihedral[0],
+                dihedral[3],
             ),
         )
     elif type_ == "improper":
         return sorted(
             sorted_conn_matches,
             key=lambda improper: (
-                top.get_index(improper[0]),
-                top.get_index(improper[1]),
-                top.get_index(improper[2]),
-                top.get_index(improper[3]),
+                improper[0],
+                improper[1],
+                improper[2],
+                improper[3],
             ),
         )
 
@@ -196,7 +187,11 @@ def _format_subgraph_angle(m, top):
         key=lambda x: top.get_index(x),
     )
     middle = sort_by_n_connections[2]
-    return [ends[0], middle, ends[1]]
+    return (
+        top.get_index(ends[0]),
+        top.get_index(middle),
+        top.get_index(ends[1]),
+    )
 
 
 def _format_subgraph_dihedral(m, top):
@@ -228,7 +223,12 @@ def _format_subgraph_dihedral(m, top):
         mid2 = sort_by_n_connections[2]
 
     end = sort_by_n_connections[1]
-    return [start, mid1, mid2, end]
+    return (
+        top.get_index(start),
+        top.get_index(mid1),
+        top.get_index(mid2),
+        top.get_index(end),
+    )
 
 
 def _format_subgraph_improper(m, top):
@@ -261,7 +261,12 @@ def _format_subgraph_improper(m, top):
             sort_by_n_connections[:3],
             key=lambda x: top.get_index(x),
         )
-        return [central, branch1, branch2, branch3]
+        return (
+            top.get_index(central),
+            top.get_index(branch1),
+            top.get_index(branch2),
+            top.get_index(branch3),
+        )
     return None
 
 
@@ -271,14 +276,14 @@ def _trim_duplicates(all_matches):
     Is there a better way to do this? Like when we format the subgraphs,
     can we impose an ordering so it's easier to eliminate redundant matches?
     """
-    trimmed_list = []
+    trimmed_list = IndexedSet()
     for match in all_matches:
         if (
             match
             and match not in trimmed_list
             and match[::-1] not in trimmed_list
         ):
-            trimmed_list.append(match)
+            trimmed_list.add(match)
     return trimmed_list
 
 
@@ -322,7 +327,7 @@ def generate_pairs_lists(
     if sort_key is None:
         sort_key = top.get_index
 
-    graph = to_networkx(top)
+    graph = to_networkx(top, parse_angles=False, parse_dihedrals=False)
 
     pairs_dict = dict()
     if refer_from_scaling_factor:

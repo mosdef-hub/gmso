@@ -80,8 +80,8 @@ def read_gro(filename):
 
             r = re.compile("([0-9]+)([a-zA-Z]+)")
             m = r.match(res)
-            site.molecule = (m.group(2), int(m.group(1)) - 1)
-            site.residue = (m.group(2), int(m.group(1)) - 1)
+            site.molecule = (m.group(2), int(m.group(1)))
+            site.residue = (m.group(2), int(m.group(1)))
             top.add_site(site, update_types=False)
         top.update_topology()
 
