@@ -108,7 +108,7 @@ class TestGro(BaseTest):
 
         reread = Topology.load("ethane_methane.gro")
         nums = set([site.molecule.number for site in reread.sites])
-        assert nums == {0, 1, 2, 3}
+        assert nums == {1, 2, 3, 4}
 
     def test_no_mol_name(self):
         # here we will just add sites with no molecule information to
@@ -123,7 +123,7 @@ class TestGro(BaseTest):
         top.save("temp_system.gro")
         reread = Topology.load("temp_system.gro")
         nums = set([site.molecule.number for site in reread.sites])
-        assert nums == {0}
+        assert nums == {1}
 
     def test_res_naming(self):
         top = Topology()
@@ -142,7 +142,7 @@ class TestGro(BaseTest):
 
         reread = Topology.load("temp1.gro")
         nums = set([site.molecule.number for site in reread.sites])
-        assert nums == {0, 1}
+        assert nums == {1, 2}
 
         top = Topology()
         ref = Atom(
@@ -172,7 +172,7 @@ class TestGro(BaseTest):
 
         reread = Topology.load("temp2.gro")
         nums = set([site.molecule.number for site in reread.sites])
-        assert nums == {0, 1, 2}
+        assert nums == {1, 2, 3}
 
         top = Topology()
         ref = Atom(
@@ -198,7 +198,7 @@ class TestGro(BaseTest):
 
         reread = Topology.load("temp3.gro")
         nums = set([site.molecule.number for site in reread.sites])
-        assert nums == {0, 1, 2, 3}
+        assert nums == {1, 2, 3, 4}
 
     @pytest.mark.parametrize("fixture", ["benzene_ua_box", "benzene_aa_box"])
     def test_full_loop_gro_molecule(self, fixture, request):

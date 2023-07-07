@@ -1,4 +1,8 @@
 """Module for standard conversions needed in molecular simulations."""
+import re
+from functools import lru_cache
+
+import numpy as np
 import sympy
 import unyt as u
 from unyt.dimensions import length, mass, time
@@ -7,7 +11,116 @@ import gmso
 from gmso.exceptions import GMSOError
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 
+templates = PotentialTemplateLibrary()
 
+
+@lru_cache(maxsize=128)
+def _constant_multiplier(pot1, pot2):
+    # TODO: Doc string
+    # TODO: Test outputs
+    # TODO: Check speed
+    try:
+        constant = sympy.simplify(pot1.expression / pot2.expression)
+        if constant.is_number:
+            for eq_term in pot1.expression.args:
+                if eq_term.is_symbol:
+                    key = str(eq_term)
+                    return {key: pot1.parameters[key] * float(constant)}
+    except Exception:
+        # return nothing if the sympy conversion errors out
+        pass
+    return None
+
+
+sympy_conversionsList = [_constant_multiplier]
+
+
+def _try_sympy_conversions(pot1, pot2):
+    # TODO: Doc string
+    # TODO: Test outputs
+    # TODO: Check speed
+    convertersList = []
+    for conversion in sympy_conversionsList:
+        convertersList.append(conversion(pot1, pot2))
+    completed_conversions = np.where(convertersList)[0]
+    if len(completed_conversions) > 0:  # check to see if any conversions worked
+        return convertersList[
+            completed_conversions[0]
+        ]  # return first completed value
+    return None
+
+
+def convert_topology_expressions(top, expressionMap={}):
+    """Convert from one parameter form to another.
+
+    Parameters
+    ----------
+    expressionMap : dict, default={}
+        map with keys of the potential type and the potential to change to
+
+    Examples
+    --------
+    Convert from RB torsions to OPLS torsions
+    top.convert_expressions({"dihedrals": "OPLSTorsionPotential"})
+    """
+    # TODO: Raise errors
+
+    # Apply from predefined conversions or easy sympy conversions
+    conversions_map = {
+        (
+            "OPLSTorsionPotential",
+            "RyckaertBellemansTorsionPotential",
+        ): convert_opls_to_ryckaert,
+        (
+            "RyckaertBellemansTorsionPotential",
+            "OPLSTorsionPotential",
+        ): convert_ryckaert_to_opls,
+        (
+            "RyckaertBellemansTorsionPotential",
+            "FourierTorsionPotential",
+        ): convert_ryckaert_to_opls,
+    }  # map of all accessible conversions currently supported
+
+    for conv in expressionMap:
+        # check all connections with these types for compatibility
+        for conn in getattr(top, conv):
+            current_expression = getattr(conn, conv[:-1] + "_type")
+            if (
+                current_expression.name == expressionMap[conv]
+            ):  # check to see if we can skip this one
+                # TODO: Do something instead of just comparing the names
+                continue
+
+            # convert it using pre-defined conversion functions
+            conversion_from_conversion_toTuple = (
+                current_expression.name,
+                expressionMap[conv],
+            )
+            if (
+                conversion_from_conversion_toTuple in conversions_map
+            ):  # Try mapped conversions
+                new_conn_type = conversions_map.get(
+                    conversion_from_conversion_toTuple
+                )(current_expression)
+                setattr(conn, conv[:-1] + "_type", new_conn_type)
+                continue
+
+            # convert it using sympy expression conversion
+            new_potential = templates[expressionMap[conv]]
+            modified_connection_parametersDict = _try_sympy_conversions(
+                current_expression, new_potential
+            )
+            if modified_connection_parametersDict:  # try sympy conversions
+                current_expression.name = new_potential.name
+                current_expression.expression = new_potential.expression
+                current_expression.parameters.update(
+                    modified_connection_parametersDict
+                )
+
+    return top
+
+
+@lru_cache(maxsize=128)
 def convert_opls_to_ryckaert(opls_connection_type):
     """Convert an OPLS dihedral to Ryckaert-Bellemans dihedral.
 
@@ -19,8 +132,8 @@ def convert_opls_to_ryckaert(opls_connection_type):
     for OPLS and RB torsions. OPLS torsions are defined with
     phi_cis = 0 while RB torsions are defined as phi_trans = 0.
     """
-    templates = PotentialTemplateLibrary()
-    opls_torsion_potential = templates["OPLSTorsionPotential"]
+    # TODO: this function really converts the fourier torsion to rb, not opls
+    opls_torsion_potential = templates["FourierTorsionPotential"]
     valid_connection_type = False
     if (
         opls_connection_type.independent_variables
@@ -67,13 +180,47 @@ def convert_opls_to_ryckaert(opls_connection_type):
         expression=expression,
         independent_variables=variables,
         parameters=converted_params,
+        member_types=opls_connection_type.member_types,
     )
 
     return ryckaert_connection_type
 
 
+@lru_cache(maxsize=128)
 def convert_ryckaert_to_opls(ryckaert_connection_type):
     """Convert Ryckaert-Bellemans dihedral to OPLS.
+
+    NOTE: the conventions defining the dihedral angle are different
+    for OPLS and RB torsions. OPLS torsions are defined with
+    phi_cis = 0 while RB torsions are defined as phi_trans = 0.
+    """
+    fourier_connection_type = convert_ryckaert_to_fourier(
+        ryckaert_connection_type
+    )
+    opls_torsion_potential = templates["OPLSTorsionPotential"]
+    converted_params = {
+        k: fourier_connection_type.parameters.get(k, None)
+        for k in ["k1", "k2", "k3", "k4"]
+    }
+
+    name = opls_torsion_potential.name
+    expression = opls_torsion_potential.expression
+    variables = opls_torsion_potential.independent_variables
+
+    opls_connection_type = gmso.DihedralType(
+        name=name,
+        expression=expression,
+        independent_variables=variables,
+        parameters=converted_params,
+        member_types=ryckaert_connection_type.member_types,
+    )
+
+    return opls_connection_type
+
+
+@lru_cache(maxsize=128)
+def convert_ryckaert_to_fourier(ryckaert_connection_type):
+    """Convert Ryckaert-Bellemans dihedral to Fourier.
 
     NOTE: the conventions defining the dihedral angle are different
     for OPLS and RB torsions. OPLS torsions are defined with
@@ -83,7 +230,7 @@ def convert_ryckaert_to_opls(ryckaert_connection_type):
     ryckaert_bellemans_torsion_potential = templates[
         "RyckaertBellemansTorsionPotential"
     ]
-    opls_torsion_potential = templates["OPLSTorsionPotential"]
+    fourier_torsion_potential = templates["FourierTorsionPotential"]
 
     valid_connection_type = False
     if (
@@ -100,7 +247,7 @@ def convert_ryckaert_to_opls(ryckaert_connection_type):
             valid_connection_type = True
     if not valid_connection_type:
         raise GMSOError(
-            "Cannot use convert_ryckaert_to_opls "
+            "Cannot use convert_ryckaert_to_fourier "
             "function to convert a ConnectionType that is not an "
             "RyckaertBellemansTorsionPotential"
         )
@@ -115,7 +262,7 @@ def convert_ryckaert_to_opls(ryckaert_connection_type):
     if c5 != 0.0:
         raise GMSOError(
             "Cannot convert Ryckaert-Bellemans dihedral "
-            "to OPLS dihedral if c5 is not equal to zero."
+            "to Fourier dihedral if c5 is not equal to zero."
         )
 
     converted_params = {
@@ -126,18 +273,19 @@ def convert_ryckaert_to_opls(ryckaert_connection_type):
         "k4": ((-1.0 / 4.0) * c4),
     }
 
-    name = opls_torsion_potential.name
-    expression = opls_torsion_potential.expression
-    variables = opls_torsion_potential.independent_variables
+    name = fourier_torsion_potential.name
+    expression = fourier_torsion_potential.expression
+    variables = fourier_torsion_potential.independent_variables
 
-    opls_connection_type = gmso.DihedralType(
+    fourier_connection_type = gmso.DihedralType(
         name=name,
         expression=expression,
         independent_variables=variables,
         parameters=converted_params,
+        member_types=ryckaert_connection_type.member_types,
     )
 
-    return opls_connection_type
+    return fourier_connection_type
 
 
 def convert_kelvin_to_energy_units(
@@ -219,3 +367,28 @@ def convert_kelvin_to_energy_units(
         energy_output_unyt = energy_input_unyt
 
     return energy_output_unyt
+
+
+def convert_params_units(
+    potentials, expected_units_dim, base_units, ref_values
+):
+    """Convert parameters' units in the potential to that specified in the base_units."""
+    converted_potentials = list()
+    for potential in potentials:
+        converted_params = dict()
+        for parameter in potential.parameters:
+            unit_dim = expected_units_dim[parameter]
+            ind_units = re.sub("[^a-zA-Z]+", " ", unit_dim).split()
+            for unit in ind_units:
+                if unit != "angle":
+                    unit_dim = unit_dim.replace(unit, f"{base_units[unit]}")
+                else:
+                    # angle doesn't show up, degree or radian does
+                    unit_dim = unit_dim.replace(unit, str(base_units[unit]))
+
+            converted_params[parameter] = potential.parameters[parameter].to(
+                u.Unit(unit_dim, registry=base_units.registry)
+            )
+        potential.parameters = converted_params
+        converted_potentials.append(potential)
+    return converted_potentials

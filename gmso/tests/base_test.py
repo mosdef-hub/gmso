@@ -173,16 +173,9 @@ class BaseTest:
 
     @pytest.fixture
     def water_system(self):
-        water = mb.load(get_path("tip3p.mol2"))
-        water.name = "water"
-        water[0].name = "opls_111"
-        water[1].name = water[2].name = "opls_112"
-
-        packed_system = mb.fill_box(
-            compound=water, n_compounds=2, box=mb.Box([2, 2, 2])
-        )
-
-        return from_mbuild(packed_system, parse_label=True)
+        water = Topology(name="water")
+        water = water.load(get_path("tip3p.mol2"))
+        return water
 
     @pytest.fixture
     def ethane(self):
@@ -200,6 +193,15 @@ class BaseTest:
         pmd_ethane = oplsaa.apply(mb_ethane)
         top = from_parmed(pmd_ethane)
         top.name = "ethane"
+        return top
+
+    @pytest.fixture
+    def typed_ethane_opls(self, typed_ethane):
+        for dihedral in typed_ethane.dihedrals:
+            dihedral.dihedral_type.name = "RyckaertBellemansTorsionPotential"
+        top = typed_ethane.convert_potential_styles(
+            {"dihedrals": "FourierTorsionPotential"}
+        )
         return top
 
     @pytest.fixture
@@ -242,6 +244,14 @@ class BaseTest:
         return top
 
     @pytest.fixture
+    def typed_methaneUA(self):
+        compound = mb.Compound(name="_CH4", charge=0.0)
+        trappe = foyer.Forcefield(name="trappe-ua")
+        pmd_structure = trappe.apply(compound)
+        top = from_parmed(pmd_structure)
+        return top
+
+    @pytest.fixture
     def parmed_hexane_box(self):
         compound = mb.recipes.Alkane(6)
         compound.name = "HEX"
@@ -253,31 +263,9 @@ class BaseTest:
     @pytest.fixture
     def typed_water_system(self, water_system):
         top = water_system
-
+        top.identify_connections()
         ff = ForceField(get_path("tip3p.xml"))
-
-        element_map = {"O": "opls_111", "H": "opls_112"}
-
-        for atom in top.sites:
-            atom.atom_type = ff.atom_types[atom.name]
-
-        for bond in top.bonds:
-            bond.bond_type = ff.bond_types["opls_111~opls_112"]
-
-        molecule_tags = top.unique_site_labels(
-            label_type="molecule", name_only=False
-        )
-        for tag in molecule_tags:
-            angle = Angle(
-                connection_members=[
-                    site for site in top.iter_sites("molecule", tag)
-                ],
-                name="opls_112~opls_111~opls_112",
-                angle_type=ff.angle_types["opls_112~opls_111~opls_112"],
-            )
-            top.add_connection(angle)
-
-        top.update_topology()
+        top = apply(top, ff)
         return top
 
     @pytest.fixture
@@ -682,3 +670,31 @@ class BaseTest:
             untyped_benzene, assert_dihedral_params=False
         )
         return benzene
+
+    # TODO: now
+    # add in some fixtures for (connects), amber
+
+    @pytest.fixture
+    def harmonic_parmed_types_charmm(self):
+        from mbuild.formats.lammpsdata import write_lammpsdata
+
+        system = mb.Compound()
+        first = mb.Particle(name="_CTL2", pos=[-1, 0, 0])
+        second = mb.Particle(name="_CL", pos=[0, 0, 0])
+        third = mb.Particle(name="_OBL", pos=[1, 0, 0])
+        fourth = mb.Particle(name="_OHL", pos=[0, 1, 0])
+
+        system.add([first, second, third, fourth])
+
+        system.add_bond((first, second))
+        system.add_bond((second, third))
+        system.add_bond((second, fourth))
+
+        ff = foyer.Forcefield(forcefield_files=[get_path("charmm36_cooh.xml")])
+        struc = ff.apply(
+            system,
+            assert_angle_params=False,
+            assert_dihedral_params=False,
+            assert_improper_params=False,
+        )
+        return struc
