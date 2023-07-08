@@ -16,3 +16,4 @@ dependencies:
   - forcefield-utilities>=0.2.1
   - symengine
   - python-symengine
+  - importlib_resources
