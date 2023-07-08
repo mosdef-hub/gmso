@@ -190,7 +190,8 @@ class BaseTest:
 
         mb_ethane = Ethane()
         oplsaa = foyer.Forcefield(name="oplsaa")
-        pmd_ethane = oplsaa.apply(mb_ethane)
+        pmd_ethane = mb_ethane.to_parmed(infer_residues=True)
+        pmd_ethane = oplsaa.apply(pmd_ethane)
         top = from_parmed(pmd_ethane)
         top.name = "ethane"
         return top
