@@ -800,7 +800,6 @@ def _parse_coulombic(
     )
     if not charge_groups:
         print("No charged group detected, skipping electrostatics.")
-        #return None
         return []
     else:
         coulombic = hoomd.md.long_range.pppm.make_pppm_coulomb_forces(

@@ -410,3 +410,29 @@ class TestGsd(BaseTest):
                         variables = params.keys()
                         for var in variables:
                             assert params[var] == 0.0
+
+    def test_zero_charges(self):
+        compound = mb.load("CC", smiles=True)
+        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=100)
+        base_units = {
+            "mass": u.amu,
+            "length": u.nm,
+            "energy": u.kJ / u.mol,
+        }
+
+        top = from_mbuild(com_box)
+        top.identify_connections()
+        oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
+        top = apply(top, oplsaa, remove_untyped=True)
+        for site in top.sites:
+            site.charge = 0
+
+        gmso_snapshot, snapshot_base_units = to_hoomd_snapshot(top)
+        gmso_forces, forces_base_units = to_hoomd_forcefield(
+                top=top, r_cut=1.4,
+        )
+        for cat in gmso_forces:
+            for force in gmso_forces[cat]:
+                assert not isinstance(force, hoomd.md.pair.pair.Ewald)
+                assert not isinstance(force, hoomd.md.long_range.pppm.Coulomb)
+                assert not isinstance(force, hoomd.md.special_pair.Coulomb)
