@@ -429,7 +429,8 @@ class TestGsd(BaseTest):
 
         gmso_snapshot, snapshot_base_units = to_hoomd_snapshot(top)
         gmso_forces, forces_base_units = to_hoomd_forcefield(
-                top=top, r_cut=1.4,
+            top=top,
+            r_cut=1.4,
         )
         for cat in gmso_forces:
             for force in gmso_forces[cat]:
