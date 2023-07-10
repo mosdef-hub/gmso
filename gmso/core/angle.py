@@ -1,7 +1,7 @@
 """Support for 3-partner connections between gmso.core.Atoms."""
 from typing import Callable, ClassVar, Optional, Tuple
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from gmso.abc.abstract_connection import Connection
 from gmso.core.angle_type import AngleType
@@ -83,16 +83,17 @@ class Angle(Connection):
         else:
             super(Angle, self).__setattr__(key, value)
 
-    class Config:
-        """Support pydantic configuration for attributes and behavior."""
-
-        fields = {
+    # TODO[pydantic]: The following keys were removed: `fields`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(
+        fields={
             "connection_members_": "connection_members",
             "angle_type_": "angle_type",
             "restraint_": "restraint",
-        }
-        alias_to_fields = {
+        },
+        alias_to_fields={
             "connection_members": "connection_members_",
             "angle_type": "angle_type_",
             "restraint": "restraint_",
-        }
+        },
+    )

@@ -2,7 +2,7 @@
 from abc import abstractmethod
 from typing import Any, Dict, Iterator, List
 
-from pydantic import Field, validator
+from pydantic import ConfigDict, Field, field_validator
 
 from gmso.abc.gmso_base import GMSOBase
 from gmso.utils.expression import PotentialExpression
@@ -115,7 +115,8 @@ class AbstractPotential(GMSOBase):
     def pop_tag(self, tag: str) -> Any:
         return self.tags.pop(tag, None)
 
-    @validator("potential_expression_", pre=True)
+    @field_validator("potential_expression_", mode="before")
+    @classmethod
     def validate_potential_expression(cls, v):
         if isinstance(v, dict):
             v = PotentialExpression(**v)
@@ -154,17 +155,17 @@ class AbstractPotential(GMSOBase):
             f"id: {id(self)}>"
         )
 
-    class Config:
-        """Pydantic configuration for the potential objects."""
-
-        fields = {
+    # TODO[pydantic]: The following keys were removed: `fields`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(
+        fields={
             "name_": "name",
             "potential_expression_": "potential_expression",
             "tags_": "tags",
-        }
-
-        alias_to_fields = {
+        },
+        alias_to_fields={
             "name": "name_",
             "potential_expression": "potential_expression_",
             "tags": "tags_",
-        }
+        },
+    )

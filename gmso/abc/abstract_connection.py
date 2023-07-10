@@ -1,6 +1,6 @@
 from typing import Optional, Sequence
 
-from pydantic import Field, root_validator
+from pydantic import ConfigDict, Field, model_validator
 
 from gmso.abc.abstract_site import Site
 from gmso.abc.gmso_base import GMSOBase
@@ -65,7 +65,8 @@ class Connection(GMSOBase):
             ]
             return tc if all(tc) else None
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def validate_fields(cls, values):
         connection_members = values.get("connection_members")
 
@@ -101,10 +102,12 @@ class Connection(GMSOBase):
     def __str__(self):
         return f"<{self.__class__.__name__} {self.name}, id: {id(self)}> "
 
-    class Config:
-        fields = {"name_": "name", "connection_members_": "connection_members"}
-
-        alias_to_fields = {
+    # TODO[pydantic]: The following keys were removed: `fields`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(
+        fields={"name_": "name", "connection_members_": "connection_members"},
+        alias_to_fields={
             "name": "name_",
             "connection_members": "connection_members_",
-        }
+        },
+    )

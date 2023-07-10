@@ -4,12 +4,13 @@ import warnings
 from abc import ABC
 from typing import Any, ClassVar, Type
 
-from pydantic import BaseModel
-from pydantic.validators import dict_validator
+from pydantic import BaseModel, ConfigDict, validators
 
 from gmso.abc import GMSOJSONHandler
 from gmso.abc.auto_doc import apply_docs
 from gmso.abc.serialization_utils import dict_to_unyt
+
+dict_validator = validators.getattr_migration("dict_validator")
 
 
 class GMSOBase(BaseModel, ABC):
@@ -116,11 +117,12 @@ class GMSOBase(BaseModel, ABC):
         """Get the validators of the object."""
         yield cls.validate
 
-    class Config:
-        """Pydantic configuration for base object."""
-
-        arbitrary_types_allowed = True
-        alias_to_fields = dict()
-        extra = "forbid"
-        json_encoders = GMSOJSONHandler.json_encoders
-        allow_population_by_field_name = True
+    # TODO[pydantic]: The following keys were removed: `json_encoders`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        alias_to_fields=dict(),
+        extra="forbid",
+        json_encoders=GMSOJSONHandler.json_encoders,
+        populate_by_name=True,
+    )

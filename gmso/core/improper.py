@@ -1,7 +1,7 @@
 """Support for improper style connections (4-member connection)."""
 from typing import Callable, ClassVar, Optional, Tuple
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from gmso.abc.abstract_connection import Connection
 from gmso.core.atom import Atom
@@ -86,14 +86,15 @@ class Improper(Connection):
         else:
             super(Improper, self).__setattr__(key, value)
 
-    class Config:
-        """Pydantic configuration to link fields to their public attribute."""
-
-        fields = {
+    # TODO[pydantic]: The following keys were removed: `fields`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(
+        fields={
             "improper_type_": "improper_type",
             "connection_members_": "connection_members",
-        }
-        alias_to_fields = {
+        },
+        alias_to_fields={
             "improper_type": "improper_type_",
             "connection_members": "connection_members_",
-        }
+        },
+    )

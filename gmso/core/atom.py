@@ -3,7 +3,7 @@ import warnings
 from typing import Optional, Union
 
 import unyt as u
-from pydantic import Field, validator
+from pydantic import ConfigDict, Field, field_validator
 
 from gmso.abc.abstract_site import Site
 from gmso.core.atom_type import AtomType
@@ -122,7 +122,8 @@ class Atom(Site):
                 f"Cannot compare equality between {type(self)} and {type(other)}"
             )
 
-    @validator("charge_")
+    @field_validator("charge_")
+    @classmethod
     def is_valid_charge(cls, charge):
         """Ensure that the charge is physically meaningful."""
         if charge is None:
@@ -137,7 +138,8 @@ class Atom(Site):
 
         return charge
 
-    @validator("mass_")
+    @field_validator("mass_")
+    @classmethod
     def is_valid_mass(cls, mass):
         """Ensure that the mass is physically meaningful."""
         if mass is None:
@@ -150,23 +152,21 @@ class Atom(Site):
             ensure_valid_dimensions(mass, default_mass_units)
         return mass
 
-    class Config:
-        """Pydantic configuration for the atom class."""
-
-        extra = "forbid"
-
-        fields = {
+    # TODO[pydantic]: The following keys were removed: `fields`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(
+        extra="forbid",
+        fields={
             "charge_": "charge",
             "mass_": "mass",
             "element_": "element",
             "atom_type_": "atom_type",
-        }
-
-        alias_to_fields = {
+        },
+        alias_to_fields={
             "charge": "charge_",
             "mass": "mass_",
             "element": "element_",
             "atom_type": "atom_type_",
-        }
-
-        validate_assignment = True
+        },
+        validate_assignment=True,
+    )

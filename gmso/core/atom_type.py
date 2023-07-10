@@ -3,7 +3,7 @@ import warnings
 from typing import Optional, Set
 
 import unyt as u
-from pydantic import Field, validator
+from pydantic import ConfigDict, Field, field_validator
 
 from gmso.core.parametric_potential import ParametricPotential
 from gmso.utils._constants import UNIT_WARNING_STRING
@@ -186,7 +186,8 @@ class AtomType(ParametricPotential):
         )
         return desc
 
-    @validator("mass_", pre=True)
+    @field_validator("mass_", mode="before")
+    @classmethod
     def validate_mass(cls, mass):
         """Check to see that a mass is a unyt array of the right dimension."""
         default_mass_units = u.gram / u.mol
@@ -198,7 +199,8 @@ class AtomType(ParametricPotential):
 
         return mass
 
-    @validator("charge_", pre=True)
+    @field_validator("charge_", mode="before")
+    @classmethod
     def validate_charge(cls, charge):
         """Check to see that a charge is a unyt array of the right dimension."""
         if not isinstance(charge, u.unyt_array):
@@ -222,10 +224,10 @@ class AtomType(ParametricPotential):
             },
         )
 
-    class Config:
-        """Pydantic configuration of the attributes for an atom_type."""
-
-        fields = {
+    # TODO[pydantic]: The following keys were removed: `fields`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(
+        fields={
             "mass_": "mass",
             "charge_": "charge",
             "atomclass_": "atomclass",
@@ -233,9 +235,8 @@ class AtomType(ParametricPotential):
             "doi_": "doi",
             "description_": "description",
             "definition_": "definition",
-        }
-
-        alias_to_fields = {
+        },
+        alias_to_fields={
             "mass": "mass_",
             "charge": "charge_",
             "atomclass": "atomclass_",
@@ -243,4 +244,5 @@ class AtomType(ParametricPotential):
             "doi": "doi_",
             "description": "description_",
             "definition": "definition_",
-        }
+        },
+    )

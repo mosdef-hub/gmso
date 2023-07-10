@@ -3,6 +3,7 @@ from typing import Any, Union
 
 import unyt as u
 from lxml import etree
+from pydantic import ConfigDict
 
 from gmso.abc.abstract_potential import AbstractPotential
 from gmso.utils.expression import PotentialExpression
@@ -334,9 +335,10 @@ class ParametricPotential(AbstractPotential):
         )
         return desc
 
-    class Config:
-        """Pydantic configuration class."""
-
-        fields = {"topology_": "topology", "set_ref_": "set_ref"}
-        alias_to_fields = {"topology": "topology_"}
-        validate_assignment = True
+    # TODO[pydantic]: The following keys were removed: `fields`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(
+        fields={"topology_": "topology", "set_ref_": "set_ref"},
+        alias_to_fields={"topology": "topology_"},
+        validate_assignment=True,
+    )

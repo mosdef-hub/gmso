@@ -1,7 +1,7 @@
 """Module for 2-partner connections between sites."""
 from typing import Callable, ClassVar, Optional, Tuple
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from gmso.abc.abstract_connection import Connection
 from gmso.core.atom import Atom
@@ -83,16 +83,17 @@ class Bond(Connection):
         else:
             super(Bond, self).__setattr__(key, value)
 
-    class Config:
-        """Pydantic configuration for Bond."""
-
-        fields = {
+    # TODO[pydantic]: The following keys were removed: `fields`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(
+        fields={
             "bond_type_": "bond_type",
             "connection_members_": "connection_members",
             "restraint_": "restraint",
-        }
-        alias_to_fields = {
+        },
+        alias_to_fields={
             "bond_type": "bond_type_",
             "connection_members": "connection_members_",
             "restraint": "restraint_",
-        }
+        },
+    )

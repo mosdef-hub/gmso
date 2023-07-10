@@ -4,7 +4,14 @@ from typing import Any, ClassVar, NamedTuple, Optional, Sequence, TypeVar, Union
 
 import numpy as np
 import unyt as u
-from pydantic import Field, StrictInt, StrictStr, validator
+from pydantic import (
+    ConfigDict,
+    Field,
+    StrictInt,
+    StrictStr,
+    field_validator,
+    validator,
+)
 from unyt.exceptions import InvalidUnitOperation
 
 from gmso.abc.gmso_base import GMSOBase
@@ -120,7 +127,8 @@ class Site(GMSOBase):
             f"label: {self.label if self.label else None} id: {id(self)}>"
         )
 
-    @validator("position_")
+    @field_validator("position_")
+    @classmethod
     def is_valid_position(cls, position):
         """Validate attribute position."""
         if position is None:
@@ -148,6 +156,8 @@ class Site(GMSOBase):
 
         return position
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("name_", pre=True, always=True)
     def inject_name(cls, value):
         if value == "" or value is None:
@@ -162,27 +172,25 @@ class Site(GMSOBase):
         else:
             return object.__new__(cls)
 
-    class Config:
-        """Pydantic configuration for site objects."""
-
-        arbitrary_types_allowed = True
-
-        fields = {
+    # TODO[pydantic]: The following keys were removed: `fields`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        fields={
             "name_": "name",
             "position_": "position",
             "label_": "label",
             "group_": "group",
             "molecule_": "molecule",
             "residue_": "residue",
-        }
-
-        alias_to_fields = {
+        },
+        alias_to_fields={
             "name": "name_",
             "position": "position_",
             "label": "label_",
             "group": "group_",
             "molecule": "molecule_",
             "residue": "residue_",
-        }
-
-        validate_assignment = True
+        },
+        validate_assignment=True,
+    )

@@ -5,7 +5,7 @@ from typing import Dict
 
 import sympy
 import unyt as u
-from pydantic import Field, validator
+from pydantic import ConfigDict, Field, validator
 
 from gmso.abc.abstract_potential import AbstractPotential
 from gmso.exceptions import (
@@ -77,6 +77,8 @@ class PotentialTemplate(AbstractPotential):
             expected_parameters_dimensions=expected_parameters_dimensions,
         )
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("expected_parameters_dimensions_", pre=True, always=True)
     def validate_expected_parameters(cls, dim_dict):
         """Validate the expected parameters and dimensions for this template."""
@@ -145,16 +147,17 @@ class PotentialTemplate(AbstractPotential):
                     f"parameters: {parameters}"
                 )
 
-    class Config:
-        """Pydantic configuration for potential template."""
-
-        allow_mutation = False
-        fields = {
+    # TODO[pydantic]: The following keys were removed: `allow_mutation`, `fields`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(
+        allow_mutation=False,
+        fields={
             "expected_parameters_dimensions_": "expected_parameters_dimensions"
-        }
-        alias_to_fields = {
+        },
+        alias_to_fields={
             "expected_parameters_dimensions": "expected_parameters_dimensions_"
-        }
+        },
+    )
 
 
 class PotentialTemplateLibrary(Singleton):

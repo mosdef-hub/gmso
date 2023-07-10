@@ -1,7 +1,7 @@
 from typing import Optional, Tuple
 
 import unyt as u
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from gmso.core.parametric_potential import ParametricPotential
 from gmso.utils.expression import PotentialExpression
@@ -84,13 +84,15 @@ class DihedralType(ParametricPotential):
             independent_variables={"phi"},
         )
 
-    class Config:
-        fields = {
+    # TODO[pydantic]: The following keys were removed: `fields`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(
+        fields={
             "member_types_": "member_types",
             "member_classes_": "member_classes",
-        }
-
-        alias_to_fields = {
+        },
+        alias_to_fields={
             "member_types": "member_types_",
             "member_classes": "member_classes_",
-        }
+        },
+    )

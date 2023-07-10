@@ -1,6 +1,6 @@
 from typing import Callable, ClassVar, Optional, Tuple
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from gmso.abc.abstract_connection import Connection
 from gmso.core.atom import Atom
@@ -85,14 +85,17 @@ class Dihedral(Connection):
         else:
             super(Dihedral, self).__setattr__(key, value)
 
-    class Config:
-        fields = {
+    # TODO[pydantic]: The following keys were removed: `fields`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(
+        fields={
             "dihedral_type_": "dihedral_type",
             "connection_members_": "connection_members",
             "restraint_": "restraint",
-        }
-        alias_to_fields = {
+        },
+        alias_to_fields={
             "dihedral_type": "dihedral_type_",
             "connection_members": "connection_members_",
             "restraint": "restraint_",
-        }
+        },
+    )

@@ -1,7 +1,7 @@
 from typing import Optional, Tuple
 
 import unyt as u
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from gmso.core.parametric_potential import ParametricPotential
 from gmso.utils.expression import PotentialExpression
@@ -64,7 +64,9 @@ class PairPotentialType(ParametricPotential):
             parameters={"eps": 1 * u.Unit("kJ / mol"), "sigma": 1 * u.nm},
         )
 
-    class Config:
-        fields = {"member_types_": "member_types"}
-
-        alias_to_fields = {"member_types": "member_types_"}
+    # TODO[pydantic]: The following keys were removed: `fields`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(
+        fields={"member_types_": "member_types"},
+        alias_to_fields={"member_types": "member_types_"},
+    )

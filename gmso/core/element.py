@@ -6,7 +6,7 @@ from re import sub
 import numpy as np
 import unyt as u
 from pkg_resources import resource_filename
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from gmso.abc.gmso_base import GMSOBase
 from gmso.exceptions import GMSOError
@@ -57,11 +57,11 @@ class Element(GMSOBase):
             and self.atomic_number == other.atomic_number
         )
 
-    class Config:
-        """Pydantic configuration for element."""
-
-        arbitrary_types_allowed = True
-        allow_mutation = False
+    # TODO[pydantic]: The following keys were removed: `allow_mutation`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True, allow_mutation=False
+    )
 
 
 def element_by_symbol(symbol, verbose=False):
