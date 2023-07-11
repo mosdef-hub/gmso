@@ -143,7 +143,7 @@ class ParametricPotential(AbstractPotential):
         if isinstance(exclude, dict):
             exclude = set(exclude)
 
-        exclude = exclude.union({"topology_", "set_ref_"})
+        exclude = exclude.union({"topology", "set_ref"})
 
         return super().dict(
             include=include,
@@ -185,7 +185,7 @@ class ParametricPotential(AbstractPotential):
     def clone(self, fast_copy=False):
         """Clone this parametric potential, faster alternative to deepcopying."""
         Creator = self.__class__
-        kwargs = {"tags": deepcopy(self.tags_)}
+        kwargs = {"tags": deepcopy(self.tags)}
         if hasattr(self, "member_classes"):
             kwargs["member_classes"] = (
                 copy(self.member_classes) if self.member_classes else None
@@ -198,7 +198,7 @@ class ParametricPotential(AbstractPotential):
 
         return Creator(
             name=self.name,
-            potential_expression=self.potential_expression_.clone(fast_copy),
+            potential_expression=self.potential_expression.clone(fast_copy),
             **kwargs,
         )
 
@@ -210,12 +210,12 @@ class ParametricPotential(AbstractPotential):
                 by_alias=True,
                 exclude_none=True,
                 exclude={
-                    "topology_",
-                    "set_ref_",
-                    "member_types_",
-                    "member_classes_",
-                    "potential_expression_",
-                    "tags_",
+                    "topology",
+                    "set_ref",
+                    "member_types",
+                    "member_classes",
+                    "potential_expression",
+                    "tags",
                 },
             ).items()
             if value != ""
@@ -334,11 +334,3 @@ class ParametricPotential(AbstractPotential):
             f"member types: {member_types(self)}>",
         )
         return desc
-
-    # TODO[pydantic]: The following keys were removed: `fields`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
-    model_config = ConfigDict(
-        fields={"topology_": "topology", "set_ref_": "set_ref"},
-        alias_to_fields={"topology": "topology_"},
-        validate_assignment=True,
-    )

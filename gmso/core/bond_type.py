@@ -25,13 +25,13 @@ class BondType(ParametricPotential):
         __eq__, _validate functions
     """
 
-    member_types_: Optional[Tuple[str, str]] = Field(
+    member_types: Optional[Tuple[str, str]] = Field(
         None,
         description="List-like of of gmso.AtomType.name "
         "defining the members of this bond type",
     )
 
-    member_classes_: Optional[Tuple[str, str]] = Field(
+    member_classes: Optional[Tuple[str, str]] = Field(
         None,
         description="List-like of of gmso.AtomType.atomclass "
         "defining the members of this bond type",
@@ -62,11 +62,11 @@ class BondType(ParametricPotential):
     @property
     def member_types(self):
         """Return the members involved in this bondtype."""
-        return self.__dict__.get("member_types_")
+        return self.__dict__.get("member_types")
 
     @property
     def member_classes(self):
-        return self.__dict__.get("member_classes_")
+        return self.__dict__.get("member_classes")
 
     @staticmethod
     def _default_potential_expr():
@@ -78,16 +78,3 @@ class BondType(ParametricPotential):
                 "r_eq": 0.14 * u.nm,
             },
         )
-
-    # TODO[pydantic]: The following keys were removed: `fields`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
-    model_config = ConfigDict(
-        fields={
-            "member_types_": "member_types",
-            "member_classes_": "member_classes",
-        },
-        alias_to_fields={
-            "member_types": "member_types_",
-            "member_classes": "member_classes_",
-        },
-    )

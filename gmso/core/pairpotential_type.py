@@ -26,7 +26,7 @@ class PairPotentialType(ParametricPotential):
         __eq__, _validate functions
     """
 
-    member_types_: Optional[Tuple[str, str]] = Field(
+    member_types: Optional[Tuple[str, str]] = Field(
         None,
         description="List-like of strs, referring to gmso.Atomtype.name or gmso.Atomtype.atomclass, "
         "defining the members of this pair potential type",
@@ -54,7 +54,7 @@ class PairPotentialType(ParametricPotential):
 
     @property
     def member_types(self):
-        return self.__dict__.get("member_types_")
+        return self.__dict__.get("member_types")
 
     @staticmethod
     def _default_potential_expr():
@@ -63,10 +63,3 @@ class PairPotentialType(ParametricPotential):
             independent_variables={"r"},
             parameters={"eps": 1 * u.Unit("kJ / mol"), "sigma": 1 * u.nm},
         )
-
-    # TODO[pydantic]: The following keys were removed: `fields`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
-    model_config = ConfigDict(
-        fields={"member_types_": "member_types"},
-        alias_to_fields={"member_types": "member_types_"},
-    )

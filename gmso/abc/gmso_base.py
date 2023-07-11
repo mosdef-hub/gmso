@@ -22,6 +22,16 @@ class GMSOBase(BaseModel, ABC):
 
     __docs_generated__: ClassVar[bool] = False
 
+    # TODO[pydantic]: The following keys were removed: `json_encoders`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        alias_to_fields=dict(),
+        extra="forbid",
+        json_encoders=GMSOJSONHandler.json_encoders,
+        populate_by_name=True,
+    )
+
     def __hash__(self):
         """Return the unique hash of the object."""
         return id(self)
@@ -29,18 +39,6 @@ class GMSOBase(BaseModel, ABC):
     def __eq__(self, other):
         """Test if two objects are equivalent."""
         return self is other
-
-    def __setattr__(self, name: Any, value: Any) -> None:
-        """Set the attributes of the object."""
-        if name in self.__config__.alias_to_fields:
-            name = self.__config__.alias_to_fields[name]
-        elif name in self.__config__.alias_to_fields.values():
-            warnings.warn(
-                "Use of internal fields is discouraged. "
-                "Please use external fields to set attributes."
-            )
-
-        super().__setattr__(name, value)
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
@@ -116,13 +114,3 @@ class GMSOBase(BaseModel, ABC):
     def __get_validators__(cls) -> "CallableGenerator":
         """Get the validators of the object."""
         yield cls.validate
-
-    # TODO[pydantic]: The following keys were removed: `json_encoders`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True,
-        alias_to_fields=dict(),
-        extra="forbid",
-        json_encoders=GMSOJSONHandler.json_encoders,
-        populate_by_name=True,
-    )

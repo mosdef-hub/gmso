@@ -33,26 +33,26 @@ class Improper(Connection):
     """
     __members_creator__: ClassVar[Callable] = Atom.parse_obj
 
-    connection_members_: Tuple[Atom, Atom, Atom, Atom] = Field(
+    connection_members: Tuple[Atom, Atom, Atom, Atom] = Field(
         ...,
         description="The 4 atoms of this improper. Central atom first, "
         "then the three atoms connected to the central site.",
     )
 
-    improper_type_: Optional[ImproperType] = Field(
+    improper_type: Optional[ImproperType] = Field(
         default=None, description="ImproperType of this improper."
     )
 
     @property
     def improper_type(self):
         """Return Potential object for this connection if it exists."""
-        return self.__dict__.get("improper_type_")
+        return self.__dict__.get("improper_type")
 
     @property
     def connection_type(self):
         """Return Potential object for this connection if it exists."""
         # ToDo: Deprecate this?
-        return self.__dict__.get("improper_type_")
+        return self.__dict__.get("improper_type")
 
     def equivalent_members(self):
         """Get a set of the equivalent connection member tuples.
@@ -85,16 +85,3 @@ class Improper(Connection):
             super(Improper, self).__setattr__("improper_type", value)
         else:
             super(Improper, self).__setattr__(key, value)
-
-    # TODO[pydantic]: The following keys were removed: `fields`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
-    model_config = ConfigDict(
-        fields={
-            "improper_type_": "improper_type",
-            "connection_members_": "connection_members",
-        },
-        alias_to_fields={
-            "improper_type": "improper_type_",
-            "connection_members": "connection_members_",
-        },
-    )

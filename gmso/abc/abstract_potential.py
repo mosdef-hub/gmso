@@ -20,16 +20,16 @@ class AbstractPotential(GMSOBase):
     by classes that represent these potentials.
     """
 
-    name_: str = Field(
+    name: str = Field(
         "", description="The name of the potential. Defaults to class name"
     )
 
-    potential_expression_: PotentialExpression = Field(
+    potential_expression: PotentialExpression = Field(
         PotentialExpression(expression="a*x+b", independent_variables={"x"}),
         description="The mathematical expression for the potential",
     )
 
-    tags_: Dict[str, Any] = Field(
+    tags: Dict[str, Any] = Field(
         {}, description="Tags associated with the potential"
     )
 
@@ -64,7 +64,7 @@ class AbstractPotential(GMSOBase):
     @property
     def name(self):
         """The name of the potential."""
-        return self.__dict__.get("name_")
+        return self.__dict__.get("name")
 
     @property
     def independent_variables(self):
@@ -79,19 +79,19 @@ class AbstractPotential(GMSOBase):
     @property
     def potential_expression(self):
         """Return the functional form of the potential."""
-        return self.__dict__.get("potential_expression_")
+        return self.__dict__.get("potential_expression")
 
     @property
     def tags(self):
-        return self.__dict__.get("tags_")
+        return self.__dict__.get("tags")
 
     @property
     def tag_names(self) -> List[str]:
-        return list(self.__dict__.get("tags_"))
+        return list(self.__dict__.get("tags"))
 
     @property
     def tag_names_iter(self) -> Iterator[str]:
-        return iter(self.__dict__.get("tags_"))
+        return iter(self.__dict__.get("tags"))
 
     def add_tag(self, tag: str, value: Any, overwrite=True) -> None:
         """Add metadata for a particular tag"""
@@ -115,7 +115,7 @@ class AbstractPotential(GMSOBase):
     def pop_tag(self, tag: str) -> Any:
         return self.tags.pop(tag, None)
 
-    @field_validator("potential_expression_", mode="before")
+    @field_validator("potential_expression", mode="before")
     @classmethod
     def validate_potential_expression(cls, v):
         if isinstance(v, dict):
@@ -154,18 +154,3 @@ class AbstractPotential(GMSOBase):
             f"expression: {self.expression}, "
             f"id: {id(self)}>"
         )
-
-    # TODO[pydantic]: The following keys were removed: `fields`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
-    model_config = ConfigDict(
-        fields={
-            "name_": "name",
-            "potential_expression_": "potential_expression",
-            "tags_": "tags",
-        },
-        alias_to_fields={
-            "name": "name_",
-            "potential_expression": "potential_expression_",
-            "tags": "tags_",
-        },
-    )

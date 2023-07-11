@@ -28,33 +28,33 @@ class AtomType(ParametricPotential):
     are stored explicitly.
     """
 
-    mass_: Optional[u.unyt_array] = Field(
+    mass: Optional[u.unyt_array] = Field(
         0.0 * u.gram / u.mol, description="The mass of the atom type"
     )
 
-    charge_: Optional[u.unyt_array] = Field(
+    charge: Optional[u.unyt_array] = Field(
         0.0 * u.elementary_charge, description="The charge of the atom type"
     )
 
-    atomclass_: Optional[str] = Field(
+    atomclass: Optional[str] = Field(
         "", description="The class of the atomtype"
     )
 
-    doi_: Optional[str] = Field(
+    doi: Optional[str] = Field(
         "",
         description="Digital Object Identifier of publication where this atom type was introduced",
     )
 
-    overrides_: Optional[Set[str]] = Field(
+    overrides: Optional[Set[str]] = Field(
         set(),
         description="Set of other atom types that this atom type overrides",
     )
 
-    definition_: Optional[str] = Field(
+    definition: Optional[str] = Field(
         "", description="SMARTS string defining this atom type"
     )
 
-    description_: Optional[str] = Field(
+    description: Optional[str] = Field(
         "", description="Description for the AtomType"
     )
 
@@ -96,37 +96,37 @@ class AtomType(ParametricPotential):
     @property
     def charge(self):
         """Return the charge of the atom_type."""
-        return self.__dict__.get("charge_")
+        return self.__dict__.get("charge")
 
     @property
     def mass(self):
         """Return the mass of the atom_type."""
-        return self.__dict__.get("mass_")
+        return self.__dict__.get("mass")
 
     @property
     def atomclass(self):
         """Return the atomclass of the atom_type."""
-        return self.__dict__.get("atomclass_")
+        return self.__dict__.get("atomclass")
 
     @property
     def doi(self):
         """Return the doi of the atom_type."""
-        return self.__dict__.get("doi_")
+        return self.__dict__.get("doi")
 
     @property
     def overrides(self):
         """Return the overrides of the atom_type."""
-        return self.__dict__.get("overrides_")
+        return self.__dict__.get("overrides")
 
     @property
     def description(self):
         """Return the description of the atom_type."""
-        return self.__dict__.get("description_")
+        return self.__dict__.get("description")
 
     @property
     def definition(self):
         """Return the SMARTS string of the atom_type."""
-        return self.__dict__.get("definition_")
+        return self.__dict__.get("definition")
 
     def clone(self, fast_copy=False):
         """Clone this AtomType, faster alternative to deepcopying."""
@@ -136,16 +136,16 @@ class AtomType(ParametricPotential):
             expression=None,
             parameters=None,
             independent_variables=None,
-            potential_expression=self.potential_expression_.clone(fast_copy),
-            mass=u.unyt_quantity(self.mass_.value, self.mass_.units),
-            charge=u.unyt_quantity(self.charge_.value, self.charge_.units),
-            atomclass=self.atomclass_,
-            doi=self.doi_,
-            overrides=set(o for o in self.overrides_)
-            if self.overrides_
+            potential_expression=self.potential_expression.clone(fast_copy),
+            mass=u.unyt_quantity(self.mass.value, self.mass.units),
+            charge=u.unyt_quantity(self.charge.value, self.charge.units),
+            atomclass=self.atomclass,
+            doi=self.doi,
+            overrides=set(o for o in self.overrides)
+            if self.overrides
             else None,
-            description=self.description_,
-            definition=self.definition_,
+            description=self.description,
+            definition=self.definition,
         )
 
     def __eq__(self, other):
@@ -186,7 +186,7 @@ class AtomType(ParametricPotential):
         )
         return desc
 
-    @field_validator("mass_", mode="before")
+    @field_validator("mass", mode="before")
     @classmethod
     def validate_mass(cls, mass):
         """Check to see that a mass is a unyt array of the right dimension."""
@@ -199,7 +199,7 @@ class AtomType(ParametricPotential):
 
         return mass
 
-    @field_validator("charge_", mode="before")
+    @field_validator("charge", mode="before")
     @classmethod
     def validate_charge(cls, charge):
         """Check to see that a charge is a unyt array of the right dimension."""
@@ -223,26 +223,3 @@ class AtomType(ParametricPotential):
                 "epsilon": 0.3 * u.Unit("kJ"),
             },
         )
-
-    # TODO[pydantic]: The following keys were removed: `fields`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
-    model_config = ConfigDict(
-        fields={
-            "mass_": "mass",
-            "charge_": "charge",
-            "atomclass_": "atomclass",
-            "overrides_": "overrides",
-            "doi_": "doi",
-            "description_": "description",
-            "definition_": "definition",
-        },
-        alias_to_fields={
-            "mass": "mass_",
-            "charge": "charge_",
-            "atomclass": "atomclass_",
-            "overrides": "overrides_",
-            "doi": "doi_",
-            "description": "description_",
-            "definition": "definition_",
-        },
-    )

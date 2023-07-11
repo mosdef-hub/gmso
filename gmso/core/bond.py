@@ -23,14 +23,14 @@ class Bond(Connection):
     """
     __members_creator__: ClassVar[Callable] = Atom.parse_obj
 
-    connection_members_: Tuple[Atom, Atom] = Field(
+    connection_members: Tuple[Atom, Atom] = Field(
         ..., description="The 2 atoms involved in the bond."
     )
 
-    bond_type_: Optional[BondType] = Field(
+    bond_type: Optional[BondType] = Field(
         default=None, description="BondType of this bond."
     )
-    restraint_: Optional[dict] = Field(
+    restraint: Optional[dict] = Field(
         default=None,
         description="""
         Restraint for this bond, must be a dict with the following keys:
@@ -43,18 +43,18 @@ class Bond(Connection):
     @property
     def bond_type(self):
         """Return parameters of the potential type."""
-        return self.__dict__.get("bond_type_")
+        return self.__dict__.get("bond_type")
 
     @property
     def connection_type(self):
         """Return parameters of the potential type."""
         # ToDo: Deprecate this?
-        return self.__dict__.get("bond_type_")
+        return self.__dict__.get("bond_type")
 
     @property
     def restraint(self):
         """Return the restraint of this bond."""
-        return self.__dict__.get("restraint_")
+        return self.__dict__.get("restraint")
 
     def equivalent_members(self):
         """Get a set of the equivalent connection member tuples.
@@ -82,18 +82,3 @@ class Bond(Connection):
             super(Bond, self).__setattr__("bond_type", value)
         else:
             super(Bond, self).__setattr__(key, value)
-
-    # TODO[pydantic]: The following keys were removed: `fields`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
-    model_config = ConfigDict(
-        fields={
-            "bond_type_": "bond_type",
-            "connection_members_": "connection_members",
-            "restraint_": "restraint",
-        },
-        alias_to_fields={
-            "bond_type": "bond_type_",
-            "connection_members": "connection_members_",
-            "restraint": "restraint_",
-        },
-    )

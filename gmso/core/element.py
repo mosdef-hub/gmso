@@ -57,11 +57,7 @@ class Element(GMSOBase):
             and self.atomic_number == other.atomic_number
         )
 
-    # TODO[pydantic]: The following keys were removed: `allow_mutation`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True, allow_mutation=False
-    )
+    model_config = ConfigDict(arbitrary_types_allowed=True, frozen=True)
 
 
 def element_by_symbol(symbol, verbose=False):

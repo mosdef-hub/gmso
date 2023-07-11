@@ -38,28 +38,33 @@ class Atom(Site):
         An Abstract Base class for implementing site objects in GMSO. The class Atom bases from
         the gmso.abc.abstract site class
     """
-    charge_: Optional[Union[u.unyt_quantity, float]] = Field(
+    charge: Optional[Union[u.unyt_quantity, float]] = Field(
         None,
         description="Charge of the atom",
     )
 
-    mass_: Optional[Union[u.unyt_quantity, float]] = Field(
+    mass: Optional[Union[u.unyt_quantity, float]] = Field(
         None, description="Mass of the atom"
     )
 
-    element_: Optional[Element] = Field(
+    element: Optional[Element] = Field(
         None, description="Element associated with the atom"
     )
 
-    atom_type_: Optional[AtomType] = Field(
+    atom_type: Optional[AtomType] = Field(
         None, description="AtomType associated with the atom"
+    )
+
+    model_config = ConfigDict(
+        extra="forbid",
+        validate_assignment=True,
     )
 
     @property
     def charge(self) -> Union[u.unyt_quantity, None]:
         """Return the charge of the atom."""
-        charge = self.__dict__.get("charge_", None)
-        atom_type = self.__dict__.get("atom_type_", None)
+        charge = self.__dict__.get("charge", None)
+        atom_type = self.__dict__.get("atom_type", None)
         if charge is not None:
             return charge
         elif atom_type is not None:
@@ -70,8 +75,8 @@ class Atom(Site):
     @property
     def mass(self) -> Union[u.unyt_quantity, None]:
         """Return the mass of the atom."""
-        mass = self.__dict__.get("mass_", None)
-        atom_type = self.__dict__.get("atom_type_", None)
+        mass = self.__dict__.get("mass", None)
+        atom_type = self.__dict__.get("atom_type", None)
         if mass is not None:
             return mass
         elif atom_type is not None:
@@ -82,12 +87,12 @@ class Atom(Site):
     @property
     def element(self) -> Union[Element, None]:
         """Return the element associated with the atom."""
-        return self.__dict__.get("element_", None)
+        return self.__dict__.get("element", None)
 
     @property
     def atom_type(self) -> Union[AtomType, None]:
         """Return the atom_type associated with the atom."""
-        return self.__dict__.get("atom_type_", None)
+        return self.__dict__.get("atom_type", None)
 
     def clone(self):
         """Clone this atom."""
@@ -98,9 +103,9 @@ class Atom(Site):
             molecule=self.molecule,
             residue=self.residue,
             position=self.position,
-            charge=self.charge_,
-            mass=self.mass_,
-            element=self.element_,
+            charge=self.charge,
+            mass=self.mass,
+            element=self.element,
             atom_type=None if not self.atom_type else self.atom_type.clone(),
         )
 
@@ -122,7 +127,7 @@ class Atom(Site):
                 f"Cannot compare equality between {type(self)} and {type(other)}"
             )
 
-    @field_validator("charge_")
+    @field_validator("charge")
     @classmethod
     def is_valid_charge(cls, charge):
         """Ensure that the charge is physically meaningful."""
@@ -138,7 +143,7 @@ class Atom(Site):
 
         return charge
 
-    @field_validator("mass_")
+    @field_validator("mass")
     @classmethod
     def is_valid_mass(cls, mass):
         """Ensure that the mass is physically meaningful."""
@@ -151,22 +156,3 @@ class Atom(Site):
         else:
             ensure_valid_dimensions(mass, default_mass_units)
         return mass
-
-    # TODO[pydantic]: The following keys were removed: `fields`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
-    model_config = ConfigDict(
-        extra="forbid",
-        fields={
-            "charge_": "charge",
-            "mass_": "mass",
-            "element_": "element",
-            "atom_type_": "atom_type",
-        },
-        alias_to_fields={
-            "charge": "charge_",
-            "mass": "mass_",
-            "element": "element_",
-            "atom_type": "atom_type_",
-        },
-        validate_assignment=True,
-    )

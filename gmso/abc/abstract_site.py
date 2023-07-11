@@ -55,30 +55,35 @@ class Site(GMSOBase):
     and their meaning the responsibility of the container where the sites will reside.
     """
 
-    name_: str = Field(
+    name: str = Field(
         "",
         description="Name of the site, defaults to class name",
     )
 
-    label_: str = Field("", description="Label to be assigned to the site")
+    label: str = Field("", description="Label to be assigned to the site")
 
-    group_: Optional[StrictStr] = Field(
+    group: Optional[StrictStr] = Field(
         None, description="Flexible alternative label relative to site"
     )
 
-    molecule_: Optional[MoleculeType] = Field(
+    molecule: Optional[MoleculeType] = Field(
         None,
         description="Molecule label for the site, format of (molecule_name, molecule_number)",
     )
 
-    residue_: Optional[ResidueType] = Field(
+    residue: Optional[ResidueType] = Field(
         None,
         description="Residue label for the site, format of (residue_name, residue_number)",
     )
 
-    position_: PositionType = Field(
+    position: PositionType = Field(
         default_factory=default_position,
         description="The 3D Cartesian coordinates of the position of the site",
+    )
+
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        validate_assignment=True,
     )
 
     @property
@@ -127,7 +132,7 @@ class Site(GMSOBase):
             f"label: {self.label if self.label else None} id: {id(self)}>"
         )
 
-    @field_validator("position_")
+    @field_validator("position")
     @classmethod
     def is_valid_position(cls, position):
         """Validate attribute position."""
@@ -158,7 +163,7 @@ class Site(GMSOBase):
 
     # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
     # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-    @validator("name_", pre=True, always=True)
+    @validator("name", pre=True, always=True)
     def inject_name(cls, value):
         if value == "" or value is None:
             return cls.__name__
@@ -171,26 +176,3 @@ class Site(GMSOBase):
             raise TypeError("Cannot instantiate abstract class of type Site")
         else:
             return object.__new__(cls)
-
-    # TODO[pydantic]: The following keys were removed: `fields`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True,
-        fields={
-            "name_": "name",
-            "position_": "position",
-            "label_": "label",
-            "group_": "group",
-            "molecule_": "molecule",
-            "residue_": "residue",
-        },
-        alias_to_fields={
-            "name": "name_",
-            "position": "position_",
-            "label": "label_",
-            "group": "group_",
-            "molecule": "molecule_",
-            "residue": "residue_",
-        },
-        validate_assignment=True,
-    )

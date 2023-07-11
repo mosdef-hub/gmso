@@ -27,15 +27,15 @@ class Dihedral(Connection):
     """
     __members_creator__: ClassVar[Callable] = Atom.parse_obj
 
-    connection_members_: Tuple[Atom, Atom, Atom, Atom] = Field(
+    connection_members: Tuple[Atom, Atom, Atom, Atom] = Field(
         ..., description="The 4 atoms involved in the dihedral."
     )
 
-    dihedral_type_: Optional[DihedralType] = Field(
+    dihedral_type: Optional[DihedralType] = Field(
         default=None, description="DihedralType of this dihedral."
     )
 
-    restraint_: Optional[dict] = Field(
+    restraint: Optional[dict] = Field(
         default=None,
         description="""
         Restraint for this dihedral, must be a dict with the following keys:
@@ -47,17 +47,17 @@ class Dihedral(Connection):
 
     @property
     def dihedral_type(self):
-        return self.__dict__.get("dihedral_type_")
+        return self.__dict__.get("dihedral_type")
 
     @property
     def connection_type(self):
         # ToDo: Deprecate this?
-        return self.__dict__.get("dihedral_type_")
+        return self.__dict__.get("dihedral_type")
 
     @property
     def restraint(self):
         """Return the restraint of this dihedral."""
-        return self.__dict__.get("restraint_")
+        return self.__dict__.get("restraint")
 
     def equivalent_members(self):
         """Get a set of the equivalent connection member tuples
@@ -84,18 +84,3 @@ class Dihedral(Connection):
             super(Dihedral, self).__setattr__("dihedral_type", value)
         else:
             super(Dihedral, self).__setattr__(key, value)
-
-    # TODO[pydantic]: The following keys were removed: `fields`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
-    model_config = ConfigDict(
-        fields={
-            "dihedral_type_": "dihedral_type",
-            "connection_members_": "connection_members",
-            "restraint_": "restraint",
-        },
-        alias_to_fields={
-            "dihedral_type": "dihedral_type_",
-            "connection_members": "connection_members_",
-            "restraint": "restraint_",
-        },
-    )

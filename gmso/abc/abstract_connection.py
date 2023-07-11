@@ -14,43 +14,43 @@ class Connection(GMSOBase):
     Each instance will have a property for the conection_type (bond_type, angle_type, dihedral_type)
     """
 
-    name_: str = Field(
+    name: str = Field(
         default="", description="Name of the connection. Defaults to class name"
     )
 
-    connection_members_: Optional[Sequence[Site]] = Field(
+    connection_members: Optional[Sequence[Site]] = Field(
         default=None,
         description="A list of constituents in this connection, in order.",
     )
 
     @property
     def connection_members(self):
-        return self.__dict__.get("connection_members_")
+        return self.__dict__.get("connection_members")
 
     @property
     def name(self):
-        return self.__dict__.get("name_")
+        return self.__dict__.get("name")
 
     @property
     def member_types(self):
         """Return the atomtype of the connection members as a list of string."""
-        return self._get_members_types_or_classes("member_types_")
+        return self._get_members_types_or_classes("member_types")
 
     @property
     def member_classes(self):
         """Return the class of the connection members as a list of string."""
-        return self._get_members_types_or_classes("member_classes_")
+        return self._get_members_types_or_classes("member_classes")
 
     def _has_typed_members(self):
         """Check if all the members of this connection are typed."""
         return all(
             member.atom_type
-            for member in self.__dict__.get("connection_members_")
+            for member in self.__dict__.get("connection_members")
         )
 
     def _get_members_types_or_classes(self, to_return):
         """Return types or classes for connection members if they exist."""
-        assert to_return in {"member_types_", "member_classes_"}
+        assert to_return in {"member_types", "member_classes"}
         ctype = getattr(self, "connection_type")
         ctype_attr = getattr(ctype, to_return) if ctype else None
 
@@ -59,9 +59,9 @@ class Connection(GMSOBase):
         elif self._has_typed_members():
             tc = [
                 member.atom_type.name
-                if to_return == "member_types_"
+                if to_return == "member_types"
                 else member.atom_type.atomclass
-                for member in self.__dict__.get("connection_members_")
+                for member in self.__dict__.get("connection_members")
             ]
             return tc if all(tc) else None
 
@@ -101,13 +101,3 @@ class Connection(GMSOBase):
 
     def __str__(self):
         return f"<{self.__class__.__name__} {self.name}, id: {id(self)}> "
-
-    # TODO[pydantic]: The following keys were removed: `fields`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
-    model_config = ConfigDict(
-        fields={"name_": "name", "connection_members_": "connection_members"},
-        alias_to_fields={
-            "name": "name_",
-            "connection_members": "connection_members_",
-        },
-    )

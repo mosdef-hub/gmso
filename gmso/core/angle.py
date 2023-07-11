@@ -23,15 +23,15 @@ class Angle(Connection):
     """
     __members_creator__: ClassVar[Callable] = Atom.parse_obj
 
-    connection_members_: Tuple[Atom, Atom, Atom] = Field(
+    connection_members: Tuple[Atom, Atom, Atom] = Field(
         ..., description="The 3 atoms involved in the angle."
     )
 
-    angle_type_: Optional[AngleType] = Field(
+    angle_type: Optional[AngleType] = Field(
         default=None, description="AngleType of this angle."
     )
 
-    restraint_: Optional[dict] = Field(
+    restraint: Optional[dict] = Field(
         default=None,
         description="""
         Restraint for this angle, must be a dict with the following keys:
@@ -44,17 +44,17 @@ class Angle(Connection):
     @property
     def angle_type(self):
         """Return the angle type if the angle is parametrized."""
-        return self.__dict__.get("angle_type_")
+        return self.__dict__.get("angle_type")
 
     @property
     def connection_type(self):
         """Return the angle type if the angle is parametrized."""
-        return self.__dict__.get("angle_type_")
+        return self.__dict__.get("angle_type")
 
     @property
     def restraint(self):
         """Return the restraint of this angle."""
-        return self.__dict__.get("restraint_")
+        return self.__dict__.get("restraint")
 
     def equivalent_members(self):
         """Return a set of the equivalent connection member tuples.
@@ -82,18 +82,3 @@ class Angle(Connection):
             super(Angle, self).__setattr__("angle_type", value)
         else:
             super(Angle, self).__setattr__(key, value)
-
-    # TODO[pydantic]: The following keys were removed: `fields`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
-    model_config = ConfigDict(
-        fields={
-            "connection_members_": "connection_members",
-            "angle_type_": "angle_type",
-            "restraint_": "restraint",
-        },
-        alias_to_fields={
-            "connection_members": "connection_members_",
-            "angle_type": "angle_type_",
-            "restraint": "restraint_",
-        },
-    )
