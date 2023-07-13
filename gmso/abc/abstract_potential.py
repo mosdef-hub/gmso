@@ -69,12 +69,12 @@ class AbstractPotential(GMSOBase):
     @property
     def independent_variables(self):
         """Optional[Union[set, str]]\n\tThe independent variables in the `Potential`'s expression."""
-        return self.potential_expression_.independent_variables
+        return self.potential_expression.independent_variables
 
     @property
     def expression(self):
         """Optional[Union[str, sympy.Expr]]\n\tThe mathematical expression of the functional form of the potential."""
-        return self.potential_expression_.expression
+        return self.potential_expression.expression
 
     @property
     def potential_expression(self):
@@ -130,9 +130,9 @@ class AbstractPotential(GMSOBase):
     def __setattr__(self, key: Any, value: Any) -> None:
         """Set attributes of the potential."""
         if key == "expression":
-            self.potential_expression_.expression = value
+            self.potential_expression.expression = value
         elif key == "independent_variables":
-            self.potential_expression_.independent_variables = value
+            self.potential_expression.independent_variables = value
         elif key == "set_ref_":
             return
         else:

@@ -5,7 +5,7 @@ from typing import Dict
 
 import sympy
 import unyt as u
-from pydantic import ConfigDict, Field, validator
+from pydantic import ConfigDict, Field, field_validator
 
 from gmso.abc.abstract_potential import AbstractPotential
 from gmso.exceptions import (
@@ -48,7 +48,7 @@ def _load_template_json(item, json_dir=JSON_DIR):
 class PotentialTemplate(AbstractPotential):
     """Template for potential objects to be re-used."""
 
-    expected_parameters_dimensions_: Dict[str, sympy.Expr] = Field(
+    expected_parameters_dimensions: Dict[str, sympy.Expr] = Field(
         ..., description="The expected dimensions for parameters."
     )
 
@@ -77,9 +77,7 @@ class PotentialTemplate(AbstractPotential):
             expected_parameters_dimensions=expected_parameters_dimensions,
         )
 
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-    @validator("expected_parameters_dimensions_", pre=True, always=True)
+    @field_validator("expected_parameters_dimensions")
     def validate_expected_parameters(cls, dim_dict):
         """Validate the expected parameters and dimensions for this template."""
         if not isinstance(dim_dict, Dict):
@@ -104,7 +102,7 @@ class PotentialTemplate(AbstractPotential):
     @property
     def expected_parameters_dimensions(self):
         """Return the expected dimensions of the parameters for this template."""
-        return self.__dict__.get("expected_parameters_dimensions_")
+        return self.__dict__.get("expected_parameters_dimensions")
 
     def set_expression(self, *args, **kwargs):
         """Set the expression of the PotentialTemplate."""
@@ -150,13 +148,7 @@ class PotentialTemplate(AbstractPotential):
     # TODO[pydantic]: The following keys were removed: `allow_mutation`, `fields`.
     # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
     model_config = ConfigDict(
-        allow_mutation=False,
-        fields={
-            "expected_parameters_dimensions_": "expected_parameters_dimensions"
-        },
-        alias_to_fields={
-            "expected_parameters_dimensions": "expected_parameters_dimensions_"
-        },
+        frozen=True,
     )
 
 

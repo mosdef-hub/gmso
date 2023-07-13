@@ -91,12 +91,12 @@ class ParametricPotential(AbstractPotential):
     @property
     def parameters(self):
         """Optional[dict]\n\tThe parameters of the `Potential` expression and their corresponding values, as `unyt` quantities"""
-        return self.potential_expression_.parameters
+        return self.potential_expression.parameters
 
     def __setattr__(self, key: Any, value: Any) -> None:
         """Set the attributes of the potential."""
         if key == "parameters":
-            self.potential_expression_.parameters = value
+            self.potential_expression.parameters = value
         else:
             super().__setattr__(key, value)
 
@@ -121,7 +121,7 @@ class ParametricPotential(AbstractPotential):
         If only a subset of the parameters are supplied, they are updated
         while the non-passed parameters default to the existing values
         """
-        self.potential_expression_.set(
+        self.potential_expression.set(
             expression=expression,
             independent_variables=independent_variables,
             parameters=parameters,
