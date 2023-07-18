@@ -800,7 +800,7 @@ def _parse_coulombic(
     )
     if not charge_groups:
         print("No charged group detected, skipping electrostatics.")
-        return None
+        return []
     else:
         coulombic = hoomd.md.long_range.pppm.make_pppm_coulomb_forces(
             nlist=nlist, resolution=resolution, order=order, r_cut=r_cut
@@ -1123,7 +1123,9 @@ def _parse_dihedral_forces(
     }
 
     hoomd_version = hoomd.version.version.split(".")
-    if int(hoomd_version[1]) >= 8:
+    if int(hoomd_version[0]) >= 4 or (
+        int(hoomd_version[0]) == 3 and int(hoomd_version[1]) >= 8
+    ):
         dtype_group_map["PeriodicTorsionPotential"] = (
             {
                 "container": hoomd.md.dihedral.Periodic,
@@ -1241,22 +1243,14 @@ def _parse_improper_forces(
             expected_units_dim,
             base_units,
         )
-    hoomd_version = hoomd.version.version.split(".")
-    if int(hoomd_version[1]) >= 8:
-        itype_group_map = {
-            "HarmonicImproperPotenial": {
-                "container": hoomd.md.dihedral.Periodic,
-                "parser": _parse_harmonic_improper,
-            },
-        }
-    else:
-        # Should this be periodic, deprecated starting from 3.8.0
-        itype_group_map = {
-            "HarmonicImproperPotenial": {
-                "container": hoomd.md.dihedral.Harmonic,
-                "parser": _parse_harmonic_improper,
-            },
-        }
+
+    itype_group_map = {
+        "HarmonicImproperPotenial": {
+            "container": hoomd.md.improper.Harmonic,
+            "parser": _parse_harmonic_improper,
+        },
+    }
+
     improper_forces = list()
     for group in groups:
         improper_forces.append(
