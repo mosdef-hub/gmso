@@ -756,7 +756,7 @@ def _write_pairtypes(out_file, top, base_unyts, cfactorsDict):
         "sigma",
     )  # this will vary with new pair styles
     param_labels = [
-        _write_out_parameter_and_units(
+        write_out_parameter_and_units(
             key, test_atomtype.parameters[key], base_unyts
         )
         for key in nb_style_orderTuple
@@ -787,7 +787,7 @@ def _write_bondtypes(out_file, top, base_unyts, cfactorsDict):
     out_file.write(f"\nBond Coeffs #{test_bondtype.name}\n")
     bond_style_orderTuple = ("k", "r_eq")
     param_labels = [
-        _write_out_parameter_and_units(
+        write_out_parameter_and_units(
             key, test_bondtype.parameters[key], base_unyts
         )
         for key in bond_style_orderTuple
@@ -824,7 +824,7 @@ def _write_angletypes(out_file, top, base_unyts, cfactorsDict):
         "theta_eq",
     )  # this will vary with new angle styles
     param_labels = [
-        _write_out_parameter_and_units(
+        write_out_parameter_and_units(
             key, test_angletype.parameters[key], base_unyts
         )
         for key in angle_style_orderTuple
@@ -867,7 +867,7 @@ def _write_dihedraltypes(out_file, top, base_unyts, cfactorsDict):
         "k4",
     )  # this will vary with new dihedral styles
     param_labels = [
-        _write_out_parameter_and_units(
+        write_out_parameter_and_units(
             key, test_dihedraltype.parameters[key], base_unyts
         )
         for key in dihedral_style_orderTuple
@@ -907,7 +907,7 @@ def _write_impropertypes(out_file, top, base_unyts, cfactorsDict):
         "phi_eq",
     )  # this will vary with new improper styles
     param_labels = [
-        _write_out_parameter_and_units(
+        write_out_parameter_and_units(
             key, test_impropertype.parameters[key], base_unyts
         )
         for key in improper_style_orderTuple
