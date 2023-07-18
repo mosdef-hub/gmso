@@ -403,3 +403,25 @@ def get_parameter_dimension(parameter, dimension):
         ):  # add mol to mass amu
             uStr += f"{symbol}**{exp}*"
     return u.Unit(uStr[:-1])
+
+
+def write_out_parameter_and_units(parameter_name, parameter, base_unyts=None):
+    """Take a parameter and return a heading for the parameter and the units it should be in."""
+    if not base_unyts:
+        return f"{parameter_name} ({parameter.units})"
+    if parameter_name in ["theta_eq", "phi_eq"]:
+        return f"{parameter_name} ({'degrees'})"  # default to always degrees
+    if base_unyts.system.name == "lj":
+        return f"{parameter_name} ({'dimensionless'})"
+    new_dims = LAMMPS_UnitSystems._get_output_dimensions(
+        parameter.units.dimensions
+    )
+    new_dimStr = str(new_dims)
+    ind_units = re.sub("[^a-zA-Z]+", " ", new_dimStr).split()
+    for unit in ind_units:
+        new_dimStr = new_dimStr.replace(unit, str(base_unyts.system[unit]))
+
+    outputUnyt = str(
+        parameter.to(u.Unit(new_dimStr, registry=base_unyts.reg)).units
+    )
+    return f"{parameter_name} ({outputUnyt})"

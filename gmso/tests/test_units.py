@@ -1,12 +1,9 @@
 import re
 
 import pytest
-import sympy
 import unyt as u
-from unyt.testing import assert_allclose_units
 
 from gmso.tests.base_test import BaseTest
-from gmso.tests.utils import get_path
 from gmso.utils.misc import unyt_to_hashable
 from gmso.utils.units import LAMMPS_UnitSystems
 
@@ -208,3 +205,19 @@ class TestUnitHandling(BaseTest):
     def test_charmm_weighting_factors(self):
         # write out dihedrals while taking into account weighting
         pass
+
+    def test_parameter_and_units_writing(self):
+        from gmso.utils.units import write_out_parameter_and_units
+
+        base_unyts = LAMMPS_UnitSystems("real")
+        x = 1 * u.kJ / u.mol
+        outStr = write_out_parameter_and_units("x", x, base_unyts)
+        assert outStr == "x (kcal/mol)"
+
+        x = 1 * u.rad
+        outStr = write_out_parameter_and_units("theta_eq", x, base_unyts)
+        assert outStr == "theta_eq (degrees)"
+
+        base_unyts = LAMMPS_UnitSystems("lj")
+        outStr = write_out_parameter_and_units("x", x, base_unyts)
+        assert outStr == "x (dimensionless)"

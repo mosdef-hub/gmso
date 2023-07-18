@@ -11,7 +11,6 @@ from pathlib import Path
 import numpy as np
 import unyt as u
 from sympy import Symbol
-from unyt import UnitRegistry
 from unyt.array import allclose_units
 
 import gmso
@@ -38,115 +37,7 @@ from gmso.utils.conversions import (
     convert_opls_to_ryckaert,
     convert_ryckaert_to_opls,
 )
-from gmso.utils.units import GMSO_UnitRegistry, LAMMPS_UnitSystems, ljUnitSystem
-
-reg = GMSO_UnitRegistry().reg
-
-"""
-def _unit_style_factory(style: str):
-    #  NOTE: the when an angle is measured in lammps is not straightforwards. It depends not on the unit_style, but on the
-    # angle_style, dihedral_style, or improper_style. For examples, harmonic angles, k is specificed in energy/radian, but the
-    # theta_eq is written in degrees. For fourier dihedrals, d_eq is specified in degrees. When adding new styles, make sure that
-    # this behavior is accounted for when converting the specific potential_type in the function
-    # _parameter_converted_to_float
-    if style == "real":
-        base_units = u.UnitSystem(
-            "lammps_real", "Å", "amu", "fs", "K", "rad", registry=reg
-        )
-        base_units["energy"] = "kcal/mol"
-        base_units["charge"] = "elementary_charge"
-    elif style == "metal":
-        base_units = u.UnitSystem(
-            "lammps_metal", "Å", "amu", "picosecond", "K", "rad", registry=reg
-        )
-        base_units["energy"] = "eV"
-        base_units["charge"] = "elementary_charge"
-    elif style == "si":
-        base_units = u.UnitSystem(
-            "lammps_si", "m", "kg", "s", "K", "rad", registry=reg
-        )
-        base_units["energy"] = "joule"
-        base_units["charge"] = "coulomb"
-    elif style == "cgs":
-        base_units = u.UnitSystem(
-            "lammps_cgs", "cm", "g", "s", "K", "rad", registry=reg
-        )
-        base_units["energy"] = "erg"
-        # Statcoulomb is strange. It is not a 1:1 correspondance to charge, with base units of
-        # mass**1/2*length**3/2*time**-1.
-        # However, assuming it is referring to a static charge and not a flux, it can be
-        # converted to coulomb units. See the registry for the unit conversion to Coulombs
-        base_units["charge"] = "Statcoulomb_charge"
-    elif style == "electron":
-        base_units = u.UnitSystem(
-            "lammps_electron", "a0", "amu", "s", "K", "rad", registry=reg
-        )
-        base_units["energy"] = "Ehartree"
-        base_units["charge"] = "elementary_charge"
-    elif style == "micro":
-        base_units = u.UnitSystem(
-            "lammps_micro", "um", "picogram", "us", "K", "rad", registry=reg
-        )
-        base_units["energy"] = "ug*um**2/us**2"
-        base_units["charge"] = "picocoulomb"
-    elif style == "nano":
-        base_units = u.UnitSystem(
-            "lammps_nano", "nm", "attogram", "ns", "K", "rad", registry=reg
-        )
-        base_units["energy"] = "attogram*nm**2/ns**2"
-        base_units["charge"] = "elementary_charge"
-    elif style == "lj":
-        base_units = ljUnitSystem(reg)
-    else:
-        raise NotYetImplementedWarning
-
-    return base_units
-"""
-
-"""
-def _parameter_converted_to_float(
-    parameter,
-    base_unyts,
-    conversion_factorDict=None,
-    n_decimals=3,
-    name="",
-):
-    Take a given parameter, and return a float of the parameter in the given style.
-
-    This function will check the base_unyts, which is a unyt.UnitSystem object,
-    and convert the parameter to those units based on its dimensions. It can
-    also generate dimensionless units via normalization from conversion_factorsDict.
-    # TODO: move this to gmso.utils.units.py
-
-    # TODO: now I think phi_eq is what is really saved in the improper angle
-    if name in ["theta_eq", "chieq"]:  # eq angle are always in degrees
-        return round(float(parameter.to("degree").value), n_decimals)
-    new_dims = _dimensions_to_energy(parameter.units.dimensions)
-    new_dims = _dimensions_to_charge(new_dims)
-    if conversion_factorDict and isinstance(base_unyts, ljUnitSystem):
-        # multiply object -> split into length, mass, energy, charge -> grab conversion factor from dict
-        # first replace energy for (length)**2*(mass)/(time)**2 u.dimensions.energy. Then iterate through the free symbols
-        # and figure out a way how to add those to the overall conversion factor
-        dim_info = new_dims.as_terms()
-        conversion_factor = 1
-        for exponent, ind_dim in zip(dim_info[0][0][1][1], dim_info[1]):
-            factor = conversion_factorDict.get(
-                ind_dim.name[1:-1], 1
-            )  # replace () in name
-            conversion_factor *= float(factor) ** exponent
-        return float(
-            parameter / conversion_factor
-        )  # Assuming that conversion factor is in right units
-    new_dimStr = str(new_dims)
-    ind_units = re.sub("[^a-zA-Z]+", " ", new_dimStr).split()
-    for unit in ind_units:
-        new_dimStr = new_dimStr.replace(unit, str(base_unyts[unit]))
-
-    return round(
-        float(parameter.to(u.Unit(new_dimStr, registry=base_unyts.registry))),
-        n_decimals,
-    )
-"""
+from gmso.utils.units import LAMMPS_UnitSystems, write_out_parameter_and_units
 
 
 @saves_as(".lammps", ".lammpsdata", ".data")
@@ -865,7 +756,7 @@ def _write_pairtypes(out_file, top, base_unyts, cfactorsDict):
         "sigma",
     )  # this will vary with new pair styles
     param_labels = [
-        _write_out_parameter_w_units(
+        _write_out_parameter_and_units(
             key, test_atomtype.parameters[key], base_unyts
         )
         for key in nb_style_orderTuple
@@ -896,7 +787,7 @@ def _write_bondtypes(out_file, top, base_unyts, cfactorsDict):
     out_file.write(f"\nBond Coeffs #{test_bondtype.name}\n")
     bond_style_orderTuple = ("k", "r_eq")
     param_labels = [
-        _write_out_parameter_w_units(
+        _write_out_parameter_and_units(
             key, test_bondtype.parameters[key], base_unyts
         )
         for key in bond_style_orderTuple
@@ -933,7 +824,7 @@ def _write_angletypes(out_file, top, base_unyts, cfactorsDict):
         "theta_eq",
     )  # this will vary with new angle styles
     param_labels = [
-        _write_out_parameter_w_units(
+        _write_out_parameter_and_units(
             key, test_angletype.parameters[key], base_unyts
         )
         for key in angle_style_orderTuple
@@ -976,7 +867,7 @@ def _write_dihedraltypes(out_file, top, base_unyts, cfactorsDict):
         "k4",
     )  # this will vary with new dihedral styles
     param_labels = [
-        _write_out_parameter_w_units(
+        _write_out_parameter_and_units(
             key, test_dihedraltype.parameters[key], base_unyts
         )
         for key in dihedral_style_orderTuple
@@ -1016,7 +907,7 @@ def _write_impropertypes(out_file, top, base_unyts, cfactorsDict):
         "phi_eq",
     )  # this will vary with new improper styles
     param_labels = [
-        _write_out_parameter_w_units(
+        _write_out_parameter_and_units(
             key, test_impropertype.parameters[key], base_unyts
         )
         for key in improper_style_orderTuple
@@ -1162,22 +1053,3 @@ def _default_lj_val(top, source):
         raise ValueError(
             f"Provided {source} for default LJ cannot be found in the topology."
         )
-
-
-def _write_out_parameter_w_units(parameter_name, parameter, base_unyts):
-    if parameter_name in ["theta_eq", "phi_eq"]:
-        return f"{parameter_name} ({'degrees'})"
-    if base_unyts.system.name == "lj":
-        return f"{parameter_name} ({'dimensionless'})"
-    new_dims = LAMMPS_UnitSystems._get_output_dimensions(
-        parameter.units.dimensions
-    )
-    new_dimStr = str(new_dims)
-    ind_units = re.sub("[^a-zA-Z]+", " ", new_dimStr).split()
-    for unit in ind_units:
-        new_dimStr = new_dimStr.replace(unit, str(base_unyts.system[unit]))
-
-    outputUnyt = str(
-        parameter.to(u.Unit(new_dimStr, registry=base_unyts.reg)).units
-    )
-    return f"{parameter_name} ({outputUnyt})"
