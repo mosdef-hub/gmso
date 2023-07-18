@@ -38,57 +38,11 @@ from gmso.utils.conversions import (
     convert_opls_to_ryckaert,
     convert_ryckaert_to_opls,
 )
+from gmso.utils.units import GMSO_UnitRegistry, LAMMPS_UnitSystems, ljUnitSystem
 
-# TODO: move this to gmso.utils.units.py
-reg = UnitRegistry()
-dim = u.dimensions.current_mks * u.dimensions.time
-conversion = 1 * getattr(u.physical_constants, "elementary_charge").value
-reg.add(
-    "elementary_charge",
-    base_value=conversion,
-    dimensions=dim,
-    tex_repr=r"\rm{e}",
-)
-conversion = 1 * getattr(u.physical_constants, "boltzmann_constant_mks").value
-dim = u.dimensions.energy / u.dimensions.temperature
-reg.add(
-    "kb", base_value=conversion, dimensions=dim, tex_repr=r"\rm{kb}"
-)  # boltzmann temperature
-conversion = (
-    4
-    * np.pi
-    * getattr(u.physical_constants, "reduced_planck_constant").value ** 2
-    * getattr(u.physical_constants, "eps_0").value
-    / (
-        getattr(u.physical_constants, "electron_charge").value ** 2
-        * getattr(u.physical_constants, "electron_mass").value
-    )
-)
-dim = u.dimensions.length
-reg.add(
-    "a0", base_value=conversion, dimensions=dim, tex_repr=r"\rm{a0}"
-)  # bohr radius
-conversion = (
-    getattr(u.physical_constants, "reduced_planck_constant").value ** 2
-    / u.Unit("a0", registry=reg).base_value ** 2
-    / getattr(u.physical_constants, "electron_mass").value
-)
-dim = u.dimensions.energy
-reg.add(
-    "Ehartree", base_value=conversion, dimensions=dim, tex_repr=r"\rm{Ehartree}"
-)  # Hartree energy
-conversion = np.sqrt(
-    10**9 / (4 * np.pi * getattr(u.physical_constants, "eps_0").value)
-)
-dim = u.dimensions.charge
-reg.add(
-    "Statcoulomb_charge",
-    base_value=conversion,
-    dimensions=dim,
-    tex_repr=r"\rm{Statcoulomb_charge}",
-)  # Static charge
+reg = GMSO_UnitRegistry().reg
 
-
+"""
 def _unit_style_factory(style: str):
     #  NOTE: the when an angle is measured in lammps is not straightforwards. It depends not on the unit_style, but on the
     # angle_style, dihedral_style, or improper_style. For examples, harmonic angles, k is specificed in energy/radian, but the
@@ -142,25 +96,14 @@ def _unit_style_factory(style: str):
         base_units["energy"] = "attogram*nm**2/ns**2"
         base_units["charge"] = "elementary_charge"
     elif style == "lj":
-        base_units = ljUnitSystem()
+        base_units = ljUnitSystem(reg)
     else:
         raise NotYetImplementedWarning
 
     return base_units
+"""
 
-
-class ljUnitSystem:
-    """Use this so the empty unitsystem has getitem magic method."""
-
-    def __init__(self):
-        self.registry = reg
-        self.name = "lj"
-
-    def __getitem__(self, items):
-        """Return dimensionless units."""
-        return "dimensionless"
-
-
+"""
 def _parameter_converted_to_float(
     parameter,
     base_unyts,
@@ -168,13 +111,13 @@ def _parameter_converted_to_float(
     n_decimals=3,
     name="",
 ):
-    """Take a given parameter, and return a float of the parameter in the given style.
+    Take a given parameter, and return a float of the parameter in the given style.
 
     This function will check the base_unyts, which is a unyt.UnitSystem object,
     and convert the parameter to those units based on its dimensions. It can
     also generate dimensionless units via normalization from conversion_factorsDict.
     # TODO: move this to gmso.utils.units.py
-    """
+
     # TODO: now I think phi_eq is what is really saved in the improper angle
     if name in ["theta_eq", "chieq"]:  # eq angle are always in degrees
         return round(float(parameter.to("degree").value), n_decimals)
@@ -203,50 +146,7 @@ def _parameter_converted_to_float(
         float(parameter.to(u.Unit(new_dimStr, registry=base_unyts.registry))),
         n_decimals,
     )
-
-
-def _dimensions_to_energy(dims):
-    """Take a set of dimensions and substitute in Symbol("energy") where possible."""
-    # TODO: move this to gmso.utils.units.py
-    symsStr = str(dims.free_symbols)
-    energy_inBool = np.all([dimStr in symsStr for dimStr in ["time", "mass"]])
-    if not energy_inBool:
-        return dims
-    energySym = Symbol("(energy)")  # create dummy symbol to replace in equation
-    dim_info = dims.as_terms()
-    time_idx = np.where(list(map(lambda x: x.name == "(time)", dim_info[1])))[
-        0
-    ][0]
-    energy_exp = (
-        dim_info[0][0][1][1][time_idx] // 2
-    )  # energy has 1/time**2 in it, so this is the hint of how many
-    return (
-        dims
-        * u.dimensions.energy**energy_exp
-        * energySym ** (-1 * energy_exp)
-    )
-
-
-def _dimensions_to_charge(dims):
-    """Take a set of dimensions and substitute in Symbol("charge") where possible."""
-    # TODO: move this to gmso.utils.units.py
-    symsStr = str(dims.free_symbols)
-    charge_inBool = np.all([dimStr in symsStr for dimStr in ["current_mks"]])
-    if not charge_inBool:
-        return dims
-    chargeSym = Symbol("(charge)")  # create dummy symbol to replace in equation
-    dim_info = dims.as_terms()
-    time_idx = np.where(
-        list(map(lambda x: x.name == "(current_mks)", dim_info[1]))
-    )[0][0]
-    charge_exp = dim_info[0][0][1][1][
-        time_idx
-    ]  # charge has (current_mks) in it, so this is the hint of how many
-    return (
-        dims
-        * u.dimensions.charge ** (-1 * charge_exp)
-        * chargeSym**charge_exp
-    )
+"""
 
 
 @saves_as(".lammps", ".lammpsdata", ".data")
@@ -331,7 +231,7 @@ def write_lammpsdata(
         raise ValueError(
             "lj_cfactorsDict argument is only used if unit_style is lj."
         )
-    base_unyts = _unit_style_factory(unit_style)
+    base_unyts = LAMMPS_UnitSystems(unit_style)
     default_parameterMaps = {  # TODO: sites are not checked currently because gmso
         # doesn't store pair potential eqn the same way as the connections.
         "impropers": "HarmonicImproperPotential",
@@ -400,7 +300,9 @@ def write_lammpsdata(
 
 @loads_as(".lammps", ".lammpsdata", ".data")
 def read_lammpsdata(
-    filename, atom_style="full", unit_style="real", potential="lj"
+    filename,
+    atom_style="full",
+    unit_style="real",
 ):
     """Read in a lammps data file as a GMSO topology.
 
@@ -414,8 +316,6 @@ def read_lammpsdata(
     unit_style : str, optional, default='real
         LAMMPS unit style used for writing the datafile. Can be "real", "lj",
         "metal", "si", "cgs", "electron", "micro", "nano".
-    potential: str, optional, default='lj'
-        Potential type defined in data file. Only supporting lj as of now.
 
     Returns
     -------
@@ -434,7 +334,6 @@ def read_lammpsdata(
     "electron", "micro", "nano".
 
     Currently supporting the following potential styles: 'lj'
-
     Currently supporting the following bond styles: 'harmonic'
     Currently supporting the following angle styles: 'harmonic'
     Currently supporting the following dihedral styles: 'opls'
@@ -467,44 +366,44 @@ def read_lammpsdata(
                 unit_style
             )
         )
+    base_unyts = LAMMPS_UnitSystems(unit_style)
 
     # Parse box information
-    _get_box_coordinates(filename, unit_style, top)
+    _get_box_coordinates(filename, base_unyts, top)
     # Parse atom type information
-    top, type_list = _get_ff_information(filename, unit_style, top)
+    top, type_list = _get_ff_information(filename, base_unyts, top)
     # Parse atom information
-    _get_atoms(filename, top, unit_style, type_list)
+    _get_atoms(filename, top, base_unyts, type_list)
     # Parse connection (bonds, angles, dihedrals, impropers) information
     # TODO: Add more atom styles
     if atom_style in ["full"]:
-        _get_connection(filename, top, unit_style, connection_type="bond")
-        _get_connection(filename, top, unit_style, connection_type="angle")
-        _get_connection(filename, top, unit_style, connection_type="dihedral")
-        _get_connection(filename, top, unit_style, connection_type="improper")
+        _get_connection(filename, top, base_unyts, connection_type="bond")
+        _get_connection(filename, top, base_unyts, connection_type="angle")
+        _get_connection(filename, top, base_unyts, connection_type="dihedral")
+        _get_connection(filename, top, base_unyts, connection_type="improper")
 
     top.update_topology()
 
     return top
 
 
-def get_units(unit_style, dimension):
+def get_units(base_unyts, dimension):
     """Get u.Unit for specific LAMMPS unit style with given dimension."""
     # Need separate angle units for harmonic force constant and angle
-    if unit_style == "lj":
+    if base_unyts.system.name == "lj":
         if dimension == "angle":
             return u.radian
         return u.dimensionless
 
-    usystem = _unit_style_factory(unit_style)
     if dimension == "angle_eq":
         return (
             u.degree
         )  # LAMMPS specifies different units for some angles, such as equilibrium angles
 
-    return u.Unit(usystem[dimension], registry=reg)
+    return u.Unit(base_unyts.system[dimension], registry=base_unyts.reg)
 
 
-def _get_connection(filename, topology, unit_style, connection_type):
+def _get_connection(filename, topology, base_unyts, connection_type):
     """Parse connection types."""
     # TODO: check for other connection types besides the defaults
     with open(filename, "r") as lammps_file:
@@ -528,11 +427,11 @@ def _get_connection(filename, topology, unit_style, connection_type):
             # Multiply 'k' by 2 since LAMMPS includes 1/2 in the term
             conn_params = {
                 "k": float(line.split()[1])
-                * get_units(unit_style, "energy")
-                / get_units(unit_style, "length") ** 2
+                * get_units(base_unyts, "energy")
+                / get_units(base_unyts, "length") ** 2
                 * 2,
                 "r_eq": float(line.split()[2])
-                * get_units(unit_style, "length"),
+                * get_units(base_unyts, "length"),
             }
             name = template_potential.name
             expression = template_potential.expression
@@ -548,11 +447,11 @@ def _get_connection(filename, topology, unit_style, connection_type):
             # Multiply 'k' by 2 since LAMMPS includes 1/2 in the term
             conn_params = {
                 "k": float(line.split()[1])
-                * get_units(unit_style, "energy")
-                / get_units(unit_style, "angle") ** 2
+                * get_units(base_unyts, "energy")
+                / get_units(base_unyts, "angle") ** 2
                 * 2,
                 "theta_eq": float(line.split()[2])
-                * get_units(unit_style, "angle_eq"),
+                * get_units(base_unyts, "angle_eq"),
             }
             name = template_potential.name
             expression = template_potential.expression
@@ -566,10 +465,10 @@ def _get_connection(filename, topology, unit_style, connection_type):
         elif connection_type == "dihedral":
             template_potential = templates["OPLSTorsionPotential"]
             conn_params = {
-                "k1": float(line.split()[1]) * get_units(unit_style, "energy"),
-                "k2": float(line.split()[2]) * get_units(unit_style, "energy"),
-                "k3": float(line.split()[3]) * get_units(unit_style, "energy"),
-                "k4": float(line.split()[4]) * get_units(unit_style, "energy"),
+                "k1": float(line.split()[1]) * get_units(base_unyts, "energy"),
+                "k2": float(line.split()[2]) * get_units(base_unyts, "energy"),
+                "k3": float(line.split()[3]) * get_units(base_unyts, "energy"),
+                "k4": float(line.split()[4]) * get_units(base_unyts, "energy"),
             }
             name = template_potential.name
             expression = template_potential.expression
@@ -584,11 +483,11 @@ def _get_connection(filename, topology, unit_style, connection_type):
             template_potential = templates["HarmonicImproperPotential"]
             conn_params = {
                 "k": float(line.split()[2])
-                * get_units(unit_style, "energy")
-                / get_units(unit_style, "energy") ** 2
+                * get_units(base_unyts, "energy")
+                / get_units(base_unyts, "energy") ** 2
                 * 2,
                 "phi_eq": float(line.split()[3])
-                * get_units(unit_style, "angle_eq"),
+                * get_units(base_unyts, "angle_eq"),
             }
             name = template_potential.name
             expression = template_potential.expression
@@ -650,7 +549,7 @@ def _get_connection(filename, topology, unit_style, connection_type):
     return topology
 
 
-def _get_atoms(filename, topology, unit_style, type_list):
+def _get_atoms(filename, topology, base_unyts, type_list):
     """Parse the atom information in the LAMMPS data file."""
     with open(filename, "r") as lammps_file:
         for i, line in enumerate(lammps_file):
@@ -663,11 +562,11 @@ def _get_atoms(filename, topology, unit_style, type_list):
         atom_line = line.split()
         atom_type = atom_line[2]
         charge = u.unyt_quantity(
-            float(atom_line[3]), get_units(unit_style, "charge")
+            float(atom_line[3]), get_units(base_unyts, "charge")
         )
         coord = u.unyt_array(
             [float(atom_line[4]), float(atom_line[5]), float(atom_line[6])]
-        ) * get_units(unit_style, "length")
+        ) * get_units(base_unyts, "length")
         site = Atom(
             charge=charge,
             position=coord,
@@ -682,7 +581,7 @@ def _get_atoms(filename, topology, unit_style, type_list):
     return topology
 
 
-def _get_box_coordinates(filename, unit_style, topology):
+def _get_box_coordinates(filename, base_unyts, topology):
     """Parse box information."""
     with open(filename, "r") as lammps_file:
         for line in lammps_file:
@@ -723,20 +622,20 @@ def _get_box_coordinates(filename, unit_style, topology):
             gamma = np.arccos(xy / b)
 
             # Box Information
-            lengths = u.unyt_array([a, b, c], get_units(unit_style, "length"))
+            lengths = u.unyt_array([a, b, c], get_units(base_unyts, "length"))
             angles = u.unyt_array(
-                [alpha, beta, gamma], get_units(unit_style, "angle")
+                [alpha, beta, gamma], get_units(base_unyts, "angle")
             )
             topology.box = Box(lengths, angles)
         else:
             # Box Information
-            lengths = u.unyt_array([x, y, z], get_units(unit_style, "length"))
+            lengths = u.unyt_array([x, y, z], get_units(base_unyts, "length"))
             topology.box = Box(lengths)
 
         return topology
 
 
-def _get_ff_information(filename, unit_style, topology):
+def _get_ff_information(filename, base_unyts, topology):
     """Parse atom-type information."""
     with open(filename, "r") as lammps_file:
         types = False
@@ -753,7 +652,7 @@ def _get_ff_information(filename, unit_style, topology):
     for line in mass_lines:
         atom_type = AtomType(
             name=line.split()[0],
-            mass=float(line.split()[1]) * get_units(unit_style, "mass"),
+            mass=float(line.split()[1]) * get_units(base_unyts, "mass"),
         )
         type_list.append(atom_type)
 
@@ -769,10 +668,10 @@ def _get_ff_information(filename, unit_style, topology):
         if len(pair.split()) == 3:
             type_list[i].parameters["sigma"] = float(
                 pair.split()[2]
-            ) * get_units(unit_style, "length")
+            ) * get_units(base_unyts, "length")
             type_list[i].parameters["epsilon"] = float(
                 pair.split()[1]
-            ) * get_units(unit_style, "energy")
+            ) * get_units(base_unyts, "energy")
         elif len(pair.split()) == 4:
             warn_ljcutBool = True
 
@@ -825,12 +724,14 @@ def _validate_unit_compatibility(top, base_unyts):
         ]
         for parameter, name in parametersList:
             assert np.isclose(
-                _parameter_converted_to_float(
-                    parameter, base_unyts, n_decimals=6, name=name
+                float(
+                    base_unyts.convert_parameter(
+                        parameter, n_decimals=6, name=name
+                    )
                 ),
                 parameter.value,
                 atol=1e-3,
-            ), f"Units System {base_unyts} is not compatible with {atype} with value {parameter}"
+            ), f"Units System {base_unyts.system} is not compatible with {atype} with value {parameter}"
 
 
 def _write_header(out_file, top, atom_style):
@@ -886,8 +787,8 @@ def _write_box(out_file, top, base_unyts, cfactorsDict):
         atol=1e-8,
     ):
         box_lengths = [
-            _parameter_converted_to_float(
-                top.box.lengths[i], base_unyts, cfactorsDict
+            float(
+                base_unyts.convert_parameter(top.box.lengths[i], cfactorsDict)
             )
             for i in range(3)
         ]
@@ -898,8 +799,8 @@ def _write_box(out_file, top, base_unyts, cfactorsDict):
         out_file.write("0.000000 0.000000 0.000000 xy xz yz\n")
     else:
         box_lengths = [
-            _parameter_converted_to_float(
-                top.box.lengths[i], base_unyts, cfactorsDict
+            float(
+                base_unyts.convert_parameter(top.box.lengths[i], cfactorsDict)
             )
             for i in range(3)
         ]
@@ -941,15 +842,13 @@ def _write_box(out_file, top, base_unyts, cfactorsDict):
 def _write_atomtypes(out_file, top, base_unyts, cfactorsDict):
     """Write out atomtypes in GMSO topology to LAMMPS file."""
     out_file.write("\nMasses\n")
-    out_file.write(f"#\tmass ({base_unyts['mass']})\n")
+    out_file.write(f"#\tmass ({base_unyts.system['mass']})\n")
     atypesView = sorted(top.atom_types(filter_by=pfilter), key=lambda x: x.name)
     for atom_type in atypesView:
         out_file.write(
-            "{:d}\t{:.6f}\t# {}\n".format(
+            "{:d}\t{}\t# {}\n".format(
                 atypesView.index(atom_type) + 1,
-                _parameter_converted_to_float(
-                    atom_type.mass, base_unyts, cfactorsDict
-                ),
+                base_unyts.convert_parameter(atom_type.mass, cfactorsDict),
                 atom_type.name,
             )
         )
@@ -977,14 +876,11 @@ def _write_pairtypes(out_file, top, base_unyts, cfactorsDict):
     )
     for idx, param in enumerate(sorted_atomtypes):
         out_file.write(
-            "{}\t{:7.5f}\t\t{:7.5f}\t\t# {}\n".format(
+            "{}\t{:7}\t\t{:7}\t\t# {}\n".format(
                 idx + 1,
                 *[
-                    _parameter_converted_to_float(
-                        param.parameters[key],
-                        base_unyts,
-                        cfactorsDict,
-                        n_decimals=5,
+                    base_unyts.convert_parameter(
+                        param.parameters[key], cfactorsDict, n_decimals=5
                     )
                     for key in nb_style_orderTuple
                 ],
@@ -1014,11 +910,11 @@ def _write_bondtypes(out_file, top, base_unyts, cfactorsDict):
             [bond_type.member_types[0], bond_type.member_types[1]]
         )
         out_file.write(
-            "{}\t{:7.5f}\t{:7.5f}\t\t# {}\t{}\n".format(
+            "{}\t{:7}\t{:7}\t\t# {}\t{}\n".format(
                 idx + 1,
                 *[
-                    _parameter_converted_to_float(
-                        bond_type.parameters[key], base_unyts, cfactorsDict
+                    base_unyts.convert_parameter(
+                        bond_type.parameters[key], cfactorsDict, n_decimals=6
                     )
                     for key in bond_style_orderTuple
                 ],
@@ -1053,13 +949,13 @@ def _write_angletypes(out_file, top, base_unyts, cfactorsDict):
     )
     for idx, angle_type in enumerate(indexList):
         out_file.write(
-            "{}\t{:7.5f}\t{:7.5f}\t#{:11s}\t{:11s}\t{:11s}\n".format(
+            "{}\t{:7}\t{:7}\t#{:11s}\t{:11s}\t{:11s}\n".format(
                 idx + 1,
                 *[
-                    _parameter_converted_to_float(
+                    base_unyts.convert_parameter(
                         angle_type.parameters[key],
-                        base_unyts,
                         cfactorsDict,
+                        n_decimals=6,
                         name=key,
                     )
                     for key in angle_style_orderTuple
@@ -1094,13 +990,14 @@ def _write_dihedraltypes(out_file, top, base_unyts, cfactorsDict):
     index_membersList.sort(key=lambda x: ([x[1][i] for i in [1, 2, 0, 3]]))
     for idx, (dihedral_type, members) in enumerate(index_membersList):
         out_file.write(
-            "{}\t{:8.5f}\t{:8.5f}\t{:8.5f}\t{:8.5f}\t# {}\t{}\t{}\t{}\n".format(
+            "{}\t{:8}\t{:8}\t{:8}\t{:8}\t# {}\t{}\t{}\t{}\n".format(
                 idx + 1,
                 *[
-                    _parameter_converted_to_float(
+                    base_unyts.convert_parameter(
                         dihedral_type.parameters[parameterStr],
-                        base_unyts,
                         cfactorsDict,
+                        n_decimals=6,
+                        name=parameterStr,
                     )
                     for parameterStr in dihedral_style_orderTuple
                 ],
@@ -1133,13 +1030,13 @@ def _write_impropertypes(out_file, top, base_unyts, cfactorsDict):
     index_membersList.sort(key=lambda x: ([x[1][i] for i in [0, 1, 2, 3]]))
     for idx, (improper_type, members) in enumerate(index_membersList):
         out_file.write(
-            "{}\t{:7.5f}\t{:7.5f}\n".format(
+            "{}\t{:7}\t{:7}\n".format(
                 idx + 1,
                 *[
-                    _parameter_converted_to_float(
+                    base_unyts.convert_parameter(
                         improper_type.parameters[parameterStr],
-                        base_unyts,
                         cfactorsDict,
+                        n_decimals=6,
                         name=parameterStr,
                     )
                     for parameterStr in improper_style_orderTuple
@@ -1153,13 +1050,15 @@ def _write_site_data(out_file, top, atom_style, base_unyts, cfactorsDict):
     """Write atomic positions and charges to LAMMPS file.."""
     out_file.write(f"\nAtoms #{atom_style}\n\n")
     if atom_style == "atomic":
-        atom_line = "{index:d}\t{type_index:d}\t{x:.6f}\t{y:.6f}\t{z:.6f}\n"
+        atom_line = "{index:d}\t{type_index:d}\t{x:.8}\t{y:.8}\t{z:.8}\n"
     elif atom_style == "charge":
-        atom_line = "{index:d}\t{type_index:d}\t{charge:.6f}\t{x:.6f}\t{y:.6f}\t{z:.6f}\n"
+        atom_line = (
+            "{index:d}\t{type_index:d}\t{charge:.8}\t{x:.8}\t{y:.8}\t{z:.8}\n"
+        )
     elif atom_style == "molecular":
-        atom_line = "{index:d}\t{moleculeid:d}\t{type_index:d}\t{x:.6f}\t{y:.6f}\t{z:.6f}\n"
+        atom_line = "{index:d}\t{moleculeid:d}\t{type_index:d}\t{x:.8}\t{y:.8}\t{z:.8}\n"
     elif atom_style == "full":
-        atom_line = "{index:d}\t{moleculeid:d}\t{type_index:d}\t{charge:.6f}\t{x:.6f}\t{y:.6f}\t{z:.6f}\n"
+        atom_line = "{index:d}\t{moleculeid:d}\t{type_index:d}\t{charge:.8}\t{x:.8}\t{y:.8}\t{z:.8}\n"
 
     unique_sorted_typesList = sorted(
         top.atom_types(filter_by=pfilter), key=lambda x: x.name
@@ -1170,17 +1069,21 @@ def _write_site_data(out_file, top, atom_style, base_unyts, cfactorsDict):
                 index=i + 1,
                 moleculeid=site.molecule.number,
                 type_index=unique_sorted_typesList.index(site.atom_type) + 1,
-                charge=_parameter_converted_to_float(
-                    site.charge, base_unyts, cfactorsDict
+                charge=base_unyts.convert_parameter(
+                    site.charge,
+                    cfactorsDict,
+                    n_decimals=6,
                 ),
-                x=_parameter_converted_to_float(
-                    site.position[0], base_unyts, cfactorsDict, n_decimals=6
+                x=base_unyts.convert_parameter(
+                    site.position[0],
+                    cfactorsDict,
+                    n_decimals=6,
                 ),
-                y=_parameter_converted_to_float(
-                    site.position[1], base_unyts, cfactorsDict, n_decimals=6
+                y=base_unyts.convert_parameter(
+                    site.position[1], cfactorsDict, n_decimals=6
                 ),
-                z=_parameter_converted_to_float(
-                    site.position[2], base_unyts, cfactorsDict, n_decimals=6
+                z=base_unyts.convert_parameter(
+                    site.position[2], cfactorsDict, n_decimals=6
                 ),
             )
         )
@@ -1264,16 +1167,17 @@ def _default_lj_val(top, source):
 def _write_out_parameter_w_units(parameter_name, parameter, base_unyts):
     if parameter_name in ["theta_eq", "phi_eq"]:
         return f"{parameter_name} ({'degrees'})"
-    if base_unyts.name == "lj":
+    if base_unyts.system.name == "lj":
         return f"{parameter_name} ({'dimensionless'})"
-    new_dims = _dimensions_to_energy(parameter.units.dimensions)
-    new_dims = _dimensions_to_charge(new_dims)
+    new_dims = LAMMPS_UnitSystems._get_output_dimensions(
+        parameter.units.dimensions
+    )
     new_dimStr = str(new_dims)
     ind_units = re.sub("[^a-zA-Z]+", " ", new_dimStr).split()
     for unit in ind_units:
-        new_dimStr = new_dimStr.replace(unit, str(base_unyts[unit]))
+        new_dimStr = new_dimStr.replace(unit, str(base_unyts.system[unit]))
 
     outputUnyt = str(
-        parameter.to(u.Unit(new_dimStr, registry=base_unyts.registry)).units
+        parameter.to(u.Unit(new_dimStr, registry=base_unyts.reg)).units
     )
     return f"{parameter_name} ({outputUnyt})"
