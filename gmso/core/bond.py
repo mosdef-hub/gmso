@@ -26,10 +26,10 @@ class Bond(Connection):
     connection_members: Tuple[Atom, Atom] = Field(
         ..., description="The 2 atoms involved in the bond."
     )
-
-    bond_type: Optional[BondType] = Field(
-        default=None, description="BondType of this bond."
-    )
+    bond_type: Optional[BondType] = None
+    # bond_type: Optional[BondType] = Field(
+    #     default_factory=None, description="BondType of this bond."
+    # )
     restraint: Optional[dict] = Field(
         default=None,
         description="""

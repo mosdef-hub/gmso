@@ -77,7 +77,7 @@ class PotentialTemplate(AbstractPotential):
             expected_parameters_dimensions=expected_parameters_dimensions,
         )
 
-    @field_validator("expected_parameters_dimensions")
+    @field_validator("expected_parameters_dimensions", mode="before")
     def validate_expected_parameters(cls, dim_dict):
         """Validate the expected parameters and dimensions for this template."""
         if not isinstance(dim_dict, Dict):
