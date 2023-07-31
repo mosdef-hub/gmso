@@ -9,7 +9,7 @@ dependencies:
   - unyt<=2.9.2
   - boltons
   - lxml
-  - pydantic>1.8,<2.0
+  - pydantic=1.10.11
   - networkx
   - ele>=0.2.0
   - foyer>=0.11.3
