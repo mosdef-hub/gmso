@@ -1,11 +1,14 @@
 """Module for 2-partner connections between sites."""
 from typing import Callable, ClassVar, Optional, Tuple
 
-from pydantic import Field
-
 from gmso.abc.abstract_connection import Connection
 from gmso.core.atom import Atom
 from gmso.core.bond_type import BondType
+
+try:
+    from pydantic.v1 import Field
+except ImportError:
+    from pydantic import Field
 
 
 class Bond(Connection):

@@ -3,13 +3,17 @@ import warnings
 from typing import Optional, Union
 
 import unyt as u
-from pydantic import Field, validator
 
 from gmso.abc.abstract_site import Site
 from gmso.core.atom_type import AtomType
 from gmso.core.element import Element
 from gmso.utils._constants import UNIT_WARNING_STRING
 from gmso.utils.misc import ensure_valid_dimensions
+
+try:
+    from pydantic.v1 import Field, validator
+except ImportError:
+    from pydantic import Field, validator
 
 
 class Atom(Site):
