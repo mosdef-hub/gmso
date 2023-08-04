@@ -611,7 +611,8 @@ class TestLammpsWriter(BaseTest):
             "nano",
         ]:
             assert (
-                LAMMPS_UnitSystems(styleStr).system.name == "lammps_" + styleStr
+                LAMMPS_UnitSystems(styleStr).usystem.name
+                == "lammps_" + styleStr
             )
         from gmso.exceptions import NotYetImplementedWarning
 

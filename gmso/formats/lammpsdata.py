@@ -281,7 +281,7 @@ def read_lammpsdata(
 def get_units(base_unyts, dimension):
     """Get u.Unit for specific LAMMPS unit style with given dimension."""
     # Need separate angle units for harmonic force constant and angle
-    if base_unyts.system.name == "lj":
+    if base_unyts.usystem.name == "lj":
         if dimension == "angle":
             return u.radian
         return u.dimensionless
@@ -291,7 +291,7 @@ def get_units(base_unyts, dimension):
             u.degree
         )  # LAMMPS specifies different units for some angles, such as equilibrium angles
 
-    return u.Unit(base_unyts.system[dimension], registry=base_unyts.reg)
+    return u.Unit(base_unyts.usystem[dimension], registry=base_unyts.reg)
 
 
 def _get_connection(filename, topology, base_unyts, connection_type):
@@ -622,7 +622,7 @@ def _validate_unit_compatibility(top, base_unyts):
                 ),
                 parameter.value,
                 atol=1e-3,
-            ), f"Units System {base_unyts.system} is not compatible with {atype} with value {parameter}"
+            ), f"Units System {base_unyts.usystem} is not compatible with {atype} with value {parameter}"
 
 
 def _write_header(out_file, top, atom_style):
@@ -733,7 +733,7 @@ def _write_box(out_file, top, base_unyts, cfactorsDict):
 def _write_atomtypes(out_file, top, base_unyts, cfactorsDict):
     """Write out atomtypes in GMSO topology to LAMMPS file."""
     out_file.write("\nMasses\n")
-    out_file.write(f"#\tmass ({base_unyts.system['mass']})\n")
+    out_file.write(f"#\tmass ({base_unyts.usystem['mass']})\n")
     atypesView = sorted(top.atom_types(filter_by=pfilter), key=lambda x: x.name)
     for atom_type in atypesView:
         out_file.write(

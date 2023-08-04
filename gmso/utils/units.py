@@ -144,12 +144,12 @@ class LAMMPS_UnitSystems:
             self.reg_ = registry
         else:
             self.reg_ = GMSO_UnitRegistry().reg
-        self.system_ = self.usystem_from_str(styleStr=style, reg=self.reg_)
+        self.usystem_ = self.usystem_from_str(styleStr=style, reg=self.reg_)
 
     @property
-    def system(self):
+    def usystem(self):
         """Return the UnitSystem attribute for the class."""
-        return self.__dict__.get("system_")
+        return self.__dict__.get("usystem_")
 
     @property
     def reg(self):
@@ -165,31 +165,49 @@ class LAMMPS_UnitSystems:
         # _parameter_converted_to_float
         if styleStr == "real":
             base_units = u.UnitSystem(
-                "lammps_real", "Å", "amu", "fs", "K", "rad", registry=reg
+                "lammps_real",
+                length_unit="angstrom",
+                mass_unit="amu",
+                time_unit="fs",
+                temperature_unit="K",
+                angle_unit="rad",
+                registry=reg,
             )
             base_units["energy"] = "kcal/mol"
             base_units["charge"] = "elementary_charge"
         elif styleStr == "metal":
             base_units = u.UnitSystem(
                 "lammps_metal",
-                "Å",
-                "amu",
-                "picosecond",
-                "K",
-                "rad",
+                length_unit="Å",
+                mass_unit="amu",
+                time_unit="picosecond",
+                temperature_unit="K",
+                angle_unit="rad",
                 registry=reg,
             )
             base_units["energy"] = "eV"
             base_units["charge"] = "elementary_charge"
         elif styleStr == "si":
             base_units = u.UnitSystem(
-                "lammps_si", "m", "kg", "s", "K", "rad", registry=reg
+                "lammps_si",
+                length_unit="m",
+                mass_unit="kg",
+                time_unit="s",
+                temperature_unit="K",
+                angle_unit="rad",
+                registry=reg,
             )
             base_units["energy"] = "joule"
             base_units["charge"] = "coulomb"
         elif styleStr == "cgs":
             base_units = u.UnitSystem(
-                "lammps_cgs", "cm", "g", "s", "K", "rad", registry=reg
+                "lammps_cgs",
+                length_unit="cm",
+                mass_unit="g",
+                time_unit="s",
+                temperature_unit="K",
+                angle_unit="rad",
+                registry=reg,
             )
             base_units["energy"] = "erg"
             # Statcoulomb is strange. It is not a 1:1 correspondance to charge, with base units of
@@ -199,19 +217,37 @@ class LAMMPS_UnitSystems:
             base_units["charge"] = "Statcoulomb_charge"
         elif styleStr == "electron":
             base_units = u.UnitSystem(
-                "lammps_electron", "a0", "amu", "s", "K", "rad", registry=reg
+                "lammps_electron",
+                length_unit="a0",
+                mass_unit="amu",
+                time_unit="s",
+                temperature_unit="K",
+                angle_unit="rad",
+                registry=reg,
             )
             base_units["energy"] = "Ehartree"
             base_units["charge"] = "elementary_charge"
         elif styleStr == "micro":
             base_units = u.UnitSystem(
-                "lammps_micro", "um", "picogram", "us", "K", "rad", registry=reg
+                "lammps_micro",
+                length_unit="um",
+                mass_unit="picogram",
+                time_unit="us",
+                temperature_unit="K",
+                angle_unit="rad",
+                registry=reg,
             )
             base_units["energy"] = "ug*um**2/us**2"
             base_units["charge"] = "picocoulomb"
         elif styleStr == "nano":
             base_units = u.UnitSystem(
-                "lammps_nano", "nm", "attogram", "ns", "K", "rad", registry=reg
+                "lammps_nano",
+                length_unit="nm",
+                mass_unit="attogram",
+                time_unit="ns",
+                temperature_unit="K",
+                angle_unit="rad",
+                registry=reg,
             )
             base_units["energy"] = "attogram*nm**2/ns**2"
             base_units["charge"] = "elementary_charge"
@@ -234,8 +270,24 @@ class LAMMPS_UnitSystems:
         This function will check the base_unyts, which is a unyt.UnitSystem object,
         and convert the parameter to those units based on its dimensions. It can
         also generate dimensionless units via normalization from conversion_factorsDict.
+
+        Parameters
+        ----------
+        parameter : unyt.array.unyt_quantity
+            Any parameter to convert to a string in the dimensions of self.usystem
+        conversion_factorDict : dict, default=None
+            If the self.usystem is ljUnitSystem, handle conversion
+        n_decimals : int, default=3
+            The number of decimals used in string .f formatting
+        name : string, default=""
+            Additionally information about the parameter, required if handling a specific parameter
+            differently than the default self.usystem would.
+
+        Returns
+        -------
+        outStr : str
+            The parameter converted via self.usystem, and foramtted as a float string.
         """
-        # TODO: need to handle thermal conversion
         if name in [
             "theta_eq",
             "chieq",
@@ -243,7 +295,7 @@ class LAMMPS_UnitSystems:
         ]:  # eq angle are always in degrees
             return f"{round(float(parameter.to('degree').value), n_decimals):.{n_decimals}f}"
         new_dims = self._get_output_dimensions(parameter.units.dimensions)
-        if isinstance(self.system, ljUnitSystem):
+        if isinstance(self.usystem, ljUnitSystem):
             if not conversion_factorDict:
                 raise ValueError(
                     "Missing conversion_factorDict for a dimensionless unit system."
@@ -265,7 +317,7 @@ class LAMMPS_UnitSystems:
             for exponent, ind_dim in zip(dim_info[0][0][1][1], dim_info[1]):
                 factor = conversion_factorDict.get(
                     ind_dim.name[1:-1],
-                    1 * self.system[ind_dim.name[1:-1]],  # default value of 1
+                    1 * self.usystem[ind_dim.name[1:-1]],  # default value of 1
                 )  # replace () in name
                 current_unit = get_parameter_dimension(parameter, ind_dim.name)
                 factor = factor.to(
@@ -279,9 +331,9 @@ class LAMMPS_UnitSystems:
         new_dimStr = str(new_dims)
         ind_units = re.sub("[^a-zA-Z]+", " ", new_dimStr).split()
         for unit in ind_units:
-            new_dimStr = new_dimStr.replace(unit, str(self.system[unit]))
+            new_dimStr = new_dimStr.replace(unit, str(self.usystem[unit]))
         outFloat = float(
-            parameter.to(u.Unit(new_dimStr, registry=self.system.registry))
+            parameter.to(u.Unit(new_dimStr, registry=self.usystem.registry))
         )
 
         return f"{outFloat:.{n_decimals}f}"
@@ -292,7 +344,9 @@ class LAMMPS_UnitSystems:
         symsStr = str(dims.free_symbols)
         energy_inBool = np.all(
             [dimStr in symsStr for dimStr in ["time", "mass"]]
-        )
+        )  # TODO: this logic could be improved, it might fail on complex
+        # units where the units are energy/mass/time**2, or something where the
+        # dimensions are cancelled out
         if not energy_inBool:
             return dims
         energySym = Symbol(
@@ -305,6 +359,7 @@ class LAMMPS_UnitSystems:
         energy_exp = (
             dim_info[0][0][1][1][time_idx] // 2
         )  # energy has 1/time**2 in it, so this is the hint of how many
+        print(energy_exp)
         return (
             dims
             * u.dimensions.energy**energy_exp
@@ -406,12 +461,31 @@ def get_parameter_dimension(parameter, dimension):
 
 
 def write_out_parameter_and_units(parameter_name, parameter, base_unyts=None):
-    """Take a parameter and return a heading for the parameter and the units it should be in."""
+    """Take a parameter and return a heading for the parameter and the units it should be in.
+
+    Parameters
+    ----------
+    parameter_name : str
+        The name of the unyt parameter to  be written. The dict key of the
+        parameter associated with the GMSO object.
+    parameter : unyt.array.unyt_quantity
+        The unyt object with the units to be written out.
+    base_unyts : LAMMPS_UnitSystem or a more general GMSO_UnitSystem
+        The base units that house the relevant registry for
+        converting parameters into a specified system.
+
+
+    Returns
+    -------
+    output_parameter_units : str
+        parameter with name converted into output unyt system. Useful for
+        labeling parameters in output files, such as .data or .top files.
+    """
     if not base_unyts:
         return f"{parameter_name} ({parameter.units})"
     if parameter_name in ["theta_eq", "phi_eq"]:
         return f"{parameter_name} ({'degrees'})"  # default to always degrees
-    if base_unyts.system.name == "lj":
+    if base_unyts.usystem.name == "lj":
         return f"{parameter_name} ({'dimensionless'})"
     new_dims = LAMMPS_UnitSystems._get_output_dimensions(
         parameter.units.dimensions
@@ -419,7 +493,7 @@ def write_out_parameter_and_units(parameter_name, parameter, base_unyts=None):
     new_dimStr = str(new_dims)
     ind_units = re.sub("[^a-zA-Z]+", " ", new_dimStr).split()
     for unit in ind_units:
-        new_dimStr = new_dimStr.replace(unit, str(base_unyts.system[unit]))
+        new_dimStr = new_dimStr.replace(unit, str(base_unyts.usystem[unit]))
 
     outputUnyt = str(
         parameter.to(u.Unit(new_dimStr, registry=base_unyts.reg)).units

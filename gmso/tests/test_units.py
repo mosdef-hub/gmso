@@ -9,6 +9,10 @@ from gmso.utils.units import LAMMPS_UnitSystems
 
 
 class TestUnitHandling(BaseTest):
+    @pytest.fixture
+    def real_usys(self):
+        return LAMMPS_UnitSystems("real")
+
     def test_unyt_to_hashable(self):
         hash(unyt_to_hashable(None))
         hash(unyt_to_hashable(1 * u.nm))
@@ -52,33 +56,53 @@ class TestUnitHandling(BaseTest):
 
     """
 
-    def test_unit_conversion(self):
-        usys = LAMMPS_UnitSystems("real")
+    def test_unit_conversion(self, real_usys):
         parameter = 0.001 * u.Unit("mm")
         n_decimals = 5
-        outStr = usys.convert_parameter(parameter, n_decimals=n_decimals)
+        outStr = real_usys.convert_parameter(parameter, n_decimals=n_decimals)
         assert float(outStr) == 10000.00000
         assert outStr[::-1].find(".") == n_decimals
 
         parameter = 1 * u.Unit("nm")
         n_decimals = 5
-        outStr = usys.convert_parameter(parameter, n_decimals=n_decimals)
+        outStr = real_usys.convert_parameter(parameter, n_decimals=n_decimals)
         assert float(outStr) == 10.00000
         assert outStr[::-1].find(".") == n_decimals
 
-    def test_unit_rounding(self):
-        usys = LAMMPS_UnitSystems("real")
+    def test_unit_rounding(self, real_usys):
         parameter = 0.001 * u.Unit("nm")
         n_decimals = 5
-        outStr = usys.convert_parameter(parameter, n_decimals=n_decimals)
+        outStr = real_usys.convert_parameter(parameter, n_decimals=n_decimals)
         assert outStr[::-1].find(".") == n_decimals
 
-    def test_unitsystem_setup(self):
-        usys = LAMMPS_UnitSystems("real")
-        assert usys.system.name == "lammps_real"
+    def test_unitsystem_setup(self, real_usys):
+        assert real_usys.usystem.name == "lammps_real"
 
         usys = LAMMPS_UnitSystems("lj", registry=u.UnitRegistry())
-        assert usys.system.name == "lj"
+        assert usys.usystem.name == "lj"
+
+    def test_dimensions_to_energy(self, real_usys):
+        real_usys = LAMMPS_UnitSystems("real")
+        parameter = 1 * u.kJ / u.nm * u.g
+        # Note: parameter cannot divide out mass or time from energy
+        out_parameter = real_usys._dimensions_to_energy(
+            parameter.units.dimensions
+        )
+        assert str(out_parameter) == "(energy)*(mass)/(length)"
+
+    def test_dimensions_to_charge(self, real_usys):
+        parameter = 1 * u.coulomb / u.nm
+        out_parameter = real_usys._dimensions_to_charge(
+            parameter.units.dimensions
+        )
+        assert str(out_parameter) == "(charge)/(length)"
+
+    def test_dimensions_thermal(self, real_usys):
+        parameter = 1 * u.K
+        out_parameter = real_usys._dimensions_from_thermal_to_energy(
+            parameter.units.dimensions
+        )
+        assert str(out_parameter) == "(energy)"
 
     def test_get_dimensions(self):
         usys = LAMMPS_UnitSystems("electron")
@@ -127,12 +151,13 @@ class TestUnitHandling(BaseTest):
             remove_parStr = dimsStr.translate({ord(i): None for i in "()"})
             assert remove_parStr == str(dim)
 
-    def test_convert_parameters(self, typed_ethane):
+    def test_convert_parameters(self, typed_ethane, real_usys):
         parameter = typed_ethane.sites[0].atom_type.parameters["epsilon"]
-        usys = LAMMPS_UnitSystems("real")
-        assert usys.convert_parameter(parameter) == "0.066"
-        usys.system["energy"] = u.kJ / u.mol
-        assert usys.convert_parameter(parameter, n_decimals=6) == "0.276144"
+        assert real_usys.convert_parameter(parameter) == "0.066"
+        real_usys.usystem["energy"] = u.kJ / u.mol
+        assert (
+            real_usys.convert_parameter(parameter, n_decimals=6) == "0.276144"
+        )
         usys = LAMMPS_UnitSystems("real")
         parameter = typed_ethane.bonds[0].bond_type.parameters["k"]
         assert usys.convert_parameter(parameter, n_decimals=0) == "680"
@@ -159,11 +184,6 @@ class TestUnitHandling(BaseTest):
         # convert a whole topology to a specific unit system
         pass
 
-    def test_overwrite_unit_output(self):
-        # TODO: make a better usys.convert_parameter function to handle eq angles
-        # write out the parameters that have specific outputs
-        pass
-
     def test_generate_unit_styles(self):
         # TODO: write all unit systems for these engines.
         # look at libary of unit styles for lammps, gromacs, hoomd, gomc
@@ -171,53 +191,53 @@ class TestUnitHandling(BaseTest):
 
     def test_lj_units(self, typed_ethane):
         # write out unit styles from ljUnitSystem and a dictonary of non-dimesnional values
-        usys = LAMMPS_UnitSystems("lj")
+        lj_usys = LAMMPS_UnitSystems("lj")
         bond_parameter = typed_ethane.bonds[0].bond_type.parameters["k"]
         errorStr = (
             "Missing conversion_factorDict for a dimensionless unit system."
         )
         with pytest.raises(ValueError, match=errorStr):
-            usys.convert_parameter(bond_parameter, conversion_factorDict=None)
+            lj_usys.convert_parameter(
+                bond_parameter, conversion_factorDict=None
+            )
         cfactorDict = {"energy": 0.276144 * u.kJ / u.mol, "length": 0.35 * u.nm}
         errorStr = f"Missing dimensionless constant in conversion_factorDict {cfactorDict}"
         with pytest.raises(ValueError, match=re.escape(errorStr)):
-            usys.convert_parameter(
+            lj_usys.convert_parameter(
                 bond_parameter, conversion_factorDict=cfactorDict
             )
         cfactorDict["charge"] = 1 * u.coulomb
         cfactorDict["mass"] = 12.011 * u.amu
-        outStr = usys.convert_parameter(
+        outStr = lj_usys.convert_parameter(
             bond_parameter, conversion_factorDict=cfactorDict
         )
         assert outStr == str(round(284512.0 / 0.276144 * 0.35**2, 3))
-        outStr = usys.convert_parameter(
+        outStr = lj_usys.convert_parameter(
             typed_ethane.sites[0].atom_type.mass,
             conversion_factorDict=cfactorDict,
         )
         assert outStr == f"{(round(1.000, 3)):.3f}"
 
-    def test_get_units(self, typed_ethane):
+    def test_get_units(self, typed_ethane, real_usys):
         # get the unit system used for a topology
-        usys = LAMMPS_UnitSystems("real")
-        typed_ethane.system = usys
-        assert typed_ethane.system == usys
+        typed_ethane.usystem = real_usys
+        assert typed_ethane.usystem == real_usys
 
     def test_charmm_weighting_factors(self):
         # write out dihedrals while taking into account weighting
         pass
 
-    def test_parameter_and_units_writing(self):
+    def test_parameter_and_units_writing(self, real_usys):
         from gmso.utils.units import write_out_parameter_and_units
 
-        base_unyts = LAMMPS_UnitSystems("real")
         x = 1 * u.kJ / u.mol
-        outStr = write_out_parameter_and_units("x", x, base_unyts)
+        outStr = write_out_parameter_and_units("x", x, real_usys)
         assert outStr == "x (kcal/mol)"
 
         x = 1 * u.rad
-        outStr = write_out_parameter_and_units("theta_eq", x, base_unyts)
+        outStr = write_out_parameter_and_units("theta_eq", x, real_usys)
         assert outStr == "theta_eq (degrees)"
 
-        base_unyts = LAMMPS_UnitSystems("lj")
-        outStr = write_out_parameter_and_units("x", x, base_unyts)
+        lj_usys = LAMMPS_UnitSystems("lj")
+        outStr = write_out_parameter_and_units("x", x, lj_usys)
         assert outStr == "x (dimensionless)"
