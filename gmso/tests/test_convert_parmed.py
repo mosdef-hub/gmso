@@ -716,3 +716,29 @@ class TestConvertParmEd(BaseTest):
                 for t in dihedrals_list
             )
         )
+
+    def test_to_and_from_parmed_with_topology(self, typed_ethane):
+        top = typed_ethane
+        struc = to_parmed(top)
+        top_from_struc = from_parmed(struc)
+        assert top.n_sites == top_from_struc.n_sites
+        assert top.n_bonds == top_from_struc.n_bonds
+        assert top.n_angles == top_from_struc.n_angles
+        assert top.n_dihedrals == top_from_struc.n_dihedrals
+        assert len(top.atom_types) == len(top_from_struc.atom_types)
+
+    def test_to_and_from_parmed_with_impropers_dihedrals(
+        self, typed_methylnitroaniline
+    ):
+        top = typed_methylnitroaniline
+        struc = to_parmed(top)
+        top_from_struc = from_parmed(struc)
+        assert top.n_sites == top_from_struc.n_sites
+        assert top.n_bonds == top_from_struc.n_bonds
+        assert top.n_angles == top_from_struc.n_angles
+        assert top.n_dihedrals == top_from_struc.n_dihedrals
+        assert top.n_impropers == top_from_struc.n_impropers
+        assert len(top.atom_types) == len(top_from_struc.atom_types)
+        assert len(top.dihedral_types(filter_by=pfilter)) == len(
+            top_from_struc.dihedral_types(filter_by=pfilter)
+        )
