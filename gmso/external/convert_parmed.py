@@ -568,15 +568,14 @@ def _atom_types_from_gmso(top, structure, atom_map):
         atype_charge = float(atom_type.charge.to("Coulomb").value) / (
             1.6 * 10 ** (-19)
         )
-        atype_mass = float(atom_type.mass.to("amu"))
         atype_sigma = float(atom_type.parameters["sigma"].to("angstrom").value)
         atype_epsilon = float(
             atom_type.parameters["epsilon"].to("kcal/mol").value
         )
         if atom_type.mass:
-            atype_mass = atom_type.mass.to("amu").value
+            atype_mass = float(atom_type.mass.to("amu").value)
         else:
-            atype_mass = element_by_symbol(atom_type.name).mass.to("amu").value
+            atype_mass = float(element_by_symbol(atom_type.name).mass.to("amu").value)
         atype_atomic_number = getattr(
             element_by_symbol(atom_type.name), "atomic_number", None
         )
