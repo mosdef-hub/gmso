@@ -716,3 +716,13 @@ class TestConvertParmEd(BaseTest):
                 for t in dihedrals_list
             )
         )
+
+    def test_to_and_from_parmed_with_topology(self, typed_ethane):
+        top = typed_ethane
+        struc = to_parmed(top)
+        top_from_struc = from_parmed(struc)
+        assert top.n_sites == top_from_struc.n_sites
+        assert top.n_bonds == top_from_struc.n_bonds
+        assert top.n_angles == top_from_struc.n_angles
+        assert top.n_dihedrals == top_from_struc.n_dihedrals
+        assert len(top.atom_types) == len(top_from_struc.atom_types)

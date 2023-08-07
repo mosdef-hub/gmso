@@ -575,7 +575,9 @@ def _atom_types_from_gmso(top, structure, atom_map):
         if atom_type.mass:
             atype_mass = float(atom_type.mass.to("amu").value)
         else:
-            atype_mass = float(element_by_symbol(atom_type.name).mass.to("amu").value)
+            atype_mass = float(
+                element_by_symbol(atom_type.name).mass.to("amu").value
+            )
         atype_atomic_number = getattr(
             element_by_symbol(atom_type.name), "atomic_number", None
         )
