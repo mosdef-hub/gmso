@@ -178,7 +178,7 @@ class LAMMPS_UnitSystems:
         elif styleStr == "metal":
             base_units = u.UnitSystem(
                 "lammps_metal",
-                length_unit="Å",
+                length_unit="angstrom",
                 mass_unit="amu",
                 time_unit="picosecond",
                 temperature_unit="K",
