@@ -312,8 +312,12 @@ def _validate_schema(xml_path_or_etree, schema=None):
     ff_xml = xml_path_or_etree
     if not isinstance(xml_path_or_etree, etree._ElementTree):
         ff_xml = etree.parse(xml_path_or_etree)
-
-    xml_schema.assertValid(ff_xml)
+    try:
+        xml_schema.assertValid(ff_xml)
+    except:
+        raise ForceFieldParseError(
+            f"xml scheme {xml_schema} has invalid elements. Check the sections of the file."
+        )
     return ff_xml
 
 

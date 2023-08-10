@@ -17,7 +17,6 @@ from gmso.core.improper import Improper
 from gmso.core.pairpotential_type import PairPotentialType
 from gmso.core.topology import Topology
 from gmso.external import from_mbuild, from_parmed
-from gmso.external.convert_foyer_xml import from_foyer_xml
 from gmso.parameterization import apply
 from gmso.tests.utils import get_path
 from gmso.utils.io import get_fn
@@ -273,41 +272,25 @@ class BaseTest:
     def foyer_fullerene(self):
         from foyer.tests.utils import get_fn
 
-        from_foyer_xml(get_fn("fullerene.xml"), overwrite=True)
-        gmso_ff = ForceField("fullerene_gmso.xml")
-
-        return gmso_ff
+        return ForceField(get_fn("fullerene.xml"))
 
     @pytest.fixture
     def foyer_periodic(self):
-        # TODO: this errors out with backend="ffutils"
         from foyer.tests.utils import get_fn
 
-        from_foyer_xml(get_fn("oplsaa-periodic.xml"), overwrite=True)
-        gmso_ff = ForceField("oplsaa-periodic_gmso.xml", backend="gmso")
-
-        return gmso_ff
+        return ForceField(get_fn("oplsaa-periodic.xml"))
 
     @pytest.fixture
     def foyer_urey_bradley(self):
-        # TODO: this errors out with backend="ffutils"
         from foyer.tests.utils import get_fn
 
-        from_foyer_xml(get_fn("charmm36_cooh.xml"), overwrite=True)
-        gmso_ff = ForceField("charmm36_cooh_gmso.xml", backend="gmso")
-
-        return gmso_ff
+        return ForceField(get_fn("charmm36_cooh.xml"))
 
     @pytest.fixture
     def foyer_rb_torsion(self):
         from foyer.tests.utils import get_fn
 
-        from_foyer_xml(
-            get_fn("refs-multi.xml"), overwrite=True, validate_foyer=True
-        )
-        gmso_ff = ForceField("refs-multi_gmso.xml")
-
-        return gmso_ff
+        return ForceField(get_fn("refs-multi.xml"))
 
     @pytest.fixture
     def methane(self):

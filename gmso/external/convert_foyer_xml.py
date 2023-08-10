@@ -4,8 +4,12 @@ import pathlib
 from lxml import etree
 
 from gmso.exceptions import ForceFieldParseError
+from gmso.utils.decorators import deprecate_function
 
 
+@deprecate_function(
+    "Converting directly to GMSO XML from Foyer XML is deprecated."
+)
 def from_foyer_xml(
     foyer_xml, gmso_xml=None, overwrite=False, validate_foyer=False
 ):
