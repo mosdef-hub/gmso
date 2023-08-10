@@ -177,7 +177,7 @@ class LAMMPS_UnitSystems:
         elif styleStr == "metal":
             base_units = u.UnitSystem(
                 "lammps_metal",
-                length_unit="Å",
+                length_unit="angstrom",
                 mass_unit="amu",
                 time_unit="picosecond",
                 temperature_unit="K",
@@ -358,7 +358,6 @@ class LAMMPS_UnitSystems:
         energy_exp = (
             dim_info[0][0][1][1][time_idx] // 2
         )  # energy has 1/time**2 in it, so this is the hint of how many
-        print(energy_exp)
         return (
             dims
             * u.dimensions.energy**energy_exp
