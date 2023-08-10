@@ -80,7 +80,6 @@ class GMSO_UnitRegistry(object):
         return reg
 
 
-@staticmethod
 def register_general_units(reg: u.UnitRegistry):
     """Register units that are generally useful to a basic unyt UnitSystem."""
     conversion = 1 * getattr(u.physical_constants, "elementary_charge").value
