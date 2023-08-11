@@ -291,7 +291,7 @@ def _write_atom_information(mcf, top, in_ring):
             "{:<4d}  "
             "{:<6s}  "
             "{:<2s}  "
-            "{:7.3f}  "
+            "{:8.4f}  "
             "{:12.8f}  ".format(
                 idx + 1,
                 types[idx],

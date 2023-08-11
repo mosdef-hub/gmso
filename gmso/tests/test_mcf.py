@@ -151,7 +151,8 @@ class TestMCF(BaseTest):
         assert np.allclose(float(mcf_data[-4][3]), 1.0)
 
     def test_typed_ethane(self, typed_ethane):
-        write_mcf(typed_ethane, "ethane.mcf")
+        top = typed_ethane
+        write_mcf(top, "ethane.mcf")
 
         mcf_data = []
         with open("ethane.mcf") as f:
@@ -173,10 +174,10 @@ class TestMCF(BaseTest):
                     dihedral_section_start = idx
 
         # Check a some atom info
-        assert mcf_data[atom_section_start + 1][0] == "1"
-        assert mcf_data[atom_section_start + 2][1] == "Xe"
-        assert mcf_data[atom_section_start + 2][2] == "Xe"
-        assert mcf_data[atom_section_start + 2][5] == "Mie"
+        assert mcf_data[atom_section_start + 1][0] == "8"
+        assert mcf_data[atom_section_start + 2][1] == "opls_135"
+        assert mcf_data[atom_section_start + 2][2] == "C"
+        assert mcf_data[atom_section_start + 2][5] == "LJ"
         assert np.isclose(
             float(mcf_data[atom_section_start + 2][3]),
             top.sites[0].mass.in_units(u.amu).value,
@@ -197,12 +198,4 @@ class TestMCF(BaseTest):
             .atom_type.parameters["sigma"]
             .in_units(u.Angstrom)
             .value,
-        )
-        assert np.isclose(
-            float(mcf_data[atom_section_start + 2][8]),
-            top.sites[0].atom_type.parameters["n"],
-        )
-        assert np.isclose(
-            float(mcf_data[atom_section_start + 2][9]),
-            top.sites[0].atom_type.parameters["m"],
         )
