@@ -2,10 +2,14 @@
 from typing import Optional, Tuple
 
 import unyt as u
-from pydantic import Field
 
 from gmso.core.parametric_potential import ParametricPotential
 from gmso.utils.expression import PotentialExpression
+
+try:
+    from pydantic.v1 import Field
+except ImportError:
+    from pydantic import Field
 
 
 class BondType(ParametricPotential):

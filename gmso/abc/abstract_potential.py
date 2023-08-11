@@ -2,10 +2,13 @@
 from abc import abstractmethod
 from typing import Any, Dict, Iterator, List
 
-from pydantic import Field, validator
-
 from gmso.abc.gmso_base import GMSOBase
 from gmso.utils.expression import PotentialExpression
+
+try:
+    from pydantic.v1 import Field, validator
+except ImportError:
+    from pydantic import Field, validator
 
 
 class AbstractPotential(GMSOBase):

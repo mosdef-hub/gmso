@@ -6,11 +6,15 @@ from re import sub
 import numpy as np
 import unyt as u
 from pkg_resources import resource_filename
-from pydantic import Field
 
 from gmso.abc.gmso_base import GMSOBase
 from gmso.exceptions import GMSOError
 from gmso.utils.misc import unyt_to_hashable
+
+try:
+    from pydantic.v1 import Field
+except ImportError:
+    from pydantic import Field
 
 exported = [
     "element_by_mass",
