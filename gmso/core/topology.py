@@ -30,7 +30,7 @@ from gmso.utils.conversions import (
     convert_params_units,
     convert_topology_expressions,
 )
-from gmso.utils.units import GMSO_UnitRegsitry as UnitReg
+from gmso.utils.units import GMSO_UnitRegistry as UnitReg
 
 scaling_interaction_idxes = {"12": 0, "13": 1, "14": 2}
 
@@ -170,6 +170,17 @@ class Topology(object):
         }
 
         self._unique_connections = {}
+        self._unit_system = None
+
+    @property
+    def unit_system(self):
+        """Return the unyt system of the topology."""
+        return self._unit_system
+
+    @unit_system.setter
+    def unit_system(self, unit_system):
+        """Set the unyt system of the topology."""
+        self._name = unit_system
 
     @property
     def name(self):
