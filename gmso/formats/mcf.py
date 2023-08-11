@@ -482,10 +482,6 @@ def _write_dihedral_information(mcf, top):
                 "{:10.5f}\n".format(
                     dihedral_style,
                     0.5
-                    * dihedral.connection_type.parameters["k0"]
-                    .in_units("kJ/mol")
-                    .value,
-                    0.5
                     * dihedral.connection_type.parameters["k1"]
                     .in_units("kJ/mol")
                     .value,
@@ -495,6 +491,10 @@ def _write_dihedral_information(mcf, top):
                     .value,
                     0.5
                     * dihedral.connection_type.parameters["k3"]
+                    .in_units("kJ/mol")
+                    .value,
+                    0.5
+                    * dihedral.connection_type.parameters["k4"]
                     .in_units("kJ/mol")
                     .value,
                 )
