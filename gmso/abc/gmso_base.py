@@ -4,12 +4,16 @@ import warnings
 from abc import ABC
 from typing import Any, ClassVar, Type
 
-from pydantic import BaseModel
-from pydantic.validators import dict_validator
-
 from gmso.abc import GMSOJSONHandler
 from gmso.abc.auto_doc import apply_docs
 from gmso.abc.serialization_utils import dict_to_unyt
+
+try:
+    from pydantic.v1 import BaseModel
+    from pydantic.v1.validators import dict_validator
+except ImportError:
+    from pydantic import BaseModel
+    from pydantic.validators import dict_validator
 
 
 class GMSOBase(BaseModel, ABC):

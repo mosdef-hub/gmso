@@ -189,13 +189,13 @@ class TestKelvinToEnergy(BaseTest):
         ].units == u.Unit("kcal/mol")
 
     def test_lammps_dimensions_to_energy(self):
-        from gmso.formats.lammpsdata import _dimensions_to_energy
+        from gmso.utils.units import LAMMPS_UnitSystems
 
         units = u.Unit("kg")
-        outdims = _dimensions_to_energy(units.dimensions)
+        outdims = LAMMPS_UnitSystems._dimensions_to_energy(units.dimensions)
         assert outdims == units.dimensions == u.dimensions.mass
         units = u.Unit("J")
-        outdims = _dimensions_to_energy(units.dimensions)
+        outdims = LAMMPS_UnitSystems._dimensions_to_energy(units.dimensions)
         assert outdims == sympy.Symbol("(energy)")
         assert (
             units.dimensions
@@ -204,7 +204,7 @@ class TestKelvinToEnergy(BaseTest):
             / u.dimensions.time**2
         )
         units = u.Unit("kcal/nm")
-        outdims = _dimensions_to_energy(units.dimensions)
+        outdims = LAMMPS_UnitSystems._dimensions_to_energy(units.dimensions)
         assert outdims == sympy.Symbol("(energy)") / u.dimensions.length
         assert (
             units.dimensions
@@ -212,46 +212,40 @@ class TestKelvinToEnergy(BaseTest):
         )
 
     def test_lammps_conversion_parameters_base_units(self):
-        from gmso.formats.lammpsdata import (
-            _parameter_converted_to_float,
-            _unit_style_factory,
-        )
+        from gmso.utils.units import LAMMPS_UnitSystems
 
         parameter = 100 * u.Unit("kcal/mol*fs/Å")
-        base_unyts = _unit_style_factory(
+        base_unyts = LAMMPS_UnitSystems(
             "real"
         )  # "lammps_real", "Å", "amu", "fs", "K", "rad"
-        float_param = _parameter_converted_to_float(
-            parameter, base_unyts, conversion_factorDict=None
+        paramStr = base_unyts.convert_parameter(
+            parameter, conversion_factorDict=None
         )
-        assert float_param == 100
+        assert paramStr == "100.000"
         parameter = 100 * u.Unit("K*fs/amu/nm")
-        float_param = _parameter_converted_to_float(
-            parameter, base_unyts, conversion_factorDict=None
+        paramStr = base_unyts.convert_parameter(
+            parameter, conversion_factorDict=None
         )
-        assert float_param == 10
+        assert paramStr == "10.000"
         parameter = 100 * u.Unit("km*g*ms*kJ*degree")
-        base_unyts = _unit_style_factory(
+        base_unyts = LAMMPS_UnitSystems(
             "si"
         )  # "lammps_si", "m", "kg", "s", "K", "rad",
-        float_param = _parameter_converted_to_float(
-            parameter, base_unyts, conversion_factorDict=None, n_decimals=6
+        paramStr = base_unyts.convert_parameter(
+            parameter, conversion_factorDict=None, n_decimals=6
         )
-        assert float_param == round(100 * np.pi / 180, 6)
+        assert paramStr == str(round(100 * np.pi / 180, 6))
         parameter = 1 * u.Unit("g*kJ*Coulomb*m*degree")
-        base_unyts = _unit_style_factory(
+        base_unyts = LAMMPS_UnitSystems(
             "si"
         )  # "lammps_si", "m", "kg", "s", "K", "rad"
-        float_param = _parameter_converted_to_float(
-            parameter, base_unyts, conversion_factorDict=None, n_decimals=6
+        paramStr = base_unyts.convert_parameter(
+            parameter, conversion_factorDict=None, n_decimals=6
         )
-        assert np.isclose(float_param, np.pi / 180, 1e-3)
+        assert np.isclose(float(paramStr), np.pi / 180, 1e-3)
 
     def test_lammps_conversion_parameters_lj(self):
-        from gmso.formats.lammpsdata import (
-            _parameter_converted_to_float,
-            _unit_style_factory,
-        )
+        from gmso.utils.units import LAMMPS_UnitSystems
 
         parameter = 1 * u.Unit("g*kJ*Coulomb*m*degree")
         conversion_factorDict = {
@@ -260,11 +254,10 @@ class TestKelvinToEnergy(BaseTest):
             "charge": 3 * u.Unit("Coulomb"),
             "length": 3 * u.Unit("m"),
         }
-        base_unyts = _unit_style_factory("lj")
-        float_param = _parameter_converted_to_float(
+        base_unyts = LAMMPS_UnitSystems("lj")
+        paramStr = base_unyts.convert_parameter(
             parameter,
-            base_unyts,
             conversion_factorDict=conversion_factorDict,
             n_decimals=6,
         )
-        assert np.isclose(float_param, 1 / 3**4, atol=1e-6)
+        assert np.isclose(float(paramStr), 1 / 3**4, atol=1e-6)

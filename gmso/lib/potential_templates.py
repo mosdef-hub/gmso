@@ -5,7 +5,6 @@ from typing import Dict
 
 import sympy
 import unyt as u
-from pydantic import Field, validator
 
 from gmso.abc.abstract_potential import AbstractPotential
 from gmso.exceptions import (
@@ -15,6 +14,11 @@ from gmso.exceptions import (
 )
 from gmso.utils.expression import PotentialExpression
 from gmso.utils.singleton import Singleton
+
+try:
+    from pydantic.v1 import Field, validator
+except ImportError:
+    from pydantic import Field, validator
 
 POTENTIAL_JSONS = list(Path(__file__).parent.glob("jsons/*.json"))
 JSON_DIR = Path.joinpath(Path(__file__).parent, "jsons")

@@ -1,11 +1,14 @@
 """Support for improper style connections (4-member connection)."""
 from typing import Callable, ClassVar, Optional, Tuple
 
-from pydantic import Field
-
 from gmso.abc.abstract_connection import Connection
 from gmso.core.atom import Atom
 from gmso.core.improper_type import ImproperType
+
+try:
+    from pydantic.v1 import Field
+except ImportError:
+    from pydantic import Field
 
 
 class Improper(Connection):

@@ -5,7 +5,6 @@ from typing import Dict, Union
 
 import networkx as nx
 from boltons.setutils import IndexedSet
-from pydantic import Field
 
 from gmso.abc.gmso_base import GMSOBase
 from gmso.core.forcefield import ForceField
@@ -28,6 +27,11 @@ from gmso.parameterization.molecule_utils import (
     molecule_impropers,
 )
 from gmso.parameterization.utils import POTENTIAL_GROUPS
+
+try:
+    from pydantic.v1 import Field
+except ImportError:
+    from pydantic import Field
 
 
 class ParameterizationError(GMSOError):

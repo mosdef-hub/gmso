@@ -1,11 +1,14 @@
 """Support for 3-partner connections between gmso.core.Atoms."""
 from typing import Callable, ClassVar, Optional, Tuple
 
-from pydantic import Field
-
 from gmso.abc.abstract_connection import Connection
 from gmso.core.angle_type import AngleType
 from gmso.core.atom import Atom
+
+try:
+    from pydantic.v1 import Field
+except ImportError:
+    from pydantic import Field
 
 
 class Angle(Connection):
