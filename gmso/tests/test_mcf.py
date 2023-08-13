@@ -44,16 +44,11 @@ class TestMCF(BaseTest):
         )
         assert np.isclose(
             float(mcf_data[atom_section_start + 2][6]),
-            (top.sites[0].atom_type.parameters["epsilon"] / u.kb)
-            .in_units(u.K)
-            .value,
+            (top.sites[0].atom_type.parameters["epsilon"] / u.kb).in_units(u.K).value,
         )
         assert np.isclose(
             float(mcf_data[atom_section_start + 2][7]),
-            top.sites[0]
-            .atom_type.parameters["sigma"]
-            .in_units(u.Angstrom)
-            .value,
+            top.sites[0].atom_type.parameters["sigma"].in_units(u.Angstrom).value,
         )
 
     def test_write_mie_full(self, n_typed_xe_mie):
@@ -85,16 +80,11 @@ class TestMCF(BaseTest):
         )
         assert np.isclose(
             float(mcf_data[atom_section_start + 2][6]),
-            (top.sites[0].atom_type.parameters["epsilon"] / u.kb)
-            .in_units(u.K)
-            .value,
+            (top.sites[0].atom_type.parameters["epsilon"] / u.kb).in_units(u.K).value,
         )
         assert np.isclose(
             float(mcf_data[atom_section_start + 2][7]),
-            top.sites[0]
-            .atom_type.parameters["sigma"]
-            .in_units(u.Angstrom)
-            .value,
+            top.sites[0].atom_type.parameters["sigma"].in_units(u.Angstrom).value,
         )
         assert np.isclose(
             float(mcf_data[atom_section_start + 2][8]),
@@ -173,7 +163,7 @@ class TestMCF(BaseTest):
                 if line[1] == "Dihedral_Info":
                     dihedral_section_start = idx
 
-        # Check a some atom info
+        # Check atom info
         assert mcf_data[atom_section_start + 1][0] == "8"
         assert mcf_data[atom_section_start + 2][1] == "opls_135"
         assert mcf_data[atom_section_start + 2][2] == "C"
@@ -188,9 +178,7 @@ class TestMCF(BaseTest):
         )
         assert np.isclose(
             float(mcf_data[atom_section_start + 2][6]),
-            (top.sites[0].atom_type.parameters["epsilon"] / u.kb)
-            .in_units(u.K)
-            .value,
+            (top.sites[0].atom_type.parameters["epsilon"] / u.kb).in_units(u.K).value,
         )
         assert np.isclose(
             float(mcf_data[atom_section_start + 2][7]),
@@ -199,3 +187,39 @@ class TestMCF(BaseTest):
             .in_units(u.Angstrom)
             .value,
         )
+
+        # Check bond section
+        assert mcf_data[bond_section_start + 1][0] == "7"
+        assert mcf_data[bond_section_start + 2][3] == "fixed"
+        assert np.isclose(
+            float(mcf_data[bond_section_start + 2][4]),
+            top.bonds[0].bond_type.parameters["r_eq"].in_units(u.Angstrom).value,
+        )
+
+        # Check angle section
+        assert mcf_data[angle_section_start + 1][0] == "12"
+        assert mcf_data[angle_section_start + 2][4] == "harmonic"
+        assert np.isclose(
+            float(mcf_data[angle_section_start + 2][6]),
+            top.angles[0].angle_type.parameters["theta_eq"].in_units(u.degree).value,
+        )
+        # assert np.isclose(
+        # float(mcf_data[angle_section_start + 2][5]),
+        # (top.angles[0].angle_type.parameters["k"] / u.kb)
+        # .in_units(u.K / u.radian**2)
+        # .value,
+        # )
+
+        # Check dihedral section
+        assert mcf_data[dihedral_section_start + 1][0] == "9"
+        dihedral_style = mcf_data[dihedral_section_start + 2][5].lower()
+        assert dihedral_style.lower() == "opls"
+
+        # for idx, k in enumerate(["k1", "k2", "k3", "k4"]):
+        # assert np.isclose(
+        # float(mcf_data[dihedral_section_start + 2][6 + idx]),
+        # top.dihedrals[0]
+        # .dihedral_type.parameters[k]
+        # .in_units(u.kilojoule / u.mole)
+        # .value,
+        # )
