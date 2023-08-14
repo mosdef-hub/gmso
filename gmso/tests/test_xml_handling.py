@@ -2,7 +2,6 @@ import glob
 import os
 
 import pytest
-from forcefield_utilities import GMSOFFs
 
 from gmso.core.forcefield import ForceField
 from gmso.tests.base_test import BaseTest
@@ -67,7 +66,7 @@ class TestXMLHandling(BaseTest):
     @pytest.mark.parametrize("xml", TEST_XMLS)
     def test_load__direct_from_forcefield_utilities(self, xml):
         """Validate loaded xmls from ff-utils match original file."""
-        ff = GMSOFFs().load_xml(xml).to_gmso_ff()
+        ff = ForceField(xml)
         assert isinstance(ff, ForceField)
 
     @pytest.mark.parametrize("xml", TEST_XMLS)
@@ -98,7 +97,7 @@ class TestXMLHandling(BaseTest):
         """Validate loaded xmls written out match original file."""
         ff1 = ForceField(xml, backend="forcefield-utilities")
         ff1.to_xml("tmp.xml", overwrite=True)
-        ff2 = GMSOFFs().load_xml("tmp.xml").to_gmso_ff()
+        ff2 = ForceField("tmp.xml")
         if "test_ffstyles" not in xml:
             assert compare_xml_files("tmp.xml", xml)
         assert ff1 == ff2
@@ -109,5 +108,5 @@ class TestXMLHandling(BaseTest):
 
     def test_kb_in_ffutils(self):
         xml_path = get_path("ff-example0.xml")
-        ff = ForceField(xml_path, backend="forcefield-utilities")
+        ff = ForceField(xml_path)
         assert ff

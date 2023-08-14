@@ -1,4 +1,3 @@
-import forcefield_utilities as ffutils
 import foyer
 import mbuild as mb
 import numpy as np
@@ -73,10 +72,8 @@ class BaseTest:
     @pytest.fixture
     def typed_benzene_ua_system(self, benzene_ua_box):
         top = benzene_ua_box
-        trappe_benzene = (
-            ffutils.FoyerFFs()
-            .load(get_path("benzene_trappe-ua.xml"))
-            .to_gmso_ff()
+        trappe_benzene = ForceField(
+            get_path("benzene_trappe-ua.xml")
         )
         top = apply(top=top, forcefields=trappe_benzene, remove_untyped=True)
         return top
@@ -103,7 +100,7 @@ class BaseTest:
     @pytest.fixture
     def typed_benzene_aa_system(self, benzene_aa_box):
         top = benzene_aa_box
-        oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
+        oplsaa = ForceField("oplsaa")
         top = apply(top=top, forcefields=oplsaa, remove_untyped=True)
         return top
 

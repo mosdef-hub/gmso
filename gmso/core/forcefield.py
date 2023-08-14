@@ -729,8 +729,8 @@ class ForceField(object):
             encoding="utf-8",
         )
 
-    @deprecate_function("This call is deprecated.")
     @classmethod
+    @deprecate_function("The from XML through GMSO conversion is deprecated.")
     def from_xml(cls, xmls_or_etrees, strict=True, greedy=True):
         """Create a gmso.Forcefield object from XML File(s).
 

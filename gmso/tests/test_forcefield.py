@@ -227,7 +227,7 @@ class TestForceField(BaseTest):
         assert ff.pairpotential_types["Xe~Xe"].member_types == ("Xe", "Xe")
 
     def test_ff_charmm_xml(self):
-        charm_ff = ForceField(get_path("trimmed_charmm.xml"), backend="gmso")
+        charm_ff = ForceField(get_path("trimmed_charmm.xml"), backend="ffutils")
 
         assert charm_ff.name == "topologyCharmm"
         assert "*~CS~SS~*" in charm_ff.dihedral_types
