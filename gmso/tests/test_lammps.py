@@ -14,7 +14,6 @@ pfilter = PotentialFilters.UNIQUE_SORTED_NAMES
 from gmso.exceptions import EngineIncompatibilityError
 from gmso.external import from_parmed, to_parmed
 from gmso.formats.formats_registry import UnsupportedFileFormatError
-from gmso.formats.lammpsdata import read_lammpsdata, write_lammpsdata
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
 
@@ -346,7 +345,7 @@ class TestLammpsWriter(BaseTest):
         assert lines[38:41] == [
             "Dihedral Coeffs #OPLSTorsionPotential\n",
             "#\tk1 (kcal/mol)\tk2 (kcal/mol)\tk3 (kcal/mol)\tk4 (kcal/mol)\n",
-            "1\t 0.00000\t-0.00000\t 0.30000\t-0.00000\t# opls_140\topls_135\topls_135\topls_140\n",
+            "1\t0.000000\t-0.000000\t0.300000\t-0.000000\t# opls_140\topls_135\topls_135\topls_140\n",
         ]
 
         struc = harmonic_parmed_types_charmm
@@ -419,6 +418,9 @@ class TestLammpsWriter(BaseTest):
         """
         # check the initial set of units
         from gmso.formats.lammpsdata import get_units
+        from gmso.utils.units import LAMMPS_UnitSystems
+
+        base_unyts = LAMMPS_UnitSystems(unit_style)
 
         # real units should be in: [g/mol, angstroms, fs, kcal/mol, kelvin, electon charge, ...]
         mass_multiplierDict = {
@@ -434,10 +436,10 @@ class TestLammpsWriter(BaseTest):
                 atype.mass = 12 * mass_multiplierDict[unit_style] * u.kg
         typed_ethane.save("ethane.lammps", unit_style=unit_style)
         real_top = Topology().load("ethane.lammps", unit_style=unit_style)
-        energy_unit = get_units(unit_style, "energy")
-        angle_unit = get_units(unit_style, "angle_eq")
-        length_unit = get_units(unit_style, "length")
-        charge_unit = get_units(unit_style, "charge")
+        energy_unit = get_units(base_unyts, "energy")
+        angle_unit = get_units(base_unyts, "angle_eq")
+        length_unit = get_units(base_unyts, "length")
+        charge_unit = get_units(base_unyts, "charge")
         assert (
             real_top.dihedrals[0].dihedral_type.parameters["k1"].units
             == energy_unit
@@ -490,8 +492,6 @@ class TestLammpsWriter(BaseTest):
                 atol=1e-8,
             )
 
-    from gmso.exceptions import EngineIncompatibilityError
-
     def test_lammps_errors(self, typed_ethane):
         with pytest.raises(UnsupportedFileFormatError):
             typed_ethane.save("e.lammmps")
@@ -513,15 +513,15 @@ class TestLammpsWriter(BaseTest):
         with pytest.raises(ValueError):
             typed_ethane.save("error.lammps", unit_style="None")
 
-    def test_lammps_units(self, typed_methylnitroaniline):
+    def test_lammps_validate_units(self, typed_methylnitroaniline):
         from gmso.formats.lammpsdata import _validate_unit_compatibility
+        from gmso.utils.units import LAMMPS_UnitSystems
 
-        usys = u.unit_systems.mks_unit_system
+        base_unyts = LAMMPS_UnitSystems("si")
         with pytest.raises(AssertionError):
-            _validate_unit_compatibility(typed_methylnitroaniline, usys)
-        from gmso.formats.lammpsdata import _unit_style_factory
+            _validate_unit_compatibility(typed_methylnitroaniline, base_unyts)
 
-        usys = _unit_style_factory("real")
+        usys = LAMMPS_UnitSystems("real")
         _validate_unit_compatibility(typed_methylnitroaniline, usys)
 
     def test_units_in_headers(self, typed_ethane):
@@ -599,7 +599,7 @@ class TestLammpsWriter(BaseTest):
         assert largest_eps_written == 0.5
 
     def test_unit_style_factor(self):
-        from gmso.formats.lammpsdata import _unit_style_factory
+        from gmso.utils.units import LAMMPS_UnitSystems
 
         for styleStr in [
             "real",
@@ -610,8 +610,11 @@ class TestLammpsWriter(BaseTest):
             "micro",
             "nano",
         ]:
-            assert _unit_style_factory(styleStr).name == "lammps_" + styleStr
+            assert (
+                LAMMPS_UnitSystems(styleStr).usystem.name
+                == "lammps_" + styleStr
+            )
         from gmso.exceptions import NotYetImplementedWarning
 
         with pytest.raises(NotYetImplementedWarning):
-            _unit_style_factory("None")
+            LAMMPS_UnitSystems("None")

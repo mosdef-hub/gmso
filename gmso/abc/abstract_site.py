@@ -4,11 +4,15 @@ from typing import Any, ClassVar, NamedTuple, Optional, Sequence, TypeVar, Union
 
 import numpy as np
 import unyt as u
-from pydantic import Field, StrictInt, StrictStr, validator
 from unyt.exceptions import InvalidUnitOperation
 
 from gmso.abc.gmso_base import GMSOBase
 from gmso.exceptions import GMSOError
+
+try:
+    from pydantic.v1 import Field, StrictInt, StrictStr, validator
+except ImportError:
+    from pydantic import Field, StrictInt, StrictStr, validator
 
 PositionType = Union[Sequence[float], np.ndarray, u.unyt_array]
 MoleculeType = NamedTuple("Molecule", name=StrictStr, number=StrictInt)

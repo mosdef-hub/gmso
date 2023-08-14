@@ -3,7 +3,6 @@ import warnings
 from typing import Optional, Set
 
 import unyt as u
-from pydantic import Field, validator
 
 from gmso.core.parametric_potential import ParametricPotential
 from gmso.utils._constants import UNIT_WARNING_STRING
@@ -13,6 +12,11 @@ from gmso.utils.misc import (
     unyt_compare,
     unyt_to_hashable,
 )
+
+try:
+    from pydantic.v1 import Field, validator
+except ImportError:
+    from pydantic import Field, validator
 
 
 class AtomType(ParametricPotential):

@@ -1,5 +1,4 @@
 import pytest
-from pydantic import ValidationError
 
 from gmso.core.angle import Angle
 from gmso.core.angle_type import AngleType
@@ -7,6 +6,11 @@ from gmso.core.atom import Atom
 from gmso.core.atom_type import AtomType
 from gmso.core.topology import Topology
 from gmso.tests.base_test import BaseTest
+
+try:
+    from pydantic.v1 import ValidationError
+except ImportError:
+    from pydantic import ValidationError
 
 
 class TestAngle(BaseTest):

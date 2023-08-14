@@ -1,13 +1,17 @@
 import numpy as np
 import pytest
 import unyt as u
-from pydantic import ValidationError
 
 from gmso.core.atom import Atom
 from gmso.core.atom_type import AtomType
 from gmso.core.element import Lithium, Sulfur
 from gmso.exceptions import GMSOError
 from gmso.tests.base_test import BaseTest
+
+try:
+    from pydantic.v1 import ValidationError
+except ImportError:
+    from pydantic import ValidationError
 
 
 class TestSite(BaseTest):

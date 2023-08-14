@@ -21,7 +21,7 @@ from gmso.exceptions import GMSOError
 from gmso.external.convert_parmed import from_parmed
 from gmso.tests.base_test import BaseTest
 from gmso.utils.io import get_fn, has_pandas, has_parmed, import_
-from gmso.utils.units import GMSO_UnitRegsitry as UnitReg
+from gmso.utils.units import GMSO_UnitRegistry as UnitReg
 
 if has_parmed:
     pmd = import_("parmed")
