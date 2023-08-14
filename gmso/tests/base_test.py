@@ -72,9 +72,7 @@ class BaseTest:
     @pytest.fixture
     def typed_benzene_ua_system(self, benzene_ua_box):
         top = benzene_ua_box
-        trappe_benzene = ForceField(
-            get_path("benzene_trappe-ua.xml")
-        )
+        trappe_benzene = ForceField(get_path("benzene_trappe-ua.xml"))
         top = apply(top=top, forcefields=trappe_benzene, remove_untyped=True)
         return top
 
