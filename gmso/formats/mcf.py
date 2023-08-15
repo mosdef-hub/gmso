@@ -144,8 +144,7 @@ def _id_rings_fragments(top):
 
     # First create a neighbor list for each atom
     neigh_dict = {
-        i: list(bond_graph.neighbors(i))
-        for i in range(bond_graph.number_of_nodes())
+        i: list(bond_graph.neighbors(i)) for i in range(bond_graph.number_of_nodes())
     }
 
     # Handle fused/adjoining rings
@@ -221,11 +220,9 @@ def _write_atom_information(mcf, top, in_ring):
     max_element_length = 6
     max_atomtype_length = 20
 
-    # Sort to make sure the atom order matches the topology indexing
-    sorted_sites = [site for site in top.sites]
-    sorted_sites.sort(key=lambda site: top.get_index(site))
-    names = [site.name for site in sorted_sites]
-    types = [site.atom_type.name for site in sorted_sites]
+    sites, names, types = zip(
+        *[(site, site.name, site.atom_type.name) for site in top.sites]
+    )
 
     # Check constraints on atom type length and element name length
     n_unique_names = len(set(names))
@@ -262,7 +259,7 @@ def _write_atom_information(mcf, top, in_ring):
 
     # Detect VDW style
     vdw_styles = set()
-    for site in sorted_sites:
+    for site in sites:
         vdw_styles.add(_get_vdw_style(site))
     if len(vdw_styles) > 1:
         raise GMSOError(
@@ -306,12 +303,8 @@ def _write_atom_information(mcf, top, in_ring):
                 "{:10.5f}  "
                 "{:10.5f}".format(
                     vdw_style,
-                    (site.atom_type.parameters["epsilon"] / u.kb)
-                    .in_units("K")
-                    .value,
-                    site.atom_type.parameters["sigma"]
-                    .in_units("Angstrom")
-                    .value,
+                    (site.atom_type.parameters["epsilon"] / u.kb).in_units("K").value,
+                    site.atom_type.parameters["sigma"].in_units("Angstrom").value,
                 )
             )
         elif vdw_style == "Mie":
@@ -322,12 +315,8 @@ def _write_atom_information(mcf, top, in_ring):
                 "{:8.3f}  "
                 "{:8.3f}".format(
                     vdw_style,
-                    (site.atom_type.parameters["epsilon"] / u.kb)
-                    .in_units("K")
-                    .value,
-                    site.atom_type.parameters["sigma"]
-                    .in_units("Angstrom")
-                    .value,
+                    (site.atom_type.parameters["epsilon"] / u.kb).in_units("K").value,
+                    site.atom_type.parameters["sigma"].in_units("Angstrom").value,
                     site.atom_type.parameters["n"].value,
                     site.atom_type.parameters["m"].value,
                 )
@@ -349,9 +338,7 @@ def _write_bond_information(mcf, top):
 
     """
     mcf.write("\n!Bond Format\n")
-    mcf.write(
-        "!index i j type parameters\n" + '!type="fixed", parms=bondLength\n'
-    )
+    mcf.write("!index i j type parameters\n" + '!type="fixed", parms=bondLength\n')
     mcf.write("\n# Bond_Info\n")
     mcf.write("{:d}\n".format(len(top.bonds)))
     for idx, bond in enumerate(top.bonds):
@@ -366,9 +353,7 @@ def _write_bond_information(mcf, top):
                 + 1,  # TODO: Confirm the +1 here
                 top.get_index(bond.connection_members[1]) + 1,
                 "fixed",
-                bond.connection_type.parameters["r_eq"]
-                .in_units(u.Angstrom)
-                .value,
+                bond.connection_type.parameters["r_eq"].in_units(u.Angstrom).value,
             )
         )
 
@@ -506,9 +491,7 @@ def _write_dihedral_information(mcf, top):
                 "{:10.5f}  "
                 "{:10.5f}\n".format(
                     dihedral_style,
-                    dihedral.connection_type.parameters["k"]
-                    .in_units("kJ/mol")
-                    .value,
+                    dihedral.connection_type.parameters["k"].in_units("kJ/mol").value,
                     dihedral.connection_type.parameters["n"],
                     dihedral.connection_type.parameters["phi_eq"]
                     .in_units(u.degrees)
@@ -522,9 +505,7 @@ def _write_dihedral_information(mcf, top):
                 "{:10.5f}\n".format(
                     dihedral_style,
                     0.5
-                    * dihedral.connection_type.parameters["k"]
-                    .in_units("kJ/mol")
-                    .value,
+                    * dihedral.connection_type.parameters["k"].in_units("kJ/mol").value,
                     dihedral.connection_type.parameters["phi_eq"]
                     .in_units(u.degrees)
                     .value,
@@ -532,9 +513,7 @@ def _write_dihedral_information(mcf, top):
             )
 
         else:
-            raise GMSOError(
-                "Unsupported dihedral style for Cassandra MCF writer"
-            )
+            raise GMSOError("Unsupported dihedral style for Cassandra MCF writer")
 
 
 def _write_improper_information(mcf, top):
@@ -606,9 +585,7 @@ def _write_fragment_information(mcf, top, frag_list, frag_conn):
             mcf.write("1\n")
             mcf.write("1 2 1 2\n")
         else:
-            warnings.warn(
-                "More than two atoms present but no fragments identified."
-            )
+            warnings.warn("More than two atoms present but no fragments identified.")
             mcf.write("0\n")
     else:
         mcf.write("{:d}\n".format(len(frag_list)))
@@ -621,9 +598,7 @@ def _write_fragment_information(mcf, top, frag_list, frag_conn):
     mcf.write("\n\n# Fragment_Connectivity\n")
     mcf.write("{:d}\n".format(len(frag_conn)))
     for i, conn in enumerate(frag_conn):
-        mcf.write(
-            "{:d}    {:d}    {:d}\n".format(i + 1, conn[0] + 1, conn[1] + 1)
-        )
+        mcf.write("{:d}    {:d}    {:d}\n".format(i + 1, conn[0] + 1, conn[1] + 1))
 
 
 def _write_intrascaling_information(mcf, top):
@@ -658,9 +633,7 @@ def _check_compatibility(top):
     if not isinstance(top, Topology):
         raise GMSOError("MCF writer requires a Topology object.")
     if not all([site.atom_type.name for site in top.sites]):
-        raise GMSOError(
-            "MCF writing not supported without parameterized forcefield."
-        )
+        raise GMSOError("MCF writing not supported without parameterized forcefield.")
     accepted_potentials = (
         potential_templates["LennardJonesPotential"],
         potential_templates["MiePotential"],
