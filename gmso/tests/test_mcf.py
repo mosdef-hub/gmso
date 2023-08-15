@@ -232,3 +232,18 @@ class TestMCF(BaseTest):
         # .in_units(u.kilojoule / u.mole)
         # .value,
         # )
+
+    def test_typed_ethane_neutral(self, typed_ethane, parse_mcf):
+        top = typed_ethane
+        write_mcf(top, "ethane.mcf")
+
+        mcf_data, mcf_idx = parse_mcf("ethane.mcf")
+
+        n_sites = len(top.sites)
+        net_q = 0.0
+        for idx, site in enumerate(range(n_sites)):
+            net_q += float(mcf_data[mcf_idx["Atom_Info"] + 2 + idx][4])
+        assert np.isclose(
+            net_q,
+            0.0,
+        )
