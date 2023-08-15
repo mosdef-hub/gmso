@@ -116,18 +116,27 @@ class TestMCF(BaseTest):
             top.sites[0].atom_type.parameters["m"],
         )
 
-    def test_modified_potentials(self, n_typed_ar_system):
-        top = n_typed_ar_system(n_sites=1)
+    def test_modified_incompatible_expressions(self, typed_ethane):
+        top = typed_ethane
 
+        # Test that we can't write a MCF with a modified potential
         next(iter(top.atom_types)).set_expression("sigma + epsilon*r")
-
         with pytest.raises(EngineIncompatibilityError):
-            top.save("out.mcf")
+            top.save("lj.mcf")
 
-        alternate_lj = "4*epsilon*sigma**12/r**12 - 4*epsilon*sigma**6/r**6"
-        next(iter(top.atom_types)).set_expression(alternate_lj)
+        next(iter(top.bond_types)).set_expression("k*(r-r_eq)**3")
+        with pytest.raises(EngineIncompatibilityError):
+            top.save("bond.mcf")
 
-        top.save("ar.mcf")
+        # Modified angles
+        next(iter(top.angle_types)).set_expression("0.5 * k*(theta-theta_eq)**3")
+        with pytest.raises(EngineIncompatibilityError):
+            top.save("angle.mcf")
+
+        # Modified dihedrals
+        #next(iter(top.dihedral_types)).set_expression("c0 * c1 * c2 * c3 * c4 * c5")
+        #with pytest.raises(EngineIncompatibilityError):
+        #    top.save("dihedral.mcf")
 
     def test_scaling_factors(self, n_typed_ar_system, parse_mcf):
         top = n_typed_ar_system(n_sites=1)
@@ -212,6 +221,7 @@ class TestMCF(BaseTest):
             .in_units(u.degree)
             .value,
         )
+        # TODO: account for 0.5 factors
         # assert np.isclose(
         # float(mcf_data[mcf_idx["Angle_Info"] + 2][5]),
         # (top.angles[0].angle_type.parameters["k"] / u.kb)
@@ -224,6 +234,7 @@ class TestMCF(BaseTest):
         dihedral_style = mcf_data[mcf_idx["Dihedral_Info"] + 2][5].lower()
         assert dihedral_style.lower() == "opls"
 
+        # TODO: account for 0.5 factors
         # for idx, k in enumerate(["k1", "k2", "k3", "k4"]):
         # assert np.isclose(
         # float(mcf_data[mcf_idx["Dihedral_Info"] + 2][6 + idx]),
