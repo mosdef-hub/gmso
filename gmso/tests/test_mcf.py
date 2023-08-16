@@ -41,19 +41,29 @@ class TestMCF(BaseTest):
 
         return _parse_mcf
 
-    def test_write_lj_simple(self, n_typed_ar_system):
-        top = n_typed_ar_system(n_sites=1)
-        top.save("ar.mcf")
+    @pytest.fixture
+    def is_charge_neutral(self):
+        def _is_charge_neutral(mcf_data, mcf_idx):
+            n_sites = int(mcf_data[mcf_idx["Atom_Info"] + 1])
+            net_q = 0.0
+            for idx, site in enumerate(range(n_sites)):
+                net_q += float(mcf_data[mcf_idx["Atom_Info"] + 2 + idx][4])
+            return np.isclose(
+                net_q,
+                0.0,
+            )
 
-    def test_write_mie_simple(self, n_typed_xe_mie):
-        top = n_typed_xe_mie()
-        top.save("xe.mcf")
+        return _is_charge_neutral
 
-    def test_write_lj_full(self, n_typed_ar_system, parse_mcf):
+    def test_write_lj_full(
+        self, n_typed_ar_system, parse_mcf, is_charge_neutral
+    ):
         top = n_typed_ar_system(n_sites=1)
         top.save("ar.mcf")
 
         mcf_data, mcf_idx = parse_mcf("ar.mcf")
+
+        assert is_charge_neutral(mcf_data, mcf_idx)
 
         assert mcf_data[mcf_idx["Atom_Info"] + 1][0] == "1"
         assert mcf_data[mcf_idx["Atom_Info"] + 2][1] == "Ar"
@@ -98,12 +108,13 @@ class TestMCF(BaseTest):
         assert np.allclose(float(mcf_data[-4][2]), 0.5)
         assert np.allclose(float(mcf_data[-4][3]), 1.0)
 
-    def test_write_mie_full(self, n_typed_xe_mie, parse_mcf):
+    def test_write_mie_full(self, n_typed_xe_mie, parse_mcf, is_charge_neutral):
         top = n_typed_xe_mie()
         top.save("xe.mcf")
 
         mcf_data, mcf_idx = parse_mcf("xe.mcf")
 
+        assert is_charge_neutral(mcf_data, mcf_idx)
         # Check a some atom info
         assert mcf_data[mcf_idx["Atom_Info"] + 1][0] == "1"
         assert mcf_data[mcf_idx["Atom_Info"] + 2][1] == "Xe"
@@ -181,11 +192,13 @@ class TestMCF(BaseTest):
         # with pytest.raises(EngineIncompatibilityError):
         #    top.save("dihedral.mcf")
 
-    def test_typed_ethane(self, typed_ethane, parse_mcf):
+    def test_typed_ethane(self, typed_ethane, parse_mcf, is_charge_neutral):
         top = typed_ethane
         write_mcf(top, "ethane.mcf")
 
         mcf_data, mcf_idx = parse_mcf("ethane.mcf")
+
+        assert is_charge_neutral(mcf_data, mcf_idx)
 
         # Check atom info
         assert mcf_data[mcf_idx["Atom_Info"] + 1][0] == "8"
@@ -257,18 +270,3 @@ class TestMCF(BaseTest):
         # .in_units(u.kilojoule / u.mole)
         # .value,
         # )
-
-    def test_typed_ethane_neutral(self, typed_ethane, parse_mcf):
-        top = typed_ethane
-        write_mcf(top, "ethane.mcf")
-
-        mcf_data, mcf_idx = parse_mcf("ethane.mcf")
-
-        n_sites = len(top.sites)
-        net_q = 0.0
-        for idx, site in enumerate(range(n_sites)):
-            net_q += float(mcf_data[mcf_idx["Atom_Info"] + 2 + idx][4])
-        assert np.isclose(
-            net_q,
-            0.0,
-        )
