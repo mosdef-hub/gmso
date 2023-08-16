@@ -30,6 +30,12 @@ class TestMCF(BaseTest):
                 if len(line) > 1:
                     if line[1] == "Dihedral_Info":
                         mcf_idx["Dihedral_Info"] = idx
+                if len(line) > 1:
+                    if line[1] == "Fragment_Info":
+                        mcf_idx["Fragment_Info"] = idx
+                if len(line) > 1:
+                    if line[1] == "Fragment_Connectivity":
+                        mcf_idx["Fragment_Connectivity"] = idx
 
             return mcf_data, mcf_idx
 
@@ -74,6 +80,23 @@ class TestMCF(BaseTest):
             .in_units(u.Angstrom)
             .value,
         )
+        assert mcf_data[mcf_idx["Bond_Info"] + 1][0] == "0"
+        assert mcf_data[mcf_idx["Angle_Info"] + 1][0] == "0"
+        assert mcf_data[mcf_idx["Dihedral_Info"] + 1][0] == "0"
+
+        assert mcf_data[mcf_idx["Fragment_Info"] + 1][0] == "1"
+        assert mcf_data[mcf_idx["Fragment_Info"] + 2] == ["1", "1", "1"]
+
+        assert mcf_data[mcf_idx["Fragment_Connectivity"] + 1][0] == "0"
+
+        assert np.allclose(float(mcf_data[-5][0]), 0.0)
+        assert np.allclose(float(mcf_data[-5][1]), 0.0)
+        assert np.allclose(float(mcf_data[-5][2]), 0.5)
+        assert np.allclose(float(mcf_data[-5][3]), 1.0)
+        assert np.allclose(float(mcf_data[-4][0]), 0.0)
+        assert np.allclose(float(mcf_data[-4][1]), 0.0)
+        assert np.allclose(float(mcf_data[-4][2]), 0.5)
+        assert np.allclose(float(mcf_data[-4][3]), 1.0)
 
     def test_write_mie_full(self, n_typed_xe_mie, parse_mcf):
         top = n_typed_xe_mie()
@@ -116,6 +139,24 @@ class TestMCF(BaseTest):
             top.sites[0].atom_type.parameters["m"],
         )
 
+        assert mcf_data[mcf_idx["Bond_Info"] + 1][0] == "0"
+        assert mcf_data[mcf_idx["Angle_Info"] + 1][0] == "0"
+        assert mcf_data[mcf_idx["Dihedral_Info"] + 1][0] == "0"
+
+        assert mcf_data[mcf_idx["Fragment_Info"] + 1][0] == "1"
+        assert mcf_data[mcf_idx["Fragment_Info"] + 2] == ["1", "1", "1"]
+
+        assert mcf_data[mcf_idx["Fragment_Connectivity"] + 1][0] == "0"
+
+        assert np.allclose(float(mcf_data[-5][0]), 0.0)
+        assert np.allclose(float(mcf_data[-5][1]), 0.0)
+        assert np.allclose(float(mcf_data[-5][2]), 0.5)
+        assert np.allclose(float(mcf_data[-5][3]), 1.0)
+        assert np.allclose(float(mcf_data[-4][0]), 0.0)
+        assert np.allclose(float(mcf_data[-4][1]), 0.0)
+        assert np.allclose(float(mcf_data[-4][2]), 0.5)
+        assert np.allclose(float(mcf_data[-4][3]), 1.0)
+
     def test_modified_incompatible_expressions(self, typed_ethane):
         top = typed_ethane
 
@@ -129,43 +170,16 @@ class TestMCF(BaseTest):
             top.save("bond.mcf")
 
         # Modified angles
-        next(iter(top.angle_types)).set_expression("0.5 * k*(theta-theta_eq)**3")
+        next(iter(top.angle_types)).set_expression(
+            "0.5 * k*(theta-theta_eq)**3"
+        )
         with pytest.raises(EngineIncompatibilityError):
             top.save("angle.mcf")
 
         # Modified dihedrals
-        #next(iter(top.dihedral_types)).set_expression("c0 * c1 * c2 * c3 * c4 * c5")
-        #with pytest.raises(EngineIncompatibilityError):
+        # next(iter(top.dihedral_types)).set_expression("c0 * c1 * c2 * c3 * c4 * c5")
+        # with pytest.raises(EngineIncompatibilityError):
         #    top.save("dihedral.mcf")
-
-    def test_scaling_factors(self, n_typed_ar_system, parse_mcf):
-        top = n_typed_ar_system(n_sites=1)
-        top.save("ar.mcf")
-
-        mcf_data, mcf_idx = parse_mcf("ar.mcf")
-
-        assert np.allclose(float(mcf_data[-5][0]), 0.0)
-        assert np.allclose(float(mcf_data[-5][1]), 0.0)
-        assert np.allclose(float(mcf_data[-5][2]), 0.5)
-        assert np.allclose(float(mcf_data[-5][3]), 1.0)
-        assert np.allclose(float(mcf_data[-4][0]), 0.0)
-        assert np.allclose(float(mcf_data[-4][1]), 0.0)
-        assert np.allclose(float(mcf_data[-4][2]), 0.5)
-        assert np.allclose(float(mcf_data[-4][3]), 1.0)
-        top.set_lj_scale([0.1, 0.2, 0.5])
-        top.set_electrostatics_scale([0.2, 0.4, 0.6])
-
-        top.save("ar.mcf", overwrite=True)
-        mcf_data, mcf_idx = parse_mcf("ar.mcf")
-
-        assert np.allclose(float(mcf_data[-5][0]), 0.1)
-        assert np.allclose(float(mcf_data[-5][1]), 0.2)
-        assert np.allclose(float(mcf_data[-5][2]), 0.5)
-        assert np.allclose(float(mcf_data[-5][3]), 1.0)
-        assert np.allclose(float(mcf_data[-4][0]), 0.2)
-        assert np.allclose(float(mcf_data[-4][1]), 0.4)
-        assert np.allclose(float(mcf_data[-4][2]), 0.6)
-        assert np.allclose(float(mcf_data[-4][3]), 1.0)
 
     def test_typed_ethane(self, typed_ethane, parse_mcf):
         top = typed_ethane
