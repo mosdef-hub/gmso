@@ -108,6 +108,14 @@ class TestMCF(BaseTest):
         assert np.allclose(float(mcf_data[-4][2]), 0.5)
         assert np.allclose(float(mcf_data[-4][3]), 1.0)
 
+    def test_write_not_neutral(
+        self, n_typed_ar_system, parse_mcf, is_charge_neutral
+    ):
+        top = n_typed_ar_system(n_sites=1)
+        top.sites[0].charge = 1.0 * u.elementary_charge
+        with pytest.raises(ValueError):
+            top.save("ar.mcf")
+
     def test_write_mie_full(self, n_typed_xe_mie, parse_mcf, is_charge_neutral):
         top = n_typed_xe_mie()
         top.save("xe.mcf")

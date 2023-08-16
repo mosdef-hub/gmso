@@ -3,6 +3,7 @@ import datetime
 import warnings
 
 import networkx as nx
+import numpy as np
 import sympy
 import unyt as u
 
@@ -260,6 +261,17 @@ def _write_atom_information(mcf, top, in_ring):
         warnings.warn(
             "The number of unique atomtypes has been reduced due to "
             f"shortening the atomtype name to {max_atomtype_length} characters."
+        )
+
+    # Check charge neutrality
+    net_q = 0.0
+    for idx, site in enumerate(range(top.n_sites)):
+        net_q += top.sites[idx].charge.in_units(u.elementary_charge).value
+
+    if not np.isclose(net_q, 0.0):
+        raise ValueError(
+            "Net charge of the system is not zero. "
+            "Cassandra MFC requires a neutral system."
         )
 
     # Detect VDW style
