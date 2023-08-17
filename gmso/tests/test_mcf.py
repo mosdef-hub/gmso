@@ -7,57 +7,49 @@ from gmso.formats.mcf import write_mcf
 from gmso.tests.base_test import BaseTest
 
 
+def parse_mcf(filename):
+    mcf_data = []
+    mcf_idx = {}
+    with open(filename) as f:
+        for line in f:
+            mcf_data.append(line.strip().split())
+
+    for idx, line in enumerate(mcf_data):
+        if len(line) > 1:
+            if line[1] == "Atom_Info":
+                mcf_idx["Atom_Info"] = idx
+        if len(line) > 1:
+            if line[1] == "Bond_Info":
+                mcf_idx["Bond_Info"] = idx
+        if len(line) > 1:
+            if line[1] == "Angle_Info":
+                mcf_idx["Angle_Info"] = idx
+        if len(line) > 1:
+            if line[1] == "Dihedral_Info":
+                mcf_idx["Dihedral_Info"] = idx
+        if len(line) > 1:
+            if line[1] == "Fragment_Info":
+                mcf_idx["Fragment_Info"] = idx
+        if len(line) > 1:
+            if line[1] == "Fragment_Connectivity":
+                mcf_idx["Fragment_Connectivity"] = idx
+
+    return mcf_data, mcf_idx
+
+
+def is_charge_neutral(mcf_data, mcf_idx):
+    n_sites = int(mcf_data[mcf_idx["Atom_Info"] + 1][0])
+    net_q = 0.0
+    for idx, site in enumerate(range(n_sites)):
+        net_q += float(mcf_data[mcf_idx["Atom_Info"] + 2 + idx][4])
+    return np.isclose(
+        net_q,
+        0.0,
+    )
+
+
 class TestMCF(BaseTest):
-    @pytest.fixture
-    def parse_mcf(self):
-        def _parse_mcf(filename):
-            mcf_data = []
-            mcf_idx = {}
-            with open(filename) as f:
-                for line in f:
-                    mcf_data.append(line.strip().split())
-
-            for idx, line in enumerate(mcf_data):
-                if len(line) > 1:
-                    if line[1] == "Atom_Info":
-                        mcf_idx["Atom_Info"] = idx
-                if len(line) > 1:
-                    if line[1] == "Bond_Info":
-                        mcf_idx["Bond_Info"] = idx
-                if len(line) > 1:
-                    if line[1] == "Angle_Info":
-                        mcf_idx["Angle_Info"] = idx
-                if len(line) > 1:
-                    if line[1] == "Dihedral_Info":
-                        mcf_idx["Dihedral_Info"] = idx
-                if len(line) > 1:
-                    if line[1] == "Fragment_Info":
-                        mcf_idx["Fragment_Info"] = idx
-                if len(line) > 1:
-                    if line[1] == "Fragment_Connectivity":
-                        mcf_idx["Fragment_Connectivity"] = idx
-
-            return mcf_data, mcf_idx
-
-        return _parse_mcf
-
-    @pytest.fixture
-    def is_charge_neutral(self):
-        def _is_charge_neutral(mcf_data, mcf_idx):
-            n_sites = int(mcf_data[mcf_idx["Atom_Info"] + 1])
-            net_q = 0.0
-            for idx, site in enumerate(range(n_sites)):
-                net_q += float(mcf_data[mcf_idx["Atom_Info"] + 2 + idx][4])
-            return np.isclose(
-                net_q,
-                0.0,
-            )
-
-        return _is_charge_neutral
-
-    def test_write_lj_full(
-        self, n_typed_ar_system, parse_mcf, is_charge_neutral
-    ):
+    def test_write_lj_full(self, n_typed_ar_system):
         top = n_typed_ar_system(n_sites=1)
         top.save("ar.mcf")
 
@@ -108,15 +100,13 @@ class TestMCF(BaseTest):
         assert np.allclose(float(mcf_data[-4][2]), 0.5)
         assert np.allclose(float(mcf_data[-4][3]), 1.0)
 
-    def test_write_not_neutral(
-        self, n_typed_ar_system, parse_mcf, is_charge_neutral
-    ):
+    def test_write_not_neutral(self, n_typed_ar_system):
         top = n_typed_ar_system(n_sites=1)
         top.sites[0].charge = 1.0 * u.elementary_charge
         with pytest.raises(ValueError):
             top.save("ar.mcf")
 
-    def test_write_mie_full(self, n_typed_xe_mie, parse_mcf, is_charge_neutral):
+    def test_write_mie_full(self, n_typed_xe_mie):
         top = n_typed_xe_mie()
         top.save("xe.mcf")
 
@@ -200,7 +190,7 @@ class TestMCF(BaseTest):
         # with pytest.raises(EngineIncompatibilityError):
         #    top.save("dihedral.mcf")
 
-    def test_typed_ethane(self, typed_ethane, parse_mcf, is_charge_neutral):
+    def test_typed_ethane(self, typed_ethane):
         top = typed_ethane
         write_mcf(top, "ethane.mcf")
 
