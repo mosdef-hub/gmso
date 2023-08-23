@@ -4,6 +4,7 @@ from warnings import warn
 import mbuild as mb
 import numpy as np
 import unyt as u
+from unyt import Unit
 from boltons.setutils import IndexedSet
 
 from gmso.core.atom import Atom
@@ -271,7 +272,8 @@ def _parse_site(site_map, particle, search_method, infer_element=False):
         ele = search_method(particle.name) if infer_element else None
 
     charge = particle.charge * u.elementary_charge if particle.charge else None
-    mass = particle.mass * u.amu if particle.mass else None
+    #mass = particle.mass * u.amu if particle.mass else None
+    mass = particle.mass * Unit('amu') if particle.mass else None
 
     site = Atom(
         name=particle.name,
