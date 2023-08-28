@@ -48,6 +48,9 @@ class TestGro(BaseTest):
         top = from_parmed(pmd.load_file(get_fn("ethane.gro"), structure=True))
         top.save("out.gro")
 
+        read_top = Topology("out.gro")
+        assert np.all(list(map(lambda x: x.positions >= 0, read_top.sites)))
+
     def test_write_gro_with_shift_coord(self):
         top = from_parmed(pmd.load_file(get_fn("ethane.gro"), structure=True))
         top.save("out.gro", shift_coord=True)
