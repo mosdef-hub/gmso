@@ -122,7 +122,7 @@ def write_gro(top, filename, precision=3, shift_coord=False):
     precision : int, optional, default=3
         The number of sig fig to write out the position in.
     shift_coord : bool, optional, default=False
-        If True, shift the coordinates of all sites by the minimum position 
+        If True, shift the coordinates of all sites by the minimum position
         to ensure all sites have non-negative positions. This is not a requirement
         for GRO files, but can be useful for visualizing.
 
