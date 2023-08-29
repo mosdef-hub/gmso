@@ -12,7 +12,7 @@ def apply(
     forcefields,
     match_ff_by="molecule",
     identify_connections=False,
-    identify_connected_components=True,
+    identify_connected_components=False,
     use_molecule_info=False,
     assert_bond_params=True,
     assert_angle_params=True,
