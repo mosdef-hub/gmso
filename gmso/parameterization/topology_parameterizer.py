@@ -58,44 +58,24 @@ class TopologyParameterizationConfig(GMSOBase):
         "angle, dihedral, improper etc",
     )
 
-    identify_connected_components: bool = Field(
+    speedup_by_molgraph: bool = Field(
         default=False,
         description="A flag to determine whether or not to search the topology"
         " for repeated disconnected structures, otherwise known as "
         "molecules and type each molecule only once.",
     )
 
-    use_molecule_info: bool = Field(
+    speedup_by_moltag: bool = Field(
         default=False,
         description="A flag to determine whether or not to look at site.molecule "
         "to look parameterize each molecule only once. Will only be used if "
         "identify_connected_components=False",
-    )  # Unused
-
-    assert_bond_params: bool = Field(
-        default=True,
-        description="If True, an error is raised if parameters are not found for "
-        "all system bonds.",
     )
 
-    assert_angle_params: bool = Field(
-        default=True,
-        description="If True, an error is raised if parameters are not found for "
-        "all system angles",
-    )
-
-    assert_dihedral_params: bool = (
-        Field(
-            default=True,
-            description="If True, an error is raised if parameters are not found for "
-            "all system dihedrals.",
-        ),
-    )
-
-    assert_improper_params: bool = Field(
-        default=False,
-        description="If True, an error is raised if parameters are not found for "
-        "all system impropers.",
+    ignore_params: list = Field(
+        default=[],
+        description="Skipping the checks that make sure all connections (in the list) "
+        "have a connection types.",
     )
 
     remove_untyped: bool = Field(
@@ -170,16 +150,20 @@ class TopologyParameterizer(GMSOBase):
             impropers = top.impropers
 
         self._apply_connection_parameters(
-            bonds, ff, self.config.assert_bond_params
+            bonds, ff, False if "bond" in self.config.ignore_params else True
         )
         self._apply_connection_parameters(
-            angles, ff, self.config.assert_angle_params
+            angles, ff, False if "angle" in self.config.ignore_params else True
         )
         self._apply_connection_parameters(
-            dihedrals, ff, self.config.assert_dihedral_params
+            dihedrals,
+            ff,
+            False if "dihedral" in self.config.ignore_params else True,
         )
         self._apply_connection_parameters(
-            impropers, ff, self.config.assert_improper_params
+            impropers,
+            ff,
+            False if "improper" in self.config.ignore_params else True,
         )
 
     def _apply_connection_parameters(
