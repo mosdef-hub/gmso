@@ -831,7 +831,8 @@ class Topology(object):
             Improper: self._impropers,
         }
         connections_sets[type(connection)].add(connection)
-
+        for site in connection.connection_members:
+            site.connections.add(connection)
         if update_types:
             self.update_topology()
 
