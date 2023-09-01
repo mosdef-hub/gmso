@@ -69,7 +69,7 @@ class TopologyParameterizationConfig(GMSOBase):
         default=False,
         description="A flag to determine whether or not to look at site.molecule "
         "to look parameterize each molecule only once. Will only be used if "
-        "identify_connected_components=False",
+        "speedup_by_molgraph=False",
     )
 
     ignore_params: list = Field(
@@ -114,7 +114,7 @@ class TopologyParameterizer(GMSOBase):
         else:
             return self.forcefields
 
-    def _parameterize_sites(self, sites, typemap, ff, use_molecule_info=None):
+    def _parameterize_sites(self, sites, typemap, ff, speedup_by_moltag=None):
         """Parameterize sites with appropriate atom-types from the forcefield."""
         for j, site in enumerate(sites):
             site.atom_type = ff.get_potential(
@@ -215,7 +215,7 @@ class TopologyParameterizer(GMSOBase):
                     )
 
     def _parameterize(
-        self, top, typemap, label_type=None, label=None, use_molecule_info=False
+        self, top, typemap, label_type=None, label=None, speedup_by_moltag=False
     ):
         """Parameterize a topology/subtopology based on an atomtype map."""
         if label and label_type:
@@ -226,7 +226,7 @@ class TopologyParameterizer(GMSOBase):
             sites = top.sites
 
         self._parameterize_sites(
-            sites, typemap, forcefield, use_molecule_info=use_molecule_info
+            sites, typemap, forcefield, speedup_by_moltag=speedup_by_moltag
         )
         self._parameterize_connections(
             top,
@@ -337,27 +337,27 @@ class TopologyParameterizer(GMSOBase):
                         self.topology,
                         self.config.match_ff_by,
                         label,
-                        self.config.use_molecule_info,
-                        self.config.identify_connected_components,
+                        self.config.speedup_by_moltag,
+                        self.config.speedup_by_molgraph,
                     )
                     self._parameterize(
                         self.topology,
                         typemap,
                         label_type=self.config.match_ff_by,
                         label=label,
-                        use_molecule_info=self.config.use_molecule_info,  # This will be removed from the future iterations
+                        speedup_by_moltag=self.config.speedup_by_moltag,  # This will be removed from the future iterations
                     )
         else:
             typemap = self._get_atomtypes(
                 self.get_ff(),
                 self.topology,
-                use_molecule_info=self.config.use_molecule_info,
-                use_isomorphic_checks=self.config.identify_connected_components,
+                speedup_by_moltag=self.config.speedup_by_moltag,
+                use_isomorphic_checks=self.config.speedup_by_molgraph,
             )
             self._parameterize(
                 self.topology,
                 typemap,
-                use_molecule_info=self.config.use_molecule_info,
+                speedup_by_moltag=self.config.speedup_by_moltag,
             )
 
         self._set_scaling_factors()  # Set global or per molecule scaling factors
@@ -401,7 +401,7 @@ class TopologyParameterizer(GMSOBase):
         topology,
         label_type=None,
         label=None,
-        use_molecule_info=False,
+        speedup_by_moltag=False,
         use_isomorphic_checks=False,
     ):
         """Run atom-typing in foyer and return the typemap."""
@@ -412,7 +412,7 @@ class TopologyParameterizer(GMSOBase):
             label,
         )
 
-        if use_molecule_info:
+        if speedup_by_moltag:
             # Iterate through foyer_topology_graph, which is a subgraph of label_type
             typemap, reference = dict(), dict()
             for connected_component in nx.connected_components(

@@ -48,7 +48,7 @@ class TestTrappeGMSO(ParameterizationBaseTest):
         apply(
             gmso_top,
             trappe_ua_gmso,
-            identify_connected_components=False,
+            speedup_by_molgraph=False,
             identify_connections=True,
         )
         gmso_top_from_parmeterized_pmd = from_parmed(struct_pmd)
