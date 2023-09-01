@@ -647,6 +647,26 @@ class Topology(object):
             ]
         )
 
+    def remove_site(self, site):
+        """"""
+        for connection in site.connections:
+            try:
+                self.remove_connection(connection)
+            except KeyError:
+                pass
+        self._sites.remove(site)
+
+    def remove_connection(self, connection):
+        """"""
+        if isinstance(connection, gmso.core.bond.Bond):
+            self._bonds.remove(connection)
+        elif isinstance(connection, gmso.core.angle.Angle):
+            self._angles.remove(connection)
+        elif isinstance(connection, gmso.core.dihedral.Dihedral):
+            self._dihedrals.remove(connection)
+        elif isinstance(connection, gmso.core.improper.Improper):
+            self._impropers.remove(connection)
+
     def set_scaling_factors(self, lj, electrostatics, *, molecule_id=None):
         """Set both lj and electrostatics scaling factors."""
         self.set_lj_scale(
