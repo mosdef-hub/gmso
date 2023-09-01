@@ -649,7 +649,8 @@ class Topology(object):
 
     def remove_site(self, site):
         """"""
-        for connection in site.connections:
+        site_connections = [con for con in site.connections]
+        for connection in site_connections:
             try:
                 self.remove_connection(connection)
             except KeyError:
@@ -658,6 +659,9 @@ class Topology(object):
 
     def remove_connection(self, connection):
         """"""
+        connection_sites = [site for site in connection.connection_members]
+        for site in connection_sites:
+            site.connections.remove(connection)
         if isinstance(connection, gmso.core.bond.Bond):
             self._bonds.remove(connection)
         elif isinstance(connection, gmso.core.angle.Angle):
