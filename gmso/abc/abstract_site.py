@@ -34,6 +34,7 @@ class Site(GMSOBase):
         "group",
         "molecule",
         "residue",
+        "connections",
     }
 
     __base_doc__: ClassVar[
@@ -51,6 +52,11 @@ class Site(GMSOBase):
     such that a label for a site can then be used to group sites together. The rules for defining a site label
     and their meaning the responsibility of the container where the sites will reside.
     """
+
+    connections_: set = Field(
+        set(),
+        description="Set of connections this site belongs to",
+    )
 
     name_: str = Field(
         "",
@@ -77,6 +83,10 @@ class Site(GMSOBase):
         default_factory=default_position,
         description="The 3D Cartesian coordinates of the position of the site",
     )
+
+    @property
+    def connections(self) -> set:
+        return self.__dict__.get("connections_")
 
     @property
     def name(self) -> str:
@@ -178,6 +188,7 @@ class Site(GMSOBase):
             "group_": "group",
             "molecule_": "molecule",
             "residue_": "residue",
+            "connections_": "connections",
         }
 
         alias_to_fields = {
