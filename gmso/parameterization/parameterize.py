@@ -43,7 +43,7 @@ def apply(
         the topology's bonding graph to smaller sub-graphs that correspond to an angle,
         dihedral, improper etc
 
-    speedup_by_molgraph: bool, optional, default=True
+    speedup_by_molgraph: bool, optional, default=False
         A flag to determine whether or not to search the topology for repeated disconnected
         structures, otherwise known as molecules and type each molecule only once.
         This option will be usefult to handle systems with many repeated small molecules,
