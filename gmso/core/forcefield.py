@@ -730,7 +730,9 @@ class ForceField(object):
         )
 
     @classmethod
-    @deprecate_function("The internal `from_xml` will be deprecated soon. Please load the XML with the `xml_from_forcefield_utilities`.")
+    @deprecate_function(
+        "The internal `from_xml` will be deprecated soon. Please load the XML with the `xml_from_forcefield_utilities`."
+    )
     def from_xml(cls, xmls_or_etrees, strict=True, greedy=True):
         """Create a gmso.Forcefield object from XML File(s).
 
