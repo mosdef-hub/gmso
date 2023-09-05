@@ -630,6 +630,18 @@ class Topology(object):
             set([ptype.expression for ptype in self._pairpotential_types])
         )
 
+    def get_connections_by_site(self, site, connections=None):
+        """ """
+        if connections is None:
+            connections = ["bonds", "angles", "dihedrals", "impropers"]
+        connection_dict = dict()
+        for conn_str in connections:
+            connection_dict[conn_str] = []
+            for conn in getattr(self, conn_str):
+                if site in conn.connection_members:
+                    connection_dict[conn_str].append(conn)
+        return connection_dict
+
     def get_lj_scale(self, *, molecule_id=None, interaction=None):
         """Return the selected lj_scales defined for this topology."""
         return self._get_scaling_factor(molecule_id, interaction, "lj_scale", 0)
@@ -649,19 +661,10 @@ class Topology(object):
 
     def remove_site(self, site):
         """"""
-        site_connections = [con for con in site.connections]
-        for connection in site_connections:
-            try:
-                self.remove_connection(connection)
-            except KeyError:
-                pass
         self._sites.remove(site)
 
     def remove_connection(self, connection):
         """"""
-        connection_sites = [site for site in connection.connection_members]
-        for site in connection_sites:
-            site.connections.remove(connection)
         if isinstance(connection, gmso.core.bond.Bond):
             self._bonds.remove(connection)
         elif isinstance(connection, gmso.core.angle.Angle):
@@ -855,8 +858,6 @@ class Topology(object):
             Improper: self._impropers,
         }
         connections_sets[type(connection)].add(connection)
-        for site in connection.connection_members:
-            site.connections.add(connection)
         if update_types:
             self.update_topology()
 
