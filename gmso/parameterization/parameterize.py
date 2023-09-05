@@ -46,13 +46,18 @@ def apply(
     speedup_by_molgraph: bool, optional, default=True
         A flag to determine whether or not to search the topology for repeated disconnected
         structures, otherwise known as molecules and type each molecule only once.
+        This option will be usefult to handle systems with many repeated small molecules,
+        but may slow down system with large molecule, e.g., monolayer.
 
     speedup_by_moltag : bool, optional, default=False
         A flag to determine whether or not to look at site.molecule_name to look parameterize
-        each molecule only once. Currently unused.
+        each molecule only once. This option provides speedup for topologies with properly
+        assigned molecule and residue labels.
 
-    ignore_params : list, optional, default=["impropers"]
+    ignore_params : set or list or tuple, optional, default=["impropers"]
         Skipping the checks that make sure all connections (in the list) have a connection types.
+        Available options includes "bonds", "angles", "dihedrals", and "impropers".
+        If you wish to have all connection types checks, provides an empty set/list/tuple.
 
     remove_untyped : bool, optional, default=False
         If True, after the atomtyping and parameterization step, remove all connection
@@ -67,6 +72,7 @@ def apply(
         this should be changed to False if further modification of expressions are
         necessary post parameterization.
     """
+    ignore_params = set([option.lower() for option in ignore_params])
     config = TopologyParameterizationConfig.parse_obj(
         dict(
             match_ff_by=match_ff_by,
