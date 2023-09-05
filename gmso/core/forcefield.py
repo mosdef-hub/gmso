@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Iterable
 
 from lxml import etree
+from pydantic import ValidationError
 
 from gmso.core.element import element_by_symbol
 from gmso.exceptions import (
@@ -573,7 +574,7 @@ class ForceField(object):
         try:
             loader = GMSOFFs()
             ff = loader.load(filename).to_gmso_ff()
-        except (ForceFieldParseError, FileNotFoundError):
+        except (ForceFieldParseError, FileNotFoundError, ValidationError):
             loader = FoyerFFs()
             ff = loader.load(filename).to_gmso_ff()
         return ff

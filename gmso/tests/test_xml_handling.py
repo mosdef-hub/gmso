@@ -104,7 +104,11 @@ class TestXMLHandling(BaseTest):
 
     def test_xml_error_handling(self):
         """Validate bad xml formatting in xmls."""
-        pass
+        file_path = "dummy_name.xml"
+        with pytest.raises(FileNotFoundError):
+            ForceField(file_path)
+        with pytest.raises(IndexError):
+            ForceField(get_path("empty_foyer.xml"))
 
     def test_kb_in_ffutils(self):
         xml_path = get_path("ff-example0.xml")
