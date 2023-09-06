@@ -69,7 +69,7 @@ class TopologyParameterizationConfig(GMSOBase):
         default=False,
         description="A flag to determine whether or not to look at site.molecule "
         "to look parameterize each molecule only once. Will only be used if "
-        "speedup_by_molgraph=False",
+        "speedup_by_molgraph=True",
     )
 
     ignore_params: list = Field(
