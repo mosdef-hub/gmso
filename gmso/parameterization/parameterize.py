@@ -50,7 +50,7 @@ def apply(
         but may slow down system with large molecule, e.g., monolayer.
 
     speedup_by_moltag : bool, optional, default=False
-        A flag to determine whether or not to look at site.molecule_name to look parameterize
+        A flag to determine whether or not to look at site.molecule_name to try to parameterize
         each molecule only once. This option provides speedup for topologies with properly
         assigned molecule and residue labels.
 
