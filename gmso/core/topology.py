@@ -630,18 +630,6 @@ class Topology(object):
             set([ptype.expression for ptype in self._pairpotential_types])
         )
 
-    def get_connections_by_site(self, site, connections=None):
-        """ """
-        if connections is None:
-            connections = ["bonds", "angles", "dihedrals", "impropers"]
-        connection_dict = dict()
-        for conn_str in connections:
-            connection_dict[conn_str] = []
-            for conn in getattr(self, conn_str):
-                if site in conn.connection_members:
-                    connection_dict[conn_str].append(conn)
-        return connection_dict
-
     def get_lj_scale(self, *, molecule_id=None, interaction=None):
         """Return the selected lj_scales defined for this topology."""
         return self._get_scaling_factor(molecule_id, interaction, "lj_scale", 0)
@@ -661,6 +649,8 @@ class Topology(object):
 
     def remove_site(self, site):
         """"""
+        for connection in self.iter_connections_by_site(site):
+            self.remove_connection(connection)
         self._sites.remove(site)
 
     def remove_connection(self, connection):
@@ -1392,6 +1382,15 @@ class Topology(object):
                     yield site
         else:
             return self.iter_sites("molecule", molecule_tag)
+
+    def iter_connections_by_site(self, site, connections=None):
+        """"""
+        if connections is None:
+            connections = ["bonds", "angles", "dihedrals", "impropers"]
+        for conn_str in connections:
+            for conn in getattr(self, conn_str):
+                if site in conn.connection_members:
+                    yield conn
 
     def create_subtop(self, label_type, label):
         """Create a new Topology object from a molecule or graup of the current Topology.
