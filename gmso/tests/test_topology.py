@@ -52,6 +52,13 @@ class TestTopology(BaseTest):
         top.add_site(site)
         assert top.n_sites == 1
 
+    def test_remove_site(self, ethane):
+        ethane.identify_connections()
+        for site in ethane.sites[2:]:
+            ethane.remove_site(site)
+        assert ethane.n_sites == 2
+        assert ethane.n_connections == 1
+
     def test_add_connection(self):
         top = Topology()
         atom1 = Atom(name="atom1")
@@ -63,6 +70,18 @@ class TestTopology(BaseTest):
         top.add_site(atom2)
 
         assert len(top.connections) == 1
+
+    def test_remove_connection(self):
+        top = Topology()
+        atom1 = Atom(name="atom1")
+        atom2 = Atom(name="atom2")
+        connect = Bond(connection_members=[atom1, atom2])
+
+        top.add_connection(connect)
+        top.add_site(atom1)
+        top.add_site(atom2)
+        top.remove_connection(connect)
+        assert top.n_connections == 0
 
     def test_add_box(self):
         top = Topology()
@@ -904,6 +923,33 @@ class TestTopology(BaseTest):
         for molecule_name in molecule_names:
             for site in labeled_top.iter_sites_by_molecule(molecule_name):
                 assert site.molecule.name == molecule_name
+
+    @pytest.mark.parametrize(
+        "connections",
+        ["bonds", "angles", "dihedrals", "impropers"],
+    )
+    def test_iter_connections_by_site(self, ethane, connections):
+        type_dict = {
+            "bonds": Bond,
+            "angles": Angle,
+            "dihedrals": Dihedral,
+            "impropers": Improper,
+        }
+        ethane.identify_connections()
+        site = ethane.sites[0]
+        for conn in ethane.iter_connections_by_site(
+            site=site, connections=[connections]
+        ):
+            assert site in conn.connection_members
+            assert isinstance(conn, type_dict[connections])
+
+    def test_iter_connections_by_site_none(self, ethane):
+        ethane.identify_connections()
+        site = ethane.sites[0]
+        for conn in ethane.iter_connections_by_site(
+            site=site, connections=None
+        ):
+            assert site in conn.connection_members
 
     def test_write_forcefield(self, typed_water_system):
         forcefield = typed_water_system.get_forcefield()
