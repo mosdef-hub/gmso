@@ -48,7 +48,7 @@ class TestOPLSGMSO(ParameterizationBaseTest):
 
         gmso_top_from_pmd = from_parmed(struct, refer_type=True)
         gmso_top = from_parmed(struct, refer_type=False)
-        apply(gmso_top, oplsaa_gmso, identify_connected_components=False)
+        apply(gmso_top, oplsaa_gmso, speedup_by_molgraph=False)
 
         assert_same_atom_params(gmso_top, gmso_top_from_pmd)
         assert_same_connection_params(gmso_top, gmso_top_from_pmd)
