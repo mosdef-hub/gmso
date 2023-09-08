@@ -665,6 +665,10 @@ class Topology(object):
         gmso.core.topology.Topology.iter_connections_by_site
             The method that shows all connections belonging to a specific site
         """
+        if site not in self._sites:
+            raise ValueError(
+                f"Site {site} is not currently part of this topology."
+            )
         for connection in self.iter_connections_by_site(site):
             self.remove_connection(connection)
         self._sites.remove(site)
@@ -682,6 +686,10 @@ class Topology(object):
         The sites that belong to this connection are
         not removed from the topology.
         """
+        if connection not in self.connections:
+            raise ValueError(
+                f"Connection {connection} is not currently part of this topology."
+            )
         if isinstance(connection, gmso.core.bond.Bond):
             self._bonds.remove(connection)
         elif isinstance(connection, gmso.core.angle.Angle):

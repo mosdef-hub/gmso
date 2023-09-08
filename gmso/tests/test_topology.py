@@ -59,6 +59,12 @@ class TestTopology(BaseTest):
         assert ethane.n_sites == 2
         assert ethane.n_connections == 1
 
+    def test_remove_site_not_in_top(self, ethane):
+        top = Topology()
+        site = Atom(name="site")
+        with pytest.raises(ValueError):
+            top.remove_site(site)
+
     def test_add_connection(self):
         top = Topology()
         atom1 = Atom(name="atom1")
@@ -82,6 +88,14 @@ class TestTopology(BaseTest):
         top.add_site(atom2)
         top.remove_connection(connect)
         assert top.n_connections == 0
+
+    def test_remove_connection(self):
+        top = Topology()
+        atom1 = Atom(name="atom1")
+        atom2 = Atom(name="atom2")
+        connect = Bond(connection_members=[atom1, atom2])
+        with pytest.raises(ValueError):
+            top.remove_connection(connect)
 
     def test_add_box(self):
         top = Topology()
