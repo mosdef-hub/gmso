@@ -648,13 +648,35 @@ class Topology(object):
         )
 
     def remove_site(self, site):
-        """"""
+        """Remove a site from the topology.
+
+        Parameters
+        ----------
+        site : gmso.core.Site
+            The site to be removed.
+
+        Notes
+        -----
+        When a site is removed, any connections that site belonged
+        to are also removed.
+
+        See Also
+        --------
+        gmso.core.topology.Topology.iter_connections_by_site
+            The method that shows all connections belonging to a specific site
+        """
         for connection in self.iter_connections_by_site(site):
             self.remove_connection(connection)
         self._sites.remove(site)
 
     def remove_connection(self, connection):
-        """"""
+        """Remove a connection from the topology.
+
+        Notes
+        -----
+        The sites that belong to this connection are
+        not removed from the topology.
+        """
         if isinstance(connection, gmso.core.bond.Bond):
             self._bonds.remove(connection)
         elif isinstance(connection, gmso.core.angle.Angle):
@@ -1384,9 +1406,28 @@ class Topology(object):
             return self.iter_sites("molecule", molecule_tag)
 
     def iter_connections_by_site(self, site, connections=None):
-        """"""
+        """Iterate through this topology's connections which contain
+        this specific site.
+
+        Parameters
+        ----------
+        site : gmso.core.Site
+            Site to limit connections search to. 
+        connections : set or list or tuple, optional, default=None
+            The connection types to include in the search.
+            If None, iterates through all of a site's connections.
+            Options include "bonds", "angles", "dihedrals", "impropers"
+
+        Yields
+        ------
+        gmso.abc.abstract_conneciton.Connection
+            Connection where site is in Connection.connection_members
+
+        """
         if connections is None:
             connections = ["bonds", "angles", "dihedrals", "impropers"]
+        else:
+            connections = set([option.lower() for option in connections])
         for conn_str in connections:
             for conn in getattr(self, conn_str):
                 if site in conn.connection_members:
