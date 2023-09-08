@@ -672,6 +672,11 @@ class Topology(object):
     def remove_connection(self, connection):
         """Remove a connection from the topology.
 
+        Parameters
+        ----------
+        connection : gmso.abc.abstract_conneciton.Connection
+            The connection to be removed from the topology
+
         Notes
         -----
         The sites that belong to this connection are
