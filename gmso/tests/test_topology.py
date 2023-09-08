@@ -89,7 +89,7 @@ class TestTopology(BaseTest):
         top.remove_connection(connect)
         assert top.n_connections == 0
 
-    def test_remove_connection(self):
+    def test_remove_connection_not_in_top(self):
         top = Topology()
         atom1 = Atom(name="atom1")
         atom2 = Atom(name="atom2")
