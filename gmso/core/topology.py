@@ -1412,7 +1412,7 @@ class Topology(object):
         Parameters
         ----------
         site : gmso.core.Site
-            Site to limit connections search to. 
+            Site to limit connections search to.
         connections : set or list or tuple, optional, default=None
             The connection types to include in the search.
             If None, iterates through all of a site's connections.
