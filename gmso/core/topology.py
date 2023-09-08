@@ -1437,6 +1437,10 @@ class Topology(object):
             Connection where site is in Connection.connection_members
 
         """
+        if site not in self._sites:
+            raise ValueError(
+                f"Site {site} is not currently part of this topology."
+            )
         if connections is None:
             connections = ["bonds", "angles", "dihedrals", "impropers"]
         else:

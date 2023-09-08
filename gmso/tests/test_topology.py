@@ -974,6 +974,13 @@ class TestTopology(BaseTest):
             ):
                 pass
 
+    def test_iter_connections_by_site_not_in_top(self):
+        top = Topology()
+        site = Atom(name="site")
+        with pytest.raises(ValueError):
+            for conn in top.iter_connections_by_site(site):
+                pass
+
     def test_write_forcefield(self, typed_water_system):
         forcefield = typed_water_system.get_forcefield()
         assert "opls_111" in forcefield.atom_types
