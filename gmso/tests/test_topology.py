@@ -951,6 +951,15 @@ class TestTopology(BaseTest):
         ):
             assert site in conn.connection_members
 
+    def test_iter_connections_by_site_bad_param(self, ethane):
+        ethane.identify_connections()
+        site = ethane.sites[0]
+        with pytest.raises(ValueError):
+            for conn in ethane.iter_connections_by_site(
+                site=site, connections=["bond"]
+            ):
+                pass
+
     def test_write_forcefield(self, typed_water_system):
         forcefield = typed_water_system.get_forcefield()
         assert "opls_111" in forcefield.atom_types

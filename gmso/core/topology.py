@@ -1433,6 +1433,12 @@ class Topology(object):
             connections = ["bonds", "angles", "dihedrals", "impropers"]
         else:
             connections = set([option.lower() for option in connections])
+            for option in connections:
+                if option not in ["bonds", "angles", "dihedrals", "impropers"]:
+                    raise ValueError(
+                        "Valid connection types are limited to: "
+                        '"bonds", "angles", "dihedrals", "impropers"'
+                    )
         for conn_str in connections:
             for conn in getattr(self, conn_str):
                 if site in conn.connection_members:
