@@ -578,7 +578,7 @@ class ForceField(object):
         try:
             loader = GMSOFFs()
             ff = loader.load(filename).to_gmso_ff()
-        except (ForceFieldParseError, ValidationError):
+        except (ForceFieldParseError, FileNotFoundError, ValidationError):
             loader = FoyerFFs()
             ff = loader.load(filename).to_gmso_ff()
         return ff
