@@ -20,11 +20,7 @@ from gmso.utils.conversions import (
 )
 from gmso.utils.geometry import coord_shift
 from gmso.utils.io import has_gsd, has_hoomd
-from gmso.utils.sorting import (
-    natural_sort,
-    sort_connection_members,
-    sort_member_types,
-)
+from gmso.utils.sorting import sort_by_classes, sort_connection_members
 
 if has_gsd:
     import gsd.hoomd
@@ -384,9 +380,9 @@ def _parse_bond_information(snapshot, top):
 
     for bond in top.bonds:
         if all([site.atom_type for site in bond.connection_members]):
-            connection_members = sort_connection_members(bond, "atom_type")
+            connection_members = sort_connection_members(bond, "atomclass")
             bond_type = "-".join(
-                [site.atom_type.name for site in connection_members]
+                [site.atom_type.atomclass for site in connection_members]
             )
         else:
             connection_members = sort_connection_members(bond, "name")
@@ -402,8 +398,8 @@ def _parse_bond_information(snapshot, top):
 
     if isinstance(snapshot, hoomd.Snapshot):
         snapshot.bonds.types = unique_bond_types
-        snapshot.bonds.typeid[0:] = bond_typeids
-        snapshot.bonds.group[0:] = bond_groups
+        snapshot.bonds.typeid[:] = bond_typeids
+        snapshot.bonds.group[:] = bond_groups
     elif isinstance(snapshot, gsd.hoomd.Frame):
         snapshot.bonds.types = unique_bond_types
         snapshot.bonds.typeid = bond_typeids
@@ -431,9 +427,9 @@ def _parse_angle_information(snapshot, top):
 
     for angle in top.angles:
         if all([site.atom_type for site in angle.connection_members]):
-            connection_members = sort_connection_members(angle, "atom_type")
+            connection_members = sort_connection_members(angle, "atomclass")
             angle_type = "-".join(
-                [site.atom_type.name for site in connection_members]
+                [site.atom_type.atomclass for site in connection_members]
             )
         else:
             connection_members = sort_connection_members(angle, "name")
@@ -449,8 +445,8 @@ def _parse_angle_information(snapshot, top):
 
     if isinstance(snapshot, hoomd.Snapshot):
         snapshot.angles.types = unique_angle_types
-        snapshot.angles.typeid[0:] = angle_typeids
-        snapshot.angles.group[0:] = np.reshape(angle_groups, (-1, 3))
+        snapshot.angles.typeid[:] = angle_typeids
+        snapshot.angles.group[:] = np.reshape(angle_groups, (-1, 3))
     elif isinstance(snapshot, gsd.hoomd.Frame):
         snapshot.angles.types = unique_angle_types
         snapshot.angles.typeid = angle_typeids
@@ -477,9 +473,9 @@ def _parse_dihedral_information(snapshot, top):
 
     for dihedral in top.dihedrals:
         if all([site.atom_type for site in dihedral.connection_members]):
-            connection_members = sort_connection_members(dihedral, "atom_type")
+            connection_members = sort_connection_members(dihedral, "atomclass")
             dihedral_type = "-".join(
-                [site.atom_type.name for site in connection_members]
+                [site.atom_type.atomclass for site in connection_members]
             )
         else:
             connection_members = sort_connection_members(dihedral, "name")
@@ -495,8 +491,8 @@ def _parse_dihedral_information(snapshot, top):
 
     if isinstance(snapshot, hoomd.Snapshot):
         snapshot.dihedrals.types = unique_dihedral_types
-        snapshot.dihedrals.typeid[0:] = dihedral_typeids
-        snapshot.dihedrals.group[0:] = np.reshape(dihedral_groups, (-1, 4))
+        snapshot.dihedrals.typeid[:] = dihedral_typeids
+        snapshot.dihedrals.group[:] = np.reshape(dihedral_groups, (-1, 4))
     elif isinstance(snapshot, gsd.hoomd.Frame):
         snapshot.dihedrals.types = unique_dihedral_types
         snapshot.dihedrals.typeid = dihedral_typeids
@@ -525,9 +521,9 @@ def _parse_improper_information(snapshot, top):
 
     for improper in top.impropers:
         if all([site.atom_type for site in improper.connection_members]):
-            connection_members = sort_connection_members(improper, "atom_type")
+            connection_members = sort_connection_members(improper, "atomclass")
             improper_type = "-".join(
-                [site.atom_type.name for site in connection_members]
+                [site.atom_type.atomclass for site in connection_members]
             )
         else:
             connection_members = sort_connection_members(improper, "name")
@@ -994,8 +990,8 @@ def _parse_harmonic_bond(
 ):
     for btype in btypes:
         # TODO: Unit conversion
-        member_types = sort_member_types(btype)
-        container.params["-".join(member_types)] = {
+        member_classes = sort_by_classes(btype)
+        container.params["-".join(member_classes)] = {
             "k": btype.parameters["k"],
             "r0": btype.parameters["r_eq"],
         }
@@ -1064,8 +1060,8 @@ def _parse_harmonic_angle(
     agtypes,
 ):
     for agtype in agtypes:
-        member_types = sort_member_types(agtype)
-        container.params["-".join(member_types)] = {
+        member_classes = sort_by_classes(agtype)
+        container.params["-".join(member_classes)] = {
             "k": agtype.parameters["k"],
             "t0": agtype.parameters["theta_eq"],
         }
@@ -1094,6 +1090,16 @@ def _parse_dihedral_forces(
     unique_dtypes = top.dihedral_types(
         filter_by=PotentialFilters.UNIQUE_NAME_CLASS
     )
+    unique_dihedrals = {}
+    for dihedral in top.dihedrals:
+        unique_members = tuple(
+            [site.atom_type.atomclass for site in dihedral.connection_members]
+        )
+        unique_dihedrals[unique_members] = dihedral
+
+    unique_dtypes = [
+        dihedral.dihedral_type for dihedral in unique_dihedrals.values()
+    ]
     groups = dict()
     for dtype in unique_dtypes:
         group = potential_types[dtype]
@@ -1157,8 +1163,8 @@ def _parse_periodic_dihedral(
     dtypes,
 ):
     for dtype in dtypes:
-        member_types = sort_member_types(dtype)
-        container.params["-".join(member_types)] = {
+        member_classes = sort_by_classes(dtype)
+        container.params["-".join(member_classes)] = {
             "k": dtype.parameters["k"],
             "d": 1,
             "n": dtype.parameters["n"],
@@ -1174,7 +1180,8 @@ def _parse_opls_dihedral(
     for dtype in dtypes:
         # TODO: The range of ks is mismatched (GMSO go from k0 to k5)
         # May need to do a check that k0 == k5 == 0 or raise a warning
-        container.params["-".join(dtype.member_types)] = {
+        member_classes = sort_by_classes(dtype)
+        container.params["-".join(member_classes)] = {
             "k1": dtype.parameters["k1"],
             "k2": dtype.parameters["k2"],
             "k3": dtype.parameters["k3"],
@@ -1192,10 +1199,10 @@ def _parse_rb_dihedral(
     )
     for dtype in dtypes:
         opls = convert_ryckaert_to_opls(dtype)
-        member_types = sort_member_types(dtype)
+        member_classes = sort_by_classes(dtype)
         # TODO: The range of ks is mismatched (GMSO go from k0 to k5)
         # May need to do a check that k0 == k5 == 0 or raise a warning
-        container.params["-".join(member_types)] = {
+        container.params["-".join(member_classes)] = {
             "k1": opls.parameters["k1"],
             "k2": opls.parameters["k2"],
             "k3": opls.parameters["k3"],
@@ -1267,7 +1274,7 @@ def _parse_harmonic_improper(
     itypes,
 ):
     for itype in itypes:
-        member_types = sort_member_types(itype)
+        member_types = sort_by_classes(itype)
         container.params["-".join(member_types)] = {
             "k": itype.parameters["k"],
             "chi0": itype.parameters["phi_eq"],  # diff nomenclature?
