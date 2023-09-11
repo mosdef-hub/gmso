@@ -1096,27 +1096,27 @@ def _parse_dihedral_forces(
             [site.atom_type.atomclass for site in dihedral.connection_members]
         )
         unique_dihedrals[unique_members] = dihedral
-
     unique_dtypes = [
         dihedral.dihedral_type for dihedral in unique_dihedrals.values()
     ]
     groups = dict()
-    for dtype in unique_dtypes:
-        group = potential_types[dtype]
+    for dihedral in unique_dihedrals.values():
+        group = potential_types[dihedral.dihedral_type]
         if group not in groups:
-            groups[group] = [dtype]
+            groups[group] = [dihedral]
         else:
-            groups[group].append(dtype)
+            groups[group].append(dihedral)
 
+    expected_unitsDict = {}
     for group in groups:
-        expected_units_dim = potential_refs[group][
+        expected_unitsDict[group] = potential_refs[group][
             "expected_parameters_dimensions"
         ]
-        groups[group] = _convert_params_units(
-            groups[group],
-            expected_units_dim,
-            base_units,
-        )
+        # groups[group] = _convert_connection_params_units(
+        #    groups[group],
+        #    expected_units_dim,
+        #    base_units,
+        # )
     dtype_group_map = {
         "OPLSTorsionPotential": {
             "container": hoomd.md.dihedral.OPLS,
@@ -1152,19 +1152,24 @@ def _parse_dihedral_forces(
         dihedral_forces.append(
             dtype_group_map[group]["parser"](
                 container=dtype_group_map[group]["container"](),
-                dtypes=groups[group],
+                dihedrals=groups[group],
+                expected_units_dim=expected_unitsDict[group],
+                base_units=base_units,
             )
         )
     return dihedral_forces
 
 
 def _parse_periodic_dihedral(
-    container,
-    dtypes,
+    container, dihedrals, expected_units_dim, base_units
 ):
-    for dtype in dtypes:
-        member_classes = sort_by_classes(dtype)
-        container.params["-".join(member_classes)] = {
+    for dihedral in dihedrals:
+        dtype = dihedral.dihedral_type
+        dtype = _convert_single_param_units(
+            dtype, expected_units_dim, base_units
+        )
+        member_sites = sort_connection_members(dihedral, "atomclass")
+        container.params["-".join(member_sites)] = {
             "k": dtype.parameters["k"],
             "d": 1,
             "n": dtype.parameters["n"],
@@ -1173,15 +1178,17 @@ def _parse_periodic_dihedral(
     return container
 
 
-def _parse_opls_dihedral(
-    container,
-    dtypes,
-):
-    for dtype in dtypes:
+def _parse_opls_dihedral(container, dihedrals, expected_units_dim, base_units):
+    for dihedral in dihedrals:
+        dtype = dihedral.dihedral_type
+        dtype = _convert_single_param_units(
+            dtype, expected_units_dim, base_units
+        )
+        member_sites = sort_connection_members(dihedral, "atomclass")
         # TODO: The range of ks is mismatched (GMSO go from k0 to k5)
         # May need to do a check that k0 == k5 == 0 or raise a warning
         member_classes = sort_by_classes(dtype)
-        container.params["-".join(member_classes)] = {
+        container.params["-".join(member_sites)] = {
             "k1": dtype.parameters["k1"],
             "k2": dtype.parameters["k2"],
             "k3": dtype.parameters["k3"],
@@ -1190,19 +1197,22 @@ def _parse_opls_dihedral(
     return container
 
 
-def _parse_rb_dihedral(
-    container,
-    dtypes,
-):
+def _parse_rb_dihedral(container, dihedrals, expected_units_dim, base_units):
     warnings.warn(
         "RyckaertBellemansTorsionPotential will be converted to OPLSTorsionPotential."
     )
-    for dtype in dtypes:
+    for dihedral in dihedrals:
+        dtype = dihedral.dihedral_type
+        dtype = _convert_single_param_units(
+            dtype, expected_units_dim, base_units
+        )
         opls = convert_ryckaert_to_opls(dtype)
-        member_classes = sort_by_classes(dtype)
+        member_sites = sort_connection_members(dihedral, "atomclass")
         # TODO: The range of ks is mismatched (GMSO go from k0 to k5)
         # May need to do a check that k0 == k5 == 0 or raise a warning
-        container.params["-".join(member_classes)] = {
+        container.params[
+            "-".join([site.atom_type.atomclass for site in member_sites])
+        ] = {
             "k1": opls.parameters["k1"],
             "k2": opls.parameters["k2"],
             "k3": opls.parameters["k3"],
@@ -1420,3 +1430,26 @@ def _convert_params_units(
         potential.parameters = converted_params
         converted_potentials.append(potential)
     return converted_potentials
+
+
+def _convert_single_param_units(
+    potential,
+    expected_units_dim,
+    base_units,
+):
+    """Convert parameters' units in the potential to that specified in the base_units."""
+    converted_params = dict()
+    for parameter in potential.parameters:
+        unit_dim = expected_units_dim[parameter]
+        ind_units = re.sub("[^a-zA-Z]+", " ", unit_dim).split()
+        for unit in ind_units:
+            unit_dim = unit_dim.replace(
+                unit,
+                f"({str(base_units[unit].value)} * {str(base_units[unit].units)})",
+            )
+
+        converted_params[parameter] = potential.parameters[parameter].to(
+            unit_dim
+        )
+    potential.parameters = converted_params
+    return potential

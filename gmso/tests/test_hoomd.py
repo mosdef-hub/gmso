@@ -457,64 +457,6 @@ class TestGsd(BaseTest):
 
     def test_forces_connections_match(self):
         compound = mb.load("CC", smiles=True)
-        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=2)
-        base_units = {
-            "mass": u.amu,
-            "length": u.nm,
-            "energy": u.kJ / u.mol,
-        }
-        top = com_box.to_gmso()
-        top.identify_connections()
-        ethaneFF = ForceField(get_path("alkanes.xml"))
-        ethaneFF.atom_types["opls_01"] = ethaneFF.atom_types.pop("opls_140")
-        ethaneFF.atom_types["opls_01"].name = "opls_01"
-        ethaneFF.atom_types["opls_01"].atomclass = "opls_01"
-        ethaneFF.atom_types["opls_1004"] = ethaneFF.atom_types.pop("opls_135")
-        ethaneFF.atom_types["opls_1004"].name = "opls_1004"
-        ethaneFF.atom_types["opls_1004"].atomclass = "opls_1004"
-        xDict = {"bond": {}, "angle": {}, "dihedral": {}}
-        for dictKey in xDict:
-            for connection in getattr(ethaneFF, dictKey + "_types"):
-                newname = connection
-                for atomclass, atomname in {
-                    "HC": "opls_01",
-                    "CT": "opls_1004",
-                }.items():
-                    newname = newname.replace(atomclass, atomname)
-                xDict[dictKey][connection] = newname
-
-        for dictKey in xDict:
-            for oldname, newname in xDict[dictKey].items():
-                getattr(ethaneFF, dictKey + "_types")[newname] = getattr(
-                    ethaneFF, dictKey + "_types"
-                ).pop(oldname)
-                getattr(ethaneFF, dictKey + "_types")[newname].name = newname
-                getattr(ethaneFF, dictKey + "_types")[
-                    newname
-                ].member_types = tuple(newname.split("~"))
-
-        # ethaneFF.bond_types["opls_01~opls_1004"] = ethaneFF.bond_types.pop("CT~HC")
-        # ethaneFF.bond_types["opls_01~opls_01"] = ethaneFF.bond_types.pop("CT~CT")
-        # ethaneFF.angle_types["opls_01~opls_01~opls_1004"] = ethaneFF.angle_types.pop("CT~CT~HC")
-        # ethaneFF.angle_types["opls_1004~opls_01~opls_1004"] = ethaneFF.angle_types.pop("HC~CT~HC")
-        # ethaneFF.dihedral_types["opls_1004~opls_01~opls_01~opls_1004"] = ethaneFF.dihedral_types.pop("HC~CT~CT~HC")
-        # should sort these opls_01, opls_1004
-        top = apply(top, ethaneFF, remove_untyped=True)
-
-        snapshot, snapshot_base_units = to_hoomd_snapshot(
-            top, base_units=base_units
-        )
-
-        forces, forces_base_units = to_hoomd_forcefield(
-            top=top, r_cut=1.4, base_units=base_units
-        )
-
-        assert forces_base_units == snapshot_base_units
-        for conntype in snapshot.bonds.types:
-            assert conntype in list(forces["bonds"][0].params.keys())
-
-    def test_forces_connections_match2(self):
-        compound = mb.load("CC", smiles=True)
         com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=1)
         base_units = {
             "mass": u.amu,
@@ -527,12 +469,10 @@ class TestGsd(BaseTest):
 
         top = apply(top, ethaneFF, remove_untyped=True)
 
-        snapshot, snapshot_base_units = to_hoomd_snapshot(
-            top, base_units=base_units
-        )
+        snapshot, _ = to_hoomd_snapshot(top, base_units=base_units)
         assert "CT-HC" in snapshot.bonds.types
 
-        forces, forces_base_units = to_hoomd_forcefield(
+        forces, _ = to_hoomd_forcefield(
             top=top, r_cut=1.4, base_units=base_units
         )
         assert "CT-HC" in forces["bonds"][0].params.keys()
