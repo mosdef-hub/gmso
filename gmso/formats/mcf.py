@@ -4,7 +4,7 @@ import warnings
 
 import networkx as nx
 import numpy as np
-import sympy
+import symengine
 import unyt as u
 
 from gmso import __version__
@@ -26,7 +26,7 @@ def write_mcf(top, filename):
     """Generate a Cassandra MCF from a gmso.core.Topology object.
 
     The MCF file stores the topology information for a single
-    species (i.e., compound) in the Cassandra Monte Carlo software
+    species (i.e., molecule) in the Cassandra Monte Carlo software
     (https://cassandra.nd.edu). The gmso.Topology object provided to
     this function should therefore be for a single molecule with the
     relevant forcefield parameters. One MCF file will be required
@@ -51,12 +51,13 @@ def write_mcf(top, filename):
     # Identify atoms in rings and Cassandra 'fragments'
     in_ring, frag_list, frag_conn = _id_rings_fragments(top)
 
-    # TODO: What oh what to do about subtops?
-    # For now refuse topologies with subtops as MCF writer is for
-    # single molecules
+    # TODO: Support writing out multiple .mcf file from one Topology
+    # This can be done by iterating through unique molecule, which can either be determined
+    # by their site.molecule tag or through graph matching (the latter case may take more
+    # effort to develop)
     if len(top.unique_site_labels("molecule")) > 1:
         raise GMSOError(
-            "MCF writer does not support multiple molecules. "
+            "MCF writer does not currently support multiple molecules. "
             "Please provide a single molecule as an gmso.Topology "
             "object to the MCF writer."
         )
@@ -117,7 +118,7 @@ def _id_rings_fragments(top):
     )
     if len(top.bonds) == 0:
         warnings.warn(
-            "No bonds found. Cassandra will interpet " "this as a rigid species"
+            "No bonds found. Cassandra will interpet this as a rigid species"
         )
         in_ring = [False] * len(top.sites)
         frag_list = []
@@ -376,8 +377,7 @@ def _write_bond_information(mcf, top):
             "{:s}  "
             "{:10.5f}\n".format(
                 idx + 1,
-                top.get_index(bond.connection_members[0])
-                + 1,  # TODO: Confirm the +1 here
+                top.get_index(bond.connection_members[0]) + 1,
                 top.get_index(bond.connection_members[1]) + 1,
                 "fixed",
                 bond.connection_type.parameters["r_eq"]
@@ -671,7 +671,7 @@ def _check_compatibility(top):
     """Check Topology object for compatibility with Cassandra MCF format."""
     if not isinstance(top, Topology):
         raise GMSOError("MCF writer requires a Topology object.")
-    if not all([site.atom_type.name for site in top.sites]):
+    if not all([site.atom_type for site in top.sites]):
         raise GMSOError(
             "MCF writing not supported without parameterized forcefield."
         )
@@ -725,6 +725,6 @@ def _get_potential_style(styles, potential):
     """Return the potential style."""
     for style, ref in styles.items():
         if ref.independent_variables == potential.independent_variables:
-            if sympy.simplify(ref.expression - potential.expression) == 0:
+            if symengine.expand(ref.expression - potential.expression) == 0:
                 return style
     return False
