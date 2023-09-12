@@ -4,8 +4,12 @@ import pathlib
 from lxml import etree
 
 from gmso.exceptions import ForceFieldParseError
+from gmso.utils.decorators import deprecate_function
 
 
+@deprecate_function(
+    "The `from_foyer_xml` method will be deprecated soon. Please use the package `forcefield-utilities.FoyerFFs`."
+)
 def from_foyer_xml(
     foyer_xml, gmso_xml=None, overwrite=False, validate_foyer=False
 ):

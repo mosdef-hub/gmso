@@ -8,10 +8,19 @@ from typing import Iterable
 
 from lxml import etree
 
+try:
+    from pydantic.v1 import ValidationError
+except:
+    from pydantic import ValidationError
+
 from gmso.core.element import element_by_symbol
-from gmso.exceptions import GMSOError, MissingPotentialError
+from gmso.exceptions import (
+    ForceFieldParseError,
+    GMSOError,
+    MissingPotentialError,
+)
 from gmso.utils._constants import FF_TOKENS_SEPARATOR
-from gmso.utils.decorators import deprecate_kwargs
+from gmso.utils.decorators import deprecate_function, deprecate_kwargs
 from gmso.utils.ff_utils import (
     parse_ff_atomtypes,
     parse_ff_connection_types,
@@ -45,10 +54,8 @@ class ForceField(object):
 
     Parameters
     ----------
-    name : str
-        Name of the forcefield, default 'ForceField'
-    version : str
-        a cannonical semantic version of the forcefield, default 1.0.0
+    xml_loc : str
+        Path to the forcefield xml. The forcefield xml can be either in Foyer or GMSO style.
     strict: bool, default=True
         If true, perform a strict validation of the forcefield XML file
     greedy: bool, default=True
@@ -104,6 +111,7 @@ class ForceField(object):
                 "ffutils",
             ]:
                 ff = ForceField.xml_from_forcefield_utilities(xml_loc)
+
             else:
                 raise (
                     GMSOError(
@@ -565,10 +573,14 @@ class ForceField(object):
 
     @classmethod
     def xml_from_forcefield_utilities(cls, filename):
-        from forcefield_utilities.xml_loader import GMSOFFs
+        from forcefield_utilities.xml_loader import FoyerFFs, GMSOFFs
 
-        loader = GMSOFFs()
-        ff = loader.load(filename).to_gmso_ff()
+        try:
+            loader = GMSOFFs()
+            ff = loader.load(filename).to_gmso_ff()
+        except (ForceFieldParseError, FileNotFoundError, ValidationError):
+            loader = FoyerFFs()
+            ff = loader.load(filename).to_gmso_ff()
         return ff
 
     def to_xml(self, filename, overwrite=False, backend="gmso"):
@@ -723,6 +735,9 @@ class ForceField(object):
         )
 
     @classmethod
+    @deprecate_function(
+        "The internal `from_xml` will be deprecated soon. Please load the XML with the `xml_from_forcefield_utilities`."
+    )
     def from_xml(cls, xmls_or_etrees, strict=True, greedy=True):
         """Create a gmso.Forcefield object from XML File(s).
 

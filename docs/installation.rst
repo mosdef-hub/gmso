@@ -50,8 +50,8 @@ Once all dependencies have been installed and the ``conda`` environment has been
 Supported Python Versions
 -------------------------
 
-Python 3.7 is the recommend version for users. It is the only version on which
-development and testing consistently takes place.  Older (3.6) and newer (3.8+)
+Python 3.8-3.11 is the recommend version for users. It is the only version on which
+development and testing consistently takes place.  Older (3.6-3.7) and newer (3.12+)
 versions of Python 3 are likely to work but no guarantee is made and, in
 addition, some dependencies may not be available for other versions.  No effort
 is made to support Python 2 because it is considered obsolete as of early 2020.

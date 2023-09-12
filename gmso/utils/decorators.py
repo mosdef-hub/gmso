@@ -82,3 +82,17 @@ def mark_WIP(message=""):
         return _inner
 
     return _function_wrapper
+
+
+def deprecate_function(msg, klass=PendingDeprecationWarning):
+    """Raise a warning that a given function will be deprecated soon."""
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            warnings.warn(msg, klass, stacklevel=2)
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
