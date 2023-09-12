@@ -669,7 +669,9 @@ class Topology(object):
             raise ValueError(
                 f"Site {site} is not currently part of this topology."
             )
-        site_connections = [conn for conn in self.iter_connections_by_site(site)]
+        site_connections = [
+            conn for conn in self.iter_connections_by_site(site)
+        ]
         for conn in site_connections:
             self.remove_connection(conn)
         self._sites.remove(site)
