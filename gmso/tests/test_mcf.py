@@ -268,3 +268,22 @@ class TestMCF(BaseTest):
                 .in_units(u.kilojoule / u.mole)
                 .value,
             )
+
+    def test_fixed_angles(self, typed_tip3p_rigid_system):
+        top = typed_tip3p_rigid_system
+        write_mcf(top, "tip3p-rigid.mcf")
+
+        mcf_data, mcf_idx = parse_mcf("tip3p-rigid.mcf")
+
+        assert is_charge_neutral(mcf_data, mcf_idx)
+
+        # Check angle section
+        assert mcf_data[mcf_idx["Angle_Info"] + 1][0] == "1"
+        assert mcf_data[mcf_idx["Angle_Info"] + 2][4] == "fixed"
+        assert np.isclose(
+            float(mcf_data[mcf_idx["Angle_Info"] + 2][5]),
+            top.angles[0]
+            .angle_type.parameters["theta_eq"]
+            .in_units(u.degree)
+            .value,
+        )
