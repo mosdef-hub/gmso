@@ -260,11 +260,11 @@ class TestMCF(BaseTest):
         assert dihedral_style.lower() == "opls"
 
         # TODO: account for 0.5 factors
-        # for idx, k in enumerate(["k1", "k2", "k3", "k4"]):
-        # assert np.isclose(
-        # float(mcf_data[mcf_idx["Dihedral_Info"] + 2][6 + idx]),
-        # top.dihedrals[0]
-        # .dihedral_type.parameters[k]
-        # .in_units(u.kilojoule / u.mole)
-        # .value,
-        # )
+        for idx, k in enumerate(["k1", "k2", "k3", "k4"]):
+            assert np.isclose(
+                2.0 * float(mcf_data[mcf_idx["Dihedral_Info"] + 2][6 + idx]),
+                top.dihedrals[0]
+                .dihedral_type.parameters[k]
+                .in_units(u.kilojoule / u.mole)
+                .value,
+            )
