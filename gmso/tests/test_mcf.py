@@ -246,13 +246,13 @@ class TestMCF(BaseTest):
             .in_units(u.degree)
             .value,
         )
-        # TODO: account for 0.5 factors
-        # assert np.isclose(
-        # float(mcf_data[mcf_idx["Angle_Info"] + 2][5]),
-        # (top.angles[0].angle_type.parameters["k"] / u.kb)
-        # .in_units(u.K / u.radian**2)
-        # .value,
-        # )
+
+        assert np.isclose(
+            2.0 * float(mcf_data[mcf_idx["Angle_Info"] + 2][5]),
+            (top.angles[0].angle_type.parameters["k"] / u.kb)
+            .in_units(u.K / u.radian**2)
+            .value,
+        )
 
         # Check dihedral section
         assert mcf_data[mcf_idx["Dihedral_Info"] + 1][0] == "9"
