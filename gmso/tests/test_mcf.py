@@ -287,3 +287,27 @@ class TestMCF(BaseTest):
             .in_units(u.degree)
             .value,
         )
+
+    def test_top_with_n_ar_system(self, n_typed_ar_system):
+        top = n_typed_ar_system(n_sites=10)
+        write_mcf(top, "top-10ar.mcf")
+
+        mcf_data, mcf_idx = parse_mcf("top-10ar.mcf")
+
+        assert is_charge_neutral(mcf_data, mcf_idx)
+
+        assert mcf_data[mcf_idx["Atom_Info"] + 1][0] == "1"
+        assert mcf_data[mcf_idx["Bond_Info"] + 1][0] == "0"
+        assert mcf_data[mcf_idx["Angle_Info"] + 1][0] == "0"
+        assert mcf_data[mcf_idx["Dihedral_Info"] + 1][0] == "0"
+        assert mcf_data[mcf_idx["Fragment_Info"] + 1][0] == "1"
+        assert mcf_data[mcf_idx["Fragment_Info"] + 2] == ["1", "1", "1"]
+        assert mcf_data[mcf_idx["Fragment_Connectivity"] + 1][0] == "0"
+        assert np.allclose(float(mcf_data[-5][0]), 0.0)
+        assert np.allclose(float(mcf_data[-5][1]), 0.0)
+        assert np.allclose(float(mcf_data[-5][2]), 0.5)
+        assert np.allclose(float(mcf_data[-5][3]), 1.0)
+        assert np.allclose(float(mcf_data[-4][0]), 0.0)
+        assert np.allclose(float(mcf_data[-4][1]), 0.0)
+        assert np.allclose(float(mcf_data[-4][2]), 0.5)
+        assert np.allclose(float(mcf_data[-4][3]), 1.0)
