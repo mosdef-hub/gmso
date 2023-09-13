@@ -137,23 +137,23 @@ class TestParameterizationOptions(ParameterizationBaseTest):
             apply(top=Topology(), forcefields=oplsaa_gmso)
 
     @pytest.mark.parametrize(
-        "identify_connected_components, use_molecule_info",
+        "speedup_by_molgraph, speedup_by_moltag",
         [(False, False), (True, False), (False, True), (True, True)],
     )
     def test_speedup_options(
         self,
         ethane_box_with_methane,
         oplsaa_gmso,
-        identify_connected_components,
-        use_molecule_info,
+        speedup_by_molgraph,
+        speedup_by_moltag,
     ):
         ethane_box_with_methane.identify_connections()
         apply(
             ethane_box_with_methane,
             oplsaa_gmso,
             identify_connections=False,
-            identify_connected_components=identify_connected_components,
-            use_molecule_info=use_molecule_info,
+            speedup_by_molgraph=speedup_by_molgraph,
+            speedup_by_moltag=speedup_by_moltag,
         )
 
         molecule_labels = ethane_box_with_methane.unique_site_labels("molecule")
@@ -214,8 +214,8 @@ class TestParameterizationOptions(ParameterizationBaseTest):
             ff_dict,
             match_ff_by="molecule",
             identify_connections=False,
-            identify_connected_components=True,
-            use_molecule_info=True,
+            speedup_by_molgraph=True,
+            speedup_by_moltag=True,
         )
         assert ethane_box_with_methane.atom_types is not None
 
@@ -231,13 +231,13 @@ class TestParameterizationOptions(ParameterizationBaseTest):
             ff_dict,
             match_ff_by="group",
             identify_connections=False,
-            identify_connected_components=True,
-            use_molecule_info=True,
+            speedup_by_molgraph=True,
+            speedup_by_moltag=True,
         )
         assert ethane_box_with_methane.atom_types is not None
 
     @pytest.mark.parametrize(
-        "identify_connected_components, use_molecule_info, match_ff_by",
+        "speedup_by_molgraph, speedup_by_moltag, match_ff_by",
         [
             (False, False, "group"),
             (True, False, "group"),
@@ -253,8 +253,8 @@ class TestParameterizationOptions(ParameterizationBaseTest):
         self,
         oplsaa_gmso,
         hierarchical_top,
-        identify_connected_components,
-        use_molecule_info,
+        speedup_by_molgraph,
+        speedup_by_moltag,
         match_ff_by,
     ):
         top = deepcopy(hierarchical_top)
@@ -274,7 +274,7 @@ class TestParameterizationOptions(ParameterizationBaseTest):
         apply(
             top,
             ff_dict,
-            identify_connected_components=identify_connected_components,
-            use_molecule_info=use_molecule_info,
+            speedup_by_molgraph=speedup_by_molgraph,
+            speedup_by_moltag=speedup_by_moltag,
             match_ff_by=match_ff_by,
         )

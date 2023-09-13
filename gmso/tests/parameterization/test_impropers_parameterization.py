@@ -17,7 +17,7 @@ from gmso.tests.utils import get_path
 class TestImpropersParameterization(ParameterizationBaseTest):
     def test_improper_parameterization(self, fake_improper_ff_gmso, ethane):
         ethane.identify_connections()
-        apply(ethane, fake_improper_ff_gmso, assert_improper_params=True)
+        apply(ethane, fake_improper_ff_gmso, ignore_params=list())
 
         lib = PotentialTemplateLibrary()
         template_improper_type = lib["PeriodicImproperPotential"]
@@ -61,7 +61,7 @@ class TestImpropersParameterization(ParameterizationBaseTest):
 
     def test_improper_assertion_error(self, ethane_methane_top, oplsaa_gmso):
         with pytest.raises(ParameterizationError):
-            apply(ethane_methane_top, oplsaa_gmso, assert_improper_params=True)
+            apply(ethane_methane_top, oplsaa_gmso, ignore_params=list())
 
     @pytest.mark.parametrize(
         "mol2_loc",

@@ -284,10 +284,10 @@ def specific_ff_to_residue(
     gmso_apply(
         new_gmso_topology,
         gmso_compatible_forcefield_selection,
-        identify_connected_components=True,
+        speedup_by_molgraph=True,
         identify_connections=True,
         match_ff_by=gmso_match_ff_by,
-        use_molecule_info=True,
+        speedup_by_moltag=True,
         remove_untyped=True,
     )
     new_gmso_topology.update_topology()
