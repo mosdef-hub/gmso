@@ -1,5 +1,4 @@
 """Support for various in-memory representations of chemical systems."""
-from .convert_foyer_xml import from_foyer_xml
 from .convert_hoomd import (
     to_gsd_snapshot,
     to_hoomd_forcefield,

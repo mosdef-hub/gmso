@@ -2,3 +2,4 @@ ignore:
   - "gmso/examples"
   - "gmso/tests"
   - "gmso/formats/networkx.py"
+  - "gmso/external/convert_foyer_xml.py"
