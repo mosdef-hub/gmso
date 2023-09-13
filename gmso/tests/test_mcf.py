@@ -311,3 +311,6 @@ class TestMCF(BaseTest):
         assert np.allclose(float(mcf_data[-4][1]), 0.0)
         assert np.allclose(float(mcf_data[-4][2]), 0.5)
         assert np.allclose(float(mcf_data[-4][3]), 1.0)
+
+    def test_top_with_mixture(self):
+        pass

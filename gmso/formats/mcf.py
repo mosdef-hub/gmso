@@ -36,55 +36,67 @@ def write_mcf(top, filename):
     ----------
     top : gmso.core.Topology
         Topology object
-    filename : str
-        Path of the output file
+    filename : str or list
+        Path of the output file(s). If a string is provided
+        and the Topology object has more than one subtopology,
+        an integer suffix will be appended to the string.
+        If a list is provided and there is more than one subtopology,
+        the names of the output files will be
+        each element in the list. The number of element in the list
+        should match the
+        number of unique subtopologies.
 
     Notes
     -----
     Atom indexing begins at 1. See
     https://cassandra.nd.edu/index.php/documentation for a complete
     description of the MCF format.
-
     """
-    _check_compatibility(top)
+    subtops = []
+    for molecule in top.unique_site_labels(name_only=True):
+        subtops.append(top.create_subtop("molecule", (molecule, 1)))
 
-    # Identify atoms in rings and Cassandra 'fragments'
-    in_ring, frag_list, frag_conn = _id_rings_fragments(top)
+    if len(subtops) > 1:
+        if len(filename) != len(subtops):
+            raise ValueError(
+                "write_mcf: Number of filenames must match number of unique species in the Topology object"
+            )
 
-    # TODO: Support writing out multiple .mcf file from one Topology
-    # This can be done by iterating through unique molecule, which can either be determined
-    # by their site.molecule tag or through graph matching (the latter case may take more
-    # effort to develop)
-    if len(top.unique_site_labels("molecule")) > 1:
-        raise GMSOError(
-            "MCF writer does not currently support multiple molecules. "
-            "Please provide a single molecule as an gmso.Topology "
-            "object to the MCF writer."
-        )
+    for idx, subtop in enumerate(subtops):
+        _check_compatibility(subtop)
 
-    # Now we write the MCF file
-    with open(filename, "w") as mcf:
-        header = (
-            "!***************************************"
-            "****************************************\n"
-            "!Molecular connectivity file\n"
-            "!***************************************"
-            "****************************************\n"
-            f"!File {filename} written by gmso {__version__} "
-            f"at {str(datetime.datetime.now())}\n\n"
-        )
+        # Identify atoms in rings and Cassandra 'fragments'
+        in_ring, frag_list, frag_conn = _id_rings_fragments(subtop)
 
-        mcf.write(header)
-        _write_atom_information(mcf, top, in_ring)
-        _write_bond_information(mcf, top)
-        _write_angle_information(mcf, top)
-        _write_dihedral_information(mcf, top)
-        _write_improper_information(mcf, top)
-        _write_fragment_information(mcf, top, frag_list, frag_conn)
-        _write_intrascaling_information(mcf, top)
+        if len(subtops) > 1:
+            if isinstance(filename, str):
+                filename = filename[:-4] + f"_{idx}.mcf"
+            elif isinstance(filename, list):
+                filename = filename[idx]
 
-        # That's all, folks!
-        mcf.write("\n\nEND\n")
+        # Now we write the MCF file
+        with open(filename, "w") as mcf:
+            header = (
+                "!***************************************"
+                "****************************************\n"
+                "!Molecular connectivity file\n"
+                "!***************************************"
+                "****************************************\n"
+                f"!File {filename} written by gmso {__version__} "
+                f"at {str(datetime.datetime.now())}\n\n"
+            )
+
+            mcf.write(header)
+            _write_atom_information(mcf, subtop, in_ring)
+            _write_bond_information(mcf, subtop)
+            _write_angle_information(mcf, subtop)
+            _write_dihedral_information(mcf, subtop)
+            _write_improper_information(mcf, subtop)
+            _write_fragment_information(mcf, subtop, frag_list, frag_conn)
+            _write_intrascaling_information(mcf, subtop)
+
+            # That's all, folks!
+            mcf.write("\n\nEND\n")
 
 
 def _id_rings_fragments(top):
@@ -103,7 +115,6 @@ def _id_rings_fragments(top):
         Atom ids belonging to each fragment
     frag_conn : list
         Fragment ids of connected fragments
-
     """
     # Identify atoms in rings
     bond_graph = nx.Graph()
