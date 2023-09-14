@@ -1,10 +1,16 @@
+import mbuild as mb
 import numpy as np
 import pytest
 import unyt as u
 
+from gmso.core.forcefield import ForceField
 from gmso.exceptions import EngineIncompatibilityError
+from gmso.external import from_mbuild
 from gmso.formats.mcf import write_mcf
+from gmso.parameterization import apply
 from gmso.tests.base_test import BaseTest
+from gmso.tests.utils import get_path
+from gmso.utils.conversions import convert_ryckaert_to_opls
 
 
 def parse_mcf(filename):
@@ -190,17 +196,21 @@ class TestMCF(BaseTest):
         # with pytest.raises(EngineIncompatibilityError):
         #    top.save("dihedral.mcf")
 
-    def test_typed_ethane(self, typed_ethane):
-        top = typed_ethane
-        write_mcf(top, "ethane.mcf")
+    def test_typed_ethylene(self):
+        ethylene = mb.load("C=C", smiles=True)
+        top = from_mbuild(ethylene)
+        ff = ForceField(get_path("ethylene.xml"))
+        top.identify_connections()
+        apply(top, ff, remove_untyped=True)
+        write_mcf(top, "ethylene.mcf")
 
-        mcf_data, mcf_idx = parse_mcf("ethane.mcf")
+        mcf_data, mcf_idx = parse_mcf("ethylene.mcf")
 
         assert is_charge_neutral(mcf_data, mcf_idx)
 
         # Check atom info
-        assert mcf_data[mcf_idx["Atom_Info"] + 1][0] == "8"
-        assert mcf_data[mcf_idx["Atom_Info"] + 2][1] == "opls_135"
+        assert mcf_data[mcf_idx["Atom_Info"] + 1][0] == "6"
+        assert mcf_data[mcf_idx["Atom_Info"] + 2][1] == "opls_143"
         assert mcf_data[mcf_idx["Atom_Info"] + 2][2] == "C"
         assert mcf_data[mcf_idx["Atom_Info"] + 2][5] == "LJ"
         assert np.isclose(
@@ -226,7 +236,7 @@ class TestMCF(BaseTest):
         )
 
         # Check bond section
-        assert mcf_data[mcf_idx["Bond_Info"] + 1][0] == "7"
+        assert mcf_data[mcf_idx["Bond_Info"] + 1][0] == "5"
         assert mcf_data[mcf_idx["Bond_Info"] + 2][3] == "fixed"
         assert np.isclose(
             float(mcf_data[mcf_idx["Bond_Info"] + 2][4]),
@@ -237,7 +247,7 @@ class TestMCF(BaseTest):
         )
 
         # Check angle section
-        assert mcf_data[mcf_idx["Angle_Info"] + 1][0] == "12"
+        assert mcf_data[mcf_idx["Angle_Info"] + 1][0] == "6"
         assert mcf_data[mcf_idx["Angle_Info"] + 2][4] == "harmonic"
         assert np.isclose(
             float(mcf_data[mcf_idx["Angle_Info"] + 2][6]),
@@ -255,19 +265,19 @@ class TestMCF(BaseTest):
         )
 
         # Check dihedral section
-        assert mcf_data[mcf_idx["Dihedral_Info"] + 1][0] == "9"
+        assert mcf_data[mcf_idx["Dihedral_Info"] + 1][0] == "4"
         dihedral_style = mcf_data[mcf_idx["Dihedral_Info"] + 2][5].lower()
         assert dihedral_style.lower() == "opls"
 
-        # TODO: account for 0.5 factors
-        for idx, k in enumerate(["k1", "k2", "k3", "k4"]):
-            assert np.isclose(
-                2.0 * float(mcf_data[mcf_idx["Dihedral_Info"] + 2][6 + idx]),
-                top.dihedrals[0]
-                .dihedral_type.parameters[k]
-                .in_units(u.kilojoule / u.mole)
-                .value,
-            )
+        k = list(ff.dihedral_types.keys())
+        dihedral_type = ff.dihedral_types[k[0]]
+        ff_coeffs = convert_ryckaert_to_opls(dihedral_type).parameters.values()
+        ff_coeffs = np.array([float(x) for x in ff_coeffs])
+        mcf_coeffs = np.array(
+            [float(x) for x in mcf_data[mcf_idx["Dihedral_Info"] + 2][6:]]
+        )
+
+        assert np.allclose(ff_coeffs, 2.0 * mcf_coeffs)
 
     def test_fixed_angles(self, typed_tip3p_rigid_system):
         top = typed_tip3p_rigid_system
