@@ -176,6 +176,31 @@ class TestMCF(BaseTest):
         assert np.allclose(float(mcf_data[-4][2]), 0.5)
         assert np.allclose(float(mcf_data[-4][3]), 1.0)
 
+    def test_write_nitrogen(self):
+        """
+        The main purpose of his test is to check for valid
+        fragment information ouput for molecules that have
+        no angles.
+        """
+        nitrogen = mb.load("N#N", smiles=True)
+        top = from_mbuild(nitrogen)
+        ff = ForceField(get_path("nitrogen-rigid.xml"))
+        top.identify_connections()
+        apply(top, ff, remove_untyped=True)
+        write_mcf(top, "nitrogen.mcf")
+
+        mcf_data, mcf_idx = parse_mcf("nitrogen.mcf")
+
+        assert is_charge_neutral(mcf_data, mcf_idx)
+
+        # Assert number of fragments
+        assert mcf_data[mcf_idx["Fragment_Info"] + 1][0] == "1"
+        # Assert number of atoms in the first fragment
+        assert mcf_data[mcf_idx["Fragment_Info"] + 2][1] == "2"
+        # Assert atom IDs in the first fragment
+        assert mcf_data[mcf_idx["Fragment_Info"] + 2][2] == "1"
+        assert mcf_data[mcf_idx["Fragment_Info"] + 2][3] == "2"
+
     def test_modified_incompatible_expressions(self, typed_ethane):
         top = typed_ethane
 
