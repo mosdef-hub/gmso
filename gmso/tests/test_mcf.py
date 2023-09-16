@@ -386,3 +386,28 @@ class TestMCF(BaseTest):
         # TODO: can we read top.mcf into the simulation somehow?
         # TODO: or use it to validate that the simulation was done
         # correctly?
+
+    def test_untyped_top(self):
+        pass
+
+    def test_top_with_ring(self, typed_benzene_ua_system):
+        top = typed_benzene_ua_system
+        write_mcf(top, "benzene-ua.mcf")
+
+        mcf_data, mcf_idx = parse_mcf("benzene-ua.mcf")
+
+        assert is_charge_neutral(mcf_data, mcf_idx)
+
+        assert mcf_data[mcf_idx["Atom_Info"] + 1][0] == "6"
+
+        for idx in range(0, 6):
+            last_label = mcf_data[mcf_idx["Atom_Info"] + 2 + idx][-1]
+            assert last_label == "ring"
+
+        assert mcf_data[mcf_idx["Bond_Info"] + 1][0] == "6"
+        assert mcf_data[mcf_idx["Angle_Info"] + 1][0] == "6"
+        assert mcf_data[mcf_idx["Dihedral_Info"] + 1][0] == "6"
+
+        assert mcf_data[mcf_idx["Fragment_Info"] + 1][0] == "1"
+        frag_atoms = mcf_data[mcf_idx["Fragment_Info"] + 2][1:]
+        assert set(frag_atoms) == set([str(i) for i in range(1, 7)])
