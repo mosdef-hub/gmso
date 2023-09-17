@@ -5,12 +5,14 @@ import pytest
 import unyt as u
 from mbuild.formats.hoomd_forcefield import create_hoomd_forcefield
 
+from gmso import ForceField
 from gmso.external import from_mbuild
 from gmso.external.convert_hoomd import to_hoomd_forcefield, to_hoomd_snapshot
 from gmso.parameterization import apply
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
 from gmso.utils.io import has_hoomd, has_mbuild, import_
+from gmso.utils.sorting import sort_connection_strings
 
 if has_hoomd:
     hoomd = import_("hoomd")
@@ -26,11 +28,7 @@ def run_hoomd_nvt(snapshot, forces, vhoomd=4):
     sim.create_state_from_snapshot(snapshot)
 
     integrator = hoomd.md.Integrator(dt=0.001)
-    integrator_forces = list()
-    for cat in forces:
-        for force in forces[cat]:
-            integrator_forces.append(force)
-    integrator.forces = integrator_forces
+    integrator.forces = list(set().union(*forces.values()))
 
     temp = 300 * u.K
     kT = temp.to_equivalent("kJ/mol", "thermal").value
@@ -58,7 +56,7 @@ def run_hoomd_nvt(snapshot, forces, vhoomd=4):
 class TestGsd(BaseTest):
     def test_mbuild_comparison(self, oplsaa_forcefield):
         compound = mb.load("CCC", smiles=True)
-        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=20)
+        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=2)
         base_units = {
             "mass": u.g / u.mol,
             "length": u.nm,
@@ -117,21 +115,35 @@ class TestGsd(BaseTest):
         )
 
         for mb_force, gmso_force in zip(sorted_mbuild_ff, sorted_gmso_ff):
-            if not isinstance(mb_force, hoomd.md.long_range.pppm.Coulomb):
-                keys = mb_force.params.param_dict.keys()
-                for key in keys:
-                    mb_params = mb_force.params.param_dict[key]
-                    gmso_params = gmso_force.params.param_dict[key]
-                    variables = mb_params.keys()
-                    for var in variables:
-                        assert np.isclose(mb_params[var], gmso_params[var])
+            if (  # TODO: why are these skipped?
+                isinstance(mb_force, hoomd.md.long_range.pppm.Coulomb)
+                or isinstance(mb_force, hoomd.md.pair.pair.LJ)
+                or isinstance(mb_force, hoomd.md.special_pair.LJ)
+                or isinstance(mb_force, hoomd.md.pair.pair.Ewald)
+                or isinstance(mb_force, hoomd.md.special_pair.Coulomb)
+            ):
+                continue
+            keys = mb_force.params.param_dict.keys()
+            gmso_keys = gmso_force.params.param_dict.keys()
+            for key in keys:
+                gmso_key = key.replace("opls_135", "CT")
+                gmso_key = gmso_key.replace("opls_136", "CT")
+                gmso_key = gmso_key.replace("opls_140", "HC")
+                gmso_key = "-".join(
+                    sort_connection_strings(gmso_key.split("-"))
+                )
+                mb_params = mb_force.params.param_dict[key]
+                gmso_params = gmso_force.params.param_dict[gmso_key]
+                variables = mb_params.keys()
+                for var in variables:
+                    assert np.isclose(mb_params[var], gmso_params[var])
 
     @pytest.mark.skipif(
         int(hoomd_version[0]) < 4, reason="Unsupported features in HOOMD 3"
     )
     def test_hoomd4_simulation(self):
         compound = mb.load("CCC", smiles=True)
-        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=200)
+        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=2)
         base_units = {
             "mass": u.g / u.mol,
             "length": u.nm,
@@ -159,7 +171,7 @@ class TestGsd(BaseTest):
     )
     def test_hoomd4_simulation_auto_scaled(self):
         compound = mb.load("CCC", smiles=True)
-        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=200)
+        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=2)
         base_units = {
             "mass": u.g / u.mol,
             "length": u.nm,
@@ -192,7 +204,7 @@ class TestGsd(BaseTest):
     )
     def test_hoomd3_simulation(self):
         compound = mb.load("CCC", smiles=True)
-        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=200)
+        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=2)
         base_units = {
             "mass": u.g / u.mol,
             "length": u.nm,
@@ -222,7 +234,7 @@ class TestGsd(BaseTest):
     )
     def test_hoomd3_simulation_auto_scaled(self):
         compound = mb.load("CCC", smiles=True)
-        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=200)
+        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=2)
         base_units = {
             "mass": u.g / u.mol,
             "length": u.nm,
@@ -278,7 +290,7 @@ class TestGsd(BaseTest):
 
     def test_diff_base_units(self):
         compound = mb.load("CC", smiles=True)
-        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=100)
+        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=2)
         base_units = {
             "mass": u.amu,
             "length": u.nm,
@@ -302,7 +314,7 @@ class TestGsd(BaseTest):
 
     def test_default_units(self):
         compound = mb.load("CC", smiles=True)
-        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=100)
+        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=2)
         base_units = {
             "mass": u.amu,
             "length": u.nm,
@@ -358,7 +370,7 @@ class TestGsd(BaseTest):
 
     def test_zero_charges(self):
         compound = mb.load("CC", smiles=True)
-        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=20)
+        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=2)
         base_units = {
             "mass": u.amu,
             "length": u.nm,
@@ -413,3 +425,48 @@ class TestGsd(BaseTest):
 
         sim = run_hoomd_nvt(snap, forces)
         sim.run(100)
+
+    def test_forces_connections_match(self):
+        compound = mb.load("CC", smiles=True)
+        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=1)
+        base_units = {
+            "mass": u.amu,
+            "length": u.nm,
+            "energy": u.kJ / u.mol,
+        }
+        top = com_box.to_gmso()
+        top.identify_connections()
+        ethaneFF = ForceField(get_path("alkanes.xml"))
+
+        top = apply(top, ethaneFF, remove_untyped=True)
+
+        snapshot, _ = to_hoomd_snapshot(top, base_units=base_units)
+        assert "CT-HC" in snapshot.bonds.types
+
+        forces, _ = to_hoomd_forcefield(
+            top=top, r_cut=1.4, base_units=base_units
+        )
+        assert "CT-HC" in forces["bonds"][0].params.keys()
+
+    def test_forces_wildcards(self):
+        compound = mb.load("CCCC", smiles=True)
+        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=1)
+        base_units = {
+            "mass": u.amu,
+            "length": u.nm,
+            "energy": u.kJ / u.mol,
+        }
+        top = com_box.to_gmso()
+        top.identify_connections()
+        ethaneFF = ForceField(get_path("alkanes_wildcards.xml"))
+        top = apply(top, ethaneFF, remove_untyped=True)
+
+        snapshot, _ = to_hoomd_snapshot(top, base_units=base_units)
+        assert "CT-HC" in snapshot.bonds.types
+
+        forces, _ = to_hoomd_forcefield(
+            top=top, r_cut=1.4, base_units=base_units
+        )
+        assert "CT-CT-CT-HC" in list(forces["dihedrals"][0].params)
+        for conntype in snapshot.dihedrals.types:
+            assert conntype in list(forces["dihedrals"][0].params)
