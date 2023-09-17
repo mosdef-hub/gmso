@@ -1,6 +1,7 @@
 """Convert GMSO Topology to GSD snapshot."""
 from __future__ import division
 
+import copy
 import itertools
 import json
 import re
@@ -1126,29 +1127,48 @@ def _parse_dihedral_forces(
     if int(hoomd_version[0]) >= 4 or (
         int(hoomd_version[0]) == 3 and int(hoomd_version[1]) >= 8
     ):
-        dtype_group_map["PeriodicTorsionPotential"] = (
-            {
-                "container": hoomd.md.dihedral.Periodic,
-                "parser": _parse_periodic_dihedral,
-            },
-        )
+        v_hoomd = "gt3.8"
+        dtype_group_map["PeriodicTorsionPotential"] = {
+            "container": hoomd.md.dihedral.Periodic,
+            "parser": _parse_periodic_dihedral,
+        }
+
     else:
+        v_hoomd = "lt3.8"
         # Should this be periodic, deprecated starting from 3.8.0
-        dtype_group_map["PeriodicTorsionPotential"] = (
-            {
-                "container": hoomd.md.dihedral.Harmonic,
-                "parser": _parse_periodic_dihedral,
-            },
-        )
+        dtype_group_map["PeriodicTorsionPotential"] = {
+            "container": hoomd.md.dihedral.Harmonic,
+            "parser": _parse_periodic_dihedral,
+        }
 
     dihedral_forces = list()
     for group in groups:
-        dihedral_forces.append(
-            dtype_group_map[group]["parser"](
-                container=dtype_group_map[group]["container"](),
-                dtypes=groups[group],
+        container = dtype_group_map[group]["container"]
+        if isinstance(container(), hoomd.md.dihedral.OPLS):
+            dihedral_forces.append(
+                dtype_group_map[group]["parser"](
+                    container=container(),
+                    dtypes=groups[group],
+                )
             )
-        )
+        elif v_hoomd == "gt3.8" and isinstance(
+            container(), hoomd.md.dihedral.Periodic
+        ):
+            dihedral_forces.extend(
+                dtype_group_map[group]["parser"](
+                    container=container,
+                    dtypes=groups[group],
+                )
+            )
+        elif v_hoomd == "lt3.8" and isinstance(
+            container(), hoomd.md.dihedral.Harmonic
+        ):
+            dihedral_forces.extend(
+                dtype_group_map[group]["parser"](
+                    container=container,
+                    dtypes=groups[group],
+                )
+            )
     return dihedral_forces
 
 
@@ -1156,15 +1176,42 @@ def _parse_periodic_dihedral(
     container,
     dtypes,
 ):
+    containersList = []
+    for _ in range(5):
+        containersList.append(copy.deepcopy(container)())
     for dtype in dtypes:
         member_types = sort_member_types(dtype)
-        container.params["-".join(member_types)] = {
-            "k": dtype.parameters["k"],
-            "d": 1,
-            "n": dtype.parameters["n"],
-            "phi0": dtype.parameters["phi_eq"],
-        }
-    return container
+        if isinstance(dtype.parameters["k"], u.array.unyt_quantity):
+            containersList[0].params["-".join(member_types)] = {
+                "k": dtype.parameters["k"].to_value(),
+                "d": 1,
+                "n": dtype.parameters["n"].to_value(),
+                "phi0": dtype.parameters["phi_eq"].to_value(),
+            }
+        elif isinstance(dtype.parameters["k"], u.array.unyt_array):
+            paramsLen = len(dtype.parameters["k"])
+            for nIndex in range(paramsLen):
+                containersList[nIndex].params["-".join(member_types)] = {
+                    "k": dtype.parameters["k"].to_value()[nIndex],
+                    "d": 1,
+                    "n": dtype.parameters["n"].to_value()[nIndex],
+                    "phi0": dtype.parameters["phi_eq"].to_value()[nIndex],
+                }
+        filled_containersList = []
+        for i in range(5):  # take only periodic terms that have parameters
+            if len(tuple(containersList[i].params.keys())) == 0:
+                continue
+            # add in extra parameters
+            for key in containersList[0].params.keys():
+                if key not in containersList[i].params.keys():
+                    containersList[i].params[key] = {
+                        "k": 0,
+                        "d": 1,
+                        "n": 0,
+                        "phi0": 0,
+                    }
+            filled_containersList.append(containersList[i])
+    return filled_containersList
 
 
 def _parse_opls_dihedral(
@@ -1370,6 +1417,8 @@ def _validate_base_units(base_units, top, auto_scale, potential_types=None):
                 base_units[key] = 1 * base_units[key]
     # Add angle unit (since HOOMD will use radian across the board)
     base_units["angle"] = 1 * u.radian
+    # add dimensionless handling
+    base_units["dimensionless"] = 1 * u.dimensionless
 
     return base_units
 
