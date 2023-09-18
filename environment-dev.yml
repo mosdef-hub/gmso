@@ -6,7 +6,7 @@ dependencies:
   - boltons
   - numpy
   - sympy
-  - unyt
+  - unyt>=2.9.5
   - boltons
   - lxml
   - pydantic
