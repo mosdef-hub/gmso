@@ -332,11 +332,12 @@ class TestMCF(BaseTest):
     @pytest.mark.skipif(not has_cassandra, reason="cassandra is not installed")
     def test_in_cassandra(self, typed_ethane):
         from gmso.external.convert_parmed import to_parmed
+
         write_mcf(typed_ethane, "top.mcf")
         box = mb.Box([3.0, 3.0, 3.0])
         species = to_parmed(typed_ethane)
         system = mc.System([box], [species], mols_to_add=[[5]])
-        ensemble = 'nvt'
+        ensemble = "nvt"
         moveset = mc.MoveSet(ensemble, [species])
         mc.run(
             system=system,
@@ -349,7 +350,9 @@ class TestMCF(BaseTest):
         mcf_data_pmd, mcf_idx_pmd = parse_mcf("species1.mcf")
         mcf_data_gmso, mcf_idx_gmso = parse_mcf("top.mcf")
         skip_dataList = [3]
-        for i, (line_pmd, line_gmso) in enumerate(zip(mcf_data_pmd, mcf_data_gmso)):
+        for i, (line_pmd, line_gmso) in enumerate(
+            zip(mcf_data_pmd, mcf_data_gmso)
+        ):
             if i in skip_dataList:
                 continue
             assert line_pmd == line_gmso
