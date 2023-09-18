@@ -11,6 +11,10 @@ from gmso.parameterization import apply
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
 from gmso.utils.conversions import convert_ryckaert_to_opls
+from gmso.utils.io import has_cassandra, import_
+
+if has_cassandra:
+    mc = import_("mosdef_cassandra")
 
 
 def parse_mcf(filename):
@@ -324,3 +328,33 @@ class TestMCF(BaseTest):
 
     def test_top_with_mixture(self):
         pass
+
+    @pytest.mark.skipif(not has_cassandra, reason="cassandra is not installed")
+    def test_in_cassandra(self, typed_ethane):
+        from gmso.external.convert_parmed import to_parmed
+        write_mcf(typed_ethane, "top.mcf")
+        box = mb.Box([3.0, 3.0, 3.0])
+        species = to_parmed(typed_ethane)
+        system = mc.System([box], [species], mols_to_add=[[5]])
+        ensemble = 'nvt'
+        moveset = mc.MoveSet(ensemble, [species])
+        mc.run(
+            system=system,
+            moveset=moveset,
+            run_type="equilibration",
+            run_length=100,
+            temperature=300.0 * u.K,
+            run_name="top",
+        )
+        mcf_data_pmd, mcf_idx_pmd = parse_mcf("species1.mcf")
+        mcf_data_gmso, mcf_idx_gmso = parse_mcf("top.mcf")
+        skip_dataList = [3]
+        for i, (line_pmd, line_gmso) in enumerate(zip(mcf_data_pmd, mcf_data_gmso)):
+            if i in skip_dataList:
+                continue
+            assert line_pmd == line_gmso
+        for line_pmd, line_gmso in zip(mcf_idx_pmd, mcf_idx_gmso):
+            assert line_pmd == line_gmso
+        # TODO: can we read top.mcf into the simulation somehow?
+        # TODO: or use it to validate that the simulation was done
+        # correctly?
