@@ -519,6 +519,7 @@ def _write_dihedral_information(mcf, top):
             # E = a0 + a1 * (1 + cos(phi)) + a2 * (1 - cos(2*phi)) + a3 * (1 + cos(3*phi))
             # The GMSO Fourier potential has terms up to 0.5 * k4 * ( 1 - cos ( 4 * phi))
             # So we need to exclude the last term in the GMSO topology.
+            dihedral_style = "opls"
             mcf.write(
                 "{:s}  "
                 "{:10.5f}  "
