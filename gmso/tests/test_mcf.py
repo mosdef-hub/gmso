@@ -11,6 +11,7 @@ from gmso.parameterization import apply
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
 from gmso.utils.conversions import convert_ryckaert_to_opls
+from gmso.utils.io import get_fn
 from gmso.utils.io import has_cassandra, import_
 
 if has_cassandra:
@@ -176,20 +177,20 @@ class TestMCF(BaseTest):
         assert np.allclose(float(mcf_data[-4][2]), 0.5)
         assert np.allclose(float(mcf_data[-4][3]), 1.0)
 
-    def test_write_nitrogen(self):
+    def test_write_single_fragment_two_atoms(self):
         """
         The main purpose of his test is to check for valid
         fragment information ouput for molecules that have
         no angles.
         """
-        nitrogen = mb.load("N#N", smiles=True)
-        top = from_mbuild(nitrogen)
-        ff = ForceField(get_path("nitrogen-rigid.xml"))
+        ethane = mb.load(get_fn("ethane_ua.mol2"))
+        top = from_mbuild(ethane)
+        ff = ForceField(get_path("ethane-rigid.xml"))
         top.identify_connections()
         apply(top, ff, remove_untyped=True)
-        write_mcf(top, "nitrogen.mcf")
+        write_mcf(top, "ethane-rigid.mcf")
 
-        mcf_data, mcf_idx = parse_mcf("nitrogen.mcf")
+        mcf_data, mcf_idx = parse_mcf("ethane-rigid.mcf")
 
         assert is_charge_neutral(mcf_data, mcf_idx)
 
@@ -200,6 +201,7 @@ class TestMCF(BaseTest):
         # Assert atom IDs in the first fragment
         assert mcf_data[mcf_idx["Fragment_Info"] + 2][2] == "1"
         assert mcf_data[mcf_idx["Fragment_Info"] + 2][3] == "2"
+        assert mcf_data[mcf_idx["Fragment_Connectivity"] + 1][0] == "0"
 
     def test_modified_incompatible_expressions(self, typed_ethane):
         top = typed_ethane
