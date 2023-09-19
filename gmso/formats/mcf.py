@@ -14,7 +14,10 @@ from gmso.exceptions import GMSOError
 from gmso.formats.formats_registry import saves_as
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.compatibility import check_compatibility
-from gmso.utils.conversions import convert_ryckaert_to_opls
+from gmso.utils.conversions import (
+    convert_opls_to_ryckaert,
+    convert_ryckaert_to_fourier,
+)
 
 __all__ = ["write_mcf"]
 
@@ -494,11 +497,28 @@ def _write_dihedral_information(mcf, top):
         dihedral_style = _get_dihedral_style(dihedral)
         # If ryckaert, convert to opls
         if dihedral_style == "ryckaert":
-            dihedral.connection_type = convert_ryckaert_to_opls(
+            dihedral.connection_type = convert_ryckaert_to_fourier(
                 dihedral.connection_type
             )
-            dihedral_style = "opls"
+            # The GMSO Fourier style is named OPLS in Cassandra. See
+            # https://cassandra-mc.readthedocs.io/en/latest/guides/forcefield.html?highlight=opls#dihedrals
+
+            dihedral_style = "fourier"
+
         if dihedral_style == "opls":
+            dihedral.connection_type = convert_opls_to_ryckaert(
+                dihedral.connection_type
+            )
+            dihedral.connection_type = convert_ryckaert_to_fourier(
+                dihedral.connection_type
+            )
+            dihedral_style = "fourier"
+
+        if dihedral_style == "fourier":
+            # Cassandra supports the OPLS (GMSO's Fourier) functional form up 4 terms, namely
+            # E = a0 + a1 * (1 + cos(phi)) + a2 * (1 - cos(2*phi)) + a3 * (1 + cos(3*phi))
+            # The GMSO Fourier potential has terms up to 0.5 * k4 * ( 1 - cos ( 4 * phi))
+            # So we need to exclude the last term in the GMSO topology.
             mcf.write(
                 "{:s}  "
                 "{:10.5f}  "
@@ -506,6 +526,10 @@ def _write_dihedral_information(mcf, top):
                 "{:10.5f}  "
                 "{:10.5f}\n".format(
                     dihedral_style,
+                    0.5
+                    * dihedral.connection_type.parameters["k0"]
+                    .in_units("kJ/mol")
+                    .value,
                     0.5
                     * dihedral.connection_type.parameters["k1"]
                     .in_units("kJ/mol")
@@ -516,10 +540,6 @@ def _write_dihedral_information(mcf, top):
                     .value,
                     0.5
                     * dihedral.connection_type.parameters["k3"]
-                    .in_units("kJ/mol")
-                    .value,
-                    0.5
-                    * dihedral.connection_type.parameters["k4"]
                     .in_units("kJ/mol")
                     .value,
                 )
@@ -695,6 +715,7 @@ def _check_compatibility(top):
         potential_templates["FixedAnglePotential"],
         potential_templates["PeriodicTorsionPotential"],
         potential_templates["OPLSTorsionPotential"],
+        potential_templates["FourierTorsionPotential"],
         potential_templates["RyckaertBellemansTorsionPotential"],
     )
     check_compatibility(top, accepted_potentials)
@@ -726,6 +747,7 @@ def _get_dihedral_style(dihedral):
         "charmm": potential_templates["PeriodicTorsionPotential"],
         "harmonic": potential_templates["HarmonicTorsionPotential"],
         "opls": potential_templates["OPLSTorsionPotential"],
+        "fourier": potential_templates["FourierTorsionPotential"],
         "ryckaert": potential_templates["RyckaertBellemansTorsionPotential"],
     }
 
