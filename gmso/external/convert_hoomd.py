@@ -1341,7 +1341,6 @@ def _parse_harmonic_improper(
 
 def _validate_base_units(base_units, top, auto_scale, potential_types=None):
     """Validate the provided base units, infer units (based on top's positions and masses) if none is provided."""
-
     if base_units and auto_scale:
         warnings.warn(
             "Both base_units and auto_scale are provided, auto_scale will take precedent."
