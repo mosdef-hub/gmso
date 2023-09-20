@@ -39,6 +39,8 @@ def run_hoomd_nvt(snapshot, forces, vhoomd=4):
         )
     elif vhoomd == 3:
         nvt = hoomd.md.methods.NVT(kT=kT, filter=hoomd.filter.All(), tau=1.0)
+    else:
+        raise ImportError("Wrong version of hoomd.")
     integrator.methods.append(nvt)
     sim.operations.integrator = integrator
 
@@ -115,12 +117,13 @@ class TestGsd(BaseTest):
         )
 
         for mb_force, gmso_force in zip(sorted_mbuild_ff, sorted_gmso_ff):
-            if (  # TODO: why are these skipped?
-                isinstance(mb_force, hoomd.md.long_range.pppm.Coulomb)
-                or isinstance(mb_force, hoomd.md.pair.pair.LJ)
-                or isinstance(mb_force, hoomd.md.special_pair.LJ)
-                or isinstance(mb_force, hoomd.md.pair.pair.Ewald)
-                or isinstance(mb_force, hoomd.md.special_pair.Coulomb)
+            if isinstance(
+                mb_force, 
+                (hoomd.md.long_range.pppm.Coulomb,
+                hoomd.md.pair.pair.LJ,
+                hoomd.md.special_pair.LJ,
+                hoomd.md.pair.pair.Ewald,
+                hoomd.md.special_pair.Coulomb)
             ):
                 continue
             keys = mb_force.params.param_dict.keys()

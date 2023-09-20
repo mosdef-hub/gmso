@@ -33,7 +33,16 @@ def natural_sort(text):
 
 
 def sort_connection_members(connection, sort_by="name"):
-    """Sort connection_members of connection."""
+    """Sort connection_members of connection.
+
+    Parameters
+    ----------
+    connection : gmso.Bond, gmso.Angle, gmso.Dihedral, gmso.Improper
+        The connection made up of sites to sort by
+    sort_by : str, default="name"
+        The attribute of the site to sort by. Can take "name", "atom_type",
+        and "atom_class" as the sorting attribute.
+    """
     if sort_by == "name":
         sorting_key = lambda site: natural_sort(site.name)
     elif sort_by == "atom_type":
@@ -69,7 +78,22 @@ def sort_connection_members(connection, sort_by="name"):
 
 
 def sort_by_classes(potential):
-    """Get list of classes for a topology potential based on memberclass."""
+    """Get tuple of classes for a topology potential based on member_classes.
+
+    Useful for sorting a long list of potentials by the potential.member_types.
+
+    Parameters
+    ----------
+    potential : gmso.core.ParametricPotential
+        Sort one of the potentials, such as an AtomType, BondType, AngleType,
+        DihedralType, or ImproperType
+
+    Returns
+    -------
+    tuple : sorted potential.member_classes based on ordering of sites in GMSO
+        for that particular connection. i.e. impropers specify that the central
+        atom of the improper is listed first.
+    """
     if isinstance(potential, AtomType):
         return potential.atom_type.atomclass
     elif isinstance(potential, BondType):
@@ -90,15 +114,30 @@ def sort_by_classes(potential):
     elif isinstance(potential, ImproperType):
         return (
             potential.member_classes[0],
-            *potential.member_classes[1:],
-        )  # could sort using `sorted`
+            *sorted(potential.member_classes[1:]),
+        )
     return ValueError(
         f"Potential {potential} not one of {potential_attribute_map.values()}"
     )
 
 
 def sort_by_types(potential):
-    """Get list of types for a topology potential based on membertype."""
+    """Get tuple of types for a topology potential based on member_types.
+
+    Useful for sorting a long list of potentials by the potential.member_types.
+
+    Parameters
+    ----------
+    potential : gmso.core.ParametricPotential
+        Sort one of the potentials, such as an AtomType, BondType, AngleType,
+        DihedralType, or ImproperType
+
+    Returns
+    -------
+    tuple : sorted potential.member_types based on ordering of sites in GMSO
+        for that particular connection. i.e. impropers specify that the central
+        atom of the improper is listed first.
+    """
     if isinstance(potential, AtomType):
         return potential.name
     elif isinstance(potential, BondType):
@@ -119,8 +158,8 @@ def sort_by_types(potential):
     elif isinstance(potential, ImproperType):
         return (
             potential.member_types[0],
-            *potential.member_types[1:],
-        )  # could sort using `sorted`
+            *sorted(potential.member_types[1:]),
+        )
     return ValueError(
         f"Potential {potential} not one of {potential_attribute_map.values()}"
     )
@@ -145,8 +184,7 @@ def sort_connection_strings(namesList, improperBool=False):
             return tuple(namesList)
     elif len(namesList) == 4 and improperBool:
         return tuple(
-            namesList[0],
-            sorted(*namesList[1:]),
+            [namesList[0], *sorted(namesList[1:])],
         )
     elif len(namesList) == 4 and not improperBool:
         if namesList[1] > namesList[2] or (

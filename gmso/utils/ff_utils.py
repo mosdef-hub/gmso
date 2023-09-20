@@ -319,8 +319,7 @@ def _validate_schema(xml_path_or_etree, schema=None):
         line = ex.error_log.last_error.line
         # rewrite error message for constraint violation
         if ex.error_log.last_error.type_name == "SCHEMAV_CVC_IDC":
-            for keyword in ex.error_log:
-                raise ForceFieldParseError(message, line)
+            raise ForceFieldParseError(message, line)
     return ff_xml
 
 

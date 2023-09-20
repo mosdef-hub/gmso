@@ -22,6 +22,7 @@ from gmso.utils.conversions import (
 from gmso.utils.geometry import coord_shift
 from gmso.utils.io import has_gsd, has_hoomd
 from gmso.utils.sorting import sort_by_classes, sort_connection_members
+from gmso.utils.units import convert_params_units
 
 if has_gsd:
     import gsd.hoomd
@@ -734,7 +735,7 @@ def _parse_nonbonded_forces(
         expected_units_dim = potential_refs[group][
             "expected_parameters_dimensions"
         ]
-        groups[group] = _convert_params_units(
+        groups[group] = convert_params_units(
             groups[group],
             expected_units_dim,
             base_units,
@@ -962,7 +963,7 @@ def _parse_bond_forces(
         expected_units_dim = potential_refs[group][
             "expected_parameters_dimensions"
         ]
-        groups[group] = _convert_params_units(
+        groups[group] = convert_params_units(
             groups[group],
             expected_units_dim,
             base_units,
@@ -1033,7 +1034,7 @@ def _parse_angle_forces(
         expected_units_dim = potential_refs[group][
             "expected_parameters_dimensions"
         ]
-        groups[group] = _convert_params_units(
+        groups[group] = convert_params_units(
             groups[group],
             expected_units_dim,
             base_units,
@@ -1307,7 +1308,7 @@ def _parse_improper_forces(
         expected_units_dim = potential_refs[group][
             "expected_parameters_dimensions"
         ]
-        groups[group] = _convert_params_units(
+        groups[group] = convert_params_units(
             groups[group],
             expected_units_dim,
             base_units,
@@ -1346,7 +1347,6 @@ def _parse_harmonic_improper(
 
 def _validate_base_units(base_units, top, auto_scale, potential_types=None):
     """Validate the provided base units, infer units (based on top's positions and masses) if none is provided."""
-    from copy import deepcopy
 
     if base_units and auto_scale:
         warnings.warn(
@@ -1357,7 +1357,7 @@ def _validate_base_units(base_units, top, auto_scale, potential_types=None):
             "Neither base_units or auto_scale is provided, will infer base units from topology."
         )
 
-    base_units = deepcopy(base_units)
+    base_units = copy.deepcopy(base_units)
     ref = {
         "energy": u.dimensions.energy,
         "length": u.dimensions.length,
@@ -1459,31 +1459,6 @@ def _infer_units(top):
 
     return {"length": length_unit, "energy": energy_unit, "mass": mass_unit}
 
-
-def _convert_params_units(
-    potentials,
-    expected_units_dim,
-    base_units,
-):
-    """Convert parameters' units in the potential to that specified in the base_units."""
-    converted_potentials = list()
-    for potential in potentials:
-        converted_params = dict()
-        for parameter in potential.parameters:
-            unit_dim = expected_units_dim[parameter]
-            ind_units = re.sub("[^a-zA-Z]+", " ", unit_dim).split()
-            for unit in ind_units:
-                unit_dim = unit_dim.replace(
-                    unit,
-                    f"({str(base_units[unit].value)} * {str(base_units[unit].units)})",
-                )
-
-            converted_params[parameter] = potential.parameters[parameter].to(
-                unit_dim
-            )
-        potential.parameters = converted_params
-        converted_potentials.append(potential)
-    return converted_potentials
 
 
 def _convert_single_param_units(
