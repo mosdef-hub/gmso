@@ -414,6 +414,7 @@ def _write_angle_information(mcf, top):
     header = (
         "\n!Angle Format\n"
         "!index i j k type parameters\n"
+        '!type="fixed", parms=equilibrium_angle\n'
         '!type="harmonic", parms=force_constant equilibrium_angle\n'
         "\n# Angle_Info\n"
     )
