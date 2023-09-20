@@ -496,31 +496,32 @@ def _write_dihedral_information(mcf, top):
             )
         )
         dihedral_style = _get_dihedral_style(dihedral)
+        dihedral_style = dihedral_style.upper()
         # If ryckaert, convert to opls
-        if dihedral_style == "ryckaert":
+        if dihedral_style == "RYCKAERT":
             dihedral.connection_type = convert_ryckaert_to_fourier(
                 dihedral.connection_type
             )
             # The GMSO Fourier style is named OPLS in Cassandra. See
             # https://cassandra-mc.readthedocs.io/en/latest/guides/forcefield.html?highlight=opls#dihedrals
 
-            dihedral_style = "fourier"
+            dihedral_style = "FOURIER"
 
-        if dihedral_style == "opls":
+        if dihedral_style == "OPLS":
             dihedral.connection_type = convert_opls_to_ryckaert(
                 dihedral.connection_type
             )
             dihedral.connection_type = convert_ryckaert_to_fourier(
                 dihedral.connection_type
             )
-            dihedral_style = "fourier"
+            dihedral_style = "FOURIER"
 
-        if dihedral_style == "fourier":
+        if dihedral_style == "FOURIER":
             # Cassandra supports the OPLS (GMSO's Fourier) functional form up 4 terms, namely
             # E = a0 + a1 * (1 + cos(phi)) + a2 * (1 - cos(2*phi)) + a3 * (1 + cos(3*phi))
             # The GMSO Fourier potential has terms up to 0.5 * k4 * ( 1 - cos ( 4 * phi))
             # So we need to exclude the last term in the GMSO topology.
-            dihedral_style = "opls"
+            dihedral_style = "OPLS"
             mcf.write(
                 "{:s}  "
                 "{:10.5f}  "
@@ -546,7 +547,7 @@ def _write_dihedral_information(mcf, top):
                     .value,
                 )
             )
-        elif dihedral_style == "charmm":
+        elif dihedral_style == "CHARMM":
             mcf.write(
                 "{:s}  "
                 "{:10.5f}  "
@@ -562,12 +563,12 @@ def _write_dihedral_information(mcf, top):
                     .value,
                 )
             )
-        elif dihedral_style == "harmonic":
+        elif dihedral_style == "HARMONIC":
             mcf.write(
                 "{:s}  "
                 "{:10.5f}  "
                 "{:10.5f}\n".format(
-                    dihedral_style,
+                    dihedral_style.lower(),
                     0.5
                     * dihedral.connection_type.parameters["k"]
                     .in_units("kJ/mol")
