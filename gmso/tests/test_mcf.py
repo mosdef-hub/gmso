@@ -78,7 +78,7 @@ class TestMCF(BaseTest):
         assert mcf_data[mcf_idx["Atom_Info"] + 2][5] == "LJ"
         assert np.isclose(
             float(mcf_data[mcf_idx["Atom_Info"] + 2][3]),
-            top.sites[0].mass.in_units(u.amu).value,
+            top.sites[0].atom_type.mass.in_units(u.amu).value,
         )
         assert np.isclose(
             float(mcf_data[mcf_idx["Atom_Info"] + 2][4]),
@@ -135,7 +135,7 @@ class TestMCF(BaseTest):
         assert mcf_data[mcf_idx["Atom_Info"] + 2][5] == "Mie"
         assert np.isclose(
             float(mcf_data[mcf_idx["Atom_Info"] + 2][3]),
-            top.sites[0].mass.in_units(u.amu).value,
+            top.sites[0].atom_type.mass.in_units(u.amu).value,
         )
         assert np.isclose(
             float(mcf_data[mcf_idx["Atom_Info"] + 2][4]),
@@ -250,7 +250,7 @@ class TestMCF(BaseTest):
         assert mcf_data[mcf_idx["Atom_Info"] + 2][5] == "LJ"
         assert np.isclose(
             float(mcf_data[mcf_idx["Atom_Info"] + 2][3]),
-            top.sites[0].mass.in_units(u.amu).value,
+            top.sites[0].atom_type.mass.in_units(u.amu).value,
         )
         assert np.isclose(
             float(mcf_data[mcf_idx["Atom_Info"] + 2][4]),

@@ -325,7 +325,7 @@ def _write_atom_information(mcf, top, in_ring):
                 idx + 1,
                 atypes_list[idx],
                 names[idx],
-                site.mass.in_units(u.amu).value,
+                site.atom_type.mass.in_units(u.amu).value,
                 site.charge.in_units(u.elementary_charge).value,
             )
         )
