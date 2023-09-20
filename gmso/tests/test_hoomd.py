@@ -129,7 +129,6 @@ class TestGsd(BaseTest):
             ):
                 continue
             keys = mb_force.params.param_dict.keys()
-            gmso_keys = gmso_force.params.param_dict.keys()
             for key in keys:
                 gmso_key = key.replace("opls_135", "CT")
                 gmso_key = gmso_key.replace("opls_136", "CT")

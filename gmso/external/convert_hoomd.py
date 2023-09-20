@@ -1089,18 +1089,12 @@ def _parse_dihedral_forces(
     base_units : dict
         The dictionary holding base units (mass, length, and energy)
     """
-    unique_dtypes = top.dihedral_types(
-        filter_by=PotentialFilters.UNIQUE_NAME_CLASS
-    )
     unique_dihedrals = {}
     for dihedral in top.dihedrals:
         unique_members = tuple(
             [site.atom_type.atomclass for site in dihedral.connection_members]
         )
         unique_dihedrals[unique_members] = dihedral
-    unique_dtypes = [
-        dihedral.dihedral_type for dihedral in unique_dihedrals.values()
-    ]
     groups = dict()
     for dihedral in unique_dihedrals.values():
         group = potential_types[dihedral.dihedral_type]
