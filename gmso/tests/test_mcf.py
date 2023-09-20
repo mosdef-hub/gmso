@@ -12,7 +12,7 @@ from gmso.formats.mcf import write_mcf
 from gmso.parameterization import apply
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
-from gmso.utils.conversions import convert_ryckaert_to_opls
+from gmso.utils.conversions import convert_ryckaert_to_fourier
 from gmso.utils.io import get_fn, has_cassandra, has_parmed, import_
 
 if has_cassandra:
@@ -306,8 +306,15 @@ class TestMCF(BaseTest):
 
         k = list(ff.dihedral_types.keys())
         dihedral_type = ff.dihedral_types[k[0]]
-        ff_coeffs = convert_ryckaert_to_opls(dihedral_type).parameters.values()
-        ff_coeffs = np.array([float(x) for x in ff_coeffs])
+        ff_coeffs = convert_ryckaert_to_fourier(
+            dihedral_type
+        ).parameters.values()
+
+        # We need to drop the last coefficient in the fourier GMSO dihedral type
+        # (the term that has cos(4*phi) since it is not supported in the equivalent OPLS
+        # dihedral type in Cassandra)
+
+        ff_coeffs = np.array([float(x) for x in ff_coeffs])[:-1]
         mcf_coeffs = np.array(
             [float(x) for x in mcf_data[mcf_idx["Dihedral_Info"] + 2][6:]]
         )
