@@ -1460,7 +1460,6 @@ def _infer_units(top):
     return {"length": length_unit, "energy": energy_unit, "mass": mass_unit}
 
 
-
 def _convert_single_param_units(
     potential,
     expected_units_dim,

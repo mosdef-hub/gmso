@@ -118,12 +118,14 @@ class TestGsd(BaseTest):
 
         for mb_force, gmso_force in zip(sorted_mbuild_ff, sorted_gmso_ff):
             if isinstance(
-                mb_force, 
-                (hoomd.md.long_range.pppm.Coulomb,
-                hoomd.md.pair.pair.LJ,
-                hoomd.md.special_pair.LJ,
-                hoomd.md.pair.pair.Ewald,
-                hoomd.md.special_pair.Coulomb)
+                mb_force,
+                (
+                    hoomd.md.long_range.pppm.Coulomb,
+                    hoomd.md.pair.pair.LJ,
+                    hoomd.md.special_pair.LJ,
+                    hoomd.md.pair.pair.Ewald,
+                    hoomd.md.special_pair.Coulomb,
+                ),
             ):
                 continue
             keys = mb_force.params.param_dict.keys()
