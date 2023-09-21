@@ -309,7 +309,7 @@ def _atom_types_from_pmd(structure):
                 "epsilon": atom_type.epsilon * u.Unit("kcal / mol"),
             },
             independent_variables={"r"},
-            mass=copy.deepcopy(atom_type.mass),
+            mass=atom_type.mass,
         )
         pmd_top_atomtypes[atom_type] = top_atomtype
     return pmd_top_atomtypes
@@ -429,9 +429,6 @@ def to_parmed(top, refer_type=True):
     # Sanity check
     msg = "Provided argument is not a topology.Topology."
     assert isinstance(top, gmso.Topology)
-
-    # Copy structure to not overwrite object in memory
-    top = copy.deepcopy(top)
 
     # Set up Parmed structure and define general properties
     structure = pmd.Structure()
@@ -570,7 +567,9 @@ def _atom_types_from_gmso(top, structure, atom_map):
     """
     # Maps
     atype_map = dict()
-    for atom_type in top.atom_types:
+    for atom_type in top.atom_types(
+        filter_by=PotentialFilters.UNIQUE_NAME_CLASS
+    ):
         msg = "Atom type {} expression does not match Parmed AtomType default expression".format(
             atom_type.name
         )
