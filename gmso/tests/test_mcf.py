@@ -482,6 +482,7 @@ class TestMCF(BaseTest):
         # Parse log files
         with open("nvt_gmso.out.log", mode="r") as f:
             lines = f.readlines()
+            energy = None
             for line in lines:
                 if "Total system energy" in line:
                     energy = float(line.split()[-1])
