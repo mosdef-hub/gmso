@@ -489,6 +489,7 @@ class TestMCF(BaseTest):
 
         with open("nvt_mbuild.out.log", mode="r") as f:
             lines = f.readlines()
+            energy_ref = 0.0
             for line in lines:
                 if "Total system energy" in line:
                     energy_ref = float(line.split()[-1])
