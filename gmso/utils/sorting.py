@@ -80,7 +80,15 @@ def sort_connection_members(connection, sort_by="name"):
 def sort_by_classes(potential):
     """Get tuple of classes for a topology potential based on member_classes.
 
-    Useful for sorting a long list of potentials by the potential.member_types.
+    Useful for sorting a long list of potentials by the potential.member_classes.
+    Returns the sorted potential based on the ordering of its 
+    `site.atom_type.atomclass`. For instance, with angles, the central atom is 
+    alwasys listed second. For dihedrals, the middle two atoms are listed at index
+    1 and 2, and the outer two atoms are placed at index 0 (which is bonded to index
+    1) and index 3 (which is bonded to atom 4). Finally, impropers are organized 
+    with the central atom at index0, followed by any combination of the other three 
+    sites.
+    Use `sorted(dihedralTypesList, key=sort_by_classes)` for sorting functionality.
 
     Parameters
     ----------
@@ -125,6 +133,14 @@ def sort_by_types(potential):
     """Get tuple of types for a topology potential based on member_types.
 
     Useful for sorting a long list of potentials by the potential.member_types.
+    Returns the sorted potential based on the ordering of its 
+    `site.atom_type.name`. For instance, with angles, the central atom is 
+    alwasys listed second. For dihedrals, the middle two atoms are listed at index
+    1 and 2, and the outer two atoms are placed at index 0 (which is bonded to index
+    1) and index 3 (which is bonded to atom 4). Finally, impropers are organized 
+    with the central atom at index0, followed by any combination of the other three 
+    sites.
+    Use `sorted(dihedralTypesList, key=sort_by_types)` for sorting functionality.
 
     Parameters
     ----------
