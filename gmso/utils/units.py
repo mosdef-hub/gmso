@@ -504,7 +504,26 @@ def convert_params_units(
     expected_units_dim,
     base_units,
 ):
-    """Convert parameters' units in the potential to that specified in the base_units."""
+    """Convert parameters' units in the potential to that specified in the base_units.
+
+    Parameters
+    ----------
+    potentials : list
+        Set of potentials to apply the conversion to.
+    expected_units_dim : dict
+        The dimensionality expected for all parameters in the potential. This allows
+        the given dimensions to be converted to via the base_units specified in the
+        unit system.
+    base_units : dict
+        The units to use for conversion. Must have keys of "length", "energy",
+        and "mass". These are the base units any parameter will be converted into.
+
+    Returns
+    -------
+    converted_potentials : list
+        the input potentials converted into the base units given by
+        base_units `dict`.
+    """
     converted_potentials = list()
     for potential in potentials:
         converted_params = dict()

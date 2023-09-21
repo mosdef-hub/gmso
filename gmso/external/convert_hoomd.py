@@ -1108,11 +1108,6 @@ def _parse_dihedral_forces(
         expected_unitsDict[group] = potential_refs[group][
             "expected_parameters_dimensions"
         ]
-        # groups[group] = _convert_connection_params_units(
-        #    groups[group],
-        #    expected_units_dim,
-        #    base_units,
-        # )
     dtype_group_map = {
         "OPLSTorsionPotential": {
             "container": hoomd.md.dihedral.OPLS,
@@ -1176,7 +1171,10 @@ def _parse_dihedral_forces(
                     base_units=base_units,
                 )
             )
-            raise ValueError
+        else:
+            raise GMSOError(
+                f"Current version of HOOMD-blue, {hoomd_version}. is not supported. Please updated for version 3.8 or later."
+            )
     return dihedral_forces
 
 
