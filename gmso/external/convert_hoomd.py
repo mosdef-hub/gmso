@@ -394,7 +394,7 @@ def _parse_bond_information(snapshot, top):
 
         bond_types.append(bond_type)
         bond_groups.append(
-            tuple(top.get_index(site) for site in connection_members)
+            sorted(tuple(top.get_index(site) for site in connection_members))
         )
 
     unique_bond_types = list(set(bond_types))
