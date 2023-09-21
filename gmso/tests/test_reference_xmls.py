@@ -1,8 +1,8 @@
 import numpy as np
+import pytest
 import sympy
 import unyt as u
 from unyt.testing import assert_allclose_units
-import pytest
 
 from gmso.core.forcefield import ForceField
 from gmso.lib.potential_templates import PotentialTemplateLibrary
@@ -580,7 +580,11 @@ class TestForceFieldFromXML(BaseTest):
             rtol=1e-5,
             atol=1e-8,
         )
+
     def test_error_duplicated_types(self):
         with pytest.raises(ValueError) as e:
             ForceField(get_path("ff-nonunique-dihedral.xml"))
-            assert e == "Duplicate identifier found for DihedralTypes: ('CT', 'CT', 'CT', 'HC')"
+            assert (
+                e
+                == "Duplicate identifier found for DihedralTypes: ('CT', 'CT', 'CT', 'HC')"
+            )
