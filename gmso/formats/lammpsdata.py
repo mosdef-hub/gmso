@@ -26,7 +26,7 @@ from gmso.core.dihedral import Dihedral
 from gmso.core.element import element_by_mass
 from gmso.core.improper import Improper
 from gmso.core.topology import Topology
-from gmso.core.views import PotentialFilters, get_sorted_names
+from gmso.core.views import PotentialFilters
 
 pfilter = PotentialFilters.UNIQUE_SORTED_NAMES
 from gmso.exceptions import NotYetImplementedWarning
@@ -37,6 +37,7 @@ from gmso.utils.conversions import (
     convert_opls_to_ryckaert,
     convert_ryckaert_to_opls,
 )
+from gmso.utils.sorting import sort_by_types
 from gmso.utils.units import LAMMPS_UnitSystems, write_out_parameter_and_units
 
 
@@ -875,7 +876,7 @@ def _write_dihedraltypes(out_file, top, base_unyts, cfactorsDict):
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
     indexList = list(top.dihedral_types(filter_by=pfilter))
     index_membersList = [
-        (dihedral_type, get_sorted_names(dihedral_type))
+        (dihedral_type, sort_by_types(dihedral_type))
         for dihedral_type in indexList
     ]
     index_membersList.sort(key=lambda x: ([x[1][i] for i in [1, 2, 0, 3]]))
@@ -915,7 +916,7 @@ def _write_impropertypes(out_file, top, base_unyts, cfactorsDict):
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
     indexList = list(top.improper_types(filter_by=pfilter))
     index_membersList = [
-        (improper_type, get_sorted_names(improper_type))
+        (improper_type, sort_by_types(improper_type))
         for improper_type in indexList
     ]
     index_membersList.sort(key=lambda x: ([x[1][i] for i in [0, 1, 2, 3]]))
@@ -1005,14 +1006,14 @@ def _write_conn_data(out_file, top, connIter, connStr):
     out_file.write(f"\n{connStr.capitalize()}\n\n")
     indexList = list(
         map(
-            get_sorted_names,
+            sort_by_types,
             getattr(top, connStr[:-1] + "_types")(filter_by=pfilter),
         )
     )
     indexList.sort(key=sorting_funcDict[connStr])
 
     for i, conn in enumerate(getattr(top, connStr)):
-        typeStr = f"{i+1:<6d}\t{indexList.index(get_sorted_names(conn.connection_type))+1:<6d}\t"
+        typeStr = f"{i+1:<6d}\t{indexList.index(sort_by_types(conn.connection_type))+1:<6d}\t"
         indexStr = "\t".join(
             map(
                 lambda x: str(top.sites.index(x) + 1).ljust(6),

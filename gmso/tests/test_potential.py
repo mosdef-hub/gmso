@@ -11,6 +11,7 @@ from gmso.core.topology import Topology
 from gmso.exceptions import GMSOError
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.tests.base_test import BaseTest
+from gmso.utils.sorting import sort_by_classes, sort_by_types
 
 
 class TestPotential(BaseTest):
@@ -284,3 +285,18 @@ class TestPotential(BaseTest):
             if id(value) == id(cloned):
                 assert isinstance(value, (str, type(None)))
                 assert isinstance(cloned, (str, type(None)))
+
+    def test_sorting(self, parmed_benzene):
+        from gmso.external import from_parmed
+
+        top = from_parmed(parmed_benzene)
+
+        labelsList = [
+            "bond_types",
+            "angle_types",
+            "dihedral_types",
+            "improper_types",
+        ]
+        for connection_type in labelsList:
+            conn = list(getattr(top, connection_type)())[0]
+            assert sort_by_classes(conn) == sort_by_types(conn)

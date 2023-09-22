@@ -1,0 +1,56 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ForceField name="nonunique-dihedral_opls" version="0.0.1">
+  <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.5" combiningRule="geometric">
+    <Units energy="kJ" distance="nm" mass="amu" charge="elementary_charge"/>
+  </FFMetaData>
+  <AtomTypes expression="4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)">
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <AtomType name="opls_135" mass="12.01078" charge="-0.18" atomclass="CT" definition="[C;X4](C)(H)(H)H">
+      <Parameters>
+        <Parameter name="epsilon" value="0.35"/>
+        <Parameter name="sigma" value="0.276144"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="opls_136" mass="12.01078" charge="-0.12" atomclass="CT" definition="[C;X4](C)(C)(H)H">
+      <Parameters>
+        <Parameter name="epsilon" value="0.35"/>
+        <Parameter name="sigma" value="0.276144"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="opls_140" mass="1.008" charge="0.06" atomclass="HC" definition="H[C;X4]">
+      <Parameters>
+        <Parameter name="epsilon" value="0.25"/>
+        <Parameter name="sigma" value="0.12552"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+  <DihedralTypes expression="c0 + c1*cos(phi) + c2*cos(phi)**2 + c3*cos(phi)**3 + c4*cos(phi)**4 + c5*cos(phi)**5">
+    <ParametersUnitDef parameter="c0" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c1" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c2" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c3" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c4" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c5" unit="kJ/mol"/>
+    <DihedralType name="RyckaertBellemansTorsionPotential" type1="HC" type2="CT" type3="CT" type4="CT">
+        <Parameters>
+        <Parameter name="c0" value="0.6276"/>
+        <Parameter name="c1" value="1.8828"/>
+        <Parameter name="c2" value="0.0"/>
+        <Parameter name="c3" value="-2.5104"/>
+        <Parameter name="c4" value="0.0"/>
+        <Parameter name="c5" value="0.0"/>
+      </Parameters>
+    </DihedralType>
+    <DihedralType name="RyckaertBellemansTorsionPotential-error" type1="CT" type2="CT" type3="CT" type4="HC">
+        <Parameters>
+        <Parameter name="c0" value="0.6276"/>
+        <Parameter name="c1" value="1.8828"/>
+        <Parameter name="c2" value="0.0"/>
+        <Parameter name="c3" value="-2.5104"/>
+        <Parameter name="c4" value="0.0"/>
+        <Parameter name="c5" value="0.0"/>
+      </Parameters>
+    </DihedralType>
+  </DihedralTypes>
+</ForceField>

@@ -1,6 +1,7 @@
 """Convert GMSO Topology to GSD snapshot."""
 from __future__ import division
 
+import copy
 import itertools
 import json
 import re
@@ -20,11 +21,8 @@ from gmso.utils.conversions import (
 )
 from gmso.utils.geometry import coord_shift
 from gmso.utils.io import has_gsd, has_hoomd
-from gmso.utils.sorting import (
-    natural_sort,
-    sort_connection_members,
-    sort_member_types,
-)
+from gmso.utils.sorting import sort_by_classes, sort_connection_members
+from gmso.utils.units import convert_params_units
 
 if has_gsd:
     import gsd.hoomd
@@ -384,9 +382,9 @@ def _parse_bond_information(snapshot, top):
 
     for bond in top.bonds:
         if all([site.atom_type for site in bond.connection_members]):
-            connection_members = sort_connection_members(bond, "atom_type")
+            connection_members = sort_connection_members(bond, "atomclass")
             bond_type = "-".join(
-                [site.atom_type.name for site in connection_members]
+                [site.atom_type.atomclass for site in connection_members]
             )
         else:
             connection_members = sort_connection_members(bond, "name")
@@ -402,8 +400,8 @@ def _parse_bond_information(snapshot, top):
 
     if isinstance(snapshot, hoomd.Snapshot):
         snapshot.bonds.types = unique_bond_types
-        snapshot.bonds.typeid[0:] = bond_typeids
-        snapshot.bonds.group[0:] = bond_groups
+        snapshot.bonds.typeid[:] = bond_typeids
+        snapshot.bonds.group[:] = bond_groups
     elif isinstance(snapshot, gsd.hoomd.Frame):
         snapshot.bonds.types = unique_bond_types
         snapshot.bonds.typeid = bond_typeids
@@ -431,9 +429,9 @@ def _parse_angle_information(snapshot, top):
 
     for angle in top.angles:
         if all([site.atom_type for site in angle.connection_members]):
-            connection_members = sort_connection_members(angle, "atom_type")
+            connection_members = sort_connection_members(angle, "atomclass")
             angle_type = "-".join(
-                [site.atom_type.name for site in connection_members]
+                [site.atom_type.atomclass for site in connection_members]
             )
         else:
             connection_members = sort_connection_members(angle, "name")
@@ -449,8 +447,8 @@ def _parse_angle_information(snapshot, top):
 
     if isinstance(snapshot, hoomd.Snapshot):
         snapshot.angles.types = unique_angle_types
-        snapshot.angles.typeid[0:] = angle_typeids
-        snapshot.angles.group[0:] = np.reshape(angle_groups, (-1, 3))
+        snapshot.angles.typeid[:] = angle_typeids
+        snapshot.angles.group[:] = np.reshape(angle_groups, (-1, 3))
     elif isinstance(snapshot, gsd.hoomd.Frame):
         snapshot.angles.types = unique_angle_types
         snapshot.angles.typeid = angle_typeids
@@ -477,9 +475,9 @@ def _parse_dihedral_information(snapshot, top):
 
     for dihedral in top.dihedrals:
         if all([site.atom_type for site in dihedral.connection_members]):
-            connection_members = sort_connection_members(dihedral, "atom_type")
+            connection_members = sort_connection_members(dihedral, "atomclass")
             dihedral_type = "-".join(
-                [site.atom_type.name for site in connection_members]
+                [site.atom_type.atomclass for site in connection_members]
             )
         else:
             connection_members = sort_connection_members(dihedral, "name")
@@ -495,8 +493,8 @@ def _parse_dihedral_information(snapshot, top):
 
     if isinstance(snapshot, hoomd.Snapshot):
         snapshot.dihedrals.types = unique_dihedral_types
-        snapshot.dihedrals.typeid[0:] = dihedral_typeids
-        snapshot.dihedrals.group[0:] = np.reshape(dihedral_groups, (-1, 4))
+        snapshot.dihedrals.typeid[:] = dihedral_typeids
+        snapshot.dihedrals.group[:] = np.reshape(dihedral_groups, (-1, 4))
     elif isinstance(snapshot, gsd.hoomd.Frame):
         snapshot.dihedrals.types = unique_dihedral_types
         snapshot.dihedrals.typeid = dihedral_typeids
@@ -525,9 +523,9 @@ def _parse_improper_information(snapshot, top):
 
     for improper in top.impropers:
         if all([site.atom_type for site in improper.connection_members]):
-            connection_members = sort_connection_members(improper, "atom_type")
+            connection_members = sort_connection_members(improper, "atomclass")
             improper_type = "-".join(
-                [site.atom_type.name for site in connection_members]
+                [site.atom_type.atomclass for site in connection_members]
             )
         else:
             connection_members = sort_connection_members(improper, "name")
@@ -737,7 +735,7 @@ def _parse_nonbonded_forces(
         expected_units_dim = potential_refs[group][
             "expected_parameters_dimensions"
         ]
-        groups[group] = _convert_params_units(
+        groups[group] = convert_params_units(
             groups[group],
             expected_units_dim,
             base_units,
@@ -965,7 +963,7 @@ def _parse_bond_forces(
         expected_units_dim = potential_refs[group][
             "expected_parameters_dimensions"
         ]
-        groups[group] = _convert_params_units(
+        groups[group] = convert_params_units(
             groups[group],
             expected_units_dim,
             base_units,
@@ -994,8 +992,8 @@ def _parse_harmonic_bond(
 ):
     for btype in btypes:
         # TODO: Unit conversion
-        member_types = sort_member_types(btype)
-        container.params["-".join(member_types)] = {
+        member_classes = sort_by_classes(btype)
+        container.params["-".join(member_classes)] = {
             "k": btype.parameters["k"],
             "r0": btype.parameters["r_eq"],
         }
@@ -1036,7 +1034,7 @@ def _parse_angle_forces(
         expected_units_dim = potential_refs[group][
             "expected_parameters_dimensions"
         ]
-        groups[group] = _convert_params_units(
+        groups[group] = convert_params_units(
             groups[group],
             expected_units_dim,
             base_units,
@@ -1064,8 +1062,8 @@ def _parse_harmonic_angle(
     agtypes,
 ):
     for agtype in agtypes:
-        member_types = sort_member_types(agtype)
-        container.params["-".join(member_types)] = {
+        member_classes = sort_by_classes(agtype)
+        container.params["-".join(member_classes)] = {
             "k": agtype.parameters["k"],
             "t0": agtype.parameters["theta_eq"],
         }
@@ -1091,26 +1089,25 @@ def _parse_dihedral_forces(
     base_units : dict
         The dictionary holding base units (mass, length, and energy)
     """
-    unique_dtypes = top.dihedral_types(
-        filter_by=PotentialFilters.UNIQUE_NAME_CLASS
-    )
+    unique_dihedrals = {}
+    for dihedral in top.dihedrals:
+        unique_members = tuple(
+            [site.atom_type.atomclass for site in dihedral.connection_members]
+        )
+        unique_dihedrals[unique_members] = dihedral
     groups = dict()
-    for dtype in unique_dtypes:
-        group = potential_types[dtype]
+    for dihedral in unique_dihedrals.values():
+        group = potential_types[dihedral.dihedral_type]
         if group not in groups:
-            groups[group] = [dtype]
+            groups[group] = [dihedral]
         else:
-            groups[group].append(dtype)
+            groups[group].append(dihedral)
 
+    expected_unitsDict = {}
     for group in groups:
-        expected_units_dim = potential_refs[group][
+        expected_unitsDict[group] = potential_refs[group][
             "expected_parameters_dimensions"
         ]
-        groups[group] = _convert_params_units(
-            groups[group],
-            expected_units_dim,
-            base_units,
-        )
     dtype_group_map = {
         "OPLSTorsionPotential": {
             "container": hoomd.md.dihedral.OPLS,
@@ -1126,55 +1123,118 @@ def _parse_dihedral_forces(
     if int(hoomd_version[0]) >= 4 or (
         int(hoomd_version[0]) == 3 and int(hoomd_version[1]) >= 8
     ):
-        dtype_group_map["PeriodicTorsionPotential"] = (
-            {
-                "container": hoomd.md.dihedral.Periodic,
-                "parser": _parse_periodic_dihedral,
-            },
-        )
+        v_hoomd = "gt3.8"
+        dtype_group_map["PeriodicTorsionPotential"] = {
+            "container": hoomd.md.dihedral.Periodic,
+            "parser": _parse_periodic_dihedral,
+        }
+
     else:
+        v_hoomd = "lt3.8"
         # Should this be periodic, deprecated starting from 3.8.0
-        dtype_group_map["PeriodicTorsionPotential"] = (
-            {
-                "container": hoomd.md.dihedral.Harmonic,
-                "parser": _parse_periodic_dihedral,
-            },
-        )
+        dtype_group_map["PeriodicTorsionPotential"] = {
+            "container": hoomd.md.dihedral.Harmonic,
+            "parser": _parse_periodic_dihedral,
+        }
 
     dihedral_forces = list()
     for group in groups:
-        dihedral_forces.append(
-            dtype_group_map[group]["parser"](
-                container=dtype_group_map[group]["container"](),
-                dtypes=groups[group],
+        container = dtype_group_map[group]["container"]
+        if isinstance(container(), hoomd.md.dihedral.OPLS):
+            dihedral_forces.append(
+                dtype_group_map[group]["parser"](
+                    container=container(),
+                    dihedrals=groups[group],
+                    expected_units_dim=expected_unitsDict[group],
+                    base_units=base_units,
+                )
             )
-        )
+        elif v_hoomd == "gt3.8" and isinstance(
+            container(), hoomd.md.dihedral.Periodic
+        ):
+            dihedral_forces.extend(
+                dtype_group_map[group]["parser"](
+                    container=dtype_group_map[group]["container"](),
+                    dihedrals=groups[group],
+                    expected_units_dim=expected_unitsDict[group],
+                    base_units=base_units,
+                )
+            )
+        elif v_hoomd == "lt3.8" and isinstance(
+            container(), hoomd.md.dihedral.Harmonic
+        ):
+            dihedral_forces.extend(
+                dtype_group_map[group]["parser"](
+                    container=dtype_group_map[group]["container"](),
+                    dihedrals=groups[group],
+                    expected_units_dim=expected_unitsDict[group],
+                    base_units=base_units,
+                )
+            )
+        else:
+            raise GMSOError(
+                f"Current version of HOOMD-blue, {hoomd_version}. is not supported. Please updated for version 3.8 or later."
+            )
     return dihedral_forces
 
 
 def _parse_periodic_dihedral(
-    container,
-    dtypes,
+    container, dihedrals, expected_units_dim, base_units
 ):
-    for dtype in dtypes:
-        member_types = sort_member_types(dtype)
-        container.params["-".join(member_types)] = {
-            "k": dtype.parameters["k"],
-            "d": 1,
-            "n": dtype.parameters["n"],
-            "phi0": dtype.parameters["phi_eq"],
-        }
-    return container
+    containersList = []
+    for _ in range(5):
+        containersList.append(copy.deepcopy(container))
+    for dihedral in dihedrals:
+        dtype = dihedral.dihedral_type
+        dtype = _convert_single_param_units(
+            dtype, expected_units_dim, base_units
+        )
+        member_sites = sort_connection_members(dihedral, "atomclass")
+        member_classes = [site.atom_type.atomclass for site in member_sites]
+        if isinstance(dtype.parameters["k"], u.array.unyt_quantity):
+            containersList[0].params["-".join(member_classes)] = {
+                "k": dtype.parameters["k"].to_value(),
+                "d": 1,
+                "n": dtype.parameters["n"].to_value(),
+                "phi0": dtype.parameters["phi_eq"].to_value(),
+            }
+        elif isinstance(dtype.parameters["k"], u.array.unyt_array):
+            paramsLen = len(dtype.parameters["k"])
+            for nIndex in range(paramsLen):
+                containersList[nIndex].params["-".join(member_classes)] = {
+                    "k": dtype.parameters["k"].to_value()[nIndex],
+                    "d": 1,
+                    "n": dtype.parameters["n"].to_value()[nIndex],
+                    "phi0": dtype.parameters["phi_eq"].to_value()[nIndex],
+                }
+    filled_containersList = []
+    for i in range(5):  # take only periodic terms that have parameters
+        if len(tuple(containersList[i].params.keys())) == 0:
+            continue
+        # add in extra parameters
+        for key in containersList[0].params.keys():
+            if key not in tuple(containersList[i].params.keys()):
+                containersList[i].params[key] = {
+                    "k": 0,
+                    "d": 1,
+                    "n": 0,
+                    "phi0": 0,
+                }
+        filled_containersList.append(containersList[i])
+    return filled_containersList
 
 
-def _parse_opls_dihedral(
-    container,
-    dtypes,
-):
-    for dtype in dtypes:
+def _parse_opls_dihedral(container, dihedrals, expected_units_dim, base_units):
+    for dihedral in dihedrals:
+        dtype = dihedral.dihedral_type
+        dtype = _convert_single_param_units(
+            dtype, expected_units_dim, base_units
+        )
         # TODO: The range of ks is mismatched (GMSO go from k0 to k5)
         # May need to do a check that k0 == k5 == 0 or raise a warning
-        container.params["-".join(dtype.member_types)] = {
+        member_sites = sort_connection_members(dihedral, "atomclass")
+        member_classes = [site.atom_type.atomclass for site in member_sites]
+        container.params["-".join(member_classes)] = {
             "k1": dtype.parameters["k1"],
             "k2": dtype.parameters["k2"],
             "k3": dtype.parameters["k3"],
@@ -1183,19 +1243,21 @@ def _parse_opls_dihedral(
     return container
 
 
-def _parse_rb_dihedral(
-    container,
-    dtypes,
-):
+def _parse_rb_dihedral(container, dihedrals, expected_units_dim, base_units):
     warnings.warn(
         "RyckaertBellemansTorsionPotential will be converted to OPLSTorsionPotential."
     )
-    for dtype in dtypes:
+    for dihedral in dihedrals:
+        dtype = dihedral.dihedral_type
+        dtype = _convert_single_param_units(
+            dtype, expected_units_dim, base_units
+        )
         opls = convert_ryckaert_to_opls(dtype)
-        member_types = sort_member_types(dtype)
+        member_sites = sort_connection_members(dihedral, "atomclass")
+        member_classes = [site.atom_type.atomclass for site in member_sites]
         # TODO: The range of ks is mismatched (GMSO go from k0 to k5)
         # May need to do a check that k0 == k5 == 0 or raise a warning
-        container.params["-".join(member_types)] = {
+        container.params["-".join(member_classes)] = {
             "k1": opls.parameters["k1"],
             "k2": opls.parameters["k2"],
             "k3": opls.parameters["k3"],
@@ -1238,7 +1300,7 @@ def _parse_improper_forces(
         expected_units_dim = potential_refs[group][
             "expected_parameters_dimensions"
         ]
-        groups[group] = _convert_params_units(
+        groups[group] = convert_params_units(
             groups[group],
             expected_units_dim,
             base_units,
@@ -1267,7 +1329,7 @@ def _parse_harmonic_improper(
     itypes,
 ):
     for itype in itypes:
-        member_types = sort_member_types(itype)
+        member_types = sort_by_classes(itype)
         container.params["-".join(member_types)] = {
             "k": itype.parameters["k"],
             "chi0": itype.parameters["phi_eq"],  # diff nomenclature?
@@ -1277,8 +1339,6 @@ def _parse_harmonic_improper(
 
 def _validate_base_units(base_units, top, auto_scale, potential_types=None):
     """Validate the provided base units, infer units (based on top's positions and masses) if none is provided."""
-    from copy import deepcopy
-
     if base_units and auto_scale:
         warnings.warn(
             "Both base_units and auto_scale are provided, auto_scale will take precedent."
@@ -1288,7 +1348,7 @@ def _validate_base_units(base_units, top, auto_scale, potential_types=None):
             "Neither base_units or auto_scale is provided, will infer base units from topology."
         )
 
-    base_units = deepcopy(base_units)
+    base_units = copy.deepcopy(base_units)
     ref = {
         "energy": u.dimensions.energy,
         "length": u.dimensions.length,
@@ -1370,6 +1430,8 @@ def _validate_base_units(base_units, top, auto_scale, potential_types=None):
                 base_units[key] = 1 * base_units[key]
     # Add angle unit (since HOOMD will use radian across the board)
     base_units["angle"] = 1 * u.radian
+    # add dimensionless handling
+    base_units["dimensionless"] = 1 * u.dimensionless
 
     return base_units
 
@@ -1389,27 +1451,24 @@ def _infer_units(top):
     return {"length": length_unit, "energy": energy_unit, "mass": mass_unit}
 
 
-def _convert_params_units(
-    potentials,
+def _convert_single_param_units(
+    potential,
     expected_units_dim,
     base_units,
 ):
     """Convert parameters' units in the potential to that specified in the base_units."""
-    converted_potentials = list()
-    for potential in potentials:
-        converted_params = dict()
-        for parameter in potential.parameters:
-            unit_dim = expected_units_dim[parameter]
-            ind_units = re.sub("[^a-zA-Z]+", " ", unit_dim).split()
-            for unit in ind_units:
-                unit_dim = unit_dim.replace(
-                    unit,
-                    f"({str(base_units[unit].value)} * {str(base_units[unit].units)})",
-                )
-
-            converted_params[parameter] = potential.parameters[parameter].to(
-                unit_dim
+    converted_params = dict()
+    for parameter in potential.parameters:
+        unit_dim = expected_units_dim[parameter]
+        ind_units = re.sub("[^a-zA-Z]+", " ", unit_dim).split()
+        for unit in ind_units:
+            unit_dim = unit_dim.replace(
+                unit,
+                f"({str(base_units[unit].value)} * {str(base_units[unit].units)})",
             )
-        potential.parameters = converted_params
-        converted_potentials.append(potential)
-    return converted_potentials
+
+        converted_params[parameter] = potential.parameters[parameter].to(
+            unit_dim
+        )
+    potential.parameters = converted_params
+    return potential

@@ -15,7 +15,7 @@ def apply(
     speedup_by_molgraph=False,
     speedup_by_moltag=False,
     ignore_params=["improper"],
-    remove_untyped=False,
+    remove_untyped=True,
     fast_copy=True,
 ):
     """Set Topology parameter types from GMSO ForceFields.
@@ -59,7 +59,7 @@ def apply(
         Available options includes "bonds", "angles", "dihedrals", and "impropers".
         If you wish to have all connection types checks, provides an empty set/list/tuple.
 
-    remove_untyped : bool, optional, default=False
+    remove_untyped : bool, optional, default=True
         If True, after the atomtyping and parameterization step, remove all connection
         that has no connection_type.
 
