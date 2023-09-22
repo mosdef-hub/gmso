@@ -319,20 +319,7 @@ def _validate_schema(xml_path_or_etree, schema=None):
         line = ex.error_log.last_error.line
         # rewrite error message for constraint violation
         if ex.error_log.last_error.type_name == "SCHEMAV_CVC_IDC":
-            for keyword in error_texts:
-                if keyword in message:
-                    atomtype = message[
-                        message.find("[") + 1 : message.find("]")
-                    ]
-                    error_text = error_texts[keyword].format(atomtype, line)
-                    raise ForceFieldParseError((error_text, ex, line))
-                else:
-                    raise ForceFieldParseError(
-                        "Unhandled XML validation error. "
-                        "Please consider submitting a bug report.",
-                        ex,
-                        line,
-                    )
+            raise ForceFieldParseError(message, line)
     return ff_xml
 
 

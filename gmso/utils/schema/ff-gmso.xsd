@@ -68,7 +68,9 @@
         </xsd:complexType>
         <xsd:key name="bondtype_name_key">
             <xsd:selector xpath="BondType"/>
-            <xsd:field xpath="@name"/>
+            <xsd:field xpath="@type1|@class1"/>
+            <xsd:field xpath="@type2|@class2"/>
+
         </xsd:key>
     </xsd:element>
 
@@ -91,21 +93,18 @@
         <xsd:complexType>
             <xsd:sequence>
                 <xsd:element name="ParametersUnitDef" type="ParametersUnitDef" minOccurs="0" maxOccurs="unbounded"/>
-                <xsd:element name="AngleType" type="AngleType" maxOccurs="unbounded" minOccurs="0">
-                    <xsd:key name="mutuallyExclusiveAttributesAngleType">
-                        <xsd:selector xpath="."/>
-                        <xsd:field xpath="@type1|@class1"/>
-                        <xsd:field xpath="@type2|@class2"/>
-                        <xsd:field xpath="@type3|@class3"/>
-                    </xsd:key>
-                </xsd:element>
+                <xsd:choice minOccurs="0" maxOccurs="unbounded">
+                    <xsd:element name="AngleType" type="AngleType" minOccurs="0"/>
+                </xsd:choice>
             </xsd:sequence>
             <xsd:attribute name="expression" type="xsd:string"/>
             <xsd:attribute name="name" type="xsd:string" use="optional"/>
         </xsd:complexType>
         <xsd:key name="angle_type_name_key">
             <xsd:selector xpath="AngleType"/>
-            <xsd:field xpath="@name"/>
+            <xsd:field xpath="@type1|@class1"/>
+            <xsd:field xpath="@type2|@class2"/>
+            <xsd:field xpath="@type3|@class3"/>
         </xsd:key>
     </xsd:element>
 
@@ -248,22 +247,6 @@
         </xsd:complexType>
         <xsd:unique name="atomtype_name_key">
             <xsd:selector xpath="AtomTypes/AtomType"/>
-            <xsd:field xpath="@name"/>
-        </xsd:unique>
-        <xsd:unique name="bondtype_names">
-            <xsd:selector xpath="BondTypes/BondType"/>
-            <xsd:field xpath="@name"/>
-        </xsd:unique>
-        <xsd:unique name="angletype_names">
-            <xsd:selector xpath="AngleTypes/AngleType"/>
-            <xsd:field xpath="@name"/>
-        </xsd:unique>
-        <xsd:unique name="dihedraltypes_names">
-            <xsd:selector xpath="DihedralTypes/DihedralType"/>
-            <xsd:field xpath="@name"/>
-        </xsd:unique>
-        <xsd:unique name="pairpotentialtypes_names">
-            <xsd:selector xpath="PairPotentialTypes/PairPotentialType"/>
             <xsd:field xpath="@name"/>
         </xsd:unique>
     </xsd:element>

@@ -105,9 +105,9 @@ class TestBond(BaseTest):
         assert tuple(bond_eq.connection_members) in bond.equivalent_members()
         assert tuple(bond.connection_members) in bond_eq.equivalent_members()
 
-    def test_bond_member_classes_none(self, typed_ethane):
+    def test_bond_member_classes_types(self, typed_ethane):
         bonds = typed_ethane.bonds
-        assert bonds[0].member_classes is None
+        assert bonds[0].member_classes == bonds[0].member_types
 
     def test_bond_member_types(self, typed_ethane):
         bonds = typed_ethane.bonds
