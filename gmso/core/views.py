@@ -11,6 +11,7 @@ from gmso.core.dihedral import Dihedral
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
+from gmso.utils.sorting import sort_by_types
 
 __all__ = ["TopologyPotentialView", "PotentialFilters"]
 
@@ -35,35 +36,6 @@ def get_name_or_class(potential):
         potential, (BondType, AngleType, DihedralType, ImproperType)
     ):
         return potential.member_types or potential.member_classes
-
-
-def get_sorted_names(potential):
-    """Get identifier for a topology potential based on name or membertype/class."""
-    if isinstance(potential, AtomType):
-        return potential.name
-    elif isinstance(potential, BondType):
-        return tuple(sorted(potential.member_types))
-    elif isinstance(potential, AngleType):
-        if potential.member_types[0] > potential.member_types[2]:
-            return tuple(reversed(potential.member_types))
-        else:
-            return potential.member_types
-    elif isinstance(potential, DihedralType):
-        if potential.member_types[1] > potential.member_types[2] or (
-            potential.member_types[1] == potential.member_types[2]
-            and potential.member_types[0] > potential.member_types[3]
-        ):
-            return tuple(reversed(potential.member_types))
-        else:
-            return potential.member_types
-    elif isinstance(potential, ImproperType):
-        return (
-            potential.member_types[0],
-            *potential.member_types[1:],
-        )  # could sort using `sorted`
-    return ValueError(
-        f"Potential {potential} not one of {potential_attribute_map.values()}"
-    )
 
 
 def get_parameters(potential):
@@ -105,7 +77,7 @@ class PotentialFilters:
 
 potential_identifiers = {
     PotentialFilters.UNIQUE_NAME_CLASS: get_name_or_class,
-    PotentialFilters.UNIQUE_SORTED_NAMES: get_sorted_names,
+    PotentialFilters.UNIQUE_SORTED_NAMES: sort_by_types,
     PotentialFilters.UNIQUE_EXPRESSION: lambda p: str(p.expression),
     PotentialFilters.UNIQUE_PARAMETERS: get_parameters,
     PotentialFilters.UNIQUE_ID: lambda p: id(p),

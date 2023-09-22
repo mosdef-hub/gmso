@@ -381,12 +381,27 @@ def _add_conn_type_from_pmd(
             {member_types} is missing a type from the ParmEd structure.\
             Try using refer_type=False to not look for a parameterized structure."
         )
+    try:
+        get_classes = (
+            lambda x: x.atom_type.atomclass
+            if x.atom_type.atomclass
+            else x.atom_type.name
+        )
+        member_classes = list(map(get_classes, gmso_conn.connection_members))
+    except AttributeError:
+        member_classes = list(
+            map(
+                lambda x: f"{x}: {x.atom_type.name})",
+                gmso_conn.connection_members,
+            )
+        )
     top_conntype = getattr(gmso, connStr)(
         name=name,
         parameters=conn_params,
         expression=expression,
         independent_variables=variables,
         member_types=member_types,
+        member_classes=member_classes,
     )
     conntypeStr = connStr.lower()[:-4] + "_type"
     setattr(gmso_conn, conntypeStr, top_conntype)

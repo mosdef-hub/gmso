@@ -685,3 +685,11 @@ class BaseTest:
             assert_improper_params=False,
         )
         return struc
+
+    @pytest.fixture
+    def gaff_forcefield(self):
+        return ForceField(get_fn("gmso_xmls/test_ffstyles/gaff.xml"))
+
+    @pytest.fixture
+    def oplsaa_forcefield(self):
+        return ForceField("oplsaa")
