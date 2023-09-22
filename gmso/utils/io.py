@@ -205,6 +205,14 @@ try:
 except ImportError:
     has_pandas = False
 
+try:
+    import mosdef_cassandra
+
+    has_cassandra = True
+    del mosdef_cassandra
+except ImportError:
+    has_cassandra = False
+
 
 def run_from_ipython():
     """Verify that the code is running in an ipython kernel."""
