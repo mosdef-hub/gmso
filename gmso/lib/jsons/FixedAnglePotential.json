@@ -1,0 +1,8 @@
+{
+  "name": "FixedAnglePotential",
+  "expression": "DiracDelta(theta-theta_eq)",
+  "independent_variables": "theta",
+  "expected_parameters_dimensions": {
+    "theta_eq": "angle"
+  }
+}

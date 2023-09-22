@@ -264,6 +264,14 @@ class BaseTest:
         return top
 
     @pytest.fixture
+    def typed_tip3p_rigid_system(self, water_system):
+        top = water_system
+        top.identify_connections()
+        ff = ForceField(get_path("tip3p-rigid.xml"))
+        top = apply(top, ff)
+        return top
+
+    @pytest.fixture
     def foyer_fullerene(self):
         from foyer.tests.utils import get_fn
 
