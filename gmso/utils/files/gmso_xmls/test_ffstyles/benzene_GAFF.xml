@@ -1,0 +1,85 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ForceField name="GAFF benzene" version="0.0.1">
+  <FFMetaData electrostatics14Scale="0.833333333" nonBonded14Scale="0.5" combiningRule="lorentz">
+    <Units energy="kJ/mol" distance="nm" mass="amu" charge="elementary_charge"/>
+  </FFMetaData>
+  <AtomTypes expression="4 * epsilon * ((sigma/r)**12 - (sigma/r)**6)">
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <AtomType name="ca" atomclass="ca" element="C" charge="0.0" mass="12.01" definition="[C;X3;r6]1[C;X3;r6][C;X3;r6][C;X3;r6][C;X3;r6][C;X3;r6]1" description="Sp2 C for total aromatic systems" doi="10.1002/jcc/20035">
+      <Parameters>
+        <Parameter name="epsilon" value="0.359824"/>
+        <Parameter name="sigma" value="0.33996695084235345"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="ha" atomclass="ha" element="H" charge="0.0" mass="1.008" definition="H[C;!X4]" description="H in aromatic carbon" doi="10.1002/jcc/20035">
+      <Parameters>
+        <Parameter name="epsilon" value="0.06276"/>
+        <Parameter name="sigma" value="0.259964245953351"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+  <BondTypes expression="k/2 * (r-r_eq)**2">
+    <ParametersUnitDef parameter="r_eq" unit="nm"/>
+    <ParametersUnitDef parameter="k" unit="kJ/mol/nm**2"/>
+    <BondType name="BondType_Harmonic_ca_ha" class1="ca" class2="ha">
+      <Parameters>
+        <Parameter name="k" value="289365.44"/>
+        <Parameter name="r_eq" value="0.10860000000000002"/>
+      </Parameters>
+    </BondType>
+    <BondType name="BondType_Harmonic_ca_ca" class1="ca" class2="ca">
+      <Parameters>
+        <Parameter name="k" value="385848.4799999999"/>
+        <Parameter name="r_eq" value="0.13984000000000002"/>
+      </Parameters>
+    </BondType>
+  </BondTypes>
+  <AngleTypes expression="k/2 * (theta - theta_eq)**2">
+    <ParametersUnitDef parameter="theta_eq" unit="radian"/>
+    <ParametersUnitDef parameter="k" unit="kJ/mol/radian**2"/>
+    <AngleType name="AngleType_Harmonic_ca_ca_ca" class1="ca" class2="ca" class3="ca">
+      <Parameters>
+        <Parameter name="k" value="557.3088"/>
+        <Parameter name="theta_eq" value="2.094744168243594"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="AngleType_Harmonic_ca_ca_ha" class1="ca" class2="ca" class3="ha">
+      <Parameters>
+        <Parameter name="k" value="403.33760000000007"/>
+        <Parameter name="theta_eq" value="2.092300707290802"/>
+      </Parameters>
+    </AngleType>
+  </AngleTypes>
+  <DihedralTypes expression="k * (1 + cos(n * phi - phi_eq))">
+    <ParametersUnitDef parameter="k" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="n" unit="dimensionless"/>
+    <ParametersUnitDef parameter="phi_eq" unit="radian"/>
+    <DihedralType name="DihedralType_periodic_Proper_x_ca_ca_x" class1="*" class2="ca" class3="ca" class4="*">
+      <Parameters>
+        <Parameter name="n">
+          <Value>2</Value>
+        </Parameter>
+        <Parameter name="k">
+          <Value>15.167</Value>
+        </Parameter>
+        <Parameter name="phi_eq">
+          <Value>3.141592653589793</Value>
+        </Parameter>
+      </Parameters>
+    </DihedralType>
+    <ImproperType name="ImproperType_periodic_Proper_ca_x_x_ha" class1="ca" class2="*" class3="*" class4="ha">
+      <Parameters>
+        <Parameter name="n">
+          <Value>2</Value>
+        </Parameter>
+        <Parameter name="k">
+          <Value>4.6024</Value>
+        </Parameter>
+        <Parameter name="phi_eq">
+          <Value>3.141592653589793</Value>
+        </Parameter>
+      </Parameters>
+    </ImproperType>
+  </DihedralTypes>
+</ForceField>

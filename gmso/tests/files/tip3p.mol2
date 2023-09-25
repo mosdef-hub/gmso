@@ -6,11 +6,11 @@ NO_CHARGES
 @<TRIPOS>CRYSIN
     3.0130     3.0130     3.0130    90.0000    90.0000    90.0000  1  1
 @<TRIPOS>ATOM
-       1 O            0.6100     1.0000     1.0000 opls_111      1 opls_111
-       2 H            0.1700     0.9000     1.7700 opls_112      1 opls_111
-       3 H            0.1100     1.5400     0.4000 opls_112      1 opls_111
+       1 O            0.6100     1.0000     1.0000 opls_111      1 tip3p
+       2 H            0.1700     0.9000     1.7700 opls_112      1 tip3p
+       3 H            0.1100     1.5400     0.4000 opls_112      1 tip3p
 @<TRIPOS>BOND
        1        1        2 1
-       2        3        1 1
+       2        1        3 1
 @<TRIPOS>SUBSTRUCTURE
        1 RES             1 RESIDUE    0 **** ROOT      0

@@ -2,6 +2,7 @@
 import os
 import re
 
+import numpy as np
 import unyt as u
 from lxml import etree
 from sympy import sympify
@@ -70,7 +71,24 @@ def _parse_params_values(parent_tag, units_dict, child_tag, expression=None):
             )
         param_name = param.attrib["name"]
         param_unit = units_dict[param_name]
-        param_value = u.unyt_quantity(float(param.attrib["value"]), param_unit)
+        if param.attrib.get("value"):
+            param_value = u.unyt_quantity(
+                float(param.attrib["value"]), param_unit
+            )
+        else:
+            children = param.getchildren()
+            if len(children) == 0:
+                raise ForceFieldParseError(
+                    f"Neither a single value nor a sequence of values "
+                    f"is specified for parameter {param_name}, please specify "
+                    f"either a single value as an attribute value or a sequence "
+                    f"of values."
+                )
+            value_array = np.array(
+                [value.text for value in children], dtype=float
+            )
+            param_value = u.unyt_array(value_array, param_unit)
+
         params_dict[param_name] = param_value
     param_ref_dict = units_dict
     if child_tag == "DihedralType":
@@ -294,8 +312,14 @@ def _validate_schema(xml_path_or_etree, schema=None):
     ff_xml = xml_path_or_etree
     if not isinstance(xml_path_or_etree, etree._ElementTree):
         ff_xml = etree.parse(xml_path_or_etree)
-
-    xml_schema.assertValid(ff_xml)
+    try:
+        xml_schema.assertValid(ff_xml)
+    except etree.DocumentInvalid as ex:
+        message = ex.error_log.last_error.message
+        line = ex.error_log.last_error.line
+        # rewrite error message for constraint violation
+        if ex.error_log.last_error.type_name == "SCHEMAV_CVC_IDC":
+            raise ForceFieldParseError(message, line)
     return ff_xml
 
 
@@ -321,7 +345,10 @@ def parse_ff_metadata(element):
         "Units": _parse_default_units,
         "ScalingFactors": _parse_scaling_factors,
     }
-    ff_meta = {"scaling_factors": parsers["ScalingFactors"](element)}
+    ff_meta = {
+        "scaling_factors": parsers["ScalingFactors"](element),
+        "combining_rule": element.get("combiningRule", "geometric"),
+    }
     for metatype in element:
         if metatype.tag in metatypes:
             ff_meta[metatype.tag] = parsers[metatype.tag](metatype)
@@ -346,10 +373,9 @@ def parse_ff_atomtypes(atomtypes_el, ff_meta):
             "independent_variables": None,
             "atomclass": "",
             "doi": "",
-            "overrides": "",
+            "overrides": set(),
             "definition": "",
             "description": "",
-            "topology": None,
             "element": "",
         }
 

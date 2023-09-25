@@ -1,17 +1,37 @@
 """Manage Potential functional expressions and variables."""
 import warnings
+from copy import deepcopy
+from functools import lru_cache
+from typing import Dict
 
 import sympy
 import unyt as u
 
 from gmso.utils.decorators import register_pydantic_json
-from gmso.utils.misc import unyt_to_hashable
 
-__all__ = ["_PotentialExpression"]
+__all__ = ["PotentialExpression"]
+
+
+def _are_equal_parameters(u1, u2):
+    """Compare two parameters of unyt quantities/arrays.
+
+    This method compares two dictionaries (`u1` and `u2`) of
+    `unyt_quantities` and returns True if:
+        * u1 and u2 have the exact same key set
+        * for each key, the value in u1 and u2 have the same unyt quantity
+    """
+    if u1.keys() != u2.keys():
+        return False
+    else:
+        for k, v in u1.items():
+            if not u.allclose_units(v, u2[k]):
+                return False
+
+        return True
 
 
 @register_pydantic_json(method="json")
-class _PotentialExpression:
+class PotentialExpression:
     """A general Expression class with parameters.
 
     This class is used by `gmso.core.potential.Potential` class and its
@@ -34,6 +54,9 @@ class _PotentialExpression:
 
     parameters: dict, default=None
         A dictionary of parameter whose key is a string and values are parameters
+
+    verify_validity: bool, default=True
+        If true verify validity of the expression, parameters and independent variables
     """
 
     __slots__ = (
@@ -43,22 +66,38 @@ class _PotentialExpression:
         "_is_parametric",
     )
 
-    def __init__(self, expression, independent_variables, parameters=None):
-        self._expression = self._validate_expression(expression)
-        self._independent_variables = self._validate_independent_variables(
-            independent_variables
+    def __init__(
+        self,
+        expression,
+        independent_variables,
+        parameters=None,
+        verify_validity=True,
+    ):
+        self._expression = (
+            self._validate_expression(expression)
+            if verify_validity
+            else expression
+        )
+        self._independent_variables = (
+            self._validate_independent_variables(independent_variables)
+            if verify_validity
+            else independent_variables
         )
         self._is_parametric = False
 
         if parameters is not None:
             self._is_parametric = True
-            self._parameters = self._validate_parameters(parameters)
-            self._verify_validity(
-                self._expression, self._independent_variables, self._parameters
+            self._parameters = (
+                self._validate_parameters(parameters)
+                if verify_validity
+                else parameters
             )
-        else:
+
+        if verify_validity:
             self._verify_validity(
-                self._expression, self.independent_variables, None
+                self._expression,
+                frozenset(self._independent_variables),
+                frozenset(self._parameters) if self._is_parametric else None,
             )
 
     @property
@@ -157,11 +196,15 @@ class _PotentialExpression:
             else:
                 parameters = self._parameters
 
-            self._verify_validity(expression, independent_variables, parameters)
+            self._verify_validity(
+                expression,
+                frozenset(independent_variables),
+                frozenset(parameters),
+            )
 
             self._parameters.update(parameters)
         else:
-            self._verify_validity(expression, independent_variables)
+            self._verify_validity(expression, frozenset(independent_variables))
 
         self._expression = expression
         self._independent_variables = independent_variables
@@ -170,31 +213,6 @@ class _PotentialExpression:
             for key in list(self._parameters.keys()):
                 if sympy.Symbol(key) not in self.expression.free_symbols:
                     self._parameters.pop(key)
-
-    def __hash__(self):
-        """Return hash of the potential expression."""
-        if self._is_parametric:
-            return hash(
-                tuple(
-                    (
-                        self.expression,
-                        tuple(self.independent_variables),
-                        tuple(self.parameters.keys()),
-                        tuple(
-                            unyt_to_hashable(val)
-                            for val in self.parameters.values()
-                        ),
-                    )
-                )
-            )
-        else:
-            return hash(
-                tuple((self.expression, tuple(self.independent_variables)))
-            )
-
-    def __eq__(self, other):
-        """Determine if two expressions are equivalent."""
-        return hash(self) == hash(other)
 
     def __repr__(self):
         """Representation of the potential expression."""
@@ -207,6 +225,7 @@ class _PotentialExpression:
         return "".join(descr)
 
     @staticmethod
+    @lru_cache(maxsize=128)
     def _validate_expression(expression):
         """Check to see that an expression is a valid sympy expression."""
         if expression is None or isinstance(expression, sympy.Expr):
@@ -242,6 +261,24 @@ class _PotentialExpression:
 
         return parameters
 
+    def __eq__(self, other):
+        """Equality checks for two expressions."""
+        if other is self:
+            return True
+        if not isinstance(other, PotentialExpression):
+            return False
+        if not self.is_parametric:
+            return (
+                self.expression == other.expression
+                and self.independent_variables == other.independent_variables
+            )
+        else:
+            return (
+                self.expression == other.expression
+                and self.independent_variables == other.independent_variables
+                and _are_equal_parameters(self.parameters, other.parameters)
+            )
+
     @staticmethod
     def _validate_independent_variables(indep_vars):
         """Check to see that independent_variables is a set of valid sympy symbols."""
@@ -269,10 +306,41 @@ class _PotentialExpression:
 
         return indep_vars
 
+    def clone(self, fast_copy=False):
+        """Return a clone of this potential expression, faster alternative to deepcopying."""
+        if not fast_copy:
+            return PotentialExpression(
+                deepcopy(self._expression),
+                deepcopy(self._independent_variables),
+                {
+                    k: u.unyt_quantity(v.value, v.units)
+                    if v.value.shape == ()
+                    else u.unyt_array(v.value, v.units)
+                    for k, v in self._parameters.items()
+                }
+                if self._is_parametric
+                else None,
+                verify_validity=False,
+            )
+        elif fast_copy:
+            return PotentialExpression(
+                self._expression,
+                self._independent_variables,
+                {
+                    k: u.unyt_quantity(v.value, v.units)
+                    if v.value.shape == ()
+                    else u.unyt_array(v.value, v.units)
+                    for k, v in self._parameters.items()
+                }
+                if self._is_parametric
+                else None,
+                verify_validity=False,
+            )
+
     @staticmethod
     def json(potential_expression):
         """Convert the provided potential expression to a json serializable dictionary."""
-        if not isinstance(potential_expression, _PotentialExpression):
+        if not isinstance(potential_expression, PotentialExpression):
             raise TypeError(
                 f"{potential_expression} is not of type _PotentialExpression"
             )
@@ -290,6 +358,7 @@ class _PotentialExpression:
         return json_dict
 
     @staticmethod
+    @lru_cache(maxsize=128)
     def _verify_validity(
         expression, independent_variables_symbols, parameters=None
     ):
@@ -302,7 +371,7 @@ class _PotentialExpression:
                     f"exist in the expression's free symbols {expression.free_symbols}"
                 )
         if parameters is not None:
-            parameter_symbols = sympy.symbols(set(parameters.keys()))
+            parameter_symbols = sympy.symbols(parameters)
             used_symbols = parameter_symbols.union(
                 independent_variables_symbols
             )
@@ -314,7 +383,7 @@ class _PotentialExpression:
                 )
 
             if used_symbols != expression.free_symbols:
-                symbols = sympy.symbols(set(parameters.keys()))
+                symbols = sympy.symbols(parameters)
                 if symbols != expression.free_symbols:
                     missing_syms = (
                         expression.free_symbols
@@ -332,3 +401,55 @@ class _PotentialExpression:
                         f"Potential expression and parameter symbols do not agree, "
                         f"extraneous symbols: {extra_syms}"
                     )
+
+    @classmethod
+    def from_non_parametric(
+        cls,
+        non_parametric: "PotentialExpression",
+        parameters: Dict[str, u.unyt_array],
+        valid: bool = False,
+    ) -> "PotentialExpression":
+        """Create a parametric expression from a non-parametric one.
+
+        Parameters
+        ----------
+        non_parametric: PotentialExpression
+            The non-parametric potential expression to create the parametric one from
+
+        parameters: dict
+            The dictionary of parameters for the newly created parametric expression.
+
+        valid: bool, default=False
+            Whether to validate expression/independent_variables and with the parameters.
+
+        Notes
+        -----
+        When `valid=True`, the validation checks (on whether or not the expression/independent_variables
+        match with the provided parameters is not performed. Use with caution.
+
+        Returns
+        -------
+        PotentialExpression
+            The parametric potential expression from the provided parameters
+        """
+        if not isinstance(non_parametric, cls):
+            raise TypeError(
+                f"Expected {non_parametric} to be of type {cls} but found "
+                f"{type(non_parametric)}."
+            )
+
+        if non_parametric.is_parametric:
+            raise ValueError(
+                "Cannot create a parametric expression from a parametric "
+                "expression."
+            )
+
+        else:
+            return cls(
+                expression=deepcopy(non_parametric.expression),
+                parameters=parameters,
+                independent_variables=deepcopy(
+                    non_parametric.independent_variables
+                ),
+                verify_validity=not valid,
+            )

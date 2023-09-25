@@ -1,10 +1,14 @@
 from typing import Optional, Tuple
 
 import unyt as u
-from pydantic import Field
 
 from gmso.core.parametric_potential import ParametricPotential
-from gmso.utils._constants import DIHEDRAL_TYPE_DICT
+from gmso.utils.expression import PotentialExpression
+
+try:
+    from pydantic.v1 import Field
+except ImportError:
+    from pydantic import Field
 
 
 class DihedralType(ParametricPotential):
@@ -51,32 +55,16 @@ class DihedralType(ParametricPotential):
         potential_expression=None,
         member_types=None,
         member_classes=None,
-        topology=None,
         tags=None,
     ):
-        if potential_expression is None:
-            if expression is None:
-                expression = "k * (1 + cos(n * phi - phi_eq))**2"
-
-            if parameters is None:
-                parameters = {
-                    "k": 1000 * u.Unit("kJ / (deg**2)"),
-                    "phi_eq": 180 * u.deg,
-                    "n": 1 * u.dimensionless,
-                }
-            if independent_variables is None:
-                independent_variables = {"phi"}
-
         super(DihedralType, self).__init__(
             name=name,
             expression=expression,
             parameters=parameters,
             independent_variables=independent_variables,
             potential_expression=potential_expression,
-            topology=topology,
             member_types=member_types,
             member_classes=member_classes,
-            set_ref=DIHEDRAL_TYPE_DICT,
             tags=tags,
         )
 
@@ -87,6 +75,18 @@ class DihedralType(ParametricPotential):
     @property
     def member_classes(self):
         return self.__dict__.get("member_classes_")
+
+    @staticmethod
+    def _default_potential_expr():
+        return PotentialExpression(
+            expression="k * (1 + cos(n * phi - phi_eq))**2",
+            parameters={
+                "k": 1000 * u.Unit("kJ / (deg**2)"),
+                "phi_eq": 180 * u.deg,
+                "n": 1 * u.dimensionless,
+            },
+            independent_variables={"phi"},
+        )
 
     class Config:
         fields = {

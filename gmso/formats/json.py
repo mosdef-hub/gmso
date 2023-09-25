@@ -63,8 +63,12 @@ def _to_json(top, types=False, update=True):
 
     json_dict = {
         "name": top._name,
-        "scaling_factors": top.scaling_factors,
-        "subtopologies": [],
+        "scaling_factors": {
+            "scaling_factors": top.scaling_factors.tolist(),
+            "molecule_scaling_factors": {
+                k: v.tolist() for k, v in top.molecule_scaling_factors.items()
+            },
+        },
         "box": top.box.json_dict() if top.box else None,
         "atoms": [],
         "bonds": [],
@@ -119,11 +123,11 @@ def _to_json(top, types=False, update=True):
                 connection_dict[exclude_attr] = id(connection_type)
     if types:
         for potentials in [
-            top._atom_types.values(),
-            top._bond_types.values(),
-            top._angle_types.values(),
-            top._dihedral_types.values(),
-            top._improper_types.values(),
+            top.atom_types,
+            top.bond_types,
+            top.angle_types,
+            top.dihedral_types,
+            top.improper_types,
         ]:
             for potential in potentials:
                 potential_dict = potential.json_dict(
@@ -133,16 +137,20 @@ def _to_json(top, types=False, update=True):
                 potential_dict["id"] = id(potential)
                 target.append(potential_dict)
 
-        for pairpotential_type in top._pairpotential_types.values():
+        for pairpotential_type in top._pairpotential_types:
             json_dict["pair_potentialtypes"].append(
-                pairpotential_type.json_dict(exclude={"topology", "set_ref"})
+                pairpotential_type.json_dict()
             )
 
-    for subtop in top.subtops:
-        subtop_dict = subtop.json_dict()
-        json_dict["subtopologies"].append(subtop_dict)
-
     return json_dict
+
+
+def _set_scaling_factors(top, scaling_factors):
+    """Set the global/permolecule scaling factors."""
+    global_scaling_factor = scaling_factors["scaling_factors"]
+    top.set_scaling_factors(global_scaling_factor[0], global_scaling_factor[1])
+    for k, v in scaling_factors["molecule_scaling_factors"].items():
+        top.set_scaling_factors(v[0], v[1], molecule_id=k)
 
 
 def _from_json(json_dict):
@@ -158,7 +166,6 @@ def _from_json(json_dict):
     gmso.Topology
         the equivalent Topology representation from the dictionary
     """
-    from gmso.core.subtopology import SubTopology
     from gmso.core.topology import Topology
 
     # FixMe: DeepCopying a dictionary might not be the most efficient
@@ -170,7 +177,7 @@ def _from_json(json_dict):
     top = Topology(
         name=json_dict["name"],
     )
-    top.scaling_factors = json_dict["scaling_factors"]
+    _set_scaling_factors(top, json_dict["scaling_factors"])
     id_to_type_map = {}
     for atom_dict in json_dict["atoms"]:
         atom_type_id = atom_dict.pop("atom_type", None)
@@ -252,12 +259,6 @@ def _from_json(json_dict):
                 for associated_connection in id_to_type_map[connection_type_id]:
                     setattr(associated_connection, attr, connection_type)
 
-    for subtop_dict in json_dict["subtopologies"]:
-        subtop = SubTopology(name=subtop_dict["name"])
-        for atom_idx in subtop_dict["atoms"]:
-            subtop.add_site(top.sites[atom_idx])
-        top.add_subtopology(subtop, update=False)
-
     if json_dict.get("box") is not None:
         box_dict = json_dict["box"]
         lengths = u.unyt_array(
@@ -281,7 +282,7 @@ def _from_json(json_dict):
 
 
 @saves_as(".json")
-def save_json(top, filename, **kwargs):
+def write_json(top, filename, **kwargs):
     """Save the topology as a JSON file.
 
     Parameters

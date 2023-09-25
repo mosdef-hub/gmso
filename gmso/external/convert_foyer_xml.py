@@ -4,8 +4,12 @@ import pathlib
 from lxml import etree
 
 from gmso.exceptions import ForceFieldParseError
+from gmso.utils.decorators import deprecate_function
 
 
+@deprecate_function(
+    "The `from_foyer_xml` method will be deprecated soon. Please use the package `forcefield-utilities.FoyerFFs`."
+)
 def from_foyer_xml(
     foyer_xml, gmso_xml=None, overwrite=False, validate_foyer=False
 ):
@@ -65,9 +69,11 @@ def from_foyer_xml(
     ff_root = foyer_xml_tree.getroot()
     name = ff_root.attrib.get("name")
     version = ff_root.attrib.get("version")
+    combining_rule = ff_root.attrib.get("combining_rule")
     f_kwargs = {
         "name": name,
         "version": version,
+        "combining_rule": combining_rule,
         "coulomb14scale": [],
         "lj14scale": [],
         "atom_types": [],
@@ -143,6 +149,10 @@ def _write_gmso_xml(gmso_xml, **kwargs):
         forcefield.attrib["version"] = "0.0.1"
 
     ffMeta = _create_sub_element(forcefield, "FFMetaData")
+    if kwargs.get("combining_rule"):
+        ffMeta.attrib["combiningRule"] = kwargs.get("combining_rule")
+    else:
+        ffMeta.attrib["combiningRule"] = "geometric"
     if kwargs["coulomb14scale"]:
         ffMeta.attrib["electrostatics14Scale"] = kwargs["coulomb14scale"]
 
@@ -235,7 +245,7 @@ def _populate_class_or_type_attrib(root, type_):
                 "type{}".format(j + 1), "c{}".format(j + 1)
             )
         elif "class" in item[0]:
-            root.attrib["type{}".format(j + 1)] = type_.get(
+            root.attrib["class{}".format(j + 1)] = type_.get(
                 "class{}".format(j + 1), "c{}".format(j + 1)
             )
 
@@ -246,10 +256,10 @@ def _write_nbforces(forcefield, ff_kwargs):
         forcefield,
         "AtomTypes",
         attrib_dict={
-            "expression": "ep * ((sigma/r)**12 - (sigma/r)**6)",
+            "expression": "4 * epsilon * ((sigma/r)**12 - (sigma/r)**6)",
         },
     )
-    parameters_units = {"ep": "kJ/mol", "sigma": "nm"}
+    parameters_units = {"epsilon": "kJ/mol", "sigma": "nm"}
 
     # NonBondedForces
     for name, unit in parameters_units.items():
@@ -279,7 +289,7 @@ def _write_nbforces(forcefield, ff_kwargs):
         thisAtomType.attrib["name"] = atom_type.get("type", "AtomType")
         thisAtomType.attrib["charge"] = atom_type.get("charge")
         parameters = {
-            "ep": atom_type.get("epsilon"),
+            "epsilon": atom_type.get("epsilon"),
             "sigma": atom_type.get("sigma"),
         }
         _add_parameters(thisAtomType, parameters)
@@ -290,11 +300,11 @@ def _write_harmonic_bonds(forcefield, ff_kwargs):
         forcefield,
         "BondTypes",
         attrib_dict={
-            "expression": "k * (r-r_eq)**2",
+            "expression": "1/2 * k * (r-r_eq)**2",
         },
     )
 
-    parameters_units = {"k": "kJ/nm**2", "r_eq": "nm"}
+    parameters_units = {"k": "kJ/mol/nm**2", "r_eq": "nm"}
 
     for name, unit in parameters_units.items():
         _insert_parameters_units_def(harmonicBondTypes, name, unit)
@@ -323,11 +333,11 @@ def _write_harmonic_angles(forcefield, ff_kwargs):
         forcefield,
         "AngleTypes",
         attrib_dict={
-            "expression": "k * (theta - theta_eq)**2",
+            "expression": "1/2 * k * (theta - theta_eq)**2",
         },
     )
 
-    parameters_units = {"k": "kJ/radian**2", "theta_eq": "radian"}
+    parameters_units = {"k": "kJ/mol/radian**2", "theta_eq": "radian"}
 
     for name, unit in parameters_units.items():
         _insert_parameters_units_def(harmonicAngleTypes, name, unit)
@@ -357,11 +367,11 @@ def _write_ub_angles(forcefield, ff_kwargs):
         forcefield,
         "AngleTypes",
         attrib_dict={
-            "expression": "k * (w - w_0) ** 2",
+            "expression": "1/2 * k * (w - w_0) ** 2",
         },
     )
 
-    parameters_units = {"k": "kJ/radian**2", "w_0": "nm"}
+    parameters_units = {"k": "kJ/mol/radian**2", "w_0": "nm"}
 
     for name, unit in parameters_units.items():
         _insert_parameters_units_def(ureybradleyAngleTypes, name, unit)
@@ -421,7 +431,7 @@ def _write_periodic_dihedrals(forcefield, ff_kwargs):
 
     for k in range(0, max_j):
         _insert_parameters_units_def(
-            periodicTorsionDihedralTypes, "k{}".format(k), "kJ"
+            periodicTorsionDihedralTypes, "k{}".format(k), "kJ/mol"
         )
         _insert_parameters_units_def(
             periodicTorsionDihedralTypes, "n{}".format(k), "dimensionless"
@@ -463,7 +473,7 @@ def _write_periodic_impropers(forcefield, ff_kwargs):
 
     for k in range(0, max_j):
         _insert_parameters_units_def(
-            periodicImproperTypes, "k{}".format(k), "kJ"
+            periodicImproperTypes, "k{}".format(k), "kJ/mol"
         )
         _insert_parameters_units_def(
             periodicImproperTypes, "n{}".format(k), "dimensionless"
@@ -523,16 +533,6 @@ def _create_sub_element(root_el, name, attrib_dict=None):
 
 
 def _validate_foyer(xml_path):
-    import warnings
+    from foyer.validator import Validator
 
-    from gmso.utils.io import has_foyer
-
-    if not has_foyer:
-        warnings.warn(
-            "Cannot validate the xml using foyer, since foyer is not installed."
-            "Please install foyer using conda install -c conda-forge foyer."
-        )
-    else:
-        from foyer.validator import Validator
-
-        Validator(xml_path)
+    Validator(xml_path)

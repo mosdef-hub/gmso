@@ -1,0 +1,25 @@
+; File Topology written by GMSO at 2023-04-21 15:15:49.195679
+
+[ defaults ]
+; nbfunc	comb-rule	gen-pairs	fudgeLJ		fudgeQQ
+1		2		yes		0.5		0.5
+
+[ atomtypes ]
+; name	at.num		mass	charge		ptype	sigma	epsilon
+Ar          18      39.94800     0.00000	A        0.30000     0.10000
+
+[ moleculetype ]
+; name	nrexcl
+Ar	3
+
+[ atoms ]
+; nr	type	resnr	residue		atom	cgnr	charge	mass
+1       Ar          1       Ar          Ar      1        0.00000    39.94800
+
+[ system ]
+; name
+Topology
+
+[ molecules ]
+; molecule	nmols
+Ar	100

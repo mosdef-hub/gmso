@@ -2,10 +2,13 @@
 from abc import abstractmethod
 from typing import Any, Dict, Iterator, List
 
-from pydantic import Field, validator
-
 from gmso.abc.gmso_base import GMSOBase
-from gmso.utils.expression import _PotentialExpression
+from gmso.utils.expression import PotentialExpression
+
+try:
+    from pydantic.v1 import Field, validator
+except ImportError:
+    from pydantic import Field, validator
 
 
 class AbstractPotential(GMSOBase):
@@ -24,8 +27,8 @@ class AbstractPotential(GMSOBase):
         "", description="The name of the potential. Defaults to class name"
     )
 
-    potential_expression_: _PotentialExpression = Field(
-        _PotentialExpression(expression="a*x+b", independent_variables={"x"}),
+    potential_expression_: PotentialExpression = Field(
+        PotentialExpression(expression="a*x+b", independent_variables={"x"}),
         description="The mathematical expression for the potential",
     )
 
@@ -48,14 +51,13 @@ class AbstractPotential(GMSOBase):
             if independent_variables is None:
                 independent_variables = {"x"}
 
-            potential_expression = _PotentialExpression(
+            potential_expression = PotentialExpression(
                 expression=expression,
                 independent_variables=independent_variables,
                 parameters=None,
             )
-        tags = kwargs.pop("tags", None)
 
-        if not tags:
+        if not kwargs.get("tags"):
             kwargs["tags"] = {}
 
         super().__init__(
@@ -119,21 +121,13 @@ class AbstractPotential(GMSOBase):
     @validator("potential_expression_", pre=True)
     def validate_potential_expression(cls, v):
         if isinstance(v, dict):
-            v = _PotentialExpression(**v)
+            v = PotentialExpression(**v)
         return v
 
     @abstractmethod
     def set_expression(self):
         """Set the functional form of the expression."""
         raise NotImplementedError
-
-    def __eq__(self, other):
-        """Compare two potentials for equivalence."""
-        return hash(self) == hash(other)
-
-    def __hash__(self):
-        """Create a unique hash for the potential."""
-        return hash(tuple((self.name, self.potential_expression)))
 
     def __setattr__(self, key: Any, value: Any) -> None:
         """Set attributes of the potential."""

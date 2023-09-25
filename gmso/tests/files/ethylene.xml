@@ -51,21 +51,21 @@
       </Parameters>
     </AngleType>
   </AngleTypes>
-  <DihedralTypes expression="c_0 + c_1 * cos(psi) + c_2 * cos(psi)**2 + c_3 * cos(psi)**3 + c_4 * cos(psi)**4 + c_5 * cos(psi)**5">
-    <ParametersUnitDef parameter="c_0" unit="kJ/mol"/>
-    <ParametersUnitDef parameter="c_1" unit="kJ/mol"/>
-    <ParametersUnitDef parameter="c_2" unit="kJ/mol"/>
-    <ParametersUnitDef parameter="c_3" unit="kJ/mol"/>
-    <ParametersUnitDef parameter="c_4" unit="kJ/mol"/>
-    <ParametersUnitDef parameter="c_5" unit="kJ/mol"/>
+  <DihedralTypes expression="c0 + c1 * cos(phi) + c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + c5 * cos(phi)**5">
+    <ParametersUnitDef parameter="c0" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c1" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c2" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c3" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c4" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c5" unit="kJ/mol"/>
     <DihedralType name="DihedralType-RyckaertBellemans-1" type1="opls_144" type2="opls_143" type3="opls_143" type4="opls_144">
       <Parameters>
-        <Parameter name="c_0" value="58.576"/>
-        <Parameter name="c_1" value="0.0"/>
-        <Parameter name="c_2" value="-58.576"/>
-        <Parameter name="c_3" value="0.0"/>
-        <Parameter name="c_4" value="0.0"/>
-        <Parameter name="c_5" value="0.0"/>
+        <Parameter name="c0" value="58.576"/>
+        <Parameter name="c1" value="0.0"/>
+        <Parameter name="c2" value="-58.576"/>
+        <Parameter name="c3" value="0.0"/>
+        <Parameter name="c4" value="0.0"/>
+        <Parameter name="c5" value="0.0"/>
       </Parameters>
     </DihedralType>
   </DihedralTypes>

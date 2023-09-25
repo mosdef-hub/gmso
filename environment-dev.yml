@@ -2,24 +2,32 @@ name: gmso-dev
 channels:
   - conda-forge
 dependencies:
+  - python>=3.8
+  - boltons
   - numpy
   - sympy
-  - unyt >= 2.4
+  - unyt>=2.9.5
   - boltons
   - lxml
   - pydantic
   - networkx
   - pytest
-  - mbuild >= 0.11.0
-  - openbabel >= 3.0.0
-  - foyer >= 0.9.4
-  - gsd >= 2.0
-  - parmed >= 3.4.3
+  - mbuild>=0.11.0
+  - openbabel>=3.0.0
+  - foyer>=0.11.3
+  - forcefield-utilities>=0.2.1
+  - gsd>=2.9
+  - parmed>=3.4.3
   - pytest-cov
   - codecov
   - bump2version
   - matplotlib
   - ipywidgets
-  - ele >= 0.2.0
+  - ele>=0.2.0
   - pre-commit
   - molbox
+  - pandas
+  - symengine
+  - python-symengine
+  - hoomd
+  - importlib_resources

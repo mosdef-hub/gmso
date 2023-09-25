@@ -1,0 +1,54 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ForceField name="alkanes_opls" version="0.0.1">
+  <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.5" combiningRule="geometric">
+    <Units energy="kcal" distance="Å" mass="g" charge="C"/>
+  </FFMetaData>
+  <AtomTypes expression="4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)">
+    <ParametersUnitDef parameter="epsilon" unit="kcal/mol"/>
+    <ParametersUnitDef parameter="sigma" unit="Å"/>
+    <AtomType name="1" mass="1.0" charge="1.0" atomclass="1" definition="C">
+      <Parameters>
+        <Parameter name="epsilon" value="1.0"/>
+        <Parameter name="sigma" value="1.0"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+  <BondTypes expression="0.5*k*(r - r_eq)**2">
+     <ParametersUnitDef parameter="r_eq" unit="Å"/>
+     <ParametersUnitDef parameter="k" unit="kcal/(mol*Å**2)"/>
+    <BondType name="BondType-Harmonic" type1="1" type2="1">
+      <Parameters>
+        <Parameter name="r_eq" value="1.0"/>
+        <Parameter name="k" value="1.0"/>
+      </Parameters>
+    </BondType>
+  </BondTypes>
+  <AngleTypes expression="0.5*k*(theta - theta_eq)**2">
+    <ParametersUnitDef parameter="k" unit="kcal/(degree**2*mol)"/>
+    <ParametersUnitDef parameter="theta_eq" unit="degree"/>
+    <AngleType name="AngleType-Harmonic-1" type1="1" type2="1" type3="1">
+      <Parameters>
+        <Parameter name="k" value="1.0"/>
+        <Parameter name="theta_eq" value="1.0"/>
+      </Parameters>
+    </AngleType>
+  </AngleTypes>
+  <DihedralTypes expression="c_0 + c_1*cos(psi) + c_2*cos(psi)**2 + c_3*cos(psi)**3 + c_4*cos(psi)**4 + c_5*cos(psi)**5">
+    <ParametersUnitDef parameter="c_0" unit="kcal/mol"/>
+    <ParametersUnitDef parameter="c_1" unit="kcal/mol"/>
+    <ParametersUnitDef parameter="c_2" unit="kcal/mol"/>
+    <ParametersUnitDef parameter="c_3" unit="kcal/mol"/>
+    <ParametersUnitDef parameter="c_4" unit="kcal/mol"/>
+    <ParametersUnitDef parameter="c_5" unit="kcal/mol"/>
+    <DihedralType name="DihedralType-RyckaertBellemans-1" type1="1" type2="1" type3="1" type4="1">
+        <Parameters>
+        <Parameter name="c_0" value="1.0"/>
+        <Parameter name="c_1" value="1.0"/>
+        <Parameter name="c_2" value="1.0"/>
+        <Parameter name="c_3" value="1.0"/>
+        <Parameter name="c_4" value="1.0"/>
+        <Parameter name="c_5" value="1.0"/>
+      </Parameters>
+    </DihedralType>
+  </DihedralTypes>
+</ForceField>

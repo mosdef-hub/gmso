@@ -189,29 +189,20 @@
     </DihedralTypes>
 
     <DihedralTypes expression="k * (1 + cos(n * shi - delta))">
-      <ParametersUnitDef parameter="delta6" unit="degree"/>
-      <ParametersUnitDef parameter="n6" unit="dimensionless"/>
-      <ParametersUnitDef parameter="k6" unit="kJ"/>
-      <ParametersUnitDef parameter="delta5" unit="degree"/>
-      <ParametersUnitDef parameter="n5" unit="dimensionless"/>
-      <ParametersUnitDef parameter="k5" unit="kJ"/>
-      <ParametersUnitDef parameter="delta4" unit="degree"/>
-      <ParametersUnitDef parameter="n4" unit="dimensionless"/>
-      <ParametersUnitDef parameter="k4" unit="kJ"/>
-      <ParametersUnitDef parameter="delta3" unit="degree"/>
-      <ParametersUnitDef parameter="n3" unit="dimensionless"/>
-      <ParametersUnitDef parameter="k3" unit="kJ"/>
-      <ParametersUnitDef parameter="delta2" unit="degree"/>
-      <ParametersUnitDef parameter="n2" unit="dimensionless"/>
-      <ParametersUnitDef parameter="k2" unit="kJ"/>
-      <ParametersUnitDef parameter="delta1" unit="degree"/>
-      <ParametersUnitDef parameter="n1" unit="dimensionless"/>
-      <ParametersUnitDef parameter="k1" unit="kJ"/>
+      <ParametersUnitDef parameter="delta" unit="degree"/>
+      <ParametersUnitDef parameter="n" unit="dimensionless"/>
+      <ParametersUnitDef parameter="k" unit="kJ"/>
       <DihedralType name="charm_proper_1" type1="NH2" type2="CT1" type3="C" type4="O">
         <Parameters>
-          <Parameter name="k1" value="0.0"/>
-          <Parameter name="n1" value="1"/>
-          <Parameter name="delta1" value="0.0"/>
+            <Parameter name="k">
+                <Value>0.0</Value>
+            </Parameter>
+            <Parameter name="n">
+                <Value>1.0</Value>
+            </Parameter>
+            <Parameter name="delta">
+                <Value>0.0</Value>
+            </Parameter>
         </Parameters>
       </DihedralType>
     </DihedralTypes>

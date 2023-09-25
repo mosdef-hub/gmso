@@ -1,0 +1,59 @@
+<ForceField name="benzene_alkane_benzene_bad_params" version="0.0.1">
+  <AtomTypes>
+    <Type name="CH_sp2" class="CE" element="C" mass="12.011" def="[C;X3]([C])([C])[H]" desc="Aromatic CH group (eg. benzene)"/>
+    <Type name="C_sp2" class="CE" element="C" mass="12.011" def="[C;X3]([C])([C])[C]" desc="Aromatic CH group (eg. benzene) where there is an alkane branch off of"/>
+    <Type name="CH2_sp3" class="CT" element="C" mass="12.011" def="[C;X4]([C])([C])([H])[H]" desc="alkane branch with 2 hydrogens"/>
+    <Type name="CH3_sp3" class="CT" element="C" mass="12.011" def="[C;X4]([C])([H])([H])[H]" desc="end of alkane branch chain off the Aromatic CH group"/>
+    <Type name="HCT" class="HCT" element="H" mass="1.008" def="H[C;%CH2_sp3,%CH3_sp3]" desc="Hydrogen on Branch alkane"/>
+    <Type name="HCE" class="HCE" element="H" mass="1.008" def="H[C;%CH_sp2,%C_sp2]" desc="Hydrogen on Aromatic CH group"/>
+  </AtomTypes>
+  <HarmonicBondForce>
+    <Bond class1="CHE" class2="CHE" length="0.14" k="170000"/>
+    <Bond class1="CHE" class2="CE" length="0.14" k="170000"/>
+    <Bond class1="CE" class2="CE" length="0.14" k="170000"/>
+    <Bond class1="CE" class2="CT" length="0.14" k="200000"/>
+    <Bond class1="CT" class2="CT" length="0.14" k="200000"/>
+    <Bond class1="CT" class2="HCT" length="0.14" k="4000000"/>
+    <Bond class1="CE" class2="HCE" length="0.14" k="4000000"/>
+  </HarmonicBondForce>
+  <HarmonicAngleForce>
+    <Angle class1="CT" class2="CT" class3="CT" angle="1.966986067" k="400"/>
+    <Angle class1="CT" class2="CT" class3="CE" angle="1.966986067" k="400"/>
+    <Angle class1="CT" class2="CE" class3="CE" angle="1.966986067" k="400"/>
+    <Angle class1="CE" class2="CE" class3="CE" angle="1.0471975511966" k="500"/>
+    <Angle class1="HCE" class2="CE" class3="CE" angle="1.0471975511966" k="300"/>
+    <Angle class1="HCE" class2="CE" class3="CT" angle="1.0471975511966" k="300"/>
+    <Angle class1="HCE" class2="CE" class3="HCT" angle="1.0471975511966" k="300"/>
+    <Angle class1="HCT" class2="CT" class3="CT" angle="1.0471975511966" k="200"/>
+    <Angle class1="HCT" class2="CT" class3="CE" angle="1.0471975511966" k="200"/>
+    <Angle class1="HCT" class2="CT" class3="HCT" angle="1.0471975511966" k="200"/>
+  </HarmonicAngleForce>
+  <RBTorsionForce>
+    <Proper class1="CT" class2="CT" class3="CT" class4="CT" c0="-4" c1="7" c2="2" c3="-5" c4="0.0" c5="0.0"/>
+    <Proper class1="CT" class2="CT" class3="CE" class4="CE" c0="-4" c1="7" c2="2" c3="-5" c4="0.0" c5="0.0"/>
+    <Proper class1="CT" class2="CE" class3="CE" class4="CE" c0="-4" c1="7" c2="2" c3="-5" c4="0.0" c5="0.0"/>
+    <Proper class1="CE" class2="CE" class3="CE" class4="CE" c0="-5" c1="8" c2="3" c3="-6" c4="0.0" c5="0.0"/>
+    <Proper class1="HCE" class2="CE" class3="CE" class4="CE" c0="-5" c1="8" c2="3" c3="-6" c4="0.0" c5="0.0"/>
+    <Proper class1="HCE" class2="CE" class3="CE" class4="CT" c0="-5" c1="8" c2="3" c3="-6" c4="0.0" c5="0.0"/>
+    <Proper class1="HCE" class2="CE" class3="CT" class4="CT" c0="-5" c1="8" c2="3" c3="-6" c4="0.0" c5="0.0"/>
+    <Proper class1="HCT" class2="CT" class3="CT" class4="CT" c0="-4" c1="7" c2="2" c3="-5" c4="0.0" c5="0.0"/>
+    <Proper class1="HCT" class2="CT" class3="CT" class4="CE" c0="-5" c1="8" c2="3" c3="-6" c4="0.0" c5="0.0"/>
+    <Proper class1="HCT" class2="CT" class3="CE" class4="CE" c0="-5" c1="8" c2="3" c3="-6" c4="0.0" c5="0.0"/>
+     <Proper class1="HCT" class2="CT" class3="CT" class4="HCT" c0="-5" c1="8" c2="3" c3="-6" c4="0.0" c5="0.0"/>
+    <Proper class1="HCT" class2="CT" class3="CE" class4="HCE" c0="-5" c1="8" c2="3" c3="-6" c4="0.0" c5="0.0"/>
+    <Proper class1="HCE" class2="CE" class3="CE" class4="HCE" c0="-5" c1="8" c2="3" c3="-6" c4="0.0" c5="0.0"/>
+    <Proper class1="HCE" class2="CE" class3="CE" class4="CE" c0="-5" c1="8" c2="3" c3="-6" c4="0.0" c5="0.0"/>
+  </RBTorsionForce>
+  <PeriodicTorsionForce>
+    <Improper class1="CE" class2="HCE" class3="CE" class4="CE" periodicity1="2" phase1="0" k1="4"/>
+    <Improper class1="CE" class2="CT" class3="CE" class4="CE" periodicity1="1" phase1="3.14159265" k1="4"/>
+  </PeriodicTorsionForce>
+  <NonbondedForce coulomb14scale="0" lj14scale="0">
+    <Atom type="CH_sp2" charge="0.01" sigma="0.3" epsilon="0.4"/>
+    <Atom type="C_sp2" charge="0.01" sigma="0.3" epsilon="0.4"/>
+    <Atom type="CH2_sp3" charge="0.03" sigma="0.5" epsilon="0.6"/>
+    <Atom type="CH3_sp3" charge="0.03" sigma="0.5" epsilon="0.6"/>
+    <Atom type="HCE" charge="0.04" sigma="0.2" epsilon="0.3"/>
+    <Atom type="HCT" charge="0.05" sigma="0.1" epsilon="0.2"/>
+  </NonbondedForce>
+</ForceField>

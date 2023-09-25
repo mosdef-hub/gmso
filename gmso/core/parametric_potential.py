@@ -1,12 +1,12 @@
-from typing import Any, Optional, Union
+from copy import copy, deepcopy
+from typing import Any, Union
 
 import unyt as u
-from pydantic import Field, validator
+from lxml import etree
 
 from gmso.abc.abstract_potential import AbstractPotential
-from gmso.exceptions import GMSOError
-from gmso.utils.decorators import confirm_dict_existence
-from gmso.utils.expression import _PotentialExpression
+from gmso.utils.expression import PotentialExpression
+from gmso.utils.misc import get_xml_representation, unyt_compare
 
 
 class ParametricPotential(AbstractPotential):
@@ -21,26 +21,13 @@ class ParametricPotential(AbstractPotential):
     by classes that represent these potentials.
     """
 
-    # FIXME: Use proper forward referencing??
-    topology_: Optional[Any] = Field(
-        None, description="the topology of which this potential is a part of"
-    )
-
-    set_ref_: Optional[str] = Field(
-        None,
-        description="The string name of the bookkeeping set in gmso.Topology class. "
-        "This is used to track property based hashed object's "
-        "changes so that a dictionary/set can keep track of them",
-    )
-
     def __init__(
         self,
         name="ParametricPotential",
-        expression="a*x+b",
+        expression=None,
         parameters=None,
         potential_expression=None,
         independent_variables=None,
-        topology=None,
         **kwargs,
     ):
         if potential_expression is not None and (
@@ -53,23 +40,10 @@ class ParametricPotential(AbstractPotential):
                 "please do not provide arguments for "
                 "expression, independent_variables or parameters."
             )
+
         if potential_expression is None:
-            if expression is None:
-                expression = "a*x+b"
-
-            if parameters is None:
-                parameters = {
-                    "a": 1.0 * u.dimensionless,
-                    "b": 1.0 * u.dimensionless,
-                }
-
-            if independent_variables is None:
-                independent_variables = {"x"}
-
-            _potential_expression = _PotentialExpression(
-                expression=expression,
-                independent_variables=independent_variables,
-                parameters=parameters,
+            _potential_expression = self._get_expression(
+                expression, parameters, independent_variables
             )
         else:
             _potential_expression = potential_expression
@@ -77,8 +51,40 @@ class ParametricPotential(AbstractPotential):
         super().__init__(
             name=name,
             potential_expression=_potential_expression,
-            topology=topology,
             **kwargs,
+        )
+
+    def _get_expression(self, expression, parameters, indep_vars):
+        args = (expression, parameters, indep_vars)
+        all_provided = tuple(1 if param is not None else 0 for param in args)
+
+        if sum(all_provided) == 0:
+            return self._default_potential_expr()
+        elif sum(all_provided) < 3:
+            raise ValueError(
+                "When using keyword arguments `expression`, "
+                "`independent_variables` and `parameters` for "
+                "a potential, you are expected to provide all the values "
+                "or none of them to use defaults. However, you provided "
+                "the following and there's not enough information to form "
+                "a set of expression, idependent_variables and parameters.\n"
+                f"expression: {expression}\n"
+                f"parameters: {parameters}\n"
+                f"independent_variables: {indep_vars}\n"
+            )
+        else:
+            return PotentialExpression(
+                expression=expression,
+                independent_variables=indep_vars,
+                parameters=parameters,
+            )
+
+    @staticmethod
+    def _default_potential_expr():
+        return PotentialExpression(
+            expression="a*x+b",
+            parameters={"a": 1.0 * u.dimensionless, "b": 1.0 * u.dimensionless},
+            independent_variables={"x"},
         )
 
     @property
@@ -86,31 +92,6 @@ class ParametricPotential(AbstractPotential):
         """Optional[dict]\n\tThe parameters of the `Potential` expression and their corresponding values, as `unyt` quantities"""
         return self.potential_expression_.parameters
 
-    @property
-    def topology(self):
-        """Return the associated topology with this potential."""
-        return self.__dict__.get("topology_")
-
-    @property
-    def set_ref(self):
-        """Set the string name of the bookkeeping set in gmso.topology to track potentials."""
-        return self.__dict__.get("set_ref_")
-
-    @validator("topology_")
-    def is_valid_topology(cls, value):
-        """Determine if the topology is a valid gmso topology."""
-        if value is None:
-            return None
-        else:
-            from gmso.core.topology import Topology
-
-            if not isinstance(value, Topology):
-                raise TypeError(
-                    f"{type(value).__name__} is not of type Topology"
-                )
-        return value
-
-    @confirm_dict_existence
     def __setattr__(self, key: Any, value: Any) -> None:
         """Set the attributes of the potential."""
         if key == "parameters":
@@ -118,7 +99,6 @@ class ParametricPotential(AbstractPotential):
         else:
             super().__setattr__(key, value)
 
-    @confirm_dict_existence
     def set_expression(
         self, expression=None, parameters=None, independent_variables=None
     ):
@@ -174,6 +154,21 @@ class ParametricPotential(AbstractPotential):
             exclude_none=exclude_none,
         )
 
+    def __eq__(self, other):
+        if other is self:
+            return True
+        if not isinstance(other, type(self)):
+            return False
+        return (
+            self.expression == other.expression
+            and self.independent_variables == other.independent_variables
+            and self.name == other.name
+            and self.parameters.keys() == other.parameters.keys()
+            and unyt_compare(
+                self.parameters.values(), other.parameters.values()
+            )
+        )
+
     def get_parameters(self, copy=False):
         """Return parameters for this ParametricPotential."""
         if copy:
@@ -186,18 +181,117 @@ class ParametricPotential(AbstractPotential):
 
         return params
 
+    def clone(self, fast_copy=False):
+        """Clone this parametric potential, faster alternative to deepcopying."""
+        Creator = self.__class__
+        kwargs = {"tags": deepcopy(self.tags_)}
+        if hasattr(self, "member_classes"):
+            kwargs["member_classes"] = (
+                copy(self.member_classes) if self.member_classes else None
+            )
+
+        if hasattr(self, "member_types"):
+            kwargs["member_types"] = (
+                copy(self.member_types) if self.member_types else None
+            )
+
+        return Creator(
+            name=self.name,
+            potential_expression=self.potential_expression_.clone(fast_copy),
+            **kwargs,
+        )
+
+    def _etree_attrib(self):
+        """Return the XML equivalent representation of this ParametricPotential"""
+        attrib = {
+            key: get_xml_representation(value)
+            for key, value in self.dict(
+                by_alias=True,
+                exclude_none=True,
+                exclude={
+                    "topology_",
+                    "set_ref_",
+                    "member_types_",
+                    "member_classes_",
+                    "potential_expression_",
+                    "tags_",
+                },
+            ).items()
+            if value != ""
+        }
+
+        return attrib
+
+    def etree(self, units=None):
+        """Return an lxml.ElementTree for the parametric potential adhering to gmso XML schema"""
+
+        attrib = self._etree_attrib()
+
+        if hasattr(self, "member_types") and hasattr(self, "member_classes"):
+            if self.member_types:
+                iterating_attribute = self.member_types
+                prefix = "type"
+            elif self.member_classes:
+                iterating_attribute = self.member_classes
+                prefix = "class"
+            else:
+                raise GMSOError(
+                    f"Cannot convert {self.__class__.__name__} into an XML."
+                    f"Please specify member_classes or member_types attribute."
+                )
+            for idx, value in enumerate(iterating_attribute):
+                attrib[f"{prefix}{idx+1}"] = str(value)
+        xml_element = etree.Element(self.__class__.__name__, attrib=attrib)
+        params = etree.SubElement(xml_element, "Parameters")
+
+        for key, value in self.parameters.items():
+            value_unit = None
+            if units is not None:
+                value_unit = units[key]
+            if isinstance(value, u.array.unyt_quantity):
+                etree.SubElement(
+                    params,
+                    "Parameter",
+                    attrib={
+                        "name": key,
+                        "value": get_xml_representation(
+                            value.in_units(value_unit) if value_unit else value
+                        ),
+                    },
+                )
+            elif isinstance(value, u.array.unyt_array):
+                params_list = etree.SubElement(
+                    params,
+                    "Parameter",
+                    attrib={
+                        "name": key,
+                    },
+                )
+                for listed_val in value:
+                    xml_repr = get_xml_representation(
+                        listed_val.in_units(value_unit)
+                        if value_unit
+                        else listed_val
+                    )
+                    etree.SubElement(params_list, "Value").text = xml_repr
+
+        return xml_element
+
     @classmethod
-    def from_template(cls, potential_template, parameters, topology=None):
+    def from_template(cls, potential_template, parameters, name=None, **kwargs):
         """Create a potential object from the potential_template.
 
         Parameters
         ----------
         potential_template : gmso.lib.potential_templates.PotentialTemplate,
-                            The potential template object
+            The potential template object
         parameters : dict,
-                    The parameters of the potential object to create
-        topology : gmso.Topology, default=None
-                   The topology to which the created potential object belongs to
+            The parameters of the potential object to create
+        name: str, default=None,
+            The new name for the created parametric potential, defaults to the
+            template name.
+        **kwargs: dict
+            The remaining keyword arguments to the Parametric potential's constructor.
 
         Returns
         -------
@@ -212,16 +306,19 @@ class ParametricPotential(AbstractPotential):
         from gmso.lib.potential_templates import PotentialTemplate
 
         if not isinstance(potential_template, PotentialTemplate):
-            raise GMSOError(
-                f"Object {type(potential_template)} is not an instance of PotentialTemplate."
+            raise TypeError(
+                f"Object {potential_template} of type {type(potential_template)} is not an instance of "
+                f"PotentialTemplate."
             )
 
+        potential_template.assert_can_parameterize_with(parameters)
+        new_expression = PotentialExpression.from_non_parametric(
+            potential_template.potential_expression, parameters, valid=True
+        )
         return cls(
-            name=potential_template.name,
-            expression=potential_template.expression,
-            independent_variables=potential_template.independent_variables,
-            parameters=parameters,
-            topology=topology,
+            name=name or potential_template.name,
+            potential_expression=new_expression,
+            **kwargs,
         )
 
     def __repr__(self):

@@ -1,0 +1,18 @@
+<ForceField name="Trappe-UA" version="0.0.2" combining_rule="lorentz">
+ <AtomTypes>
+  <Type name="O" class="O" element="O" mass="15.99940" def="OH" desc="Oxygen in hydroxyl" doi="10.1021/jp003882x"/>
+  <Type name="H" class="H" element="H" mass="1.00800" def="HO" desc="Hydrogen in hydroxyl" doi="10.1021/jp003882x"/>
+  <Type name="CH4" class="CH4" element="_CH4" mass="16.04300" def="_CH4" desc="CH4, united atom" doi="10.1021/jp972543+"/>
+ </AtomTypes>
+ <HarmonicBondForce>
+ </HarmonicBondForce>
+ <HarmonicAngleForce>
+ </HarmonicAngleForce>
+ <RBTorsionForce>
+ </RBTorsionForce>
+ <NonbondedForce coulomb14scale="0" lj14scale="0">
+  <Atom type="O" charge="-0.700" sigma="0.302" epsilon="0.773245"/>
+  <Atom type="H" charge="0.435" sigma="1.0" epsilon="0.0"/>
+  <Atom type="CH4" charge="0.0" sigma="0.373" epsilon="1.23054"/>
+ </NonbondedForce>
+</ForceField>

@@ -1,0 +1,199 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ForceField name="LJ_Buck" version="0.0.1">
+  <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.5" combiningRule="geometric">
+    <Units energy="kJ" distance="nm" mass="amu" charge="elementary_charge"/>
+  </FFMetaData>
+  <AtomTypes expression="ep*(-sigma**6/r**6 + sigma**12/r**12)">
+    <ParametersUnitDef parameter="ep" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <AtomType name="opls_135" mass="0.0" charge="-0.18" atomclass="CT" definition="[C;X4](C)(H)(H)H">
+      <Parameters>
+        <Parameter name="ep" value="0.276144"/>
+        <Parameter name="sigma" value="0.35"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="opls_136" mass="0.0" charge="-0.12" atomclass="CT" definition="[C;X4](C)(C)(H)H">
+      <Parameters>
+        <Parameter name="ep" value="0.276144"/>
+        <Parameter name="sigma" value="0.35"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="opls_140" mass="0.0" charge="0.06" atomclass="HC" definition="H[C;X4]">
+      <Parameters>
+        <Parameter name="ep" value="0.12552"/>
+        <Parameter name="sigma" value="0.25"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="NH2" mass="0.0" charge="1.0" atomclass="NH2" definition="[_NH2]">
+      <Parameters>
+        <Parameter name="ep" value="0.8368"/>
+        <Parameter name="sigma" value="0.329632525712"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="CT1" mass="0.0" charge="1.0" atomclass="CT1" definition="[_CT1]">
+      <Parameters>
+        <Parameter name="ep" value="0.13389"/>
+        <Parameter name="sigma" value="0.356359487256"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="C" mass="0.0" charge="1.0" atomclass="C" definition="[_C]">
+      <Parameters>
+        <Parameter name="ep" value="0.46024"/>
+        <Parameter name="sigma" value="0.356359487256"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="O" mass="0.0" charge="1.0" atomclass="O" definition="[_O]">
+      <Parameters>
+        <Parameter name="ep" value="0.50208"/>
+        <Parameter name="sigma" value="0.3029055641680001"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+  <AtomTypes expression="A*exp(-B*r) - C/r**6">
+    <ParametersUnitDef parameter="A" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="B" unit="1/Å"/>
+    <ParametersUnitDef parameter="C" unit="kJ*Å**6/mol"/>
+    <AtomType name="buck_O" mass="0.0" charge="-1.168" atomclass="bO" definition="[O;X2]">
+      <Parameters>
+        <Parameter name="A" value="322000.0"/>
+        <Parameter name="B" value="3.56"/>
+        <Parameter name="C" value="3320.0"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="buck_H" mass="0.0" charge="0.584" atomclass="bH" definition="H[O;X2]">
+      <Parameters>
+        <Parameter name="A" value="322000.0"/>
+        <Parameter name="B" value="3.56"/>
+        <Parameter name="C" value="3320.0"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+  <BondTypes expression="0.5*k*(r - r_eq)**2">
+    <ParametersUnitDef parameter="r_eq" unit="nm"/>
+    <ParametersUnitDef parameter="k" unit="kJ/mol"/>
+    <BondType name="opls_bond_1" type1="opls_135" type2="opls_135">
+      <Parameters>
+        <Parameter name="r_eq" value="0.1529"/>
+        <Parameter name="k" value="224262.4"/>
+      </Parameters>
+    </BondType>
+    <BondType name="opls_bond_2" type1="opls_135" type2="opls_136">
+      <Parameters>
+        <Parameter name="r_eq" value="0.1529"/>
+        <Parameter name="k" value="224262.4"/>
+      </Parameters>
+    </BondType>
+    <BondType name="opls_bond_3" type1="opls_136" type2="opls_136">
+      <Parameters>
+        <Parameter name="r_eq" value="0.1529"/>
+        <Parameter name="k" value="224262.4"/>
+      </Parameters>
+    </BondType>
+    <BondType name="opls_bond_4" type1="opls_135" type2="opls_140">
+      <Parameters>
+        <Parameter name="r_eq" value="0.109"/>
+        <Parameter name="k" value="284512.0"/>
+      </Parameters>
+    </BondType>
+    <BondType name="opls_bond_5" type1="opls_136" type2="opls_140">
+      <Parameters>
+        <Parameter name="r_eq" value="0.109"/>
+        <Parameter name="k" value="284512.0"/>
+      </Parameters>
+    </BondType>
+    <BondType name="charmm_bond_1" type1="NH2" type2="CT1">
+      <Parameters>
+        <Parameter name="r_eq" value="0.1455"/>
+        <Parameter name="k" value="200831.99999999994"/>
+      </Parameters>
+    </BondType>
+    <BondType name="charmm_bond_30" type1="CT1" type2="C">
+      <Parameters>
+        <Parameter name="r_eq" value="0.149"/>
+        <Parameter name="k" value="209199.9999999999"/>
+      </Parameters>
+    </BondType>
+    <BondType name="charmm_bond_102" type1="O" type2="C">
+      <Parameters>
+        <Parameter name="r_eq" value="0.123"/>
+        <Parameter name="k" value="518815.9999999998"/>
+      </Parameters>
+    </BondType>
+    <BondType name="water_bond_1" type1="buck_O" type2="buck_H">
+      <Parameters>
+        <Parameter name="r_eq" value="0.09572"/>
+        <Parameter name="k" value="502416.0"/>
+      </Parameters>
+    </BondType>
+  </BondTypes>
+  <AngleTypes expression="0.5*k*(r - r_eq)**2">
+    <ParametersUnitDef parameter="r_eq" unit="rad"/>
+    <ParametersUnitDef parameter="k" unit="kJ/(mol*rad**2)"/>
+    <AngleType name="opls_angle_1" type1="opls_136" type2="opls_135" type3="opls_140">
+      <Parameters>
+        <Parameter name="r_eq" value="1.91113553093"/>
+        <Parameter name="k" value="292.88"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="opls_angle_2" type1="opls_140" type2="opls_135" type3="opls_140">
+      <Parameters>
+        <Parameter name="r_eq" value="1.88146493365"/>
+        <Parameter name="k" value="276.144"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="opls_angle_3" type1="opls_140" type2="opls_136" type3="opls_140">
+      <Parameters>
+        <Parameter name="r_eq" value="1.88146493365"/>
+        <Parameter name="k" value="276.144"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="charmm_angle_9" type1="NH2" type2="CT1" type3="C">
+      <Parameters>
+        <Parameter name="r_eq" value="1.8675022996339325"/>
+        <Parameter name="k" value="418.4"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="charmm_angle_278" type1="O" type2="C" type3="CT1">
+      <Parameters>
+        <Parameter name="r_eq" value="2.111848394913139"/>
+        <Parameter name="k" value="669.44"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="water_angle_1" type1="buck_H" type2="buck_O" type3="buck_H">
+      <Parameters>
+        <Parameter name="r_eq" value="1.824218134"/>
+        <Parameter name="k" value="682.02"/>
+      </Parameters>
+    </AngleType>
+  </AngleTypes>
+  <DihedralTypes expression="c0 + c1*cos(phi) + c2*cos(phi)**2 + c3*cos(phi)**3 + c4*cos(phi)**4 + c5*cos(phi)**5">
+    <ParametersUnitDef parameter="c0" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c1" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c2" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c3" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c4" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c5" unit="kJ/mol"/>
+    <DihedralType name="opls_proper_1" type1="opls_140" type2="*" type3="*" type4="opls_140">
+      <Parameters>
+        <Parameter name="c0" value="0.6276"/>
+        <Parameter name="c1" value="1.8828"/>
+        <Parameter name="c2" value="0.0"/>
+        <Parameter name="c3" value="-3.21331"/>
+        <Parameter name="c4" value="0.0"/>
+        <Parameter name="c5" value="0.0"/>
+      </Parameters>
+    </DihedralType>
+  </DihedralTypes>
+  <DihedralTypes expression="k*(cos(delta - n*shi) + 1)">
+    <ParametersUnitDef parameter="k" unit="kJ"/>
+    <ParametersUnitDef parameter="n" unit="dimensionless"/>
+    <ParametersUnitDef parameter="delta" unit="degree"/>
+    <DihedralType name="charm_proper_1" type1="NH2" type2="CT1" type3="C" type4="O">
+      <Parameters>
+        <Parameter name="k" value="0.0"/>
+        <Parameter name="n" value="1.0"/>
+        <Parameter name="delta" value="0.0"/>
+      </Parameters>
+    </DihedralType>
+  </DihedralTypes>
+</ForceField>

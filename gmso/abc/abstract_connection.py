@@ -1,10 +1,13 @@
 from typing import Optional, Sequence
 
-from pydantic import Field, root_validator
-
 from gmso.abc.abstract_site import Site
 from gmso.abc.gmso_base import GMSOBase
 from gmso.exceptions import GMSOError
+
+try:
+    from pydantic.v1 import Field, root_validator
+except ImportError:
+    from pydantic import Field, root_validator
 
 
 class Connection(GMSOBase):

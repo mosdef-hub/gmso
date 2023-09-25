@@ -4,8 +4,8 @@ import unyt as u
 from unyt.testing import assert_allclose_units
 
 from gmso import Topology
-from gmso.formats.mol2 import from_mol2
 from gmso.tests.base_test import BaseTest
+from gmso.tests.utils import get_path
 from gmso.utils.io import get_fn
 
 
@@ -56,51 +56,50 @@ class TestMol2(BaseTest):
 
         with pytest.warns(
             UserWarning,
-            match=r"No charges were detected for site C with index 1",
+            match=r"No charge was detected for site C with index 1",
         ):
-            top = Topology.load(get_fn("ethane.mol2"))
+            top = Topology.load(get_fn("ethane.mol2"), verbose=True)
         assert list(top.sites)[0].charge is None
-
-        with pytest.warns(
-            UserWarning,
-            match=r"No element detected for site C with index1\, consider manually adding the element to the topology",
-        ):
-            Topology.load(get_fn("benzene.mol2"))
 
     def test_residue(self):
         top = Topology.load(get_fn("ethanol_aa.mol2"))
-        assert np.all([site.residue_name == "ETO" for site in top.sites])
-        assert np.all([site.residue_number == 1 for site in top.sites])
+        assert np.all([site.residue[0] == "ETO" for site in top.sites])
+        assert np.all([site.residue[1] == 1 for site in top.sites])
 
         top = Topology.load(get_fn("benzene_ua.mol2"), site_type="lj")
         assert np.all(
             [
-                site.residue_name == "BEN1"
-                for site in top.iter_sites("residue_name", "BEN1")
+                site.residue[0] == "BEN1"
+                for site in top.iter_sites_by_residue("BEN1")
             ]
         )
         assert np.all(
-            [
-                site.residue_number == 1
-                for site in top.iter_sites("residue_name", "BEN1")
-            ]
+            [site.residue[1] == 1 for site in top.iter_sites_by_residue("BEN1")]
         )
         assert np.all(
             [
-                site.residue_name == "BEN2"
-                for site in top.iter_sites("residue_name", "BEN2")
+                site.residue[0] == "BEN2"
+                for site in top.iter_sites_by_residue("BEN2")
             ]
         )
         assert np.all(
-            [
-                site.residue_number == 2
-                for site in top.iter_sites("residue_name", "BEN2")
-            ]
+            [site.residue[1] == 2 for site in top.iter_sites_by_residue("BEN2")]
         )
 
     def test_lj_system(self):
         top = Topology.load(get_fn("methane.mol2"), site_type="lj")
         assert np.all([site.element == None for site in top.sites])
+
+    def test_no_charge_lj(self):
+        with pytest.warns(
+            UserWarning,
+            match=r"No charge was detected for site .* with index \d+$",
+        ):
+            top = Topology.load(
+                get_path("methane_missing_charge.mol2"),
+                site_type="lj",
+                verbose=True,
+            )
 
     def test_wrong_path(self):
         with pytest.raises(
@@ -114,11 +113,50 @@ class TestMol2(BaseTest):
     def test_broken_files(self):
         with pytest.warns(
             UserWarning,
-            match=r"The record type indicator @<TRIPOS>MOLECULE_extra_text\n is not supported. Skipping current section and moving to the next RTI header.",
+            match=r"The record type indicator @<TRIPOS>MOLECULE_extra_text is not supported. Skipping current section and moving to the next RTI header.",
         ):
             Topology.load(get_fn("broken.mol2"))
         with pytest.warns(
             UserWarning,
             match=r"This mol2 file has two boxes to be read in, only reading in one with dimensions Box\(a=0.72",
         ):
-            Topology.load(get_fn("broken.mol2"))
+            Topology.load(get_fn("broken.mol2"), verbose=True)
+
+    def test_benzene_mol2_elements(self):
+        top = Topology.load(get_fn("benzene.mol2"))
+
+        for atom in top.sites:
+            assert atom.element.name in {"hydrogen", "carbon"}
+
+    def test_neopentane_mol2_elements(self):
+        with pytest.warns(
+            UserWarning,
+            match=r"No element detected for site .+ with index \d+, "
+            r"consider manually adding the element to the topology$",
+        ):
+            top = Topology.load(get_fn("neopentane.mol2"), verbose=True)
+
+    def test_mol2_residues(self):
+        top = Topology.load(get_fn("parmed.mol2"))
+        assert np.all(
+            np.array([site.residue.name for site in top.sites]) == "RES"
+        )
+        assert np.all(
+            np.array([site.residue.number for site in top.sites]) == 1
+        )
+
+    def test_mol2_molecules(self):
+        top = Topology.load(get_fn("methane.mol2"))
+        assert np.all(
+            np.array([site.molecule.name for site in top.sites]) == "MET"
+        )
+        assert np.all(
+            np.array([site.molecule.number for site in top.sites]) == 1
+        )
+
+    def test_mol2_group(self):
+        # Is there a place to read from mol2 file?
+        top = Topology.load(get_fn("ethane.mol2"))
+        for site in top.sites:
+            site.group = "ethane"
+        assert np.all(np.array([site.group for site in top.sites]) == "ethane")

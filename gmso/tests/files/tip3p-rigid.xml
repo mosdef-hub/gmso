@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='UTF-8'?>
+ <ForceField name="TIP3P" version="0.0.1">
+   <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.5" combiningRule="lorentz">
+    <Units energy="kJ/mol" mass="amu" charge="elementary_charge" distance="nm"/>
+  </FFMetaData>
+  <AtomTypes expression="4*epsilon * ((sigma/r)**12 - (sigma/r)**6)">
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <AtomType name="opls_111" atomclass="OW" element="O" charge="-0.834" mass="16" definition="[O;X2]" description="water O">
+      <Parameters>
+        <Parameter name="epsilon" value="0.636386"/>
+        <Parameter name="sigma" value="0.315061"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="opls_112" atomclass="HW" element="H" charge="0.417" mass="1.011" definition="[H;X1]" description="water H">
+      <Parameters>
+        <Parameter name="epsilon" value="0.0"/>
+        <Parameter name="sigma" value="1.0"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+  <BondTypes expression="DiracDelta(r-r_eq)">
+    <ParametersUnitDef parameter="r_eq" unit="nm"/>
+    <BondType name="BondType-Harmonic-1" type1="opls_111" type2="opls_112">
+      <Parameters>
+        <Parameter name="r_eq" value="0.09572"/>
+      </Parameters>
+    </BondType>
+  </BondTypes>
+  <AngleTypes expression="DiracDelta(theta-theta_eq)">
+    <ParametersUnitDef parameter="theta_eq" unit="radian"/>
+    <AngleType name="AngleType-Harmonic-1" type1="opls_112" type2="opls_111" type3="opls_112">
+      <Parameters>
+        <Parameter name="theta_eq" value="1.824218134"/>
+      </Parameters>
+    </AngleType>
+  </AngleTypes>
+</ForceField>

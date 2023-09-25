@@ -1,0 +1,48 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ForceField name="Flexible carbon" version="0.0.0">
+  <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.5" combiningRule="geometric">
+    <Units energy="kJ" distance="nm" mass="amu" charge="elementary_charge"/>
+  </FFMetaData>
+  <AtomTypes expression="4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)">
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <AtomType name="C" mass="12.011" charge="0.0" definition="C" description="Generic sp2 carbon">
+      <Parameters>
+        <Parameter name="sigma" value="0.339966950842"/>
+        <Parameter name="epsilon" value="0.359824"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+  <BondTypes expression="0.5*k*(r - r_eq)**2">
+    <ParametersUnitDef parameter="r_eq" unit="nm"/>
+    <ParametersUnitDef parameter="k" unit="kJ/(mol*nm**2)"/>
+    <BondType name="BondType1" type1="C" type2="C">
+      <Parameters>
+        <Parameter name="r_eq" value="0.1324"/>
+        <Parameter name="k" value="493460.96"/>
+      </Parameters>
+    </BondType>
+  </BondTypes>
+  <AngleTypes expression="0.5*k*(theta - theta_eq)**2">
+    <ParametersUnitDef parameter="theta_eq" unit="rad"/>
+    <ParametersUnitDef parameter="k" unit="kJ/(mol*rad**2)"/>
+    <AngleType name="AngleType1" type1="C" type2="C" type3="C">
+      <Parameters>
+        <Parameter name="theta_eq" value="2.12598556185"/>
+        <Parameter name="k" value="584.42112"/>
+      </Parameters>
+    </AngleType>
+  </AngleTypes>
+  <DihedralTypes expression="k*(cos(n*theta - theta_0) + 1)">
+    <ParametersUnitDef parameter="k" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="n" unit="dimensionless"/>
+    <ParametersUnitDef parameter="theta_0" unit="rad"/>
+    <DihedralType name="DihedralType1" type1="*" type2="C" type3="C" type4="*">
+      <Parameters>
+        <Parameter name="k" value="27.8236"/>
+        <Parameter name="n" value="2.0"/>
+        <Parameter name="theta_0" value="3.14159265359"/>
+      </Parameters>
+    </DihedralType>
+  </DihedralTypes>
+</ForceField>

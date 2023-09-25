@@ -2,12 +2,19 @@ name: gmso
 channels:
   - conda-forge
 dependencies:
+  - python>=3.8
+  - boltons
   - numpy
   - sympy
-  - unyt >= 2.4
+  - unyt>=2.9.5
   - boltons
   - lxml
   - pydantic
   - networkx
   - ele >= 0.2.0
   - molbox
+  - foyer>=0.11.3
+  - forcefield-utilities>=0.2.1
+  - symengine
+  - python-symengine
+  - importlib_resources

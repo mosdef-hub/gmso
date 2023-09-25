@@ -26,7 +26,7 @@ class TestSerialization(BaseTest):
             independent_variables={"a"},
             parameters={
                 "b": 2.0 * u.amu,
-                "c": 3.0 * u.nm / u.kg ** 2,
+                "c": 3.0 * u.nm / u.kg**2,
                 "d": 5.0 * u.kJ / u.mol,
                 "e": 1.0 * u.C,
             },
@@ -52,7 +52,6 @@ class TestSerialization(BaseTest):
         for atom_type in atom_types_to_test:
             atom_type_json = atom_type.json()
             atom_type_copy = AtomType.parse_raw(atom_type_json)
-            atom_type_copy.topology = atom_type.topology
             assert atom_type_copy == atom_type
 
     def test_bond_to_json_loop(self, typed_ethane, are_equivalent_atoms):
@@ -71,7 +70,6 @@ class TestSerialization(BaseTest):
         for bond_type in bond_types_to_test:
             bond_type_json = bond_type.json()
             bond_type_copy = BondType.parse_raw(bond_type_json)
-            bond_type_copy.topology = bond_type.topology
             assert bond_type_copy == bond_type
 
     def test_angle_to_json_loop(self, typed_ethane, are_equivalent_atoms):
@@ -89,7 +87,6 @@ class TestSerialization(BaseTest):
         for angle_type in angle_types_to_test:
             angle_type_json = angle_type.json()
             angle_type_copy = AngleType.parse_raw(angle_type_json)
-            angle_type_copy.topology = angle_type.topology
             assert angle_type_copy == angle_type
 
     def test_dihedral_to_json_loop(self, typed_ethane, are_equivalent_atoms):
@@ -107,7 +104,6 @@ class TestSerialization(BaseTest):
         for dihedral_type in dihedral_types_to_test:
             dihedral_type_json = dihedral_type.json()
             dihedral_type_copy = DihedralType.parse_raw(dihedral_type_json)
-            dihedral_type_copy.topology = dihedral_type.topology
             assert dihedral_type_copy == dihedral_type
 
     def test_improper_to_json_loop(self, typed_ethane, are_equivalent_atoms):

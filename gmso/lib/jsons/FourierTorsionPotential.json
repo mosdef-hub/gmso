@@ -1,0 +1,12 @@
+{
+  "name": "FourierTorsionPotential",
+  "expression": "0.5 * k0 + 0.5 * k1 * (1 + cos(phi)) + 0.5 * k2 * (1 - cos(2*phi)) + 0.5 * k3 * (1 + cos(3*phi)) + 0.5 * k4 * (1 - cos(4*phi))",
+  "independent_variables": "phi",
+  "expected_parameters_dimensions": {
+    "k0": "energy",
+    "k1": "energy",
+    "k2": "energy",
+    "k3": "energy",
+    "k4": "energy"
+  }
+}

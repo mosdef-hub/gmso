@@ -1,0 +1,73 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ForceField name="topologyCharmm" version="0.0.1">
+    <FFMetaData>
+        <Units energy="kcal/mol" mass="amu" charge="coulomb" distance="nm"/>
+    </FFMetaData>
+    <AtomTypes expression="ep * ((sigma/r)**12 - (sigma/r)**6) + q / (e0 * r)">
+        <ParametersUnitDef parameter="ep" unit="kJ/mol"/>
+        <ParametersUnitDef parameter="sigma" unit="nm"/>
+        <ParametersUnitDef parameter="e0" unit="A**2*s**4/(kg*m**3)"/>
+        <ParametersUnitDef parameter="q" unit="coulomb"/>
+        <AtomType name="CE1" atomclass="CE1" element="_CE1" charge="0.0" definition="[_CE1]">
+            <Parameters>
+                <Parameter name="ep" value="0.28450999999999993"/>
+                <Parameter name="sigma" value="0.37239566418299996"/>
+                <Parameter name="e0" value="8.8542e-12"/>
+                <Parameter name="q" value="0.0"/>
+            </Parameters>
+        </AtomType>
+        <AtomType name="CS" atomclass="CS" element="_CS" charge="0.0" definition="[_CS]">
+            <Parameters>
+                <Parameter name="ep" value="0.46024"/>
+                <Parameter name="sigma" value="0.391995435982"/>
+                <Parameter name="e0" value="8.8542e-12"/>
+                <Parameter name="q" value="0.0"/>
+            </Parameters>
+        </AtomType>
+        <AtomType name="SS" atomclass="SS" element="_SS" charge="0.0" definition="[_SS]">
+            <Parameters>
+                <Parameter name="ep" value="1.96648"/>
+                <Parameter name="sigma" value="0.391995435982"/>
+                <Parameter name="e0" value="8.8542e-12"/>
+                <Parameter name="q" value="0.0"/>
+            </Parameters>
+        </AtomType>
+    </AtomTypes>
+    <DihedralTypes expression="k * (1 + cos(n * shi - delta))">
+        <ParametersUnitDef parameter="delta6" unit="degree"/>
+        <ParametersUnitDef parameter="n6" unit="dimensionless"/>
+        <ParametersUnitDef parameter="k6" unit="kJ"/>
+        <ParametersUnitDef parameter="delta5" unit="degree"/>
+        <ParametersUnitDef parameter="n5" unit="dimensionless"/>
+        <ParametersUnitDef parameter="k5" unit="kJ"/>
+        <ParametersUnitDef parameter="delta4" unit="degree"/>
+        <ParametersUnitDef parameter="n4" unit="dimensionless"/>
+        <ParametersUnitDef parameter="k4" unit="kJ"/>
+        <ParametersUnitDef parameter="delta3" unit="degree"/>
+        <ParametersUnitDef parameter="n3" unit="dimensionless"/>
+        <ParametersUnitDef parameter="k3" unit="kJ"/>
+        <ParametersUnitDef parameter="delta2" unit="degree"/>
+        <ParametersUnitDef parameter="n2" unit="dimensionless"/>
+        <ParametersUnitDef parameter="k2" unit="kJ"/>
+        <ParametersUnitDef parameter="delta1" unit="degree"/>
+        <ParametersUnitDef parameter="n1" unit="dimensionless"/>
+        <ParametersUnitDef parameter="k1" unit="kJ"/>
+        <DihedralType name="DihedralType-Proper-7478" type1="" type2="CS" type3="SS" type4="">
+            <Parameters>
+                <Parameter name="k1" value="0.0"/>
+                <Parameter name="n1" value="3"/>
+                <Parameter name="delta1" value="0.003490658503988659"/>
+            </Parameters>
+        </DihedralType>
+        <DihedralType name="DihedralType-Proper-7482" type1="" type2="CE1" type3="CE1" type4="">
+            <Parameters>
+                <Parameter name="k1" value="0.6276"/>
+                <Parameter name="n1" value="1"/>
+                <Parameter name="delta1" value="0.0"/>
+                <Parameter name="k2" value="35.564"/>
+                <Parameter name="n2" value="2"/>
+                <Parameter name="delta2" value="3.141592653589793"/>
+            </Parameters>
+        </DihedralType>
+    </DihedralTypes>
+</ForceField>
