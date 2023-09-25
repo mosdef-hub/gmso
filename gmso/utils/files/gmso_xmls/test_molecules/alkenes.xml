@@ -1,0 +1,72 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ForceField name="alkenes_oplsaa" version="0.0.1">
+  <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.5" combiningRule="geometric">
+    <Units energy="kJ" distance="nm" mass="amu" charge="C"/>
+  </FFMetaData>
+  <AtomTypes expression="4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)">
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <AtomType name="opls_143" mass="12.01078" charge="-3.6850062278400004e-20" atomclass="CM" definition="[C;X3](C)(H)H">
+      <Parameters>
+        <Parameter name="epsilon" value="0.355"/>
+        <Parameter name="sigma" value="0.317984"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="opls_144" mass="1.007947" charge="1.8425031139200002e-20" atomclass="HC" definition="[H][C;X3]">
+      <Parameters>
+        <Parameter name="epsilon" value="0.242"/>
+        <Parameter name="sigma" value="0.12552"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+  <BondTypes expression="0.5*k*(r - r_eq)**2">
+    <ParametersUnitDef parameter="k" unit="kJ/(mol*nm**2)"/>
+    <ParametersUnitDef parameter="r_eq" unit="nm"/>
+    <BondType name="BondType-Harmonic-1" type1="opls_143" type2="opls_143">
+      <Parameters>
+        <Parameter name="k" value="459403.2"/>
+        <Parameter name="r_eq" value="0.134"/>
+      </Parameters>
+    </BondType>
+    <BondType name="BondType-Harmonic-2" type1="opls_143" type2="opls_144">
+      <Parameters>
+        <Parameter name="k" value="284512.0"/>
+        <Parameter name="r_eq" value="0.108"/>
+      </Parameters>
+    </BondType>
+  </BondTypes>
+  <AngleTypes expression="0.5*k*(theta - theta_eq)**2">
+    <ParametersUnitDef parameter="k" unit="kJ/(mol*rad**2)"/>
+    <ParametersUnitDef parameter="theta_eq" unit="rad"/>
+    <AngleType name="AngleType-Harmonic-1" type1="opls_143" type2="opls_143" type3="opls_144">
+      <Parameters>
+        <Parameter name="k" value="292.88"/>
+        <Parameter name="theta_eq" value="2.0943951024"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="AngleType-Harmonic-2" type1="opls_144" type2="opls_143" type3="opls_144">
+      <Parameters>
+        <Parameter name="k" value="292.88"/>
+        <Parameter name="theta_eq" value="2.0420352248"/>
+      </Parameters>
+    </AngleType>
+  </AngleTypes>
+  <DihedralTypes expression="c_0 + c_1*cos(psi) + c_2*cos(psi)**2 + c_3*cos(psi)**3 + c_4*cos(psi)**4 + c_5*cos(psi)**5">
+    <ParametersUnitDef parameter="c_0" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c_1" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c_2" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c_3" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c_4" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c_5" unit="kJ/mol"/>
+    <DihedralType name="DihedralType-RyckaertBellemans-1" type1="opls_144" type2="opls_143" type3="opls_143" type4="opls_144">
+      <Parameters>
+        <Parameter name="c_0" value="58.576"/>
+        <Parameter name="c_1" value="0.0"/>
+        <Parameter name="c_2" value="-58.576"/>
+        <Parameter name="c_3" value="0.0"/>
+        <Parameter name="c_4" value="0.0"/>
+        <Parameter name="c_5" value="0.0"/>
+      </Parameters>
+    </DihedralType>
+  </DihedralTypes>
+</ForceField>

@@ -3,13 +3,17 @@ import warnings
 from typing import Optional, Union
 
 import unyt as u
-from pydantic import Field, validator
 
 from gmso.abc.abstract_site import Site
 from gmso.core.atom_type import AtomType
 from gmso.core.element import Element
 from gmso.utils._constants import UNIT_WARNING_STRING
 from gmso.utils.misc import ensure_valid_dimensions
+
+try:
+    from pydantic.v1 import Field, validator
+except ImportError:
+    from pydantic import Field, validator
 
 
 class Atom(Site):
@@ -88,6 +92,21 @@ class Atom(Site):
     def atom_type(self) -> Union[AtomType, None]:
         """Return the atom_type associated with the atom."""
         return self.__dict__.get("atom_type_", None)
+
+    def clone(self):
+        """Clone this atom."""
+        return Atom(
+            name=self.name,
+            label=self.label,
+            group=self.group,
+            molecule=self.molecule,
+            residue=self.residue,
+            position=self.position,
+            charge=self.charge_,
+            mass=self.mass_,
+            element=self.element_,
+            atom_type=None if not self.atom_type else self.atom_type.clone(),
+        )
 
     def __le__(self, other):
         """Less than or equal to operator."""

@@ -1,11 +1,24 @@
 """Module supporting template potential objects."""
 import json
 from pathlib import Path
+from typing import Dict
+
+import sympy
+import unyt as u
 
 from gmso.abc.abstract_potential import AbstractPotential
-from gmso.exceptions import GMSOError
-from gmso.utils.expression import _PotentialExpression
+from gmso.exceptions import (
+    GMSOError,
+    MissingParameterError,
+    UnknownParameterError,
+)
+from gmso.utils.expression import PotentialExpression
 from gmso.utils.singleton import Singleton
+
+try:
+    from pydantic.v1 import Field, validator
+except ImportError:
+    from pydantic import Field, validator
 
 POTENTIAL_JSONS = list(Path(__file__).parent.glob("jsons/*.json"))
 JSON_DIR = Path.joinpath(Path(__file__).parent, "jsons")
@@ -39,19 +52,23 @@ def _load_template_json(item, json_dir=JSON_DIR):
 class PotentialTemplate(AbstractPotential):
     """Template for potential objects to be re-used."""
 
+    expected_parameters_dimensions_: Dict[str, sympy.Expr] = Field(
+        ..., description="The expected dimensions for parameters."
+    )
+
     def __init__(
         self,
         name="PotentialTemplate",
         expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
         independent_variables="r",
         potential_expression=None,
-        template=True,
+        expected_parameters_dimensions=None,
     ):
         if not isinstance(independent_variables, set):
             independent_variables = set(independent_variables.split(","))
 
         if potential_expression is None:
-            _potential_expression = _PotentialExpression(
+            _potential_expression = PotentialExpression(
                 expression=expression,
                 independent_variables=independent_variables,
             )
@@ -59,17 +76,89 @@ class PotentialTemplate(AbstractPotential):
             _potential_expression = potential_expression
 
         super(PotentialTemplate, self).__init__(
-            name=name, potential_expression=_potential_expression
+            name=name,
+            potential_expression=_potential_expression,
+            expected_parameters_dimensions=expected_parameters_dimensions,
         )
+
+    @validator("expected_parameters_dimensions_", pre=True, always=True)
+    def validate_expected_parameters(cls, dim_dict):
+        """Validate the expected parameters and dimensions for this template."""
+        if not isinstance(dim_dict, Dict):
+            raise TypeError(
+                f"Expected expected_parameters_dimensions to be a "
+                f"dictionary but found {type(dim_dict)}"
+            )
+        for param_name, dim in dim_dict.items():
+            if not isinstance(dim, sympy.Expr):
+                try:
+                    dimension = getattr(u.dimensions, dim)
+                except AttributeError:
+                    dimension_expr = sympy.sympify(dim)
+                    subs = (
+                        (symbol, getattr(u.dimensions, str(symbol)))
+                        for symbol in dimension_expr.free_symbols
+                    )
+                    dimension = dimension_expr.subs(subs)
+                dim_dict[param_name] = dimension
+        return dim_dict
+
+    @property
+    def expected_parameters_dimensions(self):
+        """Return the expected dimensions of the parameters for this template."""
+        return self.__dict__.get("expected_parameters_dimensions_")
 
     def set_expression(self, *args, **kwargs):
         """Set the expression of the PotentialTemplate."""
         raise NotImplementedError
 
+    def assert_can_parameterize_with(
+        self, parameters: Dict[str, u.unyt_quantity]
+    ) -> None:
+        """Assert that a ParametricPotential can be instantiated from this template and provided parameters."""
+        if not isinstance(parameters, dict):
+            raise TypeError("Provided `parameters` is not a dictionary.")
+
+        for param_name in self.expected_parameters_dimensions:
+            if param_name not in parameters:
+                raise MissingParameterError(param_name, list(parameters))
+
+        for param_name, param_value in parameters.items():
+            quantity = param_value
+            if not (isinstance(param_value, u.unyt_array)):
+                raise ValueError(f"Parameter {param_name} lacks a unit.")
+
+            if param_name not in self.expected_parameters_dimensions:
+                raise UnknownParameterError(
+                    param_name, list(self.expected_parameters_dimensions)
+                )
+            expected_param_dimension = self.expected_parameters_dimensions[
+                param_name
+            ]
+            param_dimension = quantity.units.dimensions
+            if param_dimension != expected_param_dimension:
+                if expected_param_dimension == 1:
+                    expected_param_dimension = "dimensionless"
+                if param_dimension == 1:
+                    param_dimension = "dimensionless"
+
+                raise AssertionError(
+                    f"Expected parameter {param_name} to have "
+                    f"dimension {expected_param_dimension} but found {param_dimension}. "
+                    f"So, a {self.__class__.__name__} cannot be instantiated using the provided "
+                    f"parameters: {parameters}"
+                )
+
     class Config:
         """Pydantic configuration for potential template."""
 
         allow_mutation = False
+        fields = {
+            "expected_parameters_dimensions_": "expected_parameters_dimensions"
+        }
+        alias_to_fields = {
+            "expected_parameters_dimensions": "expected_parameters_dimensions_"
+        }
 
 
 class PotentialTemplateLibrary(Singleton):

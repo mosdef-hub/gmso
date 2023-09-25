@@ -4,12 +4,16 @@ import warnings
 from abc import ABC
 from typing import Any, ClassVar, Type
 
-from pydantic import BaseModel
-from pydantic.validators import dict_validator
-
 from gmso.abc import GMSOJSONHandler
 from gmso.abc.auto_doc import apply_docs
 from gmso.abc.serialization_utils import dict_to_unyt
+
+try:
+    from pydantic.v1 import BaseModel
+    from pydantic.v1.validators import dict_validator
+except ImportError:
+    from pydantic import BaseModel
+    from pydantic.validators import dict_validator
 
 
 class GMSOBase(BaseModel, ABC):
@@ -64,6 +68,10 @@ class GMSOBase(BaseModel, ABC):
 
     def dict(self, **kwargs) -> "DictStrAny":
         kwargs["by_alias"] = True
+        super_dict = super(GMSOBase, self).dict(**kwargs)
+        return super_dict
+
+    def _iter(self, **kwargs) -> "TupleGenerator":
         exclude = kwargs.get("exclude")
         include = kwargs.get("include")
         include_alias = set()
@@ -84,8 +92,8 @@ class GMSOBase(BaseModel, ABC):
                 else:
                     exclude_alias.add(excluded)
             kwargs["exclude"] = exclude_alias
-        super_dict = super(GMSOBase, self).dict(**kwargs)
-        return super_dict
+
+        yield from super()._iter(**kwargs)
 
     def json(self, **kwargs):
         kwargs["by_alias"] = True

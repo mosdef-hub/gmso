@@ -21,7 +21,8 @@ def _validate_lengths(lengths):
     np.reshape(lengths, newshape=(3,), order="C")
 
     lengths *= input_unit
-    lengths.convert_to_units(u.nm)
+    if input_unit != u.Unit("dimensionless"):
+        lengths.convert_to_units(u.nm)
 
     if np.any(
         np.less(
@@ -169,7 +170,7 @@ class Box(object):
         #    and then the xy plane, with the z-axis
         box_vec = [[1, 0, 0], [cosg, sing, 0], [cosb, mat_coef_y, mat_coef_z]]
 
-        return u.unyt_array(box_vec, u.dimensionless, dtype=np.float)
+        return u.unyt_array(box_vec, u.dimensionless, dtype=float)
 
     def get_vectors(self):
         """Return the vectors of the box."""

@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='UTF-8'?>
+ <ForceField name="nitrogen" version="0.0.1">
+   <FFMetaData electrostatics14Scale="0.0" nonBonded14Scale="0.0" combiningRule="lorentz">
+    <Units energy="kJ/mol" mass="amu" charge="elementary_charge" distance="nm"/>
+  </FFMetaData>
+  <AtomTypes expression="4*epsilon * ((sigma/r)**12 - (sigma/r)**6)">
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <AtomType name="_CH3" atomclass="_CH3" element="_CH3" charge="0.0" mass="15.0" definition="[_CH3;X1]" description="UA carbon"> <Parameters>
+        <Parameter name="epsilon" value="0.814772"/>
+        <Parameter name="sigma" value="0.375"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+  <BondTypes expression="DiracDelta(r-r_eq)">
+    <ParametersUnitDef parameter="r_eq" unit="nm"/>
+    <BondType name="BondType-Harmonic-1" type1="_CH3" type2="_CH3">
+      <Parameters>
+        <Parameter name="r_eq" value="0.154"/>
+      </Parameters>
+    </BondType>
+  </BondTypes>
+</ForceField>

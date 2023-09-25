@@ -4,6 +4,7 @@ import inspect
 import os
 import sys
 import textwrap
+from tempfile import TemporaryFile
 from unittest import SkipTest
 
 from pkg_resources import resource_filename
@@ -23,7 +24,7 @@ MESSAGES[
     "matplotlib"
 ] = """
 The code at {filename}:{line_number} requires the "matplotlib" package
-matplotlib can be installed using:
+matplotlib can be installed using:f
 # conda install -c conda-forge matplotlib
 or
 # pip install matplotlib
@@ -133,20 +134,20 @@ except ImportError:
     has_mbuild = False
 
 try:
-    import foyer
-
-    has_foyer = True
-    del foyer
-except ImportError:
-    has_foyer = False
-
-try:
     import gsd
 
     has_gsd = True
     del gsd
 except ImportError:
     has_gsd = False
+
+try:
+    import hoomd
+
+    has_hoomd = True
+    del hoomd
+except ImportError:
+    has_hoomd = False
 
 try:
     import parmed
@@ -165,7 +166,7 @@ except ImportError:
     has_mdtraj = False
 
 try:
-    from simtk import openmm
+    import openmm
 
     has_openmm = True
     del openmm
@@ -173,12 +174,12 @@ except ImportError:
     has_openmm = False
 
 try:
-    from simtk import unit
+    from openmm import unit
 
-    has_simtk_unit = True
+    has_openmm_unit = True
     del unit
 except ImportError:
-    has_simtk_unit = False
+    has_openmm_unit = False
 
 try:
     import ipywidgets
@@ -195,6 +196,22 @@ try:
     del matplotlib
 except ImportError:
     has_matplotlib = False
+
+try:
+    import pandas
+
+    has_pandas = True
+    del pandas
+except ImportError:
+    has_pandas = False
+
+try:
+    import mosdef_cassandra
+
+    has_cassandra = True
+    del mosdef_cassandra
+except ImportError:
+    has_cassandra = False
 
 
 def run_from_ipython():

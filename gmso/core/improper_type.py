@@ -2,10 +2,14 @@
 from typing import Optional, Tuple
 
 import unyt as u
-from pydantic import Field
 
 from gmso.core.parametric_potential import ParametricPotential
-from gmso.utils._constants import IMPROPER_TYPE_DICT
+from gmso.utils.expression import PotentialExpression
+
+try:
+    from pydantic.v1 import Field
+except ImportError:
+    from pydantic import Field
 
 
 class ImproperType(ParametricPotential):
@@ -38,7 +42,13 @@ class ImproperType(ParametricPotential):
 
     member_types_: Optional[Tuple[str, str, str, str]] = Field(
         None,
-        description="List-like of of gmso.AtomType.name or gmso.AtomType.atomclass "
+        description="List-like of gmso.AtomType.name "
+        "defining the members of this improper type",
+    )
+
+    member_classes_: Optional[Tuple[str, str, str, str]] = Field(
+        None,
+        description="List-like of gmso.AtomType.atomclass "
         "defining the members of this improper type",
     )
 
@@ -50,31 +60,17 @@ class ImproperType(ParametricPotential):
         independent_variables=None,
         potential_expression=None,
         member_types=None,
-        topology=None,
+        member_classes=None,
         tags=None,
     ):
-        if potential_expression is None:
-            if expression is None:
-                expression = "0.5 * k * ((phi - phi_eq))**2"
-
-            if parameters is None:
-                parameters = {
-                    "k": 1000 * u.Unit("kJ / (deg**2)"),
-                    "phi_eq": 0 * u.deg,
-                }
-
-            if independent_variables is None:
-                independent_variables = {"phi"}
-
         super(ImproperType, self).__init__(
             name=name,
             expression=expression,
             parameters=parameters,
             independent_variables=independent_variables,
             potential_expression=potential_expression,
-            topology=topology,
             member_types=member_types,
-            set_ref=IMPROPER_TYPE_DICT,
+            member_classes=member_classes,
             tags=tags,
         )
 
@@ -83,9 +79,30 @@ class ImproperType(ParametricPotential):
         """Return member information for this ImproperType."""
         return self.__dict__.get("member_types_")
 
+    @property
+    def member_classes(self):
+        return self.__dict__.get("member_classes_")
+
+    @staticmethod
+    def _default_potential_expr():
+        return PotentialExpression(
+            expression="0.5 * k * ((phi - phi_eq))**2",
+            parameters={
+                "k": 1000 * u.Unit("kJ / (deg**2)"),
+                "phi_eq": 180 * u.deg,
+            },
+            independent_variables={"phi"},
+        )
+
     class Config:
         """Pydantic configuration for attributes."""
 
-        fields = {"member_types_": "member_types"}
+        fields = {
+            "member_types_": "member_types",
+            "member_classes_": "member_classes",
+        }
 
-        alias_to_fields = {"member_types": "member_types_"}
+        alias_to_fields = {
+            "member_types": "member_types_",
+            "member_classes": "member_classes_",
+        }

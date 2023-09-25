@@ -1,5 +1,10 @@
 {
   "name": "PeriodicTorsionPotential",
   "expression": "k * (1 + cos(n * phi - phi_eq))",
-  "independent_variables": "phi"
+  "independent_variables": "phi",
+  "expected_parameters_dimensions": {
+    "k": "energy",
+    "n": "dimensionless",
+    "phi_eq": "angle"
+  }
 }

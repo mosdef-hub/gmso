@@ -1,0 +1,17 @@
+<ForceField name="toluene_trappe-ua" version="0.0.1" combining_rule="lorentz">
+  <AtomTypes>
+    <Type name="CH_sp2" class="CH_E" element="_CH" mass="13.01900" def="[_CH;X2]([_CH,C])[_CH,C]" desc="Aromatic CH group (eg. benzene), united atom. These are the same parameters that are on the http://trappe.oit.umn.edu website" doi="10.1021/jp001044x" />
+  </AtomTypes>
+  <HarmonicBondForce>
+    <Bond class1="CH_E" class2="CH_E" length="0.14" k="1e-12" />
+  </HarmonicBondForce>
+  <HarmonicAngleForce>
+    <Angle class1="CH_E" class2="CH_E" class3="CH_E" angle="2.0943951023932" k="0.1" />
+  </HarmonicAngleForce>
+  <RBTorsionForce>
+    <Proper class1="CH_E" class2="CH_E" class3="CH_E" class4="CH_E" c0="0.0" c1="0.0" c2="0.0" c3="0.0" c4="0.0" c5="0.0" />
+  </RBTorsionForce>
+  <NonbondedForce coulomb14scale="0" lj14scale="0">
+    <Atom type="CH_sp2" charge="0.0" sigma="0.3695" epsilon="0.419880362216737" />
+  </NonbondedForce>
+</ForceField>

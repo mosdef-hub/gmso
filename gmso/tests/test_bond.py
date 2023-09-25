@@ -1,5 +1,4 @@
 import pytest
-from pydantic import ValidationError
 
 from gmso.core.atom import Atom
 from gmso.core.atom_type import AtomType
@@ -7,6 +6,11 @@ from gmso.core.bond import Bond
 from gmso.core.bond_type import BondType
 from gmso.core.topology import Topology
 from gmso.tests.base_test import BaseTest
+
+try:
+    from pydantic.v1 import ValidationError
+except ImportError:
+    from pydantic import ValidationError
 
 
 class TestBond(BaseTest):
@@ -100,3 +104,36 @@ class TestBond(BaseTest):
 
         assert tuple(bond_eq.connection_members) in bond.equivalent_members()
         assert tuple(bond.connection_members) in bond_eq.equivalent_members()
+
+    def test_bond_member_classes_types(self, typed_ethane):
+        bonds = typed_ethane.bonds
+        assert bonds[0].member_classes == bonds[0].member_types
+
+    def test_bond_member_types(self, typed_ethane):
+        bonds = typed_ethane.bonds
+        assert set(bonds[0].member_types) == set(["opls_135", "opls_140"])
+
+    def test_bond_member_classes_from_connection_members(self):
+        atype1 = AtomType(atomclass="CT", name="t1")
+
+        atype2 = AtomType(atomclass="CK", name="t2")
+
+        bond = Bond(
+            connection_members=[Atom(atom_type=atype1), Atom(atom_type=atype2)]
+        )
+        assert set(bond.member_classes) == set(["CT", "CK"])
+        assert set(bond.member_types) == set(["t1", "t2"])
+
+    def test_bond_member_types_classes_from_bond_type(self):
+        atom_type = AtomType()
+        atom1 = Atom(atom_type=atom_type)
+        atom2 = Atom(atom_type=atom_type)
+
+        btype = BondType(
+            name="atom1-atom2-bond",
+            member_types=["at1", "at2"],
+            member_classes=["XE", "XE"],
+        )
+        bond = Bond(connection_members=[atom1, atom2], bond_type=btype)
+        assert set(bond.member_classes) == set(["XE", "XE"])
+        assert set(bond.member_types) == set(["at1", "at2"])

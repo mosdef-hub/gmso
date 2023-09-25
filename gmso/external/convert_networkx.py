@@ -7,7 +7,6 @@ from gmso.abc.abstract_connection import Connection
 from gmso.abc.abstract_site import Site
 from gmso.core.bond import Bond
 from gmso.core.topology import Topology
-from gmso.exceptions import GMSOError
 
 
 def from_networkx(graph):
@@ -74,7 +73,7 @@ def from_networkx(graph):
     return top
 
 
-def to_networkx(top):
+def to_networkx(top, parse_angles=True, parse_dihedrals=True):
     """Convert a gmso.Topology to a networkX.Graph.
 
     Creates a graph from the topology where each node is a site and each
@@ -84,6 +83,10 @@ def to_networkx(top):
     ----------
     top : gmso.Topology
         topology.Topology instance that need to be converted
+    parse_angles : bool, optional, default=True
+        Populate angle field of all nodes
+    parse_dihedral : bool, optional default=True
+        Populate dihedral field of all nodes
 
     Returns
     -------
@@ -106,10 +109,12 @@ def to_networkx(top):
             b.connection_members[0], b.connection_members[1], connection=b
         )
 
-    for node in graph.nodes:
-        graph.nodes[node]["angles"] = top._get_angles_for(node)
+    if parse_angles:
+        for node in graph.nodes:
+            graph.nodes[node]["angles"] = top._get_angles_for(node)
 
-    for node in graph.nodes:
-        graph.nodes[node]["dihedrals"] = top._get_dihedrals_for(node)
+    if parse_dihedrals:
+        for node in graph.nodes:
+            graph.nodes[node]["dihedrals"] = top._get_dihedrals_for(node)
 
     return graph

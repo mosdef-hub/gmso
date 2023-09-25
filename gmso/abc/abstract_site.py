@@ -1,16 +1,23 @@
 """Basic interaction site in GMSO that all other sites will derive from."""
 import warnings
-from typing import Any, ClassVar, Sequence, TypeVar, Union
+from typing import Any, ClassVar, NamedTuple, Optional, Sequence, TypeVar, Union
 
 import numpy as np
 import unyt as u
-from pydantic import Field, validator
 from unyt.exceptions import InvalidUnitOperation
 
 from gmso.abc.gmso_base import GMSOBase
 from gmso.exceptions import GMSOError
 
+try:
+    from pydantic.v1 import Field, StrictInt, StrictStr, validator
+except ImportError:
+    from pydantic import Field, StrictInt, StrictStr, validator
+
 PositionType = Union[Sequence[float], np.ndarray, u.unyt_array]
+MoleculeType = NamedTuple("Molecule", name=StrictStr, number=StrictInt)
+ResidueType = NamedTuple("Residue", name=StrictStr, number=StrictInt)
+
 SiteT = TypeVar("SiteT", bound="Site")
 
 BASE_DOC_ATTR = "__base_doc__"
@@ -22,6 +29,13 @@ def default_position():
 
 
 class Site(GMSOBase):
+    __iterable_attributes__: ClassVar[set] = {
+        "label",
+        "group",
+        "molecule",
+        "residue",
+    }
+
     __base_doc__: ClassVar[
         str
     ] = """An interaction site object in the topology hierarchy.
@@ -45,6 +59,20 @@ class Site(GMSOBase):
 
     label_: str = Field("", description="Label to be assigned to the site")
 
+    group_: Optional[StrictStr] = Field(
+        None, description="Flexible alternative label relative to site"
+    )
+
+    molecule_: Optional[MoleculeType] = Field(
+        None,
+        description="Molecule label for the site, format of (molecule_name, molecule_number)",
+    )
+
+    residue_: Optional[ResidueType] = Field(
+        None,
+        description="Residue label for the site, format of (residue_name, residue_number)",
+    )
+
     position_: PositionType = Field(
         default_factory=default_position,
         description="The 3D Cartesian coordinates of the position of the site",
@@ -64,6 +92,21 @@ class Site(GMSOBase):
     def label(self) -> str:
         """Return the label assigned to the site."""
         return self.__dict__.get("label_")
+
+    @property
+    def group(self) -> str:
+        """Return the group of the site."""
+        return self.__dict__.get("group_")
+
+    @property
+    def molecule(self) -> tuple:
+        """Return the molecule of the site."""
+        return self.__dict__.get("molecule_")
+
+    @property
+    def residue(self):
+        """Return the residue assigned to the site."""
+        return self.__dict__.get("residue_")
 
     def __repr__(self):
         """Return the formatted representation of the site."""
@@ -98,7 +141,8 @@ class Site(GMSOBase):
 
         try:
             position = np.reshape(position, newshape=(3,), order="C")
-            position.convert_to_units(u.nm)
+            if position.units != u.dimensionless:
+                position.convert_to_units(u.nm)
         except ValueError:
             raise ValueError(
                 f"Position of shape {position.shape} is not valid. "
@@ -127,12 +171,22 @@ class Site(GMSOBase):
 
         arbitrary_types_allowed = True
 
-        fields = {"name_": "name", "position_": "position", "label_": "label"}
+        fields = {
+            "name_": "name",
+            "position_": "position",
+            "label_": "label",
+            "group_": "group",
+            "molecule_": "molecule",
+            "residue_": "residue",
+        }
 
         alias_to_fields = {
             "name": "name_",
             "position": "position_",
             "label": "label_",
+            "group": "group_",
+            "molecule": "molecule_",
+            "residue": "residue_",
         }
 
         validate_assignment = True

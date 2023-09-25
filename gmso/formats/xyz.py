@@ -6,8 +6,10 @@ import unyt as u
 
 from gmso.core.atom import Atom
 from gmso.core.topology import Topology
+from gmso.formats.formats_registry import loads_as, saves_as
 
 
+@loads_as(".xyz")
 def read_xyz(filename):
     """Reader for xyz file format.
 
@@ -38,7 +40,7 @@ def read_xyz(filename):
                     "were expected, but at least one fewer was found."
                 )
                 raise ValueError(msg.format(n_atoms))
-            tmp = np.array(line[1:4], dtype=np.float) * u.angstrom
+            tmp = np.array(line[1:4], dtype=float) * u.angstrom
             coords[row] = tmp.in_units(u.nanometer)
             site = Atom(name=line[0], position=coords[row])
             top.add_site(site)
@@ -57,6 +59,7 @@ def read_xyz(filename):
     return top
 
 
+@saves_as(".xyz")
 def write_xyz(top, filename):
     """Writer for xyz file format.
 
@@ -76,17 +79,20 @@ def write_xyz(top, filename):
                 top.name, filename, str(datetime.datetime.now())
             )
         )
-        for idx, site in enumerate(top.sites):
-            # TODO: Better handling of element guessing and site naming
-            if site.element is not None:
-                tmp_name = site.element.symbol
-            else:
-                tmp_name = "X"
-            out_file.write(
-                "{0} {1:8.3f} {2:8.3f} {3:8.3f}\n".format(
-                    tmp_name,
-                    site.position[0].in_units(u.angstrom).value,
-                    site.position[1].in_units(u.angstrom).value,
-                    site.position[2].in_units(u.angstrom).value,
-                )
-            )
+        out_file.write(_prepare_particles(top))
+
+
+def _prepare_particles(top: Topology) -> str:
+    atom_info = str()
+    for _, site in enumerate(top.sites):
+        # TODO: Better handling of element guessing and site naming
+        if site.element is not None:
+            tmp_name = site.element.symbol
+        else:
+            tmp_name = "X"
+
+        x = site.position[0].in_units(u.angstrom).value
+        y = site.position[1].in_units(u.angstrom).value
+        z = site.position[2].in_units(u.angstrom).value
+        atom_info = atom_info + f"{tmp_name} {x:8.3f} {y:8.3f} {z:8.3f}\n"
+    return atom_info

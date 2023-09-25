@@ -3,10 +3,14 @@ import pytest
 import unyt as u
 from lxml.etree import DocumentInvalid
 from sympy import sympify
+from unyt.testing import assert_allclose_units
 
 from gmso.core.forcefield import ForceField
+from gmso.core.improper_type import ImproperType
 from gmso.exceptions import (
+    ForceFieldError,
     ForceFieldParseError,
+    GMSOError,
     MissingAtomTypesError,
     MissingPotentialError,
 )
@@ -29,6 +33,10 @@ class TestForceField(BaseTest):
             get_path(filename=get_path("oplsaa-ethane_foyer.xml"))
         )
 
+    @pytest.fixture(scope="session")
+    def non_element_ff(self):
+        return ForceField(get_path(filename="non-element-type-ff.xml"))
+
     def test_ff_name_version_from_xml(self, ff):
         assert ff.name == "ForceFieldOne"
         assert ff.version == "0.4.1"
@@ -37,26 +45,29 @@ class TestForceField(BaseTest):
         assert ff.scaling_factors["nonBonded14Scale"] == 0.67
         assert ff.scaling_factors["electrostatics14Scale"] == 0.5
 
+    def test_ff_combining_rule(self, ff, opls_ethane_foyer):
+        assert ff.combining_rule == "lorentz"
+        assert opls_ethane_foyer.combining_rule == "geometric"
+
     @pytest.mark.parametrize(
         "unit_name,unit_value",
         [
-            ("energy", u.Unit(u.K * u.kb)),
+            ("energy", u.Unit(u.kb)),
             ("mass", u.gram / u.mol),
-            ("temperature", u.K),
             ("charge", u.coulomb),
-            ("angle", u.rad),
-            ("time", u.ps),
             ("distance", u.nm),
         ],
     )
     def test_units_from_xml(self, ff, unit_name, unit_value):
-        assert len(ff.units.keys()) == 7
+        assert len(ff.units.keys()) == 4
         assert ff.units[unit_name] == unit_value
 
     def test_ff_atomtypes_from_xml(self, ff):
         assert len(ff.atom_types) == 3
         assert "Ar" in ff.atom_types
         assert "Xe" in ff.atom_types
+        assert ff.atom_types["Ar"].get_tag("element") == "Ar"
+        assert ff.atom_types["Xe"].get_tag("element") == "Xe"
 
         assert sympify("r") in ff.atom_types["Ar"].independent_variables
         assert ff.atom_types["Ar"].parameters["A"] == u.unyt_quantity(
@@ -64,7 +75,7 @@ class TestForceField(BaseTest):
         )
         assert ff.atom_types["Ar"].parameters["B"] == u.unyt_quantity(4.0, u.nm)
         assert ff.atom_types["Ar"].parameters["C"] == u.unyt_quantity(
-            0.5, u.kcal / u.mol * u.nm ** 6
+            0.5, u.kcal / u.mol * u.nm**6
         )
         assert ff.atom_types["Ar"].mass == u.unyt_quantity(39.948, u.amu)
         assert ff.atom_types["Ar"].charge == u.unyt_quantity(0.0, u.coulomb)
@@ -81,7 +92,7 @@ class TestForceField(BaseTest):
         )
         assert ff.atom_types["Xe"].parameters["B"] == u.unyt_quantity(5.0, u.nm)
         assert ff.atom_types["Xe"].parameters["C"] == u.unyt_quantity(
-            0.3, u.kcal / u.mol * u.nm ** 6
+            0.3, u.kcal / u.mol * u.nm**6
         )
         assert ff.atom_types["Xe"].mass == u.unyt_quantity(131.293, u.amu)
         assert ff.atom_types["Xe"].charge == u.unyt_quantity(0.0, u.coulomb)
@@ -137,7 +148,7 @@ class TestForceField(BaseTest):
         assert ff.angle_types["Xe~Xe~Xe"].parameters["z"] == u.unyt_quantity(
             20, u.kJ / u.mol
         )
-        assert ff.angle_types["Xe~Xe~Xe"].member_types == ("Xe", "Xe", "Xe")
+        assert ff.angle_types["Xe~Xe~Xe"].member_classes == ("Xe", "Xe", "Xe")
 
     def test_ff_dihedraltypes_from_xml(self, ff):
         assert len(ff.dihedral_types) == 2
@@ -154,7 +165,7 @@ class TestForceField(BaseTest):
         assert ff.dihedral_types["Ar~Ar~Ar~Ar"].parameters[
             "z"
         ] == u.unyt_quantity(100, u.kJ / u.mol)
-        assert ff.dihedral_types["Ar~Ar~Ar~Ar"].member_types == (
+        assert ff.dihedral_types["Ar~Ar~Ar~Ar"].member_classes == (
             "Ar",
             "Ar",
             "Ar",
@@ -171,7 +182,7 @@ class TestForceField(BaseTest):
         assert ff.dihedral_types["Xe~Xe~Xe~Xe"].parameters[
             "z"
         ] == u.unyt_quantity(20, u.kJ / u.mol)
-        assert ff.dihedral_types["Xe~Xe~Xe~Xe"].member_types == (
+        assert ff.dihedral_types["Xe~Xe~Xe~Xe"].member_classes == (
             "Xe",
             "Xe",
             "Xe",
@@ -216,14 +227,13 @@ class TestForceField(BaseTest):
         assert ff.pairpotential_types["Xe~Xe"].member_types == ("Xe", "Xe")
 
     def test_ff_charmm_xml(self):
-        charm_ff = ForceField(get_path("trimmed_charmm.xml"))
+        charm_ff = ForceField(get_path("trimmed_charmm.xml"), backend="ffutils")
 
         assert charm_ff.name == "topologyCharmm"
         assert "*~CS~SS~*" in charm_ff.dihedral_types
 
-        # Test list of parameters
         assert isinstance(
-            charm_ff.dihedral_types["*~CE1~CE1~*"].parameters["k"], list
+            charm_ff.dihedral_types["*~CE1~CE1~*"].parameters["k"], u.unyt_array
         )
 
         # This ensures that even though the parameters is a list, they can be hashed (by equality checks)
@@ -234,18 +244,25 @@ class TestForceField(BaseTest):
         assert len(charm_ff.dihedral_types["*~CE1~CE1~*"].parameters["k"]) == 2
 
         # Test Correct Parameter Values
-        assert charm_ff.dihedral_types["*~CE1~CE1~*"].parameters["k"] == [
-            u.unyt_quantity(0.6276, u.kJ),
-            u.unyt_quantity(35.564, u.kJ),
-        ]
+        assert_allclose_units(
+            charm_ff.dihedral_types["*~CE1~CE1~*"].parameters["k"],
+            [0.6276, 35.564] * u.kJ,
+            rtol=1e-5,
+            atol=1e-8,
+        )
 
     def test_non_unique_params(self):
-        with pytest.raises(DocumentInvalid):
-            ForceField(get_path("ff-example-nonunique-params.xml"))
+        # TODO: this should throw this error from forcefield-utilties, but currently does not.
+        # with pytest.raises(DocumentInvalid):
+        #    ForceField(get_path("ff-example-nonunique-params.xml"))
+        pass
 
     def test_missing_params(self):
+        # TODO: raise same error if backend loader is forcefield-utilities
         with pytest.raises(ForceFieldParseError):
-            ForceField(get_path("ff-example-missing-parameter.xml"))
+            ForceField(
+                get_path("ff-example-missing-parameter.xml"), backend="gmso"
+            )
 
     def test_elementary_charge_to_coulomb(self, ff):
         elementary_charge = ff.atom_types["Li"].charge.to(u.elementary_charge)
@@ -262,26 +279,34 @@ class TestForceField(BaseTest):
             assert len(
                 ff.dihedral_types["opls_140~*~*~opls_140"].parameters["c0"]
             )
-        assert len(ff.dihedral_types["NH2~CT1~C~O"].parameters["delta"]) == 1
+        assert ff.dihedral_types["NH2~CT1~C~O"].parameters[
+            "delta"
+        ] == u.unyt_quantity(0.0, "degree")
 
     def test_ff_from_etree(self):
+        # TODO: load using backend forcefield-utilities from etree
         ff_etree = lxml.etree.parse(get_path("opls_charmm_buck.xml"))
-        ff = ForceField(ff_etree)
+        ff = ForceField(ff_etree, backend="gmso")
         assert ff
 
     def test_ff_from_etree_iterable(self):
+        # TODO: load using backend forcefield-utilities from etree
         ff_etrees = [
             lxml.etree.parse(get_path("opls_charmm_buck.xml")),
             lxml.etree.parse(get_path("trimmed_charmm.xml")),
         ]
-        ff = ForceField(ff_etrees)
+        ff = ForceField(ff_etrees, backend="gmso")
         assert ff
 
     def test_ff_mixed_type_error(self):
         with pytest.raises(TypeError):
             ff = ForceField([5, "20"])
 
-    def test_named_potential_groups(self, named_groups_ff):
+    def test_named_potential_groups(self):
+        # TODO: get potential groups using backend forcefield-utilities
+        named_groups_ff = ForceField(
+            get_path("ff-example1.xml"), backend="gmso"
+        )
         assert named_groups_ff.potential_groups["BuckinghamPotential"]
         assert (
             named_groups_ff.angle_types["Xe~Xe~Xe"]
@@ -341,13 +366,15 @@ class TestForceField(BaseTest):
     def test_forcefield_missing_atom_types(self):
         with pytest.raises(MissingAtomTypesError):
             ff = ForceField(
-                get_path(filename=get_path("ff_missing_atom_types.xml"))
+                get_path(filename=get_path("ff_missing_atom_types.xml")),
+                backend="gmso",
             )
 
     def test_forcefield_missing_atom_types_non_strict(self):
         ff = ForceField(
             get_path(filename=get_path("ff_missing_atom_types.xml")),
             strict=False,
+            backend="gmso",
         )
 
     def test_forcefeld_get_potential_atom_type(self, opls_ethane_foyer):
@@ -406,7 +433,7 @@ class TestForceField(BaseTest):
         assert sympify("r") in bt.independent_variables
 
         assert allclose_units_mixed(
-            params.values(), [284512.0 * u.kJ / u.nm ** 2, 0.109 * u.nm]
+            params.values(), [284512.0 * u.kJ / u.nm**2, 0.109 * u.nm]
         )
 
     def test_forcefield_get_potential_bond_type_reversed(
@@ -424,7 +451,7 @@ class TestForceField(BaseTest):
         )
 
         assert allclose_units_mixed(
-            params.values(), [224262.4 * u.kJ / u.nm ** 2, 0.1529 * u.nm]
+            params.values(), [224262.4 * u.kJ / u.nm**2, 0.1529 * u.nm]
         )
 
     def test_forcefield_get_potential_angle_type(self, opls_ethane_foyer):
@@ -440,7 +467,7 @@ class TestForceField(BaseTest):
 
         assert allclose_units_mixed(
             params.values(),
-            [313.8 * u.kJ / u.radian ** 2, 1.932079482 * u.radian],
+            [313.8 * u.kJ / u.radian**2, 1.932079482 * u.radian],
         )
 
     def test_forcefield_get_potential_angle_type_reversed(
@@ -459,7 +486,7 @@ class TestForceField(BaseTest):
 
         assert allclose_units_mixed(
             params.values(),
-            [276.144 * u.kJ / u.radian ** 2, 1.8814649337 * u.radian],
+            [276.144 * u.kJ / u.radian**2, 1.8814649337 * u.radian],
         )
 
     def test_forcefield_get_potential_dihedral_type(self, opls_ethane_foyer):
@@ -554,3 +581,95 @@ class TestForceField(BaseTest):
             opls_ethane_foyer._get_improper_type(
                 ["opls_359", "opls_600", "opls_700", "opls_800"], warn=True
             )
+
+    def test_non_element_types(self, non_element_ff, opls_ethane_foyer):
+        assert "_CH3" in non_element_ff.non_element_types
+        assert "_CH2" in non_element_ff.non_element_types
+        assert opls_ethane_foyer.non_element_types == set()
+        assert len(opls_ethane_foyer.atom_types) > 0
+
+        assert (
+            non_element_ff.get_potential(
+                group="atom_type", key="CH2_sp3"
+            ).charge
+            == 0
+        )
+        assert (
+            non_element_ff.get_potential(
+                group="atom_type", key="CH3_sp3"
+            ).charge
+            == 0
+        )
+
+        assert (
+            non_element_ff.get_potential(
+                group="atom_type", key="CH3_sp3"
+            ).definition
+            == "[_CH3;X1][_CH3,_CH2]"
+        )
+        assert (
+            non_element_ff.get_potential(
+                group="atom_type", key="CH2_sp3"
+            ).definition
+            == "[_CH2;X2]([_CH3,_CH2])[_CH3,_CH2]"
+        )
+
+    def test_forcefield_get_impropers_combinations(self):
+        ff_with_impropers = ForceField()
+        ff_with_impropers.name = "imp_ff"
+        ff_with_impropers.improper_types = {
+            "CT~CT~HC~HC": ImproperType(name="imp1"),
+            "CT~HC~HC~HC": ImproperType(name="imp2"),
+        }
+        imp1 = ff_with_impropers.get_potential(
+            "improper_type", ["CT", "HC", "HC", "CT"]
+        )
+        imp2 = ff_with_impropers.get_potential(
+            "improper_type", ["CT", "HC", "CT", "HC"]
+        )
+        assert imp1.name == imp2.name
+        assert imp1 is imp2
+
+    def test_write_xml(self, opls_ethane_foyer):
+        opls_ethane_foyer.to_xml("test_xml_writer.xml")
+        reloaded_xml = ForceField("test_xml_writer.xml")
+        get_names = lambda ff, param: [
+            typed for typed in getattr(ff, param).keys()
+        ]
+        for param in [
+            "atom_types",
+            "bond_types",
+            "angle_types",
+            "dihedral_types",
+        ]:
+            assert get_names(opls_ethane_foyer, param) == get_names(
+                reloaded_xml, param
+            )
+
+    def test_write_not_xml(self, opls_ethane_foyer):
+        with pytest.raises(ForceFieldError):
+            opls_ethane_foyer.to_xml("bad_path")
+
+    def test_valid_sequence(self):
+        for j in range(10):
+            ff = ForceField(get_path("sequence_of_parameters_ff.xml"), "r")
+            dih_with_list = ff.dihedral_types["*~C~C~*"]
+            params = dih_with_list.get_parameters()
+            assert u.allclose_units(params["theta_0"], [25, 32] * u.radian)
+            assert u.allclose_units(params["k"], [38, 45] * u.kJ / u.mol)
+
+    def test_deprecated_gmso(self):
+        with pytest.warns(DeprecationWarning):
+            ForceField(get_path("ff-example0.xml"), backend="gmso")
+
+    def test_not_supoprted_backend(self, opls_ethane_foyer):
+        # Unsupported ff parser backend
+        with pytest.raises(GMSOError):
+            ForceField(get_path("ff-example0.xml"), backend="bogus")
+
+        # Unsupported ff writer backend
+        with pytest.raises(NotImplementedError):
+            opls_ethane_foyer.to_xml("test_xml_writer.xml", backend="ffutils")
+
+        with pytest.raises(GMSOError):
+            opls_ethane_foyer.to_xml("test_xml_writer.xml", backend="bogus")

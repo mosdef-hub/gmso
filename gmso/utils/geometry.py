@@ -2,7 +2,7 @@
 import numpy as np
 
 
-def coord_shift(xyz, box):
+def coord_shift(xyz, box_lengths):
     """Ensure that coordinates are -L/2, L/2.
 
     Checks if coordinates are -L/2, L/2 and then shifts coordinates
@@ -19,7 +19,7 @@ def coord_shift(xyz, box):
     -------
     xyz : unyt_array of points with shape N x 3
     """
-    box_max = box.lengths / 2.0
+    box_max = box_lengths / 2.0
     box_min = -box_max
     # Shift all atoms
     if np.greater(xyz, box_max).any():

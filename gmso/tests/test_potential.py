@@ -3,10 +3,15 @@ import sympy
 import unyt as u
 from unyt.testing import assert_allclose_units
 
+from gmso.core.atom import Atom
+from gmso.core.bond import Bond
+from gmso.core.bond_type import BondType
 from gmso.core.parametric_potential import ParametricPotential
+from gmso.core.topology import Topology
 from gmso.exceptions import GMSOError
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.tests.base_test import BaseTest
+from gmso.utils.sorting import sort_by_classes, sort_by_types
 
 
 class TestPotential(BaseTest):
@@ -205,16 +210,18 @@ class TestPotential(BaseTest):
 
     def test_class_method(self):
         template = PotentialTemplateLibrary()["HarmonicBondPotential"]
-        params = {"k": 1.0 * u.dimensionless, "r_eq": 1.0 * u.dimensionless}
+        params = {"k": 1.0 * u.kcal / u.nm**2, "r_eq": 1.0 * u.nm}
         harmonic_potential_from_template = ParametricPotential.from_template(
             template, params
         )
+
         harmonic_potential = ParametricPotential(
             name="HarmonicBondPotential",
             expression="0.5 * k * (r-r_eq)**2",
             independent_variables={"r"},
             parameters=params,
         )
+
         assert harmonic_potential.name == harmonic_potential_from_template.name
         assert (
             harmonic_potential.expression
@@ -227,5 +234,69 @@ class TestPotential(BaseTest):
 
     def test_class_method_with_error(self):
         template = object()
-        with pytest.raises(GMSOError):
+        with pytest.raises(TypeError):
             ParametricPotential.from_template(template, parameters=None)
+
+    def test_template_parameterization_dimension_mismatch(self):
+        template = PotentialTemplateLibrary()["HarmonicBondPotential"]
+        params = {
+            "k": 1.0 * u.kcal * u.dimensionless / u.nm,
+            "r_eq": 1.0 * u.nm,
+        }
+
+        with pytest.raises(AssertionError):
+            harmonic_potential_from_template = (
+                ParametricPotential.from_template(template, params)
+            )
+
+    def test_bondtype_clone(self):
+        top = Topology()
+        btype = BondType(
+            name="ff_255~ff_256",
+            expression="a*x+b+c*y",
+            independent_variables={"x", "y"},
+            parameters={"a": 200 * u.g, "b": 300 * u.K, "c": 400 * u.J},
+        )
+        btype_clone = btype.clone()
+
+        atom1 = Atom(name="1")
+        atom2 = Atom(name="2")
+        bond1 = Bond(connection_members=[atom1, atom2])
+
+        atom3 = Atom(name="3")
+        atom4 = Atom(name="4")
+        bond2 = Bond(connection_members=[atom3, atom4])
+
+        bond1.bond_type = btype
+        bond2.bond_type = btype_clone
+
+        top.add_connection(bond1)
+        top.add_connection(bond2)
+        top.update_topology()
+
+        assert len(top.bond_types) == 2
+
+        btype_dict = btype.dict(exclude={"topology", "set_ref"})
+        btype_clone_dict = btype_clone.dict(exclude={"topology", "set_ref"})
+
+        for key, value in btype_dict.items():
+            cloned = btype_clone_dict[key]
+            assert value == cloned
+            if id(value) == id(cloned):
+                assert isinstance(value, (str, type(None)))
+                assert isinstance(cloned, (str, type(None)))
+
+    def test_sorting(self, parmed_benzene):
+        from gmso.external import from_parmed
+
+        top = from_parmed(parmed_benzene)
+
+        labelsList = [
+            "bond_types",
+            "angle_types",
+            "dihedral_types",
+            "improper_types",
+        ]
+        for connection_type in labelsList:
+            conn = list(getattr(top, connection_type)())[0]
+            assert sort_by_classes(conn) == sort_by_types(conn)

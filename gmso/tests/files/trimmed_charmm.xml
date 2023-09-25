@@ -34,39 +34,36 @@
         </AtomType>
     </AtomTypes>
     <DihedralTypes expression="k * (1 + cos(n * shi - delta))">
-        <ParametersUnitDef parameter="delta6" unit="degree"/>
-        <ParametersUnitDef parameter="n6" unit="dimensionless"/>
-        <ParametersUnitDef parameter="k6" unit="kJ"/>
-        <ParametersUnitDef parameter="delta5" unit="degree"/>
-        <ParametersUnitDef parameter="n5" unit="dimensionless"/>
-        <ParametersUnitDef parameter="k5" unit="kJ"/>
-        <ParametersUnitDef parameter="delta4" unit="degree"/>
-        <ParametersUnitDef parameter="n4" unit="dimensionless"/>
-        <ParametersUnitDef parameter="k4" unit="kJ"/>
-        <ParametersUnitDef parameter="delta3" unit="degree"/>
-        <ParametersUnitDef parameter="n3" unit="dimensionless"/>
-        <ParametersUnitDef parameter="k3" unit="kJ"/>
-        <ParametersUnitDef parameter="delta2" unit="degree"/>
-        <ParametersUnitDef parameter="n2" unit="dimensionless"/>
-        <ParametersUnitDef parameter="k2" unit="kJ"/>
-        <ParametersUnitDef parameter="delta1" unit="degree"/>
-        <ParametersUnitDef parameter="n1" unit="dimensionless"/>
-        <ParametersUnitDef parameter="k1" unit="kJ"/>
+        <ParametersUnitDef parameter="delta" unit="degree"/>
+        <ParametersUnitDef parameter="n" unit="dimensionless"/>
+        <ParametersUnitDef parameter="k" unit="kJ"/>
         <DihedralType name="DihedralType-Proper-7478" type1="" type2="CS" type3="SS" type4="">
             <Parameters>
-                <Parameter name="k1" value="0.0"/>
-                <Parameter name="n1" value="3"/>
-                <Parameter name="delta1" value="0.003490658503988659"/>
+                <Parameter name="k">
+                    <Value>0.0</Value>
+                </Parameter>
+                <Parameter name="n">
+                    <Value>3.0</Value>
+                </Parameter>
+                <Parameter name="delta">
+                    <Value>0.003490658503988659</Value>
+                </Parameter>
             </Parameters>
         </DihedralType>
         <DihedralType name="DihedralType-Proper-7482" type1="" type2="CE1" type3="CE1" type4="">
             <Parameters>
-                <Parameter name="k1" value="0.6276"/>
-                <Parameter name="n1" value="1"/>
-                <Parameter name="delta1" value="0.0"/>
-                <Parameter name="k2" value="35.564"/>
-                <Parameter name="n2" value="2"/>
-                <Parameter name="delta2" value="3.141592653589793"/>
+                <Parameter name="k">
+                    <Value>0.6276</Value>
+                    <Value>35.564</Value>
+                </Parameter>
+                <Parameter name="n">
+                    <Value>1.0</Value>
+                    <Value>2.0</Value>
+                </Parameter>
+                <Parameter name="delta">
+                    <Value>0.0</Value>
+                    <Value>3.141592653589793</Value>
+                </Parameter>
             </Parameters>
         </DihedralType>
     </DihedralTypes>

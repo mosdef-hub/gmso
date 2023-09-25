@@ -4,7 +4,6 @@ import unyt as u
 
 import gmso
 from gmso.core.atom import Atom
-from gmso.core.subtopology import SubTopology as SubTop
 from gmso.core.topology import Topology as Top
 from gmso.external.convert_networkx import from_networkx, to_networkx
 from gmso.tests.base_test import BaseTest
@@ -61,11 +60,10 @@ class TestConvertNetworkX(BaseTest):
         assert set(water_system.sites) == set(water_from_nx.sites)
         assert set(water_system.bonds) == set(water_from_nx.bonds)
 
-        # The number fragments in the networkX representation == n_subtops
-        # TODO: create subtops for each fragment in `from_networkx()`
-        assert (
-            nx.number_connected_components(water_to_nx)
-            == water_system.n_subtops
+        assert nx.number_connected_components(water_to_nx) == len(
+            water_system.unique_site_labels(
+                label_type="molecule", name_only=False
+            )
         )
 
     def test_from_networkx_without_connections(self):

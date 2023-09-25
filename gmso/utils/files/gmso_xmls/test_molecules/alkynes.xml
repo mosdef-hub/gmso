@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ForceField name="alkynes_oplsaa" version="0.0.1">
+  <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.5" combiningRule="geometric">
+    <Units energy="kJ" distance="nm" mass="amu" charge="elementary_charge"/>
+  </FFMetaData>
+  <AtomTypes expression="4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)">
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <AtomType name="opls_925" mass="12.011" charge="-0.21" atomclass="CZ" definition="[C;X2](C)H">
+      <Parameters>
+        <Parameter name="epsilon" value="0.33"/>
+        <Parameter name="sigma" value="0.359824"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="opls_926" mass="1.008" charge="-0.2" atomclass="HC" definition="H[C;%opls_925]">
+      <Parameters>
+        <Parameter name="epsilon" value="0.242"/>
+        <Parameter name="sigma" value="0.06276"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="opls_927" mass="12.011" charge="0.01" atomclass="CZ" definition="[C;X2](C(H)H)C">
+      <Parameters>
+        <Parameter name="epsilon" value="0.33"/>
+        <Parameter name="sigma" value="0.359824"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="opls_930" mass="12.011" charge="0.06" atomclass="HC" definition="H([*][C][C;%opls_925])">
+      <Parameters>
+        <Parameter name="epsilon" value="0.25"/>
+        <Parameter name="sigma" value="0.06276"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+</ForceField>

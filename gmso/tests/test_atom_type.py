@@ -12,11 +12,22 @@ from gmso.tests.base_test import BaseTest
 
 
 class TestAtomType(BaseTest):
+    @pytest.fixture(scope="session")
+    def atomtype_metadata(self):
+        return AtomType()
+
+    def test_atom_type_tag_kwarg(self):
+        at = AtomType(
+            tags={"element": "Li", "comesFrom": "ForceFieldExperiments"}
+        )
+        assert at.tag_names == ["element", "comesFrom"]
+
     def test_new_atom_type(self, charge, mass):
         new_type = AtomType(
             name="mytype",
             charge=charge,
             mass=mass,
+            expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
             parameters={
                 "sigma": 1 * u.nm,
                 "epsilon": 10 * u.Unit("kcal / mol"),
@@ -88,39 +99,46 @@ class TestAtomType(BaseTest):
         first_type = AtomType(
             name="mytype",
             charge=charge,
+            expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
             parameters={"sigma": 1 * u.m, "epsilon": 10 * u.m},
+            independent_variables={"r"},
         )
         same_type = AtomType(
             name="mytype",
             charge=charge,
+            expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
             parameters={"sigma": 1 * u.m, "epsilon": 10 * u.m},
+            independent_variables={"r"},
         )
         different_name = AtomType(
             name="difftype",
             charge=charge,
-            parameters={"sigma": 1 * u.m, "epsilon": 10 * u.m},
         )
         different_charge = AtomType(
             name="mytype",
             charge=4.0 * charge,
-            parameters={"sigma": 1 * u.m, "epsilon": 10 * u.m},
         )
         different_function = AtomType(
             name="mytype",
             charge=charge,
             parameters={"sigma": 1 * u.m, "epsilon": 10 * u.m},
             expression="r * sigma * epsilon",
+            independent_variables={"r"},
         )
         different_params = AtomType(
             name="mytype",
             charge=charge,
+            expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
             parameters={"sigma": 42 * u.m, "epsilon": 100000 * u.m},
+            independent_variables={"r"},
         )
         different_mass = AtomType(
             name="mytype",
             charge=charge,
             mass=5 * u.kg / u.mol,
             parameters={"sigma": 1 * u.m, "epsilon": 10 * u.m},
+            expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
+            independent_variables={"r"},
         )
 
         assert first_type == same_type
@@ -135,6 +153,7 @@ class TestAtomType(BaseTest):
         first_type = AtomType(
             name="mytype",
             charge=charge,
+            expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
             parameters={"sigma": 1 * u.m, "epsilon": 10 * u.m},
             independent_variables="r",
         )
@@ -273,11 +292,9 @@ class TestAtomType(BaseTest):
         site2.atom_type = atom_type2
         top.add_site(site1)
         top.add_site(site2)
-        assert id(site1.atom_type) == id(site2.atom_type)
+        assert id(site1.atom_type) != id(site2.atom_type)
         assert site1.atom_type is not None
-        assert len(top.atom_types) == 1
-        assert site1.atom_type.topology == top
-        assert site2.atom_type.topology == top
+        assert len(top.atom_types) == 2
 
     def test_atom_type_with_topology_and_site_change_properties(self):
         site1 = Atom()
@@ -290,8 +307,8 @@ class TestAtomType(BaseTest):
         top.add_site(site1)
         top.add_site(site2)
         site1.atom_type.mass = 250
-        assert site2.atom_type.mass == 250
-        assert top.atom_types[0].mass == 250
+        assert site1.atom_type.mass == 250
+        assert next(iter(top.atom_types)).mass == 250
 
     def test_with_1000_atom_types(self):
         top = Topology()
@@ -301,10 +318,87 @@ class TestAtomType(BaseTest):
             site.atom_type = atom_type
             top.add_site(site, update_types=False)
         top.update_topology()
-        assert len(top.atom_types) == 1
+        assert len(top.atom_types) == 1000
         assert top.n_sites == 1000
 
     def test_atom_type_copy(self, typed_ethane):
         for atom_type in typed_ethane.atom_types:
             assert atom_type.copy(deep=True) == atom_type
             assert deepcopy(atom_type) == atom_type
+
+    def test_metadata_empty_tags(self, atomtype_metadata):
+        assert atomtype_metadata.tag_names == []
+        assert list(atomtype_metadata.tag_names_iter) == []
+
+    def test_metadata_add_tags(self, atomtype_metadata):
+        atomtype_metadata.add_tag("tag1", dict([("tag_name_1", "value_1")]))
+        atomtype_metadata.add_tag("tag2", dict([("tag_name_2", "value_2")]))
+        atomtype_metadata.add_tag("int_tag", 1)
+        assert len(atomtype_metadata.tag_names) == 3
+
+    def test_metadata_add_tags_overwrite(self, atomtype_metadata):
+        with pytest.raises(ValueError):
+            atomtype_metadata.add_tag("tag2", "new_value", overwrite=False)
+        atomtype_metadata.add_tag("tag2", "new_value", overwrite=True)
+        assert atomtype_metadata.get_tag("tag2") == "new_value"
+        assert len(atomtype_metadata.tag_names) == 3
+
+    def test_metadata_get_tags(self, atomtype_metadata):
+        assert atomtype_metadata.get_tag("tag1").get("tag_name_1") == "value_1"
+        assert atomtype_metadata.get_tag("int_tag") == 1
+        assert atomtype_metadata.get_tag("non_existent_tag") is None
+        with pytest.raises(KeyError):
+            atomtype_metadata.get_tag("non_existent_tag", throw=True)
+
+    def test_metadata_all_tags(self, atomtype_metadata):
+        assert "int_tag" in atomtype_metadata.tags
+
+    def test_metadata_delete_tags(self, atomtype_metadata):
+        with pytest.raises(KeyError):
+            atomtype_metadata.delete_tag("non_existent_tag")
+        assert atomtype_metadata.pop_tag("non_existent_tag") is None
+        atomtype_metadata.delete_tag("int_tag")
+        assert len(atomtype_metadata.tag_names) == 2
+
+    def test_atom_type_dict(self):
+        atype = AtomType()
+        atype_dict = atype.dict(exclude={"potential_expression"})
+        assert "potential_expression" not in atype_dict
+        assert "charge" in atype_dict
+
+    def test_atom_type_clone(self):
+        top = Topology()
+        atype = AtomType(
+            name="ff_255",
+            expression="a*x+b+c*y",
+            independent_variables={"x", "y"},
+            parameters={"a": 200 * u.g, "b": 300 * u.K, "c": 400 * u.J},
+            mass=2.0 * u.g / u.mol,
+            charge=2.0 * u.elementary_charge,
+            atomclass="CX",
+            overrides={"ff_234"},
+            definition="CC-C",
+            description="Dummy Description",
+        )
+        atype_clone = atype.clone()
+
+        atom1 = Atom(name="1")
+        atom2 = Atom(name="2")
+        atom1.atom_type = atype
+        atom2.atom_type = atype_clone
+
+        top.add_site(atom1)
+        top.add_site(atom2)
+        top.update_topology()
+
+        assert len(top.atom_types) == 2
+
+        atype_dict = atype.dict(exclude={"topology", "set_ref"})
+        atype_clone_dict = atype_clone.dict(exclude={"topology", "set_ref"})
+
+        for key, value in atype_dict.items():
+            cloned = atype_clone_dict[key]
+            assert value == cloned
+            if id(value) == id(cloned):
+                assert isinstance(value, str)
+                assert isinstance(cloned, str)
