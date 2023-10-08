@@ -115,7 +115,7 @@ def write_top(top, filename, top_vars=None):
 
         # Section headers
         headers = {
-            "position_restraints": "\n[ position_restraints ]\n; ai\tfunct\tkx\tky\t\kz\funct\tb0\t\tkb\n",
+            "position_restraints": "\n[ position_restraints ]\n; ai\tfunct\tkx\tky\t\kz\tfunct\tb0\t\tkb\n",
             "bonds": "\n[ bonds ]\n; ai\taj\tfunct\tb0\t\tkb\n",
             "bond_restraints": "\n[ bonds ] ;Harmonic potential restraint\n"
             "; ai\taj\tfunct\tb0\t\tkb\n",
@@ -147,12 +147,12 @@ def write_top(top, filename, top_vars=None):
                 "[ atoms ]\n"
                 "; nr\ttype\tresnr\tresidue\t\tatom\tcgnr\tcharge\tmass\n"
             )
-            # Each unique molecule need to be reindexed (restarting from 1)
+            # Each unique molecule need to be reindexed (restarting from 0)
             # The shifted_idx_map is needed to make sure all the atom index used in
             # latter connection sections are acurate
             shifted_idx_map = dict()
             for idx, site in enumerate(unique_molecules[tag]["sites"]):
-                shifted_idx_map[top.get_index(site)] = idx + 1
+                shifted_idx_map[top.get_index(site)] = idx
                 out_file.write(
                     "{0:8s}"
                     "{1:12s}"
@@ -162,7 +162,7 @@ def write_top(top, filename, top_vars=None):
                     "{5:4s}"
                     "{6:12.5f}"
                     "{7:12.5f}\n".format(
-                        str(idx),
+                        str(idx + 1),
                         site.atom_type.name,
                         str(site.molecule.number if site.molecule else 1),
                         tag,
@@ -175,7 +175,11 @@ def write_top(top, filename, top_vars=None):
             if unique_molecules[tag]["position_restraints"]:
                 out_file.write(headers["position_restraints"])
                 for site in unique_molecules[tag]["position_restraints"]:
-                    out_file.write(_write_restraint(top, site, shifted_idx_map))
+                    out_file.write(
+                        _write_restraint(
+                            top, site, "position_restraints", shifted_idx_map
+                        )
+                    )
 
             for conn_group in [
                 "pairs",
@@ -354,6 +358,11 @@ def _get_unique_molecules(top):
             unique_molecules[tag]["sites"] = list(
                 top.iter_sites(key="molecule", value=molecule)
             )
+            unique_molecules[tag]["position_restraints"] = list(
+                site
+                for site in top.sites
+                if (site.restraint and site.molecule == molecule)
+            )
             unique_molecules[tag]["pairs"] = generate_pairs_lists(
                 top, molecule
             )["pairs14"]
@@ -404,8 +413,8 @@ def _lookup_element_symbol(atom_type):
 def _write_pairs(top, pair, shifted_idx_map):
     """Workder function to write out pairs information."""
     pair_idx = [
-        shifted_idx_map[top.get_index(pair[0])],
-        shifted_idx_map[top.get_index(pair[1])],
+        shifted_idx_map[top.get_index(pair[0])] + 1,
+        shifted_idx_map[top.get_index(pair[1])] + 1,
     ]
 
     line = "{0:8s}{1:8s}{2:4s}\n".format(
@@ -431,8 +440,8 @@ def _write_connection(top, connection, potential_name, shifted_idx_map):
 def _harmonic_bond_potential_writer(top, bond, shifted_idx_map):
     """Write harmonic bond information."""
     line = "{0:8s}{1:8s}{2:4s}{3:15.5f}{4:15.5f}\n".format(
-        str(shifted_idx_map[top.get_index(bond.connection_members[0])]),
-        str(shifted_idx_map[top.get_index(bond.connection_members[1])]),
+        str(shifted_idx_map[top.get_index(bond.connection_members[0])] + 1),
+        str(shifted_idx_map[top.get_index(bond.connection_members[1])] + 1),
         "1",
         bond.connection_type.parameters["r_eq"].in_units(u.nm).value,
         bond.connection_type.parameters["k"]
@@ -445,9 +454,9 @@ def _harmonic_bond_potential_writer(top, bond, shifted_idx_map):
 def _harmonic_angle_potential_writer(top, angle, shifted_idx_map):
     """Write harmonic angle information."""
     line = "{0:8s}{1:8s}{2:8s}{3:4s}{4:15.5f}{5:15.5f}\n".format(
-        str(shifted_idx_map[top.get_index(angle.connection_members[0])]),
-        str(shifted_idx_map[top.get_index(angle.connection_members[1])]),
-        str(shifted_idx_map[top.get_index(angle.connection_members[2])]),
+        str(shifted_idx_map[top.get_index(angle.connection_members[0])] + 1),
+        str(shifted_idx_map[top.get_index(angle.connection_members[1])] + 1),
+        str(shifted_idx_map[top.get_index(angle.connection_members[2])] + 1),
         "1",
         angle.connection_type.parameters["theta_eq"].in_units(u.degree).value,
         angle.connection_type.parameters["k"]
@@ -460,10 +469,10 @@ def _harmonic_angle_potential_writer(top, angle, shifted_idx_map):
 def _ryckaert_bellemans_torsion_writer(top, dihedral, shifted_idx_map):
     """Write Ryckaert-Bellemans Torsion information."""
     line = "{0:8s}{1:8s}{2:8s}{3:8s}{4:4s}{5:15.5f}{6:15.5f}{7:15.5f}{8:15.5f}{9:15.5f}{10:15.5f}\n".format(
-        str(shifted_idx_map[top.get_index(dihedral.connection_members[0])]),
-        str(shifted_idx_map[top.get_index(dihedral.connection_members[1])]),
-        str(shifted_idx_map[top.get_index(dihedral.connection_members[2])]),
-        str(shifted_idx_map[top.get_index(dihedral.connection_members[3])]),
+        str(shifted_idx_map[top.get_index(dihedral.connection_members[0])] + 1),
+        str(shifted_idx_map[top.get_index(dihedral.connection_members[1])] + 1),
+        str(shifted_idx_map[top.get_index(dihedral.connection_members[2])] + 1),
+        str(shifted_idx_map[top.get_index(dihedral.connection_members[3])] + 1),
         "3",
         dihedral.connection_type.parameters["c0"]
         .in_units(u.Unit("kJ/mol"))
@@ -509,10 +518,22 @@ def _periodic_torsion_writer(top, dihedral, shifted_idx_map):
     lines = list()
     for i in range(layers):
         line = "{0:8s}{1:8s}{2:8s}{3:8s}{4:4s}{5:15.5f}{6:15.5f}{7:4}\n".format(
-            str(shifted_idx_map[top.get_index(dihedral.connection_members[0])]),
-            str(shifted_idx_map[top.get_index(dihedral.connection_members[1])]),
-            str(shifted_idx_map[top.get_index(dihedral.connection_members[2])]),
-            str(shifted_idx_map[top.get_index(dihedral.connection_members[3])]),
+            str(
+                shifted_idx_map[top.get_index(dihedral.connection_members[0])]
+                + 1
+            ),
+            str(
+                shifted_idx_map[top.get_index(dihedral.connection_members[1])]
+                + 1
+            ),
+            str(
+                shifted_idx_map[top.get_index(dihedral.connection_members[2])]
+                + 1
+            ),
+            str(
+                shifted_idx_map[top.get_index(dihedral.connection_members[3])]
+                + 1
+            ),
             funct,
             dihedral.connection_type.parameters["phi_eq"][i]
             .in_units(u.degree)
@@ -541,7 +562,7 @@ def _write_restraint(top, site_or_conn, type, shifted_idx_map):
 def _position_restraints_writer(top, site, shifted_idx_map):
     """Write site position restraint information."""
     line = "{0:8s}{1:4s}{2:15.5f}{3:15.5f}{4:15.5f}\n".format(
-        str(shifted_idx_map[top.get_index(site)]),
+        str(shifted_idx_map[top.get_index(site)] + 1),
         "1",
         site.restraint["kx"].in_units(u.Unit("kJ/(mol * nm**2)")).value,
         site.restraint["ky"].in_units(u.Unit("kJ/(mol * nm**2)")).value,
@@ -553,8 +574,8 @@ def _position_restraints_writer(top, site, shifted_idx_map):
 def _bond_restraint_writer(top, bond, shifted_idx_map):
     """Write bond restraint information."""
     line = "{0:8s}{1:8s}{2:4s}{3:15.5f}{4:15.5f}\n".format(
-        str(shifted_idx_map[top.get_index(bond.connection_members[1])]),
-        str(shifted_idx_map[top.get_index(bond.connection_members[0])]),
+        str(shifted_idx_map[top.get_index(bond.connection_members[1])] + 1),
+        str(shifted_idx_map[top.get_index(bond.connection_members[0])] + 1),
         "6",
         bond.restraint["r_eq"].in_units(u.nm).value,
         bond.restraint["k"].in_units(u.Unit("kJ/(mol * nm**2)")).value,
@@ -565,10 +586,10 @@ def _bond_restraint_writer(top, bond, shifted_idx_map):
 def _angle_restraint_writer(top, angle, shifted_idx_map):
     """Write angle restraint information."""
     line = "{0:8s}{1:8s}{2:8s}{3:8s}{4:4s}{5:15.5f}{6:15.5f}{7:4}\n".format(
-        str(shifted_idx_map[top.get_index(angle.connection_members[1])]),
-        str(shifted_idx_map[top.get_index(angle.connection_members[0])]),
-        str(shifted_idx_map[top.get_index(angle.connection_members[1])]),
-        str(shifted_idx_map[top.get_index(angle.connection_members[2])]),
+        str(shifted_idx_map[top.get_index(angle.connection_members[1])] + 1),
+        str(shifted_idx_map[top.get_index(angle.connection_members[0])] + 1),
+        str(shifted_idx_map[top.get_index(angle.connection_members[1])] + 1),
+        str(shifted_idx_map[top.get_index(angle.connection_members[2])] + 1),
         "1",
         angle.restraint["theta_eq"].in_units(u.degree).value,
         angle.restraint["k"].in_units(u.Unit("kJ/mol")).value,
@@ -580,10 +601,10 @@ def _angle_restraint_writer(top, angle, shifted_idx_map):
 def _dihedral_restraint_writer(top, dihedral, shifted_idx_map):
     """Write dihedral restraint information."""
     line = "{0:8s}{1:8s}{2:8s}{3:8s}{4:4s}{5:15.5f}{6:15.5f}{7:15.5f}\n".format(
-        str(shifted_idx_map[top.get_index(dihedral.connection_members[0])]),
-        str(shifted_idx_map[top.get_index(dihedral.connection_members[1])]),
-        str(shifted_idx_map[top.get_index(dihedral.connection_members[2])]),
-        str(shifted_idx_map[top.get_index(dihedral.connection_members[3])]),
+        str(shifted_idx_map[top.get_index(dihedral.connection_members[0])] + 1),
+        str(shifted_idx_map[top.get_index(dihedral.connection_members[1])] + 1),
+        str(shifted_idx_map[top.get_index(dihedral.connection_members[2])] + 1),
+        str(shifted_idx_map[top.get_index(dihedral.connection_members[3])] + 1),
         "1",
         dihedral.restraint["phi_eq"].in_units(u.degree).value,
         dihedral.restraint["delta_phi"].in_units(u.degree).value,
