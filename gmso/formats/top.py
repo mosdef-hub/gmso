@@ -115,7 +115,7 @@ def write_top(top, filename, top_vars=None):
 
         # Section headers
         headers = {
-            "position_restraints": "\n[ position_restraints ]\n; ai\tfunct\tkx\tky\t\kz\tfunct\tb0\t\tkb\n",
+            "position_restraints": "\n[ position_restraints ]\n; ai\tfunct\tkx\tky\tkz\tfunct\tb0\t\tkb\n",
             "bonds": "\n[ bonds ]\n; ai\taj\tfunct\tb0\t\tkb\n",
             "bond_restraints": "\n[ bonds ] ;Harmonic potential restraint\n"
             "; ai\taj\tfunct\tb0\t\tkb\n",
