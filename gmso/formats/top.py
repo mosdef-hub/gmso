@@ -171,6 +171,56 @@ def write_top(top, filename, top_vars=None):
                         site.atom_type.mass.in_units(u.amu).value,
                     )
                 )
+            # Special treatment for water, may ned to consider a better way to tag rigid water
+            # Built using this https://github.com/gromacs/gromacs/blob/main/share/top/oplsaa.ff/spce.itp as reference
+            if "water" in tag.lower() and all(
+                "rigid" in site.label for site in unique_molecules[tag]["sites"]
+            ):
+                sites_list = unique_molecules[tag]["sites"]
+                water_sites = {
+                    "O": [
+                        site
+                        for site in sites_list
+                        if site.element.symbol == "O"
+                    ],
+                    "H": [
+                        site
+                        for site in sites_list
+                        if site.element.symbol == "H"
+                    ],
+                }
+
+                ow_idx = shifted_idx_map[top.get_index(water_sites["O"][0])] + 1
+                doh = np.linalg.norm(
+                    water_sites["O"][0].position.to(u.nm)
+                    - water_sites["H"][0].position.to(u.nm)
+                )
+                dhh = np.linalg.norm(
+                    water_sites["H"][0].position.to(u.nm)
+                    - water_sites["H"][1].position.to(u.nm)
+                )
+
+                # Write settles
+                out_file.write(
+                    "\n[ settles ] ;Water specific constraint algorithm\n"
+                    "; OW_idx\tfunct\tdoh\tdhh\n"
+                )
+                out_file.write(
+                    "{0:4s}{1:4s}{2:15.5f}{3:15.5f}\n".format(
+                        str(ow_idx), "1", doh, dhh
+                    )
+                )
+
+                # Write exclusion
+                out_file.write(
+                    "\n[ exclusions ] ;Exclude all interactions between water's atoms\n"
+                    "1\t2\t3\n"
+                    "2\t1\t3\n"
+                    "3\t1\t2\n"
+                )
+
+                # Skip the rest of the loop
+                continue
 
             for conn_group in [
                 "pairs",
