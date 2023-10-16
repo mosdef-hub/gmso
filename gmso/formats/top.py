@@ -174,7 +174,7 @@ def write_top(top, filename, top_vars=None):
             # Special treatment for water, may ned to consider a better way to tag rigid water
             # Built using this https://github.com/gromacs/gromacs/blob/main/share/top/oplsaa.ff/spce.itp as reference
             if "water" in tag.lower() and all(
-                "rigid" in site.label for site in unique_molecules[tag]["sites"]
+                site.molecule.isrigid for site in unique_molecules[tag]["sites"]
             ):
                 sites_list = unique_molecules[tag]["sites"]
                 water_sites = {

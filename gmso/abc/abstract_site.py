@@ -10,12 +10,14 @@ from gmso.abc.gmso_base import GMSOBase
 from gmso.exceptions import GMSOError
 
 try:
-    from pydantic.v1 import Field, StrictInt, StrictStr, validator
+    from pydantic.v1 import Field, StrictBool, StrictInt, StrictStr, validator
 except ImportError:
-    from pydantic import Field, StrictInt, StrictStr, validator
+    from pydantic import Field, StrictBool, StrictInt, StrictStr, validator
 
 PositionType = Union[Sequence[float], np.ndarray, u.unyt_array]
-MoleculeType = NamedTuple("Molecule", name=StrictStr, number=StrictInt)
+MoleculeType = NamedTuple(
+    "Molecule", name=StrictStr, number=StrictInt, isrigid=StrictBool
+)
 ResidueType = NamedTuple("Residue", name=StrictStr, number=StrictInt)
 
 SiteT = TypeVar("SiteT", bound="Site")
