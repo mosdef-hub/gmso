@@ -57,7 +57,12 @@ def read_gro(filename):
         coords = u.nm * np.zeros(shape=(n_atoms, 3))
         for row, _ in enumerate(coords):
             line = gro_file.readline()
-            content = line.split()
+            res_id = int(line[:5])
+            res_name = line[5:10].strip()
+            atom_name = line[10:15].strip()
+            atom_id = line[15:20].strip()
+
+            positions = line[20:].split()
             if not line:
                 msg = (
                     "Incorrect number of lines in .gro file. Based on the "
@@ -66,22 +71,17 @@ def read_gro(filename):
                 )
                 raise ValueError(msg.format(n_atoms))
 
-            res = content[0]
-            atom_name = content[1]
-            atom_id = content[2]
             coords[row] = u.nm * np.array(
                 [
-                    float(content[3]),
-                    float(content[4]),
-                    float(content[5]),
+                    float(positions[0]),
+                    float(positions[1]),
+                    float(positions[2]),
                 ]
             )
             site = Atom(name=atom_name, position=coords[row])
 
-            r = re.compile("([0-9]+)([a-zA-Z]+)")
-            m = r.match(res)
-            site.molecule = (m.group(2), int(m.group(1)))
-            site.residue = (m.group(2), int(m.group(1)))
+            site.molecule = (res_name, res_id)
+            site.residue = (res_name, res_id)
             top.add_site(site, update_types=False)
         top.update_topology()
 
