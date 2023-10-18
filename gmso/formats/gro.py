@@ -57,12 +57,6 @@ def read_gro(filename):
         coords = u.nm * np.zeros(shape=(n_atoms, 3))
         for row, _ in enumerate(coords):
             line = gro_file.readline()
-            res_id = int(line[:5].strip())
-            res_name = line[5:10].strip()
-            atom_name = line[10:15].strip()
-            atom_id = line[15:20].strip()
-
-            positions = line[20:].split()
             if not line:
                 msg = (
                     "Incorrect number of lines in .gro file. Based on the "
@@ -70,7 +64,12 @@ def read_gro(filename):
                     "atoms were expected, but at least one fewer was found."
                 )
                 raise ValueError(msg.format(n_atoms))
+            res_id = int(line[:5].strip())
+            res_name = line[5:10].strip()
+            atom_name = line[10:15].strip()
+            atom_id = line[15:20].strip()
 
+            positions = line[20:].split()
             coords[row] = u.nm * np.array(
                 [
                     float(positions[0]),
