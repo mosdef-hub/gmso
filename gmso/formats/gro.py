@@ -57,7 +57,7 @@ def read_gro(filename):
         coords = u.nm * np.zeros(shape=(n_atoms, 3))
         for row, _ in enumerate(coords):
             line = gro_file.readline()
-            res_id = int(line[:5])
+            res_id = int(line[:5].strip())
             res_name = line[5:10].strip()
             atom_name = line[10:15].strip()
             atom_id = line[15:20].strip()
