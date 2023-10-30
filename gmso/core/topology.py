@@ -1240,6 +1240,11 @@ class Topology(object):
         backend: str, default="gmso"
             Can be "gmso" or "forcefield-utilities". This will define the methods to
             write the xml.
+
+        Raises
+        ------
+        GMSOError
+            If the topology is untyped
         """
         ff = self.get_forcefield()
         ff.to_xml(filename=filename, overwrite=overwrite, backend=backend)
