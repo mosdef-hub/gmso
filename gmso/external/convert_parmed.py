@@ -72,10 +72,10 @@ def from_parmed(structure, refer_type=True):
                 charge=atom.charge * u.elementary_charge,
                 position=[atom.xx, atom.xy, atom.xz] * u.angstrom,
                 atom_type=None,
-                residue=(residue.name, residue.idx + 1),
+                residue=(residue.name, residue.number),
                 element=element,
             )
-            site.molecule = (residue.name, residue.idx + 1) if ind_res else None
+            site.molecule = (residue.name, residue.number) if ind_res else None
             site.atom_type = (
                 copy.deepcopy(pmd_top_atomtypes[atom.atom_type])
                 if refer_type and isinstance(atom.atom_type, pmd.AtomType)
@@ -474,7 +474,7 @@ def to_parmed(top, refer_type=True):
             structure.add_atom(
                 pmd_atom,
                 resname=site.residue.name,
-                resnum=site.residue.number - 1,
+                resnum=site.residue.number,
             )
         else:
             structure.add_atom(pmd_atom, resname="RES", resnum=-1)
