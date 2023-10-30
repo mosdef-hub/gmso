@@ -1,3 +1,4 @@
+import os
 from copy import deepcopy
 
 import numpy as np
@@ -1010,3 +1011,7 @@ class TestTopology(BaseTest):
             1.60217662e-19 * u.Coulomb,
             0.1 * u.Unit("test_charge", registry=reg.reg),
         )
+
+    def test_to_xml(self, typed_benzene_aa_system):
+        typed_benzene_aa_system.to_xml("benzene.xml")
+        assert os.path.isfile("benzene.xml")

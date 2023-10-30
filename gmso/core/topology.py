@@ -1228,6 +1228,22 @@ class Topology(object):
 
         return index
 
+    def to_xml(self, filename, overwrite=False, backend="gmso"):
+        """Save an lxml ElementTree representation of the topology's parameters
+
+        Parameters
+        ----------
+        filename: Union[str, pathlib.Path], default=None
+            The filename to write the XML file to
+        overwrite: bool, default=False
+            If True, overwrite an existing file if it exists
+        backend: str, default="gmso"
+            Can be "gmso" or "forcefield-utilities". This will define the methods to
+            write the xml.
+        """
+        ff = self.get_forcefield()
+        ff.to_xml(filename=filename, overwrite=overwrite, backend=backend)
+
     def to_dataframe(self, parameter="sites", site_attrs=None, unyts_bool=True):
         """Return a pandas dataframe object for the sites in a topology
 
