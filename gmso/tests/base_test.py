@@ -166,6 +166,24 @@ class BaseTest:
         return _typed_topology
 
     @pytest.fixture
+    def spce_water(self):
+        spce_comp = mb.lib.molecules.water.WaterSPC()
+        spce_ff = ForceField(get_fn("spce.xml"))
+        spce_top = spce_comp.to_gmso()
+        spce_top.identify_connections()
+
+        spce_top = apply(spce_top, spce_ff, remove_untyped=True)
+
+        for site in spce_top.sites:
+            site.restraint = {
+                "kx": 1000 * u.Unit("kJ/(mol*nm**2)"),
+                "ky": 1000 * u.Unit("kJ/(mol*nm**2)"),
+                "kz": 1000 * u.Unit("kJ/(mol*nm**2)"),
+            }
+
+        return spce_top
+
+    @pytest.fixture
     def water_system(self):
         water = Topology(name="water")
         water = water.load(get_path("tip3p.mol2"))
