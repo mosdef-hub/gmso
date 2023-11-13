@@ -158,8 +158,9 @@ def _validate_positions(pos_array):
             "Topology contains some negative positions. Translating "
             "in order to ensure all coordinates are non-negative."
         )
+    unit = min_xyz.units
     min_xyz = np.min(pos_array, axis=0)
-    min_xyz0 = np.where(min_xyz < 0, min_xyz, 0) * min_xyz.units
+    min_xyz0 = np.where(min_xyz < 0 * unit, min_xyz, 0 * u.unit)
 
     pos_array -= min_xyz0
 
