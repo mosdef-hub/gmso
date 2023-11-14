@@ -160,7 +160,7 @@ def _validate_positions(pos_array):
         )
     min_xyz = np.min(pos_array, axis=0)
     unit = min_xyz.units
-    min_xyz0 = np.where(min_xyz < 0 * unit, min_xyz, 0 * u.unit)
+    min_xyz0 = np.where(min_xyz < 0 * unit, min_xyz, 0 * unit)
 
     pos_array -= min_xyz0
 
