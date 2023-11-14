@@ -20,6 +20,17 @@ class TestTop(BaseTest):
         top = typed_ar_system
         top.save("ar.top")
 
+    def test_top(self, spce_water):
+        spce_water.save("spce_restraint.top", overwrite=True)
+        with open("spce_restraint.top", "r") as f:
+            contents = f.readlines()
+        with open(get_path("spce_restraint.top"), "r") as f:
+            ref_contents = f.readlines()
+
+        assert len(contents) == len(ref_contents)
+        for line, ref_line in zip(contents[1:], ref_contents[1:]):
+            assert line == ref_line
+
     @pytest.mark.parametrize(
         "top",
         [
