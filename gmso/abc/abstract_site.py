@@ -16,13 +16,7 @@ except ImportError:
 
 PositionType = Union[Sequence[float], np.ndarray, u.unyt_array]
 
-
-class MoleculeType(NamedTuple):
-    name: StrictStr
-    number: StrictInt
-    isrigid: StrictBool = False
-
-
+MoleculeType = NamedTuple("Molecule", name=StrictStr, number=StrictInt)
 ResidueType = NamedTuple("Residue", name=StrictStr, number=StrictInt)
 
 SiteT = TypeVar("SiteT", bound="Site")
