@@ -1,0 +1,22 @@
+<ForceField version="0.0.1" name="SPC/E Water" combining_rule="geometric">
+ <AtomTypes>
+   <Type name="opls_116" class="OW" element="O" mass="15.99940" def="[O;X2](H)(H)" desc="SPC/E Oxygen" doi="10.1021/j100308a038"/>
+   <!-- Need to validate the Hydrogen SMARTS string below -->
+   <Type name="opls_117" class="HW" element="H" mass="1.00800" def="[H;X1][O;X2](H)" desc="SPC/E Hydrogen" doi="10.1021/j100308a038"/>
+ </AtomTypes>
+ <HarmonicBondForce>
+   <!-- https://github.com/gromacs/gromacs/blob/master/share/top/oplsaa.ff/spce.itp -->
+   <Bond class1="OW" class2="HW" length="0.100" k="345000.0"/>
+ </HarmonicBondForce>
+ <HarmonicAngleForce>
+   <!-- https://github.com/gromacs/gromacs/blob/master/share/top/oplsaa.ff/spce.itp -->
+   <!-- numpy.deg2rad(109.47).round(8) -->
+   <!-- numpy.__version__ 1.21.1 -->
+   <Angle class1="HW" class2="OW" class3="HW" angle="1.91061193" k="383.0"/>
+ </HarmonicAngleForce>
+ <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+   <!-- https://github.com/gromacs/gromacs/blob/master/share/top/oplsaa.ff/spce.itp -->
+  <Atom type="opls_116" charge="-0.8476" sigma="0.316557" epsilon="0.650194"/>
+  <Atom type="opls_117" charge="0.4238" sigma="0.0" epsilon="0.0"/>
+ </NonbondedForce>
+</ForceField>
