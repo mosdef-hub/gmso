@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 import sympy
 import unyt as u
 from unyt.testing import assert_allclose_units
@@ -451,7 +452,7 @@ class TestForceFieldFromXML(BaseTest):
                 "4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
                 "0.5 * k * (r-r_eq)**2",
                 "0.5 * k * (theta-theta_eq)**2",
-                "c_0 + c_1 * cos(psi) + c_2 * cos(psi)**2 + c_3 * cos(psi)**3 + c_4 * cos(psi)**4 + c_5 * cos(psi)**5",
+                "c0 + c1 * cos(phi) + c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + c5 * cos(phi)**5",
             ]
         ]
 
@@ -558,7 +559,7 @@ class TestForceFieldFromXML(BaseTest):
         assert_allclose_units(
             ethylene.dihedral_types[
                 "opls_144~opls_143~opls_143~opls_144"
-            ].parameters["c_0"],
+            ].parameters["c0"],
             58.576 * u.Unit("kJ/mol"),
             rtol=1e-5,
             atol=1e-8,
@@ -566,7 +567,7 @@ class TestForceFieldFromXML(BaseTest):
         assert_allclose_units(
             ethylene.dihedral_types[
                 "opls_144~opls_143~opls_143~opls_144"
-            ].parameters["c_2"],
+            ].parameters["c2"],
             -58.576 * u.Unit("kJ/mol"),
             rtol=1e-5,
             atol=1e-8,
@@ -574,8 +575,16 @@ class TestForceFieldFromXML(BaseTest):
         assert_allclose_units(
             ethylene.dihedral_types[
                 "opls_144~opls_143~opls_143~opls_144"
-            ].parameters["c_5"],
+            ].parameters["c5"],
             0.0 * u.Unit("kJ/mol"),
             rtol=1e-5,
             atol=1e-8,
         )
+
+    def test_error_duplicated_types(self):
+        with pytest.raises(ValueError) as e:
+            ForceField(get_path("ff-nonunique-dihedral.xml"))
+            assert (
+                e
+                == "Duplicate identifier found for DihedralTypes: ('CT', 'CT', 'CT', 'HC')"
+            )

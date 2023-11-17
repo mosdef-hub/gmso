@@ -1,0 +1,8 @@
+{
+  "name": "FixedBondPotential",
+  "expression": "DiracDelta(r-r_eq)",
+  "independent_variables": "r",
+  "expected_parameters_dimensions": {
+    "r_eq": "length"
+  }
+}

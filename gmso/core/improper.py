@@ -7,6 +7,11 @@ from gmso.abc.abstract_connection import Connection
 from gmso.core.atom import Atom
 from gmso.core.improper_type import ImproperType
 
+try:
+    from pydantic.v1 import Field
+except ImportError:
+    from pydantic import Field
+
 
 class Improper(Connection):
     __base_doc__ = """sA 4-partner connection between sites.

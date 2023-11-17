@@ -312,8 +312,14 @@ def _validate_schema(xml_path_or_etree, schema=None):
     ff_xml = xml_path_or_etree
     if not isinstance(xml_path_or_etree, etree._ElementTree):
         ff_xml = etree.parse(xml_path_or_etree)
-
-    xml_schema.assertValid(ff_xml)
+    try:
+        xml_schema.assertValid(ff_xml)
+    except etree.DocumentInvalid as ex:
+        message = ex.error_log.last_error.message
+        line = ex.error_log.last_error.line
+        # rewrite error message for constraint violation
+        if ex.error_log.last_error.type_name == "SCHEMAV_CVC_IDC":
+            raise ForceFieldParseError(message, line)
     return ff_xml
 
 

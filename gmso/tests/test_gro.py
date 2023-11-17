@@ -48,6 +48,13 @@ class TestGro(BaseTest):
         top = from_parmed(pmd.load_file(get_fn("ethane.gro"), structure=True))
         top.save("out.gro")
 
+    def test_write_gro_with_shift_coord(self):
+        top = from_parmed(pmd.load_file(get_fn("ethane.mol2"), structure=True))
+        top.save("out.gro", shift_coord=True)
+
+        read_top = Topology.load("out.gro")
+        assert np.all(list(map(lambda x: x.position >= 0, read_top.sites)))
+
     def test_write_gro_non_orthogonal(self):
         top = from_parmed(pmd.load_file(get_fn("ethane.gro"), structure=True))
         top.box.angles = u.degree * [90, 90, 120]

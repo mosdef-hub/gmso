@@ -4,12 +4,12 @@ channels:
 dependencies:
   - python>=3.8
   - boltons
-  - numpy=1.24.2
+  - numpy
   - sympy
-  - unyt<=2.9.2
+  - unyt>=2.9.5
   - boltons
   - lxml
-  - pydantic=1.10.11
+  - pydantic
   - networkx
   - ele>=0.2.0
   - foyer>=0.11.3

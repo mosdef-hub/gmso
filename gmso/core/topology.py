@@ -30,7 +30,7 @@ from gmso.utils.conversions import (
     convert_params_units,
     convert_topology_expressions,
 )
-from gmso.utils.units import GMSO_UnitRegsitry as UnitReg
+from gmso.utils.units import GMSO_UnitRegistry as UnitReg
 
 scaling_interaction_idxes = {"12": 0, "13": 1, "14": 2}
 
@@ -170,6 +170,17 @@ class Topology(object):
         }
 
         self._unique_connections = {}
+        self._unit_system = None
+
+    @property
+    def unit_system(self):
+        """Return the unyt system of the topology."""
+        return self._unit_system
+
+    @unit_system.setter
+    def unit_system(self, unit_system):
+        """Set the unyt system of the topology."""
+        self._name = unit_system
 
     @property
     def name(self):
@@ -636,6 +647,61 @@ class Topology(object):
             ]
         )
 
+    def remove_site(self, site):
+        """Remove a site from the topology.
+
+        Parameters
+        ----------
+        site : gmso.core.Site
+            The site to be removed.
+
+        Notes
+        -----
+        When a site is removed, any connections that site belonged
+        to are also removed.
+
+        See Also
+        --------
+        gmso.core.topology.Topology.iter_connections_by_site
+            The method that shows all connections belonging to a specific site
+        """
+        if site not in self._sites:
+            raise ValueError(
+                f"Site {site} is not currently part of this topology."
+            )
+        site_connections = [
+            conn for conn in self.iter_connections_by_site(site)
+        ]
+        for conn in site_connections:
+            self.remove_connection(conn)
+        self._sites.remove(site)
+
+    def remove_connection(self, connection):
+        """Remove a connection from the topology.
+
+        Parameters
+        ----------
+        connection : gmso.abc.abstract_conneciton.Connection
+            The connection to be removed from the topology
+
+        Notes
+        -----
+        The sites that belong to this connection are
+        not removed from the topology.
+        """
+        if connection not in self.connections:
+            raise ValueError(
+                f"Connection {connection} is not currently part of this topology."
+            )
+        if isinstance(connection, gmso.core.bond.Bond):
+            self._bonds.remove(connection)
+        elif isinstance(connection, gmso.core.angle.Angle):
+            self._angles.remove(connection)
+        elif isinstance(connection, gmso.core.dihedral.Dihedral):
+            self._dihedrals.remove(connection)
+        elif isinstance(connection, gmso.core.improper.Improper):
+            self._impropers.remove(connection)
+
     def set_scaling_factors(self, lj, electrostatics, *, molecule_id=None):
         """Set both lj and electrostatics scaling factors."""
         self.set_lj_scale(
@@ -820,7 +886,6 @@ class Topology(object):
             Improper: self._impropers,
         }
         connections_sets[type(connection)].add(connection)
-
         if update_types:
             self.update_topology()
 
@@ -1355,6 +1420,44 @@ class Topology(object):
                     yield site
         else:
             return self.iter_sites("molecule", molecule_tag)
+
+    def iter_connections_by_site(self, site, connections=None):
+        """Iterate through this topology's connections which contain
+        this specific site.
+
+        Parameters
+        ----------
+        site : gmso.core.Site
+            Site to limit connections search to.
+        connections : set or list or tuple, optional, default=None
+            The connection types to include in the search.
+            If None, iterates through all of a site's connections.
+            Options include "bonds", "angles", "dihedrals", "impropers"
+
+        Yields
+        ------
+        gmso.abc.abstract_conneciton.Connection
+            Connection where site is in Connection.connection_members
+
+        """
+        if site not in self._sites:
+            raise ValueError(
+                f"Site {site} is not currently part of this topology."
+            )
+        if connections is None:
+            connections = ["bonds", "angles", "dihedrals", "impropers"]
+        else:
+            connections = set([option.lower() for option in connections])
+            for option in connections:
+                if option not in ["bonds", "angles", "dihedrals", "impropers"]:
+                    raise ValueError(
+                        "Valid connection types are limited to: "
+                        '"bonds", "angles", "dihedrals", "impropers"'
+                    )
+        for conn_str in connections:
+            for conn in getattr(self, conn_str):
+                if site in conn.connection_members:
+                    yield conn
 
     def create_subtop(self, label_type, label):
         """Create a new Topology object from a molecule or graup of the current Topology.
