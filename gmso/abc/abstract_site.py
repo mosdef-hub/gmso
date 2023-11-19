@@ -33,10 +33,12 @@ def default_position():
 
 class Site(GMSOBase):
     __iterable_attributes__: ClassVar[set] = {
-        "label",
+        "name" "label",
         "group",
         "molecule",
         "residue",
+        "position",
+        "model_config",
     }
 
     __base_doc__: ClassVar[
@@ -57,9 +59,9 @@ class Site(GMSOBase):
 
     name: str = Field(
         "",
+        validate_default=True,
         description="Name of the site, defaults to class name",
     )
-
     label: str = Field("", description="Label to be assigned to the site")
 
     group: Optional[StrictStr] = Field(
@@ -85,36 +87,6 @@ class Site(GMSOBase):
         arbitrary_types_allowed=True,
         validate_assignment=True,
     )
-
-    @property
-    def name(self) -> str:
-        """Return the name of the site."""
-        return self.__dict__.get("name_")
-
-    @property
-    def position(self) -> u.unyt_array:
-        """Return the 3D Cartesian coordinates of the site."""
-        return self.__dict__.get("position_")
-
-    @property
-    def label(self) -> str:
-        """Return the label assigned to the site."""
-        return self.__dict__.get("label_")
-
-    @property
-    def group(self) -> str:
-        """Return the group of the site."""
-        return self.__dict__.get("group_")
-
-    @property
-    def molecule(self) -> tuple:
-        """Return the molecule of the site."""
-        return self.__dict__.get("molecule_")
-
-    @property
-    def residue(self):
-        """Return the residue assigned to the site."""
-        return self.__dict__.get("residue_")
 
     def __repr__(self):
         """Return the formatted representation of the site."""

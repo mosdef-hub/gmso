@@ -6,7 +6,6 @@ from typing import Any, ClassVar, Type
 
 from pydantic import BaseModel, ConfigDict, validators
 
-from gmso.abc import GMSOJSONHandler
 from gmso.abc.auto_doc import apply_docs
 from gmso.abc.serialization_utils import dict_to_unyt
 
@@ -26,9 +25,7 @@ class GMSOBase(BaseModel, ABC):
     # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
-        alias_to_fields=dict(),
         extra="forbid",
-        json_encoders=GMSOJSONHandler.json_encoders,
         populate_by_name=True,
     )
 
@@ -89,18 +86,6 @@ class GMSOBase(BaseModel, ABC):
             kwargs["exclude"] = exclude_alias
 
         yield from super()._iter(**kwargs)
-
-    def json(self, **kwargs):
-        kwargs["by_alias"] = True
-        # FIXME: Pydantic>1.8 doesn't recognize json_encoders without this update
-        self.__config__.json_encoders.update(GMSOJSONHandler.json_encoders)
-
-        return super(GMSOBase, self).json(**kwargs)
-
-    def json_dict(self, **kwargs):
-        """Return a JSON serializable dictionary from the object"""
-        raw_json = self.json(**kwargs)
-        return json.loads(raw_json)
 
     @classmethod
     def validate(cls, value):

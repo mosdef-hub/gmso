@@ -28,10 +28,10 @@ class AbstractPotential(GMSOBase):
         PotentialExpression(expression="a*x+b", independent_variables={"x"}),
         description="The mathematical expression for the potential",
     )
-    # expected_parameters_dimensions: Dict[str, Any] = Field(
-    #     dict(),
-    #     description="The expected unit dimensions of all the parameters",
-    # )
+    expected_parameters_dimensions: Dict[str, Any] = Field(
+        dict(),
+        description="The expected unit dimensions of all the parameters",
+    )
     tags: Dict[str, Any] = Field(
         {}, description="Tags associated with the potential"
     )
