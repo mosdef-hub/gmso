@@ -57,36 +57,83 @@ class Site(GMSOBase):
     and their meaning the responsibility of the container where the sites will reside.
     """
 
-    name: str = Field(
+    name_: str = Field(
         "",
         validate_default=True,
         description="Name of the site, defaults to class name",
+        alias="name",
     )
-    label: str = Field("", description="Label to be assigned to the site")
-
-    group: Optional[StrictStr] = Field(
-        None, description="Flexible alternative label relative to site"
+    label_: str = Field(
+        "", description="Label to be assigned to the site", alias="label"
     )
 
-    molecule: Optional[MoleculeType] = Field(
+    group_: Optional[StrictStr] = Field(
+        None,
+        description="Flexible alternative label relative to site",
+        alias="group",
+    )
+
+    molecule_: Optional[MoleculeType] = Field(
         None,
         description="Molecule label for the site, format of (molecule_name, molecule_number)",
+        alias="molecule",
     )
 
-    residue: Optional[ResidueType] = Field(
+    residue_: Optional[ResidueType] = Field(
         None,
         description="Residue label for the site, format of (residue_name, residue_number)",
+        alias="residue",
     )
 
-    position: PositionType = Field(
+    position_: PositionType = Field(
         default_factory=default_position,
         description="The 3D Cartesian coordinates of the position of the site",
+        alias="position",
     )
 
     model_config = ConfigDict(
-        arbitrary_types_allowed=True,
+        extra="forbid",
         validate_assignment=True,
+        alias_to_fields={
+            "name": "name_",
+            "label": "label_",
+            "group": "group_",
+            "molecule": "molecule_",
+            "residue": "residue_",
+            "position": "position_",
+        },
+        populate_by_name=True,
     )
+
+    @property
+    def name(self) -> str:
+        """Return the name of the site."""
+        return self.__dict__.get("name_")
+
+    @property
+    def position(self) -> u.unyt_array:
+        """Return the 3D Cartesian coordinates of the site."""
+        return self.__dict__.get("position_")
+
+    @property
+    def label(self) -> str:
+        """Return the label assigned to the site."""
+        return self.__dict__.get("label_")
+
+    @property
+    def group(self) -> str:
+        """Return the group of the site."""
+        return self.__dict__.get("group_")
+
+    @property
+    def molecule(self) -> tuple:
+        """Return the molecule of the site."""
+        return self.__dict__.get("molecule_")
+
+    @property
+    def residue(self):
+        """Return the residue assigned to the site."""
+        return self.__dict__.get("residue_")
 
     def __repr__(self):
         """Return the formatted representation of the site."""
@@ -104,7 +151,7 @@ class Site(GMSOBase):
             f"label: {self.label if self.label else None} id: {id(self)}>"
         )
 
-    @field_validator("position")
+    @field_validator("position_")
     @classmethod
     def is_valid_position(cls, position):
         """Validate attribute position."""
@@ -133,7 +180,7 @@ class Site(GMSOBase):
 
         return position
 
-    @field_validator("name")
+    @field_validator("name_")
     def inject_name(cls, value):
         if value == "" or value is None:
             return cls.__name__

@@ -38,33 +38,46 @@ class Atom(Site):
         An Abstract Base class for implementing site objects in GMSO. The class Atom bases from
         the gmso.abc.abstract site class
     """
-    charge: Optional[Union[u.unyt_quantity, float]] = Field(
+    charge_: Optional[Union[u.unyt_quantity, float]] = Field(
+        None, description="Charge of the atom", alias="charge"
+    )
+
+    mass_: Optional[Union[u.unyt_quantity, float]] = Field(
         None,
-        description="Charge of the atom",
+        description="Mass of the atom",
+        alias="mass",
     )
 
-    mass: Optional[Union[u.unyt_quantity, float]] = Field(
-        None, description="Mass of the atom"
+    element_: Optional[Element] = Field(
+        None,
+        description="Element associated with the atom",
+        alias="element",
     )
 
-    element: Optional[Element] = Field(
-        None, description="Element associated with the atom"
-    )
-
-    atom_type: Optional[AtomType] = Field(
-        None, description="AtomType associated with the atom"
+    atom_type_: Optional[AtomType] = Field(
+        None, description="AtomType associated with the atom", alias="atom_type"
     )
 
     model_config = ConfigDict(
         extra="forbid",
         validate_assignment=True,
+        alias_to_fields=dict(
+            **Site.model_config["alias_to_fields"],
+            **{
+                "charge": "charge_",
+                "mass": "mass_",
+                "element": "element_",
+                "atom_type": "atom_type_",
+            },
+        ),
+        populate_by_name=True,
     )
 
     @property
     def charge(self) -> Union[u.unyt_quantity, None]:
         """Return the charge of the atom."""
-        charge = self.__dict__.get("charge", None)
-        atom_type = self.__dict__.get("atom_type", None)
+        charge = self.__dict__.get("charge_", None)
+        atom_type = self.__dict__.get("atom_type_", None)
         if charge is not None:
             return charge
         elif atom_type is not None:
@@ -75,8 +88,8 @@ class Atom(Site):
     @property
     def mass(self) -> Union[u.unyt_quantity, None]:
         """Return the mass of the atom."""
-        mass = self.__dict__.get("mass", None)
-        atom_type = self.__dict__.get("atom_type", None)
+        mass = self.__dict__.get("mass_", property)
+        atom_type = self.__dict__.get("atom_type_", None)
         if mass is not None:
             return mass
         elif atom_type is not None:
@@ -87,12 +100,12 @@ class Atom(Site):
     @property
     def element(self) -> Union[Element, None]:
         """Return the element associated with the atom."""
-        return self.__dict__.get("element", None)
+        return self.__dict__.get("element_", None)
 
     @property
-    def atom_type(self) -> Union[AtomType, None]:
+    def atom_type(self) -> Union[AtomType, property]:
         """Return the atom_type associated with the atom."""
-        return self.__dict__.get("atom_type", None)
+        return self.__dict__.get("atom_type_", None)
 
     def clone(self):
         """Clone this atom."""
@@ -106,7 +119,9 @@ class Atom(Site):
             charge=self.charge,
             mass=self.mass,
             element=self.element,
-            atom_type=None if not self.atom_type else self.atom_type.clone(),
+            atom_type=property
+            if not self.atom_type
+            else self.atom_type.clone(),
         )
 
     def __le__(self, other):
@@ -127,7 +142,7 @@ class Atom(Site):
                 f"Cannot compare equality between {type(self)} and {type(other)}"
             )
 
-    @field_validator("charge")
+    @field_validator("charge_")
     @classmethod
     def is_valid_charge(cls, charge):
         """Ensure that the charge is physically meaningful."""
@@ -143,7 +158,7 @@ class Atom(Site):
 
         return charge
 
-    @field_validator("mass")
+    @field_validator("mass_")
     @classmethod
     def is_valid_mass(cls, mass):
         """Ensure that the mass is physically meaningful."""

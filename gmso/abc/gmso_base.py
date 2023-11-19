@@ -37,6 +37,18 @@ class GMSOBase(BaseModel, ABC):
         """Test if two objects are equivalent."""
         return self is other
 
+    def __setattr__(self, name: Any, value: Any) -> None:
+        """Set the attributes of the object."""
+        if name in self.model_config.get("alias_to_fields"):
+            name = self.model_config.get("alias_to_fields")[name]
+        elif name in self.model_config.get("alias_to_fields").values():
+            warnings.warn(
+                "Use of internal fields is discouraged. "
+                "Please use external fields to set attributes."
+            )
+
+        super().__setattr__(name, value)
+
     @classmethod
     def __init_subclass__(cls, **kwargs):
         """Initialize the subclass of the object."""
