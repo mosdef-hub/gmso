@@ -25,6 +25,7 @@ class GMSOBase(BaseModel, ABC):
     # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
+        validate_assignment=True,
         extra="forbid",
         populate_by_name=True,
     )
@@ -66,9 +67,9 @@ class GMSOBase(BaseModel, ABC):
         apply_docs(cls, map_names=True, silent=False)
 
     @classmethod
-    def parse_obj(cls: Type["Model"], obj: Any) -> "Model":
+    def model_validate(cls: Type["Model"], obj: Any) -> "Model":
         dict_to_unyt(obj)
-        return super(GMSOBase, cls).parse_obj(obj)
+        return super(GMSOBase, cls).model_validate(obj)
 
     def dict(self, **kwargs) -> "DictStrAny":
         kwargs["by_alias"] = True

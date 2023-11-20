@@ -92,8 +92,6 @@ class Site(GMSOBase):
     )
 
     model_config = ConfigDict(
-        extra="forbid",
-        validate_assignment=True,
         alias_to_fields={
             "name": "name_",
             "label": "label_",
@@ -102,7 +100,6 @@ class Site(GMSOBase):
             "residue": "residue_",
             "position": "position_",
         },
-        populate_by_name=True,
     )
 
     @property

@@ -4,6 +4,7 @@ from typing import Callable, ClassVar, Optional, Tuple
 from pydantic import ConfigDict, Field
 
 from gmso.abc.abstract_connection import Connection
+from gmso.abc.abstract_site import Site
 from gmso.core.atom import Atom
 from gmso.core.bond_type import BondType
 
@@ -21,16 +22,19 @@ class Bond(Connection):
         __eq__, __repr__, _validate methods.
     Additional _validate methods are presented.
     """
-    __members_creator__: ClassVar[Callable] = Atom.parse_obj
+    __members_creator__: ClassVar[Callable] = Site.model_validate
 
-    connection_members: Tuple[Atom, Atom] = Field(
-        ..., description="The 2 atoms involved in the bond."
+    connection_members_: Tuple[Site, Site] = Field(
+        ...,
+        description="The 2 atoms involved in the bond.",
+        alias="connection_members",
     )
-    bond_type: Optional[BondType] = None
-    # bond_type: Optional[BondType] = Field(
-    #     default_factory=None, description="BondType of this bond."
-    # )
-    restraint: Optional[dict] = Field(
+    bond_type_: Optional[BondType] = Field(
+        default=None,
+        description="BondType of this bond.",
+        alias="bond_type",
+    )
+    restraint_: Optional[dict] = Field(
         default=None,
         description="""
         Restraint for this bond, must be a dict with the following keys:
@@ -38,23 +42,32 @@ class Bond(Connection):
         Refer to https://manual.gromacs.org/current/reference-manual/topologies/topology-file-formats.html
         for more information.
         """,
+        alias="restraint",
+    )
+    model_config = ConfigDict(
+        alias_to_fields=dict(
+            **Connection.model_config["alias_to_fields"],
+            **{
+                "bond_type": "bond_type_",
+                "restraint": "restraint_",
+            }
+        )
     )
 
     @property
     def bond_type(self):
         """Return parameters of the potential type."""
-        return self.__dict__.get("bond_type")
+        return self.__dict__.get("bond_type_")
 
     @property
     def connection_type(self):
         """Return parameters of the potential type."""
-        # ToDo: Deprecate this?
-        return self.__dict__.get("bond_type")
+        return self.__dict__.get("bond_type_")
 
     @property
     def restraint(self):
         """Return the restraint of this bond."""
-        return self.__dict__.get("restraint")
+        return self.__dict__.get("restraint_")
 
     def equivalent_members(self):
         """Get a set of the equivalent connection member tuples.

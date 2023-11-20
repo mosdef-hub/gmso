@@ -59,8 +59,6 @@ class Atom(Site):
     )
 
     model_config = ConfigDict(
-        extra="forbid",
-        validate_assignment=True,
         alias_to_fields=dict(
             **Site.model_config["alias_to_fields"],
             **{
@@ -70,7 +68,7 @@ class Atom(Site):
                 "atom_type": "atom_type_",
             },
         ),
-        populate_by_name=True,
+        # =True,
     )
 
     @property

@@ -14,44 +14,53 @@ class Connection(GMSOBase):
     Each instance will have a property for the conection_type (bond_type, angle_type, dihedral_type)
     """
 
-    name: str = Field(
-        default="", description="Name of the connection. Defaults to class name"
+    name_: str = Field(
+        default="",
+        description="Name of the connection. Defaults to class name.",
+        alias="name",
     )
 
-    connection_members: Optional[Sequence[Site]] = Field(
+    connection_members_: Optional[Sequence[Site]] = Field(
         default=None,
         description="A list of constituents in this connection, in order.",
+        alias="connection_members",
+    )
+    model_config = ConfigDict(
+        alias_to_fields={
+            "name": "name_",
+            "connection_members": "connection_members_",
+        }
     )
 
     @property
     def connection_members(self):
-        return self.__dict__.get("connection_members")
+        return self.__dict__.get("connection_members_")
 
     @property
     def name(self):
-        return self.__dict__.get("name")
+        return self.__dict__.get("name_")
 
     @property
     def member_types(self):
         """Return the atomtype of the connection members as a list of string."""
-        return self._get_members_types_or_classes("member_types")
+        return self._get_members_types_or_classes("member_types_")
 
     @property
     def member_classes(self):
         """Return the class of the connection members as a list of string."""
-        return self._get_members_types_or_classes("member_classes")
+        return self._get_members_types_or_classes("member_classes_")
 
     def _has_typed_members(self):
         """Check if all the members of this connection are typed."""
         return all(
             member.atom_type
-            for member in self.__dict__.get("connection_members")
+            for member in self.__dict__.get("connection_members_")
         )
 
     def _get_members_types_or_classes(self, to_return):
         """Return types or classes for connection members if they exist."""
-        assert to_return in {"member_types", "member_classes"}
-        ctype = getattr(self, "connection_type")
+        assert to_return in {"member_types_", "member_classes_"}
+        ctype = getattr(self, "connection_type_")
         ctype_attr = getattr(ctype, to_return) if ctype else None
 
         if ctype_attr:
@@ -59,9 +68,9 @@ class Connection(GMSOBase):
         elif self._has_typed_members():
             tc = [
                 member.atom_type.name
-                if to_return == "member_types"
+                if to_return == "member_types_"
                 else member.atom_type.atomclass
-                for member in self.__dict__.get("connection_members")
+                for member in self.__dict__.get("connection_members_")
             ]
             return tc if all(tc) else None
 
