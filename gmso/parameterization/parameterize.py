@@ -73,7 +73,7 @@ def apply(
         necessary post parameterization.
     """
     ignore_params = set([option.lower() for option in ignore_params])
-    config = TopologyParameterizationConfig.parse_obj(
+    config = TopologyParameterizationConfig.model_validat(
         dict(
             match_ff_by=match_ff_by,
             identify_connections=identify_connections,
