@@ -1,4 +1,5 @@
 import pytest
+from pydantic import ValidationError
 
 from gmso.core.angle import Angle
 from gmso.core.angle_type import AngleType
@@ -6,11 +7,6 @@ from gmso.core.atom import Atom
 from gmso.core.atom_type import AtomType
 from gmso.core.topology import Topology
 from gmso.tests.base_test import BaseTest
-
-try:
-    from pydantic.v1 import ValidationError
-except ImportError:
-    from pydantic import ValidationError
 
 
 class TestAngle(BaseTest):
@@ -43,7 +39,7 @@ class TestAngle(BaseTest):
         atom1 = Atom(name="atom1")
         atom2 = Atom(name="atom2")
         atom3 = Atom(name="atom3")
-        with pytest.raises(ValidationError):
+        with pytest.raises(TypeError):
             Angle(connection_members=["fakesite1", "fakesite2", 4.2])
 
     def test_angle_fake_angletype(self):
