@@ -22,6 +22,14 @@ class ParametricPotential(AbstractPotential):
     by classes that represent these potentials.
     """
 
+    model_config = ConfigDict(
+        alias_to_fields=dict(
+            **AbstractPotential.model_config["alias_to_fields"],
+            **{"topology": "topology_", "set_ref": "set_ref_"},
+        ),
+        validate_assignment=True,
+    )
+
     def __init__(
         self,
         name="ParametricPotential",
@@ -96,7 +104,7 @@ class ParametricPotential(AbstractPotential):
     def __setattr__(self, key: Any, value: Any) -> None:
         """Set the attributes of the potential."""
         if key == "parameters":
-            self.potential_expression.parameters = value
+            self.potential_expression_.parameters = value
         else:
             super().__setattr__(key, value)
 
@@ -121,7 +129,7 @@ class ParametricPotential(AbstractPotential):
         If only a subset of the parameters are supplied, they are updated
         while the non-passed parameters default to the existing values
         """
-        self.potential_expression.set(
+        self.potential_expression_.set(
             expression=expression,
             independent_variables=independent_variables,
             parameters=parameters,
@@ -143,7 +151,7 @@ class ParametricPotential(AbstractPotential):
         if isinstance(exclude, dict):
             exclude = set(exclude)
 
-        exclude = exclude.union({"topology", "set_ref"})
+        exclude = exclude.union({"topology_", "set_ref_"})
 
         return super().dict(
             include=include,
@@ -154,6 +162,10 @@ class ParametricPotential(AbstractPotential):
             exclude_defaults=exclude_defaults,
             exclude_none=exclude_none,
         )
+
+    def __hash__(self):
+        """Return the unique hash of the object."""
+        return id(self)
 
     def __eq__(self, other):
         if other is self:
@@ -210,12 +222,12 @@ class ParametricPotential(AbstractPotential):
                 by_alias=True,
                 exclude_none=True,
                 exclude={
-                    "topology",
-                    "set_ref",
-                    "member_types",
-                    "member_classes",
-                    "potential_expression",
-                    "tags",
+                    "topology_",
+                    "set_ref_",
+                    "member_types_",
+                    "member_classes_",
+                    "potential_expression_",
+                    "tags_",
                 },
             ).items()
             if value != ""

@@ -148,6 +148,10 @@ class AtomType(ParametricPotential):
             definition=self.definition,
         )
 
+    def __hash__(self):
+        """Return the unique hash of the object."""
+        return id(self)
+
     def __eq__(self, other):
         if other is self:
             return True
