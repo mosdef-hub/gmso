@@ -3,7 +3,7 @@ from typing import Callable, ClassVar, Optional, Tuple
 from pydantic import ConfigDict, Field
 
 from gmso.abc.abstract_connection import Connection
-from gmso.core.atom import Atom
+from gmso.abc.abstract_site import Site
 from gmso.core.dihedral_type import DihedralType
 
 
@@ -25,17 +25,21 @@ class Dihedral(Connection):
 
     Additional _validate methods are presented
     """
-    __members_creator__: ClassVar[Callable] = Atom.parse_obj
+    __members_creator__: ClassVar[Callable] = Site.model_validate
 
-    connection_members: Tuple[Atom, Atom, Atom, Atom] = Field(
-        ..., description="The 4 atoms involved in the dihedral."
+    connection_members_: Tuple[Site, Site, Site, Site] = Field(
+        ...,
+        description="The 4 atoms involved in the dihedral.",
+        alias="connection_members",
     )
 
-    dihedral_type: Optional[DihedralType] = Field(
-        default=None, description="DihedralType of this dihedral."
+    dihedral_type_: Optional[DihedralType] = Field(
+        default=None,
+        description="DihedralType of this dihedral.",
+        alias="dihedral_type",
     )
 
-    restraint: Optional[dict] = Field(
+    restraint_: Optional[dict] = Field(
         default=None,
         description="""
         Restraint for this dihedral, must be a dict with the following keys:
@@ -43,21 +47,31 @@ class Dihedral(Connection):
         Refer to https://manual.gromacs.org/current/reference-manual/topologies/topology-file-formats.html
         for more information.
         """,
+        alias="restraint",
+    )
+    model_config = ConfigDict(
+        alias_to_fields=dict(
+            **Connection.model_config["alias_to_fields"],
+            **{
+                "dihedral_type": "dihedral_type_",
+                "restraint": "restraint_",
+            }
+        )
     )
 
     @property
     def dihedral_type(self):
-        return self.__dict__.get("dihedral_type")
+        return self.__dict__.get("dihedral_type_")
 
     @property
     def connection_type(self):
         # ToDo: Deprecate this?
-        return self.__dict__.get("dihedral_type")
+        return self.__dict__.get("dihedral_type_")
 
     @property
     def restraint(self):
         """Return the restraint of this dihedral."""
-        return self.__dict__.get("restraint")
+        return self.__dict__.get("restraint_")
 
     def equivalent_members(self):
         """Get a set of the equivalent connection member tuples
@@ -81,6 +95,6 @@ class Dihedral(Connection):
 
     def __setattr__(self, key, value):
         if key == "connection_type":
-            super(Dihedral, self).__setattr__("dihedral_type", value)
+            super(Dihedral, self).__setattr__("dihedral_type_", value)
         else:
             super(Dihedral, self).__setattr__(key, value)

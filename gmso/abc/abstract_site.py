@@ -33,7 +33,8 @@ def default_position():
 
 class Site(GMSOBase):
     __iterable_attributes__: ClassVar[set] = {
-        "name" "label",
+        "name",
+        "label",
         "group",
         "molecule",
         "residue",

@@ -4,8 +4,8 @@ from typing import Callable, ClassVar, Optional, Tuple
 from pydantic import ConfigDict, Field
 
 from gmso.abc.abstract_connection import Connection
+from gmso.abc.abstract_site import Site
 from gmso.core.angle_type import AngleType
-from gmso.core.atom import Atom
 
 
 class Angle(Connection):
@@ -21,17 +21,21 @@ class Angle(Connection):
         __eq__, __repr__, _validate methods
     Additional _validate methods are presented
     """
-    __members_creator__: ClassVar[Callable] = Atom.parse_obj
+    __members_creator__: ClassVar[Callable] = Site.model_validate
 
-    connection_members: Tuple[Atom, Atom, Atom] = Field(
-        ..., description="The 3 atoms involved in the angle."
+    connection_members_: Tuple[Site, Site, Site] = Field(
+        ...,
+        description="The 3 atoms involved in the angle.",
+        alias="connection_members",
     )
 
-    angle_type: Optional[AngleType] = Field(
-        default=None, description="AngleType of this angle."
+    angle_type_: Optional[AngleType] = Field(
+        default=None,
+        description="AngleType of this angle.",
+        alias="angle_type",
     )
 
-    restraint: Optional[dict] = Field(
+    restraint_: Optional[dict] = Field(
         default=None,
         description="""
         Restraint for this angle, must be a dict with the following keys:
@@ -39,22 +43,32 @@ class Angle(Connection):
         Refer to https://manual.gromacs.org/current/reference-manual/topologies/topology-file-formats.html
         for more information.
         """,
+        alias="restraint",
+    )
+    model_config = ConfigDict(
+        alias_to_fields=dict(
+            **Connection.model_config["alias_to_fields"],
+            **{
+                "angle_type": "angle_type_",
+                "restraint": "restraint_",
+            }
+        )
     )
 
     @property
     def angle_type(self):
         """Return the angle type if the angle is parametrized."""
-        return self.__dict__.get("angle_type")
+        return self.__dict__.get("angle_type_")
 
     @property
     def connection_type(self):
         """Return the angle type if the angle is parametrized."""
-        return self.__dict__.get("angle_type")
+        return self.__dict__.get("angle_type_")
 
     @property
     def restraint(self):
         """Return the restraint of this angle."""
-        return self.__dict__.get("restraint")
+        return self.__dict__.get("restraint_")
 
     def equivalent_members(self):
         """Return a set of the equivalent connection member tuples.
