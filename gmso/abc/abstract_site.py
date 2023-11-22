@@ -9,12 +9,14 @@ from pydantic import (
     Field,
     StrictInt,
     StrictStr,
+    field_serializer,
     field_validator,
     validator,
 )
 from unyt.exceptions import InvalidUnitOperation
 
 from gmso.abc.gmso_base import GMSOBase
+from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.exceptions import GMSOError
 
 PositionType = Union[Sequence[float], np.ndarray, u.unyt_array]
@@ -132,6 +134,10 @@ class Site(GMSOBase):
     def residue(self):
         """Return the residue assigned to the site."""
         return self.__dict__.get("residue_")
+
+    @field_serializer("position_")
+    def serialize_position(self, position_: PositionType):
+        return unyt_to_dict(position_)
 
     def __repr__(self):
         """Return the formatted representation of the site."""

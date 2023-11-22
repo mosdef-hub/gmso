@@ -24,16 +24,27 @@ class AngleType(ParametricPotential):
         __eq__, _validate functions
     """
 
-    member_types: Optional[Tuple[str, str, str]] = Field(
+    member_types_: Optional[Tuple[str, str, str]] = Field(
         None,
         description="List-like of gmso.AtomType.name "
         "defining the members of this angle type",
+        alias="member_types",
     )
 
-    member_classes: Optional[Tuple[str, str, str]] = Field(
+    member_classes_: Optional[Tuple[str, str, str]] = Field(
         None,
         description="List-like of gmso.AtomType.atomclass "
         "defining the members of this angle type",
+        alias="member_classes",
+    )
+    model_config = ConfigDict(
+        alias_to_fields=dict(
+            **ParametricPotential.model_config["alias_to_fields"],
+            **{
+                "member_types": "member_types_",
+                "member_classes": "member_classes_",
+            },
+        ),
     )
 
     def __init__(
@@ -71,8 +82,8 @@ class AngleType(ParametricPotential):
 
     @property
     def member_types(self):
-        return self.__dict__.get("member_types")
+        return self.__dict__.get("member_types_")
 
     @property
     def member_classes(self):
-        return self.__dict__.get("member_classes")
+        return self.__dict__.get("member_classes_")

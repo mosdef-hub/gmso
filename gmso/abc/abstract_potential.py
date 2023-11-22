@@ -2,9 +2,10 @@
 from abc import abstractmethod
 from typing import Any, Dict, Iterator, List
 
-from pydantic import ConfigDict, Field, field_validator
+from pydantic import ConfigDict, Field, field_serializer, field_validator
 
 from gmso.abc.gmso_base import GMSOBase
+from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.utils.expression import PotentialExpression
 
 
@@ -109,6 +110,24 @@ class AbstractPotential(GMSOBase):
     @property
     def tag_names_iter(self) -> Iterator[str]:
         return iter(self.__dict__.get("tags_"))
+
+    @field_serializer("potential_expression_")
+    def serialize_expression(self, potential_expression_: PotentialExpression):
+        expr = str(potential_expression_.expression)
+        ind = sorted(
+            list(
+                str(ind) for ind in potential_expression_.independent_variables
+            )
+        )
+        params = {
+            param: unyt_to_dict(val)
+            for param, val in potential_expression_.parameters.items()
+        }
+        return {
+            "expression": expr,
+            "independent_variables": ind,
+            "parameters": params,
+        }
 
     def add_tag(self, tag: str, value: Any, overwrite=True) -> None:
         """Add metadata for a particular tag"""

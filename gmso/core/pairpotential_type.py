@@ -26,10 +26,19 @@ class PairPotentialType(ParametricPotential):
         __eq__, _validate functions
     """
 
-    member_types: Optional[Tuple[str, str]] = Field(
+    member_types_: Optional[Tuple[str, str]] = Field(
         None,
         description="List-like of strs, referring to gmso.Atomtype.name or gmso.Atomtype.atomclass, "
         "defining the members of this pair potential type",
+        alias="member_types",
+    )
+    model_config = ConfigDict(
+        alias_to_fields=dict(
+            **ParametricPotential.model_config["alias_to_fields"],
+            **{
+                "member_types": "member_types_",
+            },
+        ),
     )
 
     def __init__(
@@ -54,7 +63,7 @@ class PairPotentialType(ParametricPotential):
 
     @property
     def member_types(self):
-        return self.__dict__.get("member_types")
+        return self.__dict__.get("member_types_")
 
     @staticmethod
     def _default_potential_expr():

@@ -3,9 +3,10 @@ import warnings
 from typing import Optional, Union
 
 import unyt as u
-from pydantic import ConfigDict, Field, field_validator
+from pydantic import ConfigDict, Field, field_serializer, field_validator
 
 from gmso.abc.abstract_site import Site
+from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.core.atom_type import AtomType
 from gmso.core.element import Element
 from gmso.utils._constants import UNIT_WARNING_STRING
@@ -68,7 +69,6 @@ class Atom(Site):
                 "atom_type": "atom_type_",
             },
         ),
-        # =True,
     )
 
     @property
@@ -104,6 +104,20 @@ class Atom(Site):
     def atom_type(self) -> Union[AtomType, property]:
         """Return the atom_type associated with the atom."""
         return self.__dict__.get("atom_type_", None)
+
+    @field_serializer("charge_")
+    def serialize_charge(self, charge_: Union[u.unyt_quantity, None]):
+        if charge_ is None:
+            return None
+        else:
+            return unyt_to_dict(charge_)
+
+    @field_serializer("mass_")
+    def serialize_mass(self, mass_: Union[u.unyt_quantity, None]):
+        if mass_ is None:
+            return None
+        else:
+            return unyt_to_dict(mass_)
 
     def clone(self):
         """Clone this atom."""

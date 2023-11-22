@@ -135,13 +135,12 @@ class ParametricPotential(AbstractPotential):
             parameters=parameters,
         )
 
-    def dict(
+    def model_dump(
         self,
         *,
         include: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
         exclude: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
         by_alias: bool = False,
-        skip_defaults: bool = None,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
         exclude_none: bool = False,
@@ -153,11 +152,10 @@ class ParametricPotential(AbstractPotential):
 
         exclude = exclude.union({"topology_", "set_ref_"})
 
-        return super().dict(
+        return super().model_dump(
             include=include,
             exclude=exclude,
             by_alias=True,
-            skip_defaults=skip_defaults,
             exclude_unset=exclude_unset,
             exclude_defaults=exclude_defaults,
             exclude_none=exclude_none,
@@ -218,7 +216,7 @@ class ParametricPotential(AbstractPotential):
         """Return the XML equivalent representation of this ParametricPotential"""
         attrib = {
             key: get_xml_representation(value)
-            for key, value in self.dict(
+            for key, value in self.model_dump(
                 by_alias=True,
                 exclude_none=True,
                 exclude={

@@ -36,16 +36,27 @@ class ImproperType(ParametricPotential):
 
     """
 
-    member_types: Optional[Tuple[str, str, str, str]] = Field(
+    member_types_: Optional[Tuple[str, str, str, str]] = Field(
         None,
         description="List-like of gmso.AtomType.name "
         "defining the members of this improper type",
+        alias="member_types",
     )
 
-    member_classes: Optional[Tuple[str, str, str, str]] = Field(
+    member_classes_: Optional[Tuple[str, str, str, str]] = Field(
         None,
         description="List-like of gmso.AtomType.atomclass "
         "defining the members of this improper type",
+        alias="member_classes",
+    )
+    model_config = ConfigDict(
+        alias_to_fields=dict(
+            **ParametricPotential.model_config["alias_to_fields"],
+            **{
+                "member_types": "member_types_",
+                "member_classes": "member_classes_",
+            },
+        ),
     )
 
     def __init__(
@@ -73,11 +84,11 @@ class ImproperType(ParametricPotential):
     @property
     def member_types(self):
         """Return member information for this ImproperType."""
-        return self.__dict__.get("member_types")
+        return self.__dict__.get("member_types_")
 
     @property
     def member_classes(self):
-        return self.__dict__.get("member_classes")
+        return self.__dict__.get("member_classes_")
 
     @staticmethod
     def _default_potential_expr():

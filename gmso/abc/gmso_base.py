@@ -1,5 +1,4 @@
 """Base model all classes extend."""
-import json
 import warnings
 from abc import ABC
 from typing import Any, ClassVar, Type
@@ -21,8 +20,6 @@ class GMSOBase(BaseModel, ABC):
 
     __docs_generated__: ClassVar[bool] = False
 
-    # TODO[pydantic]: The following keys were removed: `json_encoders`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
         validate_assignment=True,
@@ -71,9 +68,18 @@ class GMSOBase(BaseModel, ABC):
         dict_to_unyt(obj)
         return super(GMSOBase, cls).model_validate(obj)
 
-    def dict(self, **kwargs) -> "DictStrAny":
+    def model_dump(self, **kwargs) -> "DictStrAny":
         kwargs["by_alias"] = True
-        super_dict = super(GMSOBase, self).dict(**kwargs)
+
+        additional_excludes = set()
+        if "exclude" in kwargs:
+            for term in kwargs["exclude"]:
+                if term in self.model_config["alias_to_fields"]:
+                    additional_excludes.add(
+                        self.model_config["alias_to_fields"][term]
+                    )
+        kwargs["exclude"] = kwargs["exclude"].union(additional_excludes)
+        super_dict = super(GMSOBase, self).model_dump(**kwargs)
         return super_dict
 
     def _iter(self, **kwargs) -> "TupleGenerator":
@@ -99,6 +105,11 @@ class GMSOBase(BaseModel, ABC):
             kwargs["exclude"] = exclude_alias
 
         yield from super()._iter(**kwargs)
+
+    def model_dump_json(self, **kwargs):
+        kwargs["by_alias"] = True
+
+        return super(GMSOBase, self).model_dump_json(**kwargs)
 
     @classmethod
     def validate(cls, value):

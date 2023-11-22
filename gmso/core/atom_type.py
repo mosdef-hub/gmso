@@ -1,10 +1,11 @@
 """Support non-bonded interactions between sites."""
 import warnings
-from typing import Optional, Set
+from typing import Optional, Set, Union
 
 import unyt as u
-from pydantic import ConfigDict, Field, field_validator
+from pydantic import ConfigDict, Field, field_serializer, field_validator
 
+from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.core.parametric_potential import ParametricPotential
 from gmso.utils._constants import UNIT_WARNING_STRING
 from gmso.utils.expression import PotentialExpression
@@ -28,34 +29,56 @@ class AtomType(ParametricPotential):
     are stored explicitly.
     """
 
-    mass: Optional[u.unyt_array] = Field(
-        0.0 * u.gram / u.mol, description="The mass of the atom type"
+    mass_: Optional[u.unyt_array] = Field(
+        0.0 * u.gram / u.mol,
+        description="The mass of the atom type",
+        alias="mass",
     )
 
-    charge: Optional[u.unyt_array] = Field(
-        0.0 * u.elementary_charge, description="The charge of the atom type"
+    charge_: Optional[u.unyt_array] = Field(
+        0.0 * u.elementary_charge,
+        description="The charge of the atom type",
+        alias="charge",
     )
 
-    atomclass: Optional[str] = Field(
-        "", description="The class of the atomtype"
+    atomclass_: Optional[str] = Field(
+        "", description="The class of the atomtype", alias="atomclass"
     )
 
-    doi: Optional[str] = Field(
+    doi_: Optional[str] = Field(
         "",
         description="Digital Object Identifier of publication where this atom type was introduced",
+        alias="doi",
     )
 
-    overrides: Optional[Set[str]] = Field(
+    overrides_: Optional[Set[str]] = Field(
         set(),
         description="Set of other atom types that this atom type overrides",
+        alias="overrides",
     )
 
-    definition: Optional[str] = Field(
-        "", description="SMARTS string defining this atom type"
+    definition_: Optional[str] = Field(
+        "",
+        description="SMARTS string defining this atom type",
+        alias="definition",
     )
 
-    description: Optional[str] = Field(
-        "", description="Description for the AtomType"
+    description_: Optional[str] = Field(
+        "", description="Description for the AtomType", alias="description"
+    )
+    model_config = ConfigDict(
+        alias_to_fields=dict(
+            **ParametricPotential.model_config["alias_to_fields"],
+            **{
+                "mass": "mass_",
+                "charge": "charge_",
+                "atomclass": "atomclass_",
+                "doi": "doi_",
+                "overrides": "overrides_",
+                "definition": "definition_",
+                "description": "description_",
+            },
+        ),
     )
 
     def __init__(
@@ -96,37 +119,51 @@ class AtomType(ParametricPotential):
     @property
     def charge(self):
         """Return the charge of the atom_type."""
-        return self.__dict__.get("charge")
+        return self.__dict__.get("charge_")
 
     @property
     def mass(self):
         """Return the mass of the atom_type."""
-        return self.__dict__.get("mass")
+        return self.__dict__.get("mass_")
 
     @property
     def atomclass(self):
         """Return the atomclass of the atom_type."""
-        return self.__dict__.get("atomclass")
+        return self.__dict__.get("atomclass_")
 
     @property
     def doi(self):
         """Return the doi of the atom_type."""
-        return self.__dict__.get("doi")
+        return self.__dict__.get("doi_")
 
     @property
     def overrides(self):
         """Return the overrides of the atom_type."""
-        return self.__dict__.get("overrides")
+        return self.__dict__.get("overrides_")
 
     @property
     def description(self):
         """Return the description of the atom_type."""
-        return self.__dict__.get("description")
+        return self.__dict__.get("description_")
 
     @property
     def definition(self):
         """Return the SMARTS string of the atom_type."""
-        return self.__dict__.get("definition")
+        return self.__dict__.get("definition_")
+
+    @field_serializer("charge_")
+    def serialize_charge(self, charge_: Union[u.unyt_quantity, None]):
+        if charge_ is None:
+            return None
+        else:
+            return unyt_to_dict(charge_)
+
+    @field_serializer("mass_")
+    def serialize_mass(self, mass_: Union[u.unyt_quantity, None]):
+        if mass_ is None:
+            return None
+        else:
+            return unyt_to_dict(mass_)
 
     def clone(self, fast_copy=False):
         """Clone this AtomType, faster alternative to deepcopying."""
@@ -190,7 +227,7 @@ class AtomType(ParametricPotential):
         )
         return desc
 
-    @field_validator("mass", mode="before")
+    @field_validator("mass_", mode="before")
     @classmethod
     def validate_mass(cls, mass):
         """Check to see that a mass is a unyt array of the right dimension."""
@@ -203,7 +240,7 @@ class AtomType(ParametricPotential):
 
         return mass
 
-    @field_validator("charge", mode="before")
+    @field_validator("charge_", mode="before")
     @classmethod
     def validate_charge(cls, charge):
         """Check to see that a charge is a unyt array of the right dimension."""
