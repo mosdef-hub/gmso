@@ -4,7 +4,6 @@ from typing import Callable, ClassVar, Optional, Tuple
 from pydantic import ConfigDict, Field
 
 from gmso.abc.abstract_connection import Connection
-from gmso.abc.abstract_site import Site
 from gmso.core.atom import Atom
 from gmso.core.bond_type import BondType
 
@@ -22,9 +21,9 @@ class Bond(Connection):
         __eq__, __repr__, _validate methods.
     Additional _validate methods are presented.
     """
-    __members_creator__: ClassVar[Callable] = Site.model_validate
+    __members_creator__: ClassVar[Callable] = Atom.model_validate
 
-    connection_members_: Tuple[Site, Site] = Field(
+    connection_members_: Tuple[Atom, Atom] = Field(
         ...,
         description="The 2 atoms involved in the bond.",
         alias="connection_members",

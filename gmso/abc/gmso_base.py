@@ -1,4 +1,5 @@
 """Base model all classes extend."""
+import json
 import warnings
 from abc import ABC
 from typing import Any, ClassVar, Type
@@ -96,6 +97,11 @@ class GMSOBase(BaseModel, ABC):
         super_dict = super(GMSOBase, self).model_dump_json(**kwargs)
 
         return super_dict
+
+    def json_dict(self, **kwargs):
+        """Return a JSON serializable dictionary from the object"""
+        raw_json = self.model_dump_json(**kwargs)
+        return json.loads(raw_json)
 
     def _iter(self, **kwargs) -> "TupleGenerator":
         exclude = kwargs.get("exclude")

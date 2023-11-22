@@ -3,7 +3,7 @@ from typing import Callable, ClassVar, Optional, Tuple
 from pydantic import ConfigDict, Field
 
 from gmso.abc.abstract_connection import Connection
-from gmso.abc.abstract_site import Site
+from gmso.core.atom import Atom
 from gmso.core.dihedral_type import DihedralType
 
 
@@ -25,9 +25,9 @@ class Dihedral(Connection):
 
     Additional _validate methods are presented
     """
-    __members_creator__: ClassVar[Callable] = Site.model_validate
+    __members_creator__: ClassVar[Callable] = Atom.model_validate
 
-    connection_members_: Tuple[Site, Site, Site, Site] = Field(
+    connection_members_: Tuple[Atom, Atom, Atom, Atom] = Field(
         ...,
         description="The 4 atoms involved in the dihedral.",
         alias="connection_members",

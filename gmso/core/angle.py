@@ -4,8 +4,8 @@ from typing import Callable, ClassVar, Optional, Tuple
 from pydantic import ConfigDict, Field
 
 from gmso.abc.abstract_connection import Connection
-from gmso.abc.abstract_site import Site
 from gmso.core.angle_type import AngleType
+from gmso.core.atom import Atom
 
 
 class Angle(Connection):
@@ -21,9 +21,9 @@ class Angle(Connection):
         __eq__, __repr__, _validate methods
     Additional _validate methods are presented
     """
-    __members_creator__: ClassVar[Callable] = Site.model_validate
+    __members_creator__: ClassVar[Callable] = Atom.model_validate
 
-    connection_members_: Tuple[Site, Site, Site] = Field(
+    connection_members_: Tuple[Atom, Atom, Atom] = Field(
         ...,
         description="The 3 atoms involved in the angle.",
         alias="connection_members",

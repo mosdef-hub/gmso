@@ -2,6 +2,7 @@
 from abc import abstractmethod
 from typing import Any, Dict, Iterator, List
 
+import unyt as u
 from pydantic import ConfigDict, Field, field_serializer, field_validator
 
 from gmso.abc.gmso_base import GMSOBase
@@ -32,11 +33,11 @@ class AbstractPotential(GMSOBase):
         description="The mathematical expression for the potential",
         alias="potential_expression",
     )
-    expected_parameters_dimensions_: Dict[str, Any] = Field(
-        dict(),
-        description="The expected unit dimensions of all the parameters",
-        alias="expected_parameters_dimensions",
-    )
+    # expected_parameters_dimensions_: Dict[str, Any] = Field(
+    #     dict(),
+    #     description="The expected unit dimensions of all the parameters",
+    #     alias="expected_parameters_dimensions",
+    # )
     tags_: Dict[str, Any] = Field(
         {},
         description="Tags associated with the potential",
@@ -46,7 +47,7 @@ class AbstractPotential(GMSOBase):
         alias_to_fields={
             "name": "name_",
             "potential_expression": "potential_expression_",
-            "expected_parameters_dimensions": "expected_parameters_dimensions_",
+            # "expected_parameters_dimensions": "expected_parameters_dimensions_",
             "tags": "tags_",
         }
     )
@@ -128,6 +129,16 @@ class AbstractPotential(GMSOBase):
             "independent_variables": ind,
             "parameters": params,
         }
+
+    @field_serializer("tags_")
+    def serialize_tags(self, tags_):
+        return_dict = dict()
+        for key, val in tags_.items():
+            if isinstance(val, u.unyt_array):
+                return_dict[key] = unyt_to_dict(val)
+            else:
+                return_dict[key] = val
+        return return_dict
 
     def add_tag(self, tag: str, value: Any, overwrite=True) -> None:
         """Add metadata for a particular tag"""
