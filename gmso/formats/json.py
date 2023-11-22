@@ -84,7 +84,7 @@ def _to_json(top, types=False, update=True):
     }
 
     for atom in top._sites:
-        atom_dict = atom.json_dict(exclude={"atom_type"})
+        atom_dict = atom.model_dump(exclude={"atom_type"})
         if types and atom.atom_type:
             atom_dict["atom_type"] = id(atom.atom_type)
 
@@ -109,7 +109,7 @@ def _to_json(top, types=False, update=True):
         (top._impropers, "improper_type"),
     ]:
         for connection in connections:
-            connection_dict = connection.json_dict(
+            connection_dict = connection.model_dump(
                 exclude={exclude_attr, "connection_members"}
             )
             target = targets[type(connection)]
@@ -130,7 +130,7 @@ def _to_json(top, types=False, update=True):
             top.improper_types,
         ]:
             for potential in potentials:
-                potential_dict = potential.json_dict(
+                potential_dict = potential.model_dump(
                     exclude={"topology", "set_ref"}
                 )
                 target = targets[type(potential)]
@@ -139,7 +139,7 @@ def _to_json(top, types=False, update=True):
 
         for pairpotential_type in top._pairpotential_types:
             json_dict["pair_potentialtypes"].append(
-                pairpotential_type.json_dict()
+                pairpotential_type.model_dump()
             )
 
     return json_dict

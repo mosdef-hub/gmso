@@ -78,8 +78,23 @@ class GMSOBase(BaseModel, ABC):
                     additional_excludes.add(
                         self.model_config["alias_to_fields"][term]
                     )
-        kwargs["exclude"] = kwargs["exclude"].union(additional_excludes)
+            kwargs["exclude"] = kwargs["exclude"].union(additional_excludes)
         super_dict = super(GMSOBase, self).model_dump(**kwargs)
+        return super_dict
+
+    def model_dump_json(self, **kwargs):
+        kwargs["by_alias"] = True
+
+        additional_excludes = set()
+        if "exclude" in kwargs:
+            for term in kwargs["exclude"]:
+                if term in self.model_config["alias_to_fields"]:
+                    additional_excludes.add(
+                        self.model_config["alias_to_fields"][term]
+                    )
+            kwargs["exclude"] = kwargs["exclude"].union(additional_excludes)
+        super_dict = super(GMSOBase, self).model_dump_json(**kwargs)
+
         return super_dict
 
     def _iter(self, **kwargs) -> "TupleGenerator":
@@ -105,11 +120,6 @@ class GMSOBase(BaseModel, ABC):
             kwargs["exclude"] = exclude_alias
 
         yield from super()._iter(**kwargs)
-
-    def model_dump_json(self, **kwargs):
-        kwargs["by_alias"] = True
-
-        return super(GMSOBase, self).model_dump_json(**kwargs)
 
     @classmethod
     def validate(cls, value):
