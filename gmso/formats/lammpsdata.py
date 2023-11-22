@@ -959,7 +959,7 @@ def _write_site_data(out_file, top, atom_style, base_unyts, cfactorsDict):
         out_file.write(
             atom_line.format(
                 index=i + 1,
-                moleculeid=site.molecule.number,
+                moleculeid=site.molecule.number + 1,  # index is 0-based in GMSO
                 type_index=unique_sorted_typesList.index(site.atom_type) + 1,
                 charge=base_unyts.convert_parameter(
                     site.charge,
