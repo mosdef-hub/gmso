@@ -215,6 +215,12 @@ class AtomType(ParametricPotential):
         attrib = super()._etree_attrib()
         if self.overrides == set():
             attrib.pop("overrides")
+        mass = eval(attrib["mass"])
+        charge = eval(attrib["charge"])
+
+        attrib["mass"] = str(mass["array"])
+        attrib["charge"] = str(charge["array"])
+
         return attrib
 
     def __repr__(self):
