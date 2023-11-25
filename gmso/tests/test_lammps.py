@@ -618,3 +618,19 @@ class TestLammpsWriter(BaseTest):
 
         with pytest.raises(NotYetImplementedWarning):
             LAMMPS_UnitSystems("None")
+
+    def test_charmm_style(self, harmonic_parmed_types_charmm):
+        top = from_parmed(harmonic_parmed_types_charmm)
+        assert top.save
+
+    def test_charmm_given_ff(self):
+        import mbuild as mb
+
+        ff = gmso.ForceField(get_path("tfsi.xml"))
+
+        cpd = mb.load("C(F)(F)(F)S(=O)(=O)[N-]S(=O)(=O)C(F)(F)F", smiles=True)
+        top = cpd.to_gmso()
+        from gmso.parameterization import apply
+
+        ptop = apply(top, ff, identify_connections=True)
+        ptop.save("test.lammps", unit_style="real", overwrite=True)

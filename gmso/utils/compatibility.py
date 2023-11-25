@@ -3,6 +3,7 @@ from functools import lru_cache
 
 import symengine
 import sympy
+import unyt as u
 
 from gmso.core.views import PotentialFilters
 from gmso.exceptions import EngineIncompatibilityError
@@ -63,10 +64,24 @@ def check_compatibility(topology, accepted_potentials):
 def _check_single_potential(potential, accepted_potentials):
     """Check to see if a single given potential is in the list of accepted potentials."""
     ind_var = potential.independent_variables
-    u_dims = {para.units.dimensions for para in potential.parameters.values()}
+    u_dims = [
+        symplify_str_eqn(para.units.dimensions)
+        for para in potential.parameters.values()
+    ]
+    for i in range(len(u_dims)):
+        if "temperature" in u_dims[i]:
+            energy_dimsStr = str(replace_temp_with_energy(u_dims[i]))
+            energy_dimsStr = symplify_str_eqn(energy_dimsStr)
+            u_dims[i] = energy_dimsStr
+    u_dims = set(u_dims)
+    # if potential.name == "LAMMPSHarmonicBondPotential":
+    #    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
     for ref in accepted_potentials:
         ref_ind_var = ref.independent_variables
-        ref_u_dims = set(ref.expected_parameters_dimensions.values())
+        ref_u_dims = set(
+            map(symplify_str_eqn, ref.expected_parameters_dimensions.values())
+        )
         if len(ind_var) == len(ref_ind_var) and u_dims == ref_u_dims:
             if str(ref.expression) == str(potential.expression):
                 return {potential: ref.name}
@@ -78,3 +93,22 @@ def _check_single_potential(potential, accepted_potentials):
                 ):
                     return {potential: ref.name}
     return False
+
+
+def replace_temp_with_energy(dimsStr):
+    """Track energy dimensions instead of temperature dimensions."""
+    dimsStr = dimsStr.replace("(temperature)", "(length)**2*(mass)/(time)**2")
+    return sympy.Symbol(dimsStr)
+
+
+def symplify_str_eqn(eqnStr):
+    """Take a string and use sympy to aggregate the expression."""
+    if not isinstance(eqnStr, str):
+        eqnStr = str(eqnStr)
+    sym_eqn = symengine.expand(eqnStr)
+    replace_symbolsSet = sym_eqn.free_symbols
+    outStr = str(sym_eqn)
+    for symbol in replace_symbolsSet:
+        symbolStr = str(symbol)
+        outStr = outStr.replace(symbolStr, f"({symbolStr})")
+    return outStr

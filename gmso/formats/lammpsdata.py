@@ -3,8 +3,8 @@ from __future__ import division
 
 import copy
 import datetime
+import itertools
 import os
-import re
 import warnings
 from pathlib import Path
 
@@ -34,6 +34,7 @@ from gmso.formats.formats_registry import loads_as, saves_as
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.compatibility import check_compatibility
 from gmso.utils.conversions import (
+    convert_kelvin_to_energy_units,
     convert_opls_to_ryckaert,
     convert_ryckaert_to_opls,
 )
@@ -126,20 +127,40 @@ def write_lammpsdata(
     base_unyts = LAMMPS_UnitSystems(unit_style)
     default_parameterMaps = {  # TODO: sites are not checked currently because gmso
         # doesn't store pair potential eqn the same way as the connections.
-        "impropers": "HarmonicImproperPotential",
-        "dihedrals": "OPLSTorsionPotential",
-        "angles": "LAMMPSHarmonicAnglePotential",
-        "bonds": "LAMMPSHarmonicBondPotential",
+        "impropers": ["HarmonicImproperPotential"],
+        "dihedrals": ["OPLSTorsionPotential", "PeriodicTorsionPotential"],
+        "angles": ["LAMMPSHarmonicAnglePotential"],
+        "bonds": ["LAMMPSHarmonicBondPotential"],
         # "sites":"LennardJonesPotential",
         # "sites":"CoulombicPotential"
     }
 
     # TODO: Use strict_x, (i.e. x=bonds) to validate what topology attrs to convert
-
-    if strict_potentials:
-        _validate_potential_compatibility(top)
-    else:
+    if not strict_potentials:
         _try_default_potential_conversions(top, default_parameterMaps)
+    potentialsMap = _validate_potential_compatibility(top)
+    potential_typesDict = {}
+    for potential in potentialsMap:
+        pot_container = potential.__class__.__name__
+        potStr = pot_container.lower() + "s"
+        potStr = potStr[:-5] + "_" + potStr[-5:]
+        if not potential_typesDict.get(potStr):
+            potential_typesDict[potStr] = {potentialsMap[potential]}
+        else:
+            potential_typesDict[potStr].add(potentialsMap[potential])
+
+    for pot_container in ["dihedral_types"]:
+        if not getattr(top, pot_container):
+            continue
+        # This is where dihedral_parser should get found
+        parserDict = {
+            "PeriodicTorsionPotential": parse_charmm_style_dihedral,
+            "OPLSTorsionPotential": parse_opls_style_dihedral,
+        }
+        assert (
+            len(potential_typesDict["dihedral_types"]) == 1
+        )  # only allowing one potential type atm
+        dihedralparser = parserDict[potential_typesDict["dihedral_types"].pop()]
 
     if strict_units:
         _validate_unit_compatibility(top, base_unyts)
@@ -163,6 +184,29 @@ def write_lammpsdata(
                     source_factor, default_val_from_topology
                 )
 
+    # reindex molecule
+    def reindex_molecules(top):
+        unique_moleculesDict = {}
+        for site in top.sites:
+            molecule = site.molecule
+            if molecule.name in unique_moleculesDict:
+                unique_moleculesDict[molecule.name].add(molecule.number)
+            else:
+                unique_moleculesDict[molecule.name] = {molecule.number}
+
+        offsetDict = {}
+        for molecule in unique_moleculesDict:
+            min_val = min(unique_moleculesDict[molecule])
+            offsetDict[molecule] = min_val
+
+        for site in top.sites:
+            mol_num = site.molecule.number
+            site.molecule = site.molecule._replace(
+                number=mol_num - offsetDict[site.molecule.name]
+            )
+
+    reindex_molecules(top)
+
     path = Path(filename)
     if not path.parent.exists():
         msg = "Provided path to file that does not exist"
@@ -179,7 +223,9 @@ def write_lammpsdata(
             if top.angle_types:
                 _write_angletypes(out_file, top, base_unyts, lj_cfactorsDict)
             if top.dihedral_types:
-                _write_dihedraltypes(out_file, top, base_unyts, lj_cfactorsDict)
+                _write_dihedraltypes(
+                    out_file, top, base_unyts, dihedralparser, lj_cfactorsDict
+                )
             if top.improper_types:
                 _write_impropertypes(out_file, top, base_unyts, lj_cfactorsDict)
 
@@ -463,7 +509,9 @@ def _get_atoms(filename, topology, base_unyts, type_list):
             charge=charge,
             position=coord,
             atom_type=copy.deepcopy(type_list[int(atom_type) - 1]),  # 0-index
-            molecule=MoleculeType(atom_line[1], int(atom_line[1])),
+            molecule=MoleculeType(
+                atom_line[1], int(atom_line[1]) - 1
+            ),  # 0-index
         )
         element = element_by_mass(site.atom_type.mass.value)
         site.name = element.name if element else site.atom_type.name
@@ -758,7 +806,9 @@ def _write_pairtypes(out_file, top, base_unyts, cfactorsDict):
     )  # this will vary with new pair styles
     param_labels = [
         write_out_parameter_and_units(
-            key, test_atomtype.parameters[key], base_unyts
+            key,
+            convert_kelvin_to_energy_units(test_atomtype.parameters[key], "kJ"),
+            base_unyts,
         )
         for key in nb_style_orderTuple
     ]
@@ -772,7 +822,11 @@ def _write_pairtypes(out_file, top, base_unyts, cfactorsDict):
                 idx + 1,
                 *[
                     base_unyts.convert_parameter(
-                        param.parameters[key], cfactorsDict, n_decimals=5
+                        convert_kelvin_to_energy_units(
+                            param.parameters[key], "kJ"
+                        ),
+                        cfactorsDict,
+                        n_decimals=5,
                     )
                     for key in nb_style_orderTuple
                 ],
@@ -789,7 +843,9 @@ def _write_bondtypes(out_file, top, base_unyts, cfactorsDict):
     bond_style_orderTuple = ("k", "r_eq")
     param_labels = [
         write_out_parameter_and_units(
-            key, test_bondtype.parameters[key], base_unyts
+            key,
+            convert_kelvin_to_energy_units(test_bondtype.parameters[key], "kJ"),
+            base_unyts,
         )
         for key in bond_style_orderTuple
     ]
@@ -806,7 +862,11 @@ def _write_bondtypes(out_file, top, base_unyts, cfactorsDict):
                 idx + 1,
                 *[
                     base_unyts.convert_parameter(
-                        bond_type.parameters[key], cfactorsDict, n_decimals=6
+                        convert_kelvin_to_energy_units(
+                            bond_type.parameters[key], "kJ"
+                        ),
+                        cfactorsDict,
+                        n_decimals=6,
                     )
                     for key in bond_style_orderTuple
                 ],
@@ -826,7 +886,11 @@ def _write_angletypes(out_file, top, base_unyts, cfactorsDict):
     )  # this will vary with new angle styles
     param_labels = [
         write_out_parameter_and_units(
-            key, test_angletype.parameters[key], base_unyts
+            key,
+            convert_kelvin_to_energy_units(
+                test_angletype.parameters[key], "kJ"
+            ),
+            base_unyts,
         )
         for key in angle_style_orderTuple
     ]
@@ -845,7 +909,9 @@ def _write_angletypes(out_file, top, base_unyts, cfactorsDict):
                 idx + 1,
                 *[
                     base_unyts.convert_parameter(
-                        angle_type.parameters[key],
+                        convert_kelvin_to_energy_units(
+                            angle_type.parameters[key], "kJ"
+                        ),
                         cfactorsDict,
                         n_decimals=6,
                         name=key,
@@ -857,21 +923,16 @@ def _write_angletypes(out_file, top, base_unyts, cfactorsDict):
         )
 
 
-def _write_dihedraltypes(out_file, top, base_unyts, cfactorsDict):
+def _write_dihedraltypes(out_file, top, base_unyts, parser, cfactorsDict):
     """Write out dihedrals to LAMMPS file."""
     test_dihedraltype = top.dihedrals[0].dihedral_type
     out_file.write(f"\nDihedral Coeffs #{test_dihedraltype.name}\n")
-    dihedral_style_orderTuple = (
-        "k1",
-        "k2",
-        "k3",
-        "k4",
-    )  # this will vary with new dihedral styles
+    param_labels0 = parser(test_dihedraltype)
     param_labels = [
         write_out_parameter_and_units(
-            key, test_dihedraltype.parameters[key], base_unyts
+            name, convert_kelvin_to_energy_units(param, "kJ"), base_unyts
         )
-        for key in dihedral_style_orderTuple
+        for param, name in zip(param_labels0[0], param_labels0[1])
     ]
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
     indexList = list(top.dihedral_types(filter_by=pfilter))
@@ -880,22 +941,57 @@ def _write_dihedraltypes(out_file, top, base_unyts, cfactorsDict):
         for dihedral_type in indexList
     ]
     index_membersList.sort(key=lambda x: ([x[1][i] for i in [1, 2, 0, 3]]))
+    # handle variable lengths for parameters
+    base_msg = "{}\t"  # handles index
+    end_msg = "# {}\t{}\t{}\t{}\n"
+    variable_msg = "{:8}\t" * len(param_labels)
+    full_msg = base_msg + variable_msg + end_msg
     for idx, (dihedral_type, members) in enumerate(index_membersList):
+        param_labels = parser(dihedral_type)
+        variable_msg = "{:8}\t" * len(param_labels[0])
+        full_msg = base_msg + variable_msg + end_msg
         out_file.write(
-            "{}\t{:8}\t{:8}\t{:8}\t{:8}\t# {}\t{}\t{}\t{}\n".format(
+            full_msg.format(
                 idx + 1,
                 *[
                     base_unyts.convert_parameter(
-                        dihedral_type.parameters[parameterStr],
+                        convert_kelvin_to_energy_units(parameter, "kJ"),
                         cfactorsDict,
                         n_decimals=6,
                         name=parameterStr,
                     )
-                    for parameterStr in dihedral_style_orderTuple
+                    for parameter, parameterStr in zip(*parser(dihedral_type))
                 ],
                 *members,
             )
         )
+
+
+def parse_opls_style_dihedral(dihedral_type):
+    """Take a dihedral type and list parameters as expected in lammps outputs."""
+    parametersList = []
+    namesList = ["k1", "k2", "k3", "k4"]
+    for k in namesList:
+        parametersList.append(dihedral_type.parameters[k])
+
+    return parametersList, namesList
+
+
+def parse_charmm_style_dihedral(dihedral_type, weightsArray=None):
+    """Take a dihedral type and list parameters as expected in lammps outputs."""
+    kArray = dihedral_type.parameters["k"].flatten()
+    nArray = dihedral_type.parameters["n"].flatten()
+    phi_eqArray = dihedral_type.parameters["phi_eq"].flatten()
+    if not weightsArray:  # used for amber forcefield weights are 0
+        weightsArray = np.zeros(kArray.size) * u.dimensionless
+    return (
+        list(
+            itertools.chain.from_iterable(
+                zip(kArray, nArray, phi_eqArray, weightsArray)
+            )
+        ),
+        ["k", "n", "phi_eq", "weights"] * kArray.size,
+    )
 
 
 def _write_impropertypes(out_file, top, base_unyts, cfactorsDict):
@@ -909,7 +1005,11 @@ def _write_impropertypes(out_file, top, base_unyts, cfactorsDict):
     )  # this will vary with new improper styles
     param_labels = [
         write_out_parameter_and_units(
-            key, test_impropertype.parameters[key], base_unyts
+            key,
+            convert_kelvin_to_energy_units(
+                test_impropertype.parameters[key], "kJ"
+            ),
+            base_unyts,
         )
         for key in improper_style_orderTuple
     ]
@@ -926,7 +1026,9 @@ def _write_impropertypes(out_file, top, base_unyts, cfactorsDict):
                 idx + 1,
                 *[
                     base_unyts.convert_parameter(
-                        improper_type.parameters[parameterStr],
+                        convert_kelvin_to_energy_units(
+                            improper_type.parameters[parameterStr], "kJ"
+                        ),
                         cfactorsDict,
                         n_decimals=6,
                         name=parameterStr,
@@ -1026,10 +1128,10 @@ def _write_conn_data(out_file, top, connIter, connStr):
 def _try_default_potential_conversions(top, potentialsDict):
     """Take a topology a convert all potentials to the style in potentialDict."""
     for pot_container in potentialsDict:
-        if getattr(top, pot_container[:-1] + "_types"):
-            top.convert_potential_styles(
-                {pot_container: potentialsDict[pot_container]}
-            )
+        containerStr = pot_container[:-1] + "_types"
+        if getattr(top, containerStr):
+            for potential in potentialsDict[pot_container]:
+                top.convert_potential_styles({pot_container: potential})
         elif getattr(top, pot_container):
             raise AttributeError(
                 f"Missing parameters in {pot_container} for {top.get_untyped(pot_container)}"
