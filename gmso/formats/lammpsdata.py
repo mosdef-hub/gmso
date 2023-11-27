@@ -703,9 +703,15 @@ def _write_header(out_file, top, atom_style):
             "{:d} angle types\n".format(len(top.angle_types(filter_by=pfilter)))
         )
     if top.n_dihedrals > 0 and atom_style in ["full", "molecular"]:
+        unique_dtypes = top.dihedral_types(filter_by=pfilter)
+        from itertools import chain
+        nkeys = len(next(iter(unique_dtypes)).parameters.keys())
+        nparams = len(list(_flatten((map(lambda x: [val.tolist() for val in x.parameters.values()], unique_dtypes)))))
+        #nparams = len(list(chain([dt.parameters.values() for dt in unique_dtypes])))
+        ntypes = int(nparams / nkeys)
         out_file.write(
             "{:d} dihedral types\n".format(
-                len(top.dihedral_types(filter_by=pfilter))
+                ntypes
             )
         )
     if top.n_impropers > 0 and atom_style in ["full", "molecular"]:
@@ -927,13 +933,22 @@ def _write_dihedraltypes(out_file, top, base_unyts, parser, cfactorsDict):
     """Write out dihedrals to LAMMPS file."""
     test_dihedraltype = top.dihedrals[0].dihedral_type
     out_file.write(f"\nDihedral Coeffs #{test_dihedraltype.name}\n")
-    param_labels0 = parser(test_dihedraltype)
-    param_labels = [
-        write_out_parameter_and_units(
-            name, convert_kelvin_to_energy_units(param, "kJ"), base_unyts
-        )
-        for param, name in zip(param_labels0[0], param_labels0[1])
-    ]
+    param_labels0 = parser(test_dihedraltype) # tuple (paramsList, params_namesList)
+    
+    if isinstance(param_labels0[0][0], list): # check for parsing out multiple instances from the dihedral
+        param_labels = [
+            write_out_parameter_and_units(
+                name, convert_kelvin_to_energy_units(param, "kJ"), base_unyts
+            )
+            for param, name in zip(param_labels0[0][0], param_labels0[1])
+        ]
+    else:
+        param_labels = [
+            write_out_parameter_and_units(
+                name, convert_kelvin_to_energy_units(param, "kJ"), base_unyts
+            )
+            for param, name in zip(param_labels0[0], param_labels0[1])
+        ]
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
     indexList = list(top.dihedral_types(filter_by=pfilter))
     index_membersList = [
@@ -944,27 +959,49 @@ def _write_dihedraltypes(out_file, top, base_unyts, parser, cfactorsDict):
     # handle variable lengths for parameters
     base_msg = "{}\t"  # handles index
     end_msg = "# {}\t{}\t{}\t{}\n"
-    variable_msg = "{:8}\t" * len(param_labels)
-    full_msg = base_msg + variable_msg + end_msg
-    for idx, (dihedral_type, members) in enumerate(index_membersList):
-        param_labels = parser(dihedral_type)
-        variable_msg = "{:8}\t" * len(param_labels[0])
-        full_msg = base_msg + variable_msg + end_msg
-        out_file.write(
-            full_msg.format(
-                idx + 1,
-                *[
-                    base_unyts.convert_parameter(
-                        convert_kelvin_to_energy_units(parameter, "kJ"),
-                        cfactorsDict,
-                        n_decimals=6,
-                        name=parameterStr,
-                    )
-                    for parameter, parameterStr in zip(*parser(dihedral_type))
-                ],
-                *members,
+     
+    if parser.__name__ == "parse_opls_style_dihedral": # one opls parameter per dihedral type
+        for idx, (dihedral_type, members) in enumerate(index_membersList):
+            param_labels = parser(dihedral_type)
+            variable_msg = "{:8}\t" * len(param_labels[1])
+            full_msg = base_msg + variable_msg + end_msg
+            out_file.write(
+                full_msg.format(
+                    idx + 1,
+                    *[
+                        base_unyts.convert_parameter(
+                            convert_kelvin_to_energy_units(parameter, "kJ"),
+                            cfactorsDict,
+                            n_decimals=6,
+                            name=parameterStr,
+                        )
+                        for parameter, parameterStr in zip(*parser(dihedral_type))
+                    ],
+                    *members,
+                )
             )
-        )
+    elif parser.__name__ == "parse_charmm_style_dihedral":
+        ndecimalsDict = {"k":6, "n":0, "phi_eq":0, "weights":1}
+        for idx, (dihedral_type, members) in enumerate(index_membersList):
+            parameter_termList, parameterStrList = parser(dihedral_type)
+            variable_msg = "{:8}\t" * len(parameterStrList)
+            full_msg = base_msg + variable_msg + end_msg
+            for parameter_terms in parameter_termList: # list of params on each line
+                out_file.write(
+                    full_msg.format(
+                        idx + 1,
+                        *[
+                            base_unyts.convert_parameter(
+                                convert_kelvin_to_energy_units(parameter, "kJ"),
+                                cfactorsDict,
+                                n_decimals=ndecimalsDict[parameterStr],
+                                name=parameterStr,
+                            )
+                            for parameter, parameterStr in zip(parameter_terms, parameterStrList)
+                        ],
+                        *members,
+                    )
+                )
 
 
 def parse_opls_style_dihedral(dihedral_type):
@@ -984,14 +1021,10 @@ def parse_charmm_style_dihedral(dihedral_type, weightsArray=None):
     phi_eqArray = dihedral_type.parameters["phi_eq"].flatten()
     if not weightsArray:  # used for amber forcefield weights are 0
         weightsArray = np.zeros(kArray.size) * u.dimensionless
-    return (
-        list(
-            itertools.chain.from_iterable(
-                zip(kArray, nArray, phi_eqArray, weightsArray)
-            )
-        ),
-        ["k", "n", "phi_eq", "weights"] * kArray.size,
-    )
+    allParamsList = []
+    for a,b,c,d in zip(kArray, nArray, phi_eqArray, weightsArray):
+        allParamsList.append([a,b,c,d])
+    return allParamsList, ["k", "n", "phi_eq", "weights"]
 
 
 def _write_impropertypes(out_file, top, base_unyts, cfactorsDict):
@@ -1156,3 +1189,10 @@ def _default_lj_val(top, source):
         raise ValueError(
             f"Provided {source} for default LJ cannot be found in the topology."
         )
+
+def _flatten(iterable):
+    try:
+        for item in iterable:
+            yield from _flatten(item)
+    except TypeError:
+        yield iterable
