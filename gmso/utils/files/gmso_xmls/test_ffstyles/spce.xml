@@ -15,7 +15,7 @@
     <AtomType name="opls_117" element="H" mass="1.00800" charge="6.7900245189504e-20" atomclass="HW" definition="H">
       <Parameters>
         <Parameter name="epsilon" value="0.0"/>
-        <Parameter name="sigma" value="0.1"/>
+        <Parameter name="sigma" value="0.0"/>
       </Parameters>
     </AtomType>
   </AtomTypes>
