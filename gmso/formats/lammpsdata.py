@@ -127,7 +127,7 @@ def write_lammpsdata(
     base_unyts = LAMMPS_UnitSystems(unit_style)
     default_parameterMaps = {  # TODO: sites are not checked currently because gmso
         # doesn't store pair potential eqn the same way as the connections.
-        "impropers": ["HarmonicImproperPotential"],
+        "impropers": ["HarmonicImproperPotential", "PeriodicTorsionPotential"],
         "dihedrals": ["OPLSTorsionPotential", "PeriodicTorsionPotential"],
         "angles": ["LAMMPSHarmonicAnglePotential"],
         "bonds": ["LAMMPSHarmonicBondPotential"],
@@ -1097,7 +1097,7 @@ def _write_site_data(out_file, top, atom_style, base_unyts, cfactorsDict):
                 moleculeid=site.molecule.number + 1,  # index is 0-based in GMSO
                 type_index=unique_sorted_typesList.index(site.atom_type) + 1,
                 charge=base_unyts.convert_parameter(
-                    site.charge,
+                    site.atom_type.charge if site.atom_type else site.charge,
                     cfactorsDict,
                     n_decimals=6,
                 ),
