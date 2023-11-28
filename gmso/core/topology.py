@@ -1250,7 +1250,7 @@ class Topology(object):
             If the topology is untyped
         """
         ff = self.get_forcefield()
-        ff.to_xml(filename=filename, overwrite=overwrite, backend=backend)
+        ff.to_xml(filename=filename, overwrite=overwrite)
 
     def to_dataframe(self, parameter="sites", site_attrs=None, unyts_bool=True):
         """Return a pandas dataframe object for the sites in a topology
