@@ -6,16 +6,16 @@
   <AtomTypes expression="4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)">
     <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
     <ParametersUnitDef parameter="sigma" unit="nm"/>
-    <AtomType name="opls_116" mass="0.0" charge="-1.35800490379008e-19" atomclass="OW" definition="O">
+    <AtomType name="opls_116" element="O" mass="15.99940" charge="-1.35800490379008e-19" atomclass="OW" definition="O">
       <Parameters>
         <Parameter name="epsilon" value="0.650194"/>
         <Parameter name="sigma" value="0.316557"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_117" mass="0.0" charge="6.7900245189504e-20" atomclass="HW" definition="H">
+    <AtomType name="opls_117" element="H" mass="1.00800" charge="6.7900245189504e-20" atomclass="HW" definition="H">
       <Parameters>
         <Parameter name="epsilon" value="0.0"/>
-        <Parameter name="sigma" value="0.1"/>
+        <Parameter name="sigma" value="0.0"/>
       </Parameters>
     </AtomType>
   </AtomTypes>
