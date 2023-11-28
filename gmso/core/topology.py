@@ -1228,8 +1228,8 @@ class Topology(object):
 
         return index
 
-    def to_xml(self, filename, overwrite=False, backend="gmso"):
-        """Save an lxml ElementTree representation of the topology's parameters
+    def write_forcefield(self, filename, overwrite=False):
+        """Save an xml file for all parameters found in the topology.
 
         Parameters
         ----------
@@ -1237,9 +1237,12 @@ class Topology(object):
             The filename to write the XML file to
         overwrite: bool, default=False
             If True, overwrite an existing file if it exists
-        backend: str, default="gmso"
-            Can be "gmso" or "forcefield-utilities". This will define the methods to
-            write the xml.
+
+        Notes
+        -----
+        This method can be used to save a small, trimmed down forcefield
+        from a larger forcefield (e.g. oplsaa). This is useful for
+        editing, saving, and sharing forcefield parameters.
 
         Raises
         ------

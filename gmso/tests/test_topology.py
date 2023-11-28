@@ -1012,6 +1012,6 @@ class TestTopology(BaseTest):
             0.1 * u.Unit("test_charge", registry=reg.reg),
         )
 
-    def test_to_xml(self, typed_benzene_aa_system):
-        typed_benzene_aa_system.to_xml("benzene.xml")
+    def test_write_forcefield(self, typed_benzene_aa_system):
+        typed_benzene_aa_system.write_forcefield("benzene.xml")
         assert os.path.isfile("benzene.xml")
