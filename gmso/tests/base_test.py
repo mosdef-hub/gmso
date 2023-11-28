@@ -168,7 +168,7 @@ class BaseTest:
     @pytest.fixture
     def spce_water(self):
         spce_comp = mb.lib.molecules.water.WaterSPC()
-        spce_ff = ForceField(get_fn("spce.xml"))
+        spce_ff = ForceField(get_fn("gmso_xmls/test_ffstyles/spce.xml"))
         spce_top = spce_comp.to_gmso()
         spce_top.identify_connections()
 
