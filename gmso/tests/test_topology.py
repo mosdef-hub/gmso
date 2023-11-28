@@ -982,13 +982,18 @@ class TestTopology(BaseTest):
             for conn in top.iter_connections_by_site(site):
                 pass
 
-    def test_write_forcefield(self, typed_water_system):
+    def test_write_forcefield(
+        self, typed_water_system, typed_benzene_aa_system
+    ):
         forcefield = typed_water_system.get_forcefield()
         assert "opls_111" in forcefield.atom_types
         assert "opls_112" in forcefield.atom_types
         top = Topology()
         with pytest.raises(GMSOError):
             top.get_forcefield()
+
+        typed_benzene_aa_system.write_forcefield("benzene.xml")
+        assert os.path.isfile("benzene.xml")
 
     def test_units(self, typed_ethane):
         reg = UnitReg()
@@ -1011,7 +1016,3 @@ class TestTopology(BaseTest):
             1.60217662e-19 * u.Coulomb,
             0.1 * u.Unit("test_charge", registry=reg.reg),
         )
-
-    def test_write_forcefield(self, typed_benzene_aa_system):
-        typed_benzene_aa_system.write_forcefield("benzene.xml")
-        assert os.path.isfile("benzene.xml")
