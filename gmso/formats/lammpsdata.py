@@ -168,7 +168,9 @@ def write_lammpsdata(
             assert (
                 len(potential_typesDict["dihedral_types"]) == 1
             )  # only allowing one potential type atm
-            dihedralparser = parserDict[potential_typesDict["dihedral_types"].pop()]
+            dihedralparser = parserDict[
+                potential_typesDict["dihedral_types"].pop()
+            ]
         return dihedralparser
 
     dihedral_parser = identify_dihedral_parser(top, potential_typesDict)
@@ -185,9 +187,11 @@ def write_lammpsdata(
             assert (
                 len(potential_typesDict["improper_types"]) == 1
             )  # only allowing one potential type atm
-            improper_parser = parserDict[potential_typesDict["improper_types"].pop()]
+            improper_parser = parserDict[
+                potential_typesDict["improper_types"].pop()
+            ]
         return improper_parser
-    
+
     improper_parser = identify_improper_parser(top, potential_typesDict)
 
     if strict_units:
@@ -255,7 +259,9 @@ def write_lammpsdata(
                     out_file, top, base_unyts, dihedral_parser, lj_cfactorsDict
                 )
             if top.improper_types:
-                _write_impropertypes(out_file, top, base_unyts, improper_parser, lj_cfactorsDict)
+                _write_impropertypes(
+                    out_file, top, base_unyts, improper_parser, lj_cfactorsDict
+                )
 
         _write_site_data(out_file, top, atom_style, base_unyts, lj_cfactorsDict)
         for conn in ["bonds", "angles", "dihedrals", "impropers"]:
@@ -1053,6 +1059,7 @@ def _write_dihedraltypes(out_file, top, base_unyts, parser, cfactorsDict):
                     )
                 )
 
+
 def parse_opls_style_dihedral(dihedral_type):
     """Take a dihedral type and list parameters as expected in lammps outputs."""
     parametersList = []
@@ -1061,6 +1068,7 @@ def parse_opls_style_dihedral(dihedral_type):
         parametersList.append(dihedral_type.parameters[k])
 
     return parametersList, namesList
+
 
 def parse_charmm_style_dihedral(dihedral_type, weightsArray=None):
     """Take a dihedral type and list parameters as expected in lammps outputs."""
@@ -1073,6 +1081,7 @@ def parse_charmm_style_dihedral(dihedral_type, weightsArray=None):
     for a, b, c, d in zip(kArray, nArray, phi_eqArray, weightsArray):
         allParamsList.append([a, b, c, d])
     return allParamsList, ["k", "n", "phi_eq", "weights"]
+
 
 def _write_impropertypes(out_file, top, base_unyts, parser, cfactorsDict):
     """Write out impropers to LAMMPS file."""
@@ -1135,6 +1144,7 @@ def _write_impropertypes(out_file, top, base_unyts, parser, cfactorsDict):
                 )
             )
 
+
 def parse_cvff_style_improper(improper_type):
     """Take a dihedral type and list parameters as expected in lammps outputs."""
     parametersList = []
@@ -1143,6 +1153,7 @@ def parse_cvff_style_improper(improper_type):
         parametersList.append(improper_type.parameters[k])
     return parametersList, namesList
 
+
 def parse_harmonic_style_improper(improper_type):
     """Take a dihedral type and list parameters as expected in lammps outputs."""
     parametersList = []
@@ -1150,6 +1161,7 @@ def parse_harmonic_style_improper(improper_type):
     for k in namesList:
         parametersList.append(improper_type.parameters[k])
     return parametersList, namesList
+
 
 def _write_site_data(out_file, top, atom_style, base_unyts, cfactorsDict):
     """Write atomic positions and charges to LAMMPS file.."""
