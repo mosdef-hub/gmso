@@ -621,16 +621,17 @@ class TestLammpsWriter(BaseTest):
 
     def test_charmm_style(self, harmonic_parmed_types_charmm):
         top = from_parmed(harmonic_parmed_types_charmm)
-        assert top.save
+        assert top.save("test.lammps")
 
-    def test_charmm_given_ff(self):
+    def test_charmm_improper_ff(self):
         import mbuild as mb
 
-        ff = gmso.ForceField(get_path("tfsi.xml"))
+        ff = gmso.ForceField(get_path("tfa_charmm.xml"))
 
-        cpd = mb.load("C(F)(F)(F)S(=O)(=O)[N-]S(=O)(=O)C(F)(F)F", smiles=True)
+        cpd = mb.load("C(=O)(C(F)(F)F)N", smiles=True) #TFA molecule
         top = cpd.to_gmso()
         from gmso.parameterization import apply
 
         ptop = apply(top, ff, identify_connections=True)
         ptop.save("test.lammps", unit_style="real", overwrite=True)
+        assert compare_lammps_files("test.lammps", get_path("charmm.lammps"))
