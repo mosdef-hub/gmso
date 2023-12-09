@@ -58,7 +58,7 @@ Dihedral Coeffs #PeriodicTorsionPotential
 1	2.500000	2       	180     	0.0     	# n	c	c3	f
 2	1.200000	2       	180     	0.0     	# o	c	c3	f
 3	10.000000	2       	180     	0.0     	# c3	c	n	hn
-4	2.500000	-2      	180     	0.0     	# o	c	n	hn
+4	2.500000	2      	    180     	0.0     	# o	c	n	hn
 4	2.000000	1       	0       	0.0     	# o	c	n	hn
 
 Improper Coeffs #PeriodicTorsionPotential

@@ -1,4 +1,5 @@
 import copy
+import os
 
 import numpy as np
 import pytest
@@ -366,7 +367,7 @@ class TestLammpsWriter(BaseTest):
         found_impropers = False
         for i, line in enumerate(out_lammps):
             if "Improper Coeffs" in line:
-                assert "HarmonicImproperPotential" in line
+                assert "HarmonicTorsionPotential" in line
                 assert "k" in out_lammps[i + 1]
                 assert "phi_eq" in out_lammps[i + 1]
                 assert len(out_lammps[i + 2].split("#")[0].split()) == 3
@@ -621,14 +622,15 @@ class TestLammpsWriter(BaseTest):
 
     def test_charmm_style(self, harmonic_parmed_types_charmm):
         top = from_parmed(harmonic_parmed_types_charmm)
-        assert top.save("test.lammps")
+        top.save("test.lammps")
+        assert os.path.exists("test.lammps")
 
     def test_charmm_improper_ff(self):
         import mbuild as mb
 
         ff = gmso.ForceField(get_path("tfa_charmm.xml"))
 
-        cpd = mb.load("C(=O)(C(F)(F)F)N", smiles=True) #TFA molecule
+        cpd = mb.load("C(=O)(C(F)(F)F)N", smiles=True)  # TFA molecule
         top = cpd.to_gmso()
         from gmso.parameterization import apply
 

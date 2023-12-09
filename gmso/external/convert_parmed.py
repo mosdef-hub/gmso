@@ -85,6 +85,7 @@ def from_parmed(structure, refer_type=True):
                 if refer_type and isinstance(atom.atom_type, pmd.AtomType)
                 else None
             )
+            site.atom_type.charge = atom.charge * u.elementary_charge
             site_map[atom] = site
             top.add_site(site)
 
