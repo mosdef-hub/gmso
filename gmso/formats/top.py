@@ -167,7 +167,9 @@ def write_top(top, filename, top_vars=None):
                         tag,
                         site.atom_type.tags["element"],
                         "1",  # TODO: care about charge groups
-                        site.charge.in_units(u.elementary_charge).value,
+                        site.atom_type.charge.in_units(
+                            u.elementary_charge
+                        ).value,
                         site.atom_type.mass.in_units(u.amu).value,
                     )
                 )
