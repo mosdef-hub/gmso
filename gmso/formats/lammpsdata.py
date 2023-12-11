@@ -3,7 +3,6 @@ from __future__ import division
 
 import copy
 import datetime
-import itertools
 import os
 import warnings
 from pathlib import Path
@@ -745,7 +744,6 @@ def _write_header(out_file, top, atom_style):
         )
     if top.n_dihedrals > 0 and atom_style in ["full", "molecular"]:
         unique_dtypes = top.dihedral_types(filter_by=pfilter)
-        from itertools import chain
 
         nkeys = len(next(iter(unique_dtypes)).parameters.keys())
         nparams = len(
@@ -762,7 +760,6 @@ def _write_header(out_file, top, atom_style):
                 )
             )
         )
-        # nparams = len(list(chain([dt.parameters.values() for dt in unique_dtypes])))
         ntypes = int(nparams / nkeys)
         out_file.write("{:d} dihedral types\n".format(ntypes))
     if top.n_impropers > 0 and atom_style in ["full", "molecular"]:

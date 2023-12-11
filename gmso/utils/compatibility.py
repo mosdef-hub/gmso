@@ -3,7 +3,6 @@ from functools import lru_cache
 
 import symengine
 import sympy
-import unyt as u
 
 from gmso.core.views import PotentialFilters
 from gmso.exceptions import EngineIncompatibilityError
@@ -74,9 +73,6 @@ def _check_single_potential(potential, accepted_potentials):
             energy_dimsStr = symplify_str_eqn(energy_dimsStr)
             u_dims[i] = energy_dimsStr
     u_dims = set(u_dims)
-    # if potential.name == "LAMMPSHarmonicBondPotential":
-    #    import pdb; pdb.set_trace()
-    # import pdb; pdb.set_trace()
     for ref in accepted_potentials:
         ref_ind_var = ref.independent_variables
         ref_u_dims = set(
