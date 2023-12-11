@@ -70,7 +70,7 @@ def from_parmed(structure, refer_type=True):
             if residue.number == -1:  # use default value of 0 in GMSO
                 residue_number = 0
             else:
-                residue_number = residue.number
+                residue_number = residue.number - 1
             site = gmso.Atom(
                 name=atom.name,
                 charge=atom.charge * u.elementary_charge,
@@ -480,7 +480,7 @@ def to_parmed(top, refer_type=True):
             structure.add_atom(
                 pmd_atom,
                 resname=site.residue.name,
-                resnum=site.residue.number,
+                resnum=site.residue.number + 1,
             )
         else:
             structure.add_atom(pmd_atom, resname="RES", resnum=-1)
