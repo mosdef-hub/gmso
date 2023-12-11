@@ -58,6 +58,15 @@ class Atom(Site):
     atom_type_: Optional[AtomType] = Field(
         None, description="AtomType associated with the atom"
     )
+    restraint_: Optional[dict] = Field(
+        default=None,
+        description="""
+        Restraint for this atom, must be a dict with the following keys:
+        'kx', 'ky', 'kz' (unit of energy/(mol * length**2),
+        Refer to https://manual.gromacs.org/current/reference-manual/topologies/topology-file-formats.html
+        for more information.
+        """,
+    )
 
     @property
     def charge(self) -> Union[u.unyt_quantity, None]:
@@ -92,6 +101,11 @@ class Atom(Site):
     def atom_type(self) -> Union[AtomType, None]:
         """Return the atom_type associated with the atom."""
         return self.__dict__.get("atom_type_", None)
+
+    @property
+    def restraint(self):
+        """Return the restraint of this atom."""
+        return self.__dict__.get("restraint_")
 
     def clone(self):
         """Clone this atom."""
@@ -164,6 +178,7 @@ class Atom(Site):
             "mass_": "mass",
             "element_": "element",
             "atom_type_": "atom_type",
+            "restraint_": "restraint",
         }
 
         alias_to_fields = {
@@ -171,6 +186,7 @@ class Atom(Site):
             "mass": "mass_",
             "element": "element_",
             "atom_type": "atom_type_",
+            "restraint": "restraint_",
         }
 
         validate_assignment = True
