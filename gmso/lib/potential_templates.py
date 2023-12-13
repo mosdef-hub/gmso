@@ -48,8 +48,18 @@ def _load_template_json(item, json_dir=JSON_DIR):
 class PotentialTemplate(AbstractPotential):
     """Template for potential objects to be re-used."""
 
-    expected_parameters_dimensions: Dict[str, sympy.Expr] = Field(
+    expected_parameters_dimensions_: Dict[str, sympy.Expr] = Field(
         ..., description="The expected dimensions for parameters."
+
+    )
+
+    model_config = ConfigDict(
+        alias_to_fields=dict(
+            **AbstractPotential.model_config["alias_to_fields"],
+            **{
+                "expected_parameters_dimensions": "expected_parameters_dimensions_",
+            },
+        ),
     )
 
     def __init__(
@@ -77,7 +87,7 @@ class PotentialTemplate(AbstractPotential):
             expected_parameters_dimensions=expected_parameters_dimensions,
         )
 
-    @field_validator("expected_parameters_dimensions", mode="before")
+    @field_validator("expected_parameters_dimensions_", mode="before")
     def validate_expected_parameters(cls, dim_dict):
         """Validate the expected parameters and dimensions for this template."""
         if not isinstance(dim_dict, Dict):
@@ -102,7 +112,7 @@ class PotentialTemplate(AbstractPotential):
     @property
     def expected_parameters_dimensions(self):
         """Return the expected dimensions of the parameters for this template."""
-        return self.__dict__.get("expected_parameters_dimensions")
+        return self.__dict__.get("expected_parameters_dimensions_")
 
     def set_expression(self, *args, **kwargs):
         """Set the expression of the PotentialTemplate."""
