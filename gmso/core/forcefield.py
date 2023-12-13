@@ -598,7 +598,7 @@ class ForceField(object):
             Can be "gmso" or "forcefield-utilities". This will define the methods to
             write the xml.
         """
-        if backend == "gmso" or backend == "GMSO":
+        if backend.lower() == "gmso":
             self._xml_from_gmso(filename, overwrite)
         elif backend in [
             "forcefield_utilities",

@@ -1,14 +1,10 @@
 from typing import Optional, Tuple
 
 import unyt as u
+from pydantic import ConfigDict, Field
 
 from gmso.core.parametric_potential import ParametricPotential
 from gmso.utils.expression import PotentialExpression
-
-try:
-    from pydantic.v1 import Field
-except ImportError:
-    from pydantic import Field
 
 
 class PairPotentialType(ParametricPotential):
@@ -34,6 +30,15 @@ class PairPotentialType(ParametricPotential):
         None,
         description="List-like of strs, referring to gmso.Atomtype.name or gmso.Atomtype.atomclass, "
         "defining the members of this pair potential type",
+        alias="member_types",
+    )
+    model_config = ConfigDict(
+        alias_to_fields=dict(
+            **ParametricPotential.model_config["alias_to_fields"],
+            **{
+                "member_types": "member_types_",
+            },
+        ),
     )
 
     def __init__(
@@ -67,8 +72,3 @@ class PairPotentialType(ParametricPotential):
             independent_variables={"r"},
             parameters={"eps": 1 * u.Unit("kJ / mol"), "sigma": 1 * u.nm},
         )
-
-    class Config:
-        fields = {"member_types_": "member_types"}
-
-        alias_to_fields = {"member_types": "member_types_"}

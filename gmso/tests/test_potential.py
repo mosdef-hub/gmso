@@ -276,8 +276,10 @@ class TestPotential(BaseTest):
 
         assert len(top.bond_types) == 2
 
-        btype_dict = btype.dict(exclude={"topology", "set_ref"})
-        btype_clone_dict = btype_clone.dict(exclude={"topology", "set_ref"})
+        btype_dict = btype.model_dump(exclude={"topology", "set_ref"})
+        btype_clone_dict = btype_clone.model_dump(
+            exclude={"topology", "set_ref"}
+        )
 
         for key, value in btype_dict.items():
             cloned = btype_clone_dict[key]

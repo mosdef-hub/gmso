@@ -5,6 +5,7 @@ from typing import Dict
 
 import sympy
 import unyt as u
+from pydantic import ConfigDict, Field, field_validator
 
 from gmso.abc.abstract_potential import AbstractPotential
 from gmso.exceptions import (
@@ -14,11 +15,6 @@ from gmso.exceptions import (
 )
 from gmso.utils.expression import PotentialExpression
 from gmso.utils.singleton import Singleton
-
-try:
-    from pydantic.v1 import Field, validator
-except ImportError:
-    from pydantic import Field, validator
 
 POTENTIAL_JSONS = list(Path(__file__).parent.glob("jsons/*.json"))
 JSON_DIR = Path.joinpath(Path(__file__).parent, "jsons")
@@ -53,7 +49,19 @@ class PotentialTemplate(AbstractPotential):
     """Template for potential objects to be re-used."""
 
     expected_parameters_dimensions_: Dict[str, sympy.Expr] = Field(
-        ..., description="The expected dimensions for parameters."
+        ...,
+        description="The expected dimensions for parameters.",
+        alias="expected_parameters_dimensions",
+    )
+
+    model_config = ConfigDict(
+        frozen=True,
+        alias_to_fields=dict(
+            **AbstractPotential.model_config["alias_to_fields"],
+            **{
+                "expected_parameters_dimensions": "expected_parameters_dimensions_",
+            },
+        ),
     )
 
     def __init__(
@@ -81,7 +89,7 @@ class PotentialTemplate(AbstractPotential):
             expected_parameters_dimensions=expected_parameters_dimensions,
         )
 
-    @validator("expected_parameters_dimensions_", pre=True, always=True)
+    @field_validator("expected_parameters_dimensions_", mode="before")
     def validate_expected_parameters(cls, dim_dict):
         """Validate the expected parameters and dimensions for this template."""
         if not isinstance(dim_dict, Dict):
@@ -148,17 +156,6 @@ class PotentialTemplate(AbstractPotential):
                     f"So, a {self.__class__.__name__} cannot be instantiated using the provided "
                     f"parameters: {parameters}"
                 )
-
-    class Config:
-        """Pydantic configuration for potential template."""
-
-        allow_mutation = False
-        fields = {
-            "expected_parameters_dimensions_": "expected_parameters_dimensions"
-        }
-        alias_to_fields = {
-            "expected_parameters_dimensions": "expected_parameters_dimensions_"
-        }
 
 
 class PotentialTemplateLibrary(Singleton):

@@ -1,3 +1,5 @@
+import json
+
 import pytest
 import unyt as u
 
@@ -43,21 +45,21 @@ class TestSerialization(BaseTest):
     def test_atom_to_json_loop(self, typed_ethane, are_equivalent_atoms):
         atoms_to_test = typed_ethane.sites
         for atom in atoms_to_test:
-            atom_json = atom.json()
-            atom_copy = Atom.parse_raw(atom_json)
+            atom_json = atom.model_dump_json()
+            atom_copy = Atom.model_validate(json.loads(atom_json))
             assert are_equivalent_atoms(atom, atom_copy)
 
     def test_atom_types_to_json_loop(self, typed_ethane):
         atom_types_to_test = typed_ethane.atom_types
         for atom_type in atom_types_to_test:
-            atom_type_json = atom_type.json()
-            atom_type_copy = AtomType.parse_raw(atom_type_json)
+            atom_type_json = atom_type.model_dump_json()
+            atom_type_copy = AtomType.model_validate(json.loads(atom_type_json))
             assert atom_type_copy == atom_type
 
     def test_bond_to_json_loop(self, typed_ethane, are_equivalent_atoms):
         for bond in typed_ethane.bonds:
-            bond_json = bond.json()
-            bond_copy = Bond.parse_raw(bond_json)
+            bond_json = bond.model_dump_json()
+            bond_copy = Bond.model_validate(json.loads(bond_json))
             assert bond_copy.name == bond.name
             for member1, member2 in zip(
                 bond.connection_members, bond_copy.connection_members
@@ -68,14 +70,14 @@ class TestSerialization(BaseTest):
     def test_bond_type_to_json_loop(self, typed_ethane):
         bond_types_to_test = typed_ethane.bond_types
         for bond_type in bond_types_to_test:
-            bond_type_json = bond_type.json()
-            bond_type_copy = BondType.parse_raw(bond_type_json)
+            bond_type_json = bond_type.model_dump_json()
+            bond_type_copy = BondType.model_validate(json.loads(bond_type_json))
             assert bond_type_copy == bond_type
 
     def test_angle_to_json_loop(self, typed_ethane, are_equivalent_atoms):
         for angle in typed_ethane.angles:
-            angle_json = angle.json()
-            angle_copy = Angle.parse_raw(angle_json)
+            angle_json = angle.model_dump_json()
+            angle_copy = Angle.model_validate(json.loads(angle_json))
             for member1, member2 in zip(
                 angle.connection_members, angle_copy.connection_members
             ):
@@ -85,14 +87,16 @@ class TestSerialization(BaseTest):
     def test_angle_type_to_json_loop(self, typed_ethane):
         angle_types_to_test = typed_ethane.angle_types
         for angle_type in angle_types_to_test:
-            angle_type_json = angle_type.json()
-            angle_type_copy = AngleType.parse_raw(angle_type_json)
+            angle_type_json = angle_type.model_dump_json()
+            angle_type_copy = AngleType.model_validate(
+                json.loads(angle_type_json)
+            )
             assert angle_type_copy == angle_type
 
     def test_dihedral_to_json_loop(self, typed_ethane, are_equivalent_atoms):
         for dihedral in typed_ethane.dihedrals:
-            dihedral_json = dihedral.json()
-            dihedral_copy = Dihedral.parse_raw(dihedral_json)
+            dihedral_json = dihedral.model_dump_json()
+            dihedral_copy = Dihedral.model_validate(json.loads(dihedral_json))
             for member1, member2 in zip(
                 dihedral.connection_members, dihedral_copy.connection_members
             ):
@@ -102,14 +106,16 @@ class TestSerialization(BaseTest):
     def test_dihedral_types_to_json_loop(self, typed_ethane):
         dihedral_types_to_test = typed_ethane.dihedral_types
         for dihedral_type in dihedral_types_to_test:
-            dihedral_type_json = dihedral_type.json()
-            dihedral_type_copy = DihedralType.parse_raw(dihedral_type_json)
+            dihedral_type_json = dihedral_type.model_dump_json()
+            dihedral_type_copy = DihedralType.model_validate(
+                json.loads(dihedral_type_json)
+            )
             assert dihedral_type_copy == dihedral_type
 
     def test_improper_to_json_loop(self, typed_ethane, are_equivalent_atoms):
         for improper in typed_ethane.impropers:
-            improper_json = improper.json()
-            improper_copy = Improper.parse_raw(improper_json)
+            improper_json = improper.model_dump_json()
+            improper_copy = Improper.model_validate(json.loads(improper_json))
             for member1, member2 in zip(
                 improper_copy.connection_members, improper.connection_members
             ):
@@ -119,8 +125,10 @@ class TestSerialization(BaseTest):
     def test_improper_types_to_json_loop(self, typed_ethane):
         improper_types_to_test = typed_ethane.improper_types
         for improper_type in improper_types_to_test:
-            improper_type_json = improper_type.json()
-            improper_type_copy = ImproperType.parse_raw(improper_type_json)
+            improper_type_json = improper_type.model_dump_json()
+            improper_type_copy = ImproperType.model_validate(
+                json.loads(improper_type_json)
+            )
             improper_type_copy.topology = improper_type.topology
             assert improper_type_copy == improper_type
 
@@ -135,7 +143,7 @@ class TestSerialization(BaseTest):
             atom_type=full_atom_type,
         )
 
-        atom_copy = Atom.parse_raw(atom.json())
+        atom_copy = Atom.model_validate(atom.json_dict())
         assert are_equivalent_atoms(atom, atom_copy)
 
     def test_bond_every_field_set(self, full_atom_type, are_equivalent_atoms):
@@ -168,7 +176,7 @@ class TestSerialization(BaseTest):
             independent_variables={"c"},
         )
 
-        bond_copy = Bond.parse_raw(bond.json())
+        bond_copy = Bond.model_validate(bond.json_dict())
         assert bond_copy.name == bond.name
         for member1, member2 in zip(
             bond.connection_members, bond_copy.connection_members
@@ -178,13 +186,13 @@ class TestSerialization(BaseTest):
 
     def test_include_and_exclude(self):
         atom = Atom(mass=2.0 * u.g / u.mol, charge=30.0 * u.C, name="TestAtom")
-        atom_json = atom.json(exclude={"mass"})
+        atom_json = atom.model_dump_json(exclude={"mass"})
         assert "mass" not in atom_json
-        atom_json = atom.json(exclude={"mass_"})
+        atom_json = atom.model_dump_json(exclude={"mass_"})
         assert "mass" not in atom_json
-        atom_json = atom.json(include={"mass"})
+        atom_json = atom.model_dump_json(include={"mass"})
         assert "name" not in atom_json
-        atom_json = atom.json(include={"mass_"})
+        atom_json = atom.model_dump_json(include={"mass_"})
         assert "name" not in atom_json
 
     def test_full_serialization(

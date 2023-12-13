@@ -181,7 +181,7 @@ def _from_json(json_dict):
     id_to_type_map = {}
     for atom_dict in json_dict["atoms"]:
         atom_type_id = atom_dict.pop("atom_type", None)
-        atom = Atom.parse_obj(atom_dict)
+        atom = Atom.model_validate(atom_dict)
         top.add_site(atom)
         if atom_type_id:
             if not id_to_type_map.get(atom_type_id):
@@ -194,7 +194,7 @@ def _from_json(json_dict):
             top._sites[member_idx]
             for member_idx in bond_dict["connection_members"]
         ]
-        bond = Bond.parse_obj(bond_dict)
+        bond = Bond.model_validate(bond_dict)
         top.add_connection(bond)
         if bond_type_id:
             if not id_to_type_map.get(bond_type_id):
@@ -207,7 +207,7 @@ def _from_json(json_dict):
             top._sites[member_idx]
             for member_idx in angle_dict["connection_members"]
         ]
-        angle = Angle.parse_obj(angle_dict)
+        angle = Angle.model_validate(angle_dict)
         top.add_connection(angle)
         if angle_type_id:
             if not id_to_type_map.get(angle_type_id):
@@ -220,7 +220,7 @@ def _from_json(json_dict):
             top._sites[member_idx]
             for member_idx in dihedral_dict["connection_members"]
         ]
-        dihedral = Dihedral.parse_obj(dihedral_dict)
+        dihedral = Dihedral.model_validate(dihedral_dict)
         top.add_connection(dihedral)
         if dihedral_type_id:
             if not id_to_type_map.get(dihedral_type_id):
@@ -233,7 +233,7 @@ def _from_json(json_dict):
             top._sites[member_idx]
             for member_idx in improper_dict["connection_members"]
         ]
-        improper = Improper.parse_obj(improper_dict)
+        improper = Improper.model_validate(improper_dict)
         if improper_type_id:
             if not id_to_type_map.get(improper_type_id):
                 id_to_type_map[improper_type_id] = []
@@ -241,7 +241,7 @@ def _from_json(json_dict):
 
     for atom_type_dict in json_dict["atom_types"]:
         atom_type_id = atom_type_dict.pop("id", None)
-        atom_type = AtomType.parse_obj(atom_type_dict)
+        atom_type = AtomType.model_validate(atom_type_dict)
         if atom_type_id in id_to_type_map:
             for associated_atom in id_to_type_map[atom_type_id]:
                 associated_atom.atom_type = atom_type
@@ -254,7 +254,7 @@ def _from_json(json_dict):
     ]:
         for connection_type_dict in connection_types:
             connection_type_id = connection_type_dict.pop("id")
-            connection_type = Creator.parse_obj(connection_type_dict)
+            connection_type = Creator.model_validate(connection_type_dict)
             if connection_type_id in id_to_type_map:
                 for associated_connection in id_to_type_map[connection_type_id]:
                     setattr(associated_connection, attr, connection_type)
@@ -273,7 +273,7 @@ def _from_json(json_dict):
 
     # AtomTypes need to be updated for pairpotentialtype addition
     for pair_potentialtype_dict in json_dict["pair_potentialtypes"]:
-        pair_potentialtype = PairPotentialType.parse_obj(
+        pair_potentialtype = PairPotentialType.model_validate(
             pair_potentialtype_dict
         )
         top.add_pairpotentialtype(pair_potentialtype, update=False)
