@@ -50,7 +50,6 @@ class PotentialTemplate(AbstractPotential):
 
     expected_parameters_dimensions_: Dict[str, sympy.Expr] = Field(
         ..., description="The expected dimensions for parameters."
-
     )
 
     model_config = ConfigDict(

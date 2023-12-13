@@ -67,19 +67,18 @@ class Atom(Site):
         Refer to https://manual.gromacs.org/current/reference-manual/topologies/topology-file-formats.html
         for more information.
         """,
-
-    model_config = ConfigDict(
-        alias_to_fields=dict(
-            **Site.model_config["alias_to_fields"],
-            **{
-                "charge": "charge_",
-                "mass": "mass_",
-                "element": "element_",
-                "atom_type": "atom_type_",
-                "restraint": "restraint_",
-            },
+        model_config=ConfigDict(
+            alias_to_fields=dict(
+                **Site.model_config["alias_to_fields"],
+                **{
+                    "charge": "charge_",
+                    "mass": "mass_",
+                    "element": "element_",
+                    "atom_type": "atom_type_",
+                    "restraint": "restraint_",
+                },
+            ),
         ),
-    )
     )
 
     @property
@@ -141,8 +140,7 @@ class Atom(Site):
             return None
         else:
             converted_restraint = {
-                key: unyt_to_dict(val)
-                for key, val in restraint_.items()
+                key: unyt_to_dict(val) for key, val in restraint_.items()
             }
         return converted_restraint
 
