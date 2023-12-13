@@ -141,8 +141,7 @@ class Atom(Site):
             return None
         else:
             converted_restraint = {
-                key: unyt_to_dict(val)
-                for key, val in restraint_.items()
+                key: unyt_to_dict(val) for key, val in restraint_.items()
             }
         return converted_restraint
 
