@@ -33,11 +33,7 @@ class AbstractPotential(GMSOBase):
         description="The mathematical expression for the potential",
         alias="potential_expression",
     )
-    # expected_parameters_dimensions_: Dict[str, Any] = Field(
-    #     dict(),
-    #     description="The expected unit dimensions of all the parameters",
-    #     alias="expected_parameters_dimensions",
-    # )
+
     tags_: Dict[str, Any] = Field(
         {},
         description="Tags associated with the potential",
@@ -47,7 +43,6 @@ class AbstractPotential(GMSOBase):
         alias_to_fields={
             "name": "name_",
             "potential_expression": "potential_expression_",
-            # "expected_parameters_dimensions": "expected_parameters_dimensions_",
             "tags": "tags_",
         }
     )

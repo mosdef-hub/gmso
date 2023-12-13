@@ -1228,6 +1228,30 @@ class Topology(object):
 
         return index
 
+    def write_forcefield(self, filename, overwrite=False):
+        """Save an xml file for all parameters found in the topology.
+
+        Parameters
+        ----------
+        filename: Union[str, pathlib.Path], default=None
+            The filename to write the XML file to
+        overwrite: bool, default=False
+            If True, overwrite an existing file if it exists
+
+        Notes
+        -----
+        This method can be used to save a small, trimmed down forcefield
+        from a larger forcefield (e.g. oplsaa). This is useful for
+        editing, saving, and sharing forcefield parameters.
+
+        Raises
+        ------
+        GMSOError
+            If the topology is untyped
+        """
+        ff = self.get_forcefield()
+        ff.to_xml(filename=filename, overwrite=overwrite)
+
     def to_dataframe(self, parameter="sites", site_attrs=None, unyts_bool=True):
         """Return a pandas dataframe object for the sites in a topology
 

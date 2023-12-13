@@ -59,6 +59,15 @@ class Atom(Site):
         None, description="AtomType associated with the atom", alias="atom_type"
     )
 
+    restraint_: Optional[dict] = Field(
+        default=None,
+        description="""
+        Restraint for this atom, must be a dict with the following keys:
+        'kx', 'ky', 'kz' (unit of energy/(mol * length**2),
+        Refer to https://manual.gromacs.org/current/reference-manual/topologies/topology-file-formats.html
+        for more information.
+        """,
+
     model_config = ConfigDict(
         alias_to_fields=dict(
             **Site.model_config["alias_to_fields"],
@@ -67,8 +76,10 @@ class Atom(Site):
                 "mass": "mass_",
                 "element": "element_",
                 "atom_type": "atom_type_",
+                "restraint": "restraint_",
             },
         ),
+    )
     )
 
     @property
@@ -105,6 +116,11 @@ class Atom(Site):
         """Return the atom_type associated with the atom."""
         return self.__dict__.get("atom_type_", None)
 
+    @property
+    def restraint(self):
+        """Return the restraint of this atom."""
+        return self.__dict__.get("restraint_")
+
     @field_serializer("charge_")
     def serialize_charge(self, charge_: Union[u.unyt_quantity, None]):
         if charge_ is None:
@@ -118,6 +134,17 @@ class Atom(Site):
             return None
         else:
             return unyt_to_dict(mass_)
+
+    @field_serializer("restraint_")
+    def serialize_restraint(self, restraint_: Union[dict, None]):
+        if restraint_ is None:
+            return None
+        else:
+            converted_restraint = {
+                key: unyt_to_dict(val)
+                for key, val in restraint_.items()
+            }
+        return converted_restraint
 
     def clone(self):
         """Clone this atom."""
