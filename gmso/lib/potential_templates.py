@@ -49,7 +49,7 @@ class PotentialTemplate(AbstractPotential):
     """Template for potential objects to be re-used."""
 
     expected_parameters_dimensions_: Dict[str, sympy.Expr] = Field(
-        ..., description="The expected dimensions for parameters."
+        ..., description="The expected dimensions for parameters.", alias="expected_parameters_dimensions"
     )
 
     model_config = ConfigDict(
