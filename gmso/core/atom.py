@@ -67,6 +67,7 @@ class Atom(Site):
         Refer to https://manual.gromacs.org/current/reference-manual/topologies/topology-file-formats.html
         for more information.
         """,
+    )
 
     model_config = ConfigDict(
         alias_to_fields=dict(
@@ -79,7 +80,6 @@ class Atom(Site):
                 "restraint": "restraint_",
             },
         ),
-    )
     )
 
     @property

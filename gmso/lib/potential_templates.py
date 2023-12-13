@@ -54,6 +54,7 @@ class PotentialTemplate(AbstractPotential):
     )
 
     model_config = ConfigDict(
+        frozen=True,
         alias_to_fields=dict(
             **AbstractPotential.model_config["alias_to_fields"],
             **{
@@ -154,12 +155,6 @@ class PotentialTemplate(AbstractPotential):
                     f"So, a {self.__class__.__name__} cannot be instantiated using the provided "
                     f"parameters: {parameters}"
                 )
-
-    # TODO[pydantic]: The following keys were removed: `allow_mutation`, `fields`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
-    model_config = ConfigDict(
-        frozen=True,
-    )
 
 
 class PotentialTemplateLibrary(Singleton):

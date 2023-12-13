@@ -11,7 +11,6 @@ from pydantic import (
     StrictStr,
     field_serializer,
     field_validator,
-    validator,
 )
 from unyt.exceptions import InvalidUnitOperation
 
