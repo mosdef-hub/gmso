@@ -82,22 +82,24 @@ class GMSO_UnitRegistry(object):
 
 def register_general_units(reg: u.UnitRegistry):
     """Register units that are generally useful to a basic unyt UnitSystem."""
-    conversion = 1 * getattr(u.physical_constants, "elementary_charge").value
-    dim = u.dimensions.current_mks * u.dimensions.time
+    elementary_charge_conversion = 1 * getattr(u.physical_constants, "elementary_charge").value
+    charge_dim = u.dimensions.current_mks * u.dimensions.time
     reg.add(
         "elementary_charge",
-        conversion,
-        dim,
+        elementary_charge_conversion,
+        charge_dim,
         r"\rm{e}",
     )  # proton charge
-    conversion = (
+
+    kb_conversion = (
         1 * getattr(u.physical_constants, "boltzmann_constant_mks").value
     )
-    dim = u.dimensions.energy / u.dimensions.temperature
+    kb_dim = u.dimensions.energy / u.dimensions.temperature
     reg.add(
-        "kb", base_value=conversion, dimensions=dim, tex_repr=r"\rm{kb}"
+        "kb", base_value=kb_conversion, dimensions=kb_dim, tex_repr=r"\rm{kb}"
     )  # boltzmann temperature
-    conversion = (
+
+    bohr_rad_conversion = (
         4
         * np.pi
         * getattr(u.physical_constants, "reduced_planck_constant").value ** 2
@@ -107,30 +109,32 @@ def register_general_units(reg: u.UnitRegistry):
             * getattr(u.physical_constants, "electron_mass").value
         )
     )
-    dim = u.dimensions.length
+    bohr_rad_dim = u.dimensions.length
     reg.add(
-        "a0", base_value=conversion, dimensions=dim, tex_repr=r"\rm{a0}"
+        "a0", base_value=bohr_rad_conversion, dimensions=bohr_rad_dim, tex_repr=r"\rm{a0}"
     )  # bohr radius
-    conversion = (
+
+    hartree_conversion = (
         getattr(u.physical_constants, "reduced_planck_constant").value ** 2
         / u.Unit("a0", registry=reg).base_value ** 2
         / getattr(u.physical_constants, "electron_mass").value
     )
-    dim = u.dimensions.energy
+    hartree_dim = u.dimensions.energy
     reg.add(
         "Ehartree",
-        base_value=conversion,
-        dimensions=dim,
+        base_value=hartree_conversion,
+        dimensions=hartree_dim,
         tex_repr=r"\rm{Ehartree}",
     )  # Hartree energy
-    conversion = np.sqrt(
+
+    static_coulomb_conversion = np.sqrt(
         10**9 / (4 * np.pi * getattr(u.physical_constants, "eps_0").value)
     )
-    dim = u.dimensions.charge
+    charge_dim = u.dimensions.charge
     reg.add(
         "Statcoulomb_charge",
-        base_value=conversion,
-        dimensions=dim,
+        base_value=static_coulomb_conversion,
+        dimensions=charge_dim,
         tex_repr=r"\rm{Statcoulomb_charge}",
     )  # Static charge
 
