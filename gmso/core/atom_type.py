@@ -7,7 +7,6 @@ from pydantic import ConfigDict, Field, field_serializer, field_validator
 
 from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.core.parametric_potential import ParametricPotential
-from gmso.utils.units import GMSO_UnitRegistry
 from gmso.utils._constants import UNIT_WARNING_STRING
 from gmso.utils.expression import PotentialExpression
 from gmso.utils.misc import (
@@ -15,6 +14,7 @@ from gmso.utils.misc import (
     unyt_compare,
     unyt_to_hashable,
 )
+from gmso.utils.units import GMSO_UnitRegistry
 
 
 class AtomType(ParametricPotential):
@@ -255,7 +255,9 @@ class AtomType(ParametricPotential):
             warnings.warn(
                 UNIT_WARNING_STRING.format("Charges", "elementary charge")
             )
-            charge *= u.Unit("elementary_charge", registry=GMSO_UnitRegistry().reg_)
+            charge *= u.Unit(
+                "elementary_charge", registry=GMSO_UnitRegistry().reg_
+            )
         else:
             ensure_valid_dimensions(charge, u.elementary_charge)
 

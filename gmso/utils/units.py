@@ -82,7 +82,9 @@ class GMSO_UnitRegistry(object):
 
 def register_general_units(reg: u.UnitRegistry):
     """Register units that are generally useful to a basic unyt UnitSystem."""
-    elementary_charge_conversion = 1 * getattr(u.physical_constants, "elementary_charge").value
+    elementary_charge_conversion = (
+        1 * getattr(u.physical_constants, "elementary_charge").value
+    )
     charge_dim = u.dimensions.current_mks * u.dimensions.time
     reg.add(
         "elementary_charge",
@@ -111,7 +113,10 @@ def register_general_units(reg: u.UnitRegistry):
     )
     bohr_rad_dim = u.dimensions.length
     reg.add(
-        "a0", base_value=bohr_rad_conversion, dimensions=bohr_rad_dim, tex_repr=r"\rm{a0}"
+        "a0",
+        base_value=bohr_rad_conversion,
+        dimensions=bohr_rad_dim,
+        tex_repr=r"\rm{a0}",
     )  # bohr radius
 
     hartree_conversion = (

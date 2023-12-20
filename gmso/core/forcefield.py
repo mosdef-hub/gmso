@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Iterable
 
 from lxml import etree
-
 from pydantic import ValidationError
 
 from gmso.core.element import element_by_symbol
@@ -579,11 +578,11 @@ class ForceField(object):
             loader = FoyerFFs()
             ff = loader.load(filename).to_gmso_ff()
             ff.units = {
-                    "energy": "kJ",
-                    "distance": "nm",
-                    "mass": "amu",
-                    "charge": "elementary_charge",
-                }
+                "energy": "kJ",
+                "distance": "nm",
+                "mass": "amu",
+                "charge": "elementary_charge",
+            }
         return ff
 
     def to_xml(self, filename, overwrite=False, backend="gmso"):
