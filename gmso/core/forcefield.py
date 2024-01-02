@@ -8,10 +8,7 @@ from typing import Iterable
 
 from lxml import etree
 
-try:
-    from pydantic.v1 import ValidationError
-except:
-    from pydantic import ValidationError
+from pydantic import ValidationError
 
 from gmso.core.element import element_by_symbol
 from gmso.exceptions import (
