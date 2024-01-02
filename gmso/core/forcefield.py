@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Iterable
 
 from lxml import etree
-
 from pydantic import ValidationError
 
 from gmso.core.element import element_by_symbol
