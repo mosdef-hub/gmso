@@ -153,3 +153,35 @@ class TestDihedral(BaseTest):
             tuple(dihedral.connection_members)
             in dihedral_not_eq.equivalent_members()
         )
+
+    def test_sort_dihedral_types(self):
+        from gmso.utils.sorting import sort_by_classes, sort_by_types
+
+        atom1 = Atom(
+            name="atom1", position=[0, 0, 0], atom_type=AtomType(name="A")
+        )
+        atom2 = Atom(
+            name="atom2", position=[1, 0, 0], atom_type=AtomType(name="B")
+        )
+        atom3 = Atom(
+            name="atom3", position=[1, 1, 0], atom_type=AtomType(name="C")
+        )
+        atom4 = Atom(
+            name="atom4", position=[1, 1, 4], atom_type=AtomType(name="D")
+        )
+
+        consituentList = [
+            atom2.atom_type.name,
+            atom4.atom_type.name,
+            atom3.atom_type.name,
+            atom1.atom_type.name,
+        ]
+        dihtype = DihedralType(
+            member_types=consituentList, member_classes=consituentList
+        )
+
+        expected_sortingList = tuple(
+            [atom.atom_type.name for atom in [atom1, atom3, atom4, atom2]]
+        )
+        assert sort_by_classes(dihtype) == expected_sortingList
+        assert sort_by_types(dihtype) == expected_sortingList
