@@ -21,7 +21,7 @@ from gmso.core.pairpotential_type import PairPotentialType
 from gmso.formats.formats_registry import loads_as, saves_as
 
 
-def _to_json(top, types=False, update=True):
+def _to_json(top, types=True, update=False):
     """Return a json serializable dictionary from a topology.
 
     This method is used for json serializing the topology
@@ -30,7 +30,7 @@ def _to_json(top, types=False, update=True):
     ----------
     top: gmso.Topology, required
         The topology
-    types: bool, default=False
+    types: bool, default=True
         If true, include type info (i.e. Potentials)
     update: bool, default=False
         If true, update the topology before iterating through the files
@@ -282,7 +282,7 @@ def _from_json(json_dict):
 
 
 @saves_as(".json")
-def write_json(top, filename, **kwargs):
+def write_json(top, filename, types=True, update=False, **kwargs):
     """Save the topology as a JSON file.
 
     Parameters
@@ -291,11 +291,15 @@ def write_json(top, filename, **kwargs):
         The topology to save
     filename: str, pathlib.Path
         The file to save to topology to, must be suffixed with .json
+    types: bool, default=True
+        If true, include type info (i.e. Potentials)
+    update: bool, default=False
+        If true, update the topology before iterating through the files
     **kwargs: dict
         The keyword arguments to _to_json and json.dump methods
     """
     json_dict = _to_json(
-        top, update=kwargs.pop("update", True), types=kwargs.pop("types", False)
+        top, update=update, types=types,
     )
     if not isinstance(filename, Path):
         filename = Path(filename).resolve()
