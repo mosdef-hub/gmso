@@ -502,6 +502,7 @@ def _get_connection(filename, topology, base_unyts, connection_type):
             site_list.append(site)
         ctype = copy.copy(connection_type_list[int(line.split()[1]) - 1])
         ctype.member_types = tuple(map(lambda x: x.atom_type.name, site_list))
+        ctype.member_classes = ctype.member_types
         if connection_type == "bond":
             connection = Bond(
                 connection_members=site_list,

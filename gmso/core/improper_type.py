@@ -2,14 +2,10 @@
 from typing import Optional, Tuple
 
 import unyt as u
+from pydantic import ConfigDict, Field
 
 from gmso.core.parametric_potential import ParametricPotential
 from gmso.utils.expression import PotentialExpression
-
-try:
-    from pydantic.v1 import Field
-except ImportError:
-    from pydantic import Field
 
 
 class ImproperType(ParametricPotential):
@@ -44,12 +40,23 @@ class ImproperType(ParametricPotential):
         None,
         description="List-like of gmso.AtomType.name "
         "defining the members of this improper type",
+        alias="member_types",
     )
 
     member_classes_: Optional[Tuple[str, str, str, str]] = Field(
         None,
         description="List-like of gmso.AtomType.atomclass "
         "defining the members of this improper type",
+        alias="member_classes",
+    )
+    model_config = ConfigDict(
+        alias_to_fields=dict(
+            **ParametricPotential.model_config["alias_to_fields"],
+            **{
+                "member_types": "member_types_",
+                "member_classes": "member_classes_",
+            },
+        ),
     )
 
     def __init__(
@@ -93,16 +100,3 @@ class ImproperType(ParametricPotential):
             },
             independent_variables={"phi"},
         )
-
-    class Config:
-        """Pydantic configuration for attributes."""
-
-        fields = {
-            "member_types_": "member_types",
-            "member_classes_": "member_classes",
-        }
-
-        alias_to_fields = {
-            "member_types": "member_types_",
-            "member_classes": "member_classes_",
-        }

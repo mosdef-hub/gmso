@@ -1,14 +1,11 @@
 """Support for 3-partner connections between gmso.core.Atoms."""
 from typing import Callable, ClassVar, Optional, Tuple
 
+from pydantic import ConfigDict, Field
+
 from gmso.abc.abstract_connection import Connection
 from gmso.core.angle_type import AngleType
 from gmso.core.atom import Atom
-
-try:
-    from pydantic.v1 import Field
-except ImportError:
-    from pydantic import Field
 
 
 class Angle(Connection):
@@ -24,14 +21,18 @@ class Angle(Connection):
         __eq__, __repr__, _validate methods
     Additional _validate methods are presented
     """
-    __members_creator__: ClassVar[Callable] = Atom.parse_obj
+    __members_creator__: ClassVar[Callable] = Atom.model_validate
 
     connection_members_: Tuple[Atom, Atom, Atom] = Field(
-        ..., description="The 3 atoms involved in the angle."
+        ...,
+        description="The 3 atoms involved in the angle.",
+        alias="connection_members",
     )
 
     angle_type_: Optional[AngleType] = Field(
-        default=None, description="AngleType of this angle."
+        default=None,
+        description="AngleType of this angle.",
+        alias="angle_type",
     )
 
     restraint_: Optional[dict] = Field(
@@ -42,6 +43,16 @@ class Angle(Connection):
         Refer to https://manual.gromacs.org/current/reference-manual/topologies/topology-file-formats.html
         for more information.
         """,
+        alias="restraint",
+    )
+    model_config = ConfigDict(
+        alias_to_fields=dict(
+            **Connection.model_config["alias_to_fields"],
+            **{
+                "angle_type": "angle_type_",
+                "restraint": "restraint_",
+            }
+        )
     )
 
     @property
@@ -85,17 +96,3 @@ class Angle(Connection):
             super(Angle, self).__setattr__("angle_type", value)
         else:
             super(Angle, self).__setattr__(key, value)
-
-    class Config:
-        """Support pydantic configuration for attributes and behavior."""
-
-        fields = {
-            "connection_members_": "connection_members",
-            "angle_type_": "angle_type",
-            "restraint_": "restraint",
-        }
-        alias_to_fields = {
-            "connection_members": "connection_members_",
-            "angle_type": "angle_type_",
-            "restraint": "restraint_",
-        }

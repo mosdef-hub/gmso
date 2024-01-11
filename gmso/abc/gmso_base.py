@@ -4,16 +4,12 @@ import warnings
 from abc import ABC
 from typing import Any, ClassVar, Type
 
-from gmso.abc import GMSOJSONHandler
+from pydantic import BaseModel, ConfigDict, validators
+
 from gmso.abc.auto_doc import apply_docs
 from gmso.abc.serialization_utils import dict_to_unyt
 
-try:
-    from pydantic.v1 import BaseModel
-    from pydantic.v1.validators import dict_validator
-except ImportError:
-    from pydantic import BaseModel
-    from pydantic.validators import dict_validator
+dict_validator = validators.getattr_migration("dict_validator")
 
 
 class GMSOBase(BaseModel, ABC):
@@ -25,6 +21,13 @@ class GMSOBase(BaseModel, ABC):
 
     __docs_generated__: ClassVar[bool] = False
 
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        validate_assignment=True,
+        extra="forbid",
+        populate_by_name=True,
+    )
+
     def __hash__(self):
         """Return the unique hash of the object."""
         return id(self)
@@ -35,9 +38,9 @@ class GMSOBase(BaseModel, ABC):
 
     def __setattr__(self, name: Any, value: Any) -> None:
         """Set the attributes of the object."""
-        if name in self.__config__.alias_to_fields:
-            name = self.__config__.alias_to_fields[name]
-        elif name in self.__config__.alias_to_fields.values():
+        if name in self.model_config.get("alias_to_fields"):
+            name = self.model_config.get("alias_to_fields")[name]
+        elif name in self.model_config.get("alias_to_fields").values():
             warnings.warn(
                 "Use of internal fields is discouraged. "
                 "Please use external fields to set attributes."
@@ -62,14 +65,43 @@ class GMSOBase(BaseModel, ABC):
         apply_docs(cls, map_names=True, silent=False)
 
     @classmethod
-    def parse_obj(cls: Type["Model"], obj: Any) -> "Model":
+    def model_validate(cls: Type["Model"], obj: Any) -> "Model":
         dict_to_unyt(obj)
-        return super(GMSOBase, cls).parse_obj(obj)
+        return super(GMSOBase, cls).model_validate(obj)
 
-    def dict(self, **kwargs) -> "DictStrAny":
+    def model_dump(self, **kwargs) -> "DictStrAny":
         kwargs["by_alias"] = True
-        super_dict = super(GMSOBase, self).dict(**kwargs)
+
+        additional_excludes = set()
+        if "exclude" in kwargs:
+            for term in kwargs["exclude"]:
+                if term in self.model_config["alias_to_fields"]:
+                    additional_excludes.add(
+                        self.model_config["alias_to_fields"][term]
+                    )
+            kwargs["exclude"] = kwargs["exclude"].union(additional_excludes)
+        super_dict = super(GMSOBase, self).model_dump(**kwargs)
         return super_dict
+
+    def model_dump_json(self, **kwargs):
+        kwargs["by_alias"] = True
+
+        additional_excludes = set()
+        if "exclude" in kwargs:
+            for term in kwargs["exclude"]:
+                if term in self.model_config["alias_to_fields"]:
+                    additional_excludes.add(
+                        self.model_config["alias_to_fields"][term]
+                    )
+            kwargs["exclude"] = kwargs["exclude"].union(additional_excludes)
+        super_dict = super(GMSOBase, self).model_dump_json(**kwargs)
+
+        return super_dict
+
+    def json_dict(self, **kwargs):
+        """Return a JSON serializable dictionary from the object"""
+        raw_json = self.model_dump_json(**kwargs)
+        return json.loads(raw_json)
 
     def _iter(self, **kwargs) -> "TupleGenerator":
         exclude = kwargs.get("exclude")
@@ -95,18 +127,6 @@ class GMSOBase(BaseModel, ABC):
 
         yield from super()._iter(**kwargs)
 
-    def json(self, **kwargs):
-        kwargs["by_alias"] = True
-        # FIXME: Pydantic>1.8 doesn't recognize json_encoders without this update
-        self.__config__.json_encoders.update(GMSOJSONHandler.json_encoders)
-
-        return super(GMSOBase, self).json(**kwargs)
-
-    def json_dict(self, **kwargs):
-        """Return a JSON serializable dictionary from the object"""
-        raw_json = self.json(**kwargs)
-        return json.loads(raw_json)
-
     @classmethod
     def validate(cls, value):
         """Ensure that the object is validated before use."""
@@ -119,12 +139,3 @@ class GMSOBase(BaseModel, ABC):
     def __get_validators__(cls) -> "CallableGenerator":
         """Get the validators of the object."""
         yield cls.validate
-
-    class Config:
-        """Pydantic configuration for base object."""
-
-        arbitrary_types_allowed = True
-        alias_to_fields = dict()
-        extra = "forbid"
-        json_encoders = GMSOJSONHandler.json_encoders
-        allow_population_by_field_name = True

@@ -1357,7 +1357,7 @@ class Topology(object):
             }
             for atom_type in self.atom_types:
                 ff.atom_types[atom_type.name] = atom_type.copy(
-                    deep=True, exclude={"topology_", "set_ref_"}
+                    deep=True, exclude={"topology", "set_ref"}
                 )
 
             ff_conn_types = {
@@ -1371,7 +1371,7 @@ class Topology(object):
                 ff_conn_types[type(connection_type)][
                     FF_TOKENS_SEPARATOR.join(connection_type.member_types)
                 ] = connection_type.copy(
-                    deep=True, exclude={"topology_", "set_ref_"}
+                    deep=True, exclude={"topology", "set_ref"}
                 )
 
         return ff

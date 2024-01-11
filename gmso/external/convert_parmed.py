@@ -357,22 +357,28 @@ def _sort_improper_members(top, site_map, atom1, atom2, atom3, atom4):
 def _add_conn_type_from_pmd(
     connStr, pmd_conn, gmso_conn, conn_params, name, expression, variables
 ):
-    """Convert ParmEd dihedral types to GMSO DihedralType.
+    """Create a GMSO connection type and add to the conneciton object.
 
-    This function take in a Parmed Structure, iterate through its
-    dihedral_types, create a corresponding
-    GMSO.DihedralType, and finally return a dictionary containing all
-    pairs of pmd.Dihedraltype and GMSO.DihedralType
+    This function creates the connection type object and add it to the
+    connection object provided.
+
     Parameters
     ----------
-    structure: pmd.Structure
-        Parmed Structure that needed to be converted.
-
-    Returns
-    -------
-    pmd_top_dihedraltypes : dict
-        A dictionary linking a pmd.DihedralType
-        object to its corresponding GMSO.DihedralType object.
+    connStr : str
+        The name of the connection type. Accepted values include
+        "BondType", "AngleType", "DihedralType", and "ImproperType".
+    pmd_conn : pmd.Bond/Angle/Dihedral/Improper
+        The parmed connection object.
+    gmso_conn : gmso.Bond/Angle/Dihedral/Improper
+        The GMSO connection object.
+    conn_params : dict
+        The potential expression parameters in dictionary form.
+    name : str
+        Name of the potential form.
+    expression :  expression
+        The potential expression form.
+    variables : dict
+        The independent variables.
     """
     try:
         member_types = list(

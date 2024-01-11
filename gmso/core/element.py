@@ -2,19 +2,17 @@
 import json
 import warnings
 from re import sub
+from typing import Union
 
 import numpy as np
 import unyt as u
 from pkg_resources import resource_filename
+from pydantic import ConfigDict, Field, field_serializer
 
 from gmso.abc.gmso_base import GMSOBase
+from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.exceptions import GMSOError
 from gmso.utils.misc import unyt_to_hashable
-
-try:
-    from pydantic.v1 import Field
-except ImportError:
-    from pydantic import Field
 
 exported = [
     "element_by_mass",
@@ -42,6 +40,13 @@ class Element(GMSOBase):
 
     mass: u.unyt_quantity = Field(..., description="Mass of the element.")
 
+    @field_serializer("mass")
+    def serialize_mass(self, mass: Union[u.unyt_quantity, None]):
+        if mass is None:
+            return None
+        else:
+            return unyt_to_dict(mass)
+
     def __repr__(self):
         """Representation of the element."""
         return (
@@ -61,11 +66,7 @@ class Element(GMSOBase):
             and self.atomic_number == other.atomic_number
         )
 
-    class Config:
-        """Pydantic configuration for element."""
-
-        arbitrary_types_allowed = True
-        allow_mutation = False
+    model_config = ConfigDict(arbitrary_types_allowed=True, frozen=True)
 
 
 def element_by_symbol(symbol, verbose=False):

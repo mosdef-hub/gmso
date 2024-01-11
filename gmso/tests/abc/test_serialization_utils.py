@@ -1,7 +1,7 @@
 import pytest
 import unyt as u
 
-from gmso.abc.serialization_utils import JSONHandler, dict_to_unyt, unyt_to_dict
+from gmso.abc.serialization_utils import dict_to_unyt, unyt_to_dict
 from gmso.tests.base_test import BaseTest
 
 
@@ -52,9 +52,3 @@ class TestSerializationUtils(BaseTest):
             unyt_dict["level1"]["level2"]["my_quantity"],
             u.unyt_array([-10, 2.5, 100], u.C),
         )
-
-    def test_json_handler(self):
-        handler = JSONHandler()
-        handler.register(int, str, override=False)
-        with pytest.warns(UserWarning):
-            handler.register(int, str, override=True)
