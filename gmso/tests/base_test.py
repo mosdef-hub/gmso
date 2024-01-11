@@ -386,8 +386,10 @@ class BaseTest:
                 if isinstance(x1, u.unyt_array) and isinstance(x2, u.unyt_array)
                 else x1 == x2
             )
-            for prop in atom1.dict(by_alias=True):
-                if not equal(atom2.dict().get(prop), atom1.dict().get(prop)):
+            for prop in atom1.model_dump(by_alias=True):
+                if not equal(
+                    atom2.model_dump().get(prop), atom1.model_dump().get(prop)
+                ):
                     return False
             return True
 

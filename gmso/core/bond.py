@@ -1,14 +1,11 @@
 """Module for 2-partner connections between sites."""
 from typing import Callable, ClassVar, Optional, Tuple
 
+from pydantic import ConfigDict, Field
+
 from gmso.abc.abstract_connection import Connection
 from gmso.core.atom import Atom
 from gmso.core.bond_type import BondType
-
-try:
-    from pydantic.v1 import Field
-except ImportError:
-    from pydantic import Field
 
 
 class Bond(Connection):
@@ -24,14 +21,17 @@ class Bond(Connection):
         __eq__, __repr__, _validate methods.
     Additional _validate methods are presented.
     """
-    __members_creator__: ClassVar[Callable] = Atom.parse_obj
+    __members_creator__: ClassVar[Callable] = Atom.model_validate
 
     connection_members_: Tuple[Atom, Atom] = Field(
-        ..., description="The 2 atoms involved in the bond."
+        ...,
+        description="The 2 atoms involved in the bond.",
+        alias="connection_members",
     )
-
     bond_type_: Optional[BondType] = Field(
-        default=None, description="BondType of this bond."
+        default=None,
+        description="BondType of this bond.",
+        alias="bond_type",
     )
     restraint_: Optional[dict] = Field(
         default=None,
@@ -41,6 +41,16 @@ class Bond(Connection):
         Refer to https://manual.gromacs.org/current/reference-manual/topologies/topology-file-formats.html
         for more information.
         """,
+        alias="restraint",
+    )
+    model_config = ConfigDict(
+        alias_to_fields=dict(
+            **Connection.model_config["alias_to_fields"],
+            **{
+                "bond_type": "bond_type_",
+                "restraint": "restraint_",
+            }
+        )
     )
 
     @property
@@ -51,7 +61,6 @@ class Bond(Connection):
     @property
     def connection_type(self):
         """Return parameters of the potential type."""
-        # ToDo: Deprecate this?
         return self.__dict__.get("bond_type_")
 
     @property
@@ -85,17 +94,3 @@ class Bond(Connection):
             super(Bond, self).__setattr__("bond_type", value)
         else:
             super(Bond, self).__setattr__(key, value)
-
-    class Config:
-        """Pydantic configuration for Bond."""
-
-        fields = {
-            "bond_type_": "bond_type",
-            "connection_members_": "connection_members",
-            "restraint_": "restraint",
-        }
-        alias_to_fields = {
-            "bond_type": "bond_type_",
-            "connection_members": "connection_members_",
-            "restraint": "restraint_",
-        }

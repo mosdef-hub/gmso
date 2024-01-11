@@ -3,17 +3,14 @@ import warnings
 from typing import Optional, Union
 
 import unyt as u
+from pydantic import ConfigDict, Field, field_serializer, field_validator
 
 from gmso.abc.abstract_site import Site
+from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.core.atom_type import AtomType
 from gmso.core.element import Element
 from gmso.utils._constants import UNIT_WARNING_STRING
 from gmso.utils.misc import ensure_valid_dimensions
-
-try:
-    from pydantic.v1 import Field, validator
-except ImportError:
-    from pydantic import Field, validator
 
 
 class Atom(Site):
@@ -43,21 +40,25 @@ class Atom(Site):
         the gmso.abc.abstract site class
     """
     charge_: Optional[Union[u.unyt_quantity, float]] = Field(
-        None,
-        description="Charge of the atom",
+        None, description="Charge of the atom", alias="charge"
     )
 
     mass_: Optional[Union[u.unyt_quantity, float]] = Field(
-        None, description="Mass of the atom"
+        None,
+        description="Mass of the atom",
+        alias="mass",
     )
 
     element_: Optional[Element] = Field(
-        None, description="Element associated with the atom"
+        None,
+        description="Element associated with the atom",
+        alias="element",
     )
 
     atom_type_: Optional[AtomType] = Field(
-        None, description="AtomType associated with the atom"
+        None, description="AtomType associated with the atom", alias="atom_type"
     )
+
     restraint_: Optional[dict] = Field(
         default=None,
         description="""
@@ -66,6 +67,19 @@ class Atom(Site):
         Refer to https://manual.gromacs.org/current/reference-manual/topologies/topology-file-formats.html
         for more information.
         """,
+    )
+
+    model_config = ConfigDict(
+        alias_to_fields=dict(
+            **Site.model_config["alias_to_fields"],
+            **{
+                "charge": "charge_",
+                "mass": "mass_",
+                "element": "element_",
+                "atom_type": "atom_type_",
+                "restraint": "restraint_",
+            },
+        ),
     )
 
     @property
@@ -83,7 +97,7 @@ class Atom(Site):
     @property
     def mass(self) -> Union[u.unyt_quantity, None]:
         """Return the mass of the atom."""
-        mass = self.__dict__.get("mass_", None)
+        mass = self.__dict__.get("mass_", property)
         atom_type = self.__dict__.get("atom_type_", None)
         if mass is not None:
             return mass
@@ -98,7 +112,7 @@ class Atom(Site):
         return self.__dict__.get("element_", None)
 
     @property
-    def atom_type(self) -> Union[AtomType, None]:
+    def atom_type(self) -> Union[AtomType, property]:
         """Return the atom_type associated with the atom."""
         return self.__dict__.get("atom_type_", None)
 
@@ -106,6 +120,30 @@ class Atom(Site):
     def restraint(self):
         """Return the restraint of this atom."""
         return self.__dict__.get("restraint_")
+
+    @field_serializer("charge_")
+    def serialize_charge(self, charge_: Union[u.unyt_quantity, None]):
+        if charge_ is None:
+            return None
+        else:
+            return unyt_to_dict(charge_)
+
+    @field_serializer("mass_")
+    def serialize_mass(self, mass_: Union[u.unyt_quantity, None]):
+        if mass_ is None:
+            return None
+        else:
+            return unyt_to_dict(mass_)
+
+    @field_serializer("restraint_")
+    def serialize_restraint(self, restraint_: Union[dict, None]):
+        if restraint_ is None:
+            return None
+        else:
+            converted_restraint = {
+                key: unyt_to_dict(val) for key, val in restraint_.items()
+            }
+        return converted_restraint
 
     def clone(self):
         """Clone this atom."""
@@ -116,10 +154,12 @@ class Atom(Site):
             molecule=self.molecule,
             residue=self.residue,
             position=self.position,
-            charge=self.charge_,
-            mass=self.mass_,
-            element=self.element_,
-            atom_type=None if not self.atom_type else self.atom_type.clone(),
+            charge=self.charge,
+            mass=self.mass,
+            element=self.element,
+            atom_type=property
+            if not self.atom_type
+            else self.atom_type.clone(),
         )
 
     def __le__(self, other):
@@ -140,7 +180,8 @@ class Atom(Site):
                 f"Cannot compare equality between {type(self)} and {type(other)}"
             )
 
-    @validator("charge_")
+    @field_validator("charge_")
+    @classmethod
     def is_valid_charge(cls, charge):
         """Ensure that the charge is physically meaningful."""
         if charge is None:
@@ -155,7 +196,8 @@ class Atom(Site):
 
         return charge
 
-    @validator("mass_")
+    @field_validator("mass_")
+    @classmethod
     def is_valid_mass(cls, mass):
         """Ensure that the mass is physically meaningful."""
         if mass is None:
@@ -167,26 +209,3 @@ class Atom(Site):
         else:
             ensure_valid_dimensions(mass, default_mass_units)
         return mass
-
-    class Config:
-        """Pydantic configuration for the atom class."""
-
-        extra = "forbid"
-
-        fields = {
-            "charge_": "charge",
-            "mass_": "mass",
-            "element_": "element",
-            "atom_type_": "atom_type",
-            "restraint_": "restraint",
-        }
-
-        alias_to_fields = {
-            "charge": "charge_",
-            "mass": "mass_",
-            "element": "element_",
-            "atom_type": "atom_type_",
-            "restraint": "restraint_",
-        }
-
-        validate_assignment = True

@@ -1,9 +1,11 @@
 """Support non-bonded interactions between sites."""
 import warnings
-from typing import Optional, Set
+from typing import Optional, Set, Union
 
 import unyt as u
+from pydantic import ConfigDict, Field, field_serializer, field_validator
 
+from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.core.parametric_potential import ParametricPotential
 from gmso.utils._constants import UNIT_WARNING_STRING
 from gmso.utils.expression import PotentialExpression
@@ -12,11 +14,6 @@ from gmso.utils.misc import (
     unyt_compare,
     unyt_to_hashable,
 )
-
-try:
-    from pydantic.v1 import Field, validator
-except ImportError:
-    from pydantic import Field, validator
 
 
 class AtomType(ParametricPotential):
@@ -33,33 +30,55 @@ class AtomType(ParametricPotential):
     """
 
     mass_: Optional[u.unyt_array] = Field(
-        0.0 * u.gram / u.mol, description="The mass of the atom type"
+        0.0 * u.gram / u.mol,
+        description="The mass of the atom type",
+        alias="mass",
     )
 
     charge_: Optional[u.unyt_array] = Field(
-        0.0 * u.elementary_charge, description="The charge of the atom type"
+        0.0 * u.elementary_charge,
+        description="The charge of the atom type",
+        alias="charge",
     )
 
     atomclass_: Optional[str] = Field(
-        "", description="The class of the atomtype"
+        "", description="The class of the atomtype", alias="atomclass"
     )
 
     doi_: Optional[str] = Field(
         "",
         description="Digital Object Identifier of publication where this atom type was introduced",
+        alias="doi",
     )
 
     overrides_: Optional[Set[str]] = Field(
         set(),
         description="Set of other atom types that this atom type overrides",
+        alias="overrides",
     )
 
     definition_: Optional[str] = Field(
-        "", description="SMARTS string defining this atom type"
+        "",
+        description="SMARTS string defining this atom type",
+        alias="definition",
     )
 
     description_: Optional[str] = Field(
-        "", description="Description for the AtomType"
+        "", description="Description for the AtomType", alias="description"
+    )
+    model_config = ConfigDict(
+        alias_to_fields=dict(
+            **ParametricPotential.model_config["alias_to_fields"],
+            **{
+                "mass": "mass_",
+                "charge": "charge_",
+                "atomclass": "atomclass_",
+                "doi": "doi_",
+                "overrides": "overrides_",
+                "definition": "definition_",
+                "description": "description_",
+            },
+        ),
     )
 
     def __init__(
@@ -132,6 +151,20 @@ class AtomType(ParametricPotential):
         """Return the SMARTS string of the atom_type."""
         return self.__dict__.get("definition_")
 
+    @field_serializer("charge_")
+    def serialize_charge(self, charge_: Union[u.unyt_quantity, None]):
+        if charge_ is None:
+            return None
+        else:
+            return unyt_to_dict(charge_)
+
+    @field_serializer("mass_")
+    def serialize_mass(self, mass_: Union[u.unyt_quantity, None]):
+        if mass_ is None:
+            return None
+        else:
+            return unyt_to_dict(mass_)
+
     def clone(self, fast_copy=False):
         """Clone this AtomType, faster alternative to deepcopying."""
         return AtomType(
@@ -140,17 +173,21 @@ class AtomType(ParametricPotential):
             expression=None,
             parameters=None,
             independent_variables=None,
-            potential_expression=self.potential_expression_.clone(fast_copy),
-            mass=u.unyt_quantity(self.mass_.value, self.mass_.units),
-            charge=u.unyt_quantity(self.charge_.value, self.charge_.units),
-            atomclass=self.atomclass_,
-            doi=self.doi_,
-            overrides=set(o for o in self.overrides_)
-            if self.overrides_
+            potential_expression=self.potential_expression.clone(fast_copy),
+            mass=u.unyt_quantity(self.mass.value, self.mass.units),
+            charge=u.unyt_quantity(self.charge.value, self.charge.units),
+            atomclass=self.atomclass,
+            doi=self.doi,
+            overrides=set(o for o in self.overrides)
+            if self.overrides
             else None,
-            description=self.description_,
-            definition=self.definition_,
+            description=self.description,
+            definition=self.definition,
         )
+
+    def __hash__(self):
+        """Return the unique hash of the object."""
+        return id(self)
 
     def __eq__(self, other):
         if other is self:
@@ -178,6 +215,12 @@ class AtomType(ParametricPotential):
         attrib = super()._etree_attrib()
         if self.overrides == set():
             attrib.pop("overrides")
+        mass = eval(attrib["mass"])
+        charge = eval(attrib["charge"])
+
+        attrib["mass"] = str(mass["array"])
+        attrib["charge"] = str(charge["array"])
+
         return attrib
 
     def __repr__(self):
@@ -190,7 +233,8 @@ class AtomType(ParametricPotential):
         )
         return desc
 
-    @validator("mass_", pre=True)
+    @field_validator("mass_", mode="before")
+    @classmethod
     def validate_mass(cls, mass):
         """Check to see that a mass is a unyt array of the right dimension."""
         default_mass_units = u.gram / u.mol
@@ -202,7 +246,8 @@ class AtomType(ParametricPotential):
 
         return mass
 
-    @validator("charge_", pre=True)
+    @field_validator("charge_", mode="before")
+    @classmethod
     def validate_charge(cls, charge):
         """Check to see that a charge is a unyt array of the right dimension."""
         if not isinstance(charge, u.unyt_array):
@@ -225,26 +270,3 @@ class AtomType(ParametricPotential):
                 "epsilon": 0.3 * u.Unit("kJ"),
             },
         )
-
-    class Config:
-        """Pydantic configuration of the attributes for an atom_type."""
-
-        fields = {
-            "mass_": "mass",
-            "charge_": "charge",
-            "atomclass_": "atomclass",
-            "overrides_": "overrides",
-            "doi_": "doi",
-            "description_": "description",
-            "definition_": "definition",
-        }
-
-        alias_to_fields = {
-            "mass": "mass_",
-            "charge": "charge_",
-            "atomclass": "atomclass_",
-            "overrides": "overrides_",
-            "doi": "doi_",
-            "description": "description_",
-            "definition": "definition_",
-        }

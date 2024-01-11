@@ -7,11 +7,7 @@ from pathlib import Path
 from typing import Iterable
 
 from lxml import etree
-
-try:
-    from pydantic.v1 import ValidationError
-except:
-    from pydantic import ValidationError
+from pydantic import ValidationError
 
 from gmso.core.element import element_by_symbol
 from gmso.exceptions import (
@@ -578,7 +574,9 @@ class ForceField(object):
         try:
             loader = GMSOFFs()
             ff = loader.load(filename).to_gmso_ff()
-        except (ForceFieldParseError, FileNotFoundError, ValidationError):
+        # Temporarily opt out, pending new forcefield-utilities release
+        # except (ForceFieldParseError, FileNotFoundError, ValidationError):
+        except:
             loader = FoyerFFs()
             ff = loader.load(filename).to_gmso_ff()
         return ff
@@ -598,7 +596,7 @@ class ForceField(object):
             Can be "gmso" or "forcefield-utilities". This will define the methods to
             write the xml.
         """
-        if backend == "gmso" or backend == "GMSO":
+        if backend.lower() == "gmso":
             self._xml_from_gmso(filename, overwrite)
         elif backend in [
             "forcefield_utilities",

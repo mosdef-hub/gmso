@@ -7,8 +7,6 @@ from typing import Dict
 import sympy
 import unyt as u
 
-from gmso.utils.decorators import register_pydantic_json
-
 __all__ = ["PotentialExpression"]
 
 
@@ -30,7 +28,6 @@ def _are_equal_parameters(u1, u2):
         return True
 
 
-@register_pydantic_json(method="json")
 class PotentialExpression:
     """A general Expression class with parameters.
 

@@ -53,7 +53,7 @@ class TestViews(BaseTest):
                     custom_top.sites[j],
                     custom_top.sites[j + 1],
                 ],
-                bond_type=BondType(member_classes=(j, j + 1)),
+                bond_type=BondType(member_classes=(str(j), str(j + 1))),
             )
             custom_top.add_connection(bond)
 
