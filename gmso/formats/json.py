@@ -299,7 +299,9 @@ def write_json(top, filename, types=True, update=False, **kwargs):
         The keyword arguments to _to_json and json.dump methods
     """
     json_dict = _to_json(
-        top, update=update, types=types,
+        top,
+        update=update,
+        types=types,
     )
     if not isinstance(filename, Path):
         filename = Path(filename).resolve()
