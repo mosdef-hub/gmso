@@ -42,8 +42,8 @@ def read_gro(filename):
     Gro files do not specify connections between atoms, the returned topology
     will not have connections between sites either.
 
-    Currently this implementation does not support a gro file with more than 1
-    frame.
+    Currently this implementation does not support parsing velocities from a gro file or gro file
+    with more than 1 frame.
 
     All residues and resid information from the gro file are currently lost
     when converting to `topology`.
@@ -82,6 +82,11 @@ def read_gro(filename):
             site.molecule = (res_name, res_id)
             site.residue = (res_name, res_id)
             top.add_site(site, update_types=False)
+
+        if len(positions) == 6:
+            warnings.warn(
+                "Velocity information presents but will not be parsed."
+            )
         top.update_topology()
 
         # Box information
