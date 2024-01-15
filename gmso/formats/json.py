@@ -41,9 +41,10 @@ def _to_json(top, types=True, update=False):
         A json serializable dictionary representing members of this Topology
     """
     if types and not top.is_typed():
-        raise ValueError(
+        warnings.warn(
             "Cannot incorporate types because the topology is not typed."
         )
+        types = False
 
     if not types and top.is_typed():
         warnings.warn(
