@@ -256,7 +256,7 @@ class AtomType(ParametricPotential):
                 UNIT_WARNING_STRING.format("Charges", "elementary charge")
             )
             charge *= u.Unit(
-                "elementary_charge", registry=GMSO_UnitRegistry().reg_
+                "elementary_charge", registry=GMSO_UnitRegistry().reg
             )
         else:
             ensure_valid_dimensions(charge, u.elementary_charge)
