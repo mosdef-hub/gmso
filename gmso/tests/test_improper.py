@@ -152,3 +152,35 @@ class TestImproper(BaseTest):
             tuple(improper.connection_members)
             in improper_not_eq.equivalent_members()
         )
+
+    def test_sort_improper_types(self):
+        from gmso.utils.sorting import sort_by_classes, sort_by_types
+
+        atom1 = Atom(
+            name="atom1", position=[0, 0, 0], atom_type=AtomType(name="A")
+        )
+        atom2 = Atom(
+            name="atom2", position=[1, 0, 0], atom_type=AtomType(name="B")
+        )
+        atom3 = Atom(
+            name="atom3", position=[1, 1, 0], atom_type=AtomType(name="C")
+        )
+        atom4 = Atom(
+            name="atom4", position=[1, 1, 4], atom_type=AtomType(name="D")
+        )
+
+        consituentList = [
+            atom2.atom_type.name,
+            atom4.atom_type.name,
+            atom3.atom_type.name,
+            atom1.atom_type.name,
+        ]
+        imptype = ImproperType(
+            member_types=consituentList, member_classes=consituentList
+        )
+
+        expected_sortingList = tuple(
+            [atom.atom_type.name for atom in [atom2, atom3, atom4, atom1]]
+        )
+        assert sort_by_classes(imptype) == expected_sortingList
+        assert sort_by_types(imptype) == expected_sortingList
