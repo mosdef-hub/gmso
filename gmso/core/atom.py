@@ -67,6 +67,7 @@ class Atom(Site):
         Refer to https://manual.gromacs.org/current/reference-manual/topologies/topology-file-formats.html
         for more information.
         """,
+        alias="restraint",
     )
 
     model_config = ConfigDict(
