@@ -122,7 +122,8 @@ def sort_by_classes(potential):
     elif isinstance(potential, ImproperType):
         return (
             potential.member_classes[0],
-            *sorted(potential.member_classes[1:]),
+            *sorted(potential.member_classes[1:3]),
+            potential.member_classes[3],
         )
     return ValueError(
         f"Potential {potential} not one of {potential_attribute_map.values()}"
@@ -174,7 +175,8 @@ def sort_by_types(potential):
     elif isinstance(potential, ImproperType):
         return (
             potential.member_types[0],
-            *sorted(potential.member_types[1:]),
+            *sorted(potential.member_types[1:3]),
+            potential.member_types[3],
         )
     return ValueError(
         f"Potential {potential} not one of {potential_attribute_map.values()}"
