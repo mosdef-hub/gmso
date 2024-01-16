@@ -34,10 +34,14 @@ def compare_lammps_files(fn1, fn2, skip_linesList=[], offsets=None):
     line_counter2 = 0
     while True:
         # check for offsets
-        if offsets:
-            if offsets[0][0][0] == line_counter1:
+        if offsets is not None:
+            if len(offsets[0]) == 0:
+                pass
+            elif offsets[0][0][0] == line_counter1:
                 line_counter1 += offsets[0][0][1]
                 offsets[0].pop(0)
+            if len(offsets[1]) == 0:
+                pass
             elif offsets[1][0][0] == line_counter2:
                 line_counter2 += offsets[1][0][1]
                 offsets[1].pop(0)
@@ -294,6 +298,7 @@ class TestLammpsWriter(BaseTest):
             "gmso.lammps",
             "pmd.lammps",
             skip_linesList=[0],
+            offsets=[[[1, 1], ["none", "none"]], [["none", "none"]]],
         )
 
     @pytest.mark.parametrize(
@@ -325,6 +330,7 @@ class TestLammpsWriter(BaseTest):
             "gmso.lammps",
             "pmd.lammps",
             skip_linesList=[0],
+            offsets=[[[0, 1]], [["none", "none"]]],
         )
 
     def test_lammps_default_conversions(
@@ -343,7 +349,7 @@ class TestLammpsWriter(BaseTest):
         typed_ethane.save("opls.lammps")
         with open("opls.lammps", "r") as f:
             lines = f.readlines()
-        assert lines[38:41] == [
+        assert lines[39:42] == [
             "Dihedral Coeffs #OPLSTorsionPotential\n",
             "#\tk1 (kcal/mol)\tk2 (kcal/mol)\tk3 (kcal/mol)\tk4 (kcal/mol)\n",
             "1\t0.000000\t-0.000000\t0.300000\t-0.000000\t# opls_140\topls_135\topls_135\topls_140\n",
@@ -361,7 +367,7 @@ class TestLammpsWriter(BaseTest):
             "gmso.lammps",
             "pmd.lammps",
             skip_linesList=[0],
-            offsets=[[[16, 1], ["none", "none"]], [["none", "none"]]],
+            offsets=[[[0, 1], [17, 1]], []],
         )
         out_lammps = open("gmso.lammps", "r").readlines()
         found_impropers = False

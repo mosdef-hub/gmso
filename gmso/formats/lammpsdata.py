@@ -34,9 +34,6 @@ from gmso.utils.sorting import sort_by_types
 from gmso.utils.units import LAMMPS_UnitSystems, write_out_parameter_and_units
 
 
-# TODO: impropers have to read multiple terms for each improper
-# TODO: speed up this function to handle 500000 atoms
-# TODO: make every parameter source identify styles
 # TODO: Write in header of each potential type any conversions that happened
 # TODO: write in file header the source of the xml
 @saves_as(".lammps", ".lammpsdata", ".data")
@@ -725,10 +722,11 @@ def _validate_unit_compatibility(top, base_unyts):
 def _write_header(out_file, top, atom_style, dihedral_parser):
     """Write Lammps file header."""
     out_file.write(
-        "{} written by {} at {} using the GMSO LAMMPS Writer\n\n".format(
+        "{} written by {} at {} using the GMSO LAMMPS Writer\nUsing Forcefield {}\n\n".format(
             os.environ.get("USER"),
             top.name if top.name is not None else "",
             str(datetime.datetime.now()),
+            top.get_forcefield().name,
         )
     )
     out_file.write("{:d} atoms\n".format(top.n_sites))
