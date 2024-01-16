@@ -64,7 +64,9 @@ def read_gro(filename):
                     "atoms were expected, but at least one fewer was found."
                 )
                 raise ValueError(msg.format(n_atoms))
-            res_id = int(line[:5].strip())
+            res_id = (
+                int(line[:5].strip()) - 1
+            )  # reformat from 1 to 0 index in gmso
             res_name = line[5:10].strip()
             atom_name = line[10:15].strip()
             atom_id = line[15:20].strip()

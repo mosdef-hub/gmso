@@ -691,7 +691,10 @@ def _accepted_potentials():
 
 def _validate_potential_compatibility(top):
     """Check compatability of topology object potentials with LAMMPSDATA format."""
-    pot_types = check_compatibility(top, _accepted_potentials())
+    pfilter = PotentialFilters.UNIQUE_EXPRESSION
+    pot_types = check_compatibility(
+        top, _accepted_potentials(), site_pfilter=pfilter, conn_pfilter=pfilter
+    )
     return pot_types
 
 

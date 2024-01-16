@@ -8,7 +8,12 @@ from gmso.core.views import PotentialFilters
 from gmso.exceptions import EngineIncompatibilityError
 
 
-def check_compatibility(topology, accepted_potentials):
+def check_compatibility(
+    topology,
+    accepted_potentials,
+    site_pfilter=PotentialFilters.UNIQUE_NAME_CLASS,
+    conn_pfilter=PotentialFilters.UNIQUE_ID,
+):
     """
     Compare the potentials in a topology against a list of accepted potential templates.
 
@@ -18,6 +23,28 @@ def check_compatibility(topology, accepted_potentials):
         The topology whose potentials to check.
     accepted_potentials: list
         A list of gmso.Potential objects to check against
+    site_pfilter: gmso.core.view.PotentialFilter name, defaults=PotentialFilters.UNIQUE_NAME_CLASS
+        A given name from the set of potential filters, or a user defined function that
+        operates on each atom_type and returns the attributes of the atom_type to be
+        considered as distinctive. In other words,
+        i.e. site_pfilter = lambda atype: atype.name
+    conn_pfilter: gmso.core.view.PotentialFilter name, default=PotentialFilters.UNIQUE_ID
+        A given name from the set of potential filters, or a user defined function that
+        operates on each connection_type and returns the attributes of the connection_type to be
+        considered as distinctive.
+        i.e. site_pfilter = lambda conn_type: conn_type.member_types
+
+    Notes
+    -----
+    Pre-made potential identifiers that work for both site_pfilter and conn_pfilter.
+        potential_identifiers = {
+            PotentialFilters.UNIQUE_NAME_CLASS: get_name_or_class,
+            PotentialFilters.UNIQUE_SORTED_NAMES: sort_by_types,
+            PotentialFilters.UNIQUE_EXPRESSION: lambda p: str(p.expression),
+            PotentialFilters.UNIQUE_PARAMETERS: get_parameters,
+            PotentialFilters.UNIQUE_ID: lambda p: id(p),
+            PotentialFilters.REPEAT_DUPLICATES: lambda _: str(uuid.uuid4()),
+        }
 
     Returns
     -------
@@ -28,9 +55,7 @@ def check_compatibility(topology, accepted_potentials):
 
     """
     potential_forms_dict = dict()
-    for atom_type in topology.atom_types(
-        filter_by=PotentialFilters.UNIQUE_EXPRESSION
-    ):
+    for atom_type in topology.atom_types(filter_by=site_pfilter):
         potential_form = _check_single_potential(
             atom_type,
             accepted_potentials,
@@ -42,9 +67,7 @@ def check_compatibility(topology, accepted_potentials):
         else:
             potential_forms_dict.update(potential_form)
 
-    for connection_type in topology.connection_types(
-        filter_by=PotentialFilters.UNIQUE_EXPRESSION
-    ):
+    for connection_type in topology.connection_types(filter_by=conn_pfilter):
         potential_form = _check_single_potential(
             connection_type,
             accepted_potentials,
@@ -59,7 +82,6 @@ def check_compatibility(topology, accepted_potentials):
     return potential_forms_dict
 
 
-# @lru_cache()
 def _check_single_potential(potential, accepted_potentials):
     """Check to see if a single given potential is in the list of accepted potentials."""
     ind_var = potential.independent_variables
