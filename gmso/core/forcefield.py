@@ -56,7 +56,7 @@ class ForceField(object):
         If true, perform a strict validation of the forcefield XML file
     greedy: bool, default=True
         If True, when using strict mode, fail on the first error/mismatch
-    backend: str, default="gmso"
+    backend: str, default="forcefield-utilities"
         Can be "gmso" or "forcefield-utilities". This will define the methods to
         load the forcefield.
 
@@ -579,6 +579,12 @@ class ForceField(object):
         except:
             loader = FoyerFFs()
             ff = loader.load(filename).to_gmso_ff()
+            ff.units = {
+                "energy": "kJ",
+                "distance": "nm",
+                "mass": "amu",
+                "charge": "elementary_charge",
+            }
         return ff
 
     def to_xml(self, filename, overwrite=False, backend="gmso"):
@@ -647,7 +653,7 @@ class ForceField(object):
                     "energy": "kJ",
                     "distance": "nm",
                     "mass": "amu",
-                    "charge": "coulomb",
+                    "charge": "elementary_charge",
                 },
             )
 

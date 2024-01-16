@@ -14,6 +14,7 @@ from gmso.utils.misc import (
     unyt_compare,
     unyt_to_hashable,
 )
+from gmso.utils.units import GMSO_UnitRegistry
 
 
 class AtomType(ParametricPotential):
@@ -254,7 +255,9 @@ class AtomType(ParametricPotential):
             warnings.warn(
                 UNIT_WARNING_STRING.format("Charges", "elementary charge")
             )
-            charge *= u.elementary_charge
+            charge *= u.Unit(
+                "elementary_charge", registry=GMSO_UnitRegistry().reg
+            )
         else:
             ensure_valid_dimensions(charge, u.elementary_charge)
 
