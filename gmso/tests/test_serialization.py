@@ -224,7 +224,7 @@ class TestSerialization(BaseTest):
             ethane_from_scratch.save("ethane_from_scratch.zip")
 
     def test_serialization_untyped_with_types_info(self, ethane_from_scratch):
-        with pytest.raises(ValueError):
+        with pytest.warns(UserWarning):
             ethane_from_scratch.save("ethane_from_scratch.json", types=True)
 
     def test_serialization_overwrite(self, ethane_from_scratch):
