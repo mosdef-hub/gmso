@@ -5,21 +5,19 @@ import copy
 import datetime
 import os
 import warnings
+from itertools import count
 from pathlib import Path
 
 import numpy as np
 import unyt as u
-from sympy import Symbol
 from unyt.array import allclose_units
 
 import gmso
 from gmso.abc.abstract_site import MoleculeType
 from gmso.core.angle import Angle
-from gmso.core.angle_type import AngleType
 from gmso.core.atom import Atom
 from gmso.core.atom_type import AtomType
 from gmso.core.bond import Bond
-from gmso.core.bond_type import BondType
 from gmso.core.box import Box
 from gmso.core.dihedral import Dihedral
 from gmso.core.element import element_by_mass
@@ -28,15 +26,10 @@ from gmso.core.topology import Topology
 from gmso.core.views import PotentialFilters
 
 pfilter = PotentialFilters.UNIQUE_SORTED_NAMES
-from gmso.exceptions import NotYetImplementedWarning
 from gmso.formats.formats_registry import loads_as, saves_as
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.compatibility import check_compatibility
-from gmso.utils.conversions import (
-    convert_kelvin_to_energy_units,
-    convert_opls_to_ryckaert,
-    convert_ryckaert_to_opls,
-)
+from gmso.utils.conversions import convert_kelvin_to_energy_units
 from gmso.utils.sorting import sort_by_types
 from gmso.utils.units import LAMMPS_UnitSystems, write_out_parameter_and_units
 
@@ -46,8 +39,6 @@ from gmso.utils.units import LAMMPS_UnitSystems, write_out_parameter_and_units
 # TODO: make every parameter source identify styles
 # TODO: Write in header of each potential type any conversions that happened
 # TODO: write in file header the source of the xml
-# TODO: LAMMPS Needs custom info about writing out dihedrals in how to handle the in. files
-# TODO: CVFF impropers
 @saves_as(".lammps", ".lammpsdata", ".data")
 def write_lammpsdata(
     top,
@@ -251,29 +242,45 @@ def write_lammpsdata(
         raise FileNotFoundError(msg)
 
     with open(path, "w") as out_file:
-        _write_header(out_file, top, atom_style)
+        _write_header(out_file, top, atom_style, dihedral_parser)
         _write_box(out_file, top, base_unyts, lj_cfactorsDict)
+        all_ordered_typesDict = {}
         if top.is_fully_typed():
             _write_atomtypes(out_file, top, base_unyts, lj_cfactorsDict)
             _write_pairtypes(out_file, top, base_unyts, lj_cfactorsDict)
             if top.bond_types:
-                _write_bondtypes(out_file, top, base_unyts, lj_cfactorsDict)
-            if top.angle_types:
-                _write_angletypes(out_file, top, base_unyts, lj_cfactorsDict)
-            if top.dihedral_types:
-                _write_dihedraltypes(
-                    out_file, top, base_unyts, dihedral_parser, lj_cfactorsDict
+                sorted_bondsList = _write_bondtypes(
+                    out_file, top, base_unyts, lj_cfactorsDict
                 )
+                all_ordered_typesDict["bonds"] = sorted_bondsList
+            if top.angle_types:
+                sorted_anglesList = _write_angletypes(
+                    out_file, top, base_unyts, lj_cfactorsDict
+                )
+                all_ordered_typesDict["angles"] = sorted_anglesList
+            if top.dihedral_types:
+                sorted_dihedralsList = (
+                    _write_dihedraltypes(  # return a list of dihedraltypes
+                        out_file,
+                        top,
+                        base_unyts,
+                        dihedral_parser,
+                        lj_cfactorsDict,
+                    )
+                )
+                all_ordered_typesDict["dihedrals"] = sorted_dihedralsList
             if top.improper_types:
-                _write_impropertypes(
+                sorted_impropersList = _write_impropertypes(
                     out_file, top, base_unyts, improper_parser, lj_cfactorsDict
                 )
+                all_ordered_typesDict["impropers"] = sorted_impropersList
 
         _write_site_data(out_file, top, atom_style, base_unyts, lj_cfactorsDict)
         for conn in ["bonds", "angles", "dihedrals", "impropers"]:
             connIter = getattr(top, conn)
-            if connIter:
-                _write_conn_data(out_file, top, connIter, conn)
+            conn_typesList = all_ordered_typesDict.get(conn)
+            if connIter and conn_typesList:
+                _write_conn_data(out_file, top, conn, conn_typesList)
 
 
 @loads_as(".lammps", ".lammpsdata", ".data")
@@ -715,7 +722,7 @@ def _validate_unit_compatibility(top, base_unyts):
             ), f"Units System {base_unyts.usystem} is not compatible with {atype} with value {parameter}"
 
 
-def _write_header(out_file, top, atom_style):
+def _write_header(out_file, top, atom_style, dihedral_parser):
     """Write Lammps file header."""
     out_file.write(
         "{} written by {} at {} using the GMSO LAMMPS Writer\n\n".format(
@@ -728,7 +735,23 @@ def _write_header(out_file, top, atom_style):
     if atom_style in ["full", "molecular"]:
         out_file.write("{:d} bonds\n".format(top.n_bonds))
         out_file.write("{:d} angles\n".format(top.n_angles))
-        out_file.write("{:d} dihedrals\n".format(top.n_dihedrals))
+        if dihedral_parser in [
+            parse_opls_style_dihedral
+        ]:  # no layered dihedrals
+            n_dihedrals = top.n_dihedrals
+        elif dihedral_parser in [
+            parse_charmm_style_dihedral
+        ]:  # layered dihedrals
+            n_dihedrals = 0
+            for dihedral in top.dihedrals:
+                param = next(iter(dihedral.dihedral_type.parameters.values()))
+                if isinstance(param, u.unyt_quantity):
+                    n_dihedrals += 1
+                else:
+                    n_dihedrals += len(param)
+        elif dihedral_parser is None:
+            n_dihedrals = 0
+        out_file.write("{:d} dihedrals\n".format(n_dihedrals))
         out_file.write("{:d} impropers\n\n".format(top.n_impropers))
 
     # TODO: allow users to specify filter_by syntax
@@ -928,6 +951,7 @@ def _write_bondtypes(out_file, top, base_unyts, cfactorsDict):
                 *member_types,
             )
         )
+    return bond_types
 
 
 def _write_angletypes(out_file, top, base_unyts, cfactorsDict):
@@ -950,15 +974,15 @@ def _write_angletypes(out_file, top, base_unyts, cfactorsDict):
         for key in angle_style_orderTuple
     ]
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
-    indexList = list(top.angle_types(filter_by=pfilter))
-    indexList.sort(
+    angle_types = list(top.angle_types(filter_by=pfilter))
+    angle_types.sort(
         key=lambda x: (
             x.member_types[1],
             min(x.member_types[::2]),
             max(x.member_types[::2]),
         )
     )
-    for idx, angle_type in enumerate(indexList):
+    for idx, angle_type in enumerate(angle_types):
         out_file.write(
             "{}\t{:7}\t{:7}\t#{:11s}\t{:11s}\t{:11s}\n".format(
                 idx + 1,
@@ -976,6 +1000,7 @@ def _write_angletypes(out_file, top, base_unyts, cfactorsDict):
                 *angle_type.member_types,
             )
         )
+    return angle_types
 
 
 def _write_dihedraltypes(out_file, top, base_unyts, parser, cfactorsDict):
@@ -1016,6 +1041,7 @@ def _write_dihedraltypes(out_file, top, base_unyts, parser, cfactorsDict):
     if (
         parser.__name__ == "parse_opls_style_dihedral"
     ):  # one opls parameter per dihedral type
+        dihedral_typesList = []
         for idx, (dihedral_type, members) in enumerate(index_membersList):
             param_labels = parser(dihedral_type)
             variable_msg = "{:8}\t" * len(param_labels[1])
@@ -1037,9 +1063,14 @@ def _write_dihedraltypes(out_file, top, base_unyts, parser, cfactorsDict):
                     *members,
                 )
             )
+            dihedral_typesList.append(dihedral_type)
+        return dihedral_typesList
+
     elif parser.__name__ == "parse_charmm_style_dihedral":
         ndecimalsDict = {"k": 6, "n": 0, "phi_eq": 0, "weights": 1}
-        for idx, (dihedral_type, members) in enumerate(index_membersList):
+        idx = 0
+        dihedral_typesList = []
+        for dihedral_type, members in index_membersList:
             parameter_termList, parameterStrList = parser(dihedral_type)
             variable_msg = "{:8}\t" * len(parameterStrList)
             full_msg = base_msg + variable_msg + end_msg
@@ -1063,6 +1094,10 @@ def _write_dihedraltypes(out_file, top, base_unyts, parser, cfactorsDict):
                         *members,
                     )
                 )
+                dihedral_typesList.append(
+                    dihedral_type
+                )  # add dihedral type multiple times if it is layered
+                idx += 1
 
 
 def parse_opls_style_dihedral(dihedral_type):
@@ -1128,7 +1163,8 @@ def _write_impropertypes(out_file, top, base_unyts, parser, cfactorsDict):
         or "parse_harmonic_style_improper"
     ):  # one cvff parameter per dihedral type
         ndecimalsDict = {"k": 6, "n": 0, "phi_eq": 0}
-        for idx, (improper_type, members) in enumerate(index_membersList):
+        idx = 0
+        for improper_type, members in index_membersList:
             param_labels = parser(improper_type)
             variable_msg = "{:8}\t" * len(param_labels[1])
             full_msg = base_msg + variable_msg + end_msg
@@ -1149,6 +1185,8 @@ def _write_impropertypes(out_file, top, base_unyts, parser, cfactorsDict):
                     *members,
                 )
             )
+            idx += 1
+        return index_membersList  # cvff is not layered, so no added to list
 
 
 def parse_cvff_style_improper(improper_type):
@@ -1232,26 +1270,28 @@ sorting_funcDict = {
 }
 
 
-def _write_conn_data(out_file, top, connIter, connStr):
+def _write_conn_data(out_file, top, connStr, sorted_typesList):
     """Write all connections to LAMMPS datafile."""
     out_file.write(f"\n{connStr.capitalize()}\n\n")
-    indexList = list(
-        map(
-            sort_by_types,
-            getattr(top, connStr[:-1] + "_types")(filter_by=pfilter),
-        )
-    )
-    indexList.sort(key=sorting_funcDict[connStr])
 
-    for i, conn in enumerate(getattr(top, connStr)):
-        typeStr = f"{i+1:<6d}\t{indexList.index(sort_by_types(conn.connection_type))+1:<6d}\t"
-        indexStr = "\t".join(
-            map(
-                lambda x: str(top.sites.index(x) + 1).ljust(6),
-                conn.connection_members,
+    i = 0
+    for conn in getattr(top, connStr):
+        ctype_members = sort_by_types(getattr(conn, connStr[:-1] + "_type"))
+        indexList = [
+            ind
+            for ind, ele in zip(count(), sorted_typesList)
+            if sort_by_types(ele) == ctype_members
+        ]
+        for index in indexList:
+            typeStr = f"{i+1:<6d}\t{index+1:<6d}\t"
+            indexStr = "\t".join(
+                map(
+                    lambda x: str(top.sites.index(x) + 1).ljust(6),
+                    conn.connection_members,
+                )
             )
-        )
-        out_file.write(typeStr + indexStr + "\n")
+            out_file.write(typeStr + indexStr + "\n")
+            i += 1
 
 
 def _try_default_potential_conversions(top, potentialsDict):

@@ -3,7 +3,7 @@ calcraven written by Topology at 2023-12-07 19:10:26.697824 using the GMSO LAMMP
 9 atoms
 8 bonds
 12 angles
-10 dihedrals
+12 dihedrals
 5 impropers
 
 6 atom types
@@ -59,7 +59,7 @@ Dihedral Coeffs #PeriodicTorsionPotential
 2	1.200000	2       	180     	0.0     	# o	c	c3	f
 3	10.000000	2       	180     	0.0     	# c3	c	n	hn
 4	2.500000	2      	    180     	0.0     	# o	c	n	hn
-4	2.000000	1       	0       	0.0     	# o	c	n	hn
+5	2.000000	1       	0       	0.0     	# o	c	n	hn
 
 Improper Coeffs #PeriodicTorsionPotential
 #	k (kcal/mol)	d (dimensionless) phi_eq (degrees)
@@ -111,12 +111,14 @@ Dihedrals
 2     	2     	2     	1     	3     	5     
 3     	2     	2     	1     	3     	6     
 4     	4     	2     	1     	7     	8     
-5     	4     	2     	1     	7     	9     
-6     	3     	3     	1     	7     	8     
-7     	3     	3     	1     	7     	9     
-8     	1     	4     	3     	1     	7     
-9     	1     	5     	3     	1     	7     
-10    	1     	6     	3     	1     	7     
+5     	5     	2     	1     	7     	8     
+6     	4     	2     	1     	7     	9     
+7     	5     	2     	1     	7     	9     
+8     	3     	3     	1     	7     	8     
+9     	3     	3     	1     	7     	9     
+10     	1     	4     	3     	1     	7     
+11     	1     	5     	3     	1     	7     
+12    	1     	6     	3     	1     	7     
 
 Impropers
 
