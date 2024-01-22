@@ -71,7 +71,7 @@ affiliations:
   index: 5
 - name: Department of Chemical and Biomolecular Engineering, University of Notre Dame, Notre Dame, IN, USA
   index: 6
-- name: Atomfold LLC, PA, USA
+- name: Atomfold, PA, USA
   index: 7
 - name: Department of Chemical Engineering, Wayne State University, Detroit, MI, USA
   index: 8
