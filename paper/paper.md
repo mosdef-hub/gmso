@@ -41,6 +41,15 @@ authors:
 - name: Christopher R. Iacovella
   orcid: 0000-0003-0557-0427
   affiliation: "1, 2"
+- name: Jeffrey Potoff
+  affiliation: "7"
+  orcid: "0000-0002-4421-8787"
+-name: Eric Jankowski
+  affiliation: "5"
+  orcid: "0000-0002-3267-1410"
+- name: Edward J. Maginn
+  affiliation: "6"
+  orcid:
 - name: Clare McCabe
   orcid: 0000-0002-8552-9135
   affiliation: "1, 2, 9"
