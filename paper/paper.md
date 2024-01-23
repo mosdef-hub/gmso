@@ -32,6 +32,7 @@ authors:
 - name: Parashara Shamaprasad
   affiliation: "1, 2"
 - name: Chris Jones
+  orcid: 0000-0002-6196-5274 
   affiliation: "5"
 - name: Ryan S. DeFever
   affiliation: "6"
