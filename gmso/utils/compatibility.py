@@ -27,12 +27,12 @@ def check_compatibility(
         A given name from the set of potential filters, or a user defined function that
         operates on each atom_type and returns the attributes of the atom_type to be
         considered as distinctive. In other words,
-        i.e. site_pfilter = lambda atype: atype.name
+        e.g. site_pfilter = lambda atype: atype.name
     conn_pfilter: gmso.core.view.PotentialFilter name, default=PotentialFilters.UNIQUE_ID
         A given name from the set of potential filters, or a user defined function that
         operates on each connection_type and returns the attributes of the connection_type to be
         considered as distinctive.
-        i.e. site_pfilter = lambda conn_type: conn_type.member_types
+        e.g. site_pfilter = lambda conn_type: conn_type.member_types
 
     Notes
     -----

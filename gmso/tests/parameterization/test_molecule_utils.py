@@ -37,7 +37,7 @@ class TestSubTopologyUtils(ParameterizationBaseTest):
         return top
 
     @pytest.fixture(scope="session")
-    def top_from_parmed_apply(self, usable_compound):
+    def top_from_typed_parmed(self, usable_compound):
         ff = foyer.Forcefield(name="oplsaa")
         pmd_structure = ff.apply(usable_compound)
         top = from_parmed(pmd_structure)
@@ -129,8 +129,8 @@ class TestSubTopologyUtils(ParameterizationBaseTest):
             )
 
     def test_molecule_numbers(
-        self, top_from_mbuild, top_from_parmed, top_from_parmed_apply
+        self, top_from_mbuild, top_from_parmed, top_from_typed_parmed
     ):
         assert top_from_mbuild.sites[0].molecule.number == 0
         assert top_from_parmed.sites[0].molecule.number == 0
-        assert top_from_parmed_apply.sites[0].molecule.number == 0
+        assert top_from_typed_parmed.sites[0].molecule.number == 0

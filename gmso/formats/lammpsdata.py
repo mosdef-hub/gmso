@@ -148,43 +148,37 @@ def write_lammpsdata(
             potential_typesDict[potStr].add(potentialsMap[potential])
 
     def identify_dihedral_parser(top, potential_typesDict):
-        for pot_container in ["dihedral_types"]:
-            if not getattr(top, pot_container):
-                continue
-            # This is where dihedral_parser should get found
-            parserDict = {
-                "PeriodicTorsionPotential": parse_charmm_style_dihedral,
-                "OPLSTorsionPotential": parse_opls_style_dihedral,
-            }
-            assert (
-                len(potential_typesDict["dihedral_types"]) == 1
-            )  # only allowing one potential type atm
-            dihedralparser = parserDict[
-                potential_typesDict["dihedral_types"].pop()
-            ]
-            return dihedralparser
-        return None
+        if not getattr(top, "dihedral_types"):
+            return None
+        # This is where dihedral_parser should get found
+        parserDict = {
+            "PeriodicTorsionPotential": parse_charmm_style_dihedral,
+            "OPLSTorsionPotential": parse_opls_style_dihedral,
+        }
+        assert (
+            len(potential_typesDict["dihedral_types"]) == 1
+        )  # only allowing one potential type atm
+        dihedralparser = parserDict[potential_typesDict["dihedral_types"].pop()]
+        return dihedralparser
 
     dihedral_parser = identify_dihedral_parser(top, potential_typesDict)
 
     def identify_improper_parser(top, potential_typesDict):
-        for pot_container in ["improper_types"]:
-            if not getattr(top, pot_container):
-                continue
-            # This is where improper_parser should be stored
-            parserDict = {
-                "PeriodicTorsionPotential": parse_cvff_style_improper,
-                "HarmonicTorsionPotential": parse_harmonic_style_improper,
-                "HarmonicImproperPotential": parse_harmonic_style_improper,
-            }
-            assert (
-                len(potential_typesDict["improper_types"]) == 1
-            )  # only allowing one potential type atm
-            improper_parser = parserDict[
-                potential_typesDict["improper_types"].pop()
-            ]
-            return improper_parser
-        return None
+        if not getattr(top, "improper_types"):
+            return None
+        # This is where improper_parser should be stored
+        parserDict = {
+            "PeriodicTorsionPotential": parse_cvff_style_improper,
+            "HarmonicTorsionPotential": parse_harmonic_style_improper,
+            "HarmonicImproperPotential": parse_harmonic_style_improper,
+        }
+        assert (
+            len(potential_typesDict["improper_types"]) == 1
+        )  # only allowing one potential type atm
+        improper_parser = parserDict[
+            potential_typesDict["improper_types"].pop()
+        ]
+        return improper_parser
 
     improper_parser = identify_improper_parser(top, potential_typesDict)
 
@@ -725,11 +719,10 @@ def _validate_unit_compatibility(top, base_unyts):
 def _write_header(out_file, top, atom_style, dihedral_parser):
     """Write Lammps file header."""
     out_file.write(
-        "{} written by {} at {} using the GMSO LAMMPS Writer\nUsing Forcefield {}\n\n".format(
+        "{} written by {} at {} using the GMSO LAMMPS Writer\n\n\n".format(
+            top.name if top.name is not None else "Topology",
             os.environ.get("USER"),
-            top.name if top.name is not None else "",
             str(datetime.datetime.now()),
-            top.get_forcefield().name,
         )
     )
     out_file.write("{:d} atoms\n".format(top.n_sites))
@@ -769,23 +762,19 @@ def _write_header(out_file, top, atom_style, dihedral_parser):
         )
     if top.n_dihedrals > 0 and atom_style in ["full", "molecular"]:
         unique_dtypes = top.dihedral_types(filter_by=pfilter)
-
         nkeys = len(next(iter(unique_dtypes)).parameters.keys())
-        nparams = len(
-            list(
-                _flatten(
-                    (
-                        map(
-                            lambda x: [
-                                val.tolist() for val in x.parameters.values()
-                            ],
-                            unique_dtypes,
-                        )
-                    )
-                )
-            )
-        )
-        ntypes = int(nparams / nkeys)
+        nparams = 0  # write out the total number of found for dihedrals
+        for potential in unique_dtypes:
+            for param in potential.parameters.values():
+                paramList = param.tolist()
+                if isinstance(paramList, float):
+                    nparams += 1
+                else:
+                    for _ in param.tolist():
+                        nparams += 1
+        ntypes = int(
+            nparams / nkeys
+        )  # allows us to count multiples for ones stored in a single object
         out_file.write("{:d} dihedral types\n".format(ntypes))
     if top.n_impropers > 0 and atom_style in ["full", "molecular"]:
         out_file.write(
@@ -1065,7 +1054,6 @@ def _write_dihedraltypes(out_file, top, base_unyts, parser, cfactorsDict):
                 )
             )
             dihedral_typesList.append(dihedral_type)
-        return dihedral_typesList
 
     elif parser.__name__ == "parse_charmm_style_dihedral":
         ndecimalsDict = {"k": 6, "n": 0, "phi_eq": 0, "weights": 1}
@@ -1099,6 +1087,7 @@ def _write_dihedraltypes(out_file, top, base_unyts, parser, cfactorsDict):
                     dihedral_type
                 )  # add dihedral type multiple times if it is layered
                 idx += 1
+    return dihedral_typesList
 
 
 def parse_opls_style_dihedral(dihedral_type):
@@ -1187,7 +1176,7 @@ def _write_impropertypes(out_file, top, base_unyts, parser, cfactorsDict):
                 )
             )
             idx += 1
-        return index_membersList  # cvff is not layered, so no added to list
+    return index_membersList  # cvff is not layered, so no added to list
 
 
 def parse_cvff_style_improper(improper_type):
@@ -1232,7 +1221,7 @@ def _write_site_data(out_file, top, atom_style, base_unyts, cfactorsDict):
                 moleculeid=site.molecule.number + 1,  # index is 0-based in GMSO
                 type_index=unique_sorted_typesList.index(site.atom_type) + 1,
                 charge=base_unyts.convert_parameter(
-                    site.atom_type.charge if site.atom_type else site.charge,
+                    site.charge,
                     cfactorsDict,
                     n_decimals=6,
                 ),
