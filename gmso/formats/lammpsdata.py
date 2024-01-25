@@ -30,7 +30,7 @@ from gmso.formats.formats_registry import loads_as, saves_as
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.compatibility import check_compatibility
 from gmso.utils.conversions import convert_kelvin_to_energy_units
-from gmso.utils.sorting import sort_by_types
+from gmso.utils.sorting import reindex_molecules, sort_by_types
 from gmso.utils.units import LAMMPS_UnitSystems, write_out_parameter_and_units
 
 
@@ -147,40 +147,8 @@ def write_lammpsdata(
         else:
             potential_typesDict[potStr].add(potentialsMap[potential])
 
-    def identify_dihedral_parser(top, potential_typesDict):
-        if not getattr(top, "dihedral_types"):
-            return None
-        # This is where dihedral_parser should get found
-        parserDict = {
-            "PeriodicTorsionPotential": parse_charmm_style_dihedral,
-            "OPLSTorsionPotential": parse_opls_style_dihedral,
-        }
-        assert (
-            len(potential_typesDict["dihedral_types"]) == 1
-        )  # only allowing one potential type atm
-        dihedralparser = parserDict[potential_typesDict["dihedral_types"].pop()]
-        return dihedralparser
-
-    dihedral_parser = identify_dihedral_parser(top, potential_typesDict)
-
-    def identify_improper_parser(top, potential_typesDict):
-        if not getattr(top, "improper_types"):
-            return None
-        # This is where improper_parser should be stored
-        parserDict = {
-            "PeriodicTorsionPotential": parse_cvff_style_improper,
-            "HarmonicTorsionPotential": parse_harmonic_style_improper,
-            "HarmonicImproperPotential": parse_harmonic_style_improper,
-        }
-        assert (
-            len(potential_typesDict["improper_types"]) == 1
-        )  # only allowing one potential type atm
-        improper_parser = parserDict[
-            potential_typesDict["improper_types"].pop()
-        ]
-        return improper_parser
-
-    improper_parser = identify_improper_parser(top, potential_typesDict)
+    dihedral_parser = _identify_dihedral_parser(top, potential_typesDict)
+    improper_parser = _identify_improper_parser(top, potential_typesDict)
 
     if strict_units:
         _validate_unit_compatibility(top, base_unyts)
@@ -204,29 +172,9 @@ def write_lammpsdata(
                     source_factor, default_val_from_topology
                 )
 
-    # reindex molecule
-    def reindex_molecules(top):
-        unique_moleculesDict = {}
-        for site in top.sites:
-            molecule = site.molecule
-            if molecule.name in unique_moleculesDict:
-                unique_moleculesDict[molecule.name].add(molecule.number)
-            else:
-                unique_moleculesDict[molecule.name] = {molecule.number}
-
-        offsetDict = {}
-        for molecule in unique_moleculesDict:
-            min_val = min(unique_moleculesDict[molecule])
-            offsetDict[molecule] = min_val
-
-        for site in top.sites:
-            mol_num = site.molecule.number
-            site.molecule = site.molecule._replace(
-                number=mol_num - offsetDict[site.molecule.name]
-            )
-
-    reindex_molecules(top)
-
+    reindex_molecules(
+        top
+    )  # reset the topology molecule index to match with lammps
     path = Path(filename)
     if not path.parent.exists():
         msg = "Provided path to file that does not exist"
@@ -1317,9 +1265,32 @@ def _default_lj_val(top, source):
         )
 
 
-def _flatten(iterable):
-    try:
-        for item in iterable:
-            yield from _flatten(item)
-    except TypeError:
-        yield iterable
+def _identify_dihedral_parser(top, potential_typesDict):
+    if not getattr(top, "dihedral_types"):
+        return None
+    # This is where dihedral_parser should get found
+    parserDict = {
+        "PeriodicTorsionPotential": parse_charmm_style_dihedral,
+        "OPLSTorsionPotential": parse_opls_style_dihedral,
+    }
+    assert (
+        len(potential_typesDict["dihedral_types"]) == 1
+    )  # only allowing one potential type atm
+    dihedralparser = parserDict[potential_typesDict["dihedral_types"].pop()]
+    return dihedralparser
+
+
+def _identify_improper_parser(top, potential_typesDict):
+    if not getattr(top, "improper_types"):
+        return None
+    # This is where improper_parser should be stored
+    parserDict = {
+        "PeriodicTorsionPotential": parse_cvff_style_improper,
+        "HarmonicTorsionPotential": parse_harmonic_style_improper,
+        "HarmonicImproperPotential": parse_harmonic_style_improper,
+    }
+    assert (
+        len(potential_typesDict["improper_types"]) == 1
+    )  # only allowing one potential type atm
+    improper_parser = parserDict[potential_typesDict["improper_types"].pop()]
+    return improper_parser
