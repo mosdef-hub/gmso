@@ -1,4 +1,5 @@
 """Defined interactions for improper-style connections."""
+
 from typing import Optional, Tuple
 
 import unyt as u

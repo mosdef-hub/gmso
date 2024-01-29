@@ -1,4 +1,5 @@
 """Documentation support for pydantic objects."""
+
 import inspect
 import re
 from copy import deepcopy

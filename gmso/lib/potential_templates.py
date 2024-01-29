@@ -1,4 +1,5 @@
 """Module supporting template potential objects."""
+
 import json
 from pathlib import Path
 from typing import Dict

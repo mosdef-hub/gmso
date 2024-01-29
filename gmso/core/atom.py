@@ -1,4 +1,5 @@
 """Represent general atomic information in GMSO."""
+
 import warnings
 from typing import Optional, Union
 
@@ -158,9 +159,9 @@ class Atom(Site):
             charge=self.charge,
             mass=self.mass,
             element=self.element,
-            atom_type=property
-            if not self.atom_type
-            else self.atom_type.clone(),
+            atom_type=(
+                property if not self.atom_type else self.atom_type.clone()
+            ),
         )
 
     def __le__(self, other):

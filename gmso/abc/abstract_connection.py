@@ -67,9 +67,11 @@ class Connection(GMSOBase):
             return list(ctype_attr)
         elif self._has_typed_members():
             tc = [
-                member.atom_type.name
-                if to_return == "member_types"
-                else member.atom_type.atomclass
+                (
+                    member.atom_type.name
+                    if to_return == "member_types"
+                    else member.atom_type.atomclass
+                )
                 for member in self.__dict__.get("connection_members_")
             ]
             return tc if all(tc) else None

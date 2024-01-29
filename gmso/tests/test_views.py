@@ -41,9 +41,9 @@ class TestViews(BaseTest):
         for j in range(200):
             custom_top.add_site(
                 Atom(
-                    atom_type=atom_type1.clone()
-                    if j % 2 == 0
-                    else atom_type2.clone()
+                    atom_type=(
+                        atom_type1.clone() if j % 2 == 0 else atom_type2.clone()
+                    )
                 )
             )
 

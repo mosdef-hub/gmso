@@ -1,4 +1,5 @@
 """Module for standard conversions needed in molecular simulations."""
+
 import re
 from functools import lru_cache
 

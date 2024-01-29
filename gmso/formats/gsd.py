@@ -1,4 +1,5 @@
 """Write GSD files from GMSO topologies."""
+
 from __future__ import division
 
 from gmso.external.convert_hoomd import to_gsd_snapshot

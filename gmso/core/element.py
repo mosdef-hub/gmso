@@ -1,4 +1,5 @@
 """Representation of the chemical elements."""
+
 import json
 import warnings
 from re import sub

@@ -1,4 +1,5 @@
 """Abstract representation of a Potential object."""
+
 from abc import abstractmethod
 from typing import Any, Dict, Iterator, List
 

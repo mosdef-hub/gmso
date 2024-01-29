@@ -416,9 +416,7 @@ class LAMMPS_UnitSystems:
             temp_idx
         ]  # energy has 1/time**2 in it, so this is the hint of how many
         return (
-            dims
-            / u.dimensions.temperature**temp_exp
-            * energySym ** (temp_exp)
+            dims / u.dimensions.temperature**temp_exp * energySym ** (temp_exp)
         )
 
     @classmethod

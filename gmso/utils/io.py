@@ -1,4 +1,5 @@
 """General module for IO operations in GMSO."""
+
 import importlib
 import inspect
 import os

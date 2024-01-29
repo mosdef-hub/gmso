@@ -1,4 +1,5 @@
 """Write a GROMACS topology (.TOP) file."""
+
 import datetime
 import warnings
 

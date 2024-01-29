@@ -1,4 +1,5 @@
 """Support for 3-partner connections between gmso.core.Atoms."""
+
 from typing import Callable, ClassVar, Optional, Tuple
 
 from pydantic import ConfigDict, Field

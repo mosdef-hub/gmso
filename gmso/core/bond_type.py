@@ -1,4 +1,5 @@
 """Defined interactions between two bonded partners."""
+
 from typing import Optional, Tuple
 
 import unyt as u

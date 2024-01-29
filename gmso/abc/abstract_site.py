@@ -1,4 +1,5 @@
 """Basic interaction site in GMSO that all other sites will derive from."""
+
 import warnings
 from typing import Any, ClassVar, NamedTuple, Optional, Sequence, TypeVar, Union
 

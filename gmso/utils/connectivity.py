@@ -1,4 +1,5 @@
 """Module supporting various connectivity methods and operations."""
+
 import networkx as nx
 import numpy as np
 from boltons.setutils import IndexedSet

@@ -1,4 +1,5 @@
 """Convert GMSO Topology to GSD snapshot."""
+
 from __future__ import division
 
 import copy
