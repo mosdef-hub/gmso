@@ -1,4 +1,5 @@
 """Sorting utilities."""
+
 import re
 
 import gmso

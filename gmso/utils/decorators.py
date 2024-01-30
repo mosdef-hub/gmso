@@ -1,4 +1,5 @@
 """Various decorators for GMSO."""
+
 import functools
 import warnings
 

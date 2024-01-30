@@ -1,4 +1,5 @@
 """Read and write LAMMPS data files."""
+
 from __future__ import division
 
 import copy

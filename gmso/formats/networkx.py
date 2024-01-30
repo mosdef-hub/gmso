@@ -1,4 +1,5 @@
 """NetworkX methods for operating with GMSO topologies."""
+
 from gmso.utils import nx_utils
 from gmso.utils.io import has_ipywidgets, import_, run_from_ipython
 

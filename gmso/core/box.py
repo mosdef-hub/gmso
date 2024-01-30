@@ -1,4 +1,5 @@
 """Represent box regions in gmso."""
+
 import warnings
 
 import numpy as np

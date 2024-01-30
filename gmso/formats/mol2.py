@@ -1,4 +1,5 @@
 """Convert to and from a TRIPOS mol2 file."""
+
 import itertools
 import warnings
 from pathlib import Path

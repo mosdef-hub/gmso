@@ -1,4 +1,5 @@
 """Module support for converting to/from ParmEd objects."""
+
 import copy
 import warnings
 from operator import attrgetter, itemgetter
@@ -394,10 +395,8 @@ def _add_conn_type_from_pmd(
             Try using refer_type=False to not look for a parameterized structure."
         )
     try:
-        get_classes = (
-            lambda x: x.atom_type.atomclass
-            if x.atom_type.atomclass
-            else x.atom_type.name
+        get_classes = lambda x: (
+            x.atom_type.atomclass if x.atom_type.atomclass else x.atom_type.name
         )
         member_classes = list(map(get_classes, gmso_conn.connection_members))
     except AttributeError:
@@ -473,9 +472,11 @@ def to_parmed(top, refer_type=True):
             atomic_number=atomic_number,
             name=site.name,
             mass=site.mass.to(u.amu).value if site.mass else None,
-            charge=site.charge.to(u.elementary_charge).value
-            if site.charge
-            else None,
+            charge=(
+                site.charge.to(u.elementary_charge).value
+                if site.charge
+                else None
+            ),
         )
         pmd_atom.xx, pmd_atom.xy, pmd_atom.xz = site.position.to(
             "angstrom"

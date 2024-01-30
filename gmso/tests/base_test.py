@@ -381,8 +381,8 @@ class BaseTest:
                 return False
             if atom1 is atom2:
                 return True
-            equal = (
-                lambda x1, x2: u.allclose_units(x1, x2)
+            equal = lambda x1, x2: (
+                u.allclose_units(x1, x2)
                 if isinstance(x1, u.unyt_array) and isinstance(x2, u.unyt_array)
                 else x1 == x2
             )

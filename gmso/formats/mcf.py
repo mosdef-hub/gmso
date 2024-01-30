@@ -1,4 +1,5 @@
 """Write Cassandra Monte Carlo MCF files."""
+
 import datetime
 import warnings
 

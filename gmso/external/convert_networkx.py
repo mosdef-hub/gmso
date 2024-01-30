@@ -1,4 +1,5 @@
 """Convert to/from NetworkX graphs and GMSO topologies."""
+
 import warnings
 
 import networkx as nx

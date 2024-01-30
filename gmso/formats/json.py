@@ -1,4 +1,5 @@
 """Serialization to json."""
+
 import json
 import warnings
 from copy import deepcopy

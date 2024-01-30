@@ -1,4 +1,5 @@
 """TopologyGraph Functions that identify molecules from isomorphism."""
+
 from collections import deque
 
 import networkx as nx

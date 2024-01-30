@@ -1,4 +1,5 @@
 """Base model all classes extend."""
+
 import json
 import warnings
 from abc import ABC
@@ -15,9 +16,9 @@ dict_validator = validators.getattr_migration("dict_validator")
 class GMSOBase(BaseModel, ABC):
     """A BaseClass to all abstract classes in GMSO."""
 
-    __base_doc__: ClassVar[
-        str
-    ] = """A base class to all abstract base classes in gmso."""
+    __base_doc__: ClassVar[str] = (
+        """A base class to all abstract base classes in gmso."""
+    )
 
     __docs_generated__: ClassVar[bool] = False
 

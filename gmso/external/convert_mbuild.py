@@ -1,4 +1,5 @@
 """Convert to and from an mbuild.Compound."""
+
 from warnings import warn
 
 import mbuild as mb
