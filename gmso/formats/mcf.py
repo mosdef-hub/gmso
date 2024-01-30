@@ -57,7 +57,7 @@ def write_mcf(top, filename):
     """
     subtops = []
     for molecule in top.unique_site_labels(name_only=True):
-        subtops.append(top.create_subtop("molecule", (molecule, 1)))
+        subtops.append(top.create_subtop("molecule", (molecule, 0)))
 
     if len(subtops) > 1:
         if len(filename) != len(subtops):

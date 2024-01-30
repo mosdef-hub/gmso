@@ -151,7 +151,7 @@ def _parse_atom(top, section, verbose):
                 element=element,
                 charge=charge,
                 residue=ResidueType(content[7], int(content[6])),
-                molecule=MoleculeType(molecule, 1),
+                molecule=MoleculeType(molecule, 0),
             )
             top.add_site(atom)
 
