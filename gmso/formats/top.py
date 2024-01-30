@@ -165,11 +165,13 @@ def write_top(top, filename, top_vars=None):
                     "{7:12.5f}\n".format(
                         str(idx + 1),
                         site.atom_type.name,
-                        str(site.molecule.number if site.molecule else 1),
+                        str(site.molecule.number + 1 if site.molecule else 1),
                         tag,
                         site.atom_type.tags.get("element", site.element.symbol),
                         "1",  # TODO: care about charge groups
-                        site.charge.in_units(u.elementary_charge).value,
+                        site.atom_type.charge.in_units(
+                            u.elementary_charge
+                        ).value,
                         site.atom_type.mass.in_units(u.amu).value,
                     )
                 )

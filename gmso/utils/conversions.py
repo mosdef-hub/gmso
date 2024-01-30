@@ -4,6 +4,7 @@ import re
 from functools import lru_cache
 
 import numpy as np
+import symengine
 import sympy
 import unyt as u
 from unyt.dimensions import length, mass, time
@@ -21,7 +22,8 @@ def _constant_multiplier(pot1, pot2):
     # TODO: Test outputs
     # TODO: Check speed
     try:
-        constant = sympy.simplify(pot1.expression / pot2.expression)
+        constant = symengine.expand(pot1.expression / pot2.expression)
+        # constant = sympy.simplify(pot1.expression / pot2.expression)
         if constant.is_number:
             for eq_term in pot1.expression.args:
                 if eq_term.is_symbol:
@@ -36,6 +38,7 @@ def _constant_multiplier(pot1, pot2):
 sympy_conversionsList = [_constant_multiplier]
 
 
+@lru_cache(maxsize=128)
 def _try_sympy_conversions(pot1, pot2):
     # TODO: Doc string
     # TODO: Test outputs

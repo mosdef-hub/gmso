@@ -1,0 +1,183 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ForceField name="LiTFSI-tfa from Gaussian" version="0.0.1">
+  <FFMetaData electrostatics14Scale="0.833333333" nonBonded14Scale="0.5" combiningRule="lorentz">
+    <Units energy="K" distance="angstrom" mass="amu" charge="elementary_charge"/>
+  </FFMetaData>
+  <AtomTypes expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)">
+    <ParametersUnitDef parameter="sigma" unit="angstrom"/>
+    <ParametersUnitDef parameter="epsilon" unit="K"/>
+    <AtomType name="O" atomclass="O" element="O" charge="-0.4538928545" mass="15.999" definition="O" doi="10.1021/acs.jpcb.1c02189">
+      <Parameters>
+        <Parameter name="epsilon" value="105.676"/>
+        <Parameter name="sigma" value="2.96"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="F" atomclass="F" element="F" charge="-0.1280712497" mass="18.999" definition="F" doi="10.1021/acs.jpcb.1c02189">
+    <Parameters>
+      <Parameter name="epsilon" value="30.696"/>
+      <Parameter name="sigma" value="3.118"/>
+    </Parameters>
+  </AtomType>
+  <AtomType name="C3" atomclass="C3" element="C" charge="0.4140351636" mass="12.01" definition="C" doi="10.1021/acs.jpcb.1c02189">
+    <Parameters>
+      <Parameter name="epsilon" value="55.052"/>
+      <Parameter name="sigma" value="3.4"/>
+    </Parameters>
+  </AtomType>
+  <AtomType name="SY" atomclass="SY" element="S" charge="0.8674524525" mass="32.07" definition="S" doi="10.1021/acs.jpcb.1c02189">
+    <Parameters>
+      <Parameter name="epsilon" value="125.805"/>
+      <Parameter name="sigma" value="3.564"/>
+    </Parameters>
+  </AtomType>
+  <AtomType name="NE" atomclass="NE" element="N" charge="-0.5859724185" mass="14.01" definition="N" doi="10.1021/acs.jpcb.1c02189">
+    <Parameters>
+      <Parameter name="epsilon" value="85.547"/>
+      <Parameter name="sigma" value="3.25"/>
+    </Parameters>
+  </AtomType>
+  <AtomType name="LI" atomclass="LI" element="Li" charge="0.8" mass="6.941" definition="Li" doi="10.1021/acs.jpcb.1c02189">
+    <Parameters>
+      <Parameter name="epsilon" value="9.198"/>
+      <Parameter name="sigma" value="2.12645"/>
+    </Parameters>
+  </AtomType>
+  </AtomTypes>
+  <BondTypes expression="k * (r-r_eq)**2">
+    <ParametersUnitDef parameter="r_eq" unit="angstrom"/>
+    <ParametersUnitDef parameter="k" unit="K/angstrom**2"/>
+    <BondType name="Harmonic" class1="O" class2="SY">
+      <Parameters>
+        <Parameter name="k" value="248087"/>
+        <Parameter name="r_eq" value="1.466"/>
+      </Parameters>
+    </BondType>
+    <BondType name="Harmonic" class1="C3" class2="F">
+      <Parameters>
+        <Parameter name="k" value="183071"/>
+        <Parameter name="r_eq" value="1.344"/>
+      </Parameters>
+    </BondType>
+    <BondType name="Harmonic" class1="C3" class2="SY">
+      <Parameters>
+        <Parameter name="k" value="125251"/>
+        <Parameter name="r_eq" value="1.782"/>
+      </Parameters>
+    </BondType>
+    <BondType name="Harmonic" class1="NE" class2="SY">
+      <Parameters>
+        <Parameter name="k" value="129378"/>
+        <Parameter name="r_eq" value="1.752"/>
+      </Parameters>
+    </BondType>
+  </BondTypes>
+  <AngleTypes expression="k * (theta - theta_eq)**2">
+    <ParametersUnitDef parameter="theta_eq" unit="degree"/>
+    <ParametersUnitDef parameter="k" unit="K/radian**2"/>
+    <AngleType name="Harmonic" class1="C3" class2="SY" class3="O">
+      <Parameters>
+        <Parameter name="k" value="20773"/>
+        <Parameter name="theta_eq" value="108.48"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="Harmonic" class1="O" class2="SY" class3="O">
+      <Parameters>
+        <Parameter name="k" value="22796"/>
+        <Parameter name="theta_eq" value="121.88"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="Harmonic" class1="NE" class2="SY" class3="O">
+      <Parameters>
+        <Parameter name="k" value="21689"/>
+        <Parameter name="theta_eq" value="107.06"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="Harmonic" class1="F" class2="C3" class3="SY">
+      <Parameters>
+        <Parameter name="k" value="40871"/>
+        <Parameter name="theta_eq" value="109.67"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="Harmonic" class1="F" class2="C3" class3="F">
+      <Parameters>
+        <Parameter name="k" value="35859"/>
+        <Parameter name="theta_eq" value="107.16"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="Harmonic" class1="C3" class2="SY" class3="NE">
+      <Parameters>
+        <Parameter name="k" value="19837"/>
+        <Parameter name="theta_eq" value="103.12"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="Harmonic" class1="SY" class2="NE" class3="SY">
+      <Parameters>
+        <Parameter name="k" value="55213"/>
+        <Parameter name="theta_eq" value="119.18"/>
+      </Parameters>
+    </AngleType>
+  </AngleTypes>
+  <DihedralTypes expression="k * (1 + cos(n * phi - phi_eq))">
+    <ParametersUnitDef parameter="k" unit="K"/>
+    <ParametersUnitDef parameter="n" unit="dimensionless"/>
+    <ParametersUnitDef parameter="phi_eq" unit="degree"/>
+    <DihedralType name="PeriodicTorsionPotential" class1="F" class2="C3" class3="SY" class4="O">
+      <Parameters>
+        <Parameter name="n">
+          <Value>3</Value>
+        </Parameter>
+        <Parameter name="k">
+          <Value>72.46</Value>
+        </Parameter>
+        <Parameter name="phi_eq">
+          <Value>0</Value>
+        </Parameter>
+      </Parameters>
+    </DihedralType>
+    <DihedralType name="PeriodicTorsionPotential" class1="SY" class2="NE" class3="SY" class4="O">
+      <Parameters>
+        <Parameter name="n">
+          <Value>1</Value>
+          <Value>3</Value>
+        </Parameter>
+        <Parameter name="k">
+          <Value>3421.89</Value>
+          <Value>251.61</Value>
+        </Parameter>
+        <Parameter name="phi_eq">
+          <Value>180</Value>
+          <Value>180</Value>
+        </Parameter>
+      </Parameters>
+    </DihedralType>
+    <DihedralType name="PeriodicTorsionPotential" class1="F" class2="C3" class3="SY" class4="NE">
+      <Parameters>
+        <Parameter name="n">
+          <Value>3</Value>
+        </Parameter>
+        <Parameter name="k">
+          <Value>72.46</Value>
+        </Parameter>
+        <Parameter name="phi_eq">
+          <Value>0</Value>
+        </Parameter>
+      </Parameters>
+    </DihedralType>
+    <DihedralType name="PeriodicTorsionPotential" class1="SY" class2="NE" class3="SY" class4="C3">
+      <Parameters>
+        <Parameter name="n">
+          <Value>1</Value>
+          <Value>1</Value>
+        </Parameter>
+        <Parameter name="k">
+          <Value>3421.89</Value>
+          <Value>251.61</Value>
+        </Parameter>
+        <Parameter name="phi_eq">
+          <Value>180</Value>
+          <Value>180</Value>
+        </Parameter>
+      </Parameters>
+    </DihedralType>
+  </DihedralTypes>
+</ForceField>

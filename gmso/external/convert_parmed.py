@@ -68,20 +68,26 @@ def from_parmed(structure, refer_type=True):
             element = (
                 element_by_atomic_number(atom.element) if atom.element else None
             )
+            if residue.number == -1:  # use default value of 0 in GMSO
+                residue_number = 0
+            else:
+                residue_number = residue.number - 1
             site = gmso.Atom(
                 name=atom.name,
                 charge=atom.charge * u.elementary_charge,
                 position=[atom.xx, atom.xy, atom.xz] * u.angstrom,
                 atom_type=None,
-                residue=(residue.name, residue.number),
+                residue=(residue.name, residue_number),
                 element=element,
             )
-            site.molecule = (residue.name, residue.number) if ind_res else None
+            site.molecule = (residue.name, residue_number) if ind_res else None
             site.atom_type = (
                 copy.deepcopy(pmd_top_atomtypes[atom.atom_type])
                 if refer_type and isinstance(atom.atom_type, pmd.AtomType)
                 else None
             )
+            if site.atom_type:
+                site.atom_type.charge = atom.charge * u.elementary_charge
             site_map[atom] = site
             top.add_site(site)
 
@@ -481,7 +487,7 @@ def to_parmed(top, refer_type=True):
             structure.add_atom(
                 pmd_atom,
                 resname=site.residue.name,
-                resnum=site.residue.number,
+                resnum=site.residue.number + 1,
             )
         else:
             structure.add_atom(pmd_atom, resname="RES", resnum=-1)

@@ -816,7 +816,7 @@ class Topology(object):
         else:
             if interaction not in scaling_interaction_idxes:
                 raise GMSOError(f"Unknown `{name}` interaction `{interaction}`")
-            all_scales[index][scaling_interaction_idxes[interaction]] = value
+            all_scales[index][scaling_interaction_idxes[interaction]] = value[0]
 
     def add_site(self, site, update_types=False):
         """Add a site to the topology.
