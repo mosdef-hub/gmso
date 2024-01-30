@@ -133,7 +133,7 @@ def write_lammpsdata(
         # "sites":"CoulombicPotential"
     }
 
-    # TODO: Use strict_x, (i.e. x=bonds) to validate what topology attrs to convert
+    # TODO: Use strict_x, (e.g. x=bonds) to validate what topology attrs to convert
     if not strict_potentials:
         _try_default_potential_conversions(top, default_parameterMaps)
     potentialsMap = _validate_potential_compatibility(top)
