@@ -1,4 +1,5 @@
 """Convert to and from an mbuild.Compound."""
+
 from warnings import warn
 
 import mbuild as mb
@@ -315,7 +316,7 @@ def _parse_molecule_residue(site_map, compound):
         if molecule_tag.name in molecule_tracker:
             molecule_tracker[molecule_tag.name] += 1
         else:
-            molecule_tracker[molecule_tag.name] = 1
+            molecule_tracker[molecule_tag.name] = 0
         molecule_number = molecule_tracker[molecule_tag.name]
         """End of molecule parsing"""
 
@@ -330,7 +331,7 @@ def _parse_molecule_residue(site_map, compound):
                         residue_tracker[residue_tag.name]
                     )
             else:
-                residue_tracker[residue_tag.name] = {residue_tag: 1}
+                residue_tracker[residue_tag.name] = {residue_tag: 0}
 
             residue_number = residue_tracker[residue_tag.name][residue_tag]
             site_map[particle]["residue"] = (residue_tag.name, residue_number)

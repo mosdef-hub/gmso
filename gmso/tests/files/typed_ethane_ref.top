@@ -6,8 +6,8 @@
 
 [ atomtypes ]
 ; name	at.num		mass	charge		ptype	sigma	epsilon
-opls_135    6       12.01078     0.00000	A        0.35000     0.27614
-opls_140    1        1.00795     0.00000	A        0.25000     0.12552
+opls_135    6       12.01078    -0.18000	A        0.35000     0.27614
+opls_140    1        1.00795     0.06000	A        0.25000     0.12552
 
 [ moleculetype ]
 ; name	nrexcl

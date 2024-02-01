@@ -1,4 +1,5 @@
 """GMSO equation or expression comparisons."""
+
 import os
 
 import sympy

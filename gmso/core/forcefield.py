@@ -1,4 +1,5 @@
 """Module for working with GMSO forcefields."""
+
 import copy
 import itertools
 import warnings
@@ -297,9 +298,11 @@ class ForceField(object):
             raise ValueError(f"Cannot get potential for {group}")
 
         validate_type(
-            [key]
-            if isinstance(key, str) or not isinstance(key, Iterable)
-            else key,
+            (
+                [key]
+                if isinstance(key, str) or not isinstance(key, Iterable)
+                else key
+            ),
             str,
         )
 
@@ -842,9 +845,9 @@ class ForceField(object):
             this_bond_types_group_name = bond_types.attrib.get("name", None)
 
             if this_bond_types_group_name:
-                potential_groups[
-                    this_bond_types_group_name
-                ] = this_bond_types_group
+                potential_groups[this_bond_types_group_name] = (
+                    this_bond_types_group
+                )
 
             bond_types_dict.update(this_bond_types_group)
 
@@ -856,9 +859,9 @@ class ForceField(object):
             this_angle_types_group_name = angle_types.attrib.get("name", None)
 
             if this_angle_types_group_name:
-                potential_groups[
-                    this_angle_types_group_name
-                ] = this_angle_types_group
+                potential_groups[this_angle_types_group_name] = (
+                    this_angle_types_group
+                )
 
             angle_types_dict.update(this_angle_types_group)
 
@@ -889,9 +892,9 @@ class ForceField(object):
             )
 
             if this_pairpotential_types_group_name:
-                potential_groups[
-                    this_pairpotential_types_group_name
-                ] = this_pairpotential_types_group
+                potential_groups[this_pairpotential_types_group_name] = (
+                    this_pairpotential_types_group
+                )
 
             pairpotential_types_dict.update(this_pairpotential_types_group)
 

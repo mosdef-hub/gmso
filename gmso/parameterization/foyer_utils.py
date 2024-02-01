@@ -1,4 +1,5 @@
 """Utilities for atomtyping a gmso topology with foyer."""
+
 from collections import namedtuple
 
 from foyer.atomtyper import AtomTypingRulesProvider, find_atomtypes

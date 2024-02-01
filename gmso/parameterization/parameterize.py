@@ -1,4 +1,5 @@
 """Functions used to atomtype a gmso.Topology."""
+
 from gmso.parameterization.topology_parameterizer import (
     TopologyParameterizationConfig,
     TopologyParameterizer,

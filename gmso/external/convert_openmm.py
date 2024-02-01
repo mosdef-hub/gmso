@@ -1,4 +1,5 @@
 """Convert to and from an OpenMM Topology or System object."""
+
 import unyt as u
 
 from gmso.utils.io import has_openmm, has_openmm_unit, import_

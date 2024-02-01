@@ -335,8 +335,8 @@ class ParametricPotential(AbstractPotential):
     def __repr__(self):
         """Return formatted representation of the potential."""
         desc = super().__repr__()
-        member_types = (
-            lambda x: x.member_types if hasattr(x, "member_types") else ""
+        member_types = lambda x: (
+            x.member_types if hasattr(x, "member_types") else ""
         )
         desc = desc.replace(
             ">",

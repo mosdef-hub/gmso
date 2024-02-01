@@ -1,4 +1,5 @@
 """Support for improper style connections (4-member connection)."""
+
 from typing import Callable, ClassVar, Optional, Tuple
 
 from pydantic import ConfigDict, Field

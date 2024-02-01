@@ -1,4 +1,5 @@
 """Base data structure for GMSO chemical systems."""
+
 import itertools
 import warnings
 from pathlib import Path
@@ -805,9 +806,9 @@ class Topology(object):
             all_scales = self._scaling_factors
         else:
             if molecule_id not in self._molecule_scaling_factors:
-                self._molecule_scaling_factors[
-                    molecule_id
-                ] = self._scaling_factors.copy()
+                self._molecule_scaling_factors[molecule_id] = (
+                    self._scaling_factors.copy()
+                )
             all_scales = self._molecule_scaling_factors[molecule_id]
 
         if interaction is None:
@@ -815,7 +816,7 @@ class Topology(object):
         else:
             if interaction not in scaling_interaction_idxes:
                 raise GMSOError(f"Unknown `{name}` interaction `{interaction}`")
-            all_scales[index][scaling_interaction_idxes[interaction]] = value
+            all_scales[index][scaling_interaction_idxes[interaction]] = value[0]
 
     def add_site(self, site, update_types=False):
         """Add a site to the topology.
@@ -1548,9 +1549,11 @@ class Topology(object):
                 connection_members=[
                     new_top.sites[conn_idx[i]] for i in range(2)
                 ],
-                bond_type=None
-                if not ref_conn.connection_type
-                else ref_conn.connection_type.clone(),
+                bond_type=(
+                    None
+                    if not ref_conn.connection_type
+                    else ref_conn.connection_type.clone()
+                ),
             )
             new_top.add_connection(bond)
         for ref_conn, conn_idx in angles_dict.items():
@@ -1558,9 +1561,11 @@ class Topology(object):
                 connection_members=[
                     new_top.sites[conn_idx[i]] for i in range(3)
                 ],
-                angle_type=None
-                if not ref_conn.connection_type
-                else ref_conn.connection_type.clone(),
+                angle_type=(
+                    None
+                    if not ref_conn.connection_type
+                    else ref_conn.connection_type.clone()
+                ),
             )
             new_top.add_connection(angle)
         for ref_conn, conn_idx in dihedrals_dict.items():
@@ -1568,9 +1573,11 @@ class Topology(object):
                 connection_members=[
                     new_top.sites[conn_idx[i]] for i in range(4)
                 ],
-                dihedral_type=None
-                if not ref_conn.connection_type
-                else ref_conn.connection_type.clone(),
+                dihedral_type=(
+                    None
+                    if not ref_conn.connection_type
+                    else ref_conn.connection_type.clone()
+                ),
             )
             new_top.add_connection(dihedral)
         for ref_conn, conn_idx in impropers_dict.items():
@@ -1578,9 +1585,11 @@ class Topology(object):
                 connection_members=[
                     new_top.sites[conn_idx[i]] for i in range(4)
                 ],
-                improper_type=None
-                if not ref_conn.connection_type
-                else ref_conn.connection_type.clone(),
+                improper_type=(
+                    None
+                    if not ref_conn.connection_type
+                    else ref_conn.connection_type.clone()
+                ),
             )
             new_top.add_connection(improper)
 

@@ -1,4 +1,5 @@
 """Module for 2-partner connections between sites."""
+
 from typing import Callable, ClassVar, Optional, Tuple
 
 from pydantic import ConfigDict, Field

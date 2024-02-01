@@ -1,4 +1,5 @@
 """Read and write XYZ files."""
+
 import datetime
 
 import numpy as np
