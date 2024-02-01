@@ -37,6 +37,7 @@ authors:
   orcid: 0000-0002-6196-5274
   affiliation: "5"
 - name: Ryan S. DeFever
+  orcid: 0000-0001-5311-6718
   affiliation: "6"
 - name: Brad Crawford
   orcid: 0000-0003-0638-7333
@@ -46,11 +47,12 @@ authors:
   affiliation: "1, 2"
 - name: Jeffrey Potoff
   affiliation: "7"
-  orcid: "0000-0002-4421-8787"
+  orcid: 0000-0002-4421-8787
 -name: Eric Jankowski
   affiliation: "5"
-  orcid: "0000-0002-3267-1410"
+  orcid: 0000-0002-3267-1410
 - name: Edward J. Maginn
+  orcid: 0000-0002-6309-1347
   affiliation: "6"
 - name: Clare McCabe
   orcid: 0000-0002-8552-9135
