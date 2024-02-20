@@ -1,4 +1,5 @@
 """Read and write Gromos87 (.GRO) file format."""
+
 import datetime
 import re
 import warnings
@@ -42,8 +43,8 @@ def read_gro(filename):
     Gro files do not specify connections between atoms, the returned topology
     will not have connections between sites either.
 
-    Currently this implementation does not support a gro file with more than 1
-    frame.
+    Currently this implementation does not support parsing velocities from a gro file or gro file
+    with more than 1 frame.
 
     All residues and resid information from the gro file are currently lost
     when converting to `topology`.
@@ -57,7 +58,6 @@ def read_gro(filename):
         coords = u.nm * np.zeros(shape=(n_atoms, 3))
         for row, _ in enumerate(coords):
             line = gro_file.readline()
-            content = line.split()
             if not line:
                 msg = (
                     "Incorrect number of lines in .gro file. Based on the "
@@ -65,24 +65,31 @@ def read_gro(filename):
                     "atoms were expected, but at least one fewer was found."
                 )
                 raise ValueError(msg.format(n_atoms))
+            res_id = (
+                int(line[:5].strip()) - 1
+            )  # reformat from 1 to 0 index in gmso
+            res_name = line[5:10].strip()
+            atom_name = line[10:15].strip()
+            atom_id = line[15:20].strip()
 
-            res = content[0]
-            atom_name = content[1]
-            atom_id = content[2]
+            positions = line[20:].split()
             coords[row] = u.nm * np.array(
                 [
-                    float(content[3]),
-                    float(content[4]),
-                    float(content[5]),
+                    float(positions[0]),
+                    float(positions[1]),
+                    float(positions[2]),
                 ]
             )
             site = Atom(name=atom_name, position=coords[row])
 
-            r = re.compile("([0-9]+)([a-zA-Z]+)")
-            m = r.match(res)
-            site.molecule = (m.group(2), int(m.group(1)))
-            site.residue = (m.group(2), int(m.group(1)))
+            site.molecule = (res_name, res_id)
+            site.residue = (res_name, res_id)
             top.add_site(site, update_types=False)
+
+        if len(positions) == 6:
+            warnings.warn(
+                "Velocity information presents but will not be parsed."
+            )
         top.update_topology()
 
         # Box information
@@ -159,7 +166,7 @@ def _validate_positions(pos_array):
             "in order to ensure all coordinates are non-negative."
         )
     min_xyz = np.min(pos_array, axis=0)
-    min_xyz0 = np.where(min_xyz < 0, min_xyz, 0) * min_xyz.units
+    min_xyz0 = np.where(min_xyz < 0 * min_xyz.units, min_xyz, 0 * min_xyz.units)
 
     pos_array -= min_xyz0
 

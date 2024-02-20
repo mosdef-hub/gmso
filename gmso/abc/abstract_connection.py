@@ -1,13 +1,10 @@
 from typing import Optional, Sequence
 
+from pydantic import ConfigDict, Field, model_validator
+
 from gmso.abc.abstract_site import Site
 from gmso.abc.gmso_base import GMSOBase
 from gmso.exceptions import GMSOError
-
-try:
-    from pydantic.v1 import Field, root_validator
-except ImportError:
-    from pydantic import Field, root_validator
 
 
 class Connection(GMSOBase):
@@ -18,12 +15,21 @@ class Connection(GMSOBase):
     """
 
     name_: str = Field(
-        default="", description="Name of the connection. Defaults to class name"
+        default="",
+        description="Name of the connection. Defaults to class name.",
+        alias="name",
     )
 
     connection_members_: Optional[Sequence[Site]] = Field(
         default=None,
         description="A list of constituents in this connection, in order.",
+        alias="connection_members",
+    )
+    model_config = ConfigDict(
+        alias_to_fields={
+            "name": "name_",
+            "connection_members": "connection_members_",
+        }
     )
 
     @property
@@ -37,12 +43,12 @@ class Connection(GMSOBase):
     @property
     def member_types(self):
         """Return the atomtype of the connection members as a list of string."""
-        return self._get_members_types_or_classes("member_types_")
+        return self._get_members_types_or_classes("member_types")
 
     @property
     def member_classes(self):
         """Return the class of the connection members as a list of string."""
-        return self._get_members_types_or_classes("member_classes_")
+        return self._get_members_types_or_classes("member_classes")
 
     def _has_typed_members(self):
         """Check if all the members of this connection are typed."""
@@ -53,7 +59,7 @@ class Connection(GMSOBase):
 
     def _get_members_types_or_classes(self, to_return):
         """Return types or classes for connection members if they exist."""
-        assert to_return in {"member_types_", "member_classes_"}
+        assert to_return in {"member_types", "member_classes"}
         ctype = getattr(self, "connection_type")
         ctype_attr = getattr(ctype, to_return) if ctype else None
 
@@ -61,16 +67,21 @@ class Connection(GMSOBase):
             return list(ctype_attr)
         elif self._has_typed_members():
             tc = [
-                member.atom_type.name
-                if to_return == "member_types_"
-                else member.atom_type.atomclass
+                (
+                    member.atom_type.name
+                    if to_return == "member_types"
+                    else member.atom_type.atomclass
+                )
                 for member in self.__dict__.get("connection_members_")
             ]
             return tc if all(tc) else None
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def validate_fields(cls, values):
-        connection_members = values.get("connection_members")
+        if "connection_members" in values:
+            connection_members = values.get("connection_members")
+        else:
+            connection_members = values.get("connection_members_")
 
         if all(isinstance(member, dict) for member in connection_members):
             connection_members = [
@@ -103,11 +114,3 @@ class Connection(GMSOBase):
 
     def __str__(self):
         return f"<{self.__class__.__name__} {self.name}, id: {id(self)}> "
-
-    class Config:
-        fields = {"name_": "name", "connection_members_": "connection_members"}
-
-        alias_to_fields = {
-            "name": "name_",
-            "connection_members": "connection_members_",
-        }

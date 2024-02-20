@@ -1,4 +1,5 @@
 import pytest
+from pydantic import ValidationError
 
 from gmso.core.atom import Atom
 from gmso.core.atom_type import AtomType
@@ -6,11 +7,6 @@ from gmso.core.dihedral import Dihedral
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.topology import Topology
 from gmso.tests.base_test import BaseTest
-
-try:
-    from pydantic.v1 import ValidationError
-except ImportError:
-    from pydantic import ValidationError
 
 
 class TestDihedral(BaseTest):
@@ -48,7 +44,7 @@ class TestDihedral(BaseTest):
         atom2 = Atom(name="atom2")
         atom3 = Atom(name="atom3")
         atom4 = Atom(name="atom4")
-        with pytest.raises(ValidationError):
+        with pytest.raises(TypeError):
             Dihedral(connection_members=["fakeatom1", "fakeatom2", 4.2])
 
     def test_dihedral_fake_dihedraltype(self):
@@ -157,3 +153,35 @@ class TestDihedral(BaseTest):
             tuple(dihedral.connection_members)
             in dihedral_not_eq.equivalent_members()
         )
+
+    def test_sort_dihedral_types(self):
+        from gmso.utils.sorting import sort_by_classes, sort_by_types
+
+        atom1 = Atom(
+            name="atom1", position=[0, 0, 0], atom_type=AtomType(name="A")
+        )
+        atom2 = Atom(
+            name="atom2", position=[1, 0, 0], atom_type=AtomType(name="B")
+        )
+        atom3 = Atom(
+            name="atom3", position=[1, 1, 0], atom_type=AtomType(name="C")
+        )
+        atom4 = Atom(
+            name="atom4", position=[1, 1, 4], atom_type=AtomType(name="D")
+        )
+
+        consituentList = [
+            atom2.atom_type.name,
+            atom4.atom_type.name,
+            atom3.atom_type.name,
+            atom1.atom_type.name,
+        ]
+        dihtype = DihedralType(
+            member_types=consituentList, member_classes=consituentList
+        )
+
+        expected_sortingList = tuple(
+            [atom.atom_type.name for atom in [atom1, atom3, atom4, atom2]]
+        )
+        assert sort_by_classes(dihtype) == expected_sortingList
+        assert sort_by_types(dihtype) == expected_sortingList

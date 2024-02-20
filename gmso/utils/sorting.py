@@ -1,4 +1,5 @@
 """Sorting utilities."""
+
 import re
 
 import gmso
@@ -122,7 +123,8 @@ def sort_by_classes(potential):
     elif isinstance(potential, ImproperType):
         return (
             potential.member_classes[0],
-            *sorted(potential.member_classes[1:]),
+            *sorted(potential.member_classes[1:3]),
+            potential.member_classes[3],
         )
     return ValueError(
         f"Potential {potential} not one of {potential_attribute_map.values()}"
@@ -174,7 +176,8 @@ def sort_by_types(potential):
     elif isinstance(potential, ImproperType):
         return (
             potential.member_types[0],
-            *sorted(potential.member_types[1:]),
+            *sorted(potential.member_types[1:3]),
+            potential.member_types[3],
         )
     return ValueError(
         f"Potential {potential} not one of {potential_attribute_map.values()}"
@@ -212,4 +215,27 @@ def sort_connection_strings(namesList, improperBool=False):
     else:
         return ValueError(
             f"Cannot sort {namesList}. It is not a length of 2,3, or 4 members."
+        )
+
+
+# reindex molecule
+def reindex_molecules(top):
+    """Take a Topology and reset the molecule numbers to index from 0."""
+    unique_moleculesDict = {}
+    for site in top.sites:
+        molecule = site.molecule
+        if molecule.name in unique_moleculesDict:
+            unique_moleculesDict[molecule.name].add(molecule.number)
+        else:
+            unique_moleculesDict[molecule.name] = {molecule.number}
+
+    offsetDict = {}
+    for molecule in unique_moleculesDict:
+        min_val = min(unique_moleculesDict[molecule])
+        offsetDict[molecule] = min_val
+
+    for site in top.sites:
+        mol_num = site.molecule.number
+        site.molecule = site.molecule._replace(
+            number=mol_num - offsetDict[site.molecule.name]
         )

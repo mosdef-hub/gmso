@@ -41,9 +41,9 @@ class TestViews(BaseTest):
         for j in range(200):
             custom_top.add_site(
                 Atom(
-                    atom_type=atom_type1.clone()
-                    if j % 2 == 0
-                    else atom_type2.clone()
+                    atom_type=(
+                        atom_type1.clone() if j % 2 == 0 else atom_type2.clone()
+                    )
                 )
             )
 
@@ -53,7 +53,7 @@ class TestViews(BaseTest):
                     custom_top.sites[j],
                     custom_top.sites[j + 1],
                 ],
-                bond_type=BondType(member_classes=(j, j + 1)),
+                bond_type=BondType(member_classes=(str(j), str(j + 1))),
             )
             custom_top.add_connection(bond)
 

@@ -3,6 +3,7 @@ from typing import Any, Union
 
 import unyt as u
 from lxml import etree
+from pydantic import ConfigDict
 
 from gmso.abc.abstract_potential import AbstractPotential
 from gmso.utils.expression import PotentialExpression
@@ -20,6 +21,14 @@ class ParametricPotential(AbstractPotential):
     angle potential, a dihedral potential, etc. and is designed to be inherited
     by classes that represent these potentials.
     """
+
+    model_config = ConfigDict(
+        alias_to_fields=dict(
+            **AbstractPotential.model_config["alias_to_fields"],
+            **{"topology": "topology_", "set_ref": "set_ref_"},
+        ),
+        validate_assignment=True,
+    )
 
     def __init__(
         self,
@@ -90,7 +99,7 @@ class ParametricPotential(AbstractPotential):
     @property
     def parameters(self):
         """Optional[dict]\n\tThe parameters of the `Potential` expression and their corresponding values, as `unyt` quantities"""
-        return self.potential_expression_.parameters
+        return self.potential_expression.parameters
 
     def __setattr__(self, key: Any, value: Any) -> None:
         """Set the attributes of the potential."""
@@ -126,13 +135,12 @@ class ParametricPotential(AbstractPotential):
             parameters=parameters,
         )
 
-    def dict(
+    def model_dump(
         self,
         *,
         include: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
         exclude: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
         by_alias: bool = False,
-        skip_defaults: bool = None,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
         exclude_none: bool = False,
@@ -144,15 +152,18 @@ class ParametricPotential(AbstractPotential):
 
         exclude = exclude.union({"topology_", "set_ref_"})
 
-        return super().dict(
+        return super().model_dump(
             include=include,
             exclude=exclude,
             by_alias=True,
-            skip_defaults=skip_defaults,
             exclude_unset=exclude_unset,
             exclude_defaults=exclude_defaults,
             exclude_none=exclude_none,
         )
+
+    def __hash__(self):
+        """Return the unique hash of the object."""
+        return id(self)
 
     def __eq__(self, other):
         if other is self:
@@ -184,7 +195,7 @@ class ParametricPotential(AbstractPotential):
     def clone(self, fast_copy=False):
         """Clone this parametric potential, faster alternative to deepcopying."""
         Creator = self.__class__
-        kwargs = {"tags": deepcopy(self.tags_)}
+        kwargs = {"tags": deepcopy(self.tags)}
         if hasattr(self, "member_classes"):
             kwargs["member_classes"] = (
                 copy(self.member_classes) if self.member_classes else None
@@ -197,7 +208,7 @@ class ParametricPotential(AbstractPotential):
 
         return Creator(
             name=self.name,
-            potential_expression=self.potential_expression_.clone(fast_copy),
+            potential_expression=self.potential_expression.clone(fast_copy),
             **kwargs,
         )
 
@@ -205,7 +216,7 @@ class ParametricPotential(AbstractPotential):
         """Return the XML equivalent representation of this ParametricPotential"""
         attrib = {
             key: get_xml_representation(value)
-            for key, value in self.dict(
+            for key, value in self.model_dump(
                 by_alias=True,
                 exclude_none=True,
                 exclude={
@@ -324,8 +335,8 @@ class ParametricPotential(AbstractPotential):
     def __repr__(self):
         """Return formatted representation of the potential."""
         desc = super().__repr__()
-        member_types = (
-            lambda x: x.member_types if hasattr(x, "member_types") else ""
+        member_types = lambda x: (
+            x.member_types if hasattr(x, "member_types") else ""
         )
         desc = desc.replace(
             ">",
@@ -333,10 +344,3 @@ class ParametricPotential(AbstractPotential):
             f"member types: {member_types(self)}>",
         )
         return desc
-
-    class Config:
-        """Pydantic configuration class."""
-
-        fields = {"topology_": "topology", "set_ref_": "set_ref"}
-        alias_to_fields = {"topology": "topology_"}
-        validate_assignment = True

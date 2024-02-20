@@ -386,11 +386,11 @@ class TopologyParameterizer(GMSOBase):
         group = POTENTIAL_GROUPS[type(connection)]
         return group, [
             list(
-                member.atom_type.atomclass
+                member.atom_type.name
                 for member in connection.connection_members
             ),
             list(
-                member.atom_type.name
+                member.atom_type.atomclass
                 for member in connection.connection_members
             ),
         ]

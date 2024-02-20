@@ -362,7 +362,7 @@ class TestAtomType(BaseTest):
 
     def test_atom_type_dict(self):
         atype = AtomType()
-        atype_dict = atype.dict(exclude={"potential_expression"})
+        atype_dict = atype.model_dump(exclude={"potential_expression"})
         assert "potential_expression" not in atype_dict
         assert "charge" in atype_dict
 
@@ -393,8 +393,10 @@ class TestAtomType(BaseTest):
 
         assert len(top.atom_types) == 2
 
-        atype_dict = atype.dict(exclude={"topology", "set_ref"})
-        atype_clone_dict = atype_clone.dict(exclude={"topology", "set_ref"})
+        atype_dict = atype.model_dump(exclude={"topology", "set_ref"})
+        atype_clone_dict = atype_clone.model_dump(
+            exclude={"topology", "set_ref"}
+        )
 
         for key, value in atype_dict.items():
             cloned = atype_clone_dict[key]

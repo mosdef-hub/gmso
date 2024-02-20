@@ -1,4 +1,5 @@
 """GMSO and foyer use specific residues to apply force fields and mapping molecule number to atom numbers."""
+
 import os
 from warnings import warn
 from xml.dom import minidom
@@ -720,9 +721,9 @@ def _validate_forcefields(forcefield_selection, residues):
             ff_names_path_iteration = forcefield_selection[residue]
             try:
                 read_xlm_iteration = minidom.parse(ff_names_path_iteration)
-                forcefield_selection_with_paths[
-                    residue
-                ] = ff_names_path_iteration
+                forcefield_selection_with_paths[residue] = (
+                    ff_names_path_iteration
+                )
 
             except:
                 error_msg = (
@@ -741,9 +742,9 @@ def _validate_forcefields(forcefield_selection, residues):
             )
             try:
                 read_xlm_iteration = minidom.parse(ff_names_path_iteration)
-                forcefield_selection_with_paths[
-                    residue
-                ] = ff_names_path_iteration
+                forcefield_selection_with_paths[residue] = (
+                    ff_names_path_iteration
+                )
             except:
                 error_msg = (
                     "Please make sure you are entering the correct foyer FF name, or the "

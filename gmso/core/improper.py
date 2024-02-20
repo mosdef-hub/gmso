@@ -1,14 +1,12 @@
 """Support for improper style connections (4-member connection)."""
+
 from typing import Callable, ClassVar, Optional, Tuple
+
+from pydantic import ConfigDict, Field
 
 from gmso.abc.abstract_connection import Connection
 from gmso.core.atom import Atom
 from gmso.core.improper_type import ImproperType
-
-try:
-    from pydantic.v1 import Field
-except ImportError:
-    from pydantic import Field
 
 
 class Improper(Connection):
@@ -34,16 +32,27 @@ class Improper(Connection):
 
     Additional _validate methods are presented
     """
-    __members_creator__: ClassVar[Callable] = Atom.parse_obj
+    __members_creator__: ClassVar[Callable] = Atom.model_validate
 
     connection_members_: Tuple[Atom, Atom, Atom, Atom] = Field(
         ...,
         description="The 4 atoms of this improper. Central atom first, "
         "then the three atoms connected to the central site.",
+        alias="connection_members",
     )
 
     improper_type_: Optional[ImproperType] = Field(
-        default=None, description="ImproperType of this improper."
+        default=None,
+        description="ImproperType of this improper.",
+        alias="improper_type",
+    )
+    model_config = ConfigDict(
+        alias_to_fields=dict(
+            **Connection.model_config["alias_to_fields"],
+            **{
+                "improper_type": "improper_type_",
+            }
+        )
     )
 
     @property
@@ -85,18 +94,6 @@ class Improper(Connection):
     def __setattr__(self, key, value):
         """Set attribute override to support connection_type key."""
         if key == "connection_type":
-            super(Improper, self).__setattr__("improper_type", value)
+            super(Improper, self).__setattr__("improper_type_", value)
         else:
             super(Improper, self).__setattr__(key, value)
-
-    class Config:
-        """Pydantic configuration to link fields to their public attribute."""
-
-        fields = {
-            "improper_type_": "improper_type",
-            "connection_members_": "connection_members",
-        }
-        alias_to_fields = {
-            "improper_type": "improper_type_",
-            "connection_members": "connection_members_",
-        }

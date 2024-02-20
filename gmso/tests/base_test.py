@@ -166,6 +166,24 @@ class BaseTest:
         return _typed_topology
 
     @pytest.fixture
+    def spce_water(self):
+        spce_comp = mb.lib.molecules.water.WaterSPC()
+        spce_ff = ForceField(get_fn("gmso_xmls/test_ffstyles/spce.xml"))
+        spce_top = spce_comp.to_gmso()
+        spce_top.identify_connections()
+
+        spce_top = apply(spce_top, spce_ff, remove_untyped=True)
+
+        for site in spce_top.sites:
+            site.restraint = {
+                "kx": 1000 * u.Unit("kJ/(mol*nm**2)"),
+                "ky": 1000 * u.Unit("kJ/(mol*nm**2)"),
+                "kz": 1000 * u.Unit("kJ/(mol*nm**2)"),
+            }
+
+        return spce_top
+
+    @pytest.fixture
     def water_system(self):
         water = Topology(name="water")
         water = water.load(get_path("tip3p.mol2"))
@@ -363,13 +381,15 @@ class BaseTest:
                 return False
             if atom1 is atom2:
                 return True
-            equal = (
-                lambda x1, x2: u.allclose_units(x1, x2)
+            equal = lambda x1, x2: (
+                u.allclose_units(x1, x2)
                 if isinstance(x1, u.unyt_array) and isinstance(x2, u.unyt_array)
                 else x1 == x2
             )
-            for prop in atom1.dict(by_alias=True):
-                if not equal(atom2.dict().get(prop), atom1.dict().get(prop)):
+            for prop in atom1.model_dump(by_alias=True):
+                if not equal(
+                    atom2.model_dump().get(prop), atom1.model_dump().get(prop)
+                ):
                     return False
             return True
 

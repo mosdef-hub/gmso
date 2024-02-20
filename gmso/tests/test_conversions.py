@@ -199,9 +199,7 @@ class TestKelvinToEnergy(BaseTest):
         assert outdims == sympy.Symbol("(energy)")
         assert (
             units.dimensions
-            == u.dimensions.length**2
-            * u.dimensions.mass
-            / u.dimensions.time**2
+            == u.dimensions.length**2 * u.dimensions.mass / u.dimensions.time**2
         )
         units = u.Unit("kcal/nm")
         outdims = LAMMPS_UnitSystems._dimensions_to_energy(units.dimensions)

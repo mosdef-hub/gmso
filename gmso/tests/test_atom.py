@@ -1,17 +1,13 @@
 import numpy as np
 import pytest
 import unyt as u
+from pydantic import ValidationError
 
 from gmso.core.atom import Atom
 from gmso.core.atom_type import AtomType
 from gmso.core.element import Lithium, Sulfur
 from gmso.exceptions import GMSOError
 from gmso.tests.base_test import BaseTest
-
-try:
-    from pydantic.v1 import ValidationError
-except ImportError:
-    from pydantic import ValidationError
 
 
 class TestSite(BaseTest):
@@ -28,7 +24,7 @@ class TestSite(BaseTest):
         assert isinstance(atom.position, np.ndarray)
 
     def test_name_none(self):
-        atom = Atom(name=None)
+        atom = Atom()
         assert atom.name == "Atom"
 
     def test_setters_and_getters(self):
@@ -73,6 +69,12 @@ class TestSite(BaseTest):
     def test_bad_pos_input(self, position):
         with pytest.raises((u.exceptions.InvalidUnitOperation, ValueError)):
             Atom(name="atom", position=u.nm * position)
+
+    def test_pos_restraint(self, spce_water):
+        for site in spce_water.sites:
+            for ax in ["kx", "ky", "kz"]:
+                assert site.restraint[ax] == 1000 * u.Unit("kJ/(mol*nm**2)")
+                site.restraint[ax] = 500 * u.Unit("kJ/(mol*nm**2)")
 
     def test_equivalence(self):
         ref = Atom(name="atom", position=u.nm * np.zeros(3))

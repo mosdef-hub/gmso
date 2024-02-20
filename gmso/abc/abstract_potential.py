@@ -1,14 +1,14 @@
 """Abstract representation of a Potential object."""
+
 from abc import abstractmethod
 from typing import Any, Dict, Iterator, List
 
-from gmso.abc.gmso_base import GMSOBase
-from gmso.utils.expression import PotentialExpression
+import unyt as u
+from pydantic import ConfigDict, Field, field_serializer, field_validator
 
-try:
-    from pydantic.v1 import Field, validator
-except ImportError:
-    from pydantic import Field, validator
+from gmso.abc.gmso_base import GMSOBase
+from gmso.abc.serialization_utils import unyt_to_dict
+from gmso.utils.expression import PotentialExpression
 
 
 class AbstractPotential(GMSOBase):
@@ -24,16 +24,28 @@ class AbstractPotential(GMSOBase):
     """
 
     name_: str = Field(
-        "", description="The name of the potential. Defaults to class name"
+        "",
+        description="The name of the potential. Defaults to class name",
+        alias="name",
     )
 
     potential_expression_: PotentialExpression = Field(
         PotentialExpression(expression="a*x+b", independent_variables={"x"}),
         description="The mathematical expression for the potential",
+        alias="potential_expression",
     )
 
     tags_: Dict[str, Any] = Field(
-        {}, description="Tags associated with the potential"
+        {},
+        description="Tags associated with the potential",
+        alias="tags",
+    )
+    model_config = ConfigDict(
+        alias_to_fields={
+            "name": "name_",
+            "potential_expression": "potential_expression_",
+            "tags": "tags_",
+        }
     )
 
     def __init__(
@@ -72,12 +84,12 @@ class AbstractPotential(GMSOBase):
     @property
     def independent_variables(self):
         """Optional[Union[set, str]]\n\tThe independent variables in the `Potential`'s expression."""
-        return self.potential_expression_.independent_variables
+        return self.potential_expression.independent_variables
 
     @property
     def expression(self):
         """Optional[Union[str, sympy.Expr]]\n\tThe mathematical expression of the functional form of the potential."""
-        return self.potential_expression_.expression
+        return self.potential_expression.expression
 
     @property
     def potential_expression(self):
@@ -95,6 +107,34 @@ class AbstractPotential(GMSOBase):
     @property
     def tag_names_iter(self) -> Iterator[str]:
         return iter(self.__dict__.get("tags_"))
+
+    @field_serializer("potential_expression_")
+    def serialize_expression(self, potential_expression_: PotentialExpression):
+        expr = str(potential_expression_.expression)
+        ind = sorted(
+            list(
+                str(ind) for ind in potential_expression_.independent_variables
+            )
+        )
+        params = {
+            param: unyt_to_dict(val)
+            for param, val in potential_expression_.parameters.items()
+        }
+        return {
+            "expression": expr,
+            "independent_variables": ind,
+            "parameters": params,
+        }
+
+    @field_serializer("tags_")
+    def serialize_tags(self, tags_):
+        return_dict = dict()
+        for key, val in tags_.items():
+            if isinstance(val, u.unyt_array):
+                return_dict[key] = unyt_to_dict(val)
+            else:
+                return_dict[key] = val
+        return return_dict
 
     def add_tag(self, tag: str, value: Any, overwrite=True) -> None:
         """Add metadata for a particular tag"""
@@ -118,7 +158,8 @@ class AbstractPotential(GMSOBase):
     def pop_tag(self, tag: str) -> Any:
         return self.tags.pop(tag, None)
 
-    @validator("potential_expression_", pre=True)
+    @field_validator("potential_expression_", mode="before")
+    @classmethod
     def validate_potential_expression(cls, v):
         if isinstance(v, dict):
             v = PotentialExpression(**v)
@@ -132,9 +173,9 @@ class AbstractPotential(GMSOBase):
     def __setattr__(self, key: Any, value: Any) -> None:
         """Set attributes of the potential."""
         if key == "expression":
-            self.potential_expression_.expression = value
+            self.potential_expression.expression = value
         elif key == "independent_variables":
-            self.potential_expression_.independent_variables = value
+            self.potential_expression.independent_variables = value
         elif key == "set_ref_":
             return
         else:
@@ -156,18 +197,3 @@ class AbstractPotential(GMSOBase):
             f"expression: {self.expression}, "
             f"id: {id(self)}>"
         )
-
-    class Config:
-        """Pydantic configuration for the potential objects."""
-
-        fields = {
-            "name_": "name",
-            "potential_expression_": "potential_expression",
-            "tags_": "tags",
-        }
-
-        alias_to_fields = {
-            "name": "name_",
-            "potential_expression": "potential_expression_",
-            "tags": "tags_",
-        }

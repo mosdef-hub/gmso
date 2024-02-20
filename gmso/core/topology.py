@@ -1,4 +1,5 @@
 """Base data structure for GMSO chemical systems."""
+
 import itertools
 import warnings
 from pathlib import Path
@@ -805,9 +806,9 @@ class Topology(object):
             all_scales = self._scaling_factors
         else:
             if molecule_id not in self._molecule_scaling_factors:
-                self._molecule_scaling_factors[
-                    molecule_id
-                ] = self._scaling_factors.copy()
+                self._molecule_scaling_factors[molecule_id] = (
+                    self._scaling_factors.copy()
+                )
             all_scales = self._molecule_scaling_factors[molecule_id]
 
         if interaction is None:
@@ -815,7 +816,7 @@ class Topology(object):
         else:
             if interaction not in scaling_interaction_idxes:
                 raise GMSOError(f"Unknown `{name}` interaction `{interaction}`")
-            all_scales[index][scaling_interaction_idxes[interaction]] = value
+            all_scales[index][scaling_interaction_idxes[interaction]] = value[0]
 
     def add_site(self, site, update_types=False):
         """Add a site to the topology.
@@ -1228,6 +1229,30 @@ class Topology(object):
 
         return index
 
+    def write_forcefield(self, filename, overwrite=False):
+        """Save an xml file for all parameters found in the topology.
+
+        Parameters
+        ----------
+        filename: Union[str, pathlib.Path], default=None
+            The filename to write the XML file to
+        overwrite: bool, default=False
+            If True, overwrite an existing file if it exists
+
+        Notes
+        -----
+        This method can be used to save a small, trimmed down forcefield
+        from a larger forcefield (e.g. oplsaa). This is useful for
+        editing, saving, and sharing forcefield parameters.
+
+        Raises
+        ------
+        GMSOError
+            If the topology is untyped
+        """
+        ff = self.get_forcefield()
+        ff.to_xml(filename=filename, overwrite=overwrite)
+
     def to_dataframe(self, parameter="sites", site_attrs=None, unyts_bool=True):
         """Return a pandas dataframe object for the sites in a topology
 
@@ -1333,7 +1358,7 @@ class Topology(object):
             }
             for atom_type in self.atom_types:
                 ff.atom_types[atom_type.name] = atom_type.copy(
-                    deep=True, exclude={"topology_", "set_ref_"}
+                    deep=True, exclude={"topology", "set_ref"}
                 )
 
             ff_conn_types = {
@@ -1347,7 +1372,7 @@ class Topology(object):
                 ff_conn_types[type(connection_type)][
                     FF_TOKENS_SEPARATOR.join(connection_type.member_types)
                 ] = connection_type.copy(
-                    deep=True, exclude={"topology_", "set_ref_"}
+                    deep=True, exclude={"topology", "set_ref"}
                 )
 
         return ff
@@ -1524,9 +1549,11 @@ class Topology(object):
                 connection_members=[
                     new_top.sites[conn_idx[i]] for i in range(2)
                 ],
-                bond_type=None
-                if not ref_conn.connection_type
-                else ref_conn.connection_type.clone(),
+                bond_type=(
+                    None
+                    if not ref_conn.connection_type
+                    else ref_conn.connection_type.clone()
+                ),
             )
             new_top.add_connection(bond)
         for ref_conn, conn_idx in angles_dict.items():
@@ -1534,9 +1561,11 @@ class Topology(object):
                 connection_members=[
                     new_top.sites[conn_idx[i]] for i in range(3)
                 ],
-                angle_type=None
-                if not ref_conn.connection_type
-                else ref_conn.connection_type.clone(),
+                angle_type=(
+                    None
+                    if not ref_conn.connection_type
+                    else ref_conn.connection_type.clone()
+                ),
             )
             new_top.add_connection(angle)
         for ref_conn, conn_idx in dihedrals_dict.items():
@@ -1544,9 +1573,11 @@ class Topology(object):
                 connection_members=[
                     new_top.sites[conn_idx[i]] for i in range(4)
                 ],
-                dihedral_type=None
-                if not ref_conn.connection_type
-                else ref_conn.connection_type.clone(),
+                dihedral_type=(
+                    None
+                    if not ref_conn.connection_type
+                    else ref_conn.connection_type.clone()
+                ),
             )
             new_top.add_connection(dihedral)
         for ref_conn, conn_idx in impropers_dict.items():
@@ -1554,9 +1585,11 @@ class Topology(object):
                 connection_members=[
                     new_top.sites[conn_idx[i]] for i in range(4)
                 ],
-                improper_type=None
-                if not ref_conn.connection_type
-                else ref_conn.connection_type.clone(),
+                improper_type=(
+                    None
+                    if not ref_conn.connection_type
+                    else ref_conn.connection_type.clone()
+                ),
             )
             new_top.add_connection(improper)
 

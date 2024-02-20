@@ -1,0 +1,194 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ForceField name="TFA-Forcefield" version="1.0.0">
+  <FFMetaData electrostatics14Scale="0.833333333" nonBonded14Scale="0.5" combiningRule="lorentz">
+    <Units energy="kJ" distance="nm" mass="amu" charge="elementary_charge"/>
+  </FFMetaData>
+  <AtomTypes expression="4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)">
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <AtomType name="c" mass="12.01" charge="0.48936" atomclass="c" doi="10.1002/jcc/20035" definition="[C;X3][O&amp;X1,N;X3]" description="Sp2 C amine group">
+      <Parameters>
+        <Parameter name="epsilon" value="0.359824"/>
+        <Parameter name="sigma" value="0.33996695084235345"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="o" mass="16.0" charge="-0.40437" atomclass="o" doi="10.1002/jcc/20035" definition="[O;X1]" description="Oxygen with one connected atom in amine">
+      <Parameters>
+        <Parameter name="epsilon" value="0.87864"/>
+        <Parameter name="sigma" value="0.2959921901149464"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="c3" mass="12.01" charge="0.52389" atomclass="c3" doi="10.1002/jcc/20035" definition="[C;X4]" description="Sp3 C">
+      <Parameters>
+        <Parameter name="epsilon" value="0.4577296"/>
+        <Parameter name="sigma" value="0.33996695084235345"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="f" mass="19.0" charge="-0.18349" atomclass="f" doi="10.1002/jcc/20035" definition="F" description="Fluorine">
+      <Parameters>
+        <Parameter name="epsilon" value="0.255224"/>
+        <Parameter name="sigma" value="0.3118145513491188"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="n" mass="14.01" charge="-0.74567" atomclass="n" doi="10.1002/jcc/20035" definition="[N;X3][C;X3][O&amp;X1]" description="Sp2 nitrogen in amide groups">
+      <Parameters>
+        <Parameter name="epsilon" value="0.7112800000000001"/>
+        <Parameter name="sigma" value="0.32499985237759577"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="hn" mass="1.008" charge="0.34363" atomclass="hn" doi="10.1002/jcc/20035" definition="HN" description="H bonded to nitrogen atoms">
+      <Parameters>
+        <Parameter name="epsilon" value="0.06568879999999999"/>
+        <Parameter name="sigma" value="0.10690784617684071"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+  <BondTypes expression="0.5*k*(r - r_eq)**2">
+    <ParametersUnitDef parameter="k" unit="kJ/(mol*nm**2)"/>
+    <ParametersUnitDef parameter="r_eq" unit="nm"/>
+    <BondType name="HarmonicBondPotential" type1="c" type2="o">
+      <Parameters>
+        <Parameter name="k" value="533627.36"/>
+        <Parameter name="r_eq" value="0.12183"/>
+      </Parameters>
+    </BondType>
+    <BondType name="HarmonicBondPotential" type1="c" type2="c3">
+      <Parameters>
+        <Parameter name="k" value="261918.39999999997"/>
+        <Parameter name="r_eq" value="0.15241000000000002"/>
+      </Parameters>
+    </BondType>
+    <BondType name="HarmonicBondPotential" type1="c" type2="n">
+      <Parameters>
+        <Parameter name="k" value="357815.67999999993"/>
+        <Parameter name="r_eq" value="0.13789"/>
+      </Parameters>
+    </BondType>
+    <BondType name="HarmonicBondPotential" type1="c3" type2="f">
+      <Parameters>
+        <Parameter name="k" value="298653.9199999999"/>
+        <Parameter name="r_eq" value="0.13497"/>
+      </Parameters>
+    </BondType>
+    <BondType name="HarmonicBondPotential" type1="hn" type2="n">
+      <Parameters>
+        <Parameter name="k" value="337397.75999999995"/>
+        <Parameter name="r_eq" value="0.10128999999999999"/>
+      </Parameters>
+    </BondType>
+  </BondTypes>
+  <AngleTypes expression="0.5*k*(theta - theta_eq)**2">
+    <ParametersUnitDef parameter="k" unit="kJ/(mol*rad**2)"/>
+    <ParametersUnitDef parameter="theta_eq" unit="rad"/>
+    <AngleType name="HarmonicAnglePotential" type1="c3" type2="c" type3="o">
+      <Parameters>
+        <Parameter name="k" value="564.0032000000001"/>
+        <Parameter name="theta_eq" value="2.1502456384570143"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="HarmonicAnglePotential" type1="n" type2="c" type3="o">
+      <Parameters>
+        <Parameter name="k" value="620.9056"/>
+        <Parameter name="theta_eq" value="2.1476276445790226"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="HarmonicAnglePotential" type1="c3" type2="c" type3="n">
+      <Parameters>
+        <Parameter name="k" value="558.9824"/>
+        <Parameter name="theta_eq" value="2.010270232447069"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="HarmonicAnglePotential" type1="c" type2="c3" type3="f">
+      <Parameters>
+        <Parameter name="k" value="554.7984"/>
+        <Parameter name="theta_eq" value="1.9198621771937625"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="HarmonicAnglePotential" type1="f" type2="c3" type3="f">
+      <Parameters>
+        <Parameter name="k" value="593.2912000000001"/>
+        <Parameter name="theta_eq" value="1.8737854849411122"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="HarmonicAnglePotential" type1="c" type2="n" type3="hn">
+      <Parameters>
+        <Parameter name="k" value="404.1744"/>
+        <Parameter name="theta_eq" value="2.051634535719334"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="HarmonicAnglePotential" type1="hn" type2="n" type3="hn">
+      <Parameters>
+        <Parameter name="k" value="331.37280000000004"/>
+        <Parameter name="theta_eq" value="2.0586158527273115"/>
+      </Parameters>
+    </AngleType>
+  </AngleTypes>
+  <DihedralTypes expression="k*(cos(n*phi - phi_eq) + 1)">
+    <ParametersUnitDef parameter="k" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="phi_eq" unit="rad"/>
+    <ParametersUnitDef parameter="n" unit="dimensionless"/>
+    <DihedralType name="PeriodicTorsionPotential" type1="o" type2="c" type3="c3" type4="f">
+      <Parameters>
+        <Parameter name="k" value="5.0208"/>
+        <Parameter name="phi_eq" value="3.141592653589793"/>
+        <Parameter name="n" value="2.0"/>
+      </Parameters>
+    </DihedralType>
+    <DihedralType name="PeriodicTorsionPotential" type1="hn" type2="n" type3="c" type4="o">
+      <Parameters>
+        <Parameter name="k">
+          <Value>10.46</Value>
+          <Value>8.368</Value>
+        </Parameter>
+        <Parameter name="phi_eq">
+          <Value>3.141592653589793</Value>
+          <Value>0.0</Value>
+        </Parameter>
+        <Parameter name="n">
+          <Value>2.0</Value>
+          <Value>1.0</Value>
+        </Parameter>
+      </Parameters>
+    </DihedralType>
+    <DihedralType name="PeriodicTorsionPotential" type1="c3" type2="c" type3="n" type4="hn">
+      <Parameters>
+        <Parameter name="k" value="41.84"/>
+        <Parameter name="phi_eq" value="3.141592653589793"/>
+        <Parameter name="n" value="2.0"/>
+      </Parameters>
+    </DihedralType>
+    <DihedralType name="PeriodicTorsionPotential" type1="n" type2="c" type3="c3" type4="f">
+      <Parameters>
+        <Parameter name="k" value="10.46"/>
+        <Parameter name="phi_eq" value="3.141592653589793"/>
+        <Parameter name="n" value="2.0"/>
+      </Parameters>
+    </DihedralType>
+  </DihedralTypes>
+  <DihedralTypes expression="k*(cos(n*phi - phi_eq) + 1)">
+    <ParametersUnitDef parameter="k" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="phi_eq" unit="rad"/>
+    <ParametersUnitDef parameter="n" unit="dimensionless"/>
+    <ImproperType name="PeriodicTorsionPotential" type1="c" type2="c3" type3="n" type4="o">
+      <Parameters>
+        <Parameter name="k" value="4.6024"/>
+        <Parameter name="phi_eq" value="3.141592653589793"/>
+        <Parameter name="n" value="2.0"/>
+      </Parameters>
+    </ImproperType>
+    <ImproperType name="PeriodicTorsionPotential" type1="c3" type2="c" type3="f" type4="f">
+      <Parameters>
+        <Parameter name="k" value="4.6024"/>
+        <Parameter name="phi_eq" value="3.141592653589793"/>
+        <Parameter name="n" value="2.0"/>
+      </Parameters>
+    </ImproperType>
+    <ImproperType name="PeriodicTorsionPotential" type1="n" type2="c" type3="hn" type4="hn">
+      <Parameters>
+        <Parameter name="k" value="4.6024"/>
+        <Parameter name="phi_eq" value="3.141592653589793"/>
+        <Parameter name="n" value="2.0"/>
+      </Parameters>
+    </ImproperType>
+  </DihedralTypes>
+</ForceField>

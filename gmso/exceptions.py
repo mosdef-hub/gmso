@@ -1,4 +1,5 @@
 """Custom exception module for GMSO."""
+
 TYPE_ERROR_STRING = "Error: Expected {0} to be of type {1}, found {2}."
 
 
