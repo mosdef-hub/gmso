@@ -8,7 +8,6 @@ Core Classes
     :nosignatures:
 
     gmso.Topology
-    gmso.SubTopology
     gmso.Atom
     gmso.Bond
     gmso.Angle
@@ -25,11 +24,6 @@ Topology
 ********
     .. autoclass:: gmso.Topology
         :members: add_site, add_connection, update_topology
-
-SubTopology
-***********
-    .. autoclass:: gmso.SubTopology
-        :members:
 
 Atom
 ****
