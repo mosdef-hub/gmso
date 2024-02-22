@@ -6,6 +6,8 @@ dependencies:
   - pip:
     - numpy
     - sympy
+    - symengine
+    - python-symengine
     - unyt >= 2.4
     - boltons
     - lxml
