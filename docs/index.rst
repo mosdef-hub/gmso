@@ -5,18 +5,22 @@
 
 GMSO: Flexible storage of chemical topology for molecular simulation
 ====================================================================
+
+.. image:: https://img.shields.io/badge/license-MIT-blue.svg
+    :target: http://opensource.org/licenses/MIT
+
 `GMSO`is a flexible storage of chemical topology for molecular simulation.
-With a few lines of `GMSO` code, together with [`mBuild`](https://mbuild.mosdef.org) and [`foyer`](https://foyer.mosdef.org), users can rapidly prototype arbitrary parameterized chemical systems and generate data files for a wide variety of simulation engines.
+With a few lines of `GMSO` code, together with `mBuild <https://mbuild.mosdef.org>`_ and `foyer <https://foyer.mosdef.org>`_, users can rapidly prototype arbitrary parameterized chemical systems and generate data files for a wide variety of simulation engines.
 
 
 GMSO is a part of the MoSDeF ecosystem
 -----------------------------------------
 `GMSO` is designed to be a general and flexible representation of chemical topolgies for molecular simulation.
 With an emphasis on assuming as little as possible about the chemical system, model, or engine, `GMSO` can enable support for a variety of systems.
-`GMSO` is a part of the [MoSDeF (Molecular Simulation and Design Framework)](https://mosdef.org) ecosystem, and is intended to be the backend replacement for the [`foyer` package](https://foyer.mosdef.org).
+`GMSO` is a part of the `MoSDeF (Molecular Simulation and Design Framework) <https://mosdef.org>`_ ecosystem, and is intended to be the backend replacement for the `foyer package <https://foyer.mosdef.org>`_.
 Libraries in the MoSDeF ecosystem are designed to provide utilities neccessary to streamline
 a researcher's simulation workflow. When setting up simulation studies,
-we also recommend users to follow the [TRUE](https://www.tandfonline.com/doi/full/10.1080/00268976.2020.1742938)
+we also recommend users to follow the `TRUE <https://www.tandfonline.com/doi/full/10.1080/00268976.2020.1742938>`_
 (Transparent, Reproducible, Usable-by-others, and Extensible) standard, which is a set of common
 practices meant to improve the reproducibility of computational simulation research.
 
@@ -31,7 +35,7 @@ Depending on the type of simulation performed, this ranges from:
   * particle connectivity
   * box information
   * forcefield data
-    * functional forms defined as `sympy <https://www.sympy.org>` expressions
+    * functional forms defined as `sympy <https://www.sympy.org>`_ expressions
     * parameters with defined units
     * partial charges
     * tabulated data
@@ -42,22 +46,23 @@ Depending on the type of simulation performed, this ranges from:
     * etc.
 
 With these driving goals for `GMSO`, the following features are enabled:
-  #. **Supporting a variety of models** in the molecular simulation/computational
-  chemistry community_:
+
+  #.  **Supporting a variety of models** in the molecular simulation/computational
+  chemistry community:
   No assumptions are made about an interaction site
   representing an atom or bead, instead these can be atomistic,
   united-atom/coarse-grained, polarizable, and other models!
 
-  #. **Greater flexibility for exotic potentials**: The [`AtomType`](./gmso/core/atom_type.py) (and [analogue
-  classes for intramolecular interactions](./gmso/core)) uses [`sympy`](https://www.sympy.org) to store any
+  #.  **Greater flexibility for exotic potentials**: The `AtomType` (and analogue
+  classes for intramolecular interactions) uses `sympy <https://www.sympy.org>`_ to store any
   potential that can be represented by a mathematical expression.
 
-  #. **Adaptable for new engines**: by not being designed for
+  #.  **Adaptable for new engines**: by not being designed for
   compatibility with any particular molecular simulation engine or ecosystem,
   it becomes more tractable for developers in the community to add glue for
   engines that are not currently supported.
 
-  #. **Compatibility with existing community tools**: No single molecular simulation
+  #.  **Compatibility with existing community tools**: No single molecular simulation
   tool will ever be a silver bullet, so ``GMSO`` includes functions to convert
   between various file formats and libraries. These can be used in their own right to convert between objects in-memory
   and also to support conversion to file formats not natively supported at
@@ -67,13 +72,13 @@ With these driving goals for `GMSO`, the following features are enabled:
       * `mBuild`
       * more in the future!
 
-  #. **Native support for reading and writing many common file formats**: We natively have support for:
-    * `XYZ`
-    * `GRO`
-    * `TOP`
-    * `LAMMPSDATA`
-    * `GSD`
-    * indirect support, through other libraries, for many more!
+  #.  **Native support for reading and writing many common file formats**: We natively have support for:
+      * `XYZ`
+      * `GRO`
+      * `TOP`
+      * `LAMMPSDATA`
+      * `GSD`
+      * indirect support, through other libraries, for many more!
 
 
 .. toctree::
