@@ -8,16 +8,16 @@ Core Classes
     :nosignatures:
 
     gmso.Topology
-    gmso.Atom
-    gmso.Bond
-    gmso.Angle
-    gmso.Dihedral
-    gmso.Improper
-    gmso.AtomType
-    gmso.BondType
-    gmso.AngleType
-    gmso.DihedralType
-    gmso.ImproperType
+    gmso.core.Atom
+    gmso.core.Bond
+    gmso.core.Angle
+    gmso.core.Dihedral
+    gmso.core.Improper
+    gmso.core.AtomType
+    gmso.core.BondType
+    gmso.core.AngleType
+    gmso.core.DihedralType
+    gmso.core.ImproperType
 
 
 Topology
