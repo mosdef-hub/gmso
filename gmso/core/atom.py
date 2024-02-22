@@ -15,7 +15,7 @@ from gmso.utils.misc import ensure_valid_dimensions
 
 
 class Atom(Site):
-    __base_doc__ = """An atom represents a single element association in a topology.
+    """An atom represents a single element association in a topology.
 
     Atoms are the representation of an element within `gmso` that describes any general
     atom in a molecular simulation. Atoms also contain information that are unique to
