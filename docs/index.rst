@@ -46,17 +46,25 @@ Depending on the type of simulation performed, this ranges from:
     * etc.
 
 With these driving goals for `GMSO`, the following features are enabled:
+
+
   #.  **Supporting a variety of models** in the molecular simulation/computational
   chemistry community:
   No assumptions are made about an interaction site
   representing an atom or bead, instead these can be atomistic,
   united-atom/coarse-grained, polarizable, and other models!
+
+
   #.  **Greater flexibility for exotic potentials**: The `AtomType` (and analogue
   classes for intramolecular interactions) uses `sympy <https://www.sympy.org>`_ to store any
   potential that can be represented by a mathematical expression.
+
+
   #.  **Adaptable for new engines**: by not being designed for
   compatibility with any particular molecular simulation engine or ecosystem,
   it becomes more tractable for developers in the community to add glue for
+
+
   engines that are not currently supported.
   #.  **Compatibility with existing community tools**: No single molecular simulation
   tool will ever be a silver bullet, so ``GMSO`` includes functions to convert
@@ -67,6 +75,8 @@ With these driving goals for `GMSO`, the following features are enabled:
       * `OpenMM`
       * `mBuild`
       * more in the future!
+
+
   #.  **Native support for reading and writing many common file formats**: We natively have support for:
       * `XYZ`
       * `GRO`
