@@ -40,6 +40,7 @@ class Atom(Site):
         An Abstract Base class for implementing site objects in GMSO. The class Atom bases from
         the gmso.abc.abstract site class
     """
+
     charge_: Optional[Union[u.unyt_quantity, float]] = Field(
         None, description="Charge of the atom", alias="charge"
     )
