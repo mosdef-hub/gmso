@@ -9,7 +9,7 @@ GMSO: Flexible storage of chemical topology for molecular simulation
 .. image:: https://img.shields.io/badge/license-MIT-blue.svg
     :target: http://opensource.org/licenses/MIT
 
-`GMSO`is a flexible storage of chemical topology for molecular simulation.
+`GMSO` is a flexible storage of chemical topology for molecular simulation.
 With a few lines of `GMSO` code, together with `mBuild <https://mbuild.mosdef.org>`_ and `foyer <https://foyer.mosdef.org>`_, users can rapidly prototype arbitrary parameterized chemical systems and generate data files for a wide variety of simulation engines.
 
 
@@ -40,10 +40,10 @@ Depending on the type of simulation performed, this ranges from:
   * partial charges
   * tabulated data
   * etc.
-  * Other optional data
-      * particle mass
-      * elemental data
-      * etc.
+* Other optional data
+    * particle mass
+    * elemental data
+    * etc.
 
 With these driving goals for `GMSO`, the following features are enabled:
 
@@ -72,7 +72,7 @@ any given time. Currently supported conversions include:
     * `mBuild`
     * more in the future!
 
-#. **Native support for reading and writing many common file formats**: We natively have support for:
+#. **Native support for reading and writing many common file formats**:
     * `XYZ`
     * `GRO`
     * `TOP`
