@@ -43,6 +43,8 @@ AKMA_UNITS = {
     "mass": u.g / u.mol,  # aka amu
 }
 
+hoomd_version = hoomd.version.version.split(".")
+
 
 def to_gsd_snapshot(
     top,
@@ -678,6 +680,7 @@ def _validate_compatibility(top):
     harmonic_bond_potential = templates["HarmonicBondPotential"]
     harmonic_angle_potential = templates["HarmonicAnglePotential"]
     periodic_torsion_potential = templates["PeriodicTorsionPotential"]
+    harmonic_torsion_potential = templates["HarmonicTorsionPotential"]
     opls_torsion_potential = templates["OPLSTorsionPotential"]
     rb_torsion_potential = templates["RyckaertBellemansTorsionPotential"]
     accepted_potentials = (
@@ -685,6 +688,7 @@ def _validate_compatibility(top):
         harmonic_bond_potential,
         harmonic_angle_potential,
         periodic_torsion_potential,
+        harmonic_torsion_potential,
         opls_torsion_potential,
         rb_torsion_potential,
     )
@@ -1120,7 +1124,6 @@ def _parse_dihedral_forces(
         },
     }
 
-    hoomd_version = hoomd.version.version.split(".")
     if int(hoomd_version[0]) >= 4 or (
         int(hoomd_version[0]) == 3 and int(hoomd_version[1]) >= 8
     ):
@@ -1307,12 +1310,24 @@ def _parse_improper_forces(
             base_units,
         )
 
-    itype_group_map = {
-        "HarmonicImproperPotenial": {
-            "container": hoomd.md.improper.Harmonic,
-            "parser": _parse_harmonic_improper,
-        },
-    }
+    if int(hoomd_version[0]) >= 4 and int(hoomd_version[1]) >= 5:
+        itype_group_map = {
+            "HarmonicImproperPotenial": {
+                "container": hoomd.md.improper.Harmonic,
+                "parser": _parse_harmonic_improper,
+            },
+            "PeriodicImproperPotenial": {
+                "container": hoomd.md.improper.Periodic,
+                "parser": _parse_periodic_improper,
+            },
+        }
+    else:
+        itype_group_map = {
+            "HarmonicImproperPotenial": {
+                "container": hoomd.md.improper.Harmonic,
+                "parser": _parse_harmonic_improper,
+            },
+        }
 
     improper_forces = list()
     for group in groups:
@@ -1334,6 +1349,21 @@ def _parse_harmonic_improper(
         container.params["-".join(member_types)] = {
             "k": itype.parameters["k"],
             "chi0": itype.parameters["phi_eq"],  # diff nomenclature?
+        }
+    return container
+
+
+def _parse_periodic_improper(
+    container,
+    itypes,
+):
+    for itype in itypes:
+        member_types = sort_by_classes(itype)
+        container.params["-".join(member_types)] = {
+            "k": itype.parameters["k"],
+            "chi0": itype.parameters["phi_eq"],
+            "n": itype.parameters["n"],
+            "d": itype.parameters["d"],
         }
     return container
 

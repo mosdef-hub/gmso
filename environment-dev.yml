@@ -2,7 +2,7 @@ name: gmso-dev
 channels:
   - conda-forge
 dependencies:
-  - python>=3.8
+  - python<3.12
   - boltons
   - numpy
   - sympy
@@ -12,7 +12,7 @@ dependencies:
   - pydantic>=2
   - networkx
   - pytest
-  - mbuild>=0.11.0
+  - mbuild>=0.17.0
   - openbabel>=3.0.0
   - foyer>=0.11.3
   - forcefield-utilities>=0.2.1
