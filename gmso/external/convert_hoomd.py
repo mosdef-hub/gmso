@@ -1312,18 +1312,18 @@ def _parse_improper_forces(
 
     if int(hoomd_version[0]) >= 4 and int(hoomd_version[1]) >= 5:
         itype_group_map = {
-            "HarmonicImproperPotenial": {
+            "HarmonicImproperPotential": {
                 "container": hoomd.md.improper.Harmonic,
                 "parser": _parse_harmonic_improper,
             },
-            "PeriodicImproperPotenial": {
+            "PeriodicTorsionPotential": {
                 "container": hoomd.md.improper.Periodic,
                 "parser": _parse_periodic_improper,
             },
         }
     else:
         itype_group_map = {
-            "HarmonicImproperPotenial": {
+            "HarmonicImproperPotential": {
                 "container": hoomd.md.improper.Harmonic,
                 "parser": _parse_harmonic_improper,
             },
@@ -1363,7 +1363,7 @@ def _parse_periodic_improper(
             "k": itype.parameters["k"],
             "chi0": itype.parameters["phi_eq"],
             "n": itype.parameters["n"],
-            "d": itype.parameters["d"],
+            "d": 1,
         }
     return container
 
