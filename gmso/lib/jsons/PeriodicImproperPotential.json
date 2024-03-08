@@ -5,7 +5,6 @@
   "expected_parameters_dimensions": {
     "k": "energy",
     "n": "dimensionless",
-    "phi_eq": "angle",
-    "d": "dimensionless"
+    "phi_eq": "angle"
   }
 }
