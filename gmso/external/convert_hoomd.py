@@ -1363,7 +1363,7 @@ def _parse_periodic_improper(
             "k": itype.parameters["k"],
             "chi0": itype.parameters["phi_eq"],
             "n": itype.parameters["n"],
-            "d": 1,
+            "d": 1.0,
         }
     return container
 
