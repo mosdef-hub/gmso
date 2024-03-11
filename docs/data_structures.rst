@@ -90,7 +90,7 @@ ImproperType
         :exclude-members: model_config, model_fields
 
 PairPotentialType
-************
+*****************
     .. autoclass:: gmso.PairPotentialType
         :members:
         :exclude-members: model_config, model_fields
@@ -101,5 +101,3 @@ ForceField
         :members:
         :exclude-members: model_config, model_fields
 
-
-=======

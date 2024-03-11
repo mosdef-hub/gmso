@@ -31,55 +31,46 @@ Goals and Features
 `GMSO`'s goal is to provide a flexible backend framework to store topological information of a chemical system in a reproducible fashion.
 **Topology** in this case is defined as the information needed to initialize a molecular simulation.
 Depending on the type of simulation performed, this ranges from:
-
 * particle positions
 * particle connectivity
 * box information
 * forcefield data
-  * functional forms defined as `sympy <https://www.sympy.org>`_ expressions
-  * parameters with defined units
-  * partial charges
-  * tabulated data
-  * etc.
+
+    * functional forms defined as `sympy <https://www.sympy.org>`_ expressions
+    * parameters with defined units
+    * partial charges
+    * tabulated data
+    * etc.
+
 * Other optional data
+
     * particle mass
     * elemental data
     * etc.
 
 With these driving goals for `GMSO`, the following features are enabled:
 
-#. **Supporting a variety of models** in the molecular simulation/computational
-chemistry community:
-No assumptions are made about an interaction site
-representing an atom or bead, instead these can be atomistic,
-united-atom/coarse-grained, polarizable, and other models!
+    #.  **Supporting a variety of models**: in the molecular simulation/computational chemistry community: No assumptions are made about an interaction site representing an atom or bead, instead these can be atomistic, united-atom/coarse-grained, polarizable, and other models!
 
-#. **Greater flexibility for exotic potentials**: The `AtomType` (and analogue
-classes for intramolecular interactions) uses `sympy <https://www.sympy.org>`_ to store any
-potential that can be represented by a mathematical expression.
+    #.  **Greater flexibility for exotic potentials**: The `AtomType` (and analogue classes for intramolecular interactions) uses `sympy <https://www.sympy.org>`_ to store any potential that can be represented by a mathematical expression.
 
-#. **Adaptable for new engines**: by not being designed for
-compatibility with any particular molecular simulation engine or ecosystem,
-it becomes more tractable for developers in the community to add glue for
-engines that are not currently supported.
+    #.  **Adaptable for new engines**: by not being designed for compatibility with any particular molecular simulation engine or ecosystem, it becomes more tractable for developers in the community to add glue for engines that are not currently supported.
 
-#. **Compatibility with existing community tools**: No single molecular simulation
-tool will ever be a silver bullet, so ``GMSO`` includes functions to convert
-between various file formats and libraries. These can be used in their own right to convert between objects in-memory
-and also to support conversion to file formats not natively supported at
-any given time. Currently supported conversions include:
-    * `ParmEd`
-    * `OpenMM`
-    * `mBuild`
-    * more in the future!
+    #.  **Compatibility with existing community tools**: No single molecular simulation tool will ever be a silver bullet, so ``GMSO`` includes functions to convert between various file formats and libraries. These can be used in their own right to convert between objects in-memory and also to support conversion to file formats not natively supported at any given time. Currently supported conversions include:
 
-#. **Native support for reading and writing many common file formats**:
-    * `XYZ`
-    * `GRO`
-    * `TOP`
-    * `LAMMPSDATA`
-    * `GSD`
-    * indirect support, through other libraries, for many more!
+        * `ParmEd`
+        * `OpenMM`
+        * `mBuild`
+        * more in the future!
+
+    #.  **Native support for reading and writing many common file formats**:
+
+        * `XYZ`
+        * `GRO`
+        * `TOP`
+        * `LAMMPSDATA`
+        * `GSD`
+        * indirect support, through other libraries, for many more!
 
 
 .. toctree::
