@@ -47,34 +47,51 @@ class ParameterizationBaseTest(BaseTest):
     def assert_same_connection_params(self):
         def _assert_same_connection_params(top1, top2, connection_type="bonds"):
             """Match connection parameters between two gmso topologies."""
-            connection_types_original = {}
-            connection_types_mirror = {}
-            for connection in getattr(top2, connection_type):
-                connection_types_mirror[
-                    tuple(
-                        top2.get_index(member)
-                        for member in connection.connection_members
-                    )
-                ] = connection
-
+            connection_types_top1 = {}
             for connection in getattr(top1, connection_type):
-                connection_types_original[
-                    tuple(
-                        top1.get_index(member)
-                        for member in connection.connection_members
-                    )
-                ] = connection
+                eq_connsList = connection.equivalent_members()
+                indexList = [
+                    tuple(map(lambda x: top1.get_index(x), conn))
+                    for conn in eq_connsList
+                ]
+                atom_indicesList = sorted(indexList)[0]
+                connection_types_top1[atom_indicesList] = connection
+            connection_types_top2 = {}
+            for connection in getattr(top2, connection_type):
+                eq_connsList = connection.equivalent_members()
+                indexList = [
+                    tuple(map(lambda x: top2.get_index(x), conn))
+                    for conn in eq_connsList
+                ]
+                atom_indicesList = sorted(indexList)[0]
+                connection_types_top2[atom_indicesList] = connection
 
-            for key in connection_types_original:
-                conn = connection_types_original[key]
-                conn_mirror = connection_types_mirror[key]
+            # for connection in getattr(top2, connection_type):
+            #    connection_types_mirror[
+            #        tuple(
+            #            top2.get_index(member)
+            #            for member in sort_connection_members(connection, "atom_type")
+            #        )
+            #    ] = connection
+
+            # for connection in getattr(top1, connection_type):
+            #    connection_types_original[
+            #        tuple(
+            #            top1.get_index(member)
+            #            for member in sort_connection_members(connection, "atom_type")
+            #        )
+            #    ] = connection
+
+            for key in connection_types_top1:
+                conn1 = connection_types_top1[key]
+                conn2 = connection_types_top2[key]
                 conn_type_attr = connection_type[:-1] + "_type"
-                conn_type_mirror = getattr(conn_mirror, conn_type_attr)
-                conn_type = getattr(conn, conn_type_attr)
-                for param in conn_type.parameters:
+                conn_type1 = getattr(conn1, conn_type_attr)
+                conn_type2 = getattr(conn2, conn_type_attr)
+                for param in conn_type1.parameters:
                     assert u.allclose_units(
-                        conn_type_mirror.parameters[param],
-                        conn_type.parameters[param],
+                        conn_type2.parameters[param],
+                        conn_type1.parameters[param],
                     )
 
         return _assert_same_connection_params
