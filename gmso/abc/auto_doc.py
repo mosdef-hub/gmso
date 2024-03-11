@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 from pydantic import BaseModel
 
 BASE_DOC_ATTR = "__base_doc__"
-FIELDS_IN_DOCSTRING = "__alias_to_fields__"
+FIELDS_IN_DOCSTRING = "alias_to_fields"
 DOCS_GENERATED = "__docs_generated__"
 FIELDS_KEY = "__fields__"
 
@@ -298,6 +298,7 @@ def apply_docs(
     if hasattr(target_class, DOCS_GENERATED) and getattr(
         target_class, DOCS_GENERATED
     ):
+        print(target_class, DOCS_GENERATED)
         return
     try:
         target_class.__doc__ = AutoDocGenerator(

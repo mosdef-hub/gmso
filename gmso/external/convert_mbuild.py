@@ -60,7 +60,7 @@ def from_mbuild(
     compound : mbuild.Compound
         mbuild.Compound instance that need to be converted
     box : mbuild.Box, optional, default=None
-        Box information to be loaded to a gmso.Topologyl
+        Box information to be loaded to a gmso.Topology
     search_method : function, optional, default=element_by_symbol
         Searching method used to assign element from periodic table to
         particle site.

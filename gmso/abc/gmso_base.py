@@ -56,9 +56,9 @@ class GMSOBase(BaseModel, ABC):
         setattr(cls, "__docs_generated__", False)
         for super_class in cls.mro()[1:]:
             if (
-                hasattr(super_class, "Config")
-                and hasattr(super_class.Config, "alias_to_fields")
-                and hasattr(cls.Config, "alias_to_fields")
+                hasattr(super_class, "model_config")
+                and hasattr(super_class.model_config, "alias_to_fields")
+                and hasattr(cls.model_config, "alias_to_fields")
             ):
                 cls.Config.alias_to_fields.update(
                     super_class.Config.alias_to_fields
