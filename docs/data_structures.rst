@@ -100,4 +100,3 @@ ForceField
     .. autoclass:: gmso.ForceField
         :members:
         :exclude-members: model_config, model_fields
-
