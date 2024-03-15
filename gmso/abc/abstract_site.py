@@ -1,18 +1,23 @@
 """Basic interaction site in GMSO that all other sites will derive from."""
+
 import warnings
 from typing import Any, ClassVar, NamedTuple, Optional, Sequence, TypeVar, Union
 
 import numpy as np
 import unyt as u
+from pydantic import (
+    ConfigDict,
+    Field,
+    StrictInt,
+    StrictStr,
+    field_serializer,
+    field_validator,
+)
 from unyt.exceptions import InvalidUnitOperation
 
 from gmso.abc.gmso_base import GMSOBase
+from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.exceptions import GMSOError
-
-try:
-    from pydantic.v1 import Field, StrictInt, StrictStr, validator
-except ImportError:
-    from pydantic import Field, StrictInt, StrictStr, validator
 
 PositionType = Union[Sequence[float], np.ndarray, u.unyt_array]
 MoleculeType = NamedTuple("Molecule", name=StrictStr, number=StrictInt)
@@ -30,10 +35,13 @@ def default_position():
 
 class Site(GMSOBase):
     __iterable_attributes__: ClassVar[set] = {
+        "name",
         "label",
         "group",
         "molecule",
         "residue",
+        "position",
+        "model_config",
     }
 
     __base_doc__: ClassVar[
@@ -54,28 +62,47 @@ class Site(GMSOBase):
 
     name_: str = Field(
         "",
+        validate_default=True,
         description="Name of the site, defaults to class name",
+        alias="name",
+    )
+    label_: str = Field(
+        "", description="Label to be assigned to the site", alias="label"
     )
 
-    label_: str = Field("", description="Label to be assigned to the site")
-
     group_: Optional[StrictStr] = Field(
-        None, description="Flexible alternative label relative to site"
+        None,
+        description="Flexible alternative label relative to site",
+        alias="group",
     )
 
     molecule_: Optional[MoleculeType] = Field(
         None,
         description="Molecule label for the site, format of (molecule_name, molecule_number)",
+        alias="molecule",
     )
 
     residue_: Optional[ResidueType] = Field(
         None,
         description="Residue label for the site, format of (residue_name, residue_number)",
+        alias="residue",
     )
 
     position_: PositionType = Field(
         default_factory=default_position,
         description="The 3D Cartesian coordinates of the position of the site",
+        alias="position",
+    )
+
+    model_config = ConfigDict(
+        alias_to_fields={
+            "name": "name_",
+            "label": "label_",
+            "group": "group_",
+            "molecule": "molecule_",
+            "residue": "residue_",
+            "position": "position_",
+        },
     )
 
     @property
@@ -108,6 +135,10 @@ class Site(GMSOBase):
         """Return the residue assigned to the site."""
         return self.__dict__.get("residue_")
 
+    @field_serializer("position_")
+    def serialize_position(self, position_: PositionType):
+        return unyt_to_dict(position_)
+
     def __repr__(self):
         """Return the formatted representation of the site."""
         return (
@@ -124,7 +155,8 @@ class Site(GMSOBase):
             f"label: {self.label if self.label else None} id: {id(self)}>"
         )
 
-    @validator("position_")
+    @field_validator("position_")
+    @classmethod
     def is_valid_position(cls, position):
         """Validate attribute position."""
         if position is None:
@@ -152,7 +184,7 @@ class Site(GMSOBase):
 
         return position
 
-    @validator("name_", pre=True, always=True)
+    @field_validator("name_")
     def inject_name(cls, value):
         if value == "" or value is None:
             return cls.__name__
@@ -165,28 +197,3 @@ class Site(GMSOBase):
             raise TypeError("Cannot instantiate abstract class of type Site")
         else:
             return object.__new__(cls)
-
-    class Config:
-        """Pydantic configuration for site objects."""
-
-        arbitrary_types_allowed = True
-
-        fields = {
-            "name_": "name",
-            "position_": "position",
-            "label_": "label",
-            "group_": "group",
-            "molecule_": "molecule",
-            "residue_": "residue",
-        }
-
-        alias_to_fields = {
-            "name": "name_",
-            "position": "position_",
-            "label": "label_",
-            "group": "group_",
-            "molecule": "molecule_",
-            "residue": "residue_",
-        }
-
-        validate_assignment = True

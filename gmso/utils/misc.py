@@ -1,4 +1,5 @@
 """Miscellaneous helper methods for GMSO."""
+
 from functools import lru_cache
 
 import unyt as u

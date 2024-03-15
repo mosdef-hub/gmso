@@ -151,7 +151,7 @@ class TestMol2(BaseTest):
             np.array([site.molecule.name for site in top.sites]) == "MET"
         )
         assert np.all(
-            np.array([site.molecule.number for site in top.sites]) == 1
+            np.array([site.molecule.number for site in top.sites]) == 0
         )
 
     def test_mol2_group(self):

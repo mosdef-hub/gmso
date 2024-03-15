@@ -1,4 +1,5 @@
 """Module for working with GMSO forcefields."""
+
 import copy
 import itertools
 import warnings
@@ -7,11 +8,7 @@ from pathlib import Path
 from typing import Iterable
 
 from lxml import etree
-
-try:
-    from pydantic.v1 import ValidationError
-except:
-    from pydantic import ValidationError
+from pydantic import ValidationError
 
 from gmso.core.element import element_by_symbol
 from gmso.exceptions import (
@@ -60,7 +57,7 @@ class ForceField(object):
         If true, perform a strict validation of the forcefield XML file
     greedy: bool, default=True
         If True, when using strict mode, fail on the first error/mismatch
-    backend: str, default="gmso"
+    backend: str, default="forcefield-utilities"
         Can be "gmso" or "forcefield-utilities". This will define the methods to
         load the forcefield.
 
@@ -301,9 +298,11 @@ class ForceField(object):
             raise ValueError(f"Cannot get potential for {group}")
 
         validate_type(
-            [key]
-            if isinstance(key, str) or not isinstance(key, Iterable)
-            else key,
+            (
+                [key]
+                if isinstance(key, str) or not isinstance(key, Iterable)
+                else key
+            ),
             str,
         )
 
@@ -578,9 +577,17 @@ class ForceField(object):
         try:
             loader = GMSOFFs()
             ff = loader.load(filename).to_gmso_ff()
-        except (ForceFieldParseError, FileNotFoundError, ValidationError):
+        # Temporarily opt out, pending new forcefield-utilities release
+        # except (ForceFieldParseError, FileNotFoundError, ValidationError):
+        except:
             loader = FoyerFFs()
             ff = loader.load(filename).to_gmso_ff()
+            ff.units = {
+                "energy": "kJ",
+                "distance": "nm",
+                "mass": "amu",
+                "charge": "elementary_charge",
+            }
         return ff
 
     def to_xml(self, filename, overwrite=False, backend="gmso"):
@@ -598,7 +605,7 @@ class ForceField(object):
             Can be "gmso" or "forcefield-utilities". This will define the methods to
             write the xml.
         """
-        if backend == "gmso" or backend == "GMSO":
+        if backend.lower() == "gmso":
             self._xml_from_gmso(filename, overwrite)
         elif backend in [
             "forcefield_utilities",
@@ -649,7 +656,7 @@ class ForceField(object):
                     "energy": "kJ",
                     "distance": "nm",
                     "mass": "amu",
-                    "charge": "coulomb",
+                    "charge": "elementary_charge",
                 },
             )
 
@@ -838,9 +845,9 @@ class ForceField(object):
             this_bond_types_group_name = bond_types.attrib.get("name", None)
 
             if this_bond_types_group_name:
-                potential_groups[
-                    this_bond_types_group_name
-                ] = this_bond_types_group
+                potential_groups[this_bond_types_group_name] = (
+                    this_bond_types_group
+                )
 
             bond_types_dict.update(this_bond_types_group)
 
@@ -852,9 +859,9 @@ class ForceField(object):
             this_angle_types_group_name = angle_types.attrib.get("name", None)
 
             if this_angle_types_group_name:
-                potential_groups[
-                    this_angle_types_group_name
-                ] = this_angle_types_group
+                potential_groups[this_angle_types_group_name] = (
+                    this_angle_types_group
+                )
 
             angle_types_dict.update(this_angle_types_group)
 
@@ -885,9 +892,9 @@ class ForceField(object):
             )
 
             if this_pairpotential_types_group_name:
-                potential_groups[
-                    this_pairpotential_types_group_name
-                ] = this_pairpotential_types_group
+                potential_groups[this_pairpotential_types_group_name] = (
+                    this_pairpotential_types_group
+                )
 
             pairpotential_types_dict.update(this_pairpotential_types_group)
 

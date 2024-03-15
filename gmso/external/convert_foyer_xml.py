@@ -1,4 +1,5 @@
 """Convert foyer ForceField XMLs to the GMSO format."""
+
 import pathlib
 
 from lxml import etree

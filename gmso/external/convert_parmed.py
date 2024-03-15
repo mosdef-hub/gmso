@@ -1,4 +1,5 @@
 """Module support for converting to/from ParmEd objects."""
+
 import copy
 import warnings
 from operator import attrgetter, itemgetter
@@ -67,20 +68,26 @@ def from_parmed(structure, refer_type=True):
             element = (
                 element_by_atomic_number(atom.element) if atom.element else None
             )
+            if residue.number == -1:  # use default value of 0 in GMSO
+                residue_number = 0
+            else:
+                residue_number = residue.number - 1
             site = gmso.Atom(
                 name=atom.name,
                 charge=atom.charge * u.elementary_charge,
                 position=[atom.xx, atom.xy, atom.xz] * u.angstrom,
                 atom_type=None,
-                residue=(residue.name, residue.idx + 1),
+                residue=(residue.name, residue_number),
                 element=element,
             )
-            site.molecule = (residue.name, residue.idx + 1) if ind_res else None
+            site.molecule = (residue.name, residue_number) if ind_res else None
             site.atom_type = (
                 copy.deepcopy(pmd_top_atomtypes[atom.atom_type])
                 if refer_type and isinstance(atom.atom_type, pmd.AtomType)
                 else None
             )
+            if site.atom_type:
+                site.atom_type.charge = atom.charge * u.elementary_charge
             site_map[atom] = site
             top.add_site(site)
 
@@ -351,22 +358,28 @@ def _sort_improper_members(top, site_map, atom1, atom2, atom3, atom4):
 def _add_conn_type_from_pmd(
     connStr, pmd_conn, gmso_conn, conn_params, name, expression, variables
 ):
-    """Convert ParmEd dihedral types to GMSO DihedralType.
+    """Create a GMSO connection type and add to the conneciton object.
 
-    This function take in a Parmed Structure, iterate through its
-    dihedral_types, create a corresponding
-    GMSO.DihedralType, and finally return a dictionary containing all
-    pairs of pmd.Dihedraltype and GMSO.DihedralType
+    This function creates the connection type object and add it to the
+    connection object provided.
+
     Parameters
     ----------
-    structure: pmd.Structure
-        Parmed Structure that needed to be converted.
-
-    Returns
-    -------
-    pmd_top_dihedraltypes : dict
-        A dictionary linking a pmd.DihedralType
-        object to its corresponding GMSO.DihedralType object.
+    connStr : str
+        The name of the connection type. Accepted values include
+        "BondType", "AngleType", "DihedralType", and "ImproperType".
+    pmd_conn : pmd.Bond/Angle/Dihedral/Improper
+        The parmed connection object.
+    gmso_conn : gmso.Bond/Angle/Dihedral/Improper
+        The GMSO connection object.
+    conn_params : dict
+        The potential expression parameters in dictionary form.
+    name : str
+        Name of the potential form.
+    expression :  expression
+        The potential expression form.
+    variables : dict
+        The independent variables.
     """
     try:
         member_types = list(
@@ -382,10 +395,8 @@ def _add_conn_type_from_pmd(
             Try using refer_type=False to not look for a parameterized structure."
         )
     try:
-        get_classes = (
-            lambda x: x.atom_type.atomclass
-            if x.atom_type.atomclass
-            else x.atom_type.name
+        get_classes = lambda x: (
+            x.atom_type.atomclass if x.atom_type.atomclass else x.atom_type.name
         )
         member_classes = list(map(get_classes, gmso_conn.connection_members))
     except AttributeError:
@@ -461,9 +472,11 @@ def to_parmed(top, refer_type=True):
             atomic_number=atomic_number,
             name=site.name,
             mass=site.mass.to(u.amu).value if site.mass else None,
-            charge=site.charge.to(u.elementary_charge).value
-            if site.charge
-            else None,
+            charge=(
+                site.charge.to(u.elementary_charge).value
+                if site.charge
+                else None
+            ),
         )
         pmd_atom.xx, pmd_atom.xy, pmd_atom.xz = site.position.to(
             "angstrom"
@@ -474,7 +487,7 @@ def to_parmed(top, refer_type=True):
             structure.add_atom(
                 pmd_atom,
                 resname=site.residue.name,
-                resnum=site.residue.number - 1,
+                resnum=site.residue.number + 1,
             )
         else:
             structure.add_atom(pmd_atom, resname="RES", resnum=-1)

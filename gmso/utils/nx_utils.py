@@ -1,4 +1,5 @@
 """NetowrkX support for GMSO."""
+
 import networkx as nx
 import unyt
 

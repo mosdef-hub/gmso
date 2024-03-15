@@ -1,13 +1,11 @@
 """Documentation support for pydantic objects."""
+
 import inspect
 import re
 from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
-try:
-    from pydantic.v1 import BaseModel
-except ImportError:
-    from pydantic import BaseModel
+from pydantic import BaseModel
 
 BASE_DOC_ATTR = "__base_doc__"
 FIELDS_IN_DOCSTRING = "__alias_to_fields__"

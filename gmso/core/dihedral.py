@@ -1,13 +1,10 @@
 from typing import Callable, ClassVar, Optional, Tuple
 
+from pydantic import ConfigDict, Field
+
 from gmso.abc.abstract_connection import Connection
 from gmso.core.atom import Atom
 from gmso.core.dihedral_type import DihedralType
-
-try:
-    from pydantic.v1 import Field
-except ImportError:
-    from pydantic import Field
 
 
 class Dihedral(Connection):
@@ -28,14 +25,18 @@ class Dihedral(Connection):
 
     Additional _validate methods are presented
     """
-    __members_creator__: ClassVar[Callable] = Atom.parse_obj
+    __members_creator__: ClassVar[Callable] = Atom.model_validate
 
     connection_members_: Tuple[Atom, Atom, Atom, Atom] = Field(
-        ..., description="The 4 atoms involved in the dihedral."
+        ...,
+        description="The 4 atoms involved in the dihedral.",
+        alias="connection_members",
     )
 
     dihedral_type_: Optional[DihedralType] = Field(
-        default=None, description="DihedralType of this dihedral."
+        default=None,
+        description="DihedralType of this dihedral.",
+        alias="dihedral_type",
     )
 
     restraint_: Optional[dict] = Field(
@@ -46,6 +47,16 @@ class Dihedral(Connection):
         Refer to https://manual.gromacs.org/current/reference-manual/topologies/topology-file-formats.html
         for more information.
         """,
+        alias="restraint",
+    )
+    model_config = ConfigDict(
+        alias_to_fields=dict(
+            **Connection.model_config["alias_to_fields"],
+            **{
+                "dihedral_type": "dihedral_type_",
+                "restraint": "restraint_",
+            }
+        )
     )
 
     @property
@@ -84,18 +95,6 @@ class Dihedral(Connection):
 
     def __setattr__(self, key, value):
         if key == "connection_type":
-            super(Dihedral, self).__setattr__("dihedral_type", value)
+            super(Dihedral, self).__setattr__("dihedral_type_", value)
         else:
             super(Dihedral, self).__setattr__(key, value)
-
-    class Config:
-        fields = {
-            "dihedral_type_": "dihedral_type",
-            "connection_members_": "connection_members",
-            "restraint_": "restraint",
-        }
-        alias_to_fields = {
-            "dihedral_type": "dihedral_type_",
-            "connection_members": "connection_members_",
-            "restraint": "restraint_",
-        }

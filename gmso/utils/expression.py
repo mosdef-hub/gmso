@@ -1,4 +1,5 @@
 """Manage Potential functional expressions and variables."""
+
 import warnings
 from copy import deepcopy
 from functools import lru_cache
@@ -6,8 +7,6 @@ from typing import Dict
 
 import sympy
 import unyt as u
-
-from gmso.utils.decorators import register_pydantic_json
 
 __all__ = ["PotentialExpression"]
 
@@ -30,7 +29,6 @@ def _are_equal_parameters(u1, u2):
         return True
 
 
-@register_pydantic_json(method="json")
 class PotentialExpression:
     """A general Expression class with parameters.
 
@@ -312,28 +310,36 @@ class PotentialExpression:
             return PotentialExpression(
                 deepcopy(self._expression),
                 deepcopy(self._independent_variables),
-                {
-                    k: u.unyt_quantity(v.value, v.units)
-                    if v.value.shape == ()
-                    else u.unyt_array(v.value, v.units)
-                    for k, v in self._parameters.items()
-                }
-                if self._is_parametric
-                else None,
+                (
+                    {
+                        k: (
+                            u.unyt_quantity(v.value, v.units)
+                            if v.value.shape == ()
+                            else u.unyt_array(v.value, v.units)
+                        )
+                        for k, v in self._parameters.items()
+                    }
+                    if self._is_parametric
+                    else None
+                ),
                 verify_validity=False,
             )
         elif fast_copy:
             return PotentialExpression(
                 self._expression,
                 self._independent_variables,
-                {
-                    k: u.unyt_quantity(v.value, v.units)
-                    if v.value.shape == ()
-                    else u.unyt_array(v.value, v.units)
-                    for k, v in self._parameters.items()
-                }
-                if self._is_parametric
-                else None,
+                (
+                    {
+                        k: (
+                            u.unyt_quantity(v.value, v.units)
+                            if v.value.shape == ()
+                            else u.unyt_array(v.value, v.units)
+                        )
+                        for k, v in self._parameters.items()
+                    }
+                    if self._is_parametric
+                    else None
+                ),
                 verify_validity=False,
             )
 

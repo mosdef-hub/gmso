@@ -1,4 +1,5 @@
 """Write a GROMACS topology (.TOP) file."""
+
 import datetime
 import warnings
 
@@ -115,6 +116,7 @@ def write_top(top, filename, top_vars=None):
 
         # Section headers
         headers = {
+            "position_restraints": "\n[ position_restraints ]\n; ai\tfunct\tkx\tky\tkz\tfunct\tb0\t\tkb\n",
             "bonds": "\n[ bonds ]\n; ai\taj\tfunct\tb0\t\tkb\n",
             "bond_restraints": "\n[ bonds ] ;Harmonic potential restraint\n"
             "; ai\taj\tfunct\tb0\t\tkb\n",
@@ -163,14 +165,24 @@ def write_top(top, filename, top_vars=None):
                     "{7:12.5f}\n".format(
                         str(idx + 1),
                         site.atom_type.name,
-                        str(site.molecule.number if site.molecule else 1),
+                        str(site.molecule.number + 1 if site.molecule else 1),
                         tag,
-                        site.atom_type.tags["element"],
+                        site.atom_type.tags.get("element", site.element.symbol),
                         "1",  # TODO: care about charge groups
-                        site.charge.in_units(u.elementary_charge).value,
+                        site.atom_type.charge.in_units(
+                            u.elementary_charge
+                        ).value,
                         site.atom_type.mass.in_units(u.amu).value,
                     )
                 )
+            if unique_molecules[tag]["position_restraints"]:
+                out_file.write(headers["position_restraints"])
+                for site in unique_molecules[tag]["position_restraints"]:
+                    out_file.write(
+                        _write_restraint(
+                            top, site, "position_restraints", shifted_idx_map
+                        )
+                    )
 
             for conn_group in [
                 "pairs",
@@ -323,6 +335,9 @@ def _get_unique_molecules(top):
         unique_molecules[top.name] = dict()
         unique_molecules[top.name]["subtags"] = [top.name]
         unique_molecules[top.name]["sites"] = list(top.sites)
+        unique_molecules[top.name]["position_restraints"] = list(
+            site for site in top.sites if site.restraint
+        )
         unique_molecules[top.name]["pairs"] = generate_pairs_lists(
             top, refer_from_scaling_factor=True
         )["pairs14"]
@@ -345,6 +360,11 @@ def _get_unique_molecules(top):
             molecule = unique_molecules[tag]["subtags"][0]
             unique_molecules[tag]["sites"] = list(
                 top.iter_sites(key="molecule", value=molecule)
+            )
+            unique_molecules[tag]["position_restraints"] = list(
+                site
+                for site in top.sites
+                if (site.restraint and site.molecule == molecule)
             )
             unique_molecules[tag]["pairs"] = generate_pairs_lists(
                 top, molecule
@@ -530,15 +550,28 @@ def _periodic_torsion_writer(top, dihedral, shifted_idx_map):
     return lines
 
 
-def _write_restraint(top, connection, type, shifted_idx_map):
+def _write_restraint(top, site_or_conn, type, shifted_idx_map):
     """Worker function to write various connection restraint information."""
     worker_functions = {
+        "position_restraints": _position_restraints_writer,
         "bond_restraints": _bond_restraint_writer,
         "angle_restraints": _angle_restraint_writer,
         "dihedral_restraints": _dihedral_restraint_writer,
     }
 
-    return worker_functions[type](top, connection, shifted_idx_map)
+    return worker_functions[type](top, site_or_conn, shifted_idx_map)
+
+
+def _position_restraints_writer(top, site, shifted_idx_map):
+    """Write site position restraint information."""
+    line = "{0:8s}{1:4s}{2:15.5f}{3:15.5f}{4:15.5f}\n".format(
+        str(shifted_idx_map[top.get_index(site)] + 1),
+        "1",
+        site.restraint["kx"].in_units(u.Unit("kJ/(mol * nm**2)")).value,
+        site.restraint["ky"].in_units(u.Unit("kJ/(mol * nm**2)")).value,
+        site.restraint["kz"].in_units(u.Unit("kJ/(mol * nm**2)")).value,
+    )
+    return line
 
 
 def _bond_restraint_writer(top, bond, shifted_idx_map):

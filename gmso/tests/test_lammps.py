@@ -1,4 +1,5 @@
 import copy
+import os
 
 import numpy as np
 import pytest
@@ -33,10 +34,14 @@ def compare_lammps_files(fn1, fn2, skip_linesList=[], offsets=None):
     line_counter2 = 0
     while True:
         # check for offsets
-        if offsets:
-            if offsets[0][0][0] == line_counter1:
+        if offsets is not None:
+            if len(offsets[0]) == 0:
+                pass
+            elif offsets[0][0][0] == line_counter1:
                 line_counter1 += offsets[0][0][1]
                 offsets[0].pop(0)
+            if len(offsets[1]) == 0:
+                pass
             elif offsets[1][0][0] == line_counter2:
                 line_counter2 += offsets[1][0][1]
                 offsets[1].pop(0)
@@ -287,6 +292,7 @@ class TestLammpsWriter(BaseTest):
             "gmso.lammps",
             "pmd.lammps",
             skip_linesList=[0],
+            offsets=[[[1, 1], ["none", "none"]], [["none", "none"]]],
         )
 
     @pytest.mark.parametrize(
@@ -318,6 +324,7 @@ class TestLammpsWriter(BaseTest):
             "gmso.lammps",
             "pmd.lammps",
             skip_linesList=[0],
+            offsets=[[[0, 1]], [["none", "none"]]],
         )
 
     def test_lammps_default_conversions(
@@ -336,7 +343,7 @@ class TestLammpsWriter(BaseTest):
         typed_ethane.save("opls.lammps")
         with open("opls.lammps", "r") as f:
             lines = f.readlines()
-        assert lines[38:41] == [
+        assert lines[39:42] == [
             "Dihedral Coeffs #OPLSTorsionPotential\n",
             "#\tk1 (kcal/mol)\tk2 (kcal/mol)\tk3 (kcal/mol)\tk4 (kcal/mol)\n",
             "1\t0.000000\t-0.000000\t0.300000\t-0.000000\t# opls_140\topls_135\topls_135\topls_140\n",
@@ -354,13 +361,13 @@ class TestLammpsWriter(BaseTest):
             "gmso.lammps",
             "pmd.lammps",
             skip_linesList=[0],
-            offsets=[[[16, 1], ["none", "none"]], [["none", "none"]]],
+            offsets=[[[0, 1], [17, 1]], []],
         )
         out_lammps = open("gmso.lammps", "r").readlines()
         found_impropers = False
         for i, line in enumerate(out_lammps):
             if "Improper Coeffs" in line:
-                assert "HarmonicImproperPotential" in line
+                assert "HarmonicTorsionPotential" in line
                 assert "k" in out_lammps[i + 1]
                 assert "phi_eq" in out_lammps[i + 1]
                 assert len(out_lammps[i + 2].split("#")[0].split()) == 3
@@ -612,3 +619,21 @@ class TestLammpsWriter(BaseTest):
 
         with pytest.raises(NotYetImplementedWarning):
             LAMMPS_UnitSystems("None")
+
+    def test_charmm_style(self, harmonic_parmed_types_charmm):
+        top = from_parmed(harmonic_parmed_types_charmm)
+        top.save("test.lammps")
+        assert os.path.exists("test.lammps")
+
+    def test_charmm_improper_ff(self):
+        import mbuild as mb
+
+        ff = gmso.ForceField(get_path("tfa_charmm.xml"))
+
+        cpd = mb.load("C(=O)(C(F)(F)F)N", smiles=True)  # TFA molecule
+        top = cpd.to_gmso()
+        from gmso.parameterization import apply
+
+        ptop = apply(top, ff, identify_connections=True)
+        ptop.save("test.lammps", unit_style="real", overwrite=True)
+        assert compare_lammps_files("test.lammps", get_path("charmm.lammps"))

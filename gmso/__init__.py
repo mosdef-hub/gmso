@@ -1,4 +1,5 @@
 """GMSO: General Molecular Simulation Object."""
+
 from .core.angle import Angle
 from .core.angle_type import AngleType
 from .core.atom import Atom
@@ -15,4 +16,4 @@ from .core.improper_type import ImproperType
 from .core.pairpotential_type import PairPotentialType
 from .core.topology import Topology
 
-__version__ = "0.11.2"
+__version__ = "0.12.0"
