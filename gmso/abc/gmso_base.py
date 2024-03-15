@@ -7,7 +7,6 @@ from typing import Any, ClassVar, Type
 
 from pydantic import BaseModel, ConfigDict, validators
 
-# from gmso.abc.auto_doc import apply_docs
 from gmso.abc.serialization_utils import dict_to_unyt
 
 dict_validator = validators.getattr_migration("dict_validator")
