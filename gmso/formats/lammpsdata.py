@@ -115,6 +115,7 @@ def write_lammpsdata(
                 unit_style
             )
         )
+
     if unit_style != "lj" and lj_cfactorsDict:
         raise ValueError(
             "lj_cfactorsDict argument is only used if unit_style is lj."

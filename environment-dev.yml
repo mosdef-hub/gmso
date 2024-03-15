@@ -25,6 +25,7 @@ dependencies:
   - ipywidgets
   - ele>=0.2.0
   - pre-commit
+  - molbox
   - pandas
   - symengine
   - python-symengine
