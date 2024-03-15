@@ -31,6 +31,7 @@ Goals and Features
 `GMSO`'s goal is to provide a flexible backend framework to store topological information of a chemical system in a reproducible fashion.
 **Topology** in this case is defined as the information needed to initialize a molecular simulation.
 Depending on the type of simulation performed, this ranges from:
+
 * particle positions
 * particle connectivity
 * box information

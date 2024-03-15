@@ -27,7 +27,7 @@ exported = [
 
 
 class Element(GMSOBase):
-    __base_doc__ = """Chemical element object
+    """Chemical element object
 
     Template to create a chemical element.
     Properties of the element instance are immutable.

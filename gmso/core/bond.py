@@ -10,7 +10,7 @@ from gmso.core.bond_type import BondType
 
 
 class Bond(Connection):
-    __base_doc__ = """A 2-partner connection between sites.
+    """A 2-partner connection between sites.
 
     This is a subclass of the gmso.abc.Connection superclass.
     This class has strictly 2 members in its connection_members.
@@ -19,7 +19,8 @@ class Bond(Connection):
     Notes
     -----
     Inherits some methods from Connection:
-        __eq__, __repr__, _validate methods.
+    __eq__, __repr__, _validate methods.
+
     Additional _validate methods are presented.
     """
     __members_creator__: ClassVar[Callable] = Atom.model_validate

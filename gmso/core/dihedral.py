@@ -8,22 +8,22 @@ from gmso.core.dihedral_type import DihedralType
 
 
 class Dihedral(Connection):
-    __base_doc__ = """A 4-partner connection between sites.
+    """A 4-partner connection between sites.
 
     This is a subclass of the gmso.Connection superclass.
     This class has strictly 4 members in its connection_members.
     The connection_type in this class corresponds to gmso.DihedralType.
     The connectivity of a dihedral is:
-        m1–m2–m3–m4
+    m1–m2–m3–m4
 
     where m1, m2, m3, and m4 are connection members 1-4, respectively.
 
     Notes
     -----
     Inherits some methods from Connection:
-        __eq__, __repr__, _validate methods
+    __eq__, __repr__, _validate methods
 
-    Additional _validate methods are presented
+    Additional _validate methods are presented.
     """
     __members_creator__: ClassVar[Callable] = Atom.model_validate
 

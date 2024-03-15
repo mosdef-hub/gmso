@@ -39,18 +39,20 @@ def from_mbuild(
 
         * All positional and box dimension values in compound are in nanometers.
 
-        * The hierarchical structure of the Compound will be flattened and translated to labels
-         in GMSO Sites. The directly supported labels include `Site.group`,
+        * The hierarchical structure of the Compound will be flattened and translated to labels\
+         in GMSO Sites. The directly supported labels include `Site.group`,\
         `Site.molecule_name`, and `Site.residue_name`.
-            * `group` is determined as te second-highest level Compound and is automatically generated;
-            * `molecule` is determined by traversing through
-            hierarchy of the mb.Compound, starting from the particle level, until the lowest
-            independent mb.Compound is reached (determined as an mb.Compound that does not have
+
+            * `group` is determined as te second-highest level Compound and is automatically generated;\
+            * `molecule` is determined by traversing through\
+            hierarchy of the mb.Compound, starting from the particle level, until the lowest\
+            independent mb.Compound is reached (determined as an mb.Compound that does not have\
             any bond outside its boundary);
-            * `residue` is the `mb.Compound` level right above particle level. `
-            * `molecule` and `residue` take the format of (name, index), where the latter can be used
-            to distinguish between molecule/residue of the same name. These two labels are only generated
+            * `residue` is the `mb.Compound` level right above particle level.
+            * `molecule` and `residue` take the format of (name, index), where the latter can be used\
+            to distinguish between molecule/residue of the same name. These two labels are only generated\
             if parse_label=True.
+
         * Only `Bonds` are added for each bond in the `Compound`. If `Angles`\
           and `Dihedrals` are desired in the resulting `Topology`, they must be\
           added separately from this function.
@@ -62,13 +64,12 @@ def from_mbuild(
     box : mbuild.Box, optional, default=None
         Box information to be loaded to a gmso.Topology
     search_method : function, optional, default=element_by_symbol
-        Searching method used to assign element from periodic table to
-        particle site.
+        Searching method used to assign element from periodic table to particle site.
         The information specified in the `search_method` argument is extracted
         from each `Particle`'s `name` attribute.
         Valid functions are element_by_symbol, element_by_name,
         element_by_atomic_number, and element_by_mass, which can be imported
-        from `gmso.core.element'
+        from `gmso.core.element`
     parse_label : bool, optional, default=True
         Option to parse hierarchy info of the compound into system of top label,
         including, group, molecule and residue labels.
