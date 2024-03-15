@@ -42,7 +42,6 @@ class GMSOBase(BaseModel, ABC):
 
         super().__setattr__(name, value)
 
-
     @classmethod
     def model_validate(cls: Type["Model"], obj: Any) -> "Model":
         dict_to_unyt(obj)
