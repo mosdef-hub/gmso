@@ -13,11 +13,6 @@ Core Classes
     gmso.Angle
     gmso.Dihedral
     gmso.Improper
-    gmso.AtomType
-    gmso.BondType
-    gmso.AngleType
-    gmso.DihedralType
-    gmso.ImproperType
 
 
 Topology
@@ -58,6 +53,15 @@ Improper
 
 Potential Classes
 =================
+.. autosummary::
+    :nosignatures:
+
+    gmso.AtomType
+    gmso.BondType
+    gmso.AngleType
+    gmso.DihedralType
+    gmso.ImproperType
+    gmso.PairPotentialType
 
 AtomType
 ********
