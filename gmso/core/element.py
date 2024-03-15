@@ -33,6 +33,7 @@ class Element(GMSOBase):
     Properties of the element instance are immutable.
     All known elements are pre-built and stored internally.
     """
+
     name: str = Field(..., description="Name of the element.")
 
     symbol: str = Field(..., description="Chemical symbol of the element.")

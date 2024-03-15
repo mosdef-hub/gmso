@@ -23,6 +23,7 @@ class Angle(Connection):
 
     Additional _validate methods are presented.
     """
+
     __members_creator__: ClassVar[Callable] = Atom.model_validate
 
     connection_members_: Tuple[Atom, Atom, Atom] = Field(
