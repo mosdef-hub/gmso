@@ -92,7 +92,7 @@ bibliography: paper.bib
 # Summary
 
 <p align="center">
-  <img src="toc.png?raw=True" alt="Summary of the GMSO workflow" width="500"/>
+  <img src="toc.png?raw=True" alt="Summary of the GMSO workflow" width="500 <br>/>
   <em>Summary of the GMSO workflow.</em>
 </p>
 
