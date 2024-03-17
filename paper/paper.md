@@ -91,11 +91,6 @@ bibliography: paper.bib
 
 # Summary
 
-<p align="center">
-  <img src="toc.png?raw=True" alt="Summary of the GMSO workflow" width="500 <br>/>
-  <em>Summary of the GMSO workflow.</em>
-</p>
-
 The General Molecular Simulation Object, or GMSO, is an open-source Python package designed to supplement molecular simulation workflow. This library offers a versatile and expandable data structures crucial for storage of chemical and biomolecular topologies, along with utilities necessary for editing and outputting these systems. GMSO is a core component of the Molecular Simulation Design Framework (MoSDeF), dedicated to streamlining the creation, parameterization, and representation of systems for molecular simulations. The GMSO library serves as a dynamic repository for storing chemical/biomolecular structures, encompassing metadata, coordinates, and interaction potentials. Moreover, the library includes routines for editing and exporting stored structures into various file formats, which can be used with other software for visualization (e.g., VMD[@humphrey1996vmd] and OVITO[@]) or conducting molecular simulations (e.g., GROMACS [@abraham2015gromacs], LAMMPS[@thompson2022lammps], GOMC[@nejahi2021update], and HOOMD-blue[@anderson2020hoomd]).
 
 
@@ -123,6 +118,10 @@ Currently, existing data structures, such as ParmEd and OpenMM[@shirts2016lesson
 
 Hence, we developed the General Molecular Simulation Object (GMSO) library, which is a lightweight and extensible data structure encapsulating chemical/biomolecular systems and their associated interaction parameters, i.e., force fields, to cater to the general force fields. The library is designed to accommodate a wide range of chemical/biomolecular models, offering the capability to support arbitrary potential expressions and unit systems. Generalizing these potential (force field) expressions allows users to enter the force field in its native form and units, minimizing user error when setting up the force field file while providing the ability to easily auto-convert the potential form and units to the molecular engine's required form. GMSO satisfies the broader community's need for a general, extensible, and reproducible method of setting up molecular simulations. In addition to core data classes, the library includes routines for interacting/converting to and from other ecosystems, including ParmEd and OpenMM, enhancing interoperability without reinventing functionalities. GMSO supports output to multiple molecular simulation engine-specific file formats, currently including: GROMACS [@abraham2015gromacs], LAMMPS [@thompson2022lammps], HOOMD-Blue [@anderson2020hoomd], NAMD[@phillips2020scalable], Cassandra [@shah2017cassandra], and GOMC [@nejahi2021update], with plans for future expansion. When integrated with other MoSDeF software and workflow manager like Signac [@adorf2018simple], GMSO facilitates large-scale automated molecular screening for diverse molecules/structures and state points, which is critical for developing new materials, chemicals and drugs [@craven2021examining, @quach2022high, @thompson2019scalable].
 
+
+# Figures
+
+![Summary of the GMSO Workflow.\label{fig:summary}]("toc.png"){width=50%}
 
 # Acknowledgements
 This research was partially supported by the National Science Foundation OAC-1835713 and OAC-1835874. Atomfold also donated research and development time and computational resources for this research and software.
