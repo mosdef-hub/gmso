@@ -121,10 +121,10 @@ Hence, we developed the General Molecular Simulation Object (GMSO) library, whic
 
 # Figures
 
-<figure align="center">
+<p align="center">
   <img src="summary_fig.png" alt="Summary of the GMSO Workflow" style="width:50%">
   <figcaption><b>Figure 1. Summary of the GMSO workflow.</b></figcaption>
-</figure>
+</p>
 
 # Acknowledgements
 This research was partially supported by the National Science Foundation OAC-1835713 and OAC-1835874. Atomfold also donated research and development time and computational resources for this research and software.
