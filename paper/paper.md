@@ -121,7 +121,7 @@ Hence, we developed the General Molecular Simulation Object (GMSO) library, whic
 
 # Figures
 
-<figure style="text-align: center;" markdown="1">
+<figure align="center">
   <img src="summary_fig.png" alt="Summary of the GMSO Workflow" style="width:50%">
   <figcaption><b>Figure 1. Summary of the GMSO workflow.</b></figcaption>
 </figure>
