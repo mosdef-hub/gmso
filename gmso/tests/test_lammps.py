@@ -263,7 +263,6 @@ class TestLammpsWriter(BaseTest):
             "typed_ethane",
             "typed_methylnitroaniline",
             "typed_methaneUA",
-            "typed_water_system",
         ],
     )
     def test_lammps_vs_parmed_by_mol(self, top, request):

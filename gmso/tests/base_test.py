@@ -678,6 +678,18 @@ class BaseTest:
         )
         return benzene
 
+    @pytest.fixture
+    def benzeneTopology(self):
+        untyped_benzene = mb.load(get_fn("benzene.mol2"))
+        top_benzene = untyped_benzene.to_gmso()
+        ff_improper = ForceField(get_fn("benzeneaa_improper.xml"))
+        return apply(
+            top_benzene,
+            ff_improper,
+            identify_connections=True,
+            ignore_params=[],
+        )
+
     # TODO: now
     # add in some fixtures for (connects), amber
 

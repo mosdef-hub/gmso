@@ -494,9 +494,14 @@ def _write_connection(top, connection, potential_name, shifted_idx_map):
 
 def _harmonic_bond_potential_writer(top, bond, shifted_idx_map):
     """Write harmonic bond information."""
+    eq_connsList = bond.equivalent_members()
+    indexList = [
+        tuple(map(lambda x: top.get_index(x), conn)) for conn in eq_connsList
+    ]
+    sorted_indicesList = sorted(indexList)[0]
     line = "{0:8s}{1:8s}{2:4s}{3:15.5f}{4:15.5f}\n".format(
-        str(shifted_idx_map[top.get_index(bond.connection_members[0])] + 1),
-        str(shifted_idx_map[top.get_index(bond.connection_members[1])] + 1),
+        str(shifted_idx_map[sorted_indicesList[0]] + 1),
+        str(shifted_idx_map[sorted_indicesList[1]] + 1),
         "1",
         bond.connection_type.parameters["r_eq"].in_units(u.nm).value,
         bond.connection_type.parameters["k"]
@@ -508,10 +513,16 @@ def _harmonic_bond_potential_writer(top, bond, shifted_idx_map):
 
 def _harmonic_angle_potential_writer(top, angle, shifted_idx_map):
     """Write harmonic angle information."""
+    eq_connsList = angle.equivalent_members()
+    indexList = [
+        tuple(map(lambda x: top.get_index(x), conn)) for conn in eq_connsList
+    ]
+    sorted_indicesList = sorted(indexList)[0]
+
     line = "{0:8s}{1:8s}{2:8s}{3:4s}{4:15.5f}{5:15.5f}\n".format(
-        str(shifted_idx_map[top.get_index(angle.connection_members[0])] + 1),
-        str(shifted_idx_map[top.get_index(angle.connection_members[1])] + 1),
-        str(shifted_idx_map[top.get_index(angle.connection_members[2])] + 1),
+        str(shifted_idx_map[sorted_indicesList[0]] + 1),
+        str(shifted_idx_map[sorted_indicesList[1]] + 1),
+        str(shifted_idx_map[sorted_indicesList[2]] + 1),
         "1",
         angle.connection_type.parameters["theta_eq"].in_units(u.degree).value,
         angle.connection_type.parameters["k"]
