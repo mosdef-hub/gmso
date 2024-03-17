@@ -19,7 +19,7 @@ from gmso.utils.units import GMSO_UnitRegistry
 
 
 class AtomType(ParametricPotential):
-    __base_doc__ = """A description of non-bonded interactions between sites.
+    """A description of non-bonded interactions between sites.
 
     This is a subclass of the gmso.core.Potential superclass.
 

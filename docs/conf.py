@@ -19,8 +19,8 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Project information -----------------------------------------------------
 
 project = "gmso"
-copyright = "2020, mosdef-hub, Vanderbilt University"
-author = "Matt Thompson, Alex Yang, Ray Matsumoto, Parashara Shamaprasad, Umesh Timalsina, Co Quach, Ryan S. DeFever, Justin Gilmer"
+copyright = "2024, mosdef-hub, Vanderbilt University"
+author = "Matt Thompson, Alex Yang, Ray Matsumoto, Parashara Shamaprasad, Umesh Timalsina, Co D. Quach, Ryan S. DeFever, Justin Gilmer"
 
 # The full version, including alpha/beta/rc tags
 version = "0.12.0"
@@ -49,7 +49,7 @@ napoleon_use_admonition_for_notes = True
 napoleon_use_param = False
 napoleon_use_ivar = True
 
-intersphinx_mapping = {"python": ("https://docs.python.org/3.7", None)}
+intersphinx_mapping = {"python": ("https://docs.python.org/3.11", None)}
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
@@ -69,9 +69,9 @@ html_theme = "sphinx_rtd_theme"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["_static"]
+# html_static_path = ["_static"]
 
-_python_doc_base = "http://docs.python.org/3.7"
+_python_doc_base = "http://docs.python.org/3.11"
 
 source_suffix = ".rst"
 
