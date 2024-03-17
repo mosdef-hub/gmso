@@ -90,6 +90,12 @@ bibliography: paper.bib
 
 
 # Summary
+
+<p align="center">
+  <img src="toc.pdf?raw=True" alt="Summary of the GMSO workflow" width="500"/>
+  <em>Summary of the GMSO workflow.</em>
+</p>
+
 The General Molecular Simulation Object, or GMSO, is an open-source Python package designed to supplement molecular simulation workflow. This library offers a versatile and expandable data structures crucial for storage of chemical and biomolecular topologies, along with utilities necessary for editing and outputting these systems. GMSO is a core component of the Molecular Simulation Design Framework (MoSDeF), dedicated to streamlining the creation, parameterization, and representation of systems for molecular simulations. The GMSO library serves as a dynamic repository for storing chemical/biomolecular structures, encompassing metadata, coordinates, and interaction potentials. Moreover, the library includes routines for editing and exporting stored structures into various file formats, which can be used with other software for visualization (e.g., VMD[@humphrey1996vmd] and OVITO[@]) or conducting molecular simulations (e.g., GROMACS [@abraham2015gromacs], LAMMPS[@thompson2022lammps], GOMC[@nejahi2021update], and HOOMD-blue[@anderson2020hoomd]).
 
 
