@@ -184,3 +184,97 @@ class TestImproper(BaseTest):
         )
         assert sort_by_classes(imptype) == expected_sortingList
         assert sort_by_types(imptype) == expected_sortingList
+
+    def test_sorting_improper_based_on_impropertype(self):
+        from gmso.exceptions import MissingParameterError
+        from gmso.utils.sorting import sort_by_classes, sort_by_types
+
+        def sort_improper_connection_members(improper):
+            if improper.improper_type is None:
+                return improper.connection_members
+            improper_classes = improper.improper_type.member_classes
+            improper_types = improper.improper_type.member_types
+            if improper_classes:
+                order_improperList = improper_classes
+                orderStr = "atomclass"  # String to access site attribute
+            elif improper_types:
+                order_improperList = improper_types
+                orderStr = "name"  # String to access site attribute
+            else:
+                missing_types = [site.atom_type.atomclass for site in improper]
+                raise MissingParameterError(
+                    improper.improper_type, missing_types
+                )
+
+            # get the site atomtypes and make a dictionary map to match to the order_improperList
+            cmemList = improper.connection_members
+            assert order_improperList[0] == getattr(
+                cmemList[0].atom_type, orderStr
+            )  # first atoms should be the same
+            first_site = cmemList[0]
+            middle_sitesList = []
+            for site in cmemList[1:]:
+                if getattr(site.atom_type, orderStr) == order_improperList[-1]:
+                    last_site = site
+                else:
+                    middle_sitesList.append(site)
+            assert (
+                len(middle_sitesList) == 2
+            ), f"The improper_type {improper.improper_type} could not find 2 middle sites from {middle_sitesList}"
+            middle_sitesList = sorted(
+                middle_sitesList,
+                key=lambda site: getattr(site.atom_type, orderStr),
+            )
+            return [first_site] + middle_sitesList + [last_site]
+
+        atom1 = Atom(
+            name="atom1",
+            position=[0, 0, 0],
+            atom_type=AtomType(name="A", atomclass="A"),
+        )
+        atom2 = Atom(
+            name="atom2",
+            position=[1, 0, 0],
+            atom_type=AtomType(name="B", atomclass="B"),
+        )
+        atom3 = Atom(
+            name="atom3",
+            position=[1, 1, 0],
+            atom_type=AtomType(name="C", atomclass="C"),
+        )
+        atom4 = Atom(
+            name="atom4",
+            position=[1, 1, 4],
+            atom_type=AtomType(name="D", atomclass="D"),
+        )
+
+        connect = Improper(connection_members=[atom2, atom1, atom4, atom3])
+
+        consituentList = [
+            atom2.atom_type.name,
+            atom4.atom_type.name,
+            atom3.atom_type.name,
+            atom1.atom_type.name,
+        ]
+
+        imptype = ImproperType(
+            member_types=consituentList, member_classes=consituentList
+        )
+        connect.improper_type = imptype
+        expected_membersList = [atom2, atom3, atom4, atom1]
+        assert sort_by_types(connect.improper_type) == tuple(
+            [site.atom_type.name for site in expected_membersList]
+        )
+        assert (
+            tuple([site.atom_type for site in connect.connection_members])
+            != imptype.member_types
+        )
+        assert sort_improper_connection_members(connect) == expected_membersList
+
+    def test_applied_improper_updates_connection_members(self, benzeneTopology):
+        improper = benzeneTopology.impropers[0]
+        classes_connectionList = tuple(
+            [site.atom_type.atomclass for site in improper.connection_members]
+        )
+        classes_typeList = improper.improper_type.member_classes
+        assert classes_connectionList == classes_typeList
