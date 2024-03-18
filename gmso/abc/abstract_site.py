@@ -20,6 +20,7 @@ from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.exceptions import GMSOError
 
 PositionType = Union[Sequence[float], np.ndarray, u.unyt_array]
+
 MoleculeType = NamedTuple("Molecule", name=StrictStr, number=StrictInt)
 ResidueType = NamedTuple("Residue", name=StrictStr, number=StrictInt)
 
