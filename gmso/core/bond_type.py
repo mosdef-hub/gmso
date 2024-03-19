@@ -10,7 +10,7 @@ from gmso.utils.expression import PotentialExpression
 
 
 class BondType(ParametricPotential):
-    __base_doc__ = """A descripton of the interaction between 2 bonded partners.
+    """A descripton of the interaction between 2 bonded partners.
 
     This is a subclass of the gmso.core.Potential superclass.
 

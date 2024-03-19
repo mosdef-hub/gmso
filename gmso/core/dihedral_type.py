@@ -8,7 +8,7 @@ from gmso.utils.expression import PotentialExpression
 
 
 class DihedralType(ParametricPotential):
-    __base_doc__ = """A descripton of the interaction between 4 bonded partners.
+    """A descripton of the interaction between 4 bonded partners.
 
     This is a subclass of the gmso.core.Potential superclass.
 

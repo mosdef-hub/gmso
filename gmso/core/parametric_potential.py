@@ -11,7 +11,7 @@ from gmso.utils.misc import get_xml_representation, unyt_compare
 
 
 class ParametricPotential(AbstractPotential):
-    __base_doc__ = """A parametric potential class.
+    """A parametric potential class.
 
     Potential stores a general interaction between components of a chemical
     topology that can be specified by a mathematical expression. The functional

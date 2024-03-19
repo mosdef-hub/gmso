@@ -18,7 +18,7 @@ Version control
 ---------------
 
 We currently use the "standard" Pull Request model. Contributions should be implemented on feature branches of forks.
-Please try to keep the `master` branch of your fork up-to-date with the `master` branch of the main repository.
+Please try to keep the `main` branch of your fork up-to-date with the `main` branch of the main repository.
 
 Propose a single set of related changes
 ****************************************
