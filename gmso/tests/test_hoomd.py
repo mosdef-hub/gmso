@@ -410,8 +410,9 @@ class TestGsd(BaseTest):
             "energy": u.kJ / u.mol,
         }
         ethanol = mb.load("CCO", smiles=True)
-        ethanol.box = mb.Box([5, 5, 5])
-        top = ethanol.to_gmso()
+        benzene = mb.load("c1ccccc1", smiles=True)
+        benzene.box = mb.Box([5, 5, 5])
+        top = benzene.to_gmso()
         parameterized_top = apply(
             top, gaff_forcefield, identify_connections=True
         )
