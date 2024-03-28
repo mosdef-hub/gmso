@@ -15,7 +15,7 @@ from gmso.utils.misc import ensure_valid_dimensions
 
 
 class Atom(Site):
-    __base_doc__ = """An atom represents a single element association in a topology.
+    """An atom represents a single element association in a topology.
 
     Atoms are the representation of an element within `gmso` that describes any general
     atom in a molecular simulation. Atoms also contain information that are unique to
@@ -26,8 +26,9 @@ class Atom(Site):
     -----
     Atoms have all the attributes inherited from the base Site class,
     The order of precedence when attaining properties `charge` and `mass` is:
-        1. atom.charge > atom.atom_type.charge
-        2. atom.mass > atom.atom_type.mass
+
+    1. atom.charge > atom.atom_type.charge
+    2. atom.mass > atom.atom_type.mass
 
     Examples
     --------
@@ -40,6 +41,7 @@ class Atom(Site):
         An Abstract Base class for implementing site objects in GMSO. The class Atom bases from
         the gmso.abc.abstract site class
     """
+
     charge_: Optional[Union[u.unyt_quantity, float]] = Field(
         None, description="Charge of the atom", alias="charge"
     )

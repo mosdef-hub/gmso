@@ -7,7 +7,6 @@ from typing import Any, ClassVar, Type
 
 from pydantic import BaseModel, ConfigDict, validators
 
-from gmso.abc.auto_doc import apply_docs
 from gmso.abc.serialization_utils import dict_to_unyt
 
 dict_validator = validators.getattr_migration("dict_validator")
@@ -15,12 +14,6 @@ dict_validator = validators.getattr_migration("dict_validator")
 
 class GMSOBase(BaseModel, ABC):
     """A BaseClass to all abstract classes in GMSO."""
-
-    __base_doc__: ClassVar[str] = (
-        """A base class to all abstract base classes in gmso."""
-    )
-
-    __docs_generated__: ClassVar[bool] = False
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
@@ -48,22 +41,6 @@ class GMSOBase(BaseModel, ABC):
             )
 
         super().__setattr__(name, value)
-
-    @classmethod
-    def __init_subclass__(cls, **kwargs):
-        """Initialize the subclass of the object."""
-        super().__init_subclass__()
-        setattr(cls, "__docs_generated__", False)
-        for super_class in cls.mro()[1:]:
-            if (
-                hasattr(super_class, "Config")
-                and hasattr(super_class.Config, "alias_to_fields")
-                and hasattr(cls.Config, "alias_to_fields")
-            ):
-                cls.Config.alias_to_fields.update(
-                    super_class.Config.alias_to_fields
-                )
-        apply_docs(cls, map_names=True, silent=False)
 
     @classmethod
     def model_validate(cls: Type["Model"], obj: Any) -> "Model":

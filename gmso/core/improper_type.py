@@ -10,7 +10,7 @@ from gmso.utils.expression import PotentialExpression
 
 
 class ImproperType(ParametricPotential):
-    __base_doc__ = """A description of the interaction between 4 bonded partners.
+    """A description of the interaction between 4 bonded partners.
 
     This is a subclass of the gmso.core.Potential superclass.
 
@@ -19,22 +19,16 @@ class ImproperType(ParametricPotential):
     as a `sympy` expression and the parameters, with units, are stored
     explicitly.  The AtomTypes that are used to define the improper type are
     stored as `member_types`.
-
     The connectivity of an improper is:
-
-                   m2
-                   |
-                   m1
-                  / \
-                 m3  m4
+             m2
+        m3 - m1 - m4
 
     where m1, m2, m3, and m4 are connection members 1-4, respectively.
 
     Notes
     ----
     Inherits many functions from gmso.ParametricPotential:
-        __eq__, _validate functions
-
+    __eq__, _validate functions
     """
 
     member_types_: Optional[Tuple[str, str, str, str]] = Field(

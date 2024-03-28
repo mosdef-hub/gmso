@@ -33,7 +33,7 @@ def natural_sort(text):
     return [_atoi(a) for a in re.split(r"(\d+)", text)]
 
 
-def sort_connection_members(connection, sort_by="name"):
+def sort_connection_members(connection, sort_by="name", top=None):
     """Sort connection_members of connection.
 
     Parameters
@@ -43,6 +43,9 @@ def sort_connection_members(connection, sort_by="name"):
     sort_by : str, default="name"
         The attribute of the site to sort by. Can take "name", "atom_type",
         and "atom_class" as the sorting attribute.
+    top : gmso.Topology
+        The topology associated with the connection. This is used in sort_by='index'
+        to provide the index of the sites.
     """
     if sort_by == "name":
         sorting_key = lambda site: natural_sort(site.name)
@@ -50,6 +53,12 @@ def sort_connection_members(connection, sort_by="name"):
         sorting_key = lambda site: natural_sort(site.atom_type.name)
     elif sort_by == "atomclass":
         sorting_key = lambda site: natural_sort(site.atom_type.atomclass)
+    elif sort_by == "index":
+        if top is None or connection.connection_members[0] not in top.sites:
+            raise ValueError(
+                f"Must provide topology associated with {connection}. Provided {top}"
+            )
+        sorting_key = lambda site: top.get_index(site)
     else:
         raise ValueError("Unsupported sort_by value provided.")
 

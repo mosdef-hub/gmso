@@ -35,13 +35,11 @@ Alternatively, you can also start a Bourne shell to use python from the containe
     container's lifecycle.  If the container is removed, any changes or code additions will not persist.  See the section below for
     persistent data.
 
-.. Note::
+.. note::
 
-Note
-
-The -it flags connect your keyboard to the terminal running in the container.
-You may run the prior command without those flags, but be aware that the container will not respond to any keyboard input.
-In that case, you would need to use the docker ``ps`` and ``docker kill`` commands to shut down the container.
+    The -it flags connect your keyboard to the terminal running in the container.
+    You may run the prior command without those flags, but be aware that the container will not respond to any keyboard input.
+    In that case, you would need to use the docker ``ps`` and ``docker kill`` commands to shut down the container.
 
 
 Persisting User Volumes

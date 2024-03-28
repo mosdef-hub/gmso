@@ -31,7 +31,11 @@ from gmso.formats.formats_registry import loads_as, saves_as
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.compatibility import check_compatibility
 from gmso.utils.conversions import convert_kelvin_to_energy_units
-from gmso.utils.sorting import reindex_molecules, sort_by_types
+from gmso.utils.sorting import (
+    reindex_molecules,
+    sort_by_types,
+    sort_connection_members,
+)
 from gmso.utils.units import LAMMPS_UnitSystems, write_out_parameter_and_units
 
 
@@ -1223,11 +1227,14 @@ def _write_conn_data(out_file, top, connStr, sorted_typesList):
         ]
         for index in indexList:
             typeStr = f"{i+1:<6d}\t{index+1:<6d}\t"
+            sorted_membersList = sort_connection_members(
+                conn, sort_by="index", top=top
+            )
             indexStr = "\t".join(
-                map(
-                    lambda x: str(top.sites.index(x) + 1).ljust(6),
-                    conn.connection_members,
-                )
+                [
+                    str(top.get_index(member) + 1).ljust(6)
+                    for member in sorted_membersList
+                ]
             )
             out_file.write(typeStr + indexStr + "\n")
             i += 1

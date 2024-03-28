@@ -27,12 +27,13 @@ exported = [
 
 
 class Element(GMSOBase):
-    __base_doc__ = """Chemical element object
+    """Chemical element object
 
     Template to create a chemical element.
     Properties of the element instance are immutable.
     All known elements are pre-built and stored internally.
     """
+
     name: str = Field(..., description="Name of the element.")
 
     symbol: str = Field(..., description="Chemical symbol of the element.")
