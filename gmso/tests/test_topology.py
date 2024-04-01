@@ -757,7 +757,6 @@ class TestTopology(BaseTest):
         with pytest.raises(ValueError):
             top.set_scaling_factors(None, None)
 
-
     def test_is_typed_check(self, typed_chloroethanol):
         groups = [
             "sites",
