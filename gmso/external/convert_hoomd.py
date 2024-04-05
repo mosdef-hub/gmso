@@ -22,7 +22,11 @@ from gmso.utils.conversions import (
 )
 from gmso.utils.geometry import coord_shift
 from gmso.utils.io import has_gsd, has_hoomd
-from gmso.utils.sorting import sort_by_classes, sort_connection_members
+from gmso.utils.sorting import (
+    sort_by_classes,
+    sort_by_types,
+    sort_connection_members,
+)
 from gmso.utils.units import convert_params_units
 
 if has_gsd:
@@ -1359,6 +1363,9 @@ def _parse_periodic_improper(
 ):
     for itype in itypes:
         member_types = sort_by_classes(itype)
+        # If wild card in class, sort by types instead
+        if "*" in member_types:
+            member_types = sort_by_types(itype)
         container.params["-".join(member_types)] = {
             "k": itype.parameters["k"],
             "chi0": itype.parameters["phi_eq"],
