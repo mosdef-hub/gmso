@@ -1077,7 +1077,7 @@ def _parse_harmonic_angle(
         members = sort_by_classes(agtype)
         # If wild card in class, sort by types instead
         if "*" in members:
-            members = sort_by_types(atype)
+            members = sort_by_types(agtype)
         container.params["-".join(members)] = {
             "k": agtype.parameters["k"],
             "t0": agtype.parameters["theta_eq"],
