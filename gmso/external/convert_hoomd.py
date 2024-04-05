@@ -1001,8 +1001,11 @@ def _parse_harmonic_bond(
 ):
     for btype in btypes:
         # TODO: Unit conversion
-        member_classes = sort_by_classes(btype)
-        container.params["-".join(member_classes)] = {
+        members = sort_by_classes(btype)
+        # If wild card in class, sort by types instead
+        if "*" in members:
+            members = sort_by_types(btype)
+        container.params["-".join(members)] = {
             "k": btype.parameters["k"],
             "r0": btype.parameters["r_eq"],
         }
@@ -1071,8 +1074,11 @@ def _parse_harmonic_angle(
     agtypes,
 ):
     for agtype in agtypes:
-        member_classes = sort_by_classes(agtype)
-        container.params["-".join(member_classes)] = {
+        members = sort_by_classes(agtype)
+        # If wild card in class, sort by types instead
+        if "*" in members:
+            members = sort_by_types(atype)
+        container.params["-".join(members)] = {
             "k": agtype.parameters["k"],
             "t0": agtype.parameters["theta_eq"],
         }
@@ -1349,7 +1355,10 @@ def _parse_harmonic_improper(
     itypes,
 ):
     for itype in itypes:
-        member_types = sort_by_classes(itype)
+        members = sort_by_classes(itype)
+        # If wild card in class, sort by types instead
+        if "*" in members:
+            members = sort_by_types(itype)
         container.params["-".join(member_types)] = {
             "k": itype.parameters["k"],
             "chi0": itype.parameters["phi_eq"],  # diff nomenclature?
@@ -1362,11 +1371,11 @@ def _parse_periodic_improper(
     itypes,
 ):
     for itype in itypes:
-        member_types = sort_by_classes(itype)
+        members = sort_by_classes(itype)
         # If wild card in class, sort by types instead
-        if "*" in member_types:
-            member_types = sort_by_types(itype)
-        container.params["-".join(member_types)] = {
+        if "*" in members:
+            members = sort_by_types(itype)
+        container.params["-".join(members)] = {
             "k": itype.parameters["k"],
             "chi0": itype.parameters["phi_eq"],
             "n": itype.parameters["n"],
