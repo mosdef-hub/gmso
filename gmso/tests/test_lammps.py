@@ -636,6 +636,7 @@ class TestLammpsWriter(BaseTest):
         ff = gmso.ForceField(get_path("tfa_charmm.xml"))
 
         cpd = mb.load("C(=O)(C(F)(F)F)N", smiles=True)  # TFA molecule
+        cpd.box = mb.Box([2, 2, 2])
         top = cpd.to_gmso()
         from gmso.parameterization import apply
 
