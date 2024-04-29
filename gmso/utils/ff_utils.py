@@ -42,7 +42,7 @@ def _check_valid_string(type_str):
     """Verify that the strings in the forcefield are valid."""
     if FF_TOKENS_SEPARATOR in type_str:
         raise ForceFieldError(
-            "Please do not use {} in type string".format(FF_TOKENS_SEPARATOR)
+            f"Please do not use {FF_TOKENS_SEPARATOR} in type string"
         )
 
 
@@ -66,9 +66,7 @@ def _parse_params_values(parent_tag, units_dict, child_tag, expression=None):
     for param in parent_tag.find("Parameters").getiterator("Parameter"):
         if param.attrib["name"] not in units_dict:
             raise ForceFieldParseError(
-                "Parameters {} with Unknown units found".format(
-                    param.attrib["name"]
-                )
+                f"Parameters {param.attrib['name']} with Unknown units found"
             )
         param_name = param.attrib["name"]
         param_unit = units_dict[param_name]
@@ -105,9 +103,7 @@ def _parse_params_values(parent_tag, units_dict, child_tag, expression=None):
     for param in param_ref_dict:
         if param not in params_dict:
             raise ForceFieldParseError(
-                "Parameter {} is in units but cannot be found in parameters list".format(
-                    param
-                )
+                f"Parameter {param} is in units but cannot be found in parameters list"
             )
     return params_dict
 
