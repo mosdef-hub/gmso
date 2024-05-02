@@ -40,10 +40,6 @@ class TestImproper(BaseTest):
         assert connect.name == "improper_name"
 
     def test_improper_fake(self):
-        atom1 = Atom(name="atom1")
-        atom2 = Atom(name="atom2")
-        atom3 = Atom(name="atom3")
-        atom4 = Atom(name="atom4")
         with pytest.raises(TypeError):
             Improper(connection_members=["fakeatom1", "fakeatom2", 4.2])
 
@@ -130,8 +126,8 @@ class TestImproper(BaseTest):
 
         assert tuple(improper_eq.connection_members) in improper.equivalent_members()
         assert tuple(improper.connection_members) in improper_eq.equivalent_members()
-        assert not (
-            tuple(improper.connection_members) in improper_not_eq.equivalent_members()
+        assert (
+            tuple(improper.connection_members) not in improper_not_eq.equivalent_members()
         )
 
     def test_sort_improper_types(self):
@@ -160,7 +156,7 @@ class TestImproper(BaseTest):
 
     def test_sorting_improper_based_on_impropertype(self):
         from gmso.exceptions import MissingParameterError
-        from gmso.utils.sorting import sort_by_classes, sort_by_types
+        from gmso.utils.sorting import sort_by_types
 
         def sort_improper_connection_members(improper):
             if improper.improper_type is None:

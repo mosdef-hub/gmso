@@ -7,7 +7,7 @@ from gmso import Topology
 from gmso.core.atom import Atom
 from gmso.core.box import Box
 from gmso.external.convert_parmed import from_parmed
-from gmso.formats.gro import _prepare_atoms, read_gro, write_gro
+from gmso.formats.gro import _prepare_atoms
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
 from gmso.utils.io import get_fn, has_mbuild, has_parmed, import_

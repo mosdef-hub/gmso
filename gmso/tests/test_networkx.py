@@ -86,24 +86,24 @@ class TestNetworkx(BaseTest):
         for node, angles in graph.nodes(data="angles"):
             if angles[0]:
                 angles[0].angle_type = None
-        result = select_params_on_networkx(graph, [None, None, None])
+        select_params_on_networkx(graph, [None, None, None])
         captured, err = capsys.readouterr()
         assert captured.startswith("Since no sites are input, angles")
         for node, dihedrals in graph.nodes(data="dihedrals"):
             if dihedrals[0]:
                 dihedrals[0].dihedral_type = None
-        result = select_params_on_networkx(graph, [None, None, None, None])
+        select_params_on_networkx(graph, [None, None, None, None])
         captured, err = capsys.readouterr()
         assert captured.startswith("Since no sites are input, dihedrals")
         nx.set_node_attributes(graph, None, name="angles")
-        result = select_params_on_networkx(graph, [None, None, None])
+        select_params_on_networkx(graph, [None, None, None])
         captured, err = capsys.readouterr()
         assert captured.startswith("No angle")
         nx.set_node_attributes(graph, None, name="dihedrals")
-        result = select_params_on_networkx(graph, [None, None, None, None])
+        select_params_on_networkx(graph, [None, None, None, None])
         captured, err = capsys.readouterr()
         assert captured.startswith("No dihedral")
-        result = select_params_on_networkx(graph, [None, None])
+        select_params_on_networkx(graph, [None, None])
         captured, err = capsys.readouterr()
         assert captured.startswith("invalid")
 

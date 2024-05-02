@@ -1,7 +1,6 @@
 import lxml
 import pytest
 import unyt as u
-from lxml.etree import DocumentInvalid
 from sympy import sympify
 from unyt.testing import assert_allclose_units
 
@@ -274,7 +273,7 @@ class TestForceField(BaseTest):
 
     def test_ff_mixed_type_error(self):
         with pytest.raises(TypeError):
-            ff = ForceField([5, "20"])
+            ForceField([5, "20"])
 
     def test_named_potential_groups(self):
         # TODO: get potential groups using backend forcefield-utilities
@@ -327,13 +326,13 @@ class TestForceField(BaseTest):
 
     def test_forcefield_missing_atom_types(self):
         with pytest.raises(MissingAtomTypesError):
-            ff = ForceField(
+            ForceField(
                 get_path(filename=get_path("ff_missing_atom_types.xml")),
                 backend="gmso",
             )
 
     def test_forcefield_missing_atom_types_non_strict(self):
-        ff = ForceField(
+        ForceField(
             get_path(filename=get_path("ff_missing_atom_types.xml")),
             strict=False,
             backend="gmso",

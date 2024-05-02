@@ -35,7 +35,7 @@ class TestExpression(BaseTest):
 
     def test_invalid_expression(self):
         with pytest.raises(ValueError) as e:
-            expression = PotentialExpression(
+            PotentialExpression(
                 expression="a*x+b",
                 independent_variables="x",
                 parameters={"sigma": 1.0 * u.nm, "phi": 1.0 * u.rad},
@@ -47,7 +47,7 @@ class TestExpression(BaseTest):
 
     def test_invalid_indep_vars(self):
         with pytest.raises(ValueError) as e:
-            expression = PotentialExpression(
+            PotentialExpression(
                 expression="a*x+b", independent_variables="j", parameters=None
             )
             assert (
@@ -87,7 +87,7 @@ class TestExpression(BaseTest):
             parameters=None,
         )
 
-        with pytest.raises(ValueError) as e:
+        with pytest.raises(ValueError):
             expression.independent_variables = "y"
 
         assert expression.independent_variables == {sympy.Symbol("a")}
@@ -107,7 +107,7 @@ class TestExpression(BaseTest):
             independent_variables={"x", "y", "z"},
             parameters={"a": 2.6 * u.nm, "b": 2.7 * u.nm, "c": 22.8 * u.hertz},
         )
-        with pytest.raises(ValueError) as e:
+        with pytest.raises(ValueError):
             expression.expression = "2 * theta^2 + 3 * phi^2"
 
         assert sympy.sympify("a^x + b^y + c^z") == expression.expression

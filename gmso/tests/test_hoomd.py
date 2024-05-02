@@ -329,6 +329,7 @@ class TestGsd(BaseTest):
             top=top,
             r_cut=1.4,
             pppm_kwargs={"resolution": (64, 64, 64), "order": 7},
+            base_units=base_units
         )
 
     def test_ff_zero_parameter(self):
@@ -367,12 +368,6 @@ class TestGsd(BaseTest):
     def test_zero_charges(self):
         compound = mb.load("CC", smiles=True)
         com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=2)
-        base_units = {
-            "mass": u.amu,
-            "length": u.nm,
-            "energy": u.kJ / u.mol,
-        }
-
         top = from_mbuild(com_box)
         top.identify_connections()
         oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()

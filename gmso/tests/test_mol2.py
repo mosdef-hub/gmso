@@ -52,7 +52,7 @@ class TestMol2(BaseTest):
         assert top.n_sites == 6
         assert len(top.bonds) == 5
         assert top.bonds[0].connection_members[0] == top.sites[0]
-        assert top.box == None
+        assert top.box is None
 
         with pytest.warns(
             UserWarning,
@@ -82,14 +82,14 @@ class TestMol2(BaseTest):
 
     def test_lj_system(self):
         top = Topology.load(get_fn("methane.mol2"), site_type="lj")
-        assert np.all([site.element == None for site in top.sites])
+        assert np.all([site.element is None for site in top.sites])
 
     def test_no_charge_lj(self):
         with pytest.warns(
             UserWarning,
             match=r"No charge was detected for site .* with index \d+$",
         ):
-            top = Topology.load(
+            Topology.load(
                 get_path("methane_missing_charge.mol2"),
                 site_type="lj",
                 verbose=True,
@@ -126,7 +126,7 @@ class TestMol2(BaseTest):
             match=r"No element detected for site .+ with index \d+, "
             r"consider manually adding the element to the topology$",
         ):
-            top = Topology.load(get_fn("neopentane.mol2"), verbose=True)
+            Topology.load(get_fn("neopentane.mol2"), verbose=True)
 
     def test_mol2_residues(self):
         top = Topology.load(get_fn("parmed.mol2"))
