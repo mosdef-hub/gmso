@@ -127,7 +127,8 @@ class TestImproper(BaseTest):
         assert tuple(improper_eq.connection_members) in improper.equivalent_members()
         assert tuple(improper.connection_members) in improper_eq.equivalent_members()
         assert (
-            tuple(improper.connection_members) not in improper_not_eq.equivalent_members()
+            tuple(improper.connection_members)
+            not in improper_not_eq.equivalent_members()
         )
 
     def test_sort_improper_types(self):
