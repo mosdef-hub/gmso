@@ -5,7 +5,6 @@ import unyt as u
 from sympy import sympify
 
 from gmso.core.forcefield import ForceField
-from gmso.exceptions import ForceFieldParseError
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
 

@@ -8,14 +8,9 @@ from pathlib import Path
 from typing import Iterable
 
 from lxml import etree
-from pydantic import ValidationError
 
 from gmso.core.element import element_by_symbol
-from gmso.exceptions import (
-    ForceFieldParseError,
-    GMSOError,
-    MissingPotentialError,
-)
+from gmso.exceptions import GMSOError, MissingPotentialError
 from gmso.utils._constants import FF_TOKENS_SEPARATOR
 from gmso.utils.decorators import deprecate_function, deprecate_kwargs
 from gmso.utils.ff_utils import (
@@ -112,7 +107,7 @@ class ForceField(object):
             else:
                 raise (
                     GMSOError(
-                        f"Backend provided does not exist. Please provide one of `'gmso'` or \
+                        "Backend provided does not exist. Please provide one of `'gmso'` or \
                 `'forcefield-utilities'`"
                     )
                 )
@@ -606,7 +601,7 @@ class ForceField(object):
         else:
             raise (
                 GMSOError(
-                    f"Backend provided does not exist. Please provide one of `'gmso'` or \
+                    "Backend provided does not exist. Please provide one of `'gmso'` or \
             `'forcefield-utilities'`"
                 )
             )

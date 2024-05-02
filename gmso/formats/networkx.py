@@ -1,14 +1,13 @@
 """NetworkX methods for operating with GMSO topologies."""
 
+from gmso.external.convert_networkx import to_networkx
 from gmso.utils import nx_utils
 from gmso.utils.io import has_ipywidgets, import_, run_from_ipython
 
 widgets = import_("ipywidgets")
 plt = import_("matplotlib.pyplot")
 if has_ipywidgets:
-    from ipywidgets import interact, fixed
-
-from gmso.external.convert_networkx import to_networkx
+    from ipywidgets import fixed, interact
 
 
 def interactive_networkx_atomtypes(topology, list_of_labels=None):

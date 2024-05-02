@@ -1,5 +1,4 @@
 import mbuild as mb
-import pytest
 
 from gmso.core.atom import Atom
 from gmso.core.bond import Bond

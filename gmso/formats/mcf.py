@@ -194,7 +194,7 @@ def _id_rings_fragments(top):
     # Now ID the other fragments
     for idx in neigh_dict:
         if len(neigh_dict[idx]) > 1:
-            if in_ring[idx] == True:
+            if in_ring[idx] is True:
                 continue
             else:
                 frag_list.append([idx] + neigh_dict[idx])
@@ -341,7 +341,7 @@ def _write_atom_information(mcf, top, in_ring):
                     site.atom_type.parameters["m"].value,
                 )
             )
-        if in_ring[idx] == True:
+        if in_ring[idx] is True:
             mcf.write("  ring")
         mcf.write("\n")
 

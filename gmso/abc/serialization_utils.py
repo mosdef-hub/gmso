@@ -1,12 +1,12 @@
 from typing import Union
-from warnings import warn
 
 import numpy as np
 import unyt as u
 
 from gmso.utils.units import GMSO_UnitRegistry
 
-__all__ = ["unyt_to_dict", "dict_to_unyt", "GMSOJSONHandler"]
+# TODO: Add GMSOJSONHandler method?
+__all__ = ["unyt_to_dict", "dict_to_unyt"]
 
 uregistry = GMSO_UnitRegistry()
 

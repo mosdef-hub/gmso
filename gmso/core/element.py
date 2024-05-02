@@ -13,7 +13,6 @@ from pydantic import ConfigDict, Field, field_serializer
 from gmso.abc.gmso_base import GMSOBase
 from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.exceptions import GMSOError
-from gmso.utils.misc import unyt_to_hashable
 
 exported = [
     "element_by_mass",
@@ -319,11 +318,11 @@ def element_by_atom_type(atom_type, verbose=False):
 
     if matched_element is None:
         raise GMSOError(
-            f"Failed to find an element from atom type"
-            "{atom_type} with "
-            "properties mass: {atom_type.mass}, name:"
-            "{atom_type.name}, and "
-            "definition: {atom_type.definition}"
+            "Failed to find an element from atom type"
+            f"{atom_type} with "
+            f"properties mass: {atom_type.mass}, name:"
+            f"{atom_type.name}, and "
+            f"definition: {atom_type.definition}"
         )
 
     return matched_element

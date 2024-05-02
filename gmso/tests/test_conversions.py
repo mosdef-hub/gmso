@@ -1,10 +1,7 @@
-from copy import deepcopy
-
 import numpy as np
 import pytest
 import sympy
 import unyt as u
-from unyt.testing import assert_allclose_units
 
 from gmso.tests.base_test import BaseTest
 from gmso.utils.conversions import (

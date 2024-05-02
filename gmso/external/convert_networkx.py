@@ -41,8 +41,6 @@ def from_networkx(graph):
         )
     top = Topology()
 
-    node_mapping = dict()
-
     for node in graph.nodes:
         if not isinstance(node, Site):
             raise TypeError("Nodes must be instances of gmso.abc.Site")

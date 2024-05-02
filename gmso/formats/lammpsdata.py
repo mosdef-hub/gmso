@@ -25,8 +25,6 @@ from gmso.core.element import element_by_mass
 from gmso.core.improper import Improper
 from gmso.core.topology import Topology
 from gmso.core.views import PotentialFilters
-
-pfilter = PotentialFilters.UNIQUE_SORTED_NAMES
 from gmso.formats.formats_registry import loads_as, saves_as
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.compatibility import check_compatibility
@@ -37,6 +35,8 @@ from gmso.utils.sorting import (
     sort_connection_members,
 )
 from gmso.utils.units import LAMMPS_UnitSystems, write_out_parameter_and_units
+
+pfilter = PotentialFilters.UNIQUE_SORTED_NAMES
 
 
 # TODO: Write in header of each potential type any conversions that happened
@@ -337,7 +337,7 @@ def _get_connection(filename, topology, base_unyts, connection_type):
                 types = True
             if connection_type.capitalize() in line.split():
                 break
-    if types == False:
+    if types is False:
         return topology
     templates = PotentialTemplateLibrary()
     connection_type_lines = open(filename, "r").readlines()[
@@ -560,7 +560,7 @@ def _get_ff_information(filename, base_unyts, topology):
                 types = True
             elif "Masses" in line:
                 break
-    if types == False:
+    if types is False:
         return topology
     mass_lines = open(filename, "r").readlines()[i + 2 : i + n_atomtypes + 2]
     type_list = list()

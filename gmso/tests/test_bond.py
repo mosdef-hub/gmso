@@ -35,8 +35,6 @@ class TestBond(BaseTest):
         assert connect.name == "bond_name"
 
     def test_bond_fake(self):
-        atom1 = Atom(name="atom1")
-        atom2 = Atom(name="atom2")
         with pytest.raises(TypeError):
             Bond(connection_members=["fakeatom1", "fakeatom2"])
 

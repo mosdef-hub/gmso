@@ -10,7 +10,6 @@ from gmso.core.element import element_by_atom_type
 from gmso.core.improper import Improper
 from gmso.core.views import PotentialFilters
 from gmso.exceptions import GMSOError
-from gmso.external import to_networkx
 from gmso.formats.formats_registry import saves_as
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.parameterization.molecule_utils import (

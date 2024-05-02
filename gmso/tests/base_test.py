@@ -3,7 +3,6 @@ import mbuild as mb
 import numpy as np
 import pytest
 import unyt as u
-from foyer.tests.utils import get_fn
 
 from gmso.core.angle import Angle
 from gmso.core.atom import Atom
@@ -506,7 +505,7 @@ class BaseTest:
                 top1.pairpotential_types, top2.pairpotential_types
             ):
                 if pp_type1 != pp_type2:
-                    return False, f"Pair-PotentialTypes mismatch"
+                    return False, "Pair-PotentialTypes mismatch"
 
             return True, f"{top1} and {top2} are equivalent"
 
@@ -542,9 +541,9 @@ class BaseTest:
         for i in range(1, 26):
             atom = Atom(
                 name=f"atom_{i + 1}",
-                residue=("MY_RES_EVEN" if i % 2 == 0 else f"MY_RES_ODD", i % 5),
+                residue=("MY_RES_EVEN" if i % 2 == 0 else "MY_RES_ODD", i % 5),
                 molecule=(
-                    "MY_MOL_EVEN" if i % 2 == 0 else f"MY_RES_ODD",
+                    "MY_MOL_EVEN" if i % 2 == 0 else "MY_RES_ODD",
                     i % 5,
                 ),
                 group="MY_GROUP",
@@ -687,8 +686,6 @@ class BaseTest:
 
     @pytest.fixture
     def harmonic_parmed_types_charmm(self):
-        from mbuild.formats.lammpsdata import write_lammpsdata
-
         system = mb.Compound()
         first = mb.Particle(name="_CTL2", pos=[-1, 0, 0])
         second = mb.Particle(name="_CL", pos=[0, 0, 0])

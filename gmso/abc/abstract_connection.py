@@ -88,7 +88,7 @@ class Connection(GMSOBase):
             ]
 
         if not all(isinstance(x, Site) for x in connection_members):
-            raise TypeError(f"A non-site object provided to be a connection member")
+            raise TypeError("A non-site object provided to be a connection member")
 
         if len(set(connection_members)) != len(connection_members):
             raise GMSOError(

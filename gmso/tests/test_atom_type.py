@@ -248,30 +248,35 @@ class TestAtomType(BaseTest):
         assert valid_type.overrides
 
         with pytest.raises(ValueError):
-            bad_doi = AtomType(
+            AtomType(
                 doi=123,
                 definition="[c]",
                 overrides={"122"},
                 description="Some type solely for testing",
             )
-            bad_defn = AtomType(
+        with pytest.raises(ValueError):
+            AtomType(
                 doi="123",
                 definition=123,
                 overrides={"122"},
                 description="Some type solely for testing",
             )
-            bad_over = AtomType(
+        with pytest.raises(ValueError):
+            AtomType(
                 doi="123",
                 definition="[c]",
                 overrides="122",
                 description="Some type solely for testing",
             )
-            bad_desc = AtomType(
-                doi="123", definition="[c]", overrides="122", description=123
-            )
+        with pytest.raises(ValueError):
+            AtomType(doi="123", definition="[c]", overrides="122", description=123)
+        with pytest.raises(ValueError):
             valid_type.doi = 123
+        with pytest.raises(ValueError):
             valid_type.definition = 123
-            valid_type.overrides = ["123"]
+        with pytest.raises(ValueError):
+            valid_type.overrides = 123
+        with pytest.raises(ValueError):
             valid_type.description = 123
 
     def test_atom_type_with_topology_and_site(self):

@@ -36,9 +36,6 @@ class TestAngle(BaseTest):
         assert connect.name == "angle_name"
 
     def test_angle_fake(self):
-        atom1 = Atom(name="atom1")
-        atom2 = Atom(name="atom2")
-        atom3 = Atom(name="atom3")
         with pytest.raises(TypeError):
             Angle(connection_members=["fakesite1", "fakesite2", 4.2])
 
@@ -116,6 +113,4 @@ class TestAngle(BaseTest):
 
         assert tuple(angle_eq.connection_members) in angle.equivalent_members()
         assert tuple(angle.connection_members) in angle_eq.equivalent_members()
-        assert not (
-            tuple(angle.connection_members) in angle_not_eq.equivalent_members()
-        )
+        assert tuple(angle.connection_members) not in angle_not_eq.equivalent_members()

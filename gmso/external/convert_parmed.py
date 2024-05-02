@@ -1,7 +1,6 @@
 """Module support for converting to/from ParmEd objects."""
 
 import copy
-import warnings
 from operator import attrgetter, itemgetter
 
 import numpy as np
@@ -11,11 +10,11 @@ from symengine import expand
 import gmso
 from gmso.core.element import element_by_atomic_number, element_by_symbol
 from gmso.core.views import PotentialFilters, get_parameters
-
-pfilter = PotentialFilters.UNIQUE_PARAMETERS
 from gmso.exceptions import GMSOError
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.io import has_parmed, import_
+
+pfilter = PotentialFilters.UNIQUE_PARAMETERS
 
 if has_parmed:
     pmd = import_("parmed")
@@ -432,7 +431,6 @@ def to_parmed(top, refer_type=True):
     structure : parmed.Structure
     """
     # Sanity check
-    msg = "Provided argument is not a topology.Topology."
     assert isinstance(top, gmso.Topology)
 
     # Set up Parmed structure and define general properties
@@ -749,7 +747,7 @@ def _dihedral_types_from_gmso(top, structure, dihedral_map):
             structure.rb_torsion_types.append(dtype)
             # dtype._idx = len(structure.rb_torsion_types) - 1
         else:
-            raise GMSOError("msg")
+            raise GMSOError(msg)
         dtype_map[get_parameters(dihedral_type)] = dtype
 
     for dihedral in top.dihedrals:

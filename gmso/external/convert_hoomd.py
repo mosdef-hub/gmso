@@ -16,10 +16,7 @@ from gmso.core.views import PotentialFilters
 from gmso.exceptions import GMSOError, NotYetImplementedWarning
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.connectivity import generate_pairs_lists
-from gmso.utils.conversions import (
-    convert_opls_to_ryckaert,
-    convert_ryckaert_to_opls,
-)
+from gmso.utils.conversions import convert_ryckaert_to_opls
 from gmso.utils.geometry import coord_shift
 from gmso.utils.io import has_gsd, has_hoomd
 from gmso.utils.sorting import sort_by_classes, sort_connection_members

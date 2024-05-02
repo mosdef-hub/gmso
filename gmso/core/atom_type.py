@@ -10,11 +10,7 @@ from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.core.parametric_potential import ParametricPotential
 from gmso.utils._constants import UNIT_WARNING_STRING
 from gmso.utils.expression import PotentialExpression
-from gmso.utils.misc import (
-    ensure_valid_dimensions,
-    unyt_compare,
-    unyt_to_hashable,
-)
+from gmso.utils.misc import ensure_valid_dimensions, unyt_compare
 from gmso.utils.units import GMSO_UnitRegistry
 
 

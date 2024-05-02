@@ -1,3 +1,6 @@
+# ruff: noqa
+# Ignore all qa checks as the openMM model is not currently operational
+# Make sure to uncomment ruff: noqa once convert_openmm is implemented.
 """Convert to and from an OpenMM Topology or System object."""
 
 import unyt as u

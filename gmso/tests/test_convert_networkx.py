@@ -1,10 +1,7 @@
 import networkx as nx
 import pytest
-import unyt as u
 
-import gmso
 from gmso.core.atom import Atom
-from gmso.core.topology import Topology as Top
 from gmso.external.convert_networkx import from_networkx, to_networkx
 from gmso.tests.base_test import BaseTest
 
@@ -72,5 +69,5 @@ class TestConvertNetworkX(BaseTest):
 
     def test_from_networkx_arbitrary_graph(self):
         test_graph = nx.grid_2d_graph(2, 2)
-        with pytest.raises(TypeError) as e:
+        with pytest.raises(TypeError):
             from_networkx(test_graph)

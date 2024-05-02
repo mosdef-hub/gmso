@@ -158,16 +158,17 @@ def _write_gmso_xml(gmso_xml, **kwargs):
     if kwargs["lj14scale"]:
         ffMeta.attrib["nonBonded14Scale"] = kwargs["lj14scale"]
 
-    units = _create_sub_element(
-        ffMeta,
-        name="Units",
-        attrib_dict={
-            "energy": "kJ/mol",
-            "mass": "amu",
-            "charge": "elementary_charge",
-            "distance": "nm",
-        },
-    )
+    # TODO: Do we need this?
+    # units = _create_sub_element(
+    #     ffMeta,
+    #     name="Units",
+    #     attrib_dict={
+    #         "energy": "kJ/mol",
+    #         "mass": "amu",
+    #         "charge": "elementary_charge",
+    #         "distance": "nm",
+    #     },
+    # )
 
     # AtomTypes and NonBonded Forces
     _write_nbforces(forcefield, kwargs)

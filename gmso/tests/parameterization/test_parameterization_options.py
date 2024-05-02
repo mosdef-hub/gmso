@@ -186,13 +186,13 @@ class TestParameterizationOptions(ParameterizationBaseTest):
 
     def test_remove_untyped(self, oplsaa_gmso):
         isopropane = mb.load("C(C)C", smiles=True)
-        top1 = gmso.external.from_mbuild(isopropane)
+        top1 = from_mbuild(isopropane)
         top1.identify_connections()
         assert top1.n_impropers != 0
         apply(top1, oplsaa_gmso, remove_untyped=False)
         assert top1.n_impropers != 0
 
-        top2 = gmso.external.from_mbuild(isopropane)
+        top2 = from_mbuild(isopropane)
         top2.identify_connections()
         assert top2.n_impropers != 0
         apply(top2, oplsaa_gmso, remove_untyped=True)

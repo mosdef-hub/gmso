@@ -11,12 +11,7 @@ from unyt import Unit
 from gmso.core.atom import Atom
 from gmso.core.bond import Bond
 from gmso.core.box import Box
-from gmso.core.element import (
-    element_by_atomic_number,
-    element_by_mass,
-    element_by_name,
-    element_by_symbol,
-)
+from gmso.core.element import element_by_symbol
 from gmso.core.topology import Topology
 from gmso.exceptions import GMSOError
 from gmso.utils.io import has_mbuild
