@@ -16,8 +16,8 @@ from gmso.formats.formats_registry import UnsupportedFileFormatError
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
 
-
 pfilter = PotentialFilters.UNIQUE_SORTED_NAMES
+
 
 def compare_lammps_files(fn1, fn2, skip_linesList=[], offsets=None):
     """Check for line by line equality between lammps files, by any values.

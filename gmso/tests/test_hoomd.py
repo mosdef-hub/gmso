@@ -329,7 +329,7 @@ class TestGsd(BaseTest):
             top=top,
             r_cut=1.4,
             pppm_kwargs={"resolution": (64, 64, 64), "order": 7},
-            base_units=base_units
+            base_units=base_units,
         )
 
     def test_ff_zero_parameter(self):
