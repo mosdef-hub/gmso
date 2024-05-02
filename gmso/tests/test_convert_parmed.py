@@ -155,7 +155,7 @@ class TestConvertParmEd(BaseTest):
 
         with pytest.raises(Exception):
             top.bond_types[0] = "k * r_eq"
-            struc_from_top = to_parmed(top)
+            to_parmed(top)
 
         with pytest.raises(Exception):
             top.angle_types[0] = "k - theta_eq"
