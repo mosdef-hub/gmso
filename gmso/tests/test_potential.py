@@ -241,9 +241,7 @@ class TestPotential(BaseTest):
         }
 
         with pytest.raises(AssertionError):
-            harmonic_potential_from_template = ParametricPotential.from_template(
-                template, params
-            )
+            ParametricPotential.from_template(template, params)
 
     def test_bondtype_clone(self):
         top = Topology()

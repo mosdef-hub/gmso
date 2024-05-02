@@ -706,7 +706,7 @@ def _validate_forcefields(forcefield_selection, residues):
                 f"{forcefields.get_ff_path()[0]}/xml/{ff_for_residue}.xml"
             )
             try:
-                read_xlm_iteration = minidom.parse(ff_names_path_iteration)
+                read_xlm_iteration = minidom.parse(ff_names_path_iteration)  # noqa: F841
                 forcefield_selection_with_paths[residue] = ff_names_path_iteration
             except:
                 error_msg = (
