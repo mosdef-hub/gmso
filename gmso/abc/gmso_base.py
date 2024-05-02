@@ -3,7 +3,7 @@
 import json
 import warnings
 from abc import ABC
-from typing import Any, ClassVar, Type
+from typing import Any, Type
 
 from pydantic import BaseModel, ConfigDict, validators
 
