@@ -549,7 +549,7 @@ class TestForceFieldFromXML(BaseTest):
     def test_error_duplicated_types(self):
         # Temporarily opt out, pending new forcefield-utilities release
         # with pytest.raises(ValueError) as e:
-        with pytest.raises(Exception) as e:
+        with pytest.raises(Exception):
             ForceField(get_path("ff-nonunique-dihedral.xml"))
             # assert (
             #     e

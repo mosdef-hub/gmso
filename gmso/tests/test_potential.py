@@ -8,7 +8,6 @@ from gmso.core.bond import Bond
 from gmso.core.bond_type import BondType
 from gmso.core.parametric_potential import ParametricPotential
 from gmso.core.topology import Topology
-from gmso.exceptions import GMSOError
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.tests.base_test import BaseTest
 from gmso.utils.sorting import sort_by_classes, sort_by_types

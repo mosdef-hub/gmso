@@ -40,10 +40,6 @@ class TestDihedral(BaseTest):
         assert connect.name == "dihedral_name"
 
     def test_dihedral_fake(self):
-        atom1 = Atom(name="atom1")
-        atom2 = Atom(name="atom2")
-        atom3 = Atom(name="atom3")
-        atom4 = Atom(name="atom4")
         with pytest.raises(TypeError):
             Dihedral(connection_members=["fakeatom1", "fakeatom2", 4.2])
 
@@ -131,8 +127,9 @@ class TestDihedral(BaseTest):
 
         assert tuple(dihedral_eq.connection_members) in dihedral.equivalent_members()
         assert tuple(dihedral.connection_members) in dihedral_eq.equivalent_members()
-        assert not (
-            tuple(dihedral.connection_members) in dihedral_not_eq.equivalent_members()
+        assert (
+            tuple(dihedral.connection_members)
+            not in dihedral_not_eq.equivalent_members()
         )
 
     def test_sort_dihedral_types(self):

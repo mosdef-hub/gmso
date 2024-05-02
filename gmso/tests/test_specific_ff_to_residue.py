@@ -1,7 +1,7 @@
 import mbuild as mb
 import pytest
 from foyer.forcefields import forcefields
-from mbuild import Box, Compound
+from mbuild import Box
 from mbuild.utils.io import has_foyer
 
 from gmso.exceptions import GMSOError
@@ -48,10 +48,10 @@ class TestSpecificFFToResidue(BaseTest):
     def test_specific_all_residue_not_input(self, ethane_gomc, ethanol_gomc):
         with pytest.raises(
             GMSOError,
-            match=f"A particle named C cannot be associated with the\n        "
-            f"custom_groups \['ETH'\]. "
-            f"Be sure to specify a list of group names that will cover\n        "
-            f"all particles in the compound. This particle is one level below ETO.",
+            match="A particle named C cannot be associated with the\n        "
+            "custom_groups \['ETH'\]. "
+            "Be sure to specify a list of group names that will cover\n        "
+            "all particles in the compound. This particle is one level below ETO.",
         ):
             box = mb.fill_box(
                 compound=[ethane_gomc, ethanol_gomc],

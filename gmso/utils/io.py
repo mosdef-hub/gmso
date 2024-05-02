@@ -5,7 +5,6 @@ import inspect
 import os
 import sys
 import textwrap
-from tempfile import TemporaryFile
 from unittest import SkipTest
 
 from pkg_resources import resource_filename
@@ -84,7 +83,7 @@ def import_(module):
     """
     try:
         return importlib.import_module(module)
-    except ImportError as e:
+    except ImportError:
         try:
             message = MESSAGES[module]
         except KeyError:

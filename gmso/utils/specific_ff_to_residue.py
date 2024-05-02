@@ -261,8 +261,7 @@ def specific_ff_to_residue(
     but is planned to be supported in the future.
     """
     if has_foyer:
-        from foyer import Forcefield
-        from foyer.forcefields import forcefields
+        pass
     else:
         error_msg = (
             "Package foyer is not installed. "
@@ -663,7 +662,6 @@ def _validate_boxes_for_simulation(boxes_for_simulation):
 def _validate_forcefields(forcefield_selection, residues):
     """Validate and create GMSO ForceField object from the forcefield_selection."""
     if has_foyer:
-        from foyer import Forcefield
         from foyer.forcefields import forcefields
 
     forcefield_keys_list = list(forcefield_selection.keys())
@@ -766,8 +764,8 @@ def _cross_check_residues_and_unique_site_labels(
         "are not in the structure may have been specified. "
     )
     msg3 = (
-        f"NOTE: This warning will appear if you are using the CHARMM pdb and psf writers "
-        f"2 boxes, and the boxes do not contain all the residues in each box."
+        "NOTE: This warning will appear if you are using the CHARMM pdb and psf writers "
+        "2 boxes, and the boxes do not contain all the residues in each box."
     )
     for res_i in residues:
         if res_i not in unique_topology_groups_list:

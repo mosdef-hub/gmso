@@ -167,7 +167,7 @@ class TestSerialization(BaseTest):
 
         bond = Bond(name="test_bond1", connection_members=(atom1, atom2))
 
-        bond_type = BondType(
+        BondType(
             name="test_bond_type",
             expression="a*b+c**2",
             parameters={"a": 10 * u.nm, "b": 20 * u.angstrom},

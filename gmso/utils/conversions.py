@@ -335,15 +335,15 @@ def convert_kelvin_to_energy_units(
     # check for K energy units and convert them to normal energy units;
     # otherwise, just pass thru the original unyt units
     if energy_output_unyt_units_str in ["K"]:
-        print_error_message = f"ERROR: The entered energy_output_unyt_units_str can not be in K energy units."
+        print_error_message = "ERROR: The entered energy_output_unyt_units_str can not be in K energy units."
         raise ValueError(print_error_message)
 
     elif (length) ** 2 * (mass) / (time) ** 2 != u.unyt_quantity(
         1, energy_output_unyt_units_str
     ).units.dimensions:
         print_error_message = (
-            f"ERROR: The entered energy_output_unyt_units_str value must be in units of energy/mol, "
-            f"(length)**2*(mass)/(time)**2, but not in K energy units."
+            "ERROR: The entered energy_output_unyt_units_str value must be in units of energy/mol, "
+            "(length)**2*(mass)/(time)**2, but not in K energy units."
         )
         raise ValueError(print_error_message)
 

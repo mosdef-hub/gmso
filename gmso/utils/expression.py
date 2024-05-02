@@ -210,7 +210,7 @@ class PotentialExpression:
 
     def __repr__(self):
         """Representation of the potential expression."""
-        descr = list(f"<PotentialExpression, ")
+        descr = list("<PotentialExpression, ")
         descr.append(f"expression: {self.expression}, ")
         descr.append(f"{len(self.independent_variables)} independent variables>")
 

@@ -4,7 +4,6 @@ from operator import attrgetter, itemgetter
 
 import foyer
 import mbuild as mb
-import numpy as np
 import pytest
 import unyt as u
 from unyt.testing import assert_allclose_units
@@ -164,7 +163,7 @@ class TestConvertParmEd(BaseTest):
 
         with pytest.raises(Exception):
             top.dihedral_types[0] = "c0 - c1 + c2 - c3 + c4 - c5"
-            struc_from_top = to_parmed(top)
+            to_parmed(top)
 
     def test_to_parmed_loop(
         self, parmed_methylnitroaniline, parmed_chloroethanol, parmed_ethane

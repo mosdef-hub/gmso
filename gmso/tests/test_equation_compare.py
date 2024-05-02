@@ -196,9 +196,7 @@ class TestEqnCompare(BaseTest):
                 boxes_for_simulation=1,
             )
 
-            atom_types_data_expression_data_dict = (
-                get_atom_type_expressions_and_scalars(test_atom_types_dict)
-            )
+            get_atom_type_expressions_and_scalars(test_atom_types_dict)
 
     # harmonic bond
     def test_wrong_harmonic_bond(self):
@@ -399,7 +397,7 @@ class TestEqnCompare(BaseTest):
         assert form_scalar == 2
 
     # RB torsion
-    def test_wrong_RB_torsion(self):
+    def test_wrong_RB_torsion2(self):
         input_base_harmonic_improper = "k * (phi - phi_eq)**2"
 
         input_new_harmonic_improper_form = "x"

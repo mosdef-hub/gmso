@@ -52,7 +52,7 @@ class TestTemplate(BaseTest):
             AttributeError,
             match="^module 'unyt.dimensions' has no attribute 'missing'$",
         ):
-            invalid_dimension_template = PotentialTemplate(
+            PotentialTemplate(
                 expression="a*x+c",
                 independent_variables="x",
                 expected_parameters_dimensions={"a": "missing", "b": "length"},

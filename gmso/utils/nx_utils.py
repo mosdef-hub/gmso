@@ -3,14 +3,13 @@
 import networkx as nx
 import unyt
 
+from gmso.external.convert_networkx import to_networkx
 from gmso.utils.io import has_ipywidgets, import_
 
 widgets = import_("ipywidgets")
 plt = import_("matplotlib.pyplot")
 if has_ipywidgets:
-    from ipywidgets import interact, fixed
-
-from gmso.external.convert_networkx import to_networkx
+    from ipywidgets import fixed, interact
 
 
 def plot_networkx_params(networkx_graph, list_of_edges):

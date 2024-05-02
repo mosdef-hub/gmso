@@ -22,7 +22,6 @@ def test_unyt_to_hashable():
 
 
 def test_has_ipython():
-    __IPYTHON__ = None
     assert run_from_ipython() is False
 
 

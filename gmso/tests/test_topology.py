@@ -442,12 +442,12 @@ class TestTopology(BaseTest):
     def test_parametrization(self):
         top = Topology()
 
-        assert top.typed == False
+        assert top.typed is False
         top.add_site(Atom(atom_type=AtomType()), update_types=True)
 
-        assert top.typed == True
-        assert top.is_typed() == True
-        assert top.typed == True
+        assert top.typed is True
+        assert top.is_typed() is True
+        assert top.typed is True
 
     def test_topology_atom_type_changes(self):
         top = Topology()
@@ -692,7 +692,7 @@ class TestTopology(BaseTest):
         assert np.allclose(top.get_electrostatics_scale(), [0.4, 0.4, 0.4])
         assert np.allclose(top.get_lj_scale(molecule_id="RESA"), [1.2, 1.3, 1.4])
 
-        assert top.get_electrostatics_scale(molecule_id="MissingMolecule") == None
+        assert top.get_electrostatics_scale(molecule_id="MissingMolecule") is None
 
     def test_topology_set_scaling_factors(self):
         top = Topology()

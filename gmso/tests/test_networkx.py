@@ -138,7 +138,7 @@ class TestNetworkx(BaseTest):
     def test_select_dihedrals_from_sites(self, typed_ethane, capsys):
         graph = to_networkx(typed_ethane)
         select_dihedrals_from_sites(graph, typed_ethane)
-        select_dihedrals_from_sites(graph, top, "C", "C", "H", "H")
+        select_dihedrals_from_sites(graph, "C", "C", "H", "H")
         captured, err = capsys.readouterr()
         assert isinstance(err, str)
 
