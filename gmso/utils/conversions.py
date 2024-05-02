@@ -48,9 +48,7 @@ def _try_sympy_conversions(pot1, pot2):
         convertersList.append(conversion(pot1, pot2))
     completed_conversions = np.where(convertersList)[0]
     if len(completed_conversions) > 0:  # check to see if any conversions worked
-        return convertersList[
-            completed_conversions[0]
-        ]  # return first completed value
+        return convertersList[completed_conversions[0]]  # return first completed value
     return None
 
 
@@ -103,9 +101,9 @@ def convert_topology_expressions(top, expressionMap={}):
             if (
                 conversion_from_conversion_toTuple in conversions_map
             ):  # Try mapped conversions
-                new_conn_type = conversions_map.get(
-                    conversion_from_conversion_toTuple
-                )(current_expression)
+                new_conn_type = conversions_map.get(conversion_from_conversion_toTuple)(
+                    current_expression
+                )
                 setattr(conn, conv[:-1] + "_type", new_conn_type)
                 continue
 
@@ -117,9 +115,7 @@ def convert_topology_expressions(top, expressionMap={}):
             if modified_connection_parametersDict:  # try sympy conversions
                 current_expression.name = new_potential.name
                 current_expression.expression = new_potential.expression
-                current_expression.parameters.update(
-                    modified_connection_parametersDict
-                )
+                current_expression.parameters.update(modified_connection_parametersDict)
 
     return top
 
@@ -145,8 +141,7 @@ def convert_opls_to_ryckaert(opls_connection_type):
     ):
         if (
             sympy.simplify(
-                opls_connection_type.expression
-                - opls_torsion_potential.expression
+                opls_connection_type.expression - opls_torsion_potential.expression
             )
             == 0
         ):
@@ -198,9 +193,7 @@ def convert_ryckaert_to_opls(ryckaert_connection_type):
     for OPLS and RB torsions. OPLS torsions are defined with
     phi_cis = 0 while RB torsions are defined as phi_trans = 0.
     """
-    fourier_connection_type = convert_ryckaert_to_fourier(
-        ryckaert_connection_type
-    )
+    fourier_connection_type = convert_ryckaert_to_fourier(ryckaert_connection_type)
     opls_torsion_potential = templates["OPLSTorsionPotential"]
     converted_params = {
         k: fourier_connection_type.parameters.get(k, None)
@@ -373,9 +366,7 @@ def convert_kelvin_to_energy_units(
     return energy_output_unyt
 
 
-def convert_params_units(
-    potentials, expected_units_dim, base_units, ref_values
-):
+def convert_params_units(potentials, expected_units_dim, base_units, ref_values):
     """Convert parameters' units in the potential to that specified in the base_units."""
     converted_potentials = list()
     for potential in potentials:

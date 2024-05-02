@@ -48,7 +48,7 @@ class Improper(Connection):
             **Connection.model_config["alias_to_fields"],
             **{
                 "improper_type": "improper_type_",
-            }
+            },
         )
     )
 

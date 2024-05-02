@@ -17,9 +17,7 @@ class TestAtomType(BaseTest):
         return AtomType()
 
     def test_atom_type_tag_kwarg(self):
-        at = AtomType(
-            tags={"element": "Li", "comesFrom": "ForceFieldExperiments"}
-        )
+        at = AtomType(tags={"element": "Li", "comesFrom": "ForceFieldExperiments"})
         assert at.tag_names == ["element", "comesFrom"]
 
     def test_new_atom_type(self, charge, mass):
@@ -59,9 +57,7 @@ class TestAtomType(BaseTest):
         }
         new_type.expression = "r * sigma * epsilon"
         assert new_type.name == "SettingName"
-        assert_allclose_units(
-            new_type.charge, -1.0 * charge, rtol=1e-5, atol=1e-8
-        )
+        assert_allclose_units(new_type.charge, -1.0 * charge, rtol=1e-5, atol=1e-8)
         assert_allclose_units(new_type.mass, 1 * mass, rtol=1e-5, atol=1e-8)
         assert new_type.independent_variables == {sympy.symbols("r")}
         assert new_type.parameters == {
@@ -90,9 +86,7 @@ class TestAtomType(BaseTest):
 
         symbol_x, symbol_y, symbol_z = sympy.symbols("x y z")
         correct_expr = sympy.sympify("x+y*z")
-        assert new_type.expression.free_symbols == set(
-            [symbol_x, symbol_y, symbol_z]
-        )
+        assert new_type.expression.free_symbols == set([symbol_x, symbol_y, symbol_z])
         assert correct_expr == new_type.expression
 
     def test_equivalance(self, charge):
@@ -182,9 +176,7 @@ class TestAtomType(BaseTest):
             parameters={"sigma": 1 * u.m, "epsilon": 10 * u.m},
             independent_variables="r",
         )
-        first_type.set_expression(
-            parameters={"sigma": 42 * u.m, "epsilon": 24 * u.m}
-        )
+        first_type.set_expression(parameters={"sigma": 42 * u.m, "epsilon": 24 * u.m})
         correct_expr = sympy.sympify("r * sigma * epsilon")
         assert first_type.expression == correct_expr
         assert first_type.parameters == {"sigma": 42, "epsilon": 24}
@@ -394,9 +386,7 @@ class TestAtomType(BaseTest):
         assert len(top.atom_types) == 2
 
         atype_dict = atype.model_dump(exclude={"topology", "set_ref"})
-        atype_clone_dict = atype_clone.model_dump(
-            exclude={"topology", "set_ref"}
-        )
+        atype_clone_dict = atype_clone.model_dump(exclude={"topology", "set_ref"})
 
         for key, value in atype_dict.items():
             cloned = atype_clone_dict[key]

@@ -273,9 +273,7 @@ def specific_ff_to_residue(
     # Validate inputs
     _validate_boxes_for_simulation(boxes_for_simulation)
     _validate_forcefield_selection_and_residues(forcefield_selection, residues)
-    new_gmso_topology, initial_no_atoms = _validate_structure(
-        structure, residues
-    )
+    new_gmso_topology, initial_no_atoms = _validate_structure(structure, residues)
     gmso_compatible_forcefield_selection = _validate_forcefields(
         forcefield_selection, residues
     )
@@ -295,9 +293,7 @@ def specific_ff_to_residue(
 
     # find mixing rule.  If an empty.box mixing rule is set to None
     combining_rule = (
-        new_gmso_topology._combining_rule
-        if isinstance(structure, Compound)
-        else None
+        new_gmso_topology._combining_rule if isinstance(structure, Compound) else None
     )
 
     # identify the bonded atoms and hence the molecule, label the GMSO objects
@@ -326,9 +322,7 @@ def specific_ff_to_residue(
         )
         unique_topologies_groups_dict[unique_group] = unique_subtop_group
 
-        nb_scalers_list = new_gmso_topology.get_lj_scale(
-            molecule_id=unique_group
-        )
+        nb_scalers_list = new_gmso_topology.get_lj_scale(molecule_id=unique_group)
         electro_scalers_list = new_gmso_topology.get_electrostatics_scale(
             molecule_id=unique_group
         )
@@ -347,15 +341,9 @@ def specific_ff_to_residue(
     bonded_atom_number_set = set()
     all_bonded_atoms_list = set()
     for bond in new_gmso_topology.bonds:
-        bonded_atom_0_iter = new_gmso_topology.get_index(
-            bond.connection_members[0]
-        )
-        bonded_atom_1_iter = new_gmso_topology.get_index(
-            bond.connection_members[1]
-        )
-        bonded_atom_tuple_iter = sorted(
-            [bonded_atom_0_iter, bonded_atom_1_iter]
-        )
+        bonded_atom_0_iter = new_gmso_topology.get_index(bond.connection_members[0])
+        bonded_atom_1_iter = new_gmso_topology.get_index(bond.connection_members[1])
+        bonded_atom_tuple_iter = sorted([bonded_atom_0_iter, bonded_atom_1_iter])
         bonded_atom_number_set.add(tuple(bonded_atom_tuple_iter))
         all_bonded_atoms_list.update(bonded_atom_tuple_iter)
 
@@ -371,10 +359,7 @@ def specific_ff_to_residue(
                             if site_idx in initiated_molecule:
                                 initiated_molecule.update(bonded_atoms_n)
                                 break
-                            elif (
-                                initiated_molecule
-                                == molecules_atom_number_list[-1]
-                            ):
+                            elif initiated_molecule == molecules_atom_number_list[-1]:
                                 molecules_atom_number_list.append(
                                     {bonded_atoms_n[0], bonded_atoms_n[1]}
                                 )
@@ -418,9 +403,7 @@ def specific_ff_to_residue(
         for atom_type in unique_top_iter.atom_types(
             filter_by=PotentialFilters.UNIQUE_NAME_CLASS
         ):
-            atom_type.__dict__["tags_"] = {
-                "resname": unique_top_group_name_iter
-            }
+            atom_type.__dict__["tags_"] = {"resname": unique_top_group_name_iter}
             atom_type_expression_set.add(atom_type.expression)
         if len(atom_type_expression_set) == 1:
             atom_types_dict.update(
@@ -445,9 +428,7 @@ def specific_ff_to_residue(
         for bond_type in unique_top_iter.bond_types(
             filter_by=PotentialFilters.UNIQUE_NAME_CLASS
         ):
-            bond_type.__dict__["tags_"] = {
-                "resname": unique_top_group_name_iter
-            }
+            bond_type.__dict__["tags_"] = {"resname": unique_top_group_name_iter}
             bond_type_expression_set.add(bond_type.expression)
         if len(bond_type_expression_set) == 1:
             bond_types_dict.update(
@@ -472,9 +453,7 @@ def specific_ff_to_residue(
         for angle_type in unique_top_iter.angle_types(
             filter_by=PotentialFilters.UNIQUE_NAME_CLASS
         ):
-            angle_type.__dict__["tags_"] = {
-                "resname": unique_top_group_name_iter
-            }
+            angle_type.__dict__["tags_"] = {"resname": unique_top_group_name_iter}
             angle_type_expression_set.add(angle_type.expression)
         if len(angle_type_expression_set) == 1:
             angle_types_dict.update(
@@ -499,9 +478,7 @@ def specific_ff_to_residue(
         for dihedral_type in unique_top_iter.dihedral_types(
             filter_by=PotentialFilters.UNIQUE_NAME_CLASS
         ):
-            dihedral_type.__dict__["tags_"] = {
-                "resname": unique_top_group_name_iter
-            }
+            dihedral_type.__dict__["tags_"] = {"resname": unique_top_group_name_iter}
             dihedral_type_expression_set.add(dihedral_type.expression)
         if len(dihedral_type_expression_set) == 1:
             dihedral_types_dict.update(
@@ -526,9 +503,7 @@ def specific_ff_to_residue(
         for improper_type in unique_top_iter.improper_types(
             filter_by=PotentialFilters.UNIQUE_NAME_CLASS
         ):
-            improper_type.__dict__["tags_"] = {
-                "resname": unique_top_group_name_iter
-            }
+            improper_type.__dict__["tags_"] = {"resname": unique_top_group_name_iter}
             improper_type_expression_set.add(improper_type.expression)
         if len(improper_type_expression_set) == 1:
             improper_types_dict.update(
@@ -551,9 +526,7 @@ def specific_ff_to_residue(
         # check to see if the non-bonded and electrostatic 1-4 interactions are in each group/molecule/residue
         if unique_top_group_name_iter not in list(
             nonBonded14Scale_dict.keys()
-        ) or unique_top_group_name_iter not in list(
-            electrostatics14Scale_dict.keys()
-        ):
+        ) or unique_top_group_name_iter not in list(electrostatics14Scale_dict.keys()):
             raise ValueError(
                 f"The {unique_top_group_name_iter} residue is not provided for the "
                 f'{"nonBonded14Scale"} and {"electrostatics14Scale"} values'
@@ -664,9 +637,7 @@ def _validate_forcefield_selection_and_residues(forcefield_selection, residues):
         raise TypeError(error_msg)
 
     if not isinstance(residues, (list, tuple)):
-        error_msg = (
-            "Please enter the residues list in the specific_ff_to_residue."
-        )
+        error_msg = "Please enter the residues list in the specific_ff_to_residue."
         raise TypeError(error_msg)
 
     forcefield_keys_list = list(forcefield_selection.keys())
@@ -685,9 +656,7 @@ def _validate_forcefield_selection_and_residues(forcefield_selection, residues):
 def _validate_boxes_for_simulation(boxes_for_simulation):
     """Validate if input boxes_for_simulation is of the correct form."""
     if boxes_for_simulation not in [1, 2]:
-        boxes_for_simulation_error_msg = (
-            "boxes_for_simulation must be either 1 or 2."
-        )
+        boxes_for_simulation_error_msg = "boxes_for_simulation must be either 1 or 2."
         raise ValueError(boxes_for_simulation_error_msg)
 
 
@@ -721,9 +690,7 @@ def _validate_forcefields(forcefield_selection, residues):
             ff_names_path_iteration = forcefield_selection[residue]
             try:
                 read_xlm_iteration = minidom.parse(ff_names_path_iteration)
-                forcefield_selection_with_paths[residue] = (
-                    ff_names_path_iteration
-                )
+                forcefield_selection_with_paths[residue] = ff_names_path_iteration
 
             except:
                 error_msg = (
@@ -742,9 +709,7 @@ def _validate_forcefields(forcefield_selection, residues):
             )
             try:
                 read_xlm_iteration = minidom.parse(ff_names_path_iteration)
-                forcefield_selection_with_paths[residue] = (
-                    ff_names_path_iteration
-                )
+                forcefield_selection_with_paths[residue] = ff_names_path_iteration
             except:
                 error_msg = (
                     "Please make sure you are entering the correct foyer FF name, or the "
@@ -758,13 +723,9 @@ def _validate_forcefields(forcefield_selection, residues):
         # try to load the Foyer and GMSO FFs, if Foyer convert to GMSO; otherwise, it is an error.
         try:
             try:
-                ff_new_gmso_value_iter = FoyerFFs.get_ff(
-                    ff_value_iter
-                ).to_gmso_ff()
+                ff_new_gmso_value_iter = FoyerFFs.get_ff(ff_value_iter).to_gmso_ff()
             except:
-                ff_new_gmso_value_iter = GMSOFFs.get_ff(
-                    ff_value_iter
-                ).to_gmso_ff()
+                ff_new_gmso_value_iter = GMSOFFs.get_ff(ff_value_iter).to_gmso_ff()
 
         except:
             error_msg = (

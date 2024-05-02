@@ -125,9 +125,7 @@ class TestExpression(BaseTest):
         }
         assert expression.parameters["a"] == u.unyt_quantity(2.7, units="nm")
         assert expression.parameters["b"] == u.unyt_quantity(2.8, units="nm")
-        assert expression.parameters["c"] == u.unyt_quantity(
-            220.0, units="hertz"
-        )
+        assert expression.parameters["c"] == u.unyt_quantity(220.0, units="hertz")
 
     def test_set_parameters_extra(self):
         expression = PotentialExpression(
@@ -145,9 +143,7 @@ class TestExpression(BaseTest):
 
         assert expression.parameters["a"] == u.unyt_quantity(2.7, units="nm")
         assert expression.parameters["b"] == u.unyt_quantity(2.8, units="nm")
-        assert expression.parameters["c"] == u.unyt_quantity(
-            220.0, units="hertz"
-        )
+        assert expression.parameters["c"] == u.unyt_quantity(220.0, units="hertz")
         assert "d" not in expression.parameters
 
     def test_set_parameters_invalid(self):
@@ -165,9 +161,7 @@ class TestExpression(BaseTest):
 
         assert expression.parameters["a"] == u.unyt_quantity(2.6, units="nm")
         assert expression.parameters["b"] == u.unyt_quantity(2.7, units="nm")
-        assert expression.parameters["c"] == u.unyt_quantity(
-            22.8, units="hertz"
-        )
+        assert expression.parameters["c"] == u.unyt_quantity(22.8, units="hertz")
         assert "l" not in expression.parameters
 
     def test_expression_equality(self):
@@ -227,9 +221,7 @@ class TestExpression(BaseTest):
         assert id(expr_clone.parameters) != id(expr.parameters)
 
         assert expr_clone.independent_variables == expr.independent_variables
-        assert id(expr_clone.independent_variables) != id(
-            expr.independent_variables
-        )
+        assert id(expr_clone.independent_variables) != id(expr.independent_variables)
 
         assert expr == expr_clone
 
@@ -246,15 +238,9 @@ class TestExpression(BaseTest):
 
         assert parametric.expression == non_parametric.expression
         assert id(parametric.expression) != id(non_parametric.expression)
-        assert (
-            parametric.independent_variables
-            == non_parametric.independent_variables
-        )
+        assert parametric.independent_variables == non_parametric.independent_variables
         parametric.independent_variables.add("X")
-        assert (
-            parametric.independent_variables
-            != non_parametric.independent_variables
-        )
+        assert parametric.independent_variables != non_parametric.independent_variables
 
     def test_from_non_parametric_errors(self):
         with pytest.raises(

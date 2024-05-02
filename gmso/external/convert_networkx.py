@@ -37,9 +37,7 @@ def from_networkx(graph):
     if not isinstance(graph, nx.Graph):
         raise TypeError(
             "Type mismatch, graph object is expected to be "
-            "an instance of networkx.Graph, was provided: {}".format(
-                type(graph)
-            )
+            "an instance of networkx.Graph, was provided: {}".format(type(graph))
         )
     top = Topology()
 
@@ -106,9 +104,7 @@ def to_networkx(top, parse_angles=True, parse_dihedrals=True):
         graph.add_node(n)
 
     for b in top.bonds:
-        graph.add_edge(
-            b.connection_members[0], b.connection_members[1], connection=b
-        )
+        graph.add_edge(b.connection_members[0], b.connection_members[1], connection=b)
 
     if parse_angles:
         for node in graph.nodes:

@@ -61,9 +61,7 @@ class TestConvertNetworkX(BaseTest):
         assert set(water_system.bonds) == set(water_from_nx.bonds)
 
         assert nx.number_connected_components(water_to_nx) == len(
-            water_system.unique_site_labels(
-                label_type="molecule", name_only=False
-            )
+            water_system.unique_site_labels(label_type="molecule", name_only=False)
         )
 
     def test_from_networkx_without_connections(self):

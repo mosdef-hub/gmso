@@ -53,8 +53,7 @@ class Connection(GMSOBase):
     def _has_typed_members(self):
         """Check if all the members of this connection are typed."""
         return all(
-            member.atom_type
-            for member in self.__dict__.get("connection_members_")
+            member.atom_type for member in self.__dict__.get("connection_members_")
         )
 
     def _get_members_types_or_classes(self, to_return):
@@ -89,9 +88,7 @@ class Connection(GMSOBase):
             ]
 
         if not all(isinstance(x, Site) for x in connection_members):
-            raise TypeError(
-                f"A non-site object provided to be a connection member"
-            )
+            raise TypeError(f"A non-site object provided to be a connection member")
 
         if len(set(connection_members)) != len(connection_members):
             raise GMSOError(

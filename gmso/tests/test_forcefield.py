@@ -29,9 +29,7 @@ class TestForceField(BaseTest):
 
     @pytest.fixture
     def opls_ethane_foyer(self):
-        return ForceField(
-            get_path(filename=get_path("oplsaa-ethane_foyer.xml"))
-        )
+        return ForceField(get_path(filename=get_path("oplsaa-ethane_foyer.xml")))
 
     @pytest.fixture(scope="session")
     def non_element_ff(self):
@@ -81,9 +79,7 @@ class TestForceField(BaseTest):
         assert ff.atom_types["Ar"].charge == u.unyt_quantity(0.0, u.coulomb)
         assert ff.atom_types["Ar"].description == "Argon atom"
         assert ff.atom_types["Ar"].definition == "Ar"
-        assert ff.atom_types["Ar"].expression == sympify(
-            "(A*exp(-B/r) - C/r**6)"
-        )
+        assert ff.atom_types["Ar"].expression == sympify("(A*exp(-B/r) - C/r**6)")
 
         assert sympify("r") in ff.atom_types["Xe"].independent_variables
         assert "A" in ff.atom_types["Xe"].parameters
@@ -98,9 +94,7 @@ class TestForceField(BaseTest):
         assert ff.atom_types["Xe"].charge == u.unyt_quantity(0.0, u.coulomb)
         assert ff.atom_types["Xe"].description == "Xenon atom"
         assert ff.atom_types["Xe"].definition == "Xe"
-        assert ff.atom_types["Xe"].expression == sympify(
-            "(A*exp(-B/r) - C/r**6)"
-        )
+        assert ff.atom_types["Xe"].expression == sympify("(A*exp(-B/r) - C/r**6)")
 
         assert ff.atom_types["Li"].charge == u.unyt_quantity(1.0, u.coulomb)
 
@@ -110,18 +104,14 @@ class TestForceField(BaseTest):
         assert "Xe~Xe" in ff.bond_types
 
         assert sympify("r") in ff.bond_types["Ar~Ar"].independent_variables
-        assert ff.bond_types["Ar~Ar"].parameters["r_eq"] == u.unyt_quantity(
-            10.0, u.nm
-        )
+        assert ff.bond_types["Ar~Ar"].parameters["r_eq"] == u.unyt_quantity(10.0, u.nm)
         assert ff.bond_types["Ar~Ar"].parameters["k"] == u.unyt_quantity(
             10000, u.kJ / u.mol
         )
         assert ff.bond_types["Ar~Ar"].member_types == ("Ar", "Ar")
 
         assert sympify("r") in ff.bond_types["Xe~Xe"].independent_variables
-        assert ff.bond_types["Xe~Xe"].parameters["r_eq"] == u.unyt_quantity(
-            10.0, u.nm
-        )
+        assert ff.bond_types["Xe~Xe"].parameters["r_eq"] == u.unyt_quantity(10.0, u.nm)
         assert ff.bond_types["Xe~Xe"].parameters["k"] == u.unyt_quantity(
             20000, u.kJ / u.mol
         )
@@ -155,16 +145,13 @@ class TestForceField(BaseTest):
         assert "Xe~Xe~Xe~Xe" in ff.dihedral_types
         assert "Ar~Ar~Ar~Ar" in ff.dihedral_types
 
-        assert (
-            sympify("r")
-            in ff.dihedral_types["Ar~Ar~Ar~Ar"].independent_variables
+        assert sympify("r") in ff.dihedral_types["Ar~Ar~Ar~Ar"].independent_variables
+        assert ff.dihedral_types["Ar~Ar~Ar~Ar"].parameters["r_eq"] == u.unyt_quantity(
+            10.0, u.nm
         )
-        assert ff.dihedral_types["Ar~Ar~Ar~Ar"].parameters[
-            "r_eq"
-        ] == u.unyt_quantity(10.0, u.nm)
-        assert ff.dihedral_types["Ar~Ar~Ar~Ar"].parameters[
-            "z"
-        ] == u.unyt_quantity(100, u.kJ / u.mol)
+        assert ff.dihedral_types["Ar~Ar~Ar~Ar"].parameters["z"] == u.unyt_quantity(
+            100, u.kJ / u.mol
+        )
         assert ff.dihedral_types["Ar~Ar~Ar~Ar"].member_classes == (
             "Ar",
             "Ar",
@@ -172,16 +159,13 @@ class TestForceField(BaseTest):
             "Ar",
         )
 
-        assert (
-            sympify("r")
-            in ff.dihedral_types["Xe~Xe~Xe~Xe"].independent_variables
+        assert sympify("r") in ff.dihedral_types["Xe~Xe~Xe~Xe"].independent_variables
+        assert ff.dihedral_types["Xe~Xe~Xe~Xe"].parameters["r_eq"] == u.unyt_quantity(
+            10.0, u.nm
         )
-        assert ff.dihedral_types["Xe~Xe~Xe~Xe"].parameters[
-            "r_eq"
-        ] == u.unyt_quantity(10.0, u.nm)
-        assert ff.dihedral_types["Xe~Xe~Xe~Xe"].parameters[
-            "z"
-        ] == u.unyt_quantity(20, u.kJ / u.mol)
+        assert ff.dihedral_types["Xe~Xe~Xe~Xe"].parameters["z"] == u.unyt_quantity(
+            20, u.kJ / u.mol
+        )
         assert ff.dihedral_types["Xe~Xe~Xe~Xe"].member_classes == (
             "Xe",
             "Xe",
@@ -193,16 +177,13 @@ class TestForceField(BaseTest):
         assert len(ff.improper_types) == 1
         assert "Xe~Xe~Xe~Xe" in ff.improper_types
 
-        assert (
-            sympify("r")
-            in ff.improper_types["Xe~Xe~Xe~Xe"].independent_variables
+        assert sympify("r") in ff.improper_types["Xe~Xe~Xe~Xe"].independent_variables
+        assert ff.improper_types["Xe~Xe~Xe~Xe"].parameters["r_eq"] == u.unyt_quantity(
+            10.0, u.nm
         )
-        assert ff.improper_types["Xe~Xe~Xe~Xe"].parameters[
-            "r_eq"
-        ] == u.unyt_quantity(10.0, u.nm)
-        assert ff.improper_types["Xe~Xe~Xe~Xe"].parameters[
-            "z"
-        ] == u.unyt_quantity(20, u.kJ / u.mol)
+        assert ff.improper_types["Xe~Xe~Xe~Xe"].parameters["z"] == u.unyt_quantity(
+            20, u.kJ / u.mol
+        )
         assert ff.improper_types["Xe~Xe~Xe~Xe"].member_types == (
             "Xe",
             "Xe",
@@ -214,16 +195,13 @@ class TestForceField(BaseTest):
         assert len(ff.pairpotential_types) == 1
         assert "Xe~Xe" in ff.pairpotential_types
 
-        assert (
-            sympify("r")
-            in ff.pairpotential_types["Xe~Xe"].independent_variables
+        assert sympify("r") in ff.pairpotential_types["Xe~Xe"].independent_variables
+        assert ff.pairpotential_types["Xe~Xe"].parameters["sigma"] == u.unyt_quantity(
+            10.0, u.nm
         )
-        assert ff.pairpotential_types["Xe~Xe"].parameters[
-            "sigma"
-        ] == u.unyt_quantity(10.0, u.nm)
-        assert ff.pairpotential_types["Xe~Xe"].parameters[
-            "k"
-        ] == u.unyt_quantity(0.1, u.kJ / u.mol)
+        assert ff.pairpotential_types["Xe~Xe"].parameters["k"] == u.unyt_quantity(
+            0.1, u.kJ / u.mol
+        )
         assert ff.pairpotential_types["Xe~Xe"].member_types == ("Xe", "Xe")
 
     def test_ff_charmm_xml(self):
@@ -260,9 +238,7 @@ class TestForceField(BaseTest):
     def test_missing_params(self):
         # TODO: raise same error if backend loader is forcefield-utilities
         with pytest.raises(ForceFieldParseError):
-            ForceField(
-                get_path("ff-example-missing-parameter.xml"), backend="gmso"
-            )
+            ForceField(get_path("ff-example-missing-parameter.xml"), backend="gmso")
 
     def test_elementary_charge_to_coulomb(self, ff):
         elementary_charge = ff.atom_types["Li"].charge.to(u.elementary_charge)
@@ -276,12 +252,10 @@ class TestForceField(BaseTest):
         ff = ForceField(get_path("opls_charmm_buck.xml"))
         assert "A" in ff.atom_types["buck_O"].parameters
         with pytest.raises(TypeError):
-            assert len(
-                ff.dihedral_types["opls_140~*~*~opls_140"].parameters["c0"]
-            )
-        assert ff.dihedral_types["NH2~CT1~C~O"].parameters[
-            "delta"
-        ] == u.unyt_quantity(0.0, "degree")
+            assert len(ff.dihedral_types["opls_140~*~*~opls_140"].parameters["c0"])
+        assert ff.dihedral_types["NH2~CT1~C~O"].parameters["delta"] == u.unyt_quantity(
+            0.0, "degree"
+        )
 
     def test_ff_from_etree(self):
         # TODO: load using backend forcefield-utilities from etree
@@ -304,9 +278,7 @@ class TestForceField(BaseTest):
 
     def test_named_potential_groups(self):
         # TODO: get potential groups using backend forcefield-utilities
-        named_groups_ff = ForceField(
-            get_path("ff-example1.xml"), backend="gmso"
-        )
+        named_groups_ff = ForceField(get_path("ff-example1.xml"), backend="gmso")
         assert named_groups_ff.potential_groups["BuckinghamPotential"]
         assert (
             named_groups_ff.angle_types["Xe~Xe~Xe"]
@@ -339,21 +311,11 @@ class TestForceField(BaseTest):
             named_groups_ff.group_pairpotential_types_by_expression()
         )
 
-        assert (
-            len(atom_types_grouped_by_expression["A*exp(-B/r) - C/r**6"]) == 3
-        )
+        assert len(atom_types_grouped_by_expression["A*exp(-B/r) - C/r**6"]) == 3
         assert len(bond_types_grouped_by_expression["0.5*k*(r - r_eq)**2"]) == 2
-        assert (
-            len(angle_types_grouped_by_expression["0.5*z*(r - r_eq)**2"]) == 2
-        )
-        assert (
-            len(dihedral_types_grouped_by_expression["0.5*z*(r - r_eq)**2"])
-            == 2
-        )
-        assert (
-            len(improper_types_grouped_by_expression["0.5*z*(r - r_eq)**2"])
-            == 1
-        )
+        assert len(angle_types_grouped_by_expression["0.5*z*(r - r_eq)**2"]) == 2
+        assert len(dihedral_types_grouped_by_expression["0.5*z*(r - r_eq)**2"]) == 2
+        assert len(improper_types_grouped_by_expression["0.5*z*(r - r_eq)**2"]) == 1
         assert (
             len(
                 pairpotential_types_grouped_by_expression[
@@ -422,9 +384,7 @@ class TestForceField(BaseTest):
         assert allclose_units_mixed(params.values(), params_copy.values())
 
     def test_forcefield_get_potential_bond_type(self, opls_ethane_foyer):
-        bt = opls_ethane_foyer.get_potential(
-            "bond_type", key=["opls_135", "opls_140"]
-        )
+        bt = opls_ethane_foyer.get_potential("bond_type", key=["opls_135", "opls_140"])
         assert bt.name == "BondType-Harmonic-2"
         params = bt.parameters
         assert "k" in params
@@ -436,14 +396,10 @@ class TestForceField(BaseTest):
             params.values(), [284512.0 * u.kJ / u.nm**2, 0.109 * u.nm]
         )
 
-    def test_forcefield_get_potential_bond_type_reversed(
-        self, opls_ethane_foyer
-    ):
+    def test_forcefield_get_potential_bond_type_reversed(self, opls_ethane_foyer):
         assert opls_ethane_foyer.get_potential(
             "bond_type", ["opls_135", "opls_140"]
-        ) == opls_ethane_foyer.get_potential(
-            "bond_type", ["opls_140", "opls_135"]
-        )
+        ) == opls_ethane_foyer.get_potential("bond_type", ["opls_140", "opls_135"])
 
     def test_forcefield_get_parameters_bond_type(self, opls_ethane_foyer):
         params = opls_ethane_foyer.get_parameters(
@@ -470,9 +426,7 @@ class TestForceField(BaseTest):
             [313.8 * u.kJ / u.radian**2, 1.932079482 * u.radian],
         )
 
-    def test_forcefield_get_potential_angle_type_reversed(
-        self, opls_ethane_foyer
-    ):
+    def test_forcefield_get_potential_angle_type_reversed(self, opls_ethane_foyer):
         assert opls_ethane_foyer.get_potential(
             "angle_type", ["opls_135", "opls_135", "opls_140"]
         ) == opls_ethane_foyer.get_potential(
@@ -521,9 +475,7 @@ class TestForceField(BaseTest):
             [0.6276, 1.8828, 0.0, -2.5104, 0.0, 0.0] * u.kJ / u.mol,
         )
 
-    def test_forcefield_get_potential_non_exisistent_group(
-        self, opls_ethane_foyer
-    ):
+    def test_forcefield_get_potential_non_exisistent_group(self, opls_ethane_foyer):
         with pytest.raises(ValueError):
             opls_ethane_foyer.get_potential("non_group", ["a", "b", "c"])
 
@@ -540,14 +492,10 @@ class TestForceField(BaseTest):
 
     def test_get_bond_type_missing(self, opls_ethane_foyer):
         with pytest.raises(MissingPotentialError):
-            opls_ethane_foyer._get_bond_type(
-                ["opls_359", "opls_600"], warn=False
-            )
+            opls_ethane_foyer._get_bond_type(["opls_359", "opls_600"], warn=False)
 
         with pytest.warns(UserWarning):
-            opls_ethane_foyer._get_bond_type(
-                ["opls_359", "opls_600"], warn=True
-            )
+            opls_ethane_foyer._get_bond_type(["opls_359", "opls_600"], warn=True)
 
     def test_get_angle_type_missing(self, opls_ethane_foyer):
         with pytest.raises(MissingPotentialError):
@@ -589,28 +537,18 @@ class TestForceField(BaseTest):
         assert len(opls_ethane_foyer.atom_types) > 0
 
         assert (
-            non_element_ff.get_potential(
-                group="atom_type", key="CH2_sp3"
-            ).charge
-            == 0
+            non_element_ff.get_potential(group="atom_type", key="CH2_sp3").charge == 0
         )
         assert (
-            non_element_ff.get_potential(
-                group="atom_type", key="CH3_sp3"
-            ).charge
-            == 0
+            non_element_ff.get_potential(group="atom_type", key="CH3_sp3").charge == 0
         )
 
         assert (
-            non_element_ff.get_potential(
-                group="atom_type", key="CH3_sp3"
-            ).definition
+            non_element_ff.get_potential(group="atom_type", key="CH3_sp3").definition
             == "[_CH3;X1][_CH3,_CH2]"
         )
         assert (
-            non_element_ff.get_potential(
-                group="atom_type", key="CH2_sp3"
-            ).definition
+            non_element_ff.get_potential(group="atom_type", key="CH2_sp3").definition
             == "[_CH2;X2]([_CH3,_CH2])[_CH3,_CH2]"
         )
 
@@ -633,18 +571,14 @@ class TestForceField(BaseTest):
     def test_write_xml(self, opls_ethane_foyer):
         opls_ethane_foyer.to_xml("test_xml_writer.xml")
         reloaded_xml = ForceField("test_xml_writer.xml")
-        get_names = lambda ff, param: [
-            typed for typed in getattr(ff, param).keys()
-        ]
+        get_names = lambda ff, param: [typed for typed in getattr(ff, param).keys()]
         for param in [
             "atom_types",
             "bond_types",
             "angle_types",
             "dihedral_types",
         ]:
-            assert get_names(opls_ethane_foyer, param) == get_names(
-                reloaded_xml, param
-            )
+            assert get_names(opls_ethane_foyer, param) == get_names(reloaded_xml, param)
 
     def test_write_not_xml(self, opls_ethane_foyer):
         with pytest.raises(ForceFieldError):

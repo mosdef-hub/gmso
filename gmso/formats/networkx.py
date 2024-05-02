@@ -44,9 +44,7 @@ def interactive_networkx_atomtypes(topology, list_of_labels=None):
             Atom_Name = Which sites will show these labels.
     """
     if not run_from_ipython():
-        raise RuntimeError(
-            "Unsupported visualization outside of jupyter notebooks."
-        )
+        raise RuntimeError("Unsupported visualization outside of jupyter notebooks.")
     networkx_graph = to_networkx(topology)
     # get a unique list of site names
     site_names = []
@@ -128,9 +126,7 @@ def interactive_networkx_bonds(topology, additional_labels=None):
             dropdown option.
     """
     if not run_from_ipython():
-        raise RuntimeError(
-            "Unsupported visualization outside of jupyter notebooks."
-        )
+        raise RuntimeError("Unsupported visualization outside of jupyter notebooks.")
     networkx_graph = to_networkx(topology)
 
     # Create a list of labels to go on the nodes
@@ -214,9 +210,7 @@ def interactive_networkx_angles(topology):
             dropdown option.
     """
     if not run_from_ipython():
-        raise RuntimeError(
-            "Unsupported visualization outside of jupyter notebooks."
-        )
+        raise RuntimeError("Unsupported visualization outside of jupyter notebooks.")
 
     networkx_graph = to_networkx(topology)
 
@@ -299,9 +293,7 @@ def interactive_networkx_dihedrals(topology):
             dropdown option.
     """
     if not run_from_ipython():
-        raise RuntimeError(
-            "Unsupported visualization outside of jupyter notebooks."
-        )
+        raise RuntimeError("Unsupported visualization outside of jupyter notebooks.")
 
     networkx_graph = to_networkx(topology)
     # Create list of nodes to plot

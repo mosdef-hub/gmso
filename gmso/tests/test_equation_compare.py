@@ -68,7 +68,9 @@ class TestEqnCompare(BaseTest):
         assert form_scalar == None
 
     def test_scaled_mie_equation_form(self):
-        input_new_mie_form = "2*(n/(n-m)) * (n/m)**(m/(n-m)) * epsilon * ((sigma/r)**n - (sigma/r)**m)"
+        input_new_mie_form = (
+            "2*(n/(n-m)) * (n/m)**(m/(n-m)) * epsilon * ((sigma/r)**n - (sigma/r)**m)"
+        )
 
         [form_output, form_scalar] = evaluate_nonbonded_mie_format_with_scaler(
             input_new_mie_form, input_base_mie_form
@@ -88,7 +90,9 @@ class TestEqnCompare(BaseTest):
         assert form_scalar == None
 
     def test_scaled_exp6_equation_form(self):
-        input_new_exp6_form = "2*epsilon*alpha/(alpha-6) * (6/alpha*exp(alpha*(1-r/Rmin)) - (Rmin/r)**6)"
+        input_new_exp6_form = (
+            "2*epsilon*alpha/(alpha-6) * (6/alpha*exp(alpha*(1-r/Rmin)) - (Rmin/r)**6)"
+        )
 
         [form_output, form_scalar] = evaluate_nonbonded_exp6_format_with_scaler(
             input_new_exp6_form, input_base_exp6_form
@@ -128,8 +132,8 @@ class TestEqnCompare(BaseTest):
             boxes_for_simulation=1,
         )
 
-        atom_types_data_expression_data_dict = (
-            get_atom_type_expressions_and_scalars(test_atom_types_dict)
+        atom_types_data_expression_data_dict = get_atom_type_expressions_and_scalars(
+            test_atom_types_dict
         )
 
         assert (
@@ -137,12 +141,10 @@ class TestEqnCompare(BaseTest):
             == "4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)"
         )
         assert (
-            atom_types_data_expression_data_dict["ETH_CH3"]["expression_form"]
-            == "LJ"
+            atom_types_data_expression_data_dict["ETH_CH3"]["expression_form"] == "LJ"
         )
         assert (
-            atom_types_data_expression_data_dict["ETH_CH3"]["expression_scalar"]
-            == 1.0
+            atom_types_data_expression_data_dict["ETH_CH3"]["expression_scalar"] == 1.0
         )
 
         assert (
@@ -150,14 +152,10 @@ class TestEqnCompare(BaseTest):
             == "epsilon*n*(n/m)**(m/(-m + n))*(-(sigma/r)**m + (sigma/r)**n)/(-m + n)"
         )
         assert (
-            atom_types_data_expression_data_dict["ETHM_CH3"]["expression_form"]
-            == "Mie"
+            atom_types_data_expression_data_dict["ETHM_CH3"]["expression_form"] == "Mie"
         )
         assert (
-            atom_types_data_expression_data_dict["ETHM_CH3"][
-                "expression_scalar"
-            ]
-            == 1.0
+            atom_types_data_expression_data_dict["ETHM_CH3"]["expression_scalar"] == 1.0
         )
 
     # the exp6 needs added when the standard exp6 is added to gmso overall.

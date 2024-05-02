@@ -220,9 +220,7 @@ def element_by_mass(mass, exact=True, verbose=False):
         matched_element = mass_dict.get(mass_trimmed)
     else:
         # Closest match mode
-        mass_closest = min(
-            mass_dict.keys(), key=lambda k: abs(k - mass_trimmed)
-        )
+        mass_closest = min(mass_dict.keys(), key=lambda k: abs(k - mass_trimmed))
         if verbose:
             msg2 = f"Closest mass to {mass_trimmed}: {mass_closest}"
             warnings.warn(msg2)
@@ -311,9 +309,7 @@ def element_by_atom_type(atom_type, verbose=False):
     matched_element = None
 
     if matched_element is None and atom_type.mass:
-        matched_element = element_by_mass(
-            atom_type.mass, exact=False, verbose=verbose
-        )
+        matched_element = element_by_mass(atom_type.mass, exact=False, verbose=verbose)
     if matched_element is None and atom_type.name:
         matched_element = element_by_symbol(atom_type.name, verbose=verbose)
     if matched_element is None and atom_type.definition:

@@ -59,18 +59,10 @@ class TestDihedral(BaseTest):
             )
 
     def test_dihedral_constituent_types(self):
-        atom1 = Atom(
-            name="atom1", position=[0, 0, 0], atom_type=AtomType(name="A")
-        )
-        atom2 = Atom(
-            name="atom2", position=[1, 0, 0], atom_type=AtomType(name="B")
-        )
-        atom3 = Atom(
-            name="atom3", position=[1, 1, 0], atom_type=AtomType(name="C")
-        )
-        atom4 = Atom(
-            name="atom4", position=[1, 1, 4], atom_type=AtomType(name="D")
-        )
+        atom1 = Atom(name="atom1", position=[0, 0, 0], atom_type=AtomType(name="A"))
+        atom2 = Atom(name="atom2", position=[1, 0, 0], atom_type=AtomType(name="B"))
+        atom3 = Atom(name="atom3", position=[1, 1, 0], atom_type=AtomType(name="C"))
+        atom4 = Atom(name="atom4", position=[1, 1, 4], atom_type=AtomType(name="D"))
         dihtype = DihedralType(
             member_types=[
                 atom1.atom_type.name,
@@ -117,9 +109,7 @@ class TestDihedral(BaseTest):
 
         dihedral = Dihedral(connection_members=[atom1, atom2, atom3, atom4])
         dihedral_eq = Dihedral(connection_members=[atom4, atom3, atom2, atom1])
-        dihedral_not_eq = Dihedral(
-            connection_members=[atom4, atom2, atom3, atom1]
-        )
+        dihedral_not_eq = Dihedral(connection_members=[atom4, atom2, atom3, atom1])
 
         top = Topology()
         top.add_connection(dihedral)
@@ -137,38 +127,21 @@ class TestDihedral(BaseTest):
 
         dihedral = Dihedral(connection_members=[atom1, atom2, atom3, atom4])
         dihedral_eq = Dihedral(connection_members=[atom4, atom3, atom2, atom1])
-        dihedral_not_eq = Dihedral(
-            connection_members=[atom4, atom2, atom3, atom1]
-        )
+        dihedral_not_eq = Dihedral(connection_members=[atom4, atom2, atom3, atom1])
 
-        assert (
-            tuple(dihedral_eq.connection_members)
-            in dihedral.equivalent_members()
-        )
-        assert (
-            tuple(dihedral.connection_members)
-            in dihedral_eq.equivalent_members()
-        )
+        assert tuple(dihedral_eq.connection_members) in dihedral.equivalent_members()
+        assert tuple(dihedral.connection_members) in dihedral_eq.equivalent_members()
         assert not (
-            tuple(dihedral.connection_members)
-            in dihedral_not_eq.equivalent_members()
+            tuple(dihedral.connection_members) in dihedral_not_eq.equivalent_members()
         )
 
     def test_sort_dihedral_types(self):
         from gmso.utils.sorting import sort_by_classes, sort_by_types
 
-        atom1 = Atom(
-            name="atom1", position=[0, 0, 0], atom_type=AtomType(name="A")
-        )
-        atom2 = Atom(
-            name="atom2", position=[1, 0, 0], atom_type=AtomType(name="B")
-        )
-        atom3 = Atom(
-            name="atom3", position=[1, 1, 0], atom_type=AtomType(name="C")
-        )
-        atom4 = Atom(
-            name="atom4", position=[1, 1, 4], atom_type=AtomType(name="D")
-        )
+        atom1 = Atom(name="atom1", position=[0, 0, 0], atom_type=AtomType(name="A"))
+        atom2 = Atom(name="atom2", position=[1, 0, 0], atom_type=AtomType(name="B"))
+        atom3 = Atom(name="atom3", position=[1, 1, 0], atom_type=AtomType(name="C"))
+        atom4 = Atom(name="atom4", position=[1, 1, 4], atom_type=AtomType(name="D"))
 
         consituentList = [
             atom2.atom_type.name,

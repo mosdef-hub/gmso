@@ -21,9 +21,7 @@ setup(
     author="Matthew W Thompson, Justin Gilmer",
     author_email="matt.thompson@vanderbilt.edu, justin.b.gilmer@vanderbilt.edu",
     url="https://github.com/mosdef-hub/gmso",
-    download_url="https://github.com/mosdef-hub/gmso/tarball/{}".format(
-        __version__
-    ),
+    download_url="https://github.com/mosdef-hub/gmso/tarball/{}".format(__version__),
     license="MIT",
     keywords="gmso",
     classifiers=[

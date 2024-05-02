@@ -88,9 +88,7 @@ class TestSerialization(BaseTest):
         angle_types_to_test = typed_ethane.angle_types
         for angle_type in angle_types_to_test:
             angle_type_json = angle_type.model_dump_json()
-            angle_type_copy = AngleType.model_validate(
-                json.loads(angle_type_json)
-            )
+            angle_type_copy = AngleType.model_validate(json.loads(angle_type_json))
             assert angle_type_copy == angle_type
 
     def test_dihedral_to_json_loop(self, typed_ethane, are_equivalent_atoms):
@@ -204,9 +202,7 @@ class TestSerialization(BaseTest):
         typed_ethane_copy = Topology.load("eth.json")
         assert are_equivalent_topologies(typed_ethane_copy, typed_ethane)
 
-    def test_serialization_with_box(
-        self, n_typed_xe_mie, are_equivalent_topologies
-    ):
+    def test_serialization_with_box(self, n_typed_xe_mie, are_equivalent_topologies):
         top = n_typed_xe_mie(n_sites=20)
         top.save("n_typed_xe_mie_20.json")
         top_copy = Topology.load("n_typed_xe_mie_20.json")
@@ -230,7 +226,5 @@ class TestSerialization(BaseTest):
     def test_serialization_overwrite(self, ethane_from_scratch):
         ethane_from_scratch.save("ethane_from_scratch.json", overwrite=False)
         with pytest.raises(FileExistsError):
-            ethane_from_scratch.save(
-                "ethane_from_scratch.json", overwrite=False
-            )
+            ethane_from_scratch.save("ethane_from_scratch.json", overwrite=False)
         ethane_from_scratch.save("ethane_from_scratch.json", overwrite=True)

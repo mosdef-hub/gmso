@@ -11,9 +11,7 @@ from gmso.utils.decorators import deprecate_function
 @deprecate_function(
     "The `from_foyer_xml` method will be deprecated soon. Please use the package `forcefield-utilities.FoyerFFs`."
 )
-def from_foyer_xml(
-    foyer_xml, gmso_xml=None, overwrite=False, validate_foyer=False
-):
+def from_foyer_xml(foyer_xml, gmso_xml=None, overwrite=False, validate_foyer=False):
     """Convert a foyer XML to a gmso XML.
 
     Parameters
@@ -315,9 +313,7 @@ def _write_harmonic_bonds(forcefield, ff_kwargs):
             harmonicBondTypes,
             "BondType",
             attrib_dict={
-                "name": bond_type.get(
-                    "name", "BondType-Harmonic-{}".format(i + 1)
-                ),
+                "name": bond_type.get("name", "BondType-Harmonic-{}".format(i + 1)),
             },
         )
         _populate_class_or_type_attrib(thisBondType, bond_type)
@@ -348,9 +344,7 @@ def _write_harmonic_angles(forcefield, ff_kwargs):
             harmonicAngleTypes,
             "AngleType",
             attrib_dict={
-                "name": angle_type.get(
-                    "name", "AngleType-Harmonic-{}".format(i + 1)
-                ),
+                "name": angle_type.get("name", "AngleType-Harmonic-{}".format(i + 1)),
             },
         )
 
@@ -407,9 +401,7 @@ def _write_periodic_dihedrals(forcefield, ff_kwargs):
         },
     )
     max_j = 0
-    for i, dihedral_type in enumerate(
-        ff_kwargs["periodic_torsion_dihedral_types"]
-    ):
+    for i, dihedral_type in enumerate(ff_kwargs["periodic_torsion_dihedral_types"]):
         thisDihedralType = _create_sub_element(
             periodicTorsionDihedralTypes,
             "DihedralType",
@@ -422,9 +414,7 @@ def _write_periodic_dihedrals(forcefield, ff_kwargs):
 
         _populate_class_or_type_attrib(thisDihedralType, dihedral_type)
 
-        parameters, max_index = _get_dihedral_or_improper_parameters(
-            dihedral_type
-        )
+        parameters, max_index = _get_dihedral_or_improper_parameters(dihedral_type)
         if max_index > max_j:
             max_j = max_index
 
@@ -464,18 +454,14 @@ def _write_periodic_impropers(forcefield, ff_kwargs):
 
         _populate_class_or_type_attrib(thisImproperType, dihedral_type)
 
-        parameters, max_index = _get_dihedral_or_improper_parameters(
-            dihedral_type
-        )
+        parameters, max_index = _get_dihedral_or_improper_parameters(dihedral_type)
         if max_index > max_j:
             max_j = max_index
 
         _add_parameters(thisImproperType, parameters)
 
     for k in range(0, max_j):
-        _insert_parameters_units_def(
-            periodicImproperTypes, "k{}".format(k), "kJ/mol"
-        )
+        _insert_parameters_units_def(periodicImproperTypes, "k{}".format(k), "kJ/mol")
         _insert_parameters_units_def(
             periodicImproperTypes, "n{}".format(k), "dimensionless"
         )
@@ -523,9 +509,7 @@ def _write_rb_torsions(forcefield, ff_kwargs):
         if j > max_j:
             max_j = j
     for k in range(0, max_j):
-        _insert_parameters_units_def(
-            rbTorsionDihedralTypes, "c{}".format(k), "kJ/mol"
-        )
+        _insert_parameters_units_def(rbTorsionDihedralTypes, "c{}".format(k), "kJ/mol")
 
 
 def _create_sub_element(root_el, name, attrib_dict=None):

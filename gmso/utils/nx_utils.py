@@ -35,9 +35,7 @@ def plot_networkx_params(networkx_graph, list_of_edges):
         matplotlib.pyplot.show()
     """
     fig, ax = plt.subplots(1, 1, figsize=(8, 8))
-    edge_weights, edge_colors = highlight_networkx_edges(
-        networkx_graph, list_of_edges
-    )
+    edge_weights, edge_colors = highlight_networkx_edges(networkx_graph, list_of_edges)
     ax = plot_networkx_nodes(
         networkx_graph, ax, edge_weights=edge_weights, edge_colors=edge_colors
     )
@@ -45,9 +43,7 @@ def plot_networkx_params(networkx_graph, list_of_edges):
     return (fig, ax)
 
 
-def call_interactive_sites(
-    Atom1, Atom2, networkx_graph, topology, list_of_labels
-):
+def call_interactive_sites(Atom1, Atom2, networkx_graph, topology, list_of_labels):
     """Return a static plot or interactive display for visualization."""
     list_of_edges = get_edges(networkx_graph, Atom1, Atom2)
     if list_of_edges:
@@ -98,9 +94,7 @@ def show_bond_info(w, topology, list_of_bonds):
 
 def select_angles_from_sites(networkx_graph, top, Atom1, Atom2, Atom3):
     """Return angles based on interactive selection."""
-    params_list = select_params_on_networkx(
-        networkx_graph, [Atom1, Atom2, Atom3]
-    )
+    params_list = select_params_on_networkx(networkx_graph, [Atom1, Atom2, Atom3])
     if params_list:
         edges_widget = widgets.Dropdown(
             options=params_list,
@@ -163,9 +157,7 @@ def select_params_on_networkx(networkx_graph, atoms):
                         names[i] for i in [1, 2, 0]
                     ]:
                         list_of_params.append(angle.connection_members)
-                        list_of_names.append(
-                            _get_formatted_atom_types_names_for(angle)
-                        )
+                        list_of_names.append(_get_formatted_atom_types_names_for(angle))
         elif all(atoms[0:2]):
             for node, angles in networkx_graph.nodes(data="angles"):
                 for angle in angles:
@@ -174,49 +166,37 @@ def select_params_on_networkx(networkx_graph, atoms):
                         reversed(names[0:2])
                     ):
                         list_of_params.append(angle.connection_members)
-                        list_of_names.append(
-                            _get_formatted_atom_types_names_for(angle)
-                        )
+                        list_of_names.append(_get_formatted_atom_types_names_for(angle))
         elif atoms[0]:
             for node, angles in networkx_graph.nodes(data="angles"):
                 for angle in angles:
                     names = [member.name for member in angle.connection_members]
                     if atoms[0] == names[1]:
                         list_of_params.append(angle.connection_members)
-                        list_of_names.append(
-                            _get_formatted_atom_types_names_for(angle)
-                        )
+                        list_of_names.append(_get_formatted_atom_types_names_for(angle))
         else:
             for node, angles in networkx_graph.nodes(data="angles"):
                 if not angles:
-                    print(
-                        "No angle parameters have been applied to this topology"
-                    )
+                    print("No angle parameters have been applied to this topology")
                     return
                 for angle in angles:
                     if angle.angle_type is None:
                         list_of_params.append(angle.connection_members)
-                        list_of_names.append(
-                            _get_formatted_atom_types_names_for(angle)
-                        )
+                        list_of_names.append(_get_formatted_atom_types_names_for(angle))
                         mia_angle_flag = 1
             if not mia_angle_flag:
                 print(
                     "All angles are typed. Select a central atom to look at the different angle_types."
                 )
             else:
-                print(
-                    "Since no sites are input, angles with missing types are shown."
-                )
+                print("Since no sites are input, angles with missing types are shown.")
 
     elif len(atoms) == 4:
         # select a list of dihedrals
         if all(atoms):
             for node, dihedrals in networkx_graph.nodes(data="dihedrals"):
                 for dihedral in dihedrals:
-                    names = [
-                        member.name for member in dihedral.connection_members
-                    ]
+                    names = [member.name for member in dihedral.connection_members]
                     if (
                         atoms == [names[i] for i in [2, 1, 0, 3]]
                         or atoms == [names[i] for i in [1, 2, 3, 0]]
@@ -230,9 +210,7 @@ def select_params_on_networkx(networkx_graph, atoms):
         elif all(atoms[0:3]):
             for node, dihedrals in networkx_graph.nodes(data="dihedrals"):
                 for dihedral in dihedrals:
-                    names = [
-                        member.name for member in dihedral.connection_members
-                    ]
+                    names = [member.name for member in dihedral.connection_members]
                     if (
                         atoms[0:3] == [names[i] for i in [1, 2, 3]]
                         or atoms[0:3] == [names[i] for i in [2, 1, 3]]
@@ -246,9 +224,7 @@ def select_params_on_networkx(networkx_graph, atoms):
         elif all(atoms[0:2]):
             for node, dihedrals in networkx_graph.nodes(data="dihedrals"):
                 for dihedral in dihedrals:
-                    names = [
-                        member.name for member in dihedral.connection_members
-                    ]
+                    names = [member.name for member in dihedral.connection_members]
                     if atoms[0:2] == names[1:3] or atoms[0:2] == [
                         names[2],
                         names[1],
@@ -260,9 +236,7 @@ def select_params_on_networkx(networkx_graph, atoms):
         else:
             for node, dihedrals in networkx_graph.nodes(data="dihedrals"):
                 if not dihedrals:
-                    print(
-                        "No dihedral parameters have been applied to this topology"
-                    )
+                    print("No dihedral parameters have been applied to this topology")
                     return
                 for dihedral in dihedrals:
                     if dihedral.dihedral_type is None:
@@ -426,9 +400,7 @@ def plot_networkx_nodes(
     # Get a list of labels to plot
     labels = identify_labels(networkx_graph, list_of_labels, atom_name)
     # Plot labels on current figure
-    nx.draw_networkx_labels(
-        networkx_graph, layout, labels, horizontalalignment="left"
-    )
+    nx.draw_networkx_labels(networkx_graph, layout, labels, horizontalalignment="left")
     ax.margins(0.3, 0.3)
 
     return ax
@@ -445,9 +417,7 @@ def identify_labels(networkx_graph, list_of_labels, atom_name=None):
                 list_of_nodes.append(node)
         labels = return_labels_for_nodes(list_of_nodes, list_of_labels)
     else:
-        labels = return_labels_for_nodes(
-            list(networkx_graph.nodes), list_of_labels
-        )
+        labels = return_labels_for_nodes(list(networkx_graph.nodes), list_of_labels)
 
     return labels
 
@@ -464,9 +434,7 @@ def return_labels_for_nodes(list_of_nodes, list_of_labels):
                 label1, label2 = label.split(".")
                 try:
                     node.label = (
-                        node.label
-                        + "\n"
-                        + str(getattr(getattr(node, label1), label2))
+                        node.label + "\n" + str(getattr(getattr(node, label1), label2))
                     )
                 except AttributeError:
                     node.label = node.label + "\nNoneType"
@@ -475,25 +443,18 @@ def return_labels_for_nodes(list_of_nodes, list_of_labels):
                     node.label = (
                         node.label
                         + "\n"
-                        + str(
-                            (getattr(node, label) / unyt.electron_charge).round(
-                                4
-                            )
-                        )
+                        + str((getattr(node, label) / unyt.electron_charge).round(4))
                         + " e"
                     )
                 else:
                     node.label = node.label + "\nNone"
             elif label == "position":
-                if isinstance(
-                    getattr(node, label)[0], unyt.array.unyt_quantity
-                ):
+                if isinstance(getattr(node, label)[0], unyt.array.unyt_quantity):
                     node.label = (
                         node.label
                         + "\n"
                         + str(
-                            getattr(node, label).to("angstrom").round(2)
-                            * unyt.angstrom
+                            getattr(node, label).to("angstrom").round(2) * unyt.angstrom
                         )
                     )
                 else:
@@ -504,9 +465,7 @@ def return_labels_for_nodes(list_of_nodes, list_of_labels):
                 except AttributeError:
                     node.label = node.label + "\nNoneType"
                 if len(node.label) > 12:
-                    node.label = "".join(
-                        [line + "\n" for line in node.label.split()]
-                    )
+                    node.label = "".join([line + "\n" for line in node.label.split()])
         labels[node] = node.label
 
     return labels
@@ -574,15 +533,11 @@ def get_edges(networkx_graph, atom_name1, atom_name2):
             if (edge[0].name == atom_name1 and edge[1].name == atom_name2) or (
                 edge[0].name == atom_name2 and edge[1].name == atom_name1
             ):
-                selectable_dict = create_dict_of_labels_for_edges(
-                    selectable_dict, edge
-                )
+                selectable_dict = create_dict_of_labels_for_edges(selectable_dict, edge)
     elif atom_name1:
         for edge in list(networkx_graph.edges):
             if edge[0].name == atom_name1 or edge[1].name == atom_name1:
-                selectable_dict = create_dict_of_labels_for_edges(
-                    selectable_dict, edge
-                )
+                selectable_dict = create_dict_of_labels_for_edges(selectable_dict, edge)
     else:
         for nodes in list(networkx_graph.edges.items()):
             if nodes[1]["connection"].bond_type is None:
@@ -654,9 +609,7 @@ def report_bond_parameters(topology, edge):
     # return nicely printed bond parameters for a given edge.
     for bond in topology.bonds:
         try:
-            if bond.connection_members == edge[
-                0
-            ] or bond.connection_members == (
+            if bond.connection_members == edge[0] or bond.connection_members == (
                 edge[0][1],
                 edge[0][0],
             ):

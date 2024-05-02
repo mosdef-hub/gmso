@@ -180,9 +180,7 @@ class AtomType(ParametricPotential):
             charge=u.unyt_quantity(self.charge.value, self.charge.units),
             atomclass=self.atomclass,
             doi=self.doi,
-            overrides=(
-                set(o for o in self.overrides) if self.overrides else None
-            ),
+            overrides=(set(o for o in self.overrides) if self.overrides else None),
             description=self.description,
             definition=self.definition,
         )
@@ -201,9 +199,7 @@ class AtomType(ParametricPotential):
             and self.expression == other.expression
             and self.independent_variables == other.independent_variables
             and self.parameters.keys() == other.parameters.keys()
-            and unyt_compare(
-                self.parameters.values(), other.parameters.values()
-            )
+            and unyt_compare(self.parameters.values(), other.parameters.values())
             and self.charge == other.charge
             and self.atomclass == other.atomclass
             and self.mass == other.mass
@@ -253,12 +249,8 @@ class AtomType(ParametricPotential):
     def validate_charge(cls, charge):
         """Check to see that a charge is a unyt array of the right dimension."""
         if not isinstance(charge, u.unyt_array):
-            warnings.warn(
-                UNIT_WARNING_STRING.format("Charges", "elementary charge")
-            )
-            charge *= u.Unit(
-                "elementary_charge", registry=GMSO_UnitRegistry().reg
-            )
+            warnings.warn(UNIT_WARNING_STRING.format("Charges", "elementary charge"))
+            charge *= u.Unit("elementary_charge", registry=GMSO_UnitRegistry().reg)
         else:
             ensure_valid_dimensions(charge, u.elementary_charge)
 

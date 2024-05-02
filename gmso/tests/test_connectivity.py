@@ -142,8 +142,7 @@ class TestConnectivity(BaseTest):
         for idx_tuple in angle_indices:
             assert (
                 idx_tuple in indices["angles"]
-                or (idx_tuple[-1], idx_tuple[-2], idx_tuple[-3])
-                in indices["angles"]
+                or (idx_tuple[-1], idx_tuple[-2], idx_tuple[-3]) in indices["angles"]
             )
 
         assert len(indices["dihedrals"]) == 3
@@ -184,9 +183,7 @@ class TestConnectivity(BaseTest):
         ethane = mb.load("CC", smiles=True)
         ethane_top = from_mbuild(ethane)
         ethane_top.identify_connections()
-        ethane_pairs = generate_pairs_lists(
-            ethane_top, refer_from_scaling_factor=False
-        )
+        ethane_pairs = generate_pairs_lists(ethane_top, refer_from_scaling_factor=False)
         assert len(ethane_pairs["pairs14"]) == len(ethane_top.dihedrals) == 9
 
         # Cyclobutadiene with 16 dihedrals and 8 pairs (due to cyclic structure)

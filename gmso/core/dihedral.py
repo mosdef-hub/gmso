@@ -56,7 +56,7 @@ class Dihedral(Connection):
             **{
                 "dihedral_type": "dihedral_type_",
                 "restraint": "restraint_",
-            }
+            },
         )
     )
 

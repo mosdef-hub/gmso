@@ -63,9 +63,7 @@ class TestSubTopologyUtils(ParameterizationBaseTest):
                 bonds,
             )
             expected_members = {("C", "H"), ("C", "C"), ("H", "C")}
-            assert all(
-                b_member in expected_members for b_member in bond_members
-            )
+            assert all(b_member in expected_members for b_member in bond_members)
 
     def test_molecule_angles(self, top_from_mbuild):
         for molecule in top_from_mbuild.unique_site_labels("molecule"):
@@ -83,9 +81,7 @@ class TestSubTopologyUtils(ParameterizationBaseTest):
                 ("H", "C", "C"),
                 ("C", "C", "H"),
             }
-            assert all(
-                a_member in expected_members for a_member in angle_members
-            )
+            assert all(a_member in expected_members for a_member in angle_members)
 
     def test_molecule_dihedrals(self, top_from_mbuild):
         for molecule in top_from_mbuild.unique_site_labels("molecule"):
@@ -99,9 +95,7 @@ class TestSubTopologyUtils(ParameterizationBaseTest):
                 dihedrals,
             )
             expected_members = {("H", "C", "C", "H")}
-            assert all(
-                a_member in expected_members for a_member in dihedral_members
-            )
+            assert all(a_member in expected_members for a_member in dihedral_members)
 
     def test_molecule_impropers(self, top_from_mbuild):
         for molecule in top_from_mbuild.unique_site_labels("molecule"):
@@ -112,9 +106,7 @@ class TestSubTopologyUtils(ParameterizationBaseTest):
 
             improper_members = list(
                 map(
-                    lambda i: tuple(
-                        map(lambda s: s.name, i.connection_members)
-                    ),
+                    lambda i: tuple(map(lambda s: s.name, i.connection_members)),
                     impropers,
                 )
             )
@@ -124,9 +116,7 @@ class TestSubTopologyUtils(ParameterizationBaseTest):
                 ("C", "H", "H", "H"),
                 ("C", "H", "C", "H"),
             }
-            assert all(
-                a_member in expected_members for a_member in improper_members
-            )
+            assert all(a_member in expected_members for a_member in improper_members)
 
     def test_molecule_numbers(
         self, top_from_mbuild, top_from_parmed, top_from_typed_parmed

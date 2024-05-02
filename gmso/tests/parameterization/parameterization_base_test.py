@@ -25,9 +25,7 @@ class ParameterizationBaseTest(BaseTest):
 
     @pytest.fixture(scope="session")
     def fake_improper_ff_gmso(self, xml_loader):
-        return xml_loader.load(
-            get_path("fake_ethane_impropers.xml")
-        ).to_gmso_ff()
+        return xml_loader.load(get_path("fake_ethane_impropers.xml")).to_gmso_ff()
 
     @pytest.fixture(scope="session")
     def benzene_alkane_aa_ff_gmso(self, xml_loader):

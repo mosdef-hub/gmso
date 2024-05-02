@@ -44,8 +44,7 @@ def _validate_lengths(lengths):
     ):
         if lengths[0] > 0 and lengths[1] > 0:
             warnings.warn(
-                "A c value of 0 was passed. This will be "
-                "interpreted as a 2-D box."
+                "A c value of 0 was passed. This will be " "interpreted as a 2-D box."
             )
         else:
             raise ValueError(
@@ -203,9 +202,7 @@ class Box(object):
         if not isinstance(other, Box):
             return False
 
-        if not allclose_units(
-            self.lengths, other.lengths, rtol=1e-5, atol=1e-8
-        ):
+        if not allclose_units(self.lengths, other.lengths, rtol=1e-5, atol=1e-8):
             return False
 
         if not allclose_units(self.angles, other.angles, rtol=1e-5, atol=1e-8):

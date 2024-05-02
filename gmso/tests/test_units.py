@@ -21,19 +21,13 @@ class TestUnitHandling(BaseTest):
         assert hash(unyt_to_hashable(1 * u.nm)) == hash(
             unyt_to_hashable(10 * u.angstrom)
         )
-        assert hash(unyt_to_hashable(1 * u.kg)) == hash(
-            unyt_to_hashable(1000 * u.g)
-        )
+        assert hash(unyt_to_hashable(1 * u.kg)) == hash(unyt_to_hashable(1000 * u.g))
 
-        assert hash(unyt_to_hashable(1 * u.nm)) != hash(
-            unyt_to_hashable(1.01 * u.nm)
-        )
+        assert hash(unyt_to_hashable(1 * u.nm)) != hash(unyt_to_hashable(1.01 * u.nm))
         assert hash(unyt_to_hashable(1 * u.nm)) != hash(
             unyt_to_hashable(1.01 * u.second)
         )
-        assert hash(unyt_to_hashable(1 * u.nm)) != hash(
-            unyt_to_hashable([1, 1] * u.nm)
-        )
+        assert hash(unyt_to_hashable(1 * u.nm)) != hash(unyt_to_hashable([1, 1] * u.nm))
 
     """
     Utilities to make
@@ -85,16 +79,12 @@ class TestUnitHandling(BaseTest):
         real_usys = LAMMPS_UnitSystems("real")
         parameter = 1 * u.kJ / u.nm * u.g
         # Note: parameter cannot divide out mass or time from energy
-        out_parameter = real_usys._dimensions_to_energy(
-            parameter.units.dimensions
-        )
+        out_parameter = real_usys._dimensions_to_energy(parameter.units.dimensions)
         assert str(out_parameter) == "(energy)*(mass)/(length)"
 
     def test_dimensions_to_charge(self, real_usys):
         parameter = 1 * u.coulomb / u.nm
-        out_parameter = real_usys._dimensions_to_charge(
-            parameter.units.dimensions
-        )
+        out_parameter = real_usys._dimensions_to_charge(parameter.units.dimensions)
         assert str(out_parameter) == "(charge)/(length)"
 
     def test_dimensions_thermal(self, real_usys):
@@ -144,9 +134,7 @@ class TestUnitHandling(BaseTest):
             else:
                 thermalize = False
             dimsStr = str(
-                usys._get_output_dimensions(
-                    parameter.units.dimensions, thermalize
-                )
+                usys._get_output_dimensions(parameter.units.dimensions, thermalize)
             )
             remove_parStr = dimsStr.translate({ord(i): None for i in "()"})
             assert remove_parStr == str(dim)
@@ -155,9 +143,7 @@ class TestUnitHandling(BaseTest):
         parameter = typed_ethane.sites[0].atom_type.parameters["epsilon"]
         assert real_usys.convert_parameter(parameter) == "0.066"
         real_usys.usystem["energy"] = u.kJ / u.mol
-        assert (
-            real_usys.convert_parameter(parameter, n_decimals=6) == "0.276144"
-        )
+        assert real_usys.convert_parameter(parameter, n_decimals=6) == "0.276144"
         usys = LAMMPS_UnitSystems("real")
         parameter = typed_ethane.bonds[0].bond_type.parameters["k"]
         assert usys.convert_parameter(parameter, n_decimals=0) == "680"
@@ -170,13 +156,10 @@ class TestUnitHandling(BaseTest):
         from gmso.utils.units import get_parameter_dimension
 
         assert (
-            get_parameter_dimension(1 * u.kJ / u.mol / u.nm, "(energy)")
-            == u.kJ / u.mol
+            get_parameter_dimension(1 * u.kJ / u.mol / u.nm, "(energy)") == u.kJ / u.mol
         )
         assert get_parameter_dimension(1 * u.kJ / u.nm, "(length)") == u.nm
-        assert (
-            get_parameter_dimension(1 * u.kJ / u.mol / u.nm, "(length)") == u.nm
-        )
+        assert get_parameter_dimension(1 * u.kJ / u.mol / u.nm, "(length)") == u.nm
 
     def test_convert_to_unit_system(self):
         # TODO: discuss if we would want a function to convert a whole
@@ -193,19 +176,15 @@ class TestUnitHandling(BaseTest):
         # write out unit styles from ljUnitSystem and a dictonary of non-dimesnional values
         lj_usys = LAMMPS_UnitSystems("lj")
         bond_parameter = typed_ethane.bonds[0].bond_type.parameters["k"]
-        errorStr = (
-            "Missing conversion_factorDict for a dimensionless unit system."
-        )
+        errorStr = "Missing conversion_factorDict for a dimensionless unit system."
         with pytest.raises(ValueError, match=errorStr):
-            lj_usys.convert_parameter(
-                bond_parameter, conversion_factorDict=None
-            )
+            lj_usys.convert_parameter(bond_parameter, conversion_factorDict=None)
         cfactorDict = {"energy": 0.276144 * u.kJ / u.mol, "length": 0.35 * u.nm}
-        errorStr = f"Missing dimensionless constant in conversion_factorDict {cfactorDict}"
+        errorStr = (
+            f"Missing dimensionless constant in conversion_factorDict {cfactorDict}"
+        )
         with pytest.raises(ValueError, match=re.escape(errorStr)):
-            lj_usys.convert_parameter(
-                bond_parameter, conversion_factorDict=cfactorDict
-            )
+            lj_usys.convert_parameter(bond_parameter, conversion_factorDict=cfactorDict)
         cfactorDict["charge"] = 1 * u.coulomb
         cfactorDict["mass"] = 12.011 * u.amu
         outStr = lj_usys.convert_parameter(

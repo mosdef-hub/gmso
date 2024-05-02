@@ -68,19 +68,13 @@ class TestMol2(BaseTest):
 
         top = Topology.load(get_fn("benzene_ua.mol2"), site_type="lj")
         assert np.all(
-            [
-                site.residue[0] == "BEN1"
-                for site in top.iter_sites_by_residue("BEN1")
-            ]
+            [site.residue[0] == "BEN1" for site in top.iter_sites_by_residue("BEN1")]
         )
         assert np.all(
             [site.residue[1] == 1 for site in top.iter_sites_by_residue("BEN1")]
         )
         assert np.all(
-            [
-                site.residue[0] == "BEN2"
-                for site in top.iter_sites_by_residue("BEN2")
-            ]
+            [site.residue[0] == "BEN2" for site in top.iter_sites_by_residue("BEN2")]
         )
         assert np.all(
             [site.residue[1] == 2 for site in top.iter_sites_by_residue("BEN2")]
@@ -102,9 +96,7 @@ class TestMol2(BaseTest):
             )
 
     def test_wrong_path(self):
-        with pytest.raises(
-            OSError, match=r"Provided path to file that does not exist"
-        ):
+        with pytest.raises(OSError, match=r"Provided path to file that does not exist"):
             Topology.load("not_a_file.mol2")
         top = Topology.load(get_fn("ethanegro.mol2"))
         assert len(top.sites) == 0
@@ -138,21 +130,13 @@ class TestMol2(BaseTest):
 
     def test_mol2_residues(self):
         top = Topology.load(get_fn("parmed.mol2"))
-        assert np.all(
-            np.array([site.residue.name for site in top.sites]) == "RES"
-        )
-        assert np.all(
-            np.array([site.residue.number for site in top.sites]) == 1
-        )
+        assert np.all(np.array([site.residue.name for site in top.sites]) == "RES")
+        assert np.all(np.array([site.residue.number for site in top.sites]) == 1)
 
     def test_mol2_molecules(self):
         top = Topology.load(get_fn("methane.mol2"))
-        assert np.all(
-            np.array([site.molecule.name for site in top.sites]) == "MET"
-        )
-        assert np.all(
-            np.array([site.molecule.number for site in top.sites]) == 0
-        )
+        assert np.all(np.array([site.molecule.name for site in top.sites]) == "MET")
+        assert np.all(np.array([site.molecule.number for site in top.sites]) == 0)
 
     def test_mol2_group(self):
         # Is there a place to read from mol2 file?

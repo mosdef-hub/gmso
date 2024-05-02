@@ -134,9 +134,7 @@ class TestGro(BaseTest):
 
     def test_res_naming(self):
         top = Topology()
-        ref = Atom(
-            name="mol_atom", position=[0.0, 0.0, 0.0], molecule=("test", 0)
-        )
+        ref = Atom(name="mol_atom", position=[0.0, 0.0, 0.0], molecule=("test", 0))
         top.add_site(ref)
 
         for i in range(0, 2):
@@ -152,22 +150,14 @@ class TestGro(BaseTest):
         assert nums == {0, 1}
 
         top = Topology()
-        ref = Atom(
-            name="mol_atom", position=[0.0, 0.0, 0.0], molecule=("test", 0)
-        )
+        ref = Atom(name="mol_atom", position=[0.0, 0.0, 0.0], molecule=("test", 0))
         top.add_site(ref)
-        ref = Atom(
-            name="mol_atom", position=[0.0, 0.0, 0.0], molecule=("test", 0)
-        )
+        ref = Atom(name="mol_atom", position=[0.0, 0.0, 0.0], molecule=("test", 0))
         top.add_site(ref)
 
-        ref = Atom(
-            name="mol_atom", position=[0.0, 0.0, 0.0], molecule=("test", 1)
-        )
+        ref = Atom(name="mol_atom", position=[0.0, 0.0, 0.0], molecule=("test", 1))
         top.add_site(ref)
-        ref = Atom(
-            name="mol_atom", position=[0.0, 0.0, 0.0], molecule=("test", 1)
-        )
+        ref = Atom(name="mol_atom", position=[0.0, 0.0, 0.0], molecule=("test", 1))
         top.add_site(ref)
 
         for i in range(0, 2):
@@ -182,13 +172,9 @@ class TestGro(BaseTest):
         assert nums == {0, 1, 2}
 
         top = Topology()
-        ref = Atom(
-            name="mol_atom", position=[0.0, 0.0, 0.0], molecule=("test", 0)
-        )
+        ref = Atom(name="mol_atom", position=[0.0, 0.0, 0.0], molecule=("test", 0))
         top.add_site(ref)
-        ref = Atom(
-            name="mol_atom", position=[0.0, 0.0, 0.0], molecule=("test", 0)
-        )
+        ref = Atom(name="mol_atom", position=[0.0, 0.0, 0.0], molecule=("test", 0))
         top.add_site(ref)
 
         ref = Atom(name="resA", position=[0.0, 0.0, 0.0], residue=("resA", 0))
@@ -222,9 +208,7 @@ class TestGro(BaseTest):
         ref = Topology.load(get_path(refs[fixture]))
 
         assert len(top.sites) == len(ref.sites)
-        assert top.unique_site_labels("molecule") == ref.unique_site_labels(
-            "molecule"
-        )
+        assert top.unique_site_labels("molecule") == ref.unique_site_labels("molecule")
 
         if top == "benzene_ua_box":
             for site in top.sites:

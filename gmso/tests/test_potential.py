@@ -162,9 +162,7 @@ class TestPotential(BaseTest):
         )
 
         with pytest.raises(ValueError):
-            potential.set_expression(
-                parameters={"aa": 4.0 * u.g, "bb": 4.0 * u.m}
-            )
+            potential.set_expression(parameters={"aa": 4.0 * u.g, "bb": 4.0 * u.m})
 
     def test_set_params_partial(self):
         potential = ParametricPotential(
@@ -224,8 +222,7 @@ class TestPotential(BaseTest):
 
         assert harmonic_potential.name == harmonic_potential_from_template.name
         assert (
-            harmonic_potential.expression
-            == harmonic_potential_from_template.expression
+            harmonic_potential.expression == harmonic_potential_from_template.expression
         )
         assert (
             harmonic_potential.independent_variables
@@ -245,8 +242,8 @@ class TestPotential(BaseTest):
         }
 
         with pytest.raises(AssertionError):
-            harmonic_potential_from_template = (
-                ParametricPotential.from_template(template, params)
+            harmonic_potential_from_template = ParametricPotential.from_template(
+                template, params
             )
 
     def test_bondtype_clone(self):
@@ -277,9 +274,7 @@ class TestPotential(BaseTest):
         assert len(top.bond_types) == 2
 
         btype_dict = btype.model_dump(exclude={"topology", "set_ref"})
-        btype_clone_dict = btype_clone.model_dump(
-            exclude={"topology", "set_ref"}
-        )
+        btype_clone_dict = btype_clone.model_dump(exclude={"topology", "set_ref"})
 
         for key, value in btype_dict.items():
             cloned = btype_clone_dict[key]

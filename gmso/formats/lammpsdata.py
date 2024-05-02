@@ -120,9 +120,7 @@ def write_lammpsdata(
             )
         )
     if unit_style != "lj" and lj_cfactorsDict:
-        raise ValueError(
-            "lj_cfactorsDict argument is only used if unit_style is lj."
-        )
+        raise ValueError("lj_cfactorsDict argument is only used if unit_style is lj.")
     base_unyts = LAMMPS_UnitSystems(unit_style)
     default_parameterMaps = {  # TODO: sites are not checked currently because gmso
         # doesn't store pair potential eqn the same way as the connections.
@@ -177,9 +175,7 @@ def write_lammpsdata(
                     source_factor, default_val_from_topology
                 )
 
-    reindex_molecules(
-        top
-    )  # reset the topology molecule index to match with lammps
+    reindex_molecules(top)  # reset the topology molecule index to match with lammps
     path = Path(filename)
     if not path.parent.exists():
         msg = "Provided path to file that does not exist"
@@ -325,9 +321,7 @@ def get_units(base_unyts, dimension):
         return u.dimensionless
 
     if dimension == "angle_eq":
-        return (
-            u.degree
-        )  # LAMMPS specifies different units for some angles, such as equilibrium angles
+        return u.degree  # LAMMPS specifies different units for some angles, such as equilibrium angles
 
     return u.Unit(base_unyts.usystem[dimension], registry=base_unyts.reg)
 
@@ -359,8 +353,7 @@ def _get_connection(filename, topology, base_unyts, connection_type):
                 * get_units(base_unyts, "energy")
                 / get_units(base_unyts, "length") ** 2
                 * 2,
-                "r_eq": float(line.split()[2])
-                * get_units(base_unyts, "length"),
+                "r_eq": float(line.split()[2]) * get_units(base_unyts, "length"),
             }
             name = template_potential.name
             expression = template_potential.expression
@@ -379,8 +372,7 @@ def _get_connection(filename, topology, base_unyts, connection_type):
                 * get_units(base_unyts, "energy")
                 / get_units(base_unyts, "angle") ** 2
                 * 2,
-                "theta_eq": float(line.split()[2])
-                * get_units(base_unyts, "angle_eq"),
+                "theta_eq": float(line.split()[2]) * get_units(base_unyts, "angle_eq"),
             }
             name = template_potential.name
             expression = template_potential.expression
@@ -415,8 +407,7 @@ def _get_connection(filename, topology, base_unyts, connection_type):
                 * get_units(base_unyts, "energy")
                 / get_units(base_unyts, "energy") ** 2
                 * 2,
-                "phi_eq": float(line.split()[3])
-                * get_units(base_unyts, "angle_eq"),
+                "phi_eq": float(line.split()[3]) * get_units(base_unyts, "angle_eq"),
             }
             name = template_potential.name
             expression = template_potential.expression
@@ -436,9 +427,7 @@ def _get_connection(filename, topology, base_unyts, connection_type):
                 n_connections = int(line.split()[0])
             if connection_type.capitalize() + "s" in line.split():
                 break
-    connection_lines = open(filename, "r").readlines()[
-        i + 2 : i + n_connections + 2
-    ]
+    connection_lines = open(filename, "r").readlines()[i + 2 : i + n_connections + 2]
     # Determine number of sites to generate
     if connection_type == "bond":
         n_sites = 2
@@ -491,9 +480,7 @@ def _get_atoms(filename, topology, base_unyts, type_list):
     for line in atom_lines:
         atom_line = line.split()
         atom_type = atom_line[2]
-        charge = u.unyt_quantity(
-            float(atom_line[3]), get_units(base_unyts, "charge")
-        )
+        charge = u.unyt_quantity(float(atom_line[3]), get_units(base_unyts, "charge"))
         coord = u.unyt_array(
             [float(atom_line[4]), float(atom_line[5]), float(atom_line[6])]
         ) * get_units(base_unyts, "length")
@@ -501,9 +488,7 @@ def _get_atoms(filename, topology, base_unyts, type_list):
             charge=charge,
             position=coord,
             atom_type=copy.deepcopy(type_list[int(atom_type) - 1]),  # 0-index
-            molecule=MoleculeType(
-                atom_line[1], int(atom_line[1]) - 1
-            ),  # 0-index
+            molecule=MoleculeType(atom_line[1], int(atom_line[1]) - 1),  # 0-index
         )
         element = element_by_mass(site.atom_type.mass.value)
         site.name = element.name if element else site.atom_type.name
@@ -555,9 +540,7 @@ def _get_box_coordinates(filename, base_unyts, topology):
 
             # Box Information
             lengths = u.unyt_array([a, b, c], get_units(base_unyts, "length"))
-            angles = u.unyt_array(
-                [alpha, beta, gamma], get_units(base_unyts, "angle")
-            )
+            angles = u.unyt_array([alpha, beta, gamma], get_units(base_unyts, "angle"))
             topology.box = Box(lengths, angles)
         else:
             # Box Information
@@ -598,12 +581,12 @@ def _get_ff_information(filename, base_unyts, topology):
     pair_lines = open(filename, "r").readlines()[i + 2 : i + n_atomtypes + 2]
     for i, pair in enumerate(pair_lines):
         if len(pair.split()) == 3:
-            type_list[i].parameters["sigma"] = float(
-                pair.split()[2]
-            ) * get_units(base_unyts, "length")
-            type_list[i].parameters["epsilon"] = float(
-                pair.split()[1]
-            ) * get_units(base_unyts, "energy")
+            type_list[i].parameters["sigma"] = float(pair.split()[2]) * get_units(
+                base_unyts, "length"
+            )
+            type_list[i].parameters["epsilon"] = float(pair.split()[1]) * get_units(
+                base_unyts, "energy"
+            )
         elif len(pair.split()) == 4:
             warn_ljcutBool = True
 
@@ -659,11 +642,7 @@ def _validate_unit_compatibility(top, base_unyts):
         ]
         for parameter, name in parametersList:
             assert np.isclose(
-                float(
-                    base_unyts.convert_parameter(
-                        parameter, n_decimals=6, name=name
-                    )
-                ),
+                float(base_unyts.convert_parameter(parameter, n_decimals=6, name=name)),
                 parameter.value,
                 atol=1e-3,
             ), f"Units System {base_unyts.usystem} is not compatible with {atype} with value {parameter}"
@@ -682,13 +661,9 @@ def _write_header(out_file, top, atom_style, dihedral_parser):
     if atom_style in ["full", "molecular"]:
         out_file.write("{:d} bonds\n".format(top.n_bonds))
         out_file.write("{:d} angles\n".format(top.n_angles))
-        if dihedral_parser in [
-            parse_opls_style_dihedral
-        ]:  # no layered dihedrals
+        if dihedral_parser in [parse_opls_style_dihedral]:  # no layered dihedrals
             n_dihedrals = top.n_dihedrals
-        elif dihedral_parser in [
-            parse_charmm_style_dihedral
-        ]:  # layered dihedrals
+        elif dihedral_parser in [parse_charmm_style_dihedral]:  # layered dihedrals
             n_dihedrals = 0
             for dihedral in top.dihedrals:
                 param = next(iter(dihedral.dihedral_type.parameters.values()))
@@ -702,9 +677,7 @@ def _write_header(out_file, top, atom_style, dihedral_parser):
         out_file.write("{:d} impropers\n\n".format(top.n_impropers))
 
     # TODO: allow users to specify filter_by syntax
-    out_file.write(
-        "{:d} atom types\n".format(len(top.atom_types(filter_by=pfilter)))
-    )
+    out_file.write("{:d} atom types\n".format(len(top.atom_types(filter_by=pfilter))))
     if top.n_bonds > 0 and atom_style in ["full", "molecular"]:
         out_file.write(
             "{:d} bond types\n".format(len(top.bond_types(filter_by=pfilter)))
@@ -731,9 +704,7 @@ def _write_header(out_file, top, atom_style, dihedral_parser):
         out_file.write("{:d} dihedral types\n".format(ntypes))
     if top.n_impropers > 0 and atom_style in ["full", "molecular"]:
         out_file.write(
-            "{:d} improper types\n".format(
-                len(top.improper_types(filter_by=pfilter))
-            )
+            "{:d} improper types\n".format(len(top.improper_types(filter_by=pfilter)))
         )
 
     out_file.write("\n")
@@ -748,9 +719,7 @@ def _write_box(out_file, top, base_unyts, cfactorsDict):
         atol=1e-8,
     ):
         box_lengths = [
-            float(
-                base_unyts.convert_parameter(top.box.lengths[i], cfactorsDict)
-            )
+            float(base_unyts.convert_parameter(top.box.lengths[i], cfactorsDict))
             for i in range(3)
         ]
         for i, dim in enumerate(["x", "y", "z"]):
@@ -760,9 +729,7 @@ def _write_box(out_file, top, base_unyts, cfactorsDict):
         out_file.write("0.000000 0.000000 0.000000 xy xz yz\n")
     else:
         box_lengths = [
-            float(
-                base_unyts.convert_parameter(top.box.lengths[i], cfactorsDict)
-            )
+            float(base_unyts.convert_parameter(top.box.lengths[i], cfactorsDict))
             for i in range(3)
         ]
         vectors = (box_lengths * top.box.get_unit_vectors().T).T
@@ -794,9 +761,7 @@ def _write_box(out_file, top, base_unyts, cfactorsDict):
             "{0:.6f} {1:.6f} zlo zhi\n".format(zlo_bound.value, zhi_bound.value)
         )
         out_file.write(
-            "{0:.6f} {1:.6f} {2:.6f} xy xz yz\n".format(
-                xy.value, xz.value, yz.value
-            )
+            "{0:.6f} {1:.6f} {2:.6f} xy xz yz\n".format(xy.value, xz.value, yz.value)
         )
 
 
@@ -834,18 +799,14 @@ def _write_pairtypes(out_file, top, base_unyts, cfactorsDict):
         for key in nb_style_orderTuple
     ]
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
-    sorted_atomtypes = sorted(
-        top.atom_types(filter_by=pfilter), key=lambda x: x.name
-    )
+    sorted_atomtypes = sorted(top.atom_types(filter_by=pfilter), key=lambda x: x.name)
     for idx, param in enumerate(sorted_atomtypes):
         out_file.write(
             "{}\t{:7}\t\t{:7}\t\t# {}\n".format(
                 idx + 1,
                 *[
                     base_unyts.convert_parameter(
-                        convert_kelvin_to_energy_units(
-                            param.parameters[key], "kJ"
-                        ),
+                        convert_kelvin_to_energy_units(param.parameters[key], "kJ"),
                         cfactorsDict,
                         n_decimals=5,
                     )
@@ -875,17 +836,13 @@ def _write_bondtypes(out_file, top, base_unyts, cfactorsDict):
     bond_types = list(top.bond_types(filter_by=pfilter))
     bond_types.sort(key=lambda x: sorted(x.member_types))
     for idx, bond_type in enumerate(bond_types):
-        member_types = sorted(
-            [bond_type.member_types[0], bond_type.member_types[1]]
-        )
+        member_types = sorted([bond_type.member_types[0], bond_type.member_types[1]])
         out_file.write(
             "{}\t{:7}\t{:7}\t\t# {}\t{}\n".format(
                 idx + 1,
                 *[
                     base_unyts.convert_parameter(
-                        convert_kelvin_to_energy_units(
-                            bond_type.parameters[key], "kJ"
-                        ),
+                        convert_kelvin_to_energy_units(bond_type.parameters[key], "kJ"),
                         cfactorsDict,
                         n_decimals=6,
                     )
@@ -909,9 +866,7 @@ def _write_angletypes(out_file, top, base_unyts, cfactorsDict):
     param_labels = [
         write_out_parameter_and_units(
             key,
-            convert_kelvin_to_energy_units(
-                test_angletype.parameters[key], "kJ"
-            ),
+            convert_kelvin_to_energy_units(test_angletype.parameters[key], "kJ"),
             base_unyts,
         )
         for key in angle_style_orderTuple
@@ -950,9 +905,7 @@ def _write_dihedraltypes(out_file, top, base_unyts, parser, cfactorsDict):
     """Write out dihedrals to LAMMPS file."""
     test_dihedraltype = top.dihedrals[0].dihedral_type
     out_file.write(f"\nDihedral Coeffs #{test_dihedraltype.name}\n")
-    param_labels0 = parser(
-        test_dihedraltype
-    )  # tuple (paramsList, params_namesList)
+    param_labels0 = parser(test_dihedraltype)  # tuple (paramsList, params_namesList)
 
     if isinstance(
         param_labels0[0][0], list
@@ -973,8 +926,7 @@ def _write_dihedraltypes(out_file, top, base_unyts, parser, cfactorsDict):
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
     indexList = list(top.dihedral_types(filter_by=pfilter))
     index_membersList = [
-        (dihedral_type, sort_by_types(dihedral_type))
-        for dihedral_type in indexList
+        (dihedral_type, sort_by_types(dihedral_type)) for dihedral_type in indexList
     ]
     index_membersList.sort(key=lambda x: ([x[1][i] for i in [1, 2, 0, 3]]))
     # handle variable lengths for parameters
@@ -999,9 +951,7 @@ def _write_dihedraltypes(out_file, top, base_unyts, parser, cfactorsDict):
                             n_decimals=6,
                             name=parameterStr,
                         )
-                        for parameter, parameterStr in zip(
-                            *parser(dihedral_type)
-                        )
+                        for parameter, parameterStr in zip(*parser(dihedral_type))
                     ],
                     *members,
                 )
@@ -1016,9 +966,7 @@ def _write_dihedraltypes(out_file, top, base_unyts, parser, cfactorsDict):
             parameter_termList, parameterStrList = parser(dihedral_type)
             variable_msg = "{:8}\t" * len(parameterStrList)
             full_msg = base_msg + variable_msg + end_msg
-            for (
-                parameter_terms
-            ) in parameter_termList:  # list of params on each line
+            for parameter_terms in parameter_termList:  # list of params on each line
                 out_file.write(
                     full_msg.format(
                         idx + 1,
@@ -1070,9 +1018,7 @@ def _write_impropertypes(out_file, top, base_unyts, parser, cfactorsDict):
     """Write out impropers to LAMMPS file."""
     test_impropertype = top.impropers[0].improper_type
     out_file.write(f"\nImproper Coeffs #{test_impropertype.name}\n")
-    param_labels0 = parser(
-        test_impropertype
-    )  # tuple (paramsList, params_namesList)
+    param_labels0 = parser(test_impropertype)  # tuple (paramsList, params_namesList)
 
     if isinstance(
         param_labels0[0][0], list
@@ -1093,8 +1039,7 @@ def _write_impropertypes(out_file, top, base_unyts, parser, cfactorsDict):
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
     indexList = list(top.improper_types(filter_by=pfilter))
     index_membersList = [
-        (improper_type, sort_by_types(improper_type))
-        for improper_type in indexList
+        (improper_type, sort_by_types(improper_type)) for improper_type in indexList
     ]
     index_membersList.sort(key=lambda x: ([x[1][i] for i in [0, 1, 2, 3]]))
     # handle variable lengths for parameters
@@ -1121,9 +1066,7 @@ def _write_impropertypes(out_file, top, base_unyts, parser, cfactorsDict):
                             n_decimals=ndecimalsDict[parameterStr],
                             name=parameterStr,
                         )
-                        for parameter, parameterStr in zip(
-                            *parser(improper_type)
-                        )
+                        for parameter, parameterStr in zip(*parser(improper_type))
                     ],
                     *members,
                 )
@@ -1156,11 +1099,11 @@ def _write_site_data(out_file, top, atom_style, base_unyts, cfactorsDict):
     if atom_style == "atomic":
         atom_line = "{index:d}\t{type_index:d}\t{x:.8}\t{y:.8}\t{z:.8}\n"
     elif atom_style == "charge":
-        atom_line = (
-            "{index:d}\t{type_index:d}\t{charge:.8}\t{x:.8}\t{y:.8}\t{z:.8}\n"
-        )
+        atom_line = "{index:d}\t{type_index:d}\t{charge:.8}\t{x:.8}\t{y:.8}\t{z:.8}\n"
     elif atom_style == "molecular":
-        atom_line = "{index:d}\t{moleculeid:d}\t{type_index:d}\t{x:.8}\t{y:.8}\t{z:.8}\n"
+        atom_line = (
+            "{index:d}\t{moleculeid:d}\t{type_index:d}\t{x:.8}\t{y:.8}\t{z:.8}\n"
+        )
     elif atom_style == "full":
         atom_line = "{index:d}\t{moleculeid:d}\t{type_index:d}\t{charge:.8}\t{x:.8}\t{y:.8}\t{z:.8}\n"
 
@@ -1227,9 +1170,7 @@ def _write_conn_data(out_file, top, connStr, sorted_typesList):
         ]
         for index in indexList:
             typeStr = f"{i+1:<6d}\t{index+1:<6d}\t"
-            sorted_membersList = sort_connection_members(
-                conn, sort_by="index", top=top
-            )
+            sorted_membersList = sort_connection_members(conn, sort_by="index", top=top)
             indexStr = "\t".join(
                 [
                     str(top.get_index(member) + 1).ljust(6)

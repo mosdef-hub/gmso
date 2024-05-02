@@ -62,9 +62,7 @@ class BaseTest:
     def benzene_ua_box(self):
         compound = mb.load(get_fn("benzene_ua.mol2"))
         compound.children[0].name = "BenzeneUA"
-        compound_box = mb.packing.fill_box(
-            compound=compound, n_compounds=5, density=1
-        )
+        compound_box = mb.packing.fill_box(compound=compound, n_compounds=5, density=1)
         top = from_mbuild(compound_box)
         top.identify_connections()
         return top
@@ -88,9 +86,7 @@ class BaseTest:
     def benzene_aa_box(self):
         compound = mb.load(get_fn("benzene.mol2"))
         compound.children[0].name = "BenzeneAA"
-        compound_box = mb.packing.fill_box(
-            compound=compound, n_compounds=5, density=1
-        )
+        compound_box = mb.packing.fill_box(compound=compound, n_compounds=5, density=1)
         top = from_mbuild(compound_box)
         top.identify_connections()
         return top
@@ -424,9 +420,9 @@ class BaseTest:
                 return False
             if conn1.name != conn2.name:
                 return False
-            if getattr(
-                conn1, connection_types_attrs_map[type(conn1)]
-            ) != getattr(conn2, connection_types_attrs_map[type(conn2)]):
+            if getattr(conn1, connection_types_attrs_map[type(conn1)]) != getattr(
+                conn2, connection_types_attrs_map[type(conn2)]
+            ):
                 return False
             return True
 
@@ -670,12 +666,8 @@ class BaseTest:
     @pytest.fixture
     def parmed_benzene(self):
         untyped_benzene = mb.load(get_fn("benzene.mol2"))
-        ff_improper = foyer.Forcefield(
-            forcefield_files=get_fn("improper_dihedral.xml")
-        )
-        benzene = ff_improper.apply(
-            untyped_benzene, assert_dihedral_params=False
-        )
+        ff_improper = foyer.Forcefield(forcefield_files=get_fn("improper_dihedral.xml"))
+        benzene = ff_improper.apply(untyped_benzene, assert_dihedral_params=False)
         return benzene
 
     @pytest.fixture

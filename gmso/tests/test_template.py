@@ -82,9 +82,7 @@ class TestTemplate(BaseTest):
 
         with pytest.raises(
             MissingParameterError,
-            match=re.escape(
-                "Parameter 'b' missing from the provided parameters ['a']"
-            ),
+            match=re.escape("Parameter 'b' missing from the provided parameters ['a']"),
         ):
             template.assert_can_parameterize_with(
                 {

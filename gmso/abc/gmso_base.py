@@ -54,9 +54,7 @@ class GMSOBase(BaseModel, ABC):
         if "exclude" in kwargs:
             for term in kwargs["exclude"]:
                 if term in self.model_config["alias_to_fields"]:
-                    additional_excludes.add(
-                        self.model_config["alias_to_fields"][term]
-                    )
+                    additional_excludes.add(self.model_config["alias_to_fields"][term])
             kwargs["exclude"] = kwargs["exclude"].union(additional_excludes)
         super_dict = super(GMSOBase, self).model_dump(**kwargs)
         return super_dict
@@ -68,9 +66,7 @@ class GMSOBase(BaseModel, ABC):
         if "exclude" in kwargs:
             for term in kwargs["exclude"]:
                 if term in self.model_config["alias_to_fields"]:
-                    additional_excludes.add(
-                        self.model_config["alias_to_fields"][term]
-                    )
+                    additional_excludes.add(self.model_config["alias_to_fields"][term])
             kwargs["exclude"] = kwargs["exclude"].union(additional_excludes)
         super_dict = super(GMSOBase, self).model_dump_json(**kwargs)
 

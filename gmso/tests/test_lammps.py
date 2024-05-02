@@ -73,15 +73,11 @@ def compare_lammps_files(fn1, fn2, skip_linesList=[], offsets=None):
 
 
 class TestLammpsWriter(BaseTest):
-    @pytest.mark.parametrize(
-        "fname", ["data.lammps", "data.data", "data.lammpsdata"]
-    )
+    @pytest.mark.parametrize("fname", ["data.lammps", "data.data", "data.lammpsdata"])
     def test_write_lammps(self, fname, typed_ar_system):
         typed_ar_system.save(fname)
 
-    def test_ethane_lammps_conversion(
-        self, typed_ethane, are_equivalent_topologies
-    ):
+    def test_ethane_lammps_conversion(self, typed_ethane, are_equivalent_topologies):
         typed_ethane.save("ethane.lammps")
         read_top = Topology.load("ethane.lammps")
         assert are_equivalent_topologies(read_top, typed_ethane)
@@ -120,9 +116,7 @@ class TestLammpsWriter(BaseTest):
         read = gmso.Topology.load(filename)
         charge = [i.charge for i in read.atom_types]
 
-        assert_allclose_units(
-            charge, u.unyt_array(0, u.C), rtol=1e-5, atol=1e-8
-        )
+        assert_allclose_units(charge, u.unyt_array(0, u.C), rtol=1e-5, atol=1e-8)
 
     def test_read_sigma(self, filename=get_path("data.lammps")):
         read = gmso.Topology.load(filename)
@@ -219,9 +213,7 @@ class TestLammpsWriter(BaseTest):
     def test_read_angle_params(self, typed_ethane_opls):
         typed_ethane_opls.save("ethane.lammps")
         read = gmso.Topology.load("ethane.lammps")
-        angle_params = [
-            i.parameters for i in read.angle_types(filter_by=pfilter)
-        ]
+        angle_params = [i.parameters for i in read.angle_types(filter_by=pfilter)]
 
         assert_allclose_units(
             angle_params[0]["k"],
@@ -300,12 +292,8 @@ class TestLammpsWriter(BaseTest):
             offsets=[[[1, 1], ["none", "none"]], [["none", "none"]]],
         )
 
-    @pytest.mark.parametrize(
-        "atom_style", ["atomic", "charge", "molecular", "full"]
-    )
-    def test_lammps_vs_parmed_by_styles(
-        self, atom_style, typed_ethane, parmed_ethane
-    ):
+    @pytest.mark.parametrize("atom_style", ["atomic", "charge", "molecular", "full"])
+    def test_lammps_vs_parmed_by_styles(self, atom_style, typed_ethane, parmed_ethane):
         """Test all support styles in lammps writer.
         _______References_______
         See https://docs.lammps.org/atom_style.html for more info.
@@ -446,17 +434,9 @@ class TestLammpsWriter(BaseTest):
         angle_unit = get_units(base_unyts, "angle_eq")
         length_unit = get_units(base_unyts, "length")
         charge_unit = get_units(base_unyts, "charge")
-        assert (
-            real_top.dihedrals[0].dihedral_type.parameters["k1"].units
-            == energy_unit
-        )
-        assert (
-            real_top.angles[0].angle_type.parameters["theta_eq"].units
-            == angle_unit
-        )
-        assert (
-            real_top.bonds[0].bond_type.parameters["r_eq"].units == length_unit
-        )
+        assert real_top.dihedrals[0].dihedral_type.parameters["k1"].units == energy_unit
+        assert real_top.angles[0].angle_type.parameters["theta_eq"].units == angle_unit
+        assert real_top.bonds[0].bond_type.parameters["r_eq"].units == length_unit
         assert real_top.sites[0].charge.units == charge_unit
         if unit_style == "lj":
             largest_eps = max(
@@ -468,11 +448,7 @@ class TestLammpsWriter(BaseTest):
                 )
             )
             largest_sig = max(
-                list(
-                    map(
-                        lambda x: x.parameters["sigma"], typed_ethane.atom_types
-                    )
-                )
+                list(map(lambda x: x.parameters["sigma"], typed_ethane.atom_types))
             )
             assert_allclose_units(
                 real_top.dihedrals[0].dihedral_type.parameters["k1"],
@@ -490,10 +466,7 @@ class TestLammpsWriter(BaseTest):
             )
             assert_allclose_units(
                 real_top.bonds[0].bond_type.parameters["r_eq"],
-                (
-                    typed_ethane.bonds[0].bond_type.parameters["r_eq"]
-                    / largest_sig
-                ),
+                (typed_ethane.bonds[0].bond_type.parameters["r_eq"] / largest_sig),
                 rtol=1e-5,
                 atol=1e-8,
             )
@@ -507,9 +480,7 @@ class TestLammpsWriter(BaseTest):
         with pytest.raises(AttributeError):
             missing_bonds_top.save("e.lammps")
         with pytest.raises(ValueError):
-            typed_ethane.save(
-                "e.lammps", unit_style="lj", lj_cfactorsDict={"bonds": 1}
-            )
+            typed_ethane.save("e.lammps", unit_style="lj", lj_cfactorsDict={"bonds": 1})
         with pytest.raises(ValueError):
             typed_ethane.save("e.lammps", lj_cfactorsDict={"energy": "kJ/mol"})
 
@@ -595,12 +566,7 @@ class TestLammpsWriter(BaseTest):
                 end = i
                 break
         largest_eps_written = max(
-            [
-                obj
-                for obj in map(
-                    lambda x: float(x.split()[1]), lines[start + 2 : end]
-                )
-            ]
+            [obj for obj in map(lambda x: float(x.split()[1]), lines[start + 2 : end])]
         )
         assert largest_eps_written == 0.5
 
@@ -616,10 +582,7 @@ class TestLammpsWriter(BaseTest):
             "micro",
             "nano",
         ]:
-            assert (
-                LAMMPS_UnitSystems(styleStr).usystem.name
-                == "lammps_" + styleStr
-            )
+            assert LAMMPS_UnitSystems(styleStr).usystem.name == "lammps_" + styleStr
         from gmso.exceptions import NotYetImplementedWarning
 
         with pytest.raises(NotYetImplementedWarning):

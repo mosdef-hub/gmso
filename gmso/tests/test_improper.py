@@ -59,18 +59,10 @@ class TestImproper(BaseTest):
             )
 
     def test_improper_constituent_types(self):
-        atom1 = Atom(
-            name="atom1", position=[0, 0, 0], atom_type=AtomType(name="A")
-        )
-        atom2 = Atom(
-            name="atom2", position=[1, 0, 0], atom_type=AtomType(name="B")
-        )
-        atom3 = Atom(
-            name="atom3", position=[1, 1, 0], atom_type=AtomType(name="C")
-        )
-        atom4 = Atom(
-            name="atom4", position=[1, 1, 4], atom_type=AtomType(name="D")
-        )
+        atom1 = Atom(name="atom1", position=[0, 0, 0], atom_type=AtomType(name="A"))
+        atom2 = Atom(name="atom2", position=[1, 0, 0], atom_type=AtomType(name="B"))
+        atom3 = Atom(name="atom3", position=[1, 1, 0], atom_type=AtomType(name="C"))
+        atom4 = Atom(name="atom4", position=[1, 1, 4], atom_type=AtomType(name="D"))
         imptype = ImproperType(
             member_types=[
                 atom1.atom_type.name,
@@ -117,9 +109,7 @@ class TestImproper(BaseTest):
 
         improper = Improper(connection_members=[atom1, atom2, atom3, atom4])
         improper_eq = Improper(connection_members=[atom1, atom3, atom2, atom4])
-        improper_not_eq = Improper(
-            connection_members=[atom2, atom3, atom1, atom4]
-        )
+        improper_not_eq = Improper(connection_members=[atom2, atom3, atom1, atom4])
 
         top = Topology()
         top.add_connection(improper)
@@ -136,38 +126,21 @@ class TestImproper(BaseTest):
 
         improper = Improper(connection_members=[atom1, atom2, atom3, atom4])
         improper_eq = Improper(connection_members=[atom1, atom3, atom2, atom4])
-        improper_not_eq = Improper(
-            connection_members=[atom2, atom3, atom1, atom4]
-        )
+        improper_not_eq = Improper(connection_members=[atom2, atom3, atom1, atom4])
 
-        assert (
-            tuple(improper_eq.connection_members)
-            in improper.equivalent_members()
-        )
-        assert (
-            tuple(improper.connection_members)
-            in improper_eq.equivalent_members()
-        )
+        assert tuple(improper_eq.connection_members) in improper.equivalent_members()
+        assert tuple(improper.connection_members) in improper_eq.equivalent_members()
         assert not (
-            tuple(improper.connection_members)
-            in improper_not_eq.equivalent_members()
+            tuple(improper.connection_members) in improper_not_eq.equivalent_members()
         )
 
     def test_sort_improper_types(self):
         from gmso.utils.sorting import sort_by_classes, sort_by_types
 
-        atom1 = Atom(
-            name="atom1", position=[0, 0, 0], atom_type=AtomType(name="A")
-        )
-        atom2 = Atom(
-            name="atom2", position=[1, 0, 0], atom_type=AtomType(name="B")
-        )
-        atom3 = Atom(
-            name="atom3", position=[1, 1, 0], atom_type=AtomType(name="C")
-        )
-        atom4 = Atom(
-            name="atom4", position=[1, 1, 4], atom_type=AtomType(name="D")
-        )
+        atom1 = Atom(name="atom1", position=[0, 0, 0], atom_type=AtomType(name="A"))
+        atom2 = Atom(name="atom2", position=[1, 0, 0], atom_type=AtomType(name="B"))
+        atom3 = Atom(name="atom3", position=[1, 1, 0], atom_type=AtomType(name="C"))
+        atom4 = Atom(name="atom4", position=[1, 1, 4], atom_type=AtomType(name="D"))
 
         consituentList = [
             atom2.atom_type.name,
@@ -202,9 +175,7 @@ class TestImproper(BaseTest):
                 orderStr = "name"  # String to access site attribute
             else:
                 missing_types = [site.atom_type.atomclass for site in improper]
-                raise MissingParameterError(
-                    improper.improper_type, missing_types
-                )
+                raise MissingParameterError(improper.improper_type, missing_types)
 
             # get the site atomtypes and make a dictionary map to match to the order_improperList
             cmemList = improper.connection_members

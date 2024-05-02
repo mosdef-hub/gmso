@@ -143,9 +143,7 @@ class TestConvertMBuild(BaseTest):
         mb_box = Box(lengths=[3, 3, 3])
 
         top = from_mbuild(mb_ethane, box=mb_box, parse_label=True)
-        assert_allclose_units(
-            top.box.lengths, [3, 3, 3] * u.nm, rtol=1e-5, atol=1e-8
-        )
+        assert_allclose_units(top.box.lengths, [3, 3, 3] * u.nm, rtol=1e-5, atol=1e-8)
 
     def test_pass_failed_box(self, mb_ethane):
         with pytest.raises(ValueError):
@@ -172,9 +170,7 @@ class TestConvertMBuild(BaseTest):
                 "molecule", name_only=True
             )
         for label in ("sol1", "sol2"):
-            assert label in hierarchical_top.unique_site_labels(
-                "group", name_only=True
-            )
+            assert label in hierarchical_top.unique_site_labels("group", name_only=True)
 
     @pytest.mark.skipif(not has_mbuild, reason="mBuild is not installed")
     def test_group_2_level_compound(self):
@@ -200,9 +196,7 @@ class TestConvertMBuild(BaseTest):
         mb_cpd3 = mb.load("O", smiles=True)
         mb_cpd3.name = "O"
 
-        filled_box1 = mb.fill_box(
-            [mb_cpd1, mb_cpd2], n_compounds=[2, 2], box=[1, 1, 1]
-        )
+        filled_box1 = mb.fill_box([mb_cpd1, mb_cpd2], n_compounds=[2, 2], box=[1, 1, 1])
         filled_box1.name = "box1"
         filled_box2 = mb.fill_box(mb_cpd3, n_compounds=2, box=[1, 1, 1])
         filled_box2.name = "box2"
@@ -225,18 +219,13 @@ class TestConvertMBuild(BaseTest):
             top = from_mbuild(top_box, custom_groups=groups)
             assert np.all([site.group in groups for site in top.sites])
             for n, gname in zip(n_groups, groups):
-                assert (
-                    len([True for site in top.sites if site.group == gname])
-                    == n
-                )
+                assert len([True for site in top.sites if site.group == gname]) == n
 
     @pytest.mark.skipif(not has_mbuild, reason="mBuild is not installed")
     def test_single_custom_group(self):
         mb_cpd1 = mb.Compound(name="_CH4")
         mb_cpd2 = mb.Compound(name="_CH3")
-        filled_box = mb.fill_box(
-            [mb_cpd1, mb_cpd2], n_compounds=[2, 2], box=[1, 1, 1]
-        )
+        filled_box = mb.fill_box([mb_cpd1, mb_cpd2], n_compounds=[2, 2], box=[1, 1, 1])
         filled_box.name = "box1"
 
         top = from_mbuild(filled_box, custom_groups=filled_box.name)
@@ -249,14 +238,10 @@ class TestConvertMBuild(BaseTest):
     def test_bad_custom_groups_from_compound(self):
         mb_cpd1 = mb.Compound(name="_CH4")
         mb_cpd2 = mb.Compound(name="_CH3")
-        filled_box = mb.fill_box(
-            [mb_cpd1, mb_cpd2], n_compounds=[2, 2], box=[1, 1, 1]
-        )
+        filled_box = mb.fill_box([mb_cpd1, mb_cpd2], n_compounds=[2, 2], box=[1, 1, 1])
 
         with pytest.warns(Warning):
-            top = from_mbuild(
-                filled_box, custom_groups=["_CH4", "_CH3", "_CH5"]
-            )
+            top = from_mbuild(filled_box, custom_groups=["_CH4", "_CH3", "_CH5"])
 
         with pytest.raises(GMSOError):
             top = from_mbuild(filled_box, custom_groups=["_CH4"])
