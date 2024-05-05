@@ -556,7 +556,7 @@ class ForceField(object):
     @classmethod
     def xml_from_forcefield_utilities(cls, filename):
         from forcefield_utilities.xml_loader import FoyerFFs, GMSOFFs
-        from foyer.exepttions import ValidationError
+        from foyer.exceptions import ValidationError
 
         from gmso.exceptions import ForceFieldParseError
 
