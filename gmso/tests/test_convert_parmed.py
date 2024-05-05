@@ -151,7 +151,7 @@ class TestConvertParmEd(BaseTest):
 
         with pytest.raises(Exception):
             top.atom_types[0] = "sigma + epsilon"
-            struc_from_top = to_parmed(top)
+            to_parmed(top)
 
         with pytest.raises(Exception):
             top.bond_types[0] = "k * r_eq"
@@ -506,10 +506,13 @@ class TestConvertParmEd(BaseTest):
                 struc.rb_torsions,
             )
         )
+
         # return true if reversal is necessary, false if keep the order
         # order should be from smallest to largest id
         # reverse dihedral order if 1 > 2, or 1=2 and 0>4
-        rev_order = lambda x: x[1] > x[2] or (x[1] == x[2] and x[0] > x[3])
+        def rev_order(x):
+            return x[1] > x[2] or x[1] == x[2] and x[0] > x[3]
+
         assert len(top.dihedral_types(filter_by=pfilter)) == len(
             Counter(tuple(reversed(t)) if rev_order(t) else t for t in dihedrals_list)
         )
@@ -551,10 +554,13 @@ class TestConvertParmEd(BaseTest):
                 dihedrals,
             )
         )
+
         # return true if reversal is necessary, false if keep the order
         # order should be from smallest to largest id
         # reverse dihedral order if 1 > 2, or 1=2 and 0>4
-        rev_order = lambda x: x[1] > x[2] or (x[1] == x[2] and x[0] > x[3])
+        def rev_order(x):
+            return x[1] > x[2] or x[1] == x[2] and x[0] > x[3]
+
         assert len(top.dihedral_types(filter_by=pfilter)) == len(
             Counter(tuple(reversed(t)) if rev_order(t) else t for t in dihedrals_list)
         )
@@ -621,7 +627,10 @@ class TestConvertParmEd(BaseTest):
                 struc.rb_torsions,
             )
         )
-        rev_order = lambda x: x[1] > x[2] or (x[1] == x[2] and x[0] > x[3])
+
+        def rev_order(x):
+            return x[1] > x[2] or x[1] == x[2] and x[0] > x[3]
+
         assert len(top.dihedral_types(filter_by=pfilter)) == len(
             Counter(tuple(reversed(t)) if rev_order(t) else t for t in dihedrals_list)
         )

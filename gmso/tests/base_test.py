@@ -376,11 +376,14 @@ class BaseTest:
                 return False
             if atom1 is atom2:
                 return True
-            equal = lambda x1, x2: (
-                u.allclose_units(x1, x2)
-                if isinstance(x1, u.unyt_array) and isinstance(x2, u.unyt_array)
-                else x1 == x2
-            )
+
+            def equal(x1, x2):
+                return (
+                    u.allclose_units(x1, x2)
+                    if isinstance(x1, u.unyt_array) and isinstance(x2, u.unyt_array)
+                    else x1 == x2
+                )
+
             for prop in atom1.model_dump(by_alias=True):
                 if not equal(
                     atom2.model_dump().get(prop), atom1.model_dump().get(prop)

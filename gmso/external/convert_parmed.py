@@ -329,9 +329,8 @@ def _sort_angle_members(top, site_map, atom1, atom2, atom3):
 
 
 # function to check reversibility of dihedral type
-rev_dih_order = lambda top, site_map, x, y: top.get_index(site_map[x]) > top.get_index(
-    site_map[y]
-)
+def rev_dih_order(top, site_map, x, y):
+    return top.get_index(site_map[x]) > top.get_index(site_map[y])
 
 
 def _sort_dihedral_members(top, site_map, atom1, atom2, atom3, atom4):
@@ -388,9 +387,10 @@ def _add_conn_type_from_pmd(
             Try using refer_type=False to not look for a parameterized structure."
         )
     try:
-        get_classes = lambda x: (
-            x.atom_type.atomclass if x.atom_type.atomclass else x.atom_type.name
-        )
+
+        def get_classes(x):
+            return x.atom_type.atomclass if x.atom_type.atomclass else x.atom_type.name
+
         member_classes = list(map(get_classes, gmso_conn.connection_members))
     except AttributeError:
         member_classes = list(

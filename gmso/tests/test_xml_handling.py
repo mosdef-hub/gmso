@@ -40,7 +40,10 @@ class TestXMLHandling(BaseTest):
     def test_write_xml(self, opls_ethane_foyer):
         opls_ethane_foyer.to_xml("test_xml_writer.xml")
         reloaded_xml = ForceField("test_xml_writer.xml")
-        get_names = lambda ff, param: [typed for typed in getattr(ff, param).keys()]
+
+        def get_names(ff, param):
+            return [typed for typed in getattr(ff, param).keys()]
+
         for param in [
             "atom_types",
             "bond_types",

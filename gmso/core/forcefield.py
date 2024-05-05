@@ -556,13 +556,15 @@ class ForceField(object):
     @classmethod
     def xml_from_forcefield_utilities(cls, filename):
         from forcefield_utilities.xml_loader import FoyerFFs, GMSOFFs
+        from foyer.exepttions import ValidationError
+
+        from gmso.exceptions import ForceFieldParseError
 
         try:
             loader = GMSOFFs()
             ff = loader.load(filename).to_gmso_ff()
         # Temporarily opt out, pending new forcefield-utilities release
-        # except (ForceFieldParseError, FileNotFoundError, ValidationError):
-        except:
+        except (ForceFieldParseError, FileNotFoundError, ValidationError):
             loader = FoyerFFs()
             ff = loader.load(filename).to_gmso_ff()
             ff.units = {
