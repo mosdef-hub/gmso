@@ -1,6 +1,5 @@
 """Module support for converting to/from Pandas DataFrame objects."""
 
-import copy
 import functools
 import warnings
 from collections.abc import Iterable
@@ -13,12 +12,10 @@ from symengine import expand
 
 from gmso import Topology
 from gmso.abc.serialization_utils import unyt_to_dict
-from gmso.core.element import element_by_atomic_number, element_by_symbol
-from gmso.core.views import PotentialFilters, get_parameters
+from gmso.core.views import PotentialFilters
 
 pfilter = PotentialFilters.UNIQUE_PARAMETERS
 from gmso.exceptions import GMSOError
-from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.io import import_
 
 pd = import_("pandas")
@@ -31,7 +28,7 @@ def to_dataframeDict(
     columns: list[str] = None,
     handle_unyts: str = "in_headers",
 ) -> pd.DataFrame:
-    """Return a dictioanry of pandas dataframe objects for a topology.
+    """Return a dictionary of pandas dataframe objects for a topology.
 
     Parameters
     ----------
@@ -81,7 +78,7 @@ def to_dataframeDict(
         those sites, and the parameters that are associated with the dihedrals.
 
     Notes
-    ____
+    -----
     A dataframe is easily manipulated. In order to change the rounding to two decimals places for a column named `label`:
         >>> df['label'] = df['label'].round(2)
     The column labels can also be easily modified. This line can take a dataframe `df` and rename a column labeled
@@ -89,7 +86,6 @@ def to_dataframeDict(
         >>> df.rename(columns = {'Atom0':'newname'})
     See https://pandas.pydata.org/pandas-docs/stable/getting_started/intro_tutorials/index.html for further information.
     """
-
     if columns is None:
         columns = []
     if not topology.is_typed():
@@ -293,7 +289,7 @@ def _generate_component_lists(topology, parameter, columns) -> list:
 
 
 def _recursive_getattr(topology, attr, attr_attr):
-    """Parse a topology to get a list of attributes from an iterable"""
+    """Parse a topology to get a list of attributes from an iterable."""
 
     def _getattr(obj, attr1):
         try:
@@ -313,9 +309,13 @@ def _recursive_getattr(topology, attr, attr_attr):
 def _pandas_from_parameters(
     topology, df, parameter, site_attrs=None, unyts_bool=True
 ):
-    """Add to a pandas dataframe the site indices for each connection member in a
+    """Members of a connection attributes added to the dataframe.
+
+    Add to a pandas dataframe the site indices for each connection member in a
     multimember topology attribute such as a bond. Also include information about
-    those sites in the site_attrs list"""
+    those sites in the site_attrs list.
+
+    """
     if site_attrs is None:
         site_attrs = []
     sites_per_connection = len(getattr(self, parameter)[0].connection_members)
@@ -335,8 +335,7 @@ def _pandas_from_parameters(
 def _parse_dataframe_attrs(
     self, df, attr, parameter, sites_per_connection=1, unyts_bool=True
 ):
-    """Parses an attribute string to correctly format and return the topology attribute
-    into a pandas dataframe"""
+    """Parse an attribute string to correctly format and return the topology attribute into a pandas dataframe."""
     if parameter == "sites":
         if "." in attr:
             try:
@@ -471,7 +470,7 @@ def _parse_dataframe_attrs(
 
 
 def _parse_parameter_expression(self, df, parameter, unyts_bool):
-    """Take a given topology attribute and return the parameters associated with it"""
+    """Take a given topology attribute and return the parameters associated with it."""
     for i, param in enumerate(
         getattr(
             getattr(self, parameter)[0], parameter[:-1] + "_type"
@@ -551,4 +550,3 @@ def multi_topology_dataframe(topologies: list) -> pd.DataFrame:
 
 def generate_topology_report(topologies: list | Topology) -> pd.DataFrame:
     """Generate information of 2D structure and parameters for an iterable of Topologies."""
-    pass

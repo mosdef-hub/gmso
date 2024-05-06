@@ -2,17 +2,13 @@ import numpy as np
 import pytest
 import unyt as u
 
-import gmso
-from gmso.core.atom import Atom
-from gmso.core.topology import Topology as Top
 from gmso.external.convert_dataframe import (
     _recursive_getattr,
     multi_topology_dataframe,
     to_dataframeDict,
 )
-from gmso.external.convert_networkx import from_networkx, to_networkx
 from gmso.tests.base_test import BaseTest
-from gmso.utils.io import get_fn, has_pandas
+from gmso.utils.io import has_pandas
 
 
 class TestConvertDataFrame(BaseTest):
