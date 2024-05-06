@@ -1,10 +1,7 @@
-from copy import deepcopy
-
 import numpy as np
 import pytest
 import sympy
 import unyt as u
-from unyt.testing import assert_allclose_units
 
 from gmso.tests.base_test import BaseTest
 from gmso.utils.conversions import (
@@ -30,18 +27,13 @@ class TestKelvinToEnergy(BaseTest):
         assert typed_ethane.dihedrals[0].dihedral_type.expression == rb_expr
         for dihedral in typed_ethane.dihedrals:
             dihedral.dihedral_type.name = "RyckaertBellemansTorsionPotential"
-        typed_ethane.convert_potential_styles(
-            {"dihedrals": "OPLSTorsionPotential"}
-        )
+        typed_ethane.convert_potential_styles({"dihedrals": "OPLSTorsionPotential"})
         opls_expr = sympify(
             "0.5 * k1 * (1 + cos(phi)) + 0.5 * k2 * (1 - cos(2*phi)) + \
             0.5 * k3 * (1 + cos(3*phi)) + 0.5 * k4 * (1 - cos(4*phi))"
         )
         assert typed_ethane.dihedrals[0].dihedral_type.expression == opls_expr
-        assert (
-            typed_ethane.dihedrals[0].dihedral_type.name
-            == "OPLSTorsionPotential"
-        )
+        assert typed_ethane.dihedrals[0].dihedral_type.name == "OPLSTorsionPotential"
 
     def test_K_to_kcal(self):
         input_value = 1 * u.Kelvin / u.nm**2
@@ -50,9 +42,7 @@ class TestKelvinToEnergy(BaseTest):
             "kcal/mol",
         )
 
-        assert new_value == u.unyt_quantity(
-            0.0019872041457050975, "kcal/(mol*nm**2)"
-        )
+        assert new_value == u.unyt_quantity(0.0019872041457050975, "kcal/(mol*nm**2)")
 
     def test_kcal_per_mol_to_kJ_per_mol(self):
         input_value = 2 * u.kcal / u.mol * u.gram**2
@@ -120,16 +110,12 @@ class TestKelvinToEnergy(BaseTest):
             typed_ethane, "dihedral", expected_units_dim, base_units
         )
         assert (
-            str(
-                potentials.iterator[0]
-                .dihedral_type.parameters["c0"]
-                .units.dimensions
-            )
+            str(potentials.iterator[0].dihedral_type.parameters["c0"].units.dimensions)
             == "(length)**2*(mass)/(time)**2"
         )
-        assert potentials.iterator[0].dihedral_type.parameters[
-            "c0"
-        ].units == u.Unit("kcal/mol")
+        assert potentials.iterator[0].dihedral_type.parameters["c0"].units == u.Unit(
+            "kcal/mol"
+        )
 
     def test_conversion_for_topology_angles(self, typed_ethane):
         expected_units_dim = dict(k="energy/angle**2", theta_eq="angle")
@@ -139,16 +125,12 @@ class TestKelvinToEnergy(BaseTest):
             typed_ethane, "angle", expected_units_dim, base_units
         )
         assert (
-            str(
-                potentials.iterator[0]
-                .angle_type.parameters["k"]
-                .units.dimensions
-            )
+            str(potentials.iterator[0].angle_type.parameters["k"].units.dimensions)
             == "(length)**2*(mass)/((angle)**2*(time)**2)"
         )
-        assert potentials.iterator[0].angle_type.parameters[
-            "k"
-        ].units == u.Unit("kcal/mol/rad**2")
+        assert potentials.iterator[0].angle_type.parameters["k"].units == u.Unit(
+            "kcal/mol/rad**2"
+        )
 
     def test_conversion_for_topology_bonds(self, typed_ethane):
         expected_units_dim = dict(k="energy/length**2", r_eq="length")
@@ -158,11 +140,7 @@ class TestKelvinToEnergy(BaseTest):
             typed_ethane, "bond", expected_units_dim, base_units
         )
         assert (
-            str(
-                potentials.iterator[0]
-                .bond_type.parameters["k"]
-                .units.dimensions
-            )
+            str(potentials.iterator[0].bond_type.parameters["k"].units.dimensions)
             == "(mass)/(time)**2"
         )
         assert potentials.iterator[0].bond_type.parameters["k"].units == u.Unit(
@@ -177,16 +155,12 @@ class TestKelvinToEnergy(BaseTest):
             typed_ethane, "atom", expected_units_dim, base_units
         )
         assert (
-            str(
-                potentials.iterator[0]
-                .atom_type.parameters["epsilon"]
-                .units.dimensions
-            )
+            str(potentials.iterator[0].atom_type.parameters["epsilon"].units.dimensions)
             == "(length)**2*(mass)/(time)**2"
         )
-        assert potentials.iterator[0].atom_type.parameters[
-            "epsilon"
-        ].units == u.Unit("kcal/mol")
+        assert potentials.iterator[0].atom_type.parameters["epsilon"].units == u.Unit(
+            "kcal/mol"
+        )
 
     def test_lammps_dimensions_to_energy(self):
         from gmso.utils.units import LAMMPS_UnitSystems
@@ -216,14 +190,10 @@ class TestKelvinToEnergy(BaseTest):
         base_unyts = LAMMPS_UnitSystems(
             "real"
         )  # "lammps_real", "Å", "amu", "fs", "K", "rad"
-        paramStr = base_unyts.convert_parameter(
-            parameter, conversion_factorDict=None
-        )
+        paramStr = base_unyts.convert_parameter(parameter, conversion_factorDict=None)
         assert paramStr == "100.000"
         parameter = 100 * u.Unit("K*fs/amu/nm")
-        paramStr = base_unyts.convert_parameter(
-            parameter, conversion_factorDict=None
-        )
+        paramStr = base_unyts.convert_parameter(parameter, conversion_factorDict=None)
         assert paramStr == "10.000"
         parameter = 100 * u.Unit("km*g*ms*kJ*degree")
         base_unyts = LAMMPS_UnitSystems(
@@ -234,9 +204,7 @@ class TestKelvinToEnergy(BaseTest):
         )
         assert paramStr == str(round(100 * np.pi / 180, 6))
         parameter = 1 * u.Unit("g*kJ*Coulomb*m*degree")
-        base_unyts = LAMMPS_UnitSystems(
-            "si"
-        )  # "lammps_si", "m", "kg", "s", "K", "rad"
+        base_unyts = LAMMPS_UnitSystems("si")  # "lammps_si", "m", "kg", "s", "K", "rad"
         paramStr = base_unyts.convert_parameter(
             parameter, conversion_factorDict=None, n_decimals=6
         )

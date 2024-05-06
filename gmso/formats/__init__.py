@@ -1,3 +1,4 @@
+# ruff: noqa: F401
 """Readers and writers for various file formats."""
 
 from gmso.utils.io import has_ipywidgets

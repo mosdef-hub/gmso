@@ -2,7 +2,7 @@ name: gmso
 channels:
   - conda-forge
 dependencies:
-  - python >=3.8, <3.12
+  - python>=3.8, <3.12
   - boltons
   - numpy
   - sympy

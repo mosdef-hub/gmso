@@ -16,10 +16,7 @@ from gmso.core.views import PotentialFilters
 from gmso.exceptions import GMSOError, NotYetImplementedWarning
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.connectivity import generate_pairs_lists
-from gmso.utils.conversions import (
-    convert_opls_to_ryckaert,
-    convert_ryckaert_to_opls,
-)
+from gmso.utils.conversions import convert_ryckaert_to_opls
 from gmso.utils.geometry import coord_shift
 from gmso.utils.io import has_gsd, has_hoomd
 from gmso.utils.sorting import (
@@ -347,9 +344,7 @@ def _parse_pairs_information(
     for pair in scaled_pairs:
         if pair[0].atom_type and pair[1].atom_type:
             pair.sort(key=lambda site: site.atom_type.name)
-            pair_type = "-".join(
-                [pair[0].atom_type.name, pair[1].atom_type.name]
-            )
+            pair_type = "-".join([pair[0].atom_type.name, pair[1].atom_type.name])
         else:
             pair.sort(key=lambda site: site.name)
             pair_type = "-".join([pair[0].name, pair[1].name])
@@ -445,9 +440,7 @@ def _parse_angle_information(snapshot, top):
             angle_type = "-".join([site.name for site in connection_members])
 
         angle_types.append(angle_type)
-        angle_groups.append(
-            tuple(top.get_index(site) for site in connection_members)
-        )
+        angle_groups.append(tuple(top.get_index(site) for site in connection_members))
 
     unique_angle_types = list(set(angle_types))
     angle_typeids = [unique_angle_types.index(i) for i in angle_types]
@@ -508,9 +501,7 @@ def _parse_dihedral_information(snapshot, top):
         snapshot.dihedrals.group = np.reshape(dihedral_groups, (-1, 4))
 
     warnings.warn(f"{top.n_dihedrals} dihedrals detected")
-    warnings.warn(
-        f"{len(unique_dihedral_types)} unique dihedral types detected"
-    )
+    warnings.warn(f"{len(unique_dihedral_types)} unique dihedral types detected")
 
 
 def _parse_improper_information(snapshot, top):
@@ -556,9 +547,7 @@ def _parse_improper_information(snapshot, top):
         snapshot.impropers.group = np.reshape(improper_groups, (-1, 4))
 
     warnings.warn(f"{top.n_impropers} impropers detected")
-    warnings.warn(
-        f"{len(unique_improper_types)} unique dihedral types detected"
-    )
+    warnings.warn(f"{len(unique_improper_types)} unique dihedral types detected")
 
 
 def _prepare_box_information(top):
@@ -624,9 +613,7 @@ def to_hoomd_forcefield(
 
     """
     potential_types = _validate_compatibility(top)
-    base_units = _validate_base_units(
-        base_units, top, auto_scale, potential_types
-    )
+    base_units = _validate_base_units(base_units, top, auto_scale, potential_types)
 
     # Reference json dict of all the potential in the PotentialTemplate
     potential_refs = dict()
@@ -741,9 +728,7 @@ def _parse_nonbonded_forces(
 
     # Perform units conversion based on the provided base_units
     for group in groups:
-        expected_units_dim = potential_refs[group][
-            "expected_parameters_dimensions"
-        ]
+        expected_units_dim = potential_refs[group]["expected_parameters_dimensions"]
         groups[group] = convert_params_units(
             groups[group],
             expected_units_dim,
@@ -825,9 +810,7 @@ def _parse_coulombic(
                 pair_name = "-".join(
                     sorted([pair[0].atom_type.name, pair[1].atom_type.name])
                 )
-                special_coulombic.params[pair_name] = dict(
-                    alpha=scaling_factors[i]
-                )
+                special_coulombic.params[pair_name] = dict(alpha=scaling_factors[i])
                 special_coulombic.r_cut[pair_name] = r_cut
 
     return [*coulombic, special_coulombic]
@@ -842,8 +825,7 @@ def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
         pairs.sort(key=lambda atype: atype.name)
         type_name = (pairs[0].name, pairs[1].name)
         comb_epsilon = np.sqrt(
-            pairs[0].parameters["epsilon"].value
-            * pairs[1].parameters["epsilon"].value
+            pairs[0].parameters["epsilon"].value * pairs[1].parameters["epsilon"].value
         )
         if top.combining_rule == "lorentz":
             comb_sigma = np.mean(
@@ -851,13 +833,10 @@ def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
             )
         elif top.combining_rule == "geometric":
             comb_sigma = np.sqrt(
-                pairs[0].parameters["sigma"].value
-                * pairs[1].parameters["sigma"].value
+                pairs[0].parameters["sigma"].value * pairs[1].parameters["sigma"].value
             )
         else:
-            raise ValueError(
-                f"Invalid combining rule provided ({combining_rule})"
-            )
+            raise ValueError(f"Invalid combining rule provided ({combining_rule})")
 
         calculated_params[type_name] = {
             "sigma": comb_sigma,
@@ -882,9 +861,7 @@ def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
                         pair[0].atom_type.name,
                         pair[1].atom_type.name,
                     )
-                    scaled_epsilon = (
-                        adjscale * calculated_params[pair_name]["epsilon"]
-                    )
+                    scaled_epsilon = adjscale * calculated_params[pair_name]["epsilon"]
                     sigma = calculated_params[pair_name]["sigma"]
                     special_lj.params["-".join(pair_name)] = {
                         "sigma": sigma,
@@ -969,9 +946,7 @@ def _parse_bond_forces(
             groups[group].append(btype)
 
     for group in groups:
-        expected_units_dim = potential_refs[group][
-            "expected_parameters_dimensions"
-        ]
+        expected_units_dim = potential_refs[group]["expected_parameters_dimensions"]
         groups[group] = convert_params_units(
             groups[group],
             expected_units_dim,
@@ -1031,9 +1006,7 @@ def _parse_angle_forces(
     base_units : dict
         The dictionary holding base units (mass, length, and energy)
     """
-    unique_agtypes = top.angle_types(
-        filter_by=PotentialFilters.UNIQUE_NAME_CLASS
-    )
+    unique_agtypes = top.angle_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS)
     groups = dict()
     for agtype in unique_agtypes:
         group = potential_types[agtype]
@@ -1043,9 +1016,7 @@ def _parse_angle_forces(
             groups[group].append(agtype)
 
     for group in groups:
-        expected_units_dim = potential_refs[group][
-            "expected_parameters_dimensions"
-        ]
+        expected_units_dim = potential_refs[group]["expected_parameters_dimensions"]
         groups[group] = convert_params_units(
             groups[group],
             expected_units_dim,
@@ -1163,9 +1134,7 @@ def _parse_dihedral_forces(
                     base_units=base_units,
                 )
             )
-        elif v_hoomd == "gt3.8" and isinstance(
-            container(), hoomd.md.dihedral.Periodic
-        ):
+        elif v_hoomd == "gt3.8" and isinstance(container(), hoomd.md.dihedral.Periodic):
             dihedral_forces.extend(
                 dtype_group_map[group]["parser"](
                     container=dtype_group_map[group]["container"](),
@@ -1174,9 +1143,7 @@ def _parse_dihedral_forces(
                     base_units=base_units,
                 )
             )
-        elif v_hoomd == "lt3.8" and isinstance(
-            container(), hoomd.md.dihedral.Harmonic
-        ):
+        elif v_hoomd == "lt3.8" and isinstance(container(), hoomd.md.dihedral.Harmonic):
             dihedral_forces.extend(
                 dtype_group_map[group]["parser"](
                     container=dtype_group_map[group]["container"](),
@@ -1192,17 +1159,13 @@ def _parse_dihedral_forces(
     return dihedral_forces
 
 
-def _parse_periodic_dihedral(
-    container, dihedrals, expected_units_dim, base_units
-):
+def _parse_periodic_dihedral(container, dihedrals, expected_units_dim, base_units):
     containersList = []
     for _ in range(5):
         containersList.append(copy.deepcopy(container))
     for dihedral in dihedrals:
         dtype = dihedral.dihedral_type
-        dtype = _convert_single_param_units(
-            dtype, expected_units_dim, base_units
-        )
+        dtype = _convert_single_param_units(dtype, expected_units_dim, base_units)
         member_sites = sort_connection_members(dihedral, "atomclass")
         member_classes = [site.atom_type.atomclass for site in member_sites]
         if isinstance(dtype.parameters["k"], u.array.unyt_quantity):
@@ -1241,9 +1204,7 @@ def _parse_periodic_dihedral(
 def _parse_opls_dihedral(container, dihedrals, expected_units_dim, base_units):
     for dihedral in dihedrals:
         dtype = dihedral.dihedral_type
-        dtype = _convert_single_param_units(
-            dtype, expected_units_dim, base_units
-        )
+        dtype = _convert_single_param_units(dtype, expected_units_dim, base_units)
         # TODO: The range of ks is mismatched (GMSO go from k0 to k5)
         # May need to do a check that k0 == k5 == 0 or raise a warning
         member_sites = sort_connection_members(dihedral, "atomclass")
@@ -1263,9 +1224,7 @@ def _parse_rb_dihedral(container, dihedrals, expected_units_dim, base_units):
     )
     for dihedral in dihedrals:
         dtype = dihedral.dihedral_type
-        dtype = _convert_single_param_units(
-            dtype, expected_units_dim, base_units
-        )
+        dtype = _convert_single_param_units(dtype, expected_units_dim, base_units)
         opls = convert_ryckaert_to_opls(dtype)
         member_sites = sort_connection_members(dihedral, "atomclass")
         member_classes = [site.atom_type.atomclass for site in member_sites]
@@ -1299,9 +1258,7 @@ def _parse_improper_forces(
     base_units : dict
         The dictionary holding base units (mass, length, and energy)
     """
-    unique_dtypes = top.improper_types(
-        filter_by=PotentialFilters.UNIQUE_NAME_CLASS
-    )
+    unique_dtypes = top.improper_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS)
     groups = dict()
     for itype in unique_dtypes:
         group = potential_types[itype]
@@ -1311,9 +1268,7 @@ def _parse_improper_forces(
             groups[group].append(itype)
 
     for group in groups:
-        expected_units_dim = potential_refs[group][
-            "expected_parameters_dimensions"
-        ]
+        expected_units_dim = potential_refs[group]["expected_parameters_dimensions"]
         groups[group] = convert_params_units(
             groups[group],
             expected_units_dim,
@@ -1359,7 +1314,7 @@ def _parse_harmonic_improper(
         # If wild card in class, sort by types instead
         if "*" in members:
             members = sort_by_types(itype)
-        container.params["-".join(member_types)] = {
+        container.params["-".join(members)] = {
             "k": itype.parameters["k"],
             "chi0": itype.parameters["phi_eq"],  # diff nomenclature?
         }
@@ -1430,9 +1385,7 @@ def _validate_base_units(base_units, top, auto_scale, potential_types=None):
         for atype_class in atype_classes:
             if atype_class == "LennardJonesPotential":
                 for atype in unique_atypes:
-                    lengths.append(
-                        atype.parameters["sigma"].to(base_units["length"])
-                    )
+                    lengths.append(atype.parameters["sigma"].to(base_units["length"]))
                     energies.append(
                         atype.parameters["epsilon"].to(base_units["energy"])
                     )
@@ -1514,8 +1467,6 @@ def _convert_single_param_units(
                 f"({str(base_units[unit].value)} * {str(base_units[unit].units)})",
             )
 
-        converted_params[parameter] = potential.parameters[parameter].to(
-            unit_dim
-        )
+        converted_params[parameter] = potential.parameters[parameter].to(unit_dim)
     potential.parameters = converted_params
     return potential

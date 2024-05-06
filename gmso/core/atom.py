@@ -161,9 +161,7 @@ class Atom(Site):
             charge=self.charge,
             mass=self.mass,
             element=self.element,
-            atom_type=(
-                property if not self.atom_type else self.atom_type.clone()
-            ),
+            atom_type=(property if not self.atom_type else self.atom_type.clone()),
         )
 
     def __le__(self, other):
@@ -191,9 +189,7 @@ class Atom(Site):
         if charge is None:
             return None
         if not isinstance(charge, u.unyt_array):
-            warnings.warn(
-                UNIT_WARNING_STRING.format("Charges", "elementary charge")
-            )
+            warnings.warn(UNIT_WARNING_STRING.format("Charges", "elementary charge"))
             charge *= u.elementary_charge
         else:
             ensure_valid_dimensions(charge, u.elementary_charge)

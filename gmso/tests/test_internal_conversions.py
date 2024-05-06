@@ -32,9 +32,7 @@ class TestInternalConversions(BaseTest):
         ]
 
         name = ryckaert_bellemans_torsion_potential.name
-        expression = (
-            str(ryckaert_bellemans_torsion_potential.expression) + " + 3 * psi"
-        )
+        expression = str(ryckaert_bellemans_torsion_potential.expression) + " + 3 * psi"
         variables = ["phi", "psi"]
 
         ryckaert_connection_type = DihedralType(
@@ -71,8 +69,7 @@ class TestInternalConversions(BaseTest):
         opls_torsion_potential = templates["OPLSTorsionPotential"]
         name = opls_torsion_potential.name
         expression = (
-            str(opls_torsion_potential.expression)
-            + " + 0.5 * k1 * (1 + cos(psi))"
+            str(opls_torsion_potential.expression) + " + 0.5 * k1 * (1 + cos(psi))"
         )
         variables = ["phi", "psi"]
 
@@ -84,9 +81,7 @@ class TestInternalConversions(BaseTest):
         )
 
         with pytest.raises(GMSOError, match=""):
-            ryckaert_connection_type = convert_opls_to_ryckaert(
-                opls_connection_type
-            )
+            ryckaert_connection_type = convert_opls_to_ryckaert(opls_connection_type)
 
         variables = opls_torsion_potential.independent_variables
         expression = "k0+k1+k2+k3+k4+phi"
@@ -98,9 +93,7 @@ class TestInternalConversions(BaseTest):
         )
 
         with pytest.raises(GMSOError, match=""):
-            ryckaert_connection_type = convert_opls_to_ryckaert(
-                opls_connection_type
-            )
+            ryckaert_connection_type = convert_opls_to_ryckaert(opls_connection_type)
 
     def test_ryckaert_to_fourier(self, templates):
         # Pick some RB parameters at random
@@ -129,9 +122,7 @@ class TestInternalConversions(BaseTest):
         )
 
         # Convert connection to Fourier
-        opls_connection_type = convert_ryckaert_to_fourier(
-            ryckaert_connection_type
-        )
+        opls_connection_type = convert_ryckaert_to_fourier(ryckaert_connection_type)
 
         # Pick some angles to check
         angles = [-2.38, -1.31, -0.44, 0.0, 0.26, 0.92, 1.84, 3.10]
@@ -185,9 +176,7 @@ class TestInternalConversions(BaseTest):
         )
 
         # Convert connection to RB
-        ryckaert_connection_type = convert_opls_to_ryckaert(
-            opls_connection_type
-        )
+        ryckaert_connection_type = convert_opls_to_ryckaert(opls_connection_type)
 
         # Pick some angles to check
         angles = [-2.38, -1.31, -0.44, 0.0, 0.26, 0.92, 1.84, 3.10]
@@ -242,14 +231,10 @@ class TestInternalConversions(BaseTest):
         )
 
         # Convert connection to RB
-        ryckaert_connection_type = convert_opls_to_ryckaert(
-            opls_connection_type
-        )
+        ryckaert_connection_type = convert_opls_to_ryckaert(opls_connection_type)
 
         # Convert connection back to OPLS
-        final_connection_type = convert_ryckaert_to_fourier(
-            ryckaert_connection_type
-        )
+        final_connection_type = convert_ryckaert_to_fourier(ryckaert_connection_type)
 
         assert_allclose_units(
             [*opls_connection_type.parameters.values()],

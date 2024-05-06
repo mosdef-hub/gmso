@@ -5,8 +5,7 @@ def _conn_in_molecule(connection, label, is_group=False):
     """Check if all the members in a connection belong to a molecule (namedtuple)."""
     if is_group:
         return all(
-            getattr(site, "group") == label
-            for site in connection.connection_members
+            getattr(site, "group") == label for site in connection.connection_members
         )
     else:
         if isinstance(label, str):

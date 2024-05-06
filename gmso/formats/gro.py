@@ -1,7 +1,6 @@
 """Read and write Gromos87 (.GRO) file format."""
 
 import datetime
-import re
 import warnings
 
 import numpy as np
@@ -65,12 +64,9 @@ def read_gro(filename):
                     "atoms were expected, but at least one fewer was found."
                 )
                 raise ValueError(msg.format(n_atoms))
-            res_id = (
-                int(line[:5].strip()) - 1
-            )  # reformat from 1 to 0 index in gmso
+            res_id = int(line[:5].strip()) - 1  # reformat from 1 to 0 index in gmso
             res_name = line[5:10].strip()
             atom_name = line[10:15].strip()
-            atom_id = line[15:20].strip()
 
             positions = line[20:].split()
             coords[row] = u.nm * np.array(
@@ -87,9 +83,7 @@ def read_gro(filename):
             top.add_site(site, update_types=False)
 
         if len(positions) == 6:
-            warnings.warn(
-                "Velocity information presents but will not be parsed."
-            )
+            warnings.warn("Velocity information presents but will not be parsed.")
         top.update_topology()
 
         # Box information

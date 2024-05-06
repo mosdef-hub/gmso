@@ -1,11 +1,9 @@
-import forcefield_utilities as ffutils
 import parmed as pmd
 import pytest
 import unyt as u
 
 import gmso
 from gmso.exceptions import EngineIncompatibilityError
-from gmso.external.convert_mbuild import from_mbuild
 from gmso.parameterization import apply
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
@@ -99,9 +97,7 @@ class TestTop(BaseTest):
             site.atom_type = ff.atom_types[site.atom_type.name]
 
         for bond in top.bonds:
-            bond.bond_type = bond.connection_type = ff.bond_types[
-                "opls_111~opls_112"
-            ]
+            bond.bond_type = bond.connection_type = ff.bond_types["opls_111~opls_112"]
 
         for molecule in top.unique_site_labels("molecule"):
             angle = gmso.core.angle.Angle(
@@ -208,9 +204,7 @@ class TestTop(BaseTest):
                 # Each dict will have the keys be members and values be their parameters
                 members = dict()
                 ref_members = dict()
-                for line, ref in zip(
-                    sections[section], ref_sections[ref_section]
-                ):
+                for line, ref in zip(sections[section], ref_sections[ref_section]):
                     line = line.split()
                     ref = ref.split()
                     members["-".join(line[:4])] = line[4:]

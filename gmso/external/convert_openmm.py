@@ -1,3 +1,6 @@
+# ruff: noqa
+# Ignore all qa checks as the openMM model is not currently operational
+# Make sure to uncomment ruff: noqa once convert_openmm is implemented.
 """Convert to and from an OpenMM Topology or System object."""
 
 import unyt as u
@@ -40,9 +43,7 @@ def to_openmm(topology, openmm_object="topology"):
     residue = openmm_top.addResidue(name="RES", chain=chain)
 
     for site in topology.sites:
-        openmm_top.addAtom(
-            name=site.name, element=site.element.name, residue=residue
-        )
+        openmm_top.addAtom(name=site.name, element=site.element.name, residue=residue)
 
     # Set box
     box = topology.box

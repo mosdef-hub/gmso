@@ -52,7 +52,7 @@ class TestMol2(BaseTest):
         assert top.n_sites == 6
         assert len(top.bonds) == 5
         assert top.bonds[0].connection_members[0] == top.sites[0]
-        assert top.box == None
+        assert top.box is None
 
         with pytest.warns(
             UserWarning,
@@ -68,19 +68,13 @@ class TestMol2(BaseTest):
 
         top = Topology.load(get_fn("benzene_ua.mol2"), site_type="lj")
         assert np.all(
-            [
-                site.residue[0] == "BEN1"
-                for site in top.iter_sites_by_residue("BEN1")
-            ]
+            [site.residue[0] == "BEN1" for site in top.iter_sites_by_residue("BEN1")]
         )
         assert np.all(
             [site.residue[1] == 1 for site in top.iter_sites_by_residue("BEN1")]
         )
         assert np.all(
-            [
-                site.residue[0] == "BEN2"
-                for site in top.iter_sites_by_residue("BEN2")
-            ]
+            [site.residue[0] == "BEN2" for site in top.iter_sites_by_residue("BEN2")]
         )
         assert np.all(
             [site.residue[1] == 2 for site in top.iter_sites_by_residue("BEN2")]
@@ -88,23 +82,21 @@ class TestMol2(BaseTest):
 
     def test_lj_system(self):
         top = Topology.load(get_fn("methane.mol2"), site_type="lj")
-        assert np.all([site.element == None for site in top.sites])
+        assert np.all([site.element is None for site in top.sites])
 
     def test_no_charge_lj(self):
         with pytest.warns(
             UserWarning,
             match=r"No charge was detected for site .* with index \d+$",
         ):
-            top = Topology.load(
+            Topology.load(
                 get_path("methane_missing_charge.mol2"),
                 site_type="lj",
                 verbose=True,
             )
 
     def test_wrong_path(self):
-        with pytest.raises(
-            OSError, match=r"Provided path to file that does not exist"
-        ):
+        with pytest.raises(OSError, match=r"Provided path to file that does not exist"):
             Topology.load("not_a_file.mol2")
         top = Topology.load(get_fn("ethanegro.mol2"))
         assert len(top.sites) == 0
@@ -134,25 +126,17 @@ class TestMol2(BaseTest):
             match=r"No element detected for site .+ with index \d+, "
             r"consider manually adding the element to the topology$",
         ):
-            top = Topology.load(get_fn("neopentane.mol2"), verbose=True)
+            Topology.load(get_fn("neopentane.mol2"), verbose=True)
 
     def test_mol2_residues(self):
         top = Topology.load(get_fn("parmed.mol2"))
-        assert np.all(
-            np.array([site.residue.name for site in top.sites]) == "RES"
-        )
-        assert np.all(
-            np.array([site.residue.number for site in top.sites]) == 1
-        )
+        assert np.all(np.array([site.residue.name for site in top.sites]) == "RES")
+        assert np.all(np.array([site.residue.number for site in top.sites]) == 1)
 
     def test_mol2_molecules(self):
         top = Topology.load(get_fn("methane.mol2"))
-        assert np.all(
-            np.array([site.molecule.name for site in top.sites]) == "MET"
-        )
-        assert np.all(
-            np.array([site.molecule.number for site in top.sites]) == 0
-        )
+        assert np.all(np.array([site.molecule.name for site in top.sites]) == "MET")
+        assert np.all(np.array([site.molecule.number for site in top.sites]) == 0)
 
     def test_mol2_group(self):
         # Is there a place to read from mol2 file?

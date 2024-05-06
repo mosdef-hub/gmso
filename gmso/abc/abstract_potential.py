@@ -72,9 +72,7 @@ class AbstractPotential(GMSOBase):
         if not kwargs.get("tags"):
             kwargs["tags"] = {}
 
-        super().__init__(
-            name=name, potential_expression=potential_expression, **kwargs
-        )
+        super().__init__(name=name, potential_expression=potential_expression, **kwargs)
 
     @property
     def name(self):
@@ -112,9 +110,7 @@ class AbstractPotential(GMSOBase):
     def serialize_expression(self, potential_expression_: PotentialExpression):
         expr = str(potential_expression_.expression)
         ind = sorted(
-            list(
-                str(ind) for ind in potential_expression_.independent_variables
-            )
+            list(str(ind) for ind in potential_expression_.independent_variables)
         )
         params = {
             param: unyt_to_dict(val)
@@ -140,8 +136,7 @@ class AbstractPotential(GMSOBase):
         """Add metadata for a particular tag"""
         if self.tags.get(tag) and not overwrite:
             raise ValueError(
-                f"Tag {tag} already exists. "
-                f"Please use overwrite=True to overwrite"
+                f"Tag {tag} already exists. " f"Please use overwrite=True to overwrite"
             )
         self.tags[tag] = value
 

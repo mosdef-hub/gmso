@@ -109,12 +109,8 @@ class TestGsd(BaseTest):
         assert mb_snapshot.angles.N == gmso_snapshot.angles.N
         assert mb_snapshot.dihedrals.N == gmso_snapshot.dihedrals.N
 
-        sorted_gmso_ff = sorted(
-            integrator_forces, key=lambda cls: str(cls.__class__)
-        )
-        sorted_mbuild_ff = sorted(
-            mb_forcefield, key=lambda cls: str(cls.__class__)
-        )
+        sorted_gmso_ff = sorted(integrator_forces, key=lambda cls: str(cls.__class__))
+        sorted_mbuild_ff = sorted(mb_forcefield, key=lambda cls: str(cls.__class__))
 
         for mb_force, gmso_force in zip(sorted_mbuild_ff, sorted_gmso_ff):
             if isinstance(
@@ -133,9 +129,7 @@ class TestGsd(BaseTest):
                 gmso_key = key.replace("opls_135", "CT")
                 gmso_key = gmso_key.replace("opls_136", "CT")
                 gmso_key = gmso_key.replace("opls_140", "HC")
-                gmso_key = "-".join(
-                    sort_connection_strings(gmso_key.split("-"))
-                )
+                gmso_key = "-".join(sort_connection_strings(gmso_key.split("-")))
                 mb_params = mb_force.params.param_dict[key]
                 gmso_params = gmso_force.params.param_dict[gmso_key]
                 variables = mb_params.keys()
@@ -335,6 +329,7 @@ class TestGsd(BaseTest):
             top=top,
             r_cut=1.4,
             pppm_kwargs={"resolution": (64, 64, 64), "order": 7},
+            base_units=base_units,
         )
 
     def test_ff_zero_parameter(self):
@@ -342,9 +337,7 @@ class TestGsd(BaseTest):
         top = from_mbuild(ethane)
         top.identify_connections()
         ff_zero_param = (
-            ffutils.FoyerFFs()
-            .load(get_path("ethane_zero_parameter.xml"))
-            .to_gmso_ff()
+            ffutils.FoyerFFs().load(get_path("ethane_zero_parameter.xml")).to_gmso_ff()
         )
         top = apply(top, ff_zero_param, remove_untyped=True)
         base_units = {
@@ -375,12 +368,6 @@ class TestGsd(BaseTest):
     def test_zero_charges(self):
         compound = mb.load("CC", smiles=True)
         com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=2)
-        base_units = {
-            "mass": u.amu,
-            "length": u.nm,
-            "energy": u.kJ / u.mol,
-        }
-
         top = from_mbuild(com_box)
         top.identify_connections()
         oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
@@ -412,9 +399,7 @@ class TestGsd(BaseTest):
         benzene = mb.load("c1ccccc1", smiles=True)
         benzene.box = mb.Box([5, 5, 5])
         top = benzene.to_gmso()
-        parameterized_top = apply(
-            top, gaff_forcefield, identify_connections=True
-        )
+        parameterized_top = apply(top, gaff_forcefield, identify_connections=True)
         assert parameterized_top.is_fully_typed
 
         snap, _ = to_hoomd_snapshot(parameterized_top, base_units)
@@ -447,9 +432,7 @@ class TestGsd(BaseTest):
         snapshot, _ = to_hoomd_snapshot(top, base_units=base_units)
         assert "CT-HC" in snapshot.bonds.types
 
-        forces, _ = to_hoomd_forcefield(
-            top=top, r_cut=1.4, base_units=base_units
-        )
+        forces, _ = to_hoomd_forcefield(top=top, r_cut=1.4, base_units=base_units)
         assert "CT-HC" in forces["bonds"][0].params.keys()
 
     def test_forces_wildcards(self):
@@ -468,9 +451,7 @@ class TestGsd(BaseTest):
         snapshot, _ = to_hoomd_snapshot(top, base_units=base_units)
         assert "CT-HC" in snapshot.bonds.types
 
-        forces, _ = to_hoomd_forcefield(
-            top=top, r_cut=1.4, base_units=base_units
-        )
+        forces, _ = to_hoomd_forcefield(top=top, r_cut=1.4, base_units=base_units)
         assert "CT-CT-CT-HC" in list(forces["dihedrals"][0].params)
         for conntype in snapshot.dihedrals.types:
             assert conntype in list(forces["dihedrals"][0].params)

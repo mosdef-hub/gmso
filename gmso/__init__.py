@@ -1,3 +1,4 @@
+# ruff: noqa: F401
 """GMSO: General Molecular Simulation Object."""
 
 from .core.angle import Angle

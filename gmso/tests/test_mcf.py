@@ -109,16 +109,11 @@ class TestMCF(BaseTest):
         )
         assert np.isclose(
             float(mcf_data[mcf_idx["Atom_Info"] + 2][6]),
-            (top.sites[0].atom_type.parameters["epsilon"] / u.kb)
-            .in_units(u.K)
-            .value,
+            (top.sites[0].atom_type.parameters["epsilon"] / u.kb).in_units(u.K).value,
         )
         assert np.isclose(
             float(mcf_data[mcf_idx["Atom_Info"] + 2][7]),
-            top.sites[0]
-            .atom_type.parameters["sigma"]
-            .in_units(u.Angstrom)
-            .value,
+            top.sites[0].atom_type.parameters["sigma"].in_units(u.Angstrom).value,
         )
         assert mcf_data[mcf_idx["Bond_Info"] + 1][0] == "0"
         assert mcf_data[mcf_idx["Angle_Info"] + 1][0] == "0"
@@ -166,16 +161,11 @@ class TestMCF(BaseTest):
         )
         assert np.isclose(
             float(mcf_data[mcf_idx["Atom_Info"] + 2][6]),
-            (top.sites[0].atom_type.parameters["epsilon"] / u.kb)
-            .in_units(u.K)
-            .value,
+            (top.sites[0].atom_type.parameters["epsilon"] / u.kb).in_units(u.K).value,
         )
         assert np.isclose(
             float(mcf_data[mcf_idx["Atom_Info"] + 2][7]),
-            top.sites[0]
-            .atom_type.parameters["sigma"]
-            .in_units(u.Angstrom)
-            .value,
+            top.sites[0].atom_type.parameters["sigma"].in_units(u.Angstrom).value,
         )
         assert np.isclose(
             float(mcf_data[mcf_idx["Atom_Info"] + 2][8]),
@@ -243,9 +233,7 @@ class TestMCF(BaseTest):
             top.save("bond.mcf")
 
         # Modified angles
-        next(iter(top.angle_types)).set_expression(
-            "0.5 * k*(theta-theta_eq)**3"
-        )
+        next(iter(top.angle_types)).set_expression("0.5 * k*(theta-theta_eq)**3")
         with pytest.raises(EngineIncompatibilityError):
             top.save("angle.mcf")
 
@@ -281,16 +269,11 @@ class TestMCF(BaseTest):
         )
         assert np.isclose(
             float(mcf_data[mcf_idx["Atom_Info"] + 2][6]),
-            (top.sites[0].atom_type.parameters["epsilon"] / u.kb)
-            .in_units(u.K)
-            .value,
+            (top.sites[0].atom_type.parameters["epsilon"] / u.kb).in_units(u.K).value,
         )
         assert np.isclose(
             float(mcf_data[mcf_idx["Atom_Info"] + 2][7]),
-            top.sites[0]
-            .atom_type.parameters["sigma"]
-            .in_units(u.Angstrom)
-            .value,
+            top.sites[0].atom_type.parameters["sigma"].in_units(u.Angstrom).value,
         )
 
         # Check bond section
@@ -298,10 +281,7 @@ class TestMCF(BaseTest):
         assert mcf_data[mcf_idx["Bond_Info"] + 2][3] == "fixed"
         assert np.isclose(
             float(mcf_data[mcf_idx["Bond_Info"] + 2][4]),
-            top.bonds[0]
-            .bond_type.parameters["r_eq"]
-            .in_units(u.Angstrom)
-            .value,
+            top.bonds[0].bond_type.parameters["r_eq"].in_units(u.Angstrom).value,
         )
 
         # Check angle section
@@ -309,10 +289,7 @@ class TestMCF(BaseTest):
         assert mcf_data[mcf_idx["Angle_Info"] + 2][4] == "harmonic"
         assert np.isclose(
             float(mcf_data[mcf_idx["Angle_Info"] + 2][6]),
-            top.angles[0]
-            .angle_type.parameters["theta_eq"]
-            .in_units(u.degree)
-            .value,
+            top.angles[0].angle_type.parameters["theta_eq"].in_units(u.degree).value,
         )
 
         assert np.isclose(
@@ -329,9 +306,7 @@ class TestMCF(BaseTest):
 
         k = list(ff.dihedral_types.keys())
         dihedral_type = ff.dihedral_types[k[0]]
-        ff_coeffs = convert_ryckaert_to_fourier(
-            dihedral_type
-        ).parameters.values()
+        ff_coeffs = convert_ryckaert_to_fourier(dihedral_type).parameters.values()
 
         # We need to drop the last coefficient in the fourier GMSO dihedral type
         # (the term that has cos(4*phi) since it is not supported in the equivalent OPLS
@@ -357,10 +332,7 @@ class TestMCF(BaseTest):
         assert mcf_data[mcf_idx["Angle_Info"] + 2][4] == "fixed"
         assert np.isclose(
             float(mcf_data[mcf_idx["Angle_Info"] + 2][5]),
-            top.angles[0]
-            .angle_type.parameters["theta_eq"]
-            .in_units(u.degree)
-            .value,
+            top.angles[0].angle_type.parameters["theta_eq"].in_units(u.degree).value,
         )
 
     def test_top_with_n_ar_system(self, n_typed_ar_system):
@@ -521,9 +493,7 @@ class TestMCF(BaseTest):
         mcf_data_gmso, mcf_idx_gmso = parse_mcf("gmso-ethane.mcf")
         skip_lines = [3]
         float_pattern = r"[+-]?[0-9]*[.][0-9]*"
-        for i, (line_pmd, line_gmso) in enumerate(
-            zip(mcf_data_pmd, mcf_data_gmso)
-        ):
+        for i, (line_pmd, line_gmso) in enumerate(zip(mcf_data_pmd, mcf_data_gmso)):
             if i in skip_lines:
                 continue
 
