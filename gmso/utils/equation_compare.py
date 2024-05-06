@@ -49,7 +49,7 @@ def evaluate_nonbonded_lj_format_with_scaler(new_lj_form, base_lj_form):
         form_scalar = float(list(values)[0][0])
         form_output = "LJ"
 
-    except UnsolvableFactorError:
+    except (UnsolvableFactorError, TypeError):
         form_scalar = None
         form_output = None
 
@@ -98,7 +98,7 @@ def evaluate_nonbonded_mie_format_with_scaler(new_mie_form, base_mie_form):
         form_scalar = float(list(values)[0][0])
         form_output = "Mie"
 
-    except UnsolvableFactorError:
+    except (UnsolvableFactorError, TypeError):
         form_scalar = None
         form_output = None
 
@@ -149,7 +149,7 @@ def evaluate_nonbonded_exp6_format_with_scaler(new_exp6_form, base_exp6_form):
         form_scalar = float(list(values)[0][0])
         form_output = "Exp6"
 
-    except UnsolvableFactorError:
+    except (UnsolvableFactorError, TypeError):
         form_scalar = None
         form_output = None
 
@@ -356,7 +356,8 @@ def evaluate_harmonic_bond_format_with_scaler(new_bond_form, base_bond_form):
 
         form_scalar = float(list(values)[0][0])
         form_output = "HarmonicBondPotential"
-    except UnsolvableFactorError:
+
+    except (UnsolvableFactorError, TypeError):
         form_scalar = None
         form_output = None
 
@@ -400,7 +401,7 @@ def evaluate_harmonic_angle_format_with_scaler(new_angle_form, base_angle_form):
         form_scalar = float(list(values)[0][0])
         form_output = "HarmonicAnglePotential"
 
-    except UnsolvableFactorError:
+    except (UnsolvableFactorError, TypeError):
         form_scalar = None
         form_output = None
 
@@ -444,7 +445,7 @@ def evaluate_harmonic_torsion_format_with_scaler(new_torsion_form, base_torsion_
         form_scalar = float(list(values)[0][0])
         form_output = "HarmonicTorsionPotential"
 
-    except UnsolvableFactorError:
+    except (UnsolvableFactorError, TypeError):
         form_scalar = None
         form_output = None
 
@@ -490,7 +491,7 @@ def evaluate_OPLS_torsion_format_with_scaler(new_torsion_form, base_torsion_form
         form_scalar = float(list(values)[0][0])
         form_output = "OPLSTorsionPotential"
 
-    except UnsolvableFactorError:
+    except (UnsolvableFactorError, TypeError):
         form_scalar = None
         form_output = None
 
@@ -534,7 +535,7 @@ def evaluate_periodic_torsion_format_with_scaler(new_torsion_form, base_torsion_
         form_scalar = float(list(values)[0][0])
         form_output = "PeriodicTorsionPotential"
 
-    except UnsolvableFactorError:
+    except (UnsolvableFactorError, TypeError):
         form_scalar = None
         form_output = None
 
@@ -580,7 +581,7 @@ def evaluate_RB_torsion_format_with_scaler(new_torsion_form, base_torsion_form):
         form_scalar = float(list(values)[0][0])
         form_output = "RyckaertBellemansTorsionPotential"
 
-    except UnsolvableFactorError:
+    except (UnsolvableFactorError, TypeError):
         form_scalar = None
         form_output = None
 
@@ -626,7 +627,7 @@ def evaluate_harmonic_improper_format_with_scaler(
         form_scalar = float(list(values)[0][0])
         form_output = "HarmonicImproperPotential"
 
-    except UnsolvableFactorError:
+    except (UnsolvableFactorError, TypeError):
         form_scalar = None
         form_output = None
 
@@ -672,7 +673,7 @@ def evaluate_periodic_improper_format_with_scaler(
         form_scalar = float(list(values)[0][0])
         form_output = "PeriodicImproperPotential"
 
-    except UnsolvableFactorError:
+    except (UnsolvableFactorError, TypeError):
         form_scalar = None
         form_output = None
 

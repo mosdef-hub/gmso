@@ -6,9 +6,9 @@ from xml.dom import minidom
 
 import mbuild as mb
 from forcefield_utilities.xml_loader import FoyerFFs, GMSOFFs
-from foyer.exceptions import ValidationError
 from mbuild.compound import Compound
 from mbuild.utils.io import has_foyer
+from pydantic import ValidationError
 
 import gmso
 from gmso.core.views import PotentialFilters
@@ -692,7 +692,12 @@ def _validate_forcefields(forcefield_selection, residues):
                 read_xlm_iteration = minidom.parse(ff_names_path_iteration)
                 forcefield_selection_with_paths[residue] = ff_names_path_iteration
 
-            except (ForceFieldParseError, FileNotFoundError, ValidationError):
+            except (
+                ForceFieldParseError,
+                FileNotFoundError,
+                ValidationError,
+                IndexError,
+            ):
                 error_msg = (
                     "Please make sure you are entering the correct foyer FF path, "
                     "including the FF file name.xml. "
@@ -710,7 +715,12 @@ def _validate_forcefields(forcefield_selection, residues):
             try:
                 read_xlm_iteration = minidom.parse(ff_names_path_iteration)  # noqa: F841
                 forcefield_selection_with_paths[residue] = ff_names_path_iteration
-            except (ForceFieldParseError, FileNotFoundError, ValidationError):
+            except (
+                ForceFieldParseError,
+                FileNotFoundError,
+                ValidationError,
+                IndexError,
+            ):
                 error_msg = (
                     "Please make sure you are entering the correct foyer FF name, or the "
                     "correct file extension (i.e., .xml, if required)."
@@ -724,10 +734,15 @@ def _validate_forcefields(forcefield_selection, residues):
         try:
             try:
                 ff_new_gmso_value_iter = FoyerFFs.get_ff(ff_value_iter).to_gmso_ff()
-            except (ForceFieldParseError, FileNotFoundError, ValidationError):
+            except (
+                ForceFieldParseError,
+                FileNotFoundError,
+                ValidationError,
+                IndexError,
+            ):
                 ff_new_gmso_value_iter = GMSOFFs.get_ff(ff_value_iter).to_gmso_ff()
 
-        except (ForceFieldParseError, FileNotFoundError, ValidationError):
+        except (ForceFieldParseError, FileNotFoundError, ValidationError, IndexError):
             error_msg = (
                 f"The supplied force field xml for the "
                 f"{ff_key_iter} residue is not a foyer or gmso xml, "
