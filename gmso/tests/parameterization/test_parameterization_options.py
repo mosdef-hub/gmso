@@ -19,9 +19,7 @@ from gmso.tests.utils import get_path
 
 
 class TestParameterizationOptions(ParameterizationBaseTest):
-    def test_parameterization_different_combining_rule(
-        self, ethane_methane_top
-    ):
+    def test_parameterization_different_combining_rule(self, ethane_methane_top):
         ff1 = ForceField()
         ff1.name = "FF1"
         ff1.scaling_factors = {
@@ -47,9 +45,7 @@ class TestParameterizationOptions(ParameterizationBaseTest):
         apply(top=ethane, forcefields=opls, remove_untyped=True)
         for connection in ethane.connections:
             connection_type = connection.connection_type
-            assert (
-                connection_type.member_types and connection_type.member_classes
-            )
+            assert connection_type.member_types and connection_type.member_classes
             for i in range(len(connection_type.member_classes)):
                 assert (
                     opls.atom_types[connection_type.member_types[i]].atomclass
@@ -72,9 +68,7 @@ class TestParameterizationOptions(ParameterizationBaseTest):
 
         assert ethane_methane_top.combining_rule == "geometric"
         assert (
-            ethane_methane_top.get_lj_scale(
-                molecule_id="Ethane", interaction="14"
-            )
+            ethane_methane_top.get_lj_scale(molecule_id="Ethane", interaction="14")
             == opls.scaling_factors["nonBonded14Scale"]
             == 0.5
         )
@@ -87,9 +81,7 @@ class TestParameterizationOptions(ParameterizationBaseTest):
         )
 
         assert (
-            ethane_methane_top.get_lj_scale(
-                molecule_id="Methane", interaction="14"
-            )
+            ethane_methane_top.get_lj_scale(molecule_id="Methane", interaction="14")
             == opls_copy.scaling_factors["nonBonded14Scale"]
             == 1.2
         )
@@ -194,13 +186,13 @@ class TestParameterizationOptions(ParameterizationBaseTest):
 
     def test_remove_untyped(self, oplsaa_gmso):
         isopropane = mb.load("C(C)C", smiles=True)
-        top1 = gmso.external.from_mbuild(isopropane)
+        top1 = from_mbuild(isopropane)
         top1.identify_connections()
         assert top1.n_impropers != 0
         apply(top1, oplsaa_gmso, remove_untyped=False)
         assert top1.n_impropers != 0
 
-        top2 = gmso.external.from_mbuild(isopropane)
+        top2 = from_mbuild(isopropane)
         top2.identify_connections()
         assert top2.n_impropers != 0
         apply(top2, oplsaa_gmso, remove_untyped=True)

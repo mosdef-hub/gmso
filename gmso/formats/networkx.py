@@ -1,14 +1,13 @@
 """NetworkX methods for operating with GMSO topologies."""
 
+from gmso.external.convert_networkx import to_networkx
 from gmso.utils import nx_utils
 from gmso.utils.io import has_ipywidgets, import_, run_from_ipython
 
 widgets = import_("ipywidgets")
 plt = import_("matplotlib.pyplot")
 if has_ipywidgets:
-    from ipywidgets import interact, fixed
-
-from gmso.external.convert_networkx import to_networkx
+    from ipywidgets import fixed, interact
 
 
 def interactive_networkx_atomtypes(topology, list_of_labels=None):
@@ -44,9 +43,7 @@ def interactive_networkx_atomtypes(topology, list_of_labels=None):
             Atom_Name = Which sites will show these labels.
     """
     if not run_from_ipython():
-        raise RuntimeError(
-            "Unsupported visualization outside of jupyter notebooks."
-        )
+        raise RuntimeError("Unsupported visualization outside of jupyter notebooks.")
     networkx_graph = to_networkx(topology)
     # get a unique list of site names
     site_names = []
@@ -128,9 +125,7 @@ def interactive_networkx_bonds(topology, additional_labels=None):
             dropdown option.
     """
     if not run_from_ipython():
-        raise RuntimeError(
-            "Unsupported visualization outside of jupyter notebooks."
-        )
+        raise RuntimeError("Unsupported visualization outside of jupyter notebooks.")
     networkx_graph = to_networkx(topology)
 
     # Create a list of labels to go on the nodes
@@ -214,9 +209,7 @@ def interactive_networkx_angles(topology):
             dropdown option.
     """
     if not run_from_ipython():
-        raise RuntimeError(
-            "Unsupported visualization outside of jupyter notebooks."
-        )
+        raise RuntimeError("Unsupported visualization outside of jupyter notebooks.")
 
     networkx_graph = to_networkx(topology)
 
@@ -299,9 +292,7 @@ def interactive_networkx_dihedrals(topology):
             dropdown option.
     """
     if not run_from_ipython():
-        raise RuntimeError(
-            "Unsupported visualization outside of jupyter notebooks."
-        )
+        raise RuntimeError("Unsupported visualization outside of jupyter notebooks.")
 
     networkx_graph = to_networkx(topology)
     # Create list of nodes to plot

@@ -1,13 +1,17 @@
 from copy import copy, deepcopy
-from typing import Any, Union
+from typing import Any, Type, Union
 
 import unyt as u
 from lxml import etree
 from pydantic import ConfigDict
 
 from gmso.abc.abstract_potential import AbstractPotential
+from gmso.exceptions import GMSOError
 from gmso.utils.expression import PotentialExpression
 from gmso.utils.misc import get_xml_representation, unyt_compare
+
+AbstractSetIntStr = Type["AbstractSetIntStr"]
+MappingIntStrAny = Type["MappingIntStrAny"]
 
 
 class ParametricPotential(AbstractPotential):
@@ -138,8 +142,8 @@ class ParametricPotential(AbstractPotential):
     def model_dump(
         self,
         *,
-        include: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
-        exclude: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
+        include: Union[AbstractSetIntStr, MappingIntStrAny] = None,
+        exclude: Union[AbstractSetIntStr, MappingIntStrAny] = None,
         by_alias: bool = False,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
@@ -175,17 +179,14 @@ class ParametricPotential(AbstractPotential):
             and self.independent_variables == other.independent_variables
             and self.name == other.name
             and self.parameters.keys() == other.parameters.keys()
-            and unyt_compare(
-                self.parameters.values(), other.parameters.values()
-            )
+            and unyt_compare(self.parameters.values(), other.parameters.values())
         )
 
     def get_parameters(self, copy=False):
         """Return parameters for this ParametricPotential."""
         if copy:
             params = {
-                k: u.unyt_quantity(v.value, v.units)
-                for k, v in self.parameters.items()
+                k: u.unyt_quantity(v.value, v.units) for k, v in self.parameters.items()
             }
         else:
             params = self.parameters
@@ -280,9 +281,7 @@ class ParametricPotential(AbstractPotential):
                 )
                 for listed_val in value:
                     xml_repr = get_xml_representation(
-                        listed_val.in_units(value_unit)
-                        if value_unit
-                        else listed_val
+                        listed_val.in_units(value_unit) if value_unit else listed_val
                     )
                     etree.SubElement(params_list, "Value").text = xml_repr
 
@@ -335,9 +334,10 @@ class ParametricPotential(AbstractPotential):
     def __repr__(self):
         """Return formatted representation of the potential."""
         desc = super().__repr__()
-        member_types = lambda x: (
-            x.member_types if hasattr(x, "member_types") else ""
-        )
+
+        def member_types(x):
+            return x.member_types if hasattr(x, "member_types") else ""
+
         desc = desc.replace(
             ">",
             f", \n parameters: {self.parameters},\n"

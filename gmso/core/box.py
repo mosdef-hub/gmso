@@ -12,7 +12,9 @@ def _validate_lengths(lengths):
     if not isinstance(lengths, u.unyt_array):
         if all(isinstance(length, u.unyt_quantity) for length in lengths):
             print("Converting list of unyt quantities to a unyt array")
-            lengths = u.unyt_array([l for l in lengths], str(lengths[0].units))
+            lengths = u.unyt_array(
+                [length for length in lengths], str(lengths[0].units)
+            )
         else:
             warnings.warn("Lengths are assumed to be in nm")
             lengths *= u.nm
@@ -44,8 +46,7 @@ def _validate_lengths(lengths):
     ):
         if lengths[0] > 0 and lengths[1] > 0:
             warnings.warn(
-                "A c value of 0 was passed. This will be "
-                "interpreted as a 2-D box."
+                "A c value of 0 was passed. This will be " "interpreted as a 2-D box."
             )
         else:
             raise ValueError(
@@ -203,9 +204,7 @@ class Box(object):
         if not isinstance(other, Box):
             return False
 
-        if not allclose_units(
-            self.lengths, other.lengths, rtol=1e-5, atol=1e-8
-        ):
+        if not allclose_units(self.lengths, other.lengths, rtol=1e-5, atol=1e-8):
             return False
 
         if not allclose_units(self.angles, other.angles, rtol=1e-5, atol=1e-8):

@@ -42,9 +42,7 @@ def _to_json(top, types=True, update=False):
         A json serializable dictionary representing members of this Topology
     """
     if types and not top.is_typed():
-        warnings.warn(
-            "Cannot incorporate types because the topology is not typed."
-        )
+        warnings.warn("Cannot incorporate types because the topology is not typed.")
         types = False
 
     if not types and top.is_typed():
@@ -116,8 +114,7 @@ def _to_json(top, types=True, update=False):
             )
             target = targets[type(connection)]
             connection_dict["connection_members"] = [
-                top.get_index(member)
-                for member in connection.connection_members
+                top.get_index(member) for member in connection.connection_members
             ]
             target.append(connection_dict)
             connection_type = getattr(connection, exclude_attr)
@@ -132,17 +129,13 @@ def _to_json(top, types=True, update=False):
             top.improper_types,
         ]:
             for potential in potentials:
-                potential_dict = potential.json_dict(
-                    exclude={"topology", "set_ref"}
-                )
+                potential_dict = potential.json_dict(exclude={"topology", "set_ref"})
                 target = targets[type(potential)]
                 potential_dict["id"] = id(potential)
                 target.append(potential_dict)
 
         for pairpotential_type in top._pairpotential_types:
-            json_dict["pair_potentialtypes"].append(
-                pairpotential_type.json_dict()
-            )
+            json_dict["pair_potentialtypes"].append(pairpotential_type.json_dict())
 
     return json_dict
 
@@ -193,8 +186,7 @@ def _from_json(json_dict):
     for bond_dict in json_dict["bonds"]:
         bond_type_id = bond_dict.pop("bond_type", None)
         bond_dict["connection_members"] = [
-            top._sites[member_idx]
-            for member_idx in bond_dict["connection_members"]
+            top._sites[member_idx] for member_idx in bond_dict["connection_members"]
         ]
         bond = Bond.model_validate(bond_dict)
         top.add_connection(bond)
@@ -206,8 +198,7 @@ def _from_json(json_dict):
     for angle_dict in json_dict["angles"]:
         angle_type_id = angle_dict.pop("angle_type", None)
         angle_dict["connection_members"] = [
-            top._sites[member_idx]
-            for member_idx in angle_dict["connection_members"]
+            top._sites[member_idx] for member_idx in angle_dict["connection_members"]
         ]
         angle = Angle.model_validate(angle_dict)
         top.add_connection(angle)
@@ -219,8 +210,7 @@ def _from_json(json_dict):
     for dihedral_dict in json_dict["dihedrals"]:
         dihedral_type_id = dihedral_dict.pop("dihedral_type", None)
         dihedral_dict["connection_members"] = [
-            top._sites[member_idx]
-            for member_idx in dihedral_dict["connection_members"]
+            top._sites[member_idx] for member_idx in dihedral_dict["connection_members"]
         ]
         dihedral = Dihedral.model_validate(dihedral_dict)
         top.add_connection(dihedral)
@@ -232,8 +222,7 @@ def _from_json(json_dict):
     for improper_dict in json_dict["impropers"]:
         improper_type_id = improper_dict.pop("improper_type", None)
         improper_dict["connection_members"] = [
-            top._sites[member_idx]
-            for member_idx in improper_dict["connection_members"]
+            top._sites[member_idx] for member_idx in improper_dict["connection_members"]
         ]
         improper = Improper.model_validate(improper_dict)
         if improper_type_id:
@@ -266,18 +255,14 @@ def _from_json(json_dict):
         lengths = u.unyt_array(
             box_dict["lengths"]["array"], box_dict["lengths"]["unit"]
         )
-        angles = u.unyt_array(
-            box_dict["angles"]["array"], box_dict["angles"]["unit"]
-        )
+        angles = u.unyt_array(box_dict["angles"]["array"], box_dict["angles"]["unit"])
         top.box = Box(lengths=lengths, angles=angles)
 
     top.update_topology()
 
     # AtomTypes need to be updated for pairpotentialtype addition
     for pair_potentialtype_dict in json_dict["pair_potentialtypes"]:
-        pair_potentialtype = PairPotentialType.model_validate(
-            pair_potentialtype_dict
-        )
+        pair_potentialtype = PairPotentialType.model_validate(pair_potentialtype_dict)
         top.add_pairpotentialtype(pair_potentialtype, update=False)
 
     return top

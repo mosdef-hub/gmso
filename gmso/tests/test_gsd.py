@@ -26,23 +26,17 @@ class TestGsd(BaseTest):
             assert all([i in snap.particles.types for i in ["C", "H"]])
             assert all([i in snap.bonds.types for i in ["C-C", "C-H"]])
             assert all([i in snap.angles.types for i in ["C-C-C", "C-C-H"]])
-            assert all(
-                [i in snap.dihedrals.types for i in ["C-C-C-C", "C-C-C-H"]]
-            )
+            assert all([i in snap.dihedrals.types for i in ["C-C-C-C", "C-C-C-H"]])
 
     def test_write_gsd(self, hierarchical_compound):
         top = from_mbuild(hierarchical_compound)
         top.save("out.gsd")
 
     def test_write_gsd_pmd(self):
-        top = from_parmed(
-            pmd.load_file(get_fn("ethane.top"), xyz=get_fn("ethane.gro"))
-        )
+        top = from_parmed(pmd.load_file(get_fn("ethane.top"), xyz=get_fn("ethane.gro")))
         top.save("out.gsd")
 
     def test_write_gsd_non_orthogonal(self):
-        top = from_parmed(
-            pmd.load_file(get_fn("ethane.top"), xyz=get_fn("ethane.gro"))
-        )
+        top = from_parmed(pmd.load_file(get_fn("ethane.top"), xyz=get_fn("ethane.gro")))
         top.box.angles = u.degree * [90, 90, 120]
         top.save("out.gsd")

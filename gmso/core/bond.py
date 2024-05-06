@@ -52,7 +52,7 @@ class Bond(Connection):
             **{
                 "bond_type": "bond_type_",
                 "restraint": "restraint_",
-            }
+            },
         )
     )
 

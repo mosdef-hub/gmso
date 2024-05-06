@@ -32,9 +32,7 @@ def get_name_or_class(potential):
     """Get identifier for a topology potential based on name or membertype/class."""
     if isinstance(potential, AtomType):
         return potential.name
-    elif isinstance(
-        potential, (BondType, AngleType, DihedralType, ImproperType)
-    ):
+    elif isinstance(potential, (BondType, AngleType, DihedralType, ImproperType)):
         return potential.member_types or potential.member_classes
 
 
@@ -199,15 +197,11 @@ class TopologyPotentialView:
         if filter_by == self.filter_by:
             return self
 
-        return TopologyPotentialView(
-            iterator=self.iterator, filter_by=filter_by
-        )
+        return TopologyPotentialView(iterator=self.iterator, filter_by=filter_by)
 
     def __repr__(self):
         name = self.__class__.__name__
         return f"<{name}({tuple(self)})>"
 
     def __len__(self):
-        return len(
-            list(self.yield_view())
-        )  # This will be costly? But How frequent?
+        return len(list(self.yield_view()))  # This will be costly? But How frequent?

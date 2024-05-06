@@ -25,9 +25,7 @@ def unyt_to_hashable(unyt_or_unyt_iter):
         return unyt_or_unyt_iter
 
     if isinstance(unyt_or_unyt_iter, list):
-        hashes = tuple(
-            _unyt_to_hashable_single(val) for val in unyt_or_unyt_iter
-        )
+        hashes = tuple(_unyt_to_hashable_single(val) for val in unyt_or_unyt_iter)
         return hashes
     else:
         return _unyt_to_hashable_single(unyt_or_unyt_iter)
@@ -116,12 +114,9 @@ def mask_with(iterable, window_size=1, mask="*"):
     idx = 0
     first = None
     while idx < len(input_list):
-        mask_idxes = set(
-            (idx + j) % len(input_list) for j in range(window_size)
-        )
+        mask_idxes = set((idx + j) % len(input_list) for j in range(window_size))
         to_yield = [
-            mask if j in mask_idxes else input_list[j]
-            for j in range(len(input_list))
+            mask if j in mask_idxes else input_list[j] for j in range(len(input_list))
         ]
         if to_yield == first:
             break

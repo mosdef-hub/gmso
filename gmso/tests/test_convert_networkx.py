@@ -1,10 +1,7 @@
 import networkx as nx
 import pytest
-import unyt as u
 
-import gmso
 from gmso.core.atom import Atom
-from gmso.core.topology import Topology as Top
 from gmso.external.convert_networkx import from_networkx, to_networkx
 from gmso.tests.base_test import BaseTest
 
@@ -61,9 +58,7 @@ class TestConvertNetworkX(BaseTest):
         assert set(water_system.bonds) == set(water_from_nx.bonds)
 
         assert nx.number_connected_components(water_to_nx) == len(
-            water_system.unique_site_labels(
-                label_type="molecule", name_only=False
-            )
+            water_system.unique_site_labels(label_type="molecule", name_only=False)
         )
 
     def test_from_networkx_without_connections(self):
@@ -74,5 +69,5 @@ class TestConvertNetworkX(BaseTest):
 
     def test_from_networkx_arbitrary_graph(self):
         test_graph = nx.grid_2d_graph(2, 2)
-        with pytest.raises(TypeError) as e:
+        with pytest.raises(TypeError):
             from_networkx(test_graph)

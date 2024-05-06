@@ -30,9 +30,7 @@ def partition_isomorphic_topology_graphs(graph):
     See https://github.com/networkx/networkx/blob/main/networkx/algorithms/isomorphism/isomorphvf2.py
     from the networkx documentation about identifying isomorphic components
     """
-    graph_queue = deque(
-        graph.subgraph(c) for c in nx.connected_components(graph)
-    )
+    graph_queue = deque(graph.subgraph(c) for c in nx.connected_components(graph))
 
     graph_of_interest = graph_queue.popleft()
     isomorphic_elements = {
@@ -53,9 +51,7 @@ def partition_isomorphic_topology_graphs(graph):
                 graph, graph_of_interest, node_match=top_node_match
             )
             if matcher.is_isomorphic():
-                isomorphic_elements[graph_of_interest].append(
-                    (graph, matcher.mapping)
-                )
+                isomorphic_elements[graph_of_interest].append((graph, matcher.mapping))
             else:
                 if count == 0:
                     first_mismatch = graph

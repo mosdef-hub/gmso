@@ -41,9 +41,7 @@ for name, item in vars(u).items():
 def _check_valid_string(type_str):
     """Verify that the strings in the forcefield are valid."""
     if FF_TOKENS_SEPARATOR in type_str:
-        raise ForceFieldError(
-            f"Please do not use {FF_TOKENS_SEPARATOR} in type string"
-        )
+        raise ForceFieldError(f"Please do not use {FF_TOKENS_SEPARATOR} in type string")
 
 
 def _parse_param_units(parent_tag):
@@ -71,9 +69,7 @@ def _parse_params_values(parent_tag, units_dict, child_tag, expression=None):
         param_name = param.attrib["name"]
         param_unit = units_dict[param_name]
         if param.attrib.get("value"):
-            param_value = u.unyt_quantity(
-                float(param.attrib["value"]), param_unit
-            )
+            param_value = u.unyt_quantity(float(param.attrib["value"]), param_unit)
         else:
             children = param.getchildren()
             if len(children) == 0:
@@ -83,22 +79,16 @@ def _parse_params_values(parent_tag, units_dict, child_tag, expression=None):
                     f"either a single value as an attribute value or a sequence "
                     f"of values."
                 )
-            value_array = np.array(
-                [value.text for value in children], dtype=float
-            )
+            value_array = np.array([value.text for value in children], dtype=float)
             param_value = u.unyt_array(value_array, param_unit)
 
         params_dict[param_name] = param_value
     param_ref_dict = units_dict
     if child_tag == "DihedralType":
         if not expression:
-            raise ForceFieldError(
-                "Cannot consolidate parameters without an expression"
-            )
+            raise ForceFieldError("Cannot consolidate parameters without an expression")
         _consolidate_params(params_dict, expression)
-        param_ref_dict = _consolidate_params(
-            units_dict, expression, update_orig=False
-        )
+        param_ref_dict = _consolidate_params(units_dict, expression, update_orig=False)
 
     for param in param_ref_dict:
         if param not in params_dict:
@@ -112,9 +102,7 @@ def _consolidate_params(params_dict, expression, update_orig=True):
     """Consolidate parameters for a specific expression."""
     to_del = []
     new_dict = {}
-    match_string = "|".join(
-        str(symbol) for symbol in sympify(expression).free_symbols
-    )
+    match_string = "|".join(str(symbol) for symbol in sympify(expression).free_symbols)
     for param in params_dict:
         match = re.match(r"({0})([0-9]+)".format(match_string), param)
         if match:
@@ -137,9 +125,7 @@ def _get_member_types(tag):
     at4 = tag.attrib.get("type4")
 
     member_types = filter(lambda x: x is not None, [at1, at2, at3, at4])
-    member_types = [
-        "*" if mem_type == "" else mem_type for mem_type in member_types
-    ]
+    member_types = ["*" if mem_type == "" else mem_type for mem_type in member_types]
     return member_types or None
 
 
@@ -322,15 +308,13 @@ def _validate_schema(xml_path_or_etree, schema=None):
 
 def _parse_scaling_factors(meta_tag):
     """Parse the scaling factors from the schema."""
-    assert (
-        meta_tag.tag == "FFMetaData"
-    ), "Can only parse metadata from FFMetaData tag"
+    assert meta_tag.tag == "FFMetaData", "Can only parse metadata from FFMetaData tag"
     scaling_factors = {
         "electrostatics14Scale": meta_tag.get("electrostatics14Scale", 1.0),
         "nonBonded14Scale": meta_tag.get("nonBonded14Scale", 1.0),
     }
     for key in scaling_factors:
-        if type(scaling_factors[key]) != float:
+        if not isinstance(scaling_factors[key], float):
             scaling_factors[key] = float(scaling_factors[key])
     return scaling_factors
 
@@ -392,21 +376,16 @@ def parse_ff_atomtypes(atomtypes_el, ff_meta):
             )
         if isinstance(ctor_kwargs["overrides"], str):
             ctor_kwargs["overrides"] = set(
-                override.strip()
-                for override in ctor_kwargs["overrides"].split(",")
+                override.strip() for override in ctor_kwargs["overrides"].split(",")
             )
         if isinstance(ctor_kwargs["charge"], str):
             ctor_kwargs["charge"] = u.unyt_quantity(
                 float(ctor_kwargs["charge"]), units_dict["charge"]
             )
-        params_dict = _parse_params_values(
-            atom_type, param_unit_dict, "AtomType"
-        )
+        params_dict = _parse_params_values(atom_type, param_unit_dict, "AtomType")
         if not ctor_kwargs["parameters"] and params_dict:
             ctor_kwargs["parameters"] = params_dict
-            valued_param_vars = set(
-                sympify(param) for param in params_dict.keys()
-            )
+            valued_param_vars = set(sympify(param) for param in params_dict.keys())
             ctor_kwargs["independent_variables"] = (
                 sympify(atom_types_expression).free_symbols - valued_param_vars
             )
@@ -430,9 +409,7 @@ TAG_TO_CLASS_MAP = {
 def parse_ff_connection_types(connectiontypes_el, child_tag="BondType"):
     """Parse an XML etree Element rooted at BondTypes to create topology.core.AtomTypes."""
     connectiontypes_dict = {}
-    connectiontype_expression = connectiontypes_el.attrib.get(
-        "expression", None
-    )
+    connectiontype_expression = connectiontypes_el.attrib.get("expression", None)
     param_unit_dict = _parse_param_units(connectiontypes_el)
 
     # Parse all the bondTypes and create a new BondType
@@ -449,9 +426,7 @@ def parse_ff_connection_types(connectiontypes_el, child_tag="BondType"):
             ctor_kwargs["expression"] = connectiontype_expression
 
         for kwarg in ctor_kwargs.keys():
-            ctor_kwargs[kwarg] = connection_type.attrib.get(
-                kwarg, ctor_kwargs[kwarg]
-            )
+            ctor_kwargs[kwarg] = connection_type.attrib.get(kwarg, ctor_kwargs[kwarg])
 
         ctor_kwargs["member_types"] = _get_member_types(connection_type)
         if not ctor_kwargs["member_types"]:
@@ -485,15 +460,11 @@ def parse_ff_connection_types(connectiontypes_el, child_tag="BondType"):
 def parse_ff_pairpotential_types(pairpotentialtypes_el):
     """Given an XML etree Element rooted at PairPotentialTypes, parse the XML to create topology.core.PairPotentialTypes."""
     pairpotentialtypes_dict = {}
-    pairpotentialtype_expression = pairpotentialtypes_el.attrib.get(
-        "expression", None
-    )
+    pairpotentialtype_expression = pairpotentialtypes_el.attrib.get("expression", None)
     param_unit_dict = _parse_param_units(pairpotentialtypes_el)
 
     # Parse all the pairpotentialTypes and create a new PairPotentialType
-    for pairpotential_type in pairpotentialtypes_el.getiterator(
-        "PairPotentialType"
-    ):
+    for pairpotential_type in pairpotentialtypes_el.getiterator("PairPotentialType"):
         ctor_kwargs = {
             "name": PairPotentialType,
             "expression": "4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
@@ -522,8 +493,7 @@ def parse_ff_pairpotential_types(pairpotentialtypes_el):
             sympify(param) for param in ctor_kwargs["parameters"].keys()
         )
         ctor_kwargs["independent_variables"] = (
-            sympify(pairpotentialtype_expression).free_symbols
-            - valued_param_vars
+            sympify(pairpotentialtype_expression).free_symbols - valued_param_vars
         )
         this_pp_type_key = FF_TOKENS_SEPARATOR.join(ctor_kwargs["member_types"])
         this_pp_type = TAG_TO_CLASS_MAP["PairPotentialType"](**ctor_kwargs)
@@ -551,15 +521,11 @@ def _parse_unit_string(string):
             )
         if isinstance(symbol_unit, u.Unit):
             sympy_subs.append((symbol.name, symbol_unit.base_value))
-            unyt_subs.append(
-                (symbol.name, symbol_unit.get_base_equivalent().expr)
-            )
+            unyt_subs.append((symbol.name, symbol_unit.get_base_equivalent().expr))
         elif isinstance(symbol_unit, u.unyt_quantity):
             sympy_subs.append((symbol.name, float(symbol_unit.in_base().value)))
             unyt_subs.append(
                 (symbol.name, symbol_unit.units.get_base_equivalent().expr)
             )
 
-    return u.Unit(
-        float(expr.subs(sympy_subs)) * u.Unit(str(expr.subs(unyt_subs)))
-    )
+    return u.Unit(float(expr.subs(sympy_subs)) * u.Unit(str(expr.subs(unyt_subs))))

@@ -54,7 +54,7 @@ class Angle(Connection):
             **{
                 "angle_type": "angle_type_",
                 "restraint": "restraint_",
-            }
+            },
         )
     )
 

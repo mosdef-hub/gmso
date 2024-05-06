@@ -11,11 +11,7 @@ from lxml import etree
 from pydantic import ValidationError
 
 from gmso.core.element import element_by_symbol
-from gmso.exceptions import (
-    ForceFieldParseError,
-    GMSOError,
-    MissingPotentialError,
-)
+from gmso.exceptions import GMSOError, MissingPotentialError
 from gmso.utils._constants import FF_TOKENS_SEPARATOR
 from gmso.utils.decorators import deprecate_function, deprecate_kwargs
 from gmso.utils.ff_utils import (
@@ -112,7 +108,7 @@ class ForceField(object):
             else:
                 raise (
                     GMSOError(
-                        f"Backend provided does not exist. Please provide one of `'gmso'` or \
+                        "Backend provided does not exist. Please provide one of `'gmso'` or \
                 `'forcefield-utilities'`"
                     )
                 )
@@ -298,11 +294,7 @@ class ForceField(object):
             raise ValueError(f"Cannot get potential for {group}")
 
         validate_type(
-            (
-                [key]
-                if isinstance(key, str) or not isinstance(key, Iterable)
-                else key
-            ),
+            ([key] if isinstance(key, str) or not isinstance(key, Iterable) else key),
             str,
         )
 
@@ -399,9 +391,7 @@ class ForceField(object):
         else:
             raise MissingPotentialError(msg)
 
-    def _get_dihedral_type(
-        self, atom_types, return_match_order=False, warn=False
-    ):
+    def _get_dihedral_type(self, atom_types, return_match_order=False, warn=False):
         """Get a particular dihedral_type between `atom_types` from this ForceField."""
         if len(atom_types) != 4:
             raise ValueError(
@@ -460,9 +450,7 @@ class ForceField(object):
         else:
             raise MissingPotentialError(msg)
 
-    def _get_improper_type(
-        self, atom_types, return_match_order=False, warn=False
-    ):
+    def _get_improper_type(self, atom_types, return_match_order=False, warn=False):
         """Get a particular improper_type between `atom_types` from this ForceField."""
         if len(atom_types) != 4:
             raise ValueError(
@@ -478,9 +466,7 @@ class ForceField(object):
             else:
                 return self.improper_types[forward]
 
-        equiv_idx = [
-            (0, i, j, k) for (i, j, k) in itertools.permutations((1, 2, 3), 3)
-        ]
+        equiv_idx = [(0, i, j, k) for (i, j, k) in itertools.permutations((1, 2, 3), 3)]
         equivalent = [
             [atom_types[m], atom_types[n], atom_types[o], atom_types[p]]
             for (m, n, o, p) in equiv_idx
@@ -508,9 +494,7 @@ class ForceField(object):
                 for eq, order in zip(equivalent, equiv_idx):
                     equiv_patterns = mask_with(eq, i)
                     for equiv_pattern in equiv_patterns:
-                        equiv_pattern_key = FF_TOKENS_SEPARATOR.join(
-                            equiv_pattern
-                        )
+                        equiv_pattern_key = FF_TOKENS_SEPARATOR.join(equiv_pattern)
                         if equiv_pattern_key in self.improper_types:
                             match = (
                                 self.improper_types[equiv_pattern_key],
@@ -574,12 +558,13 @@ class ForceField(object):
     def xml_from_forcefield_utilities(cls, filename):
         from forcefield_utilities.xml_loader import FoyerFFs, GMSOFFs
 
+        from gmso.exceptions import ForceFieldParseError
+
         try:
             loader = GMSOFFs()
             ff = loader.load(filename).to_gmso_ff()
         # Temporarily opt out, pending new forcefield-utilities release
-        # except (ForceFieldParseError, FileNotFoundError, ValidationError):
-        except:
+        except (ForceFieldParseError, FileNotFoundError, ValidationError):
             loader = FoyerFFs()
             ff = loader.load(filename).to_gmso_ff()
             ff.units = {
@@ -618,7 +603,7 @@ class ForceField(object):
         else:
             raise (
                 GMSOError(
-                    f"Backend provided does not exist. Please provide one of `'gmso'` or \
+                    "Backend provided does not exist. Please provide one of `'gmso'` or \
             `'forcefield-utilities'`"
                 )
             )
@@ -662,9 +647,7 @@ class ForceField(object):
 
         at_groups = self.group_atom_types_by_expression()
         for expr, atom_types in at_groups.items():
-            atypes = etree.SubElement(
-                ff_el, "AtomTypes", attrib={"expression": expr}
-            )
+            atypes = etree.SubElement(ff_el, "AtomTypes", attrib={"expression": expr})
             params_units_def = None
             for atom_type in atom_types:
                 if params_units_def is None:
@@ -769,17 +752,13 @@ class ForceField(object):
             created using the information in the XML file
         """
 
-        if not isinstance(xmls_or_etrees, Iterable) or isinstance(
-            xmls_or_etrees, str
-        ):
+        if not isinstance(xmls_or_etrees, Iterable) or isinstance(xmls_or_etrees, str):
             xmls_or_etrees = [xmls_or_etrees]
 
         should_parse_xml = False
         if not (
             all(map(lambda x: isinstance(x, str), xmls_or_etrees))
-            or all(
-                map(lambda x: isinstance(x, etree._ElementTree), xmls_or_etrees)
-            )
+            or all(map(lambda x: isinstance(x, etree._ElementTree), xmls_or_etrees))
         ):
             raise TypeError(
                 "Please provide an iterable of strings "
@@ -825,9 +804,7 @@ class ForceField(object):
             ff_bondtypes_list.extend(ff_tree.findall("BondTypes"))
             ff_angletypes_list.extend(ff_tree.findall("AngleTypes"))
             ff_dihedraltypes_list.extend(ff_tree.findall("DihedralTypes"))
-            ff_pairpotentialtypes_list.extend(
-                ff_tree.findall("PairPotentialTypes")
-            )
+            ff_pairpotentialtypes_list.extend(ff_tree.findall("PairPotentialTypes"))
 
         # Consolidate AtomTypes
         for atom_types in ff_atomtypes_list:
@@ -845,9 +822,7 @@ class ForceField(object):
             this_bond_types_group_name = bond_types.attrib.get("name", None)
 
             if this_bond_types_group_name:
-                potential_groups[this_bond_types_group_name] = (
-                    this_bond_types_group
-                )
+                potential_groups[this_bond_types_group_name] = this_bond_types_group
 
             bond_types_dict.update(this_bond_types_group)
 
@@ -859,9 +834,7 @@ class ForceField(object):
             this_angle_types_group_name = angle_types.attrib.get("name", None)
 
             if this_angle_types_group_name:
-                potential_groups[this_angle_types_group_name] = (
-                    this_angle_types_group
-                )
+                potential_groups[this_angle_types_group_name] = this_angle_types_group
 
             angle_types_dict.update(this_angle_types_group)
 
@@ -887,8 +860,8 @@ class ForceField(object):
             this_pairpotential_types_group = parse_ff_pairpotential_types(
                 pairpotential_types
             )
-            this_pairpotential_types_group_name = (
-                pairpotential_types.attrib.get("name", None)
+            this_pairpotential_types_group_name = pairpotential_types.attrib.get(
+                "name", None
             )
 
             if this_pairpotential_types_group_name:
