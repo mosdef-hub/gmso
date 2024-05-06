@@ -52,7 +52,7 @@ class TestTemplate(BaseTest):
             AttributeError,
             match="^module 'unyt.dimensions' has no attribute 'missing'$",
         ):
-            invalid_dimension_template = PotentialTemplate(
+            PotentialTemplate(
                 expression="a*x+c",
                 independent_variables="x",
                 expected_parameters_dimensions={"a": "missing", "b": "length"},
@@ -82,9 +82,7 @@ class TestTemplate(BaseTest):
 
         with pytest.raises(
             MissingParameterError,
-            match=re.escape(
-                "Parameter 'b' missing from the provided parameters ['a']"
-            ),
+            match=re.escape("Parameter 'b' missing from the provided parameters ['a']"),
         ):
             template.assert_can_parameterize_with(
                 {

@@ -35,8 +35,6 @@ class TestBond(BaseTest):
         assert connect.name == "bond_name"
 
     def test_bond_fake(self):
-        atom1 = Atom(name="atom1")
-        atom2 = Atom(name="atom2")
         with pytest.raises(TypeError):
             Bond(connection_members=["fakeatom1", "fakeatom2"])
 
@@ -47,15 +45,9 @@ class TestBond(BaseTest):
             Bond(connection_members=[atom1, atom2], bond_type="Fake bondtype")
 
     def test_bond_constituent_types(self):
-        atom1 = Atom(
-            name="atom1", position=[0, 0, 0], atom_type=AtomType(name="A")
-        )
-        atom2 = Atom(
-            name="atom2", position=[1, 0, 0], atom_type=AtomType(name="B")
-        )
-        bondtype = BondType(
-            member_types=[atom1.atom_type.name, atom2.atom_type.name]
-        )
+        atom1 = Atom(name="atom1", position=[0, 0, 0], atom_type=AtomType(name="A"))
+        atom2 = Atom(name="atom2", position=[1, 0, 0], atom_type=AtomType(name="B"))
+        bondtype = BondType(member_types=[atom1.atom_type.name, atom2.atom_type.name])
         bond = Bond(connection_members=[atom1, atom2], bond_type=bondtype)
         assert "A" in bond.connection_type.member_types
         assert "B" in bond.connection_type.member_types
@@ -114,9 +106,7 @@ class TestBond(BaseTest):
 
         atype2 = AtomType(atomclass="CK", name="t2")
 
-        bond = Bond(
-            connection_members=[Atom(atom_type=atype1), Atom(atom_type=atype2)]
-        )
+        bond = Bond(connection_members=[Atom(atom_type=atype1), Atom(atom_type=atype2)])
         assert set(bond.member_classes) == set(["CT", "CK"])
         assert set(bond.member_types) == set(["t1", "t2"])
 

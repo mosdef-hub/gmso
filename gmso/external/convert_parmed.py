@@ -1,7 +1,6 @@
 """Module support for converting to/from ParmEd objects."""
 
 import copy
-import warnings
 from operator import attrgetter, itemgetter
 
 import numpy as np
@@ -11,11 +10,11 @@ from symengine import expand
 import gmso
 from gmso.core.element import element_by_atomic_number, element_by_symbol
 from gmso.core.views import PotentialFilters, get_parameters
-
-pfilter = PotentialFilters.UNIQUE_PARAMETERS
 from gmso.exceptions import GMSOError
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.io import has_parmed, import_
+
+pfilter = PotentialFilters.UNIQUE_PARAMETERS
 
 if has_parmed:
     pmd = import_("parmed")
@@ -65,9 +64,7 @@ def from_parmed(structure, refer_type=True):
     for residue in structure.residues:
         for atom in residue.atoms:
             # add atom to sites in gmso
-            element = (
-                element_by_atomic_number(atom.element) if atom.element else None
-            )
+            element = element_by_atomic_number(atom.element) if atom.element else None
             if residue.number == -1:  # use default value of 0 in GMSO
                 residue_number = 0
             else:
@@ -206,9 +203,7 @@ def from_parmed(structure, refer_type=True):
                 )
         top.add_connection(top_connection, update_types=False)
 
-    ryckaert_bellemans_torsion_potential = lib[
-        "RyckaertBellemansTorsionPotential"
-    ]
+    ryckaert_bellemans_torsion_potential = lib["RyckaertBellemansTorsionPotential"]
     name = ryckaert_bellemans_torsion_potential.name
     expression = ryckaert_bellemans_torsion_potential.expression
     variables = ryckaert_bellemans_torsion_potential.independent_variables
@@ -323,9 +318,7 @@ def _atom_types_from_pmd(structure):
 
 
 def _sort_bond_members(top, site_map, atom1, atom2):
-    return sorted(
-        [site_map[atom1], site_map[atom2]], key=lambda x: top.get_index(x)
-    )
+    return sorted([site_map[atom1], site_map[atom2]], key=lambda x: top.get_index(x))
 
 
 def _sort_angle_members(top, site_map, atom1, atom2, atom3):
@@ -336,9 +329,8 @@ def _sort_angle_members(top, site_map, atom1, atom2, atom3):
 
 
 # function to check reversibility of dihedral type
-rev_dih_order = lambda top, site_map, x, y: top.get_index(
-    site_map[x]
-) > top.get_index(site_map[y])
+def rev_dih_order(top, site_map, x, y):
+    return top.get_index(site_map[x]) > top.get_index(site_map[y])
 
 
 def _sort_dihedral_members(top, site_map, atom1, atom2, atom3, atom4):
@@ -395,9 +387,10 @@ def _add_conn_type_from_pmd(
             Try using refer_type=False to not look for a parameterized structure."
         )
     try:
-        get_classes = lambda x: (
-            x.atom_type.atomclass if x.atom_type.atomclass else x.atom_type.name
-        )
+
+        def get_classes(x):
+            return x.atom_type.atomclass if x.atom_type.atomclass else x.atom_type.name
+
         member_classes = list(map(get_classes, gmso_conn.connection_members))
     except AttributeError:
         member_classes = list(
@@ -438,7 +431,6 @@ def to_parmed(top, refer_type=True):
     structure : parmed.Structure
     """
     # Sanity check
-    msg = "Provided argument is not a topology.Topology."
     assert isinstance(top, gmso.Topology)
 
     # Set up Parmed structure and define general properties
@@ -472,15 +464,9 @@ def to_parmed(top, refer_type=True):
             atomic_number=atomic_number,
             name=site.name,
             mass=site.mass.to(u.amu).value if site.mass else None,
-            charge=(
-                site.charge.to(u.elementary_charge).value
-                if site.charge
-                else None
-            ),
+            charge=(site.charge.to(u.elementary_charge).value if site.charge else None),
         )
-        pmd_atom.xx, pmd_atom.xy, pmd_atom.xz = site.position.to(
-            "angstrom"
-        ).value
+        pmd_atom.xx, pmd_atom.xy, pmd_atom.xz = site.position.to("angstrom").value
 
         # Add atom to structure
         if site.residue:
@@ -580,9 +566,7 @@ def _atom_types_from_gmso(top, structure, atom_map):
     """
     # Maps
     atype_map = dict()
-    for atom_type in top.atom_types(
-        filter_by=PotentialFilters.UNIQUE_NAME_CLASS
-    ):
+    for atom_type in top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS):
         msg = "Atom type {} expression does not match Parmed AtomType default expression".format(
             atom_type.name
         )
@@ -592,19 +576,13 @@ def _atom_types_from_gmso(top, structure, atom_map):
         # Extract Topology atom type information
         atype_name = atom_type.name
         # Convert charge to elementary_charge
-        atype_charge = float(atom_type.charge.to("Coulomb").value) / (
-            1.6 * 10 ** (-19)
-        )
+        atype_charge = float(atom_type.charge.to("Coulomb").value) / (1.6 * 10 ** (-19))
         atype_sigma = float(atom_type.parameters["sigma"].to("angstrom").value)
-        atype_epsilon = float(
-            atom_type.parameters["epsilon"].to("kcal/mol").value
-        )
+        atype_epsilon = float(atom_type.parameters["epsilon"].to("kcal/mol").value)
         if atom_type.mass:
             atype_mass = float(atom_type.mass.to("amu").value)
         else:
-            atype_mass = float(
-                element_by_symbol(atom_type.name).mass.to("amu").value
-            )
+            atype_mass = float(element_by_symbol(atom_type.name).mass.to("amu").value)
         atype_atomic_number = getattr(
             element_by_symbol(atom_type.name), "atomic_number", None
         )
@@ -646,9 +624,7 @@ def _bond_types_from_gmso(top, structure, bond_map):
         msg = "Bond type {} expression does not match Parmed BondType default expression".format(
             bond_type.name
         )
-        assert expand(bond_type.expression) == expand(
-            "0.5 * k * (r-r_eq)**2"
-        ), msg
+        assert expand(bond_type.expression) == expand("0.5 * k * (r-r_eq)**2"), msg
         # Extract Topology bond_type information
         btype_k = 0.5 * float(
             bond_type.parameters["k"].to("kcal / (angstrom**2 * mol)").value
@@ -693,9 +669,7 @@ def _angle_types_from_gmso(top, structure, angle_map):
         agltype_k = 0.5 * float(
             angle_type.parameters["k"].to("kcal / (radian**2 * mol)").value
         )
-        agltype_theta_eq = float(
-            angle_type.parameters["theta_eq"].to("degree").value
-        )
+        agltype_theta_eq = float(angle_type.parameters["theta_eq"].to("degree").value)
         # Create unique Parmed AngleType object
         agltype = pmd.AngleType(agltype_k, agltype_theta_eq)
         # Type map to match Topology AngleType with Parmed AngleType
@@ -739,9 +713,7 @@ def _dihedral_types_from_gmso(top, structure, dihedral_map):
             "k * (1 + cos(n * phi - phi_eq))**2"
         ):
             dtype_k = float(dihedral_type.parameters["k"].to("kcal/mol").value)
-            dtype_phi_eq = float(
-                dihedral_type.parameters["phi_eq"].to("degrees").value
-            )
+            dtype_phi_eq = float(dihedral_type.parameters["phi_eq"].to("degrees").value)
             dtype_n = float(dihedral_type.parameters["n"].value)
             # Create unique Parmed DihedralType object
             dtype = pmd.DihedralType(dtype_k, dtype_n, dtype_phi_eq)
@@ -755,24 +727,12 @@ def _dihedral_types_from_gmso(top, structure, dihedral_map):
             + "c4 * cos(phi)**4 + "
             + "c5 * cos(phi)**5"
         ):
-            dtype_c0 = float(
-                dihedral_type.parameters["c0"].to("kcal/mol").value
-            )
-            dtype_c1 = float(
-                dihedral_type.parameters["c1"].to("kcal/mol").value
-            )
-            dtype_c2 = float(
-                dihedral_type.parameters["c2"].to("kcal/mol").value
-            )
-            dtype_c3 = float(
-                dihedral_type.parameters["c3"].to("kcal/mol").value
-            )
-            dtype_c4 = float(
-                dihedral_type.parameters["c4"].to("kcal/mol").value
-            )
-            dtype_c5 = float(
-                dihedral_type.parameters["c5"].to("kcal/mol").value
-            )
+            dtype_c0 = float(dihedral_type.parameters["c0"].to("kcal/mol").value)
+            dtype_c1 = float(dihedral_type.parameters["c1"].to("kcal/mol").value)
+            dtype_c2 = float(dihedral_type.parameters["c2"].to("kcal/mol").value)
+            dtype_c3 = float(dihedral_type.parameters["c3"].to("kcal/mol").value)
+            dtype_c4 = float(dihedral_type.parameters["c4"].to("kcal/mol").value)
+            dtype_c5 = float(dihedral_type.parameters["c5"].to("kcal/mol").value)
             # Create unique DihedralType object
             dtype = pmd.RBTorsionType(
                 dtype_c0,
@@ -787,7 +747,7 @@ def _dihedral_types_from_gmso(top, structure, dihedral_map):
             structure.rb_torsion_types.append(dtype)
             # dtype._idx = len(structure.rb_torsion_types) - 1
         else:
-            raise GMSOError("msg")
+            raise GMSOError(msg)
         dtype_map[get_parameters(dihedral_type)] = dtype
 
     for dihedral in top.dihedrals:

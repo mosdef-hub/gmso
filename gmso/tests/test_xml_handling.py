@@ -35,25 +35,22 @@ class TestXMLHandling(BaseTest):
 
     @pytest.fixture
     def opls_ethane_foyer(self):
-        return ForceField(
-            get_path(filename=get_path("oplsaa-ethane_foyer.xml"))
-        )
+        return ForceField(get_path(filename=get_path("oplsaa-ethane_foyer.xml")))
 
     def test_write_xml(self, opls_ethane_foyer):
         opls_ethane_foyer.to_xml("test_xml_writer.xml")
         reloaded_xml = ForceField("test_xml_writer.xml")
-        get_names = lambda ff, param: [
-            typed for typed in getattr(ff, param).keys()
-        ]
+
+        def get_names(ff, param):
+            return [typed for typed in getattr(ff, param).keys()]
+
         for param in [
             "atom_types",
             "bond_types",
             "angle_types",
             "dihedral_types",
         ]:
-            assert get_names(opls_ethane_foyer, param) == get_names(
-                reloaded_xml, param
-            )
+            assert get_names(opls_ethane_foyer, param) == get_names(reloaded_xml, param)
 
     def test_foyer_xml_conversion(self):
         """Validate xml converted from Foyer can be written out correctly."""

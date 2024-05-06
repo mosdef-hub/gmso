@@ -3,7 +3,6 @@ import mbuild as mb
 import numpy as np
 import pytest
 import unyt as u
-from foyer.tests.utils import get_fn
 
 from gmso.core.angle import Angle
 from gmso.core.atom import Atom
@@ -62,9 +61,7 @@ class BaseTest:
     def benzene_ua_box(self):
         compound = mb.load(get_fn("benzene_ua.mol2"))
         compound.children[0].name = "BenzeneUA"
-        compound_box = mb.packing.fill_box(
-            compound=compound, n_compounds=5, density=1
-        )
+        compound_box = mb.packing.fill_box(compound=compound, n_compounds=5, density=1)
         top = from_mbuild(compound_box)
         top.identify_connections()
         return top
@@ -88,9 +85,7 @@ class BaseTest:
     def benzene_aa_box(self):
         compound = mb.load(get_fn("benzene.mol2"))
         compound.children[0].name = "BenzeneAA"
-        compound_box = mb.packing.fill_box(
-            compound=compound, n_compounds=5, density=1
-        )
+        compound_box = mb.packing.fill_box(compound=compound, n_compounds=5, density=1)
         top = from_mbuild(compound_box)
         top.identify_connections()
         return top
@@ -381,11 +376,14 @@ class BaseTest:
                 return False
             if atom1 is atom2:
                 return True
-            equal = lambda x1, x2: (
-                u.allclose_units(x1, x2)
-                if isinstance(x1, u.unyt_array) and isinstance(x2, u.unyt_array)
-                else x1 == x2
-            )
+
+            def equal(x1, x2):
+                return (
+                    u.allclose_units(x1, x2)
+                    if isinstance(x1, u.unyt_array) and isinstance(x2, u.unyt_array)
+                    else x1 == x2
+                )
+
             for prop in atom1.model_dump(by_alias=True):
                 if not equal(
                     atom2.model_dump().get(prop), atom1.model_dump().get(prop)
@@ -424,9 +422,9 @@ class BaseTest:
                 return False
             if conn1.name != conn2.name:
                 return False
-            if getattr(
-                conn1, connection_types_attrs_map[type(conn1)]
-            ) != getattr(conn2, connection_types_attrs_map[type(conn2)]):
+            if getattr(conn1, connection_types_attrs_map[type(conn1)]) != getattr(
+                conn2, connection_types_attrs_map[type(conn2)]
+            ):
                 return False
             return True
 
@@ -510,7 +508,7 @@ class BaseTest:
                 top1.pairpotential_types, top2.pairpotential_types
             ):
                 if pp_type1 != pp_type2:
-                    return False, f"Pair-PotentialTypes mismatch"
+                    return False, "Pair-PotentialTypes mismatch"
 
             return True, f"{top1} and {top2} are equivalent"
 
@@ -546,9 +544,9 @@ class BaseTest:
         for i in range(1, 26):
             atom = Atom(
                 name=f"atom_{i + 1}",
-                residue=("MY_RES_EVEN" if i % 2 == 0 else f"MY_RES_ODD", i % 5),
+                residue=("MY_RES_EVEN" if i % 2 == 0 else "MY_RES_ODD", i % 5),
                 molecule=(
-                    "MY_MOL_EVEN" if i % 2 == 0 else f"MY_RES_ODD",
+                    "MY_MOL_EVEN" if i % 2 == 0 else "MY_RES_ODD",
                     i % 5,
                 ),
                 group="MY_GROUP",
@@ -670,12 +668,8 @@ class BaseTest:
     @pytest.fixture
     def parmed_benzene(self):
         untyped_benzene = mb.load(get_fn("benzene.mol2"))
-        ff_improper = foyer.Forcefield(
-            forcefield_files=get_fn("improper_dihedral.xml")
-        )
-        benzene = ff_improper.apply(
-            untyped_benzene, assert_dihedral_params=False
-        )
+        ff_improper = foyer.Forcefield(forcefield_files=get_fn("improper_dihedral.xml"))
+        benzene = ff_improper.apply(untyped_benzene, assert_dihedral_params=False)
         return benzene
 
     @pytest.fixture
@@ -695,8 +689,6 @@ class BaseTest:
 
     @pytest.fixture
     def harmonic_parmed_types_charmm(self):
-        from mbuild.formats.lammpsdata import write_lammpsdata
-
         system = mb.Compound()
         first = mb.Particle(name="_CTL2", pos=[-1, 0, 0])
         second = mb.Particle(name="_CL", pos=[0, 0, 0])

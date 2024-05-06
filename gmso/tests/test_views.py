@@ -41,9 +41,7 @@ class TestViews(BaseTest):
         for j in range(200):
             custom_top.add_site(
                 Atom(
-                    atom_type=(
-                        atom_type1.clone() if j % 2 == 0 else atom_type2.clone()
-                    )
+                    atom_type=(atom_type1.clone() if j % 2 == 0 else atom_type2.clone())
                 )
             )
 
@@ -71,9 +69,7 @@ class TestViews(BaseTest):
     def test_ethane_views(self, typed_ethane):
         # test filters
         atom_types = typed_ethane.atom_types
-        unique_atomtypes = atom_types(
-            filter_by=PotentialFilters.UNIQUE_NAME_CLASS
-        )
+        unique_atomtypes = atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS)
         assert len(atom_types) == 8
         assert len(unique_atomtypes) == 2
 
@@ -103,9 +99,7 @@ class TestViews(BaseTest):
         )
         assert len(dihedral_types) == 9
         assert len(unique_dihedraltypes) == 1
-        assert typed_ethane._potentials_count["dihedral_types"] == len(
-            dihedral_types
-        )
+        assert typed_ethane._potentials_count["dihedral_types"] == len(dihedral_types)
 
     def test_custom_filter(self, custom_top):
         assert len(custom_top.atom_types) == 200
@@ -121,27 +115,17 @@ class TestViews(BaseTest):
     def test_call(self, custom_top):
         atom_types = custom_top.atom_types
         atom_types_new = atom_types()
-        atom_types_new_different_filter = atom_types(
-            filter_by=str_expr_dict_param
-        )
+        atom_types_new_different_filter = atom_types(filter_by=str_expr_dict_param)
 
         assert id(atom_types) == id(atom_types_new)
         assert id(atom_types) != atom_types_new_different_filter
 
     def test_default_filters(self, custom_top):
-        bond_types = custom_top.bond_types(
-            filter_by=PotentialFilters.UNIQUE_EXPRESSION
-        )
-        bond_types_params = bond_types(
-            filter_by=PotentialFilters.UNIQUE_PARAMETERS
-        )
-        bond_types_name_class = bond_types(
-            filter_by=PotentialFilters.UNIQUE_NAME_CLASS
-        )
+        bond_types = custom_top.bond_types(filter_by=PotentialFilters.UNIQUE_EXPRESSION)
+        bond_types_params = bond_types(filter_by=PotentialFilters.UNIQUE_PARAMETERS)
+        bond_types_name_class = bond_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS)
 
-        bond_types_repeat = bond_types(
-            filter_by=PotentialFilters.REPEAT_DUPLICATES
-        )
+        bond_types_repeat = bond_types(filter_by=PotentialFilters.REPEAT_DUPLICATES)
 
         assert len(bond_types) == 1
         assert len(bond_types_params) == 1

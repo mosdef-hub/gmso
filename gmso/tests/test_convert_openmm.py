@@ -1,4 +1,3 @@
-import numpy as np
 import pytest
 import unyt as u
 from unyt.testing import assert_allclose_units
@@ -29,7 +28,6 @@ class TestOpenMM(BaseTest):
         assert n_topology_sites == n_modeller_atoms
 
     def test_box_dims(self, typed_ar_system):
-        n_topology_sites = len(typed_ar_system.sites)
         omm_top = to_openmm(typed_ar_system)
         topology_lengths = typed_ar_system.box.lengths
         omm_lengths = omm_top.getUnitCellDimensions()
@@ -51,8 +49,5 @@ class TestOpenMM(BaseTest):
 
     def test_position_units(self, typed_ar_system):
         typed_ar_system.box = Box(lengths=[1, 1, 1])
-
-        n_topology_sites = len(typed_ar_system.sites)
         omm_top = to_openmm(typed_ar_system, openmm_object="modeller")
-
         assert isinstance(omm_top.positions.unit, type(openmm_unit.nanometer))

@@ -93,9 +93,7 @@ def register_general_units(reg: u.UnitRegistry):
         r"\rm{e}",
     )  # proton charge
 
-    kb_conversion = (
-        1 * getattr(u.physical_constants, "boltzmann_constant_mks").value
-    )
+    kb_conversion = 1 * getattr(u.physical_constants, "boltzmann_constant_mks").value
     kb_dim = u.dimensions.energy / u.dimensions.temperature
     reg.add(
         "kb", base_value=kb_conversion, dimensions=kb_dim, tex_repr=r"\rm{kb}"
@@ -328,9 +326,7 @@ class LAMMPS_UnitSystems:
                     1 * self.usystem[ind_dim.name[1:-1]],  # default value of 1
                 )  # replace () in name
                 current_unit = get_parameter_dimension(parameter, ind_dim.name)
-                factor = factor.to(
-                    current_unit
-                )  # convert factor to units of parameter
+                factor = factor.to(current_unit)  # convert factor to units of parameter
                 conversion_factor *= float(factor) ** (exponent)
             return f"""{round(
                 float(parameter / conversion_factor),
@@ -357,34 +353,22 @@ class LAMMPS_UnitSystems:
         # dimensions are cancelled out
         if not energy_inBool:
             return dims
-        energySym = Symbol(
-            "(energy)"
-        )  # create dummy symbol to replace in equation
+        energySym = Symbol("(energy)")  # create dummy symbol to replace in equation
         dim_info = dims.as_terms()
-        time_idx = np.where(
-            list(map(lambda x: x.name == "(time)", dim_info[1]))
-        )[0][0]
+        time_idx = np.where(list(map(lambda x: x.name == "(time)", dim_info[1])))[0][0]
         energy_exp = (
             dim_info[0][0][1][1][time_idx] // 2
         )  # energy has 1/time**2 in it, so this is the hint of how many
-        return (
-            dims
-            * u.dimensions.energy**energy_exp
-            * energySym ** (-1 * energy_exp)
-        )
+        return dims * u.dimensions.energy**energy_exp * energySym ** (-1 * energy_exp)
 
     @staticmethod
     def _dimensions_to_charge(dims):
         """Take a set of dimensions and substitute in Symbol("charge") where possible."""
         symsStr = str(dims.free_symbols)
-        charge_inBool = np.all(
-            [dimStr in symsStr for dimStr in ["current_mks"]]
-        )
+        charge_inBool = np.all([dimStr in symsStr for dimStr in ["current_mks"]])
         if not charge_inBool:
             return dims
-        chargeSym = Symbol(
-            "(charge)"
-        )  # create dummy symbol to replace in equation
+        chargeSym = Symbol("(charge)")  # create dummy symbol to replace in equation
         dim_info = dims.as_terms()
         current_idx = np.where(
             list(map(lambda x: x.name == "(current_mks)", dim_info[1]))
@@ -392,11 +376,7 @@ class LAMMPS_UnitSystems:
         charge_exp = dim_info[0][0][1][1][
             current_idx
         ]  # charge has (current_mks) in it, so this is the hint of how many
-        return (
-            dims
-            * u.dimensions.charge ** (-1 * charge_exp)
-            * chargeSym**charge_exp
-        )
+        return dims * u.dimensions.charge ** (-1 * charge_exp) * chargeSym**charge_exp
 
     @staticmethod
     def _dimensions_from_thermal_to_energy(dims):
@@ -405,9 +385,7 @@ class LAMMPS_UnitSystems:
         temp_inBool = np.all([dimStr in symsStr for dimStr in ["temperature"]])
         if not temp_inBool:
             return dims
-        energySym = Symbol(
-            "(energy)"
-        )  # create dummy symbol to replace in equation
+        energySym = Symbol("(energy)")  # create dummy symbol to replace in equation
         dim_info = dims.as_terms()
         temp_idx = np.where(
             list(map(lambda x: x.name == "(temperature)", dim_info[1]))
@@ -415,9 +393,7 @@ class LAMMPS_UnitSystems:
         temp_exp = dim_info[0][0][1][1][
             temp_idx
         ]  # energy has 1/time**2 in it, so this is the hint of how many
-        return (
-            dims / u.dimensions.temperature**temp_exp * energySym ** (temp_exp)
-        )
+        return dims / u.dimensions.temperature**temp_exp * energySym ** (temp_exp)
 
     @classmethod
     def _get_output_dimensions(cls, dims, thermal_equivalence=False):
@@ -449,9 +425,7 @@ def get_parameter_dimension(parameter, dimension):
     param_terms = parameter.units.expr.as_terms()
     uStr = ""
     for symbol, exp in zip(param_terms[-1], param_terms[0][0][1][1]):
-        outputDim = LAMMPS_UnitSystems._get_output_dimensions(
-            u.Unit(symbol).dimensions
-        )
+        outputDim = LAMMPS_UnitSystems._get_output_dimensions(u.Unit(symbol).dimensions)
         if str(outputDim) == dimension:
             uStr += f"{symbol}*"
         elif (
@@ -492,17 +466,13 @@ def write_out_parameter_and_units(parameter_name, parameter, base_unyts=None):
         return f"{parameter_name} ({'degrees'})"  # default to always degrees
     if base_unyts.usystem.name == "lj":
         return f"{parameter_name} ({'dimensionless'})"
-    new_dims = LAMMPS_UnitSystems._get_output_dimensions(
-        parameter.units.dimensions
-    )
+    new_dims = LAMMPS_UnitSystems._get_output_dimensions(parameter.units.dimensions)
     new_dimStr = str(new_dims)
     ind_units = re.sub("[^a-zA-Z]+", " ", new_dimStr).split()
     for unit in ind_units:
         new_dimStr = new_dimStr.replace(unit, str(base_unyts.usystem[unit]))
 
-    outputUnyt = str(
-        parameter.to(u.Unit(new_dimStr, registry=base_unyts.reg)).units
-    )
+    outputUnyt = str(parameter.to(u.Unit(new_dimStr, registry=base_unyts.reg)).units)
     return f"{parameter_name} ({outputUnyt})"
 
 
@@ -543,9 +513,7 @@ def convert_params_units(
                     f"({str(base_units[unit].value)} * {str(base_units[unit].units)})",
                 )
 
-            converted_params[parameter] = potential.parameters[parameter].to(
-                unit_dim
-            )
+            converted_params[parameter] = potential.parameters[parameter].to(unit_dim)
         potential.parameters = converted_params
         converted_potentials.append(potential)
     return converted_potentials
