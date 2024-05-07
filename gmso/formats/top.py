@@ -173,16 +173,8 @@ def write_top(top, filename, top_vars=None):
             ):
                 sites_list = unique_molecules[tag]["sites"]
                 water_sites = {
-                    "O": [
-                        site
-                        for site in sites_list
-                        if site.element.symbol == "O"
-                    ],
-                    "H": [
-                        site
-                        for site in sites_list
-                        if site.element.symbol == "H"
-                    ],
+                    "O": [site for site in sites_list if site.element.symbol == "O"],
+                    "H": [site for site in sites_list if site.element.symbol == "H"],
                 }
 
                 ow_idx = shifted_idx_map[top.get_index(water_sites["O"][0])] + 1
