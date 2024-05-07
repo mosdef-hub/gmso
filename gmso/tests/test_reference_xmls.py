@@ -32,24 +32,13 @@ class TestForceFieldFromXML(BaseTest):
 
         assert carbon.atom_types["C"].charge.value == 0
 
+        assert sympy.simplify(carbon.atom_types["C"].expression - ref_exprs[0]) == 0
+        assert sympy.simplify(carbon.bond_types["C~C"].expression - ref_exprs[1]) == 0
         assert (
-            sympy.simplify(carbon.atom_types["C"].expression - ref_exprs[0])
-            == 0
+            sympy.simplify(carbon.angle_types["C~C~C"].expression - ref_exprs[2]) == 0
         )
         assert (
-            sympy.simplify(carbon.bond_types["C~C"].expression - ref_exprs[1])
-            == 0
-        )
-        assert (
-            sympy.simplify(
-                carbon.angle_types["C~C~C"].expression - ref_exprs[2]
-            )
-            == 0
-        )
-        assert (
-            sympy.simplify(
-                carbon.dihedral_types["*~C~C~*"].expression - ref_exprs[3]
-            )
+            sympy.simplify(carbon.dihedral_types["*~C~C~*"].expression - ref_exprs[3])
             == 0
         )
 
@@ -132,16 +121,10 @@ class TestForceFieldFromXML(BaseTest):
         assert water.atom_types["opls_112"].charge.value == 0.417
 
         assert (
-            sympy.simplify(
-                water.atom_types["opls_111"].expression - ref_exprs[0]
-            )
-            == 0
+            sympy.simplify(water.atom_types["opls_111"].expression - ref_exprs[0]) == 0
         )
         assert (
-            sympy.simplify(
-                water.atom_types["opls_112"].expression - ref_exprs[0]
-            )
-            == 0
+            sympy.simplify(water.atom_types["opls_112"].expression - ref_exprs[0]) == 0
         )
         assert (
             sympy.simplify(
@@ -196,9 +179,7 @@ class TestForceFieldFromXML(BaseTest):
         )
 
         assert_allclose_units(
-            water.angle_types["opls_112~opls_111~opls_112"].parameters[
-                "theta_eq"
-            ],
+            water.angle_types["opls_112~opls_111~opls_112"].parameters["theta_eq"],
             1.824218134 * u.radian,
             rtol=1e-5,
             atol=1e-8,
@@ -242,16 +223,10 @@ class TestForceFieldFromXML(BaseTest):
         )
 
         assert (
-            sympy.simplify(
-                spce.atom_types["opls_116"].expression - ref_exprs[0]
-            )
-            == 0
+            sympy.simplify(spce.atom_types["opls_116"].expression - ref_exprs[0]) == 0
         )
         assert (
-            sympy.simplify(
-                spce.atom_types["opls_117"].expression - ref_exprs[0]
-            )
-            == 0
+            sympy.simplify(spce.atom_types["opls_117"].expression - ref_exprs[0]) == 0
         )
         assert (
             sympy.simplify(
@@ -261,8 +236,7 @@ class TestForceFieldFromXML(BaseTest):
         )
         assert (
             sympy.simplify(
-                spce.angle_types["opls_117~opls_116~opls_117"].expression
-                - ref_exprs[2]
+                spce.angle_types["opls_117~opls_116~opls_117"].expression - ref_exprs[2]
             )
             == 0
         )
@@ -306,9 +280,7 @@ class TestForceFieldFromXML(BaseTest):
         )
 
         assert_allclose_units(
-            spce.angle_types["opls_117~opls_116~opls_117"].parameters[
-                "theta_eq"
-            ],
+            spce.angle_types["opls_117~opls_116~opls_117"].parameters["theta_eq"],
             109.47 * u.degree,
             rtol=1e-5,
             atol=1e-8,
@@ -470,21 +442,16 @@ class TestForceFieldFromXML(BaseTest):
         )
 
         assert (
-            sympy.simplify(
-                ethylene.atom_types["opls_143"].expression - ref_exprs[0]
-            )
+            sympy.simplify(ethylene.atom_types["opls_143"].expression - ref_exprs[0])
+            == 0
+        )
+        assert (
+            sympy.simplify(ethylene.atom_types["opls_144"].expression - ref_exprs[0])
             == 0
         )
         assert (
             sympy.simplify(
-                ethylene.atom_types["opls_144"].expression - ref_exprs[0]
-            )
-            == 0
-        )
-        assert (
-            sympy.simplify(
-                ethylene.bond_types["opls_143~opls_144"].expression
-                - ref_exprs[1]
+                ethylene.bond_types["opls_143~opls_144"].expression - ref_exprs[1]
             )
             == 0
         )
@@ -543,9 +510,7 @@ class TestForceFieldFromXML(BaseTest):
         )
 
         assert_allclose_units(
-            ethylene.angle_types["opls_143~opls_143~opls_144"].parameters[
-                "theta_eq"
-            ],
+            ethylene.angle_types["opls_143~opls_143~opls_144"].parameters["theta_eq"],
             2.0943951 * u.rad,
             rtol=1e-5,
             atol=1e-8,
@@ -557,25 +522,25 @@ class TestForceFieldFromXML(BaseTest):
             atol=1e-8,
         )
         assert_allclose_units(
-            ethylene.dihedral_types[
-                "opls_144~opls_143~opls_143~opls_144"
-            ].parameters["c0"],
+            ethylene.dihedral_types["opls_144~opls_143~opls_143~opls_144"].parameters[
+                "c0"
+            ],
             58.576 * u.Unit("kJ/mol"),
             rtol=1e-5,
             atol=1e-8,
         )
         assert_allclose_units(
-            ethylene.dihedral_types[
-                "opls_144~opls_143~opls_143~opls_144"
-            ].parameters["c2"],
+            ethylene.dihedral_types["opls_144~opls_143~opls_143~opls_144"].parameters[
+                "c2"
+            ],
             -58.576 * u.Unit("kJ/mol"),
             rtol=1e-5,
             atol=1e-8,
         )
         assert_allclose_units(
-            ethylene.dihedral_types[
-                "opls_144~opls_143~opls_143~opls_144"
-            ].parameters["c5"],
+            ethylene.dihedral_types["opls_144~opls_143~opls_143~opls_144"].parameters[
+                "c5"
+            ],
             0.0 * u.Unit("kJ/mol"),
             rtol=1e-5,
             atol=1e-8,
@@ -584,7 +549,7 @@ class TestForceFieldFromXML(BaseTest):
     def test_error_duplicated_types(self):
         # Temporarily opt out, pending new forcefield-utilities release
         # with pytest.raises(ValueError) as e:
-        with pytest.raises(Exception) as e:
+        with pytest.raises(Exception):
             ForceField(get_path("ff-nonunique-dihedral.xml"))
             # assert (
             #     e

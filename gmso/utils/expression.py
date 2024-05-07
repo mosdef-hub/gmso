@@ -72,9 +72,7 @@ class PotentialExpression:
         verify_validity=True,
     ):
         self._expression = (
-            self._validate_expression(expression)
-            if verify_validity
-            else expression
+            self._validate_expression(expression) if verify_validity else expression
         )
         self._independent_variables = (
             self._validate_independent_variables(independent_variables)
@@ -86,9 +84,7 @@ class PotentialExpression:
         if parameters is not None:
             self._is_parametric = True
             self._parameters = (
-                self._validate_parameters(parameters)
-                if verify_validity
-                else parameters
+                self._validate_parameters(parameters) if verify_validity else parameters
             )
 
         if verify_validity:
@@ -214,11 +210,9 @@ class PotentialExpression:
 
     def __repr__(self):
         """Representation of the potential expression."""
-        descr = list(f"<PotentialExpression, ")
+        descr = list("<PotentialExpression, ")
         descr.append(f"expression: {self.expression}, ")
-        descr.append(
-            f"{len(self.independent_variables)} independent variables>"
-        )
+        descr.append(f"{len(self.independent_variables)} independent variables>")
 
         return "".join(descr)
 
@@ -246,14 +240,10 @@ class PotentialExpression:
             if isinstance(val, list):
                 for params in val:
                     if not isinstance(params, u.unyt_array):
-                        raise ValueError(
-                            "Parameter value {} lacks a unyt".format(val)
-                        )
+                        raise ValueError("Parameter value {} lacks a unyt".format(val))
             else:
                 if not isinstance(val, u.unyt_array):
-                    raise ValueError(
-                        "Parameter value {} lacks a unyt".format(val)
-                    )
+                    raise ValueError("Parameter value {} lacks a unyt".format(val))
             if not isinstance(key, str):
                 raise ValueError("Parameter key {} is not a str".format(key))
 
@@ -354,8 +344,7 @@ class PotentialExpression:
             json_dict = {
                 "expression": str(potential_expression.expression),
                 "independent_variables": list(
-                    str(idep)
-                    for idep in potential_expression.independent_variables
+                    str(idep) for idep in potential_expression.independent_variables
                 ),
             }
             if potential_expression.is_parametric:
@@ -365,9 +354,7 @@ class PotentialExpression:
 
     @staticmethod
     @lru_cache(maxsize=128)
-    def _verify_validity(
-        expression, independent_variables_symbols, parameters=None
-    ):
+    def _verify_validity(expression, independent_variables_symbols, parameters=None):
         """Verify whether or not the parameters, independent_variables and expression are consistent."""
         for sym in independent_variables_symbols:
             if sym not in expression.free_symbols:
@@ -378,14 +365,11 @@ class PotentialExpression:
                 )
         if parameters is not None:
             parameter_symbols = sympy.symbols(parameters)
-            used_symbols = parameter_symbols.union(
-                independent_variables_symbols
-            )
+            used_symbols = parameter_symbols.union(independent_variables_symbols)
             unused_symbols = expression.free_symbols - used_symbols
             if len(unused_symbols) > 0:
                 warnings.warn(
-                    f"You supplied parameters with "
-                    f"unused symbols {unused_symbols}"
+                    f"You supplied parameters with " f"unused symbols {unused_symbols}"
                 )
 
             if used_symbols != expression.free_symbols:
@@ -446,16 +430,13 @@ class PotentialExpression:
 
         if non_parametric.is_parametric:
             raise ValueError(
-                "Cannot create a parametric expression from a parametric "
-                "expression."
+                "Cannot create a parametric expression from a parametric " "expression."
             )
 
         else:
             return cls(
                 expression=deepcopy(non_parametric.expression),
                 parameters=parameters,
-                independent_variables=deepcopy(
-                    non_parametric.independent_variables
-                ),
+                independent_variables=deepcopy(non_parametric.independent_variables),
                 verify_validity=not valid,
             )

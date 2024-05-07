@@ -57,9 +57,7 @@ def get_topology_graph(
         atom_index_map[id(atom)] = j
         if isinstance(atom, Atom):
             kwargs = (
-                atomdata_populator(gmso_topology, atom)
-                if atomdata_populator
-                else {}
+                atomdata_populator(gmso_topology, atom) if atomdata_populator else {}
             )
             if atom.name.startswith("_") or not atom.element:
                 top_graph.add_atom(

@@ -12,18 +12,14 @@ class TestXYZ(BaseTest):
         top = Topology.load(get_fn("ethane.xyz"))
         assert top.n_sites == 8
         assert top.n_connections == 0
-        assert set([type(site.position) for site in top.sites]) == {
-            u.unyt_array
-        }
+        assert set([type(site.position) for site in top.sites]) == {u.unyt_array}
         assert set([site.position.units for site in top.sites]) == {u.nm}
 
         top = Topology.load(get_fn("cu_block.xyz"))
         assert top.n_sites == 108
 
         assert top.n_connections == 0
-        assert set([type(site.position) for site in top.sites]) == {
-            u.unyt_array
-        }
+        assert set([type(site.position) for site in top.sites]) == {u.unyt_array}
         assert set([site.position.units for site in top.sites]) == {u.nm}
 
     def test_wrong_n_atoms(self):

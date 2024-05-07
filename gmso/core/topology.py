@@ -379,9 +379,7 @@ class Topology(object):
         """
 
         return TopologyPotentialView(
-            itertools.chain(
-                self.bonds, self.angles, self.dihedrals, self.impropers
-            )
+            itertools.chain(self.bonds, self.angles, self.dihedrals, self.impropers)
         )
 
     @property
@@ -601,9 +599,7 @@ class Topology(object):
     @property
     def connection_type_expressions(self):
         """Return all connection_type expressions in the topology."""
-        return list(
-            set([contype.expression for contype in self.connection_types])
-        )
+        return list(set([contype.expression for contype in self.connection_types]))
 
     @property
     def bond_type_expressions(self):
@@ -627,9 +623,7 @@ class Topology(object):
 
     @property
     def pairpotential_type_expressions(self):
-        return list(
-            set([ptype.expression for ptype in self._pairpotential_types])
-        )
+        return list(set([ptype.expression for ptype in self._pairpotential_types]))
 
     def get_lj_scale(self, *, molecule_id=None, interaction=None):
         """Return the selected lj_scales defined for this topology."""
@@ -667,12 +661,8 @@ class Topology(object):
             The method that shows all connections belonging to a specific site
         """
         if site not in self._sites:
-            raise ValueError(
-                f"Site {site} is not currently part of this topology."
-            )
-        site_connections = [
-            conn for conn in self.iter_connections_by_site(site)
-        ]
+            raise ValueError(f"Site {site} is not currently part of this topology.")
+        site_connections = [conn for conn in self.iter_connections_by_site(site)]
         for conn in site_connections:
             self.remove_connection(conn)
         self._sites.remove(site)
@@ -738,9 +728,7 @@ class Topology(object):
             molecule_id, interaction, "electrostatics_scale", 1
         )
 
-    def set_electrostatics_scale(
-        self, value, *, molecule_id=None, interaction=None
-    ):
+    def set_electrostatics_scale(self, value, *, molecule_id=None, interaction=None):
         """Set the correct lj_scaling factors for this topology.
 
         Parameters
@@ -1014,9 +1002,7 @@ class Topology(object):
         typed_status = {
             "sites": lambda top: all(site.atom_type for site in top._sites),
             "bonds": lambda top: all(bond.bond_type for bond in top._bonds),
-            "angles": lambda top: all(
-                angle.angle_type for angle in top._angles
-            ),
+            "angles": lambda top: all(angle.angle_type for angle in top._angles),
             "dihedrals": lambda top: all(
                 dihedral.dihedral_type for dihedral in top._dihedrals
             ),
@@ -1221,9 +1207,7 @@ class Topology(object):
         member_type = type(member)
 
         if member_type not in refs.keys():
-            raise TypeError(
-                f"Cannot index member of type {member_type.__name__}"
-            )
+            raise TypeError(f"Cannot index member of type {member_type.__name__}")
 
         index = refs[member_type].index(member)
 
@@ -1308,9 +1292,7 @@ class Topology(object):
             df["atom_types"] = list(site.atom_type.name for site in self.sites)
             df["names"] = list(site.name for site in self.sites)
             for attr in site_attrs:
-                df = self._parse_dataframe_attrs(
-                    df, attr, parameter, unyts_bool
-                )
+                df = self._parse_dataframe_attrs(df, attr, parameter, unyts_bool)
         elif parameter in ["bonds", "angles", "dihedrals", "impropers"]:
             if len(getattr(self, parameter)) == 0:
                 raise GMSOError(
@@ -1327,9 +1309,7 @@ class Topology(object):
             raise AttributeError(
                 "{} is not yet supported for outputting parameters to a dataframe. \
             Please use  one of 'sites', 'bonds', 'angles', 'dihedrals', or \
-            'impropers'".format(
-                    str(parameter)
-                )
+            'impropers'".format(str(parameter))
             )
 
         return df
@@ -1343,9 +1323,7 @@ class Topology(object):
             If the topology is untyped
         """
         if not self.is_typed():
-            raise GMSOError(
-                "Cannot create a ForceField from an untyped topology."
-            )
+            raise GMSOError("Cannot create a ForceField from an untyped topology.")
         else:
             from gmso import ForceField
             from gmso.utils._constants import FF_TOKENS_SEPARATOR
@@ -1371,9 +1349,7 @@ class Topology(object):
             for connection_type in self.connection_types:
                 ff_conn_types[type(connection_type)][
                     FF_TOKENS_SEPARATOR.join(connection_type.member_types)
-                ] = connection_type.copy(
-                    deep=True, exclude={"topology", "set_ref"}
-                )
+                ] = connection_type.copy(deep=True, exclude={"topology", "set_ref"})
 
         return ff
 
@@ -1420,10 +1396,7 @@ class Topology(object):
         """
         if isinstance(residue_tag, str):
             for site in self._sites:
-                if (
-                    site.residue
-                    and getattr(site, "residue").name == residue_tag
-                ):
+                if site.residue and getattr(site, "residue").name == residue_tag:
                     yield site
         else:
             return self.iter_sites("residue", residue_tag)
@@ -1438,10 +1411,7 @@ class Topology(object):
         """
         if isinstance(molecule_tag, str):
             for site in self._sites:
-                if (
-                    site.molecule
-                    and getattr(site, "molecule").name == molecule_tag
-                ):
+                if site.molecule and getattr(site, "molecule").name == molecule_tag:
                     yield site
         else:
             return self.iter_sites("molecule", molecule_tag)
@@ -1466,9 +1436,7 @@ class Topology(object):
 
         """
         if site not in self._sites:
-            raise ValueError(
-                f"Site {site} is not currently part of this topology."
-            )
+            raise ValueError(f"Site {site} is not currently part of this topology.")
         if connections is None:
             connections = ["bonds", "angles", "dihedrals", "impropers"]
         else:
@@ -1511,16 +1479,12 @@ class Topology(object):
             for idx, site in enumerate(self.iter_sites(label_type, label))
         }
         bonds_dict = {
-            bond: tuple(
-                sites_dict[bond.connection_members[i]][0] for i in range(2)
-            )
+            bond: tuple(sites_dict[bond.connection_members[i]][0] for i in range(2))
             for bond in molecule_bonds(self, label, of_group)
         }
 
         angles_dict = {
-            angle: tuple(
-                sites_dict[angle.connection_members[i]][0] for i in range(3)
-            )
+            angle: tuple(sites_dict[angle.connection_members[i]][0] for i in range(3))
             for angle in molecule_angles(self, label, of_group)
         }
 
@@ -1538,17 +1502,13 @@ class Topology(object):
             for improper in molecule_impropers(self, label, of_group)
         }
 
-        new_top = gmso.Topology(
-            name=label if isinstance(label, str) else label[0]
-        )
+        new_top = gmso.Topology(name=label if isinstance(label, str) else label[0])
 
         for ref_site, new_site in sites_dict.items():
             new_top.add_site(new_site[1])
         for ref_conn, conn_idx in bonds_dict.items():
             bond = gmso.Bond(
-                connection_members=[
-                    new_top.sites[conn_idx[i]] for i in range(2)
-                ],
+                connection_members=[new_top.sites[conn_idx[i]] for i in range(2)],
                 bond_type=(
                     None
                     if not ref_conn.connection_type
@@ -1558,9 +1518,7 @@ class Topology(object):
             new_top.add_connection(bond)
         for ref_conn, conn_idx in angles_dict.items():
             angle = gmso.Angle(
-                connection_members=[
-                    new_top.sites[conn_idx[i]] for i in range(3)
-                ],
+                connection_members=[new_top.sites[conn_idx[i]] for i in range(3)],
                 angle_type=(
                     None
                     if not ref_conn.connection_type
@@ -1570,9 +1528,7 @@ class Topology(object):
             new_top.add_connection(angle)
         for ref_conn, conn_idx in dihedrals_dict.items():
             dihedral = gmso.Dihedral(
-                connection_members=[
-                    new_top.sites[conn_idx[i]] for i in range(4)
-                ],
+                connection_members=[new_top.sites[conn_idx[i]] for i in range(4)],
                 dihedral_type=(
                     None
                     if not ref_conn.connection_type
@@ -1582,9 +1538,7 @@ class Topology(object):
             new_top.add_connection(dihedral)
         for ref_conn, conn_idx in impropers_dict.items():
             improper = gmso.Improper(
-                connection_members=[
-                    new_top.sites[conn_idx[i]] for i in range(4)
-                ],
+                connection_members=[new_top.sites[conn_idx[i]] for i in range(4)],
                 improper_type=(
                     None
                     if not ref_conn.connection_type
@@ -1640,17 +1594,13 @@ class Topology(object):
         """Return custom format to represent topology as a string."""
         return f"<Topology {self.name}, {self.n_sites} sites, id: {id(self)}>"
 
-    def _pandas_from_parameters(
-        self, df, parameter, site_attrs=None, unyts_bool=True
-    ):
+    def _pandas_from_parameters(self, df, parameter, site_attrs=None, unyts_bool=True):
         """Add to a pandas dataframe the site indices for each connection member in a
         multimember topology attribute such as a bond. Also include information about
         those sites in the site_attrs list"""
         if site_attrs is None:
             site_attrs = []
-        sites_per_connection = len(
-            getattr(self, parameter)[0].connection_members
-        )
+        sites_per_connection = len(getattr(self, parameter)[0].connection_members)
         for site_index in np.arange(sites_per_connection):
             df["Atom" + str(site_index)] = list(
                 str(connection.connection_members[site_index].name)
@@ -1686,17 +1636,13 @@ class Topology(object):
             elif attr == "positions" or attr == "position":
                 for i, dimension in enumerate(["x", "y", "z"]):
                     df[dimension] = list(
-                        _return_float_for_unyt(
-                            getattr(site, "position")[i], unyts_bool
-                        )
+                        _return_float_for_unyt(getattr(site, "position")[i], unyts_bool)
                         for site in self.sites
                     )
             elif attr == "charge" or attr == "charges":
                 df["charge (e)"] = list(
                     site.charge.in_units(
-                        u.Unit(
-                            "elementary_charge", registry=UnitReg.default_reg()
-                        )
+                        u.Unit("elementary_charge", registry=UnitReg.default_reg())
                     ).to_value()
                     for site in self.sites
                 )
@@ -1720,9 +1666,7 @@ class Topology(object):
                             _return_float_for_unyt(
                                 getattr(
                                     getattr(
-                                        connection.connection_members[
-                                            site_index
-                                        ],
+                                        connection.connection_members[site_index],
                                         attr1,
                                     ),
                                     attr2,
@@ -1807,17 +1751,13 @@ class Topology(object):
     def _parse_parameter_expression(self, df, parameter, unyts_bool):
         """Take a given topology attribute and return the parameters associated with it"""
         for i, param in enumerate(
-            getattr(
-                getattr(self, parameter)[0], parameter[:-1] + "_type"
-            ).parameters
+            getattr(getattr(self, parameter)[0], parameter[:-1] + "_type").parameters
         ):
             df[
                 f"Parameter {i} ({param}) {getattr(getattr(self, parameter)[0], parameter[:-1]+'_type').parameters[param].units}"
             ] = list(
                 _return_float_for_unyt(
-                    getattr(connection, parameter[:-1] + "_type").parameters[
-                        param
-                    ],
+                    getattr(connection, parameter[:-1] + "_type").parameters[param],
                     unyts_bool,
                 )
                 for connection in getattr(self, parameter)

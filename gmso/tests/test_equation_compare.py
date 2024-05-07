@@ -44,8 +44,8 @@ class TestEqnCompare(BaseTest):
             input_new_lj_form, input_base_lj_form
         )
 
-        assert form_output == None
-        assert form_scalar == None
+        assert form_output is None
+        assert form_scalar is None
 
     def test_scaled_lj_equation_form(self):
         input_new_lj_form = "8*epsilon * ((sigma/r)**12 - (sigma/r)**6)"
@@ -64,11 +64,13 @@ class TestEqnCompare(BaseTest):
             input_new_mie_form, input_base_mie_form
         )
 
-        assert form_output == None
-        assert form_scalar == None
+        assert form_output is None
+        assert form_scalar is None
 
     def test_scaled_mie_equation_form(self):
-        input_new_mie_form = "2*(n/(n-m)) * (n/m)**(m/(n-m)) * epsilon * ((sigma/r)**n - (sigma/r)**m)"
+        input_new_mie_form = (
+            "2*(n/(n-m)) * (n/m)**(m/(n-m)) * epsilon * ((sigma/r)**n - (sigma/r)**m)"
+        )
 
         [form_output, form_scalar] = evaluate_nonbonded_mie_format_with_scaler(
             input_new_mie_form, input_base_mie_form
@@ -84,11 +86,13 @@ class TestEqnCompare(BaseTest):
             input_new_exp6_form, input_base_exp6_form
         )
 
-        assert form_output == None
-        assert form_scalar == None
+        assert form_output is None
+        assert form_scalar is None
 
     def test_scaled_exp6_equation_form(self):
-        input_new_exp6_form = "2*epsilon*alpha/(alpha-6) * (6/alpha*exp(alpha*(1-r/Rmin)) - (Rmin/r)**6)"
+        input_new_exp6_form = (
+            "2*epsilon*alpha/(alpha-6) * (6/alpha*exp(alpha*(1-r/Rmin)) - (Rmin/r)**6)"
+        )
 
         [form_output, form_scalar] = evaluate_nonbonded_exp6_format_with_scaler(
             input_new_exp6_form, input_base_exp6_form
@@ -128,8 +132,8 @@ class TestEqnCompare(BaseTest):
             boxes_for_simulation=1,
         )
 
-        atom_types_data_expression_data_dict = (
-            get_atom_type_expressions_and_scalars(test_atom_types_dict)
+        atom_types_data_expression_data_dict = get_atom_type_expressions_and_scalars(
+            test_atom_types_dict
         )
 
         assert (
@@ -137,12 +141,10 @@ class TestEqnCompare(BaseTest):
             == "4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)"
         )
         assert (
-            atom_types_data_expression_data_dict["ETH_CH3"]["expression_form"]
-            == "LJ"
+            atom_types_data_expression_data_dict["ETH_CH3"]["expression_form"] == "LJ"
         )
         assert (
-            atom_types_data_expression_data_dict["ETH_CH3"]["expression_scalar"]
-            == 1.0
+            atom_types_data_expression_data_dict["ETH_CH3"]["expression_scalar"] == 1.0
         )
 
         assert (
@@ -150,14 +152,10 @@ class TestEqnCompare(BaseTest):
             == "epsilon*n*(n/m)**(m/(-m + n))*(-(sigma/r)**m + (sigma/r)**n)/(-m + n)"
         )
         assert (
-            atom_types_data_expression_data_dict["ETHM_CH3"]["expression_form"]
-            == "Mie"
+            atom_types_data_expression_data_dict["ETHM_CH3"]["expression_form"] == "Mie"
         )
         assert (
-            atom_types_data_expression_data_dict["ETHM_CH3"][
-                "expression_scalar"
-            ]
-            == 1.0
+            atom_types_data_expression_data_dict["ETHM_CH3"]["expression_scalar"] == 1.0
         )
 
     # the exp6 needs added when the standard exp6 is added to gmso overall.
@@ -198,9 +196,7 @@ class TestEqnCompare(BaseTest):
                 boxes_for_simulation=1,
             )
 
-            atom_types_data_expression_data_dict = (
-                get_atom_type_expressions_and_scalars(test_atom_types_dict)
-            )
+            get_atom_type_expressions_and_scalars(test_atom_types_dict)
 
     # harmonic bond
     def test_wrong_harmonic_bond(self):
@@ -211,8 +207,8 @@ class TestEqnCompare(BaseTest):
             input_new_harmonic_form, input_base_harmonic_bond
         )
 
-        assert form_output == None
-        assert form_scalar == None
+        assert form_output is None
+        assert form_scalar is None
 
     def test_scaled_harmonic_bond(self):
         # bond types
@@ -235,8 +231,8 @@ class TestEqnCompare(BaseTest):
             input_new_harmonic_form, input_base_harmonic_angle
         )
 
-        assert form_output == None
-        assert form_scalar == None
+        assert form_output is None
+        assert form_scalar is None
 
     def test_scaled_harmonic_angle(self):
         # angle types
@@ -262,8 +258,8 @@ class TestEqnCompare(BaseTest):
             input_new_harmonic_form, input_base_harmonic_torsion
         )
 
-        assert form_output == None
-        assert form_scalar == None
+        assert form_output is None
+        assert form_scalar is None
 
     def test_scaled_harmonic_torsion(self):
         # torsion types
@@ -295,8 +291,8 @@ class TestEqnCompare(BaseTest):
             input_new_opls_form, input_base_opls_torsion
         )
 
-        assert form_output == None
-        assert form_scalar == None
+        assert form_output is None
+        assert form_scalar is None
 
     def test_scaled_opls_torsion(self):
         # torsion types
@@ -335,8 +331,8 @@ class TestEqnCompare(BaseTest):
             input_new_periodic_form, input_base_periodic_torsion
         )
 
-        assert form_output == None
-        assert form_scalar == None
+        assert form_output is None
+        assert form_scalar is None
 
     def test_scaled_periodic_torsion(self):
         # torsion types
@@ -370,8 +366,8 @@ class TestEqnCompare(BaseTest):
             input_new_RB_form, input_base_RB_torsion
         )
 
-        assert form_output == None
-        assert form_scalar == None
+        assert form_output is None
+        assert form_scalar is None
 
     def test_scaled_RB_torsion(self):
         # torsion types
@@ -401,7 +397,7 @@ class TestEqnCompare(BaseTest):
         assert form_scalar == 2
 
     # RB torsion
-    def test_wrong_RB_torsion(self):
+    def test_wrong_RB_torsion2(self):
         input_base_harmonic_improper = "k * (phi - phi_eq)**2"
 
         input_new_harmonic_improper_form = "x"
@@ -414,8 +410,8 @@ class TestEqnCompare(BaseTest):
             input_base_harmonic_improper,
         )
 
-        assert form_output == None
-        assert form_scalar == None
+        assert form_output is None
+        assert form_scalar is None
 
     # scaled_harmonic_improper
     def test_harmonic_improper(self):
@@ -430,8 +426,8 @@ class TestEqnCompare(BaseTest):
             input_base_harmonic_improper,
         )
 
-        assert form_output == None
-        assert form_scalar == None
+        assert form_output is None
+        assert form_scalar is None
 
     def test_scaled_harmonic_improper(self):
         # torsion types
@@ -462,8 +458,8 @@ class TestEqnCompare(BaseTest):
             input_base_periodic_improper,
         )
 
-        assert form_output == None
-        assert form_scalar == None
+        assert form_output is None
+        assert form_scalar is None
 
     def test_scaled_periodic_improper(self):
         # periodic types

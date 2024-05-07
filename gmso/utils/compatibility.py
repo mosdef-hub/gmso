@@ -1,7 +1,5 @@
 """Determine if the parametrized gmso.topology can be written to an engine."""
 
-from functools import lru_cache
-
 import symengine
 import sympy
 

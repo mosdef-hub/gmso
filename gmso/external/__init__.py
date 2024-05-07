@@ -1,3 +1,4 @@
+# ruff: noqa: F401
 """Support for various in-memory representations of chemical systems."""
 
 from .convert_hoomd import (

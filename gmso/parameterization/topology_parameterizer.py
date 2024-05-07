@@ -131,9 +131,7 @@ class TopologyParameterizer(GMSOBase):
     ):
         """Parameterize connections with appropriate potentials from the forcefield."""
         if label_type and label:
-            bonds = molecule_bonds(
-                top, label, True if label_type == "group" else False
-            )
+            bonds = molecule_bonds(top, label, True if label_type == "group" else False)
             angles = molecule_angles(
                 top, label, True if label_type == "group" else False
             )
@@ -166,16 +164,12 @@ class TopologyParameterizer(GMSOBase):
             False if "improper" in self.config.ignore_params else True,
         )
 
-    def _apply_connection_parameters(
-        self, connections, ff, error_on_missing=True
-    ):
+    def _apply_connection_parameters(self, connections, ff, error_on_missing=True):
         """Find and assign potentials from the forcefield for the provided connections."""
         visited = dict()
 
         for connection in connections:
-            group, connection_identifiers = self.connection_identifier(
-                connection
-            )
+            group, connection_identifiers = self.connection_identifier(connection)
             match = None
             for identifier_key in connection_identifiers:
                 if tuple(identifier_key) in visited:
@@ -198,12 +192,8 @@ class TopologyParameterizer(GMSOBase):
                     f"identifiers: {connection_identifiers} in the Forcefield."
                 )
             elif match:
-                setattr(
-                    connection, group, match[0].clone(self.config.fast_copy)
-                )
-                matched_order = [
-                    connection.connection_members[i] for i in match[1]
-                ]
+                setattr(connection, group, match[0].clone(self.config.fast_copy))
+                matched_order = [connection.connection_members[i] for i in match[1]]
                 connection.connection_members = matched_order
                 if not match[0].member_types:
                     connection.connection_type.member_types = tuple(
@@ -238,9 +228,7 @@ class TopologyParameterizer(GMSOBase):
     def _set_combining_rule(self):
         """Verify all the provided forcefields have the same combining rule and set it for the Topology."""
         if isinstance(self.forcefields, dict):
-            all_comb_rules = set(
-                ff.combining_rule for ff in self.forcefields.values()
-            )
+            all_comb_rules = set(ff.combining_rule for ff in self.forcefields.values())
         else:
             all_comb_rules = {self.forcefields.combining_rule}
 
@@ -385,13 +373,9 @@ class TopologyParameterizer(GMSOBase):
         """Return the group and list of identifiers for a connection to query the forcefield for its potential."""
         group = POTENTIAL_GROUPS[type(connection)]
         return group, [
+            list(member.atom_type.name for member in connection.connection_members),
             list(
-                member.atom_type.name
-                for member in connection.connection_members
-            ),
-            list(
-                member.atom_type.atomclass
-                for member in connection.connection_members
+                member.atom_type.atomclass for member in connection.connection_members
             ),
         ]
 
@@ -415,9 +399,7 @@ class TopologyParameterizer(GMSOBase):
         if speedup_by_moltag:
             # Iterate through foyer_topology_graph, which is a subgraph of label_type
             typemap, reference = dict(), dict()
-            for connected_component in nx.connected_components(
-                foyer_topology_graph
-            ):
+            for connected_component in nx.connected_components(foyer_topology_graph):
                 subgraph = foyer_topology_graph.subgraph(connected_component)
                 nodes_idx = tuple(subgraph.nodes)
                 molecule = subgraph.nodes[nodes_idx[0]]["atom_data"].molecule
@@ -449,9 +431,7 @@ class TopologyParameterizer(GMSOBase):
                             sorted(subgraph.nodes),
                             sorted(reference[molecule]["typemap"]),
                         ):
-                            typemap[node] = reference[molecule]["typemap"][
-                                ref_node
-                            ]
+                            typemap[node] = reference[molecule]["typemap"][ref_node]
             return typemap
         elif use_isomorphic_checks:
             # Iterate through each isomorphic connected component

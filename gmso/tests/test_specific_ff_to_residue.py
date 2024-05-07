@@ -1,7 +1,7 @@
 import mbuild as mb
 import pytest
 from foyer.forcefields import forcefields
-from mbuild import Box, Compound
+from mbuild import Box
 from mbuild.utils.io import has_foyer
 
 from gmso.exceptions import GMSOError
@@ -22,9 +22,7 @@ class TestSpecificFFToResidue(BaseTest):
             "Note: the file path must be specified the force field file "
             "or by using the standard force field name provided the `foyer` package.",
         ):
-            box_0 = mb.fill_box(
-                compound=[ethane_gomc], n_compounds=[1], box=[4, 4, 4]
-            )
+            box_0 = mb.fill_box(compound=[ethane_gomc], n_compounds=[1], box=[4, 4, 4])
 
             specific_ff_to_residue(
                 box_0,
@@ -38,9 +36,7 @@ class TestSpecificFFToResidue(BaseTest):
             ValueError,
             match="Please make sure you are enterning the correct FF name or path with xml extension",
         ):
-            box_0 = mb.fill_box(
-                compound=[ethane_gomc], n_compounds=[1], box=[4, 4, 4]
-            )
+            box_0 = mb.fill_box(compound=[ethane_gomc], n_compounds=[1], box=[4, 4, 4])
 
             specific_ff_to_residue(
                 box_0,
@@ -52,10 +48,10 @@ class TestSpecificFFToResidue(BaseTest):
     def test_specific_all_residue_not_input(self, ethane_gomc, ethanol_gomc):
         with pytest.raises(
             GMSOError,
-            match=f"A particle named C cannot be associated with the\n        "
-            f"custom_groups \['ETH'\]. "
-            f"Be sure to specify a list of group names that will cover\n        "
-            f"all particles in the compound. This particle is one level below ETO.",
+            match="A particle named C cannot be associated with the\n        "
+            "custom_groups \['ETH'\]. "
+            "Be sure to specify a list of group names that will cover\n        "
+            "all particles in the compound. This particle is one level below ETO.",
         ):
             box = mb.fill_box(
                 compound=[ethane_gomc, ethanol_gomc],
@@ -80,9 +76,7 @@ class TestSpecificFFToResidue(BaseTest):
             "Note: the file path must be specified the force field file "
             "or by using the standard force field name provided the `foyer` package.",
         ):
-            box_0 = mb.fill_box(
-                compound=[ethane_gomc], n_compounds=[1], box=[4, 4, 4]
-            )
+            box_0 = mb.fill_box(compound=[ethane_gomc], n_compounds=[1], box=[4, 4, 4])
 
             specific_ff_to_residue(
                 box_0,
@@ -96,9 +90,7 @@ class TestSpecificFFToResidue(BaseTest):
             TypeError,
             match=r"Please enter the residues list in the specific_ff_to_residue.",
         ):
-            box_0 = mb.fill_box(
-                compound=[ethane_gomc], n_compounds=[1], box=[4, 4, 4]
-            )
+            box_0 = mb.fill_box(compound=[ethane_gomc], n_compounds=[1], box=[4, 4, 4])
 
             specific_ff_to_residue(
                 box_0,
@@ -155,9 +147,7 @@ class TestSpecificFFToResidue(BaseTest):
             r"The selected FF file could also could not formated properly, "
             r"or there may be errors in the FF file itself.",
         ):
-            box_0 = mb.fill_box(
-                compound=[ethane_gomc], n_compounds=[1], box=[4, 4, 4]
-            )
+            box_0 = mb.fill_box(compound=[ethane_gomc], n_compounds=[1], box=[4, 4, 4])
 
             specific_ff_to_residue(
                 box_0,
@@ -180,15 +170,11 @@ class TestSpecificFFToResidue(BaseTest):
                 boxes_for_simulation=1,
             )
 
-    def test_specific_ff_to_residue_boxes_for_simulation_not_int(
-        self, ethane_gomc
-    ):
+    def test_specific_ff_to_residue_boxes_for_simulation_not_int(self, ethane_gomc):
         with pytest.raises(
             ValueError, match=r"boxes_for_simulation must be either 1 or 2."
         ):
-            box_0 = mb.fill_box(
-                compound=[ethane_gomc], n_compounds=[1], box=[4, 4, 4]
-            )
+            box_0 = mb.fill_box(compound=[ethane_gomc], n_compounds=[1], box=[4, 4, 4])
 
             specific_ff_to_residue(
                 box_0,
@@ -202,9 +188,7 @@ class TestSpecificFFToResidue(BaseTest):
             ValueError,
             match="The forcefield_selection variable are not provided, but there are residues provided.",
         ):
-            box_0 = mb.fill_box(
-                compound=[ethane_gomc], n_compounds=[1], box=[4, 4, 4]
-            )
+            box_0 = mb.fill_box(compound=[ethane_gomc], n_compounds=[1], box=[4, 4, 4])
 
             specific_ff_to_residue(
                 box_0,
@@ -219,9 +203,7 @@ class TestSpecificFFToResidue(BaseTest):
             match=r"The residues variable is an empty list but there are "
             "forcefield_selection variables provided.",
         ):
-            box_0 = mb.fill_box(
-                compound=[ethane_gomc], n_compounds=[1], box=[4, 4, 4]
-            )
+            box_0 = mb.fill_box(compound=[ethane_gomc], n_compounds=[1], box=[4, 4, 4])
 
             specific_ff_to_residue(
                 box_0,
@@ -236,9 +218,7 @@ class TestSpecificFFToResidue(BaseTest):
             match=r"Please make sure you are entering the correct foyer FF name, "
             r"or the correct file extension \(i.e., .xml, if required\).",
         ):
-            box_0 = mb.fill_box(
-                compound=[ethane_gomc], n_compounds=[1], box=[4, 4, 4]
-            )
+            box_0 = mb.fill_box(compound=[ethane_gomc], n_compounds=[1], box=[4, 4, 4])
 
             specific_ff_to_residue(
                 box_0,
@@ -470,56 +450,32 @@ class TestSpecificFFToResidue(BaseTest):
             str(test_atom_types_dict["BEN"]["expression"])
             == "4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)"
         )
-        assert (
-            len(list(test_atom_types_dict["BEN"]["atom_types"].yield_view()))
-            == 2
-        )
+        assert len(list(test_atom_types_dict["BEN"]["atom_types"].yield_view())) == 2
 
         assert (
             str(test_atom_types_dict["WAT"]["expression"])
             == "4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)"
         )
-        assert (
-            len(list(test_atom_types_dict["WAT"]["atom_types"].yield_view()))
-            == 2
-        )
+        assert len(list(test_atom_types_dict["WAT"]["atom_types"].yield_view())) == 2
 
         # bond tests
-        assert (
-            str(test_bond_types_dict["BEN"]["expression"])
-            == "k*(r - r_eq)**2/2"
-        )
-        assert (
-            len(list(test_bond_types_dict["BEN"]["bond_types"].yield_view()))
-            == 2
-        )
+        assert str(test_bond_types_dict["BEN"]["expression"]) == "k*(r - r_eq)**2/2"
+        assert len(list(test_bond_types_dict["BEN"]["bond_types"].yield_view())) == 2
 
-        assert (
-            str(test_bond_types_dict["WAT"]["expression"]) == "k*(r - r_eq)**2"
-        )
-        assert (
-            len(list(test_bond_types_dict["WAT"]["bond_types"].yield_view()))
-            == 1
-        )
+        assert str(test_bond_types_dict["WAT"]["expression"]) == "k*(r - r_eq)**2"
+        assert len(list(test_bond_types_dict["WAT"]["bond_types"].yield_view())) == 1
 
         # angle tests
         assert (
             str(test_angle_types_dict["BEN"]["expression"])
             == "k*(theta - theta_eq)**2/2"
         )
-        assert (
-            len(list(test_angle_types_dict["BEN"]["angle_types"].yield_view()))
-            == 2
-        )
+        assert len(list(test_angle_types_dict["BEN"]["angle_types"].yield_view())) == 2
 
         assert (
-            str(test_angle_types_dict["WAT"]["expression"])
-            == "k*(theta - theta_eq)**2"
+            str(test_angle_types_dict["WAT"]["expression"]) == "k*(theta - theta_eq)**2"
         )
-        assert (
-            len(list(test_angle_types_dict["WAT"]["angle_types"].yield_view()))
-            == 1
-        )
+        assert len(list(test_angle_types_dict["WAT"]["angle_types"].yield_view())) == 1
 
         # dihedral tests
         assert (
@@ -527,13 +483,7 @@ class TestSpecificFFToResidue(BaseTest):
             == "k*(cos(n*phi - phi_eq) + 1)"
         )
         assert (
-            len(
-                list(
-                    test_dihedral_types_dict["BEN"][
-                        "dihedral_types"
-                    ].yield_view()
-                )
-            )
+            len(list(test_dihedral_types_dict["BEN"]["dihedral_types"].yield_view()))
             == 3
         )
 
@@ -543,13 +493,7 @@ class TestSpecificFFToResidue(BaseTest):
             == "k*(cos(n*phi - phi_eq) + 1)"
         )
         assert (
-            len(
-                list(
-                    test_improper_types_dict["BEN"][
-                        "improper_types"
-                    ].yield_view()
-                )
-            )
+            len(list(test_improper_types_dict["BEN"]["improper_types"].yield_view()))
             == 1
         )
 
@@ -597,7 +541,4 @@ class TestSpecificFFToResidue(BaseTest):
             str(test_atom_types_dict["MET"]["expression"])
             == "4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)"
         )
-        assert (
-            len(list(test_atom_types_dict["MET"]["atom_types"].yield_view()))
-            == 1
-        )
+        assert len(list(test_atom_types_dict["MET"]["atom_types"].yield_view())) == 1

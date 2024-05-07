@@ -48,17 +48,25 @@ def sort_connection_members(connection, sort_by="name", top=None):
         to provide the index of the sites.
     """
     if sort_by == "name":
-        sorting_key = lambda site: natural_sort(site.name)
+
+        def sorting_key(site):
+            return natural_sort(site.name)
     elif sort_by == "atom_type":
-        sorting_key = lambda site: natural_sort(site.atom_type.name)
+
+        def sorting_key(site):
+            return natural_sort(site.atom_type.name)
     elif sort_by == "atomclass":
-        sorting_key = lambda site: natural_sort(site.atom_type.atomclass)
+
+        def sorting_key(site):
+            return natural_sort(site.atom_type.atomclass)
     elif sort_by == "index":
         if top is None or connection.connection_members[0] not in top.sites:
             raise ValueError(
                 f"Must provide topology associated with {connection}. Provided {top}"
             )
-        sorting_key = lambda site: top.get_index(site)
+
+        def sorting_key(site):
+            return top.get_index(site)
     else:
         raise ValueError("Unsupported sort_by value provided.")
 

@@ -13,7 +13,6 @@ from pydantic import ConfigDict, Field, field_serializer
 from gmso.abc.gmso_base import GMSOBase
 from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.exceptions import GMSOError
-from gmso.utils.misc import unyt_to_hashable
 
 exported = [
     "element_by_mass",
@@ -27,12 +26,13 @@ exported = [
 
 
 class Element(GMSOBase):
-    __base_doc__ = """Chemical element object
+    """Chemical element object
 
     Template to create a chemical element.
     Properties of the element instance are immutable.
     All known elements are pre-built and stored internally.
     """
+
     name: str = Field(..., description="Name of the element.")
 
     symbol: str = Field(..., description="Chemical symbol of the element.")
@@ -219,9 +219,7 @@ def element_by_mass(mass, exact=True, verbose=False):
         matched_element = mass_dict.get(mass_trimmed)
     else:
         # Closest match mode
-        mass_closest = min(
-            mass_dict.keys(), key=lambda k: abs(k - mass_trimmed)
-        )
+        mass_closest = min(mass_dict.keys(), key=lambda k: abs(k - mass_trimmed))
         if verbose:
             msg2 = f"Closest mass to {mass_trimmed}: {mass_closest}"
             warnings.warn(msg2)
@@ -310,9 +308,7 @@ def element_by_atom_type(atom_type, verbose=False):
     matched_element = None
 
     if matched_element is None and atom_type.mass:
-        matched_element = element_by_mass(
-            atom_type.mass, exact=False, verbose=verbose
-        )
+        matched_element = element_by_mass(atom_type.mass, exact=False, verbose=verbose)
     if matched_element is None and atom_type.name:
         matched_element = element_by_symbol(atom_type.name, verbose=verbose)
     if matched_element is None and atom_type.definition:
@@ -322,11 +318,11 @@ def element_by_atom_type(atom_type, verbose=False):
 
     if matched_element is None:
         raise GMSOError(
-            f"Failed to find an element from atom type"
-            "{atom_type} with "
-            "properties mass: {atom_type.mass}, name:"
-            "{atom_type.name}, and "
-            "definition: {atom_type.definition}"
+            "Failed to find an element from atom type"
+            f"{atom_type} with "
+            f"properties mass: {atom_type.mass}, name:"
+            f"{atom_type.name}, and "
+            f"definition: {atom_type.definition}"
         )
 
     return matched_element

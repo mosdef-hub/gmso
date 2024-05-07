@@ -8,18 +8,23 @@ ci:
     skip: []
     submodules: false
 repos:
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  # Ruff version.
+  rev: v0.4.3
+  hooks:
+    # Run the linter.
+    - id: ruff
+      args: [--line-length=80, --fix]
+    # Run the formatter.
+    - id: ruff-format
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.5.0
+  rev: v4.6.0
   hooks:
     - id: check-yaml
     - id: end-of-file-fixer
     - id: trailing-whitespace
       exclude: 'setup.cfg|gmso/tests/files/.*'
-- repo: https://github.com/psf/black
-  rev: 24.2.0
-  hooks:
-    - id: black
-      args: [--line-length=80]
+
 - repo: https://github.com/pycqa/isort
   rev: 5.13.2
   hooks:
@@ -27,9 +32,3 @@ repos:
       name: isort (python)
       args: [--profile=black, --line-length=80]
       exclude: "gmso/tests/files/.*"
-- repo: https://github.com/pycqa/pydocstyle
-  rev: '6.3.0'
-  hooks:
-    - id: pydocstyle
-      exclude: ^(gmso/abc|gmso/core|gmso/tests/|docs/|devtools/|setup.py)
-      args: [--convention=numpy]

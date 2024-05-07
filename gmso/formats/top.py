@@ -10,7 +10,6 @@ from gmso.core.element import element_by_atom_type
 from gmso.core.improper import Improper
 from gmso.core.views import PotentialFilters
 from gmso.exceptions import GMSOError
-from gmso.external import to_networkx
 from gmso.formats.formats_registry import saves_as
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.parameterization.molecule_utils import (
@@ -66,11 +65,7 @@ def write_top(top, filename, top_vars=None):
             "fudgeQQ\n"
         )
         out_file.write(
-            "{0}\t\t"
-            "{1}\t\t"
-            "{2}\t\t"
-            "{3}\t\t"
-            "{4}\n\n".format(
+            "{0}\t\t" "{1}\t\t" "{2}\t\t" "{3}\t\t" "{4}\n\n".format(
                 top_vars["nbfunc"],
                 top_vars["comb-rule"],
                 top_vars["gen-pairs"],
@@ -105,9 +100,7 @@ def write_top(top, filename, top_vars=None):
                     atom_type.charge.in_units(u.elementary_charge).value,
                     "A",
                     atom_type.parameters["sigma"].in_units(u.nanometer).value,
-                    atom_type.parameters["epsilon"]
-                    .in_units(u.Unit("kJ/mol"))
-                    .value,
+                    atom_type.parameters["epsilon"].in_units(u.Unit("kJ/mol")).value,
                 )
             )
 
@@ -145,8 +138,7 @@ def write_top(top, filename, top_vars=None):
 
             """Write out atoms for each unique molecule."""
             out_file.write(
-                "[ atoms ]\n"
-                "; nr\ttype\tresnr\tresidue\t\tatom\tcgnr\tcharge\tmass\n"
+                "[ atoms ]\n" "; nr\ttype\tresnr\tresidue\t\tatom\tcgnr\tcharge\tmass\n"
             )
             # Each unique molecule need to be reindexed (restarting from 0)
             # The shifted_idx_map is needed to make sure all the atom index used in
@@ -169,9 +161,7 @@ def write_top(top, filename, top_vars=None):
                         tag,
                         site.atom_type.tags.get("element", site.element.symbol),
                         "1",  # TODO: care about charge groups
-                        site.atom_type.charge.in_units(
-                            u.elementary_charge
-                        ).value,
+                        site.atom_type.charge.in_units(u.elementary_charge).value,
                         site.atom_type.mass.in_units(u.amu).value,
                     )
                 )
@@ -250,9 +240,7 @@ def write_top(top, filename, top_vars=None):
                     if conn_group == "pairs":
                         out_file.write(headers[conn_group])
                         for conn in unique_molecules[tag][conn_group]:
-                            out_file.write(
-                                _write_pairs(top, conn, shifted_idx_map)
-                            )
+                            out_file.write(_write_pairs(top, conn, shifted_idx_map))
                     elif conn_group in ["dihedrals", "impropers"]:
                         proper_groups = {
                             "RyckaertBellemansTorsionPotential": list(),
@@ -283,9 +271,7 @@ def write_top(top, filename, top_vars=None):
                             out_file.write(
                                 headers["dihedrals"]["PeriodicTorsionPotential"]
                             )
-                            for conn in proper_groups[
-                                "PeriodicTorsionPotential"
-                            ]:
+                            for conn in proper_groups["PeriodicTorsionPotential"]:
                                 for line in _write_connection(
                                     top,
                                     conn,
@@ -418,32 +404,24 @@ def _get_unique_molecules(top):
                 for site in top.sites
                 if (site.restraint and site.molecule == molecule)
             )
-            unique_molecules[tag]["pairs"] = generate_pairs_lists(
-                top, molecule
-            )["pairs14"]
+            unique_molecules[tag]["pairs"] = generate_pairs_lists(top, molecule)[
+                "pairs14"
+            ]
             unique_molecules[tag]["bonds"] = list(molecule_bonds(top, molecule))
             unique_molecules[tag]["bond_restraints"] = list(
                 bond for bond in molecule_bonds(top, molecule) if bond.restraint
             )
-            unique_molecules[tag]["angles"] = list(
-                molecule_angles(top, molecule)
-            )
+            unique_molecules[tag]["angles"] = list(molecule_angles(top, molecule))
             unique_molecules[tag]["angle_restraints"] = list(
-                angle
-                for angle in molecule_angles(top, molecule)
-                if angle.restraint
+                angle for angle in molecule_angles(top, molecule) if angle.restraint
             )
-            unique_molecules[tag]["dihedrals"] = list(
-                molecule_dihedrals(top, molecule)
-            )
+            unique_molecules[tag]["dihedrals"] = list(molecule_dihedrals(top, molecule))
             unique_molecules[tag]["dihedral_restraints"] = list(
                 dihedral
                 for dihedral in molecule_dihedrals(top, molecule)
                 if dihedral.restraint
             )
-            unique_molecules[tag]["impropers"] = list(
-                molecule_impropers(top, molecule)
-            )
+            unique_molecules[tag]["impropers"] = list(molecule_impropers(top, molecule))
     return unique_molecules
 
 
@@ -495,18 +473,14 @@ def _write_connection(top, connection, potential_name, shifted_idx_map):
 def _harmonic_bond_potential_writer(top, bond, shifted_idx_map):
     """Write harmonic bond information."""
     eq_connsList = bond.equivalent_members()
-    indexList = [
-        tuple(map(lambda x: top.get_index(x), conn)) for conn in eq_connsList
-    ]
+    indexList = [tuple(map(lambda x: top.get_index(x), conn)) for conn in eq_connsList]
     sorted_indicesList = sorted(indexList)[0]
     line = "{0:8s}{1:8s}{2:4s}{3:15.5f}{4:15.5f}\n".format(
         str(shifted_idx_map[sorted_indicesList[0]] + 1),
         str(shifted_idx_map[sorted_indicesList[1]] + 1),
         "1",
         bond.connection_type.parameters["r_eq"].in_units(u.nm).value,
-        bond.connection_type.parameters["k"]
-        .in_units(u.Unit("kJ / (mol*nm**2)"))
-        .value,
+        bond.connection_type.parameters["k"].in_units(u.Unit("kJ / (mol*nm**2)")).value,
     )
     return line
 
@@ -514,9 +488,7 @@ def _harmonic_bond_potential_writer(top, bond, shifted_idx_map):
 def _harmonic_angle_potential_writer(top, angle, shifted_idx_map):
     """Write harmonic angle information."""
     eq_connsList = angle.equivalent_members()
-    indexList = [
-        tuple(map(lambda x: top.get_index(x), conn)) for conn in eq_connsList
-    ]
+    indexList = [tuple(map(lambda x: top.get_index(x), conn)) for conn in eq_connsList]
     sorted_indicesList = sorted(indexList)[0]
 
     line = "{0:8s}{1:8s}{2:8s}{3:4s}{4:15.5f}{5:15.5f}\n".format(
@@ -525,9 +497,7 @@ def _harmonic_angle_potential_writer(top, angle, shifted_idx_map):
         str(shifted_idx_map[sorted_indicesList[2]] + 1),
         "1",
         angle.connection_type.parameters["theta_eq"].in_units(u.degree).value,
-        angle.connection_type.parameters["k"]
-        .in_units(u.Unit("kJ/(mol*rad**2)"))
-        .value,
+        angle.connection_type.parameters["k"].in_units(u.Unit("kJ/(mol*rad**2)")).value,
     )
     return line
 
@@ -540,24 +510,12 @@ def _ryckaert_bellemans_torsion_writer(top, dihedral, shifted_idx_map):
         str(shifted_idx_map[top.get_index(dihedral.connection_members[2])] + 1),
         str(shifted_idx_map[top.get_index(dihedral.connection_members[3])] + 1),
         "3",
-        dihedral.connection_type.parameters["c0"]
-        .in_units(u.Unit("kJ/mol"))
-        .value,
-        dihedral.connection_type.parameters["c1"]
-        .in_units(u.Unit("kJ/mol"))
-        .value,
-        dihedral.connection_type.parameters["c2"]
-        .in_units(u.Unit("kJ/mol"))
-        .value,
-        dihedral.connection_type.parameters["c3"]
-        .in_units(u.Unit("kJ/mol"))
-        .value,
-        dihedral.connection_type.parameters["c4"]
-        .in_units(u.Unit("kJ/mol"))
-        .value,
-        dihedral.connection_type.parameters["c5"]
-        .in_units(u.Unit("kJ/mol"))
-        .value,
+        dihedral.connection_type.parameters["c0"].in_units(u.Unit("kJ/mol")).value,
+        dihedral.connection_type.parameters["c1"].in_units(u.Unit("kJ/mol")).value,
+        dihedral.connection_type.parameters["c2"].in_units(u.Unit("kJ/mol")).value,
+        dihedral.connection_type.parameters["c3"].in_units(u.Unit("kJ/mol")).value,
+        dihedral.connection_type.parameters["c4"].in_units(u.Unit("kJ/mol")).value,
+        dihedral.connection_type.parameters["c5"].in_units(u.Unit("kJ/mol")).value,
     )
     return line
 
@@ -584,26 +542,12 @@ def _periodic_torsion_writer(top, dihedral, shifted_idx_map):
     lines = list()
     for i in range(layers):
         line = "{0:8s}{1:8s}{2:8s}{3:8s}{4:4s}{5:15.5f}{6:15.5f}{7:4}\n".format(
-            str(
-                shifted_idx_map[top.get_index(dihedral.connection_members[0])]
-                + 1
-            ),
-            str(
-                shifted_idx_map[top.get_index(dihedral.connection_members[1])]
-                + 1
-            ),
-            str(
-                shifted_idx_map[top.get_index(dihedral.connection_members[2])]
-                + 1
-            ),
-            str(
-                shifted_idx_map[top.get_index(dihedral.connection_members[3])]
-                + 1
-            ),
+            str(shifted_idx_map[top.get_index(dihedral.connection_members[0])] + 1),
+            str(shifted_idx_map[top.get_index(dihedral.connection_members[1])] + 1),
+            str(shifted_idx_map[top.get_index(dihedral.connection_members[2])] + 1),
+            str(shifted_idx_map[top.get_index(dihedral.connection_members[3])] + 1),
             funct,
-            dihedral.connection_type.parameters["phi_eq"][i]
-            .in_units(u.degree)
-            .value,
+            dihedral.connection_type.parameters["phi_eq"][i].in_units(u.degree).value,
             dihedral.connection_type.parameters["k"][i]
             .in_units(u.Unit("kJ/(mol)"))
             .value,

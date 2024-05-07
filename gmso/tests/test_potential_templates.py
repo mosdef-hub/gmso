@@ -24,9 +24,7 @@ class TestPotentialTemplates(BaseTest):
         assert lennard_jones_potential.expression == sympy.sympify(
             "4*epsilon*((sigma/r)**12 - (sigma/r)**6)"
         )
-        assert lennard_jones_potential.independent_variables == {
-            sympy.sympify("r")
-        }
+        assert lennard_jones_potential.independent_variables == {sympy.sympify("r")}
 
         assert lennard_jones_potential.expected_parameters_dimensions == {
             "sigma": ud.length,
@@ -57,9 +55,7 @@ class TestPotentialTemplates(BaseTest):
             "0.5 * k3 * (1 + cos(3*phi)) +"
             "0.5 * k4 * (1 - cos(4*phi))"
         )
-        assert fourier_torsion_potential.independent_variables == {
-            sympy.sympify("phi")
-        }
+        assert fourier_torsion_potential.independent_variables == {sympy.sympify("phi")}
 
         assert fourier_torsion_potential.expected_parameters_dimensions == {
             "k0": ud.energy,
@@ -78,9 +74,7 @@ class TestPotentialTemplates(BaseTest):
             "0.5 * k3 * (1 + cos(3*phi)) +"
             "0.5 * k4 * (1 - cos(4*phi))"
         )
-        assert opls_torsion_potential.independent_variables == {
-            sympy.sympify("phi")
-        }
+        assert opls_torsion_potential.independent_variables == {sympy.sympify("phi")}
 
         assert opls_torsion_potential.expected_parameters_dimensions == {
             "k1": ud.energy,
@@ -122,17 +116,14 @@ class TestPotentialTemplates(BaseTest):
             sympy.sympify("phi")
         }
 
-        assert (
-            ryckaert_bellemans_torsion_potential.expected_parameters_dimensions
-            == {
-                "c0": ud.energy,
-                "c1": ud.energy,
-                "c2": ud.energy,
-                "c3": ud.energy,
-                "c4": ud.energy,
-                "c5": ud.energy,
-            }
-        )
+        assert ryckaert_bellemans_torsion_potential.expected_parameters_dimensions == {
+            "c0": ud.energy,
+            "c1": ud.energy,
+            "c2": ud.energy,
+            "c3": ud.energy,
+            "c4": ud.energy,
+            "c5": ud.energy,
+        }
 
     def test_harmonic_torsion_potential(self, templates):
         harmonic_torsion_potential = templates["HarmonicTorsionPotential"]
@@ -192,9 +183,7 @@ class TestPotentialTemplates(BaseTest):
         assert harmonic_bond_potential.expression == sympy.sympify(
             "0.5 * k * (r-r_eq)**2"
         )
-        assert harmonic_bond_potential.independent_variables == {
-            sympy.sympify("r")
-        }
+        assert harmonic_bond_potential.independent_variables == {sympy.sympify("r")}
 
         assert harmonic_bond_potential.expected_parameters_dimensions == {
             "k": ud.energy / ud.length**2,
@@ -204,9 +193,7 @@ class TestPotentialTemplates(BaseTest):
     def test_fixed_angle_potential(self, templates):
         potential = templates["FixedAnglePotential"]
         assert potential.name == "FixedAnglePotential"
-        assert potential.expression == sympy.sympify(
-            "DiracDelta(theta-theta_eq)"
-        )
+        assert potential.expression == sympy.sympify("DiracDelta(theta-theta_eq)")
         assert potential.independent_variables == {sympy.sympify("theta")}
 
     def test_harmonic_angle_potential(self, templates):
@@ -227,12 +214,8 @@ class TestPotentialTemplates(BaseTest):
     def test_buckingham_potential(self, templates):
         buckingham_potential = templates["BuckinghamPotential"]
         assert buckingham_potential.name == "BuckinghamPotential"
-        assert buckingham_potential.expression == sympy.sympify(
-            "a*exp(-b*r) - c*r**-6"
-        )
-        assert buckingham_potential.independent_variables == sympy.sympify(
-            {"r"}
-        )
+        assert buckingham_potential.expression == sympy.sympify("a*exp(-b*r) - c*r**-6")
+        assert buckingham_potential.independent_variables == sympy.sympify({"r"})
         assert buckingham_potential.expected_parameters_dimensions == {
             "a": ud.energy,
             "b": 1 / ud.length,

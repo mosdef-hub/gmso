@@ -1,3 +1,4 @@
+# ruff: noqa: F401
 """GMSO: General Molecular Simulation Object."""
 
 from .core.angle import Angle
@@ -16,4 +17,4 @@ from .core.improper_type import ImproperType
 from .core.pairpotential_type import PairPotentialType
 from .core.topology import Topology
 
-__version__ = "0.12.0"
+__version__ = "0.12.1"

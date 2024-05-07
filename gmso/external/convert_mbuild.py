@@ -11,12 +11,7 @@ from unyt import Unit
 from gmso.core.atom import Atom
 from gmso.core.bond import Bond
 from gmso.core.box import Box
-from gmso.core.element import (
-    element_by_atomic_number,
-    element_by_mass,
-    element_by_name,
-    element_by_symbol,
-)
+from gmso.core.element import element_by_symbol
 from gmso.core.topology import Topology
 from gmso.exceptions import GMSOError
 from gmso.utils.io import has_mbuild
@@ -39,18 +34,20 @@ def from_mbuild(
 
         * All positional and box dimension values in compound are in nanometers.
 
-        * The hierarchical structure of the Compound will be flattened and translated to labels
-         in GMSO Sites. The directly supported labels include `Site.group`,
+        * The hierarchical structure of the Compound will be flattened and translated to labels\
+         in GMSO Sites. The directly supported labels include `Site.group`,\
         `Site.molecule_name`, and `Site.residue_name`.
-            * `group` is determined as te second-highest level Compound and is automatically generated;
-            * `molecule` is determined by traversing through
-            hierarchy of the mb.Compound, starting from the particle level, until the lowest
-            independent mb.Compound is reached (determined as an mb.Compound that does not have
+
+            * `group` is determined as te second-highest level Compound and is automatically generated;\
+            * `molecule` is determined by traversing through\
+            hierarchy of the mb.Compound, starting from the particle level, until the lowest\
+            independent mb.Compound is reached (determined as an mb.Compound that does not have\
             any bond outside its boundary);
-            * `residue` is the `mb.Compound` level right above particle level. `
-            * `molecule` and `residue` take the format of (name, index), where the latter can be used
-            to distinguish between molecule/residue of the same name. These two labels are only generated
+            * `residue` is the `mb.Compound` level right above particle level.
+            * `molecule` and `residue` take the format of (name, index), where the latter can be used\
+            to distinguish between molecule/residue of the same name. These two labels are only generated\
             if parse_label=True.
+
         * Only `Bonds` are added for each bond in the `Compound`. If `Angles`\
           and `Dihedrals` are desired in the resulting `Topology`, they must be\
           added separately from this function.
@@ -60,15 +57,14 @@ def from_mbuild(
     compound : mbuild.Compound
         mbuild.Compound instance that need to be converted
     box : mbuild.Box, optional, default=None
-        Box information to be loaded to a gmso.Topologyl
+        Box information to be loaded to a gmso.Topology
     search_method : function, optional, default=element_by_symbol
-        Searching method used to assign element from periodic table to
-        particle site.
+        Searching method used to assign element from periodic table to particle site.
         The information specified in the `search_method` argument is extracted
         from each `Particle`'s `name` attribute.
         Valid functions are element_by_symbol, element_by_name,
         element_by_atomic_number, and element_by_mass, which can be imported
-        from `gmso.core.element'
+        from `gmso.core.element`
     parse_label : bool, optional, default=True
         Option to parse hierarchy info of the compound into system of top label,
         including, group, molecule and residue labels.
@@ -111,9 +107,7 @@ def from_mbuild(
 
     # Use site map to apply Compound info to Topology.
     for part in compound.particles():
-        site = _parse_site(
-            site_map, part, search_method, infer_element=infer_elements
-        )
+        site = _parse_site(site_map, part, search_method, infer_element=infer_elements)
         top.add_site(site)
 
     for b1, b2 in compound.bonds():
@@ -172,18 +166,14 @@ def to_mbuild(topology, infer_hierarchy=True):
         molecule_list = []
         for molecule_tag in topology.unique_site_labels(label_type="molecule"):
             mb_molecule = mb.Compound()
-            mb_molecule.name = (
-                molecule_tag.name if molecule_tag else "DefaultMolecule"
-            )
+            mb_molecule.name = molecule_tag.name if molecule_tag else "DefaultMolecule"
             residue_dict = dict()
             residue_dict_particles = dict()
 
             if molecule_tag:
                 sites_iter = topology.iter_sites("molecule", molecule_tag)
             else:
-                sites_iter = (
-                    site for site in topology.sites if not site.molecule
-                )
+                sites_iter = (site for site in topology.sites if not site.molecule)
 
             for site in sites_iter:
                 particle = _parse_particle(particle_map, site)
@@ -248,9 +238,7 @@ def from_mbuild_box(mb_box):
 def _parse_particle(particle_map, site):
     """Parse information for a mb.Particle from a gmso.Site and add it to particle map."""
     element = site.element.symbol if site.element else None
-    charge = (
-        site.charge.in_units(u.elementary_charge).value if site.charge else None
-    )
+    charge = site.charge.in_units(u.elementary_charge).value if site.charge else None
     mass = site.mass.in_units(u.amu).value if site.mass else None
 
     particle = mb.Compound(
@@ -306,9 +294,7 @@ def _parse_molecule_residue(site_map, compound):
                 # ancestor of the first particle is used as reference.
                 # Hence, this called will return the lowest-level Compound]
                 # that is a molecule
-                ancestors = ancestors.intersection(
-                    IndexedSet(particle.ancestors())
-                )
+                ancestors = ancestors.intersection(IndexedSet(particle.ancestors()))
 
         """Parse molecule information"""
         molecule_tag = ancestors[0]
@@ -322,9 +308,7 @@ def _parse_molecule_residue(site_map, compound):
 
         for particle in molecule:
             """Parse residue information"""
-            residue_tag = (
-                particle if not particle.n_direct_bonds else particle.parent
-            )
+            residue_tag = particle if not particle.n_direct_bonds else particle.parent
             if residue_tag.name in residue_tracker:
                 if residue_tag not in residue_tracker[residue_tag.name]:
                     residue_tracker[residue_tag.name][residue_tag] = len(
@@ -347,13 +331,9 @@ def _parse_group(site_map, compound, custom_groups):
         if isinstance(custom_groups, str):
             custom_groups = [custom_groups]
         elif not hasattr(custom_groups, "__iter__"):
-            raise TypeError(
-                f"Please pass groups {custom_groups} as a list of strings."
-            )
+            raise TypeError(f"Please pass groups {custom_groups} as a list of strings.")
         elif not np.all([isinstance(g, str) for g in custom_groups]):
-            raise TypeError(
-                f"Please pass groups {custom_groups} as a list of strings."
-            )
+            raise TypeError(f"Please pass groups {custom_groups} as a list of strings.")
         for part in _traverse_down_hierarchy(compound, custom_groups):
             for particle in part.particles():
                 site_map[particle]["group"] = part.name

@@ -1,9 +1,7 @@
-from pathlib import Path
-
 from setuptools import find_packages, setup
 
 #####################################
-VERSION = "0.12.0"
+VERSION = "0.12.1"
 ISRELEASED = False
 if ISRELEASED:
     __version__ = VERSION
@@ -21,9 +19,7 @@ setup(
     author="Matthew W Thompson, Justin Gilmer",
     author_email="matt.thompson@vanderbilt.edu, justin.b.gilmer@vanderbilt.edu",
     url="https://github.com/mosdef-hub/gmso",
-    download_url="https://github.com/mosdef-hub/gmso/tarball/{}".format(
-        __version__
-    ),
+    download_url="https://github.com/mosdef-hub/gmso/tarball/{}".format(__version__),
     license="MIT",
     keywords="gmso",
     classifiers=[

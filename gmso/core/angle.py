@@ -10,7 +10,7 @@ from gmso.core.atom import Atom
 
 
 class Angle(Connection):
-    __base_doc__ = """A 3-partner connection between Atoms.
+    """A 3-partner connection between Atoms.
 
     This is a subclass of the gmso.Connection superclass.
     This class has strictly 3 members in its connection members.
@@ -19,9 +19,11 @@ class Angle(Connection):
     Notes
     -----
     Inherits some methods from Connection:
-        __eq__, __repr__, _validate methods
-    Additional _validate methods are presented
+    __eq__, __repr__, _validate methods
+
+    Additional _validate methods are presented.
     """
+
     __members_creator__: ClassVar[Callable] = Atom.model_validate
 
     connection_members_: Tuple[Atom, Atom, Atom] = Field(
@@ -52,7 +54,7 @@ class Angle(Connection):
             **{
                 "angle_type": "angle_type_",
                 "restraint": "restraint_",
-            }
+            },
         )
     )
 

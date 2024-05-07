@@ -5,15 +5,12 @@ import inspect
 import os
 import sys
 import textwrap
-from tempfile import TemporaryFile
 from unittest import SkipTest
 
 from pkg_resources import resource_filename
 
 MESSAGES = dict()
-MESSAGES[
-    "matplotlib.pyplot"
-] = """
+MESSAGES["matplotlib.pyplot"] = """
 The code at {filename}:{line_number} requires the "matplotlib" package
 matplotlib can be installed using:
 # conda install -c conda-forge matplotlib
@@ -21,9 +18,7 @@ or
 # pip install matplotlib
 """
 
-MESSAGES[
-    "matplotlib"
-] = """
+MESSAGES["matplotlib"] = """
 The code at {filename}:{line_number} requires the "matplotlib" package
 matplotlib can be installed using:f
 # conda install -c conda-forge matplotlib
@@ -88,7 +83,7 @@ def import_(module):
     """
     try:
         return importlib.import_module(module)
-    except ImportError as e:
+    except ImportError:
         try:
             message = MESSAGES[module]
         except KeyError:
@@ -97,7 +92,7 @@ def import_(module):
                 + module
                 + " package"
             )
-            e = ImportError("No module named %s" % module)
+            raise ImportError("No module named %s" % module)
 
         (
             frame,
@@ -108,9 +103,7 @@ def import_(module):
             index,
         ) = inspect.getouterframes(inspect.currentframe())[1]
 
-        m = message.format(
-            filename=os.path.basename(filename), line_number=line_number
-        )
+        m = message.format(filename=os.path.basename(filename), line_number=line_number)
         m = textwrap.dedent(m)
 
         bar = (

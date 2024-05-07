@@ -36,9 +36,6 @@ class TestAngle(BaseTest):
         assert connect.name == "angle_name"
 
     def test_angle_fake(self):
-        atom1 = Atom(name="atom1")
-        atom2 = Atom(name="atom2")
-        atom3 = Atom(name="atom3")
         with pytest.raises(TypeError):
             Angle(connection_members=["fakesite1", "fakesite2", 4.2])
 
@@ -53,15 +50,9 @@ class TestAngle(BaseTest):
             )
 
     def test_angle_constituent_types(self):
-        atom1 = Atom(
-            name="atom1", position=[0, 0, 0], atom_type=AtomType(name="A")
-        )
-        atom2 = Atom(
-            name="atom2", position=[1, 0, 0], atom_type=AtomType(name="B")
-        )
-        atom3 = Atom(
-            name="atom3", position=[1, 1, 0], atom_type=AtomType(name="C")
-        )
+        atom1 = Atom(name="atom1", position=[0, 0, 0], atom_type=AtomType(name="A"))
+        atom2 = Atom(name="atom2", position=[1, 0, 0], atom_type=AtomType(name="B"))
+        atom3 = Atom(name="atom3", position=[1, 1, 0], atom_type=AtomType(name="C"))
         angtype = AngleType(
             member_types=[
                 atom1.atom_type.name,
@@ -69,9 +60,7 @@ class TestAngle(BaseTest):
                 atom3.atom_type.name,
             ]
         )
-        ang = Angle(
-            connection_members=[atom1, atom2, atom3], angle_type=angtype
-        )
+        ang = Angle(connection_members=[atom1, atom2, atom3], angle_type=angtype)
         assert "A" in ang.angle_type.member_types
         assert "B" in ang.angle_type.member_types
         assert "C" in ang.angle_type.member_types
@@ -124,6 +113,4 @@ class TestAngle(BaseTest):
 
         assert tuple(angle_eq.connection_members) in angle.equivalent_members()
         assert tuple(angle.connection_members) in angle_eq.equivalent_members()
-        assert not (
-            tuple(angle.connection_members) in angle_not_eq.equivalent_members()
-        )
+        assert tuple(angle.connection_members) not in angle_not_eq.equivalent_members()

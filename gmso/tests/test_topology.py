@@ -114,9 +114,7 @@ class TestTopology(BaseTest):
         atom1 = Atom(name="atom1", position=[0.0, 0.0, 0.0])
         top.add_site(atom1)
 
-        assert set([type(site.position) for site in top.sites]) == {
-            u.unyt_array
-        }
+        assert set([type(site.position) for site in top.sites]) == {u.unyt_array}
         assert set([site.position.units for site in top.sites]) == {u.nm}
 
         assert top.positions.dtype == float
@@ -229,9 +227,7 @@ class TestTopology(BaseTest):
         top = Topology()
         assert len(top.atom_types) == 0
         top.add_site(typed_site, update_types=False)
-        assert (
-            len(top.atom_types) == 1
-        )  # Always upto date now (except for repr)
+        assert len(top.atom_types) == 1  # Always upto date now (except for repr)
         assert top._potentials_count["atom_types"] == 0
 
         top = Topology()
@@ -437,9 +433,7 @@ class TestTopology(BaseTest):
         assert len(top.improper_type_expressions) == 1
         assert len(top.atom_type_expressions) == 2
 
-    def test_pairpotential_pairpotentialtype_update(
-        self, pairpotentialtype_top
-    ):
+    def test_pairpotential_pairpotentialtype_update(self, pairpotentialtype_top):
         assert len(pairpotentialtype_top.pairpotential_types) == 1
 
         pairpotentialtype_top.remove_pairpotentialtype(["a1", "a2"])
@@ -448,12 +442,12 @@ class TestTopology(BaseTest):
     def test_parametrization(self):
         top = Topology()
 
-        assert top.typed == False
+        assert top.typed is False
         top.add_site(Atom(atom_type=AtomType()), update_types=True)
 
-        assert top.typed == True
-        assert top.is_typed() == True
-        assert top.typed == True
+        assert top.typed is True
+        assert top.is_typed() is True
+        assert top.typed is True
 
     def test_topology_atom_type_changes(self):
         top = Topology()
@@ -570,14 +564,8 @@ class TestTopology(BaseTest):
             top.get_index(site)
 
     def test_topology_get_index_atom_type(self, typed_water_system):
-        assert (
-            typed_water_system.get_index(typed_water_system.sites[0].atom_type)
-            == 0
-        )
-        assert (
-            typed_water_system.get_index(typed_water_system.sites[1].atom_type)
-            == 1
-        )
+        assert typed_water_system.get_index(typed_water_system.sites[0].atom_type) == 0
+        assert typed_water_system.get_index(typed_water_system.sites[1].atom_type) == 1
 
     def test_topology_get_index_bond_type(self, typed_methylnitroaniline):
         assert (
@@ -595,15 +583,11 @@ class TestTopology(BaseTest):
 
     def test_topology_get_index_angle_type(self, typed_chloroethanol):
         assert (
-            typed_chloroethanol.get_index(
-                typed_chloroethanol.angles[0].connection_type
-            )
+            typed_chloroethanol.get_index(typed_chloroethanol.angles[0].connection_type)
             == 0
         )
         assert (
-            typed_chloroethanol.get_index(
-                typed_chloroethanol.angles[5].connection_type
-            )
+            typed_chloroethanol.get_index(typed_chloroethanol.angles[5].connection_type)
             == 5
         )
 
@@ -643,28 +627,18 @@ class TestTopology(BaseTest):
 
     def test_topology_get_dihedrals_for(self, typed_methylnitroaniline):
         site = list(typed_methylnitroaniline.sites)[0]
-        converted_dihedrals_list = typed_methylnitroaniline._get_dihedrals_for(
-            site
-        )
+        converted_dihedrals_list = typed_methylnitroaniline._get_dihedrals_for(site)
         top_dihedrals_containing_site = []
         for dihedral in typed_methylnitroaniline.dihedrals:
             if site in dihedral.connection_members:
                 assert dihedral in converted_dihedrals_list
                 top_dihedrals_containing_site.append(dihedral)
-        assert len(top_dihedrals_containing_site) == len(
-            converted_dihedrals_list
-        )
+        assert len(top_dihedrals_containing_site) == len(converted_dihedrals_list)
 
     def test_topology_scale_factors(self, typed_methylnitroaniline):
-        assert np.allclose(
-            typed_methylnitroaniline.get_lj_scale(interaction="12"), 0.0
-        )
-        assert np.allclose(
-            typed_methylnitroaniline.get_lj_scale(interaction="13"), 0.0
-        )
-        assert np.allclose(
-            typed_methylnitroaniline.get_lj_scale(interaction="14"), 0.5
-        )
+        assert np.allclose(typed_methylnitroaniline.get_lj_scale(interaction="12"), 0.0)
+        assert np.allclose(typed_methylnitroaniline.get_lj_scale(interaction="13"), 0.0)
+        assert np.allclose(typed_methylnitroaniline.get_lj_scale(interaction="14"), 0.5)
         assert np.allclose(
             typed_methylnitroaniline.get_electrostatics_scale(interaction="12"),
             0.0,
@@ -681,15 +655,9 @@ class TestTopology(BaseTest):
     def test_topology_change_scale_factors(self, typed_methylnitroaniline):
         typed_methylnitroaniline.set_lj_scale([0.5, 0.5, 1.0])
         typed_methylnitroaniline.set_electrostatics_scale([1.0, 1.0, 1.0])
-        assert np.allclose(
-            typed_methylnitroaniline.get_lj_scale(interaction="12"), 0.5
-        )
-        assert np.allclose(
-            typed_methylnitroaniline.get_lj_scale(interaction="13"), 0.5
-        )
-        assert np.allclose(
-            typed_methylnitroaniline.get_lj_scale(interaction="14"), 1.0
-        )
+        assert np.allclose(typed_methylnitroaniline.get_lj_scale(interaction="12"), 0.5)
+        assert np.allclose(typed_methylnitroaniline.get_lj_scale(interaction="13"), 0.5)
+        assert np.allclose(typed_methylnitroaniline.get_lj_scale(interaction="14"), 1.0)
         assert np.allclose(
             typed_methylnitroaniline.get_electrostatics_scale(interaction="12"),
             1.0,
@@ -703,9 +671,7 @@ class TestTopology(BaseTest):
             1.0,
         )
         typed_methylnitroaniline.set_lj_scale(1.0, interaction="12")
-        assert np.allclose(
-            typed_methylnitroaniline.get_lj_scale(), [1.0, 0.5, 1.0]
-        )
+        assert np.allclose(typed_methylnitroaniline.get_lj_scale(), [1.0, 0.5, 1.0])
 
     def test_topology_invalid_interactions_scaling_factors(
         self, typed_methylnitroaniline
@@ -716,9 +682,7 @@ class TestTopology(BaseTest):
         with pytest.raises(GMSOError):
             typed_methylnitroaniline.set_lj_scale(2, interaction="16")
 
-    def test_topology_scaling_factors_by_molecule_id(
-        self, typed_methylnitroaniline
-    ):
+    def test_topology_scaling_factors_by_molecule_id(self, typed_methylnitroaniline):
         top = Topology()
         top.set_electrostatics_scale(0.4)
         top.set_lj_scale(
@@ -726,22 +690,16 @@ class TestTopology(BaseTest):
             molecule_id="RESA",
         )
         assert np.allclose(top.get_electrostatics_scale(), [0.4, 0.4, 0.4])
-        assert np.allclose(
-            top.get_lj_scale(molecule_id="RESA"), [1.2, 1.3, 1.4]
-        )
+        assert np.allclose(top.get_lj_scale(molecule_id="RESA"), [1.2, 1.3, 1.4])
 
-        assert (
-            top.get_electrostatics_scale(molecule_id="MissingMolecule") == None
-        )
+        assert top.get_electrostatics_scale(molecule_id="MissingMolecule") is None
 
     def test_topology_set_scaling_factors(self):
         top = Topology()
         with pytest.raises(ValueError):
             top.set_scaling_factors([1.0, 2.0, 3.0], [2.1, 3.2])
         top.set_scaling_factors([1.0, 2.0, 3.0], [2.1, 2.2, 2.3])
-        top.set_scaling_factors(
-            [2.0, 2.0, 3.2], [0.0, 0.0, 0.5], molecule_id="MOLA"
-        )
+        top.set_scaling_factors([2.0, 2.0, 3.2], [0.0, 0.0, 0.5], molecule_id="MOLA")
         assert np.allclose(
             top.get_scaling_factors(),
             [[1.0, 2.0, 3.0], [2.1, 2.2, 2.3]],
@@ -776,17 +734,13 @@ class TestTopology(BaseTest):
             .to_value(),
         )
         assert (
-            typed_ethane.to_dataframe(site_attrs=["atom_type.name"])[
-                "atom_type.name"
-            ][0]
+            typed_ethane.to_dataframe(site_attrs=["atom_type.name"])["atom_type.name"][
+                0
+            ]
             == "opls_135"
         )
         assert np.allclose(
-            float(
-                typed_ethane.to_dataframe(site_attrs=["charge", "position"])[
-                    "x"
-                ][0]
-            ),
+            float(typed_ethane.to_dataframe(site_attrs=["charge", "position"])["x"][0]),
             0,
         )
         assert np.allclose(
@@ -804,10 +758,7 @@ class TestTopology(BaseTest):
         )
         with pytest.raises(AttributeError) as e:
             typed_ethane.to_dataframe(site_attrs=["missingattr"])
-        assert (
-            str(e.value)
-            == "The attribute missingattr is not in this gmso object."
-        )
+        assert str(e.value) == "The attribute missingattr is not in this gmso object."
         with pytest.raises(AttributeError) as e:
             typed_ethane.to_dataframe(site_attrs=["missingattr.missingattr"])
         assert (
@@ -817,24 +768,17 @@ class TestTopology(BaseTest):
         with pytest.raises(AttributeError) as e:
             typed_ethane.to_dataframe(site_attrs=["missingattr.attr"])
         assert (
-            str(e.value)
-            == "The attribute missingattr.attr is not in this gmso object."
+            str(e.value) == "The attribute missingattr.attr is not in this gmso object."
         )
         with pytest.raises(AttributeError) as e:
-            typed_ethane.to_dataframe(
-                parameter="bonds", site_attrs=["missingattr"]
-            )
-        assert (
-            str(e.value)
-            == "The attribute missingattr is not in this gmso object."
-        )
+            typed_ethane.to_dataframe(parameter="bonds", site_attrs=["missingattr"])
+        assert str(e.value) == "The attribute missingattr is not in this gmso object."
         with pytest.raises(AttributeError) as e:
             typed_ethane.to_dataframe(
                 parameter="bonds", site_attrs=["missingattr.attr"]
             )
         assert (
-            str(e.value)
-            == "The attribute missingattr.attr is not in this gmso object."
+            str(e.value) == "The attribute missingattr.attr is not in this gmso object."
         )
         with pytest.raises(GMSOError) as e:
             top = Topology()
@@ -850,9 +794,9 @@ class TestTopology(BaseTest):
         df = pd.DataFrame()
         assert np.allclose(
             float(
-                typed_ethane._pandas_from_parameters(
-                    df, "bonds", ["positions"]
-                )["x Atom1 (nm)"][6]
+                typed_ethane._pandas_from_parameters(df, "bonds", ["positions"])[
+                    "x Atom1 (nm)"
+                ][6]
             ),
             -0.03570001,
         )
@@ -919,9 +863,7 @@ class TestTopology(BaseTest):
             for site in labeled_top.iter_sites_by_residue(residue):
                 assert site.residue == residue
 
-        residue_names = labeled_top.unique_site_labels(
-            "residue", name_only=True
-        )
+        residue_names = labeled_top.unique_site_labels("residue", name_only=True)
         for residue_name in residue_names:
             for site in labeled_top.iter_sites_by_residue(residue_name):
                 assert site.residue.name == residue_name
@@ -932,9 +874,7 @@ class TestTopology(BaseTest):
             for site in labeled_top.iter_sites_by_molecule(molecule):
                 assert site.residue == molecule
 
-        molecule_names = labeled_top.unique_site_labels(
-            "molecule", name_only=True
-        )
+        molecule_names = labeled_top.unique_site_labels("molecule", name_only=True)
         for molecule_name in molecule_names:
             for site in labeled_top.iter_sites_by_molecule(molecule_name):
                 assert site.molecule.name == molecule_name
@@ -961,9 +901,7 @@ class TestTopology(BaseTest):
     def test_iter_connections_by_site_none(self, ethane):
         ethane.identify_connections()
         site = ethane.sites[0]
-        for conn in ethane.iter_connections_by_site(
-            site=site, connections=None
-        ):
+        for conn in ethane.iter_connections_by_site(site=site, connections=None):
             assert site in conn.connection_members
 
     def test_iter_connections_by_site_bad_param(self, ethane):
@@ -982,9 +920,7 @@ class TestTopology(BaseTest):
             for conn in top.iter_connections_by_site(site):
                 pass
 
-    def test_write_forcefield(
-        self, typed_water_system, typed_benzene_aa_system
-    ):
+    def test_write_forcefield(self, typed_water_system, typed_benzene_aa_system):
         forcefield = typed_water_system.get_forcefield()
         assert "opls_111" in forcefield.atom_types
         assert "opls_112" in forcefield.atom_types
@@ -1003,9 +939,7 @@ class TestTopology(BaseTest):
             .to_value(),
             -0.18,
         )
-        conversion = (
-            10 * getattr(u.physical_constants, "elementary_charge").value
-        )
+        conversion = 10 * getattr(u.physical_constants, "elementary_charge").value
         reg.register_unit(
             "test_charge",
             conversion,

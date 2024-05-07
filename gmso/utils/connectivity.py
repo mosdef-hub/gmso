@@ -1,7 +1,6 @@
 """Module supporting various connectivity methods and operations."""
 
 import networkx as nx
-import numpy as np
 from boltons.setutils import IndexedSet
 from networkx.algorithms import shortest_path_length
 
@@ -53,12 +52,8 @@ def identify_connections(top, index_only=False):
     compound_line_graph = nx.line_graph(compound)
 
     angle_matches = _detect_connections(compound_line_graph, top, type_="angle")
-    dihedral_matches = _detect_connections(
-        compound_line_graph, top, type_="dihedral"
-    )
-    improper_matches = _detect_connections(
-        compound_line_graph, top, type_="improper"
-    )
+    dihedral_matches = _detect_connections(compound_line_graph, top, type_="dihedral")
+    improper_matches = _detect_connections(compound_line_graph, top, type_="improper")
 
     if not index_only:
         for conn_matches, conn_type in zip(
@@ -93,9 +88,7 @@ def _detect_connections(compound_line_graph, top, type_="angle"):
         assert len(edge) == 2, "Edges should be of length 2"
         connection.add_edge(edge[0], edge[1])
 
-    matcher = nx.algorithms.isomorphism.GraphMatcher(
-        compound_line_graph, connection
-    )
+    matcher = nx.algorithms.isomorphism.GraphMatcher(compound_line_graph, connection)
 
     formatter_fns = {
         "angle": _format_subgraph_angle,
@@ -279,11 +272,7 @@ def _trim_duplicates(all_matches):
     """
     trimmed_list = IndexedSet()
     for match in all_matches:
-        if (
-            match
-            and match not in trimmed_list
-            and match[::-1] not in trimmed_list
-        ):
+        if match and match not in trimmed_list and match[::-1] not in trimmed_list:
             trimmed_list.add(match)
     return trimmed_list
 
