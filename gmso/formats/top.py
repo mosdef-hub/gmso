@@ -3,6 +3,7 @@
 import datetime
 import warnings
 
+import numpy as np
 import unyt as u
 
 from gmso.core.dihedral import Dihedral

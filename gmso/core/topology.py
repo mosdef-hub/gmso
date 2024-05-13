@@ -9,7 +9,7 @@ import unyt as u
 from boltons.setutils import IndexedSet
 
 import gmso
-from gmso.abc.abstract_site import Site
+from gmso.abc.abstract_site import Molecule, Residue, Site
 from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.core.angle import Angle
 from gmso.core.angle_type import AngleType
@@ -1382,9 +1382,21 @@ class Topology(object):
             for site in self._sites:
                 if getattr(site, key) and getattr(site, key).name == value:
                     yield site
-        for site in self._sites:
-            if getattr(site, key) == value:
-                yield site
+        elif isinstance(value, (tuple, list)):
+            containers_dict = {"molecule": Molecule, "residue": Residue}
+            if len(value) == 2:
+                tmp = containers_dict[key](name=value[0], number=value[1])
+            else:
+                tmp = containers_dict[key](
+                    name=value[0], number=value[1], isrigid=value[2]
+                )
+            for site in self._sites:
+                if getattr(site, key) and getattr(site, key) == tmp:
+                    yield site
+        else:
+            for site in self._sites:
+                if getattr(site, key) == value:
+                    yield site
 
     def iter_sites_by_residue(self, residue_tag):
         """Iterate through this topology's sites which contain this specific residue name.
