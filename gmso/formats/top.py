@@ -5,6 +5,7 @@ import warnings
 
 import numpy as np
 import unyt as u
+from lark import UnexpectedCharacters
 
 from gmso.core.dihedral import Dihedral
 from gmso.core.element import element_by_atom_type
@@ -421,7 +422,7 @@ def _lookup_atomic_number(atom_type):
     try:
         element = element_by_atom_type(atom_type)
         return element.atomic_number
-    except GMSOError:
+    except (GMSOError, UnexpectedCharacters):
         return 0
 
 
@@ -430,7 +431,7 @@ def _lookup_element_symbol(atom_type):
     try:
         element = element_by_atom_type(atom_type)
         return element.symbol
-    except GMSOError:
+    except (GMSOError, UnexpectedCharacters):
         return "X"
 
 
