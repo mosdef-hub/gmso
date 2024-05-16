@@ -19,7 +19,11 @@ from gmso.utils.connectivity import generate_pairs_lists
 from gmso.utils.conversions import convert_ryckaert_to_opls
 from gmso.utils.geometry import coord_shift
 from gmso.utils.io import has_gsd, has_hoomd
-from gmso.utils.sorting import sort_by_classes, sort_connection_members
+from gmso.utils.sorting import (
+    sort_by_classes,
+    sort_by_types,
+    sort_connection_members,
+)
 from gmso.utils.units import convert_params_units
 
 if has_gsd:
@@ -39,6 +43,8 @@ AKMA_UNITS = {
     "length": u.angstrom,
     "mass": u.g / u.mol,  # aka amu
 }
+
+hoomd_version = hoomd.version.version.split(".")
 
 
 def to_gsd_snapshot(
@@ -665,6 +671,7 @@ def _validate_compatibility(top):
     harmonic_bond_potential = templates["HarmonicBondPotential"]
     harmonic_angle_potential = templates["HarmonicAnglePotential"]
     periodic_torsion_potential = templates["PeriodicTorsionPotential"]
+    harmonic_torsion_potential = templates["HarmonicTorsionPotential"]
     opls_torsion_potential = templates["OPLSTorsionPotential"]
     rb_torsion_potential = templates["RyckaertBellemansTorsionPotential"]
     accepted_potentials = (
@@ -672,6 +679,7 @@ def _validate_compatibility(top):
         harmonic_bond_potential,
         harmonic_angle_potential,
         periodic_torsion_potential,
+        harmonic_torsion_potential,
         opls_torsion_potential,
         rb_torsion_potential,
     )
@@ -968,8 +976,11 @@ def _parse_harmonic_bond(
 ):
     for btype in btypes:
         # TODO: Unit conversion
-        member_classes = sort_by_classes(btype)
-        container.params["-".join(member_classes)] = {
+        members = sort_by_classes(btype)
+        # If wild card in class, sort by types instead
+        if "*" in members:
+            members = sort_by_types(btype)
+        container.params["-".join(members)] = {
             "k": btype.parameters["k"],
             "r0": btype.parameters["r_eq"],
         }
@@ -1034,8 +1045,11 @@ def _parse_harmonic_angle(
     agtypes,
 ):
     for agtype in agtypes:
-        member_classes = sort_by_classes(agtype)
-        container.params["-".join(member_classes)] = {
+        members = sort_by_classes(agtype)
+        # If wild card in class, sort by types instead
+        if "*" in members:
+            members = sort_by_types(agtype)
+        container.params["-".join(members)] = {
             "k": agtype.parameters["k"],
             "t0": agtype.parameters["theta_eq"],
         }
@@ -1091,7 +1105,6 @@ def _parse_dihedral_forces(
         },
     }
 
-    hoomd_version = hoomd.version.version.split(".")
     if int(hoomd_version[0]) >= 4 or (
         int(hoomd_version[0]) == 3 and int(hoomd_version[1]) >= 8
     ):
@@ -1262,12 +1275,24 @@ def _parse_improper_forces(
             base_units,
         )
 
-    itype_group_map = {
-        "HarmonicImproperPotenial": {
-            "container": hoomd.md.improper.Harmonic,
-            "parser": _parse_harmonic_improper,
-        },
-    }
+    if int(hoomd_version[0]) >= 4 and int(hoomd_version[1]) >= 5:
+        itype_group_map = {
+            "HarmonicImproperPotential": {
+                "container": hoomd.md.improper.Harmonic,
+                "parser": _parse_harmonic_improper,
+            },
+            "PeriodicTorsionPotential": {
+                "container": hoomd.md.improper.Periodic,
+                "parser": _parse_periodic_improper,
+            },
+        }
+    else:
+        itype_group_map = {
+            "HarmonicImproperPotential": {
+                "container": hoomd.md.improper.Harmonic,
+                "parser": _parse_harmonic_improper,
+            },
+        }
 
     improper_forces = list()
     for group in groups:
@@ -1285,10 +1310,31 @@ def _parse_harmonic_improper(
     itypes,
 ):
     for itype in itypes:
-        member_types = sort_by_classes(itype)
-        container.params["-".join(member_types)] = {
+        members = sort_by_classes(itype)
+        # If wild card in class, sort by types instead
+        if "*" in members:
+            members = sort_by_types(itype)
+        container.params["-".join(members)] = {
             "k": itype.parameters["k"],
             "chi0": itype.parameters["phi_eq"],  # diff nomenclature?
+        }
+    return container
+
+
+def _parse_periodic_improper(
+    container,
+    itypes,
+):
+    for itype in itypes:
+        members = sort_by_classes(itype)
+        # If wild card in class, sort by types instead
+        if "*" in members:
+            members = sort_by_types(itype)
+        container.params["-".join(members)] = {
+            "k": itype.parameters["k"],
+            "chi0": itype.parameters["phi_eq"],
+            "n": itype.parameters["n"],
+            "d": itype.parameters.get("d", 1.0),
         }
     return container
 
