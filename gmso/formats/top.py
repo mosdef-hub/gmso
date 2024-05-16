@@ -160,7 +160,7 @@ def write_top(top, filename, top_vars=None):
                         site.atom_type.name,
                         str(site.molecule.number + 1 if site.molecule else 1),
                         tag,
-                        site.atom_type.tags.get("element", site.element.symbol),
+                        site.atom_type.tags.get("element", site.name),
                         "1",  # TODO: care about charge groups
                         site.atom_type.charge.in_units(u.elementary_charge).value,
                         site.atom_type.mass.in_units(u.amu).value,
@@ -173,6 +173,7 @@ def write_top(top, filename, top_vars=None):
                 site.molecule.isrigid for site in unique_molecules[tag]["sites"]
             ):
                 sites_list = unique_molecules[tag]["sites"]
+
                 water_sites = {
                     "O": [site for site in sites_list if site.element.symbol == "O"],
                     "H": [site for site in sites_list if site.element.symbol == "H"],
@@ -206,9 +207,6 @@ def write_top(top, filename, top_vars=None):
                     "2\t1\t3\n"
                     "3\t1\t2\n"
                 )
-
-                # Skip the rest of the loop
-                continue
 
             if unique_molecules[tag]["position_restraints"]:
                 out_file.write(headers["position_restraints"])
