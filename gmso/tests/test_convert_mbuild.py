@@ -193,9 +193,9 @@ class TestConvertMBuild(BaseTest):
         mb_cpd3 = mb.load("O", smiles=True)
         mb_cpd3.name = "O"
 
-        filled_box1 = mb.fill_box([mb_cpd1, mb_cpd2], n_compounds=[2, 2], box=[1, 1, 1])
+        filled_box1 = mb.fill_box([mb_cpd1, mb_cpd2], n_compounds=[2, 2], box=[5, 5, 5])
         filled_box1.name = "box1"
-        filled_box2 = mb.fill_box(mb_cpd3, n_compounds=2, box=[1, 1, 1])
+        filled_box2 = mb.fill_box(mb_cpd3, n_compounds=2, box=[5, 5, 5])
         filled_box2.name = "box2"
 
         top_box = mb.Compound()
@@ -222,7 +222,9 @@ class TestConvertMBuild(BaseTest):
     def test_single_custom_group(self):
         mb_cpd1 = mb.Compound(name="_CH4")
         mb_cpd2 = mb.Compound(name="_CH3")
-        filled_box = mb.fill_box([mb_cpd1, mb_cpd2], n_compounds=[2, 2], box=[1, 1, 1])
+        filled_box = mb.fill_box(
+            [mb_cpd1, mb_cpd2], n_compounds=[2, 2], box=[5, 5, 5], seed=20
+        )
         filled_box.name = "box1"
 
         top = from_mbuild(filled_box, custom_groups=filled_box.name)
@@ -235,7 +237,9 @@ class TestConvertMBuild(BaseTest):
     def test_bad_custom_groups_from_compound(self):
         mb_cpd1 = mb.Compound(name="_CH4")
         mb_cpd2 = mb.Compound(name="_CH3")
-        filled_box = mb.fill_box([mb_cpd1, mb_cpd2], n_compounds=[2, 2], box=[1, 1, 1])
+        filled_box = mb.fill_box(
+            [mb_cpd1, mb_cpd2], n_compounds=[2, 2], box=[5, 5, 5], seed=13
+        )
 
         with pytest.warns(Warning):
             from_mbuild(filled_box, custom_groups=["_CH4", "_CH3", "_CH5"])
