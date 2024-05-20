@@ -5,7 +5,6 @@ import warnings
 
 import numpy as np
 import unyt as u
-from lark import UnexpectedCharacters
 
 from gmso.core.dihedral import Dihedral
 from gmso.core.element import element_by_atom_type
@@ -168,6 +167,15 @@ def write_top(top, filename, top_vars=None):
                     )
                 )
 
+            if unique_molecules[tag]["position_restraints"]:
+                out_file.write(headers["position_restraints"])
+                for site in unique_molecules[tag]["position_restraints"]:
+                    out_file.write(
+                        _write_restraint(
+                            top, site, "position_restraints", shifted_idx_map
+                        )
+                    )
+
             # Special treatment for water, may ned to consider a better way to tag rigid water
             # Built using this https://github.com/gromacs/gromacs/blob/main/share/top/oplsaa.ff/spce.itp as reference
             if "water" in tag.lower() and all(
@@ -184,11 +192,11 @@ def write_top(top, filename, top_vars=None):
                 doh = np.linalg.norm(
                     water_sites["O"][0].position.to(u.nm)
                     - water_sites["H"][0].position.to(u.nm)
-                )
+                ).to_value("nm")
                 dhh = np.linalg.norm(
                     water_sites["H"][0].position.to(u.nm)
                     - water_sites["H"][1].position.to(u.nm)
-                )
+                ).to_value("nm")
 
                 # Write settles
                 out_file.write(
@@ -209,14 +217,8 @@ def write_top(top, filename, top_vars=None):
                     "3\t1\t2\n"
                 )
 
-            if unique_molecules[tag]["position_restraints"]:
-                out_file.write(headers["position_restraints"])
-                for site in unique_molecules[tag]["position_restraints"]:
-                    out_file.write(
-                        _write_restraint(
-                            top, site, "position_restraints", shifted_idx_map
-                        )
-                    )
+                # Break out of the loop, skipping connection info
+                continue
 
             for conn_group in [
                 "pairs",
@@ -422,7 +424,7 @@ def _lookup_atomic_number(atom_type):
     try:
         element = element_by_atom_type(atom_type)
         return element.atomic_number
-    except (GMSOError, UnexpectedCharacters):
+    except GMSOError:
         return 0
 
 
@@ -431,7 +433,7 @@ def _lookup_element_symbol(atom_type):
     try:
         element = element_by_atom_type(atom_type)
         return element.symbol
-    except (GMSOError, UnexpectedCharacters):
+    except GMSOError:
         return "X"
 
 
