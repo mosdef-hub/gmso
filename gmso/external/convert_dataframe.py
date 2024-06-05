@@ -45,18 +45,22 @@ def to_dataframeDict(
         'specific_columns' will only output the attributes from the `columns` argument.
         'publication' will use the default outputs, but remove duplicate values from the dataframes. It adds a column labeled
         'Atom Indices' to the `sites` dataframe, which enumerates the indices that the atom_type is a part of.
-        `remove_duplicates` will use the labels in passed through the columns argument, and remove duplicates rows in the dataframe.
-        You must also set the `parameter` argument to be one of {"sites", "bonds", "angles", "dihedrals", "impropers"}, not {"all"}
-        See Notes for more details on what this looks like.
+        `remove_duplicates` will remove duplicate rows from the dataframe. For sites, this column is `atom_types.name`. 
+        For connections, it is the `connection_types.connection_members`. For sites, an additional column will be added, labeled 
+        `Atom Indices` that includes the site indexes of members that are the given `atom_type.name`. Because these methods 
+        are specific to a given Topology element, the `parameter` argument must be one of 
+        {"sites", "bonds", "angles", "dihedrals", "impropers"}, not {"all"}.
     columns : list of str, optional, default=None
-            List of strings that are attributes of the topology site and can be included as entries in the pandas dataframe.
+        List of strings that are attributes of the topology site and can be included as entries in the pandas dataframe.
         Examples of these can be found by printing `topology.sites[0].__dict__` or `topology.bonds[0].__dict__`.
         See https://gmso.mosdef.org/en/stable/data_structures.html#gmso.Atom for additional information on labeling.
     handle_unyts: str, optional, default='in_headers'
         The placement/recording of unyt quantities in dataframe.
-        Options are 'in_headers', 'with_data', 'all_floats'
-        Determines if numerical values in the DataFrame are saved as unyt quantities or floats. Default method 'in_headers"
-        is convert the values to floats, and place a string of the units in the column headers.
+        Options are 'in_headers', 'with_data', 'to_float'
+        Determines if numerical values in the DataFrame are saved as unyt quantities or floats. Default case, 'in_headers", 
+        puts the unyts as strings to go with the column header of the dataframe.
+        `with_data` leaves any values alone, so any values in the Topology that are unyt quantities will stay that way.
+        `to_float` converts any unyt values to a float in the associated element of the dataframe.
         See https://unyt.readthedocs.io/en/stable/usage.html
         for more information about manipulating unyt quantities.
 
@@ -68,11 +72,33 @@ def to_dataframeDict(
         can be `sites`, `bonds`, `angles`, `dihedrals`, `impropers`, which are determined from the argument `parameter`.
 
 
-    # TODO: Show more examples
     Examples
     ________
-    >>> topology.to_dataframe(parameter = 'sites', site_attrs = ['charge'])
+    # example topology to use
+    ``` python
+    >>> import gmso
+    >>> import mbuild as mb
+    >>> from gmso.parameterization import apply
+    >>> cpd = mb.load("C", smiles=True)
+    >>> top = cpd.to_gmso()
+    >>> ff = gmso.ForceField("oplsaa")
+    >>> ptop = apply(top, ff)
+    ```
+
+
+    >>> gmso.external.convert_dataframe.to_dataframeDict(ptop, parameter='sites', columns=['charge'], handle_unyts="in_headers")
         This will return a dataframe with a listing of the sites and include the charges that correspond to each site.
+        ```
+        {'sites':   
+            name atom_type.name  epsilon (kJ/mol)  sigma (nm)   charge (elementary_charge)  mass (amu)  
+            0    C       opls_138          0.276144        0.35  -0.24      12.011
+            1    H       opls_140          0.125520        0.25   0.06       1.008  
+            2    H       opls_140          0.125520        0.25   0.06       1.008
+            3    H       opls_140          0.125520        0.25   0.06       1.008
+            4    H       opls_140          0.125520        0.25   0.06       1.008
+        }
+        ```
+
     >>> topology.to_dataframe(parameter = 'dihedrals', site_attrs = ['positions'])
         This will return a dataframe with a listing of the sites that make up each dihedral, the positions of each of
         those sites, and the parameters that are associated with the dihedrals.
@@ -158,7 +184,7 @@ def to_dataframeDict(
         columnsDict = {parameter: columns}
     else:
         raise ValueError(
-            f"Please provide formt=['default', 'specific_columns', 'publication']"
+            f"Available options for format are 'default', 'specific_columns', 'publication', or 'remove_duplicates'. The incorrect argument passed was {format=}."
         )
 
     if parameter == "all":
@@ -199,9 +225,6 @@ def to_dataframeDict(
             df.drop("Atom Indices", errors="ignore")
             df.drop_duplicates(inplace=True, ignore_index=True)
 
-    ###############
-    # END OF FUNCTION
-    ###############
     return outDict
 
 
@@ -211,11 +234,11 @@ def _parse_unyts(handle_unyts, dataList, columnsList):
         dataList = _parse_unyts_to_floats(dataList)
     elif handle_unyts == "with_data":  # leave units where they are
         pass
-    elif handle_unyts == "all_floats":  # convert units to floats
+    elif handle_unyts == "to_float":  # convert units to floats
         dataList = _parse_unyts_to_floats(dataList)
     else:
         raise ValueError(
-            f"Supplied the argument handle_unyts={handle_unyts} of {type(handle_unyts)}, but must provide one of: 'in_headers', 'with_data', or 'all_floats'."
+            f"Supplied the argument {handle_unyts=} of {type(handle_unyts)}, but must provide one of the arguments 'in_headers', 'with_data', or 'to_float'."
         )
     return dataList, columnsList
 
@@ -230,11 +253,11 @@ def _parse_unyts_to_floats(dataList) -> list:
 def _parse_unyts_to_headers(dataList, columns) -> list:
     new_colsList = []
     for data, col in zip(dataList, columns):
-        if isinstance(data, u.unyt_array):
+        if isinstance(data[0], u.unyt_array):
             unit = str(
                 data[0].units
             )  # assumption that all data in List is same units
-            new_colsList.append(col + f"({unit})")
+            new_colsList.append(col + f" ({unit})")
         else:
             new_colsList.append(col)
     return new_colsList
@@ -306,193 +329,6 @@ def _recursive_getattr(topology, attr, attr_attr):
     return list(map(parseFunction, iteritems))
 
 
-def _pandas_from_parameters(
-    topology, df, parameter, site_attrs=None, unyts_bool=True
-):
-    """Members of a connection attributes added to the dataframe.
-
-    Add to a pandas dataframe the site indices for each connection member in a
-    multimember topology attribute such as a bond. Also include information about
-    those sites in the site_attrs list.
-
-    """
-    if site_attrs is None:
-        site_attrs = []
-    sites_per_connection = len(getattr(self, parameter)[0].connection_members)
-    for site_index in np.arange(sites_per_connection):
-        df["Atom" + str(site_index)] = list(
-            str(connection.connection_members[site_index].name)
-            + f"({self.get_index(connection.connection_members[site_index])})"
-            for connection in getattr(self, parameter)
-        )
-    for attr in site_attrs:
-        df = self._parse_dataframe_attrs(
-            df, attr, parameter, sites_per_connection, unyts_bool
-        )
-    return df
-
-
-def _parse_dataframe_attrs(
-    self, df, attr, parameter, sites_per_connection=1, unyts_bool=True
-):
-    """Parse an attribute string to correctly format and return the topology attribute into a pandas dataframe."""
-    if parameter == "sites":
-        if "." in attr:
-            try:
-                attr1, attr2 = attr.split(".")
-                df[attr] = list(
-                    _return_float_for_unyt(
-                        getattr(getattr(site, attr1), attr2),
-                        unyts_bool,
-                    )
-                    for site in self.sites
-                )
-            except AttributeError:
-                raise AttributeError(
-                    f"The attribute {attr} is not in this gmso object."
-                )
-        elif attr == "positions" or attr == "position":
-            for i, dimension in enumerate(["x", "y", "z"]):
-                df[dimension] = list(
-                    _return_float_for_unyt(
-                        getattr(site, "position")[i], unyts_bool
-                    )
-                    for site in self.sites
-                )
-        elif attr == "charge" or attr == "charges":
-            df["charge (e)"] = list(
-                site.charge.in_units(
-                    u.Unit("elementary_charge", registry=UnitReg.default_reg())
-                ).to_value()
-                for site in self.sites
-            )
-        else:
-            try:
-                df[attr] = list(
-                    _return_float_for_unyt(getattr(site, attr), unyts_bool)
-                    for site in self.sites
-                )
-            except AttributeError:
-                raise AttributeError(
-                    f"The attribute {attr} is not in this gmso object."
-                )
-
-    elif parameter in ["bonds", "angles", "dihedrals", "impropers"]:
-        for site_index in np.arange(sites_per_connection):
-            if "." in attr:
-                try:
-                    attr1, attr2 = attr.split(".")
-                    df[attr + " Atom" + str(site_index)] = list(
-                        _return_float_for_unyt(
-                            getattr(
-                                getattr(
-                                    connection.connection_members[site_index],
-                                    attr1,
-                                ),
-                                attr2,
-                            ),
-                            unyts_bool,
-                        )
-                        for connection in getattr(self, parameter)
-                    )
-                except AttributeError:
-                    raise AttributeError(
-                        f"The attribute {attr} is not in this gmso object."
-                    )
-            elif attr == "positions" or attr == "position":
-                df["x Atom" + str(site_index) + " (nm)"] = list(
-                    _return_float_for_unyt(
-                        getattr(
-                            connection.connection_members[site_index],
-                            "position",
-                        )[0],
-                        unyts_bool,
-                    )
-                    for connection in getattr(self, parameter)
-                )
-                df["y Atom" + str(site_index) + " (nm)"] = list(
-                    _return_float_for_unyt(
-                        getattr(
-                            connection.connection_members[site_index],
-                            "position",
-                        )[1],
-                        unyts_bool,
-                    )
-                    for connection in getattr(self, parameter)
-                )
-                df["z Atom" + str(site_index) + " (nm)"] = list(
-                    _return_float_for_unyt(
-                        getattr(
-                            connection.connection_members[site_index],
-                            "position",
-                        )[2],
-                        unyts_bool,
-                    )
-                    for connection in getattr(self, parameter)
-                )
-            elif attr == "charge" or attr == "charges":
-                df["charge Atom" + str(site_index) + " (e)"] = list(
-                    getattr(
-                        connection.connection_members[site_index],
-                        "charge",
-                    )
-                    .in_units(
-                        u.Unit(
-                            "elementary_charge",
-                            registry=UnitReg.default_reg(),
-                        )
-                    )
-                    .value
-                    for connection in getattr(self, parameter)
-                )
-            else:
-                try:
-                    df[f"{attr} Atom {site_index}"] = list(
-                        _return_float_for_unyt(
-                            getattr(
-                                connection.connection_members[site_index],
-                                attr,
-                            ),
-                            unyts_bool,
-                        )
-                        for connection in getattr(self, parameter)
-                    )
-                except AttributeError:
-                    raise AttributeError(
-                        f"The attribute {attr} is not in this gmso object."
-                    )
-    else:
-        raise AttributeError(
-            f"{parameter} is not yet supported for adding labels to a dataframe. \
-                Please use  one of 'sites', 'bonds', 'angles', 'dihedrals', or 'impropers'"
-        )
-    return df
-
-
-def _parse_parameter_expression(self, df, parameter, unyts_bool):
-    """Take a given topology attribute and return the parameters associated with it."""
-    for i, param in enumerate(
-        getattr(
-            getattr(self, parameter)[0], parameter[:-1] + "_type"
-        ).parameters
-    ):
-        df[
-            f"Parameter {i} ({param}) {getattr(getattr(self, parameter)[0], parameter[:-1]+'_type').parameters[param].units}"
-        ] = list(
-            _return_float_for_unyt(
-                getattr(connection, parameter[:-1] + "_type").parameters[param],
-                unyts_bool,
-            )
-            for connection in getattr(self, parameter)
-        )
-    return df
-
-
-def _return_float_for_unyt(unyt_quant, unyts_bool):
-    try:
-        return unyt_quant if unyts_bool else unyt_to_dict(unyt_quant)["array"]
-    except TypeError:
-        return unyt_quant
 
 
 def _add_duplicate_indices_to_sites_dataframe(df: pd.DataFrame) -> pd.DataFrame:
