@@ -158,7 +158,11 @@ class TestConvertDataFrame(BaseTest):
             "mass",
         ]
         assert np.all(
-            list(to_dataframeDict(typed_ethane, "sites")["sites"].columns)
+            list(
+                to_dataframeDict(
+                    typed_ethane, "sites", convert_unyts="no_unyts"
+                )["sites"].columns
+            )
             == expected_columns
         )
 
@@ -220,13 +224,13 @@ class TestConvertDataFrame(BaseTest):
     @pytest.mark.skipif(not has_pandas, reason="Pandas is not installed")
     def test_dataframe_unyts(self, typed_ethane):
         dfDict = to_dataframeDict(
-            typed_ethane, "all", format="publication", handle_unyts="with_data"
+            typed_ethane, "all", format="publication", convert_unyts="with_data"
         )
         df = dfDict["sites"]
         assert isinstance(df["charge"].loc[0], u.unyt_quantity)
 
         dfDict = to_dataframeDict(
-            typed_ethane, "all", format="publication", handle_unyts="all_floats"
+            typed_ethane, "all", format="publication", convert_unyts="no_unyts"
         )
         df = dfDict["sites"]
         assert isinstance(df["charge"].loc[0], float)

@@ -26,7 +26,7 @@ def to_dataframeDict(
     parameter: str = "all",
     format: str = "default",
     columns: list[str] = None,
-    handle_unyts: str = "in_headers",
+    convert_unyts: str = "to_headers",
 ) -> pd.DataFrame:
     """Return a dictionary of pandas dataframe objects for a topology.
 
@@ -45,22 +45,22 @@ def to_dataframeDict(
         'specific_columns' will only output the attributes from the `columns` argument.
         'publication' will use the default outputs, but remove duplicate values from the dataframes. It adds a column labeled
         'Atom Indices' to the `sites` dataframe, which enumerates the indices that the atom_type is a part of.
-        `remove_duplicates` will remove duplicate rows from the dataframe. For sites, this column is `atom_types.name`. 
-        For connections, it is the `connection_types.connection_members`. For sites, an additional column will be added, labeled 
-        `Atom Indices` that includes the site indexes of members that are the given `atom_type.name`. Because these methods 
-        are specific to a given Topology element, the `parameter` argument must be one of 
+        `remove_duplicates` will remove duplicate rows from the dataframe. For sites, this column is `atom_types.name`.
+        For connections, it is the `connection_types.connection_members`. For sites, an additional column will be added, labeled
+        `Atom Indices` that includes the site indexes of members that are the given `atom_type.name`. Because these methods
+        are specific to a given Topology element, the `parameter` argument must be one of
         {"sites", "bonds", "angles", "dihedrals", "impropers"}, not {"all"}.
     columns : list of str, optional, default=None
         List of strings that are attributes of the topology site and can be included as entries in the pandas dataframe.
         Examples of these can be found by printing `topology.sites[0].__dict__` or `topology.bonds[0].__dict__`.
         See https://gmso.mosdef.org/en/stable/data_structures.html#gmso.Atom for additional information on labeling.
-    handle_unyts: str, optional, default='in_headers'
+    convert_unyts: str, optional, default='to_headers'
         The placement/recording of unyt quantities in dataframe.
-        Options are 'in_headers', 'with_data', 'to_float'
-        Determines if numerical values in the DataFrame are saved as unyt quantities or floats. Default case, 'in_headers", 
+        Options are 'to_headers', 'with_data', 'no_unyts'
+        Determines if numerical values in the DataFrame are saved as unyt quantities or floats. Default case, 'to_headers",
         puts the unyts as strings to go with the column header of the dataframe.
         `with_data` leaves any values alone, so any values in the Topology that are unyt quantities will stay that way.
-        `to_float` converts any unyt values to a float in the associated element of the dataframe.
+        `no_unyts` strips any unyt values and converts to a float in the associated element of the dataframe.
         See https://unyt.readthedocs.io/en/stable/usage.html
         for more information about manipulating unyt quantities.
 
@@ -86,13 +86,13 @@ def to_dataframeDict(
     ```
 
 
-    >>> gmso.external.convert_dataframe.to_dataframeDict(ptop, parameter='sites', columns=['charge'], handle_unyts="in_headers")
+    >>> gmso.external.convert_dataframe.to_dataframeDict(ptop, parameter='sites', columns=['charge'], convert_unyts="to_headers")
         This will return a dataframe with a listing of the sites and include the charges that correspond to each site.
         ```
-        {'sites':   
-            name atom_type.name  epsilon (kJ/mol)  sigma (nm)   charge (elementary_charge)  mass (amu)  
+        {'sites':
+            name atom_type.name  epsilon (kJ/mol)  sigma (nm)   charge (elementary_charge)  mass (amu)
             0    C       opls_138          0.276144        0.35  -0.24      12.011
-            1    H       opls_140          0.125520        0.25   0.06       1.008  
+            1    H       opls_140          0.125520        0.25   0.06       1.008
             2    H       opls_140          0.125520        0.25   0.06       1.008
             3    H       opls_140          0.125520        0.25   0.06       1.008
             4    H       opls_140          0.125520        0.25   0.06       1.008
@@ -203,7 +203,7 @@ def to_dataframeDict(
             topology, param, columnsDict.get(param)
         )
         # handle unyts in values
-        dataList, columns = _parse_unyts(handle_unyts, dataList, columns)
+        dataList, columns = _parse_unyts(convert_unyts, dataList, columns)
         dataDict = {col: data for col, data in zip(columns, dataList)}
         outDict[param] = pd.DataFrame(dataDict)  # create dataframe
 
@@ -228,22 +228,22 @@ def to_dataframeDict(
     return outDict
 
 
-def _parse_unyts(handle_unyts, dataList, columnsList):
-    if handle_unyts == "in_headers":  # move units to the header
+def _parse_unyts(convert_unyts, dataList, columnsList):
+    if convert_unyts == "to_headers":  # move units to the header
         columnsList = _parse_unyts_to_headers(dataList, columnsList)
-        dataList = _parse_unyts_to_floats(dataList)
-    elif handle_unyts == "with_data":  # leave units where they are
+        dataList = _parse_unyts_no_unytss(dataList)
+    elif convert_unyts == "with_data":  # leave units where they are
         pass
-    elif handle_unyts == "to_float":  # convert units to floats
-        dataList = _parse_unyts_to_floats(dataList)
+    elif convert_unyts == "no_unyts":  # convert units to floats
+        dataList = _parse_unyts_no_unytss(dataList)
     else:
         raise ValueError(
-            f"Supplied the argument {handle_unyts=} of {type(handle_unyts)}, but must provide one of the arguments 'in_headers', 'with_data', or 'to_float'."
+            f"Supplied the argument {convert_unyts=} of {type(convert_unyts)}, but must provide one of the arguments 'to_headers', 'with_data', or 'no_unyts'."
         )
     return dataList, columnsList
 
 
-def _parse_unyts_to_floats(dataList) -> list:
+def _parse_unyts_no_unytss(dataList) -> list:
     for i in range(len(dataList)):
         if isinstance(dataList[i][0], u.unyt_array):
             dataList[i] = [float(x) for x in dataList[i]]  # turn to float
@@ -327,8 +327,6 @@ def _recursive_getattr(topology, attr, attr_attr):
         _getattr, [x] + attr_attr.split(".")
     )
     return list(map(parseFunction, iteritems))
-
-
 
 
 def _add_duplicate_indices_to_sites_dataframe(df: pd.DataFrame) -> pd.DataFrame:
