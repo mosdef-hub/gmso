@@ -23,7 +23,7 @@ pd = import_("pandas")
 
 def to_dataframeDict(
     topology: Topology,
-    parameter: str = "all",
+    parameters: str or list = "all",
     format: str = "default",
     columns: list[str] = None,
     convert_unyts: str = "to_headers",
@@ -34,9 +34,9 @@ def to_dataframeDict(
     ----------
     topology : gmso.Topology, required
         Topology to use for converting values
-    parameter : str, optional, default='all'
+    parameters : str or list of str, optional, default='all'
         A string determining what aspects of the gmso topology will be reported.
-        Options are: 'all', 'sites', 'bonds', 'angles', 'dihedrals', and 'impropers'. Defaults to 'all'.
+        Options are: 'all', 'sites', 'bonds', 'angles', 'dihedrals', and 'impropers'. Defaults to 'all'. Can pass multiple strings as a list.
     format : str, optional, default='default'
         The output formatting style for the dataframe.
         Options are 'default', 'specific_columns', 'publication', `remove_duplicates`. Defaults to 'default'
@@ -48,7 +48,7 @@ def to_dataframeDict(
         `remove_duplicates` will remove duplicate rows from the dataframe. For sites, this column is `atom_types.name`.
         For connections, it is the `connection_types.connection_members`. For sites, an additional column will be added, labeled
         `Atom Indices` that includes the site indexes of members that are the given `atom_type.name`. Because these methods
-        are specific to a given Topology element, the `parameter` argument must be one of
+        are specific to a given Topology element, the `parameters` argument must be one of
         {"sites", "bonds", "angles", "dihedrals", "impropers"}, not {"all"}.
     columns : list of str, optional, default=None
         List of strings that are attributes of the topology site and can be included as entries in the pandas dataframe.
@@ -69,7 +69,7 @@ def to_dataframeDict(
     Dictionary of Pandas Dataframe
         A python dictionary of pandas.Dataframe object, see https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
         for further information. The keys of this dictionary are the attributes of the topology that are associated with each DataFrame. These
-        can be `sites`, `bonds`, `angles`, `dihedrals`, `impropers`, which are determined from the argument `parameter`.
+        can be `sites`, `bonds`, `angles`, `dihedrals`, `impropers`, which are determined from the argument `parameters`.
 
 
     Examples
@@ -86,7 +86,7 @@ def to_dataframeDict(
     ```
 
 
-    >>> gmso.external.convert_dataframe.to_dataframeDict(ptop, parameter='sites', columns=['charge'], convert_unyts="to_headers")
+    >>> gmso.external.convert_dataframe.to_dataframeDict(ptop, parameters='sites', columns=['charge'], convert_unyts="to_headers")
         This will return a dataframe with a listing of the sites and include the charges that correspond to each site.
         ```
         {'sites':
@@ -99,7 +99,7 @@ def to_dataframeDict(
         }
         ```
 
-    >>> topology.to_dataframe(parameter = 'dihedrals', site_attrs = ['positions'])
+    >>> topology.to_dataframe(parameters = 'dihedrals', site_attrs = ['positions'])
         This will return a dataframe with a listing of the sites that make up each dihedral, the positions of each of
         those sites, and the parameters that are associated with the dihedrals.
 
@@ -150,11 +150,11 @@ def to_dataframeDict(
                 key: columnsDict[key] + columns for key in columnsDict.keys()
             }  # add in any provided columns
     elif format == "specific_columns":
-        assert parameter != "all", (
+        assert parameters != "all", (
             f"When formatting for specific columns, please set parameter argument to be one of {['sites']+connectionsList}."
             "Otherwise use a format of default."
         )
-        columnsDict = {parameter: columns}
+        columnsDict = {parameter: columns for parameter in parameters}
     elif format == "publication":
         columnsDict = {
             param: [
@@ -173,27 +173,31 @@ def to_dataframeDict(
         ]
         remove_duplicatesBool = True
     elif format == "remove_duplicates":
-        assert parameter != "all", (
+        assert parameters != "all", (
             f"When formatting for specific columns, please set parameter argument to be one of {['sites']+connectionsList}."
             "Otherwise use a format of default."
         )
-        if not columns and parameter == "sites":  # default values
+        if not columns and parameters == "sites":  # default values
             columns = ["atom_type.name"]
-        elif not columns and parameter in connectionsList:
-            columns = [f"{parameter[:-1]}_type.member_classes"]
-        columnsDict = {parameter: columns}
+        elif not columns and parameters in connectionsList:
+            columns = [f"{parameters[:-1]}_type.member_classes"]
+        columnsDict = {parameters: columns}
     else:
         raise ValueError(
             f"Available options for format are 'default', 'specific_columns', 'publication', or 'remove_duplicates'. The incorrect argument passed was {format=}."
         )
 
-    if parameter == "all":
+    if parameters == "all":
         parametersList = ["sites"] + connectionsList
-    elif parameter in connectionsList or parameter == "sites":
-        parametersList = [parameter]
+    elif parameters in connectionsList or parameters == "sites":
+        parametersList = [parameters]
+    elif isinstance(parameters, list) and all(
+        [parameter in connectionsList for parameter in parameters]
+    ):
+        parametersList = parameters
     else:
         raise ValueError(
-            f"parameter {parameter} must be one of: 'all', 'sites', {', '.join(connectionsList)}."
+            f"parameters argument {parameters} must be one of: 'all', 'sites', {', '.join(connectionsList)}."
         )
 
     for param in parametersList:

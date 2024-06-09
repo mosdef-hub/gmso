@@ -40,13 +40,13 @@ class TestConvertDataFrame(BaseTest):
         for parameter, val in zip(checkList, expected_valuesList):
             assert (
                 len(
-                    to_dataframeDict(typed_ethane, parameter=parameter)[
+                    to_dataframeDict(typed_ethane, parameters=parameter)[
                         parameter
                     ]
                 )
                 == val
             )
-        allDict = to_dataframeDict(typed_ethane, parameter="all")
+        allDict = to_dataframeDict(typed_ethane, parameters="all")
         dfList = [allDict.get(key) for key in checkList]
         assert list(map(len, dfList)) == expected_valuesList
 
@@ -57,13 +57,13 @@ class TestConvertDataFrame(BaseTest):
         for parameter, val in zip(checkList, expected_valuesList):
             assert (
                 len(
-                    to_dataframeDict(benzeneTopology, parameter=parameter)[
+                    to_dataframeDict(benzeneTopology, parameters=parameter)[
                         parameter
                     ]
                 )
                 == val
             )
-        allDict = to_dataframeDict(benzeneTopology, parameter="all")
+        allDict = to_dataframeDict(benzeneTopology, parameters="all")
         dfList = [allDict.get(key) for key in checkList]
         assert list(map(len, dfList)) == expected_valuesList
 
