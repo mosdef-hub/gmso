@@ -23,10 +23,10 @@ pd = import_("pandas")
 
 def to_dataframeDict(
     topology: Topology,
-    parameters: str or list = "all",
+    parameters: str or list[str] = "all",
     format: str = "default",
     columns: list[str] = None,
-    convert_unyts: str = "to_headers",
+    handle_unyts: str = "to_headers",
 ) -> pd.DataFrame:
     """Return a dictionary of pandas dataframe objects for a topology.
 
@@ -54,7 +54,7 @@ def to_dataframeDict(
         List of strings that are attributes of the topology site and can be included as entries in the pandas dataframe.
         Examples of these can be found by printing `topology.sites[0].__dict__` or `topology.bonds[0].__dict__`.
         See https://gmso.mosdef.org/en/stable/data_structures.html#gmso.Atom for additional information on labeling.
-    convert_unyts: str, optional, default='to_headers'
+    handle_unyts: str, optional, default='to_headers'
         The placement/recording of unyt quantities in dataframe.
         Options are 'to_headers', 'with_data', 'no_unyts'
         Determines if numerical values in the DataFrame are saved as unyt quantities or floats. Default case, 'to_headers",
@@ -73,7 +73,7 @@ def to_dataframeDict(
 
 
     Examples
-    ________
+    --------
     # example topology to use
     ``` python
     >>> import gmso
@@ -86,7 +86,7 @@ def to_dataframeDict(
     ```
 
 
-    >>> gmso.external.convert_dataframe.to_dataframeDict(ptop, parameters='sites', columns=['charge'], convert_unyts="to_headers")
+    >>> gmso.external.convert_dataframe.to_dataframeDict(ptop, parameters='sites', columns=['charge'], handle_unyts="to_headers")
         This will return a dataframe with a listing of the sites and include the charges that correspond to each site.
         ```
         {'sites':
@@ -154,7 +154,11 @@ def to_dataframeDict(
             f"When formatting for specific columns, please set parameter argument to be one of {['sites']+connectionsList}."
             "Otherwise use a format of default."
         )
-        columnsDict = {parameter: columns for parameter in parameters}
+        if isinstance(parameters, str):
+            parametersList = [parameters]
+        else:
+            parametersList = parameters
+        columnsDict = {parameter: columns for parameter in parametersList}
     elif format == "publication":
         columnsDict = {
             param: [
@@ -192,22 +196,29 @@ def to_dataframeDict(
     elif parameters in connectionsList or parameters == "sites":
         parametersList = [parameters]
     elif isinstance(parameters, list) and all(
-        [parameter in connectionsList for parameter in parameters]
+        [parameter in connectionsList + ["sites"] for parameter in parameters]
     ):
         parametersList = parameters
     else:
+        allowed_parameters = "', '".join(connectionsList)
         raise ValueError(
-            f"parameters argument {parameters} must be one of: 'all', 'sites', {', '.join(connectionsList)}."
+            f"Parameters argument {parameters} must be one of: 'all', 'sites', '{allowed_parameters}'."
         )
 
     for param in parametersList:
         if not getattr(topology, f"n_{param}"):
+            warnings.warn(
+                UserWarning(
+                    f"Topology {topology} has no {param}, so adding a None element to dictionary"
+                )
+            )
+            outDict[param] = None
             continue
         dataList, columns = _generate_component_lists(
             topology, param, columnsDict.get(param)
         )
         # handle unyts in values
-        dataList, columns = _parse_unyts(convert_unyts, dataList, columns)
+        dataList, columns = _parse_unyts(handle_unyts, dataList, columns)
         dataDict = {col: data for col, data in zip(columns, dataList)}
         outDict[param] = pd.DataFrame(dataDict)  # create dataframe
 
@@ -232,17 +243,17 @@ def to_dataframeDict(
     return outDict
 
 
-def _parse_unyts(convert_unyts, dataList, columnsList):
-    if convert_unyts == "to_headers":  # move units to the header
+def _parse_unyts(handle_unyts, dataList, columnsList):
+    if handle_unyts == "to_headers":  # move units to the header
         columnsList = _parse_unyts_to_headers(dataList, columnsList)
         dataList = _parse_unyts_no_unytss(dataList)
-    elif convert_unyts == "with_data":  # leave units where they are
+    elif handle_unyts == "with_data":  # leave units where they are
         pass
-    elif convert_unyts == "no_unyts":  # convert units to floats
+    elif handle_unyts == "no_unyts":  # convert units to floats
         dataList = _parse_unyts_no_unytss(dataList)
     else:
         raise ValueError(
-            f"Supplied the argument {convert_unyts=} of {type(convert_unyts)}, but must provide one of the arguments 'to_headers', 'with_data', or 'no_unyts'."
+            f"Supplied the argument {handle_unyts=} of {type(handle_unyts)}, but must provide one of the arguments 'to_headers', 'with_data', or 'no_unyts'."
         )
     return dataList, columnsList
 
