@@ -8,7 +8,7 @@ from gmso.exceptions import GMSOError
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.tests.base_test import BaseTest
 from gmso.utils.conversions import (
-    convert_opls_to_ryckaert,
+    convert_fourier_to_ryckaert,
     convert_ryckaert_to_fourier,
 )
 
@@ -81,7 +81,7 @@ class TestInternalConversions(BaseTest):
         )
 
         with pytest.raises(GMSOError, match=""):
-            ryckaert_connection_type = convert_opls_to_ryckaert(opls_connection_type)
+            ryckaert_connection_type = convert_fourier_to_ryckaert(opls_connection_type)
 
         variables = opls_torsion_potential.independent_variables
         expression = "k0+k1+k2+k3+k4+phi"
@@ -93,7 +93,7 @@ class TestInternalConversions(BaseTest):
         )
 
         with pytest.raises(GMSOError, match=""):
-            ryckaert_connection_type = convert_opls_to_ryckaert(opls_connection_type)
+            ryckaert_connection_type = convert_fourier_to_ryckaert(opls_connection_type)
 
     def test_ryckaert_to_fourier(self, templates):
         # Pick some RB parameters at random
@@ -176,7 +176,7 @@ class TestInternalConversions(BaseTest):
         )
 
         # Convert connection to RB
-        ryckaert_connection_type = convert_opls_to_ryckaert(opls_connection_type)
+        ryckaert_connection_type = convert_fourier_to_ryckaert(opls_connection_type)
 
         # Pick some angles to check
         angles = [-2.38, -1.31, -0.44, 0.0, 0.26, 0.92, 1.84, 3.10]
@@ -231,7 +231,7 @@ class TestInternalConversions(BaseTest):
         )
 
         # Convert connection to RB
-        ryckaert_connection_type = convert_opls_to_ryckaert(opls_connection_type)
+        ryckaert_connection_type = convert_fourier_to_ryckaert(opls_connection_type)
 
         # Convert connection back to OPLS
         final_connection_type = convert_ryckaert_to_fourier(ryckaert_connection_type)
