@@ -34,10 +34,10 @@ class TestConvertDataFrame(BaseTest):
         checkList = ["sites", "bonds", "angles", "dihedrals"]
         for parameter, val in zip(checkList, expected_valuesList):
             assert (
-                len(to_dataframeDict(typed_ethane, parameter=parameter)[parameter])
+                len(to_dataframeDict(typed_ethane, parameters=parameter)[parameter])
                 == val
             )
-        allDict = to_dataframeDict(typed_ethane, parameter="all")
+        allDict = to_dataframeDict(typed_ethane, parameters="all")
         dfList = [allDict.get(key) for key in checkList]
         assert list(map(len, dfList)) == expected_valuesList
 
@@ -47,10 +47,10 @@ class TestConvertDataFrame(BaseTest):
         checkList = ["sites", "bonds", "angles", "dihedrals", "impropers"]
         for parameter, val in zip(checkList, expected_valuesList):
             assert (
-                len(to_dataframeDict(benzeneTopology, parameter=parameter)[parameter])
+                len(to_dataframeDict(benzeneTopology, parameters=parameter)[parameter])
                 == val
             )
-        allDict = to_dataframeDict(benzeneTopology, parameter="all")
+        allDict = to_dataframeDict(benzeneTopology, parameters="all")
         dfList = [allDict.get(key) for key in checkList]
         assert list(map(len, dfList)) == expected_valuesList
 
@@ -65,7 +65,11 @@ class TestConvertDataFrame(BaseTest):
             "mass",
         ]
         assert np.all(
-            list(to_dataframeDict(typed_ethane, "sites")["sites"].columns)
+            list(
+                to_dataframeDict(typed_ethane, "sites", handle_unyts="no_unyts")[
+                    "sites"
+                ].columns
+            )
             == expected_columns
         )
 
@@ -127,7 +131,7 @@ class TestConvertDataFrame(BaseTest):
         assert isinstance(df["charge"].loc[0], u.unyt_quantity)
 
         dfDict = to_dataframeDict(
-            typed_ethane, "all", format="publication", handle_unyts="all_floats"
+            typed_ethane, "all", format="publication", handle_unyts="no_unyts"
         )
         df = dfDict["sites"]
         assert isinstance(df["charge"].loc[0], float)
