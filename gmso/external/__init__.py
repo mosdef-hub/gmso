@@ -1,6 +1,7 @@
 # ruff: noqa: F401
 """Support for various in-memory representations of chemical systems."""
 
+from .convert_dataframe import to_dataframeDict
 from .convert_hoomd import (
     to_gsd_snapshot,
     to_hoomd_forcefield,
