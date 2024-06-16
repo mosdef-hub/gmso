@@ -1275,7 +1275,7 @@ def _parse_improper_forces(
             base_units,
         )
 
-    if int(hoomd_version[0]) >= 4 and int(hoomd_version[1]) >= 5:
+    if int(hoomd_version[0]) + float(hoomd_version[1]) * 0.1 >= 4.5:
         itype_group_map = {
             "HarmonicImproperPotential": {
                 "container": hoomd.md.improper.Harmonic,
