@@ -2,6 +2,7 @@
 
 import itertools
 import warnings
+from copy import copy
 from pathlib import Path
 
 import numpy as np
@@ -313,7 +314,7 @@ class Topology(object):
                 unique_tags.add(label.name if label else None)
         else:
             for site in self.sites:
-                unique_tags.add(getattr(site, label_type))
+                unique_tags.add(copy(getattr(site, label_type)))
         return unique_tags
 
     @property

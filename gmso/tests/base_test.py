@@ -282,6 +282,12 @@ class BaseTest:
         top.identify_connections()
         ff = ForceField(get_path("tip3p-rigid.xml"))
         top = apply(top, ff)
+
+        # molecules = top.unique_site_labels(name_only=False)
+        # for molecule in molecules:
+        #     for site in top.iter_sites(key="molecule", value=molecule):
+        #         site.molecule.isrigid = True
+        #
         return top
 
     @pytest.fixture
