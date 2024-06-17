@@ -85,7 +85,6 @@ class Residue(GMSOBase):
     __iterable_attributes__: ClassVar[set] = {
         "name",
         "number",
-        "isrigid",
     }
 
     __base_doc__: ClassVar[str] = "Residue label for interaction sites."
