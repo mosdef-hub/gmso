@@ -22,6 +22,8 @@ PositionType = Union[Sequence[float], np.ndarray, u.unyt_array]
 
 
 class Molecule(GMSOBase):
+    def __repr__(self):
+        return f"Molecule(name={self.name}, residue={self.residue}, isrigid={self.isrigid}"
     __iterable_attributes__: ClassVar[set] = {
         "name",
         "number",
