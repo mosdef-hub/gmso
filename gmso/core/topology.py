@@ -1399,9 +1399,18 @@ class Topology(object):
             containers_dict = {"molecule": Molecule, "residue": Residue}
             if len(value) == 2:
                 tmp = containers_dict[key](name=value[0], number=value[1])
-            else:
+            elif len(value) == 3:
                 tmp = containers_dict[key](
                     name=value[0], number=value[1], isrigid=value[2]
+                )
+            else:
+                raise ValueError(
+                    f"""
+                        Argument value was passed as {value},
+                        but should be an indexible iterable of
+                        [name, number, isrigid] where name is type string,
+                        number is type int, and isrigid is type bool.
+                    """
                 )
             for site in self._sites:
                 if getattr(site, key) and getattr(site, key) == tmp:
