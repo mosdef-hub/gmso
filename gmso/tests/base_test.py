@@ -277,17 +277,25 @@ class BaseTest:
         return top
 
     @pytest.fixture
+    def typed_tip3p_system(self, water_system):
+        top = water_system
+        top.identify_connections()
+        ff = ForceField(get_path("tip3p-rigid.xml"))
+        top = apply(top, ff)
+
+        return top
+
+    @pytest.fixture
     def typed_tip3p_rigid_system(self, water_system):
         top = water_system
         top.identify_connections()
         ff = ForceField(get_path("tip3p-rigid.xml"))
         top = apply(top, ff)
 
-        # molecules = top.unique_site_labels(name_only=False)
-        # for molecule in molecules:
-        #     for site in top.iter_sites(key="molecule", value=molecule):
-        #         site.molecule.isrigid = True
-        #
+        molecules = top.unique_site_labels(name_only=False)
+        for molecule in molecules:
+            top.set_rigid(molecule)
+
         return top
 
     @pytest.fixture

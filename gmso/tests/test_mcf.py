@@ -319,8 +319,8 @@ class TestMCF(BaseTest):
 
         assert np.allclose(ff_coeffs, 2.0 * mcf_coeffs)
 
-    def test_fixed_angles(self, typed_tip3p_rigid_system):
-        top = typed_tip3p_rigid_system
+    def test_fixed_angles(self, typed_tip3p_system):
+        top = typed_tip3p_system
         write_mcf(top, "tip3p-rigid.mcf")
 
         mcf_data, mcf_idx = parse_mcf("tip3p-rigid.mcf")
