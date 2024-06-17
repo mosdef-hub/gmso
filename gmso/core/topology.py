@@ -643,6 +643,18 @@ class Topology(object):
             ]
         )
 
+    def set_rigid(self, molecule):
+        """Set molecule tags to rigid if they match the name or number specified.
+
+        Parameters
+        ----------
+        molecule : str, Molecule, or tuple of 2
+            Specified the molecule name and number to be set rigid.
+            If only string is provided, make all molecule of that name rigid.
+        """
+        for site in self.iter_sites(key="molecule", value=molecule):
+            site.molecule.isrigid = True
+
     def remove_site(self, site):
         """Remove a site from the topology.
 
