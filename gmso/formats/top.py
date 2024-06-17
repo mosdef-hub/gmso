@@ -286,7 +286,7 @@ def write_top(top, filename, top_vars=None):
                             )
                         if conn_group == "dihedral_restraints":
                             warnings.warn(
-                                "The diehdral_restraints writer is designed to work with"
+                                "The dihebradral_restraints writer is designed to work with"
                                 "`define = DDIHRES` clause in the GROMACS input file (.mdp)"
                             )
                             out_file.write("#endif DIHRES\n")
