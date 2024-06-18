@@ -254,6 +254,8 @@ def element_by_smarts_string(smarts_string, verbose=False):
     GMSOError
         If no matching element is found for the provided smarts string
     """
+    from lark import UnexpectedCharacters
+
     from gmso.utils.io import import_
 
     foyer = import_("foyer")
@@ -261,7 +263,13 @@ def element_by_smarts_string(smarts_string, verbose=False):
 
     PARSER = SMARTS()
 
-    symbols = PARSER.parse(smarts_string).iter_subtrees_topdown()
+    try:
+        symbols = PARSER.parse(smarts_string).iter_subtrees_topdown()
+    except UnexpectedCharacters:
+        raise GMSOError(
+            f"Failed to find an element from SMARTS string {smarts_string}. "
+            f"The SMARTS string contained unexpected characters."
+        )
 
     first_symbol = None
     for symbol in symbols:

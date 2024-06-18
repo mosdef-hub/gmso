@@ -253,6 +253,4 @@ def reindex_molecules(top):
 
     for site in top.sites:
         mol_num = site.molecule.number
-        site.molecule = site.molecule._replace(
-            number=mol_num - offsetDict[site.molecule.name]
-        )
+        site.molecule.number = mol_num - offsetDict[site.molecule.name]

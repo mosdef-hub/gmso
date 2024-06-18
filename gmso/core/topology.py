@@ -2,6 +2,7 @@
 
 import itertools
 import warnings
+from copy import copy
 from pathlib import Path
 
 import numpy as np
@@ -9,7 +10,7 @@ import unyt as u
 from boltons.setutils import IndexedSet
 
 import gmso
-from gmso.abc.abstract_site import Site
+from gmso.abc.abstract_site import Molecule, Residue, Site
 from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.core.angle import Angle
 from gmso.core.angle_type import AngleType
@@ -313,7 +314,7 @@ class Topology(object):
                 unique_tags.add(label.name if label else None)
         else:
             for site in self.sites:
-                unique_tags.add(getattr(site, label_type))
+                unique_tags.add(copy(getattr(site, label_type)))
         return unique_tags
 
     @property
@@ -641,6 +642,18 @@ class Topology(object):
                 self.get_electrostatics_scale(molecule_id=molecule_id),
             ]
         )
+
+    def set_rigid(self, molecule):
+        """Set molecule tags to rigid if they match the name or number specified.
+
+        Parameters
+        ----------
+        molecule : str, Molecule, or tuple of 2
+            Specified the molecule name and number to be set rigid.
+            If only string is provided, make all molecule of that name rigid.
+        """
+        for site in self.iter_sites(key="molecule", value=molecule):
+            site.molecule.isrigid = True
 
     def remove_site(self, site):
         """Remove a site from the topology.
@@ -1382,9 +1395,30 @@ class Topology(object):
             for site in self._sites:
                 if getattr(site, key) and getattr(site, key).name == value:
                     yield site
-        for site in self._sites:
-            if getattr(site, key) == value:
-                yield site
+        elif isinstance(value, (tuple, list)):
+            containers_dict = {"molecule": Molecule, "residue": Residue}
+            if len(value) == 2:
+                tmp = containers_dict[key](name=value[0], number=value[1])
+            elif len(value) == 3:
+                tmp = containers_dict[key](
+                    name=value[0], number=value[1], isrigid=value[2]
+                )
+            else:
+                raise ValueError(
+                    f"""
+                        Argument value was passed as {value},
+                        but should be an indexible iterable of
+                        [name, number, isrigid] where name is type string,
+                        number is type int, and isrigid is type bool.
+                    """
+                )
+            for site in self._sites:
+                if getattr(site, key) and getattr(site, key) == tmp:
+                    yield site
+        else:
+            for site in self._sites:
+                if getattr(site, key) == value:
+                    yield site
 
     def iter_sites_by_residue(self, residue_tag):
         """Iterate through this topology's sites which contain this specific residue name.
