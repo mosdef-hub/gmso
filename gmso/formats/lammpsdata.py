@@ -14,7 +14,7 @@ import unyt as u
 from unyt.array import allclose_units
 
 import gmso
-from gmso.abc.abstract_site import MoleculeType
+from gmso.abc.abstract_site import Molecule
 from gmso.core.angle import Angle
 from gmso.core.atom import Atom
 from gmso.core.atom_type import AtomType
@@ -488,7 +488,9 @@ def _get_atoms(filename, topology, base_unyts, type_list):
             charge=charge,
             position=coord,
             atom_type=copy.deepcopy(type_list[int(atom_type) - 1]),  # 0-index
-            molecule=MoleculeType(atom_line[1], int(atom_line[1]) - 1),  # 0-index
+            molecule=Molecule(
+                name=atom_line[1], number=int(atom_line[1]) - 1
+            ),  # 0-index
         )
         element = element_by_mass(site.atom_type.mass.value)
         site.name = element.name if element else site.atom_type.name

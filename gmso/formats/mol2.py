@@ -7,7 +7,7 @@ from pathlib import Path
 import unyt as u
 
 from gmso import Atom, Bond, Box, Topology
-from gmso.abc.abstract_site import MoleculeType, ResidueType
+from gmso.abc.abstract_site import Molecule, Residue
 from gmso.core.element import element_by_name, element_by_symbol
 from gmso.formats.formats_registry import loads_as
 
@@ -151,8 +151,8 @@ def _parse_atom(top, section, verbose):
                 position=position.to("nm"),
                 element=element,
                 charge=charge,
-                residue=ResidueType(content[7], int(content[6])),
-                molecule=MoleculeType(molecule, 0),
+                residue=Residue(name=content[7], number=int(content[6])),
+                molecule=Molecule(name=molecule, number=0),
             )
             top.add_site(atom)
 

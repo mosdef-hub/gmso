@@ -8,6 +8,7 @@ import unyt as u
 from boltons.setutils import IndexedSet
 from unyt import Unit
 
+from gmso.abc.abstract_site import Residue
 from gmso.core.atom import Atom
 from gmso.core.bond import Bond
 from gmso.core.box import Box
@@ -179,12 +180,14 @@ def to_mbuild(topology, infer_hierarchy=True):
                 particle = _parse_particle(particle_map, site)
                 # Try to add the particle to a residue level
                 residue_tag = (
-                    site.residue if site.residue else ("DefaultResidue", 0)
+                    site.residue
+                    if site.residue
+                    else Residue(name="DefaultResidue", number=0)
                 )  # the 0 idx is placeholder and does nothing
                 if residue_tag in residue_dict:
                     residue_dict_particles[residue_tag] += [particle]
                 else:
-                    residue_dict[residue_tag] = mb.Compound(name=residue_tag[0])
+                    residue_dict[residue_tag] = mb.Compound(name=residue_tag.name)
                     residue_dict_particles[residue_tag] = [particle]
 
             for key, item in residue_dict.items():

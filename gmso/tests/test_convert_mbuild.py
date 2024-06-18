@@ -53,7 +53,7 @@ class TestConvertMBuild(BaseTest):
             assert top.sites[i].name == top.sites[i].element.symbol
 
         for site in top.sites:
-            assert site.molecule[0] == "Ar"
+            assert site.molecule.name == "Ar"
 
     def test_from_mbuild_single_particle(self):
         compound = mb.Compound()

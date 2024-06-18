@@ -149,6 +149,18 @@ class TestTop(BaseTest):
         assert struct.defaults.fudgeLJ == 0.5
         assert struct.defaults.fudgeQQ == 0.5
 
+    def test_settles(self, typed_tip3p_rigid_system):
+        typed_tip3p_rigid_system.save("settles.top", overwrite=True)
+
+        with open("settles.top", "r") as f1:
+            current = f1.readlines()
+
+        with open(get_path("settles_ref.top"), "r") as f2:
+            ref = f2.readlines()
+
+        for line, ref_line in zip(current[1:], ref[1:]):
+            assert line, ref_line
+
     def test_benzene_restraints(self, typed_benzene_ua_system):
         top = typed_benzene_ua_system
 
