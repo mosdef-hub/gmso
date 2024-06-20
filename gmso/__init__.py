@@ -17,4 +17,4 @@ from .core.improper_type import ImproperType
 from .core.pairpotential_type import PairPotentialType
 from .core.topology import Topology
 
-__version__ = "0.12.2"
+__version__ = "0.12.3"
