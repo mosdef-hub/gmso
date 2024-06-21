@@ -30,6 +30,7 @@ if has_gsd:
     import gsd.hoomd
 if has_hoomd:
     import hoomd
+
     hoomd_version = hoomd.version.version.split(".")
 else:
     hoomd_version = None
@@ -46,7 +47,6 @@ AKMA_UNITS = {
     "length": u.angstrom,
     "mass": u.g / u.mol,  # aka amu
 }
-
 
 
 def to_gsd_snapshot(
