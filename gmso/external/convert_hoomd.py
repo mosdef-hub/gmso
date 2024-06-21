@@ -30,6 +30,9 @@ if has_gsd:
     import gsd.hoomd
 if has_hoomd:
     import hoomd
+    hoomd_version = hoomd.version.version.split(".")
+else:
+    hoomd_version = None
 
 # Note, charge will always be assumed to be in elementary_charge
 MD_UNITS = {
@@ -44,7 +47,6 @@ AKMA_UNITS = {
     "mass": u.g / u.mol,  # aka amu
 }
 
-hoomd_version = hoomd.version.version.split(".")
 
 
 def to_gsd_snapshot(
