@@ -23,8 +23,8 @@ copyright = "2024, mosdef-hub, Vanderbilt University"
 author = "Matt Thompson, Alex Yang, Ray Matsumoto, Parashara Shamaprasad, Umesh Timalsina, Co D. Quach, Ryan S. DeFever, Justin Gilmer"
 
 # The full version, including alpha/beta/rc tags
-version = "0.12.3"
-release = "0.12.3"
+version = "0.12.4"
+release = "0.12.4"
 
 
 # -- General configuration ---------------------------------------------------
