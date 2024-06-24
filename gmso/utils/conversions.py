@@ -18,9 +18,7 @@ templates = PotentialTemplateLibrary()
 
 @lru_cache(maxsize=128)
 def _constant_multiplier(pot1, pot2):
-    # TODO: Doc string
-    # TODO: Test outputs
-    # TODO: Check speed
+    """Take two potentials and check for a difference of a constant multiplier between them."""
     try:
         constant = symengine.expand(pot1.expression / pot2.expression)
         # constant = sympy.simplify(pot1.expression / pot2.expression)
@@ -70,9 +68,9 @@ def convert_topology_expressions(top, expressionMap={}):
     # Apply from predefined conversions or easy sympy conversions
     conversions_map = {
         (
-            "OPLSTorsionPotential",
+            "FourierTorsionPotential",
             "RyckaertBellemansTorsionPotential",
-        ): convert_opls_to_ryckaert,
+        ): convert_fourier_to_ryckaert,
         (
             "RyckaertBellemansTorsionPotential",
             "OPLSTorsionPotential",
@@ -81,6 +79,10 @@ def convert_topology_expressions(top, expressionMap={}):
             "RyckaertBellemansTorsionPotential",
             "FourierTorsionPotential",
         ): convert_ryckaert_to_opls,
+        (
+            "OPLSTorsionPotential",
+            "FourierTorsionPotential",
+        ): convert_opls_to_fourier,
     }  # map of all accessible conversions currently supported
 
     for conv in expressionMap:
@@ -121,8 +123,8 @@ def convert_topology_expressions(top, expressionMap={}):
 
 
 @lru_cache(maxsize=128)
-def convert_opls_to_ryckaert(opls_connection_type):
-    """Convert an OPLS dihedral to Ryckaert-Bellemans dihedral.
+def convert_fourier_to_ryckaert(fourier_connection_type):
+    """Convert a Foufourier dihedral to Ryckaert-Bellemans dihedral.
 
     Equations taken/modified from:
         http://manual.gromacs.org/documentation/2019/
@@ -133,31 +135,32 @@ def convert_opls_to_ryckaert(opls_connection_type):
     phi_cis = 0 while RB torsions are defined as phi_trans = 0.
     """
     # TODO: this function really converts the fourier torsion to rb, not opls
-    opls_torsion_potential = templates["FourierTorsionPotential"]
+    fourier_torsion_potential = templates["FourierTorsionPotential"]
     valid_connection_type = False
     if (
-        opls_connection_type.independent_variables
-        == opls_torsion_potential.independent_variables
+        fourier_connection_type.independent_variables
+        == fourier_torsion_potential.independent_variables
     ):
         if (
             sympy.simplify(
-                opls_connection_type.expression - opls_torsion_potential.expression
+                fourier_connection_type.expression
+                - fourier_torsion_potential.expression
             )
             == 0
         ):
             valid_connection_type = True
     if not valid_connection_type:
         raise GMSOError(
-            "Cannot use convert_opls_to_ryckaert "
+            "Cannot use convert_fourier_to_ryckaert "
             "function to convert a ConnectionType that is not an "
-            "OPLSTorsionPotential"
+            "FourierTorsionPotential"
         )
 
-    f0 = opls_connection_type.parameters["k0"]
-    f1 = opls_connection_type.parameters["k1"]
-    f2 = opls_connection_type.parameters["k2"]
-    f3 = opls_connection_type.parameters["k3"]
-    f4 = opls_connection_type.parameters["k4"]
+    f0 = fourier_connection_type.parameters["k0"]
+    f1 = fourier_connection_type.parameters["k1"]
+    f2 = fourier_connection_type.parameters["k2"]
+    f3 = fourier_connection_type.parameters["k3"]
+    f4 = fourier_connection_type.parameters["k4"]
 
     converted_params = {
         "c0": (f2 + 0.5 * (f0 + f1 + f3)),
@@ -179,7 +182,8 @@ def convert_opls_to_ryckaert(opls_connection_type):
         expression=expression,
         independent_variables=variables,
         parameters=converted_params,
-        member_types=opls_connection_type.member_types,
+        member_types=fourier_connection_type.member_types,
+        member_classes=fourier_connection_type.member_classes,
     )
 
     return ryckaert_connection_type
@@ -280,6 +284,37 @@ def convert_ryckaert_to_fourier(ryckaert_connection_type):
         independent_variables=variables,
         parameters=converted_params,
         member_types=ryckaert_connection_type.member_types,
+    )
+
+    return fourier_connection_type
+
+
+def convert_opls_to_fourier(opls_connection_type):
+    """Convert opls dihedrals to Fourier.
+
+    NOTE: These only differ by the number of elements. Fourier style has a k0 term.
+    LAMMPS uses the opls style -> https://docs.lammps.org/dihedral_opls.html.
+    GROMACS uses the fourier style ->
+    https://manual.gromacs.org/documentation/current/reference-manual/functions/bonded-interactions.html#proper-dihedrals-fourier-function.
+    """
+
+    fourier_torsion_potential = templates["FourierTorsionPotential"]
+    converted_params = {
+        k: opls_connection_type.parameters.get(k, None)
+        for k in ["k1", "k2", "k3", "k4"]
+    }
+    converted_params["k0"] = 0 * u.kJ / u.mol
+    name = fourier_torsion_potential.name
+    expression = fourier_torsion_potential.expression
+    variables = fourier_torsion_potential.independent_variables
+
+    fourier_connection_type = gmso.DihedralType(
+        name=name,
+        expression=expression,
+        independent_variables=variables,
+        parameters=converted_params,
+        member_classes=opls_connection_type.member_classes,
+        member_types=opls_connection_type.member_types,
     )
 
     return fourier_connection_type

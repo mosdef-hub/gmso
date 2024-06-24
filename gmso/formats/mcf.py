@@ -16,7 +16,7 @@ from gmso.formats.formats_registry import saves_as
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.compatibility import check_compatibility
 from gmso.utils.conversions import (
-    convert_opls_to_ryckaert,
+    convert_fourier_to_ryckaert,
     convert_ryckaert_to_fourier,
 )
 
@@ -473,7 +473,7 @@ def _write_dihedral_information(mcf, top):
             dihedral_style = "FOURIER"
 
         if dihedral_style == "OPLS":
-            dihedral.connection_type = convert_opls_to_ryckaert(
+            dihedral.connection_type = convert_fourier_to_ryckaert(
                 dihedral.connection_type
             )
             dihedral.connection_type = convert_ryckaert_to_fourier(
