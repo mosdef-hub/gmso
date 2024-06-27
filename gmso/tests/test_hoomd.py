@@ -388,7 +388,8 @@ class TestGsd(BaseTest):
     @pytest.mark.skipif(not has_hoomd, reason="hoomd is not installed")
     @pytest.mark.skipif(not has_mbuild, reason="mbuild not installed")
     @pytest.mark.skipif(
-        int(hoomd_version[0]) <= 3.8, reason="Deprecated features in HOOMD 4"
+        int(hoomd_version[0]) + float(hoomd_version[1]) * 0.1 < 4.5,
+        reason="Feature added in HOOMD 4.5",
     )
     def test_gaff_sim(self, gaff_forcefield):
         base_units = {
