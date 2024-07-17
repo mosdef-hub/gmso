@@ -483,7 +483,8 @@ def evaluate_OPLS_torsion_format_with_scaler(new_torsion_form, base_torsion_form
         values = sympy.nonlinsolve(
             [
                 eqn_ratio
-                - sympy.nsimplify(new_torsion_form) / sympy.nsimplify(base_torsion_form),
+                - sympy.nsimplify(new_torsion_form)
+                / sympy.nsimplify(base_torsion_form),
             ],
             [eqn_ratio],
         )
