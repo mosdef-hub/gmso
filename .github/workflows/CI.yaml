@@ -26,7 +26,7 @@ jobs:
         shell: bash -l {0}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         name: Checkout Branch / Pull Request
 
       - name: Install Mamba
@@ -43,7 +43,7 @@ jobs:
         run: python -m pytest -v --cov=gmso --cov-report=xml --cov-append --cov-config=setup.cfg --color yes --pyargs gmso
 
       - name: Upload Coverage Report
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v4
         with:
           name: GMSO-Coverage
           verbose: true
@@ -63,7 +63,7 @@ jobs:
         shell: bash -l {0}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         name: Checkout Branch / Pull Request
 
       - name: Install Mamba
