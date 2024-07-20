@@ -420,7 +420,7 @@ class BaseTest:
         }
 
         def test_connection_equality(conn1, conn2):
-            if not type(conn1) == type(conn2):
+            if type(conn1) is not type(conn2):
                 return False
             conn1_eq_members = conn1.equivalent_members()
             conn2_eq_members = conn2.equivalent_members()
