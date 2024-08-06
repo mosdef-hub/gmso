@@ -151,7 +151,7 @@ jobs:
           echo Docker Image tags: ${DOCKER_TAGS}
 
       - name: Build and Push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           push: true
           tags: ${{ env.DOCKER_TAGS }}
