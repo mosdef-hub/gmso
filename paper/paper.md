@@ -129,4 +129,4 @@ Hence, we developed the General Molecular Simulation Object (GMSO) library, whic
 </p>
 
 # Acknowledgements
-This research was partially supported by the National Science Foundation OAC-1835713 and OAC-1835874. Atomfold also donated research and development time and computational resources for this research and software.
+This research was partially supported by the National Science Foundation OAC-1835713, OAC-1835874, and DMR-2119575. Atomfold also donated research and development time and computational resources for this research and software.
