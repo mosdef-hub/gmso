@@ -20,11 +20,11 @@ sys.path.insert(0, os.path.abspath(".."))
 
 project = "gmso"
 copyright = "2024, mosdef-hub, Vanderbilt University"
-author = "Matt Thompson, Alex Yang, Ray Matsumoto, Parashara Shamaprasad, Umesh Timalsina, Co D. Quach, Ryan S. DeFever, Justin Gilmer"
+author = "Matt Thompson, Alex Yang, Ray Matsumoto, Parashara Shamaprasad, Umesh Timalsina, Co D. Quach, Ryan S. DeFever, Justin Gilmer, Nicholas C. Craven, Christopher R. Iacovella, Brad Crawford, and Chris Jones"
 
 # The full version, including alpha/beta/rc tags
-version = "0.12.1"
-release = "0.12.1"
+version = "0.12.4"
+release = "0.12.4"
 
 
 # -- General configuration ---------------------------------------------------

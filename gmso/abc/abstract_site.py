@@ -1,14 +1,13 @@
 """Basic interaction site in GMSO that all other sites will derive from."""
 
 import warnings
-from typing import Any, ClassVar, NamedTuple, Optional, Sequence, TypeVar, Union
+from typing import Any, ClassVar, Optional, Sequence, TypeVar, Union
 
 import numpy as np
 import unyt as u
 from pydantic import (
     ConfigDict,
     Field,
-    StrictInt,
     StrictStr,
     field_serializer,
     field_validator,
@@ -20,8 +19,124 @@ from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.exceptions import GMSOError
 
 PositionType = Union[Sequence[float], np.ndarray, u.unyt_array]
-MoleculeType = NamedTuple("Molecule", name=StrictStr, number=StrictInt)
-ResidueType = NamedTuple("Residue", name=StrictStr, number=StrictInt)
+
+
+class Molecule(GMSOBase):
+    def __repr__(self):
+        return (
+            f"Molecule(name={self.name}, residue={self.residue}, isrigid={self.isrigid}"
+        )
+
+    __iterable_attributes__: ClassVar[set] = {
+        "name",
+        "number",
+        "isrigid",
+    }
+
+    __base_doc__: ClassVar[str] = "Molecule label for interaction sites."
+
+    name_: str = Field(
+        "",
+        validate_default=True,
+        description="Name of the molecule",
+        alias="name",
+    )
+    number_: int = Field(
+        0,
+        description="The index/number of the molecule",
+        alias="number",
+    )
+    isrigid_: bool = Field(
+        False,
+        description="Indicate whether the molecule is rigid",
+    )
+    model_config = ConfigDict(
+        alias_to_fields={
+            "name": "name_",
+            "number": "number_",
+            "isrigid": "isrigid_",
+        }
+    )
+
+    @property
+    def name(self) -> str:
+        """Return the name of the molecule."""
+        return self.__dict__.get("name_")
+
+    @property
+    def number(self) -> int:
+        """Return the index/number of the moleucle."""
+        return self.__dict__.get("number_")
+
+    @property
+    def isrigid(self) -> bool:
+        """Return the rigid label of the molecule."""
+        return self.__dict__.get("isrigid_")
+
+    def __hash__(self):
+        return hash(tuple([(name, val) for name, val in self.__dict__.items()]))
+
+    def __eq__(self, other):
+        """Test if two objects are equivalent."""
+        if isinstance(other, (list, tuple)):
+            return all(
+                [val1 == val2 for val1, val2 in zip(self.__dict__.values(), other)]
+            )
+        else:
+            return self.__dict__ == other.__dict__
+
+
+class Residue(GMSOBase):
+    def __repr__(self):
+        return f"Residue(name={self.name}, residue={self.residue}"
+
+    __iterable_attributes__: ClassVar[set] = {
+        "name",
+        "number",
+    }
+
+    __base_doc__: ClassVar[str] = "Residue label for interaction sites."
+
+    name_: str = Field(
+        "",
+        validate_default=True,
+        description="Name of the residue",
+        alias="name",
+    )
+    number_: int = Field(
+        0,
+        description="The index/number of the residue",
+        alias="number",
+    )
+    model_config = ConfigDict(
+        alias_to_fields={
+            "name": "name_",
+            "number": "number_",
+        }
+    )
+
+    @property
+    def name(self) -> str:
+        """Return the name of the residue."""
+        return self.__dict__.get("name_")
+
+    @property
+    def number(self) -> int:
+        """Return the index/number of the residue."""
+        return self.__dict__.get("number_")
+
+    def __hash__(self):
+        return hash(tuple([(name, val) for name, val in self.__dict__.items()]))
+
+    def __eq__(self, other):
+        """Test if two objects are equivalent."""
+        if isinstance(other, (list, tuple)):
+            return all(
+                [val1 == val2 for val1, val2 in zip(self.__dict__.values(), other)]
+            )
+        else:
+            return self.__dict__ == other.__dict__
+
 
 SiteT = TypeVar("SiteT", bound="Site")
 
@@ -76,13 +191,13 @@ class Site(GMSOBase):
         alias="group",
     )
 
-    molecule_: Optional[MoleculeType] = Field(
+    molecule_: Optional[Union[Molecule, list, tuple]] = Field(
         None,
         description="Molecule label for the site, format of (molecule_name, molecule_number)",
         alias="molecule",
     )
 
-    residue_: Optional[ResidueType] = Field(
+    residue_: Optional[Union[Residue, list, tuple]] = Field(
         None,
         description="Residue label for the site, format of (residue_name, residue_number)",
         alias="residue",
@@ -126,7 +241,7 @@ class Site(GMSOBase):
         return self.__dict__.get("group_")
 
     @property
-    def molecule(self) -> tuple:
+    def molecule(self):
         """Return the molecule of the site."""
         return self.__dict__.get("molecule_")
 
@@ -185,11 +300,27 @@ class Site(GMSOBase):
         return position
 
     @field_validator("name_")
-    def inject_name(cls, value):
+    def parse_name(cls, value):
         if value == "" or value is None:
             return cls.__name__
         else:
             return value
+
+    @field_validator("residue_")
+    def parse_residue(cls, value):
+        if isinstance(value, (tuple, list)):
+            assert len(value) == 2
+            value = Residue(name=value[0], number=value[1])
+        return value
+
+    @field_validator("molecule_")
+    def parse_molecule(cls, value):
+        if isinstance(value, (tuple, list)):
+            if len(value) == 2:
+                value = Molecule(name=value[0], number=value[1])
+            elif len(value) == 3:
+                value = Molecule(name=value[0], number=value[1], isrigid=value[2])
+        return value
 
     @classmethod
     def __new__(cls, *args: Any, **kwargs: Any) -> SiteT:

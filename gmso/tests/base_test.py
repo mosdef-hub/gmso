@@ -182,6 +182,9 @@ class BaseTest:
     def water_system(self):
         water = Topology(name="water")
         water = water.load(get_path("tip3p.mol2"))
+        for site in water.sites:
+            site.molecule.name = "WaterTIP3P"
+
         return water
 
     @pytest.fixture
@@ -277,11 +280,25 @@ class BaseTest:
         return top
 
     @pytest.fixture
-    def typed_tip3p_rigid_system(self, water_system):
+    def typed_tip3p_system(self, water_system):
         top = water_system
         top.identify_connections()
         ff = ForceField(get_path("tip3p-rigid.xml"))
         top = apply(top, ff)
+
+        return top
+
+    @pytest.fixture
+    def typed_tip3p_rigid_system(self, water_system):
+        top = water_system
+        top.identify_connections()
+        ff = ForceField(get_path("tip3p.xml"))
+        top = apply(top, ff)
+
+        molecules = top.unique_site_labels(name_only=False)
+        for molecule in molecules:
+            top.set_rigid(molecule)
+
         return top
 
     @pytest.fixture
@@ -403,7 +420,7 @@ class BaseTest:
         }
 
         def test_connection_equality(conn1, conn2):
-            if not type(conn1) == type(conn2):
+            if type(conn1) is not type(conn2):
                 return False
             conn1_eq_members = conn1.equivalent_members()
             conn2_eq_members = conn2.equivalent_members()
