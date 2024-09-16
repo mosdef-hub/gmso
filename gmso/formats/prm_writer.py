@@ -1,11 +1,10 @@
 """CHARMM Par format."""
 
-import warnings
 from gmso.formats.formats_registry import saves_as
+from gmso.utils.units import LAMMPS_UnitSystems
 
-__all__ = ["write_prm"]
 
-@saves_as("prm", "par")
+@saves_as(".prm", ".par")
 def write_prm(topology, filename):
     """Write CHARMM Parameter .prm file given a parametrized structure.
 
@@ -19,163 +18,107 @@ def write_prm(topology, filename):
 
     Parmed stores rmin/2 in "rmin"
     """
+    unit_system = LAMMPS_UnitSystems("real")  # ang, kcal/mol, amu
     # ATOMS
     with open(filename, "w") as f:
         f.write("ATOMS\n")
         unique_atoms = set()
         for site in topology.sites:
-            unique_atoms.add((site.atom_type.name, site.mass))
-        for atom in unique_atoms:
-            f.write("MASS -1 {:8s} {:8.4f}\n".format(atom[0], atom[1]))
-
-        f.write("\nBONDS\n")
-        unique_bonds = set()
-        for bond in topology.bonds:
-            atom1, atom2 = bond.connection_members
-            unique_bonds.add(
+            unique_atoms.add(
                 (
-                    atom1.atom_type.name,
-                    atom2.atom_type.name,
-                    bond.bond_type,
+                    site.atom_type.name,
+                    unit_system.convert_parameter(
+                        site.atom_type.mass, n_decimals=6, name="mass"
+                    ),
                 )
             )
+        for atom in unique_atoms:
+            f.write("MASS -1 {:8s} {:8s}\n".format(atom[0], atom[1]))
 
-        for bond in unique_bonds:
-            # TODO: only works for harmonic bonds
+        # TODO: Works for harmonic bonds
+        f.write("\nBONDS\n")
+        for bond in topology.bond_types:
+            atom1, atom2 = bond.member_types
             f.write(
                 "{:8s} {:8s} {:.5f} {:.5f}\n".format(
-                    bond[0], bond[1], bond[2].k, bond[2].req
+                    atom1, atom2, bond.parameters["k"], bond.parameters["r_eq"]
                 )
             )
 
         f.write("\nANGLES\n")
-        unique_harmonic_angles = set()
-        unique_ubs = set()
-        for angle in topology.angles:
-            atom1. atom2, atom3 = angle.connection_members
-            unique_ubs.add(
-                atom1.atom_type.name,
-                atom2.atom_type.name,
-                atom3.atom_type.name,
-                angle.angle_type,
-                angle.angle_type.name == "UreyBradleyAnglePotential"
-            )
-
-        for angle in unique_angles:
-            if angle[4]: # urey_bradley flag
+        for angle in topology.angle_types:
+            atom1, atom2, atom3 = angle.member_types
+            if angle.name == "UreyBradleyAnglePotential":
                 f.write(
                     "{:8s} {:8s} {:8s} {:.5f} {:.5f} {:.5f} {:.5f}\n".format(
-                        angle[0],
-                        angle[1],
-                        angle[2],
-                        angle[3].k,
-                        angle[3].theteq,
-                        angle[3].kub,
-                        angle[3].r_eq,
+                        atom1,
+                        atom2,
+                        atom3,
+                        angle.parameters["k"],
+                        angle.parameters["theta_eq"],
+                        angle.parameters["kub"],
+                        angle.parameters["r_eq"],
                     )
-            else: # assume harmonic angle
+                )
+            else:  # assume harmonic style:
                 f.write(
                     "{:8s} {:8s} {:8s} {:.5f} {:.5f}\n".format(
-                        angle[0],
-                        angle[1],
-                        angle[2],
-                        angle[3].k,
-                        angle[3].theteq,
+                        atom1,
+                        atom2,
+                        atom3,
+                        angle.parameters["k"],
+                        angle.parameters["theta_eq"],
                     )
-
+                )
 
         # These dihedrals need to be PeriodicTorsion Style (Charmm style)
-        if len(topology.rb_torsions) > 0:
-            warnings.warn("RB Torsions detected, but unsupported in par writer")
         f.write("\nDIHEDRALS\n")
-        unique_dihedrals = set()
-        for dihedral in topology.dihedrals:
+        for dihedral in topology.dihedral_types:
             # works for PeriodicTorsion
-            atom1, atom2, atom3, atom4 = dihedral.connection_members
-            unique_dihedrals.add(
-                (
-                    atom1.atom_type.name,
-                    atom2.atom_type.name,
-                    atom3.atom_type.name,
-                    atom4.atom_type.name,
-                    dihedral.dihedral_type,
-                )
-            )
-
-        for dihedral in unique_dihedrals:
+            atom1, atom2, atom3, atom4 = dihedral.member_types
             f.write(
-                "{:8s} {:8s} {:8s} {:8s} {:.5f} {:5d} {:.5f}\n".format(
-                    dihedral[0],
-                    dihedral[1],
-                    dihedral[2],
-                    dihedral[3],
-                    dihedral[4].k,
-                    dihedral[4].n,
-                    dihedral[4].phi_eq,
+                "{:8s} {:8s} {:8s} {:8s} {:.5f} {:5f} {:.5f}\n".format(
+                    atom1,
+                    atom2,
+                    atom3,
+                    atom4,
+                    dihedral.parameters["k"][0],
+                    dihedral.parameters["n"][0],
+                    dihedral.parameters["phi_eq"][0],
                 )
             )
 
         # TODO: No support for harmonic impropers
 
         f.write("\nIMPROPER\n")
-        unique_impropers = set()
-        for improper in topology.impropers:
-            atom1, atom2, atom3, atom4 = improper.connection_members
-            unique_impropers.add(
-                (
-                    atom1.atom_type.name,
-                    atom2.atom_type.name,
-                    atom3.atom_type.name,
-                    atom4.atom_type.name,
-                    improper.type,
-                )
-            )
-        for improper in unique_impropers:
-            # order of impropers goes
+        for improper in topology.improper_types:
+            atom1, atom2, atom3, atom4 = improper.member_types
             f.write(
-                "{:8s} {:8s} {:8s} {:8s} {:.5f} {:5d} {:.5f}\n".format(
-                    improper[2],
-                    improper[0],
-                    improper[1],
-                    improper[3],
-                    improper[4].psi_k,
-                    0,
-                    improper[4].psi_eq,
+                "{:8s} {:8s} {:8s} {:8s} {:.5f} {:5f} {:.5f}\n".format(
+                    atom1,
+                    atom2,
+                    atom3,
+                    atom4,
+                    improper.parameters["phi_k"][0],
+                    improper.parameters["n"][0],
+                    improper.parameters["phi_eq"][0],
                 )
             )
-
-        sc_nb = [a for a in scnb]
-        if len(sc_nb) > 1:
-            warnings.warn(
-                "Multiple 1-4 LJ scalings were detected, "
-                "defaulting to first LJ scaling detected, {}".format(sc_nb[0])
-            )
-            sc_nb = sc_nb[0]
-        elif len(sc_nb) == 1:
-            sc_nb = sc_nb[0]
-        elif len(sc_nb) == 0:
-            warnings.warn("No 1-4 LJ scaling was detected, defaulting 1")
-            sc_nb = 1.0
 
         f.write("\nNONBONDED\n")
-        unique_atypes = set()
-        for atom in topology.atoms:
-            unique_atypes.add(atom.atom_type)
-        for atype in unique_atypes:
+        nonbonded14 = topology.scaling_factors[0][2]
+
+        for atype in topology.atom_types:
             # atype, 0.0, epsilon, rmin/2, 0.0, epsilon(1-4), rmin/2 (1-4)
             f.write(
                 "{:8s} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f}\n".format(
                     atype.name,
+                    0.0,  # ignored,
+                    atype.parameters["epsilon"],
+                    atype.parameters["sigma"],
                     0.0,
-                    -1 * atype.epsilon,
-                    atype.rmin,
-                    0.0,
-                    -1 * sc_nb * atype.epsilon,
-                    atype.rmin,
+                    atype.parameters["epsilon"] * nonbonded14,
+                    atype.parameters["sigma"] * nonbonded14,
                 )
             )
-
-        if topology.has_NBFIX():
-            warnings.warn("NBFixes detected but unsupported in par writer")
-
         f.write("\nEND")

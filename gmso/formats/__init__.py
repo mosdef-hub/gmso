@@ -10,6 +10,7 @@ from .json import write_json
 from .lammpsdata import write_lammpsdata
 from .mcf import write_mcf
 from .mol2 import read_mol2
+from .prm_writer import write_prm
 from .top import write_top
 from .xyz import read_xyz, write_xyz
 

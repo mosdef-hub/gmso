@@ -1,37 +1,32 @@
-import numpy as np
-import pytest
+from gmso import ForceField, Topology
+from gmso.parameterization import apply
+from gmso.tests.base_test import BaseTest
+from gmso.utils.io import get_fn
 
-from gmso.formats.prm_writer import write_par
-import mbuild as mb
-from mbuild.tests.base_test import BaseTest
-from mbuild.utils.io import get_fn, has_foyer
+# TODO: Sorting of atomtypes info in connection types
+# TODO: Test of correct potential forms
+# TODO: Handle iterating over unique types
+# TODO: Handle multiple values in charmm dihedral k as np array
 
 
-@pytest.mark.skipif(not has_foyer, reason="Foyer package not installed")
 class TestPar(BaseTest):
-    @pytest.mark.skipif(not has_foyer, reason="Foyer package not installed")
     def test_save_charmm(self):
-        cmpd = mb.load(get_fn("charmm_dihedral.mol2"))
-        for i in cmpd.particles():
-            i.name = "_{}".format(i.name)
-        structure = cmpd.to_parmed(
-            box=cmpd.get_boundingbox(),
-            residues=set([p.parent.name for p in cmpd.particles()]),
+        top = Topology.load(get_fn("charmm_dihedral.mol2"))
+        for site in top.sites:
+            site.name = f"_{site.name}"
+
+        ff = ForceField(get_fn("charmm_truncated.xml"))
+        ptop = apply(
+            top, ff, identify_connections=True, ignore_params=["dihedral", "improper"]
         )
+        ptop.save("charmm_dihedral.prm")
 
-        from foyer import Forcefield
+    def test_par_parameters(self, ethane, oplsaa_forcefield):
+        from gmso.parameterization import apply
 
-        ff = Forcefield(forcefield_files=[get_fn("charmm_truncated.xml")])
-        structure = ff.apply(structure, assert_dihedral_params=False)
+        ptop = apply(ethane, oplsaa_forcefield)
 
-        write_par(structure, "charmm_dihedral.par")
-
-    @pytest.mark.skipif(not has_foyer, reason="Foyer package not installed")
-    def test_save_forcefield(self, ethane):
-        ethane.save(filename="ethane-opls.par", forcefield_name="oplsaa")
-
-    def test_par_parameters(self, ethane):
-        ethane.save(filename="ethane-opls.par", forcefield_name="oplsaa")
+        ptop.save(filename="ethane-opls.par")
         from parmed.charmm import CharmmParameterSet
 
         pset = CharmmParameterSet.load_set(pfile="ethane-opls.par")
@@ -43,6 +38,7 @@ class TestPar(BaseTest):
         # test that the values are correct
         # write mbuild file and compare to gmso file
         pass
+
     def test_raise_errors(self):
         # only takes harmonic bonds
         # only takes harmonic of ub angles
