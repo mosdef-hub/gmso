@@ -272,6 +272,7 @@ def _parse_site(site_map, particle, search_method, infer_element=False):
         element=ele,
         charge=charge,
         mass=mass,
+        rigid_id=particle.rigid_id,
         molecule=site_map[particle]["molecule"],
         residue=site_map[particle]["residue"],
         group=site_map[particle]["group"],
