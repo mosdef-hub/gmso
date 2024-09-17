@@ -284,8 +284,6 @@ def _parse_particle_information(
         site.name if site.atom_type is None else site.atom_type.name
         for site in top.sites
     ]
-    unique_types = sorted(list(set(types)))
-    typeids = np.array([unique_types.index(t) for t in types])
     masses = list()
     charges = list()
     for site in top.sites:
@@ -295,6 +293,23 @@ def _parse_particle_information(
             else 1 * base_units["mass"]
         )
         charges.append(site.charge if site.charge else 0 * u.elementary_charge)
+    # Check for rigid IDs
+    rigid_ids = [site.rigid_id for site in top.sites]
+    if all(rigid_ids):  # Need to create rigid bodies
+        n_rigid = len(set(rigid_ids))
+        write_rigid = True
+    else:
+        write_rigid = False
+        n_rigid = 0
+    unique_types = sorted(list(set(types)))
+    typeids = np.array([unique_types.index(t) for t in types])
+    if write_rigid:
+        # Rigid particle type defaults to "R"; add to front of list
+        unique_types = ["R"] + unique_types
+        # Rigid particles get type ID 0, move all others up by 1
+        typeids = np.concatenate(([0] * n_rigid), typeids + 1)
+        # Update mass list
+        # Update position list
 
     """
     Permittivity of free space = 2.39725e-4 e^2/((kcal/mol)(angstrom)),
@@ -309,7 +324,7 @@ def _parse_particle_information(
     ) ** 0.5
 
     if isinstance(snapshot, hoomd.Snapshot):
-        snapshot.particles.N = top.n_sites
+        snapshot.particles.N = top.n_sites + n_rigid
         snapshot.particles.types = unique_types
         snapshot.particles.position[0:] = xyz
         snapshot.particles.typeid[0:] = typeids
