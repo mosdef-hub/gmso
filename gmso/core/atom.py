@@ -73,12 +73,6 @@ class Atom(Site):
         alias="restraint",
     )
 
-    rigid_id_: Optional[int] = Field(
-        None,
-        description="Rigid body ID used to assign rigid body contraints in HOOMD-Blue topologies.",
-        alias="rigid_id",
-    )
-
     model_config = ConfigDict(
         alias_to_fields=dict(
             **Site.model_config["alias_to_fields"],
@@ -130,11 +124,6 @@ class Atom(Site):
     def restraint(self):
         """Return the restraint of this atom."""
         return self.__dict__.get("restraint_")
-
-    @property
-    def rigid_id(self):
-        """Return the rigid body ID for this atom."""
-        return self.__dict__.get("rigid_id_")
 
     @field_serializer("charge_")
     def serialize_charge(self, charge_: Union[u.unyt_quantity, None]):

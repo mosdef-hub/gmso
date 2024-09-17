@@ -209,6 +209,12 @@ class Site(GMSOBase):
         alias="position",
     )
 
+    rigid_id_: Optional[int] = Field(
+        None,
+        description="Rigid body ID used to assign rigid body contraints in HOOMD-Blue topologies.",
+        alias="rigid_id",
+    )
+
     model_config = ConfigDict(
         alias_to_fields={
             "name": "name_",
@@ -249,6 +255,11 @@ class Site(GMSOBase):
     def residue(self):
         """Return the residue assigned to the site."""
         return self.__dict__.get("residue_")
+
+    @property
+    def rigid_id(self):
+        """Return the rigid body ID for this atom."""
+        return self.__dict__.get("rigid_id_")
 
     @field_serializer("position_")
     def serialize_position(self, position_: PositionType):

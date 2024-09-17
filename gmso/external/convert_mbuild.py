@@ -251,6 +251,7 @@ def _parse_particle(particle_map, site):
         charge=charge,
         mass=mass,
     )
+    particle.rigid_id = site.rigid_id
     particle_map[site] = particle
     return particle
 
