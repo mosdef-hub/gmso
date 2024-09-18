@@ -88,7 +88,7 @@ class Molecule(GMSOBase):
 
 class Residue(GMSOBase):
     def __repr__(self):
-        return f"Residue(name={self.name}, number={self.number}, residue={self.residue}"
+        return f"Residue(name={self.name}, number={self.number}"
 
     __iterable_attributes__: ClassVar[set] = {
         "name",
