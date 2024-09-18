@@ -24,7 +24,7 @@ PositionType = Union[Sequence[float], np.ndarray, u.unyt_array]
 class Molecule(GMSOBase):
     def __repr__(self):
         return (
-            f"Molecule(name={self.name}, residue={self.residue}, isrigid={self.isrigid}"
+            f"Molecule(name={self.name}, number={self.number}, isrigid={self.isrigid})"
         )
 
     __iterable_attributes__: ClassVar[set] = {
@@ -88,7 +88,7 @@ class Molecule(GMSOBase):
 
 class Residue(GMSOBase):
     def __repr__(self):
-        return f"Residue(name={self.name}, residue={self.residue}"
+        return f"Residue(name={self.name}, number={self.number}, residue={self.residue}"
 
     __iterable_attributes__: ClassVar[set] = {
         "name",
@@ -149,6 +149,17 @@ def default_position():
 
 
 class Site(GMSOBase):
+    def __repr__(self):
+        """Return the formatted representation of the site."""
+        return (
+            f"<{self.__class__.__name__} {self.name},\n "
+            f"position: {self.position},\n "
+            f"label: {self.label if self.label else None},\n "
+            f"Molecule: {self.molecule},\n"
+            f"Residue: {self.residue},\n"
+            f"id: {id(self)}>"
+        )
+
     __iterable_attributes__: ClassVar[set] = {
         "name",
         "label",
@@ -253,15 +264,6 @@ class Site(GMSOBase):
     @field_serializer("position_")
     def serialize_position(self, position_: PositionType):
         return unyt_to_dict(position_)
-
-    def __repr__(self):
-        """Return the formatted representation of the site."""
-        return (
-            f"<{self.__class__.__name__} {self.name},\n "
-            f"position: {self.position},\n "
-            f"label: {self.label if self.label else None},\n "
-            f"id: {id(self)}>"
-        )
 
     def __str__(self):
         """Return the string representation of the site."""
