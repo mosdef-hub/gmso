@@ -304,7 +304,6 @@ def _parse_particle_information(
         n_rigid = 0
     unique_types = sorted(list(set(types)))
     typeids = np.array([unique_types.index(t) for t in types])
-    rigid_id_tags = None
     if write_rigid:
         rigid_masses = np.zeros(n_rigid)
         rigid_xyz = np.zeros(n_rigid)
@@ -347,7 +346,8 @@ def _parse_particle_information(
         snapshot.particles.typeid[0:] = typeids
         snapshot.particles.mass[0:] = masses
         snapshot.particles.charge[0:] = charges / charge_factor
-        snapshot.particles.body = rigid_id_tags
+        if write_rigid:
+            snapshot.particles.body[0:] = rigid_id_tags
     elif isinstance(snapshot, gsd.hoomd.Frame):
         snapshot.particles.N = top.n_sites
         snapshot.particles.types = unique_types
@@ -355,7 +355,8 @@ def _parse_particle_information(
         snapshot.particles.typeid = typeids
         snapshot.particles.mass = masses
         snapshot.particles.charge = charges / charge_factor
-        snapshot.particles.body = rigid_id_tags
+        if write_rigid:
+            snapshot.particles.body = rigid_id_tags
 
 
 def _parse_pairs_information(
