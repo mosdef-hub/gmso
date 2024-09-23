@@ -1,16 +1,19 @@
 import forcefield_utilities as ffutils
 import hoomd
-import numpy as np
 import pytest
 import unyt as u
+
 from gmso import ForceField
 from gmso.external import from_mbuild
-from gmso.external.convert_hoomd import to_hoomd_forcefield, to_hoomd_snapshot, to_gsd_snapshot
+from gmso.external.convert_hoomd import (
+    to_gsd_snapshot,
+    to_hoomd_forcefield,
+    to_hoomd_snapshot,
+)
 from gmso.parameterization import apply
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
 from gmso.utils.io import has_hoomd, has_mbuild, import_
-from gmso.utils.sorting import sort_connection_strings
 
 if has_hoomd:
     hoomd = import_("hoomd")
@@ -49,9 +52,6 @@ def run_hoomd_nvt(snapshot, forces, vhoomd=4):
 
     sim.operations.computes.append(thermodynamic_properties)
     return sim
-
-
-
 
 
 @pytest.mark.skipif(not has_hoomd, reason="hoomd is not installed")

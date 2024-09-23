@@ -292,7 +292,7 @@ def _parse_particle_information(
             if site.mass
             else 1 * base_units["mass"]
         )
-        charges[idx] = (site.charge if site.charge else 0 * u.elementary_charge)
+        charges[idx] = site.charge if site.charge else 0 * u.elementary_charge
     # Check for rigid IDs
     rigid_ids = [site.rigid_id for site in top.sites]
     rigid_ids_set = set(rigid_ids)
@@ -311,9 +311,7 @@ def _parse_particle_information(
         # TODO: Can we always use "R" here? What if an atom_type is "R"?
         unique_types = ["R"] + unique_types
         # Rigid particles get type ID 0, move all others up by 1
-        typeids = np.concatenate(
-                (np.array([0] * n_rigid), typeids + 1)
-        )
+        typeids = np.concatenate((np.array([0] * n_rigid), typeids + 1))
         # Update mass list and position list of Frame
         for idx, _id in enumerate(rigid_ids_set):
             group_indices = np.where(rigid_ids == _id)[0]
