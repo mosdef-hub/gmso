@@ -3,11 +3,9 @@ import hoomd
 import numpy as np
 import pytest
 import unyt as u
-from mbuild.formats.hoomd_forcefield import create_hoomd_forcefield
-
 from gmso import ForceField
 from gmso.external import from_mbuild
-from gmso.external.convert_hoomd import to_hoomd_forcefield, to_hoomd_snapshot
+from gmso.external.convert_hoomd import to_hoomd_forcefield, to_hoomd_snapshot, to_gsd_snapshot
 from gmso.parameterization import apply
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
@@ -53,88 +51,31 @@ def run_hoomd_nvt(snapshot, forces, vhoomd=4):
     return sim
 
 
+
+
+
 @pytest.mark.skipif(not has_hoomd, reason="hoomd is not installed")
 @pytest.mark.skipif(not has_mbuild, reason="mbuild not installed")
 class TestGsd(BaseTest):
-    def test_mbuild_comparison(self, oplsaa_forcefield):
-        compound = mb.load("CCC", smiles=True)
-        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=2)
-        base_units = {
-            "mass": u.g / u.mol,
-            "length": u.nm,
-            "energy": u.kJ / u.mol,
-        }
+    def test_rigid_bodies(self):
+        ethane = mb.lib.molecules.Ethane()
+        box = mb.fill_box(ethane, n_compounds=2, box=[2, 2, 2])
+        box_no_rigid = mb.clone(box)
+        for i, child in enumerate(box.children):
+            for p in child.particles():
+                p.rigid_id = i
 
-        top = from_mbuild(com_box)
-        top.identify_connections()
-        top = apply(top, oplsaa_forcefield, remove_untyped=True)
+        top = from_mbuild(box)
+        top_no_rigid = from_mbuild(box_no_rigid)
 
-        gmso_snapshot, _ = to_hoomd_snapshot(top, base_units=base_units)
-        gmso_forces, _ = to_hoomd_forcefield(
-            top,
-            r_cut=1.4,
-            base_units=base_units,
-            pppm_kwargs={"resolution": (64, 64, 64), "order": 7},
-        )
+        rigid_ids = [site.rigid_id for site in top.sites]
+        assert len(rigid_ids) == box.n_particles
+        assert len(set(rigid_ids)) == 2
 
-        integrator_forces = list()
-        for cat in gmso_forces:
-            for force in gmso_forces[cat]:
-                integrator_forces.append(force)
-
-        import foyer
-
-        oplsaa = foyer.Forcefield(name="oplsaa")
-        structure = oplsaa.apply(com_box)
-
-        d = 10
-        e = 1 / 4.184
-        m = 0.9999938574
-
-        mb_snapshot, mb_forcefield, _ = create_hoomd_forcefield(
-            structure,
-            ref_distance=d,
-            ref_energy=e,
-            ref_mass=m,
-            r_cut=1.4,
-            init_snap=None,
-            pppm_kwargs={"Nx": 64, "Ny": 64, "Nz": 64, "order": 7},
-        )
-
-        assert mb_snapshot.particles.N == gmso_snapshot.particles.N
-        assert np.allclose(
-            mb_snapshot.particles.position, gmso_snapshot.particles.position
-        )
-        assert mb_snapshot.bonds.N == gmso_snapshot.bonds.N
-        assert mb_snapshot.angles.N == gmso_snapshot.angles.N
-        assert mb_snapshot.dihedrals.N == gmso_snapshot.dihedrals.N
-
-        sorted_gmso_ff = sorted(integrator_forces, key=lambda cls: str(cls.__class__))
-        sorted_mbuild_ff = sorted(mb_forcefield, key=lambda cls: str(cls.__class__))
-
-        for mb_force, gmso_force in zip(sorted_mbuild_ff, sorted_gmso_ff):
-            if isinstance(
-                mb_force,
-                (
-                    hoomd.md.long_range.pppm.Coulomb,
-                    hoomd.md.pair.pair.LJ,
-                    hoomd.md.special_pair.LJ,
-                    hoomd.md.pair.pair.Ewald,
-                    hoomd.md.special_pair.Coulomb,
-                ),
-            ):
-                continue
-            keys = mb_force.params.param_dict.keys()
-            for key in keys:
-                gmso_key = key.replace("opls_135", "CT")
-                gmso_key = gmso_key.replace("opls_136", "CT")
-                gmso_key = gmso_key.replace("opls_140", "HC")
-                gmso_key = "-".join(sort_connection_strings(gmso_key.split("-")))
-                mb_params = mb_force.params.param_dict[key]
-                gmso_params = gmso_force.params.param_dict[gmso_key]
-                variables = mb_params.keys()
-                for var in variables:
-                    assert np.isclose(mb_params[var], gmso_params[var])
+        snapshot, refs = to_gsd_snapshot(top)
+        snapshot_no_rigid, refs = to_gsd_snapshot(top_no_rigid)
+        assert "R" in snapshot.particles.types
+        assert snapshot.particles.N - 2 == snapshot_no_rigid.particles.N
 
     @pytest.mark.skipif(
         int(hoomd_version[0]) < 4, reason="Unsupported features in HOOMD 3"
