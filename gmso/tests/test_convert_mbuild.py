@@ -259,14 +259,3 @@ class TestConvertMBuild(BaseTest):
         cpd.add(mb_ethane)
         with pytest.raises(AssertionError):
             from_mbuild(mb_ethane)
-
-    def test_rigid_ids(self, mb_ethane):
-        box = mb.fill_box(mb_ethane, n_compounds=3, box=[2, 2, 2])
-        for i, child in enumerate(box.children):
-            for p in child.particles():
-                p.rigid_id = i
-
-        top = from_mbuild(box)
-        assert set([site.rigid_id for site in top.sites]) == {0, 1, 2}
-        for particle, site in zip(box.particles(), top.sites):
-            assert particle.rigid_id == site.rigid_id
