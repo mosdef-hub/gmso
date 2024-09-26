@@ -60,21 +60,19 @@ class TestGsd(BaseTest):
     def test_rigid_bodies(self):
         ethane = mb.lib.molecules.Ethane()
         box = mb.fill_box(ethane, n_compounds=2, box=[2, 2, 2])
-        box_no_rigid = mb.clone(box)
-        for i, child in enumerate(box.children):
-            for p in child.particles():
-                p.rigid_id = i
-
         top = from_mbuild(box)
-        top_no_rigid = from_mbuild(box_no_rigid)
+        for site in top.sites:
+            site.molecule.isrigid = True
 
-        rigid_ids = [site.rigid_id for site in top.sites]
-        assert len(rigid_ids) == box.n_particles
-        assert len(set(rigid_ids)) == 2
+        top_no_rigid = from_mbuild(box)
+
+        rigid_ids = [site.molecule.number for site in top.sites]
+        assert set(rigid_ids) == {0, 1}
 
         snapshot, refs = to_gsd_snapshot(top)
         snapshot_no_rigid, refs = to_gsd_snapshot(top_no_rigid)
         assert "R" in snapshot.particles.types
+        assert "R" not in snapshot_no_rigid.particles.types
         assert snapshot.particles.N - 2 == snapshot_no_rigid.particles.N
 
     @pytest.mark.skipif(

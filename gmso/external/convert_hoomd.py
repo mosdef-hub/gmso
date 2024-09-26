@@ -293,18 +293,16 @@ def _parse_particle_information(
             else 1 * base_units["mass"]
         )
         charges[idx] = site.charge if site.charge else 0 * u.elementary_charge
-    # Check for rigid IDs
-    rigid_ids = [site.rigid_id for site in top.sites]
-    rigid_ids_set = set(rigid_ids)
-    if None not in rigid_ids:
-        n_rigid = len(rigid_ids_set)
-        write_rigid = True
-    else:
-        write_rigid = False
-        n_rigid = 0
+
     unique_types = sorted(list(set(types)))
     typeids = np.array([unique_types.index(t) for t in types])
-    if write_rigid:
+    # Check for rigid molecules
+    rigid_mols = any([site.molecule.isrigid for site in top.sites])
+    if rigid_mols:
+        rigid_ids = [site.molecule.number for site in top.sites]
+        rigid_ids_set = set(rigid_ids)
+        n_rigid = len(rigid_ids_set)
+        write_rigid = True
         rigid_masses = np.zeros(n_rigid)
         rigid_xyz = np.zeros((n_rigid, 3))
         # Rigid particle type defaults to "R"; add to front of list
@@ -326,6 +324,9 @@ def _parse_particle_information(
         masses = np.concatenate((rigid_masses, masses))
         xyz = np.concatenate((rigid_xyz, xyz))
         rigid_id_tags = np.concatenate((np.arange(n_rigid), np.array(rigid_ids)))
+    else:
+        write_rigid = False
+        n_rigid = 0
 
     """
     Permittivity of free space = 2.39725e-4 e^2/((kcal/mol)(angstrom)),
