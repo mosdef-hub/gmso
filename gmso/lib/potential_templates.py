@@ -69,7 +69,11 @@ class PotentialTemplate(AbstractPotential):
         potential_expression=None,
         expected_parameters_dimensions=None,
     ):
-        if not isinstance(independent_variables, set):
+        if isinstance(independent_variables, set):
+            pass
+        elif isinstance(independent_variables, list):
+            independent_variables = set(independent_variables)
+        elif isinstance(independent_variables, str):
             independent_variables = set(independent_variables.split(","))
 
         if potential_expression is None:
