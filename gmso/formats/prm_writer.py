@@ -2,6 +2,39 @@
 
 from gmso.formats.formats_registry import saves_as
 from gmso.utils.units import LAMMPS_UnitSystems
+from gmso.utils.compatibility import check_compatibility
+from gmso.core.views import PotentialFilters
+from gmso.lib.potential_templates import PotentialTemplateLibrary
+
+
+def _validate_potential_compatibility(top):
+    """Check compatability of topology object potentials with LAMMPSDATA format."""
+    pfilter = PotentialFilters.UNIQUE_EXPRESSION
+    pot_types = check_compatibility(
+        top, _accepted_potentials(), site_pfilter=pfilter, conn_pfilter=pfilter
+    )
+    return pot_types
+
+def _accepted_potentials():
+    """List of accepted potentials that LAMMPS can support."""
+    templates = PotentialTemplateLibrary()
+    lennard_jones_potential = templates["LennardJonesPotential"]
+    harmonic_bond_potential = templates["LAMMPSHarmonicBondPotential"]
+    harmonic_angle_potential = templates["LAMMPSHarmonicAnglePotential"]
+    ub_angle_potential = templates["UreyBradleyAnglePotential"]
+    periodic_torsion_potential = templates["PeriodicTorsionPotential"]
+    harmonic_improper_potential = templates["LAMMPSHarmonicImproperPotential"]
+    accepted_potentialsList = [
+        lennard_jones_potential,
+        harmonic_bond_potential,
+        harmonic_angle_potential,
+		ub_angle_potential,
+        periodic_torsion_potential,
+        harmonic_improper_potential,
+    ]
+    return accepted_potentialsList
+
+
 
 
 @saves_as(".prm", ".par")
@@ -18,6 +51,11 @@ def write_prm(topology, filename):
 
     Parmed stores rmin/2 in "rmin"
     """
+    # Validation
+    potentialsMap = _validate_potential_compatibility(topology)
+
+
+
     unit_system = LAMMPS_UnitSystems("real")  # ang, kcal/mol, amu
     # ATOMS
     with open(filename, "w") as f:
@@ -28,7 +66,7 @@ def write_prm(topology, filename):
                 (
                     site.atom_type.name,
                     unit_system.convert_parameter(
-                        site.atom_type.mass, n_decimals=6, name="mass"
+                        site.atom_type.mass, n_decimals=3, name="mass"
                     ),
                 )
             )
@@ -40,8 +78,15 @@ def write_prm(topology, filename):
         for bond in topology.bond_types:
             atom1, atom2 = bond.member_types
             f.write(
-                "{:8s} {:8s} {:.5f} {:.5f}\n".format(
-                    atom1, atom2, bond.parameters["k"], bond.parameters["r_eq"]
+                "{:8s} {:8s} {:7s} {:7s}\n".format(
+
+                    atom1, atom2,
+                    unit_system.convert_parameter(
+                        bond.parameters["k"], n_decimals=3
+                    ),
+                    unit_system.convert_parameter(
+                        bond.parameters["r_eq"], n_decimals=3
+                    )
                 )
             )
 
@@ -50,24 +95,37 @@ def write_prm(topology, filename):
             atom1, atom2, atom3 = angle.member_types
             if angle.name == "UreyBradleyAnglePotential":
                 f.write(
-                    "{:8s} {:8s} {:8s} {:.5f} {:.5f} {:.5f} {:.5f}\n".format(
+                    "{:8s} {:8s} {:8s} {:7s} {:7s} {:7s} {:7s}\n".format(
                         atom1,
                         atom2,
                         atom3,
-                        angle.parameters["k"],
-                        angle.parameters["theta_eq"],
-                        angle.parameters["kub"],
-                        angle.parameters["r_eq"],
+                        unit_system.convert_parameter(
+                            angle.parameters["k"], n_decimals=3
+                        ),
+                        unit_system.convert_parameter(
+                            angle.parameters["theta_eq"], n_decimals=3, name="theta_eq" # necessary for conversion to degrees not radians
+                        ),
+                        unit_system.convert_parameter(
+                            angle.parameters["kub"], n_decimals=3
+                        ),
+                        unit_system.convert_parameter(
+                            angle.parameters["r_eq"], n_decimals=3
+                        ),
                     )
                 )
             else:  # assume harmonic style:
                 f.write(
-                    "{:8s} {:8s} {:8s} {:.5f} {:.5f}\n".format(
+                    "{:8s} {:8s} {:8s} {:7s} {:7s}\n".format(
                         atom1,
                         atom2,
                         atom3,
-                        angle.parameters["k"],
-                        angle.parameters["theta_eq"],
+                        unit_system.convert_parameter(
+                            angle.parameters["k"], n_decimals=3
+                        ),
+                        unit_system.convert_parameter(
+                            angle.parameters["theta_eq"], n_decimals=3,
+                            name="theta_eq"
+                        ),
                     )
                 )
 
@@ -76,32 +134,44 @@ def write_prm(topology, filename):
         for dihedral in topology.dihedral_types:
             # works for PeriodicTorsion
             atom1, atom2, atom3, atom4 = dihedral.member_types
-            f.write(
-                "{:8s} {:8s} {:8s} {:8s} {:.5f} {:5f} {:.5f}\n".format(
-                    atom1,
-                    atom2,
-                    atom3,
-                    atom4,
-                    dihedral.parameters["k"][0],
-                    dihedral.parameters["n"][0],
-                    dihedral.parameters["phi_eq"][0],
+            variable_dtypes = ["k", "n", "phi_eq"]
+            zipped_params = (dihedral.parameters[x] for x in variable_dtypes)
+            for k, n, phi_eq in zip(*zipped_params):
+                f.write(
+                    "{:8s} {:8s} {:8s} {:8s} {:7s} {:7s} {:7s}\n".format(
+                        atom1,
+                        atom2,
+                        atom3,
+                        atom4,
+                        unit_system.convert_parameter(
+                            k, n_decimals=3
+                        ),
+                        unit_system.convert_parameter(
+                            n, n_decimals=3
+                        ),
+                        unit_system.convert_parameter(
+                            phi_eq, n_decimals=3, name="phi_eq"
+                        ),
+                    )
                 )
-            )
 
-        # TODO: No support for harmonic impropers
 
         f.write("\nIMPROPER\n")
         for improper in topology.improper_types:
             atom1, atom2, atom3, atom4 = improper.member_types
             f.write(
-                "{:8s} {:8s} {:8s} {:8s} {:.5f} {:5f} {:.5f}\n".format(
+                "{:8s} {:8s} {:8s} {:8s} {:.5s} {:5.3f} {:.5s}\n".format(
                     atom1,
                     atom2,
                     atom3,
                     atom4,
-                    improper.parameters["phi_k"][0],
-                    improper.parameters["n"][0],
-                    improper.parameters["phi_eq"][0],
+                    unit_system.convert_parameter(
+                        improper.parameters["k"], n_decimals=3
+                    ),
+                    0.0,
+                    unit_system.convert_parameter(
+                        improper.parameters["phi_eq"], n_decimals=3
+                    ),
                 )
             )
 
@@ -111,14 +181,22 @@ def write_prm(topology, filename):
         for atype in topology.atom_types:
             # atype, 0.0, epsilon, rmin/2, 0.0, epsilon(1-4), rmin/2 (1-4)
             f.write(
-                "{:8s} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f}\n".format(
+                "{:8s} {:8.3f} {:8s} {:8s} {:8.3f} {:8s} {:8s}\n".format(
                     atype.name,
                     0.0,  # ignored,
-                    atype.parameters["epsilon"],
-                    atype.parameters["sigma"],
+                    unit_system.convert_parameter(
+                        atype.parameters["epsilon"], n_decimals=3
+                    ),
+                    unit_system.convert_parameter(
+                        atype.parameters["sigma"], n_decimals=3
+                    ),
                     0.0,
-                    atype.parameters["epsilon"] * nonbonded14,
-                    atype.parameters["sigma"] * nonbonded14,
+                    unit_system.convert_parameter(
+                        atype.parameters["epsilon"], n_decimals=3
+                    ),
+                    unit_system.convert_parameter(
+                        atype.parameters["sigma"], n_decimals=3
+                    ),
                 )
             )
         f.write("\nEND")

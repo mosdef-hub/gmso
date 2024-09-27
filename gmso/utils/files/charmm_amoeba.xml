@@ -1,0 +1,192 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ForceField name="Forcefield" version="1.0.0">
+  <FFMetaData electrostatics14Scale="1.0" nonBonded14Scale="1.0" combiningRule="geometric">
+      <Units energy="kJ/mol" distance="nm" mass="amu" charge="elementary_charge"/>
+  </FFMetaData>
+  <AtomTypes expression="4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)">
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <AtomType name="CTL1" mass="12.011" charge="0.0" atomclass="CTL1" definition="_CTL1" element="_CTL1">
+      <Parameters>
+        <Parameter name="epsilon" value="1.192464"/>
+        <Parameter name="sigma" value="1.0400013524445013"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="OSL" mass="16.008" charge="0.0" atomclass="OSL" definition="_OSL" element="_OSL">
+      <Parameters>
+        <Parameter name="epsilon" value="2.192464"/>
+        <Parameter name="sigma" value="2.0400013524445013"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="PL" mass="15.0" charge="0.0" atomclass="PL" definition="[_PL]" element="_PL">
+      <Parameters>
+        <Parameter name="epsilon" value="3.192464"/>
+        <Parameter name="sigma" value="3.0400013524445013"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="OSLP" mass="16.008" charge="0.0" atomclass="OSLP" definition="[_OSLP]" element="_OSLP">
+      <Parameters>
+        <Parameter name="epsilon" value="4.192464"/>
+        <Parameter name="sigma" value="4.040001352444501"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+  <BondTypes expression="0.5*k*(r - r_eq)**2">
+    <ParametersUnitDef parameter="k" unit="kJ/(mol*nm**2)"/>
+    <ParametersUnitDef parameter="r_eq" unit="nm"/>
+    <BondType name="HarmonicBondPotential" type1="CTL1" type2="CTL1">
+      <Parameters>
+        <Parameter name="k" value="1.0"/>
+        <Parameter name="r_eq" value="1.0"/>
+      </Parameters>
+    </BondType>
+    <BondType name="HarmonicBondPotential" type1="CTL1" type2="OSL">
+      <Parameters>
+        <Parameter name="k" value="2.0"/>
+        <Parameter name="r_eq" value="2.0"/>
+      </Parameters>
+    </BondType>
+    <BondType name="HarmonicBondPotential" type1="CTL1" type2="PL">
+      <Parameters>
+        <Parameter name="k" value="3.0"/>
+        <Parameter name="r_eq" value="3.0"/>
+      </Parameters>
+    </BondType>
+    <BondType name="HarmonicBondPotential" type1="CTL1" type2="OSLP">
+      <Parameters>
+        <Parameter name="k" value="4.0"/>
+        <Parameter name="r_eq" value="4.0"/>
+      </Parameters>
+    </BondType>
+    <BondType name="HarmonicBondPotential" type1="OSL" type2="PL">
+      <Parameters>
+        <Parameter name="k" value="5.0"/>
+        <Parameter name="r_eq" value="5.0"/>
+      </Parameters>
+    </BondType>
+    <BondType name="HarmonicBondPotential" type1="OSL" type2="OSL">
+      <Parameters>
+        <Parameter name="k" value="6.0"/>
+        <Parameter name="r_eq" value="6.0"/>
+      </Parameters>
+    </BondType>
+    <BondType name="HarmonicBondPotential" type1="OSL" type2="OSLP">
+      <Parameters>
+        <Parameter name="k" value="7.0"/>
+        <Parameter name="r_eq" value="7.0"/>
+      </Parameters>
+    </BondType>
+    <BondType name="HarmonicBondPotential" type1="PL" type2="OSLP">
+      <Parameters>
+        <Parameter name="k" value="8.0"/>
+        <Parameter name="r_eq" value="8.0"/>
+      </Parameters>
+    </BondType>
+    <BondType name="HarmonicBondPotential" type1="PL" type2="PL">
+      <Parameters>
+        <Parameter name="k" value="9.0"/>
+        <Parameter name="r_eq" value="9.0"/>
+      </Parameters>
+    </BondType>
+    <BondType name="HarmonicBondPotential" type1="OSLP" type2="OSLP">
+      <Parameters>
+        <Parameter name="k" value="10.0"/>
+        <Parameter name="r_eq" value="10.0"/>
+      </Parameters>
+    </BondType>
+  </BondTypes>
+  <AngleTypes expression="0.5*k*(theta - theta_eq)**2">
+    <ParametersUnitDef parameter="k" unit="kJ/(mol*rad**2)"/>
+    <ParametersUnitDef parameter="theta_eq" unit="rad"/>
+    <AngleType name="HarmonicAnglePotential" type1="CTL1" type2="OSL" type3="OSLP">
+      <Parameters>
+        <Parameter name="k" value="518.4"/>
+        <Parameter name="theta_eq" value="2.93732"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="HarmonicAnglePotential" type1="OSLP" type2="OSL" type3="PL">
+      <Parameters>
+        <Parameter name="k" value="618.4"/>
+        <Parameter name="theta_eq" value="3.93732"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="HarmonicAnglePotential" type1="OSLP" type2="CTL1" type3="OSL">
+      <Parameters>
+        <Parameter name="k" value="718.4"/>
+        <Parameter name="theta_eq" value="4.93732"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="HarmonicAnglePotential" type1="OSL" type2="PL" type3="OSLP">
+      <Parameters>
+        <Parameter name="k" value="718.4"/>
+        <Parameter name="theta_eq" value="4.93732"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="HarmonicAnglePotential" type1="OSL" type2="PL" type3="CTL1">
+      <Parameters>
+        <Parameter name="k" value="718.4"/>
+        <Parameter name="theta_eq" value="4.93732"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="HarmonicAnglePotential" type1="OSLP" type2="PL" type3="CTL1">
+      <Parameters>
+        <Parameter name="k" value="718.4"/>
+        <Parameter name="theta_eq" value="4.93732"/>
+      </Parameters>
+    </AngleType>
+  </AngleTypes>
+  <AngleTypes expression="0.5*k*(theta - theta_eq)**2+ 0.5*kub*(r-r_eq)**2">
+    <ParametersUnitDef parameter="k" unit="kJ/(mol*rad**2)"/>
+    <ParametersUnitDef parameter="theta_eq" unit="rad"/>
+    <ParametersUnitDef parameter="kub" unit="kJ/(mol*rad**2)"/>
+    <ParametersUnitDef parameter="r_eq" unit="rad"/>
+    <AngleType name="UreyBradleyAnglePotential" type1="CTL1" type2="OSL" type3="PL">
+      <Parameters>
+        <Parameter name="k" value="418.4"/>
+        <Parameter name="theta_eq" value="1.93732"/>
+        <Parameter name="kub" value="20920"/>
+        <Parameter name="r_eq" value="0.21400"/>
+      </Parameters>
+    </AngleType>
+  </AngleTypes>
+  <DihedralTypes expression="k*(cos(n*phi - phi_eq) + 1)">
+    <ParametersUnitDef parameter="k" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="phi_eq" unit="rad"/>
+    <ParametersUnitDef parameter="n" unit="dimensionless"/>
+    <DihedralType name="PeriodicTorsionPotential" type1="PL" type2="OSL" type3="CTL1" type4="OSLP">
+      <Parameters>
+        <Parameter name="k">
+          <Value>69.0</Value>
+          <Value>138.0</Value>
+          <Value>138.0</Value>
+        </Parameter>
+        <Parameter name="phi_eq">
+          <Value>0.0</Value>
+          <Value>45.0</Value>
+          <Value>90.0</Value>
+        </Parameter>
+        <Parameter name="n">
+          <Value>1.0</Value>
+          <Value>2.0</Value>
+          <Value>3.0</Value>
+        </Parameter>
+      </Parameters>
+    </DihedralType>
+  </DihedralTypes>
+  <ImproperTypes expression="k * (phi - phi_eq)**2">
+    <ParametersUnitDef parameter="k" unit="kJ/mol/rad**2"/>
+    <ParametersUnitDef parameter="phi_eq" unit="degree"/>
+    <ImproperType name="HarmonicImproperPotential" type1="PL" type2="OSL" type3="CTL1" type4="OSLP">
+      <Parameters>
+        <Parameter name="k" value="200.83200"/>
+        <Parameter name="phi_eq" value="0.000"/>
+      </Parameters>
+    </ImproperType>
+    <ImproperType name="HarmonicImproperPotential" type1="OSL" type2="PL" type3="CTL1" type4="OSLP">
+      <Parameters>
+        <Parameter name="k" value="300.83200"/>
+        <Parameter name="phi_eq" value="1.000"/>
+      </Parameters>
+    </ImproperType>
+  </ImproperTypes>
+</ForceField>
