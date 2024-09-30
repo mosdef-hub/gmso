@@ -1,5 +1,5 @@
 {
-  "name": "HarmonicImproperPotential",
+  "name": "LAMMPSHarmonicImproperPotential",
   "expression": "k * (phi - phi_eq)**2",
   "independent_variables": "phi",
   "expected_parameters_dimensions": {

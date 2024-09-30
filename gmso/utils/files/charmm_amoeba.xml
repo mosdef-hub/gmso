@@ -138,8 +138,8 @@
   <AngleTypes expression="0.5*k*(theta - theta_eq)**2+ 0.5*kub*(r-r_eq)**2">
     <ParametersUnitDef parameter="k" unit="kJ/(mol*rad**2)"/>
     <ParametersUnitDef parameter="theta_eq" unit="rad"/>
-    <ParametersUnitDef parameter="kub" unit="kJ/(mol*rad**2)"/>
-    <ParametersUnitDef parameter="r_eq" unit="rad"/>
+    <ParametersUnitDef parameter="kub" unit="kJ/(mol*nm**2)"/>
+    <ParametersUnitDef parameter="r_eq" unit="nm"/>
     <AngleType name="UreyBradleyAnglePotential" type1="CTL1" type2="OSL" type3="PL">
       <Parameters>
         <Parameter name="k" value="418.4"/>
