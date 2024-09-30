@@ -3,7 +3,7 @@
   <FFMetaData electrostatics14Scale="1.0" nonBonded14Scale="1.0" combiningRule="geometric">
       <Units energy="kJ/mol" distance="nm" mass="amu" charge="elementary_charge"/>
   </FFMetaData>
-  <AtomTypes expression="4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)">
+  <AtomTypes expression="epsilon*(-sigma**6/r**6 + sigma**12/r**12)">
     <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
     <ParametersUnitDef parameter="sigma" unit="nm"/>
     <AtomType name="CTL1" mass="12.011" charge="0.0" atomclass="CTL1" definition="_CTL1" element="_CTL1">

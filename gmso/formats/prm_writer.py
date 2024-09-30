@@ -20,6 +20,7 @@ def _accepted_potentials():
     """List of accepted potentials that LAMMPS can support."""
     templates = PotentialTemplateLibrary()
     lennard_jones_potential = templates["LennardJonesPotential"]
+    lennard_jones_potential.expression /= 4 # no 4*epsilon term
     harmonic_bond_potential = templates["LAMMPSHarmonicBondPotential"]
     harmonic_angle_potential = templates["LAMMPSHarmonicAnglePotential"]
     ub_angle_potential = templates["UreyBradleyAnglePotential"]
@@ -59,11 +60,11 @@ def write_prm(topology, filename, strict_potentials=False):
             "dihedrals": ["PeriodicTorsionPotential"],
             "angles": ["LAMMPSHarmonicAnglePotential", "UreyBradleyAnglePotential"],
             "bonds": ["LAMMPSHarmonicBondPotential"],
-            # "sites":"LennardJonesPotential",
+            "sites":["LennardJonesPotential"],
             # "sites":"CoulombicPotential"
         }
         _try_default_potential_conversions(topology, default_parameterMaps)
-    potentialsMap = _validate_potential_compatibility(topology)
+    _validate_potential_compatibility(topology)
 
     unit_system = LAMMPS_UnitSystems("real")  # ang, kcal/mol, amu
     # ATOMS
@@ -179,7 +180,7 @@ def write_prm(topology, filename, strict_potentials=False):
             )
 
         f.write("\nNONBONDED\n")
-        nonbonded14 = topology.scaling_factors[0][2]
+        # nonbonded14 = topology.scaling_factors[0][2]
 
         for atype in topology.atom_types:
             # atype, 0.0, epsilon, rmin/2, 0.0, epsilon(1-4), rmin/2 (1-4)
@@ -202,6 +203,8 @@ def write_prm(topology, filename, strict_potentials=False):
                     ),
                 )
             )
+        # TODO: Add NONBONDED section: NONBONDED nbxmod  5 atom cdiel shift vatom vdistance vswitch -
+        # !adm jr., 5/08/91, suggested cutoff scheme
         f.write("\nEND")
 
 
