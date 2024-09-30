@@ -302,7 +302,6 @@ def _parse_particle_information(
         rigid_ids = [site.molecule.number for site in top.sites]
         rigid_ids_set = set(rigid_ids)
         n_rigid = len(rigid_ids_set)
-        write_rigid = True
         rigid_masses = np.zeros(n_rigid)
         rigid_xyz = np.zeros((n_rigid, 3))
         # Rigid particle type defaults to "R"; add to front of list
@@ -325,7 +324,6 @@ def _parse_particle_information(
         xyz = np.concatenate((rigid_xyz, xyz))
         rigid_id_tags = np.concatenate((np.arange(n_rigid), np.array(rigid_ids)))
     else:
-        write_rigid = False
         n_rigid = 0
 
     """
@@ -347,7 +345,7 @@ def _parse_particle_information(
         snapshot.particles.typeid[0:] = typeids
         snapshot.particles.mass[0:] = masses
         snapshot.particles.charge[0:] = charges / charge_factor
-        if write_rigid:
+        if n_rigid:
             snapshot.particles.body[0:] = rigid_id_tags
     elif isinstance(snapshot, gsd.hoomd.Frame):
         snapshot.particles.N = top.n_sites + n_rigid
@@ -356,7 +354,7 @@ def _parse_particle_information(
         snapshot.particles.typeid = typeids
         snapshot.particles.mass = masses
         snapshot.particles.charge = charges / charge_factor
-        if write_rigid:
+        if n_rigid:
             snapshot.particles.body = rigid_id_tags
 
 
