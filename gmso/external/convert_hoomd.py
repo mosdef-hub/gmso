@@ -284,17 +284,47 @@ def _parse_particle_information(
         site.name if site.atom_type is None else site.atom_type.name
         for site in top.sites
     ]
-    unique_types = sorted(list(set(types)))
-    typeids = np.array([unique_types.index(t) for t in types])
-    masses = list()
-    charges = list()
-    for site in top.sites:
-        masses.append(
+    masses = np.zeros(len(xyz))
+    charges = np.zeros(len(xyz))
+    for idx, site in enumerate(top.sites):
+        masses[idx] = (
             site.mass.to_value(base_units["mass"])
             if site.mass
             else 1 * base_units["mass"]
         )
-        charges.append(site.charge if site.charge else 0 * u.elementary_charge)
+        charges[idx] = site.charge if site.charge else 0 * u.elementary_charge
+
+    unique_types = sorted(list(set(types)))
+    typeids = np.array([unique_types.index(t) for t in types])
+    # Check for rigid molecules
+    rigid_mols = any([site.molecule.isrigid for site in top.sites])
+    if rigid_mols:
+        rigid_ids = [site.molecule.number for site in top.sites]
+        rigid_ids_set = set(rigid_ids)
+        n_rigid = len(rigid_ids_set)
+        rigid_masses = np.zeros(n_rigid)
+        rigid_xyz = np.zeros((n_rigid, 3))
+        # Rigid particle type defaults to "R"; add to front of list
+        # TODO: Can we always use "R" here? What if an atom_type is "R"?
+        unique_types = ["R"] + unique_types
+        # Rigid particles get type ID 0, move all others up by 1
+        typeids = np.concatenate((np.array([0] * n_rigid), typeids + 1))
+        # Update mass list and position list of Frame
+        for idx, _id in enumerate(rigid_ids_set):
+            group_indices = np.where(rigid_ids == _id)[0]
+            group_positions = xyz[group_indices]
+            group_masses = masses[group_indices]
+            com_xyz = np.sum(group_positions.T * group_masses, axis=1) / sum(
+                group_masses
+            )
+            rigid_masses[idx] = sum(group_masses)
+            rigid_xyz[idx] = com_xyz
+        # Append rigid center mass and xyz to front
+        masses = np.concatenate((rigid_masses, masses))
+        xyz = np.concatenate((rigid_xyz, xyz))
+        rigid_id_tags = np.concatenate((np.arange(n_rigid), np.array(rigid_ids)))
+    else:
+        n_rigid = 0
 
     """
     Permittivity of free space = 2.39725e-4 e^2/((kcal/mol)(angstrom)),
@@ -309,24 +339,23 @@ def _parse_particle_information(
     ) ** 0.5
 
     if isinstance(snapshot, hoomd.Snapshot):
-        snapshot.particles.N = top.n_sites
+        snapshot.particles.N = top.n_sites + n_rigid
         snapshot.particles.types = unique_types
         snapshot.particles.position[0:] = xyz
         snapshot.particles.typeid[0:] = typeids
         snapshot.particles.mass[0:] = masses
         snapshot.particles.charge[0:] = charges / charge_factor
+        if n_rigid:
+            snapshot.particles.body[0:] = rigid_id_tags
     elif isinstance(snapshot, gsd.hoomd.Frame):
-        snapshot.particles.N = top.n_sites
+        snapshot.particles.N = top.n_sites + n_rigid
         snapshot.particles.types = unique_types
         snapshot.particles.position = xyz
         snapshot.particles.typeid = typeids
         snapshot.particles.mass = masses
         snapshot.particles.charge = charges / charge_factor
-    if rigid_bodies:
-        warnings.warn(
-            "Rigid bodies detected, but not yet implemented for GSD",
-            NotYetImplementedWarning,
-        )
+        if n_rigid:
+            snapshot.particles.body = rigid_id_tags
 
 
 def _parse_pairs_information(
