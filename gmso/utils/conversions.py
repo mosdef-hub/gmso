@@ -57,7 +57,7 @@ def _try_sympy_conversions(pot1, pot2):
 
 def _conversion_from_template_name(
     top, connStr: str, conn_typeStr: str, convStr: str
-) -> "Topology":
+) -> gmso.Topology:
     """Use the name of convStr to identify function to convert sympy expressions."""
     conversions_map = {  # these are predefined between template types
         # More functions, and `(to, from)` key pairs added to this dictionary
@@ -101,10 +101,10 @@ def _conversion_from_template_name(
 
 
 def _conversion_from_template_obj(
-    top: "Topology",
+    top: gmso.Topology,
     connStr: str,
     conn_typeStr: str,
-    potential_template: "ParametricPotential",
+    potential_template: gmso.core.ParametricPotential,
 ):
     """Use a passed template object to identify conversion between expressions."""
     for conn in getattr(top, connStr):
@@ -140,12 +140,6 @@ def convert_topology_expressions(top, expressionMap={}):
     # handler for various keys passed to expressionMap for conversion
     for connStr, conv in expressionMap.items():
         possible_connections = ["bond", "angle", "dihedral", "improper"]
-        possible_endings = ["", "s", "_atypes"]
-        possible_connection_labels = [
-            connection + ending
-            for connection in possible_connections
-            for ending in possible_endings
-        ]
         if connStr.lower() in [
             "sites",
             "site",
