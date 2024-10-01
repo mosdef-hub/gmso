@@ -1,8 +1,10 @@
 """Module for standard conversions needed in molecular simulations."""
+
 from __future__ import annotations
-from typing import TYPE_CHECKING
+
 import re
 from functools import lru_cache
+from typing import TYPE_CHECKING
 
 import numpy as np
 import symengine
@@ -11,7 +13,7 @@ import unyt as u
 from unyt.dimensions import length, mass, time
 
 if TYPE_CHECKING:
-        import gmso
+    import gmso
 
 from gmso.exceptions import EngineIncompatibilityError, GMSOError
 from gmso.lib.potential_templates import (
@@ -60,7 +62,7 @@ def _try_sympy_conversions(pot1, pot2):
 
 def _conversion_from_template_name(
     top, connStr: str, conn_typeStr: str, convStr: str
-) -> 'gmso.Topology':
+) -> "gmso.Topology":
     """Use the name of convStr to identify function to convert sympy expressions."""
     conversions_map = {  # these are predefined between template types
         # More functions, and `(to, from)` key pairs added to this dictionary
@@ -104,7 +106,7 @@ def _conversion_from_template_name(
 
 
 def _conversion_from_template_obj(
-    top: 'gmso.Topology',
+    top: "gmso.Topology",
     connStr: str,
     conn_typeStr: str,
     potential_template: gmso.core.ParametricPotential,
