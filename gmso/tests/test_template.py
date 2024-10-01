@@ -34,8 +34,10 @@ class TestTemplate(BaseTest):
             independent_variables={"x"},
             expected_parameters_dimensions={"a": "length", "b": "length"},
         )
-        with pytest.raises(NotImplementedError):
-            template.set_expression(expression="a*y+b")
+        with pytest.raises(ValueError):
+            template.set_expression(new_expression="a*y+b")
+        template2 = template.set_expression(new_expression="3*a*x+b")
+        assert template2.expression != template.expression
 
     def test_parameterization_non_dict_expected_dimensions(self):
         template = PotentialTemplate(
