@@ -1,6 +1,5 @@
 """Abstract representation of a Potential object."""
 
-from abc import abstractmethod
 from typing import Any, Dict, Iterator, List
 
 import unyt as u
@@ -159,11 +158,6 @@ class AbstractPotential(GMSOBase):
         if isinstance(v, dict):
             v = PotentialExpression(**v)
         return v
-
-    @abstractmethod
-    def set_expression(self):
-        """Set the functional form of the expression."""
-        raise NotImplementedError
 
     def __setattr__(self, key: Any, value: Any) -> None:
         """Set attributes of the potential."""
