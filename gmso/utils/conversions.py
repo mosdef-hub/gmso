@@ -12,7 +12,6 @@ import unyt as u
 from unyt.dimensions import length, mass, time
 
 import gmso
-
 from gmso.exceptions import EngineIncompatibilityError, GMSOError
 from gmso.lib.potential_templates import (
     PotentialTemplate,
