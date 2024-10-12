@@ -12,7 +12,6 @@ import unyt as u
 from unyt.dimensions import length, mass, time
 
 import gmso
-
 from gmso.exceptions import EngineIncompatibilityError, GMSOError
 from gmso.lib.potential_templates import (
     PotentialTemplate,
@@ -174,7 +173,9 @@ def convert_topology_expressions(top, expressionMap={}):
             connType = list(getattr(top, conn_typeStr))[0]
             errormsg = f"""
             Failed to convert {top} for {connStr} components, with conversion
-            of {connType.name}: {connType} to {conv} as {type(conv)}.
+            of {connType.name}: Attempted to convert {connType} with style {conv}, which is a {type(conv)}.
+            Please use a template conversion from gmso.lib.potential_templates by passing the name: i.e.
+            HarmonicBondPotential, or by loading a template from gmso.lib.potential_template PotentialTemplateLibrary().
             """
             raise EngineIncompatibilityError(errormsg)
     return top

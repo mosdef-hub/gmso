@@ -4,6 +4,7 @@ import sympy
 import unyt as u
 from sympy import sympify
 
+from gmso.exceptions import EngineIncompatibilityError
 from gmso.tests.base_test import BaseTest
 from gmso.utils.conversions import (
     convert_kelvin_to_energy_units,
@@ -239,3 +240,9 @@ class TestConversions(BaseTest):
             n_decimals=6,
         )
         assert np.isclose(float(paramStr), 1 / 3**4, atol=1e-6)
+
+    def test_failed_conversion_method(self, typed_ethane):
+        with pytest.raises(
+            EngineIncompatibilityError,
+        ):
+            typed_ethane.convert_potential_styles({"bond": 2})
