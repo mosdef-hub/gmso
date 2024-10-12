@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 from functools import lru_cache
-from typing import TYPE_CHECKING
 
 import numpy as np
 import symengine
@@ -12,8 +11,7 @@ import sympy
 import unyt as u
 from unyt.dimensions import length, mass, time
 
-if TYPE_CHECKING:
-    import gmso
+import gmso
 
 from gmso.exceptions import EngineIncompatibilityError, GMSOError
 from gmso.lib.potential_templates import (
