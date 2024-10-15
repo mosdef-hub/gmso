@@ -2,7 +2,9 @@ import numpy as np
 import pytest
 import sympy
 import unyt as u
+from sympy import sympify
 
+from gmso.exceptions import EngineIncompatibilityError
 from gmso.tests.base_test import BaseTest
 from gmso.utils.conversions import (
     convert_kelvin_to_energy_units,
@@ -17,10 +19,21 @@ def _convert_potential_types(top, connStr, expected_units_dim, base_units):
     return potentials
 
 
-class TestKelvinToEnergy(BaseTest):
-    def test_convert_potential_styles(self, typed_ethane):
-        from sympy import sympify
+class TestConversions(BaseTest):
+    def test_rescale_potentials(self, typed_ethane):
+        from gmso.lib.potential_templates import PotentialTemplateLibrary
 
+        library = PotentialTemplateLibrary()
+        template = library["LennardJonesPotential"]
+        template = template.set_expression(
+            template.expression / 4
+        )  # use setter to not set in place
+        atype = list(typed_ethane.atom_types)[0]
+        assert atype.expression == sympify("4*epsilon*((sigma/r)**12 - (sigma/r)**6)")
+        typed_ethane.convert_potential_styles({"sites": template})
+        assert atype.expression == sympify("epsilon*((sigma/r)**12 - (sigma/r)**6)")
+
+    def test_convert_potential_styles(self, typed_ethane):
         rb_expr = sympify(
             "c0 * cos(phi)**0 + c1 * cos(phi)**1 + c2 * cos(phi)**2 + c3 * cos(phi)**3 + c4 * cos(phi)**4 + c5 * cos(phi)**5"
         )
@@ -227,3 +240,9 @@ class TestKelvinToEnergy(BaseTest):
             n_decimals=6,
         )
         assert np.isclose(float(paramStr), 1 / 3**4, atol=1e-6)
+
+    def test_failed_conversion_method(self, typed_ethane):
+        with pytest.raises(
+            EngineIncompatibilityError,
+        ):
+            typed_ethane.convert_potential_styles({"bond": 2})
