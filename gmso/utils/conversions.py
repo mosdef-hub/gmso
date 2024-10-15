@@ -1,5 +1,7 @@
 """Module for standard conversions needed in molecular simulations."""
 
+from __future__ import annotations
+
 import re
 from functools import lru_cache
 
@@ -10,20 +12,20 @@ import unyt as u
 from unyt.dimensions import length, mass, time
 
 import gmso
-from gmso.exceptions import GMSOError
-from gmso.lib.potential_templates import PotentialTemplateLibrary
+from gmso.exceptions import EngineIncompatibilityError, GMSOError
+from gmso.lib.potential_templates import (
+    PotentialTemplate,
+    PotentialTemplateLibrary,
+)
 
 templates = PotentialTemplateLibrary()
 
 
 @lru_cache(maxsize=128)
 def _constant_multiplier(pot1, pot2):
-    # TODO: Doc string
-    # TODO: Test outputs
-    # TODO: Check speed
+    """Attempt to convert from pot1 to pot2 using a scalar."""
     try:
         constant = symengine.expand(pot1.expression / pot2.expression)
-        # constant = sympy.simplify(pot1.expression / pot2.expression)
         if constant.is_number:
             for eq_term in pot1.expression.args:
                 if eq_term.is_symbol:
@@ -40,9 +42,7 @@ sympy_conversionsList = [_constant_multiplier]
 
 @lru_cache(maxsize=128)
 def _try_sympy_conversions(pot1, pot2):
-    # TODO: Doc string
-    # TODO: Test outputs
-    # TODO: Check speed
+    """Attempt to convert from pot1 to pot2 using any generalized conversion function."""
     convertersList = []
     for conversion in sympy_conversionsList:
         convertersList.append(conversion(pot1, pot2))
@@ -52,23 +52,12 @@ def _try_sympy_conversions(pot1, pot2):
     return None
 
 
-def convert_topology_expressions(top, expressionMap={}):
-    """Convert from one parameter form to another.
-
-    Parameters
-    ----------
-    expressionMap : dict, default={}
-        map with keys of the potential type and the potential to change to
-
-    Examples
-    --------
-    Convert from RB torsions to OPLS torsions
-    top.convert_expressions({"dihedrals": "OPLSTorsionPotential"})
-    """
-    # TODO: Raise errors
-
-    # Apply from predefined conversions or easy sympy conversions
-    conversions_map = {
+def _conversion_from_template_name(
+    top, connStr: str, conn_typeStr: str, convStr: str
+) -> "gmso.Topology":
+    """Use the name of convStr to identify function to convert sympy expressions."""
+    conversions_map = {  # these are predefined between template types
+        # More functions, and `(to, from)` key pairs added to this dictionary
         (
             "OPLSTorsionPotential",
             "RyckaertBellemansTorsionPotential",
@@ -83,40 +72,112 @@ def convert_topology_expressions(top, expressionMap={}):
         ): convert_ryckaert_to_opls,
     }  # map of all accessible conversions currently supported
 
-    for conv in expressionMap:
-        # check all connections with these types for compatibility
-        for conn in getattr(top, conv):
-            current_expression = getattr(conn, conv[:-1] + "_type")
-            if (
-                current_expression.name == expressionMap[conv]
-            ):  # check to see if we can skip this one
-                # TODO: Do something instead of just comparing the names
-                continue
-
-            # convert it using pre-defined conversion functions
-            conversion_from_conversion_toTuple = (
-                current_expression.name,
-                expressionMap[conv],
+    # check all connections with these types for compatibility
+    for conn in getattr(top, connStr):
+        current_expression = getattr(conn, conn_typeStr[:-1])  # strip off extra s
+        # convert it using pre-defined names with conversion functions
+        conversion_from_conversion_toTuple = (current_expression.name, convStr)
+        if (
+            conversion_from_conversion_toTuple in conversions_map
+        ):  # Try mapped conversions
+            new_conn_type = conversions_map.get(conversion_from_conversion_toTuple)(
+                current_expression
             )
-            if (
-                conversion_from_conversion_toTuple in conversions_map
-            ):  # Try mapped conversions
-                new_conn_type = conversions_map.get(conversion_from_conversion_toTuple)(
-                    current_expression
-                )
-                setattr(conn, conv[:-1] + "_type", new_conn_type)
-                continue
+            setattr(conn, conn_typeStr[:-1], new_conn_type)
+            continue
 
-            # convert it using sympy expression conversion
-            new_potential = templates[expressionMap[conv]]
-            modified_connection_parametersDict = _try_sympy_conversions(
-                current_expression, new_potential
-            )
-            if modified_connection_parametersDict:  # try sympy conversions
-                current_expression.name = new_potential.name
-                current_expression.expression = new_potential.expression
-                current_expression.parameters.update(modified_connection_parametersDict)
+        # convert it using sympy expression conversion (handles constant multipliers)
+        new_potential = templates[convStr]
+        modified_connection_parametersDict = _try_sympy_conversions(
+            current_expression, new_potential
+        )
+        if modified_connection_parametersDict:  # try sympy conversions
+            current_expression.name = new_potential.name
+            current_expression.expression = new_potential.expression
+            current_expression.parameters.update(modified_connection_parametersDict)
 
+
+def _conversion_from_template_obj(
+    top: "gmso.Topology",
+    connStr: str,
+    conn_typeStr: str,
+    potential_template: gmso.core.ParametricPotential,
+):
+    """Use a passed template object to identify conversion between expressions."""
+    for conn in getattr(top, connStr):
+        current_expression = getattr(conn, conn_typeStr[:-1])  # strip off extra s
+
+        # convert it using sympy expression conversion (handles constant multipliers)
+        modified_connection_parametersDict = _try_sympy_conversions(
+            current_expression, potential_template
+        )
+        if modified_connection_parametersDict:  # try sympy conversions
+            current_expression.name = potential_template.name
+            current_expression.expression = potential_template.expression
+            current_expression.parameters.update(modified_connection_parametersDict)
+
+
+def convert_topology_expressions(top, expressionMap={}):
+    """Convert from one parameter form to another.
+
+    Parameters
+    ----------
+    expressionMap : dict, default={}
+        map with keys of the potential type and the potential to change to.
+        Note that all of the possible template can be found in `gmso/lib/jsons`.
+        Use the string for the json property `name`, or load the template and pass
+        that as the value for conversion.
+
+    Examples
+    --------
+    Convert from RB torsions to OPLS torsions
+    top.convert_expressions({"dihedrals": "OPLSTorsionPotential"})
+
+    Convert from LJ sites to 1*epsilon LJ sites
+    ```
+    template = gmso.lib.potential_templates.PotentialTemplatesLibrary()["LennardJonesPotential"]
+    template = template.set_expression(template.expression / 4) # modify equation
+    top.convert_expressions({"sites":template})
+    # or
+    top = gmso.utils.conversion.convert_topology_expression(top, {"sites":template})
+    ```
+    """
+    # Apply from predefined conversions or easy sympy conversions
+    # handler for various keys passed to expressionMap for conversion
+    for connStr, conv in expressionMap.items():
+        possible_connections = ["bond", "angle", "dihedral", "improper"]
+        if connStr.lower() in [
+            "sites",
+            "site",
+            "atom",
+            "atoms",
+            "atom_types",
+            "atom_type",
+            "atomtype",
+            "atomtypes",
+        ]:
+            # handle renaming type names in relationship to the site or connection
+            conn_typeStr = "atom_types"
+            connStr = "sites"
+        for possible_connection in possible_connections:
+            if possible_connection in connStr.lower():
+                connStr = possible_connection + "s"
+                conn_typeStr = possible_connection + "_types"
+                break
+
+        if isinstance(conv, str):
+            _conversion_from_template_name(top, connStr, conn_typeStr, conv)
+        elif isinstance(conv, PotentialTemplate):
+            _conversion_from_template_obj(top, connStr, conn_typeStr, conv)
+        else:
+            connType = list(getattr(top, conn_typeStr))[0]
+            errormsg = f"""
+            Failed to convert {top} for {connStr} components, with conversion
+            of {connType.name}: Attempted to convert {connType} with style {conv}, which is a {type(conv)}.
+            Please use a template conversion from gmso.lib.potential_templates by passing the name: i.e.
+            HarmonicBondPotential, or by loading a template from gmso.lib.potential_template PotentialTemplateLibrary().
+            """
+            raise EngineIncompatibilityError(errormsg)
     return top
 
 
@@ -132,7 +193,6 @@ def convert_opls_to_ryckaert(opls_connection_type):
     for OPLS and RB torsions. OPLS torsions are defined with
     phi_cis = 0 while RB torsions are defined as phi_trans = 0.
     """
-    # TODO: this function really converts the fourier torsion to rb, not opls
     opls_torsion_potential = templates["FourierTorsionPotential"]
     valid_connection_type = False
     if (
