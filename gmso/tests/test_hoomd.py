@@ -1,5 +1,6 @@
 import forcefield_utilities as ffutils
 import hoomd
+import numpy as np
 import pytest
 import unyt as u
 
@@ -28,7 +29,7 @@ def run_hoomd_nvt(snapshot, forces, vhoomd=4):
     sim = hoomd.Simulation(device=cpu)
     sim.create_state_from_snapshot(snapshot)
 
-    integrator = hoomd.md.Integrator(dt=0.001)
+    integrator = hoomd.md.Integrator(dt=0.0001)
     integrator.forces = list(set().union(*forces.values()))
 
     temp = 300 * u.K
@@ -74,6 +75,14 @@ class TestGsd(BaseTest):
         assert "R" in snapshot.particles.types
         assert "R" not in snapshot_no_rigid.particles.types
         assert snapshot.particles.N - 2 == snapshot_no_rigid.particles.N
+        assert np.array_equal(snapshot.particles.typeid[:2], np.array([0, 0]))
+        assert np.array_equal(
+            snapshot.particles.body[2:10], np.array([0] * ethane.n_particles)
+        )
+        assert np.array_equal(
+            snapshot.particles.body[10:], np.array([1] * ethane.n_particles)
+        )
+        assert snapshot.particles.mass[0] == ethane.mass
 
     @pytest.mark.skipif(
         int(hoomd_version[0]) < 4, reason="Unsupported features in HOOMD 3"
