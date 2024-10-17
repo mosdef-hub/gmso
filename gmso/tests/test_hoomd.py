@@ -61,22 +61,20 @@ class TestGsd(BaseTest):
     def test_rigid_bodies(self):
         ethane = mb.lib.molecules.Ethane()
         box = mb.fill_box(ethane, n_compounds=2, box=[2, 2, 2])
-        cg_comp = mb.Compound()
-        for child in box.children:
-            cg_comp.add(mb.Compound(name="_A", pos=child.center, mass=child.mass))
-        cg_top = from_mbuild(cg_comp)
         top = from_mbuild(box)
         for site in top.sites:
             site.molecule.isrigid = True
+        top.identify_connections()
 
         top_no_rigid = from_mbuild(box)
+        top_no_rigid.identify_connections()
 
         rigid_ids = [site.molecule.number for site in top.sites]
         assert set(rigid_ids) == {0, 1}
 
         snapshot, refs = to_gsd_snapshot(top)
-        cg_snapshot, refs = to_gsd_snapshot(cg_top)
         snapshot_no_rigid, refs = to_gsd_snapshot(top_no_rigid)
+        # Check that snapshot has rigid particles added
         assert "R" in snapshot.particles.types
         assert "R" not in snapshot_no_rigid.particles.types
         assert snapshot.particles.N - 2 == snapshot_no_rigid.particles.N
@@ -88,12 +86,25 @@ class TestGsd(BaseTest):
             snapshot.particles.body[10:], np.array([1] * ethane.n_particles)
         )
         assert np.allclose(snapshot.particles.mass[0], ethane.mass, atol=1e-2)
-        for i in range(2):
-            assert np.allclose(
-                snapshot.particles.position[i],
-                cg_snapshot.particles.position[i],
-                atol=1e-3,
-            )
+        # Check that topology isn't changed by using rigid bodies
+        assert snapshot.bonds.N == snapshot_no_rigid.bonds.N
+        assert snapshot.angles.N == snapshot_no_rigid.angles.N
+        assert snapshot.dihedrals.N == snapshot_no_rigid.dihedrals.N
+        # Check that particle indices in snapshot groups are adjust by num rigid bodies
+        for group1, group2 in zip(snapshot.bonds.group, snapshot_no_rigid.bonds.group):
+            assert np.array_equal(np.array(group1), np.array(group2) + 2)
+        for group1, group2 in zip(
+            snapshot.angles.group, snapshot_no_rigid.angles.group
+        ):
+            assert np.array_equal(np.array(group1), np.array(group2) + 2)
+        for group1, group2 in zip(
+            snapshot.dihedrals.group, snapshot_no_rigid.dihedrals.group
+        ):
+            assert np.array_equal(np.array(group1), np.array(group2) + 2)
+        for group1, group2 in zip(
+            snapshot.impropers.group, snapshot_no_rigid.impropers.group
+        ):
+            assert np.array_equal(np.array(group1), np.array(group2) + 2)
 
     @pytest.mark.skipif(
         int(hoomd_version[0]) < 4, reason="Unsupported features in HOOMD 3"

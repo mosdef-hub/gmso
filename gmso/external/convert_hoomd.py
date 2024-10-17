@@ -394,7 +394,7 @@ def _parse_pairs_information(snapshot, top, n_rigid=0):
             pair_types.append(pair_type)
         pair_typeids.append(pair_types.index(pair_type))
         pairs.append(
-            (top.get_index(pair[0] + n_rigid), top.get_index(pair[1] + n_rigid))
+            (top.get_index(pair[0]) + n_rigid, top.get_index(pair[1]) + n_rigid)
         )
 
     if isinstance(snapshot, hoomd.Snapshot):
