@@ -61,6 +61,10 @@ class TestGsd(BaseTest):
     def test_rigid_bodies(self):
         ethane = mb.lib.molecules.Ethane()
         box = mb.fill_box(ethane, n_compounds=2, box=[2, 2, 2])
+        cg_comp = mb.Compound()
+        for child in box.children:
+            cg_comp.add(mb.Compound(name="_A", pos=child.center, mass=child.mass))
+        cg_top = from_mbuild(cg_comp)
         top = from_mbuild(box)
         for site in top.sites:
             site.molecule.isrigid = True
@@ -71,6 +75,7 @@ class TestGsd(BaseTest):
         assert set(rigid_ids) == {0, 1}
 
         snapshot, refs = to_gsd_snapshot(top)
+        cg_snapshot, refs = to_gsd_snapshot(cg_top)
         snapshot_no_rigid, refs = to_gsd_snapshot(top_no_rigid)
         assert "R" in snapshot.particles.types
         assert "R" not in snapshot_no_rigid.particles.types
@@ -83,6 +88,12 @@ class TestGsd(BaseTest):
             snapshot.particles.body[10:], np.array([1] * ethane.n_particles)
         )
         assert np.allclose(snapshot.particles.mass[0], ethane.mass, atol=1e-2)
+        for i in range(2):
+            assert np.allclose(
+                snapshot.particles.position[i],
+                cg_snapshot.particles.position[i],
+                atol=1e-3,
+            )
 
     @pytest.mark.skipif(
         int(hoomd_version[0]) < 4, reason="Unsupported features in HOOMD 3"
