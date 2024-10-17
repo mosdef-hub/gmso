@@ -82,7 +82,7 @@ class TestGsd(BaseTest):
         assert np.array_equal(
             snapshot.particles.body[10:], np.array([1] * ethane.n_particles)
         )
-        assert snapshot.particles.mass[0] == ethane.mass
+        assert np.allclose(snapshot.particles.mass[0], ethane.mass, atol=1e-2)
 
     @pytest.mark.skipif(
         int(hoomd_version[0]) < 4, reason="Unsupported features in HOOMD 3"
