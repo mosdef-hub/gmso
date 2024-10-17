@@ -402,15 +402,11 @@ def _parse_pairs_information(snapshot, top, n_rigid=0):
         snapshot.pairs.group[:] = np.reshape(pairs, (-1, 2))
         snapshot.pairs.types = pair_types
         snapshot.pairs.typeid[:] = pair_typeids
-        if n_rigid:
-            snapshot.pairs.group += n_rigid
     elif isinstance(snapshot, gsd.hoomd.Frame):
         snapshot.pairs.N = len(pairs)
         snapshot.pairs.group = np.reshape(pairs, (-1, 2))
         snapshot.pairs.types = pair_types
         snapshot.pairs.typeid = pair_typeids
-        if n_rigid:
-            snapshot.pairs.group += n_rigid
 
 
 def _parse_bond_information(snapshot, top, n_rigid=0):

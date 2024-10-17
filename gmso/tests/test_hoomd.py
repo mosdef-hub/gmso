@@ -90,7 +90,7 @@ class TestGsd(BaseTest):
         assert snapshot.bonds.N == snapshot_no_rigid.bonds.N
         assert snapshot.angles.N == snapshot_no_rigid.angles.N
         assert snapshot.dihedrals.N == snapshot_no_rigid.dihedrals.N
-        # Check that particle indices in snapshot groups are adjust by num rigid bodies
+        # Check if particle indices in snapshot groups are adjusted by N rigid bodies
         for group1, group2 in zip(snapshot.bonds.group, snapshot_no_rigid.bonds.group):
             assert np.array_equal(np.array(group1), np.array(group2) + 2)
         for group1, group2 in zip(
