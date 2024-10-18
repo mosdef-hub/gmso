@@ -1,6 +1,7 @@
 """Module supporting template potential objects."""
 
 import json
+from copy import deepcopy
 from pathlib import Path
 from typing import Dict
 
@@ -117,9 +118,11 @@ class PotentialTemplate(AbstractPotential):
         """Return the expected dimensions of the parameters for this template."""
         return self.__dict__.get("expected_parameters_dimensions_")
 
-    def set_expression(self, *args, **kwargs):
+    def set_expression(self, new_expression):
         """Set the expression of the PotentialTemplate."""
-        raise NotImplementedError
+        copied_template = deepcopy(self)
+        copied_template.expression = new_expression
+        return copied_template
 
     def assert_can_parameterize_with(
         self, parameters: Dict[str, u.unyt_quantity]
