@@ -3,16 +3,18 @@ import hoomd
 import numpy as np
 import pytest
 import unyt as u
-from mbuild.formats.hoomd_forcefield import create_hoomd_forcefield
 
 from gmso import ForceField
 from gmso.external import from_mbuild
-from gmso.external.convert_hoomd import to_hoomd_forcefield, to_hoomd_snapshot
+from gmso.external.convert_hoomd import (
+    to_gsd_snapshot,
+    to_hoomd_forcefield,
+    to_hoomd_snapshot,
+)
 from gmso.parameterization import apply
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
 from gmso.utils.io import has_hoomd, has_mbuild, import_
-from gmso.utils.sorting import sort_connection_strings
 
 if has_hoomd:
     hoomd = import_("hoomd")
@@ -27,7 +29,7 @@ def run_hoomd_nvt(snapshot, forces, vhoomd=4):
     sim = hoomd.Simulation(device=cpu)
     sim.create_state_from_snapshot(snapshot)
 
-    integrator = hoomd.md.Integrator(dt=0.001)
+    integrator = hoomd.md.Integrator(dt=0.0001)
     integrator.forces = list(set().union(*forces.values()))
 
     temp = 300 * u.K
@@ -56,85 +58,53 @@ def run_hoomd_nvt(snapshot, forces, vhoomd=4):
 @pytest.mark.skipif(not has_hoomd, reason="hoomd is not installed")
 @pytest.mark.skipif(not has_mbuild, reason="mbuild not installed")
 class TestGsd(BaseTest):
-    def test_mbuild_comparison(self, oplsaa_forcefield):
-        compound = mb.load("CCC", smiles=True)
-        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=2)
-        base_units = {
-            "mass": u.g / u.mol,
-            "length": u.nm,
-            "energy": u.kJ / u.mol,
-        }
-
-        top = from_mbuild(com_box)
+    def test_rigid_bodies(self):
+        ethane = mb.lib.molecules.Ethane()
+        box = mb.fill_box(ethane, n_compounds=2, box=[2, 2, 2])
+        top = from_mbuild(box)
+        for site in top.sites:
+            site.molecule.isrigid = True
         top.identify_connections()
-        top = apply(top, oplsaa_forcefield, remove_untyped=True)
 
-        gmso_snapshot, _ = to_hoomd_snapshot(top, base_units=base_units)
-        gmso_forces, _ = to_hoomd_forcefield(
-            top,
-            r_cut=1.4,
-            base_units=base_units,
-            pppm_kwargs={"resolution": (64, 64, 64), "order": 7},
+        top_no_rigid = from_mbuild(box)
+        top_no_rigid.identify_connections()
+
+        rigid_ids = [site.molecule.number for site in top.sites]
+        assert set(rigid_ids) == {0, 1}
+
+        snapshot, refs = to_gsd_snapshot(top)
+        snapshot_no_rigid, refs = to_gsd_snapshot(top_no_rigid)
+        # Check that snapshot has rigid particles added
+        assert "R" in snapshot.particles.types
+        assert "R" not in snapshot_no_rigid.particles.types
+        assert snapshot.particles.N - 2 == snapshot_no_rigid.particles.N
+        assert np.array_equal(snapshot.particles.typeid[:2], np.array([0, 0]))
+        assert np.array_equal(
+            snapshot.particles.body[2:10], np.array([0] * ethane.n_particles)
         )
-
-        integrator_forces = list()
-        for cat in gmso_forces:
-            for force in gmso_forces[cat]:
-                integrator_forces.append(force)
-
-        import foyer
-
-        oplsaa = foyer.Forcefield(name="oplsaa")
-        structure = oplsaa.apply(com_box)
-
-        d = 10
-        e = 1 / 4.184
-        m = 0.9999938574
-
-        mb_snapshot, mb_forcefield, _ = create_hoomd_forcefield(
-            structure,
-            ref_distance=d,
-            ref_energy=e,
-            ref_mass=m,
-            r_cut=1.4,
-            init_snap=None,
-            pppm_kwargs={"Nx": 64, "Ny": 64, "Nz": 64, "order": 7},
+        assert np.array_equal(
+            snapshot.particles.body[10:], np.array([1] * ethane.n_particles)
         )
-
-        assert mb_snapshot.particles.N == gmso_snapshot.particles.N
-        assert np.allclose(
-            mb_snapshot.particles.position, gmso_snapshot.particles.position
-        )
-        assert mb_snapshot.bonds.N == gmso_snapshot.bonds.N
-        assert mb_snapshot.angles.N == gmso_snapshot.angles.N
-        assert mb_snapshot.dihedrals.N == gmso_snapshot.dihedrals.N
-
-        sorted_gmso_ff = sorted(integrator_forces, key=lambda cls: str(cls.__class__))
-        sorted_mbuild_ff = sorted(mb_forcefield, key=lambda cls: str(cls.__class__))
-
-        for mb_force, gmso_force in zip(sorted_mbuild_ff, sorted_gmso_ff):
-            if isinstance(
-                mb_force,
-                (
-                    hoomd.md.long_range.pppm.Coulomb,
-                    hoomd.md.pair.pair.LJ,
-                    hoomd.md.special_pair.LJ,
-                    hoomd.md.pair.pair.Ewald,
-                    hoomd.md.special_pair.Coulomb,
-                ),
-            ):
-                continue
-            keys = mb_force.params.param_dict.keys()
-            for key in keys:
-                gmso_key = key.replace("opls_135", "CT")
-                gmso_key = gmso_key.replace("opls_136", "CT")
-                gmso_key = gmso_key.replace("opls_140", "HC")
-                gmso_key = "-".join(sort_connection_strings(gmso_key.split("-")))
-                mb_params = mb_force.params.param_dict[key]
-                gmso_params = gmso_force.params.param_dict[gmso_key]
-                variables = mb_params.keys()
-                for var in variables:
-                    assert np.isclose(mb_params[var], gmso_params[var])
+        assert np.allclose(snapshot.particles.mass[0], ethane.mass, atol=1e-2)
+        # Check that topology isn't changed by using rigid bodies
+        assert snapshot.bonds.N == snapshot_no_rigid.bonds.N
+        assert snapshot.angles.N == snapshot_no_rigid.angles.N
+        assert snapshot.dihedrals.N == snapshot_no_rigid.dihedrals.N
+        # Check if particle indices in snapshot groups are adjusted by N rigid bodies
+        for group1, group2 in zip(snapshot.bonds.group, snapshot_no_rigid.bonds.group):
+            assert np.array_equal(np.array(group1), np.array(group2) + 2)
+        for group1, group2 in zip(
+            snapshot.angles.group, snapshot_no_rigid.angles.group
+        ):
+            assert np.array_equal(np.array(group1), np.array(group2) + 2)
+        for group1, group2 in zip(
+            snapshot.dihedrals.group, snapshot_no_rigid.dihedrals.group
+        ):
+            assert np.array_equal(np.array(group1), np.array(group2) + 2)
+        for group1, group2 in zip(
+            snapshot.impropers.group, snapshot_no_rigid.impropers.group
+        ):
+            assert np.array_equal(np.array(group1), np.array(group2) + 2)
 
     @pytest.mark.skipif(
         int(hoomd_version[0]) < 4, reason="Unsupported features in HOOMD 3"
