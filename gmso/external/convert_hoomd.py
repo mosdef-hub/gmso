@@ -316,8 +316,6 @@ def _parse_particle_information(
         typeids = np.concatenate((np.array([0] * n_rigid), typeids + 1))
         # Update mass list and position list of Frame
         for idx, _id in enumerate(rigid_ids_set):
-            if _id == 1:
-                continue
             group_indices = np.where(np.array(rigid_ids) == _id)[0]
             group_positions = xyz[group_indices]
             group_masses = masses[group_indices]
