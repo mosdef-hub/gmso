@@ -106,6 +106,29 @@ class TestGsd(BaseTest):
         ):
             assert np.array_equal(np.array(group1), np.array(group2) + 2)
 
+    def test_rigid_bodies_mix(self):
+        ethane = mb.lib.molecules.Ethane()
+        ethane.name = "ethane"
+        benzene = mb.load("c1ccccc1", smiles=True)
+        benzene.name = "benzene"
+        box = mb.fill_box([benzene, ethane], n_compounds=[1, 1], box=[2, 2, 2])
+        top = from_mbuild(box)
+        for site in top.sites:
+            if site.molecule.name == "benzene":
+                site.molecule.isrigid = True
+
+        snapshot, refs = to_gsd_snapshot(top)
+        assert snapshot.particles.typeid[0] == 0
+        assert snapshot.particles.N == top.n_sites + 1
+        assert np.array_equal(
+            snapshot.particles.body[-ethane.n_particles :],
+            np.array([-1] * ethane.n_particles),
+        )
+        assert np.array_equal(
+            snapshot.particles.body[1 : benzene.n_particles + 1],
+            np.array([0] * benzene.n_particles),
+        )
+
     @pytest.mark.skipif(
         int(hoomd_version[0]) < 4, reason="Unsupported features in HOOMD 3"
     )
