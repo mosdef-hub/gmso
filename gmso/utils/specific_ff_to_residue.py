@@ -238,7 +238,7 @@ def specific_ff_to_residue(
         {'expression': confirmed singular improper types expression or equation,
         'improper_types': gmso Topology.improper_types}.
     combining_rule: str
-        The possible mixing/combining  rules are 'geometric' or 'lorentz',
+        The possible mixing/combining rules are 'geometric' or 'lorentz',
         which provide the  geometric and arithmetic mixing rule, respectively.
         NOTE: Arithmetic means the 'lorentz' combining or mixing rule.
         NOTE: GMSO default to the 'lorentz' mixing rule if none is provided,

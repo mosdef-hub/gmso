@@ -20,7 +20,7 @@ def _accepted_potentials():
     """List of accepted potentials that LAMMPS can support."""
     templates = PotentialTemplateLibrary()
     lennard_jones_potential = templates["LennardJonesPotential"]
-    lennard_jones_potential.expression /= 4 # no 4*epsilon term
+    lennard_jones_potential.expression /= 4
     harmonic_bond_potential = templates["LAMMPSHarmonicBondPotential"]
     harmonic_angle_potential = templates["LAMMPSHarmonicAnglePotential"]
     ub_angle_potential = templates["UreyBradleyAnglePotential"]
@@ -54,24 +54,49 @@ def write_prm(topology, filename, strict_potentials=False):
     # Validation
     # TODO: Use strict_x, (e.g. x=bonds) to validate what topology attrs   to convert
     if not strict_potentials:
-        default_parameterMaps = {  # TODO: sites are not checked currently because gmso
+        templates = PotentialTemplateLibrary()
+        lennard_jones_potential = templates["LennardJonesPotential"]
+        lennard_jones_potential.expression /= 4  # no 4*epsilon term
+        default_parameterMaps = {  # TODO: sites coulomb potential not checked here
             # doesn't store pair potential eqn the same way as the connections.
             "impropers": ["LAMMPSHarmonicImproperPotential"],
             "dihedrals": ["PeriodicTorsionPotential"],
             "angles": ["LAMMPSHarmonicAnglePotential", "UreyBradleyAnglePotential"],
             "bonds": ["LAMMPSHarmonicBondPotential"],
-            "sites":["LennardJonesPotential"],
+            "sites": [lennard_jones_potential],
             # "sites":"CoulombicPotential"
         }
         _try_default_potential_conversions(topology, default_parameterMaps)
     _validate_potential_compatibility(topology)
 
     unit_system = LAMMPS_UnitSystems("real")  # ang, kcal/mol, amu
+
+    # need a unique string to pair each Atom to the NonBonded force sections
+    # this uniqueness is akin to PotentialFilters.UNIQUE_PARAMETERS
+    # uniqueTypesDict = dict() # key is tuple of (sigma, epsilon)
+    # pfilter = PotentialFilters.UNIQUE_PARAMETERS
+    # [atype for atype in topology.atom_types(pfilter)]
+
     # ATOMS
+    # columns: unique name, mass
     with open(filename, "w") as f:
         f.write("ATOMS\n")
         unique_atoms = set()
         for site in topology.sites:
+            # key =
+            # if key not in uniqueTypesDict:
+            #    sigma
+            #    epsilon
+            #    name
+            #    mass
+            #    sigma 1-4
+            #    epsilon 1-4
+            # else:
+            #    vals = uniqueTypesDict[key]
+
+            # unique_atoms.add(vals)
+            ########
+
             unique_atoms.add(
                 (
                     site.atom_type.name,
@@ -83,7 +108,7 @@ def write_prm(topology, filename, strict_potentials=False):
         for atom in unique_atoms:
             f.write("MASS -1 {:8s} {:8s}\n".format(atom[0], atom[1]))
 
-        # TODO: Works for harmonic bonds
+        # TODO: Works for harmonic bonds only
         f.write("\nBONDS\n")
         for bond in topology.bond_types:
             atom1, atom2 = bond.member_types
@@ -180,10 +205,10 @@ def write_prm(topology, filename, strict_potentials=False):
             )
 
         f.write("\nNONBONDED\n")
+        # columns: unique name, 0.0, epsilon, rmin/2, 0.0, epsilon 1-4, rmin/2 (1-4)
         # nonbonded14 = topology.scaling_factors[0][2]
 
         for atype in topology.atom_types:
-            # atype, 0.0, epsilon, rmin/2, 0.0, epsilon(1-4), rmin/2 (1-4)
             f.write(
                 "{:8s} {:8.3f} {:8s} {:8s} {:8.3f} {:8s} {:8s}\n".format(
                     atype.name,
@@ -211,7 +236,11 @@ def write_prm(topology, filename, strict_potentials=False):
 def _try_default_potential_conversions(top, potentialsDict):
     """Take a topology a convert all potentials to the style in potentialDict.""" ""
     for pot_container in potentialsDict:
-        containerStr = pot_container[:-1] + "_types"
+        if pot_container == "sites":  # sites contain atom_types
+            containerStr = "atom_types"
+        else:
+            # connections contain "{connection}_types"
+            containerStr = pot_container[:-1] + "_types"
         if getattr(top, containerStr):
             for potential in potentialsDict[pot_container]:
                 top.convert_potential_styles({pot_container: potential})

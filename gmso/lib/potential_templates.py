@@ -16,7 +16,6 @@ from gmso.exceptions import (
     UnknownParameterError,
 )
 from gmso.utils.expression import PotentialExpression
-from gmso.utils.singleton import Singleton
 
 POTENTIAL_JSONS = list(Path(__file__).parent.glob("jsons/*.json"))
 JSON_DIR = Path.joinpath(Path(__file__).parent, "jsons")
@@ -160,7 +159,7 @@ class PotentialTemplate(AbstractPotential):
                 )
 
 
-class PotentialTemplateLibrary(Singleton):
+class PotentialTemplateLibrary:
     """A singleton collection of all the potential templates."""
 
     def __init__(self):

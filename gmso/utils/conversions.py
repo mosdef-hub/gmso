@@ -92,7 +92,8 @@ def _conversion_from_template_name(
             current_expression, new_potential
         )
         if modified_connection_parametersDict:  # try sympy conversions
-            current_expression.name = new_potential.name
+            if not conn_typeStr == "atom_types":
+                current_expression.name = new_potential.name
             current_expression.expression = new_potential.expression
             current_expression.parameters.update(modified_connection_parametersDict)
 
@@ -112,7 +113,9 @@ def _conversion_from_template_obj(
             current_expression, potential_template
         )
         if modified_connection_parametersDict:  # try sympy conversions
-            current_expression.name = potential_template.name
+            if not conn_typeStr == "atom_types":
+                # only change name for connections, leave atom_type name
+                current_expression.name = potential_template.name
             current_expression.expression = potential_template.expression
             current_expression.parameters.update(modified_connection_parametersDict)
 
