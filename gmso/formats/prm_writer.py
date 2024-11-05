@@ -20,7 +20,7 @@ def _accepted_potentials():
     """List of accepted potentials that LAMMPS can support."""
     templates = PotentialTemplateLibrary()
     lennard_jones_potential = templates["LennardJonesPotential"]
-    lennard_jones_potential.expression /= 4
+    lennard_jones_potential.expression /= 4  # no 4*epsilon term
     harmonic_bond_potential = templates["LAMMPSHarmonicBondPotential"]
     harmonic_angle_potential = templates["LAMMPSHarmonicAnglePotential"]
     ub_angle_potential = templates["UreyBradleyAnglePotential"]
