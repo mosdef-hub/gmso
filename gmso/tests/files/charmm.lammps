@@ -1,130 +1,69 @@
-calcraven written by Topology at 2023-12-07 19:10:26.697824 using the GMSO LAMMPS Writer
-Using Forcefield Topology_ForceField
+charmm.lammps - created by mBuild; units = real
 
-9 atoms
-8 bonds
-12 angles
-12 dihedrals
-5 impropers
+4 atoms
+3 bonds
+3 angles
+0 dihedrals
+1 impropers
 
-6 atom types
-5 bond types
-7 angle types
-5 dihedral types
-3 improper types
+4 atom types
+3 bond types
+3 angle types
+1 improper types
 
-0.000000 20.000000 xlo xhi
-0.000000 20.000000 ylo yhi
-0.000000 20.000000 zlo zhi
-0.000000 0.000000 0.000000 xy xz yz
+0.000000 25.000000 xlo xhi
+0.000000 15.000000 ylo yhi
+0.000000 6.000000 zlo zhi
 
 Masses
-#	mass (amu)
-1	12.010	# c
-2	12.010	# c3
-3	19.000	# f
-4	1.008	# hn
-5	14.010	# n
-6	16.000	# o
 
-Pair Coeffs # 4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)
-#	epsilon (kcal/mol)	sigma (Å)
-1	0.08600		3.39967		# c
-2	0.10940		3.39967		# c3
-3	0.06100		3.11815		# f
-4	0.01570		1.06908		# hn
-5	0.17000		3.25000		# n
-6	0.21000		2.95992		# o
+1	12.011000	# CL
+2	12.011000	# CTL2
+3	15.994000	# OBL
+4	15.994000	# OHL
 
-Bond Coeffs #LAMMPSHarmonicBondPotential
-#	k (kcal/(mol*Å**2))	r_eq (Å)
-1	313.000000	1.524100		# c	c3
-2	427.600000	1.378900		# c	n
-3	637.700000	1.218300		# c	o
-4	356.900000	1.349700		# c3	f
-5	403.200000	1.012900		# hn	n
+Pair Coeffs # lj
+#	epsilon (kcal/mol)		sigma (Angstrom)
+1	0.07000		3.56359		# CL
+2	0.05600		3.58141		# CTL2
+3	0.12000		3.02906		# OBL
+4	0.15210		3.15378		# OHL
 
-Angle Coeffs #LAMMPSHarmonicAnglePotential
-#	k (kcal/(mol*rad**2))	theta_eq (degrees)
-1	66.800000	115.180000	#c3         	c          	n
-2	67.400000	123.200000	#c3         	c          	o
-3	74.200000	123.050000	#n          	c          	o
-4	66.300000	110.000000	#c          	c3         	f
-5	70.900000	107.360000	#f          	c3         	f
-6	48.300000	117.550000	#c          	n          	hn
-7	39.600000	117.950000	#hn         	n          	hn
+Bond Coeffs # harmonic
+#	k(kcal/mol/angstrom^2)		req(angstrom)
+1	200.0		1.522		# CL	CTL2
+2	750.0		1.22		# CL	OBL
+3	230.0		1.4		# CL	OHL
 
-Dihedral Coeffs #PeriodicTorsionPotential
-#	k (kcal/mol)	n (dimensionless)	phi_eq (degrees)	weights (dimensionless)
-1	2.500000	2       	180     	0.0     	# n	c	c3	f
-2	1.200000	2       	180     	0.0     	# o	c	c3	f
-3	10.000000	2       	180     	0.0     	# c3	c	n	hn
-4	2.500000	2      	    180     	0.0     	# o	c	n	hn
-5	2.000000	1       	0       	0.0     	# o	c	n	hn
+Angle Coeffs # charmm
+#	k(kcal/mol/rad^2)		theteq(deg)	k(kcal/mol/angstrom^2)	req(angstrom)
+1	70.0	125.00000	20.00000	2.44200
+2	55.0	110.50000	0.00000	0.00000
+3	50.0	123.00000	210.00000	2.26200
 
-Improper Coeffs #PeriodicTorsionPotential
-#	k (kcal/mol)	d (dimensionless) phi_eq (degrees)
-1	1.100000	2       180
-2	1.100000	2       180
-3	1.100000	2       180
+Improper Coeffs # harmonic
+#k, phi
+1	100.00000	0.00000	# CL	CTL2	OBL	OHL
 
-Atoms #full
+Atoms # full
 
-1	1	1	0.489360	0.110700	-0.58950	0.021100
-2	1	6	-0.40437	-0.03070	-1.83510	-0.10770
-3	1	2	0.523890	-0.97100	0.342700	-0.43070
-4	1	3	-0.18349	-1.41570	1.088800	0.644700
-5	1	3	-0.18349	-2.03550	-0.36720	-0.95820
-6	1	3	-0.18349	-0.47200	1.192900	-1.39980
-7	1	5	-0.74567	1.308100	-0.07150	0.600200
-8	1	4	0.343630	1.442000	0.957800	0.714400
-9	1	4	0.343630	2.064000	-0.71890	0.916100
+1	1	2	0.000000	-10.000000	0.000000	0.000000
+2	1	1	0.000000	0.000000	0.000000	0.000000
+3	1	3	0.000000	10.000000	0.000000	0.000000
+4	1	4	0.000000	0.000000	10.000000	0.000000
 
 Bonds
 
-1     	3     	1     	2
-2     	1     	1     	3
-3     	2     	1     	7
-4     	4     	3     	4
-5     	4     	3     	5
-6     	4     	3     	6
-7     	5     	7     	8
-8     	5     	7     	9
+1	1	1	2
+2	2	2	3
+3	3	2	4
 
 Angles
 
-1     	2     	2     	1     	3
-2     	3     	2     	1     	7
-3     	1     	3     	1     	7
-4     	4     	1     	3     	4
-5     	4     	1     	3     	5
-6     	4     	1     	3     	6
-7     	5     	4     	3     	5
-8     	5     	4     	3     	6
-9     	5     	5     	3     	6
-10    	6     	1     	7     	8
-11    	6     	1     	7     	9
-12    	7     	8     	7     	9
-
-Dihedrals
-
-1     	2     	2     	1     	3     	4
-2     	2     	2     	1     	3     	5
-3     	2     	2     	1     	3     	6
-4     	4     	2     	1     	7     	8
-5     	5     	2     	1     	7     	8
-6     	4     	2     	1     	7     	9
-7     	5     	2     	1     	7     	9
-8     	3     	3     	1     	7     	8
-9     	3     	3     	1     	7     	9
-10     	1     	7     	1     	3     	4
-11     	1     	7     	1     	3     	5
-12    	1     	7     	1     	3     	6
+1	1	1	2	3
+2	2	1	2	4
+3	3	3	2	4
 
 Impropers
 
-1     	1     	1     	2     	3     	7
-2     	2     	3     	1     	4     	5
-3     	2     	3     	1     	4     	6
-4     	2     	3     	1     	5     	6
-5     	3     	7     	1     	8     	9
+1	1	2	1	3	4
