@@ -479,17 +479,10 @@ class TestMCF(BaseTest):
         """
         from gmso.external.convert_parmed import from_parmed
 
-        mb.formats.cassandramcf.write_mcf(
-            parmed_ethane,
-            "parmed-ethane.mcf",
-            dihedral_style="opls",
-            angle_style="harmonic",
-        )
-
         top = from_parmed(parmed_ethane)
         write_mcf(top, "gmso-ethane.mcf")
 
-        mcf_data_pmd, mcf_idx_pmd = parse_mcf("parmed-ethane.mcf")
+        mcf_data_pmd, mcf_idx_pmd = parse_mcf(get_path("parmed-ethane.mcf"))
         mcf_data_gmso, mcf_idx_gmso = parse_mcf("gmso-ethane.mcf")
         skip_lines = [3]
         float_pattern = r"[+-]?[0-9]*[.][0-9]*"
