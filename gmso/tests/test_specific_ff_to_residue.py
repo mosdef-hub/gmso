@@ -525,6 +525,7 @@ class TestSpecificFFToResidue(BaseTest):
             gmso_match_ff_by="group",
             boxes_for_simulation=1,
         )
+
         assert test_topology.n_sites == 4
         assert test_topology.n_bonds == 0
         assert test_topology.n_angles == 0
