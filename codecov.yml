@@ -4,3 +4,5 @@ ignore:
   - "gmso/paper"
   - "gmso/formats/networkx.py"
   - "gmso/external/convert_foyer_xml.py"
+  - "gmso/.github/ISSUE_TEMPLATE"
+  - "gmso/.github/PULL_REQUEST_TEMPLATE.md"
