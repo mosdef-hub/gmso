@@ -76,7 +76,8 @@ class BaseTest:
     @pytest.fixture
     def benzene_aa(self):
         compound = mb.load(get_fn("benzene.mol2"))
-        compound.children[0].name = "BenzeneAA"
+        compound.flatten()
+        compound.name = "BenzeneAA"
         top = from_mbuild(compound)
         top.identify_connections()
         return top
@@ -84,7 +85,8 @@ class BaseTest:
     @pytest.fixture
     def benzene_aa_box(self):
         compound = mb.load(get_fn("benzene.mol2"))
-        compound.children[0].name = "BenzeneAA"
+        compound.flatten()
+        compound.name = "BenzeneAA"
         compound_box = mb.packing.fill_box(compound=compound, n_compounds=5, density=1)
         top = from_mbuild(compound_box)
         top.identify_connections()

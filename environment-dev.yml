@@ -12,7 +12,7 @@ dependencies:
   - pydantic>=2
   - networkx
   - pytest
-  - mbuild>=0.17.0
+  - mbuild>=1.1
   - openbabel>=3.0.0
   - foyer>=0.11.3
   - forcefield-utilities>=0.2.1
