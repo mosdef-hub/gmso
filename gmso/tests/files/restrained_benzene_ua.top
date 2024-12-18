@@ -10,16 +10,16 @@ CH_sp2      6       13.01900     0.00000	A        0.36950     0.41988
 
 [ moleculetype ]
 ; name	nrexcl
-Compound	3
+BenzeneUA	3
 
 [ atoms ]
 ; nr	type	resnr	residue		atom	cgnr	charge	mass
-1       CH_sp2      1       Compound    _CH     1        0.00000    13.01900
-2       CH_sp2      1       Compound    _CH     1        0.00000    13.01900
-3       CH_sp2      1       Compound    _CH     1        0.00000    13.01900
-4       CH_sp2      1       Compound    _CH     1        0.00000    13.01900
-5       CH_sp2      1       Compound    _CH     1        0.00000    13.01900
-6       CH_sp2      1       Compound    _CH     1        0.00000    13.01900
+1       CH_sp2      1       BenzeneUA   _CH     1        0.00000    13.01900
+2       CH_sp2      1       BenzeneUA   _CH     1        0.00000    13.01900
+3       CH_sp2      1       BenzeneUA   _CH     1        0.00000    13.01900
+4       CH_sp2      1       BenzeneUA   _CH     1        0.00000    13.01900
+5       CH_sp2      1       BenzeneUA   _CH     1        0.00000    13.01900
+6       CH_sp2      1       BenzeneUA   _CH     1        0.00000    13.01900
 
 [ pairs ]
 ; ai	aj	funct
@@ -89,4 +89,4 @@ Topology
 
 [ molecules ]
 ; molecule	nmols
-Compound	5
+BenzeneUA	5
