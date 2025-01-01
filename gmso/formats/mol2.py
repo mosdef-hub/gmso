@@ -87,6 +87,8 @@ def read_mol2(filename, site_type="atom", verbose=False):
     # TODO: read in parameters to correct attribute as well. This can be saved in various rti sections.
     return topology
 
+@saves_as(".mol2")
+def write_mol2()
 
 def _parse_lj(top, section, verbose):
     """Parse atom of lj style from mol2 file."""
