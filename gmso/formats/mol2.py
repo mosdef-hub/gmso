@@ -3,7 +3,6 @@
 import itertools
 import warnings
 from pathlib import Path
-import os
 
 import unyt as u
 
@@ -88,9 +87,10 @@ def read_mol2(filename, site_type="atom", verbose=False):
     # TODO: read in parameters to correct attribute as well. This can be saved in various rti sections.
     return topology
 
+
 @saves_as(".mol2")
 def write_mol2(top, filename):
-    """Write a gmso.Topology to a TRIPOS mol2 file. 
+    """Write a gmso.Topology to a TRIPOS mol2 file.
 
     Creates a mol2 file from a Topology structure. This will generate the following
     sections in the mol2 file.
@@ -105,7 +105,7 @@ def write_mol2(top, filename):
     filename : string
         path to the file where the mol2 file will be saved
     overwrite : bool, optional, default=False
-        If True, overwrite the file if it already exists. Raise error if False and 
+        If True, overwrite the file if it already exists. Raise error if False and
         overwriting is attempted.
     site_type : string ('atom' or 'lj'), default='atom'
         tells the reader to consider the elements saved in the mol2 file, and
@@ -122,36 +122,34 @@ def write_mol2(top, filename):
 
     # Loop through topology and write each section
     with open(filename, "w") as f:
-        
-
-        #ATOM top.sites
-        #@<TRIPOS>ATOM
+        # ATOM top.sites
+        # @<TRIPOS>ATOM
         # 1 C          -0.7600    1.1691   -0.0005 C.ar    1  BENZENE       0.000
         f.writelines("@<TRIPOS>ATOM\n")
         for site in top.sites:
             _write_site_info(site, f)
 
-
-    #BOND top.bonds
-    # bond_id origin_atom_id target_atom_id bond_type
+        # BOND top.bonds
+        # bond_id origin_atom_id target_atom_id bond_type
         for bond in top.bonds:
             _write_bond_info(bond, f)
 
-    #FF_PBC
-    #format_version_number pbc_type pbc_x_coord_min
-    # pbc_y_coord_min pbc_z_coord_min pbc_x_coord_max
-    # pbc_y_coord_max pbc_z_coord_max solvent_type
-    # num_solvent_shells reorient_molecule_flag
-    # status_flag apply_
+        # FF_PBC
+        # format_version_number pbc_type pbc_x_coord_min
+        # pbc_y_coord_min pbc_z_coord_min pbc_x_coord_max
+        # pbc_y_coord_max pbc_z_coord_max solvent_type
+        # num_solvent_shells reorient_molecule_flag
+        # status_flag apply_
         if top.box:
             _write_box_info(top.box, f)
 
-    #MOLECULE 
+    # MOLECULE
     # mol_name
     # num_atoms [num_bonds [num_subst [num_feat[num_sets]]]]
     # mol_type
     # charge_type
     _write_molecule_info(top, f)
+
 
 def _parse_lj(top, section, verbose):
     """Parse atom of lj style from mol2 file."""
@@ -261,30 +259,34 @@ def _parse_molecule(top, section, verbose):
     """Parse molecule information from the mol2 file."""
     top.label = str(section[0].strip())
 
+
 def _write_site_info(site, f, index=1):
     """Write site information to ATOM section."""
     # TODO: Create rules to make sure nothing is too long, so that it cuts off.
     lineList = [
-        str(index), 
-        site.element.symbol, 
-        *map(str,site.position.value), 
-        site.atom_type.name if site.atom_type else site.name, 
-        str(site.molecule.number), 
-        site.molecule.name, 
-        str(site.charge) if site.charge else "0.00"
+        str(index),
+        site.element.symbol,
+        *map(str, site.position.value),
+        site.atom_type.name if site.atom_type else site.name,
+        str(site.molecule.number),
+        site.molecule.name,
+        str(site.charge) if site.charge else "0.00",
     ]
-    formattedStr = "\t".join(lineList)+"\n"
+    formattedStr = "\t".join(lineList) + "\n"
     f.writelines(formattedStr)
-    index+=1
-    #ATOM top.sites
-    #@<TRIPOS>ATOM
+    index += 1
+    # ATOM top.sites
+    # @<TRIPOS>ATOM
     # 1 C          -0.7600    1.1691   -0.0005 C.ar    1  BENZENE       0.000
+
 
 def _write_bond_info(bond, f):
     pass
 
+
 def _write_molecule_info(top, f):
     pass
+
 
 def _write_box_info(box, f):
     pass
