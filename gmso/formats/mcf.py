@@ -315,7 +315,7 @@ def _write_atom_information(mcf, top, in_ring):
     mcf.write("{:d}\n".format(len(top.sites)))
     for idx, site in enumerate(top.sites):
         mcf.write(
-            "{:<4d}  " "{:<6s}  " "{:<2s}  " "{:8.4f}  " "{:12.8f}  ".format(
+            "{:<4d}  {:<6s}  {:<2s}  {:8.4f}  {:12.8f}  ".format(
                 idx + 1,
                 atypes_list[idx],
                 names[idx],
@@ -325,7 +325,7 @@ def _write_atom_information(mcf, top, in_ring):
         )
         if vdw_style == "LJ":
             mcf.write(
-                "{:3s}  " "{:10.5f}  " "{:10.5f}".format(
+                "{:3s}  {:10.5f}  {:10.5f}".format(
                     vdw_style,
                     (site.atom_type.parameters["epsilon"] / u.kb).in_units("K").value,
                     site.atom_type.parameters["sigma"].in_units("Angstrom").value,
@@ -333,7 +333,7 @@ def _write_atom_information(mcf, top, in_ring):
             )
         elif vdw_style == "Mie":
             mcf.write(
-                "{:3s}  " "{:10.5f}  " "{:10.5f}  " "{:8.3f}  " "{:8.3f}".format(
+                "{:3s}  {:10.5f}  {:10.5f}  {:8.3f}  {:8.3f}".format(
                     vdw_style,
                     (site.atom_type.parameters["epsilon"] / u.kb).in_units("K").value,
                     site.atom_type.parameters["sigma"].in_units("Angstrom").value,
@@ -363,7 +363,7 @@ def _write_bond_information(mcf, top):
     mcf.write("{:d}\n".format(len(top.bonds)))
     for idx, bond in enumerate(top.bonds):
         mcf.write(
-            "{:<4d}  " "{:<4d}  " "{:<4d}  " "{:s}  " "{:10.5f}\n".format(
+            "{:<4d}  {:<4d}  {:<4d}  {:s}  {:10.5f}\n".format(
                 idx + 1,
                 top.get_index(bond.connection_members[0]) + 1,
                 top.get_index(bond.connection_members[1]) + 1,
@@ -403,7 +403,7 @@ def _write_angle_information(mcf, top):
         angle_style = _get_angle_style(angle)
         if angle_style == "fixed":
             mcf.write(
-                "{:s}  " "{:10.5f}\n".format(
+                "{:s}  {:10.5f}\n".format(
                     angle_style,
                     angle.connection_type.parameters["theta_eq"]
                     .in_units(u.degree)
@@ -412,7 +412,7 @@ def _write_angle_information(mcf, top):
             )
         elif angle_style == "harmonic":
             mcf.write(
-                "{:s}  " "{:10.5f} " "{:10.5f}\n".format(
+                "{:s}  {:10.5f} {:10.5f}\n".format(
                     angle_style,
                     (0.5 * angle.connection_type.parameters["k"] / u.kb)
                     .in_units("K/rad**2")
@@ -452,7 +452,7 @@ def _write_dihedral_information(mcf, top):
     mcf.write("{:d}\n".format(len(top.dihedrals)))
     for idx, dihedral in enumerate(top.dihedrals):
         mcf.write(
-            "{:<4d}  " "{:<4d}  " "{:<4d}  " "{:<4d}  " "{:<4d}  ".format(
+            "{:<4d}  {:<4d}  {:<4d}  {:<4d}  {:<4d}  ".format(
                 idx + 1,
                 top.get_index(dihedral.connection_members[0]) + 1,
                 top.get_index(dihedral.connection_members[1]) + 1,
@@ -488,7 +488,7 @@ def _write_dihedral_information(mcf, top):
             # So we need to exclude the last term in the GMSO topology.
             dihedral_style = "OPLS"
             mcf.write(
-                "{:s}  " "{:10.5f}  " "{:10.5f}  " "{:10.5f}  " "{:10.5f}\n".format(
+                "{:s}  {:10.5f}  {:10.5f}  {:10.5f}  {:10.5f}\n".format(
                     dihedral_style,
                     0.5
                     * dihedral.connection_type.parameters["k0"]
@@ -510,7 +510,7 @@ def _write_dihedral_information(mcf, top):
             )
         elif dihedral_style == "CHARMM":
             mcf.write(
-                "{:s}  " "{:10.5f}  " "{:10.5f}  " "{:10.5f}\n".format(
+                "{:s}  {:10.5f}  {:10.5f}  {:10.5f}\n".format(
                     dihedral_style,
                     dihedral.connection_type.parameters["k"].in_units("kJ/mol").value,
                     dihedral.connection_type.parameters["n"],
@@ -521,7 +521,7 @@ def _write_dihedral_information(mcf, top):
             )
         elif dihedral_style == "HARMONIC":
             mcf.write(
-                "{:s}  " "{:10.5f}  " "{:10.5f}\n".format(
+                "{:s}  {:10.5f}  {:10.5f}\n".format(
                     dihedral_style.lower(),
                     0.5
                     * dihedral.connection_type.parameters["k"].in_units("kJ/mol").value,
@@ -558,8 +558,7 @@ def _write_improper_information(mcf, top):
     improper_style = "harmonic"
     for i, improper in enumerate(top.impropers):
         mcf.write(
-            "{:<4d}  {:<4d}  {:<4d}  {:<4d}  {:<4d}"
-            "  {:s}  {:10.5f}  {:10.5f}\n".format(
+            "{:<4d}  {:<4d}  {:<4d}  {:<4d}  {:<4d}  {:s}  {:10.5f}  {:10.5f}\n".format(
                 i + 1,
                 top.get_index(improper.connection_members[0]) + 1,
                 top.get_index(improper.connection_members[1]) + 1,

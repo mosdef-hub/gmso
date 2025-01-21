@@ -328,10 +328,7 @@ class LAMMPS_UnitSystems:
                 current_unit = get_parameter_dimension(parameter, ind_dim.name)
                 factor = factor.to(current_unit)  # convert factor to units of parameter
                 conversion_factor *= float(factor) ** (exponent)
-            return f"""{round(
-                float(parameter / conversion_factor),
-                n_decimals
-            ):.{n_decimals}f}"""  # Assuming that conversion factor is in right units
+            return f"""{round(float(parameter / conversion_factor), n_decimals):.{n_decimals}f}"""  # Assuming that conversion factor is in right units
         new_dimStr = str(new_dims)
         ind_units = re.sub("[^a-zA-Z]+", " ", new_dimStr).split()
         for unit in ind_units:
