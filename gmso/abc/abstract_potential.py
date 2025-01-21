@@ -135,7 +135,7 @@ class AbstractPotential(GMSOBase):
         """Add metadata for a particular tag"""
         if self.tags.get(tag) and not overwrite:
             raise ValueError(
-                f"Tag {tag} already exists. " f"Please use overwrite=True to overwrite"
+                f"Tag {tag} already exists. Please use overwrite=True to overwrite"
             )
         self.tags[tag] = value
 

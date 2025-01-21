@@ -336,7 +336,7 @@ class TestConvertParmEd(BaseTest):
         ):
             pmd_member_names = list(
                 atom.name
-                for atom in [getattr(pmd_improper, f"atom{j+1}") for j in range(4)]
+                for atom in [getattr(pmd_improper, f"atom{j + 1}") for j in range(4)]
             )
             gmso_member_names = list(
                 map(lambda a: a.name, gmso_improper.connection_members)

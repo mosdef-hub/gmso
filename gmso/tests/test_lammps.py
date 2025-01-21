@@ -59,9 +59,9 @@ def compare_lammps_files(line1, line2, skip_linesList=[], offsets=None):
                 comp1 = str(arg1)
                 comp2 = str(arg2)
             if isinstance(comp1, float):
-                assert np.isclose(
-                    comp1, comp2, 1e-3
-                ), f"The following two lines have not been found to have equality {l1} and {l2}"
+                assert np.isclose(comp1, comp2, 1e-3), (
+                    f"The following two lines have not been found to have equality {l1} and {l2}"
+                )
         line_counter1 += 1
         line_counter2 += 1
         if line_counter1 >= length1 or line_counter2 >= length2:

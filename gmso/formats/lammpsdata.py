@@ -647,7 +647,9 @@ def _validate_unit_compatibility(top, base_unyts):
                 float(base_unyts.convert_parameter(parameter, n_decimals=6, name=name)),
                 parameter.value,
                 atol=1e-3,
-            ), f"Units System {base_unyts.usystem} is not compatible with {atype} with value {parameter}"
+            ), (
+                f"Units System {base_unyts.usystem} is not compatible with {atype} with value {parameter}"
+            )
 
 
 def _write_header(out_file, top, atom_style, dihedral_parser):
@@ -1171,7 +1173,7 @@ def _write_conn_data(out_file, top, connStr, sorted_typesList):
             if sort_by_types(ele) == ctype_members
         ]
         for index in indexList:
-            typeStr = f"{i+1:<6d}\t{index+1:<6d}\t"
+            typeStr = f"{i + 1:<6d}\t{index + 1:<6d}\t"
             sorted_membersList = sort_connection_members(conn, sort_by="index", top=top)
             indexStr = "\t".join(
                 [
