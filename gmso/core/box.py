@@ -46,7 +46,7 @@ def _validate_lengths(lengths):
     ):
         if lengths[0] > 0 and lengths[1] > 0:
             warnings.warn(
-                "A c value of 0 was passed. This will be " "interpreted as a 2-D box."
+                "A c value of 0 was passed. This will be interpreted as a 2-D box."
             )
         else:
             raise ValueError(

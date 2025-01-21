@@ -323,10 +323,10 @@ def generate_pairs_lists(
     if refer_from_scaling_factor:
         for i in range(3):
             if nb_scalings[i] or coulombic_scalings[i]:
-                pairs_dict[f"pairs1{i+2}"] = list()
+                pairs_dict[f"pairs1{i + 2}"] = list()
     else:
         for i in range(3):
-            pairs_dict = {f"pairs1{i+2}": list() for i in range(3)}
+            pairs_dict = {f"pairs1{i + 2}": list() for i in range(3)}
 
     if molecule is None:
         bonds, angles, dihedrals = top.bonds, top.angles, top.dihedrals

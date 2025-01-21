@@ -751,7 +751,7 @@ def _parse_nonbonded_forces(
         if i == 0:
             exclusions.append("bond")
         else:
-            exclusions.append(f"1-{i+2}")
+            exclusions.append(f"1-{i + 2}")
     nlist = hoomd.md.nlist.Cell(exclusions=exclusions, buffer=nlist_buffer)
 
     nbonded_forces = list()

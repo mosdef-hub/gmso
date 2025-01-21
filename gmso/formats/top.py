@@ -58,15 +58,10 @@ def write_top(top, filename, top_vars=None):
             )
         )
         out_file.write(
-            "[ defaults ]\n"
-            "; nbfunc\t"
-            "comb-rule\t"
-            "gen-pairs\t"
-            "fudgeLJ\t\t"
-            "fudgeQQ\n"
+            "[ defaults ]\n; nbfunc\tcomb-rule\tgen-pairs\tfudgeLJ\t\tfudgeQQ\n"
         )
         out_file.write(
-            "{0}\t\t" "{1}\t\t" "{2}\t\t" "{3}\t\t" "{4}\n\n".format(
+            "{0}\t\t{1}\t\t{2}\t\t{3}\t\t{4}\n\n".format(
                 top_vars["nbfunc"],
                 top_vars["comb-rule"],
                 top_vars["gen-pairs"],
@@ -76,25 +71,12 @@ def write_top(top, filename, top_vars=None):
         )
 
         out_file.write(
-            "[ atomtypes ]\n"
-            "; name\t"
-            "at.num\t\t"
-            "mass\t"
-            "charge\t\t"
-            "ptype\t"
-            "sigma\t"
-            "epsilon\n"
+            "[ atomtypes ]\n; name\tat.num\t\tmass\tcharge\t\tptype\tsigma\tepsilon\n"
         )
 
         for atom_type in top.atom_types(PotentialFilters.UNIQUE_NAME_CLASS):
             out_file.write(
-                "{0:12s}"
-                "{1:4s}"
-                "{2:12.5f}"
-                "{3:12.5f}\t"
-                "{4:4s}"
-                "{5:12.5f}"
-                "{6:12.5f}\n".format(
+                "{0:12s}{1:4s}{2:12.5f}{3:12.5f}\t{4:4s}{5:12.5f}{6:12.5f}\n".format(
                     atom_type.name,
                     str(_lookup_atomic_number(atom_type)),
                     atom_type.mass.in_units(u.amu).value,
@@ -115,7 +97,7 @@ def write_top(top, filename, top_vars=None):
             "bond_restraints": "\n[ bonds ] ;Harmonic potential restraint\n"
             "; ai\taj\tfunct\tb0\t\tkb\n",
             "pairs": "\n[ pairs ]\n; ai\taj\tfunct\n",
-            "angles": "\n[ angles ]\n" "; ai\taj\tak\tfunct\tphi_0\t\tk0\n",
+            "angles": "\n[ angles ]\n; ai\taj\tak\tfunct\tphi_0\t\tk0\n",
             "angle_restraints": (
                 "\n[ angle_restraints ]\n"
                 "; ai\taj\tai\tak\tfunct\ttheta_eq\tk\tmultiplicity\n"
@@ -132,14 +114,14 @@ def write_top(top, filename, top_vars=None):
         }
         for tag in unique_molecules:
             """Write out nrexcl for each unique molecule."""
-            out_file.write("\n[ moleculetype ]\n" "; name\tnrexcl\n")
+            out_file.write("\n[ moleculetype ]\n; name\tnrexcl\n")
 
             # TODO: Lookup and join nrexcl from each molecule object
-            out_file.write("{0}\t" "{1}\n\n".format(tag, top_vars["nrexcl"]))
+            out_file.write("{0}\t{1}\n\n".format(tag, top_vars["nrexcl"]))
 
             """Write out atoms for each unique molecule."""
             out_file.write(
-                "[ atoms ]\n" "; nr\ttype\tresnr\tresidue\t\tatom\tcgnr\tcharge\tmass\n"
+                "[ atoms ]\n; nr\ttype\tresnr\tresidue\t\tatom\tcgnr\tcharge\tmass\n"
             )
             # Each unique molecule need to be reindexed (restarting from 0)
             # The shifted_idx_map is needed to make sure all the atom index used in
@@ -148,14 +130,7 @@ def write_top(top, filename, top_vars=None):
             for idx, site in enumerate(unique_molecules[tag]["sites"]):
                 shifted_idx_map[top.get_index(site)] = idx
                 out_file.write(
-                    "{0:8s}"
-                    "{1:12s}"
-                    "{2:8s}"
-                    "{3:12s}"
-                    "{4:8s}"
-                    "{5:4s}"
-                    "{6:12.5f}"
-                    "{7:12.5f}\n".format(
+                    "{0:8s}{1:12s}{2:8s}{3:12s}{4:8s}{5:4s}{6:12.5f}{7:12.5f}\n".format(
                         str(idx + 1),
                         site.atom_type.name,
                         str(site.molecule.number + 1 if site.molecule else 1),
@@ -302,9 +277,9 @@ def write_top(top, filename, top_vars=None):
                                 )
                             )
 
-        out_file.write("\n[ system ]\n" "; name\n" "{0}\n\n".format(top.name))
+        out_file.write("\n[ system ]\n; name\n{0}\n\n".format(top.name))
 
-        out_file.write("[ molecules ]\n" "; molecule\tnmols\n")
+        out_file.write("[ molecules ]\n; molecule\tnmols\n")
         for tag in unique_molecules:
             out_file.write(
                 "{0}\t{1}\n".format(tag, len(unique_molecules[tag]["subtags"]))

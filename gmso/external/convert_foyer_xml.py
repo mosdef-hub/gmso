@@ -270,7 +270,7 @@ def _write_nbforces(forcefield, ff_kwargs):
             nonBondedAtomTypes,
             "AtomType",
             attrib_dict={
-                "name": atom_type.get("name", f"AtomType-{j+1}"),
+                "name": atom_type.get("name", f"AtomType-{j + 1}"),
                 "atomclass": atom_type.get("class", ""),
                 "element": atom_type.get("element", ""),
                 "charge": atom_type.get("charge", "0.0"),

@@ -186,9 +186,9 @@ class TestImproper(BaseTest):
                     last_site = site
                 else:
                     middle_sitesList.append(site)
-            assert (
-                len(middle_sitesList) == 2
-            ), f"The improper_type {improper.improper_type} could not find 2 middle sites from {middle_sitesList}"
+            assert len(middle_sitesList) == 2, (
+                f"The improper_type {improper.improper_type} could not find 2 middle sites from {middle_sitesList}"
+            )
             middle_sitesList = sorted(
                 middle_sitesList,
                 key=lambda site: getattr(site.atom_type, orderStr),
