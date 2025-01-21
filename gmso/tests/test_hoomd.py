@@ -11,8 +11,8 @@ from gmso.external.convert_hoomd import (
     to_hoomd_forcefield,
     to_hoomd_snapshot,
 )
-from gmso.tests.base_test import BaseTest
 from gmso.parameterization import apply
+from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
 from gmso.utils.io import has_hoomd, has_mbuild, import_
 
@@ -53,6 +53,7 @@ def run_hoomd_nvt(snapshot, forces, vhoomd=4):
 
     sim.operations.computes.append(thermodynamic_properties)
     return sim
+
 
 @pytest.mark.skipif(not has_mbuild, reason="mbuild not installed")
 class TestGsd(BaseTest):
