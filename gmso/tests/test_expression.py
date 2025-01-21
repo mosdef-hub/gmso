@@ -66,8 +66,7 @@ class TestExpression(BaseTest):
         with pytest.raises(AttributeError) as e:
             assert expression.parameters
             assert (
-                "Object of type _PotentialExpression "
-                "has no attribute parameters" in e
+                "Object of type _PotentialExpression has no attribute parameters" in e
             )
 
     def test_set_indep_variables(self):

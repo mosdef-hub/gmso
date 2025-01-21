@@ -793,8 +793,7 @@ class Topology(object):
 
         if any(np.isnan(value)):
             raise ValueError(
-                f"Cannot assign a nan/NoneType to `{name}`. "
-                f"Provided value: {org_value}"
+                f"Cannot assign a nan/NoneType to `{name}`. Provided value: {org_value}"
             )
 
         if value.shape != (1,) and value.shape != (3,):
@@ -1788,7 +1787,7 @@ class Topology(object):
             getattr(getattr(self, parameter)[0], parameter[:-1] + "_type").parameters
         ):
             df[
-                f"Parameter {i} ({param}) {getattr(getattr(self, parameter)[0], parameter[:-1]+'_type').parameters[param].units}"
+                f"Parameter {i} ({param}) {getattr(getattr(self, parameter)[0], parameter[:-1] + '_type').parameters[param].units}"
             ] = list(
                 _return_float_for_unyt(
                     getattr(connection, parameter[:-1] + "_type").parameters[param],

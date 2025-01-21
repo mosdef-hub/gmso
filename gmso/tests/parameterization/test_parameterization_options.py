@@ -104,7 +104,7 @@ class TestParameterizationOptions(ParameterizationBaseTest):
     def test_missing_group_name_ff(self, oplsaa_gmso):
         top = Topology(name="top1")
         for j in range(0, 10, 2):
-            top.add_site(gmso.Atom(name=f"Atom_{j+1}", group="groupB"))
+            top.add_site(gmso.Atom(name=f"Atom_{j + 1}", group="groupB"))
         with pytest.warns(
             UserWarning,
             match=r"Group/molecule groupB will not be parameterized, as the forcefield "
