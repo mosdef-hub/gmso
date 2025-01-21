@@ -28,5 +28,5 @@ dependencies:
   - pandas
   - symengine
   - python-symengine
-  - hoomd
+  - hoomd>=4.0,<5.0
   - importlib_resources
