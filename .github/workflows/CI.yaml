@@ -116,6 +116,10 @@ jobs:
           pip install -e forcefield-utilities
           pip install -e .
 
+      - name: Check environment
+        run: |
+          micromamba list
+
       - name: Run Bleeding Edge Tests
         run: |
           python -m pytest -v --color yes --pyargs gmso
