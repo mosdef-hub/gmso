@@ -94,7 +94,7 @@ jobs:
       - name: Install Mamba
         uses: mamba-org/setup-micromamba@v2
         with:
-          environment-file: environment-latest.yml
+          environment-file: environment-dev.yml
 
       - name: Install Packages from Source
         run: |
