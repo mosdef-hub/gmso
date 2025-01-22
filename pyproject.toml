@@ -4,6 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gmso"
+version = 0.12.4
 description = "A flexible storage of chemical topology for molecular simulation."
 readme = "README.md"
 authors = [
@@ -30,7 +31,9 @@ classifiers=[
 ]
 urls = {Homepage = "https://github.com/mosdef-hub/gmso"}
 requires-python = ">=3.9"
-dynamic = ["version"]
+
+[tool.setuptools.dynamic]
+version = { attr = "gmso.__version__" }
 
 [tool.setuptools]
 zip-safe = false
