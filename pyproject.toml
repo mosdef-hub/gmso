@@ -30,6 +30,7 @@ classifiers=[
 ]
 urls = {Homepage = "https://github.com/mosdef-hub/gmso"}
 requires-python = ">=3.9"
+dynamic = ["version"]
 
 [tool.setuptools]
 zip-safe = false
