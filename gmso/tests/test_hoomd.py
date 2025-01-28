@@ -1,12 +1,18 @@
 import forcefield_utilities as ffutils
 import hoomd
+import numpy as np
 import pytest
 import unyt as u
 
 from gmso import ForceField
 from gmso.external import from_mbuild
-from gmso.external.convert_hoomd import to_hoomd_forcefield, to_hoomd_snapshot
+from gmso.external.convert_hoomd import (
+    to_gsd_snapshot,
+    to_hoomd_forcefield,
+    to_hoomd_snapshot,
+)
 from gmso.parameterization import apply
+from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
 from gmso.utils.io import has_hoomd, has_mbuild, import_
 
@@ -23,7 +29,7 @@ def run_hoomd_nvt(snapshot, forces, vhoomd=4):
     sim = hoomd.Simulation(device=cpu)
     sim.create_state_from_snapshot(snapshot)
 
-    integrator = hoomd.md.Integrator(dt=0.001)
+    integrator = hoomd.md.Integrator(dt=0.0001)
     integrator.forces = list(set().union(*forces.values()))
 
     temp = 300 * u.K
@@ -47,6 +53,80 @@ def run_hoomd_nvt(snapshot, forces, vhoomd=4):
 
     sim.operations.computes.append(thermodynamic_properties)
     return sim
+
+
+@pytest.mark.skipif(not has_mbuild, reason="mbuild not installed")
+class TestGsd(BaseTest):
+    def test_rigid_bodies(self):
+        ethane = mb.lib.molecules.Ethane()
+        box = mb.fill_box(ethane, n_compounds=2, box=[2, 2, 2])
+        top = from_mbuild(box)
+        for site in top.sites:
+            site.molecule.isrigid = True
+        top.identify_connections()
+
+        top_no_rigid = from_mbuild(box)
+        top_no_rigid.identify_connections()
+
+        rigid_ids = [site.molecule.number for site in top.sites]
+        assert set(rigid_ids) == {0, 1}
+
+        snapshot, refs = to_gsd_snapshot(top)
+        snapshot_no_rigid, refs = to_gsd_snapshot(top_no_rigid)
+        # Check that snapshot has rigid particles added
+        assert "R" in snapshot.particles.types
+        assert "R" not in snapshot_no_rigid.particles.types
+        assert snapshot.particles.N - 2 == snapshot_no_rigid.particles.N
+        assert np.array_equal(snapshot.particles.typeid[:2], np.array([0, 0]))
+        assert np.array_equal(
+            snapshot.particles.body[2:10], np.array([0] * ethane.n_particles)
+        )
+        assert np.array_equal(
+            snapshot.particles.body[10:], np.array([1] * ethane.n_particles)
+        )
+        assert np.allclose(snapshot.particles.mass[0], ethane.mass, atol=1e-2)
+        # Check that topology isn't changed by using rigid bodies
+        assert snapshot.bonds.N == snapshot_no_rigid.bonds.N
+        assert snapshot.angles.N == snapshot_no_rigid.angles.N
+        assert snapshot.dihedrals.N == snapshot_no_rigid.dihedrals.N
+        # Check if particle indices in snapshot groups are adjusted by N rigid bodies
+        for group1, group2 in zip(snapshot.bonds.group, snapshot_no_rigid.bonds.group):
+            assert np.array_equal(np.array(group1), np.array(group2) + 2)
+        for group1, group2 in zip(
+            snapshot.angles.group, snapshot_no_rigid.angles.group
+        ):
+            assert np.array_equal(np.array(group1), np.array(group2) + 2)
+        for group1, group2 in zip(
+            snapshot.dihedrals.group, snapshot_no_rigid.dihedrals.group
+        ):
+            assert np.array_equal(np.array(group1), np.array(group2) + 2)
+        for group1, group2 in zip(
+            snapshot.impropers.group, snapshot_no_rigid.impropers.group
+        ):
+            assert np.array_equal(np.array(group1), np.array(group2) + 2)
+
+    def test_rigid_bodies_mix(self):
+        ethane = mb.lib.molecules.Ethane()
+        ethane.name = "ethane"
+        benzene = mb.load("c1ccccc1", smiles=True)
+        benzene.name = "benzene"
+        box = mb.fill_box([benzene, ethane], n_compounds=[1, 1], box=[2, 2, 2])
+        top = from_mbuild(box)
+        for site in top.sites:
+            if site.molecule.name == "benzene":
+                site.molecule.isrigid = True
+
+        snapshot, refs = to_gsd_snapshot(top)
+        assert snapshot.particles.typeid[0] == 0
+        assert snapshot.particles.N == top.n_sites + 1
+        assert np.array_equal(
+            snapshot.particles.body[-ethane.n_particles :],
+            np.array([-1] * ethane.n_particles),
+        )
+        assert np.array_equal(
+            snapshot.particles.body[1 : benzene.n_particles + 1],
+            np.array([0] * benzene.n_particles),
+        )
 
     @pytest.mark.skipif(
         int(hoomd_version[0]) < 4, reason="Unsupported features in HOOMD 3"
