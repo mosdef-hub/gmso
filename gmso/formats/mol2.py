@@ -195,3 +195,57 @@ def _parse_box(top, section, verbose):
 def _parse_molecule(top, section, verbose):
     """Parse molecule information from the mol2 file."""
     top.label = str(section[0].strip())
+<<<<<<< Updated upstream
+=======
+
+
+def _write_site_info(site, f, index=1):
+    """Write site information to ATOM section."""
+    # TODO: Create rules to make sure nothing is too long, so that it cuts off.
+    lineList = [
+        str(index),
+        site.element.symbol,
+        *map(str, site.position.value),
+        site.atom_type.name if site.atom_type else site.name,
+        str(site.molecule.number),
+        site.molecule.name,
+        str(site.charge) if site.charge else "0.00",
+    ]
+    formattedStr = "\t".join(lineList) + "\n"
+    f.writelines(formattedStr)
+    index += 1
+    # ATOM top.sites
+    # @<TRIPOS>ATOM
+    # 1 C          -0.7600    1.1691   -0.0005 C.ar    1  BENZENE       0.000
+
+
+def _write_bond_info(top, bond, f):
+    """writes the bonds in a topology with assigned atom number."""
+    # need to add bond type info as well
+    atom_id = {site: idx + 1 for idx, site in enumerate(top.sites)}
+
+    bond_list = []
+
+    for bond in top.bonds:
+        idx1 = atom_id[bond.connection_members[0]]
+        idx2 = atom_id[bond.connection_members[1]]
+
+        bond_list.append((min(idx1, idx2), max(idx1, idx2)))
+
+        bond_info_str = "\n".join(f"{idx1} {idx2} un " for idx1, idx2 in bond_list)
+        # un stands for unkown because bond type (order) is implicit in gms
+
+    return bond_info_str
+
+
+def _write_molecule_info(top, f):
+    name = top.name
+    num_atoms = top.n_sites
+    num_bonds = top.n_bonds
+
+    return f"{name}\n{num_atoms} {num_bonds}"
+
+
+def _write_box_info(box, f):
+    pass
+>>>>>>> Stashed changes
