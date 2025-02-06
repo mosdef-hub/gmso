@@ -195,8 +195,6 @@ def _parse_box(top, section, verbose):
 def _parse_molecule(top, section, verbose):
     """Parse molecule information from the mol2 file."""
     top.label = str(section[0].strip())
-<<<<<<< Updated upstream
-=======
 
 
 def _write_site_info(site, f, index=1):
@@ -248,4 +246,3 @@ def _write_molecule_info(top, f):
 
 def _write_box_info(box, f):
     pass
->>>>>>> Stashed changes
