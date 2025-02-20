@@ -126,7 +126,7 @@ def to_gsd_snapshot(
         NotYetImplementedWarning,
     )
 
-    _parse_particle_information(
+    n_rigid = _parse_particle_information(
         gsd_snapshot,
         top,
         base_units,
@@ -135,15 +135,15 @@ def to_gsd_snapshot(
         u.unyt_array([lx, ly, lz]),
     )
     if parse_special_pairs:
-        _parse_pairs_information(gsd_snapshot, top)
+        _parse_pairs_information(gsd_snapshot, top, n_rigid)
     if top.n_bonds > 0:
-        _parse_bond_information(gsd_snapshot, top)
+        _parse_bond_information(gsd_snapshot, top, n_rigid)
     if top.n_angles > 0:
-        _parse_angle_information(gsd_snapshot, top)
+        _parse_angle_information(gsd_snapshot, top, n_rigid)
     if top.n_dihedrals > 0:
-        _parse_dihedral_information(gsd_snapshot, top)
+        _parse_dihedral_information(gsd_snapshot, top, n_rigid)
     if top.n_impropers > 0:
-        _parse_improper_information(gsd_snapshot, top)
+        _parse_improper_information(gsd_snapshot, top, n_rigid)
 
     return gsd_snapshot, base_units
 
@@ -224,7 +224,7 @@ def to_hoomd_snapshot(
         NotYetImplementedWarning,
     )
 
-    _parse_particle_information(
+    n_rigid = _parse_particle_information(
         hoomd_snapshot,
         top,
         base_units,
@@ -233,15 +233,15 @@ def to_hoomd_snapshot(
         u.unyt_array([lx, ly, lz]),
     )
     if parse_special_pairs:
-        _parse_pairs_information(hoomd_snapshot, top)
+        _parse_pairs_information(hoomd_snapshot, top, n_rigid)
     if top.n_bonds > 0:
-        _parse_bond_information(hoomd_snapshot, top)
+        _parse_bond_information(hoomd_snapshot, top, n_rigid)
     if top.n_angles > 0:
-        _parse_angle_information(hoomd_snapshot, top)
+        _parse_angle_information(hoomd_snapshot, top, n_rigid)
     if top.n_dihedrals > 0:
-        _parse_dihedral_information(hoomd_snapshot, top)
+        _parse_dihedral_information(hoomd_snapshot, top, n_rigid)
     if top.n_impropers > 0:
-        _parse_improper_information(hoomd_snapshot, top)
+        _parse_improper_information(hoomd_snapshot, top, n_rigid)
 
     hoomd_snapshot.wrap()
     return hoomd_snapshot, base_units
@@ -284,17 +284,53 @@ def _parse_particle_information(
         site.name if site.atom_type is None else site.atom_type.name
         for site in top.sites
     ]
-    unique_types = sorted(list(set(types)))
-    typeids = np.array([unique_types.index(t) for t in types])
-    masses = list()
-    charges = list()
-    for site in top.sites:
-        masses.append(
+    masses = u.unyt_array(
+        [
             site.mass.to_value(base_units["mass"])
             if site.mass
             else 1 * base_units["mass"]
-        )
-        charges.append(site.charge if site.charge else 0 * u.elementary_charge)
+            for site in top.sites
+        ]
+    )
+    charges = u.unyt_array(
+        [site.charge if site.charge else 0 * u.elementary_charge for site in top.sites]
+    )
+
+    unique_types = sorted(list(set(types)))
+    typeids = np.array([unique_types.index(t) for t in types])
+    # Check for rigid molecules
+    rigid_mols = any([site.molecule.isrigid for site in top.sites])
+    if rigid_mols:
+        rigid_ids = [
+            site.molecule.number if site.molecule.isrigid else -1 for site in top.sites
+        ]
+        rigid_ids_set = set([i for i in rigid_ids if i != -1])
+        n_rigid = len(rigid_ids_set)
+        rigid_charges = np.zeros(n_rigid) * charges.units
+        rigid_masses = np.zeros(n_rigid) * masses.units
+        rigid_xyz = np.zeros((n_rigid, 3)) * xyz.units
+        # Rigid particle type defaults to "R"; add to front of list
+        # TODO: Can we always use "R" here? What if an atom_type is "R"?
+        unique_types = ["R"] + unique_types
+        # Rigid particles get type ID 0, move all others up by 1
+        typeids = np.concatenate((np.array([0] * n_rigid), typeids + 1))
+        # Update mass list and position list of Frame
+        for idx, _id in enumerate(rigid_ids_set):
+            group_indices = np.where(np.array(rigid_ids) == _id)[0]
+            group_positions = xyz[group_indices]
+            group_masses = masses[group_indices]
+            com_xyz = np.sum(group_positions.T * group_masses, axis=1) / sum(
+                group_masses
+            )
+            rigid_masses[idx] = sum(group_masses)
+            rigid_xyz[idx] = com_xyz
+        # Append rigid center mass and xyz to front
+        masses = np.concatenate((rigid_masses, masses))
+        xyz = np.concatenate((rigid_xyz, xyz))
+        charges = np.concatenate((rigid_charges, charges))
+        rigid_id_tags = np.concatenate((np.arange(n_rigid), rigid_ids))
+    else:
+        n_rigid = 0
 
     """
     Permittivity of free space = 2.39725e-4 e^2/((kcal/mol)(angstrom)),
@@ -309,31 +345,40 @@ def _parse_particle_information(
     ) ** 0.5
 
     if isinstance(snapshot, hoomd.Snapshot):
-        snapshot.particles.N = top.n_sites
+        snapshot.particles.N = top.n_sites + n_rigid
         snapshot.particles.types = unique_types
         snapshot.particles.position[0:] = xyz
         snapshot.particles.typeid[0:] = typeids
         snapshot.particles.mass[0:] = masses
         snapshot.particles.charge[0:] = charges / charge_factor
+        if n_rigid:
+            snapshot.particles.body[0:] = rigid_id_tags
     elif isinstance(snapshot, gsd.hoomd.Frame):
-        snapshot.particles.N = top.n_sites
+        snapshot.particles.N = top.n_sites + n_rigid
         snapshot.particles.types = unique_types
         snapshot.particles.position = xyz
         snapshot.particles.typeid = typeids
         snapshot.particles.mass = masses
         snapshot.particles.charge = charges / charge_factor
-    if rigid_bodies:
-        warnings.warn(
-            "Rigid bodies detected, but not yet implemented for GSD",
-            NotYetImplementedWarning,
-        )
+        if n_rigid:
+            snapshot.particles.body = rigid_id_tags
+    return n_rigid
 
 
-def _parse_pairs_information(
-    snapshot,
-    top,
-):
-    """Parse scaled pair types."""
+def _parse_pairs_information(snapshot, top, n_rigid=0):
+    """Parse sacled pair types.
+
+    Parameters
+    ----------
+    snapshot : gsd.hoomd.Frame or hoomd.Snapshot
+        The target Snapshot object.
+    top : gmso.Topology
+        Topology object holding system information
+    n_rigid : int
+        The number of rigid bodies found in `_parse_particle_information()`
+        Used to adjust pair group indices.
+
+    """
     pair_types = list()
     pair_typeids = list()
     pairs = list()
@@ -353,7 +398,9 @@ def _parse_pairs_information(
         if pair_type not in pair_types:
             pair_types.append(pair_type)
         pair_typeids.append(pair_types.index(pair_type))
-        pairs.append((top.get_index(pair[0]), top.get_index(pair[1])))
+        pairs.append(
+            (top.get_index(pair[0]) + n_rigid, top.get_index(pair[1]) + n_rigid)
+        )
 
     if isinstance(snapshot, hoomd.Snapshot):
         snapshot.pairs.N = len(pairs)
@@ -367,7 +414,7 @@ def _parse_pairs_information(
         snapshot.pairs.typeid = pair_typeids
 
 
-def _parse_bond_information(snapshot, top):
+def _parse_bond_information(snapshot, top, n_rigid=0):
     """Parse bonds information from topology.
 
     Parameters
@@ -376,6 +423,9 @@ def _parse_bond_information(snapshot, top):
         The target Snapshot object.
     top : gmso.Topology
         Topology object holding system information
+    n_rigid : int
+        The number of rigid bodies found in `_parse_particle_information()`
+        Used to adjust bond group indices.
 
     """
     snapshot.bonds.N = top.n_bonds
@@ -396,7 +446,7 @@ def _parse_bond_information(snapshot, top):
 
         bond_types.append(bond_type)
         bond_groups.append(
-            sorted(tuple(top.get_index(site) for site in connection_members))
+            sorted(tuple(top.get_index(site) + n_rigid for site in connection_members))
         )
 
     unique_bond_types = list(set(bond_types))
@@ -414,7 +464,7 @@ def _parse_bond_information(snapshot, top):
     warnings.warn(f"{len(unique_bond_types)} unique bond types detected")
 
 
-def _parse_angle_information(snapshot, top):
+def _parse_angle_information(snapshot, top, n_rigid=0):
     """Parse angles information from topology.
 
     Parameters
@@ -423,6 +473,9 @@ def _parse_angle_information(snapshot, top):
         The target Snapshot object.
     top : gmso.Topology
         Topology object holding system information
+    n_rigid : int
+        The number of rigid bodies found in `_parse_particle_information()`
+        Used to adjust angle group indices.
 
     """
     snapshot.angles.N = top.n_angles
@@ -442,7 +495,9 @@ def _parse_angle_information(snapshot, top):
             angle_type = "-".join([site.name for site in connection_members])
 
         angle_types.append(angle_type)
-        angle_groups.append(tuple(top.get_index(site) for site in connection_members))
+        angle_groups.append(
+            tuple(top.get_index(site) + n_rigid for site in connection_members)
+        )
 
     unique_angle_types = list(set(angle_types))
     angle_typeids = [unique_angle_types.index(i) for i in angle_types]
@@ -460,7 +515,7 @@ def _parse_angle_information(snapshot, top):
     warnings.warn(f"{len(unique_angle_types)} unique angle types detected")
 
 
-def _parse_dihedral_information(snapshot, top):
+def _parse_dihedral_information(snapshot, top, n_rigid=0):
     """Parse dihedral information from topology.
 
     Parameters
@@ -469,6 +524,9 @@ def _parse_dihedral_information(snapshot, top):
         The target Snapshot object.
     top : gmso.Topology
         Topology object holding system information
+    n_rigid : int
+        The number of rigid bodies found in `_parse_particle_information()`
+        Used to adjust dihedral group indices.
 
     """
     snapshot.dihedrals.N = top.n_dihedrals
@@ -487,7 +545,7 @@ def _parse_dihedral_information(snapshot, top):
 
         dihedral_types.append(dihedral_type)
         dihedral_groups.append(
-            tuple(top.get_index(site) for site in connection_members)
+            tuple(top.get_index(site) + n_rigid for site in connection_members)
         )
 
     unique_dihedral_types = list(set(dihedral_types))
@@ -506,7 +564,7 @@ def _parse_dihedral_information(snapshot, top):
     warnings.warn(f"{len(unique_dihedral_types)} unique dihedral types detected")
 
 
-def _parse_improper_information(snapshot, top):
+def _parse_improper_information(snapshot, top, n_rigid=0):
     """Parse impropers information from topology.
 
     Parameters
@@ -515,6 +573,8 @@ def _parse_improper_information(snapshot, top):
         The target Snapshot object.
     top : gmso.Topology
         Topology object holding system information
+    n_rigid : int
+        The number of rigid bodies found in `_parse_particle_information()`
 
     """
     snapshot.impropers.N = top.n_impropers
@@ -533,7 +593,7 @@ def _parse_improper_information(snapshot, top):
 
         improper_types.append(improper_type)
         improper_groups.append(
-            tuple(top.get_index(site) for site in connection_members)
+            tuple(top.get_index(site) + n_rigid for site in connection_members)
         )
 
     unique_improper_types = list(set(improper_types))
