@@ -24,7 +24,7 @@ from gmso.utils.connectivity import generate_pairs_lists
 
 
 @saves_as(".top")
-def write_top(top, filename, top_vars=None):
+def write_top(top, filename, top_vars=None, settles_tag=None):
     """Write a gmso.core.Topology object to a GROMACS topology (.TOP) file.
 
     Parameters
@@ -33,6 +33,11 @@ def write_top(top, filename, top_vars=None):
         A typed Topology Object
     filename : str
         Path of the output file
+    settles_tag : str or None, default None
+        Add GROMACS section [ settles ] for rigid 3-Site water models.
+        Note: See https://manual.gromacs.org/2024.4/reference-manual/algorithms/constraint-algorithms.html#settle
+        for more information on the SETTLE implementation.
+        TODO: Add support for 4-Site and 5-Site water models.
 
     Notes
     -----
@@ -49,6 +54,11 @@ def write_top(top, filename, top_vars=None):
         assert site.atom_type, msg
     for connection in top.connections:
         assert connection.connection_type, msg
+
+    if not isinstance(settles_tag, str) and settles_tag is not None:
+        raise TypeError(
+            f"Argument settles_tag {settles_tag} must be of type string, but passed type {type(settles_tag)}"
+        )
 
     with open(filename, "w") as out_file:
         out_file.write(
@@ -151,11 +161,10 @@ def write_top(top, filename, top_vars=None):
                         )
                     )
 
-            # Special treatment for water, may ned to consider a better way to tag rigid water
+            # Special treatment for water, may ned to consider a better way to tag rigid SETTLES for 3-site water
+            # need a more general way to work for 4-site and 5-site models.
             # Built using this https://github.com/gromacs/gromacs/blob/main/share/top/oplsaa.ff/spce.itp as reference
-            if "water" in tag.lower() and all(
-                site.molecule.isrigid for site in unique_molecules[tag]["sites"]
-            ):
+            if settles_tag and settles_tag.lower() == tag.lower():
                 sites_list = unique_molecules[tag]["sites"]
 
                 water_sites = {
