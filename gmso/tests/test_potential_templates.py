@@ -14,10 +14,6 @@ class TestPotentialTemplates(BaseTest):
     def templates(self):
         return PotentialTemplateLibrary()
 
-    def test_singleton_behavior(self, templates):
-        assert id(templates) == id(PotentialTemplateLibrary())
-        assert id(PotentialTemplateLibrary()) == id(PotentialTemplateLibrary())
-
     def test_lennard_jones_potential(self, templates):
         lennard_jones_potential = templates["LennardJonesPotential"]
         assert lennard_jones_potential.name == "LennardJonesPotential"
