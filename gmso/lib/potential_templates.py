@@ -24,14 +24,14 @@ JSON_DIR = Path.joinpath(Path(__file__).parent, "jsons")
 def _verify_potential_template_keys(_dict, name):
     """Verify the potential template is properly formatted."""
     assert "name" in _dict, f"Key name not found in the potential template {name}.json"
-    assert (
-        "expression" in _dict
-    ), f"Key expression not found in the potential template {name}.json"
-    assert (
-        "independent_variables" in _dict
-    ), f"Key independent_variables not found in the potential template {name}.json"
+    assert "expression" in _dict, (
+        f"Key expression not found in the potential template {name}.json"
+    )
+    assert "independent_variables" in _dict, (
+        f"Key independent_variables not found in the potential template {name}.json"
+    )
     if str(name) != _dict["name"]:
-        raise GMSOError(f'Mismatch between Potential name {name} and {_dict["name"]}')
+        raise GMSOError(f"Mismatch between Potential name {name} and {_dict['name']}")
 
 
 def _load_template_json(item, json_dir=JSON_DIR):

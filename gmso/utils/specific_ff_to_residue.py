@@ -530,7 +530,7 @@ def specific_ff_to_residue(
         ) or unique_top_group_name_iter not in list(electrostatics14Scale_dict.keys()):
             raise ValueError(
                 f"The {unique_top_group_name_iter} residue is not provided for the "
-                f'{"nonBonded14Scale"} and {"electrostatics14Scale"} values'
+                f"{'nonBonded14Scale'} and {'electrostatics14Scale'} values"
             )
 
     topology = new_gmso_topology

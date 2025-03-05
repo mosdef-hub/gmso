@@ -252,7 +252,7 @@ class ParametricPotential(AbstractPotential):
                     f"Please specify member_classes or member_types attribute."
                 )
             for idx, value in enumerate(iterating_attribute):
-                attrib[f"{prefix}{idx+1}"] = str(value)
+                attrib[f"{prefix}{idx + 1}"] = str(value)
         xml_element = etree.Element(self.__class__.__name__, attrib=attrib)
         params = etree.SubElement(xml_element, "Parameters")
 
@@ -340,7 +340,6 @@ class ParametricPotential(AbstractPotential):
 
         desc = desc.replace(
             ">",
-            f", \n parameters: {self.parameters},\n"
-            f"member types: {member_types(self)}>",
+            f", \n parameters: {self.parameters},\nmember types: {member_types(self)}>",
         )
         return desc

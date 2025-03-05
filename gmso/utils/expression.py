@@ -369,7 +369,7 @@ class PotentialExpression:
             unused_symbols = expression.free_symbols - used_symbols
             if len(unused_symbols) > 0:
                 warnings.warn(
-                    f"You supplied parameters with " f"unused symbols {unused_symbols}"
+                    f"You supplied parameters with unused symbols {unused_symbols}"
                 )
 
             if used_symbols != expression.free_symbols:
@@ -430,7 +430,7 @@ class PotentialExpression:
 
         if non_parametric.is_parametric:
             raise ValueError(
-                "Cannot create a parametric expression from a parametric " "expression."
+                "Cannot create a parametric expression from a parametric expression."
             )
 
         else:
