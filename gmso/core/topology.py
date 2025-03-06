@@ -247,6 +247,7 @@ class Topology(object):
     def n_sites(self):
         """Return the number of sites in the topology."""
         return len(self._sites)
+
     @property
     def virtual_sites(self):
         """Return all virtual_sites in the topology."""
@@ -256,7 +257,7 @@ class Topology(object):
     def n_virtual_sites(self):
         """Return the number of virtual sites in the topology."""
         return len(self.virtual_sites)
-    
+
     @property
     def n_connections(self):
         """Return the number of connections in the topology."""
