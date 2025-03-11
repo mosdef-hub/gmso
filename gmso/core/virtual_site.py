@@ -1,10 +1,4 @@
-<<<<<<< HEAD
-class VirtualSite(Site):
-    """A generalized virtual site class in GMSO.
 
-    Virtual sites are massless particles that represet represent off-atom charge sites, lone pairs, or other non-physical sites.
-
-=======
 import warnings
 from typing import Optional, Union, List, Callable, Awaitable
 from pydantic import ConfigDict, Field, field_serializer, field_validator
