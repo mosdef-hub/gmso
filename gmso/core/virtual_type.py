@@ -1,15 +1,16 @@
-
-from typing import Optional, Tuple, Union, Set
 import warnings
+from typing import Optional, Set, Tuple, Union
+
 import unyt as u
-from pydantic import ConfigDict, Field ,field_serializer, field_validator
+from pydantic import ConfigDict, Field, field_serializer, field_validator
 
 from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.core.parametric_potential import ParametricPotential
-from gmso.utils.expression import PotentialExpression
 from gmso.utils._constants import UNIT_WARNING_STRING
+from gmso.utils.expression import PotentialExpression
 from gmso.utils.misc import ensure_valid_dimensions, unyt_compare
 from gmso.utils.units import GMSO_UnitRegistry
+
 
 class VirtualPositionType(ParametricPotential):
     """A descripton of the interaction between 3 bonded partners.
@@ -81,7 +82,7 @@ class VirtualPositionType(ParametricPotential):
                 "k": 1000 * u.Unit("kJ / (deg**2)"),
                 "theta_eq": 180 * u.deg,
             },
-            independent_variables={"ri","rj","rk"},
+            independent_variables={"ri", "rj", "rk"},
         )
 
     @property
@@ -105,7 +106,6 @@ class VirtualPotentialType(ParametricPotential):
     potential is stored as a `sympy` expression and the parameters, with units,
     are stored explicitly.
     """
-
 
     charge_: Optional[u.unyt_array] = Field(
         0.0 * u.elementary_charge,
@@ -142,7 +142,6 @@ class VirtualPotentialType(ParametricPotential):
         alias_to_fields=dict(
             **ParametricPotential.model_config["alias_to_fields"],
             **{
-        
                 "charge": "charge_",
                 "atomclass": "atomclass_",
                 "doi": "doi_",
@@ -191,7 +190,6 @@ class VirtualPotentialType(ParametricPotential):
         """Return the charge of the atom_type."""
         return self.__dict__.get("charge_")
 
-
     @property
     def atomclass(self):
         """Return the atomclass of the atom_type."""
@@ -223,7 +221,6 @@ class VirtualPotentialType(ParametricPotential):
             return None
         else:
             return unyt_to_dict(charge_)
-
 
     def clone(self, fast_copy=False):
         """Clone this AtomType, faster alternative to deepcopying."""
@@ -283,8 +280,6 @@ class VirtualPotentialType(ParametricPotential):
             f"atomclass: {self.atomclass}>"
         )
         return desc
-
-
 
     @field_validator("charge_", mode="before")
     @classmethod
