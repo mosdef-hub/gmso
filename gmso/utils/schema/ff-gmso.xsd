@@ -108,6 +108,38 @@
         </xsd:key>
     </xsd:element>
 
+<!-- Begin VirtualSiteType  Tags and Attributes -->
+    <xsd:complexType name="VirtualSiteType">
+        <xsd:sequence>
+            <xsd:element ref="Parameters" minOccurs="0" maxOccurs="1"/>
+        </xsd:sequence>
+        <xsd:attribute name="a" type="xsd:float" use="optional"/>
+        <xsd:attribute name="b" type="xsd:float" use="optional"/>
+        <xsd:attribute name="c" type="xsd:float" use="optional"/>
+        <xsd:attribute name="d" type="xsd:float" use="optional"/>
+   </xsd:complexType>
+
+    <xsd:element name="VirtualSiteTypes">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="ParametersUnitDef" type="ParametersUnitDef" minOccurs="0" maxOccurs="unbounded"/>
+                <xsd:choice minOccurs="0" maxOccurs="unbounded">
+                    <xsd:element name="VirtualSiteType" type="VirtualSiteType" minOccurs="0"/>
+                </xsd:choice>
+            </xsd:sequence>
+            <xsd:attribute name="expression" type="xsd:string"/>
+            <xsd:attribute name="name" type="xsd:string" use="optional"/>
+        </xsd:complexType>
+        <xsd:key name="virtual_type_name_key">
+            <xsd:selector xpath="VirtualSiteType"/>
+            <xsd:field xpath="@type1"/>
+            <xsd:field xpath="@type2"/>
+            <xsd:field xpath="@type3"/>
+            <xsd:field xpath="@type4"/>
+            <xsd:field xpath="@type5"/>
+        </xsd:key>
+    </xsd:element>
+
     <!-- Begin ForceField DihedralType and ImproperType Tags and Attributes -->
     <xsd:complexType name="DihedralOrImproperType">
         <xsd:sequence>
