@@ -66,6 +66,6 @@
         <Parameter name="a" value="0.5"/>
         <Parameter name="b" value="0.15"/>
       </Parameters>
-    </VirtualSiteType>  
+    </VirtualSiteType>
   </VirtualSiteTypes>
 </ForceField>
