@@ -1,10 +1,9 @@
 {
-  "name": "BuckinghamPotential",
-  "expression": "a*exp(-b*r) - c*r**-6",
-  "independent_variables": "r",
+  "name": "3fdVirtualPosition",
+  "expression": "ri + b*(rj-ri+a*(rk-rj))/((rj-ri+a*(rk-rj)).norm())",
+  "independent_variables": "ri",
   "expected_parameters_dimensions": {
-    "a": "energy",
-    "b": "1/length",
-    "c": "energy*length**6"
-  }
+    "a": "dimensionless",
+    "b": "dimensionless"
+      }
 }
