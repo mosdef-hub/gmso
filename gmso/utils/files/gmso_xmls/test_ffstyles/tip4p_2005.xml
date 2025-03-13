@@ -57,4 +57,15 @@
       </Parameters>
     </AngleType>
   </AngleTypes>
+  </VirtualSiteTypes>
+    <VirtualSiteTypes expression="ri + b*(rj-ri+a*(rk-rj))/((rj-ri+a*(rk-rj)).norm())">
+    <ParametersUnitDef parameter="a" unit="unitless"/>
+    <ParametersUnitDef parameter="b" unit="unitless"/>
+    <VirtualSiteType name="VirtualSiteType-Harmonic-1" type1="opls_112" type2="opls_111" type3="opls_112">
+      <Parameters>
+        <Parameter name="a" value="0.5"/>
+        <Parameter name="b" value="0.15"/>
+      </Parameters>
+    </VirtualSiteType>  
+  </VirtualSiteTypes>
 </ForceField>
