@@ -150,7 +150,13 @@ class TestTop(BaseTest):
         assert struct.defaults.fudgeQQ == 0.5
 
     def test_settles(self, typed_tip3p_rigid_system):
-        typed_tip3p_rigid_system.save("settles.top", overwrite=True)
+        # set molecules to water:
+        molecule_name = "water"
+        for site in typed_tip3p_rigid_system.sites:
+            site.molecule.name = molecule_name
+        typed_tip3p_rigid_system.save(
+            "settles.top", overwrite=True, settles_tag=molecule_name
+        )
 
         with open("settles.top", "r") as f1:
             current = f1.readlines()
@@ -159,7 +165,24 @@ class TestTop(BaseTest):
             ref = f2.readlines()
 
         for line, ref_line in zip(current[1:], ref[1:]):
-            assert line, ref_line
+            assert " ".join(line.split()) == " ".join(ref_line.split())
+
+    def test_settles_fails(self, typed_tip3p_rigid_system):
+        fail_cases = ["error", "", "Wat", [], 1]
+        for site in typed_tip3p_rigid_system.sites:
+            site.molecule.name = "water"
+
+        for fail in fail_cases:
+            with pytest.raises((ValueError, AssertionError, TypeError)):
+                typed_tip3p_rigid_system.save(
+                    "settles.top", overwrite=True, settles_tag=fail
+                )
+                with open("settles.top", "r") as f1:
+                    current = f1.readlines()
+                with open(get_path("settles_ref.top"), "r") as f2:
+                    ref = f2.readlines()
+                for line, ref_line in zip(current[1:], ref[1:]):
+                    assert " ".join(line.split()) == " ".join(ref_line.split())
 
     def test_benzene_restraints(self, typed_benzene_ua_system):
         top = typed_benzene_ua_system
