@@ -71,8 +71,8 @@ class TestGsd(BaseTest):
         rigid_ids = [site.molecule.number for site in top.sites]
         assert set(rigid_ids) == {0, 1}
 
-        snapshot, refs = to_gsd_snapshot(top)
-        snapshot_no_rigid, refs = to_gsd_snapshot(top_no_rigid)
+        snapshot, refs, rigid = to_gsd_snapshot(top)
+        snapshot_no_rigid, refs, rigid = to_gsd_snapshot(top_no_rigid)
         # Check that snapshot has rigid particles added
         assert "R" in snapshot.particles.types
         assert "R" not in snapshot_no_rigid.particles.types
@@ -116,7 +116,7 @@ class TestGsd(BaseTest):
             if site.molecule.name == "benzene":
                 site.molecule.isrigid = True
 
-        snapshot, refs = to_gsd_snapshot(top)
+        snapshot, refs, rigid = to_gsd_snapshot(top)
         assert snapshot.particles.typeid[0] == 0
         assert snapshot.particles.N == top.n_sites + 1
         assert np.array_equal(
@@ -145,7 +145,7 @@ class TestGsd(BaseTest):
         oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
         top = apply(top, oplsaa, remove_untyped=True)
 
-        gmso_snapshot, _ = to_hoomd_snapshot(top, base_units=base_units)
+        gmso_snapshot, _, _ = to_hoomd_snapshot(top, base_units=base_units)
         gmso_forces, _ = to_hoomd_forcefield(
             top,
             r_cut=1.4,
@@ -173,7 +173,7 @@ class TestGsd(BaseTest):
         oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
         top = apply(top, oplsaa, remove_untyped=True)
 
-        gmso_snapshot, _ = to_hoomd_snapshot(
+        gmso_snapshot, _, _ = to_hoomd_snapshot(
             top,
             base_units=base_units,
             auto_scale=True,
@@ -206,7 +206,7 @@ class TestGsd(BaseTest):
         oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
         top = apply(top, oplsaa, remove_untyped=True)
 
-        gmso_snapshot, snapshot_base_units = to_hoomd_snapshot(
+        gmso_snapshot, snapshot_base_units, _ = to_hoomd_snapshot(
             top, base_units=base_units
         )
         gmso_forces, forces_base_units = to_hoomd_forcefield(
@@ -236,7 +236,7 @@ class TestGsd(BaseTest):
         oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
         top = apply(top, oplsaa, remove_untyped=True)
 
-        gmso_snapshot, snapshot_base_units = to_hoomd_snapshot(
+        gmso_snapshot, snapshot_base_units, _ = to_hoomd_snapshot(
             top,
             base_units=base_units,
             auto_scale=True,
@@ -292,7 +292,7 @@ class TestGsd(BaseTest):
         oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
         top = apply(top, oplsaa, remove_untyped=True)
 
-        gmso_snapshot, snapshot_base_units = to_hoomd_snapshot(
+        gmso_snapshot, snapshot_base_units, _ = to_hoomd_snapshot(
             top, base_units=base_units
         )
         gmso_forces, forces_base_units = to_hoomd_forcefield(
@@ -316,7 +316,7 @@ class TestGsd(BaseTest):
         oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
         top = apply(top, oplsaa, remove_untyped=True)
 
-        gmso_snapshot, snapshot_base_units = to_hoomd_snapshot(top)
+        gmso_snapshot, snapshot_base_units, _ = to_hoomd_snapshot(top)
         gmso_forces, forces_base_units = to_hoomd_forcefield(
             top=top,
             r_cut=1.4,
@@ -394,7 +394,7 @@ class TestGsd(BaseTest):
         parameterized_top = apply(top, gaff_forcefield, identify_connections=True)
         assert parameterized_top.is_fully_typed
 
-        snap, _ = to_hoomd_snapshot(parameterized_top, base_units)
+        snap, _, _ = to_hoomd_snapshot(parameterized_top, base_units)
         forces, _ = to_hoomd_forcefield(
             parameterized_top,
             r_cut=1.4,
@@ -421,7 +421,7 @@ class TestGsd(BaseTest):
 
         top = apply(top, ethaneFF, remove_untyped=True)
 
-        snapshot, _ = to_hoomd_snapshot(top, base_units=base_units)
+        snapshot, _, _ = to_hoomd_snapshot(top, base_units=base_units)
         assert "CT-HC" in snapshot.bonds.types
 
         forces, _ = to_hoomd_forcefield(top=top, r_cut=1.4, base_units=base_units)
@@ -440,7 +440,7 @@ class TestGsd(BaseTest):
         ethaneFF = ForceField(get_path("alkanes_wildcards.xml"))
         top = apply(top, ethaneFF, remove_untyped=True)
 
-        snapshot, _ = to_hoomd_snapshot(top, base_units=base_units)
+        snapshot, _, _ = to_hoomd_snapshot(top, base_units=base_units)
         assert "CT-HC" in snapshot.bonds.types
 
         forces, _ = to_hoomd_forcefield(top=top, r_cut=1.4, base_units=base_units)

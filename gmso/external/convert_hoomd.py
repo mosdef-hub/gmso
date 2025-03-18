@@ -244,7 +244,7 @@ def to_hoomd_snapshot(
         _parse_improper_information(hoomd_snapshot, top, n_rigid)
 
     hoomd_snapshot.wrap()
-    return hoomd_snapshot, base_units
+    return hoomd_snapshot, base_units, rigid_info
 
 
 def _parse_particle_information(
@@ -367,9 +367,9 @@ def _parse_particle_information(
         snapshot.particles.mass[0:] = masses
         snapshot.particles.charge[0:] = charges / charge_factor
         snapshot.particles.orientation[0:] = orientations
-        snapshot.particles.moment_intertia[0:] = moits
         if n_rigid:
             snapshot.particles.body[0:] = rigid_id_tags
+            snapshot.particles.moment_intertia[0:] = moits
     elif isinstance(snapshot, gsd.hoomd.Frame):
         snapshot.particles.N = top.n_sites + n_rigid
         snapshot.particles.types = unique_types
@@ -378,9 +378,9 @@ def _parse_particle_information(
         snapshot.particles.mass = masses
         snapshot.particles.charge = charges / charge_factor
         snapshot.particles.orientation = orientations
-        snapshot.particles.moment_intertia = moits
         if n_rigid:
             snapshot.particles.body = rigid_id_tags
+            snapshot.particles.moment_intertia = moits
     return n_rigid, rigid_body_info
 
 
