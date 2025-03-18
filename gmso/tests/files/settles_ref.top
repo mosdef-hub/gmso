@@ -11,13 +11,13 @@ opls_112    1        1.01100     0.41700	A        1.00000     0.00000
 
 [ moleculetype ]
 ; name	nrexcl
-WaterTIP3P	3
+water	3
 
 [ atoms ]
 ; nr	type	resnr	residue		atom	cgnr	charge	mass
-1       opls_111    1       WaterTIP3P  O       1       -0.83400    16.00000
-2       opls_112    1       WaterTIP3P  H       1        0.41700     1.01100
-3       opls_112    1       WaterTIP3P  H       1        0.41700     1.01100
+1       opls_111    1     water     O       1       -0.83400    16.00000
+2       opls_112    1     water     H       1        0.41700     1.01100
+3       opls_112    1     water     H       1        0.41700     1.01100
 
 [ settles ] ;Water specific constraint algorithm
 ; OW_idx	funct	doh	dhh
@@ -34,4 +34,4 @@ tip3p
 
 [ molecules ]
 ; molecule	nmols
-WaterTIP3P	1
+water	1
