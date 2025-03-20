@@ -330,7 +330,6 @@ def _parse_particle_information(
             rigid_type_ids.extend([i] * len(rigid_body_sets[rigid_type]))
         # Hoomd rigid constraint obj needed to run rigid body simulations
         rigid_constraint = hoomd.md.constrain.Rigid()
-        rigid_id_tags = []
         mol_count = 0
         for rigid_mol in rigid_body_sets.keys():
             # Place holder lists for each rigid body entry to hoomd.md.constrain.Rigid()
