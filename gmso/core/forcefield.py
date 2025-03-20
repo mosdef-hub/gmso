@@ -784,7 +784,7 @@ class ForceField(object):
         bond_types_dict = {}
         angle_types_dict = {}
         dihedral_types_dict = {}
-        virtual_types_dict = {} 
+        virtual_types_dict = {}
         improper_types_dict = {}
         pairpotential_types_dict = {}
         potential_groups = {}
@@ -859,7 +859,7 @@ class ForceField(object):
             if this_group_name:
                 this_dihedral_types_group.update(this_improper_types_group)
                 potential_groups[this_group_name] = this_dihedral_types_group
-        
+
         # Consolidate VirtualTypes
         for virtual_types in ff_virtualtypes_list:
             print(virtual_types)
@@ -869,10 +869,12 @@ class ForceField(object):
             this_virtual_types_group_name = virtual_types.attrib.get("name", None)
 
             if this_virtual_types_group_name:
-                potential_groups[this_virtual_types_group_name] = this_virtual_types_group
+                potential_groups[this_virtual_types_group_name] = (
+                    this_virtual_types_group
+                )
 
             virtual_types_dict.update(this_virtual_types_group)
-       
+
         # Consolidate PairPotentialType
         for pairpotential_types in ff_pairpotentialtypes_list:
             this_pairpotential_types_group = parse_ff_pairpotential_types(
