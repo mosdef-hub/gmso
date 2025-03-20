@@ -106,6 +106,54 @@ class TestGsd(BaseTest):
         ):
             assert np.array_equal(np.array(group1), np.array(group2) + 2)
 
+    def test_multiple_rigid_bodies(self, gaff_forcefield):
+        ethane = mb.lib.molecules.Ethane()
+        benzene = mb.load("c1ccccc1", smiles=True)
+        benzene.name = "Benzene"
+        box = mb.fill_box([ethane, benzene], n_compounds=[1, 1], box=[2, 2, 2])
+        top = from_mbuild(box)
+        for site in top.sites:
+            site.molecule.isrigid = True
+        apply(top, gaff_forcefield, identify_connections=True)
+
+        rigid_ids = [site.molecule.number for site in top.sites]
+        assert set(rigid_ids) == {0, 1}
+
+        snapshot, refs, rigid = to_gsd_snapshot(top)
+        snapshot.validate()
+        ethane_types = list(
+            set(
+                [
+                    site.atom_type.name
+                    for site in top.sites
+                    if site.molecule.name == "Ethane"
+                ]
+            )
+        )
+        benzene_types = list(
+            set(
+                [
+                    site.atom_type.name
+                    for site in top.sites
+                    if site.molecule.name == "Benzene"
+                ]
+            )
+        )
+        for _type in ethane_types:
+            assert _type in rigid.body["Ethane"]["constituent_types"]
+
+        for _type in benzene_types:
+            assert _type in rigid.body["Benzene"]["constituent_types"]
+
+        assert np.array_equal(np.zeros(8), snapshot.particles.body[2:10])
+        assert np.array_equal(np.ones(12), snapshot.particles.body[10:])
+        assert round(float(snapshot.particles.mass[0]), 4) == round(
+            float(ethane.mass), 4
+        )
+        assert round(float(snapshot.particles.mass[1]), 4) == round(
+            float(benzene.mass), 4
+        )
+
     def test_rigid_bodies_mix(self):
         ethane = mb.lib.molecules.Ethane()
         ethane.name = "ethane"
@@ -118,6 +166,7 @@ class TestGsd(BaseTest):
                 site.molecule.isrigid = True
 
         snapshot, refs, rigid = to_gsd_snapshot(top)
+        snapshot.validate()
         assert snapshot.particles.typeid[0] == 0
         assert snapshot.particles.N == top.n_sites + 1
         assert np.array_equal(
@@ -147,6 +196,7 @@ class TestGsd(BaseTest):
         top = apply(top, oplsaa, remove_untyped=True)
 
         gmso_snapshot, _, _ = to_hoomd_snapshot(top, base_units=base_units)
+        gmso_snapshot.validate()
         gmso_forces, _ = to_hoomd_forcefield(
             top,
             r_cut=1.4,
