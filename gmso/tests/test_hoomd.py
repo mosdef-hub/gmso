@@ -106,6 +106,9 @@ class TestGsd(BaseTest):
         ):
             assert np.array_equal(np.array(group1), np.array(group2) + 2)
 
+        for site in top.iter_sites_by_molecule("Ethane"):
+            assert site.name in rigid.body["Ethane"]["constituent_types"]
+
     def test_multiple_rigid_bodies(self, gaff_forcefield):
         ethane = mb.lib.molecules.Ethane()
         benzene = mb.load("c1ccccc1", smiles=True)
@@ -121,29 +124,12 @@ class TestGsd(BaseTest):
 
         snapshot, refs, rigid = to_gsd_snapshot(top)
         snapshot.validate()
-        ethane_types = list(
-            set(
-                [
-                    site.atom_type.name
-                    for site in top.sites
-                    if site.molecule.name == "Ethane"
-                ]
-            )
-        )
-        benzene_types = list(
-            set(
-                [
-                    site.atom_type.name
-                    for site in top.sites
-                    if site.molecule.name == "Benzene"
-                ]
-            )
-        )
-        for _type in ethane_types:
-            assert _type in rigid.body["Ethane"]["constituent_types"]
 
-        for _type in benzene_types:
-            assert _type in rigid.body["Benzene"]["constituent_types"]
+        for site in top.iter_sites_by_molecule("Ethane"):
+            assert site.atom_type.name in rigid.body["Ethane"]["constituent_types"]
+
+        for site in top.iter_sites_by_molecule("Benzene"):
+            assert site.atom_type.name in rigid.body["Benzene"]["constituent_types"]
 
         assert np.array_equal(np.zeros(8), snapshot.particles.body[2:10])
         assert np.array_equal(np.ones(12), snapshot.particles.body[10:])
