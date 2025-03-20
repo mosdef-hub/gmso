@@ -95,5 +95,15 @@
         </Parameters>
     </PairPotentialType>
   </PairPotentialTypes>
-
+ 
+ <VirtualSiteTypes expression="ri + b*(rj-ri+a*(rk-rj))/((rj-ri+a*(rk-rj)))">
+    <ParametersUnitDef parameter="a" unit="dimensionless"/>
+    <ParametersUnitDef parameter="b" unit="dimensionless"/>
+    <VirtualSiteType name="VirtualSiteType-3fd" type1="Xe" type2="Xe" type3="Xe">
+      <Parameters>
+        <Parameter name="a" value="1.0"/>
+        <Parameter name="b" value="0.1"/>
+      </Parameters>
+    </VirtualSiteType>  
+  </VirtualSiteTypes>
 </ForceField>
