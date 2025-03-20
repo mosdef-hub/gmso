@@ -119,6 +119,7 @@ class ForceField(object):
             self.angle_types = ff.angle_types
             self.dihedral_types = ff.dihedral_types
             self.improper_types = ff.improper_types
+            self.virtual_types = ff.virtual_types
             self.pairpotential_types = ff.pairpotential_types
             self.potential_groups = ff.potential_groups
             self.scaling_factors = ff.scaling_factors
@@ -132,6 +133,7 @@ class ForceField(object):
             self.angle_types = {}
             self.dihedral_types = {}
             self.improper_types = {}
+            self.virtual_types = {}
             self.pairpotential_types = {}
             self.potential_groups = {}
             self.scaling_factors = {}
@@ -775,12 +777,14 @@ class ForceField(object):
         ff_bondtypes_list = []
         ff_angletypes_list = []
         ff_dihedraltypes_list = []
+        ff_virtualtypes_list = []
         ff_pairpotentialtypes_list = []
 
         atom_types_dict = ChainMap()
         bond_types_dict = {}
         angle_types_dict = {}
         dihedral_types_dict = {}
+        virtual_types_dict = {} 
         improper_types_dict = {}
         pairpotential_types_dict = {}
         potential_groups = {}
@@ -804,6 +808,7 @@ class ForceField(object):
             ff_bondtypes_list.extend(ff_tree.findall("BondTypes"))
             ff_angletypes_list.extend(ff_tree.findall("AngleTypes"))
             ff_dihedraltypes_list.extend(ff_tree.findall("DihedralTypes"))
+            ff_virtualtypes_list.extend(ff_tree.findall("VirtualSiteTypes"))
             ff_pairpotentialtypes_list.extend(ff_tree.findall("PairPotentialTypes"))
 
         # Consolidate AtomTypes
@@ -854,7 +859,20 @@ class ForceField(object):
             if this_group_name:
                 this_dihedral_types_group.update(this_improper_types_group)
                 potential_groups[this_group_name] = this_dihedral_types_group
+        
+        # Consolidate VirtualTypes
+        for virtual_types in ff_virtualtypes_list:
+            print(virtual_types)
+            this_virtual_types_group = parse_ff_connection_types(
+                virtual_types, child_tag="VirtualSiteType"
+            )
+            this_virtual_types_group_name = virtual_types.attrib.get("name", None)
 
+            if this_virtual_types_group_name:
+                potential_groups[this_virtual_types_group_name] = this_virtual_types_group
+
+            virtual_types_dict.update(this_virtual_types_group)
+       
         # Consolidate PairPotentialType
         for pairpotential_types in ff_pairpotentialtypes_list:
             this_pairpotential_types_group = parse_ff_pairpotential_types(
@@ -882,6 +900,7 @@ class ForceField(object):
         ff.angle_types = angle_types_dict
         ff.dihedral_types = dihedral_types_dict
         ff.improper_types = improper_types_dict
+        ff.virtual_types = virtual_types_dict
         ff.pairpotential_types = pairpotential_types_dict
         ff.potential_groups = potential_groups
         return ff

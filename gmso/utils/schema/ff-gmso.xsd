@@ -113,12 +113,15 @@
         <xsd:sequence>
             <xsd:element ref="Parameters" minOccurs="0" maxOccurs="1"/>
         </xsd:sequence>
-        <xsd:attribute name="a" type="xsd:float" use="optional"/>
-        <xsd:attribute name="b" type="xsd:float" use="optional"/>
-        <xsd:attribute name="c" type="xsd:float" use="optional"/>
-        <xsd:attribute name="d" type="xsd:float" use="optional"/>
-        <xsd:attribute name="e" type="xsd:float" use="optional"/>
-   </xsd:complexType>
+        <xsd:attribute name="name" type="xsd:string" use="optional"/>
+        <xsd:attribute name="type1" type="xsd:string"/>
+        <xsd:attribute name="class1" type="xsd:string"/>
+        <xsd:attribute name="type2" type="xsd:string"/>
+        <xsd:attribute name="class2" type="xsd:string"/>
+        <xsd:attribute name="type3" type="xsd:string"/>
+        <xsd:attribute name="class3" type="xsd:string"/>
+        <xsd:attribute name="expression" type="xsd:string" use="optional"/>
+    </xsd:complexType>
 
     <xsd:element name="VirtualSiteTypes">
         <xsd:complexType>

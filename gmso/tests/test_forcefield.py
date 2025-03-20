@@ -190,6 +190,20 @@ class TestForceField(BaseTest):
             "Xe",
         )
 
+    def test_ff_VitualSiteTypes_from_xml(self):
+        ff = ForceField(get_path("ff-example0.xml"), backend="gmso")
+        assert len(ff.virtual_types) == 1
+        assert "Xe~Xe~Xe" in ff.virtual_types
+
+        assert sympify("r") in ff.virtual_types["Xe~Xe~Xe"].independent_variables
+        assert ff.virtual_types["Xe~Xe~Xe"].parameters["a"] == u.unyt_quantity(
+            1.0, u.dimensionless
+        )
+        assert ff.virtual_types["Xe~Xe~Xe"].parameters["b"] == u.unyt_quantity(
+            0.1, u.dimensionless
+        )
+        assert ff.virtual_types["Xe~Xe~Xe"].member_classes == ("Xe", "Xe", "Xe")
+
     def test_ff_pairpotentialtypes_from_xml(self, ff):
         assert len(ff.pairpotential_types) == 1
         assert "Xe~Xe" in ff.pairpotential_types
