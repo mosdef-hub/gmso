@@ -72,10 +72,10 @@ class TestGsd(BaseTest):
         assert set(rigid_ids) == {0, 1}
 
         snapshot, refs, rigid = to_gsd_snapshot(top)
-        snapshot_no_rigid, refs, rigid = to_gsd_snapshot(top_no_rigid)
+        snapshot_no_rigid, refs, _ = to_gsd_snapshot(top_no_rigid)
         # Check that snapshot has rigid particles added
-        assert "R" in snapshot.particles.types
-        assert "R" not in snapshot_no_rigid.particles.types
+        assert "Ethane" in snapshot.particles.types
+        assert "Ethane" not in snapshot_no_rigid.particles.types
         assert snapshot.particles.N - 2 == snapshot_no_rigid.particles.N
         assert np.array_equal(snapshot.particles.typeid[:2], np.array([0, 0]))
         assert np.array_equal(

@@ -132,7 +132,7 @@ class TestConvertMBuild(BaseTest):
         for site in top.sites:
             if site.name == "particle2":
                 assert site.group == "mid"
-                assert site.molecule == ("particle2", 0)
+                assert site.molecule == ("particle2", 1)
             elif site.name == "particle1":
                 assert site.molecule == ("particle1", 0)
 
