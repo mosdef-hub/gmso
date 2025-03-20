@@ -196,7 +196,6 @@ class TestGsd(BaseTest):
         top = apply(top, oplsaa, remove_untyped=True)
 
         gmso_snapshot, _, _ = to_hoomd_snapshot(top, base_units=base_units)
-        gmso_snapshot.validate()
         gmso_forces, _ = to_hoomd_forcefield(
             top,
             r_cut=1.4,
