@@ -323,7 +323,7 @@ def _parse_particle_information(
         rigid_masses = np.zeros(n_rigid) * masses.units
         rigid_xyz = np.zeros((n_rigid, 3)) * xyz.units
         rigid_moits = np.zeros((n_rigid, 3)) * xyz.units
-        rigid_orientations = [tuple([1, 0, 0, 0]) for i in rigid_xyz]
+        rigid_orientations = [[1, 0, 0, 0] for i in rigid_xyz]
         # Rigid particles get type IDs from 0 to n_rigid_types
         rigid_type_ids = []
         for i, rigid_type in enumerate(rigid_body_sets.keys()):
@@ -331,19 +331,14 @@ def _parse_particle_information(
         # Hoomd rigid constraint obj needed to run rigid body simulations
         rigid_constraint = hoomd.md.constrain.Rigid()
         mol_count = 0
+        # Populate rigid particle placeholder arrays created above
         for rigid_mol in rigid_body_sets.keys():
-            # Place holder lists for each rigid body entry to hoomd.md.constrain.Rigid()
-            rigid_constraint.body[rigid_mol] = {
-                "constituent_types": [],
-                "positions": [],
-                "orientations": [],
-            }
             for idx, _id in enumerate(rigid_body_sets[rigid_mol]):
                 # Get values for rigid body properties from their constituent particles
                 group_indices = np.where(np.array(rigid_ids) == _id)[0]
                 group_positions = xyz[group_indices]
                 group_masses = masses[group_indices]
-                group_orientations = [tuple([1, 0, 0, 0]) for i in group_indices]
+                group_orientations = [[1, 0, 0, 0] for i in group_indices]
                 com_xyz = np.sum(group_positions.T * group_masses, axis=1) / sum(
                     group_masses
                 )
@@ -352,19 +347,16 @@ def _parse_particle_information(
                 rigid_moits[idx + mol_count] = moit(
                     group_positions, group_masses, com_xyz
                 )
-                # Only need to do this once per rigid body type
+                # Only need to make one entry per rigid body type
                 if idx == 0:
                     const_ids = typeids[group_indices]
                     const_types = [unique_types[i] for i in const_ids]
-                    rigid_constraint.body[rigid_mol]["constituent_types"].extend(
-                        const_types
-                    )
-                    rigid_constraint.body[rigid_mol]["positions"].extend(
-                        group_positions
-                    )
-                    rigid_constraint.body[rigid_mol]["orientations"].extend(
-                        group_orientations
-                    )
+
+                    rigid_constraint.body[rigid_mol] = {
+                        "constituent_types": const_types,
+                        "positions": group_positions,
+                        "orientations": group_orientations,
+                    }
             mol_count += len(rigid_body_sets[rigid_mol])
         # Combine properties for rigid body particles and constituent particles
         # All rigid body propeties should be at the beginning, others get bumped

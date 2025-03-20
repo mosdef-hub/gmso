@@ -72,6 +72,7 @@ class TestGsd(BaseTest):
         assert set(rigid_ids) == {0, 1}
 
         snapshot, refs, rigid = to_gsd_snapshot(top)
+        snapshot.validate()
         snapshot_no_rigid, refs, _ = to_gsd_snapshot(top_no_rigid)
         # Check that snapshot has rigid particles added
         assert "Ethane" in snapshot.particles.types
