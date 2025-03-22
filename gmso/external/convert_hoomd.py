@@ -57,7 +57,7 @@ def to_gsd_snapshot(
     parse_special_pairs=True,
     auto_scale=False,
 ):
-    """Create a gsd.snapshot objcet (HOOMD v3 default data format).
+    """Create a gsd.snapshot objcet (HOOMD default data format).
 
     The gsd snapshot is molecular structure of HOOMD-Blue. This file
     can be used as a starting point for a HOOMD-Blue simulation, for analysis,
@@ -156,7 +156,7 @@ def to_hoomd_snapshot(
     parse_special_pairs=True,
     auto_scale=False,
 ):
-    """Create a gsd.snapshot objcet (HOOMD v3 default data format).
+    """Create a gsd.snapshot objcet (HOOMD default data format).
 
     The gsd snapshot is molecular structure of HOOMD-Blue. This file
     can be used as a starting point for a HOOMD-Blue simulation, for analysis,
