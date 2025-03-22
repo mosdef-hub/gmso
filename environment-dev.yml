@@ -38,7 +38,7 @@ dependencies:
   - pandas
   - symengine
   - python-symengine
-  - hoomd>=4.0,<5.0
+  - hoomd>=4.0
   - importlib_resources
   - pip:
       - git+https://github.com/mosdef-hub/mbuild.git@main
