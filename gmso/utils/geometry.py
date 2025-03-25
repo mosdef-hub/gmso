@@ -52,7 +52,7 @@ def moit(xyz, masses, center=np.zeros(3)):
     numpy.ndarray (3,)
         Moment of inertia tensor for the set of particles.
     """
-    xyz -= center
+    xyz -= np.asarray(center)
     x = xyz[:, 0]
     y = xyz[:, 1]
     z = xyz[:, 2]
