@@ -57,9 +57,9 @@ def to_gsd_snapshot(
     parse_special_pairs=True,
     auto_scale=False,
 ):
-    """Create a gsd.snapshot objcet (HOOMD v3 default data format).
+    """Create a gsd.hoomd.Frame objcet (HOOMD default data format).
 
-    The gsd snapshot is molecular structure of HOOMD-Blue. This file
+    The gsd snapshot defines the topology of HOOMD-Blue simulations. This file
     can be used as a starting point for a HOOMD-Blue simulation, for analysis,
     and for visualization in various tools.
 
@@ -94,7 +94,7 @@ def to_gsd_snapshot(
 
     Return
     ------
-    hoomd_snapshot : hoomd.Snapshot
+    gsd_snapshot : gsd.hoomd.Frame
         Converted hoomd Snapshot. Always retruned.
     base_units : dict
         Based units dictionary utilized during the conversion. Always returned.
@@ -110,18 +110,19 @@ def to_gsd_snapshot(
     generated using `to_hoomd_forcefield()`.
 
     If you are using mBuild and GMSO to initialize rigid body simulations
-    with Hoomd-Blue set the `Molecule.isrigid` property to `True`.
+    with Hoomd-Blue set the site's `Molecule.isrigid` property to `True`.
     If your topology contains a mix of rigid and flexible molecules,
     the rigid molecules must come first in the heirarchy of the GMSO toplogy
-    and therefore also in the mBuild compound.
+    and therefore also in the mBuild compound heirarchy.
     See https://hoomd-blue.readthedocs.io/en/latest/index.html
-    for more information about running rigid body simulations.
+    for more information about running rigid body simulations in Hoomd-Blue.
 
     Rigid Body Example
     ------------------
     In this example, a system with rigid benzene and flexible ethane
     is initialized. Since benzene is rigid, it must be passed first
-    into `mb.fill_box`.
+    into `mb.fill_box` so that benzene molecules are at the top of
+    `box` heirarchy.
         ::
             ethane = mb.lib.molecules.Ethane()
             ethane.name = "ethane"
@@ -190,9 +191,9 @@ def to_hoomd_snapshot(
     parse_special_pairs=True,
     auto_scale=False,
 ):
-    """Create a gsd.snapshot objcet (HOOMD v3 default data format).
+    """Create a hoomd.Snapshot objcet (HOOMD default data format).
 
-    The gsd snapshot is molecular structure of HOOMD-Blue. This file
+    The Hoomd snapshot defines the topology of HOOMD-Blue simulations. This file
     can be used as a starting point for a HOOMD-Blue simulation, for analysis,
     and for visualization in various tools.
 
@@ -246,7 +247,7 @@ def to_hoomd_snapshot(
     with Hoomd-Blue set the `Molecule.isrigid` property to `True`.
     If your topology contains a mix of rigid and flexible molecules,
     the rigid molecules must come first in the heirarchy of the GMSO toplogy
-    and therefore also in the mBuild compound.
+    and therefore also in the mBuild compound heirarchy.
     See https://hoomd-blue.readthedocs.io/en/latest/index.html
     for more information about running rigid body simulations.
 
@@ -254,7 +255,8 @@ def to_hoomd_snapshot(
     ------------------
     In this example, a system with rigid benzene and flexible ethane
     is initialized. Since benzene is rigid, it must be passed first
-    into `mb.fill_box`.
+    into `mb.fill_box` so that benzene molecules are at the top of
+    `box` heirarchy.
         ::
             ethane = mb.lib.molecules.Ethane()
             ethane.name = "ethane"
@@ -266,7 +268,7 @@ def to_hoomd_snapshot(
                 if site.molecule.name == "benzene":
                     site.molecule.isrigid = True
 
-            snapshot, refs, rigid = to_gsd_snapshot(top)
+            snapshot, refs, rigid = to_hoomd_snapshot(top)
     """
     base_units = _validate_base_units(base_units, top, auto_scale)
     hoomd_snapshot = hoomd.Snapshot()
