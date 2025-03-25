@@ -50,7 +50,7 @@ def moit(xyz, masses, center=np.zeros(3)):
     Returns
     -------
     numpy.ndarray (3,)
-        Moment of inertia tensor for the set of particles.
+        Diagonal components of the moment of inertia tensor.
     """
     xyz -= np.asarray(center)
     x = xyz[:, 0]
