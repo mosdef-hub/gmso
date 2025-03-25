@@ -94,16 +94,47 @@ def to_gsd_snapshot(
 
     Return
     ------
-    gsd_snapshot : gsd.hoomd.Frame
-        Converted hoomd Snapshot.
+    hoomd_snapshot : hoomd.Snapshot
+        Converted hoomd Snapshot. Always retruned.
     base_units : dict
-        Based units dictionary utilized during the conversion.
+        Based units dictionary utilized during the conversion. Always returned.
+    rigid_info : hoomd.md.constrain.Rigid
+        Hoomd object storing constituent particle information
+        needed to run rigid body simulations in Hoomd-Blue.
+        This is only returned if Molecule's with `Molecule.isrigid = True`
+        are found in the topology.
 
     Notes
     -----
-    Force field parameters are not written to the GSD file and must be included
-    manually in a HOOMD input script. Work on a HOOMD plugin is underway to
-    read force field parameters from a Foyer XML file.
+    Force field parameters are not written to the GSD file and must be
+    generated using `to_hoomd_forcefield()`.
+
+    If you are using mBuild and GMSO to initialize rigid body simulations
+    with Hoomd-Blue set the `Molecule.isrigid` property to `True`.
+    If your topology contains a mix of rigid and flexible molecules,
+    the rigid molecules must come first in the heirarchy of the GMSO toplogy
+    and therefore also in the mBuild compound.
+    See https://hoomd-blue.readthedocs.io/en/latest/index.html
+    for more information about running rigid body simulations.
+
+    Rigid Body Example
+    ------------------
+    In this example, a system with rigid benzene and flexible ethane
+    is initialized. Since benzene is rigid, it must be passed first
+    into `mb.fill_box`.
+        ::
+            ethane = mb.lib.molecules.Ethane()
+            ethane.name = "ethane"
+            benzene = mb.load("c1ccccc1", smiles=True)
+            benzene.name = "benzene"
+            box = mb.fill_box([benzene, ethane], n_compounds=[1, 1], box=[2, 2, 2])
+            top = from_mbuild(box)
+            for site in top.sites:
+                if site.molecule.name == "benzene":
+                    site.molecule.isrigid = True
+
+            snapshot, refs, rigid = to_gsd_snapshot(top)
+
     """
     base_units = _validate_base_units(base_units, top, auto_scale)
     gsd_snapshot = gsd.hoomd.Frame()
@@ -145,7 +176,10 @@ def to_gsd_snapshot(
     if top.n_impropers > 0:
         _parse_improper_information(gsd_snapshot, top, n_rigid)
 
-    return gsd_snapshot, base_units, rigid_info
+    if rigid_info:
+        return gsd_snapshot, base_units, rigid_info
+    else:
+        return gsd_snapshot, base_units
 
 
 def to_hoomd_snapshot(
@@ -194,15 +228,45 @@ def to_hoomd_snapshot(
     Return
     ------
     hoomd_snapshot : hoomd.Snapshot
-        Converted hoomd Snapshot.
+        Converted hoomd Snapshot. Always retruned.
     base_units : dict
-        Based units dictionary utilized during the conversion.
+        Based units dictionary utilized during the conversion. Always returned.
+    rigid_info : hoomd.md.constrain.Rigid
+        Hoomd object storing constituent particle information
+        needed to run rigid body simulations in Hoomd-Blue.
+        This is only returned if Molecule's with `Molecule.isrigid = True`
+        are found in the topology.
 
     Notes
     -----
-    Force field parameters are not written to the GSD file and must be included
-    manually in a HOOMD input script. Work on a HOOMD plugin is underway to
-    read force field parameters from a Foyer XML file.
+    Force field parameters are not written to the GSD file and must be
+    generated using `to_hoomd_forcefield()`.
+
+    If you are using mBuild and GMSO to initialize rigid body simulations
+    with Hoomd-Blue set the `Molecule.isrigid` property to `True`.
+    If your topology contains a mix of rigid and flexible molecules,
+    the rigid molecules must come first in the heirarchy of the GMSO toplogy
+    and therefore also in the mBuild compound.
+    See https://hoomd-blue.readthedocs.io/en/latest/index.html
+    for more information about running rigid body simulations.
+
+    Rigid Body Example
+    ------------------
+    In this example, a system with rigid benzene and flexible ethane
+    is initialized. Since benzene is rigid, it must be passed first
+    into `mb.fill_box`.
+        ::
+            ethane = mb.lib.molecules.Ethane()
+            ethane.name = "ethane"
+            benzene = mb.load("c1ccccc1", smiles=True)
+            benzene.name = "benzene"
+            box = mb.fill_box([benzene, ethane], n_compounds=[1, 1], box=[2, 2, 2])
+            top = from_mbuild(box)
+            for site in top.sites:
+                if site.molecule.name == "benzene":
+                    site.molecule.isrigid = True
+
+            snapshot, refs, rigid = to_gsd_snapshot(top)
     """
     base_units = _validate_base_units(base_units, top, auto_scale)
     hoomd_snapshot = hoomd.Snapshot()
@@ -244,7 +308,10 @@ def to_hoomd_snapshot(
         _parse_improper_information(hoomd_snapshot, top, n_rigid)
 
     hoomd_snapshot.wrap()
-    return hoomd_snapshot, base_units, rigid_info
+    if rigid_info:
+        return hoomd_snapshot, base_units, rigid_info
+    else:
+        return hoomd_snapshot, base_units
 
 
 def _parse_particle_information(
