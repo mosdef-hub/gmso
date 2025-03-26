@@ -195,14 +195,16 @@ class TestForceField(BaseTest):
         assert len(ff.virtual_types) == 1
         assert "Xe~Xe~Xe" in ff.virtual_types
 
-        assert sympify("r") in ff.virtual_types["Xe~Xe~Xe"].independent_variables
+        assert sympify("ri") in ff.virtual_types["Xe~Xe~Xe"].independent_variables
+        assert sympify("rj") in ff.virtual_types["Xe~Xe~Xe"].independent_variables
+        assert sympify("rk") in ff.virtual_types["Xe~Xe~Xe"].independent_variables
         assert ff.virtual_types["Xe~Xe~Xe"].parameters["a"] == u.unyt_quantity(
             1.0, u.dimensionless
         )
         assert ff.virtual_types["Xe~Xe~Xe"].parameters["b"] == u.unyt_quantity(
             0.1, u.dimensionless
         )
-        assert ff.virtual_types["Xe~Xe~Xe"].member_classes == ("Xe", "Xe", "Xe")
+        assert ff.virtual_types["Xe~Xe~Xe"].member_types == ("Xe", "Xe", "Xe")
 
     def test_ff_pairpotentialtypes_from_xml(self, ff):
         assert len(ff.pairpotential_types) == 1

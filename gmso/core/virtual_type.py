@@ -77,7 +77,7 @@ class VirtualPositionType(ParametricPotential):
     @staticmethod
     def _default_potential_expr():
         return PotentialExpression(
-            expression="ri + b*(rj-ri+a*(rk-rj))/(rijk.norm)",
+            expression="ri + b*(rj-ri+a*(rk-rj))",
             parameters={
                 "k": 1000 * u.Unit("kJ / (deg**2)"),
                 "theta_eq": 180 * u.deg,
