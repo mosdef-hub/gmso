@@ -95,8 +95,7 @@
         </Parameters>
     </PairPotentialType>
   </PairPotentialTypes>
- 
- <VirtualSiteTypes expression="ri + b*(rj-ri+a*(rk-rj))/((rj-ri+a*(rk-rj)))">
+ <VirtualSiteTypes expression="ri + b*(rj-ri+a*(rk-rj))">
     <ParametersUnitDef parameter="a" unit="dimensionless"/>
     <ParametersUnitDef parameter="b" unit="dimensionless"/>
     <VirtualSiteType name="VirtualSiteType-3fd" type1="Xe" type2="Xe" type3="Xe">

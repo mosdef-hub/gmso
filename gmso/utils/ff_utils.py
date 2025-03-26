@@ -13,6 +13,7 @@ from gmso.core.atom_type import AtomType
 from gmso.core.bond_type import BondType
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper_type import ImproperType
+from gmso.core.virtual_type import VirtualPositionType
 from gmso.core.pairpotential_type import PairPotentialType
 from gmso.exceptions import (
     ForceFieldError,
@@ -402,6 +403,7 @@ TAG_TO_CLASS_MAP = {
     "AngleType": AngleType,
     "DihedralType": DihedralType,
     "ImproperType": ImproperType,
+    "VirtualSiteType": VirtualPositionType,
     "PairPotentialType": PairPotentialType,
 }
 

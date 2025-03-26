@@ -862,7 +862,6 @@ class ForceField(object):
 
         # Consolidate VirtualTypes
         for virtual_types in ff_virtualtypes_list:
-            print(virtual_types)
             this_virtual_types_group = parse_ff_connection_types(
                 virtual_types, child_tag="VirtualSiteType"
             )
