@@ -13,7 +13,7 @@ import unyt as u
 from unyt.array import allclose_units
 
 from gmso.core.views import PotentialFilters
-from gmso.exceptions import NotYetImplementedWarning
+from gmso.exceptions import EngineIncompatibilityError, NotYetImplementedWarning
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.connectivity import generate_pairs_lists
 from gmso.utils.conversions import convert_ryckaert_to_opls
@@ -106,7 +106,9 @@ def to_gsd_snapshot(
     read force field parameters from a Foyer XML file.
     """
     if int(hoomd_version[0]) < 4:
-        raise RuntimeError("GMSO is only compatible with Hoomd-Blue >= 4.0")
+        raise EngineIncompatibilityError(
+            "GMSO is only compatible with Hoomd-Blue >= 4.0"
+        )
     base_units = _validate_base_units(base_units, top, auto_scale)
     gsd_snapshot = gsd.hoomd.Frame()
 
@@ -207,7 +209,9 @@ def to_hoomd_snapshot(
     read force field parameters from a Foyer XML file.
     """
     if int(hoomd_version[0]) < 4:
-        raise RuntimeError("GMSO is only compatible with Hoomd-Blue >= 4.0")
+        raise EngineIncompatibilityError(
+            "GMSO is only compatible with Hoomd-Blue >= 4.0"
+        )
     base_units = _validate_base_units(base_units, top, auto_scale)
     hoomd_snapshot = hoomd.Snapshot()
 
@@ -619,7 +623,9 @@ def to_hoomd_forcefield(
 
     """
     if int(hoomd_version[0]) < 4:
-        raise RuntimeError("GMSO is only compatible with Hoomd-Blue >= 4.0")
+        raise EngineIncompatibilityError(
+            "GMSO is only compatible with Hoomd-Blue >= 4.0"
+        )
     potential_types = _validate_compatibility(top)
     base_units = _validate_base_units(base_units, top, auto_scale, potential_types)
 
