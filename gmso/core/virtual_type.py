@@ -12,7 +12,7 @@ from gmso.utils.misc import ensure_valid_dimensions, unyt_compare
 from gmso.utils.units import GMSO_UnitRegistry
 
 
-class VirtualPositionType(ParametricPotential):
+class VirtualSiteType(ParametricPotential):
     """A descripton of the interaction between 3 bonded partners.
 
     This is a subclass of the gmso.core.Potential superclass.
@@ -54,7 +54,7 @@ class VirtualPositionType(ParametricPotential):
 
     def __init__(
         self,
-        name="VirtualPositionType",
+        name="VirtualSiteType",
         expression=None,
         parameters=None,
         independent_variables=None,
@@ -63,7 +63,7 @@ class VirtualPositionType(ParametricPotential):
         member_classes=None,
         tags=None,
     ):
-        super(VirtualPositionType, self).__init__(
+        super(VirtualSiteType, self).__init__(
             name=name,
             expression=expression,
             parameters=parameters,
