@@ -105,6 +105,8 @@ def to_gsd_snapshot(
     manually in a HOOMD input script. Work on a HOOMD plugin is underway to
     read force field parameters from a Foyer XML file.
     """
+    if int(hoomd_version[0]) < 4:
+        raise RuntimeError("GMSO is only compatible with Hoomd-Blue >= 4.0")
     base_units = _validate_base_units(base_units, top, auto_scale)
     gsd_snapshot = gsd.hoomd.Frame()
 
@@ -156,7 +158,7 @@ def to_hoomd_snapshot(
     parse_special_pairs=True,
     auto_scale=False,
 ):
-    """Create a gsd.snapshot objcet (HOOMD default data format).
+    """Create a gsd.snapshot object (HOOMD default data format).
 
     The gsd snapshot is molecular structure of HOOMD-Blue. This file
     can be used as a starting point for a HOOMD-Blue simulation, for analysis,
@@ -204,6 +206,8 @@ def to_hoomd_snapshot(
     manually in a HOOMD input script. Work on a HOOMD plugin is underway to
     read force field parameters from a Foyer XML file.
     """
+    if int(hoomd_version[0]) < 4:
+        raise RuntimeError("GMSO is only compatible with Hoomd-Blue >= 4.0")
     base_units = _validate_base_units(base_units, top, auto_scale)
     hoomd_snapshot = hoomd.Snapshot()
 
@@ -614,6 +618,8 @@ def to_hoomd_forcefield(
         Based units dictionary utilized during the conversion.
 
     """
+    if int(hoomd_version[0]) < 4:
+        raise RuntimeError("GMSO is only compatible with Hoomd-Blue >= 4.0")
     potential_types = _validate_compatibility(top)
     base_units = _validate_base_units(base_units, top, auto_scale, potential_types)
 
