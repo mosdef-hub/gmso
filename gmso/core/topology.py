@@ -1085,6 +1085,10 @@ class Topology(object):
                 f"Available options: {[untyped_extractors.keys()]}."
             )
         return untyped
+    
+    def _add_virtual_site(self, site):
+        "Add a VirtualSite instance to topology"
+        self._virtual_sites.add(site)
 
     def _get_untyped_sites(self):
         "Return a list of untyped sites"
