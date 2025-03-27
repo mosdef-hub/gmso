@@ -294,3 +294,20 @@ class TestPotential(BaseTest):
         for connection_type in labelsList:
             conn = list(getattr(top, connection_type)())[0]
             assert sort_by_classes(conn) == sort_by_types(conn)
+
+    def test_numpy_potential(self):
+        new_potential = ParametricPotential(
+            name="numpy function",
+            expression="a*norm(x)+sin(b)",
+            parameters={"a": 1.0 * u.g, "b": 1.0 * u.m},
+            independent_variables={"x"},
+        )
+        assert new_potential.name == "numpy function"
+        assert new_potential.expression == sympy.sympify("a*norm(x)+sin(b)")
+        assert_allclose_units(
+            new_potential.parameters["a"], 1.0 * u.g, rtol=1e-5, atol=1e-8
+        )
+        assert_allclose_units(
+            new_potential.parameters["b"], 1.0 * u.m, rtol=1e-5, atol=1e-8
+        )
+        assert new_potential.independent_variables == {sympy.symbols("x")}
