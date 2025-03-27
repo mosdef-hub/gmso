@@ -1,11 +1,11 @@
 from typing import Callable, List, Optional, Union
 
 import unyt as u
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from gmso.abc.abstract_site import Site
 from gmso.core.atom import Atom
-from gmso.core.virtual_type import VirtualPositionType
+from gmso.core.virtual_type import VirtualSiteType
 
 
 class VirtualSite(Site):
@@ -13,7 +13,6 @@ class VirtualSite(Site):
 
         Virtual sites are massless particles that represent off-atom charge sites, lone pairs, or other non-physical sites.
 
-    >>>>>>> 7d3a393 (added virtual site class attributes and added virtual type class)
         Attributes
         ----------
         charge : float
@@ -25,20 +24,24 @@ class VirtualSite(Site):
         position:
     """
 
+    parent_atoms_: List[Site] = Field(
+        ...,
+        description="The parent atoms of the virtual site.",
+        alias="parent_atoms",
+    )
+
     charge_: Optional[Union[u.unyt_quantity, float]] = Field(
         None, description="Charge of the virtual site", alias="charge"
     )
 
-    parent_atoms_: List[Atom] = Field(
-        ...,
-        description="The 3 atoms involved in the angle.",
-        alias="connection_members",
-    )
-
     position_: Callable = Field(None, description="", alias="position")
 
-    virtual_type_: Optional[VirtualPositionType] = Field(
+    virtual_type_: Optional[VirtualSiteType] = Field(
         default=None,
         description="virtual type for a virtual site .",
         alias="virtual_type",
     )
+
+    @property
+    def parent_atoms(self) -> List[Site]:
+        return self.__dict__.get("parent_atoms_")
