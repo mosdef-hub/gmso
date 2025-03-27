@@ -57,4 +57,14 @@
       </Parameters>
     </AngleType>
   </AngleTypes>
+  <VirtualSiteTypes expression="ri + b*(rj-ri+a*(rk-rj))">
+    <ParametersUnitDef parameter="a" unit="dimensionless"/>
+    <ParametersUnitDef parameter="b" unit="dimensionless"/>
+    <VirtualSiteType name="3fd" type1="opls_112" type2="opls_111" type3="opls_112">
+      <Parameters>
+        <Parameter name="a" value="0.5"/>
+        <Parameter name="b" value="0.15"/>
+      </Parameters>
+    </VirtualSiteType>
+  </VirtualSiteTypes>
 </ForceField>
