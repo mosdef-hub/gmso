@@ -1,27 +1,26 @@
 from typing import Callable, List, Optional, Union
 
 import unyt as u
-from pydantic import ConfigDict, Field
+from pydantic import Field
 
 from gmso.abc.abstract_site import Site
-from gmso.core.atom import Atom
 from gmso.core.virtual_type import VirtualSiteType
 
 
 class VirtualSite(Site):
     """A generalized virtual site class in GMSO.
 
-        Virtual sites are massless particles that represent off-atom charge sites, lone pairs, or other non-physical sites.
+    Virtual sites are massless particles that represent off-atom charge sites, lone pairs, or other non-physical sites.
 
-        Attributes
-        ----------
-        charge : float
-            The charge of the virtual site in elementary charge units.
-        parent_atoms : List[Site]
-            The real constituent atoms that define the virtual site's position.
-        virtual_type:
+    Attributes
+    ----------
+    charge : float
+        The charge of the virtual site in elementary charge units.
+    parent_atoms : List[Site]
+        The real constituent atoms that define the virtual site's position.
+    virtual_type:
 
-        position:
+    position:
     """
 
     parent_atoms_: List[Site] = Field(
