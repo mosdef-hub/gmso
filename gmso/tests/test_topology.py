@@ -55,9 +55,9 @@ class TestTopology(BaseTest):
         assert top.n_sites == 1
 
     def test_add_virtual_site(self, water_system):
-        v_site = VirtualSite(parent_atoms = water_system.sites)
+        v_site = VirtualSite(parent_atoms=water_system.sites)
         water_system._add_virtual_site(v_site)
-        assert water_system.n_sites == 3 
+        assert water_system.n_sites == 3
         assert water_system.n_virtual_sites == 1
 
     def test_remove_site(self, ethane):
