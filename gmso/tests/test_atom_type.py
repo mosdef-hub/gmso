@@ -399,3 +399,29 @@ class TestAtomType(BaseTest):
             if id(value) == id(cloned):
                 assert isinstance(value, str)
                 assert isinstance(cloned, str)
+
+    def test_numpy_expression_atom_type(self, charge, mass):
+        from sympy import sympify
+
+        new_type = AtomType(
+            name="numpy_expression",
+            charge=charge,
+            mass=mass,
+            expression="norm(ji) + x * 1000 + sin(theta) * 180 / pi",
+            parameters={
+                "x": 1 * u.nm,
+                "theta": 60 * u.Unit("degree"),
+            },
+            independent_variables={"ji"},
+        )
+        assert new_type.name == "numpy_expression"
+        assert_allclose_units(new_type.charge, charge, rtol=1e-5, atol=1e-8)
+        assert_allclose_units(new_type.parameters["x"], 1 * u.nm, rtol=1e-5, atol=1e-8)
+        assert_allclose_units(
+            new_type.parameters["theta"],
+            60 * u.Unit("degree"),
+            rtol=1e-5,
+            atol=1e-8,
+        )
+        assert_allclose_units(new_type.mass, mass, rtol=1e-5, atol=1e-8)
+        assert new_type.expression == sympify("norm(ji) + x * 1000 + sin(theta)*180/pi")
