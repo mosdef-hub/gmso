@@ -27,6 +27,10 @@ class TestForceField(BaseTest):
         return ForceField(get_path("ff-example1.xml"))
 
     @pytest.fixture
+    def ff_numpy(self):
+        return ForceField(get_path("ff-example2.xml"))
+
+    @pytest.fixture
     def opls_ethane_foyer(self):
         return ForceField(get_path(filename=get_path("oplsaa-ethane_foyer.xml")))
 
@@ -625,3 +629,76 @@ class TestForceField(BaseTest):
 
         with pytest.raises(GMSOError):
             opls_ethane_foyer.to_xml("test_xml_writer.xml", backend="bogus")
+
+    def test_ff_numpy(self, ff_numpy):
+        assert len(ff_numpy.atom_types) == 3
+
+        assert sympify("r") in ff_numpy.atom_types["Ar"].independent_variables
+        assert ff_numpy.atom_types["Ar"].parameters["A"] == u.unyt_quantity(
+            0.1, u.kcal / u.mol
+        )
+        assert ff_numpy.atom_types["Ar"].parameters["B"] == u.unyt_quantity(4.0, u.nm)
+        assert ff_numpy.atom_types["Ar"].parameters["C"] == u.unyt_quantity(
+            0.5, u.kcal / u.mol * u.nm**6
+        )
+        assert ff_numpy.atom_types["Ar"].mass == u.unyt_quantity(39.948, u.amu)
+        assert ff_numpy.atom_types["Ar"].charge == u.unyt_quantity(0.0, u.coulomb)
+        assert ff_numpy.atom_types["Ar"].description == "Argon atom"
+        assert ff_numpy.atom_types["Ar"].definition == "Ar"
+        assert ff_numpy.atom_types["Ar"].expression == sympify(
+            "(A*cos(-B/r) - C/r**6)+norm(C)"
+        )
+
+        assert sympify("r") in ff_numpy.atom_types["Xe"].independent_variables
+        assert "A" in ff_numpy.atom_types["Xe"].parameters
+        assert ff_numpy.atom_types["Xe"].parameters["A"] == u.unyt_quantity(
+            0.2, u.kcal / u.mol
+        )
+        assert ff_numpy.atom_types["Xe"].parameters["B"] == u.unyt_quantity(5.0, u.nm)
+        assert ff_numpy.atom_types["Xe"].parameters["C"] == u.unyt_quantity(
+            0.3, u.kcal / u.mol * u.nm**6
+        )
+        assert ff_numpy.atom_types["Xe"].mass == u.unyt_quantity(131.293, u.amu)
+        assert ff_numpy.atom_types["Xe"].charge == u.unyt_quantity(0.0, u.coulomb)
+        assert ff_numpy.atom_types["Xe"].description == "Xenon atom"
+        assert ff_numpy.atom_types["Xe"].definition == "Xe"
+        assert ff_numpy.atom_types["Xe"].expression == sympify(
+            "(A*cos(-B/r) - C/r**6)+norm(C)"
+        )
+
+        assert ff_numpy.atom_types["Li"].charge == u.unyt_quantity(1.0, u.coulomb)
+
+        assert len(ff_numpy.bond_types) == 2
+        assert sympify("r") in ff_numpy.bond_types["Ar~Ar"].independent_variables
+        assert ff_numpy.bond_types["Ar~Ar"].parameters["r_eq"] == u.unyt_quantity(
+            10.0, u.nm
+        )
+        assert ff_numpy.bond_types["Ar~Ar"].parameters["k"] == u.unyt_quantity(
+            10000, u.kJ / u.mol
+        )
+        assert ff_numpy.bond_types["Ar~Ar"].member_types == ("Ar", "Ar")
+        assert ff_numpy.bond_types["Ar~Ar"].expression == sympify(
+            "0.5 * k * (r-r_eq)**2/tan(1)"
+        )
+
+        assert len(ff_numpy.angle_types) == 2
+        assert sympify("r") in ff_numpy.angle_types["Ar~Ar~Ar"].independent_variables
+        assert ff_numpy.angle_types["Ar~Ar~Ar"].parameters["r_eq"] == u.unyt_quantity(
+            10.0, u.nm
+        )
+        assert ff_numpy.angle_types["Ar~Ar~Ar"].parameters["z"] == u.unyt_quantity(
+            100, u.kJ / u.mol
+        )
+        assert ff_numpy.angle_types["Ar~Ar~Ar"].member_types == ("Ar", "Ar", "Ar")
+
+        assert sympify("r") in ff_numpy.angle_types["Xe~Xe~Xe"].independent_variables
+        assert ff_numpy.angle_types["Xe~Xe~Xe"].parameters["r_eq"] == u.unyt_quantity(
+            10.0, u.nm
+        )
+        assert ff_numpy.angle_types["Xe~Xe~Xe"].parameters["z"] == u.unyt_quantity(
+            20, u.kJ / u.mol
+        )
+        assert ff_numpy.angle_types["Xe~Xe~Xe"].member_classes == ("Xe", "Xe", "Xe")
+        assert ff_numpy.angle_types["Xe~Xe~Xe"].expression == sympify(
+            "dot(z,r) * (r-r_eq)**2"
+        )
