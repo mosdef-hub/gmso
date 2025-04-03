@@ -57,14 +57,28 @@
       </Parameters>
     </AngleType>
   </AngleTypes>
-  <VirtualSiteTypes expression="ri + b*(rj-ri+a*(rk-rj))">
-    <ParametersUnitDef parameter="a" unit="dimensionless"/>
-    <ParametersUnitDef parameter="b" unit="dimensionless"/>
-    <VirtualSiteType name="3fd" type1="opls_112" type2="opls_111" type3="opls_112">
-      <Parameters>
-        <Parameter name="a" value="0.5"/>
-        <Parameter name="b" value="0.15"/>
-      </Parameters>
+  <VirtualSiteTypes> 
+    <Position expression="ri + b*(rj-ri+a*(rk-rj))/(norm(rj-ri+a*(rk-rj))">
+      <ParametersUnitDef parameter="a" unit="dimensionless"/>
+      <ParametersUnitDef parameter="b" unit="dimensionless"/>
+    </Position> 
+    <Energy expression="4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)">
+      <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+      <ParametersUnitDef parameter="sigma" unit="nm"/>
+    </Energy> 
+    <VirtualSiteType name="VirtualSiteType-3fd" type1="opls_112" type2="opls_111" type3="opls_112">
+      <Position>
+        <Parameters>
+          <Parameter name="a" value="0.5"/>
+          <Parameter name="b" value="0.15"/>
+        </Parameters>  
+      </Position>
+      <Energy>
+        <Parameters>
+          <Parameter name="epsilon" value="0"/>
+          <Parameter name="sigma" value="0"/>
+        </Parameters> 
+      </Energy>    
     </VirtualSiteType>
   </VirtualSiteTypes>
 </ForceField>
