@@ -115,14 +115,14 @@
         <xsd:sequence>
             <xsd:element name="Position"/>
             <xsd:element name="Energy"/>
-        </xsd:sequence>    
+        </xsd:sequence>
         <xsd:attribute name="name" type="xsd:string" use="optional"/>
         <xsd:attribute name="type1" type="xsd:string"/>
         <xsd:attribute name="class1" type="xsd:string"/>
         <xsd:attribute name="type2" type="xsd:string"/>
         <xsd:attribute name="class2" type="xsd:string"/>
         <xsd:attribute name="type3" type="xsd:string"/>
-        <xsd:attribute name="class3" type="xsd:string"/>     
+        <xsd:attribute name="class3" type="xsd:string"/>
     </xsd:complexType>
 
     <xsd:element name="VirtualSiteTypes">
