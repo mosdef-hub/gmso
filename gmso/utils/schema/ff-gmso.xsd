@@ -114,7 +114,7 @@
     <xsd:complexType name="VirtualSiteType">
         <xsd:sequence>
             <xsd:element name="Position"/>
-            <xsd:element name="Energy"/>
+            <xsd:element name="Potential"/>
         </xsd:sequence>
         <xsd:attribute name="name" type="xsd:string" use="optional"/>
         <xsd:attribute name="type1" type="xsd:string"/>
@@ -128,7 +128,7 @@
     <xsd:element name="VirtualSiteTypes">
         <xsd:complexType>
             <xsd:sequence>
-                <xsd:element name="Energy" type="Energy" minOccurs="0" maxOccurs="unbounded"/>
+                <xsd:element name="Potential" type="Potential" minOccurs="0" maxOccurs="unbounded"/>
                 <xsd:element name="Position" type="Position" minOccurs="0" maxOccurs="unbounded"/>
                 <xsd:choice minOccurs="0" maxOccurs="unbounded">
                     <xsd:element name="VirtualSiteType" type="VirtualSiteType" minOccurs="0"/>
@@ -231,7 +231,7 @@
         <xsd:attribute name="expression" type="xsd:string"/>
     </xsd:complexType>
 
-    <xsd:complexType name="Energy">
+    <xsd:complexType name="Potential">
         <xsd:sequence>
             <xsd:element name="ParametersUnitDef" type="ParametersUnitDef" minOccurs="0" maxOccurs="unbounded"/>
         </xsd:sequence>

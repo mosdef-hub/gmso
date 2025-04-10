@@ -1,9 +1,10 @@
 import warnings
-from typing import Optional, Set, Tuple, Union
+from typing import Callable, Optional, Set, Tuple, Union
 
 import unyt as u
 from pydantic import ConfigDict, Field, field_serializer, field_validator
 
+from gmso.abc.gmso_base import GMSOBase
 from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.core.parametric_potential import ParametricPotential
 from gmso.utils._constants import UNIT_WARNING_STRING
@@ -12,8 +13,8 @@ from gmso.utils.misc import ensure_valid_dimensions, unyt_compare
 from gmso.utils.units import GMSO_UnitRegistry
 
 
-class VirtualSiteType(ParametricPotential):
-    """A descripton of the interaction between 3 bonded partners.
+class VirtualPositionType(ParametricPotential):
+    """A description of the interaction between 3 bonded partners.
 
     This is a subclass of the gmso.core.Potential superclass.
 
@@ -54,7 +55,7 @@ class VirtualSiteType(ParametricPotential):
 
     def __init__(
         self,
-        name="VirtualSiteType",
+        name="VirtualPositionType",
         expression=None,
         parameters=None,
         independent_variables=None,
@@ -63,7 +64,7 @@ class VirtualSiteType(ParametricPotential):
         member_classes=None,
         tags=None,
     ):
-        super(VirtualSiteType, self).__init__(
+        super(VirtualPositionType, self).__init__(
             name=name,
             expression=expression,
             parameters=parameters,
@@ -79,8 +80,8 @@ class VirtualSiteType(ParametricPotential):
         return PotentialExpression(
             expression="ri + b*(rj-ri+a*(rk-rj))",
             parameters={
-                "k": 1000 * u.Unit("kJ / (deg**2)"),
-                "theta_eq": 180 * u.deg,
+                "b": 1 * u.dimensionless,
+                "a": 180 * u.dimensionless,
             },
             independent_variables={"ri", "rj", "rk"},
         )
@@ -303,3 +304,56 @@ class VirtualPotentialType(ParametricPotential):
                 "epsilon": 0.3 * u.Unit("kJ"),
             },
         )
+
+
+class VirtualType(GMSOBase):
+    """A generalized virtual site class in GMSO.
+
+    Virtual sites are massless particles that represent off-atom charge sites, lone pairs, or other non-physical sites.
+
+    Attributes
+    ----------
+    charge : float
+        The charge of the virtual site in elementary charge units.
+    parent_atoms : List[Site]
+        The real constituent atoms that define the virtual site's position.
+    virtual_type:
+
+    position:
+    """
+
+    name: str = Field(
+        "VirtualType-3fd",
+        description="Identifying Virtual Type",
+    )
+    member_types_: Optional[Tuple[str, str, str]] = Field(
+        None,
+        description="List-like of gmso.AtomType.name "
+        "defining the members of this angle type",
+        alias="member_types",
+    )
+
+    member_classes_: Optional[Tuple[str, str, str]] = Field(
+        None,
+        description="List-like of gmso.AtomType.atomclass "
+        "defining the members of this angle type",
+        alias="member_classes",
+    )
+
+    charge_: Optional[Union[u.unyt_quantity, float]] = Field(
+        None, description="Charge of the virtual site", alias="charge"
+    )
+
+    position_: Callable = Field(None, description="", alias="position")
+
+    virtual_position_: Optional[VirtualPositionType] = Field(
+        default=None,
+        description="virtual type for a virtual site.",
+        alias="virtual_position",
+    )
+
+    virtual_potential_: Optional[VirtualPotentialType] = Field(
+        default=None,
+        description="virtual type for a virtual site.",
+        alias="virtual_potential",
+    )

@@ -14,7 +14,11 @@ from gmso.core.bond_type import BondType
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper_type import ImproperType
 from gmso.core.pairpotential_type import PairPotentialType
-from gmso.core.virtual_type import VirtualSiteType
+from gmso.core.virtual_type import (
+    VirtualPositionType,
+    VirtualPotentialType,
+    VirtualType,
+)
 from gmso.exceptions import (
     ForceFieldError,
     ForceFieldParseError,
@@ -403,7 +407,6 @@ TAG_TO_CLASS_MAP = {
     "AngleType": AngleType,
     "DihedralType": DihedralType,
     "ImproperType": ImproperType,
-    "VirtualSiteType": VirtualSiteType,
     "PairPotentialType": PairPotentialType,
 }
 
@@ -457,6 +460,71 @@ def parse_ff_connection_types(connectiontypes_el, child_tag="BondType"):
         connectiontypes_dict[this_conn_type_key] = this_conn_type
 
     return connectiontypes_dict
+
+
+def parse_ff_virtual_types(virtualtypes_el, child_tag="VirtualSiteType"):
+    """Parse an XML etree Element rooted at VirtualSiteType to create topology.core.VirtualType."""
+    virtualtypes_dict = {}
+
+    expressionDict = {
+        "potential_": virtualtypes_el.find("Potential").attrib.get("expression", None),
+        "position_": virtualtypes_el.find("Position").attrib.get("expression", None),
+    }
+    param_unit_dict = {}
+    param_unit_dict["potential_"] = _parse_param_units(
+        virtualtypes_el.find("Potential")
+    )
+    param_unit_dict["position_"] = _parse_param_units(virtualtypes_el.find("Position"))
+
+    # Parse all the VirtualTypes and create a new VirtualSite
+    for virtual_type in virtualtypes_el.getiterator(child_tag):
+        ctor_kwargs = {
+            "name": child_tag,
+            "virtual_potential": None,
+            "virtual_position": None,
+            "charge": 0 * u.elementary_charge,
+            "member_types": None,
+            "member_classes": None,
+        }
+
+        for kwarg in ctor_kwargs.keys():  # get directly from etree
+            ctor_kwargs[kwarg] = virtual_type.attrib.get(kwarg, ctor_kwargs[kwarg])
+
+        for expressStr, virtualClass in zip(
+            ("potential_", "position_"), (VirtualPotentialType, VirtualPositionType)
+        ):  # handle values for potential vs position expressions
+            kwargs = {}  # empty dict for kwargs
+            if expressionDict[expressStr]:
+                kwargs["expression"] = expressionDict[expressStr]
+            if not kwargs.get("parameters"):
+                kwargs["parameters"] = _parse_params_values(
+                    virtual_type.find(expressStr[:-1].capitalize()),
+                    param_unit_dict[expressStr],
+                    child_tag,
+                    kwargs["expression"],
+                )
+            valued_param_vars = set(
+                sympify(param) for param in kwargs["parameters"].keys()
+            )
+            kwargs["independent_variables"] = (
+                sympify(expressionDict[expressStr]).free_symbols - valued_param_vars
+            )
+            ctor_kwargs["virtual_" + expressStr[:-1]] = virtualClass(
+                **kwargs
+            )  # assign correct type to VirtualSite arguments
+
+        ctor_kwargs["member_types"] = _get_member_types(virtual_type)
+        if not ctor_kwargs["member_types"]:
+            ctor_kwargs["member_classes"] = _get_member_classes(virtual_type)
+
+        this_conn_type_key = FF_TOKENS_SEPARATOR.join(
+            ctor_kwargs.get("member_types") or ctor_kwargs.get("member_classes")
+        )
+
+        this_conn_type = VirtualType(**ctor_kwargs)  # VirtualSite initialization
+        virtualtypes_dict[this_conn_type_key] = this_conn_type
+
+    return virtualtypes_dict
 
 
 def parse_ff_pairpotential_types(pairpotentialtypes_el):

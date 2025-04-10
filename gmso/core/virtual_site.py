@@ -4,7 +4,7 @@ import unyt as u
 from pydantic import Field
 
 from gmso.abc.abstract_site import Site
-from gmso.core.virtual_type import VirtualSiteType
+from gmso.core.virtual_type import VirtualPositionType, VirtualPotentialType
 
 
 class VirtualSite(Site):
@@ -35,10 +35,16 @@ class VirtualSite(Site):
 
     position_: Callable = Field(None, description="", alias="position")
 
-    virtual_type_: Optional[VirtualSiteType] = Field(
+    virtual_position_: Optional[VirtualPositionType] = Field(
         default=None,
-        description="virtual type for a virtual site .",
-        alias="virtual_type",
+        description="virtual type for a virtual site.",
+        alias="virtual_position",
+    )
+
+    virtual_potential_: Optional[VirtualPotentialType] = Field(
+        default=None,
+        description="virtual type for a virtual site.",
+        alias="virtual_potential",
     )
 
     @property
