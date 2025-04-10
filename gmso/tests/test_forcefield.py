@@ -197,18 +197,36 @@ class TestForceField(BaseTest):
     def test_ff_VitualSiteTypes_from_xml(self):
         ff = ForceField(get_path("ff-example0.xml"), backend="gmso")
         assert len(ff.virtual_types) == 1
-        assert "Xe~Xe~Xe" in ff.virtual_types
+        assert "Xe" in ff.virtual_types
 
-        assert sympify("ri") in ff.virtual_types["Xe~Xe~Xe"].independent_variables
-        assert sympify("rj") in ff.virtual_types["Xe~Xe~Xe"].independent_variables
-        assert sympify("rk") in ff.virtual_types["Xe~Xe~Xe"].independent_variables
-        assert ff.virtual_types["Xe~Xe~Xe"].parameters["a"] == u.unyt_quantity(
-            1.0, u.dimensionless
+        assert (
+            sympify("ri")
+            in ff.virtual_types["Xe"].virtual_position.independent_variables
         )
-        assert ff.virtual_types["Xe~Xe~Xe"].parameters["b"] == u.unyt_quantity(
-            0.1, u.dimensionless
+        assert allclose_units_mixed(
+            ff.virtual_types["Xe"].virtual_position.parameters["r"], [0.1, 0, 0] * u.nm
         )
-        assert ff.virtual_types["Xe~Xe~Xe"].member_types == ("Xe", "Xe", "Xe")
+        assert ff.virtual_types["Xe"].member_classes == ("Xe",)
+
+        assert (
+            sympify("r")
+            in ff.virtual_types["Xe"].virtual_potential.independent_variables
+        )
+        assert (
+            ff.virtual_types["Xe"].virtual_potential.parameters["m"]
+            == 12 * u.dimensionless
+        )
+        assert (
+            ff.virtual_types["Xe"].virtual_potential.parameters["n"]
+            == 6 * u.dimensionless
+        )
+        assert (
+            ff.virtual_types["Xe"].virtual_potential.parameters["epsilon"]
+            == 0.7 * u.kJ / u.mol
+        )
+        assert (
+            ff.virtual_types["Xe"].virtual_potential.parameters["sigma"] == 0.154 * u.nm
+        )
 
     def test_ff_pairpotentialtypes_from_xml(self, ff):
         assert len(ff.pairpotential_types) == 1

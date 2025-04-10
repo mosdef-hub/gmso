@@ -95,14 +95,35 @@
         </Parameters>
     </PairPotentialType>
   </PairPotentialTypes>
- <VirtualSiteTypes expression="ri + b*(rj-ri+a*(rk-rj))">
-    <ParametersUnitDef parameter="a" unit="dimensionless"/>
-    <ParametersUnitDef parameter="b" unit="dimensionless"/>
-    <VirtualSiteType name="VirtualSiteType-3fd" type1="Xe" type2="Xe" type3="Xe">
-      <Parameters>
-        <Parameter name="a" value="1.0"/>
-        <Parameter name="b" value="0.1"/>
-      </Parameters>
-    </VirtualSiteType>  
+
+  <VirtualSiteTypes>
+    <Position expression="ri + r">
+      <ParametersUnitDef parameter="r" unit="nm"/>
+    </Position>
+    <Potential expression="(n/(n-m)*(n/m)**(m/(n-m)))*epsilon*(-sigma**m/r**m + sigma**n/r**n)">
+      <ParametersUnitDef parameter="m" unit="dimensionless"/>
+      <ParametersUnitDef parameter="n" unit="dimensionless"/>
+      <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+      <ParametersUnitDef parameter="sigma" unit="nm"/>
+    </Potential>
+    <VirtualSiteType name="Mie-vector_offset" class1="Xe">
+      <Position>
+        <Parameters>
+          <Parameter name="r">
+          <Value>0.1</Value>
+          <Value>0</Value>
+          <Value>0</Value>
+          </Parameter>
+        </Parameters>
+      </Position>
+      <Potential>
+        <Parameters>
+          <Parameter name="m" value="12"/>
+          <Parameter name="n" value="6"/>
+          <Parameter name="sigma" value="0.154"/>
+          <Parameter name="epsilon" value="0.7"/>
+        </Parameters>
+      </Potential>
+    </VirtualSiteType>
   </VirtualSiteTypes>
 </ForceField>

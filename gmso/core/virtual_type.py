@@ -326,18 +326,23 @@ class VirtualType(GMSOBase):
         "VirtualType-3fd",
         description="Identifying Virtual Type",
     )
-    member_types_: Optional[Tuple[str, str, str]] = Field(
+    member_types_: Optional[Tuple[str, ...]] = Field(
         None,
         description="List-like of gmso.AtomType.name "
         "defining the members of this angle type",
         alias="member_types",
+        min_length=0,
+        max_length=12,
     )
 
-    member_classes_: Optional[Tuple[str, str, str]] = Field(
+    #
+    member_classes_: Optional[Tuple[str, ...]] = Field(
         None,
         description="List-like of gmso.AtomType.atomclass "
         "defining the members of this angle type",
         alias="member_classes",
+        min_length=0,
+        max_length=12,
     )
 
     charge_: Optional[Union[u.unyt_quantity, float]] = Field(
@@ -357,3 +362,19 @@ class VirtualType(GMSOBase):
         description="virtual type for a virtual site.",
         alias="virtual_potential",
     )
+
+    @property
+    def virtual_position(self) -> VirtualPositionType:
+        return self.__dict__.get("virtual_position_")
+
+    @property
+    def virtual_potential(self) -> VirtualPotentialType:
+        return self.__dict__.get("virtual_potential_")
+
+    @property
+    def member_types(self):
+        return self.__dict__.get("member_types_")
+
+    @property
+    def member_classes(self):
+        return self.__dict__.get("member_classes_")
