@@ -194,6 +194,41 @@ class TestForceField(BaseTest):
             "Xe",
         )
 
+    def test_ff_VitualSiteTypes_from_xml(self):
+        ff = ForceField(get_path("ff-example0.xml"), backend="gmso")
+        assert len(ff.virtual_types) == 1
+        assert "Xe" in ff.virtual_types
+
+        assert ff.virtual_types["Xe"].charge == 0.0 * u.C
+        assert (
+            sympify("ri")
+            in ff.virtual_types["Xe"].virtual_position.independent_variables
+        )
+        assert allclose_units_mixed(
+            ff.virtual_types["Xe"].virtual_position.parameters["r"], [0.1, 0, 0] * u.nm
+        )
+        assert ff.virtual_types["Xe"].member_classes == ("Xe",)
+
+        assert (
+            sympify("r")
+            in ff.virtual_types["Xe"].virtual_potential.independent_variables
+        )
+        assert (
+            ff.virtual_types["Xe"].virtual_potential.parameters["m"]
+            == 12 * u.dimensionless
+        )
+        assert (
+            ff.virtual_types["Xe"].virtual_potential.parameters["n"]
+            == 6 * u.dimensionless
+        )
+        assert (
+            ff.virtual_types["Xe"].virtual_potential.parameters["epsilon"]
+            == 0.7 * u.kJ / u.mol
+        )
+        assert (
+            ff.virtual_types["Xe"].virtual_potential.parameters["sigma"] == 0.154 * u.nm
+        )
+
     def test_ff_pairpotentialtypes_from_xml(self, ff):
         assert len(ff.pairpotential_types) == 1
         assert "Xe~Xe" in ff.pairpotential_types

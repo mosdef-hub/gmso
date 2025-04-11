@@ -1,0 +1,64 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ForceField name="Rigid TraPPE 5-site CO2" version="0.0.1">
+  <FFMetaData electrostatics14Scale="0.0" nonBonded14Scale="0.0" combiningRule="lorentz">
+    <Units energy="kJ/mol" distance="nm" mass="amu" charge="elementary_charge"/>
+  </FFMetaData>
+  <AtomTypes expression="4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)">
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <AtomType name="_M" mass="22.00475" charge="0.0" atomclass="C" doi="10.1039/D0TA03419C" definition="[_M;X1]" description="Virtual M-Site">
+      <Parameters>
+        <Parameter name="epsilon" value="0.0"/>
+        <Parameter name="sigma" value="0.0"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+  <VirtualSiteTypes>
+    <Position expression="(rj-ri)*a+ri">
+      <ParametersUnitDef parameter="a" unit="dimensionless"/>
+    </Position>
+    <Potential expression="4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)">
+      <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+      <ParametersUnitDef parameter="sigma" unit="nm"/>
+    </Potential>
+    <VirtualSiteType name="GromacsType-2-Carbon" charge="0.7" mass="22.00475" type1="_M" type2="_M">
+      <Position>
+        <Parameters>
+          <Parameter name="a" value="0.5"/>
+        </Parameters>
+      </Position>
+      <Potential>
+        <Parameters>
+          <Parameter name="epsilon" value="0.224490"/>
+          <Parameter name="sigma" value="0.280"/>
+        </Parameters>
+      </Potential>
+    </VirtualSiteType>
+    <VirtualSiteType name="GromacsType-2-Oxygen1" charge="-0.35" type1="_M" type2="_M">
+      <Position>
+        <Parameters>
+          <Parameter name="a" value="1.086376255"/>
+        </Parameters>
+      </Position>
+      <Potential>
+        <Parameters>
+          <Parameter name="epsilon" value="0.656842"/>
+          <Parameter name="sigma" value="0.305"/>
+        </Parameters>
+      </Potential>
+    </VirtualSiteType>
+        <VirtualSiteType name="GromacsType-2-Oxygen2" charge="-0.35" type1="_M" type2="_M">
+      <Position>
+        <Parameters>
+          <Parameter name="a" value="-0.086376255"/>
+        </Parameters>
+      </Position>
+      <Potential>
+        <Parameters>
+          <Parameter name="epsilon" value="0.656842"/>
+          <Parameter name="sigma" value="0.305"/>
+        </Parameters>
+      </Potential>
+    </VirtualSiteType>
+  </VirtualSiteTypes>
+</ForceField>
