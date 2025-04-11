@@ -11,7 +11,8 @@ dependencies:
   - lxml
   - pydantic>=2
   - networkx
-  - ele>=0.2.0
+  - ele >= 0.2.0
+  - molbox
   - foyer>=0.11.3
   - forcefield-utilities>=0.2.1
   - symengine
