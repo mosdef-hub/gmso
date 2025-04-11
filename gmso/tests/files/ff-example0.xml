@@ -106,7 +106,7 @@
       <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
       <ParametersUnitDef parameter="sigma" unit="nm"/>
     </Potential>
-    <VirtualSiteType name="Mie-vector_offset" class1="Xe">
+    <VirtualSiteType name="Mie-vector_offset" class1="Xe" charge="0.0">
       <Position>
         <Parameters>
           <Parameter name="r">

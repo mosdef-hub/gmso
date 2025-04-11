@@ -199,6 +199,7 @@ class TestForceField(BaseTest):
         assert len(ff.virtual_types) == 1
         assert "Xe" in ff.virtual_types
 
+        assert ff.virtual_types["Xe"].charge == 0.0 * u.C
         assert (
             sympify("ri")
             in ff.virtual_types["Xe"].virtual_position.independent_variables

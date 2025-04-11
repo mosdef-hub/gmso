@@ -378,3 +378,7 @@ class VirtualType(GMSOBase):
     @property
     def member_classes(self):
         return self.__dict__.get("member_classes_")
+
+    @property
+    def charge(self):
+        return self.__dict__.get("charge_")
