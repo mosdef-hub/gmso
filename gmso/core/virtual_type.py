@@ -264,9 +264,7 @@ class VirtualType(GMSOBase):
     """
 
     name_: str = Field(
-        "VirtualType-3fd",
-        description="Identifying Virtual Type",
-        alias="name"
+        "VirtualType-3fd", description="Identifying Virtual Type", alias="name"
     )
     member_types_: Optional[Tuple[str, ...]] = Field(
         None,
@@ -329,7 +327,7 @@ class VirtualType(GMSOBase):
     @property
     def name(self) -> str:
         return self.__dict__.get("name_")
-    
+
     @property
     def virtual_position(self) -> VirtualPositionType:
         return self.__dict__.get("virtual_position_")
@@ -349,12 +347,12 @@ class VirtualType(GMSOBase):
     @property
     def charge(self):
         return self.__dict__.get("charge_")
-    
+
     @property
     def doi(self):
         """Return the doi of the atom_type."""
         return self.__dict__.get("doi_")
-    
+
     @field_validator("charge_", mode="before")
     @classmethod
     def validate_charge(cls, charge):
@@ -366,14 +364,14 @@ class VirtualType(GMSOBase):
             ensure_valid_dimensions(charge, u.elementary_charge)
 
         return charge
-    
+
     @field_serializer("charge_")
     def serialize_charge(self, charge_: Union[u.unyt_quantity, None]):
         if charge_ is None:
             return None
         else:
             return unyt_to_dict(charge_)
-        
+
     def __eq__(self, other):
         if other is self:
             return True
@@ -388,15 +386,15 @@ class VirtualType(GMSOBase):
             and self.doi == other.doi
             and self.charge == other.charge
         )
-    
+
     def clone(self):
         """Clone this VirtualType."""
         return VirtualType(
-            name = str(self.name),
-            virtual_position = self.virtual_position.clone(),
-            virtual_potential = self.virtual_potential.clone(),
-            member_types = self.member_types,
-            member_classes = self.member_classes,
-            charge = self.charge,
-            doi = self.doi,
+            name=str(self.name),
+            virtual_position=self.virtual_position.clone(),
+            virtual_potential=self.virtual_potential.clone(),
+            member_types=self.member_types,
+            member_classes=self.member_classes,
+            charge=self.charge,
+            doi=self.doi,
         )
