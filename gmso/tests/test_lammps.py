@@ -153,16 +153,10 @@ class TestLammpsWriter(BaseTest):
 
         read = gmso.Topology.load("triclinic.lammps")
         assert_allclose_units(
-            read.box.lengths,
-            u.unyt_array([1, 1, 1], u.nm),
-            rtol=1e-5,
-            atol=1e-8,
+            read.box.lengths, u.unyt_array([1.0, 1.0, 1.0], u.nm)
         )
         assert_allclose_units(
-            read.box.angles,
-            u.unyt_array([60, 90, 120], u.degree),
-            rtol=1e-5,
-            atol=1e-8,
+            read.box.angles, u.unyt_array([60, 90, 120], u.degree), rtol=1e-5
         )
 
     def test_read_n_bonds(self, typed_ethane_opls):
