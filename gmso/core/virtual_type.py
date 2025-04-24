@@ -108,20 +108,8 @@ class VirtualPotentialType(ParametricPotential):
     are stored explicitly.
     """
 
-    charge_: Optional[u.unyt_array] = Field(
-        0.0 * u.elementary_charge,
-        description="The charge of the atom type",
-        alias="charge",
-    )
-
     atomclass_: Optional[str] = Field(
         "", description="The class of the atomtype", alias="atomclass"
-    )
-
-    doi_: Optional[str] = Field(
-        "",
-        description="Digital Object Identifier of publication where this atom type was introduced",
-        alias="doi",
     )
 
     overrides_: Optional[Set[str]] = Field(
@@ -143,7 +131,6 @@ class VirtualPotentialType(ParametricPotential):
         alias_to_fields=dict(
             **ParametricPotential.model_config["alias_to_fields"],
             **{
-                "charge": "charge_",
                 "atomclass": "atomclass_",
                 "doi": "doi_",
                 "overrides": "overrides_",
@@ -156,13 +143,11 @@ class VirtualPotentialType(ParametricPotential):
     def __init__(
         self,
         name="VirtualPotentialType",
-        charge=0.0 * u.elementary_charge,
         expression=None,
         parameters=None,
         potential_expression=None,
         independent_variables=None,
         atomclass="",
-        doi="",
         overrides=None,
         definition="",
         description="",
@@ -177,9 +162,7 @@ class VirtualPotentialType(ParametricPotential):
             parameters=parameters,
             independent_variables=independent_variables,
             potential_expression=potential_expression,
-            charge=charge,
             atomclass=atomclass,
-            doi=doi,
             overrides=overrides,
             description=description,
             definition=definition,
@@ -187,19 +170,9 @@ class VirtualPotentialType(ParametricPotential):
         )
 
     @property
-    def charge(self):
-        """Return the charge of the atom_type."""
-        return self.__dict__.get("charge_")
-
-    @property
     def atomclass(self):
         """Return the atomclass of the atom_type."""
         return self.__dict__.get("atomclass_")
-
-    @property
-    def doi(self):
-        """Return the doi of the atom_type."""
-        return self.__dict__.get("doi_")
 
     @property
     def overrides(self):
@@ -216,13 +189,6 @@ class VirtualPotentialType(ParametricPotential):
         """Return the SMARTS string of the atom_type."""
         return self.__dict__.get("definition_")
 
-    @field_serializer("charge_")
-    def serialize_charge(self, charge_: Union[u.unyt_quantity, None]):
-        if charge_ is None:
-            return None
-        else:
-            return unyt_to_dict(charge_)
-
     def clone(self, fast_copy=False):
         """Clone this AtomType, faster alternative to deepcopying."""
         return VirtualPotentialType(
@@ -232,9 +198,7 @@ class VirtualPotentialType(ParametricPotential):
             parameters=None,
             independent_variables=None,
             potential_expression=self.potential_expression.clone(fast_copy),
-            charge=u.unyt_quantity(self.charge.value, self.charge.units),
             atomclass=self.atomclass,
-            doi=self.doi,
             overrides=(set(o for o in self.overrides) if self.overrides else None),
             description=self.description,
             definition=self.definition,
@@ -255,22 +219,11 @@ class VirtualPotentialType(ParametricPotential):
             and self.independent_variables == other.independent_variables
             and self.parameters.keys() == other.parameters.keys()
             and unyt_compare(self.parameters.values(), other.parameters.values())
-            and self.charge == other.charge
             and self.atomclass == other.atomclass
-            and self.doi == other.doi
             and self.overrides == other.overrides
             and self.definition == other.definition
             and self.description == other.description
         )
-
-    def _etree_attrib(self):
-        attrib = super()._etree_attrib()
-        if self.overrides == set():
-            attrib.pop("overrides")
-        charge = eval(attrib["charge"])
-        attrib["charge"] = str(charge["array"])
-
-        return attrib
 
     def __repr__(self):
         """Return a formatted representation of the atom type."""
@@ -281,18 +234,6 @@ class VirtualPotentialType(ParametricPotential):
             f"atomclass: {self.atomclass}>"
         )
         return desc
-
-    @field_validator("charge_", mode="before")
-    @classmethod
-    def validate_charge(cls, charge):
-        """Check to see that a charge is a unyt array of the right dimension."""
-        if not isinstance(charge, u.unyt_array):
-            warnings.warn(UNIT_WARNING_STRING.format("Charges", "elementary charge"))
-            charge *= u.Unit("elementary_charge", registry=GMSO_UnitRegistry().reg)
-        else:
-            ensure_valid_dimensions(charge, u.elementary_charge)
-
-        return charge
 
     @staticmethod
     def _default_potential_expr():
@@ -322,9 +263,10 @@ class VirtualType(GMSOBase):
     position:
     """
 
-    name: str = Field(
+    name_: str = Field(
         "VirtualType-3fd",
         description="Identifying Virtual Type",
+        alias="name"
     )
     member_types_: Optional[Tuple[str, ...]] = Field(
         None,
@@ -345,24 +287,49 @@ class VirtualType(GMSOBase):
         max_length=12,
     )
 
-    charge_: Optional[Union[u.unyt_quantity, float]] = Field(
-        None, description="Charge of the virtual site", alias="charge"
+    charge_: Optional[u.unyt_array] = Field(
+        0.0 * u.elementary_charge,
+        description="The charge of the atom type",
+        alias="charge",
     )
 
     position_: Callable = Field(None, description="", alias="position")
 
     virtual_position_: Optional[VirtualPositionType] = Field(
-        default=None,
+        default=VirtualPositionType(),
         description="virtual type for a virtual site.",
         alias="virtual_position",
     )
 
     virtual_potential_: Optional[VirtualPotentialType] = Field(
-        default=None,
+        default=VirtualPotentialType(),
         description="virtual type for a virtual site.",
         alias="virtual_potential",
     )
 
+    doi_: Optional[str] = Field(
+        "",
+        description="Digital Object Identifier of publication where this atom type was introduced",
+        alias="doi",
+    )
+    model_config = ConfigDict(
+        alias_to_fields=dict(
+            **ParametricPotential.model_config["alias_to_fields"],
+            **{
+                "charge": "charge_",
+                "virtual_position": "virtual_position_",
+                "virtual_potential": "virtual_potential_",
+                "doi": "doi_",
+                "member_classes": "member_classes_",
+                "member_types": "member_types_",
+            },
+        ),
+    )
+
+    @property
+    def name(self) -> str:
+        return self.__dict__.get("name_")
+    
     @property
     def virtual_position(self) -> VirtualPositionType:
         return self.__dict__.get("virtual_position_")
@@ -382,3 +349,54 @@ class VirtualType(GMSOBase):
     @property
     def charge(self):
         return self.__dict__.get("charge_")
+    
+    @property
+    def doi(self):
+        """Return the doi of the atom_type."""
+        return self.__dict__.get("doi_")
+    
+    @field_validator("charge_", mode="before")
+    @classmethod
+    def validate_charge(cls, charge):
+        """Check to see that a charge is a unyt array of the right dimension."""
+        if not isinstance(charge, u.unyt_array):
+            warnings.warn(UNIT_WARNING_STRING.format("Charges", "elementary charge"))
+            charge *= u.Unit("elementary_charge", registry=GMSO_UnitRegistry().reg)
+        else:
+            ensure_valid_dimensions(charge, u.elementary_charge)
+
+        return charge
+    
+    @field_serializer("charge_")
+    def serialize_charge(self, charge_: Union[u.unyt_quantity, None]):
+        if charge_ is None:
+            return None
+        else:
+            return unyt_to_dict(charge_)
+        
+    def __eq__(self, other):
+        if other is self:
+            return True
+        if not isinstance(other, VirtualType):
+            return False
+        return (
+            self.name == other.name
+            and self.virtual_position == other.virtual_position
+            and self.virtual_potential == other.virtual_potential
+            and self.member_types == other.member_types
+            and self.member_classes == other.member_classes
+            and self.doi == other.doi
+            and self.charge == other.charge
+        )
+    
+    def clone(self):
+        """Clone this VirtualType."""
+        return VirtualType(
+            name = str(self.name),
+            virtual_position = self.virtual_position.clone(),
+            virtual_potential = self.virtual_potential.clone(),
+            member_types = self.member_types,
+            member_classes = self.member_classes,
+            charge = self.charge,
+            doi = self.doi,
+        )
