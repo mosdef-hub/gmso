@@ -864,7 +864,7 @@ class ForceField(object):
         # Consolidate VirtualTypes
         for virtual_types in ff_virtualtypes_list:
             this_virtual_types_group = parse_ff_virtual_types(
-                virtual_types, child_tag="VirtualSiteType"
+                virtual_types, child_tag="VirtualSiteType", ff_meta=ff_meta_map
             )
             this_virtual_types_group_name = virtual_types.attrib.get("name", None)
 

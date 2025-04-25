@@ -462,9 +462,10 @@ def parse_ff_connection_types(connectiontypes_el, child_tag="BondType"):
     return connectiontypes_dict
 
 
-def parse_ff_virtual_types(virtualtypes_el, child_tag="VirtualSiteType"):
+def parse_ff_virtual_types(virtualtypes_el, child_tag="VirtualSiteType", ff_meta=dict()):
     """Parse an XML etree Element rooted at VirtualSiteType to create topology.core.VirtualType."""
     virtualtypes_dict = {}
+    units_dict = ff_meta.get("Units")
 
     expressionDict = {
         "potential_": virtualtypes_el.find("Potential").attrib.get("expression", None),
@@ -512,6 +513,11 @@ def parse_ff_virtual_types(virtualtypes_el, child_tag="VirtualSiteType"):
             ctor_kwargs["virtual_" + expressStr[:-1]] = virtualClass(
                 **kwargs
             )  # assign correct type to VirtualSite arguments
+
+        if isinstance(ctor_kwargs["charge"], str):
+            ctor_kwargs["charge"] = u.unyt_quantity(
+                float(ctor_kwargs["charge"]), units_dict["charge"]
+        )
 
         ctor_kwargs["member_types"] = _get_member_types(virtual_type)
         if not ctor_kwargs["member_types"]:
