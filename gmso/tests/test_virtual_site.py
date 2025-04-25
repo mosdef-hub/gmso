@@ -1,15 +1,15 @@
-import unyt as u
-from unyt.testing import assert_allclose_units
 import pytest
-from sympy import sympify, symbols
+import unyt as u
+from sympy import symbols, sympify
+from unyt.testing import assert_allclose_units
 
+from gmso.core.atom import Atom
 from gmso.core.virtual_site import VirtualSite
 from gmso.core.virtual_type import (
     VirtualPositionType,
     VirtualPotentialType,
     VirtualType,
 )
-from gmso.core.atom import Atom
 from gmso.tests.base_test import BaseTest
 
 
@@ -18,7 +18,7 @@ class TestVirturalSite(BaseTest):
     def virtual_site(self):
         site = Atom()
         return VirtualSite(parent_atoms=[site])
-    
+
     @pytest.fixture(scope="session")
     def virtual_type(self):
         v_pot = VirtualPotentialType()
@@ -58,20 +58,23 @@ class TestVirturalSite(BaseTest):
 
         v_pos2 = VirtualPositionType(
             expression="ri+rj+b",
-            independent_variables=["ri","rj"],
+            independent_variables=["ri", "rj"],
             parameters={"b": [1, 0, 0] * u.nm},
         )
         assert v_pos2 == v_pos
-    
-    def test_expression(self, virtual_type):
-        assert virtual_type.virtual_position.expression == sympify("ri + b*(rj-ri+a*(rk-rj))")
-        assert virtual_type.virtual_potential.expression == sympify("4*epsilon*((sigma/r)**12 - (sigma/r)**6)")
 
+    def test_expression(self, virtual_type):
+        assert virtual_type.virtual_position.expression == sympify(
+            "ri + b*(rj-ri+a*(rk-rj))"
+        )
+        assert virtual_type.virtual_potential.expression == sympify(
+            "4*epsilon*((sigma/r)**12 - (sigma/r)**6)"
+        )
 
     def test_members(self, virtual_type):
         assert virtual_type.member_types == ("C",)
         assert virtual_type.member_classes is None
-        
+
     def test_charge(self, virtual_type):
         assert virtual_type.charge == 0.0 * u.elementary_charge
 
