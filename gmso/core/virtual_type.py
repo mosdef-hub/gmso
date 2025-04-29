@@ -1,5 +1,5 @@
 import warnings
-from typing import Callable, Optional, Set, Tuple, Union
+from typing import Callable, Optional, Tuple, Union
 
 import unyt as u
 from pydantic import ConfigDict, Field, field_serializer, field_validator
@@ -112,12 +112,6 @@ class VirtualPotentialType(ParametricPotential):
         "", description="The class of the atomtype", alias="atomclass"
     )
 
-    overrides_: Optional[Set[str]] = Field(
-        set(),
-        description="Set of other atom types that this atom type overrides",
-        alias="overrides",
-    )
-
     definition_: Optional[str] = Field(
         "",
         description="SMARTS string defining this atom type",
@@ -127,13 +121,13 @@ class VirtualPotentialType(ParametricPotential):
     description_: Optional[str] = Field(
         "", description="Description for the VirtualPotentialType", alias="description"
     )
+
     model_config = ConfigDict(
         alias_to_fields=dict(
             **ParametricPotential.model_config["alias_to_fields"],
             **{
                 "atomclass": "atomclass_",
                 "doi": "doi_",
-                "overrides": "overrides_",
                 "definition": "definition_",
                 "description": "description_",
             },
@@ -148,14 +142,10 @@ class VirtualPotentialType(ParametricPotential):
         potential_expression=None,
         independent_variables=None,
         atomclass="",
-        overrides=None,
         definition="",
         description="",
         tags=None,
     ):
-        if overrides is None:
-            overrides = set()
-
         super(VirtualPotentialType, self).__init__(
             name=name,
             expression=expression,
@@ -163,7 +153,6 @@ class VirtualPotentialType(ParametricPotential):
             independent_variables=independent_variables,
             potential_expression=potential_expression,
             atomclass=atomclass,
-            overrides=overrides,
             description=description,
             definition=definition,
             tags=tags,
@@ -173,11 +162,6 @@ class VirtualPotentialType(ParametricPotential):
     def atomclass(self):
         """Return the atomclass of the atom_type."""
         return self.__dict__.get("atomclass_")
-
-    @property
-    def overrides(self):
-        """Return the overrides of the atom_type."""
-        return self.__dict__.get("overrides_")
 
     @property
     def description(self):
@@ -199,7 +183,6 @@ class VirtualPotentialType(ParametricPotential):
             independent_variables=None,
             potential_expression=self.potential_expression.clone(fast_copy),
             atomclass=self.atomclass,
-            overrides=(set(o for o in self.overrides) if self.overrides else None),
             description=self.description,
             definition=self.definition,
         )
@@ -220,7 +203,6 @@ class VirtualPotentialType(ParametricPotential):
             and self.parameters.keys() == other.parameters.keys()
             and unyt_compare(self.parameters.values(), other.parameters.values())
             and self.atomclass == other.atomclass
-            and self.overrides == other.overrides
             and self.definition == other.definition
             and self.description == other.description
         )
