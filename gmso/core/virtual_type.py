@@ -14,15 +14,18 @@ from gmso.utils.units import GMSO_UnitRegistry
 
 
 class VirtualPositionType(ParametricPotential):
-    """A description of the interaction between 3 bonded partners.
+    """A description of the interaction between virtual partners.
 
     This is a subclass of the gmso.core.Potential superclass.
 
-    AngleType represents an angle type and includes the functional form
-    describing its interactions. The functional form of the potential is stored
+    VirtualPositionType represents a virtual type and includes the functional form
+    describing the position of the virtual site from its parent atoms.
+    The functional form of the potential is stored
     as a `sympy` expression and the parameters, with units, are stored
-    explicitly.  The AtomTypes that are used to define the angle type are
-    stored as `member_types`.
+    explicitly.  The AtomTypes that are used to define the virtual type are
+    stored as `member_types`. The expression uses these atom_types with their
+    positions as ri, rj, rk, ... , matching the number of atoms used to define
+    the virtual site.
 
     Notes
     ----
@@ -30,26 +33,10 @@ class VirtualPositionType(ParametricPotential):
         __eq__, _validate functions
     """
 
-    member_types_: Optional[Tuple[str, str, str]] = Field(
-        None,
-        description="List-like of gmso.AtomType.name "
-        "defining the members of this angle type",
-        alias="member_types",
-    )
-
-    member_classes_: Optional[Tuple[str, str, str]] = Field(
-        None,
-        description="List-like of gmso.AtomType.atomclass "
-        "defining the members of this angle type",
-        alias="member_classes",
-    )
     model_config = ConfigDict(
         alias_to_fields=dict(
             **ParametricPotential.model_config["alias_to_fields"],
-            **{
-                "member_types": "member_types_",
-                "member_classes": "member_classes_",
-            },
+            **{},
         ),
     )
 
@@ -60,8 +47,6 @@ class VirtualPositionType(ParametricPotential):
         parameters=None,
         independent_variables=None,
         potential_expression=None,
-        member_types=None,
-        member_classes=None,
         tags=None,
     ):
         super(VirtualPositionType, self).__init__(
@@ -70,8 +55,6 @@ class VirtualPositionType(ParametricPotential):
             parameters=parameters,
             independent_variables=independent_variables,
             potential_expression=potential_expression,
-            member_types=member_types,
-            member_classes=member_classes,
             tags=tags,
         )
 
@@ -86,51 +69,23 @@ class VirtualPositionType(ParametricPotential):
             independent_variables={"ri", "rj", "rk"},
         )
 
-    @property
-    def member_types(self):
-        return self.__dict__.get("member_types_")
-
-    @property
-    def member_classes(self):
-        return self.__dict__.get("member_classes_")
-
 
 class VirtualPotentialType(ParametricPotential):
     """A description of non-bonded interactions between sites.
 
     This is a subclass of the gmso.core.Potential superclass.
 
-    AtomType represents an atom type and includes the functional form
-    describing its interactions and, optionally, other properties such as mass
-    and charge.  This class inhereits from Potential, which stores the
+    VirtualPotentialType represents an virtual site type and includes the functional form
+    describing its nonbonded interactions. This class inhereits from Potential, which stores the
     non-bonded interaction between atoms or sites. The functional form of the
     potential is stored as a `sympy` expression and the parameters, with units,
     are stored explicitly.
     """
 
-    atomclass_: Optional[str] = Field(
-        "", description="The class of the atomtype", alias="atomclass"
-    )
-
-    definition_: Optional[str] = Field(
-        "",
-        description="SMARTS string defining this atom type",
-        alias="definition",
-    )
-
-    description_: Optional[str] = Field(
-        "", description="Description for the VirtualPotentialType", alias="description"
-    )
-
     model_config = ConfigDict(
         alias_to_fields=dict(
             **ParametricPotential.model_config["alias_to_fields"],
-            **{
-                "atomclass": "atomclass_",
-                "doi": "doi_",
-                "definition": "definition_",
-                "description": "description_",
-            },
+            **{},
         ),
     )
 
@@ -141,9 +96,6 @@ class VirtualPotentialType(ParametricPotential):
         parameters=None,
         potential_expression=None,
         independent_variables=None,
-        atomclass="",
-        definition="",
-        description="",
         tags=None,
     ):
         super(VirtualPotentialType, self).__init__(
@@ -152,29 +104,11 @@ class VirtualPotentialType(ParametricPotential):
             parameters=parameters,
             independent_variables=independent_variables,
             potential_expression=potential_expression,
-            atomclass=atomclass,
-            description=description,
-            definition=definition,
             tags=tags,
         )
 
-    @property
-    def atomclass(self):
-        """Return the atomclass of the atom_type."""
-        return self.__dict__.get("atomclass_")
-
-    @property
-    def description(self):
-        """Return the description of the atom_type."""
-        return self.__dict__.get("description_")
-
-    @property
-    def definition(self):
-        """Return the SMARTS string of the atom_type."""
-        return self.__dict__.get("definition_")
-
     def clone(self, fast_copy=False):
-        """Clone this AtomType, faster alternative to deepcopying."""
+        """Clone this VirtualType, faster alternative to deepcopying."""
         return VirtualPotentialType(
             name=str(self.name),
             tags=self.tags,
@@ -182,9 +116,6 @@ class VirtualPotentialType(ParametricPotential):
             parameters=None,
             independent_variables=None,
             potential_expression=self.potential_expression.clone(fast_copy),
-            atomclass=self.atomclass,
-            description=self.description,
-            definition=self.definition,
         )
 
     def __hash__(self):
@@ -202,9 +133,6 @@ class VirtualPotentialType(ParametricPotential):
             and self.independent_variables == other.independent_variables
             and self.parameters.keys() == other.parameters.keys()
             and unyt_compare(self.parameters.values(), other.parameters.values())
-            and self.atomclass == other.atomclass
-            and self.definition == other.definition
-            and self.description == other.description
         )
 
     def __repr__(self):
@@ -213,7 +141,6 @@ class VirtualPotentialType(ParametricPotential):
             f"<{self.__class__.__name__} {self.name},\n "
             f"expression: {self.expression},\n "
             f"id: {id(self)},\n "
-            f"atomclass: {self.atomclass}>"
         )
         return desc
 
@@ -230,19 +157,24 @@ class VirtualPotentialType(ParametricPotential):
 
 
 class VirtualType(GMSOBase):
-    """A generalized virtual site class in GMSO.
+    """A generalized virtual site type class in GMSO.
 
-    Virtual sites are massless particles that represent off-atom charge sites, lone pairs, or other non-physical sites.
+    Virtual sites are massless particles that represent off-atom interaction/charge sites, lone pairs, or other non-physical sites.
 
     Attributes
     ----------
+    name : str
+        A generalize name for the type of the virtual site. See https://manual.gromacs.org/current/reference-manual/functions/interaction-methods.html#id3 for some Gromacs examples.
+    member_types_: List[Str]
+        The atom types of the constituent atoms that define the virtual site's position.
+    member_classes_: List[Str]
+        The atom classes of the constituent atoms that define the virtual site's position.
     charge : float
         The charge of the virtual site in elementary charge units.
-    parent_atoms : List[Site]
-        The real constituent atoms that define the virtual site's position.
-    virtual_type:
-
-    position:
+    virtual_potential: VirtualPositionType
+        The ParametricPotential that takes the specific `parent_atoms` and is used to generate the specific virtual site position.
+    virtual_position: VirtualPotentialType
+        The ParametricPotential that is used to store the nonbonded interactions of the virtual site type.
     """
 
     name_: str = Field(
@@ -257,7 +189,6 @@ class VirtualType(GMSOBase):
         max_length=12,
     )
 
-    #
     member_classes_: Optional[Tuple[str, ...]] = Field(
         None,
         description="List-like of gmso.AtomType.atomclass "
@@ -332,7 +263,7 @@ class VirtualType(GMSOBase):
 
     @property
     def doi(self):
-        """Return the doi of the atom_type."""
+        """Return the doi of the virtual_type."""
         return self.__dict__.get("doi_")
 
     @field_validator("charge_", mode="before")
