@@ -291,6 +291,7 @@ class ForceField(object):
             "angle_type": self._get_angle_type,
             "dihedral_type": self._get_dihedral_type,
             "improper_type": self._get_improper_type,
+            "virtual_type": self._get_virtual_type,
         }
 
         if group not in potential_extractors:
@@ -515,6 +516,27 @@ class ForceField(object):
         )
         if match:
             return match
+        elif warn:
+            warnings.warn(msg)
+            return None
+        else:
+            raise MissingPotentialError(msg)
+
+    def _get_virtual_type(self, atom_types, return_match_order=False, warn=False):
+        """Get a particular virtual_type between `atom_types` from this ForceField."""
+
+        forward = FF_TOKENS_SEPARATOR.join(atom_types)
+        n_elements = len(atom_types)
+        match = None
+        if forward in self.virtual_types:
+            match = self.virtual_types[forward], tuple(range(n_elements))
+
+        msg = f"VirtualType between atoms {tuple(atype for atype in atom_types)} is missing from the ForceField"
+        if match:
+            if return_match_order:
+                return match
+            else:
+                return match[0]  # only return the atoms, not their order
         elif warn:
             warnings.warn(msg)
             return None

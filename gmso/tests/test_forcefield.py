@@ -568,6 +568,17 @@ class TestForceField(BaseTest):
                 ["opls_359", "opls_600", "opls_700", "opls_800"], warn=True
             )
 
+    def test_get_virtual_type_missing(self):
+        ff = ff = ForceField(get_path("ff-example0.xml"), backend="gmso")
+        with pytest.raises(MissingPotentialError):
+            ff._get_virtual_type(["Missing"], warn=False)
+
+        with pytest.warns(UserWarning):
+            ff._get_virtual_type(["Missing", "Missing"], warn=True)
+
+        match = ff._get_virtual_type(["Xe"], warn=False)
+        assert match
+
     def test_non_element_types(self, non_element_ff, opls_ethane_foyer):
         assert "_CH3" in non_element_ff.non_element_types
         assert "_CH2" in non_element_ff.non_element_types
