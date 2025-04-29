@@ -169,11 +169,11 @@ class VirtualType(GMSOBase):
         The atom types of the constituent atoms that define the virtual site's position.
     member_classes_: List[Str]
         The atom classes of the constituent atoms that define the virtual site's position.
-    charge : float
+    charge : u.unyt_array
         The charge of the virtual site in elementary charge units.
-    virtual_potential: VirtualPositionType
+    virtual_potential: gmso.core.virtual_type.VirtualPositionType
         The ParametricPotential that takes the specific `parent_atoms` and is used to generate the specific virtual site position.
-    virtual_position: VirtualPotentialType
+    virtual_position: gmso.core.virtual_type.VirtualPotentialType
         The ParametricPotential that is used to store the nonbonded interactions of the virtual site type.
     """
 
