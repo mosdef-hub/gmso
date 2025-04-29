@@ -398,3 +398,25 @@ class VirtualType(GMSOBase):
             charge=self.charge,
             doi=self.doi,
         )
+
+    def get_parameters(self, copy=False):
+        """Return parameters for this VirtualPotentialType and VirtualPositionType."""
+        parametersDict = {}
+        if copy:
+            if self.virtual_potential:
+                parametersDict["potential"] = {
+                    k: u.unyt_quantity(v.value, v.units)
+                    for k, v in self.virtual_potential.parameters.items()
+                }
+            if self.virtual_position:
+                parametersDict["position"] = {
+                    k: u.unyt_quantity(v.value, v.units)
+                    for k, v in self.virtual_position.parameters.items()
+                }
+        else:
+            if self.virtual_potential:
+                parametersDict["potential"] = self.virtual_potential.parameters
+            if self.virtual_position:
+                parametersDict["position"] = self.virtual_position.parameters
+
+        return parametersDict

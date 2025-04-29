@@ -513,6 +513,20 @@ class TestForceField(BaseTest):
             [0.6276, 1.8828, 0.0, -2.5104, 0.0, 0.0] * u.kJ / u.mol,
         )
 
+    def test_forcefield_get_parameters_virtual_type(self):
+        ff = ForceField(get_path("ff-example0.xml"), backend="gmso")
+        params = ff.get_parameters("virtual_type", key=["Xe"])
+
+        assert allclose_units_mixed(
+            list([val.values() for val in params.values()][0]),
+            [
+                12 * u.dimensionless,
+                6 * u.dimensionless,
+                0.154 * u.nm,
+                0.7 * u.kJ / u.mol,
+            ],
+        )
+
     def test_forcefield_get_potential_non_exisistent_group(self, opls_ethane_foyer):
         with pytest.raises(ValueError):
             opls_ethane_foyer.get_potential("non_group", ["a", "b", "c"])
@@ -569,7 +583,7 @@ class TestForceField(BaseTest):
             )
 
     def test_get_virtual_type_missing(self):
-        ff = ff = ForceField(get_path("ff-example0.xml"), backend="gmso")
+        ff = ForceField(get_path("ff-example0.xml"), backend="gmso")
         with pytest.raises(MissingPotentialError):
             ff._get_virtual_type(["Missing"], warn=False)
 

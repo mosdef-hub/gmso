@@ -263,7 +263,7 @@ class ForceField(object):
 
         Parameters
         ----------
-        group:  {'atom_type', 'bond_type', 'angle_type', 'dihedral_type', 'improper_type'}
+        group:  {'atom_type', 'bond_type', 'angle_type', 'dihedral_type', 'improper_type', 'virtual_type'}
             The potential group to perform this search on
         key: str (for atom type) or list of str (for connection types)
             The key to lookup for this potential group
