@@ -1,0 +1,9 @@
+{
+  "name": "3fdVirtualPosition",
+  "expression": "ri + b*(rj-ri+a*(rk-rj))/((rj-ri+a*(rk-rj)).norm())",
+  "independent_variables": "ri",
+  "expected_parameters_dimensions": {
+    "a": "dimensionless",
+    "b": "dimensionless"
+      }
+}

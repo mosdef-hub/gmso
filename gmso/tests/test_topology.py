@@ -18,6 +18,7 @@ from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
 from gmso.core.topology import Topology
+from gmso.core.virtual_site import VirtualSite
 from gmso.exceptions import GMSOError
 from gmso.external.convert_parmed import from_parmed
 from gmso.tests.base_test import BaseTest
@@ -52,6 +53,12 @@ class TestTopology(BaseTest):
         assert top.n_sites == 0
         top.add_site(site)
         assert top.n_sites == 1
+
+    def test_add_virtual_site(self, water_system):
+        v_site = VirtualSite(parent_atoms=water_system.sites)
+        water_system._add_virtual_site(v_site)
+        assert water_system.n_sites == 3
+        assert water_system.n_virtual_sites == 1
 
     def test_remove_site(self, ethane):
         ethane.identify_connections()

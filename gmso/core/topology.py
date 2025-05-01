@@ -146,6 +146,7 @@ class Topology(object):
         self.name = name
         self._box = box
         self._sites = IndexedSet()
+        self._virtual_sites = IndexedSet()
         self._typed = False
         self._bonds = IndexedSet()
         self._angles = IndexedSet()
@@ -246,6 +247,16 @@ class Topology(object):
     def n_sites(self):
         """Return the number of sites in the topology."""
         return len(self._sites)
+
+    @property
+    def virtual_sites(self):
+        """Return all virtual_sites in the topology."""
+        return self._virtual_sites
+
+    @property
+    def n_virtual_sites(self):
+        """Return the number of virtual sites in the topology."""
+        return len(self.virtual_sites)
 
     @property
     def n_connections(self):
@@ -1074,6 +1085,10 @@ class Topology(object):
                 f"Available options: {[untyped_extractors.keys()]}."
             )
         return untyped
+
+    def _add_virtual_site(self, site):
+        "Add a VirtualSite instance to topology"
+        self._virtual_sites.add(site)
 
     def _get_untyped_sites(self):
         "Return a list of untyped sites"
