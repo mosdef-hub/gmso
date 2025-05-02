@@ -4,7 +4,7 @@ import unyt as u
 
 from gmso.core.atom import Atom
 from gmso.core.dihedral import Dihedral
-from gmso.utils.geometry import moit
+from gmso.utils.geometry import moment_of_inertia
 from gmso.utils.io import run_from_ipython
 from gmso.utils.misc import unyt_to_hashable
 from gmso.utils.sorting import sort_connection_members, sort_connection_strings
@@ -59,15 +59,15 @@ def test_sorting():
     )
 
 
-def test_moit():
+def test_moment_of_inertia():
     xyz = [
         np.array([-0.5, -0.5, 0]),
         np.array([0.5, -0.5, 0]),
         np.array([0.5, 0.5, 0]),
         np.array([-0.5, 0.5, 0]),
     ]
-    moit_tensor = moit(xyz=xyz, masses=np.array([1.0 for i in xyz]))
-    assert np.array_equal(moit_tensor, np.array([1, 1, 2]))
+    tensor = moment_of_inertia(xyz=xyz, masses=np.array([1.0 for i in xyz]))
+    assert np.array_equal(tensor, np.array([1, 1, 2]))
 
     xyz = [
         np.array([0, 0, 0]),
@@ -75,9 +75,9 @@ def test_moit():
         np.array([1, 1, 0]),
         np.array([0, 1, 0]),
     ]
-    moit_tensor = moit(
+    tensor = moment_of_inertia(
         xyz=xyz,
         center=np.array((0.5, 0.5, 0)),
         masses=np.array([1.0 for i in xyz]),
     )
-    assert np.array_equal(moit_tensor, np.array([1, 1, 2]))
+    assert np.array_equal(tensor, np.array([1, 1, 2]))
