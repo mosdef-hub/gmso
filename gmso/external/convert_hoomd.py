@@ -99,9 +99,9 @@ def to_gsd_snapshot(
     base_units : dict
         Base units dictionary utilized during the conversion. Always returned.
     rigid_info : hoomd.md.constrain.Rigid
-        Hoomd constraint object storing constituent particle information
+        A hoomd constraint object storing constituent particle information
         needed to run rigid body simulations in HOOMD-blue.
-        This is only returned if site's with with `site.molecule.isrigid = True`
+        This is only returned if sites with `site.molecule.isrigid = True`
         are found in the topology.
 
     Notes
@@ -110,12 +110,15 @@ def to_gsd_snapshot(
     generated using `gmso.external.convert_hoomd.to_hoomd_forcefield()`.
 
     If you are using mBuild and GMSO to initialize rigid body simulations
-    with HOOMD-blue set the site's `molecule.isrigid` property to `True`.
+    with HOOMD-blue set the `site.molecule.isrigid` property to `True`.
     If your topology contains a mix of rigid and flexible molecules,
     the rigid molecules must come first in the hierarchy of the GMSO Toplogy
     and therefore also in the mBuild Compound hierarchy.
     For more information about running rigid body simulations in HOOMD-blue,
     see https://hoomd-blue.readthedocs.io/en/latest/tutorial/06-Modelling-Rigid-Bodies/00-index.html
+
+    For more information on the units from `base_units`, see
+    https://hoomd-blue.readthedocs.io/en/latest/units.html#base-units
 
     Rigid Body Example
     ------------------
@@ -245,7 +248,7 @@ def to_hoomd_snapshot(
     Notes
     -----
     Force field parameters are not written to the GSD file and must be
-    generated using `to_hoomd_forcefield()`.
+    generated using `gmso.external.convert_hoomd.to_hoomd_forcefield()`.
 
     If you are using mBuild and GMSO to initialize rigid body simulations
     with HOOMD-blue set the `site.molecule.isrigid` property to `True`.
@@ -254,6 +257,9 @@ def to_hoomd_snapshot(
     and therefore also in the mBuild Compound hierarchy.
     For more information about running rigid body simulations in HOOMD-blue,
     see https://hoomd-blue.readthedocs.io/en/latest/tutorial/06-Modelling-Rigid-Bodies/00-index.html
+
+    For more information on the units from `base_units`, see
+    https://hoomd-blue.readthedocs.io/en/latest/units.html#base-units
 
     Rigid Body Example
     ------------------
