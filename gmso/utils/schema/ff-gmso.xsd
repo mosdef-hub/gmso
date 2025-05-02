@@ -108,6 +108,43 @@
         </xsd:key>
     </xsd:element>
 
+<!-- Begin VirtualSiteType  Tags and Attributes -->
+
+
+    <xsd:complexType name="VirtualSiteType">
+        <xsd:sequence>
+            <xsd:element name="Position"/>
+            <xsd:element name="Potential"/>
+        </xsd:sequence>
+        <xsd:attribute name="name" type="xsd:string" use="optional"/>
+        <xsd:attribute name="type1" type="xsd:string"/>
+        <xsd:attribute name="class1" type="xsd:string"/>
+        <xsd:attribute name="type2" type="xsd:string"/>
+        <xsd:attribute name="class2" type="xsd:string"/>
+        <xsd:attribute name="type3" type="xsd:string"/>
+        <xsd:attribute name="class3" type="xsd:string"/>
+    </xsd:complexType>
+
+    <xsd:element name="VirtualSiteTypes">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="Potential" type="Potential" minOccurs="0" maxOccurs="unbounded"/>
+                <xsd:element name="Position" type="Position" minOccurs="0" maxOccurs="unbounded"/>
+                <xsd:choice minOccurs="0" maxOccurs="unbounded">
+                    <xsd:element name="VirtualSiteType" type="VirtualSiteType" minOccurs="0"/>
+                </xsd:choice>
+            </xsd:sequence>
+            <xsd:attribute name="name" type="xsd:string" use="optional"/>
+        </xsd:complexType>
+        <xsd:key name="virtual_type_name_key">
+            <xsd:selector xpath="VirtualSiteType"/>
+            <xsd:field xpath="@type1"/>
+            <xsd:field xpath="@type2"/>
+            <xsd:field xpath="@type3"/>
+
+        </xsd:key>
+    </xsd:element>
+
     <!-- Begin ForceField DihedralType and ImproperType Tags and Attributes -->
     <xsd:complexType name="DihedralOrImproperType">
         <xsd:sequence>
@@ -185,6 +222,20 @@
     <xsd:complexType name="ParametersUnitDef">
         <xsd:attribute name="parameter" type="xsd:string"/>
         <xsd:attribute name="unit" type="xsd:string"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="Position">
+        <xsd:sequence>
+            <xsd:element name="ParametersUnitDef" type="ParametersUnitDef" minOccurs="0" maxOccurs="unbounded"/>
+        </xsd:sequence>
+        <xsd:attribute name="expression" type="xsd:string"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="Potential">
+        <xsd:sequence>
+            <xsd:element name="ParametersUnitDef" type="ParametersUnitDef" minOccurs="0" maxOccurs="unbounded"/>
+        </xsd:sequence>
+        <xsd:attribute name="expression" type="xsd:string"/>
     </xsd:complexType>
 
     <xsd:element name="Parameters">

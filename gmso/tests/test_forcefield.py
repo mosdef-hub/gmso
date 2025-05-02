@@ -194,6 +194,41 @@ class TestForceField(BaseTest):
             "Xe",
         )
 
+    def test_ff_VitualSiteTypes_from_xml(self):
+        ff = ForceField(get_path("ff-example0.xml"), backend="gmso")
+        assert len(ff.virtual_types) == 1
+        assert "Xe" in ff.virtual_types
+
+        assert ff.virtual_types["Xe"].charge == 0.0 * u.C
+        assert (
+            sympify("ri")
+            in ff.virtual_types["Xe"].virtual_position.independent_variables
+        )
+        assert allclose_units_mixed(
+            ff.virtual_types["Xe"].virtual_position.parameters["r"], [0.1, 0, 0] * u.nm
+        )
+        assert ff.virtual_types["Xe"].member_classes == ("Xe",)
+
+        assert (
+            sympify("r")
+            in ff.virtual_types["Xe"].virtual_potential.independent_variables
+        )
+        assert (
+            ff.virtual_types["Xe"].virtual_potential.parameters["m"]
+            == 12 * u.dimensionless
+        )
+        assert (
+            ff.virtual_types["Xe"].virtual_potential.parameters["n"]
+            == 6 * u.dimensionless
+        )
+        assert (
+            ff.virtual_types["Xe"].virtual_potential.parameters["epsilon"]
+            == 0.7 * u.kJ / u.mol
+        )
+        assert (
+            ff.virtual_types["Xe"].virtual_potential.parameters["sigma"] == 0.154 * u.nm
+        )
+
     def test_ff_pairpotentialtypes_from_xml(self, ff):
         assert len(ff.pairpotential_types) == 1
         assert "Xe~Xe" in ff.pairpotential_types
@@ -478,6 +513,20 @@ class TestForceField(BaseTest):
             [0.6276, 1.8828, 0.0, -2.5104, 0.0, 0.0] * u.kJ / u.mol,
         )
 
+    def test_forcefield_get_parameters_virtual_type(self):
+        ff = ForceField(get_path("ff-example0.xml"), backend="gmso")
+        params = ff.get_parameters("virtual_type", key=["Xe"])
+
+        assert allclose_units_mixed(
+            list([val.values() for val in params.values()][0]),
+            [
+                12 * u.dimensionless,
+                6 * u.dimensionless,
+                0.154 * u.nm,
+                0.7 * u.kJ / u.mol,
+            ],
+        )
+
     def test_forcefield_get_potential_non_exisistent_group(self, opls_ethane_foyer):
         with pytest.raises(ValueError):
             opls_ethane_foyer.get_potential("non_group", ["a", "b", "c"])
@@ -532,6 +581,17 @@ class TestForceField(BaseTest):
             opls_ethane_foyer._get_improper_type(
                 ["opls_359", "opls_600", "opls_700", "opls_800"], warn=True
             )
+
+    def test_get_virtual_type_missing(self):
+        ff = ForceField(get_path("ff-example0.xml"), backend="gmso")
+        with pytest.raises(MissingPotentialError):
+            ff._get_virtual_type(["Missing"], warn=False)
+
+        with pytest.warns(UserWarning):
+            ff._get_virtual_type(["Missing", "Missing"], warn=True)
+
+        match = ff._get_virtual_type(["Xe"], warn=False)
+        assert match
 
     def test_non_element_types(self, non_element_ff, opls_ethane_foyer):
         assert "_CH3" in non_element_ff.non_element_types
