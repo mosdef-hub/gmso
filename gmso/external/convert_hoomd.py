@@ -17,7 +17,7 @@ from gmso.exceptions import EngineIncompatibilityError, NotYetImplementedWarning
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.connectivity import generate_pairs_lists
 from gmso.utils.conversions import convert_ryckaert_to_opls
-from gmso.utils.geometry import coord_shift, moit
+from gmso.utils.geometry import coord_shift, moment_of_inertia
 from gmso.utils.io import has_gsd, has_hoomd
 from gmso.utils.sorting import (
     sort_by_classes,
@@ -59,8 +59,8 @@ def to_gsd_snapshot(
 ):
     """Create a gsd.hoomd.Frame objcet (HOOMD default data format).
 
-    The gsd snapshot defines the topology of HOOMD-Blue simulations. This file
-    can be used as a starting point for a HOOMD-Blue simulation, for analysis,
+    The gsd snapshot defines the topology of HOOMD-blue simulations. This file
+    can be used as a starting point for a HOOMD-blue simulation, for analysis,
     and for visualization in various tools.
 
     Parameters
@@ -97,32 +97,32 @@ def to_gsd_snapshot(
     gsd_snapshot : gsd.hoomd.Frame
         Converted hoomd Snapshot. Always retruned.
     base_units : dict
-        Based units dictionary utilized during the conversion. Always returned.
+        Base units dictionary utilized during the conversion. Always returned.
     rigid_info : hoomd.md.constrain.Rigid
-        Hoomd object storing constituent particle information
-        needed to run rigid body simulations in Hoomd-Blue.
-        This is only returned if Molecule's with `Molecule.isrigid = True`
+        Hoomd constraint object storing constituent particle information
+        needed to run rigid body simulations in HOOMD-blue.
+        This is only returned if site's with with `site.molecule.isrigid = True`
         are found in the topology.
 
     Notes
     -----
     Force field parameters are not written to the GSD file and must be
-    generated using `to_hoomd_forcefield()`.
+    generated using `gmso.external.convert_hoomd.to_hoomd_forcefield()`.
 
     If you are using mBuild and GMSO to initialize rigid body simulations
-    with Hoomd-Blue set the site's `Molecule.isrigid` property to `True`.
+    with HOOMD-blue set the site's `molecule.isrigid` property to `True`.
     If your topology contains a mix of rigid and flexible molecules,
-    the rigid molecules must come first in the heirarchy of the GMSO toplogy
-    and therefore also in the mBuild compound heirarchy.
-    See https://hoomd-blue.readthedocs.io/en/latest/index.html
-    for more information about running rigid body simulations in Hoomd-Blue.
+    the rigid molecules must come first in the hierarchy of the GMSO Toplogy
+    and therefore also in the mBuild Compound hierarchy.
+    For more information about running rigid body simulations in HOOMD-blue,
+    see https://hoomd-blue.readthedocs.io/en/latest/tutorial/06-Modelling-Rigid-Bodies/00-index.html
 
     Rigid Body Example
     ------------------
     In this example, a system with rigid benzene and flexible ethane
     is initialized. Since benzene is rigid, it must be passed first
     into `mb.fill_box` so that benzene molecules are at the top of
-    `box` heirarchy.
+    `box` hierarchy.
         ::
             ethane = mb.lib.molecules.Ethane()
             ethane.name = "ethane"
@@ -139,7 +139,7 @@ def to_gsd_snapshot(
     """
     if int(hoomd_version[0]) < 4:
         raise EngineIncompatibilityError(
-            "GMSO is only compatible with Hoomd-Blue >= 4.0"
+            "GMSO is only compatible with HOOMD-blue >= 4.0"
         )
     base_units = _validate_base_units(base_units, top, auto_scale)
     gsd_snapshot = gsd.hoomd.Frame()
@@ -197,8 +197,8 @@ def to_hoomd_snapshot(
 ):
     """Create a hoomd.Snapshot objcet (HOOMD default data format).
 
-    The Hoomd snapshot defines the topology of HOOMD-Blue simulations. This file
-    can be used as a starting point for a HOOMD-Blue simulation, for analysis,
+    The Hoomd snapshot defines the topology of HOOMD-blue simulations. This file
+    can be used as a starting point for a HOOMD-blue simulation, for analysis,
     and for visualization in various tools.
 
     Parameters
@@ -235,11 +235,11 @@ def to_hoomd_snapshot(
     hoomd_snapshot : hoomd.Snapshot
         Converted hoomd Snapshot. Always retruned.
     base_units : dict
-        Based units dictionary utilized during the conversion. Always returned.
+        Base units dictionary utilized during the conversion. Always returned.
     rigid_info : hoomd.md.constrain.Rigid
-        Hoomd object storing constituent particle information
-        needed to run rigid body simulations in Hoomd-Blue.
-        This is only returned if Molecule's with `Molecule.isrigid = True`
+        A hoomd constraint object storing constituent particle information
+        needed to run rigid body simulations in HOOMD-blue.
+        This is only returned if sites with `site.molecule.isrigid = True`
         are found in the topology.
 
     Notes
@@ -248,19 +248,19 @@ def to_hoomd_snapshot(
     generated using `to_hoomd_forcefield()`.
 
     If you are using mBuild and GMSO to initialize rigid body simulations
-    with Hoomd-Blue set the `Molecule.isrigid` property to `True`.
+    with HOOMD-blue set the `site.molecule.isrigid` property to `True`.
     If your topology contains a mix of rigid and flexible molecules,
-    the rigid molecules must come first in the heirarchy of the GMSO toplogy
-    and therefore also in the mBuild compound heirarchy.
-    See https://hoomd-blue.readthedocs.io/en/latest/index.html
-    for more information about running rigid body simulations.
+    the rigid molecules must come first in the hierarchy of the GMSO Toplogy
+    and therefore also in the mBuild Compound hierarchy.
+    For more information about running rigid body simulations in HOOMD-blue,
+    see https://hoomd-blue.readthedocs.io/en/latest/tutorial/06-Modelling-Rigid-Bodies/00-index.html
 
     Rigid Body Example
     ------------------
     In this example, a system with rigid benzene and flexible ethane
     is initialized. Since benzene is rigid, it must be passed first
     into `mb.fill_box` so that benzene molecules are at the top of
-    `box` heirarchy.
+    `box` hierarchy.
         ::
             ethane = mb.lib.molecules.Ethane()
             ethane.name = "ethane"
@@ -276,7 +276,7 @@ def to_hoomd_snapshot(
     """
     if int(hoomd_version[0]) < 4:
         raise EngineIncompatibilityError(
-            "GMSO is only compatible with Hoomd-Blue >= 4.0"
+            "GMSO is only compatible with HOOMD-blue >= 4.0"
         )
     base_units = _validate_base_units(base_units, top, auto_scale)
     hoomd_snapshot = hoomd.Snapshot()
@@ -372,7 +372,7 @@ def _parse_particle_information(
     charges = u.unyt_array(
         [site.charge if site.charge else 0 * u.elementary_charge for site in top.sites]
     )
-    moits = [[1, 0, 0] for i in xyz]
+    moment_of_inertias = [[1, 0, 0] for i in xyz]
     # GMSO and mBuild don't store particle orientation; use default
     orientations = [[1, 0, 0, 0] for i in xyz]
     unique_types = sorted(list(set(types)))
@@ -421,7 +421,7 @@ def _parse_particle_information(
                 )
                 rigid_masses[idx + mol_count] = sum(group_masses)
                 rigid_xyz[idx + mol_count] = com_xyz
-                rigid_moits[idx + mol_count] = moit(
+                rigid_moits[idx + mol_count] = moment_of_inertia(
                     group_positions, group_masses, com_xyz
                 )
                 # Only need to make one entry per rigid body type
@@ -443,7 +443,7 @@ def _parse_particle_information(
         xyz = np.concatenate((rigid_xyz, xyz))
         charges = np.concatenate((rigid_charges, charges))
         orientations = rigid_orientations + orientations
-        moits = np.concatenate((rigid_moits, moits))
+        moment_of_inertias = np.concatenate((rigid_moits, moment_of_inertias))
         rigid_id_tags = np.concatenate((np.arange(n_rigid), rigid_ids))
     else:
         n_rigid = 0
@@ -471,7 +471,7 @@ def _parse_particle_information(
         snapshot.particles.orientation[0:] = orientations
         if n_rigid:
             snapshot.particles.body[0:] = rigid_id_tags
-            snapshot.particles.moment_inertia[0:] = moits
+            snapshot.particles.moment_inertia[0:] = moment_of_inertias
     elif isinstance(snapshot, gsd.hoomd.Frame):
         snapshot.particles.N = top.n_sites + n_rigid
         snapshot.particles.types = unique_types
@@ -482,7 +482,7 @@ def _parse_particle_information(
         snapshot.particles.orientation = orientations
         if n_rigid:
             snapshot.particles.body = rigid_id_tags
-            snapshot.particles.moment_inertia = moits
+            snapshot.particles.moment_inertia = moment_of_inertias
     return n_rigid, rigid_constraint
 
 
@@ -792,12 +792,12 @@ def to_hoomd_forcefield(
         GMSO Topology. Converted are grouped by their category (as key of the
         dictionary), namely, "nonbonded", "bonds", rangles", "dihedrals", and "impropers".
     base_units : dict
-        Based units dictionary utilized during the conversion.
+        Base units dictionary utilized during the conversion.
 
     """
     if int(hoomd_version[0]) < 4:
         raise EngineIncompatibilityError(
-            "GMSO is only compatible with Hoomd-Blue >= 4.0"
+            "GMSO is only compatible with HOOMD-blue >= 4.0"
         )
     potential_types = _validate_compatibility(top)
     base_units = _validate_base_units(base_units, top, auto_scale, potential_types)

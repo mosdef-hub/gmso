@@ -31,12 +31,12 @@ def coord_shift(xyz, box_lengths):
     return xyz
 
 
-def moit(xyz, masses, center=np.zeros(3)):
-    """Find the moment of intertia tensor given a set of
+def moment_of_inertia(xyz, masses, center=np.zeros(3)):
+    """Find the moment of inertia tensor given a set of
     particle coordinates and their corresponding masses.
 
     This method is used in setting rigid body moments
-    of intertia.
+    of inertia.
 
     Parameters
     ----------
