@@ -170,7 +170,7 @@ class TestGsd(BaseTest):
             if site.molecule.name == "benzene":
                 site.molecule.isrigid = True
         with pytest.raises(RuntimeError):
-            snapshot, refs, rigid = to_gsd_snapshot(top)
+            to_gsd_snapshot(top)
 
 
 class TestHoomd(BaseTest):
