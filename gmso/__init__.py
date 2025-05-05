@@ -16,5 +16,7 @@ from .core.improper import Improper
 from .core.improper_type import ImproperType
 from .core.pairpotential_type import PairPotentialType
 from .core.topology import Topology
+from .core.virtual_site import VirtualSite
+from .core.virtual_type import VirtualType
 
 __version__ = "0.12.4"

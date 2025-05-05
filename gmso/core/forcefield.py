@@ -19,6 +19,7 @@ from gmso.utils.ff_utils import (
     parse_ff_connection_types,
     parse_ff_metadata,
     parse_ff_pairpotential_types,
+    parse_ff_virtual_types,
     validate,
 )
 from gmso.utils.misc import mask_with, validate_type
@@ -119,6 +120,7 @@ class ForceField(object):
             self.angle_types = ff.angle_types
             self.dihedral_types = ff.dihedral_types
             self.improper_types = ff.improper_types
+            self.virtual_types = ff.virtual_types
             self.pairpotential_types = ff.pairpotential_types
             self.potential_groups = ff.potential_groups
             self.scaling_factors = ff.scaling_factors
@@ -132,6 +134,7 @@ class ForceField(object):
             self.angle_types = {}
             self.dihedral_types = {}
             self.improper_types = {}
+            self.virtual_types = {}
             self.pairpotential_types = {}
             self.potential_groups = {}
             self.scaling_factors = {}
@@ -260,7 +263,7 @@ class ForceField(object):
 
         Parameters
         ----------
-        group:  {'atom_type', 'bond_type', 'angle_type', 'dihedral_type', 'improper_type'}
+        group:  {'atom_type', 'bond_type', 'angle_type', 'dihedral_type', 'improper_type', 'virtual_type'}
             The potential group to perform this search on
         key: str (for atom type) or list of str (for connection types)
             The key to lookup for this potential group
@@ -288,6 +291,7 @@ class ForceField(object):
             "angle_type": self._get_angle_type,
             "dihedral_type": self._get_dihedral_type,
             "improper_type": self._get_improper_type,
+            "virtual_type": self._get_virtual_type,
         }
 
         if group not in potential_extractors:
@@ -512,6 +516,27 @@ class ForceField(object):
         )
         if match:
             return match
+        elif warn:
+            warnings.warn(msg)
+            return None
+        else:
+            raise MissingPotentialError(msg)
+
+    def _get_virtual_type(self, atom_types, return_match_order=False, warn=False):
+        """Get a particular virtual_type between `atom_types` from this ForceField."""
+
+        forward = FF_TOKENS_SEPARATOR.join(atom_types)
+        n_elements = len(atom_types)
+        match = None
+        if forward in self.virtual_types:
+            match = self.virtual_types[forward], tuple(range(n_elements))
+
+        msg = f"VirtualType between atoms {tuple(atype for atype in atom_types)} is missing from the ForceField"
+        if match:
+            if return_match_order:
+                return match
+            else:
+                return match[0]  # only return the atoms, not their order
         elif warn:
             warnings.warn(msg)
             return None
@@ -775,12 +800,14 @@ class ForceField(object):
         ff_bondtypes_list = []
         ff_angletypes_list = []
         ff_dihedraltypes_list = []
+        ff_virtualtypes_list = []
         ff_pairpotentialtypes_list = []
 
         atom_types_dict = ChainMap()
         bond_types_dict = {}
         angle_types_dict = {}
         dihedral_types_dict = {}
+        virtual_types_dict = {}
         improper_types_dict = {}
         pairpotential_types_dict = {}
         potential_groups = {}
@@ -804,6 +831,7 @@ class ForceField(object):
             ff_bondtypes_list.extend(ff_tree.findall("BondTypes"))
             ff_angletypes_list.extend(ff_tree.findall("AngleTypes"))
             ff_dihedraltypes_list.extend(ff_tree.findall("DihedralTypes"))
+            ff_virtualtypes_list.extend(ff_tree.findall("VirtualSiteTypes"))
             ff_pairpotentialtypes_list.extend(ff_tree.findall("PairPotentialTypes"))
 
         # Consolidate AtomTypes
@@ -855,6 +883,20 @@ class ForceField(object):
                 this_dihedral_types_group.update(this_improper_types_group)
                 potential_groups[this_group_name] = this_dihedral_types_group
 
+        # Consolidate VirtualTypes
+        for virtual_types in ff_virtualtypes_list:
+            this_virtual_types_group = parse_ff_virtual_types(
+                virtual_types, child_tag="VirtualSiteType", ff_meta=ff_meta_map
+            )
+            this_virtual_types_group_name = virtual_types.attrib.get("name", None)
+
+            if this_virtual_types_group_name:
+                potential_groups[this_virtual_types_group_name] = (
+                    this_virtual_types_group
+                )
+
+            virtual_types_dict.update(this_virtual_types_group)
+
         # Consolidate PairPotentialType
         for pairpotential_types in ff_pairpotentialtypes_list:
             this_pairpotential_types_group = parse_ff_pairpotential_types(
@@ -882,6 +924,7 @@ class ForceField(object):
         ff.angle_types = angle_types_dict
         ff.dihedral_types = dihedral_types_dict
         ff.improper_types = improper_types_dict
+        ff.virtual_types = virtual_types_dict
         ff.pairpotential_types = pairpotential_types_dict
         ff.potential_groups = potential_groups
         return ff
