@@ -17,7 +17,6 @@ def write_gsd(
     top,
     filename,
     base_units=None,
-    rigid_bodies=None,
     shift_coords=True,
     write_special_pairs=True,
 ):
@@ -33,11 +32,6 @@ def write_gsd(
         gmso.Topology object
     filename : str
         Path of the output file.
-    rigid_bodies : list of int, optional, default=None
-        List of rigid body information. An integer value is required for each
-        atom corresponding to the index of the rigid body the particle is to be
-        associated with. A value of None indicates the atom is not part of a
-        rigid body.
     shift_coords : bool, optional, default=True
         Shift coordinates from (0, L) to (-L/2, L/2) if necessary.
     write_special_pairs : bool, optional, default=True
@@ -54,7 +48,6 @@ def write_gsd(
     gsd_snapshot = to_gsd_snapshot(
         top=top,
         base_units=base_units,
-        rigid_bodies=rigid_bodies,
         shift_coords=shift_coords,
         parse_special_pairs=write_special_pairs,
     )[0]
