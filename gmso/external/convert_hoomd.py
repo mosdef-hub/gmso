@@ -52,7 +52,6 @@ AKMA_UNITS = {
 def to_gsd_snapshot(
     top,
     base_units=None,
-    rigid_bodies=None,
     shift_coords=True,
     parse_special_pairs=True,
     auto_scale=False,
@@ -74,11 +73,6 @@ def to_gsd_snapshot(
         "energy", "length", and "mass". There is also option to used predefined
         unit systems ("MD" or "AKMA" provided as string). If None is provided,
         this method will perform no units conversion.
-    rigid_bodies : list of int, optional, default=None
-        List of rigid body information. An integer value is required for each
-        atom corresponding to the index of the rigid body the particle is to be
-        associated with. A value of None indicates the atom is not part of a
-        rigid body.
     shift_coords : bool, optional, default=True
         Shift coordinates from (0, L) to (-L/2, L/2) if necessary.
     parse_special_pairs : bool, optional, default=True
@@ -169,7 +163,6 @@ def to_gsd_snapshot(
         gsd_snapshot,
         top,
         base_units,
-        rigid_bodies,
         shift_coords,
         u.unyt_array([lx, ly, lz]),
     )
@@ -193,7 +186,6 @@ def to_gsd_snapshot(
 def to_hoomd_snapshot(
     top,
     base_units=None,
-    rigid_bodies=None,
     shift_coords=True,
     parse_special_pairs=True,
     auto_scale=False,
@@ -215,11 +207,6 @@ def to_hoomd_snapshot(
         "energy", "length", and "mass". There is also option to used predefined
         unit systems ("MD" or "AKMA" provided as string). If None is provided,
         this method will perform no units conversion.
-    rigid_bodies : list of int, optional, default=None
-        List of rigid body information. An integer value is required for each
-        atom corresponding to the index of the rigid body the particle is to be
-        associated with. A value of None indicates the atom is not part of a
-        rigid body.
     shift_coords : bool, optional, default=True
         Shift coordinates from (0, L) to (-L/2, L/2) if necessary.
     parse_special_pairs : bool, optional, default=True
@@ -308,7 +295,6 @@ def to_hoomd_snapshot(
         hoomd_snapshot,
         top,
         base_units,
-        rigid_bodies,
         shift_coords,
         u.unyt_array([lx, ly, lz]),
     )
@@ -334,7 +320,6 @@ def _parse_particle_information(
     snapshot,
     top,
     base_units,
-    rigid_bodies,
     shift_coords,
     box_lengths,
 ):
@@ -348,8 +333,6 @@ def _parse_particle_information(
         Topology object holding system information.
     base_units : dict
         The dictionary holding base units (mass, length, and energy)
-    rigid_bodies : bool
-        Flag to parse rigid bodies information, to be implemented
     shift_coords : bool
         If True, shift coordinates from (0, L) to (-L/2, L/2) if neccessary.
     box_lengths : list() of length 3
