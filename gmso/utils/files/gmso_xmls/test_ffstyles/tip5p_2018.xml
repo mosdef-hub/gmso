@@ -1,18 +1,18 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<ForceField name="TIP4P 2005 water" version="0.0.1">
+<ForceField name="TIP5P 2018" version="0.0.1">
   <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.5" combiningRule="geometric">
-    <Units energy="kJ" distance="nm" mass="amu" charge="C"/>
+    <Units energy="kJ/mol" distance="nm" mass="amu" charge="elementary_charge"/>
   </FFMetaData>
   <AtomTypes expression="4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)">
     <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
     <ParametersUnitDef parameter="sigma" unit="nm"/>
-    <AtomType name="OW" mass="15.9994" charge="0.0" atomclass="OW" doi="10.1063/1.2121687" definition="[O;X2](H)(H)" description="O in TIP4P 2005 ">
+    <AtomType name="OW" mass="15.9994" charge="-0.641114" atomclass="OW" doi="10.1063/1.5070137" definition="[O;X2](H)(H)" description="O in TIP5P 2018">
       <Parameters>
-        <Parameter name="epsilon" value="0.774907916011878"/>
-        <Parameter name="sigma" value="0.31589"/>
+        <Parameter name="epsilon" value="0.79"/>
+        <Parameter name="sigma" value="0.3145 "/>
       </Parameters>
     </AtomType>
-    <AtomType name="HW" mass="1.008" charge="8.9145107181312e-20" atomclass="HW" doi="10.1063/1.2121687" definition="[H;X1][O;X2](H)" description="H in TIP4P 2005 ">
+    <AtomType name="HW" mass="1.008" charge="0.394137 " atomclass="HW" doi="10.1063/1.5070137" definition="[H;X1][O;X2](H)" description="H in TIP5P 2018">
       <Parameters>
         <Parameter name="epsilon" value="0.0"/>
         <Parameter name="sigma" value="0.0"/>
@@ -24,41 +24,55 @@
     <ParametersUnitDef parameter="r_eq" unit="nm"/>
     <BondType name="HarmonicBondPotential-1" class1="OW" class2="HW">
       <Parameters>
-        <Parameter name="k" value="502080.0"/>
+        <Parameter name="k" value="0.0"/>
         <Parameter name="r_eq" value="0.09572"/>
       </Parameters>
     </BondType>
   </BondTypes>
   <AngleTypes expression="0.5*k*(theta - theta_eq)**2">
     <ParametersUnitDef parameter="k" unit="kJ/(mol*rad**2)"/>
-    <ParametersUnitDef parameter="theta_eq" unit="rad"/>
+    <ParametersUnitDef parameter="theta_eq" unit="degree"/>
     <AngleType name="HarmonicAnglePotential-1" class1="HW" class2="OW" class3="HW">
       <Parameters>
-        <Parameter name="k" value="627.6"/>
-        <Parameter name="theta_eq" value="1.8242181341844"/>
+        <Parameter name="k" value="0.0"/>
+        <Parameter name="theta_eq" value="104.52"/>
       </Parameters>
     </AngleType>
   </AngleTypes>
   <VirtualSiteTypes>
-    <Position expression="ri + b*(rj-ri+a*(rk-rj))/norm(rj-ri+a*(rk-rj))">
-      <ParametersUnitDef parameter="a" unit="dimensionless"/>
-      <ParametersUnitDef parameter="b" unit="dimensionless"/>
+    <Position expression="rj + ((-1*cos(theta/360*pi)*(ri+rk-2*rj)/norm(ri+rk-2*rj)) - sin(theta/360*pi)*cross(ri-rj, rk-rj) / norm(cross(ri-rj, rk-rj))) * r">
+      <ParametersUnitDef parameter="theta" unit="degree"/>
+      <ParametersUnitDef parameter="r" unit="nm"/>
     </Position>
     <Potential expression="4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)">
       <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
       <ParametersUnitDef parameter="sigma" unit="nm"/>
     </Potential>
-    <VirtualSiteType name="VirtualSiteType-3fd" type1="opls_112" type2="opls_111" type3="opls_112">
+    <VirtualSiteType name="VirtualSiteType-3-sitea" type1="HW" type2="OW" type3="HW">
       <Position>
         <Parameters>
-          <Parameter name="a" value="0.5"/>
-          <Parameter name="b" value="0.15"/>
+          <Parameter name="theta" value="109.47"/>
+          <Parameter name="r" value="0.7"/>
         </Parameters>
       </Position>
       <Potential>
         <Parameters>
           <Parameter name="epsilon" value="0"/>
           <Parameter name="sigma" value="0"/>
+        </Parameters>
+      </Potential>
+    </VirtualSiteType>
+        <VirtualSiteType name="VirtualSiteType-3-siteb" type1="HW" type2="OW" type3="HW">
+      <Position>
+        <Parameters>
+          <Parameter name="theta" value="109.47"/>
+          <Parameter name="r" value="-0.7"/>
+        </Parameters>
+      </Position>
+      <Potential>
+        <Parameters>
+          <Parameter name="epsilon" value="0.0"/>
+          <Parameter name="sigma" value="0.0"/>
         </Parameters>
       </Potential>
     </VirtualSiteType>
