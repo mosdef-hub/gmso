@@ -159,6 +159,19 @@ class TestGsd(BaseTest):
             np.array([0] * benzene.n_particles),
         )
 
+    def test_rigid_bodies_bad_hierarchy(self):
+        ethane = mb.lib.molecules.Ethane()
+        ethane.name = "ethane"
+        benzene = mb.load("c1ccccc1", smiles=True)
+        benzene.name = "benzene"
+        box = mb.fill_box([ethane, benzene], n_compounds=[1, 1], box=[2, 2, 2])
+        top = from_mbuild(box)
+        for site in top.sites:
+            if site.molecule.name == "benzene":
+                site.molecule.isrigid = True
+        with pytest.raises(RuntimeError):
+            snapshot, refs, rigid = to_gsd_snapshot(top)
+
 
 class TestHoomd(BaseTest):
     def test_hoomd_simulation(self):

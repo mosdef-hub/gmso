@@ -386,6 +386,17 @@ def _parse_particle_information(
     # Check for rigid molecules
     rigid_mols = any([site.molecule.isrigid for site in top.sites])
     if rigid_mols:
+        rigid_ids = [
+            site.molecule.number if site.molecule.isrigid else -1 for site in top.sites
+        ]
+        # Check that the hierarchy is correct
+        if -1 in rigid_ids:
+            first_neg_index = rigid_ids.index(-1)
+            if not all(i == -1 for i in rigid_ids[first_neg_index:]):
+                raise RuntimeError(
+                    "When using a combination of rigid and non-rigid molecules, ",
+                    "all of the rigid molecules must come first in the mBuild/GMSO hierarchy. ",
+                )
         rigid_body_sets = dict()
         for site in top.sites:
             if site.molecule.isrigid:
@@ -393,10 +404,6 @@ def _parse_particle_information(
                     rigid_body_sets[site.molecule.name].add(site.molecule.number)
                 else:
                     rigid_body_sets[site.molecule.name] = {site.molecule.number}
-
-        rigid_ids = [
-            site.molecule.number if site.molecule.isrigid else -1 for site in top.sites
-        ]
         # Number of unique types of rigid molecules
         n_rigid_types = len(rigid_body_sets.keys())
         # Total number of rigid molecules
