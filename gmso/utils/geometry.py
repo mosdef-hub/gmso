@@ -29,3 +29,34 @@ def coord_shift(xyz, box_lengths):
         xyz += box_max
 
     return xyz
+
+
+def moment_of_inertia(xyz, masses, center=np.zeros(3)):
+    """Find the moment of inertia tensor given a set of
+    particle coordinates and their corresponding masses.
+
+    This method is used in setting rigid body moments
+    of inertia.
+
+    Parameters
+    ----------
+    xyz : numpy.ndarray (N,3)
+        Coordinates of the particles
+    masses : numpy.ndarray (N,)
+        Masses of the particles
+    center : numpy.ndarray (3,), default (0,0,0)
+        Coordinates of the particle's center
+
+    Returns
+    -------
+    numpy.ndarray (3,)
+        Diagonal components of the moment of inertia tensor.
+    """
+    xyz -= np.asarray(center)
+    x = xyz[:, 0]
+    y = xyz[:, 1]
+    z = xyz[:, 2]
+    Ixx = np.sum((y**2 + z**2) * masses)
+    Iyy = np.sum((x**2 + z**2) * masses)
+    Izz = np.sum((x**2 + y**2) * masses)
+    return np.array((Ixx, Iyy, Izz))

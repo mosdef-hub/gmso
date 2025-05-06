@@ -285,6 +285,7 @@ def _parse_molecule_residue(site_map, compound):
     connected_subgraph = compound.bond_graph.connected_components()
     molecule_tracker = dict()
     residue_tracker = dict()
+    total_molecule_count = 0
     for molecule in connected_subgraph:
         if len(molecule) == 1:
             ancestors = [molecule[0]]
@@ -305,8 +306,9 @@ def _parse_molecule_residue(site_map, compound):
         if molecule_tag.name in molecule_tracker:
             molecule_tracker[molecule_tag.name] += 1
         else:
-            molecule_tracker[molecule_tag.name] = 0
+            molecule_tracker[molecule_tag.name] = 0 + total_molecule_count
         molecule_number = molecule_tracker[molecule_tag.name]
+        total_molecule_count += 1
         """End of molecule parsing"""
 
         for particle in molecule:
