@@ -7,6 +7,8 @@ from networkx.algorithms import shortest_path_length
 from gmso.core.angle import Angle
 from gmso.core.dihedral import Dihedral
 from gmso.core.improper import Improper
+from gmso.core.virtual_site import VirtualSite
+from gmso.exceptions import MissingParameterError
 
 CONNS = {"angle": Angle, "dihedral": Dihedral, "improper": Improper}
 
@@ -37,12 +39,6 @@ def identify_connections(top, index_only=False):
     because the graph-matching (on the actual graph) would miss certain
     angles/dihedrals/impropers if there were cycles or bridge bonds
     that would effectively hide the angle/dihedral/dihedral
-    [ahy]: In the event of virtual sites/drude particles, the matching
-    process may have to change in the _detect, _format, or _add methods.
-    Personally, I think modifying the _add methods to exclude angles/dihedrals
-    with virtual sites would be be the best approach. I
-    don't think we would want to change how we construct any of the
-    NetworkX graphs.
     """
     compound = nx.Graph()
 
@@ -374,3 +370,67 @@ def generate_pairs_lists(
         )
 
     return pairs_dict
+
+
+def identify_virtual_sites(topology, virtual_types):
+    """Identify virtual sites within an already typed topology based on the virtual_types."""
+    if not topology.is_typed:
+        raise MissingParameterError(
+            f"Topology {topology} is not typed, so no virtual_sites can be identified."
+        )
+    compound = nx.Graph()
+
+    for b in topology.bonds:
+        compound.add_node(b.connection_members[0], identifier=b.member_types[0])
+        compound.add_node(b.connection_members[1], identifier=b.member_types[1])
+        compound.add_edge(b.connection_members[0], b.connection_members[1])
+
+    # compound_line_graph = nx.line_graph(compound)
+    virtual_sites = []
+    for vtype in virtual_types.values():
+        # if vtype.member_types:
+        #     vtypesList.append(tuple(member for member in vtype.member_types))
+        # else:
+        #     vclassesList.append(tuple(member for member in vtype.member_classes))
+        vtype_graph = graph_from_vtype(vtype)
+        matchesMap = _get_graph_isomorphism_matches(compound, vtype_graph)
+        for match in matchesMap.values():
+            virtual_sites.append(VirtualSite(parent_atoms=match.keys()))
+            topology._add_virtual_site(
+                VirtualSite(parent_atoms=match.keys())
+            )  # TODO: optional index only parameter?
+
+    return virtual_sites
+
+
+def _get_graph_isomorphism_matches(g1, g2, match_by="identifier"):
+    """g1 is a large map that is checked for g2 subgraphs in."""
+    node_match = nx.algorithms.isomorphism.categorical_node_match(match_by, default="")
+    graph_matcher = nx.algorithms.isomorphism.GraphMatcher(
+        g1, g2, node_match=node_match
+    )
+    acceptedMaps = dict()
+    for mapping in graph_matcher.subgraph_isomorphisms_iter():
+        possibleMap = {g1id: g2id for g1id, g2id in mapping.items()}
+        if frozenset(possibleMap.keys()) not in acceptedMaps:
+            acceptedMaps[frozenset(possibleMap.keys())] = possibleMap
+    return acceptedMaps
+
+
+def graph_from_vtype(vtype):
+    virtual_type_graph = nx.Graph()
+    if vtype.member_types:
+        for member in vtype.member_types:
+            virtual_type_graph.add_node(member, identifier=member)
+        [
+            virtual_type_graph.add_edge(member1, member2)
+            for member1, member2 in zip(vtype.member_types, vtype.member_types[1:])
+        ]
+    else:
+        for i, member in enumerate(vtype.member_classes):
+            virtual_type_graph.add_node(i, identifier=member)
+        [
+            virtual_type_graph.add_edge(j, j + 1)
+            for j in range(len(vtype.member_classes) - 1)
+        ]
+    return virtual_type_graph
