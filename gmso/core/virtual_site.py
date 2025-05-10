@@ -1,7 +1,7 @@
 from typing import Callable, List, Optional, Union
 
 import unyt as u
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from gmso.abc.abstract_site import Site
 from gmso.core.virtual_type import VirtualType
@@ -25,7 +25,7 @@ class VirtualSite(Site):
     """
 
     parent_atoms_: List[Site] = Field(
-        ...,
+        default=[],
         description="The parent atoms of the virtual site.",
         alias="parent_atoms",
     )
@@ -42,12 +42,22 @@ class VirtualSite(Site):
         alias="virtual_type",
     )
 
+    model_config = ConfigDict(
+        alias_to_fields=dict(
+            **Site.model_config["alias_to_fields"],
+            **{
+                "charge": "charge_",
+                "virtual_type": "virtual_type_",
+                "parent_atoms": "parent_atoms_",
+            },
+        ),
+    )
+
     @property
     def parent_atoms(self) -> List[Site]:
         """Reminder that the order of atoms is fixed, such that atom index 1 corresponds to ri in the self.virtual_type.virtual_position expression."""
-        return self.__dict__.get("parent_atoms_")
+        return self.__dict__.get("parent_atoms_", [])
 
-    @staticmethod
     def position(self):
         """Not yet implemented function to get position from virtual_type.virtual_position and parent_atoms."""
         if not self.virtual_potential:
@@ -63,3 +73,12 @@ class VirtualSite(Site):
         raise NotYetImplementedWarning(
             "Need a functional to call from self.virtual_type.virtual_position, and plug in ri, rj, rk etc."
         )
+        return 0.0
+
+    def __repr__(self):
+        return self.name + ": -".join(atom.__repr__() for atom in self.parent_atoms)
+
+    @property
+    def virtual_type(self):
+        """Return the angle type if the angle is parametrized."""
+        return self.__dict__.get("virtual_type_")

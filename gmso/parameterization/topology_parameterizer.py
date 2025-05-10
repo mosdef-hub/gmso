@@ -27,6 +27,7 @@ from gmso.parameterization.molecule_utils import (
     molecule_impropers,
 )
 from gmso.parameterization.utils import POTENTIAL_GROUPS
+from gmso.utils.connectivity import identify_virtual_sites
 
 try:
     from pydantic.v1 import Field
@@ -164,6 +165,31 @@ class TopologyParameterizer(GMSOBase):
             False if "improper" in self.config.ignore_params else True,
         )
 
+    def _parameterize_virtual_sites(self, top, ff):
+        """Parameterize virtual types with appropriate potentials from the forcefield.
+
+        Rules for identifying virtual sites
+        1. Must be bonded in order of type1, type2, type3, type4 etc.
+            - HOH, HOH -> HO,H
+        2. Reversible order of sites
+            - type4 type3 type2 type1
+        3. Correspond to virtual_position.expression ri, rj, rk, rl etc.
+        4. Speedup available by molecule
+        5. Allowed overlaps of virtual site parent atoms
+            - CH3CCCH3
+            - type1=CH3 type2=CH2 type3=CH2
+
+        - TODO: Create an identify_virtual_types topology method
+        - TODO: How to handle to_mbuild for topologies with virtual sites
+        """
+
+        identify_virtual_sites(top, ff.virtual_types)
+        self._apply_virtual_site_parameters(
+            top.virtual_sites,
+            ff,
+            False if "virtual_site" in self.config.ignore_params else True,
+        )
+
     def _apply_connection_parameters(self, connections, ff, error_on_missing=True):
         """Find and assign potentials from the forcefield for the provided connections."""
         visited = dict()
@@ -204,6 +230,46 @@ class TopologyParameterizer(GMSOBase):
                         member.atom_type.atomclass for member in matched_order
                     )
 
+    def _apply_virtual_site_parameters(self, virtual_sites, ff, error_on_missing=True):
+        """Find and assign potentials from the forcefield for the provided virtual_sites."""
+        visited = dict()
+
+        for virtual_site in virtual_sites:
+            group, vtype_identifiers = self.virtual_site_identifier(virtual_site)
+            match = None
+            for identifier_key in vtype_identifiers:
+                if tuple(identifier_key) in visited:
+                    match = visited[tuple(identifier_key)]
+                    break
+
+                match = ff.get_potential(
+                    group=group,
+                    key=identifier_key,
+                    return_match_order=True,
+                    warn=True,
+                )
+                if match:
+                    visited[tuple(identifier_key)] = match
+                    break
+
+            if not match and error_on_missing:
+                raise ParameterizationError(
+                    f"No parameters found for virtual_site {virtual_site}, group: {group}, "
+                    f"identifiers: {vtype_identifiers} in the Forcefield."
+                )
+            elif match:
+                setattr(virtual_site, group, match[0].clone(self.config.fast_copy))
+                matched_order = [virtual_site.parent_atoms[i] for i in match[1]]
+                virtual_site.parent_atoms = matched_order
+                if match[0].member_types:
+                    virtual_site.virtual_type.member_types = tuple(
+                        member.atom_type.name for member in matched_order
+                    )
+                if match[0].member_classes:
+                    virtual_site.virtual_type.member_classes = tuple(
+                        member.atom_type.atomclass for member in matched_order
+                    )
+
     def _parameterize(
         self, top, typemap, label_type=None, label=None, speedup_by_moltag=False
     ):
@@ -223,6 +289,10 @@ class TopologyParameterizer(GMSOBase):
             forcefield,
             label_type,
             label,
+        )
+        self._parameterize_virtual_sites(
+            top,
+            forcefield,
         )
 
     def _set_combining_rule(self):
@@ -377,6 +447,17 @@ class TopologyParameterizer(GMSOBase):
             list(
                 member.atom_type.atomclass for member in connection.connection_members
             ),
+        ]
+
+    @staticmethod
+    def virtual_site_identifier(
+        virtual_site,
+    ):  # This can extended to incorporate a pluggable object from the forcefield.
+        """Return the group and list of identifiers for a virtual site to query the forcefield for its potential."""
+        group = POTENTIAL_GROUPS[type(virtual_site)]
+        return group, [
+            list(member.atom_type.name for member in virtual_site.parent_atoms),
+            list(member.atom_type.atomclass for member in virtual_site.parent_atoms),
         ]
 
     @staticmethod

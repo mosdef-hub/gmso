@@ -300,12 +300,12 @@ class VirtualType(GMSOBase):
             and self.charge == other.charge
         )
 
-    def clone(self):
+    def clone(self, fast_copy=False):
         """Clone this VirtualType."""
         return VirtualType(
             name=str(self.name),
-            virtual_position=self.virtual_position.clone(),
-            virtual_potential=self.virtual_potential.clone(),
+            virtual_position=self.virtual_position.clone(fast_copy),
+            virtual_potential=self.virtual_potential.clone(fast_copy),
             member_types=self.member_types,
             member_classes=self.member_classes,
             charge=self.charge,
