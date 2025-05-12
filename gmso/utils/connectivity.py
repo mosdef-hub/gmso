@@ -372,15 +372,14 @@ def generate_pairs_lists(
     return pairs_dict
 
 
-def identify_virtual_sites(topology, virtual_types):
+def identify_virtual_sites(topology, sites, bonds, virtual_types):
     """Identify virtual sites within an already typed topology based on the virtual_types."""
-    if not topology.is_typed:
-        raise MissingParameterError(
-            f"Topology {topology} is not typed, so no virtual_sites can be identified."
-        )
+    for site in sites:  # validate subtypes are applied
+        if not site.atom_type:
+            raise MissingParameterError(site.atom_type, "atom_type")
     compound = nx.Graph()
 
-    for b in topology.bonds:
+    for b in bonds:
         compound.add_node(b.connection_members[0], identifier=b.member_types[0])
         compound.add_node(b.connection_members[1], identifier=b.member_types[1])
         compound.add_edge(b.connection_members[0], b.connection_members[1])
@@ -388,17 +387,12 @@ def identify_virtual_sites(topology, virtual_types):
     # compound_line_graph = nx.line_graph(compound)
     virtual_sites = []
     for vtype in virtual_types.values():
-        # if vtype.member_types:
-        #     vtypesList.append(tuple(member for member in vtype.member_types))
-        # else:
-        #     vclassesList.append(tuple(member for member in vtype.member_classes))
         vtype_graph = graph_from_vtype(vtype)
         matchesMap = _get_graph_isomorphism_matches(compound, vtype_graph)
         for match in matchesMap.values():
-            virtual_sites.append(VirtualSite(parent_atoms=match.keys()))
-            topology._add_virtual_site(
-                VirtualSite(parent_atoms=match.keys())
-            )  # TODO: optional index only parameter?
+            vsite = VirtualSite(parent_atoms=match.keys())
+            virtual_sites.append(vsite)
+            topology._add_virtual_site(vsite)
 
     return virtual_sites
 

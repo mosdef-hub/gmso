@@ -165,7 +165,7 @@ class TopologyParameterizer(GMSOBase):
             False if "improper" in self.config.ignore_params else True,
         )
 
-    def _parameterize_virtual_sites(self, top, ff):
+    def _parameterize_virtual_sites(self, top, sites, bonds, ff):
         """Parameterize virtual types with appropriate potentials from the forcefield.
 
         Rules for identifying virtual sites
@@ -182,10 +182,17 @@ class TopologyParameterizer(GMSOBase):
         - TODO: Create an identify_virtual_types topology method
         - TODO: How to handle to_mbuild for topologies with virtual sites
         """
-
-        identify_virtual_sites(top, ff.virtual_types)
+        # if label_type and label:
+        #     of_group = True if label_type == "group" else False
+        #     bonds = molecule_bonds(top, label, of_group)
+        #     subtop = Topology()
+        #     subtop._sites = sites
+        #     subtop._bonds = bonds
+        # else:
+        #     subtop = top
+        virtual_sites = identify_virtual_sites(top, sites, bonds, ff.virtual_types)
         self._apply_virtual_site_parameters(
-            top.virtual_sites,
+            virtual_sites,
             ff,
             False if "virtual_site" in self.config.ignore_params else True,
         )
@@ -277,9 +284,11 @@ class TopologyParameterizer(GMSOBase):
         if label and label_type:
             forcefield = self.get_ff(label)
             sites = top.iter_sites(label_type, label)
+            bonds = molecule_bonds(top, label, True if label_type == "group" else False)
         else:
             forcefield = self.get_ff(top.name)
             sites = top.sites
+            bonds = top.bonds
 
         self._parameterize_sites(
             sites, typemap, forcefield, speedup_by_moltag=speedup_by_moltag
@@ -290,10 +299,8 @@ class TopologyParameterizer(GMSOBase):
             label_type,
             label,
         )
-        self._parameterize_virtual_sites(
-            top,
-            forcefield,
-        )
+        if forcefield.virtual_types:
+            self._parameterize_virtual_sites(top, sites, bonds, forcefield)
 
     def _set_combining_rule(self):
         """Verify all the provided forcefields have the same combining rule and set it for the Topology."""
