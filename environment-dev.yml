@@ -39,7 +39,6 @@ dependencies:
   - symengine
   - python-symengine
   - hoomd>=4.0
-  - importlib_resources
   - pip:
       - git+https://github.com/mosdef-hub/mbuild.git@main
       - git+https://github.com/mosdef-hub/foyer.git@main
