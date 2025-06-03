@@ -55,9 +55,9 @@ def apply(
         each molecule only once. This option provides speedup for topologies with properly
         assigned molecule and residue labels.
 
-    ignore_params : set or list or tuple, optional, default=["impropers"]
+    ignore_params : set or list or tuple, optional, default=["improper"]
         Skipping the checks that make sure all connections (in the list) have a connection types.
-        Available options includes "bonds", "angles", "dihedrals", and "impropers".
+        Available options includes "bond", "angle", "dihedral", and "improper".
         If you wish to have all connection types checks, provides an empty set/list/tuple.
 
     remove_untyped : bool, optional, default=True
