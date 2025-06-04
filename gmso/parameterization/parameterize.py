@@ -73,7 +73,7 @@ def apply(
         this should be changed to False if further modification of expressions are
         necessary post parameterization.
     """
-    ignore_params = set([option.lower() for option in ignore_params])
+    ignore_params = set([option.lower().rstrip("s") for option in ignore_params])
     config = TopologyParameterizationConfig.model_validate(
         dict(
             match_ff_by=match_ff_by,
