@@ -266,8 +266,8 @@ class TopologyParameterizer(GMSOBase):
                 )
             elif match:
                 setattr(virtual_site, group, match[0].clone(self.config.fast_copy))
-                matched_order = [virtual_site.parent_atoms[i] for i in match[1]]
-                virtual_site.parent_atoms = matched_order
+                matched_order = [virtual_site.parent_sites[i] for i in match[1]]
+                virtual_site.parent_sites = matched_order
                 if match[0].member_types:
                     virtual_site.virtual_type.member_types = tuple(
                         member.atom_type.name for member in matched_order
@@ -463,8 +463,8 @@ class TopologyParameterizer(GMSOBase):
         """Return the group and list of identifiers for a virtual site to query the forcefield for its potential."""
         group = POTENTIAL_GROUPS[type(virtual_site)]
         return group, [
-            list(member.atom_type.name for member in virtual_site.parent_atoms),
-            list(member.atom_type.atomclass for member in virtual_site.parent_atoms),
+            list(member.atom_type.name for member in virtual_site.parent_sites),
+            list(member.atom_type.atomclass for member in virtual_site.parent_sites),
         ]
 
     @staticmethod

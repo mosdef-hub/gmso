@@ -390,7 +390,7 @@ def identify_virtual_sites(topology, sites, bonds, virtual_types):
         vtype_graph = graph_from_vtype(vtype)
         matchesMap = _get_graph_isomorphism_matches(compound, vtype_graph)
         for match in matchesMap.values():
-            vsite = VirtualSite(parent_atoms=match.keys())
+            vsite = VirtualSite(parent_sites=match.keys())
             virtual_sites.append(vsite)
             topology._add_virtual_site(vsite)
 
@@ -414,17 +414,12 @@ def _get_graph_isomorphism_matches(g1, g2, match_by="identifier"):
 def graph_from_vtype(vtype):
     virtual_type_graph = nx.Graph()
     if vtype.member_types:
-        for member in vtype.member_types:
-            virtual_type_graph.add_node(member, identifier=member)
-        [
-            virtual_type_graph.add_edge(member1, member2)
-            for member1, member2 in zip(vtype.member_types, vtype.member_types[1:])
-        ]
+        iter_elementsStr = "member_types"
     else:
-        for i, member in enumerate(vtype.member_classes):
-            virtual_type_graph.add_node(i, identifier=member)
-        [
-            virtual_type_graph.add_edge(j, j + 1)
-            for j in range(len(vtype.member_classes) - 1)
-        ]
+        iter_elementsStr = "member_classes"
+    for i, member in enumerate(getattr(vtype, iter_elementsStr)):
+        virtual_type_graph.add_node(i, identifier=member)
+    for i in range(len(getattr(vtype, iter_elementsStr)) - 1):
+        virtual_type_graph.add_edge(i, i + 1)
+
     return virtual_type_graph
