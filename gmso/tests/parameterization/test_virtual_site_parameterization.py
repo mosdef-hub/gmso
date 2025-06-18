@@ -1,3 +1,4 @@
+import mbuild as mb
 import pytest
 import unyt as u
 from sympy import sympify
@@ -24,6 +25,7 @@ class TestTIP4PGMSO(ParameterizationBaseTest):
             speedup_by_molgraph=False,
             identify_connections=True,
         )
+        gmso_top.virtual_sites
         assert len(gmso_top.virtual_sites) == 1
         vtype = gmso_top.virtual_sites[0].virtual_type
         assert ("HW", "OW", "HW") == vtype.member_classes
@@ -62,6 +64,19 @@ class TestTIP4PGMSO(ParameterizationBaseTest):
             vtype.virtual_position.parameters["d"], [0.1, 0.1, 0.1] * u.nm
         )
         assert gmso_top.sites == gmso_top.virtual_sites[0].parent_sites
+
+    def test_multiple_virtual_sites_tip4p(self):
+        water = mb.load("O", smiles=True)
+        water_box = mb.fill_box(compound=water, n_compounds=5, box=[1, 1, 1])
+        water_top = water_box.to_gmso()
+        ff = ForceField(get_fn("gmso_xmls/test_ffstyles/tip4p_2005.xml"))
+        water_top = apply(top=water_top, forcefields=ff, identify_connections=True)
+        assert water_top.is_fully_typed()
+        assert len(water_top.virtual_sites) == 5
+        assert water_top.n_virtual_sites == 5
+        for i in range(5):
+            for site in water_top.sites[i * 3 : i * 3 + 3]:
+                assert site in water_top.virtual_sites[i].parent_sites
 
     def missing_vsite_position_function(
         self, basic_virtual_site_ff, empty_virtual_site_top
