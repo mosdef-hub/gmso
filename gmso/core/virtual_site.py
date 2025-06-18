@@ -59,7 +59,7 @@ class VirtualSite(Site):
         return self.__dict__.get("parent_sites_", [])
 
     def position(self) -> str:
-        """Not yet implemented function to get position from virtual_type.virtual_position and parent_atoms."""
+        """Not yet implemented function to get position from virtual_type.virtual_position and parent_sites."""
         if not self.virtual_type:
             raise MissingPotentialError(
                 "No VirtualType associated with this VirtualSite."
@@ -75,7 +75,7 @@ class VirtualSite(Site):
         )
 
     def __repr__(self):
-        return self.name + ": -".join(atom.__repr__() for atom in self.parent_atoms)
+        return self.name + ": -".join(atom.__repr__() for atom in self.parent_sites)
 
     @property
     def virtual_type(self):
