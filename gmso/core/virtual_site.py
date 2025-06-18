@@ -79,5 +79,5 @@ class VirtualSite(Site):
 
     @property
     def virtual_type(self):
-        """Return the angle type if the angle is parametrized."""
+        """Return the virtual site type if the virtual site is parametrized."""
         return self.__dict__.get("virtual_type_")
