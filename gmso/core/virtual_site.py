@@ -17,8 +17,8 @@ class VirtualSite(Site):
     ----------
     charge : u.unyt_array
         The charge of the virtual site in elementary charge units. Will prioritize self.virtual_type.charge.
-    parent_atoms : List[Site]
-        The real constituent atoms that define the virtual site's position.
+    parent_sites : List[Site]
+        The real constituent sites that define the virtual site's position.
     virtual_type : gmso.core.virtual_type.VirtualType
         The type information, including parameters for virtual_position and virtual_potential, used to define
         the virtual site's interactions and positions
@@ -55,7 +55,7 @@ class VirtualSite(Site):
 
     @property
     def parent_sites(self) -> List[Site]:
-        """Reminder that the order of atoms is fixed, such that atom index 1 corresponds to ri in the self.virtual_type.virtual_position expression."""
+        """Reminder that the order of sites is fixed, such that site index 1 corresponds to ri in the self.virtual_type.virtual_position expression."""
         return self.__dict__.get("parent_sites_", [])
 
     def position(self) -> str:
@@ -75,7 +75,7 @@ class VirtualSite(Site):
         )
 
     def __repr__(self):
-        return self.name + ": -".join(atom.__repr__() for atom in self.parent_sites)
+        return self.name + ": -".join(site.__repr__() for site in self.parent_sites)
 
     @property
     def virtual_type(self):
