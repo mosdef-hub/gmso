@@ -434,8 +434,7 @@ def _get_graph_isomorphism_matches(g1, g2, match_by="identifier"):
     acceptedMaps = dict()
     for mapping in graph_matcher.subgraph_isomorphisms_iter():
         possibleMap = {g1id: g2id for g1id, g2id in mapping.items()}
-        if frozenset(possibleMap.keys()) not in acceptedMaps:
-            acceptedMaps[frozenset(possibleMap.keys())] = possibleMap
+        acceptedMaps[frozenset(possibleMap.keys())] = possibleMap
     return acceptedMaps
 
 

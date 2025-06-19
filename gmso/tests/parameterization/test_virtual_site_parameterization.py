@@ -90,3 +90,17 @@ class TestTIP4PGMSO(ParameterizationBaseTest):
         assert len(gmso_top.virtual_sites) == 1
         with pytest.raises(NotYetImplementedWarning):
             gmso_top.virtual_sites[0].position()
+
+    def test_multiple_virtual_sites_tip5p(self):
+        water = mb.load("O", smiles=True)
+        water_box = mb.fill_box(compound=water, n_compounds=5, box=[1, 1, 1])
+        water_top = water_box.to_gmso()
+        ff = ForceField(get_fn("gmso_xmls/test_ffstyles/tip5p_2018.xml"))
+        water_top = apply(top=water_top, forcefields=ff, identify_connections=True)
+        assert water_top.is_fully_typed()
+        assert len(water_top.virtual_sites) == 10
+        assert water_top.n_virtual_sites == 10
+        for i in range(5):
+            for site in water_top.sites[i * 3 : i * 3 + 3]:
+                assert site in water_top.virtual_sites[i].parent_sites
+                assert site in water_top.virtual_sites[i + 5].parent_sites
