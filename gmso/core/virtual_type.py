@@ -77,7 +77,7 @@ class VirtualPositionType(ParametricPotential):
             expression=None,
             parameters=None,
             independent_variables=None,
-            position_expression=self.position_expression.clone(fast_copy),
+            potential_expression=self.potential_expression.clone(fast_copy),
         )
 
 

@@ -1,8 +1,15 @@
 """Module supporting various connectivity methods and operations."""
 
+from typing import TYPE_CHECKING, List
+
 import networkx as nx
 from boltons.setutils import IndexedSet
 from networkx.algorithms import shortest_path_length
+
+if TYPE_CHECKING:
+    from gmso import Topology
+    from gmso.core.atom import Site
+    from gmso.core.bond import Bond
 
 from gmso.core.angle import Angle
 from gmso.core.dihedral import Dihedral
@@ -372,8 +379,30 @@ def generate_pairs_lists(
     return pairs_dict
 
 
-def identify_virtual_sites(topology, sites, bonds, virtual_types):
-    """Identify virtual sites within an already typed topology based on the virtual_types."""
+def identify_virtual_sites(
+    topology: "Topology",
+    sites: List["Site"],
+    bonds: List["Bond"],
+    virtual_types: List[VirtualSite],
+):
+    """Identify virtual sites within an already typed topology based on the virtual_types.
+
+    Parameters
+    ----------
+    topology : gmso.Topology
+        Topology to search for parameters.
+    sites : List[gmso.core.abstract_site.Site]
+        Sites to use to construct subsearch of topology. Can be all sites in the topology, or a subset of sites.
+    bonds : List[gmso.core.bonds.Bond]
+        Bonds to use to construct subsearch of topology. Can be all bonds in the topology, or a subset of bonds.
+    virtual_types : List[gmso.core.virtual_types.VirtualType]
+        Virtual types, presumably from a gmso.ForceField, used to match the parent_atoms in the sites and bonds graph.
+
+    Returns
+    -------
+    virtual_sites : List[gmso.core.virtual_site.VirtualSite]
+        VirtualSite instances identified in the topology.
+    """
     for site in sites:  # validate subtypes are applied
         if not site.atom_type:
             raise MissingParameterError(site.atom_type, "atom_type")
@@ -384,10 +413,9 @@ def identify_virtual_sites(topology, sites, bonds, virtual_types):
         compound.add_node(b.connection_members[1], identifier=b.member_types[1])
         compound.add_edge(b.connection_members[0], b.connection_members[1])
 
-    # compound_line_graph = nx.line_graph(compound)
     virtual_sites = []
     for vtype in virtual_types.values():
-        vtype_graph = graph_from_vtype(vtype)
+        vtype_graph = _graph_from_vtype(vtype)
         matchesMap = _get_graph_isomorphism_matches(compound, vtype_graph)
         for match in matchesMap.values():
             vsite = VirtualSite(parent_sites=match.keys())
@@ -411,7 +439,8 @@ def _get_graph_isomorphism_matches(g1, g2, match_by="identifier"):
     return acceptedMaps
 
 
-def graph_from_vtype(vtype):
+def _graph_from_vtype(vtype):
+    """Create a graph from a virtual_type."""
     virtual_type_graph = nx.Graph()
     if vtype.member_types:
         iter_elementsStr = "member_types"

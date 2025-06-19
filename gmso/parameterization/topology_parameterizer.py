@@ -170,26 +170,17 @@ class TopologyParameterizer(GMSOBase):
 
         Rules for identifying virtual sites
         1. Must be bonded in order of type1, type2, type3, type4 etc.
-            - HOH, HOH -> HO,H
+            - CCO vs COC
         2. Reversible order of sites
             - type4 type3 type2 type1
-        3. Correspond to virtual_position.expression ri, rj, rk, rl etc.
+        3. Atoms correspond to virtual_position.expression ri, rj, rk, rl etc.
         4. Speedup available by molecule
         5. Allowed overlaps of virtual site parent atoms
             - CH3CCCH3
             - type1=CH3 type2=CH2 type3=CH2
-
-        - TODO: Create an identify_virtual_types topology method
-        - TODO: How to handle to_mbuild for topologies with virtual sites
+            - Get two identified virtual sites
         """
-        # if label_type and label:
-        #     of_group = True if label_type == "group" else False
-        #     bonds = molecule_bonds(top, label, of_group)
-        #     subtop = Topology()
-        #     subtop._sites = sites
-        #     subtop._bonds = bonds
-        # else:
-        #     subtop = top
+
         virtual_sites = identify_virtual_sites(top, sites, bonds, ff.virtual_types)
         self._apply_virtual_site_parameters(
             virtual_sites,
