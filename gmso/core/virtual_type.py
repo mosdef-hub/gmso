@@ -69,6 +69,17 @@ class VirtualPositionType(ParametricPotential):
             independent_variables={"ri", "rj", "rk"},
         )
 
+    def clone(self, fast_copy=False):
+        """Clone this VirtualPositionType, faster alternative to deepcopying."""
+        return VirtualPositionType(
+            name=str(self.name),
+            tags=self.tags,
+            expression=None,
+            parameters=None,
+            independent_variables=None,
+            position_expression=self.position_expression.clone(fast_copy),
+        )
+
 
 class VirtualPotentialType(ParametricPotential):
     """A description of non-bonded interactions between sites.
@@ -108,7 +119,7 @@ class VirtualPotentialType(ParametricPotential):
         )
 
     def clone(self, fast_copy=False):
-        """Clone this VirtualType, faster alternative to deepcopying."""
+        """Clone this VirtualPotentialType, faster alternative to deepcopying."""
         return VirtualPotentialType(
             name=str(self.name),
             tags=self.tags,
