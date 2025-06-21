@@ -128,8 +128,9 @@ def _get_member_types(tag):
     at2 = tag.attrib.get("type2")
     at3 = tag.attrib.get("type3")
     at4 = tag.attrib.get("type4")
+    at5 = tag.attrib.get("type5")
 
-    member_types = filter(lambda x: x is not None, [at1, at2, at3, at4])
+    member_types = filter(lambda x: x is not None, [at1, at2, at3, at4, at5])
     member_types = ["*" if mem_type == "" else mem_type for mem_type in member_types]
     return member_types or None
 
@@ -140,8 +141,9 @@ def _get_member_classes(tag):
     at2 = tag.attrib.get("class2")
     at3 = tag.attrib.get("class3")
     at4 = tag.attrib.get("class4")
+    at5 = tag.attrib.get("class5")
 
-    member_classes = filter(lambda x: x is not None, [at1, at2, at3, at4])
+    member_classes = filter(lambda x: x is not None, [at1, at2, at3, at4, at5])
     member_classes = [
         "*" if mem_type == "" else mem_type for mem_type in member_classes
     ]

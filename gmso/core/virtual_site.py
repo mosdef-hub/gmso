@@ -1,7 +1,7 @@
 from typing import Callable, List, Optional, Union
 
 import unyt as u
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from gmso.abc.abstract_site import Site
 from gmso.core.virtual_type import VirtualType
@@ -17,17 +17,17 @@ class VirtualSite(Site):
     ----------
     charge : u.unyt_array
         The charge of the virtual site in elementary charge units. Will prioritize self.virtual_type.charge.
-    parent_atoms : List[Site]
-        The real constituent atoms that define the virtual site's position.
+    parent_sites : List[Site]
+        The real constituent sites that define the virtual site's position.
     virtual_type : gmso.core.virtual_type.VirtualType
         The type information, including parameters for virtual_position and virtual_potential, used to define
         the virtual site's interactions and positions
     """
 
-    parent_atoms_: List[Site] = Field(
-        ...,
-        description="The parent atoms of the virtual site.",
-        alias="parent_atoms",
+    parent_sites_: List[Site] = Field(
+        default=[],
+        description="The parent sites of the virtual site.",
+        alias="parent_sites",
     )
 
     charge_: Optional[Union[u.unyt_quantity, float]] = Field(
@@ -42,19 +42,29 @@ class VirtualSite(Site):
         alias="virtual_type",
     )
 
-    @property
-    def parent_atoms(self) -> List[Site]:
-        """Reminder that the order of atoms is fixed, such that atom index 1 corresponds to ri in the self.virtual_type.virtual_position expression."""
-        return self.__dict__.get("parent_atoms_")
+    model_config = ConfigDict(
+        alias_to_fields=dict(
+            **Site.model_config["alias_to_fields"],
+            **{
+                "charge": "charge_",
+                "virtual_type": "virtual_type_",
+                "parent_sites": "parent_sites_",
+            },
+        ),
+    )
 
-    @staticmethod
-    def position(self):
-        """Not yet implemented function to get position from virtual_type.virtual_position and parent_atoms."""
-        if not self.virtual_potential:
+    @property
+    def parent_sites(self) -> List[Site]:
+        """Reminder that the order of sites is fixed, such that site index 1 corresponds to ri in the self.virtual_type.virtual_position expression."""
+        return self.__dict__.get("parent_sites_", [])
+
+    def position(self) -> str:
+        """Not yet implemented function to get position from virtual_type.virtual_position and parent_sites."""
+        if not self.virtual_type:
             raise MissingPotentialError(
                 "No VirtualType associated with this VirtualSite."
             )
-        if not self.virtual_potential.virtual_position:
+        if not self.virtual_type.virtual_position:
             raise MissingPotentialError(
                 "No VirtualPositionType associated with this VirtualType."
             )
@@ -63,3 +73,11 @@ class VirtualSite(Site):
         raise NotYetImplementedWarning(
             "Need a functional to call from self.virtual_type.virtual_position, and plug in ri, rj, rk etc."
         )
+
+    def __repr__(self):
+        return self.name + ": -".join(site.__repr__() for site in self.parent_sites)
+
+    @property
+    def virtual_type(self):
+        """Return the virtual site type if the virtual site is parametrized."""
+        return self.__dict__.get("virtual_type_")
