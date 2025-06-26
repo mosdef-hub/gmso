@@ -19,4 +19,4 @@ from .core.topology import Topology
 from .core.virtual_site import VirtualSite
 from .core.virtual_type import VirtualType
 
-__version__ = "0.12.4"
+__version__ = "0.13.0"

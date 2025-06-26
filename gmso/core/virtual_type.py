@@ -22,7 +22,7 @@ class VirtualPositionType(ParametricPotential):
     describing the position of the virtual site from its parent atoms.
     The functional form of the potential is stored
     as a `sympy` expression and the parameters, with units, are stored
-    explicitly.  The AtomTypes that are used to define the virtual type are
+    explicitly. The AtomTypes that are used to define the virtual type are
     stored as `member_types`. The expression uses these atom_types with their
     positions as ri, rj, rk, ... , matching the number of atoms used to define
     the virtual site.
@@ -69,14 +69,25 @@ class VirtualPositionType(ParametricPotential):
             independent_variables={"ri", "rj", "rk"},
         )
 
+    def clone(self, fast_copy=False):
+        """Clone this VirtualPositionType, faster alternative to deepcopying."""
+        return VirtualPositionType(
+            name=str(self.name),
+            tags=self.tags,
+            expression=None,
+            parameters=None,
+            independent_variables=None,
+            potential_expression=self.potential_expression.clone(fast_copy),
+        )
+
 
 class VirtualPotentialType(ParametricPotential):
     """A description of non-bonded interactions between sites.
 
     This is a subclass of the gmso.core.Potential superclass.
 
-    VirtualPotentialType represents an virtual site type and includes the functional form
-    describing its nonbonded interactions. This class inhereits from Potential, which stores the
+    VirtualPotentialType represents a virtual site type and includes the functional form
+    describing its nonbonded interactions. This class inhereits from ParametricPotential, which stores the
     non-bonded interaction between atoms or sites. The functional form of the
     potential is stored as a `sympy` expression and the parameters, with units,
     are stored explicitly.
@@ -108,7 +119,7 @@ class VirtualPotentialType(ParametricPotential):
         )
 
     def clone(self, fast_copy=False):
-        """Clone this VirtualType, faster alternative to deepcopying."""
+        """Clone this VirtualPotentialType, faster alternative to deepcopying."""
         return VirtualPotentialType(
             name=str(self.name),
             tags=self.tags,
@@ -164,7 +175,8 @@ class VirtualType(GMSOBase):
     Attributes
     ----------
     name : str
-        A generalize name for the type of the virtual site. See https://manual.gromacs.org/current/reference-manual/functions/interaction-methods.html#id3 for some Gromacs examples.
+        A generalized name for the type of the virtual site.
+        See https://manual.gromacs.org/current/reference-manual/functions/interaction-methods.html#id3 for some Gromacs examples.
     member_types_: List[Str]
         The atom types of the constituent atoms that define the virtual site's position.
     member_classes_: List[Str]
@@ -300,12 +312,12 @@ class VirtualType(GMSOBase):
             and self.charge == other.charge
         )
 
-    def clone(self):
+    def clone(self, fast_copy=False):
         """Clone this VirtualType."""
         return VirtualType(
             name=str(self.name),
-            virtual_position=self.virtual_position.clone(),
-            virtual_potential=self.virtual_potential.clone(),
+            virtual_position=self.virtual_position.clone(fast_copy),
+            virtual_potential=self.virtual_potential.clone(fast_copy),
             member_types=self.member_types,
             member_classes=self.member_classes,
             charge=self.charge,

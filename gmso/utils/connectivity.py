@@ -1,12 +1,21 @@
 """Module supporting various connectivity methods and operations."""
 
+from typing import TYPE_CHECKING, List
+
 import networkx as nx
 from boltons.setutils import IndexedSet
 from networkx.algorithms import shortest_path_length
 
+if TYPE_CHECKING:
+    from gmso import Topology
+    from gmso.core.atom import Site
+    from gmso.core.bond import Bond
+
 from gmso.core.angle import Angle
 from gmso.core.dihedral import Dihedral
 from gmso.core.improper import Improper
+from gmso.core.virtual_site import VirtualSite
+from gmso.exceptions import MissingParameterError
 
 CONNS = {"angle": Angle, "dihedral": Dihedral, "improper": Improper}
 
@@ -37,12 +46,6 @@ def identify_connections(top, index_only=False):
     because the graph-matching (on the actual graph) would miss certain
     angles/dihedrals/impropers if there were cycles or bridge bonds
     that would effectively hide the angle/dihedral/dihedral
-    [ahy]: In the event of virtual sites/drude particles, the matching
-    process may have to change in the _detect, _format, or _add methods.
-    Personally, I think modifying the _add methods to exclude angles/dihedrals
-    with virtual sites would be be the best approach. I
-    don't think we would want to change how we construct any of the
-    NetworkX graphs.
     """
     compound = nx.Graph()
 
@@ -374,3 +377,78 @@ def generate_pairs_lists(
         )
 
     return pairs_dict
+
+
+def identify_virtual_sites(
+    topology: "Topology",
+    sites: List["Site"],
+    bonds: List["Bond"],
+    virtual_types: List[VirtualSite],
+):
+    """Identify virtual sites within an already typed topology based on the virtual_types.
+
+    Parameters
+    ----------
+    topology : gmso.Topology
+        Topology to search for parameters.
+    sites : List[gmso.core.abstract_site.Site]
+        Sites to use to construct subsearch of topology. Can be all sites in the topology, or a subset of sites.
+    bonds : List[gmso.core.bonds.Bond]
+        Bonds to use to construct subsearch of topology. Can be all bonds in the topology, or a subset of bonds.
+    virtual_types : List[gmso.core.virtual_types.VirtualType]
+        Virtual types, presumably from a gmso.ForceField, used to match the parent_atoms in the sites and bonds graph.
+
+    Returns
+    -------
+    virtual_sites : List[gmso.core.virtual_site.VirtualSite]
+        VirtualSite instances identified in the topology.
+    """
+    for site in sites:  # validate subtypes are applied
+        if not site.atom_type:
+            raise MissingParameterError(site.atom_type, "atom_type")
+    compound = nx.Graph()
+
+    for b in bonds:
+        compound.add_node(b.connection_members[0], identifier=b.member_types[0])
+        compound.add_node(b.connection_members[1], identifier=b.member_types[1])
+        compound.add_edge(b.connection_members[0], b.connection_members[1])
+
+    virtual_sites = []
+    for vtype in virtual_types.values():
+        vtype_graph = _graph_from_vtype(vtype)
+        matchesMap = _get_graph_isomorphism_matches(compound, vtype_graph)
+        for match in matchesMap.values():
+            vsite = VirtualSite(parent_sites=match.keys())
+            virtual_sites.append(vsite)
+            topology._add_virtual_site(vsite)
+
+    return virtual_sites
+
+
+def _get_graph_isomorphism_matches(g1, g2, match_by="identifier"):
+    """g1 is a large map that is checked for g2 subgraphs in."""
+    node_match = nx.algorithms.isomorphism.categorical_node_match(match_by, default="")
+    graph_matcher = nx.algorithms.isomorphism.GraphMatcher(
+        g1, g2, node_match=node_match
+    )
+    acceptedMaps = dict()
+    for mapping in graph_matcher.subgraph_isomorphisms_iter():
+        possibleMap = {g1id: g2id for g1id, g2id in mapping.items()}
+        acceptedMaps[frozenset(possibleMap.keys())] = possibleMap
+
+    return acceptedMaps
+
+
+def _graph_from_vtype(vtype):
+    """Create a graph from a virtual_type."""
+    virtual_type_graph = nx.Graph()
+    if vtype.member_types:
+        iter_elementsStr = "member_types"
+    else:
+        iter_elementsStr = "member_classes"
+    for i, member in enumerate(getattr(vtype, iter_elementsStr)):
+        virtual_type_graph.add_node(i, identifier=member)
+    for i in range(len(getattr(vtype, iter_elementsStr)) - 1):
+        virtual_type_graph.add_edge(i, i + 1)
+
+    return virtual_type_graph
