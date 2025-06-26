@@ -17,14 +17,15 @@ dependencies:
   - nglview>=3
   - pytest
   - garnett>=0.7.1
-  - openff-toolkit-base >0.16.7
+  - openff-toolkit-base>0.16.7
   - openmm
   - gsd>=2.9
+  - freud>=3.2
   - parmed>=3.4.3
-  - packmol>=20
+  - packmol>=20.15
   - pytest-cov
   - pycifrw
-  - rdkit>=2021,<2025.3.3
+  - rdkit>=2021
   - requests
   - requests-mock
   - scipy
@@ -37,6 +38,7 @@ dependencies:
   - pandas
   - symengine
   - python-symengine
+  - py3Dmol
   - hoomd>=4.0
   - pip:
       - git+https://github.com/mosdef-hub/mbuild.git@main
