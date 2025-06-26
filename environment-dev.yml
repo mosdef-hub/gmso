@@ -2,7 +2,7 @@ name: gmso-dev
 channels:
   - conda-forge
 dependencies:
-  - python>=3.9,<=3.12
+  - python>=3.10,<=3.13
   - boltons
   - numpy>=2.0,<2.3
   - sympy
@@ -17,7 +17,6 @@ dependencies:
   - nglview>=3
   - pytest
   - garnett>=0.7.1
-  - openbabel>=3.0.0
   - openff-toolkit-base >=0.11
   - openmm
   - gsd>=2.9
@@ -25,7 +24,7 @@ dependencies:
   - packmol>=20
   - pytest-cov
   - pycifrw
-  - rdkit>=2021
+  - rdkit>=2021,<2025.3.3
   - requests
   - requests-mock
   - scipy
