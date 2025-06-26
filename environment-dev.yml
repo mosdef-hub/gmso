@@ -1,10 +1,10 @@
-name: gmso-dev
+name: gmso-numpy
 channels:
   - conda-forge
 dependencies:
   - python>=3.9,<=3.12
   - boltons
-  - numpy=1.26.4
+  - numpy>=2.0,<2.3
   - sympy
   - unyt>=2.9.5
   - boltons
