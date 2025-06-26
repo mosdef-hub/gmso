@@ -1,4 +1,4 @@
-name: gmso-numpy
+name: gmso-dev
 channels:
   - conda-forge
 dependencies:
