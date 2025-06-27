@@ -2,7 +2,7 @@ name: gmso
 channels:
   - conda-forge
 dependencies:
-  - python>=3.9, <=3.12
+  - python>=3.10, <=3.13
   - boltons
   - numpy>=2.0,<2.3
   - sympy
@@ -13,6 +13,6 @@ dependencies:
   - networkx
   - ele>=0.2.0
   - foyer>=0.11.3
-  - forcefield-utilities>=0.2.1
+  - forcefield-utilities>=0.4.0
   - symengine
   - python-symengine
