@@ -7,8 +7,8 @@ from pathlib import Path
 
 import unyt as u
 
-import gmso
 from gmso import Atom, Bond, Box, Topology
+from gmso import __version__ as gmso_version
 from gmso.abc.abstract_site import Molecule, Residue
 from gmso.core.element import element_by_name, element_by_symbol
 from gmso.formats.formats_registry import loads_as, saves_as
@@ -91,17 +91,17 @@ def read_mol2(filename, site_type="atom", verbose=False):
 
 
 @saves_as(".mol2")
-def write_mol2(top, filename, n_decimals=3):
+def write_mol2(top, filename, n_decimals=4):
     with open(filename, "w") as out_file:
         out_file.write(
             "{} written by GMSO {} at {}\n".format(
                 top.name if top.name is not None else "",
-                gmso.__version__,
+                gmso_version,
                 str(datetime.datetime.now()),
             )
         )
         _write_molecule_info(top, out_file)
-        _write_sites_info(top, out_file)
+        _write_sites_info(top, out_file, n_decimals)
         _write_bonds_info(top, out_file)
         _write_box_info(top, out_file)
 
@@ -215,7 +215,7 @@ def _parse_molecule(top, section, verbose):
     top.label = str(section[0].strip())
 
 
-def _write_sites_info(top, out_file):
+def _write_sites_info(top, out_file, n_decimals):
     """Write site information to ATOM section."""
     # TODO: Create rules to make sure nothing is too long, so that it cuts off.
     # ATOM top.sites
@@ -226,7 +226,7 @@ def _write_sites_info(top, out_file):
         lineList = [
             str(index + 1),
             site.element.symbol,
-            *map(str, site.position.value.round(3)),
+            *map(str, site.position.in_units("angstrom").value.round(n_decimals)),
             site.atom_type.name if site.atom_type else site.name,
             str(site.molecule.number),
             site.molecule.name,

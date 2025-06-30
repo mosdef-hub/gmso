@@ -154,3 +154,9 @@ class TestMol2(BaseTest):
         assert np.all(
             [site.name for site in new_top.sites] == [site.name for site in top.sites]
         )
+        assert np.all(
+            np.isclose(
+                [site.position for site in new_top.sites],
+                [site.position for site in top.sites],
+            )
+        )
