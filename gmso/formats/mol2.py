@@ -1,5 +1,6 @@
 """Convert to and from a TRIPOS mol2 file."""
 
+import datetime
 import itertools
 import warnings
 from pathlib import Path
@@ -7,9 +8,10 @@ from pathlib import Path
 import unyt as u
 
 from gmso import Atom, Bond, Box, Topology
+from gmso import __version__ as gmso_version
 from gmso.abc.abstract_site import Molecule, Residue
 from gmso.core.element import element_by_name, element_by_symbol
-from gmso.formats.formats_registry import loads_as
+from gmso.formats.formats_registry import loads_as, saves_as
 
 
 @loads_as(".mol2")
@@ -86,6 +88,22 @@ def read_mol2(filename, site_type="atom", verbose=False):
 
     # TODO: read in parameters to correct attribute as well. This can be saved in various rti sections.
     return topology
+
+
+@saves_as(".mol2")
+def write_mol2(top, filename, n_decimals=4):
+    with open(filename, "w") as out_file:
+        out_file.write(
+            "{} written by GMSO {} at {}\n".format(
+                top.name if top.name is not None else "",
+                gmso_version,
+                str(datetime.datetime.now()),
+            )
+        )
+        _write_molecule_info(top, out_file)
+        _write_sites_info(top, out_file, n_decimals)
+        _write_bonds_info(top, out_file)
+        _write_box_info(top, out_file)
 
 
 def _parse_lj(top, section, verbose):
@@ -195,3 +213,57 @@ def _parse_box(top, section, verbose):
 def _parse_molecule(top, section, verbose):
     """Parse molecule information from the mol2 file."""
     top.label = str(section[0].strip())
+
+
+def _write_sites_info(top, out_file, n_decimals):
+    """Write site information to ATOM section."""
+    # TODO: Create rules to make sure nothing is too long, so that it cuts off.
+    # ATOM top.sites
+    # @<TRIPOS>ATOM
+    # 1 C          -0.7600    1.1691   -0.0005 C.ar    1  BENZENE       0.000
+    out_file.write("@<TRIPOS>ATOM\n")
+    for index, site in enumerate(top.sites):
+        lineList = [
+            str(index + 1),
+            site.element.symbol,
+            *map(str, site.position.in_units("angstrom").value.round(n_decimals)),
+            site.atom_type.name if site.atom_type else site.name,
+            str(site.molecule.number),
+            site.molecule.name,
+            str(site.charge) if site.charge else "0.00",
+        ]
+        formattedStr = "\t".join(lineList) + "\n"
+        out_file.writelines(formattedStr)
+
+
+def _write_bonds_info(top, out_file):
+    """writes the bonds in a topology with assigned atom number."""
+    # TODO: need to add bond type info as well
+    # TODO: double vs single bonds?
+    out_file.write("@<TRIPOS>BOND\n")
+    atom_id = {site: idx + 1 for idx, site in enumerate(top.sites)}
+
+    for index, bond in enumerate(top.bonds):
+        idx1 = atom_id[bond.connection_members[0]]
+        idx2 = atom_id[bond.connection_members[1]]
+
+        idx1, idx2 = min(idx1, idx2), max(idx1, idx2)
+
+        bond_info_str = f"{index + 1} {idx1} {idx2} 1\n"
+        out_file.write(bond_info_str)
+
+
+def _write_molecule_info(top, out_file):
+    # TODO: This should check the last three integers to write them correctly
+    # TODO: This should handle different molecule types
+    out_file.write("@<TRIPOS>MOLECULE\n")
+    name = top.name
+    num_atoms = top.n_sites
+    num_bonds = top.n_bonds
+    out_file.write(f"{name}\n{num_atoms} {num_bonds} 1 0 0\n")
+
+
+def _write_box_info(top, out_file):
+    # @<TRIPOS>SUBSTRUCTURE
+    # 1 ****        1 TEMP                        0 ****  **** 0 ROOT
+    pass

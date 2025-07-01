@@ -139,8 +139,24 @@ class TestMol2(BaseTest):
         assert np.all(np.array([site.molecule.number for site in top.sites]) == 0)
 
     def test_mol2_group(self):
-        # Is there a place to read from mol2 file?
         top = Topology.load(get_fn("ethane.mol2"))
         for site in top.sites:
             site.group = "ethane"
         assert np.all(np.array([site.group for site in top.sites]) == "ethane")
+
+    def test_write_mol2(self):
+        top = Topology.load(get_fn("ethane.mol2"))
+        top.save("tmp.mol2")
+        new_top = Topology.load("tmp.mol2")
+
+        assert new_top.n_sites == top.n_sites
+        assert new_top.n_bonds == top.n_bonds
+        assert np.all(
+            [site.name for site in new_top.sites] == [site.name for site in top.sites]
+        )
+        assert np.all(
+            np.isclose(
+                [site.position for site in new_top.sites],
+                [site.position for site in top.sites],
+            )
+        )
