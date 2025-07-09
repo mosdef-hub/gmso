@@ -1,24 +1,18 @@
 import mbuild as mb
-import gmso
-from gmso.core.forcefield import *
-from gmso.external import from_mbuild
-from gmso.external import from_parmed
 import parmed as pmd
-import unyt as u 
+import unyt as u
+
+import gmso
+from gmso.core.angle import Angle
+from gmso.core.angle_type import AngleType
 from gmso.core.atom import Atom
 from gmso.core.atom_type import AtomType
 from gmso.core.bond import Bond
 from gmso.core.bond_type import BondType
-from gmso.core.angle import Angle
-from gmso.core.angle_type import AngleType
 from gmso.core.dihedral import Dihedral
 from gmso.core.dihedral_type import DihedralType
-
-
-
-
-
-
+from gmso.core.forcefield import *
+from gmso.external import from_mbuild, from_parmed
 
 
 def read_itp(itp_file):
@@ -56,8 +50,8 @@ def read_itp(itp_file):
     # pdb=from_parmed(pdb,refer_type=True)
 
 <<<<<<< HEAD
-    
-#for different functional forms for bonds, angles, dihedrals include an if statement for angle 
+
+#for different functional forms for bonds, angles, dihedrals include an if statement for angle
 # pdb=pmd.load_file('liquid.pdb')
 # pdb=from_parmed(pdb,refer_type=True)
 
@@ -66,16 +60,16 @@ def read_itp(itp_file):
     atype=[]
     epsilon=[]
     sigma=[]
-    
+
     dicts_atype=[]
-    
+
     #collect bond parameters
     bind_1=[]
     bind_2=[]
     b_type=[]
     b_K=[]
     b_req=[]
-    
+
     #collect angle parameters
     aind_1=[]
     aind_2=[]
@@ -83,7 +77,7 @@ def read_itp(itp_file):
     a_type=[]
     a_K=[]
     a_thetaeq=[]
-    
+
     #collect dihedral parameters
     dind_1=[]
     dind_2=[]
@@ -93,8 +87,8 @@ def read_itp(itp_file):
     d_K=[]
     d_phi=[]
     d_n=[]
-    
-    #Get atom types, epsilon and sigma in a dictionary 
+
+    #Get atom types, epsilon and sigma in a dictionary
     with open('LIQ.itp','r') as file:
 =======
     mass = []
@@ -160,7 +154,7 @@ def read_itp(itp_file):
 <<<<<<< HEAD
                         natoms=natoms+1
             #bonds
-        
+
             if  "bonds" in line:
                 nbonds=0
 =======
@@ -181,10 +175,10 @@ def read_itp(itp_file):
                         b_type.append(int(line.split()[2]))
                         b_K.append(float(line.split()[3]))
                         b_req.append(float(line.split()[4]))
-                        nbonds=nbonds+1    
-    
+                        nbonds=nbonds+1
+
             #Angles
-        
+
             if  "angles" in line:
                 nang=0
 =======
@@ -209,8 +203,8 @@ def read_itp(itp_file):
                         a_type.append(int(line.split()[3]))
                         a_K.append(float(line.split()[4]))
                         a_thetaeq.append(float(line.split()[5]))
-                        nang=nang+1       
-            
+                        nang=nang+1
+
             #Dihedrals
             if  "dihedrals" in line:
                 ndih=0
@@ -236,17 +230,17 @@ def read_itp(itp_file):
                         dind_4.append(int(line.split()[3])-1)
                         d_type.append(int(line.split()[4]))
                         d_K.append(float(line.split()[5]))
-                        d_phi.append(float(line.split()[6]))   
-                        d_n.append(float(line.split()[7]))   
-                        ndih=ndih+1       
-                        
+                        d_phi.append(float(line.split()[6]))
+                        d_n.append(float(line.split()[7]))
+                        ndih=ndih+1
+
     print(natoms,nbonds,nang,ndih)
     pdb=gmso.Topology()
     for i in range(natoms-1):
         site=Atom()
         site.mass=float(mass[i])
         site.charge=float(charge[i])
-    
+
 =======
                         # print(line)
 
@@ -284,20 +278,20 @@ def read_itp(itp_file):
         pdb.add_site(site)
 <<<<<<< HEAD
         #print(i,site.atom_type.parameters)
-    
-    
+
+
     print(len(pdb.sites))
     print(bind_1)
     print(bind_2)
-    
+
     for i in range(nbonds):
         site_1=pdb.sites[bind_1[i]]
         site_2=pdb.sites[bind_2[i]]
         bonds=Bond(connection_members=(site_1,site_2))
-    
+
         K=b_K[i]
         req=b_req[i]
-    
+
         bonds.bond_type=BondType(name="HarmonicBondPotential",
                                 expression="0.5 * k * (r-r_eq)**2",
                                 independent_variables={"r"},
@@ -306,19 +300,19 @@ def read_itp(itp_file):
                                 parameters={
                                 "k": K * u.Unit("kJ / (nm**2)"),
                                 "r_eq": req * u.nm})
-    
+
         pdb.add_connection(bonds)
-    
-    
+
+
     for i in range(nang):
         site_1=pdb.sites[aind_1[i]]
         site_2=pdb.sites[aind_2[i]]
         site_3=pdb.sites[aind_3[i]]
         angles=Angle(connection_members=(site_1,site_2,site_3))
-    
+
         K=a_K[i]
         thetaeq=a_thetaeq[i]
-    
+
         angles.angle_type=AngleType(name="HarmonicAnglePotential",
                                 expression="0.5 * k * (theta-theta_eq)**2",
                                 independent_variables={"theta"},
@@ -327,10 +321,10 @@ def read_itp(itp_file):
                                 parameters={
                                 "k": K * u.Unit("kJ / (deg**2)"),
                                 "theta_eq": thetaeq * u.deg})
-    
+
         pdb.add_connection(angles)
-    
-    
+
+
     for i in range(ndih):
         site_1=pdb.sites[dind_1[i]]
         site_2=pdb.sites[dind_2[i]]
@@ -349,144 +343,144 @@ def read_itp(itp_file):
                                 "k": K * u.Unit("kJ / (deg**2)"),
                                 "phi_eq": 180 * u.deg,
                                 "n":n * u.dimensionless})
-    
+
         pdb.add_connection(diehdrals)
-    # 
-    
-    
-    
-
-    
-
-    
-    
-    
-    
-    
-
-    
-    
-    
-    
-    
-    
-    
-
-    
-    
-    
+    #
 
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 
-    
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
      / mol")},
-    
-    
-    
-    
 
 
 
-    
-    
-    
-    
-    
-    
-    
-    
-
-    
-
-    
-    
-    
-    
-    
-    
-    
-    
-
-    
 
 
 
-    
-    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 =======
         print(i, site.atom_type.parameters)
 
