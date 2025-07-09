@@ -9,7 +9,8 @@ from gmso.core.atom import Atom
 from gmso.core.atom_type import AtomType
 from gmso.core.bond import Bond
 from gmso.core.bond_type import BondType
-
+from gmso.core.angle import Angle
+from gmso.core.angle_type import AngleType
 
 def read_itp(itp_file):
     """Create a topology from a provided gro file.
@@ -37,9 +38,11 @@ def read_itp(itp_file):
     All residues and resid information from the gro file are currently lost
     when converting to `topology"""
 
+
+    #for different functional forms for bonds, angles, dihedrals include an if statement for angle 
     # pdb=pmd.load_file('liquid.pdb')
     # pdb=from_parmed(pdb,refer_type=True)
-
+    
     mass=[]
     charge=[]
     atype=[]
@@ -48,14 +51,32 @@ def read_itp(itp_file):
     
     dicts_atype=[]
     
-    #Bond parameters
-    b_1=[]
-    b_2=[]
+    #collect bond parameters
+    bind_1=[]
+    bind_2=[]
+    b_type=[]
     b_K=[]
-    b_d=[]
+    b_req=[]
+    
+    #collect angle parameters
+    aind_1=[]
+    aind_2=[]
+    aind_3=[]
+    a_type=[]
+    a_K=[]
+    a_thetaeq=[]
+    
+    #collect dihedral parameters
+    aind_1=[]
+    aind_2=[]
+    aind_3=[]
+    a_type=[]
+    a_K=[]
+    a_thetaeq=[]
+    
     
     #Get atom types, epsilon and sigma in a dictionary 
-    with open(itp_file,'r') as file:
+    with open('LIQ.itp','r') as file:
         for line in file:
             if "atomtypes" in line:
                 for line in file:
@@ -73,57 +94,66 @@ def read_itp(itp_file):
             #Atoms
         
             if "atoms" in line:
-                k=1
+                natoms=1
                 for line in file:
                     if "[" in line:
                         break
-                    elif line.split() and line.split()[0]==str(k):
+                    elif line.split() and line.split()[0]==str(natoms):
                         #print(line.split())
                         #print(line)
                         # print(line.split())
                         atype.append(line.split()[1])
                         mass.append(line.split()[7])
                         charge.append(line.split()[6])
-                        k=k+1
+                        natoms=natoms+1
             #bonds
         
             if  "bonds" in line:
-                kbonds=1
+                nbonds=0
                 for line in file:
                     if "[" in line:
                         break
                     elif line.split() and "funct" not in line.split():
-                        #print(line)
-    
-                        kbonds=kbonds+1    
+                        print(line)
+                        bind_1.append(int(line.split()[0])-1)
+                        bind_2.append(int(line.split()[1])-1)
+                        b_type.append(int(line.split()[2]))
+                        b_K.append(float(line.split()[3]))
+                        b_req.append(float(line.split()[4]))
+                        nbonds=nbonds+1    
     
             #Angles
         
             if  "angles" in line:
-                kang=1
+                nang=0
                 for line in file:
                     if "[" in line:
                         break
                     elif line.split() and "funct" not in line.split():
-                        #print(line)
-    
-                        kang=kang+1       
+                        print(line)
+                        aind_1.append(int(line.split()[0])-1)
+                        aind_2.append(int(line.split()[1])-1)
+                        aind_3.append(int(line.split()[2])-1)
+                        a_type.append(int(line.split()[3]))
+                        a_K.append(float(line.split()[4]))
+                        a_thetaeq.append(float(line.split()[5]))
+                        nang=nang+1       
             
             #Dihedrals
             
             if  "dihedrals" in line:
-                kdih=1
+                ndih=0
                 for line in file:
                     if "[" in line:
                         break
                     elif line.split() and "funct" not in line.split():
                         #print(line)
                                 
-                        kdih=kdih+1       
+                        ndih=ndih+1       
         pass
-    print(k,kbonds,kang,kdih)
+    print(natoms,nbonds,nang,ndih)
     pdb=gmso.Topology()
-    for i in range(len(mass)):
+    for i in range(natoms-1):
         site=Atom()
         site.mass=float(mass[i])
         site.charge=float(charge[i])
@@ -147,34 +177,225 @@ def read_itp(itp_file):
                 independent_variables={"r"}
             )
         pdb.add_site(site)
-        print(i,site.atom_type.parameters)
+        #print(i,site.atom_type.parameters)
     
     
+    print(len(pdb.sites))
+    print(bind_1)
+    print(bind_2)
     
-    for i in range(kbonds):
-        bonds=Bond(connection_members=(pdb.sites[0],pdb.sites[1]))
-        bonds.bond_type=BondType(name='2',
+    for i in range(nbonds):
+        site_1=pdb.sites[bind_1[i]]
+        site_2=pdb.sites[bind_2[i]]
+        bonds=Bond(connection_members=(site_1,site_2))
+    
+        K=b_K[i]
+        req=b_req[i]
+    
+        bonds.bond_type=BondType(name="HarmonicBondPotential",
                                 expression="0.5 * k * (r-r_eq)**2",
-                            independent_variables={"r"},
-                            parameters={
-                                "k": 1000 * u.Unit("kJ / (nm**2)"),
-                                "r_eq": 0.14 * u.nm}),
+                                independent_variables={"r"},
+                                member_types=(site_1.atom_type.name,site_2.atom_type.name),
+                                member_classes=(site_1.atom_type.atomclass,site_2.atom_type.atomclass),
+                                parameters={
+                                "k": K * u.Unit("kJ / (nm**2)"),
+                                "r_eq": req * u.nm})
     
         pdb.add_connection(bonds)
     
-    for i in range(kbonds):
-        bonds=Bond(connection_members=(pdb.sites[0],pdb.sites[1]))
-        bonds.bond_type=BondType(name='2',
+    
+    for i in range(nang):
+        site_1=pdb.sites[aind_1[i]]
+        site_2=pdb.sites[aind_2[i]]
+        site_3=pdb.sites[aind_3[i]]
+        angles=Angle(connection_members=(site_1,site_2,site_3))
+    
+        K=a_K[i]
+        thetaeq=a_thetaeq[i]
+    
+        angles.angle_type=AngleType(name="HarmonicAnglePotential",
+                                expression="0.5 * k * (theta-theta_eq)**2",
+                                independent_variables={"theta"},
+                                member_types=(site_1.atom_type.name,site_2.atom_type.name,site_3.atom_type.name),
+                                member_classes=(site_1.atom_type.atomclass,site_2.atom_type.atomclass,site_3.atom_type.atomclass),
+                                parameters={
+                                "k": K * u.Unit("kJ / (deg**2)"),
+                                "theta_eq": thetaeq * u.deg})
+    
+        pdb.add_connection(angles)
+    
+    
+    for i in range(ndih):
+        site_1=pdb.sites[bind_1[i]]
+        site_2=pdb.sites[bind_2[i]]
+        bonds=Bond(connection_members=(site_1,site_2))
+    
+        K=b_K[i]
+        req=b_req[i]
+    
+        bonds.bond_type=BondType(name="HarmonicBondPotential",
                                 expression="0.5 * k * (r-r_eq)**2",
-                            independent_variables={"r"},
-                            parameters={
-                                "k": 1000 * u.Unit("kJ / (nm**2)"),
-                                "r_eq": 0.14 * u.nm}),
+                                independent_variables={"r"},
+                                member_types=(site_1.atom_type.name,site_2.atom_type.name),
+                                member_classes=(site_1.atom_type.atomclass,site_2.atom_type.atomclass),
+                                parameters={
+                                "k": K * u.Unit("kJ / (nm**2)"),
+                                "r_eq": req * u.nm})
     
         pdb.add_connection(bonds)
+    return pdb
     
     
     
-    #bond=gmso.core.bond.Bond(connection_members=(pdb.sites[0],pdb.sites[1]))
+    
+    
+    
+    
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     return pdb
 
