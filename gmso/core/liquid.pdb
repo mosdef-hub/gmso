@@ -1,0 +1,50 @@
+REMARK  GENERATE EPOAND                                                               
+REMARK   DATE:     9/11/21     19:45:17      CREATED BY USER: apache                  
+ATOM      1  C1  EPO L   1       4.293   3.646  -5.824  1.00  0.00      EPO 
+ATOM      2  C2  EPO L   1       3.055   3.390  -5.205  1.00  0.00      EPO 
+ATOM      3  C3  EPO L   1       1.870   3.837  -5.822  1.00  0.00      EPO 
+ATOM      4  C4  EPO L   1       1.929   4.566  -7.014  1.00  0.00      EPO 
+ATOM      5  C5  EPO L   1       3.165   4.836  -7.607  1.00  0.00      EPO 
+ATOM      6  C6  EPO L   1       4.346   4.367  -7.021  1.00  0.00      EPO 
+ATOM      7  C7  EPO L   1       2.781  -0.818  -6.010  1.00  0.00      EPO 
+ATOM      8  C8  EPO L   1       2.748  -1.749  -4.968  1.00  0.00      EPO 
+ATOM      9  C9  EPO L   1       2.803  -1.319  -3.639  1.00  0.00      EPO 
+ATOM     10  C10 EPO L   1       2.895   0.049  -3.348  1.00  0.00      EPO 
+ATOM     11  C11 EPO L   1       2.921   1.002  -4.381  1.00  0.00      EPO 
+ATOM     12  C12 EPO L   1       2.868   0.543  -5.721  1.00  0.00      EPO 
+ATOM     13  C13 EPO L   1       3.023   2.478  -3.990  1.00  0.00      EPO 
+ATOM     14  C14 EPO L   1       1.827   2.860  -3.076  1.00  0.00      EPO 
+ATOM     15  O1  EPO L   1       2.550  -3.088  -5.252  1.00  0.00      EPO 
+ATOM     16  O2  EPO L   1       3.215   5.489  -8.826  1.00  0.00      EPO 
+ATOM     17  C15 EPO L   1       1.152  -3.362  -5.333  1.00  0.00      EPO 
+ATOM     18  C16 EPO L   1       3.110   4.550  -9.895  1.00  0.00      EPO 
+ATOM     19  C17 EPO L   1       0.918  -4.811  -5.628  1.00  0.00      EPO 
+ATOM     20  C18 EPO L   1       3.185   5.258 -11.213  1.00  0.00      EPO 
+ATOM     21  C19 EPO L   1      -0.504  -5.273  -5.780  1.00  0.00      EPO 
+ATOM     22  O3  EPO L   1       0.358  -5.102  -6.925  1.00  0.00      EPO 
+ATOM     23  C20 EPO L   1       3.041   4.433 -12.462  1.00  0.00      EPO 
+ATOM     24  O4  EPO L   1       1.966   5.269 -11.984  1.00  0.00      EPO 
+ATOM     25  H1  EPO L   1       5.200   3.250  -5.392  1.00  0.00      EPO 
+ATOM     26  H2  EPO L   1       0.902   3.594  -5.411  1.00  0.00      EPO 
+ATOM     27  H3  EPO L   1       1.023   4.899  -7.496  1.00  0.00      EPO 
+ATOM     28  H4  EPO L   1       5.289   4.546  -7.514  1.00  0.00      EPO 
+ATOM     29  H5  EPO L   1       2.720  -1.161  -7.032  1.00  0.00      EPO 
+ATOM     30  H6  EPO L   1       2.760  -2.048  -2.847  1.00  0.00      EPO 
+ATOM     31  H7  EPO L   1       2.938   0.368  -2.317  1.00  0.00      EPO 
+ATOM     32  H8  EPO L   1       2.882   1.237  -6.549  1.00  0.00      EPO 
+ATOM     33  H9  EPO L   1       3.954   2.637  -3.397  1.00  0.00      EPO 
+ATOM     34  H10 EPO L   1       0.878   2.426  -3.458  1.00  0.00      EPO 
+ATOM     35  H11 EPO L   1       1.708   3.963  -3.020  1.00  0.00      EPO 
+ATOM     36  H12 EPO L   1       1.987   2.489  -2.042  1.00  0.00      EPO 
+ATOM     37  H13 EPO L   1       0.675  -2.762  -6.144  1.00  0.00      EPO 
+ATOM     38  H14 EPO L   1       0.655  -3.130  -4.366  1.00  0.00      EPO 
+ATOM     39  H15 EPO L   1       2.140   4.001  -9.848  1.00  0.00      EPO 
+ATOM     40  H16 EPO L   1       3.948   3.819  -9.855  1.00  0.00      EPO 
+ATOM     41  H17 EPO L   1       1.665  -5.483  -5.230  1.00  0.00      EPO 
+ATOM     42  H18 EPO L   1       3.802   6.144 -11.219  1.00  0.00      EPO 
+ATOM     43  H19 EPO L   1      -1.300  -4.546  -5.699  1.00  0.00      EPO 
+ATOM     44  H20 EPO L   1      -0.755  -6.291  -5.542  1.00  0.00      EPO 
+ATOM     45  H21 EPO L   1       2.865   3.371 -12.368  1.00  0.00      EPO 
+ATOM     46  H22 EPO L   1       3.514   4.766 -13.369  1.00  0.00      EPO 
+TER      47      EPO      1
+END
