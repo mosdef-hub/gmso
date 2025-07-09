@@ -1,7 +1,5 @@
 """Convert to and from an mbuild.Compound."""
 
-from warnings import warn
-
 import mbuild as mb
 import numpy as np
 import unyt as u
@@ -19,6 +17,10 @@ from gmso.utils.io import has_mbuild
 
 if has_mbuild:
     import mbuild as mb
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def from_mbuild(
@@ -227,7 +229,7 @@ def from_mbuild_box(mb_box):
         raise ValueError("Argument mb_box is not an mBuild Box")
 
     if np.allclose(mb_box.lengths, [0, 0, 0]):
-        warn("No box or boundingbox information detected, setting box to None")
+        logger.info("No box or boundingbox information detected, setting box to None")
         return None
 
     box = Box(
@@ -346,7 +348,7 @@ def _parse_group(site_map, compound, custom_groups):
             applied_groups = set(map(lambda x: x["group"], site_map.values()))
             assert applied_groups == set(custom_groups)
         except AssertionError:
-            warn(
+            logger.info(
                 f"""Not all custom groups ({custom_groups}, is are being used when
             traversing compound hierachy. Only {applied_groups} are used.)"""
             )

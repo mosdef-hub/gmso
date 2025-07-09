@@ -1,7 +1,9 @@
 """Various decorators for GMSO."""
 
 import functools
-import warnings
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def deprecate_kwargs(deprecated_kwargs=None):
@@ -40,7 +42,7 @@ def _deprecate_kwargs(kwargs, deprecated_kwargs):
             "next minor release of the package. Please update your code accordingly"
         )
     if added_args:
-        warnings.warn(
+        logger.info(
             message.format(
                 dep_args=", ".join(added_args),
                 dep_params=", ".join(added_params),
@@ -56,13 +58,11 @@ def mark_WIP(message=""):
     def _function_wrapper(function):
         @functools.wraps(function)
         def _inner(*args, **kwargs):
-            warnings.simplefilter("always", UserWarning)  # turn off filter
-            warnings.warn(
+            logger.info(
                 "Call to function {} is WIP.".format(function.__name__),
                 category=UserWarning,
                 stacklevel=2,
             )
-            warnings.simplefilter("default", UserWarning)  # reset filter
             return function(*args, **kwargs)
 
         return _inner
@@ -76,7 +76,7 @@ def deprecate_function(msg, klass=PendingDeprecationWarning):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            warnings.warn(msg, klass, stacklevel=2)
+            logger.info(msg, klass, stacklevel=2)
             return func(*args, **kwargs)
 
         return wrapper

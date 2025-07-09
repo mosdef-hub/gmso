@@ -1,7 +1,7 @@
 """Base data structure for GMSO chemical systems."""
 
 import itertools
-import warnings
+import logging
 from copy import copy
 from pathlib import Path
 
@@ -33,6 +33,8 @@ from gmso.utils.conversions import (
     convert_topology_expressions,
 )
 from gmso.utils.units import GMSO_UnitRegistry as UnitReg
+
+logger = logging.getLogger(__name__)
 
 scaling_interaction_idxes = {"12": 0, "13": 1, "14": 2}
 
@@ -783,7 +785,7 @@ class Topology(object):
             all_scales = self._scaling_factors
         else:
             if molecule_id not in self._molecule_scaling_factors:
-                warnings.warn(
+                logger.info(
                     f"Scaling factors for molecule `{molecule_id}` is not defined "
                     f"in the topology. Returning None."
                 )
@@ -880,7 +882,7 @@ class Topology(object):
         # Check if an equivalent connection is in the topology
         equivalent_members = connection.equivalent_members()
         if equivalent_members in self._unique_connections:
-            warnings.warn(
+            logger.info(
                 "An equivalent connection already exists. "
                 "Providing the existing equivalent Connection."
             )
@@ -981,7 +983,7 @@ class Topology(object):
             for t in to_delete:
                 self._pairpotential_types.remove(t)
         else:
-            warnings.warn(
+            logger.info(
                 "No pair potential specified for such pair of AtomTypes/atomclasses"
             )
 
@@ -1376,7 +1378,9 @@ class Topology(object):
             for connection_type in self.connection_types:
                 ff_conn_types[type(connection_type)][
                     FF_TOKENS_SEPARATOR.join(connection_type.member_types)
-                ] = connection_type.copy(deep=True, exclude={"topology", "set_ref"})
+                ] = connection_type.model_copy(
+                    deep=True, exclude={"topology", "set_ref"}
+                )
 
         return ff
 

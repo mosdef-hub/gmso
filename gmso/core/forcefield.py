@@ -2,7 +2,7 @@
 
 import copy
 import itertools
-import warnings
+import logging
 from collections import ChainMap
 from pathlib import Path
 from typing import Iterable
@@ -23,6 +23,8 @@ from gmso.utils.ff_utils import (
     validate,
 )
 from gmso.utils.misc import mask_with, validate_type
+
+logger = logging.getLogger(__name__)
 
 
 def _group_by_expression(potential_types):
@@ -327,7 +329,7 @@ class ForceField(object):
         if not self.atom_types.get(atom_type):
             msg = f"AtomType {atom_type} is not present in the ForceField"
             if warn:
-                warnings.warn(msg)
+                logger.info(msg)
             else:
                 raise MissingPotentialError(msg)
 
@@ -359,7 +361,7 @@ class ForceField(object):
             else:
                 return match[0]
         elif warn:
-            warnings.warn(msg)
+            logger.info(msg)
             return None
         else:
             raise MissingPotentialError(msg)
@@ -390,7 +392,7 @@ class ForceField(object):
             else:
                 return match[0]
         elif warn:
-            warnings.warn(msg)
+            logger.info(msg)
             return None
         else:
             raise MissingPotentialError(msg)
@@ -449,7 +451,7 @@ class ForceField(object):
             else:
                 return match[0]
         elif warn:
-            warnings.warn(msg)
+            logger.info(msg)
             return None
         else:
             raise MissingPotentialError(msg)
@@ -517,7 +519,7 @@ class ForceField(object):
         if match:
             return match
         elif warn:
-            warnings.warn(msg)
+            logger.info(msg)
             return None
         else:
             raise MissingPotentialError(msg)
@@ -538,7 +540,7 @@ class ForceField(object):
             else:
                 return match[0]  # only return the atoms, not their order
         elif warn:
-            warnings.warn(msg)
+            logger.info(msg)
             return None
         else:
             raise MissingPotentialError(msg)

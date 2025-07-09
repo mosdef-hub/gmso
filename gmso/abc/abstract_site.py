@@ -1,6 +1,6 @@
 """Basic interaction site in GMSO that all other sites will derive from."""
 
-import warnings
+import logging
 from typing import Any, ClassVar, Optional, Sequence, TypeVar, Union
 
 import numpy as np
@@ -17,6 +17,8 @@ from unyt.exceptions import InvalidUnitOperation
 from gmso.abc.gmso_base import GMSOBase
 from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.exceptions import GMSOError
+
+logger = logging.getLogger(__name__)
 
 PositionType = Union[Sequence[float], np.ndarray, u.unyt_array]
 
@@ -286,7 +288,7 @@ class Site(GMSOBase):
                 raise GMSOError(
                     f"Converting object of type {type(position)} failed with following error: {e}"
                 )
-            warnings.warn("Positions are assumed to be in nm")
+            logger.info("Positions are assumed to be in nm")
 
         try:
             position = np.reshape(position, newshape=(3,), order="C")
