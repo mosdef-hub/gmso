@@ -4,8 +4,8 @@ from __future__ import division
 
 import copy
 import datetime
+import logging
 import os
-import warnings
 from itertools import count
 from pathlib import Path
 
@@ -35,6 +35,8 @@ from gmso.utils.sorting import (
     sort_connection_members,
 )
 from gmso.utils.units import LAMMPS_UnitSystems, write_out_parameter_and_units
+
+logger = logging.getLogger(__name__)
 
 pfilter = PotentialFilters.UNIQUE_SORTED_NAMES
 
@@ -593,7 +595,7 @@ def _get_ff_information(filename, base_unyts, topology):
             warn_ljcutBool = True
 
     if warn_ljcutBool:
-        warnings.warn(
+        logger.info(
             "Currently not reading in LJ cutoff values."
             "These should be specified in the engine run files."
         )

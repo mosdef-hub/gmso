@@ -1,6 +1,6 @@
 """Represent general atomic information in GMSO."""
 
-import warnings
+import logging
 from typing import Optional, Union
 
 import unyt as u
@@ -12,6 +12,8 @@ from gmso.core.atom_type import AtomType
 from gmso.core.element import Element
 from gmso.utils._constants import UNIT_WARNING_STRING
 from gmso.utils.misc import ensure_valid_dimensions
+
+logger = logging.getLogger(__name__)
 
 
 class Atom(Site):
@@ -189,7 +191,7 @@ class Atom(Site):
         if charge is None:
             return None
         if not isinstance(charge, u.unyt_array):
-            warnings.warn(UNIT_WARNING_STRING.format("Charges", "elementary charge"))
+            logger.info(UNIT_WARNING_STRING.format("Charges", "elementary charge"))
             charge *= u.elementary_charge
         else:
             ensure_valid_dimensions(charge, u.elementary_charge)
@@ -204,7 +206,7 @@ class Atom(Site):
             return None
         default_mass_units = u.gram / u.mol
         if not isinstance(mass, u.unyt_array):
-            warnings.warn(UNIT_WARNING_STRING.format("Masses", "g/mol"))
+            logger.info(UNIT_WARNING_STRING.format("Masses", "g/mol"))
             mass *= default_mass_units
         else:
             ensure_valid_dimensions(mass, default_mass_units)

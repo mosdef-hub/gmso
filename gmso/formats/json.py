@@ -1,7 +1,7 @@
 """Serialization to json."""
 
 import json
-import warnings
+import logging
 from copy import deepcopy
 from pathlib import Path
 
@@ -20,6 +20,8 @@ from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
 from gmso.core.pairpotential_type import PairPotentialType
 from gmso.formats.formats_registry import loads_as, saves_as
+
+logger = logging.getLogger(__name__)
 
 
 def _to_json(top, types=True, update=False):
@@ -42,18 +44,18 @@ def _to_json(top, types=True, update=False):
         A json serializable dictionary representing members of this Topology
     """
     if types and not top.is_typed():
-        warnings.warn("Cannot incorporate types because the topology is not typed.")
+        logger.info("Cannot incorporate types because the topology is not typed.")
         types = False
 
     if not types and top.is_typed():
-        warnings.warn(
+        logger.info(
             "The provided topology is typed and `types` is set to False. "
             "The types(potentials) info will be lost in the serialized representation. "
             "Please consider using `types=True` if this behavior is not intended. "
         )
 
     if types and not top.is_fully_typed():
-        warnings.warn(
+        logger.info(
             "The provided topology is not full typed and `types` is set to True. "
             "Please consider using `types=False` if this behavior is not intended. "
         )

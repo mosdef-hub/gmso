@@ -2,7 +2,7 @@
 
 import datetime
 import itertools
-import warnings
+import logging
 from pathlib import Path
 
 import unyt as u
@@ -12,6 +12,8 @@ from gmso import __version__ as gmso_version
 from gmso.abc.abstract_site import Molecule, Residue
 from gmso.core.element import element_by_name, element_by_symbol
 from gmso.formats.formats_registry import loads_as, saves_as
+
+logger = logging.getLogger(__name__)
 
 
 @loads_as(".mol2")
@@ -79,7 +81,7 @@ def read_mol2(filename, site_type="atom", verbose=False):
     }
     for section in sections:
         if section not in supported_rti:
-            warnings.warn(
+            logger.info(
                 f"The record type indicator {section} is not supported. "
                 "Skipping current section and moving to the next RTI header."
             )
@@ -117,7 +119,7 @@ def _parse_lj(top, section, verbose):
                 charge = float(content[8])
             except IndexError:
                 if verbose:
-                    warnings.warn(
+                    logger.info(
                         f"No charge was detected for site {content[1]} with index {content[0]}"
                     )
                 charge = None
@@ -150,7 +152,7 @@ def _parse_atom(top, section, verbose):
             element = parse_ele(content[5], content[1])
 
             if not element and verbose:
-                warnings.warn(
+                logger.info(
                     f"No element detected for site {content[1]} with index {content[0]}, "
                     "consider manually adding the element to the topology"
                 )
@@ -159,7 +161,7 @@ def _parse_atom(top, section, verbose):
                 charge = float(content[8])
             except IndexError:
                 if verbose:
-                    warnings.warn(
+                    logger.info(
                         f"No charge was detected for site {content[1]} with index {content[0]}"
                     )
                 charge = None
@@ -197,7 +199,7 @@ def _parse_bond(top, section, verbose):
 def _parse_box(top, section, verbose):
     """Parse box information from the mol2 file."""
     if top.box:
-        warnings.warn(
+        logger.info(
             f"This mol2 file has two boxes to be read in, only reading in one with dimensions {top.box}"
         )
 

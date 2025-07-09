@@ -1,6 +1,6 @@
 """Convert to/from NetworkX graphs and GMSO topologies."""
 
-import warnings
+import logging
 
 import networkx as nx
 
@@ -8,6 +8,8 @@ from gmso.abc.abstract_connection import Connection
 from gmso.abc.abstract_site import Site
 from gmso.core.bond import Bond
 from gmso.core.topology import Topology
+
+logger = logging.getLogger(__name__)
 
 
 def from_networkx(graph):
@@ -58,12 +60,10 @@ def from_networkx(graph):
             conn = Bond(connection_members=edge)
             top.add_connection(conn)
 
-    warnings.simplefilter("once", UserWarning)
-
     for node in graph.nodes:
         try:
             graph.nodes[node]["angles"] or graph.nodes[node]["dihedrals"]
-            warnings.warn("Angle and Dihedral information is not converted.")
+            logger.info("Angle and Dihedral information is not converted.")
         except KeyError:
             pass
 
