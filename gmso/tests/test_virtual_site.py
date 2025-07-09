@@ -17,7 +17,7 @@ class TestVirturalSite(BaseTest):
     @pytest.fixture(scope="session")
     def virtual_site(self):
         site = Atom()
-        return VirtualSite(parent_atoms=[site])
+        return VirtualSite(parent_sites=[site])
 
     @pytest.fixture(scope="session")
     def virtual_type(self):
@@ -29,9 +29,9 @@ class TestVirturalSite(BaseTest):
         return v_type
 
     def test_new_site(self, water_system):
-        v_site = VirtualSite(parent_atoms=water_system.sites)
-        assert len(v_site.parent_atoms) == 3
-        for site in v_site.parent_atoms:
+        v_site = VirtualSite(parent_sites=water_system.sites)
+        assert len(v_site.parent_sites) == 3
+        for site in v_site.parent_sites:
             assert site in water_system.sites
 
     def test_virtual_position(self):

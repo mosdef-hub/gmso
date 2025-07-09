@@ -5,6 +5,9 @@ import unyt as u
 from forcefield_utilities.xml_loader import FoyerFFs
 from mbuild.lib.molecules import Ethane, Methane
 
+from gmso import ForceField, Topology
+from gmso.core.atom import Atom
+from gmso.core.bond import Bond
 from gmso.external.convert_mbuild import from_mbuild
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
@@ -128,3 +131,30 @@ class ParameterizationBaseTest(BaseTest):
     def ethane_box_with_methane(self):
         cmpd_box = mb.fill_box([Ethane(), Methane()], [50, 50], density=1.0)
         return from_mbuild(cmpd_box)
+
+    @pytest.fixture(scope="session")
+    def basic_virtual_site_ff(self):
+        return ForceField(get_path("abstract_virtual_site_ff.xml"))
+
+    @pytest.fixture(scope="session")
+    def empty_virtual_site_top(self):
+        top = Topology()
+        c1 = Atom(name="_c1", position=[0, 0, 0])
+        c2 = Atom(name="_c2", position=[1, 0, 0])
+        c3 = Atom(name="_c2", position=[2, 0, 0])
+        c4 = Atom(name="_c2", position=[3, 0, 0])
+        c5 = Atom(name="_c1", position=[4, 0, 0])
+        c12 = Bond(connection_members=[c1, c2])
+        c23 = Bond(connection_members=[c2, c3])
+        c34 = Bond(connection_members=[c3, c4])
+        c45 = Bond(connection_members=[c4, c5])
+        top.add_site(c1, update_types=False)
+        top.add_site(c2, update_types=False)
+        top.add_site(c3, update_types=False)
+        top.add_site(c4, update_types=False)
+        top.add_site(c5, update_types=False)
+        top.add_connection(c12, update_types=False)
+        top.add_connection(c23, update_types=False)
+        top.add_connection(c34, update_types=False)
+        top.add_connection(c45, update_types=False)
+        return top

@@ -5,6 +5,7 @@ from gmso.core.atom import Atom
 from gmso.core.bond import Bond
 from gmso.core.dihedral import Dihedral
 from gmso.core.improper import Improper
+from gmso.core.virtual_site import VirtualSite
 
 POTENTIAL_GROUPS = {
     Bond: "bond_type",
@@ -12,4 +13,5 @@ POTENTIAL_GROUPS = {
     Dihedral: "dihedral_type",
     Improper: "improper_type",
     Atom: "atom_type",
+    VirtualSite: "virtual_type",
 }

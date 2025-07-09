@@ -1,0 +1,81 @@
+<ForceField version="1.0.0" name="VirtualSiteExample">
+    <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.5" combiningRule="lorentz">
+        <Units energy="kb" distance="nm" mass="amu" charge="coulomb"/>
+    </FFMetaData>
+    <AtomTypes expression="A">
+        <ParametersUnitDef parameter="A" unit="kcal/mol"/>
+        <AtomType name="c1" element="_c1" charge="0.0" atomclass="C" mass="1.0" definition="[_c1]" description="First carbon">
+            <Parameters>
+                <Parameter name="A" value="0.1"/>
+            </Parameters>
+        </AtomType>
+        <AtomType name="c2" element="_c2" charge="0.0" atomclass="C" mass="1.0" definition="[_c2]" description="Middle carbon">
+            <Parameters>
+                <Parameter name="A" value="0.1"/>
+            </Parameters>
+        </AtomType>
+    </AtomTypes>
+    <BondTypes expression="k*(r-r_eq)">
+        <ParametersUnitDef parameter="r_eq" unit="nm"/>
+        <ParametersUnitDef parameter="k" unit="kJ/mol"/>
+        <BondType name="c2-c1" class1='C' class2='C'>
+            <Parameters>
+                <Parameter name='r_eq' value="1"/>
+                <Parameter name='k' value="1"/>
+            </Parameters>
+        </BondType>
+    </BondTypes>
+
+    <AngleTypes expression="k*(phi-phi_eq)">
+        <ParametersUnitDef parameter="phi_eq" unit="radian"/>
+        <ParametersUnitDef parameter="k" unit="kJ/mol"/>
+        <AngleType name="c1-c2-c2" class1='C' class2='C' class3="C">
+            <Parameters>
+                <Parameter name='phi_eq' value="1"/>
+                <Parameter name='k' value="1"/>
+            </Parameters>
+        </AngleType>
+    </AngleTypes>
+
+    <DihedralTypes expression="k*phi">
+        <ParametersUnitDef parameter="k" unit="kJ/mol/radian"/>
+        <DihedralType name="C-C-C-C" class1='C' class2='C' class3="C" class4="C">
+            <Parameters>
+                <Parameter name='k' value="1"/>
+            </Parameters>
+        </DihedralType>
+    </DihedralTypes>
+
+  <VirtualSiteTypes>
+    <Position expression="ri+rj+rk+rl+rm+c+d">
+      <ParametersUnitDef parameter="c" unit="nm"/>
+      <ParametersUnitDef parameter="d" unit="angstrom"/>
+    </Position>
+    <Potential expression="a+b">
+      <ParametersUnitDef parameter="a" unit="kJ/mol"/>
+      <ParametersUnitDef parameter="b" unit="kJ/mol"/>
+    </Potential>
+    <VirtualSiteType name="5-Site" type1="c1" type2="c2" type3="c2" type4="c2" type5="c1" charge="1.0">
+      <Position>
+        <Parameters>
+          <Parameter name="c">
+            <Value>1</Value>
+            <Value>1</Value>
+            <Value>1</Value>
+          </Parameter>
+          <Parameter name="d">
+            <Value>1</Value>
+            <Value>1</Value>
+            <Value>1</Value>
+          </Parameter>
+        </Parameters>
+      </Position>
+      <Potential>
+        <Parameters>
+          <Parameter name="a" value="1"/>
+          <Parameter name="b" value="1"/>
+        </Parameters>
+      </Potential>
+    </VirtualSiteType>
+  </VirtualSiteTypes>
+</ForceField>
