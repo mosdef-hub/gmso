@@ -84,7 +84,7 @@ def read_itp(itp_file):
     d_n = []
 
     # Get atom types, epsilon and sigma in a dictionary
-    with open("LIQ.itp", "r") as file:
+    with open(itp_file, "r") as file:
         for line in file:
             if "atomtypes" in line:
                 for line in file:
@@ -102,7 +102,7 @@ def read_itp(itp_file):
                         # print(line)
 
     # Get charges, mass and atomtype in a list
-    with open("LIQ.itp", "r") as file:
+    with open(itp_file, "r") as file:
         for line in file:
             # Atoms
 
@@ -286,3 +286,4 @@ def read_itp(itp_file):
 
         pdb.add_connection(diehdrals)
     #
+    return pdb 
