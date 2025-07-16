@@ -18,12 +18,12 @@ def read_itp(itp_file):
     commonly with the GROMACS simulation engine.  This file contains the
     simulation box parameters, number of atoms, the residue and atom number for
     each atom, as well as their positions and velocities (velocity is
-    optional).  This method will receive a filepath representation either as a
-    string, or a file object and return a `topology`.
+    optional).  This method will receive a filepath representation as a
+    string and return a `gmso.topology`.
     Parameters
     ----------
-    filename : str or file object
-        The path to the gro file either as a string, or a file object that
+    filename : str 
+        The path to the itp file either as a string, or a file object that
         points to the gro file.
     Returns
     -------
@@ -38,7 +38,7 @@ def read_itp(itp_file):
     All residues and resid information from the gro file are currently lost
     when converting to `topology"""
 
-    # for different functional forms for bonds, angles, dihedrals include an if statement for angle
+    
     # pdb=pmd.load_file('liquid.pdb')
     # pdb=from_parmed(pdb,refer_type=True)
 
