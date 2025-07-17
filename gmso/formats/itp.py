@@ -286,4 +286,4 @@ def read_itp(itp_file):
 
         pdb.add_connection(diehdrals)
     #
-    return pdb 
+    return pdb
