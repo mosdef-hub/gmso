@@ -307,8 +307,7 @@ def read_itp(itp_file):
     commonly with the GROMACS simulation engine.  This file contains the
     simulation box parameters, number of atoms, the residue and atom number for
     each atom, as well as their positions and velocities (velocity is
-    optional).  This method will receive a filepath representation either as a
-    string, or a file object and return a `topology`.
+    optional).  This method will receive a string and returns a gmso `topology`.
     Parameters
     ----------
     filename : str or file object
@@ -333,5 +332,4 @@ def read_itp(itp_file):
         _parse_bonds(file, topology)
         _parse_angles(file, topology)
         _parse_dihedrals(file, topology)
-        pass
     return topology
