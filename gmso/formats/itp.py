@@ -10,15 +10,14 @@ from gmso.core.bond_type import BondType
 from gmso.core.dihedral import Dihedral
 from gmso.core.dihedral_type import DihedralType
 
-from gmso import Topology
 
-def _parse_atoms(file,pdb):
+def _parse_atoms(file, pdb):
     """Get a dictionary of parsable atomtypes."""
     mass = []
     charge = []
     atype = []
     dicts_atype = []
-    
+
     for line in file:
         if "atomtypes" in line:
             for line in file:
@@ -27,19 +26,20 @@ def _parse_atoms(file,pdb):
                 elif line.split() and ";" not in line.split():
                     dicts_atype.append(
                         {
-                        "type": line.split()[0],
-                        "epsilon": float(line.split()[5]),
-                        "sigma": float(line.split()[6]),
+                            "type": line.split()[0],
+                            "epsilon": float(line.split()[5]),
+                            "sigma": float(line.split()[6]),
                         }
                     )
-
 
         if "atoms" in line:
             natoms = 1
             for line in file:
                 if "[" in line:
                     break
-                elif line.split() and line.split()[0] == str(natoms):# ignore comment and read any non-empty line
+                elif line.split() and line.split()[0] == str(
+                    natoms
+                ):  # ignore comment and read any non-empty line
                     # print(line.split())
                     # print(line)
                     # print(line.split())
@@ -49,20 +49,20 @@ def _parse_atoms(file,pdb):
                     natoms = natoms + 1
             break
 
-    for i in range(natoms-1):
+    for i in range(natoms - 1):
         site = Atom()
         site.mass = float(mass[i])
         site.charge = float(charge[i])
-        for index in range(len(dicts_atype)): #change the for loop
+        for index in range(len(dicts_atype)):  # change the for loop
             # Loop over dictionary to assign epsilon
             for key in dicts_atype[index]:
                 # print(index,key,dicts_atype[index][key])
                 if dicts_atype[index]["type"] == atype[i]:
-                   sigma = dicts_atype[index]["sigma"]
-                   epsilon = dicts_atype[index]["epsilon"]
-                   break
+                    sigma = dicts_atype[index]["sigma"]
+                    epsilon = dicts_atype[index]["epsilon"]
+                    break
                 break
-        
+
         site.atom_type = AtomType(
             name=atype[i],
             charge=float(charge[i]),
@@ -75,11 +75,12 @@ def _parse_atoms(file,pdb):
             independent_variables={"r"},
         )
         pdb.add_site(site)
- 
+
     file.seek(0)
     return pdb
 
-def _parse_bonds(file,pdb):
+
+def _parse_bonds(file, pdb):
     bind_1 = []
     bind_2 = []
     b_type = []
@@ -119,8 +120,9 @@ def _parse_bonds(file,pdb):
     file.seek(0)
     return pdb
 
-def _parse_angles(file,pdb):
-     # collect angle parameters in a list
+
+def _parse_angles(file, pdb):
+    # collect angle parameters in a list
     aind_1 = []
     aind_2 = []
     aind_3 = []
@@ -173,9 +175,21 @@ def _parse_angles(file,pdb):
     return pdb
 
 
-def  _parse_RB(pdb,line):
-    dind_1, dind_2, dind_3,dind_4=int(line.split()[0]) - 1, int(line.split()[1]) - 1,int(line.split()[2]) - 1,int(line.split()[3]) - 1
-    c0,c1,c2,c3,c4,c5=float(line.split()[5]),float(line.split()[6]),float(line.split()[7]),float(line.split()[8]),float(line.split()[9]),float(line.split()[9])
+def _parse_RB(pdb, line):
+    dind_1, dind_2, dind_3, dind_4 = (
+        int(line.split()[0]) - 1,
+        int(line.split()[1]) - 1,
+        int(line.split()[2]) - 1,
+        int(line.split()[3]) - 1,
+    )
+    c0, c1, c2, c3, c4, c5 = (
+        float(line.split()[5]),
+        float(line.split()[6]),
+        float(line.split()[7]),
+        float(line.split()[8]),
+        float(line.split()[9]),
+        float(line.split()[9]),
+    )
 
     site_1 = pdb.sites[dind_1]
     site_2 = pdb.sites[dind_2]
@@ -199,21 +213,29 @@ def  _parse_RB(pdb,line):
             site_4.atom_type.atomclass,
         ),
         parameters={
-            "c0":  c0 * u.Unit("kJ / (deg**2)"),
-            "c1":  c1 * u.Unit("kJ / (deg**2)"),
-            "c2":  c2 * u.Unit("kJ / (deg**2)"),
-            "c3":  c3 * u.Unit("kJ / (deg**2)"),
-            "c4":  c4 * u.Unit("kJ / (deg**2)"),
-            "c5":  c5 * u.Unit("kJ / (deg**2)"),
+            "c0": c0 * u.Unit("kJ / (deg**2)"),
+            "c1": c1 * u.Unit("kJ / (deg**2)"),
+            "c2": c2 * u.Unit("kJ / (deg**2)"),
+            "c3": c3 * u.Unit("kJ / (deg**2)"),
+            "c4": c4 * u.Unit("kJ / (deg**2)"),
+            "c5": c5 * u.Unit("kJ / (deg**2)"),
         },
     )
     pdb.add_connection(diehdrals)
-    
 
 
-def  _parse_harmonic(pdb,line):
-    dind_1, dind_2, dind_3,dind_4=int(line.split()[0]) - 1, int(line.split()[1]) - 1,int(line.split()[2]) - 1,int(line.split()[3]) - 1
-    d_K,d_phi,d_n=float(line.split()[5]),float(line.split()[6]),float(line.split()[7])
+def _parse_harmonic(pdb, line):
+    dind_1, dind_2, dind_3, dind_4 = (
+        int(line.split()[0]) - 1,
+        int(line.split()[1]) - 1,
+        int(line.split()[2]) - 1,
+        int(line.split()[3]) - 1,
+    )
+    d_K, d_phi, d_n = (
+        float(line.split()[5]),
+        float(line.split()[6]),
+        float(line.split()[7]),
+    )
 
     site_1 = pdb.sites[dind_1]
     site_2 = pdb.sites[dind_2]
@@ -246,37 +268,39 @@ def  _parse_harmonic(pdb,line):
         },
     )
     pdb.add_connection(diehdrals)
-    
 
-def _parse_dihedrals(file,pdb):
-    #dry run to get the dihedral type 
-    for i,line in enumerate(file): 
+
+def _parse_dihedrals(file, pdb):
+    # dry run to get the dihedral type
+    for i, line in enumerate(file):
         if "dihedrals" in line:
-            for i,line in enumerate(file): 
-               if line.split() and ";" not in line.split():
-                    d_type=int(line.split()[4])
-                    break 
+            for i, line in enumerate(file):
+                if line.split() and ";" not in line.split():
+                    d_type = int(line.split()[4])
+                    break
             break
 
-    dicts_dtype={1:_parse_harmonic,3:_parse_RB}    #This one should come from the GROMACS page 
-    #https://manual.gromacs.org/documentation/current/reference-manual/topologies/topology-file-formats.html
-    parser=dicts_dtype[d_type]
+    dicts_dtype = {
+        1: _parse_harmonic,
+        3: _parse_RB,
+    }  # This one should come from the GROMACS page
+    # https://manual.gromacs.org/documentation/current/reference-manual/topologies/topology-file-formats.html
+    parser = dicts_dtype[d_type]
 
-    #file.seek(0)
+    # file.seek(0)
     # #return to previous line command not working (will fix it later)
 
     for line in file:
         if line.split() and ";" not in line.split():
-            parser(pdb,line)
+            parser(pdb, line)
         else:
             break
 
     return pdb
-  
-      
-    #https://github.com/mosdef-hub/gmso/tree/main/gmso/lib/jsons
-      
-      
+
+    # https://github.com/mosdef-hub/gmso/tree/main/gmso/lib/jsons
+
+
 def read_itp(itp_file):
     """Create a topology from a provided gro file.
     The Gromos87 (gro) format is a common plain text structure file used
@@ -304,10 +328,10 @@ def read_itp(itp_file):
     when converting to `topology"""
     topology = gmso.Topology()
     with open(itp_file, "r") as file:
-        #build topology sequentially 
-        _parse_atoms(file,topology)
-        _parse_bonds(file,topology)
-        _parse_angles(file,topology)
-        _parse_dihedrals(file,topology)
+        # build topology sequentially
+        _parse_atoms(file, topology)
+        _parse_bonds(file, topology)
+        _parse_angles(file, topology)
+        _parse_dihedrals(file, topology)
         pass
     return topology
