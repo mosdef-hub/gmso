@@ -1,7 +1,7 @@
 """Write a GROMACS topology (.TOP) file."""
 
 import datetime
-import warnings
+import logging
 
 import numpy as np
 import unyt as u
@@ -21,6 +21,8 @@ from gmso.parameterization.molecule_utils import (
 )
 from gmso.utils.compatibility import check_compatibility
 from gmso.utils.connectivity import generate_pairs_lists
+
+logger = logging.getLogger(__name__)
 
 
 @saves_as(".top")
@@ -269,7 +271,7 @@ def write_top(top, filename, top_vars=None, settles_tag=None):
                                 )
                             )
                         if conn_group == "dihedral_restraints":
-                            warnings.warn(
+                            logger.info(
                                 "The dihedral_restraints writer is designed to work with"
                                 "`define = DDIHRES` clause in the GROMACS input file (.mdp)"
                             )

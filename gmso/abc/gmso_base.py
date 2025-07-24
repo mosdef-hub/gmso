@@ -1,7 +1,7 @@
 """Base model all classes extend."""
 
 import json
-import warnings
+import logging
 from abc import ABC
 from typing import Any, Type
 
@@ -14,6 +14,8 @@ Model = Type["Model"]
 DictStrAny = Type["DictStrAny"]
 TupleGenerator = Type["TupleGenerator"]
 CallableGenerator = Type["CallableGenerator"]
+
+logger = logging.getLogger(__name__)
 
 
 class GMSOBase(BaseModel, ABC):
@@ -39,7 +41,7 @@ class GMSOBase(BaseModel, ABC):
         if name in self.model_config.get("alias_to_fields"):
             name = self.model_config.get("alias_to_fields")[name]
         elif name in self.model_config.get("alias_to_fields").values():
-            warnings.warn(
+            logger.info(
                 "Use of internal fields is discouraged. "
                 "Please use external fields to set attributes."
             )

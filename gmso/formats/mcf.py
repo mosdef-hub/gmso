@@ -1,7 +1,7 @@
 """Write Cassandra Monte Carlo MCF files."""
 
 import datetime
-import warnings
+import logging
 
 import networkx as nx
 import numpy as np
@@ -19,6 +19,8 @@ from gmso.utils.conversions import (
     convert_opls_to_ryckaert,
     convert_ryckaert_to_fourier,
 )
+
+logger = logging.getLogger(__name__)
 
 __all__ = ["write_mcf"]
 
@@ -132,7 +134,7 @@ def _id_rings_fragments(top):
         ]
     )
     if len(top.bonds) == 0:
-        warnings.warn("No bonds found. Cassandra will interpet this as a rigid species")
+        logger.info("No bonds found. Cassandra will interpet this as a rigid species")
         in_ring = [False] * len(top.sites)
         frag_list = []
         frag_conn = []
@@ -207,7 +209,7 @@ def _id_rings_fragments(top):
             if len(shared_atoms) == 2:
                 frag_conn.append([i, j])
             elif len(shared_atoms) > 2:
-                warnings.warn(
+                logger.info(
                     "Fragments share more than two atoms..."
                     "something may be going awry unless there are"
                     "fused rings in your system. See below for details."
@@ -244,7 +246,7 @@ def _write_atom_information(mcf, top, in_ring):
     n_unique_names = len(set(names))
     for name in names:
         if len(name) > max_element_length:
-            warnings.warn(
+            logger.info(
                 f"Name: {name} will be shortened to {max_element_length}"
                 "characters. Please confirm your final MCF."
             )
@@ -253,7 +255,7 @@ def _write_atom_information(mcf, top, in_ring):
     # cause two previously unique atom names to become identical.
     names = [name[:max_element_length] for name in names]
     if len(set(names)) < n_unique_names:
-        warnings.warn(
+        logger.info(
             "The number of unique names has been reduced due"
             f"to shortening the name to {max_element_length} characters."
         )
@@ -263,7 +265,7 @@ def _write_atom_information(mcf, top, in_ring):
 
     for type_ in n_unique_types:
         if len(type_.name) > max_atomtype_length:
-            warnings.warn(
+            logger.info(
                 f"Type name: {type_.name} will be shortened to "
                 f"{max_atomtype_length} characters as "
                 f"{type[-max_atomtype_length:]}. Please confirm your final MCF."
@@ -271,7 +273,7 @@ def _write_atom_information(mcf, top, in_ring):
     atypes_list = [itype[-max_atomtype_length:] for itype in atypes_list]
 
     if len(set(atypes_list)) < len(n_unique_types):
-        warnings.warn(
+        logger.info(
             "The number of unique atomtypes has been reduced due to "
             f"shortening the atomtype name to {max_atomtype_length} characters."
         )
@@ -603,7 +605,7 @@ def _write_fragment_information(mcf, top, frag_list, frag_conn):
             mcf.write("1\n")
             mcf.write("1 2 1 2\n")
         else:
-            warnings.warn("More than two atoms present but no fragments identified.")
+            logger.info("More than two atoms present but no fragments identified.")
             mcf.write("0\n")
     else:
         mcf.write("{:d}\n".format(len(frag_list)))

@@ -1,7 +1,7 @@
 """Read and write Gromos87 (.GRO) file format."""
 
 import datetime
-import warnings
+import logging
 
 import numpy as np
 import unyt as u
@@ -12,6 +12,8 @@ from gmso.core.atom import Atom
 from gmso.core.box import Box
 from gmso.core.topology import Topology
 from gmso.formats.formats_registry import loads_as, saves_as
+
+logger = logging.getLogger(__name__)
 
 
 @loads_as(".gro")
@@ -83,7 +85,7 @@ def read_gro(filename):
             top.add_site(site, update_types=False)
 
         if len(positions) == 6:
-            warnings.warn("Velocity information presents but will not be parsed.")
+            logger.info("Velocity information presents but will not be parsed.")
         top.update_topology()
 
         # Box information
@@ -155,7 +157,7 @@ def write_gro(top, filename, n_decimals=3, shift_coord=False):
 def _validate_positions(pos_array):
     """Modify coordinates, as necessary, to fit limitations of the GRO format."""
     if np.min(pos_array) < 0:
-        warnings.warn(
+        logger.info(
             "Topology contains some negative positions. Translating "
             "in order to ensure all coordinates are non-negative."
         )
@@ -169,7 +171,7 @@ def _validate_positions(pos_array):
 
 def _prepare_atoms(top, updated_positions, n_decimals):
     out_str = str()
-    warnings.warn(
+    logger.info(
         "Residue information is parsed from site.molecule,"
         "or site.residue if site.molecule does not exist."
         "Note that the residue idx will be bumped by 1 since GROMACS utilize 1-index."

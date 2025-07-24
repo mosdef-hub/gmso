@@ -1,10 +1,12 @@
 """Represent box regions in gmso."""
 
-import warnings
+import logging
 
 import numpy as np
 import unyt as u
 from unyt.array import allclose_units
+
+logger = logging.getLogger(__name__)
 
 
 def _validate_lengths(lengths):
@@ -16,7 +18,7 @@ def _validate_lengths(lengths):
                 [length for length in lengths], str(lengths[0].units)
             )
         else:
-            warnings.warn("Lengths are assumed to be in nm")
+            logger.info("Lengths are assumed to be in nm")
             lengths *= u.nm
     input_unit = lengths.units
 
@@ -45,7 +47,7 @@ def _validate_lengths(lengths):
         )
     ):
         if lengths[0] > 0 and lengths[1] > 0:
-            warnings.warn(
+            logger.info(
                 "A c value of 0 was passed. This will be interpreted as a 2-D box."
             )
         else:
@@ -64,7 +66,7 @@ def _validate_angles(angles):
         angles *= u.degree
     else:
         if not isinstance(angles, u.unyt_array):
-            warnings.warn("Angles are assumed to be in degrees")
+            logger.info("Angles are assumed to be in degrees")
             angles *= u.degree
 
         input_unit = angles.units

@@ -1,6 +1,6 @@
 """Support non-bonded interactions between sites."""
 
-import warnings
+import logging
 from typing import Optional, Set, Union
 
 import unyt as u
@@ -12,6 +12,8 @@ from gmso.utils._constants import UNIT_WARNING_STRING
 from gmso.utils.expression import PotentialExpression
 from gmso.utils.misc import ensure_valid_dimensions, unyt_compare
 from gmso.utils.units import GMSO_UnitRegistry
+
+logger = logging.getLogger(__name__)
 
 
 class AtomType(ParametricPotential):
@@ -233,7 +235,7 @@ class AtomType(ParametricPotential):
         """Check to see that a mass is a unyt array of the right dimension."""
         default_mass_units = u.gram / u.mol
         if not isinstance(mass, u.unyt_array):
-            warnings.warn(UNIT_WARNING_STRING.format("Masses", "g/mol"))
+            logger.info(UNIT_WARNING_STRING.format("Masses", "g/mol"))
             mass *= u.gram / u.mol
         else:
             ensure_valid_dimensions(mass, default_mass_units)
@@ -245,7 +247,7 @@ class AtomType(ParametricPotential):
     def validate_charge(cls, charge):
         """Check to see that a charge is a unyt array of the right dimension."""
         if not isinstance(charge, u.unyt_array):
-            warnings.warn(UNIT_WARNING_STRING.format("Charges", "elementary charge"))
+            logger.info(UNIT_WARNING_STRING.format("Charges", "elementary charge"))
             charge *= u.Unit("elementary_charge", registry=GMSO_UnitRegistry().reg)
         else:
             ensure_valid_dimensions(charge, u.elementary_charge)

@@ -1,6 +1,5 @@
 """The parameterizer module for a gmso Topology."""
 
-import warnings
 from typing import Dict, Union
 
 import networkx as nx
@@ -33,6 +32,10 @@ try:
     from pydantic.v1 import Field
 except ImportError:
     from pydantic import Field
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ParameterizationError(GMSOError):
@@ -372,7 +375,7 @@ class TopologyParameterizer(GMSOBase):
             )
             if not labels or labels == IndexedSet([None]):
                 # raise ParameterizationError(
-                warnings.warn(
+                logger.info(
                     f"The provided gmso topology doesn't have any group/molecule."
                     f"Either use a single forcefield to apply to to whole topology "
                     f"or provide an appropriate topology whose molecule names are "
@@ -383,7 +386,7 @@ class TopologyParameterizer(GMSOBase):
             assert_no_boundary_bonds(self.topology)
             for label in labels:
                 if label not in self.forcefields:
-                    warnings.warn(
+                    logger.info(
                         f"Group/molecule {label} will not be parameterized, as the forcefield to parameterize it "
                         f"is missing."
                     )  # FixMe: Will warning be enough?
