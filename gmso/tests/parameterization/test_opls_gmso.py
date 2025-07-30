@@ -1,8 +1,8 @@
 from pathlib import Path
 
+import importlib_resources
 import parmed as pmd
 import pytest
-import importlib_resources
 
 from gmso.external.convert_parmed import from_parmed
 from gmso.parameterization.parameterize import apply
@@ -12,9 +12,9 @@ from gmso.tests.parameterization.parameterization_base_test import (
 
 
 def get_foyer_opls_test_dirs():
-    fn = importlib_resources.files('foyer') / "opls_validation"
+    fn = importlib_resources.files("foyer") / "opls_validation"
     all_dirs = fn.glob("*")
-    tests_fn = importlib_resources.files('foyer') / "tests/implemented_opls_tests.txt"
+    tests_fn = importlib_resources.files("foyer") / "tests/implemented_opls_tests.txt"
     with importlib_resources.as_file(tests_fn) as tempPath:
         with open(tempPath) as impl_file:
             correctly_implemented = set(impl_file.read().strip().split("\n"))
