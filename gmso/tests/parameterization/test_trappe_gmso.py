@@ -1,8 +1,7 @@
-import glob
 from pathlib import Path
 
 import pytest
-from pkg_resources import resource_filename
+import importlib_resources
 
 from gmso.core.topology import Topology
 from gmso.external.convert_parmed import from_parmed, to_parmed
@@ -13,10 +12,10 @@ from gmso.tests.parameterization.parameterization_base_test import (
 
 
 def get_foyer_trappe_test_dirs():
-    all_dirs = glob.glob(resource_filename("foyer", "trappe_validation") + "/*")
-    with open(
-        resource_filename("foyer", "tests/implemented_trappe_tests.txt")
-    ) as impl_file:
+    fn = importlib_resources.files('foyer') / "trapped_validation"
+    all_dirs = fn.glob("*")
+    tests_fn = importlib_resources.files('foyer') / "tests/implemented_trappe_tests.txt"
+    with open(tests_fn) as impl_file:
         correctly_implemented = set(impl_file.read().strip().split("\n"))
 
     parent_dirs = map(Path, all_dirs)
