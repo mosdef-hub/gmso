@@ -50,11 +50,10 @@ def get_fn(filename):
     fn : str
         Full path to filename
     """
-    # fn = resource_filename("gmso", os.path.join("utils", "files", filename))
-    fn = importlib_resources.files('gmso') / "utils/files" / filename
+    fn = importlib_resources.files("gmso") / "utils/files" / filename
     if not os.path.exists(fn):
         raise IOError("Sorry! {} does not exists.".format(fn))
-    return fn
+    return str(fn)
 
 
 def import_(module):
