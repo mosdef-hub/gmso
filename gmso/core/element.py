@@ -5,9 +5,9 @@ import logging
 from re import sub
 from typing import Union
 
+import importlib_resources
 import numpy as np
 import unyt as u
-from pkg_resources import resource_filename
 from pydantic import ConfigDict, Field, field_serializer
 
 from gmso.abc.gmso_base import GMSOBase
@@ -339,12 +339,13 @@ def element_by_atom_type(atom_type, verbose=False):
 
 
 # Get the JSON file from ele package for a standard representation
-elements_json_loc = resource_filename("ele", "lib/elements.json")
-elements_dict = None
-elements = []
-with open(elements_json_loc, "r") as el_json_file:
-    elements_dict = json.load(el_json_file)
-    elements_dict = {int(key): value for key, value in elements_dict.items()}
+fn = importlib_resources.files("ele") / "lib/elements.json"
+with importlib_resources.as_file(fn) as path:
+    elements_dict = None
+    elements = []
+    with open(path, "r") as el_json_file:
+        elements_dict = json.load(el_json_file)
+        elements_dict = {int(key): value for key, value in elements_dict.items()}
 
 
 for atom_number, element_properties in elements_dict.items():

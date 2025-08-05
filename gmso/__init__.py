@@ -1,6 +1,10 @@
 # ruff: noqa: F401
 """GMSO: General Molecular Simulation Object."""
 
+import logging
+import sys
+from logging.handlers import RotatingFileHandler
+
 from .core.angle import Angle
 from .core.angle_type import AngleType
 from .core.atom import Atom
@@ -19,12 +23,6 @@ from .core.topology import Topology
 from .core.virtual_site import VirtualSite
 from .core.virtual_type import VirtualType
 
-__version__ = "0.13.0"
-
-import logging
-import sys
-from logging.handlers import RotatingFileHandler
-
 
 class DeduplicationFilter(logging.Filter):
     """A logging filter that suppresses duplicate messages."""
@@ -39,6 +37,10 @@ class DeduplicationFilter(logging.Filter):
             self.logged_messages.add(log_entry)
             return True
         return False
+
+
+# Example usage
+# gmso_logger = GMSOLogger()
 
 
 class GMSOLogger:
@@ -82,5 +84,4 @@ class GMSOLogger:
             self.library_logger.removeHandler(handler)
 
 
-# Example usage in __init__.py
-# gmso_logger = GMSOLogger()
+__version__ = "0.14.0"
