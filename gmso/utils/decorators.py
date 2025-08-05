@@ -1,6 +1,7 @@
 """Various decorators for GMSO."""
 
 import functools
+from warnings import warn
 import logging
 
 logger = logging.getLogger(__name__)
@@ -42,7 +43,7 @@ def _deprecate_kwargs(kwargs, deprecated_kwargs):
             "next minor release of the package. Please update your code accordingly"
         )
     if added_args:
-        logger.info(
+        warn(
             message.format(
                 dep_args=", ".join(added_args),
                 dep_params=", ".join(added_params),

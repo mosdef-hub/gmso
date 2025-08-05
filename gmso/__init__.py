@@ -53,7 +53,7 @@ class GMSOLogger:
         self.file_handler = RotatingFileHandler(
             "gmso.log", maxBytes=10**6, backupCount=3
         )
-        self.file_handler.setLevel(logging.DEBUG)
+        self.file_handler.setLevel(logging.INFO)
 
         # Create a formatter
         formatter = logging.Formatter(
@@ -83,4 +83,5 @@ class GMSOLogger:
 
 
 # Example usage in __init__.py
-# gmso_logger = GMSOLogger()
+gmso_logger = GMSOLogger()
+gmso_logger.library_logger.setLevel(logging.INFO)

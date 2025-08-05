@@ -13,7 +13,7 @@ from pydantic import ValidationError
 from gmso.core.element import element_by_symbol
 from gmso.exceptions import GMSOError, MissingPotentialError
 from gmso.utils._constants import FF_TOKENS_SEPARATOR
-from gmso.utils.decorators import deprecate_function, deprecate_kwargs
+# from gmso.utils.decorators import deprecate_function, deprecate_kwargs
 from gmso.utils.ff_utils import (
     parse_ff_atomtypes,
     parse_ff_connection_types,
@@ -88,7 +88,7 @@ class ForceField(object):
 
     """
 
-    @deprecate_kwargs([("backend", "gmso"), ("backend", "GMSO")])
+    # @deprecate_kwargs([("backend", "gmso"), ("backend", "GMSO")])
     def __init__(
         self,
         xml_loc=None,
@@ -752,9 +752,6 @@ class ForceField(object):
         )
 
     @classmethod
-    @deprecate_function(
-        "The internal `from_xml` will be deprecated soon. Please load the XML with the `xml_from_forcefield_utilities`."
-    )
     def from_xml(cls, xmls_or_etrees, strict=True, greedy=True):
         """Create a gmso.Forcefield object from XML File(s).
 

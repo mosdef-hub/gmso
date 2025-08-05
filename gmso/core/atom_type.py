@@ -235,7 +235,7 @@ class AtomType(ParametricPotential):
         """Check to see that a mass is a unyt array of the right dimension."""
         default_mass_units = u.gram / u.mol
         if not isinstance(mass, u.unyt_array):
-            logger.info(UNIT_WARNING_STRING.format("Masses", "g/mol"))
+            # logger.info(UNIT_WARNING_STRING.format("Masses", "g/mol"))
             mass *= u.gram / u.mol
         else:
             ensure_valid_dimensions(mass, default_mass_units)
@@ -247,7 +247,7 @@ class AtomType(ParametricPotential):
     def validate_charge(cls, charge):
         """Check to see that a charge is a unyt array of the right dimension."""
         if not isinstance(charge, u.unyt_array):
-            logger.info(UNIT_WARNING_STRING.format("Charges", "elementary charge"))
+            # logger.info(UNIT_WARNING_STRING.format("Charges", "elementary charge"))
             charge *= u.Unit("elementary_charge", registry=GMSO_UnitRegistry().reg)
         else:
             ensure_valid_dimensions(charge, u.elementary_charge)
