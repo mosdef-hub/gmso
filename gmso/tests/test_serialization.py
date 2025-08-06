@@ -222,8 +222,8 @@ class TestSerialization(BaseTest):
     def test_serialization_untyped_with_types_info(self, ethane_from_scratch, caplog):
         import logging
 
-        caplog.set_level(logging.INFO)
-        ethane_from_scratch.save("ethane_from_scratch.json", types=True)
+        with caplog.at_level(logging.INFO, logger="gmso"):
+            ethane_from_scratch.save("ethane_from_scratch.json", types=True)
         assert (
             "Cannot incorporate types because the topology is not typed." in caplog.text
         )

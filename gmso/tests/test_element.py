@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 import unyt as u
 
@@ -16,24 +18,30 @@ class TestElement(BaseTest):
         assert carbon.symbol == "C"
         assert carbon.mass == element.Carbon.mass
 
-    def test_element_by_name(self):
+    def test_element_by_name(self, caplog):
+        match = "Numbers and spaces are not considered when searching by element name"
         for idx, name in enumerate(["Carbon", "carbon", " CarBon 12 "]):
             if idx == 1:
                 carbon = element.element_by_name(name, verbose=True)
             else:
-                with pytest.warns(UserWarning):
+                with caplog.at_level(logging.INFO, logger="gmso"):
                     carbon = element.element_by_name(name, verbose=True)
+                assert match in caplog.text
+                caplog.clear()
             assert carbon.name == element.Carbon.name
             assert carbon.symbol == element.Carbon.symbol
             assert carbon.mass == element.Carbon.mass
 
-    def test_element_by_symbol(self):
+    def test_element_by_symbol(self, caplog):
+        match = "Numbers and spaces are not considered when searching by element symbol"
         for idx, symbol in enumerate(["N", "n", " N7"]):
             if idx == 0:
                 nitrogen = element.element_by_symbol(symbol, verbose=True)
             else:
-                with pytest.warns(UserWarning):
+                with caplog.at_level(logging.INFO, logger="gmso"):
                     nitrogen = element.element_by_symbol(symbol, verbose=True)
+                assert match in caplog.text
+                caplog.clear()
             assert nitrogen.name == element.Nitrogen.name
             assert nitrogen.symbol == element.Nitrogen.symbol
             assert nitrogen.mass == element.Nitrogen.mass

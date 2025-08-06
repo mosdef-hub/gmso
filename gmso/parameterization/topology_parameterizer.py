@@ -374,8 +374,7 @@ class TopologyParameterizer(GMSOBase):
                 self.config.match_ff_by, name_only=True
             )
             if not labels or labels == IndexedSet([None]):
-                # raise ParameterizationError(
-                logger.info(
+                raise ParameterizationError(
                     f"The provided gmso topology doesn't have any group/molecule."
                     f"Either use a single forcefield to apply to to whole topology "
                     f"or provide an appropriate topology whose molecule names are "
@@ -386,7 +385,7 @@ class TopologyParameterizer(GMSOBase):
             assert_no_boundary_bonds(self.topology)
             for label in labels:
                 if label not in self.forcefields:
-                    logger.info(
+                    logger.warning(
                         f"Group/molecule {label} will not be parameterized, as the forcefield to parameterize it "
                         f"is missing."
                     )  # FixMe: Will warning be enough?

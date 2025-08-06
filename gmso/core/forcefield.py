@@ -13,7 +13,7 @@ from pydantic import ValidationError
 from gmso.core.element import element_by_symbol
 from gmso.exceptions import GMSOError, MissingPotentialError
 from gmso.utils._constants import FF_TOKENS_SEPARATOR
-# from gmso.utils.decorators import deprecate_function, deprecate_kwargs
+from gmso.utils.decorators import deprecate_kwargs
 from gmso.utils.ff_utils import (
     parse_ff_atomtypes,
     parse_ff_connection_types,
@@ -88,7 +88,7 @@ class ForceField(object):
 
     """
 
-    # @deprecate_kwargs([("backend", "gmso"), ("backend", "GMSO")])
+    @deprecate_kwargs([("backend", "gmso"), ("backend", "GMSO")])
     def __init__(
         self,
         xml_loc=None,
@@ -329,7 +329,7 @@ class ForceField(object):
         if not self.atom_types.get(atom_type):
             msg = f"AtomType {atom_type} is not present in the ForceField"
             if warn:
-                logger.info(msg)
+                logger.warning(msg)
             else:
                 raise MissingPotentialError(msg)
 
@@ -361,7 +361,7 @@ class ForceField(object):
             else:
                 return match[0]
         elif warn:
-            logger.info(msg)
+            logger.warning(msg)
             return None
         else:
             raise MissingPotentialError(msg)
@@ -392,7 +392,7 @@ class ForceField(object):
             else:
                 return match[0]
         elif warn:
-            logger.info(msg)
+            logger.warning(msg)
             return None
         else:
             raise MissingPotentialError(msg)
@@ -451,7 +451,7 @@ class ForceField(object):
             else:
                 return match[0]
         elif warn:
-            logger.info(msg)
+            logger.warning(msg)
             return None
         else:
             raise MissingPotentialError(msg)
@@ -519,7 +519,7 @@ class ForceField(object):
         if match:
             return match
         elif warn:
-            logger.info(msg)
+            logger.warning(msg)
             return None
         else:
             raise MissingPotentialError(msg)
@@ -540,7 +540,7 @@ class ForceField(object):
             else:
                 return match[0]  # only return the atoms, not their order
         elif warn:
-            logger.info(msg)
+            logger.warning(msg)
             return None
         else:
             raise MissingPotentialError(msg)

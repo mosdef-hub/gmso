@@ -13,7 +13,6 @@ def _validate_lengths(lengths):
     """Ensure the lengths of the box are positive and check dimension."""
     if not isinstance(lengths, u.unyt_array):
         if all(isinstance(length, u.unyt_quantity) for length in lengths):
-            print("Converting list of unyt quantities to a unyt array")
             lengths = u.unyt_array(
                 [length for length in lengths], str(lengths[0].units)
             )
@@ -23,7 +22,7 @@ def _validate_lengths(lengths):
     input_unit = lengths.units
 
     lengths = np.asarray(lengths, dtype=float, order="C")
-    np.reshape(lengths, shape=(3,), order="C")
+    np.reshape(lengths, newshape=(3,), order="C")
 
     lengths *= input_unit
     if input_unit != u.Unit("dimensionless"):
@@ -72,7 +71,7 @@ def _validate_angles(angles):
         input_unit = angles.units
 
         angles = np.asarray(angles, dtype=float, order="C")
-        np.reshape(angles, shape=(3, 1), order="C")
+        np.reshape(angles, newshape=(3, 1), order="C")
 
         angles *= input_unit
         angles.convert_to_units(u.degree)
