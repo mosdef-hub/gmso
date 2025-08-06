@@ -40,48 +40,73 @@ class DeduplicationFilter(logging.Filter):
             return True
         return False
 
+class HeaderRotatingFileHandler(RotatingFileHandler):
+    def __init__(self, filename, mode='a', maxBytes=0, backupCount=0, encoding=None, delay=False, header=''):
+        self.header = header
+        super().__init__(filename, mode, maxBytes, backupCount, encoding, delay)
+
+    def _open(self):
+        """
+        Open the current base log file, with the header written.
+        """
+        stream = super()._open()
+        if stream.tell() == 0 and self.header:  # Only write header if file is empty
+            stream.write(self.header + '\n')
+        return stream
 
 class GMSOLogger:
     def __init__(self):
         self.library_logger = logging.getLogger("gmso")
-        self.library_logger.setLevel(logging.INFO)
+        self.library_logger.setLevel(logging.WARNING)
 
         # Create handlers
         self.console_handler = logging.StreamHandler(sys.stdout)
-        self.console_handler.setLevel(logging.INFO)
-
-        self.file_handler = RotatingFileHandler(
-            "gmso.log", maxBytes=10**6, backupCount=3
-        )
-        self.file_handler.setLevel(logging.INFO)
+        self.console_handler.setLevel(logging.WARNING)
 
         # Create a formatter
-        formatter = logging.Formatter(
+        self.formatter = logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
 
         # Add formatter to handlers
-        self.console_handler.setFormatter(formatter)
-        self.file_handler.setFormatter(formatter)
+        self.console_handler.setFormatter(self.formatter)
 
         # Initialize and add the deduplication filter
         self.dedup_filter = DeduplicationFilter()
         self.console_handler.addFilter(self.dedup_filter)
-        self.file_handler.addFilter(self.dedup_filter)
+
 
         # Clear any previous handlers to avoid duplicates in Jupyter
         self._clear_handlers()
 
         # Add handlers to the library logger
         self.library_logger.addHandler(self.console_handler)
-        # self.library_logger.addHandler(self.file_handler)
 
     def _clear_handlers(self):
         handlers = self.library_logger.handlers[:]
         for handler in handlers:
             self.library_logger.removeHandler(handler)
 
+    def debug_file(self, filename:str):
+        # Get the path to the Python interpreter
+        python_executable = sys.executable
+
+        # Get the list of command-line arguments
+        command_arguments = sys.argv
+
+        # Construct the full command
+        full_command = [python_executable] + command_arguments
+        header = f"Log details for GMSO {__version__} from running \n{full_command}"
+        self.file_handler = HeaderRotatingFileHandler(
+            filename, maxBytes=10**6, backupCount=1, header=header
+        )
+        # self.file_handler = RotatingFileHandler(filename, backupCount=3, )
+        self.file_handler.setLevel(logging.INFO)
+        self.file_handler.addFilter(self.dedup_filter)
+        self.file_handler.setFormatter(self.formatter)
+        self.library_logger.addHandler(self.file_handler)
+
 
 # Example usage in __init__.py
 gmso_logger = GMSOLogger()
-gmso_logger.library_logger.setLevel(logging.INFO)
+gmso_logger.library_logger.setLevel(logging.WARNING)
