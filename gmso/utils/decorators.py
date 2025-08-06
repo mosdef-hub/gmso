@@ -1,8 +1,8 @@
 """Various decorators for GMSO."""
 
 import functools
-from warnings import warn
 import logging
+from warnings import warn
 
 logger = logging.getLogger(__name__)
 
