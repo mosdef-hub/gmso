@@ -23,7 +23,7 @@ def _validate_lengths(lengths):
     input_unit = lengths.units
 
     lengths = np.asarray(lengths, dtype=float, order="C")
-    np.reshape(lengths, newshape=(3,), order="C")
+    np.reshape(lengths, shape=(3,), order="C")
 
     lengths *= input_unit
     if input_unit != u.Unit("dimensionless"):
@@ -72,7 +72,7 @@ def _validate_angles(angles):
         input_unit = angles.units
 
         angles = np.asarray(angles, dtype=float, order="C")
-        np.reshape(angles, newshape=(3, 1), order="C")
+        np.reshape(angles, shape=(3, 1), order="C")
 
         angles *= input_unit
         angles.convert_to_units(u.degree)

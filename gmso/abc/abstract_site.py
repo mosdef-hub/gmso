@@ -291,7 +291,7 @@ class Site(GMSOBase):
             logger.info("Positions are assumed to be in nm")
 
         try:
-            position = np.reshape(position, newshape=(3,), order="C")
+            position = np.reshape(position, shape=(3,), order="C")
             if position.units != u.dimensionless:
                 position.convert_to_units(u.nm)
         except ValueError:
