@@ -25,10 +25,6 @@ from .core.virtual_type import VirtualType
 
 __version__ = "0.14.0"
 
-import logging
-import sys
-from logging.handlers import RotatingFileHandler
-
 
 class DeduplicationFilter(logging.Filter):
     """A logging filter that suppresses duplicate messages."""
@@ -44,8 +40,18 @@ class DeduplicationFilter(logging.Filter):
             return True
         return False
 
+
 class HeaderRotatingFileHandler(RotatingFileHandler):
-    def __init__(self, filename, mode='a', maxBytes=0, backupCount=0, encoding=None, delay=False, header=''):
+    def __init__(
+        self,
+        filename,
+        mode="a",
+        maxBytes=0,
+        backupCount=0,
+        encoding=None,
+        delay=False,
+        header="",
+    ):
         self.header = header
         super().__init__(filename, mode, maxBytes, backupCount, encoding, delay)
 
@@ -55,8 +61,9 @@ class HeaderRotatingFileHandler(RotatingFileHandler):
         """
         stream = super()._open()
         if stream.tell() == 0 and self.header:  # Only write header if file is empty
-            stream.write(self.header + '\n')
+            stream.write(self.header + "\n")
         return stream
+
 
 class GMSOLogger:
     def __init__(self):
@@ -79,7 +86,6 @@ class GMSOLogger:
         self.dedup_filter = DeduplicationFilter()
         self.console_handler.addFilter(self.dedup_filter)
 
-
         # Clear any previous handlers to avoid duplicates in Jupyter
         self._clear_handlers()
 
@@ -91,7 +97,7 @@ class GMSOLogger:
         for handler in handlers:
             self.library_logger.removeHandler(handler)
 
-    def debug_file(self, filename:str):
+    def debug_file(self, filename: str):
         # Get the path to the Python interpreter
         python_executable = sys.executable
 

@@ -13,6 +13,7 @@ from pydantic import ValidationError
 from gmso.core.element import element_by_symbol
 from gmso.exceptions import GMSOError, MissingPotentialError
 from gmso.utils._constants import FF_TOKENS_SEPARATOR
+
 # from gmso.utils.decorators import deprecate_function, deprecate_kwargs
 from gmso.utils.ff_utils import (
     parse_ff_atomtypes,
