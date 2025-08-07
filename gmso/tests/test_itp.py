@@ -5,7 +5,6 @@ from gmso.tests.utils import get_path
 
 class Testitp(BaseTest):
     def test_itp_PNB(self):
-    
         top = read_itp(get_path("PNB.itp"))
         assert top != None
 
