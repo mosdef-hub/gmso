@@ -21,7 +21,7 @@ class Testitp(BaseTest):
                 float(bond.bond_type.parameters["r_eq"].value),
             )
             empty_set.add(b_type_tuple)
-        assert len(empty_set) == 6
+        assert len(empty_set) == 5
 
         for bond in top.bonds:
             b_type_tuple = (
@@ -29,4 +29,4 @@ class Testitp(BaseTest):
                 float(bond.bond_type.parameters["r_eq"].value),
             )
             empty_set.add(b_type_tuple)
-            assert len(empty_set) == 6
+            assert len(empty_set) == 5
