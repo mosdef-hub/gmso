@@ -20,32 +20,32 @@ def _parse_atoms(file, pdb):
 
     for line in file:
         if "atomtypes" in line:
-            for line in file:
-                if "molecule" in line:
+            for line_1 in file:
+                if "molecule" in line_1:
                     break
-                elif line.split() and ";" not in line.split():
+                elif line_1.split() and ";" not in line_1.split():
                     dicts_atype.append(
                         {
-                            "type": line.split()[0],
-                            "epsilon": float(line.split()[5]),
-                            "sigma": float(line.split()[6]),
+                            "type": line_1.split()[0],
+                            "epsilon": float(line_1.split()[5]),
+                            "sigma": float(line_1.split()[6]),
                         }
                     )
 
         if "atoms" in line:
             natoms = 1
-            for line in file:
-                if "[" in line:
+            for line_1 in file:
+                if "[" in line_1:
                     break
-                elif line.split() and line.split()[0] == str(
+                elif line_1.split() and line_1.split()[0] == str(
                     natoms
                 ):  # ignore comment and read any non-empty line
                     # print(line.split())
                     # print(line)
                     # print(line.split())
-                    atype.append(line.split()[1])
-                    mass.append(line.split()[7])
-                    charge.append(line.split()[6])
+                    atype.append(line_1.split()[1])
+                    mass.append(line_1.split()[7])
+                    charge.append(line_1.split()[6])
                     natoms = natoms + 1
             break
 
@@ -89,16 +89,16 @@ def _parse_bonds(file, pdb):
     for line in file:
         if "bonds" in line:
             nbonds = 0
-            for line in file:
-                if "[" in line:
+            for line_1 in file:
+                if "[" in line_1:
                     break
-                elif line.split() and ";" not in line.split():
+                elif line_1.split() and ";" not in line_1.split():
                     print(line)
-                    bind_1.append(int(line.split()[0]) - 1)
-                    bind_2.append(int(line.split()[1]) - 1)
-                    b_type.append(int(line.split()[2]))
-                    b_K.append(float(line.split()[3]))
-                    b_req.append(float(line.split()[4]))
+                    bind_1.append(int(line_1.split()[0]) - 1)
+                    bind_2.append(int(line_1.split()[1]) - 1)
+                    b_type.append(int(line_1.split()[2]))
+                    b_K.append(float(line_1.split()[3]))
+                    b_req.append(float(line_1.split()[4]))
                     nbonds = nbonds + 1
             break
 
@@ -133,17 +133,17 @@ def _parse_angles(file, pdb):
     for line in file:
         if "angles" in line:
             nang = 0
-            for line in file:
-                if "[" in line:
+            for line_1 in file:
+                if "[" in line_1:
                     break
-                elif line.split() and ";" not in line.split():
+                elif line_1.split() and ";" not in line_1.split():
                     print(line)
-                    aind_1.append(int(line.split()[0]) - 1)
-                    aind_2.append(int(line.split()[1]) - 1)
-                    aind_3.append(int(line.split()[2]) - 1)
-                    a_type.append(int(line.split()[3]))
-                    a_K.append(float(line.split()[4]))
-                    a_thetaeq.append(float(line.split()[5]))
+                    aind_1.append(int(line_1.split()[0]) - 1)
+                    aind_2.append(int(line_1.split()[1]) - 1)
+                    aind_3.append(int(line_1.split()[2]) - 1)
+                    a_type.append(int(line_1.split()[3]))
+                    a_K.append(float(line_1.split()[4]))
+                    a_thetaeq.append(float(line_1.split()[5]))
                     nang = nang + 1
             break
 
@@ -307,10 +307,11 @@ def read_itp(itp_file):
     commonly with the GROMACS simulation engine.  This file contains the
     simulation box parameters, number of atoms, the residue and atom number for
     each atom, as well as their positions and velocities (velocity is
-    optional).  This method will receive a string and returns a gmso `topology`.
+    optional).  This only takes a string, to be passed into with open(filename,"r") and returns gmso `topology`.
+
     Parameters
     ----------
-    filename : str or file object
+    filename : str 
         The path to the gro file either as a string, or a file object that
         points to the gro file.
     Returns
@@ -319,12 +320,7 @@ def read_itp(itp_file):
         A `topology` object containing site information
     Notes
     -----
-    Gro files do not specify connections between atoms, the returned topology
-    will not have connections between sites either.
-    Currently this implementation does not support parsing velocities from a gro file o
-    with more than 1 frame.
-    All residues and resid information from the gro file are currently lost
-    when converting to `topology"""
+    """
     topology = gmso.Topology()
     with open(itp_file, "r") as file:
         # build topology sequentially
