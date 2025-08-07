@@ -311,7 +311,7 @@ def read_itp(itp_file):
 
     Parameters
     ----------
-    filename : str 
+    filename : str
         The path to the gro file either as a string, or a file object that
         points to the gro file.
     Returns
