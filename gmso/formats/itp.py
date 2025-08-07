@@ -274,9 +274,9 @@ def _parse_dihedrals(file, pdb):
     # dry run to get the dihedral type
     for i, line in enumerate(file):
         if "dihedrals" in line:
-            for i, line in enumerate(file):
-                if line.split() and ";" not in line.split():
-                    d_type = int(line.split()[4])
+            for i, line_1 in enumerate(file):
+                if line_1.split() and ";" not in line_1.split():
+                    d_type = int(line_1.split()[4])
                     break
             break
 
@@ -311,7 +311,7 @@ def read_itp(itp_file):
 
     Parameters
     ----------
-    filename : str
+    filename : str 
         The path to the gro file either as a string, or a file object that
         points to the gro file.
     Returns
