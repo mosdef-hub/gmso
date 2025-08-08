@@ -44,7 +44,9 @@ class TestOPLSGMSO(ParameterizationBaseTest):
     ):
         top_file = str(system_dir / f"{system_dir.name}.top")
         gro_file = str(system_dir / f"{system_dir.name}.gro")
-        struct = oplsaa_foyer.apply(pmd.load_file(top_file, xyz=gro_file))
+        struct = oplsaa_foyer.apply(
+            pmd.load_file(top_file, xyz=gro_file, parametrize=False)
+        )
 
         gmso_top_from_pmd = from_parmed(struct, refer_type=True)
         gmso_top = from_parmed(struct, refer_type=False)
