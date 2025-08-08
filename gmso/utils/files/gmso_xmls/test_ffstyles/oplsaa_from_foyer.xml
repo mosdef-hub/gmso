@@ -876,7 +876,7 @@
         <Parameter name="sigma" value="0.355"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_148" mass="12.011" charge="-0.065" atomclass="CT" doi="10.1021/ja9621760" overrides="opls_135,opls_149" definition="[C;X4]([C;%opls_145])(H)(H)H" description="toluene CH3">
+    <AtomType name="opls_148" mass="12.011" charge="-0.065" atomclass="CT" doi="10.1021/ja9621760" overrides="opls_149,opls_135" definition="[C;X4]([C;%opls_145])(H)(H)H" description="toluene CH3">
       <Parameters>
         <Parameter name="epsilon" value="0.276144"/>
         <Parameter name="sigma" value="0.35"/>
@@ -996,7 +996,7 @@
         <Parameter name="sigma" value="0.25"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_157" mass="12.011" charge="0.145" atomclass="CT" doi="10.1021/ja9621760" overrides="opls_159,opls_158,opls_136" definition="[C;X4]([H])([H])([*])[O;%opls_154]" description="all-atom C: CH3 and CH2, alcohols">
+    <AtomType name="opls_157" mass="12.011" charge="0.145" atomclass="CT" doi="10.1021/ja9621760" overrides="opls_158,opls_159,opls_136" definition="[C;X4]([H])([H])([*])[O;%opls_154]" description="all-atom C: CH3 and CH2, alcohols">
       <Parameters>
         <Parameter name="epsilon" value="0.276144"/>
         <Parameter name="sigma" value="0.35"/>
@@ -1092,7 +1092,7 @@
         <Parameter name="sigma" value="1.0"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_173" mass="12.011" charge="0.145" atomclass="CT" doi="10.1021/ct200731v" overrides="opls_158,opls_157" definition="[C;X4]([H])([H])([O;X2]([H]))([C;X4]([O;X2]([H]))([C;X4]([O;X2]([H]))))" description="C(H2)(OH) in propane triols">
+    <AtomType name="opls_173" mass="12.011" charge="0.145" atomclass="CT" doi="10.1021/ct200731v" overrides="opls_157,opls_158" definition="[C;X4]([H])([H])([O;X2]([H]))([C;X4]([O;X2]([H]))([C;X4]([O;X2]([H]))))" description="C(H2)(OH) in propane triols">
       <Parameters>
         <Parameter name="epsilon" value="0.276144"/>
         <Parameter name="sigma" value="0.35"/>
@@ -1158,7 +1158,7 @@
         <Parameter name="sigma" value="0.35"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_185" mass="1.008" charge="0.03" atomclass="HC" doi="10.1021/ja9621760" overrides="opls_140,opls_176,opls_144" definition="HC[O;%opls_180]" description="H(COR), alpha H ether">
+    <AtomType name="opls_185" mass="1.008" charge="0.03" atomclass="HC" doi="10.1021/ja9621760" overrides="opls_144,opls_176,opls_140" definition="HC[O;%opls_180]" description="H(COR), alpha H ether">
       <Parameters>
         <Parameter name="epsilon" value="0.12552"/>
         <Parameter name="sigma" value="0.25"/>
@@ -1284,13 +1284,13 @@
         <Parameter name="sigma" value="1.0"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_206" mass="12.011" charge="0.06" atomclass="CT" doi="10.1021/ja9621760" overrides="opls_210,opls_207,opls_208" definition="[C;X4]([S;%opls_200])(H)(H)" description="C in R-CH2-S-H">
+    <AtomType name="opls_206" mass="12.011" charge="0.06" atomclass="CT" doi="10.1021/ja9621760" overrides="opls_208,opls_210,opls_207" definition="[C;X4]([S;%opls_200])(H)(H)" description="C in R-CH2-S-H">
       <Parameters>
         <Parameter name="epsilon" value="0.276144"/>
         <Parameter name="sigma" value="0.35"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_207" mass="12.011" charge="0.12" atomclass="CT" doi="10.1021/ja9621760" overrides="opls_211,opls_208" definition="[C;X4]([S;%opls_200])(H)([!H])([!H])" description="C in 2R-CH-S-H">
+    <AtomType name="opls_207" mass="12.011" charge="0.12" atomclass="CT" doi="10.1021/ja9621760" overrides="opls_208,opls_211" definition="[C;X4]([S;%opls_200])(H)([!H])([!H])" description="C in 2R-CH-S-H">
       <Parameters>
         <Parameter name="epsilon" value="0.276144"/>
         <Parameter name="sigma" value="0.35"/>
@@ -1302,7 +1302,7 @@
         <Parameter name="sigma" value="0.35"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_209" mass="12.011" charge="-0.013" atomclass="CT" doi="10.1021/ja9621760" overrides="opls_210,opls_211,opls_212" definition="[C;X4]([S;%opls_202])(H)(H)(H)" description="C in CH3-S-*">
+    <AtomType name="opls_209" mass="12.011" charge="-0.013" atomclass="CT" doi="10.1021/ja9621760" overrides="opls_212,opls_210,opls_211" definition="[C;X4]([S;%opls_202])(H)(H)(H)" description="C in CH3-S-*">
       <Parameters>
         <Parameter name="epsilon" value="0.276144"/>
         <Parameter name="sigma" value="0.35"/>
@@ -1326,19 +1326,19 @@
         <Parameter name="sigma" value="0.35"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_213" mass="12.011" charge="0.037" atomclass="CT" doi="10.1021/ja9621760" overrides="opls_215,opls_216,opls_209,opls_214" definition="[C;X4]([S;%opls_203])(H)(H)(H)" description="C in CH3-S-S-*">
+    <AtomType name="opls_213" mass="12.011" charge="0.037" atomclass="CT" doi="10.1021/ja9621760" overrides="opls_214,opls_216,opls_209,opls_215" definition="[C;X4]([S;%opls_203])(H)(H)(H)" description="C in CH3-S-S-*">
       <Parameters>
         <Parameter name="epsilon" value="0.276144"/>
         <Parameter name="sigma" value="0.35"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_214" mass="12.011" charge="0.098" atomclass="CT" doi="10.1021/ja9621760" overrides="opls_210,opls_215,opls_216" definition="[C;X4]([S;%opls_203])(H)(H)" description="C in R-CH2-S-S-*">
+    <AtomType name="opls_214" mass="12.011" charge="0.098" atomclass="CT" doi="10.1021/ja9621760" overrides="opls_216,opls_210,opls_215" definition="[C;X4]([S;%opls_203])(H)(H)" description="C in R-CH2-S-S-*">
       <Parameters>
         <Parameter name="epsilon" value="0.276144"/>
         <Parameter name="sigma" value="0.35"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_215" mass="12.011" charge="0.158" atomclass="CT" doi="10.1021/ja9621760" overrides="opls_211,opls_216" definition="[C;X4]([S;%opls_203])(H)" description="C in 2R-CH-S-S-*">
+    <AtomType name="opls_215" mass="12.011" charge="0.158" atomclass="CT" doi="10.1021/ja9621760" overrides="opls_216,opls_211" definition="[C;X4]([S;%opls_203])(H)" description="C in 2R-CH-S-S-*">
       <Parameters>
         <Parameter name="epsilon" value="0.276144"/>
         <Parameter name="sigma" value="0.35"/>
@@ -1350,13 +1350,13 @@
         <Parameter name="sigma" value="0.35"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_217" mass="12.011" charge="0.0" atomclass="CT" doi="10.1021/ja9621760" overrides="opls_207,opls_211,opls_206,opls_209" definition="[C;X4]([S;%opls_200])(H)(H)(H)" description="C in CH3-S-H (methanethiol)">
+    <AtomType name="opls_217" mass="12.011" charge="0.0" atomclass="CT" doi="10.1021/ja9621760" overrides="opls_206,opls_209,opls_211,opls_207" definition="[C;X4]([S;%opls_200])(H)(H)(H)" description="C in CH3-S-H (methanethiol)">
       <Parameters>
         <Parameter name="epsilon" value="0.276144"/>
         <Parameter name="sigma" value="0.35"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_218" mass="12.011" charge="0.2" atomclass="CT" doi="10.1021/ct200731v" overrides="opls_158,opls_157,opls_149" definition="[C;X4]([C;%opls_221])(O)(H)(H)" description="C in CH2OH in benzyl alcohols">
+    <AtomType name="opls_218" mass="12.011" charge="0.2" atomclass="CT" doi="10.1021/ct200731v" overrides="opls_157,opls_149,opls_158" definition="[C;X4]([C;%opls_221])(O)(H)(H)" description="C in CH2OH in benzyl alcohols">
       <Parameters>
         <Parameter name="epsilon" value="0.276144"/>
         <Parameter name="sigma" value="0.35"/>
@@ -1668,7 +1668,7 @@
         <Parameter name="sigma" value="0.355"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_267" mass="12.011" charge="0.52" atomclass="C" doi="10.1021/ja9621760" overrides="opls_277,opls_465,opls_271" definition="[C;X3]([O;X1])OH" description="Co in CCOOH">
+    <AtomType name="opls_267" mass="12.011" charge="0.52" atomclass="C" doi="10.1021/ja9621760" overrides="opls_271,opls_277,opls_465" definition="[C;X3]([O;X1])OH" description="Co in CCOOH">
       <Parameters>
         <Parameter name="epsilon" value="0.43932"/>
         <Parameter name="sigma" value="0.375"/>
@@ -1680,7 +1680,7 @@
         <Parameter name="sigma" value="0.3"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_269" mass="15.9994" charge="-0.44" atomclass="O_3" doi="10.1021/ja9621760" overrides="opls_272,opls_278" definition="[O;X1]([C;%opls_267](OH))" description="Oc in CCOOH">
+    <AtomType name="opls_269" mass="15.9994" charge="-0.44" atomclass="O_3" doi="10.1021/ja9621760" overrides="opls_278,opls_272" definition="[O;X1]([C;%opls_267](OH))" description="Oc in CCOOH">
       <Parameters>
         <Parameter name="epsilon" value="0.87864"/>
         <Parameter name="sigma" value="0.296"/>
@@ -1740,7 +1740,7 @@
         <Parameter name="sigma" value="0.296"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_279" mass="1.008" charge="0.0" atomclass="HC" doi="10.1021/ja9621760" overrides="opls_485,opls_185,opls_144" definition="H([C;X3]([O;X1])([N,C,O,H]))" description="H bonded to primary C in aldehyde and formamide">
+    <AtomType name="opls_279" mass="1.008" charge="0.0" atomclass="HC" doi="10.1021/ja9621760" overrides="opls_485,opls_144,opls_185" definition="H([C;X3]([O;X1])([N,C,O,H]))" description="H bonded to primary C in aldehyde and formamide">
       <Parameters>
         <Parameter name="epsilon" value="0.06276"/>
         <Parameter name="sigma" value="0.242"/>
@@ -3462,7 +3462,7 @@
         <Parameter name="sigma" value="0.355"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_569" mass="1.008" charge="0.142" atomclass="HA" doi="10.1021/ct200731v" overrides="opls_185,opls_144" definition="[H]([%opls_567])" description="H bonded to opls_567 in furan">
+    <AtomType name="opls_569" mass="1.008" charge="0.142" atomclass="HA" doi="10.1021/ct200731v" overrides="opls_144,opls_185" definition="[H]([%opls_567])" description="H bonded to opls_567 in furan">
       <Parameters>
         <Parameter name="epsilon" value="0.12552"/>
         <Parameter name="sigma" value="0.242"/>
@@ -4146,13 +4146,13 @@
         <Parameter name="sigma" value="0.242"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_711" mass="12.011" charge="-0.12" atomclass="CY" overrides="opls_712,opls_136" definition="[C;X4;r3]1(H)(H)[C;X4;r3][C;X4;r3]1">
+    <AtomType name="opls_711" mass="12.011" charge="-0.12" atomclass="CY" overrides="opls_136,opls_712" definition="[C;X4;r3]1(H)(H)[C;X4;r3][C;X4;r3]1">
       <Parameters>
         <Parameter name="epsilon" value="0.276144"/>
         <Parameter name="sigma" value="0.35"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_712" mass="12.011" charge="-0.06" atomclass="CY" overrides="opls_713,opls_137" definition="[C;X4;r3]1(H)[C;X4;r3][C;X4;r3]1">
+    <AtomType name="opls_712" mass="12.011" charge="-0.06" atomclass="CY" overrides="opls_137,opls_713" definition="[C;X4;r3]1(H)[C;X4;r3][C;X4;r3]1">
       <Parameters>
         <Parameter name="epsilon" value="0.276144"/>
         <Parameter name="sigma" value="0.35"/>
@@ -4200,13 +4200,13 @@
         <Parameter name="sigma" value="0.285"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_720" mass="12.011" charge="0.13" atomclass="CA" doi="10.1021/ct200731v" overrides="opls_727,opls_145,opls_718" definition="[C;X3;r6]([F])([C;r6](F))([C;r6](F))" description="Central C-ar in c(F)-c(F)-c(F) (tetra, hexafluorobenzene)">
+    <AtomType name="opls_720" mass="12.011" charge="0.13" atomclass="CA" doi="10.1021/ct200731v" overrides="opls_718,opls_727,opls_145" definition="[C;X3;r6]([F])([C;r6](F))([C;r6](F))" description="Central C-ar in c(F)-c(F)-c(F) (tetra, hexafluorobenzene)">
       <Parameters>
         <Parameter name="epsilon" value="0.29288"/>
         <Parameter name="sigma" value="0.355"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_721" mass="18.9984" charge="-0.13" atomclass="F" doi="10.1021/ct200731v" overrides="opls_719,opls_728" definition="[F;X1]([C;%opls_720])" description="F(C) in hexafluorobenzene">
+    <AtomType name="opls_721" mass="18.9984" charge="-0.13" atomclass="F" doi="10.1021/ct200731v" overrides="opls_728,opls_719" definition="[F;X1]([C;%opls_720])" description="F(C) in hexafluorobenzene">
       <Parameters>
         <Parameter name="epsilon" value="0.255224"/>
         <Parameter name="sigma" value="0.285"/>
@@ -4230,7 +4230,7 @@
         <Parameter name="sigma" value="0.355"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_725" mass="12.011" charge="0.45" atomclass="CT" doi="10.1021/ct200731v" overrides="opls_961,opls_672" definition="[C;X4](F)(F)(F)([C;X3;r6])" description="C in F3-C-benzene (trifluoro benzene)">
+    <AtomType name="opls_725" mass="12.011" charge="0.45" atomclass="CT" doi="10.1021/ct200731v" overrides="opls_672,opls_961" definition="[C;X4](F)(F)(F)([C;X3;r6])" description="C in F3-C-benzene (trifluoro benzene)">
       <Parameters>
         <Parameter name="epsilon" value="0.259408"/>
         <Parameter name="sigma" value="0.325"/>
@@ -4242,7 +4242,7 @@
         <Parameter name="sigma" value="0.294"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_727" mass="12.011" charge="0.2" atomclass="CA" overrides="opls_145,opls_718" definition="[C;X3;r6](F)([C;X3;r6](F))([%opls_145])" description="C(F) in C-C(F)-C(F)-C (difluorobenzene)">
+    <AtomType name="opls_727" mass="12.011" charge="0.2" atomclass="CA" overrides="opls_718,opls_145" definition="[C;X3;r6](F)([C;X3;r6](F))([%opls_145])" description="C(F) in C-C(F)-C(F)-C (difluorobenzene)">
       <Parameters>
         <Parameter name="epsilon" value="0.29288"/>
         <Parameter name="sigma" value="0.355"/>
@@ -4416,7 +4416,7 @@
         <Parameter name="sigma" value="0.33"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_756" mass="12.011" charge="-0.02" atomclass="CT" doi="10.1002/jcc.1092" overrides="opls_757,opls_136" definition="[C;X4](H)(H)[C;%opls_754]" description="C of CH2 in RCH2CN">
+    <AtomType name="opls_756" mass="12.011" charge="-0.02" atomclass="CT" doi="10.1002/jcc.1092" overrides="opls_136,opls_757" definition="[C;X4](H)(H)[C;%opls_754]" description="C of CH2 in RCH2CN">
       <Parameters>
         <Parameter name="epsilon" value="0.276144"/>
         <Parameter name="sigma" value="0.33"/>
@@ -4506,19 +4506,19 @@
         <Parameter name="sigma" value="0.375"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_773" mass="15.9994" charge="-0.45" atomclass="OS" overrides="opls_467,opls_180" definition="[O;X2;r5]1[C;X4;r5][C;X4;r5][O;X2;r5][C;X3;r5]1" description="propylene OS">
+    <AtomType name="opls_773" mass="15.9994" charge="-0.45" atomclass="OS" overrides="opls_180,opls_467" definition="[O;X2;r5]1[C;X4;r5][C;X4;r5][O;X2;r5][C;X3;r5]1" description="propylene OS">
       <Parameters>
         <Parameter name="epsilon" value="0.71128"/>
         <Parameter name="sigma" value="0.3"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_774" mass="12.011" charge="0.21" atomclass="CT" overrides="opls_182,opls_490" definition="[C;X4;r5]1(H)(H)[C;X4;r5][O;X2;r5][C;X3;r5][O;X2;r5]1" description="propylene carbonate C in CH2">
+    <AtomType name="opls_774" mass="12.011" charge="0.21" atomclass="CT" overrides="opls_490,opls_182" definition="[C;X4;r5]1(H)(H)[C;X4;r5][O;X2;r5][C;X3;r5][O;X2;r5]1" description="propylene carbonate C in CH2">
       <Parameters>
         <Parameter name="epsilon" value="0.276144"/>
         <Parameter name="sigma" value="0.35"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_775" mass="12.011" charge="0.16" atomclass="CT" overrides="opls_182,opls_183" definition="[C;X4;r5]1(H)(C)[C;X4;r5][O;X2;r5][C;X3;r5][O;X2;r5]1" description="propylene carbonate C in CH">
+    <AtomType name="opls_775" mass="12.011" charge="0.16" atomclass="CT" overrides="opls_183,opls_182" definition="[C;X4;r5]1(H)(C)[C;X4;r5][O;X2;r5][C;X3;r5][O;X2;r5]1" description="propylene carbonate C in CH">
       <Parameters>
         <Parameter name="epsilon" value="0.276144"/>
         <Parameter name="sigma" value="0.35"/>
@@ -4530,7 +4530,7 @@
         <Parameter name="sigma" value="0.35"/>
       </Parameters>
     </AtomType>
-    <AtomType name="opls_777" mass="1.008" charge="0.03" atomclass="HC" overrides="opls_140,opls_185,opls_469" definition="H[C;%opls_774]" description="propylene carbonate H in CH2">
+    <AtomType name="opls_777" mass="1.008" charge="0.03" atomclass="HC" overrides="opls_140,opls_469,opls_185" definition="H[C;%opls_774]" description="propylene carbonate H in CH2">
       <Parameters>
         <Parameter name="epsilon" value="0.06276"/>
         <Parameter name="sigma" value="0.242"/>
@@ -11176,8 +11176,8 @@
     </AngleType>
     <AngleType name="HarmonicAnglePotential" class1="OS" class2="C_2" class3="OS">
       <Parameters>
-        <Parameter name="k" value="694.544"/>
-        <Parameter name="theta_eq" value="2.1537363"/>
+        <Parameter name="k" value="584.9232"/>
+        <Parameter name="theta_eq" value="2.06263"/>
       </Parameters>
     </AngleType>
     <AngleType name="HarmonicAnglePotential" class1="O_2" class2="C_2" class3="OS">
@@ -12455,7 +12455,7 @@
     <AngleType name="HarmonicAnglePotential" class1="O_2" class2="C" class3="OS">
       <Parameters>
         <Parameter name="k" value="694.544"/>
-        <Parameter name="theta_eq" value="2.1537363"/>
+        <Parameter name="theta_eq" value="2.153736"/>
       </Parameters>
     </AngleType>
     <AngleType name="HarmonicAnglePotential" class1="NT" class2="CZ" class3="NZ">
