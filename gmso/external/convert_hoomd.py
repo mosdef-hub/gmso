@@ -6,7 +6,6 @@ import copy
 import itertools
 import json
 import re
-import warnings
 
 import numpy as np
 import unyt as u
@@ -34,6 +33,10 @@ if has_hoomd:
     hoomd_version = hoomd.version.version.split(".")
 else:
     hoomd_version = None
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Note, charge will always be assumed to be in elementary_charge
 MD_UNITS = {
@@ -153,7 +156,7 @@ def to_gsd_snapshot(
 
     gsd_snapshot.configuration.box = np.array([lx, ly, lz, xy, xz, yz])
 
-    warnings.warn(
+    logger.info(
         "Only writing particle, bond, sangle, proper and improper dihedral information."
         "Special pairs are not currently written to GSD files",
         NotYetImplementedWarning,
@@ -285,7 +288,7 @@ def to_hoomd_snapshot(
         Lx=lx, Ly=ly, Lz=lz, xy=xy, xz=xz, yz=yz
     )
 
-    warnings.warn(
+    logger.info(
         "Only writing particle, bond, angle, proper and improper dihedral information."
         "Special pairs are not currently written to GSD files",
         NotYetImplementedWarning,
@@ -343,7 +346,7 @@ def _parse_particle_information(
         [site.position.to_value(base_units["length"]) for site in top.sites]
     )
     if shift_coords:
-        warnings.warn("Shifting coordinates to [-L/2, L/2]")
+        logger.info("Shifting coordinates to [-L/2, L/2]")
         xyz = coord_shift(xyz, box_lengths)
 
     types = [
@@ -546,7 +549,7 @@ def _parse_bond_information(snapshot, top, n_rigid=0):
 
     """
     snapshot.bonds.N = top.n_bonds
-    warnings.warn(f"{top.n_bonds} bonds detected")
+    logger.info(f"{top.n_bonds} bonds detected")
     bond_groups = []
     bond_typeids = []
     bond_types = []
@@ -578,7 +581,7 @@ def _parse_bond_information(snapshot, top, n_rigid=0):
         snapshot.bonds.typeid = bond_typeids
         snapshot.bonds.group = bond_groups
 
-    warnings.warn(f"{len(unique_bond_types)} unique bond types detected")
+    logger.info(f"{len(unique_bond_types)} unique bond types detected")
 
 
 def _parse_angle_information(snapshot, top, n_rigid=0):
@@ -628,8 +631,8 @@ def _parse_angle_information(snapshot, top, n_rigid=0):
         snapshot.angles.typeid = angle_typeids
         snapshot.angles.group = np.reshape(angle_groups, (-1, 3))
 
-    warnings.warn(f"{top.n_angles} angles detected")
-    warnings.warn(f"{len(unique_angle_types)} unique angle types detected")
+    logger.info(f"{top.n_angles} angles detected")
+    logger.info(f"{len(unique_angle_types)} unique angle types detected")
 
 
 def _parse_dihedral_information(snapshot, top, n_rigid=0):
@@ -677,8 +680,8 @@ def _parse_dihedral_information(snapshot, top, n_rigid=0):
         snapshot.dihedrals.typeid = dihedral_typeids
         snapshot.dihedrals.group = np.reshape(dihedral_groups, (-1, 4))
 
-    warnings.warn(f"{top.n_dihedrals} dihedrals detected")
-    warnings.warn(f"{len(unique_dihedral_types)} unique dihedral types detected")
+    logger.info(f"{top.n_dihedrals} dihedrals detected")
+    logger.info(f"{len(unique_dihedral_types)} unique dihedral types detected")
 
 
 def _parse_improper_information(snapshot, top, n_rigid=0):
@@ -725,8 +728,8 @@ def _parse_improper_information(snapshot, top, n_rigid=0):
         snapshot.impropers.typeid = improper_typeids
         snapshot.impropers.group = np.reshape(improper_groups, (-1, 4))
 
-    warnings.warn(f"{top.n_impropers} impropers detected")
-    warnings.warn(f"{len(unique_improper_types)} unique dihedral types detected")
+    logger.info(f"{top.n_impropers} impropers detected")
+    logger.info(f"{len(unique_improper_types)} unique dihedral types detected")
 
 
 def _prepare_box_information(top):
@@ -734,11 +737,11 @@ def _prepare_box_information(top):
     if allclose_units(
         top.box.angles, np.array([90, 90, 90]) * u.degree, rtol=1e-5, atol=1e-8
     ):
-        warnings.warn("Orthorhombic box detected")
+        logger.info("Orthorhombic box detected")
         lx, ly, lz = top.box.lengths
         xy, xz, yz = 0.0, 0.0, 0.0
     else:
-        warnings.warn("Non-orthorhombic box detected")
+        logger.info("Non-orthorhombic box detected")
         u_vectors = top.box.get_unit_vectors()
         lx, ly, lz = top.box.lengths
         xy = u_vectors[1][0]
@@ -1384,7 +1387,7 @@ def _parse_opls_dihedral(container, dihedrals, expected_units_dim, base_units):
 
 
 def _parse_rb_dihedral(container, dihedrals, expected_units_dim, base_units):
-    warnings.warn(
+    logger.info(
         "RyckaertBellemansTorsionPotential will be converted to OPLSTorsionPotential."
     )
     for dihedral in dihedrals:
@@ -1507,11 +1510,11 @@ def _parse_periodic_improper(
 def _validate_base_units(base_units, top, auto_scale, potential_types=None):
     """Validate the provided base units, infer units (based on top's positions and masses) if none is provided."""
     if base_units and auto_scale:
-        warnings.warn(
+        logger.info(
             "Both base_units and auto_scale are provided, auto_scale will take precedent."
         )
     elif not (base_units or auto_scale):
-        warnings.warn(
+        logger.info(
             "Neither base_units or auto_scale is provided, will infer base units from topology."
         )
 
@@ -1566,7 +1569,7 @@ def _validate_base_units(base_units, top, auto_scale, potential_types=None):
     elif isinstance(base_units, dict):
         for key in base_units:
             if key not in ["energy", "mass", "length"]:
-                warnings.warn(
+                logger.info(
                     "Only base unit will be used during the conversion "
                     "i.e., energy, mass, and length, other units provided "
                     "will not be considered."

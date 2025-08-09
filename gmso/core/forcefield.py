@@ -2,7 +2,7 @@
 
 import copy
 import itertools
-import warnings
+import logging
 from collections import ChainMap
 from pathlib import Path
 from typing import Iterable
@@ -13,7 +13,7 @@ from pydantic import ValidationError
 from gmso.core.element import element_by_symbol
 from gmso.exceptions import GMSOError, MissingPotentialError
 from gmso.utils._constants import FF_TOKENS_SEPARATOR
-from gmso.utils.decorators import deprecate_function, deprecate_kwargs
+from gmso.utils.decorators import deprecate_kwargs
 from gmso.utils.ff_utils import (
     parse_ff_atomtypes,
     parse_ff_connection_types,
@@ -23,6 +23,8 @@ from gmso.utils.ff_utils import (
     validate,
 )
 from gmso.utils.misc import mask_with, validate_type
+
+logger = logging.getLogger(__name__)
 
 
 def _group_by_expression(potential_types):
@@ -327,7 +329,7 @@ class ForceField(object):
         if not self.atom_types.get(atom_type):
             msg = f"AtomType {atom_type} is not present in the ForceField"
             if warn:
-                warnings.warn(msg)
+                logger.warning(msg)
             else:
                 raise MissingPotentialError(msg)
 
@@ -359,7 +361,7 @@ class ForceField(object):
             else:
                 return match[0]
         elif warn:
-            warnings.warn(msg)
+            logger.warning(msg)
             return None
         else:
             raise MissingPotentialError(msg)
@@ -390,7 +392,7 @@ class ForceField(object):
             else:
                 return match[0]
         elif warn:
-            warnings.warn(msg)
+            logger.warning(msg)
             return None
         else:
             raise MissingPotentialError(msg)
@@ -449,7 +451,7 @@ class ForceField(object):
             else:
                 return match[0]
         elif warn:
-            warnings.warn(msg)
+            logger.warning(msg)
             return None
         else:
             raise MissingPotentialError(msg)
@@ -517,7 +519,7 @@ class ForceField(object):
         if match:
             return match
         elif warn:
-            warnings.warn(msg)
+            logger.warning(msg)
             return None
         else:
             raise MissingPotentialError(msg)
@@ -538,7 +540,7 @@ class ForceField(object):
             else:
                 return match[0]  # only return the atoms, not their order
         elif warn:
-            warnings.warn(msg)
+            logger.warning(msg)
             return None
         else:
             raise MissingPotentialError(msg)
@@ -750,9 +752,6 @@ class ForceField(object):
         )
 
     @classmethod
-    @deprecate_function(
-        "The internal `from_xml` will be deprecated soon. Please load the XML with the `xml_from_forcefield_utilities`."
-    )
     def from_xml(cls, xmls_or_etrees, strict=True, greedy=True):
         """Create a gmso.Forcefield object from XML File(s).
 

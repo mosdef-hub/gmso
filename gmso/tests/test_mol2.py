@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 import pytest
 import unyt as u
@@ -10,7 +12,7 @@ from gmso.utils.io import get_fn
 
 
 class TestMol2(BaseTest):
-    def test_read_mol2(self):
+    def test_read_mol2(self, caplog):
         top = Topology.load(get_fn("parmed.mol2"))
         assert top.name == "parmed"
         assert top.n_sites == 8
@@ -54,11 +56,10 @@ class TestMol2(BaseTest):
         assert top.bonds[0].connection_members[0] == top.sites[0]
         assert top.box is None
 
-        with pytest.warns(
-            UserWarning,
-            match=r"No charge was detected for site C with index 1",
-        ):
+        match = "No charge was detected for site C with index 1"
+        with caplog.at_level(logging.INFO, logger="gmso"):
             top = Topology.load(get_fn("ethane.mol2"), verbose=True)
+        assert match in caplog.text
         assert list(top.sites)[0].charge is None
 
     def test_residue(self):
@@ -84,16 +85,15 @@ class TestMol2(BaseTest):
         top = Topology.load(get_fn("methane.mol2"), site_type="lj")
         assert np.all([site.element is None for site in top.sites])
 
-    def test_no_charge_lj(self):
-        with pytest.warns(
-            UserWarning,
-            match=r"No charge was detected for site .* with index \d+$",
-        ):
+    def test_no_charge_lj(self, caplog):
+        match = "No charge was detected for site _CH4 with index 1"
+        with caplog.at_level(logging.INFO, logger="gmso"):
             Topology.load(
                 get_path("methane_missing_charge.mol2"),
                 site_type="lj",
                 verbose=True,
             )
+        assert match in caplog.text
 
     def test_wrong_path(self):
         with pytest.raises(OSError, match=r"Provided path to file that does not exist"):
@@ -102,17 +102,16 @@ class TestMol2(BaseTest):
         assert len(top.sites) == 0
         assert len(top.bonds) == 0
 
-    def test_broken_files(self):
-        with pytest.warns(
-            UserWarning,
-            match=r"The record type indicator @<TRIPOS>MOLECULE_extra_text is not supported. Skipping current section and moving to the next RTI header.",
-        ):
+    def test_broken_files(self, caplog):
+        match = "The record type indicator @<TRIPOS>MOLECULE_extra_text is not supported. Skipping current section and moving to the next RTI header."
+        with caplog.at_level(logging.INFO, logger="gmso"):
             Topology.load(get_fn("broken.mol2"))
-        with pytest.warns(
-            UserWarning,
-            match=r"This mol2 file has two boxes to be read in, only reading in one with dimensions Box\(a=0.72",
-        ):
+        assert match in caplog.text
+        caplog.clear()
+        match = "This mol2 file has two boxes to be read in, only reading in one with dimensions Box(a=0.72"
+        with caplog.at_level(logging.INFO, logger="gmso"):
             Topology.load(get_fn("broken.mol2"), verbose=True)
+        assert match in caplog.text
 
     def test_benzene_mol2_elements(self):
         top = Topology.load(get_fn("benzene.mol2"))
@@ -120,13 +119,11 @@ class TestMol2(BaseTest):
         for atom in top.sites:
             assert atom.element.name in {"hydrogen", "carbon"}
 
-    def test_neopentane_mol2_elements(self):
-        with pytest.warns(
-            UserWarning,
-            match=r"No element detected for site .+ with index \d+, "
-            r"consider manually adding the element to the topology$",
-        ):
+    def test_neopentane_mol2_elements(self, caplog):
+        match = "No element detected for site _CH3 with index 3"
+        with caplog.at_level(logging.INFO, logger="gmso"):
             Topology.load(get_fn("neopentane.mol2"), verbose=True)
+        assert match in caplog.text
 
     def test_mol2_residues(self):
         top = Topology.load(get_fn("parmed.mol2"))

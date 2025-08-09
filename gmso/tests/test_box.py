@@ -1,3 +1,4 @@
+import logging
 from copy import deepcopy
 
 import numpy as np
@@ -24,9 +25,11 @@ class TestBox(BaseTest):
         with pytest.raises(ValueError):
             Box(lengths=lengths, angles=angles)
 
-    def test_build_2D_Box(self):
-        with pytest.warns(UserWarning):
+    def test_build_2D_Box(self, caplog):
+        with caplog.at_level(logging.INFO, logger="gmso"):
             Box(lengths=u.nm * [4, 4, 0])
+        match = "A c value of 0 was passed. This will be interpreted as a 2-D box."
+        assert match in caplog.text
 
     def test_dtype(self, box):
         assert box.lengths.dtype == float

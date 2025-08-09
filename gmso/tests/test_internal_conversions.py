@@ -80,7 +80,7 @@ class TestInternalConversions(BaseTest):
             parameters=params,
         )
 
-        with pytest.raises(GMSOError, match=""):
+        with pytest.raises(GMSOError, match="Cannot use"):
             ryckaert_connection_type = convert_opls_to_ryckaert(opls_connection_type)
 
         variables = opls_torsion_potential.independent_variables
@@ -92,7 +92,7 @@ class TestInternalConversions(BaseTest):
             parameters=params,
         )
 
-        with pytest.raises(GMSOError, match=""):
+        with pytest.raises(GMSOError, match="Cannot use"):
             ryckaert_connection_type = convert_opls_to_ryckaert(opls_connection_type)
 
     def test_ryckaert_to_fourier(self, templates):
