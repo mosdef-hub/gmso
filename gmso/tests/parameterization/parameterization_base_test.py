@@ -67,22 +67,6 @@ class ParameterizationBaseTest(BaseTest):
                 atom_indicesList = sorted(indexList)[0]
                 connection_types_top2[atom_indicesList] = connection
 
-            # for connection in getattr(top2, connection_type):
-            #    connection_types_mirror[
-            #        tuple(
-            #            top2.get_index(member)
-            #            for member in sort_connection_members(connection, "atom_type")
-            #        )
-            #    ] = connection
-
-            # for connection in getattr(top1, connection_type):
-            #    connection_types_original[
-            #        tuple(
-            #            top1.get_index(member)
-            #            for member in sort_connection_members(connection, "atom_type")
-            #        )
-            #    ] = connection
-
             for key in connection_types_top1:
                 conn1 = connection_types_top1[key]
                 conn2 = connection_types_top2[key]
