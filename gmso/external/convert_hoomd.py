@@ -1513,12 +1513,6 @@ def _validate_base_units(base_units, top, auto_scale, potential_types=None):
         logger.info(
             "Both base_units and auto_scale are provided, auto_scale will take precedent."
         )
-    elif not (base_units or auto_scale):
-        raise EngineIncompatibilityError(
-            "Neither base_units or auto_scale is provided, please provide a "
-            "dictionary with keys of `energy`, `mass`, "
-            "and `length`, where the values unyt objects."
-        )
 
     base_units = copy.deepcopy(base_units)
     ref = {
@@ -1550,7 +1544,7 @@ def _validate_base_units(base_units, top, auto_scale, potential_types=None):
                 else:
                     atype_classes[potential_types[atype]].append(atype)
 
-        # Appending lenghts and energy
+        # Appending lengths and energy
         lengths, energies = list(), list()
         for atype_class in atype_classes:
             if atype_class == "LennardJonesPotential":
@@ -1598,6 +1592,10 @@ def _validate_base_units(base_units, top, auto_scale, potential_types=None):
         for key in base_units:
             if isinstance(base_units[key], u.Unit):
                 base_units[key] = 1 * base_units[key]
+        logger.warn(
+            f"Neither base_units or auto_scale is provided, "
+            f"so default units of {base_units=}\n are inferred."
+        )
     # Add angle unit (since HOOMD will use radian across the board)
     base_units["angle"] = 1 * u.radian
     # add dimensionless handling
