@@ -1376,11 +1376,6 @@ class Topology(object):
             }
 
             for connection_type in self.connection_types:
-                # ff_conn_types[type(connection_type)][
-                #     FF_TOKENS_SEPARATOR.join(connection_type.member_types)
-                # ] = connection_type.model_copy(
-                #     deep=True, exclude={"topology", "set_ref"}
-                # )
                 data = connection_type.model_dump(exclude={"topology", "set_ref"})
                 data = {**data, **({})}
                 ff_conn_types[type(connection_type)][

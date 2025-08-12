@@ -1514,8 +1514,10 @@ def _validate_base_units(base_units, top, auto_scale, potential_types=None):
             "Both base_units and auto_scale are provided, auto_scale will take precedent."
         )
     elif not (base_units or auto_scale):
-        logger.info(
-            "Neither base_units or auto_scale is provided, will infer base units from topology."
+        raise EngineIncompatibilityError(
+            "Neither base_units or auto_scale is provided, please provide a "
+            "dictionary with keys of `energy`, `mass`, "
+            "and `length`, where the values unyt objects."
         )
 
     base_units = copy.deepcopy(base_units)
