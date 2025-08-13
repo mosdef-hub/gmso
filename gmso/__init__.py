@@ -45,7 +45,7 @@ class HeaderRotatingFileHandler(RotatingFileHandler):
     def __init__(
         self,
         filename,
-        mode="a",
+        mode="w",
         maxBytes=0,
         backupCount=0,
         encoding=None,
@@ -68,7 +68,7 @@ class HeaderRotatingFileHandler(RotatingFileHandler):
 class GMSOLogger:
     def __init__(self):
         self.library_logger = logging.getLogger("gmso")
-        self.library_logger.setLevel(logging.WARNING)
+        self.library_logger.setLevel(logging.DEBUG)
 
         # Create handlers
         self.console_handler = logging.StreamHandler(sys.stdout)
@@ -108,15 +108,30 @@ class GMSOLogger:
         full_command = [python_executable] + command_arguments
         header = f"Log details for GMSO {__version__} from running \n{full_command}"
         self.file_handler = HeaderRotatingFileHandler(
-            filename, maxBytes=10**6, backupCount=1, header=header
+            filename, mode="a", maxBytes=10**6, backupCount=2, header=header
         )
-        # self.file_handler = RotatingFileHandler(filename, backupCount=3, )
-        self.file_handler.setLevel(logging.INFO)
-        self.file_handler.addFilter(self.dedup_filter)
+        self.file_handler.setLevel(logging.DEBUG)
+
+        self.file_handler.addFilter(DeduplicationFilter()) # fresh duplication handler
         self.file_handler.setFormatter(self.formatter)
         self.library_logger.addHandler(self.file_handler)
+
+    def print_level(self, level: str):
+        levelDict = {
+            "notset": logging.NOTSET, 
+            "debug": logging.DEBUG, 
+            "info": logging.INFO, 
+            "warning": logging.WARNING, 
+            "error": logging.ERROR, 
+            "critical": logging.CRITICAL, 
+        }
+        logLevel = levelDict.get(level.lower())
+        if logLevel:
+            self.console_handler.setLevel(logLevel) # sets stdout
+        else:
+            raise ValueError(f"INCORRECT {level=}. Please set level of {levelDict.keys()}") 
 
 
 # Example usage in __init__.py
 gmso_logger = GMSOLogger()
-gmso_logger.library_logger.setLevel(logging.WARNING)
+gmso_logger.library_logger.setLevel(logging.INFO)
