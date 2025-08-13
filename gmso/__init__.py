@@ -112,24 +112,26 @@ class GMSOLogger:
         )
         self.file_handler.setLevel(logging.DEBUG)
 
-        self.file_handler.addFilter(DeduplicationFilter()) # fresh duplication handler
+        self.file_handler.addFilter(DeduplicationFilter())  # fresh duplication handler
         self.file_handler.setFormatter(self.formatter)
         self.library_logger.addHandler(self.file_handler)
 
     def print_level(self, level: str):
         levelDict = {
-            "notset": logging.NOTSET, 
-            "debug": logging.DEBUG, 
-            "info": logging.INFO, 
-            "warning": logging.WARNING, 
-            "error": logging.ERROR, 
-            "critical": logging.CRITICAL, 
+            "notset": logging.NOTSET,
+            "debug": logging.DEBUG,
+            "info": logging.INFO,
+            "warning": logging.WARNING,
+            "error": logging.ERROR,
+            "critical": logging.CRITICAL,
         }
         logLevel = levelDict.get(level.lower())
         if logLevel:
-            self.console_handler.setLevel(logLevel) # sets stdout
+            self.console_handler.setLevel(logLevel)  # sets stdout
         else:
-            raise ValueError(f"INCORRECT {level=}. Please set level of {levelDict.keys()}") 
+            raise ValueError(
+                f"INCORRECT {level=}. Please set level of {levelDict.keys()}"
+            )
 
 
 # Example usage in __init__.py
