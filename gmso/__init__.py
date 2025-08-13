@@ -98,6 +98,7 @@ class GMSOLogger:
             self.library_logger.removeHandler(handler)
 
     def debug_file(self, filename: str):
+        """Print logging Debug messages to file `filename`."""
         # Get the path to the Python interpreter
         python_executable = sys.executable
 
@@ -117,6 +118,7 @@ class GMSOLogger:
         self.library_logger.addHandler(self.file_handler)
 
     def print_level(self, level: str):
+        """Print sys.stdout screen based on the logging `level` passed."""
         levelDict = {
             "notset": logging.NOTSET,
             "debug": logging.DEBUG,
