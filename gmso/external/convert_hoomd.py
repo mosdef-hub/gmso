@@ -159,7 +159,6 @@ def to_gsd_snapshot(
     logger.info(
         "Only writing particle, bond, sangle, proper and improper dihedral information."
         "Special pairs are not currently written to GSD files",
-        NotYetImplementedWarning,
     )
 
     n_rigid, rigid_info = _parse_particle_information(
@@ -291,7 +290,6 @@ def to_hoomd_snapshot(
     logger.info(
         "Only writing particle, bond, angle, proper and improper dihedral information."
         "Special pairs are not currently written to GSD files",
-        NotYetImplementedWarning,
     )
 
     n_rigid, rigid_info = _parse_particle_information(
@@ -1592,9 +1590,9 @@ def _validate_base_units(base_units, top, auto_scale, potential_types=None):
         for key in base_units:
             if isinstance(base_units[key], u.Unit):
                 base_units[key] = 1 * base_units[key]
-        logger.warn(
-            f"Neither base_units or auto_scale is provided, "
-            f"so default units of {base_units=}\n are inferred."
+        logger.warning(
+            "Neither base_units or auto_scale is provided, "
+            f"so default units of {base_units} are inferred."
         )
     # Add angle unit (since HOOMD will use radian across the board)
     base_units["angle"] = 1 * u.radian
