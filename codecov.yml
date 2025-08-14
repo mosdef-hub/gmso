@@ -6,3 +6,4 @@ ignore:
   - "gmso/external/convert_foyer_xml.py"
   - "gmso/.github/ISSUE_TEMPLATE"
   - "gmso/.github/PULL_REQUEST_TEMPLATE.md"
+  - "gmso/__init__.py"

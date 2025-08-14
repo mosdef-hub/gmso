@@ -1,7 +1,7 @@
 """Representation of the chemical elements."""
 
 import json
-import warnings
+import logging
 from re import sub
 from typing import Union
 
@@ -13,6 +13,8 @@ from pydantic import ConfigDict, Field, field_serializer
 from gmso.abc.gmso_base import GMSOBase
 from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.exceptions import GMSOError
+
+logger = logging.getLogger(__name__)
 
 exported = [
     "element_by_mass",
@@ -96,7 +98,7 @@ def element_by_symbol(symbol, verbose=False):
             f"Numbers and spaces are not considered when searching by element symbol.\n"
             f"{symbol} became {symbol_trimmed}"
         )
-        warnings.warn(msg)
+        logger.info(msg)
 
     matched_element = symbol_dict.get(symbol_trimmed)
     return matched_element
@@ -128,7 +130,7 @@ def element_by_name(name, verbose=False):
             "Numbers and spaces are not considered when searching by element name. \n"
             f"{name} became {name_trimmed}"
         )
-        warnings.warn(msg)
+        logger.info(msg)
 
     matched_element = name_dict.get(name_trimmed)
     return matched_element
@@ -163,7 +165,7 @@ def element_by_atomic_number(atomic_number, verbose=False):
                 f"Letters and spaces are not considered when searching by element atomic number. \n "
                 f"{atomic_number} became {atomic_number_trimmed}"
             )
-            warnings.warn(msg)
+            logger.info(msg)
     else:
         atomic_number_trimmed = atomic_number
     matched_element = atomic_dict.get(atomic_number_trimmed)
@@ -207,7 +209,7 @@ def element_by_mass(mass, exact=True, verbose=False):
                 f"Letters and spaces are not considered when searching by element mass.\n"
                 f"{mass} became {mass_trimmed}"
             )
-            warnings.warn(msg1)
+            logger.info(msg1)
     elif isinstance(mass, u.unyt_quantity):
         # Convert to u.amu if a unyt_quantity is provided
         mass_trimmed = np.round(float(mass.to("amu")), 1)
@@ -222,7 +224,7 @@ def element_by_mass(mass, exact=True, verbose=False):
         mass_closest = min(mass_dict.keys(), key=lambda k: abs(k - mass_trimmed))
         if verbose:
             msg2 = f"Closest mass to {mass_trimmed}: {mass_closest}"
-            warnings.warn(msg2)
+            logger.info(msg2)
         matched_element = mass_dict.get(mass_closest)
     return matched_element
 

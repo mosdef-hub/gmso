@@ -97,20 +97,20 @@ class TestParameterizationOptions(ParameterizationBaseTest):
 
     def test_no_molecule_dict_ff(self, oplsaa_gmso):
         top = Topology(name="topWithNoMolecule")
-        with pytest.warns(UserWarning):
+        with pytest.raises(ParameterizationError):
             apply(top, {"moleculeA": oplsaa_gmso})
         assert not top.is_typed()
 
-    def test_missing_group_name_ff(self, oplsaa_gmso):
+    def test_missing_group_name_ff(self, oplsaa_gmso, caplog):
         top = Topology(name="top1")
         for j in range(0, 10, 2):
             top.add_site(gmso.Atom(name=f"Atom_{j + 1}", group="groupB"))
-        with pytest.warns(
-            UserWarning,
-            match=r"Group/molecule groupB will not be parameterized, as the forcefield "
-            r"to parameterize it is missing.",
-        ):
-            apply(top, {"groupA": oplsaa_gmso}, match_ff_by="group")
+        apply(top, {"groupA": oplsaa_gmso}, match_ff_by="group")
+        match = (
+            r"Group/molecule groupB will not be parameterized, as the forcefield "
+            r"to parameterize it is missing."
+        )
+        assert match in caplog.text
 
     def test_diff_combining_rules_error(self, ethane_methane_top):
         ff1 = ForceField()

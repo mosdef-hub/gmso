@@ -76,13 +76,13 @@ class TestXMLHandling(BaseTest):
 
     @pytest.mark.parametrize("xml", TEST_XMLS)
     def test_gmso_backend(self, xml):
-        ff = ForceField(xml, backend="gmso", strict=False)
+        ff = ForceField(xml, "gmso", False)
         assert isinstance(ff, ForceField)
 
     @pytest.mark.parametrize("xml", TEST_XMLS)
     def test_load_write_xmls_gmso_backend(self, xml):
         """Validate loaded xmls written out match original file."""
-        ff1 = ForceField(xml, backend="forcefield_utilities")
+        ff1 = ForceField(xml, "forcefield_utilities")
         ff1.to_xml("tmp.xml", overwrite=True)
         ff2 = ForceField("tmp.xml", strict=False)
         if "test_ffstyles" not in xml:
