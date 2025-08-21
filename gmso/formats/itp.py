@@ -7,10 +7,10 @@ from gmso.core.atom import Atom
 from gmso.core.atom_type import AtomType
 from gmso.core.bond import Bond
 from gmso.core.bond_type import BondType
-from gmso.core.improper import Improper
-from gmso.core.improper_type import ImproperType
 from gmso.core.dihedral import Dihedral
 from gmso.core.dihedral_type import DihedralType
+from gmso.core.improper import Improper
+from gmso.core.improper_type import ImproperType
 
 
 def read_itp(itp_file):
@@ -41,7 +41,6 @@ def read_itp(itp_file):
         _parse_angles(file, topology)
         _parse_torsions(file, topology)
     return topology
-
 
 
 def _parse_atoms(file, pdb):
@@ -257,17 +256,17 @@ def _parse_RB(pdb, line):
     pdb.add_connection(diehdrals)
 
 
-def _parse_improper_harmonic(pdb,line):
+def _parse_improper_harmonic(pdb, line):
     dind_1, dind_2, dind_3, dind_4 = (
-    int(line.split()[0]) - 1,
-    int(line.split()[1]) - 1,
-    int(line.split()[2]) - 1,
-    int(line.split()[3]) - 1,
+        int(line.split()[0]) - 1,
+        int(line.split()[1]) - 1,
+        int(line.split()[2]) - 1,
+        int(line.split()[3]) - 1,
     )
-    d_phi,d_K,d_n = (
-    float(line.split()[5]),
-    float(line.split()[6]),
-    float(line.split()[7]),
+    d_phi, d_K, d_n = (
+        float(line.split()[5]),
+        float(line.split()[6]),
+        float(line.split()[7]),
     )
     site_1 = pdb.sites[dind_1]
     site_2 = pdb.sites[dind_2]
@@ -278,26 +277,26 @@ def _parse_improper_harmonic(pdb,line):
     phi_eq = d_phi
     n = d_n
     impropers.improper_type = ImproperType(
-    name="PeriodicImproperPotential",
-    expression="k * (1 + cos(n * phi - phi_eq))**2",
-    independent_variables={"phi"},
-    member_types=(
-        site_1.atom_type.name,
-        site_2.atom_type.name,
-        site_3.atom_type.name,
-        site_4.atom_type.name,
-    ),
-    member_classes=(
-        site_1.atom_type.atomclass,
-        site_2.atom_type.atomclass,
-        site_3.atom_type.atomclass,
-        site_4.atom_type.atomclass,
-    ),
-    parameters={
-        "k": K * u.Unit("kJ / (deg**2)"),
-        "phi_eq": phi_eq * u.deg,
-        "n": n * u.dimensionless,
-    },
+        name="PeriodicImproperPotential",
+        expression="k * (1 + cos(n * phi - phi_eq))**2",
+        independent_variables={"phi"},
+        member_types=(
+            site_1.atom_type.name,
+            site_2.atom_type.name,
+            site_3.atom_type.name,
+            site_4.atom_type.name,
+        ),
+        member_classes=(
+            site_1.atom_type.atomclass,
+            site_2.atom_type.atomclass,
+            site_3.atom_type.atomclass,
+            site_4.atom_type.atomclass,
+        ),
+        parameters={
+            "k": K * u.Unit("kJ / (deg**2)"),
+            "phi_eq": phi_eq * u.deg,
+            "n": n * u.dimensionless,
+        },
     )
     pdb.add_connection(impropers)
 
@@ -349,8 +348,7 @@ def _parse_harmonic(pdb, line):
 
 
 def _parse_torsions(file, pdb):
-    
-    #This function parses both proper (dihedrals) and improper torsions
+    # This function parses both proper (dihedrals) and improper torsions
     # dry run to get the dihedral type
     for i, line in enumerate(file):
         if "dihedrals" in line:
@@ -359,13 +357,13 @@ def _parse_torsions(file, pdb):
                     d_type = int(line_1.split()[4])
                     break
             break
-    
+
     file.seek(0)
 
     dicts_dtype = {
         1: _parse_harmonic,
         3: _parse_RB,
-        4: _parse_improper_harmonic
+        4: _parse_improper_harmonic,
     }  # This one should come from the GROMACS page
     # https://manual.gromacs.org/documentation/current/reference-manual/topologies/topology-file-formats.html
     parser = dicts_dtype[d_type]
@@ -379,29 +377,25 @@ def _parse_torsions(file, pdb):
                     print(line_1)
                     parser(pdb, line_1)
             break
-        
-    
+
     # dry run to get the dihedral type
     # for i, line in enumerate(file):
-        # if "dihedrals" in line:
-            # for i, line_1 in enumerate(file):
-                # if line_1.split() and ";" not in line_1.split():
-                    # d_type = int(line_1.split()[4])
-                    # break
-        # break
-    
-    #file.seek(0)
+    # if "dihedrals" in line:
+    # for i, line_1 in enumerate(file):
+    # if line_1.split() and ";" not in line_1.split():
+    # d_type = int(line_1.split()[4])
+    # break
+    # break
 
-    d_type=3
+    # file.seek(0)
+
+    d_type = 3
     parser = dicts_dtype[d_type]
     # #return to previous line command not working (will fix it later) so using file.seek(0)#
     for line in file:
-        if  line.split() and ";" not in line.split():
+        if line.split() and ";" not in line.split():
             parser(pdb, line)
 
-   
-
     return pdb
-    
 
     # https://github.com/mosdef-hub/gmso/tree/main/gmso/lib/jsons
