@@ -1,27 +1,28 @@
 """Represent box regions in gmso."""
 
-import warnings
+import logging
 
 import numpy as np
 import unyt as u
 from unyt.array import allclose_units
+
+logger = logging.getLogger(__name__)
 
 
 def _validate_lengths(lengths):
     """Ensure the lengths of the box are positive and check dimension."""
     if not isinstance(lengths, u.unyt_array):
         if all(isinstance(length, u.unyt_quantity) for length in lengths):
-            print("Converting list of unyt quantities to a unyt array")
             lengths = u.unyt_array(
                 [length for length in lengths], str(lengths[0].units)
             )
         else:
-            warnings.warn("Lengths are assumed to be in nm")
+            logger.info("Lengths are assumed to be in nm")
             lengths *= u.nm
     input_unit = lengths.units
 
     lengths = np.asarray(lengths, dtype=float, order="C")
-    np.reshape(lengths, newshape=(3,), order="C")
+    np.reshape(lengths, shape=(3,), order="C")
 
     lengths *= input_unit
     if input_unit != u.Unit("dimensionless"):
@@ -45,7 +46,7 @@ def _validate_lengths(lengths):
         )
     ):
         if lengths[0] > 0 and lengths[1] > 0:
-            warnings.warn(
+            logger.info(
                 "A c value of 0 was passed. This will be interpreted as a 2-D box."
             )
         else:
@@ -64,13 +65,13 @@ def _validate_angles(angles):
         angles *= u.degree
     else:
         if not isinstance(angles, u.unyt_array):
-            warnings.warn("Angles are assumed to be in degrees")
+            logger.info("Angles are assumed to be in degrees")
             angles *= u.degree
 
         input_unit = angles.units
 
         angles = np.asarray(angles, dtype=float, order="C")
-        np.reshape(angles, newshape=(3, 1), order="C")
+        np.reshape(angles, shape=(3, 1), order="C")
 
         angles *= input_unit
         angles.convert_to_units(u.degree)

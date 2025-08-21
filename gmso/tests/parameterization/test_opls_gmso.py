@@ -1,9 +1,8 @@
-import glob
 from pathlib import Path
 
+import importlib_resources
 import parmed as pmd
 import pytest
-from pkg_resources import resource_filename
 
 from gmso.external.convert_parmed import from_parmed
 from gmso.parameterization.parameterize import apply
@@ -13,11 +12,12 @@ from gmso.tests.parameterization.parameterization_base_test import (
 
 
 def get_foyer_opls_test_dirs():
-    all_dirs = glob.glob(resource_filename("foyer", "opls_validation") + "/*")
-    with open(
-        resource_filename("foyer", "tests/implemented_opls_tests.txt")
-    ) as impl_file:
-        correctly_implemented = set(impl_file.read().strip().split("\n"))
+    fn = importlib_resources.files("foyer") / "opls_validation"
+    all_dirs = fn.glob("*")
+    tests_fn = importlib_resources.files("foyer") / "tests/implemented_opls_tests.txt"
+    with importlib_resources.as_file(tests_fn) as tempPath:
+        with open(tempPath) as impl_file:
+            correctly_implemented = set(impl_file.read().strip().split("\n"))
 
     parent_dirs = map(Path, all_dirs)
     parent_dirs = list(
@@ -44,7 +44,9 @@ class TestOPLSGMSO(ParameterizationBaseTest):
     ):
         top_file = str(system_dir / f"{system_dir.name}.top")
         gro_file = str(system_dir / f"{system_dir.name}.gro")
-        struct = oplsaa_foyer.apply(pmd.load_file(top_file, xyz=gro_file))
+        struct = oplsaa_foyer.apply(
+            pmd.load_file(top_file, xyz=gro_file, parametrize=False)
+        )
 
         gmso_top_from_pmd = from_parmed(struct, refer_type=True)
         gmso_top = from_parmed(struct, refer_type=False)

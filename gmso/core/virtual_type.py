@@ -1,4 +1,4 @@
-import warnings
+import logging
 from typing import Callable, Optional, Tuple, Union
 
 import unyt as u
@@ -11,6 +11,8 @@ from gmso.utils._constants import UNIT_WARNING_STRING
 from gmso.utils.expression import PotentialExpression
 from gmso.utils.misc import ensure_valid_dimensions, unyt_compare
 from gmso.utils.units import GMSO_UnitRegistry
+
+logger = logging.getLogger(__name__)
 
 
 class VirtualPositionType(ParametricPotential):
@@ -283,7 +285,7 @@ class VirtualType(GMSOBase):
     def validate_charge(cls, charge):
         """Check to see that a charge is a unyt array of the right dimension."""
         if not isinstance(charge, u.unyt_array):
-            warnings.warn(UNIT_WARNING_STRING.format("Charges", "elementary charge"))
+            logger.info(UNIT_WARNING_STRING.format("Charges", "elementary charge"))
             charge *= u.Unit("elementary_charge", registry=GMSO_UnitRegistry().reg)
         else:
             ensure_valid_dimensions(charge, u.elementary_charge)

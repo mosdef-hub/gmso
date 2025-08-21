@@ -1,12 +1,14 @@
 """Manage Potential functional expressions and variables."""
 
-import warnings
+import logging
 from copy import deepcopy
 from functools import lru_cache
 from typing import Dict
 
 import sympy
 import unyt as u
+
+logger = logging.getLogger(__name__)
 
 __all__ = ["PotentialExpression"]
 
@@ -368,7 +370,7 @@ class PotentialExpression:
             used_symbols = parameter_symbols.union(independent_variables_symbols)
             unused_symbols = expression.free_symbols - used_symbols
             if len(unused_symbols) > 0:
-                warnings.warn(
+                logger.info(
                     f"You supplied parameters with unused symbols {unused_symbols}"
                 )
 
@@ -387,7 +389,7 @@ class PotentialExpression:
                         )
 
                     extra_syms = symbols ^ expression.free_symbols
-                    warnings.warn(
+                    logger.info(
                         f"Potential expression and parameter symbols do not agree, "
                         f"extraneous symbols: {extra_syms}"
                     )

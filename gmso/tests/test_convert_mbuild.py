@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 import pytest
 import unyt as u
@@ -234,15 +236,18 @@ class TestConvertMBuild(BaseTest):
         )
 
     @pytest.mark.skipif(not has_mbuild, reason="mBuild is not installed")
-    def test_bad_custom_groups_from_compound(self):
+    def test_bad_custom_groups_from_compound(self, caplog):
         mb_cpd1 = mb.Compound(name="_CH4")
         mb_cpd2 = mb.Compound(name="_CH3")
         filled_box = mb.fill_box(
             [mb_cpd1, mb_cpd2], n_compounds=[2, 2], box=[5, 5, 5], seed=13
         )
-
-        with pytest.warns(Warning):
+        match = (
+            "Not all custom groups (['_CH4', '_CH3', '_CH5'], is are being used when"
+        )
+        with caplog.at_level(logging.INFO, logger="gmso"):
             from_mbuild(filled_box, custom_groups=["_CH4", "_CH3", "_CH5"])
+        assert match in caplog.text
 
         with pytest.raises(GMSOError):
             from_mbuild(filled_box, custom_groups=["_CH4"])
