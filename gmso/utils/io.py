@@ -5,9 +5,8 @@ import inspect
 import os
 import sys
 import textwrap
+from importlib.resources import files
 from unittest import SkipTest
-
-import importlib_resources
 
 MESSAGES = dict()
 MESSAGES["matplotlib.pyplot"] = """
@@ -50,7 +49,7 @@ def get_fn(filename):
     fn : str
         Full path to filename
     """
-    fn = importlib_resources.files("gmso") / "utils/files" / filename
+    fn = files("gmso") / "utils/files" / filename
     if not os.path.exists(fn):
         raise IOError("Sorry! {} does not exists.".format(fn))
     return str(fn)
