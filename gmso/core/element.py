@@ -2,10 +2,10 @@
 
 import json
 import logging
+from importlib.resources import as_file, files
 from re import sub
 from typing import Union
 
-import importlib_resources
 import numpy as np
 import unyt as u
 from pydantic import ConfigDict, Field, field_serializer
@@ -339,8 +339,8 @@ def element_by_atom_type(atom_type, verbose=False):
 
 
 # Get the JSON file from ele package for a standard representation
-fn = importlib_resources.files("ele") / "lib/elements.json"
-with importlib_resources.as_file(fn) as path:
+fn = files("ele") / "lib/elements.json"
+with as_file(fn) as path:
     elements_dict = None
     elements = []
     with open(path, "r") as el_json_file:
