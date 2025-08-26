@@ -1,6 +1,6 @@
+from importlib.resources import files
 from pathlib import Path
 
-import importlib_resources
 import pytest
 
 from gmso.core.topology import Topology
@@ -12,9 +12,9 @@ from gmso.tests.parameterization.parameterization_base_test import (
 
 
 def get_foyer_trappe_test_dirs():
-    fn = importlib_resources.files("foyer") / "trapped_validation"
+    fn = files("foyer") / "trapped_validation"
     all_dirs = fn.glob("*")
-    tests_fn = importlib_resources.files("foyer") / "tests/implemented_trappe_tests.txt"
+    tests_fn = files("foyer") / "tests/implemented_trappe_tests.txt"
     with open(tests_fn) as impl_file:
         correctly_implemented = set(impl_file.read().strip().split("\n"))
 
