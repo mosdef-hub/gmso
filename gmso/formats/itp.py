@@ -43,7 +43,7 @@ def read_itp(itp_file):
     return topology
 
 
-def _parse_atoms(file, pdb):
+def _parse_atoms(file, top):
     """Get a dictionary of parsable atomtypes."""
     mass = []
     charge = []
@@ -71,10 +71,7 @@ def _parse_atoms(file, pdb):
                     break
                 elif line_1.split() and line_1.split()[0] == str(
                     natoms
-                ):  # ignore comment and read any non-empty line
-                    # print(line.split())
-                    # print(line)
-                    # print(line.split())
+                ):  
                     atype.append(line_1.split()[1])
                     mass.append(line_1.split()[7])
                     charge.append(line_1.split()[6])
@@ -85,10 +82,9 @@ def _parse_atoms(file, pdb):
         site = Atom()
         site.mass = float(mass[i])
         site.charge = float(charge[i])
-        for index in range(len(dicts_atype)):  # change the for loop
+        for index in range(len(dicts_atype)):  
             # Loop over dictionary to assign epsilon
             for key in dicts_atype[index]:
-                # print(index,key,dicts_atype[index][key])
                 if dicts_atype[index]["type"] == atype[i]:
                     sigma = dicts_atype[index]["sigma"]
                     epsilon = dicts_atype[index]["epsilon"]
@@ -106,13 +102,13 @@ def _parse_atoms(file, pdb):
             },
             independent_variables={"r"},
         )
-        pdb.add_site(site)
+        top.add_site(site)
 
     file.seek(0)
-    return pdb
+    return top
 
 
-def _parse_bonds(file, pdb):
+def _parse_bonds(file, top):
     bind_1 = []
     bind_2 = []
     b_type = []
@@ -125,7 +121,6 @@ def _parse_bonds(file, pdb):
                 if "[" in line_1:
                     break
                 elif line_1.split() and ";" not in line_1.split():
-                    # print(line)
                     bind_1.append(int(line_1.split()[0]) - 1)
                     bind_2.append(int(line_1.split()[1]) - 1)
                     b_type.append(int(line_1.split()[2]))
@@ -135,8 +130,8 @@ def _parse_bonds(file, pdb):
             break
 
     for i in range(nbonds):
-        site_1 = pdb.sites[bind_1[i]]
-        site_2 = pdb.sites[bind_2[i]]
+        site_1 = top.sites[bind_1[i]]
+        site_2 = top.sites[bind_2[i]]
         bonds = Bond(connection_members=(site_1, site_2))
         K = b_K[i]
         req = b_req[i]
@@ -148,12 +143,12 @@ def _parse_bonds(file, pdb):
             member_classes=(site_1.atom_type.atomclass, site_2.atom_type.atomclass),
             parameters={"k": K * u.Unit("kJ / (nm**2)"), "r_eq": req * u.nm},
         )
-        pdb.add_connection(bonds)
+        top.add_connection(bonds)
     file.seek(0)
-    return pdb
+    return top
 
 
-def _parse_angles(file, pdb):
+def _parse_angles(file, top):
     # collect angle parameters in a list
     aind_1 = []
     aind_2 = []
@@ -169,7 +164,6 @@ def _parse_angles(file, pdb):
                 if "[" in line_1:
                     break
                 elif line_1.split() and ";" not in line_1.split():
-                    # print(line)
                     aind_1.append(int(line_1.split()[0]) - 1)
                     aind_2.append(int(line_1.split()[1]) - 1)
                     aind_3.append(int(line_1.split()[2]) - 1)
@@ -180,9 +174,9 @@ def _parse_angles(file, pdb):
             break
 
     for i in range(nang):
-        site_1 = pdb.sites[aind_1[i]]
-        site_2 = pdb.sites[aind_2[i]]
-        site_3 = pdb.sites[aind_3[i]]
+        site_1 = top.sites[aind_1[i]]
+        site_2 = top.sites[aind_2[i]]
+        site_3 = top.sites[aind_3[i]]
         angles = Angle(connection_members=(site_1, site_2, site_3))
         K = a_K[i]
         thetaeq = a_thetaeq[i]
@@ -202,12 +196,12 @@ def _parse_angles(file, pdb):
             ),
             parameters={"k": K * u.Unit("kJ / (deg**2)"), "theta_eq": thetaeq * u.deg},
         )
-        pdb.add_connection(angles)
+        top.add_connection(angles)
     file.seek(0)
-    return pdb
+    return top
 
 
-def _parse_RB(pdb, line):
+def _parse_RB(top, line):
     dind_1, dind_2, dind_3, dind_4 = (
         int(line.split()[0]) - 1,
         int(line.split()[1]) - 1,
@@ -223,10 +217,10 @@ def _parse_RB(pdb, line):
         float(line.split()[9]),
     )
 
-    site_1 = pdb.sites[dind_1]
-    site_2 = pdb.sites[dind_2]
-    site_3 = pdb.sites[dind_3]
-    site_4 = pdb.sites[dind_4]
+    site_1 = top.sites[dind_1]
+    site_2 = top.sites[dind_2]
+    site_3 = top.sites[dind_3]
+    site_4 = top.sites[dind_4]
     diehdrals = Dihedral(connection_members=(site_1, site_2, site_3, site_4))
     diehdrals.dihedral_type = DihedralType(
         name="RyckaertBellemansTorsionPotential",
@@ -253,10 +247,10 @@ def _parse_RB(pdb, line):
             "c5": c5 * u.Unit("kJ / (deg**2)"),
         },
     )
-    pdb.add_connection(diehdrals)
+    top.add_connection(diehdrals)
 
 
-def _parse_improper_harmonic(pdb, line):
+def _parse_improper_harmonic(top, line):
     dind_1, dind_2, dind_3, dind_4 = (
         int(line.split()[0]) - 1,
         int(line.split()[1]) - 1,
@@ -268,10 +262,10 @@ def _parse_improper_harmonic(pdb, line):
         float(line.split()[6]),
         float(line.split()[7]),
     )
-    site_1 = pdb.sites[dind_1]
-    site_2 = pdb.sites[dind_2]
-    site_3 = pdb.sites[dind_3]
-    site_4 = pdb.sites[dind_4]
+    site_1 = top.sites[dind_1]
+    site_2 = top.sites[dind_2]
+    site_3 = top.sites[dind_3]
+    site_4 = top.sites[dind_4]
     impropers = Improper(connection_members=(site_1, site_2, site_3, site_4))
     K = d_K
     phi_eq = d_phi
@@ -298,10 +292,10 @@ def _parse_improper_harmonic(pdb, line):
             "n": n * u.dimensionless,
         },
     )
-    pdb.add_connection(impropers)
+    top.add_connection(impropers)
 
 
-def _parse_harmonic(pdb, line):
+def _parse_harmonic(top, line):
     dind_1, dind_2, dind_3, dind_4 = (
         int(line.split()[0]) - 1,
         int(line.split()[1]) - 1,
@@ -314,10 +308,10 @@ def _parse_harmonic(pdb, line):
         float(line.split()[7]),
     )
 
-    site_1 = pdb.sites[dind_1]
-    site_2 = pdb.sites[dind_2]
-    site_3 = pdb.sites[dind_3]
-    site_4 = pdb.sites[dind_4]
+    site_1 = top.sites[dind_1]
+    site_2 = top.sites[dind_2]
+    site_3 = top.sites[dind_3]
+    site_4 = top.sites[dind_4]
     diehdrals = Dihedral(connection_members=(site_1, site_2, site_3, site_4))
     K = d_K
     phi_eq = d_phi
@@ -344,29 +338,20 @@ def _parse_harmonic(pdb, line):
             "n": n * u.dimensionless,
         },
     )
-    pdb.add_connection(diehdrals)
+    top.add_connection(diehdrals)
 
 
-def _parse_torsions(file, pdb):
+def _parse_torsions(file, top):
+    # List of json formats can be found here https://github.com/mosdef-hub/gmso/tree/main/gmso/lib/jsons
     # This function parses both proper (dihedrals) and improper torsions
-    # dry run to get the dihedral type
-    # for i, line in enumerate(file):
-    # if "dihedrals" in line:
-    # for i, line_1 in enumerate(file):
-    # if line_1.split() and ";" not in line_1.split():
-    # d_type = int(line_1.split()[4])
-    # break
-    # break
-    #
-    # file.seek(0)
 
     dicts_dtype = {
         1: _parse_harmonic,
         3: _parse_RB,
         4: _parse_improper_harmonic,
-    }  # This one should come from the GROMACS page
+    }  # parser functs should come from the GROMACS page
     # https://manual.gromacs.org/documentation/current/reference-manual/topologies/topology-file-formats.html
-    # parser = dicts_dtype[d_type]
+
 
     for line in file:
         if "dihedrals" in line:
@@ -376,21 +361,9 @@ def _parse_torsions(file, pdb):
                 elif line_1.split() and ";" not in line_1.split():
                     d_type = int(line_1.split()[4])
                     parser = dicts_dtype[d_type]
-                    parser(pdb, line_1)
+                    parser(top, line_1)
             break
 
-    # dry run to get the dihedral type
-    # for i, line in enumerate(file):
-    # if "dihedrals" in line:
-    # for i, line_1 in enumerate(file):
-    # if line_1.split() and ";" not in line_1.split():
-    # d_type = int(line_1.split()[4])
-    # break
-    # break
-
-    # file.seek(0)
-
-    # for line in file:
     if "dihedrals" in line:
         for line_1 in file:
             if "[" in line_1:
@@ -398,8 +371,8 @@ def _parse_torsions(file, pdb):
             elif line_1.split() and ";" not in line_1.split():
                 d_type = int(line_1.split()[4])
                 parser = dicts_dtype[d_type]
-                parser(pdb, line_1)
+                parser(top, line_1)
 
-    return pdb
+    return top
 
-    # https://github.com/mosdef-hub/gmso/tree/main/gmso/lib/jsons
+    
