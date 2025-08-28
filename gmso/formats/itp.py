@@ -69,9 +69,7 @@ def _parse_atoms(file, top):
             for line_1 in file:
                 if "[" in line_1:
                     break
-                elif line_1.split() and line_1.split()[0] == str(
-                    natoms
-                ):  
+                elif line_1.split() and line_1.split()[0] == str(natoms):
                     atype.append(line_1.split()[1])
                     mass.append(line_1.split()[7])
                     charge.append(line_1.split()[6])
@@ -82,7 +80,7 @@ def _parse_atoms(file, top):
         site = Atom()
         site.mass = float(mass[i])
         site.charge = float(charge[i])
-        for index in range(len(dicts_atype)):  
+        for index in range(len(dicts_atype)):
             # Loop over dictionary to assign epsilon
             for key in dicts_atype[index]:
                 if dicts_atype[index]["type"] == atype[i]:
@@ -352,7 +350,6 @@ def _parse_torsions(file, top):
     }  # parser functs should come from the GROMACS page
     # https://manual.gromacs.org/documentation/current/reference-manual/topologies/topology-file-formats.html
 
-
     for line in file:
         if "dihedrals" in line:
             for line_1 in file:
@@ -374,5 +371,3 @@ def _parse_torsions(file, top):
                 parser(top, line_1)
 
     return top
-
-    
