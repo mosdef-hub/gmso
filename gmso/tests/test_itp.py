@@ -4,14 +4,13 @@ from gmso.tests.utils import get_path
 
 
 class Testitp(BaseTest):
-
     def test_itp_LIQ(self):
         top = read_itp(get_path("LIQ.itp"))
         assert top is not None
         assert len(top.atom_types) == 14
         assert len(set([atype.name for atype in top.atom_types])) == 4
         assert len(top.bond_types) == 13
-        #assert top.bonds[0].bond_type.parameters["k"] == 0.1529
+        # assert top.bonds[0].bond_type.parameters["k"] == 0.1529
         empty_set = set()
         for bond in top.bonds:
             b_type_tuple = (
@@ -36,7 +35,7 @@ class Testitp(BaseTest):
         assert len(set([atype.name for atype in top.atom_types])) == 9
 
         assert len(top.bond_types) == 1445
-        #assert top.bonds[0].bond_type.parameters["k"] == 0.1529
+        # assert top.bonds[0].bond_type.parameters["k"] == 0.1529
         empty_set = set()
         for bond in top.bonds:
             b_type_tuple = (
