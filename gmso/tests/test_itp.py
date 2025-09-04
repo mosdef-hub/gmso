@@ -30,15 +30,12 @@ class Testitp(BaseTest):
 
         for dihedral in top.dihedrals:
             d_type_tuple = (
-            float(dihedral.dihedral_type.parameters["k"].value),
-            float(dihedral.dihedral_type.parameters["phi_eq"].value),
-            float(dihedral.dihedral_type.parameters["n"].value),
-        )
+                float(dihedral.dihedral_type.parameters["k"].value),
+                float(dihedral.dihedral_type.parameters["phi_eq"].value),
+                float(dihedral.dihedral_type.parameters["n"].value),
+            )
             empty_set.add(d_type_tuple)
         assert len(empty_set) == 14
-
-
-
 
     def test_itp_PNB(self):
         top = read_itp(get_path("PNB.itp"))
@@ -77,7 +74,7 @@ class Testitp(BaseTest):
             )
             empty_set.add(d_type_tuple)
         assert len(empty_set) == 28
-
+        
         for improper in top.impropers:
             imp_type_tuple = (
                 float(improper.improper_type.parameters["k"].value),
