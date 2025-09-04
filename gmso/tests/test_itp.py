@@ -77,3 +77,12 @@ class Testitp(BaseTest):
             )
             empty_set.add(d_type_tuple)
         assert len(empty_set) == 28
+
+        for improper in top.impropers:
+            imp_type_tuple = (
+                float(improper.improper_type.parameters["k"].value),
+                float(improper.improper_type.parameters["phi_eq"].value),
+                float(improper.improper_type.parameters["n"].value),
+            )
+            empty_set.add(imp_type_tuple)
+        assert len(empty_set) == 29
