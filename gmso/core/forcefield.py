@@ -351,6 +351,33 @@ class ForceField(object):
         if reverse in self.bond_types:
             match = self.bond_types[reverse], (1, 0)
 
+        if match:
+            if return_match_order:
+                return match
+            else:
+                return match[0]
+
+        for i in range(1, 3):
+            forward_patterns = mask_with(atom_types, i)
+            reverse_patterns = mask_with(reversed(atom_types), i)
+
+            for forward_pattern, reverse_pattern in zip(
+                forward_patterns, reverse_patterns
+            ):
+                forward_match_key = FF_TOKENS_SEPARATOR.join(forward_pattern)
+                reverse_match_key = FF_TOKENS_SEPARATOR.join(reverse_pattern)
+
+                if forward_match_key in self.bond_types:
+                    match = self.bond_types[forward_match_key], (0, 1)
+                    break
+
+                if reverse_match_key in self.bond_types:
+                    match = self.bond_types[reverse_match_key], (2, 1)
+                    break
+
+            if match:
+                break
+
         msg = (
             f"BondType between atoms {atom_types[0]} and {atom_types[1]} "
             f"is missing from the ForceField"
@@ -381,6 +408,33 @@ class ForceField(object):
             match = self.angle_types[forward], (0, 1, 2)
         if reverse in self.angle_types:
             match = self.angle_types[reverse], (2, 1, 0)
+
+        if match:
+            if return_match_order:
+                return match
+            else:
+                return match[0]
+
+        for i in range(1, 4):
+            forward_patterns = mask_with(atom_types, i)
+            reverse_patterns = mask_with(reversed(atom_types), i)
+
+            for forward_pattern, reverse_pattern in zip(
+                forward_patterns, reverse_patterns
+            ):
+                forward_match_key = FF_TOKENS_SEPARATOR.join(forward_pattern)
+                reverse_match_key = FF_TOKENS_SEPARATOR.join(reverse_pattern)
+
+                if forward_match_key in self.angle_types:
+                    match = self.angle_types[forward_match_key], (0, 1, 2)
+                    break
+
+                if reverse_match_key in self.angle_types:
+                    match = self.angle_types[reverse_match_key], (2, 1, 0)
+                    break
+
+            if match:
+                break
 
         msg = (
             f"AngleType between atoms {atom_types[0]}, {atom_types[1]} "

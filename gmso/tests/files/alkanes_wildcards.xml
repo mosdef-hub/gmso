@@ -46,38 +46,20 @@
   <BondTypes expression="0.5*k*(r - r_eq)**2">
     <ParametersUnitDef parameter="k" unit="kJ/(mol*nm**2)"/>
     <ParametersUnitDef parameter="r_eq" unit="nm"/>
-    <BondType name="BondType-Harmonic-1" type1="CT" type2="HC">
+    <BondType name="BondType-Harmonic-1" type1="*" type2="*">
       <Parameters>
-        <Parameter name="k" value="284512.0"/>
-        <Parameter name="r_eq" value="0.109"/>
-      </Parameters>
-    </BondType>
-    <BondType name="BondType-Harmonic-2" type1="CT" type2="CT">
-      <Parameters>
-        <Parameter name="k" value="224262.4"/>
-        <Parameter name="r_eq" value="0.1529"/>
+        <Parameter name="k" value="1"/>
+        <Parameter name="r_eq" value="1"/>
       </Parameters>
     </BondType>
   </BondTypes>
   <AngleTypes expression="0.5*k*(theta - theta_eq)**2">
     <ParametersUnitDef parameter="k" unit="kJ/(mol*rad**2)"/>
     <ParametersUnitDef parameter="theta_eq" unit="rad"/>
-    <AngleType name="AngleType-Harmonic-1" type1="HC" type2="CT" type3="HC">
+    <AngleType name="AngleType-Harmonic-1" type1="*" type2="*" type3="*">
       <Parameters>
-        <Parameter name="k" value="276.144"/>
-        <Parameter name="theta_eq" value="1.88146493365"/>
-      </Parameters>
-    </AngleType>
-    <AngleType name="AngleType-Harmonic-2" type1="CT" type2="CT" type3="HC">
-      <Parameters>
-        <Parameter name="k" value="313.8"/>
-        <Parameter name="theta_eq" value="1.93207948196"/>
-      </Parameters>
-    </AngleType>
-    <AngleType name="AngleType-Harmonic-3" type1="CT" type2="CT" type3="CT">
-      <Parameters>
-        <Parameter name="k" value="488.273"/>
-        <Parameter name="theta_eq" value="1.966986067"/>
+        <Parameter name="k" value="1"/>
+        <Parameter name="theta_eq" value="1"/>
       </Parameters>
     </AngleType>
   </AngleTypes>
@@ -88,24 +70,14 @@
     <ParametersUnitDef parameter="c3" unit="kJ/mol"/>
     <ParametersUnitDef parameter="c4" unit="kJ/mol"/>
     <ParametersUnitDef parameter="c5" unit="kJ/mol"/>
-    <DihedralType name="RyckaertBellemansTorsionPotential-1" type1="HC" type2="CT" type3="CT" type4="">
+    <DihedralType name="RyckaertBellemansTorsionPotential-1" type1="*" type2="*" type3="*" type4="">
         <Parameters>
-        <Parameter name="c0" value="0.6276"/>
-        <Parameter name="c1" value="1.8828"/>
-        <Parameter name="c2" value="0.0"/>
-        <Parameter name="c3" value="-2.5104"/>
-        <Parameter name="c4" value="0.0"/>
-        <Parameter name="c5" value="0.0"/>
-      </Parameters>
-    </DihedralType>
-    <DihedralType name="RyckaertBellemansTorsionPotential-3" type1="CT" type2="CT" type3="CT" type4="CT">
-        <Parameters>
-        <Parameter name="c0" value="2.9288"/>
-        <Parameter name="c1" value="-1.4644"/>
-        <Parameter name="c2" value="0.2092"/>
-        <Parameter name="c3" value="-1.6736"/>
-        <Parameter name="c4" value="0.0"/>
-        <Parameter name="c5" value="0.0"/>
+        <Parameter name="c0" value="1"/>
+        <Parameter name="c1" value="1"/>
+        <Parameter name="c2" value="1"/>
+        <Parameter name="c3" value="1"/>
+        <Parameter name="c4" value="1"/>
+        <Parameter name="c5" value="1"/>
       </Parameters>
     </DihedralType>
   </DihedralTypes>

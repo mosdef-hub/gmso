@@ -4,11 +4,13 @@ from pathlib import Path
 import parmed as pmd
 import pytest
 
+from gmso import ForceField
 from gmso.external.convert_parmed import from_parmed
 from gmso.parameterization.parameterize import apply
 from gmso.tests.parameterization.parameterization_base_test import (
     ParameterizationBaseTest,
 )
+from gmso.tests.utils import get_path
 
 
 def get_foyer_opls_test_dirs():
@@ -56,3 +58,23 @@ class TestOPLSGMSO(ParameterizationBaseTest):
         assert_same_connection_params(gmso_top, gmso_top_from_pmd)
         assert_same_connection_params(gmso_top, gmso_top_from_pmd, "angles")
         assert_same_connection_params(gmso_top, gmso_top_from_pmd, "dihedrals")
+
+
+class TestGeneralParameterizations(ParameterizationBaseTest):
+    def test_wildcards(self, ethane_methane_top):
+        from gmso.core.views import PotentialFilters
+
+        ff = ForceField(get_path("alkanes_wildcards.xml"))
+        ptop = apply(ethane_methane_top, ff, identify_connections=True)
+        assert ptop.is_fully_typed()
+        assert len(ptop.bond_types) == 11
+        assert len(ptop.bond_types(PotentialFilters.UNIQUE_NAME_CLASS)) == 1
+        assert ptop.bonds[0].bond_type.member_types == ("*", "*")
+
+        assert len(ptop.angle_types) == 12 + 6  # ethane + methane
+        assert len(ptop.angle_types(PotentialFilters.UNIQUE_NAME_CLASS)) == 1
+        assert ptop.angles[0].angle_type.member_types == ("*", "*", "*")
+
+        assert len(ptop.dihedral_types) == 9
+        assert len(ptop.dihedral_types(PotentialFilters.UNIQUE_NAME_CLASS)) == 1
+        assert ptop.dihedrals[0].dihedral_type.member_types == ("*", "*", "*", "*")
