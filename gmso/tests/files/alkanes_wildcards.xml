@@ -77,7 +77,7 @@
         <Parameter name="c2" value="1"/>
         <Parameter name="c3" value="1"/>
         <Parameter name="c4" value="1"/>
-        <Parameter name="c5" value="1"/>
+        <Parameter name="c5" value="0"/>
       </Parameters>
     </DihedralType>
   </DihedralTypes>
