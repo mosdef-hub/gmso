@@ -69,8 +69,8 @@ class TestGeneralParameterizations(ParameterizationBaseTest):
         assert ptop.is_fully_typed()
         assert len(ptop.bond_types) == 11
         assert len(ptop.bond_types(PotentialFilters.UNIQUE_NAME_CLASS)) == 2
-        assert ptop.bonds[0].bond_type.member_types == ("*", "opls_135") # ethane
-        assert ptop.bonds[8].bond_type.member_types == ("*", "*") # methane
+        assert ptop.bonds[0].bond_type.member_types == ("*", "opls_135")  # ethane
+        assert ptop.bonds[8].bond_type.member_types == ("*", "*")  # methane
 
         assert len(ptop.angle_types) == 12 + 6  # ethane + methane
         assert len(ptop.angle_types(PotentialFilters.UNIQUE_NAME_CLASS)) == 2
