@@ -68,12 +68,14 @@ class TestGeneralParameterizations(ParameterizationBaseTest):
         ptop = apply(ethane_methane_top, ff, identify_connections=True)
         assert ptop.is_fully_typed()
         assert len(ptop.bond_types) == 11
-        assert len(ptop.bond_types(PotentialFilters.UNIQUE_NAME_CLASS)) == 1
-        assert ptop.bonds[0].bond_type.member_types == ("*", "*")
+        assert len(ptop.bond_types(PotentialFilters.UNIQUE_NAME_CLASS)) == 2
+        assert ptop.bonds[0].bond_type.member_types == ("*", "opls_135") # ethane
+        assert ptop.bonds[8].bond_type.member_types == ("*", "*") # methane
 
         assert len(ptop.angle_types) == 12 + 6  # ethane + methane
-        assert len(ptop.angle_types(PotentialFilters.UNIQUE_NAME_CLASS)) == 1
+        assert len(ptop.angle_types(PotentialFilters.UNIQUE_NAME_CLASS)) == 2
         assert ptop.angles[0].angle_type.member_types == ("*", "*", "*")
+        assert ptop.angles[2].angle_type.member_types == ("*", "*", "opls_135")
 
         assert len(ptop.dihedral_types) == 9
         assert len(ptop.dihedral_types(PotentialFilters.UNIQUE_NAME_CLASS)) == 1

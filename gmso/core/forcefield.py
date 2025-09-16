@@ -372,7 +372,7 @@ class ForceField(object):
                     break
 
                 if reverse_match_key in self.bond_types:
-                    match = self.bond_types[reverse_match_key], (2, 1)
+                    match = self.bond_types[reverse_match_key], (1, 0)
                     break
 
             if match:

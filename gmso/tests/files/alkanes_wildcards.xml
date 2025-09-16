@@ -46,9 +46,15 @@
   <BondTypes expression="0.5*k*(r - r_eq)**2">
     <ParametersUnitDef parameter="k" unit="kJ/(mol*nm**2)"/>
     <ParametersUnitDef parameter="r_eq" unit="nm"/>
-    <BondType name="BondType-Harmonic-1" type1="*" type2="*">
+    <BondType name="BondType-Harmonic-wildcard" type1="*" type2="*">
       <Parameters>
         <Parameter name="k" value="1"/>
+        <Parameter name="r_eq" value="1"/>
+      </Parameters>
+    </BondType>
+    <BondType name="BondType-Harmonic-135" type1="*" type2="opls_135">
+      <Parameters>
+        <Parameter name="k" value="2"/>
         <Parameter name="r_eq" value="1"/>
       </Parameters>
     </BondType>
@@ -56,7 +62,13 @@
   <AngleTypes expression="0.5*k*(theta - theta_eq)**2">
     <ParametersUnitDef parameter="k" unit="kJ/(mol*rad**2)"/>
     <ParametersUnitDef parameter="theta_eq" unit="rad"/>
-    <AngleType name="AngleType-Harmonic-1" type1="*" type2="*" type3="*">
+    <AngleType name="AngleType-Harmonic-wildcard" type1="*" type2="*" type3="*">
+      <Parameters>
+        <Parameter name="k" value="1"/>
+        <Parameter name="theta_eq" value="1"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="AngleType-Harmonic-opls_135" type1="*" type2="*" type3="opls_135">
       <Parameters>
         <Parameter name="k" value="1"/>
         <Parameter name="theta_eq" value="1"/>
