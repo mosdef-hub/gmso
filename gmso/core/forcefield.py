@@ -11,8 +11,9 @@ from lxml import etree
 from pydantic import ValidationError
 
 from gmso.core.element import element_by_symbol
-from gmso.exceptions import GMSOError, MissingPotentialError
+from gmso.exceptions import GMSOError
 from gmso.utils._constants import FF_TOKENS_SEPARATOR
+from gmso.utils.connectivity import create_pattern
 from gmso.utils.decorators import deprecate_kwargs
 from gmso.utils.ff_utils import (
     parse_ff_atomtypes,
@@ -22,7 +23,7 @@ from gmso.utils.ff_utils import (
     parse_ff_virtual_types,
     validate,
 )
-from gmso.utils.misc import mask_with, validate_type
+from gmso.utils.misc import mask_with, reverse_identifier, validate_type
 
 logger = logging.getLogger(__name__)
 
@@ -260,7 +261,7 @@ class ForceField(object):
         """
         return _group_by_expression(self.pairpotential_types)
 
-    def get_potential(self, group, key, return_match_order=False, warn=False):
+    def get_potential(self, group, key, exact_match=False):
         """Return a specific potential by key in this ForceField.
 
         Parameters
@@ -269,10 +270,8 @@ class ForceField(object):
             The potential group to perform this search on
         key: str (for atom type) or list of str (for connection types)
             The key to lookup for this potential group
-        return_match_order : bool, default=False
-            If true, return the order of connection member types/classes that got matched
-        warn: bool, default=False
-            If true, raise a warning instead of Error if no match found
+        exact_match : bool, default=False
+            If False, use wildcard matching to check for valid matches in the forcefield.
 
         Returns
         -------
@@ -304,11 +303,14 @@ class ForceField(object):
             str,
         )
 
+        if group == "atom_type":
+            return potential_extractors[group](key)
         return potential_extractors[group](
-            key, return_match_order=return_match_order, warn=warn
+            key,
+            exact_match=exact_match,
         )
 
-    def get_parameters(self, group, key, warn=False, copy=False):
+    def get_parameters(self, group, key, exact_match=False, copy=False):
         """Return parameters for a specific potential by key in this ForceField.
 
         This function uses the `get_potential` function to get Parameters
@@ -318,48 +320,51 @@ class ForceField(object):
         gmso.ForceField.get_potential
             Get specific potential/parameters from a forcefield potential group by key
         """
-        potential = self.get_potential(group, key, warn=warn)
-        return potential.get_parameters(copy=copy)
+        potential = self.get_potential(group, key, exact_match=exact_match)
+        if potential is None:
+            return None
+        if group == "atom_type":
+            return potential.get_parameters(copy=copy)
+        return potential[0].get_parameters(copy=copy)
 
-    def _get_atom_type(self, atom_type, return_match_order=False, warn=False):
+    def _get_atom_type(self, atom_type):
         """Get a particular atom_type with given `atom_type` from this ForceField."""
         if isinstance(atom_type, list):
             atom_type = atom_type[0]
 
-        if not self.atom_types.get(atom_type):
-            msg = f"AtomType {atom_type} is not present in the ForceField"
-            if warn:
-                logger.warning(msg)
-            else:
-                raise MissingPotentialError(msg)
-
         return self.atom_types.get(atom_type)
 
-    def _get_bond_type(self, atom_types, return_match_order=False, warn=False):
+    def _get_bond_type(self, identifier, exact_match=False):
         """Get a particular bond_type between `atom_types` from this ForceField."""
-        if len(atom_types) != 2:
-            raise ValueError(
-                f"BondType potential can only "
-                f"be extracted for two atoms. Provided {len(atom_types)}"
-            )
-
-        forward = FF_TOKENS_SEPARATOR.join(atom_types)
-        reverse = FF_TOKENS_SEPARATOR.join(reversed(atom_types))
-        match = None
+        if isinstance(identifier, str):
+            forward = identifier
+            reverse = reverse_identifier(forward)
+        else:
+            if len(identifier) == 2:  # add wildcard bond
+                identifier.append("~")
+            elif len(identifier) != 3:
+                raise ValueError(
+                    f"BondType potential can only "
+                    f"be extracted for two atoms. Provided {len(identifier)}"
+                )
+            forward = create_pattern(identifier)
+            reverse = create_pattern(list(reversed(identifier[:2])) + [identifier[2]])
         if forward in self.bond_types:
-            match = self.bond_types[forward], (0, 1)
+            return self.bond_types[forward], (0, 1)
         if reverse in self.bond_types:
-            match = self.bond_types[reverse], (1, 0)
+            return self.bond_types[reverse], (1, 0)
 
-        if match:
-            if return_match_order:
-                return match
-            else:
-                return match[0]
+        if exact_match:
+            return None
 
         for i in range(1, 3):
-            forward_patterns = mask_with(atom_types, i)
-            reverse_patterns = mask_with(reversed(atom_types), i)
+            forward_patterns = mask_with(identifier[:2], i)
+            reverse_patterns = mask_with(
+                reversed(
+                    identifier[:2],
+                ),
+                i,
+            )
 
             for forward_pattern, reverse_pattern in zip(
                 forward_patterns, reverse_patterns
@@ -368,56 +373,43 @@ class ForceField(object):
                 reverse_match_key = FF_TOKENS_SEPARATOR.join(reverse_pattern)
 
                 if forward_match_key in self.bond_types:
-                    match = self.bond_types[forward_match_key], (0, 1)
-                    break
+                    return self.bond_types[forward_match_key], (0, 1)
 
                 if reverse_match_key in self.bond_types:
-                    match = self.bond_types[reverse_match_key], (1, 0)
-                    break
+                    return self.bond_types[reverse_match_key], (1, 0)
+        return None
 
-            if match:
-                break
-
-        msg = (
-            f"BondType between atoms {atom_types[0]} and {atom_types[1]} "
-            f"is missing from the ForceField"
-        )
-        if match:
-            if return_match_order:
-                return match
-            else:
-                return match[0]
-        elif warn:
-            logger.warning(msg)
-            return None
-        else:
-            raise MissingPotentialError(msg)
-
-    def _get_angle_type(self, atom_types, return_match_order=False, warn=False):
+    def _get_angle_type(self, identifier, exact_match=False):
         """Get a particular angle_type between `atom_types` from this ForceField."""
-        if len(atom_types) != 3:
-            raise ValueError(
-                f"AngleType potential can only "
-                f"be extracted for three atoms. Provided {len(atom_types)}"
+        if isinstance(identifier, str):
+            forward = identifier
+            reverse = reverse_identifier(forward)
+        else:
+            if len(identifier) == 3:
+                identifier.append("~")
+                identifier.append("~")
+            elif len(identifier) != 5:
+                raise ValueError(
+                    f"AngleType potential can only "
+                    f"be extracted for three atoms. Provided {len(identifier)}"
+                )
+            forward = create_pattern(identifier)
+            reverse = create_pattern(
+                list(reversed(identifier[:3])) + list(reversed(identifier[3:]))
             )
 
-        forward = FF_TOKENS_SEPARATOR.join(atom_types)
-        reverse = FF_TOKENS_SEPARATOR.join(reversed(atom_types))
-        match = None
         if forward in self.angle_types:
-            match = self.angle_types[forward], (0, 1, 2)
+            return self.angle_types[forward], (0, 1, 2)
         if reverse in self.angle_types:
-            match = self.angle_types[reverse], (2, 1, 0)
+            return self.angle_types[reverse], (2, 1, 0)
 
-        if match:
-            if return_match_order:
-                return match
-            else:
-                return match[0]
-
+        if exact_match:
+            return None
         for i in range(1, 4):
-            forward_patterns = mask_with(atom_types, i)
-            reverse_patterns = mask_with(reversed(atom_types), i)
+            forward_patterns = mask_with(identifier, i)
+            reverse_patterns = mask_with(
+                list(reversed(identifier[:3])) + list(reversed(identifier[3:])), i
+            )
 
             for forward_pattern, reverse_pattern in zip(
                 forward_patterns, reverse_patterns
@@ -426,57 +418,43 @@ class ForceField(object):
                 reverse_match_key = FF_TOKENS_SEPARATOR.join(reverse_pattern)
 
                 if forward_match_key in self.angle_types:
-                    match = self.angle_types[forward_match_key], (0, 1, 2)
-                    break
+                    return self.angle_types[forward_match_key], (0, 1, 2)
 
                 if reverse_match_key in self.angle_types:
-                    match = self.angle_types[reverse_match_key], (2, 1, 0)
-                    break
+                    return self.angle_types[reverse_match_key], (2, 1, 0)
 
-            if match:
-                break
+        return None
 
-        msg = (
-            f"AngleType between atoms {atom_types[0]}, {atom_types[1]} "
-            f"and {atom_types[2]} is missing from the ForceField"
-        )
-        if match:
-            if return_match_order:
-                return match
-            else:
-                return match[0]
-        elif warn:
-            logger.warning(msg)
-            return None
-        else:
-            raise MissingPotentialError(msg)
-
-    def _get_dihedral_type(self, atom_types, return_match_order=False, warn=False):
+    def _get_dihedral_type(self, identifier, exact_match=False):
         """Get a particular dihedral_type between `atom_types` from this ForceField."""
-        if len(atom_types) != 4:
-            raise ValueError(
-                f"DihedralType potential can only "
-                f"be extracted for four atoms. Provided {len(atom_types)}"
+        if isinstance(identifier, str):
+            forward = identifier
+            reverse = reverse_identifier(forward)
+        else:
+            if len(identifier) == 4:
+                identifier.append("~")
+                identifier.append("~")
+                identifier.append("~")
+            elif len(identifier) != 7:
+                raise ValueError(
+                    f"DihedralType potential can only "
+                    f"be extracted for four atoms and three bonds. Provided {len(identifier)}"
+                )
+            forward = create_pattern(identifier)
+            reverse = create_pattern(
+                list(reversed(identifier[:4])) + list(reversed(identifier[4:]))
             )
 
-        forward = FF_TOKENS_SEPARATOR.join(atom_types)
-        reverse = FF_TOKENS_SEPARATOR.join(reversed(atom_types))
-
-        match = None
         if forward in self.dihedral_types:
-            match = self.dihedral_types[forward], (0, 1, 2, 3)
+            return self.dihedral_types[forward], (0, 1, 2, 3)
         if reverse in self.dihedral_types:
-            match = self.dihedral_types[reverse], (3, 2, 1, 0)
+            return self.dihedral_types[reverse], (3, 2, 1, 0)
 
-        if match:
-            if return_match_order:
-                return match
-            else:
-                return match[0]
-
+        if exact_match:
+            return None
         for i in range(1, 5):
-            forward_patterns = mask_with(atom_types, i)
-            reverse_patterns = mask_with(reversed(atom_types), i)
+            forward_patterns = mask_with(identifier, i)
+            reverse_patterns = mask_with(reversed(identifier[:4] + identifier[4:]), i)
 
             for forward_pattern, reverse_pattern in zip(
                 forward_patterns, reverse_patterns
@@ -485,100 +463,82 @@ class ForceField(object):
                 reverse_match_key = FF_TOKENS_SEPARATOR.join(reverse_pattern)
 
                 if forward_match_key in self.dihedral_types:
-                    match = self.dihedral_types[forward_match_key], (0, 1, 2, 3)
-                    break
+                    return self.dihedral_types[forward_match_key], (0, 1, 2, 3)
 
                 if reverse_match_key in self.dihedral_types:
-                    match = self.dihedral_types[reverse_match_key], (3, 2, 1, 0)
-                    break
+                    return self.dihedral_types[reverse_match_key], (3, 2, 1, 0)
 
-            if match:
-                break
+        return None
 
-        msg = (
-            f"DihedralType between atoms {atom_types[0]}, {atom_types[1]}, "
-            f"{atom_types[2]} and {atom_types[3]} is missing from the ForceField."
-        )
-        if match:
-            if return_match_order:
-                return match
-            else:
-                return match[0]
-        elif warn:
-            logger.warning(msg)
-            return None
+    def _get_improper_type(self, identifier, exact_match=False):
+        """Get a particular improper_type between `identifier` from this ForceField."""
+        if isinstance(identifier, str):
+            forward = identifier
+            equivalent = None  # TODO
+            # equivalent = equivalent_identifier
         else:
-            raise MissingPotentialError(msg)
+            if len(identifier) == 4:  # add wildcard bonds
+                identifier.append("~")
+                identifier.append("~")
+                identifier.append("~")
+            elif len(identifier) != 7:
+                raise ValueError(
+                    f"ImproperType potential can only "
+                    f"be extracted for four atoms and three bonds. Provided {len(identifier)}"
+                )
 
-    def _get_improper_type(self, atom_types, return_match_order=False, warn=False):
-        """Get a particular improper_type between `atom_types` from this ForceField."""
-        if len(atom_types) != 4:
-            raise ValueError(
-                f"ImproperType potential can only "
-                f"be extracted for four atoms. Provided {len(atom_types)}"
-            )
-
-        forward = FF_TOKENS_SEPARATOR.join(atom_types)
+            forward = create_pattern(identifier)
+            equiv_idx = [
+                (0, i, j, k) for (i, j, k) in itertools.permutations((1, 2, 3), 3)
+            ]
+            equivalent = [
+                [
+                    identifier[m],
+                    identifier[n],
+                    identifier[o],
+                    identifier[p],
+                    identifier[n + 3],
+                    identifier[o + 3],
+                    identifier[p + 3],
+                ]
+                for (m, n, o, p) in equiv_idx
+            ]
 
         if forward in self.improper_types:
-            if return_match_order:
-                return self.improper_types[forward], (0, 1, 2, 3)
-            else:
-                return self.improper_types[forward]
+            return self.improper_types[forward], (0, 1, 2, 3)
 
-        equiv_idx = [(0, i, j, k) for (i, j, k) in itertools.permutations((1, 2, 3), 3)]
-        equivalent = [
-            [atom_types[m], atom_types[n], atom_types[o], atom_types[p]]
-            for (m, n, o, p) in equiv_idx
-        ]
+        if not equivalent:
+            return None
         for eq, order in zip(equivalent, equiv_idx):
-            eq_key = FF_TOKENS_SEPARATOR.join(eq)
+            eq_key = create_pattern(eq)
             if eq_key in self.improper_types:
-                if return_match_order:
-                    return self.improper_types[eq_key], order
-                else:
-                    return self.improper_types[eq_key]
+                return self.improper_types[eq_key], order
 
-        match = None
+        if exact_match:
+            return None
+
         for i in range(1, 5):
-            forward_patterns = mask_with(atom_types, i)
+            forward_patterns = mask_with(identifier, i)
             for forward_pattern in forward_patterns:
                 forward_match_key = FF_TOKENS_SEPARATOR.join(forward_pattern)
                 if forward_match_key in self.improper_types:
-                    match = self.improper_types[forward_match_key], (0, 1, 2, 3)
-                    break
-            if match:
-                break
-        if not match:
-            for i in range(1, 5):
-                for eq, order in zip(equivalent, equiv_idx):
-                    equiv_patterns = mask_with(eq, i)
-                    for equiv_pattern in equiv_patterns:
-                        equiv_pattern_key = FF_TOKENS_SEPARATOR.join(equiv_pattern)
-                        if equiv_pattern_key in self.improper_types:
-                            match = (
-                                self.improper_types[equiv_pattern_key],
-                                order,
-                            )
-                            break
-                    if match:
-                        break
-                if match:
-                    break
+                    return self.improper_types[forward_match_key], (0, 1, 2, 3)
+        for i in range(1, 5):
+            for eq, order in zip(equivalent, equiv_idx):
+                equiv_patterns = mask_with(eq, i)
+                for equiv_pattern in equiv_patterns:
+                    equiv_pattern_key = FF_TOKENS_SEPARATOR.join(equiv_pattern)
+                    if equiv_pattern_key in self.improper_types:
+                        return (
+                            self.improper_types[equiv_pattern_key],
+                            order,
+                        )
 
-        msg = (
-            f"ImproperType between atoms {atom_types[0]}, {atom_types[1]}, "
-            f"{atom_types[2]} and {atom_types[3]} is missing from the ForceField."
-        )
-        if match:
-            return match
-        elif warn:
-            logger.warning(msg)
-            return None
-        else:
-            raise MissingPotentialError(msg)
+        return None
 
-    def _get_virtual_type(self, atom_types, return_match_order=False, warn=False):
+    def _get_virtual_type(
+        self, atom_types, return_match_order=False, exact_match=False
+    ):
         """Get a particular virtual_type between `atom_types` from this ForceField."""
 
         forward = FF_TOKENS_SEPARATOR.join(atom_types)
@@ -586,18 +546,7 @@ class ForceField(object):
         match = None
         if forward in self.virtual_types:
             match = self.virtual_types[forward], tuple(range(n_elements))
-
-        msg = f"VirtualType between atoms {tuple(atype for atype in atom_types)} is missing from the ForceField"
-        if match:
-            if return_match_order:
-                return match
-            else:
-                return match[0]  # only return the atoms, not their order
-        elif warn:
-            logger.warning(msg)
-            return None
-        else:
-            raise MissingPotentialError(msg)
+            return match
 
     def __repr__(self):
         """Return a formatted representation of the Forcefield."""

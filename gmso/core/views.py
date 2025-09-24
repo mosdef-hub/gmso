@@ -44,6 +44,11 @@ def get_parameters(potential):
     )
 
 
+def get_name(potential):
+    """Return the string name of the object"""
+    return potential.name
+
+
 def filtered_potentials(potential_types, identifier):
     """Filter and return unique potentials based on pre-defined identifier function."""
     visited = defaultdict(set)
@@ -63,6 +68,7 @@ class PotentialFilters:
     UNIQUE_PARAMETERS = "unique_parameters"
     UNIQUE_ID = "unique_id"
     REPEAT_DUPLICATES = "repeat_duplicates"
+    NAME = "name"
 
     @staticmethod
     def all():
@@ -80,6 +86,7 @@ potential_identifiers = {
     PotentialFilters.UNIQUE_PARAMETERS: get_parameters,
     PotentialFilters.UNIQUE_ID: lambda p: id(p),
     PotentialFilters.REPEAT_DUPLICATES: lambda _: str(uuid.uuid4()),
+    PotentialFilters.NAME: get_name,
 }
 
 
