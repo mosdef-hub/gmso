@@ -135,3 +135,19 @@ def get_xml_representation(value):
         return ",".join(value)
     else:
         return str(value)
+
+
+def reverse_identifier(identifier: str):
+    bond_tokens = ["~", "-", "=", "#"]
+    outStr = ""
+    currentNode = ""
+    for letter in identifier[::-1]:
+        if letter in bond_tokens:
+            outStr += currentNode[::-1]
+            currentNode = ""
+            outStr += letter  # should be a bond
+        else:
+            currentNode += letter
+    if currentNode:
+        outStr += currentNode[::-1]
+    return outStr

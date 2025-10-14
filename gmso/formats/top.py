@@ -564,8 +564,8 @@ def _position_restraints_writer(top, site, shifted_idx_map):
 def _bond_restraint_writer(top, bond, shifted_idx_map):
     """Write bond restraint information."""
     line = "{0:8s}{1:8s}{2:4s}{3:15.5f}{4:15.5f}\n".format(
-        str(shifted_idx_map[top.get_index(bond.connection_members[1])] + 1),
         str(shifted_idx_map[top.get_index(bond.connection_members[0])] + 1),
+        str(shifted_idx_map[top.get_index(bond.connection_members[1])] + 1),
         "6",
         bond.restraint["r_eq"].in_units(u.nm).value,
         bond.restraint["k"].in_units(u.Unit("kJ/(mol * nm**2)")).value,
