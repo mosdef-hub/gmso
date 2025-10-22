@@ -21,7 +21,6 @@ if has_mbuild:
 import logging
 
 logger = logging.getLogger(__name__)
-borderDict = {"single": 1, "double": 2, "triple": 3, "default": "0", "aromatic": 1.5}
 
 
 def from_mbuild(
@@ -118,7 +117,7 @@ def from_mbuild(
         assert site_map[b1]["site"].molecule == site_map[b2]["site"].molecule
         new_bond = Bond(
             connection_members=[site_map[b1]["site"], site_map[b2]["site"]],
-            bond_order=borderDict[border["bond_order"]],
+            bond_order=border["bond_order"],
         )
         top.add_connection(new_bond, update_types=False)
 
