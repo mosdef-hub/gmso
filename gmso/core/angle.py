@@ -2,11 +2,12 @@
 
 from typing import Callable, ClassVar, Optional, Tuple
 
-from pydantic import ConfigDict, Field
+from pydantic import ConfigDict, Field, model_validator
 
 from gmso.abc.abstract_connection import Connection
 from gmso.core.angle_type import AngleType
 from gmso.core.atom import Atom
+from gmso.core.bond import Bond
 
 
 class Angle(Connection):
@@ -26,10 +27,22 @@ class Angle(Connection):
 
     __members_creator__: ClassVar[Callable] = Atom.model_validate
 
+    connectivity: ClassVar[Tuple[Tuple[int]]] = ((0, 1), (1, 2))
+
     connection_members_: Tuple[Atom, Atom, Atom] = Field(
         ...,
         description="The 3 atoms involved in the angle.",
         alias="connection_members",
+    )
+
+    bonds_: Tuple[Bond, Bond] = Field(
+        default=None,
+        description="""
+        List of connection bonds.
+        Ordered to align with connection_members, such that self.bonds_[0] is
+        the bond between (self.connection_members[0], self.connection_members[1]).
+        """,
+        alias="bonds",
     )
 
     angle_type_: Optional[AngleType] = Field(
@@ -48,6 +61,7 @@ class Angle(Connection):
         """,
         alias="restraint",
     )
+
     model_config = ConfigDict(
         alias_to_fields=dict(
             **Connection.model_config["alias_to_fields"],
@@ -72,6 +86,24 @@ class Angle(Connection):
     def restraint(self):
         """Return the restraint of this angle."""
         return self.__dict__.get("restraint_")
+
+    @property
+    def bonds(self):
+        """Return the bond_order symbol of this bond."""
+        return self.__dict__.get("bonds_")
+
+    @bonds.setter
+    def bonds(self, bonds):
+        """Return the bonds that makeup this Improper.
+
+        Connectivity is ((0,1), (0,2), (0,3))
+        """
+        self._bonds = bonds
+
+    @property
+    def bonds_orders(self):
+        """Return the bond_order strings of this angle."""
+        return "".join([str(b.bond_order) for b in self.bonds])
 
     def equivalent_members(self):
         """Return a set of the equivalent connection member tuples.
@@ -99,3 +131,14 @@ class Angle(Connection):
             super(Angle, self).__setattr__("angle_type", value)
         else:
             super(Angle, self).__setattr__(key, value)
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_dependent_value_default(cls, data):
+        if "bonds" not in data and "connection_members" in data:
+            atoms = data["connection_members"]
+            data["bonds"] = (
+                Bond(connection_members=(atoms[0], atoms[1])),
+                Bond(connection_members=(atoms[1], atoms[2])),
+            )
+        return data

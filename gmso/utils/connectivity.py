@@ -78,9 +78,14 @@ def identify_connections(top, index_only=False):
 def _add_connections(top, matches, conn_type):
     """Add connections to the topology."""
     for sorted_conn in matches:
-        to_add_conn = CONNS[conn_type](
-            connection_members=[top.sites[idx] for idx in sorted_conn]
-        )
+        cmembers = [top.sites[idx] for idx in sorted_conn]
+        bonds = list()
+        for i, j in CONNS[conn_type].connectivity:
+            bond = (cmembers[i], cmembers[j])
+            key = frozenset([bond, tuple(reversed(bond))])
+            bonds.append(top._unique_connections[key])
+        to_add_conn = CONNS[conn_type](connection_members=cmembers, bonds=tuple(bonds))
+        # import pdb; pdb.set_trace()
         top.add_connection(to_add_conn, update_types=False)
 
 
@@ -452,3 +457,13 @@ def _graph_from_vtype(vtype):
         virtual_type_graph.add_edge(i, i + 1)
 
     return virtual_type_graph
+
+
+def create_pattern(combination):
+    bonds_cutoff = len(combination) // 2
+    sites = combination[: bonds_cutoff + 1]
+    bonds = combination[bonds_cutoff + 1 :]
+    pattern = sites[0]
+    for b, sit in zip(bonds, sites[1:]):
+        pattern += b + sit
+    return pattern
