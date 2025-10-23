@@ -1,8 +1,8 @@
+import numpy as np
 import pytest
 import unyt as u
 from sympy import symbols, sympify
 from unyt.testing import assert_allclose_units
-import numpy as np
 
 from gmso.core.atom import Atom
 from gmso.core.virtual_site import VirtualSite
@@ -17,7 +17,7 @@ from gmso.tests.base_test import BaseTest
 class TestVirturalSite(BaseTest):
     @pytest.fixture(scope="session")
     def virtual_site(self):
-        site = Atom(position=[1,1,1])
+        site = Atom(position=[1, 1, 1])
         return VirtualSite(parent_sites=[site])
 
     @pytest.fixture(scope="session")
@@ -48,22 +48,18 @@ class TestVirturalSite(BaseTest):
         v_pos = VirtualPositionType(
             expression="ri*cos(b)",
             independent_variables=["ri"],
-            parameters={"b": np.pi*u.radian},
+            parameters={"b": np.pi * u.radian},
         )
         assert v_pos
-        v_type = VirtualType(
-            virtual_potential=v_pot, virtual_position=v_pos
-        )
-        virtual_site.virtual_type = v_type # assign virtual type
-        assert_allclose_units(virtual_site.position(), -1*([1,1,1]*u.nm))
-
+        v_type = VirtualType(virtual_potential=v_pot, virtual_position=v_pos)
+        virtual_site.virtual_type = v_type  # assign virtual type
+        assert_allclose_units(virtual_site.position(), -1 * ([1, 1, 1] * u.nm))
 
     def test_tip4p_water(self):
         pass
 
     def test_tip5p_water(self):
         pass
-
 
     def test_virtual_type(self):
         v_pot = VirtualPotentialType(
