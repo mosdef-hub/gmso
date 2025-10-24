@@ -5,12 +5,30 @@ from copy import deepcopy
 from functools import lru_cache
 from typing import Dict
 
+import numpy as np
 import sympy
 import unyt as u
+from sympy import Add, Function, Mul, Symbol, lambdify, sympify
+
+from gmso.exceptions import GMSOError
 
 logger = logging.getLogger(__name__)
 
 __all__ = ["PotentialExpression"]
+
+
+class norm(Function):
+    """Sympy functions for use in lambdify"""
+
+    @classmethod
+    def eval(cls, arg):
+        return None
+
+
+# Evaluate vector norm
+def norm_evaluation(matrix_arg):
+    """Evaluation method for norm of a sympy matrix"""
+    return np.linalg.norm(matrix_arg)
 
 
 def _are_equal_parameters(u1, u2):
@@ -407,10 +425,8 @@ class PotentialExpression:
         ----------
         non_parametric: PotentialExpression
             The non-parametric potential expression to create the parametric one from
-
         parameters: dict
             The dictionary of parameters for the newly created parametric expression.
-
         valid: bool, default=False
             Whether to validate expression/independent_variables and with the parameters.
 
@@ -442,3 +458,99 @@ class PotentialExpression:
                 independent_variables=deepcopy(non_parametric.independent_variables),
                 verify_validity=not valid,
             )
+
+    def evaluate(
+        self, independent_namespace: dict = None, independent_parameters: dict = None
+    ):
+        """Evaluate the sympy expression with the given parameters
+
+        Parameters
+        ----------
+        independent_namespace: dict, default None
+            Dictionary with keys that are the string of the symbol to evaluate and values are the sympy Symbol of Function object
+        independent_parameters: dict, default None
+            Keys are strings, and values are the unyt value that corresponds to that symbol in the expression.
+
+        Notes
+        -----
+        Evaluate the LJ expression as follows:
+            ```python
+            from gmso.utils.expression import PotentialExpression
+            import sympy
+            expression = PotentialExpression(
+                expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
+                parameters={"sigma":1*u.nm, "epsilon":-32.507936507936506*u.kJ},
+                independent_variables="r"
+            )
+            r = sympy.symbols(f"r")
+            independent_namespace = {"r": r} # key to symbol
+            independent_parameters = {"r": 2} # key to value
+            expression.evaluate(independent_namespace, independent_parameters)
+            ```
+        The input "norm" in the expression will be evaluated as the Matrix normal of the variable, i.e. the result from np.linalg.norm. See
+        class norm(Function) in the module for the definition and evaluation procedure for this symbol, and possibility to add more shorthand
+        function evaluations in the lambdify namespace.
+
+        Returns
+        -------
+        result: numpy.ndarray or float
+            The expression evaluated as a function with parameters plugged in.
+        """
+        # prep namespace for sympify
+        if independent_namespace is None:
+            namespace = {}
+            args = []
+        else:  # grab symbols from namespace
+            args = [Symbol(key) for key in independent_parameters]
+            namespace = (
+                independent_namespace.copy()
+            )  # make copies to not overwrite dictionary objects
+        namespace.update(
+            {sym: Symbol(sym) for sym in self.parameters}
+        )  # expression parameters
+        namespace["norm"] = norm  # handle Matrix/Vector normalization
+        args.extend([namespace[sym] for sym in self.parameters])  # args to lambdify
+        expr_string = str(self.expression)
+        if independent_parameters is None:
+            parameters = {}
+        else:
+            parameters = independent_parameters.copy()
+
+        # parse expression
+        try:
+            expr = sympify(expr_string, locals=namespace)
+        except (ValueError, TypeError):
+            raise GMSOError(
+                f"Expression {expr_string=} was not viable in sympy for PotentialExpression object:{self}."
+            )
+
+        f = lambdify(args, expr, modules=[{"norm": norm_evaluation}, "numpy"])
+
+        # evaluate
+        parameters.update(
+            {param: val.to_value() for param, val in self.parameters.items()}
+        )
+        # apply parameters here into lamdify'ed object
+        try:
+            result = f(**parameters)
+        except ZeroDivisionError:
+            raise GMSOError(
+                f"PotentialExpression {self} is unabel to be evaluated since the result was a divide by 0 issue."
+            )
+        except NameError as e:
+            raise GMSOError(f"PotentialExpresion {self} raise: " + str(e))
+
+        # error handling
+        if isinstance(result, float):
+            return result  # TODO: Attach units here also processed via sympy expression
+        elif isinstance(result, (Symbol, Add, Mul)) or not np.issubdtype(
+            result.dtype, np.floating
+        ):
+            raise GMSOError(
+                f"{self=} expression was not able to be fully evaluated. Unknown parameters left defined in {expr_string=}. Position evaluation is: {result=}"
+            )
+        elif any(np.isnan(result)):
+            raise GMSOError(
+                f"Failed evaluation of {self=} with {expr_string=} and {parameters=}."
+            )
+        return np.array(result)

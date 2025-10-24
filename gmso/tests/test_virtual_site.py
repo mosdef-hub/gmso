@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 import unyt as u
 from sympy import symbols, sympify
@@ -16,7 +17,7 @@ from gmso.tests.base_test import BaseTest
 class TestVirturalSite(BaseTest):
     @pytest.fixture(scope="session")
     def virtual_site(self):
-        site = Atom()
+        site = Atom(position=[1, 1, 1])
         return VirtualSite(parent_sites=[site])
 
     @pytest.fixture(scope="session")
@@ -34,8 +35,30 @@ class TestVirturalSite(BaseTest):
         for site in v_site.parent_sites:
             assert site in water_system.sites
 
-    def test_virtual_position(self):
-        # TODO: Check position as a function of virtual_position_type
+    def test_virtual_position(self, virtual_site):
+        # Check position as a function of virtual_position_type
+        # TODO: check for arrays for b, sin norm
+        # TODO: checkk all gromacs potential forms
+
+        v_pot = VirtualPotentialType(
+            expression="5*a*b",
+            independent_variables={"a"},
+            parameters={"b": 1 * u.kJ},
+        )
+        v_pos = VirtualPositionType(
+            expression="ri*cos(b)",
+            independent_variables=["ri"],
+            parameters={"b": np.pi * u.radian},
+        )
+        assert v_pos
+        v_type = VirtualType(virtual_potential=v_pot, virtual_position=v_pos)
+        virtual_site.virtual_type = v_type  # assign virtual type
+        assert_allclose_units(virtual_site.position(), -1 * ([1, 1, 1] * u.nm))
+
+    def test_tip4p_water(self):
+        pass
+
+    def test_tip5p_water(self):
         pass
 
     def test_virtual_type(self):
