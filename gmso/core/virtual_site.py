@@ -1,11 +1,13 @@
+import string
 from typing import Callable, List, Optional, Union
 
 import unyt as u
 from pydantic import ConfigDict, Field
+from sympy import Matrix, symbols
 
 from gmso.abc.abstract_site import Site
 from gmso.core.virtual_type import VirtualType
-from gmso.exceptions import MissingPotentialError, NotYetImplementedWarning
+from gmso.exceptions import MissingPotentialError
 
 
 class VirtualSite(Site):
@@ -58,8 +60,8 @@ class VirtualSite(Site):
         """Reminder that the order of sites is fixed, such that site index 1 corresponds to ri in the self.virtual_type.virtual_position expression."""
         return self.__dict__.get("parent_sites_", [])
 
-    def position(self) -> str:
-        """Not yet implemented function to get position from virtual_type.virtual_position and parent_sites."""
+    def position(self) -> u.unyt_array:
+        """On the fly position evaluation from virtual_type.virtual_position and parent_sites."""
         if not self.virtual_type:
             raise MissingPotentialError(
                 "No VirtualType associated with this VirtualSite."
@@ -68,10 +70,26 @@ class VirtualSite(Site):
             raise MissingPotentialError(
                 "No VirtualPositionType associated with this VirtualType."
             )
-        # TODO: validate parent atoms matches virtual_type.virtual_position in terms of independent variables ri, rj, etc.
-        # TODO: Generate position from atoms of parent_atoms and self.virtual_type.virtual_position.expression.
-        raise NotYetImplementedWarning(
-            "Need a functional to call from self.virtual_type.virtual_position, and plug in ri, rj, rk etc."
+
+        independent_namespace = {}
+        for _, symbol in zip(range(len(self.parent_sites)), string.ascii_lowercase[8:]):
+            x, y, z = symbols(f"r{symbol}1 r{symbol}2 r{symbol}3")
+            independent_namespace[f"r{symbol}"] = Matrix([x, y, z])
+
+        independent_parameters = {}
+        for symbol, site in zip(string.ascii_lowercase[8:], self.parent_sites):
+            for i, pos in enumerate(site.position):
+                independent_parameters[f"r{symbol}{i + 1}"] = float(pos.value)
+
+        # get units from parent sites
+        unitsUnyt = self.parent_sites[0].position.units
+
+        # perform expression evaluation
+        return (
+            self.virtual_type.virtual_position.potential_expression.evaluate(
+                independent_namespace, independent_parameters
+            )
+            * unitsUnyt
         )
 
     def __repr__(self):
