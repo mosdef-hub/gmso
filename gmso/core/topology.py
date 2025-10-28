@@ -291,6 +291,13 @@ class Topology(object):
         return self._sites
 
     @property
+    def total_charge(self):
+        pass 
+
+
+
+
+    @property
     def connections(self):
         """Return all connections in topology."""
         return IndexedSet(
