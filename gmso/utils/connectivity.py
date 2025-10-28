@@ -460,6 +460,23 @@ def _graph_from_vtype(vtype):
 
 
 def create_pattern(combination):
+    """Take a list of [site1, site2, bond1] and reorder into a string identifier.
+
+    Parameters
+    ----------
+    combination : tuple, list
+        The identifier for a given connection with a list of sites and bonds.
+        For example, a dihedral would look like:
+        combination = dihedral.connection_members + dihedral.bonds
+
+    Returns
+    -------
+    pattern : str
+        The identifying pattern for the list of sites. An improper might look like:
+        `central_atom-atom2-atom3=atom4`
+        where the combination was:
+        ["central_atom", "atom2", "atom3", "atom4", "-", "-", "="]
+    """
     bonds_cutoff = len(combination) // 2
     sites = combination[: bonds_cutoff + 1]
     bonds = combination[bonds_cutoff + 1 :]

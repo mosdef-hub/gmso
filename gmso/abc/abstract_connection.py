@@ -114,14 +114,12 @@ class Connection(GMSOBase):
         return f"<{self.__class__.__name__} {self.name}, id: {id(self)}> "
 
     def get_connection_identifiers(self):
-        from gmso.core.bond import Bond
-
         borderDict = {1: "-", 2: "=", 3: "#", 0: "~", None: "~", 1.5: ":"}
         site_identifiers = [
             (site.atom_type.atomclass, site.atom_type.name)
             for site in self.connection_members
         ]
-        if isinstance(self, Bond):
+        if not getattr(self, "bonds", None):
             bond_identifiers = [borderDict[self.bond_order]]
         else:
             bond_identifiers = [borderDict[b.bond_order] for b in self.bonds]

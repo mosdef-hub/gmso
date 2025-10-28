@@ -225,19 +225,6 @@ class TopologyParameterizer(GMSOBase):
                 setattr(connection, group, match[0].clone(self.config.fast_copy))
                 matched_order = [connection.connection_members[i] for i in match[1]]
                 connection.connection_members = matched_order
-                if group == "angle_type":  # reverse angle.bonds
-                    if match[1][0] == 2:
-                        connection.bonds = [connection.bonds[1], connection.bonds[0]]
-                elif group == "dihedral_type":  # reorder dihedral.bonds
-                    if match[1][0] == 3:
-                        connection.bonds = [
-                            connection.bonds[2],
-                            connection.bonds[1],
-                            connection.bonds[0],
-                        ]
-                elif group == "improper_type":  # reorder improper.bonds
-                    improper_bonds = [connection.bonds[i - 1] for i in match[1][1:]]
-                    connection.bonds = improper_bonds
 
                 if not match[0].member_types:
                     connection.connection_type.member_types = tuple(

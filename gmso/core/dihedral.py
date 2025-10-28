@@ -96,14 +96,6 @@ class Dihedral(Connection):
         """
         return self.__dict__.get("bonds_")
 
-    @bonds.setter
-    def bonds(self, bonds):
-        """Return the bonds that makeup this Improper.
-
-        Connectivity is ((0,1), (0,2), (0,3))
-        """
-        self._bonds = bonds
-
     @property
     def bonds_orders(self):
         """Return the bond_order strings of this dihedral."""
@@ -138,6 +130,7 @@ class Dihedral(Connection):
     @model_validator(mode="before")
     @classmethod
     def set_dependent_value_default(cls, data):
+        """Automatically set bonds for this dihedral if connection_members is defined."""
         if "bonds" not in data and "connection_members" in data:
             atoms = data["connection_members"]
             data["bonds"] = (

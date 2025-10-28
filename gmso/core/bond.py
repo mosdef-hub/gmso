@@ -86,6 +86,11 @@ class Bond(Connection):
         """Return the bond_order of this bond."""
         return self.__dict__.get("bond_order_")
 
+    @bond_order.setter
+    def bond_order(self, order):
+        """Set the bond_order of this bond."""
+        self._bond_order = order
+
     def equivalent_members(self):
         """Get a set of the equivalent connection member tuples.
 

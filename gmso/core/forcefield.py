@@ -534,8 +534,6 @@ class ForceField(object):
                             order,
                         )
 
-        return None
-
     def _get_virtual_type(
         self, atom_types, return_match_order=False, exact_match=False
     ):

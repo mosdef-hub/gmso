@@ -23,6 +23,8 @@ class Angle(Connection):
     __eq__, __repr__, _validate methods
 
     Additional _validate methods are presented.
+
+    self.connectivity is the associated indices that defines the way connection_members are bonded to match self.bonds.
     """
 
     __members_creator__: ClassVar[Callable] = Atom.model_validate
@@ -89,16 +91,8 @@ class Angle(Connection):
 
     @property
     def bonds(self):
-        """Return the bond_order symbol of this bond."""
+        """Return a tuple of gmso.core.Bond objects that correspond to this angle."""
         return self.__dict__.get("bonds_")
-
-    @bonds.setter
-    def bonds(self, bonds):
-        """Return the bonds that makeup this Improper.
-
-        Connectivity is ((0,1), (0,2), (0,3))
-        """
-        self._bonds = bonds
 
     @property
     def bonds_orders(self):
@@ -135,6 +129,7 @@ class Angle(Connection):
     @model_validator(mode="before")
     @classmethod
     def set_dependent_value_default(cls, data):
+        """Automatically set bonds for this angle if connection_members is defined."""
         if "bonds" not in data and "connection_members" in data:
             atoms = data["connection_members"]
             data["bonds"] = (
