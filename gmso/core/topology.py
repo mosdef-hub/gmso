@@ -292,10 +292,7 @@ class Topology(object):
 
     @property
     def total_charge(self):
-        pass 
-
-
-
+        pass
 
     @property
     def connections(self):
