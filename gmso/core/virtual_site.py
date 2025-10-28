@@ -1,28 +1,13 @@
 import string
 from typing import Callable, List, Optional, Union
 
-import numpy as np
 import unyt as u
 from pydantic import ConfigDict, Field
-from sympy import Function, Matrix, symbols
+from sympy import Matrix, symbols
 
 from gmso.abc.abstract_site import Site
 from gmso.core.virtual_type import VirtualType
 from gmso.exceptions import MissingPotentialError
-
-
-class norm(Function):
-    """Sympy functions for use in lambdify"""
-
-    @classmethod
-    def eval(cls, arg):
-        return None
-
-
-# Evaluate vector norm
-def norm_evaluation(matrix_arg):
-    """Evaluation method for norm of a sympy matrix"""
-    return np.linalg.norm(matrix_arg)
 
 
 class VirtualSite(Site):
@@ -96,12 +81,15 @@ class VirtualSite(Site):
             for i, pos in enumerate(site.position):
                 independent_parameters[f"r{symbol}{i + 1}"] = float(pos.value)
 
+        # get units from parent sites
+        unitsUnyt = self.parent_sites[0].position.units
+
         # perform expression evaluation
         return (
             self.virtual_type.virtual_position.potential_expression.evaluate(
                 independent_namespace, independent_parameters
-            ).T
-            * u.nm
+            )
+            * unitsUnyt
         )
 
     def __repr__(self):

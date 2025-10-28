@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 import sympy
 import unyt as u
@@ -348,6 +349,19 @@ class TestExpression(BaseTest):
         independent_parameters = {"r": 2}
         assert expression.evaluate(independent_namespace, independent_parameters) == 2
 
+        # test use of norm in expression on vectors
+        expression = PotentialExpression(
+            expression="norm(a)*r",
+            parameters={"a": [3, 4, 0] * u.nm},  # norm is 5
+            independent_variables="r",
+        )
+        r = sympy.symbols("r")
+        x, y, z = sympy.symbols("x y z")
+        independent_namespace["r"] = sympy.Matrix([x, y, z])
+        independent_parameters = {"x": 0 * u.nm, "y": 1 * u.nm, "z": 2 * u.nm}
+        output = expression.evaluate(independent_namespace, independent_parameters)
+        assert all(output == np.array([0, 1, 2]) * 5)
+
         with pytest.raises(GMSOError):  # fail with missing r parameters
             expression = PotentialExpression(
                 expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
@@ -373,7 +387,7 @@ class TestExpression(BaseTest):
             x, y, z = sympy.symbols("x y z")
             independent_namespace["r"] = sympy.Matrix([x, y, z])
             independent_parameters = {"x": 1, "y": 0, "z": 0}
-            expression.evaluate()
+            expression.evaluate(independent_namespace, independent_parameters)
 
         with pytest.raises(GMSOError):  # fail with bad expression
             expression = PotentialExpression(
@@ -384,4 +398,4 @@ class TestExpression(BaseTest):
             x, y, z = sympy.symbols("x y z")
             independent_namespace["r"] = sympy.Matrix([x, y, z])
             independent_parameters = {"x": 1, "y": 0, "z": 0}
-            expression.evaluate()
+            expression.evaluate(independent_namespace, independent_parameters)

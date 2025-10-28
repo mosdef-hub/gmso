@@ -553,4 +553,8 @@ class PotentialExpression:
             raise GMSOError(
                 f"Failed evaluation of {self=} with {expr_string=} and {parameters=}."
             )
-        return np.array(result)
+        if len(result) > 1:  # return a vector
+            result = np.array(result).T[0]
+        else:
+            result = np.array(result)
+        return result
