@@ -355,7 +355,6 @@ class TestExpression(BaseTest):
             parameters={"a": [3, 4, 0] * u.nm},  # norm is 5
             independent_variables="r",
         )
-        r = sympy.symbols("r")
         x, y, z = sympy.symbols("x y z")
         independent_namespace["r"] = sympy.Matrix([x, y, z])
         independent_parameters = {"x": 0 * u.nm, "y": 1 * u.nm, "z": 2 * u.nm}
