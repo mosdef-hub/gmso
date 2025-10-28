@@ -292,7 +292,9 @@ class Topology(object):
 
     @property
     def total_charge(self):
+        """Adds all the charges in the topologies"""
         pass 
+        
 
 
 
