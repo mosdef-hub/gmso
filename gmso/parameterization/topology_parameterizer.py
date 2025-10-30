@@ -196,11 +196,6 @@ class TopologyParameterizer(GMSOBase):
         visited = dict()
         for connection in connections:
             group, connection_identifiers = self.connection_identifier(connection)
-            # TODO: sort connection_identifiers in connection_identifiers
-            connection_identifiers = sorted(
-                list(connection_identifiers),
-                key=lambda item: 100 * item.count("*") + item.count("~"),
-            )
             match = None
             for identifier_key in connection_identifiers:
                 if tuple(identifier_key) in visited:

@@ -13,7 +13,10 @@ from pydantic import ValidationError
 from gmso.core.element import element_by_symbol
 from gmso.exceptions import GMSOError
 from gmso.utils._constants import FF_TOKENS_SEPARATOR
-from gmso.utils.connectivity import create_pattern
+from gmso.utils.connectivity import (
+    connection_identifier_to_string,
+    yield_connection_identifiers,
+)
 from gmso.utils.decorators import deprecate_kwargs
 from gmso.utils.ff_utils import (
     parse_ff_atomtypes,
@@ -23,7 +26,7 @@ from gmso.utils.ff_utils import (
     parse_ff_virtual_types,
     validate,
 )
-from gmso.utils.misc import mask_with, reverse_identifier, validate_type
+from gmso.utils.misc import reverse_string_identifier, validate_type
 
 logger = logging.getLogger(__name__)
 
@@ -338,7 +341,7 @@ class ForceField(object):
         """Get a particular bond_type between `atom_types` from this ForceField."""
         if isinstance(identifier, str):
             forward = identifier
-            reverse = reverse_identifier(forward)
+            reverse = reverse_string_identifier(forward)
         else:
             if len(identifier) == 2:  # add wildcard bond
                 identifier.append("~")
@@ -347,8 +350,10 @@ class ForceField(object):
                     f"BondType potential can only "
                     f"be extracted for two atoms. Provided {len(identifier)}"
                 )
-            forward = create_pattern(identifier)
-            reverse = create_pattern(list(reversed(identifier[:2])) + [identifier[2]])
+            forward = connection_identifier_to_string(identifier)
+            reverse = connection_identifier_to_string(
+                list(reversed(identifier[:2])) + [identifier[2]]
+            )
         if forward in self.bond_types:
             return self.bond_types[forward], (0, 1)
         if reverse in self.bond_types:
@@ -357,35 +362,24 @@ class ForceField(object):
         if exact_match:
             return None
 
-        for i in range(1, 3):
-            forward_patterns = mask_with(identifier[:2], i)
-            reverse_patterns = mask_with(
-                reversed(
-                    identifier[:2],
-                ),
-                i,
-            )
-
-            for forward_pattern, reverse_pattern in zip(
-                forward_patterns, reverse_patterns
-            ):
-                forward_match_key = FF_TOKENS_SEPARATOR.join(forward_pattern)
-                reverse_match_key = FF_TOKENS_SEPARATOR.join(reverse_pattern)
-
-                if forward_match_key in self.bond_types:
-                    return self.bond_types[forward_match_key], (0, 1)
-
-                if reverse_match_key in self.bond_types:
-                    return self.bond_types[reverse_match_key], (1, 0)
-        return None
+        # try matching if exact_match is False
+        masked_forward = yield_connection_identifiers(forward)
+        masked_reverse = yield_connection_identifiers(reverse)
+        for mask_for, mask_rev in zip(masked_forward, masked_reverse):
+            if mask_for in self.bond_types:
+                return self.bond_types[mask_for], (0, 1)
+            elif mask_rev in self.bond_types:
+                return self.bond_types[mask_rev], (1, 0)
+        return None  # return no match
 
     def _get_angle_type(self, identifier, exact_match=False):
         """Get a particular angle_type between `atom_types` from this ForceField."""
         if isinstance(identifier, str):
             forward = identifier
-            reverse = reverse_identifier(forward)
+            reverse = reverse_string_identifier(forward)
         else:
             if len(identifier) == 3:
+                identifier = list(identifier)
                 identifier.append("~")
                 identifier.append("~")
             elif len(identifier) != 5:
@@ -393,8 +387,8 @@ class ForceField(object):
                     f"AngleType potential can only "
                     f"be extracted for three atoms. Provided {len(identifier)}"
                 )
-            forward = create_pattern(identifier)
-            reverse = create_pattern(
+            forward = connection_identifier_to_string(identifier)
+            reverse = connection_identifier_to_string(
                 list(reversed(identifier[:3])) + list(reversed(identifier[3:]))
             )
 
@@ -405,31 +399,21 @@ class ForceField(object):
 
         if exact_match:
             return None
-        for i in range(1, 4):
-            forward_patterns = mask_with(identifier, i)
-            reverse_patterns = mask_with(
-                list(reversed(identifier[:3])) + list(reversed(identifier[3:])), i
-            )
-
-            for forward_pattern, reverse_pattern in zip(
-                forward_patterns, reverse_patterns
-            ):
-                forward_match_key = FF_TOKENS_SEPARATOR.join(forward_pattern)
-                reverse_match_key = FF_TOKENS_SEPARATOR.join(reverse_pattern)
-
-                if forward_match_key in self.angle_types:
-                    return self.angle_types[forward_match_key], (0, 1, 2)
-
-                if reverse_match_key in self.angle_types:
-                    return self.angle_types[reverse_match_key], (2, 1, 0)
-
-        return None
+        # try matching if exact_match is False
+        masked_forward = yield_connection_identifiers(forward)
+        masked_reverse = yield_connection_identifiers(reverse)
+        for mask_for, mask_rev in zip(masked_forward, masked_reverse):
+            if mask_for in self.angle_types:
+                return self.angle_types[mask_for], (0, 1, 2)
+            elif mask_rev in self.angle_types:
+                return self.angle_types[mask_rev], (2, 1, 0)
+        return None  # return no match
 
     def _get_dihedral_type(self, identifier, exact_match=False):
         """Get a particular dihedral_type between `atom_types` from this ForceField."""
         if isinstance(identifier, str):
             forward = identifier
-            reverse = reverse_identifier(forward)
+            reverse = reverse_string_identifier(forward)
         else:
             if len(identifier) == 4:
                 identifier.append("~")
@@ -440,8 +424,8 @@ class ForceField(object):
                     f"DihedralType potential can only "
                     f"be extracted for four atoms and three bonds. Provided {len(identifier)}"
                 )
-            forward = create_pattern(identifier)
-            reverse = create_pattern(
+            forward = connection_identifier_to_string(identifier)
+            reverse = connection_identifier_to_string(
                 list(reversed(identifier[:4])) + list(reversed(identifier[4:]))
             )
 
@@ -452,30 +436,21 @@ class ForceField(object):
 
         if exact_match:
             return None
-        for i in range(1, 5):
-            forward_patterns = mask_with(identifier, i)
-            reverse_patterns = mask_with(reversed(identifier[:4] + identifier[4:]), i)
-
-            for forward_pattern, reverse_pattern in zip(
-                forward_patterns, reverse_patterns
-            ):
-                forward_match_key = FF_TOKENS_SEPARATOR.join(forward_pattern)
-                reverse_match_key = FF_TOKENS_SEPARATOR.join(reverse_pattern)
-
-                if forward_match_key in self.dihedral_types:
-                    return self.dihedral_types[forward_match_key], (0, 1, 2, 3)
-
-                if reverse_match_key in self.dihedral_types:
-                    return self.dihedral_types[reverse_match_key], (3, 2, 1, 0)
-
-        return None
+        # try matching if exact_match is False
+        masked_forward = yield_connection_identifiers(forward)
+        masked_reverse = yield_connection_identifiers(reverse)
+        for mask_for, mask_rev in zip(masked_forward, masked_reverse):
+            if mask_for in self.dihedral_types:
+                return self.dihedral_types[mask_for], (0, 1, 2, 3)
+            elif mask_rev in self.dihedral_types:
+                return self.dihedral_types[mask_rev], (3, 2, 1, 0)
+        return None  # return no match
 
     def _get_improper_type(self, identifier, exact_match=False):
         """Get a particular improper_type between `identifier` from this ForceField."""
         if isinstance(identifier, str):
             forward = identifier
-            equivalent = None  # TODO
-            # equivalent = equivalent_identifier
+            reverse = reverse_string_identifier(forward, is_improper=True)
         else:
             if len(identifier) == 4:  # add wildcard bonds
                 identifier.append("~")
@@ -487,7 +462,7 @@ class ForceField(object):
                     f"be extracted for four atoms and three bonds. Provided {len(identifier)}"
                 )
 
-            forward = create_pattern(identifier)
+            forward = connection_identifier_to_string(identifier)
             equiv_idx = [
                 (0, i, j, k) for (i, j, k) in itertools.permutations((1, 2, 3), 3)
             ]
@@ -507,32 +482,33 @@ class ForceField(object):
         if forward in self.improper_types:
             return self.improper_types[forward], (0, 1, 2, 3)
 
-        if not equivalent:
-            return None
-        for eq, order in zip(equivalent, equiv_idx):
-            eq_key = create_pattern(eq)
-            if eq_key in self.improper_types:
-                return self.improper_types[eq_key], order
+        if equivalent:
+            for eq, order in zip(equivalent, equiv_idx):
+                eq_key = connection_identifier_to_string(eq)
+                if eq_key in self.improper_types:
+                    return self.improper_types[eq_key], order
 
         if exact_match:
             return None
+        # try matching if exact_match is False
+        masked_forward = yield_connection_identifiers(forward)
+        if equivalent:
+            masked_equivalents = [
+                yield_connection_identifiers(equiv) for equiv in equivalent
+            ]
+            for mask_for in masked_forward:
+                if mask_for in self.improper_types:
+                    return self.improper_types[mask_for], (0, 1, 2, 3)
+                for check_equivalent, order in zip(masked_equivalents, equiv_idx):
+                    # iterate through all equivalent impropers as iterators, in sync with forward mask
+                    if next(check_equivalent) in self.improper_types:
+                        return self.improper_types[check_equivalent], order
+        else:  # no zip if no equivalents
+            for mask_for in masked_forward:
+                if mask_for in self.improper_types:
+                    return self.improper_types[mask_for], (0, 1, 2, 3)
 
-        for i in range(1, 5):
-            forward_patterns = mask_with(identifier, i)
-            for forward_pattern in forward_patterns:
-                forward_match_key = FF_TOKENS_SEPARATOR.join(forward_pattern)
-                if forward_match_key in self.improper_types:
-                    return self.improper_types[forward_match_key], (0, 1, 2, 3)
-        for i in range(1, 5):
-            for eq, order in zip(equivalent, equiv_idx):
-                equiv_patterns = mask_with(eq, i)
-                for equiv_pattern in equiv_patterns:
-                    equiv_pattern_key = FF_TOKENS_SEPARATOR.join(equiv_pattern)
-                    if equiv_pattern_key in self.improper_types:
-                        return (
-                            self.improper_types[equiv_pattern_key],
-                            order,
-                        )
+        return None  # return no match
 
     def _get_virtual_type(
         self, atom_types, return_match_order=False, exact_match=False
@@ -545,6 +521,7 @@ class ForceField(object):
         if forward in self.virtual_types:
             match = self.virtual_types[forward], tuple(range(n_elements))
             return match
+        return None
 
     def __repr__(self):
         """Return a formatted representation of the Forcefield."""

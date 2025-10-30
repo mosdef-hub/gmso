@@ -1,5 +1,7 @@
 """Module supporting various connectivity methods and operations."""
 
+import itertools
+import re
 from typing import TYPE_CHECKING, List
 
 import networkx as nx
@@ -459,12 +461,12 @@ def _graph_from_vtype(vtype):
     return virtual_type_graph
 
 
-def create_pattern(combination):
+def connection_identifier_to_string(identifier):
     """Take a list of [site1, site2, bond1] and reorder into a string identifier.
 
     Parameters
     ----------
-    combination : tuple, list
+    identifier : tuple, list
         The identifier for a given connection with a list of sites and bonds.
         For example, a dihedral would look like:
         combination = dihedral.connection_members + dihedral.bonds
@@ -477,10 +479,25 @@ def create_pattern(combination):
         where the combination was:
         ["central_atom", "atom2", "atom3", "atom4", "-", "-", "="]
     """
-    bonds_cutoff = len(combination) // 2
-    sites = combination[: bonds_cutoff + 1]
-    bonds = combination[bonds_cutoff + 1 :]
+    bonds_cutoff = len(identifier) // 2
+    sites = identifier[: bonds_cutoff + 1]
+    bonds = identifier[bonds_cutoff + 1 :]
     pattern = sites[0]
     for b, sit in zip(bonds, sites[1:]):
         pattern += b + sit
     return pattern
+
+
+def yield_connection_identifiers(identifier):
+    """Yield all possible bond identifiers from a tuple or string identifier."""
+    n_sites = len(identifier) // 2 + 1
+    # decide if identifier is string or tuple
+    if isinstance(identifier, str):
+        bond_tokens = r"([\=\~\-\#\:])"
+        identifier = re.split(bond_tokens, identifier)
+        identifier = identifier[::2] + identifier[1::2]
+    site_identifiers = identifier[:n_sites]
+    bond_identifiers = identifier[n_sites:]
+    choices = [(site_identifier, "*") for site_identifier in site_identifiers]
+    choices += [(val, "~") for val in bond_identifiers]
+    return itertools.product(*choices)

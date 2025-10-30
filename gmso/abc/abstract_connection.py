@@ -115,15 +115,13 @@ class Connection(GMSOBase):
 
     def get_connection_identifiers(self):
         borderDict = {1: "-", 2: "=", 3: "#", 0: "~", None: "~", 1.5: ":"}
-        site_identifiers = [
-            (site.atom_type.atomclass, site.atom_type.name)
+        choices = [
+            (site.atom_type.name, site.atom_type.atomclass, "*")
             for site in self.connection_members
         ]
         if not getattr(self, "bonds", None):
             bond_identifiers = [borderDict[self.bond_order]]
         else:
             bond_identifiers = [borderDict[b.bond_order] for b in self.bonds]
-        choices = [(aclass, atype, "*") for aclass, atype in site_identifiers]
         choices += [(val, "~") for val in bond_identifiers]
-        all_combinations = itertools.product(*choices)
-        return all_combinations
+        return itertools.product(*choices)
