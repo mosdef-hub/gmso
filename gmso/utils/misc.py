@@ -91,11 +91,21 @@ def get_xml_representation(value):
         return str(value)
 
 
-def reverse_string_identifier(identifier: str, is_improper=False):
+def reverse_string_identifier(identifier: str):
     """Change string identifier for a forcefield key."""
     tokens = r"([\=\~\-\#\:])"
     items = re.split(tokens, identifier)
-    if is_improper:  # only reverse middle two tokens and keep bonds
-        return "".join((items[:1] + items[3:5] + items[1:3] + items[5:]))
-    else:  # flip full
-        return "".join(items[::-1])
+    return "".join(items[::-1])
+
+
+def improper_equivalents_string_identifier(identifier: str):
+    # only reverse middle two tokens and keep bonds
+    tokens = r"([\=\~\-\#\:])"
+    items = re.split(tokens, identifier)
+    return [
+        "".join((items[:1] + items[3:5] + items[1:3] + items[5:])),
+        "".join((items[:1] + items[3:5] + items[1:3] + items[5:])),
+        "".join((items[:1] + items[5:] + items[3:5] + items[1:3])),
+        "".join((items[:1] + items[5:] + items[1:3] + items[3:5])),
+        "".join((items[:1] + items[1:3] + items[5:] + items[3:5])),
+    ]

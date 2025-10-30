@@ -26,7 +26,11 @@ from gmso.utils.ff_utils import (
     parse_ff_virtual_types,
     validate,
 )
-from gmso.utils.misc import reverse_string_identifier, validate_type
+from gmso.utils.misc import (
+    improper_equivalents_string_identifier,
+    reverse_string_identifier,
+    validate_type,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -448,9 +452,10 @@ class ForceField(object):
 
     def _get_improper_type(self, identifier, exact_match=False):
         """Get a particular improper_type between `identifier` from this ForceField."""
+        equiv_idx = [(0, i, j, k) for (i, j, k) in itertools.permutations((1, 2, 3), 3)]
         if isinstance(identifier, str):
             forward = identifier
-            reverse = reverse_string_identifier(forward, is_improper=True)
+            equivalent = improper_equivalents_string_identifier(identifier)
         else:
             if len(identifier) == 4:  # add wildcard bonds
                 identifier.append("~")
@@ -463,9 +468,6 @@ class ForceField(object):
                 )
 
             forward = connection_identifier_to_string(identifier)
-            equiv_idx = [
-                (0, i, j, k) for (i, j, k) in itertools.permutations((1, 2, 3), 3)
-            ]
             equivalent = [
                 [
                     identifier[m],
