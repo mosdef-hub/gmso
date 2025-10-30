@@ -113,10 +113,11 @@ def from_mbuild(
         site = _parse_site(site_map, part, search_method, infer_element=infer_elements)
         top.add_site(site)
 
-    for b1, b2 in compound.bonds():
+    for b1, b2, border in compound.bonds(return_bond_order=True):
         assert site_map[b1]["site"].molecule == site_map[b2]["site"].molecule
         new_bond = Bond(
             connection_members=[site_map[b1]["site"], site_map[b2]["site"]],
+            bond_order=border["bond_order"],
         )
         top.add_connection(new_bond, update_types=False)
 

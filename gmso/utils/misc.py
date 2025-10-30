@@ -1,5 +1,6 @@
 """Miscellaneous helper methods for GMSO."""
 
+import re
 from functools import lru_cache
 
 import unyt as u
@@ -80,53 +81,6 @@ def validate_type(iterator, type_):
             )
 
 
-def mask_with(iterable, window_size=1, mask="*"):
-    """Mask an iterable with the `mask` in a circular sliding window of size `window_size`.
-
-    This method masks an iterable elements with a mask object in a circular sliding window
-
-    Parameters
-    ----------
-    iterable: Iterable
-        The iterable to mask with
-    window_size: int, default=1
-        The window size for the mask to be applied
-    mask: Any, default='*'
-        The mask to apply
-    Examples
-    --------
-        >>> from gmso.utils.misc import mask_with
-        >>> list(mask_with(['Ar', 'Ar'], 1))
-        [['*', 'Ar'], ['Ar', '*']]
-        >>> for masked_list in mask_with(['Ar', 'Xe', 'Xm', 'CH'], 2, mask='_'):
-        ...     print('~'.join(masked_list))
-        _~_~Xm~CH
-        Ar~_~_~CH
-        Ar~Xe~_~_
-        _~Xe~Xm~_
-
-    Yields
-    ------
-    list
-        The masked iterable
-    """
-    input_list = list(iterable)
-    idx = 0
-    first = None
-    while idx < len(input_list):
-        mask_idxes = set((idx + j) % len(input_list) for j in range(window_size))
-        to_yield = [
-            mask if j in mask_idxes else input_list[j] for j in range(len(input_list))
-        ]
-        if to_yield == first:
-            break
-        if idx == 0:
-            first = to_yield
-
-        idx += 1
-        yield to_yield
-
-
 def get_xml_representation(value):
     """Given a value, get its XML representation."""
     if isinstance(value, u.unyt_quantity):
@@ -135,3 +89,23 @@ def get_xml_representation(value):
         return ",".join(value)
     else:
         return str(value)
+
+
+def reverse_string_identifier(identifier: str):
+    """Change string identifier for a forcefield key."""
+    tokens = r"([\=\~\-\#\:])"
+    items = re.split(tokens, identifier)
+    return "".join(items[::-1])
+
+
+def improper_equivalents_string_identifier(identifier: str):
+    # only reverse middle two tokens and keep bonds
+    tokens = r"([\=\~\-\#\:])"
+    items = re.split(tokens, identifier)
+    return [
+        "".join((items[:1] + items[3:5] + items[1:3] + items[5:])),
+        "".join((items[:1] + items[3:5] + items[1:3] + items[5:])),
+        "".join((items[:1] + items[5:] + items[3:5] + items[1:3])),
+        "".join((items[:1] + items[5:] + items[1:3] + items[3:5])),
+        "".join((items[:1] + items[1:3] + items[5:] + items[3:5])),
+    ]

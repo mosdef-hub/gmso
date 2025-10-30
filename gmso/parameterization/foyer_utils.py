@@ -84,7 +84,9 @@ def get_topology_graph(
         atoms_indices = [
             atom_index_map[id(atom)] for atom in top_bond.connection_members
         ]
-        top_graph.add_bond(atoms_indices[0], atoms_indices[1])
+        top_graph.add_bond(
+            atoms_indices[0], atoms_indices[1], getattr(top_bond, "bond_order", 0.0)
+        )
 
     return top_graph
 

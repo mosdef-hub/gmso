@@ -138,4 +138,4 @@ class GMSOLogger:
 
 # Example usage in __init__.py
 gmso_logger = GMSOLogger()
-gmso_logger.library_logger.setLevel(logging.INFO)
+gmso_logger.library_logger.setLevel(logging.WARNING)

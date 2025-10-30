@@ -26,6 +26,8 @@ class Bond(Connection):
 
     __members_creator__: ClassVar[Callable] = Atom.model_validate
 
+    connectivity: ClassVar[Tuple[Tuple[int]]] = ((0, 1),)
+
     connection_members_: Tuple[Atom, Atom] = Field(
         ...,
         description="The 2 atoms involved in the bond.",
@@ -46,12 +48,20 @@ class Bond(Connection):
         """,
         alias="restraint",
     )
+
+    bond_order_: Optional[float] = Field(
+        default=None,
+        description="Bond order of this bond.",
+        alias="bond_order",
+    )
+
     model_config = ConfigDict(
         alias_to_fields=dict(
             **Connection.model_config["alias_to_fields"],
             **{
                 "bond_type": "bond_type_",
                 "restraint": "restraint_",
+                "bond_order": "bond_order_",
             },
         )
     )
@@ -70,6 +80,16 @@ class Bond(Connection):
     def restraint(self):
         """Return the restraint of this bond."""
         return self.__dict__.get("restraint_")
+
+    @property
+    def bond_order(self):
+        """Return the bond_order of this bond."""
+        return self.__dict__.get("bond_order_")
+
+    @bond_order.setter
+    def bond_order(self, order):
+        """Set the bond_order of this bond."""
+        self._bond_order = order
 
     def equivalent_members(self):
         """Get a set of the equivalent connection member tuples.

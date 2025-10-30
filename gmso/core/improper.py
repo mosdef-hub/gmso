@@ -2,10 +2,11 @@
 
 from typing import Callable, ClassVar, Optional, Tuple
 
-from pydantic import ConfigDict, Field
+from pydantic import ConfigDict, Field, model_validator
 
 from gmso.abc.abstract_connection import Connection
 from gmso.core.atom import Atom
+from gmso.core.bond import Bond
 from gmso.core.improper_type import ImproperType
 
 
@@ -31,6 +32,8 @@ class Improper(Connection):
 
     __members_creator__: ClassVar[Callable] = Atom.model_validate
 
+    connectivity: ClassVar[Tuple[Tuple[int]]] = ((0, 1), (0, 2), (0, 3))
+
     connection_members_: Tuple[Atom, Atom, Atom, Atom] = Field(
         ...,
         description="The 4 atoms of this improper. Central atom first, "
@@ -38,16 +41,35 @@ class Improper(Connection):
         alias="connection_members",
     )
 
+    bonds_: Tuple[Bond, Bond, Bond] = Field(
+        default=None,
+        description="""
+        List of connection bonds.
+        Ordered to align with connection_members, such that self.bonds_[0] is
+        the bond between (self.connection_members[0], self.connection_members[1]).
+        """,
+        alias="bonds",
+    )
+
     improper_type_: Optional[ImproperType] = Field(
         default=None,
         description="ImproperType of this improper.",
         alias="improper_type",
+    )
+
+    bond_orders_: Optional[Tuple[str, str]] = Field(
+        default=None,
+        description="""
+        List of connection members bond orders.
+        """,
+        alias="bond_orders",
     )
     model_config = ConfigDict(
         alias_to_fields=dict(
             **Connection.model_config["alias_to_fields"],
             **{
                 "improper_type": "improper_type_",
+                "bond_orders": "bond_orders_",
             },
         )
     )
@@ -62,6 +84,19 @@ class Improper(Connection):
         """Return Potential object for this connection if it exists."""
         # ToDo: Deprecate this?
         return self.__dict__.get("improper_type_")
+
+    @property
+    def bonds(self):
+        """Return the bonds that makeup this Improper.
+
+        Connectivity is ((0,1), (0,2), (0,3))
+        """
+        return self.__dict__.get("bonds_")
+
+    @property
+    def bonds_orders(self):
+        """Return the bond_order strings of this improper."""
+        return [b.bond_order for b in self.bonds]
 
     def equivalent_members(self):
         """Get a set of the equivalent connection member tuples.
@@ -94,3 +129,16 @@ class Improper(Connection):
             super(Improper, self).__setattr__("improper_type_", value)
         else:
             super(Improper, self).__setattr__(key, value)
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_dependent_value_default(cls, data):
+        """Automatically set bonds for this improper if connection_members is defined."""
+        if "bonds" not in data and "connection_members" in data:
+            atoms = data["connection_members"]
+            data["bonds"] = (
+                Bond(connection_members=(atoms[0], atoms[1])),
+                Bond(connection_members=(atoms[0], atoms[2])),
+                Bond(connection_members=(atoms[0], atoms[3])),
+            )
+        return data

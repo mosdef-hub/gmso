@@ -1,5 +1,3 @@
-import logging
-
 import lxml
 import pytest
 import unyt as u
@@ -13,7 +11,6 @@ from gmso.exceptions import (
     ForceFieldParseError,
     GMSOError,
     MissingAtomTypesError,
-    MissingPotentialError,
 )
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import allclose_units_mixed, get_path
@@ -424,7 +421,9 @@ class TestForceField(BaseTest):
         assert allclose_units_mixed(params.values(), params_copy.values())
 
     def test_forcefield_get_potential_bond_type(self, opls_ethane_foyer):
-        bt = opls_ethane_foyer.get_potential("bond_type", key=["opls_135", "opls_140"])
+        bt, _ = opls_ethane_foyer.get_potential(
+            "bond_type", key=["opls_135", "opls_140"]
+        )
         assert bt.name == "BondType-Harmonic-2"
         params = bt.parameters
         assert "k" in params
@@ -437,9 +436,10 @@ class TestForceField(BaseTest):
         )
 
     def test_forcefield_get_potential_bond_type_reversed(self, opls_ethane_foyer):
-        assert opls_ethane_foyer.get_potential(
-            "bond_type", ["opls_135", "opls_140"]
-        ) == opls_ethane_foyer.get_potential("bond_type", ["opls_140", "opls_135"])
+        bt1, b1 = opls_ethane_foyer.get_potential("bond_type", ["opls_135", "opls_140"])
+        bt2, b2 = opls_ethane_foyer.get_potential("bond_type", ["opls_140", "opls_135"])
+        assert bt1 == bt2
+        assert tuple(reversed(b1)) == b2
 
     def test_forcefield_get_parameters_bond_type(self, opls_ethane_foyer):
         params = opls_ethane_foyer.get_parameters(
@@ -451,7 +451,7 @@ class TestForceField(BaseTest):
         )
 
     def test_forcefield_get_potential_angle_type(self, opls_ethane_foyer):
-        at = opls_ethane_foyer.get_potential(
+        at, _ = opls_ethane_foyer.get_potential(
             "angle_type", key=["opls_135", "opls_135", "opls_140"]
         )
         assert at.name == "AngleType-Harmonic-1"
@@ -467,11 +467,14 @@ class TestForceField(BaseTest):
         )
 
     def test_forcefield_get_potential_angle_type_reversed(self, opls_ethane_foyer):
-        assert opls_ethane_foyer.get_potential(
+        a1, members1 = opls_ethane_foyer.get_potential(
             "angle_type", ["opls_135", "opls_135", "opls_140"]
-        ) == opls_ethane_foyer.get_potential(
+        )
+        a2, members2 = opls_ethane_foyer.get_potential(
             "angle_type", ["opls_140", "opls_135", "opls_135"]
         )
+        assert a1 == a2
+        assert tuple(reversed(members1)) == members2
 
     def test_forcefield_get_parameters_angle_type(self, opls_ethane_foyer):
         params = opls_ethane_foyer.get_parameters(
@@ -484,7 +487,7 @@ class TestForceField(BaseTest):
         )
 
     def test_forcefield_get_potential_dihedral_type(self, opls_ethane_foyer):
-        dt = opls_ethane_foyer.get_potential(
+        dt, _ = opls_ethane_foyer.get_potential(
             "dihedral_type",
             key=["opls_140", "opls_135", "opls_135", "opls_140"],
         )
@@ -538,76 +541,38 @@ class TestForceField(BaseTest):
             opls_ethane_foyer.get_potential("atom_type", key=[111])
 
     def test_get_atom_type_missing(self, opls_ethane_foyer, caplog):
-        with pytest.raises(MissingPotentialError):
-            opls_ethane_foyer._get_atom_type("opls_359", warn=False)
-
-        with caplog.at_level(logging.WARNING, logger="gmso"):
-            opls_ethane_foyer._get_atom_type("opls_359", warn=True)
-        assert "AtomType opls_359 is not present in the ForceField" in caplog.text
+        assert opls_ethane_foyer._get_atom_type("opls_359") is None
 
     def test_get_bond_type_missing(self, opls_ethane_foyer, caplog):
-        with pytest.raises(MissingPotentialError):
-            opls_ethane_foyer._get_bond_type(["opls_359", "opls_600"], warn=False)
-
-        with caplog.at_level(logging.WARNING, logger="gmso"):
-            opls_ethane_foyer._get_bond_type(["opls_359", "opls_600"], warn=True)
-        assert "BondType between atoms opls_359 and opls_600 is missing" in caplog.text
+        assert opls_ethane_foyer._get_bond_type(["opls_359", "opls_600"]) is None
 
     def test_get_angle_type_missing(self, opls_ethane_foyer, caplog):
-        with pytest.raises(MissingPotentialError):
-            opls_ethane_foyer._get_angle_type(
-                ["opls_359", "opls_600", "opls_700"], warn=False
-            )
-
-        with caplog.at_level(logging.WARNING, logger="gmso"):
-            opls_ethane_foyer._get_angle_type(
-                ["opls_359", "opls_600", "opls_700"], warn=True
-            )
         assert (
-            "AngleType between atoms opls_359, opls_600 and opls_700 is missing"
-            in caplog.text
+            opls_ethane_foyer._get_angle_type(["opls_359", "opls_600", "opls_700"])
+            is None
         )
 
     def test_get_dihedral_type_missing(self, opls_ethane_foyer, caplog):
-        with pytest.raises(MissingPotentialError):
-            opls_ethane_foyer._get_dihedral_type(
-                ["opls_359", "opls_600", "opls_700", "opls_800"], warn=False
-            )
-
-        with caplog.at_level(logging.WARNING, logger="gmso"):
-            opls_ethane_foyer._get_dihedral_type(
-                ["opls_359", "opls_600", "opls_700", "opls_800"], warn=True
-            )
         assert (
-            "DihedralType between atoms opls_359, opls_600, opls_700 and opls_800"
-            in caplog.text
+            opls_ethane_foyer._get_dihedral_type(
+                ["opls_359", "opls_600", "opls_700", "opls_800"]
+            )
+            is None
         )
 
     def test_get_improper_type_missing(self, opls_ethane_foyer, caplog):
-        with pytest.raises(MissingPotentialError):
-            opls_ethane_foyer._get_improper_type(
-                ["opls_359", "opls_600", "opls_700", "opls_800"], warn=False
-            )
-
-        with caplog.at_level(logging.WARNING, logger="gmso"):
-            opls_ethane_foyer._get_improper_type(
-                ["opls_359", "opls_600", "opls_700", "opls_800"], warn=True
-            )
         assert (
-            "ImproperType between atoms opls_359, opls_600, opls_700 and opls_800"
-            in caplog.text
+            opls_ethane_foyer._get_improper_type(
+                ["opls_359", "opls_600", "opls_700", "opls_800"]
+            )
+            is None
         )
 
     def test_get_virtual_type_missing(self, caplog):
         ff = ForceField(get_path("ff-example0.xml"), backend="gmso")
-        with pytest.raises(MissingPotentialError):
-            ff._get_virtual_type(["Missing"], warn=False)
+        assert ff._get_virtual_type(["Missing"]) is None
 
-        with caplog.at_level(logging.WARNING, logger="gmso"):
-            ff._get_virtual_type(["Missing", "Missing"], warn=True)
-        assert "VirtualType between atoms ('Missing', 'Missing')" in caplog.text
-
-        match = ff._get_virtual_type(["Xe"], warn=False)
+        match = ff._get_virtual_type(["Xe"])
         assert match
 
     def test_non_element_types(self, non_element_ff, opls_ethane_foyer):
@@ -639,10 +604,10 @@ class TestForceField(BaseTest):
             "CT~CT~HC~HC": ImproperType(name="imp1"),
             "CT~HC~HC~HC": ImproperType(name="imp2"),
         }
-        imp1 = ff_with_impropers.get_potential(
+        imp1, _ = ff_with_impropers.get_potential(
             "improper_type", ["CT", "HC", "HC", "CT"]
         )
-        imp2 = ff_with_impropers.get_potential(
+        imp2, _ = ff_with_impropers.get_potential(
             "improper_type", ["CT", "HC", "CT", "HC"]
         )
         assert imp1.name == imp2.name
