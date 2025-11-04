@@ -296,10 +296,11 @@ class Topology(object):
         # Print each charge in e units (or 0.0 if missing)
         for site in self.sites:
             charge = site.charge if site.charge is not None else 0.0
-        
-        # Sum of charges 
-        total_charge = sum(site.charge if site.charge is not None else 0.0
-                    for site in self.sites)
+
+        # Sum of charges
+        total_charge = sum(
+            site.charge if site.charge is not None else 0.0 for site in self.sites
+        )
         return total_charge
 
     @property
