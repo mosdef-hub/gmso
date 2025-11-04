@@ -293,7 +293,6 @@ class Topology(object):
     @property
     def total_charge(self):
         """Adds all the charges in the topologies"""
-        pass
         # Print each charge in e units (or 0.0 if missing)
         for site in self.sites:
             charge = site.charge if site.charge is not None else 0.0
@@ -301,6 +300,7 @@ class Topology(object):
         # Sum of charges 
         total_charge = sum(site.charge if site.charge is not None else 0.0
                     for site in self.sites)
+        return total_charge
 
     @property
     def connections(self):
