@@ -1,7 +1,9 @@
+import numpy as np
 import pytest
 import sympy
 import unyt as u
 
+from gmso.exceptions import GMSOError
 from gmso.tests.base_test import BaseTest
 from gmso.utils.expression import PotentialExpression, _are_equal_parameters
 
@@ -331,3 +333,68 @@ class TestExpression(BaseTest):
         u1 = {"a": 2.0 * u.nm, "b": 3.5 * u.nm}
         u2 = {"c": 2.0 * u.nm, "d": 3.5 * u.nm}
         assert _are_equal_parameters(u1, u2) is False
+
+    def test_evaluate_expression(self):
+        import sympy
+
+        from gmso.utils.expression import PotentialExpression
+
+        expression = PotentialExpression(
+            expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
+            parameters={"sigma": 1 * u.nm, "epsilon": -32.507936507936506 * u.kJ},
+            independent_variables="r",
+        )
+        r = sympy.symbols("r")
+        independent_namespace = {"r": r}
+        independent_parameters = {"r": 2}
+        assert expression.evaluate(independent_namespace, independent_parameters) == 2
+
+        # test use of norm in expression on vectors
+        expression = PotentialExpression(
+            expression="norm(a)*r",
+            parameters={"a": [3, 4, 0] * u.nm},  # norm is 5
+            independent_variables="r",
+        )
+        x, y, z = sympy.symbols("x y z")
+        independent_namespace["r"] = sympy.Matrix([x, y, z])
+        independent_parameters = {"x": 0 * u.nm, "y": 1 * u.nm, "z": 2 * u.nm}
+        output = expression.evaluate(independent_namespace, independent_parameters)
+        assert all(output == np.array([0, 1, 2]) * 5)
+
+        with pytest.raises(GMSOError):  # fail with missing r parameters
+            expression = PotentialExpression(
+                expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
+                parameters={"sigma": 1 * u.nm, "epsilon": -32.507936507936506 * u.kJ},
+                independent_variables="r",
+            )
+            expression.evaluate()
+
+        with pytest.raises(GMSOError):  # fail with divide by 0
+            expression = PotentialExpression(
+                expression="a/b",
+                parameters={"a": 1 * u.nm, "b": 0 * u.kJ},
+                independent_variables=[],
+            )
+            expression.evaluate()
+
+        with pytest.raises(GMSOError):  # fail in vector divide by 0
+            expression = PotentialExpression(
+                expression="a/r",
+                parameters={"a": 1 * u.nm},
+                independent_variables="r",
+            )
+            x, y, z = sympy.symbols("x y z")
+            independent_namespace["r"] = sympy.Matrix([x, y, z])
+            independent_parameters = {"x": 1, "y": 0, "z": 0}
+            expression.evaluate(independent_namespace, independent_parameters)
+
+        with pytest.raises(GMSOError):  # fail with bad expression
+            expression = PotentialExpression(
+                expression="normal(a/r)",
+                parameters={"a": 1 * u.nm},
+                independent_variables="r",
+            )
+            x, y, z = sympy.symbols("x y z")
+            independent_namespace["r"] = sympy.Matrix([x, y, z])
+            independent_parameters = {"x": 1, "y": 0, "z": 0}
+            expression.evaluate(independent_namespace, independent_parameters)

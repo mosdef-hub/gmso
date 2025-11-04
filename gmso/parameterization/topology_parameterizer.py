@@ -194,7 +194,6 @@ class TopologyParameterizer(GMSOBase):
     def _apply_connection_parameters(self, connections, ff, error_on_missing=True):
         """Find and assign potentials from the forcefield for the provided connections."""
         visited = dict()
-
         for connection in connections:
             group, connection_identifiers = self.connection_identifier(connection)
             match = None
@@ -206,8 +205,7 @@ class TopologyParameterizer(GMSOBase):
                 match = ff.get_potential(
                     group=group,
                     key=identifier_key,
-                    return_match_order=True,
-                    warn=True,
+                    exact_match=True,
                 )
                 if match:
                     visited[tuple(identifier_key)] = match
@@ -222,6 +220,7 @@ class TopologyParameterizer(GMSOBase):
                 setattr(connection, group, match[0].clone(self.config.fast_copy))
                 matched_order = [connection.connection_members[i] for i in match[1]]
                 connection.connection_members = matched_order
+
                 if not match[0].member_types:
                     connection.connection_type.member_types = tuple(
                         member.atom_type.name for member in matched_order
@@ -246,8 +245,6 @@ class TopologyParameterizer(GMSOBase):
                 match = ff.get_potential(
                     group=group,
                     key=identifier_key,
-                    return_match_order=True,
-                    warn=True,
                 )
                 if match:
                     visited[tuple(identifier_key)] = match
@@ -442,12 +439,12 @@ class TopologyParameterizer(GMSOBase):
     ):  # This can extended to incorporate a pluggable object from the forcefield.
         """Return the group and list of identifiers for a connection to query the forcefield for its potential."""
         group = POTENTIAL_GROUPS[type(connection)]
-        return group, [
-            list(member.atom_type.name for member in connection.connection_members),
-            list(
-                member.atom_type.atomclass for member in connection.connection_members
-            ),
-        ]
+        return (
+            group,
+            [
+                *connection.get_connection_identifiers(),  # the viable keys made up of the bond orders
+            ],
+        )
 
     @staticmethod
     def virtual_site_identifier(

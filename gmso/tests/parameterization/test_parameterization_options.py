@@ -270,3 +270,24 @@ class TestParameterizationOptions(ParameterizationBaseTest):
             speedup_by_moltag=speedup_by_moltag,
             match_ff_by=match_ff_by,
         )
+
+    def test_bond_order(self):
+        from gmso.core.views import PotentialFilters
+
+        cpd = mb.load("C=CCC#CC(=O)O", smiles=True)
+        top = from_mbuild(cpd)
+        ff = ForceField(get_path("bond-order.xml"))
+        ptop = apply(top, ff, identify_connections=True)
+        assert len(ptop.atom_types) == 14
+        assert len(ptop.bond_types) == 13
+        # assert len(ptop.bond_types(PotentialFilters.UNIQUE_NAME_CLASS)) == 5
+        assert len(ptop.bond_types(PotentialFilters.NAME)) == 5
+        assert len(ptop.angle_types) == 18
+        # assert len(ptop.angle_types(PotentialFilters.UNIQUE_NAME_CLASS)) == 5
+        assert len(ptop.angle_types(PotentialFilters.NAME)) == 5
+        assert len(ptop.dihedral_types) == 18
+        # assert len(ptop.dihedral_types(PotentialFilters.UNIQUE_NAME_CLASS)) == 3
+        assert len(ptop.dihedral_types(PotentialFilters.NAME)) == 3
+        assert len(ptop.improper_types) == 7
+        # assert len(ptop.improper_types(PotentialFilters.UNIQUE_NAME_CLASS)) == 3
+        assert len(ptop.improper_types(PotentialFilters.NAME)) == 3

@@ -123,6 +123,7 @@ def from_parmed(structure, refer_type=True):
     for angle in structure.angles:
         # Generate angles and harmonic parameters
         # If typed, assumed to be harmonic angles
+        # import pdb; pdb.set_trace()
         top_connection = gmso.Angle(
             connection_members=_sort_angle_members(
                 top, site_map, *attrgetter("atom1", "atom2", "atom3")(angle)

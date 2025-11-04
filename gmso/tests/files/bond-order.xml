@@ -1,0 +1,156 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ForceField name="dummy-double-triple-bond" version="0.0.1">
+  <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.5" combiningRule="geometric">
+    <Units energy="kJ" distance="nm" mass="amu" charge="elementary_charge"/>
+  </FFMetaData>
+  <AtomTypes expression="4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)">
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <AtomType name="C1" mass="12.01" charge="0.00" atomclass="CX" definition="[C]">
+      <Parameters>
+        <Parameter name="epsilon" value="1"/>
+        <Parameter name="sigma" value="1"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="H1" mass="1.0" charge="0.00" atomclass="HX" definition="[H]">
+      <Parameters>
+        <Parameter name="epsilon" value="1"/>
+        <Parameter name="sigma" value="1"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="O1" mass="16.01" charge="0.00" atomclass="OX" definition="[O]">
+      <Parameters>
+        <Parameter name="epsilon" value="1"/>
+        <Parameter name="sigma" value="1"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+  <BondTypes expression="0.5*k*(r - r_eq)**2">
+    <ParametersUnitDef parameter="k" unit="kJ/(mol*nm**2)"/>
+    <ParametersUnitDef parameter="r_eq" unit="nm"/>
+    <BondType name="Hwild" class1="HX" class2="">
+      <Parameters>
+        <Parameter name="k" value="1"/>
+        <Parameter name="r_eq" value="1"/>
+      </Parameters>
+    </BondType>
+    <BondType name="Owild" classes="OX~CX">
+      <Parameters>
+        <Parameter name="k" value="1"/>
+        <Parameter name="r_eq" value="1"/>
+      </Parameters>
+    </BondType>
+    <BondType name="Csingle" classes="CX-CX">
+      <Parameters>
+        <Parameter name="k" value="1"/>
+        <Parameter name="r_eq" value="1"/>
+      </Parameters>
+    </BondType>
+    <BondType name="Cdouble" types="C1=C1">
+      <Parameters>
+        <Parameter name="k" value="1"/>
+        <Parameter name="r_eq" value="1"/>
+      </Parameters>
+    </BondType>
+    <BondType name="Ctriple" classes="CX#CX">
+      <Parameters>
+        <Parameter name="k" value="1"/>
+        <Parameter name="r_eq" value="1"/>
+      </Parameters>
+    </BondType>
+  </BondTypes>
+  <AngleTypes expression="0.5*k*(theta - theta_eq)**2">
+    <ParametersUnitDef parameter="k" unit="kJ/(mol*rad**2)"/>
+    <ParametersUnitDef parameter="theta_eq" unit="rad"/>
+    <AngleType name="C-angle" types="*~C1~*">
+      <Parameters>
+        <Parameter name="k" value="1"/>
+        <Parameter name="theta_eq" value="1"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="COH-angle" classes="CX-OX-HX">
+      <Parameters>
+        <Parameter name="k" value="1"/>
+        <Parameter name="theta_eq" value="1"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="CC=C Angle" classes="CX=CX~*">
+      <Parameters>
+        <Parameter name="k" value="1"/>
+        <Parameter name="theta_eq" value="1"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="CC#C Angle" types="C1#C1~*">
+      <Parameters>
+        <Parameter name="k" value="1"/>
+        <Parameter name="theta_eq" value="1"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="HCH Angle" type1="H1" type2="C1" type3="H1">
+      <Parameters>
+        <Parameter name="k" value="1"/>
+        <Parameter name="theta_eq" value="1"/>
+      </Parameters>
+    </AngleType>
+  </AngleTypes>
+  <DihedralTypes expression="c_0 + c_1*cos(psi) + c_2*cos(psi)**2 + c_3*cos(psi)**3 + c_4*cos(psi)**4 + c_5*cos(psi)**5">
+    <ParametersUnitDef parameter="c_0" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c_1" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c_2" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c_3" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c_4" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="c_5" unit="kJ/mol"/>
+    <DihedralType name="C=C" types="*~C1=C1~*">
+      <Parameters>
+        <Parameter name="c_0" value="1"/>
+        <Parameter name="c_1" value="0.0"/>
+        <Parameter name="c_2" value="1"/>
+        <Parameter name="c_3" value="0.0"/>
+        <Parameter name="c_4" value="0.0"/>
+        <Parameter name="c_5" value="0.0"/>
+      </Parameters>
+    </DihedralType>
+    <DihedralType name="C#C" classes="*~CX#CX~*">
+      <Parameters>
+        <Parameter name="c_0" value="1"/>
+        <Parameter name="c_1" value="0.0"/>
+        <Parameter name="c_2" value="1"/>
+        <Parameter name="c_3" value="0.0"/>
+        <Parameter name="c_4" value="0.0"/>
+        <Parameter name="c_5" value="0.0"/>
+      </Parameters>
+    </DihedralType>
+    <DihedralType name="Wildcard" classes="*~*~*~*">
+      <Parameters>
+        <Parameter name="c_0" value="1"/>
+        <Parameter name="c_1" value="0.0"/>
+        <Parameter name="c_2" value="1"/>
+        <Parameter name="c_3" value="0.0"/>
+        <Parameter name="c_4" value="0.0"/>
+        <Parameter name="c_5" value="0.0"/>
+      </Parameters>
+    </DihedralType>
+  </DihedralTypes>
+  <ImproperTypes expression="k*(psi-psi0)**2">
+    <ParametersUnitDef parameter="k" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="psi0" unit="radian"/>
+    <ImproperType name="C=O" types="C1=O1-O1~*">
+      <Parameters>
+        <Parameter name="k" value="1"/>
+        <Parameter name="psi0" value="1"/>
+      </Parameters>
+    </ImproperType>
+    <ImproperType name="C=" classes="CX=*~*~*">
+      <Parameters>
+        <Parameter name="k" value="1"/>
+        <Parameter name="psi0" value="1"/>
+      </Parameters>
+    </ImproperType>
+    <ImproperType name="wildcard" types="*~*~*~*">
+      <Parameters>
+        <Parameter name="k" value="1"/>
+        <Parameter name="psi0" value="1"/>
+      </Parameters>
+    </ImproperType>
+  </ImproperTypes>
+</ForceField>

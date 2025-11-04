@@ -48,6 +48,8 @@
         <xsd:attribute name="class1" type="xsd:string"/>
         <xsd:attribute name="type2" type="xsd:string"/>
         <xsd:attribute name="class2" type="xsd:string"/>
+        <xsd:attribute name="types" type="xsd:string"/>
+        <xsd:attribute name="classes" type="xsd:string"/>
         <xsd:attribute name="expression" type="xsd:string" use="optional"/>
     </xsd:complexType>
 
@@ -58,8 +60,8 @@
                 <xsd:element name="BondType" type="BondType" maxOccurs="unbounded" minOccurs="0">
                     <xsd:key name="mutuallyExclusiveAttributesBondType">
                         <xsd:selector xpath="."/>
-                        <xsd:field xpath="@type1|@class1"/>
-                        <xsd:field xpath="@type2|@class2"/>
+                        <xsd:field xpath="@type1|@class1|@classes|@types"/>
+                        <xsd:field xpath="@type2|@class2|@classes|@types"/>
                     </xsd:key>
                 </xsd:element>
             </xsd:sequence>
@@ -68,9 +70,8 @@
         </xsd:complexType>
         <xsd:key name="bondtype_name_key">
             <xsd:selector xpath="BondType"/>
-            <xsd:field xpath="@type1|@class1"/>
-            <xsd:field xpath="@type2|@class2"/>
-
+            <xsd:field xpath="@type1|@class1|@classes|@types"/>
+            <xsd:field xpath="@type2|@class2|@classes|@types"/>
         </xsd:key>
     </xsd:element>
 
@@ -86,6 +87,8 @@
         <xsd:attribute name="class2" type="xsd:string"/>
         <xsd:attribute name="type3" type="xsd:string"/>
         <xsd:attribute name="class3" type="xsd:string"/>
+        <xsd:attribute name="types" type="xsd:string"/>
+        <xsd:attribute name="classes" type="xsd:string"/>
         <xsd:attribute name="expression" type="xsd:string" use="optional"/>
     </xsd:complexType>
 
@@ -102,9 +105,9 @@
         </xsd:complexType>
         <xsd:key name="angle_type_name_key">
             <xsd:selector xpath="AngleType"/>
-            <xsd:field xpath="@type1|@class1"/>
-            <xsd:field xpath="@type2|@class2"/>
-            <xsd:field xpath="@type3|@class3"/>
+            <xsd:field xpath="@type1|@class1|@types|@classes"/>
+            <xsd:field xpath="@type2|@class2|@types|@classes"/>
+            <xsd:field xpath="@type3|@class3|@types|@classes"/>
         </xsd:key>
     </xsd:element>
 
@@ -159,6 +162,8 @@
         <xsd:attribute name="class3" type="xsd:string"/>
         <xsd:attribute name="type4" type="xsd:string"/>
         <xsd:attribute name="class4" type="xsd:string"/>
+        <xsd:attribute name="types" type="xsd:string"/>
+        <xsd:attribute name="classes" type="xsd:string"/>
         <xsd:attribute name="expression" type="xsd:string" use="optional"/>
     </xsd:complexType>
 
@@ -177,10 +182,10 @@
         <xsd:key name="dihedral_or_improper_type_key">
             <xsd:selector xpath="DihedralType|ImproperType"/>
             <xsd:field xpath="@name"/>
-            <xsd:field xpath="@type1|@class1"/>
-            <xsd:field xpath="@type2|@class2"/>
-            <xsd:field xpath="@type3|@class3"/>
-            <xsd:field xpath="@type4|@class4"/>
+            <xsd:field xpath="@type1|@class1|@types|@classes"/>
+            <xsd:field xpath="@type2|@class2|@types|@classes"/>
+            <xsd:field xpath="@type3|@class3|@types|@classes"/>
+            <xsd:field xpath="@type4|@class4|@types|@classes"/>
         </xsd:key>
     </xsd:element>
 
