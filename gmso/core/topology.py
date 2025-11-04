@@ -294,15 +294,13 @@ class Topology(object):
     def total_charge(self):
         """Adds all the charges in the topologies"""
         pass
-    # Print each charge in e units (or 0.0 if missing)
-    for site in benzene_top.sites:
-        charge = site.charge.to_value('e') if site.charge is not None else 0.0
-        print(charge)
-
-    # Sum of charges (unitless) in 'e'
-    total_charge = sum(site.charge.to_value('e') if site.charge is not None else 0.0
-                   for site in benzene_top.sites)
-    print("Total charge (e):", total_charge)
+        # Print each charge in e units (or 0.0 if missing)
+        for site in self.sites:
+            charge = site.charge if site.charge is not None else 0.0
+        
+        # Sum of charges 
+        total_charge = sum(site.charge if site.charge is not None else 0.0
+                    for site in self.sites)
 
     @property
     def connections(self):
