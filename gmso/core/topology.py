@@ -291,6 +291,15 @@ class Topology(object):
         return self._sites
 
     @property
+    def total_charge(self):
+        """Adds all the charges in the topologies"""
+        # Sum of charges
+        total_charge = sum(
+            site.charge if site.charge is not None else 0.0 for site in self.sites
+        )
+        return total_charge
+
+    @property
     def connections(self):
         """Return all connections in topology."""
         return IndexedSet(

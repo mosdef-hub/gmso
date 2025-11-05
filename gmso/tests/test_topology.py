@@ -957,3 +957,16 @@ class TestTopology(BaseTest):
             1.60217662e-19 * u.Coulomb,
             0.1 * u.Unit("test_charge", registry=reg.reg),
         )
+
+    def test_total_charge(self, methane):
+        # Test case when all charges are None
+        assert np.allclose(methane.total_charge, 0.0 * u.elementary_charge, atol=1e-24)
+
+        # Test case when there is a mix of values and None
+        methane.sites[0].charge = -1.0 * u.elementary_charge
+        assert np.allclose(methane.total_charge, -1.0 * u.elementary_charge, atol=1e-24)
+
+        # Test case when all sites have charge
+        for site in methane.sites[1:]:
+            site.charge = 0.25 * u.elementary_charge
+        assert np.allclose(methane.total_charge, 0.0 * u.elementary_charge, atol=1e-24)
