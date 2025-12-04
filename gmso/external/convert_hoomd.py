@@ -975,7 +975,7 @@ def _parse_coulombic(
         [site.charge.to_value(u.elementary_charge) for site in top.sites]
     )
     if not charge_groups:
-        print("No charged group detected, skipping electrostatics.")
+        logger.info("No charged group detected, skipping electrostatics.")
         return []
     else:
         coulombic = hoomd.md.long_range.pppm.make_pppm_coulomb_forces(
