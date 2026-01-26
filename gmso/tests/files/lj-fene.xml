@@ -1,28 +1,30 @@
 <ForceField version="0.0.1" name="LennardJones-FENE">
-    <FFMetaData electrostatics14Scale="" nonBonded14Scale="" combiningRule="">
-        <Units energy="kb" distance="nm" mass="amu" charge="coulomb"/>
+    <FFMetaData combiningRule="lorentz">
+        <Units energy="energy" distance="length" mass="amu" charge="charge"/>
     </FFMetaData>
-    <AtomTypes expression="">
-       <AtomType name="A" mass="1.0" description="CG Bead">
+    <AtomTypes>
+       <AtomType name="A" element="A" atomclass="A" mass="1.0" charge="0.0" definition="A" description="CG Bead">
        </AtomType>
     </AtomTypes>
-    <BondTypes expression="-0.5 * K * R0**2 *log(1-(r/R0)**2) + 4 * epsilon * ((sigma/r)**12 - (sigma/r)**6)">
+    <BondTypes expression="-0.5 * K * R0**2 * log(1-(r/R0)**2) + 4 * epsilon * ((sigma/r)**12 - (sigma/r)**6) + epsilon">
         <ParametersUnitDef parameter="R0" unit="length"/>
         <ParametersUnitDef parameter="K" unit="energy/distance^2"/>
         <ParametersUnitDef parameter="sigma" unit="length"/>
         <ParametersUnitDef parameter="epsilon" unit="energy"/>
-        <BondType name="BondType1" type1='Ar' type2='Ar'>
+        <BondType name="FENE(A-A)" type1='A' type2='A'>
             <Parameters>
-                <Parameter name='r_eq' value="10.0"/>
-                <Parameter name='k' value="10000"/>
+                <Parameter name='R0' value="1.0"/>
+                <Parameter name='K' value="10"/>
+                <Parameter name='sigma' value="1.0"/>
+                <Parameter name='epsilon' value="1.0"/>
             </Parameters>
         </BondType>
     </BondTypes>
-
   <PairPotentialTypes expression="4 * epsilon * ((sigma/r)**12 - (sigma/r)**6)">
     <ParametersUnitDef parameter="sigma" unit="length"/>
     <ParametersUnitDef parameter="epsilon" unit="energy"/>
-    <PairPotentialType name="PairPotentialType-LJ" type1="A" type2="A">
+    <ParametersUnitDef parameter="r_cut" unit="length"/>
+    <PairPotentialType name="LJ(A:A)" type1="A" type2="A">
         <Parameters>
             <Parameter name="epsilon" value="1.0"/>
             <Parameter name="sigma" value="1.0"/>
