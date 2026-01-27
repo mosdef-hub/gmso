@@ -1,4 +1,4 @@
-<ForceField version="0.0.1" name="LennardJones-FENE">
+<ForceField version="0.0.1" name="LennardJones-FENEWCA">
     <FFMetaData combiningRule="lorentz">
         <Units energy="energy" distance="length" mass="amu" charge="charge"/>
     </FFMetaData>
@@ -6,11 +6,12 @@
        <AtomType name="A" element="A" atomclass="A" mass="1.0" charge="0.0" definition="A" description="CG Bead">
        </AtomType>
     </AtomTypes>
-    <BondTypes expression="-0.5 * K * R0**2 * log(1-(r/R0)**2) + 4 * epsilon * ((sigma/r)**12 - (sigma/r)**6) + epsilon">
+    <BondTypes expression="-0.5 * K * R0**2 * log(1-((r-delta)/R0)**2) + 4 * epsilon * ((sigma/(r-delta))**12 - (sigma/(r-delta))**6) + epsilon">
         <ParametersUnitDef parameter="R0" unit="length"/>
         <ParametersUnitDef parameter="K" unit="energy/distance^2"/>
         <ParametersUnitDef parameter="sigma" unit="length"/>
         <ParametersUnitDef parameter="epsilon" unit="energy"/>
+        <ParametersUnitDef parameter="delta" unit="length"/>
         <BondType name="FENE(A-A)" type1='A' type2='A'>
             <Parameters>
                 <Parameter name='R0' value="1.0"/>
@@ -28,6 +29,7 @@
         <Parameters>
             <Parameter name="epsilon" value="1.0"/>
             <Parameter name="sigma" value="1.0"/>
+            <Parameter name="r_cut" value="1.122462"/>
         </Parameters>
     </PairPotentialType>
   </PairPotentialTypes>
