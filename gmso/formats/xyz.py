@@ -61,7 +61,7 @@ def read_xyz(filename):
 
 
 @saves_as(".xyz")
-def write_xyz(top, filename):
+def write_xyz(top, filename, decimals=3):
     """Writer for xyz file format.
 
     Write a Topology object to an xyz file at the given path.
@@ -72,6 +72,8 @@ def write_xyz(top, filename):
         Topology object that needs to be written out.
     filename : str
         Path to file location.
+    decimals : int, default 3
+        Number of decimals to write out in file for coordinates.
     """
     with open(filename, "w") as out_file:
         out_file.write("{:d}\n".format(top.n_sites))
@@ -80,10 +82,10 @@ def write_xyz(top, filename):
                 top.name, filename, str(datetime.datetime.now())
             )
         )
-        out_file.write(_prepare_particles(top))
+        out_file.write(_prepare_particles(top, decimals))
 
 
-def _prepare_particles(top: Topology) -> str:
+def _prepare_particles(top: Topology, decimals: int) -> str:
     atom_info = str()
     for _, site in enumerate(top.sites):
         # TODO: Better handling of element guessing and site naming
@@ -95,5 +97,5 @@ def _prepare_particles(top: Topology) -> str:
         x = site.position[0].in_units(u.angstrom).value
         y = site.position[1].in_units(u.angstrom).value
         z = site.position[2].in_units(u.angstrom).value
-        atom_info = atom_info + f"{tmp_name} {x:8.3f} {y:8.3f} {z:8.3f}\n"
+        atom_info = atom_info + f"{tmp_name} {x:{decimals+5}.{decimals}f} {y:{decimals+5}.{decimals}f} {z:{decimals+5}.{decimals}f}\n"
     return atom_info
