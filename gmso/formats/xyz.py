@@ -62,6 +62,7 @@ def read_xyz(filename):
 
 @saves_as(".xyz")
 def write_xyz(top, filename, decimals=3):
+def write_xyz(top, filename, decimals=3):
     """Writer for xyz file format.
 
     Write a Topology object to an xyz file at the given path.
@@ -74,6 +75,8 @@ def write_xyz(top, filename, decimals=3):
         Path to file location.
     decimals : int, default 3
         Number of decimals to write out in file for coordinates.
+    decimals : int, default 3
+        Number of decimals to write out in file for coordinates.
     """
     with open(filename, "w") as out_file:
         out_file.write("{:d}\n".format(top.n_sites))
@@ -83,8 +86,10 @@ def write_xyz(top, filename, decimals=3):
             )
         )
         out_file.write(_prepare_particles(top, decimals))
+        out_file.write(_prepare_particles(top, decimals))
 
 
+def _prepare_particles(top: Topology, decimals: int) -> str:
 def _prepare_particles(top: Topology, decimals: int) -> str:
     atom_info = str()
     for _, site in enumerate(top.sites):
