@@ -97,5 +97,8 @@ def _prepare_particles(top: Topology, decimals: int) -> str:
         x = site.position[0].in_units(u.angstrom).value
         y = site.position[1].in_units(u.angstrom).value
         z = site.position[2].in_units(u.angstrom).value
-        atom_info = atom_info + f"{tmp_name} {x:{decimals+5}.{decimals}f} {y:{decimals+5}.{decimals}f} {z:{decimals+5}.{decimals}f}\n"
+        atom_info = (
+            atom_info
+            + f"{tmp_name} {x:{decimals + 5}.{decimals}f} {y:{decimals + 5}.{decimals}f} {z:{decimals + 5}.{decimals}f}\n"
+        )
     return atom_info
