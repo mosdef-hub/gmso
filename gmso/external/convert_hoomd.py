@@ -788,10 +788,10 @@ def to_hoomd_forcefield(
         The typed topology to be converted
     r_cut : float
         r_cut for the nonbonded forces.
-    nlist : hoomd.md.nlist.NeighborList, optional, default=None
-        Neighborlist for simulation cell. Its unit is the same as that
-        used to defined GMSO Topology Box. If None, the default value used will be a
-        hoomd.md.nlist.Cell(buffer=0.4)
+    nlist : hoomd.md.nlist.NeighborList or tuple or list or None, optional, default=None
+        Neighborlist object to use for nonbonded forcefield. Can also be a list or tuple of neighborlists
+        where the first neighborlist is used for nonbonded pair forces, and the second with coulombic forces.
+        If None, the default value used will be a hoomd.md.nlist.Cell(exclusions=exclusions, buffer=0.4).
     pppm_kwargs : dict
         Keyword arguments to pass to hoomd.md.long_range.make_pppm_coulomb_forces().
     base_units : dict or str, optional, default=None
@@ -913,8 +913,9 @@ def _parse_nonbonded_forces(
         Topology object holding system information.
     r_cut : float
         Cut-off radius in simulation units
-    nlist_buffer : float
-        Buffer argument ot pass to hoomd.md.nlist.Cell.
+    nlist : hoomd.md.nlist.NeighborList or tuple or list
+        neighborlist object to use for nonbonded forcefield. Can also be a list or tuple of neighborlists
+        where the first neighborlist is used for nonbonded pair forces, and the second with coulombic forces.
     potential_types : dict
         Output from _validate_compatibility().
     potential_refs : dict

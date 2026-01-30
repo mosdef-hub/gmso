@@ -461,7 +461,7 @@ class TestHoomd(BaseTest):
             r_cut=1.4,
             base_units=base_units,
             pppm_kwargs={"resolution": (32, 32, 32), "order": 5},
-            nlist=(nlist_nb, nlist_coul),
+            nlist=nlist_coul,
         )
         for force in gmso_forces["nonbonded"]:
             if isinstance(force, hoomd.md.pair.LJ):
@@ -477,3 +477,9 @@ class TestHoomd(BaseTest):
                 assert list(force.nlist.exclusions) == ["bond", "1-3", "1-4"]
                 assert force.nlist.buffer == 1
                 assert force.r_cut == 1.4
+        with pytest.raises(ValueError):
+            gmso_forces, forces_base_units = to_hoomd_forcefield(
+                top,
+                r_cut=1.4,
+                nlist="Error",
+            )
