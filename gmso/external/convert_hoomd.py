@@ -52,6 +52,30 @@ AKMA_UNITS = {
 }
 
 
+def get_cell_nlist(top, buffer=0.4):
+    """Create a cell neighborlist for use in hoomd-blue based on top.scaling_factors"""
+    nb_scaling_factors, coul_scaling_factors = top.scaling_factors
+    if all(top.scaling_factors[0] == top.scaling_factors[1]):
+        outVals = None
+    else:
+        outVals = []  # store neighborlists
+    for scalar in [nb_scaling_factors, coul_scaling_factors]:
+        exclusions = list()
+        for i, val in enumerate(scalar):
+            if val == 1:  # skip values that are not exclusions
+                continue
+            if i == 0:
+                exclusions.append("bond")
+            else:
+                exclusions.append(f"1-{i + 2}")
+        if outVals is None:
+            outVals = hoomd.md.nlist.Cell(exclusions=exclusions, buffer=buffer)
+            return outVals, outVals  # return same neighborlist twice
+        else:
+            outVals.append(hoomd.md.nlist.Cell(exclusions=exclusions, buffer=buffer))
+    return outVals
+
+
 def to_gsd_snapshot(
     top,
     base_units=None,
@@ -751,7 +775,7 @@ def _prepare_box_information(top):
 def to_hoomd_forcefield(
     top,
     r_cut,
-    nlist_buffer=0.4,
+    nlist=None,
     pppm_kwargs={"resolution": (8, 8, 8), "order": 4},
     base_units=None,
     auto_scale=False,
@@ -764,9 +788,10 @@ def to_hoomd_forcefield(
         The typed topology to be converted
     r_cut : float
         r_cut for the nonbonded forces.
-    nlist_buffer : float, optional, default=0.4
-        Neighborlist buffer for simulation cell. Its unit is the same as that
-        used to defined GMSO Topology Box.
+    nlist : hoomd.md.nlist.NeighborList, optional, default=None
+        Neighborlist for simulation cell. Its unit is the same as that
+        used to defined GMSO Topology Box. If None, the default value used will be a
+        hoomd.md.nlist.Cell(buffer=0.4)
     pppm_kwargs : dict
         Keyword arguments to pass to hoomd.md.long_range.make_pppm_coulomb_forces().
     base_units : dict or str, optional, default=None
@@ -811,7 +836,7 @@ def to_hoomd_forcefield(
         "nonbonded": _parse_nonbonded_forces(
             top,
             r_cut,
-            nlist_buffer,
+            nlist,
             potential_types,
             potential_refs,
             pppm_kwargs,
@@ -874,7 +899,7 @@ def _validate_compatibility(top):
 def _parse_nonbonded_forces(
     top,
     r_cut,
-    nlist_buffer,
+    nlist,
     potential_types,
     potential_refs,
     pppm_kwargs,
@@ -928,19 +953,24 @@ def _parse_nonbonded_forces(
     # Use Topology scaling factor to determine exclusion
     # TODO: Use molecule scaling factor
     nb_scalings, coulombic_scalings = top.scaling_factors
-    exclusions = list()
-    for i in range(len(nb_scalings)):
-        if i == 0:
-            exclusions.append("bond")
-        else:
-            exclusions.append(f"1-{i + 2}")
-    nlist = hoomd.md.nlist.Cell(exclusions=exclusions, buffer=nlist_buffer)
+    if nlist is None:
+        nlist_nb, nlist_coul = get_cell_nlist(top)
+    elif isinstance(nlist, hoomd.md.nlist.NeighborList):
+        nlist_nb = nlist
+        nlist_coul = nlist
+    elif isinstance(nlist, (tuple, list)):
+        nlist_nb = nlist[0]
+        nlist_coul = nlist[1]
+    else:
+        raise ValueError(
+            "Incorrect values supplied for nlist. Should be of type hoomd.md.nlist"
+        )
 
     nbonded_forces = list()
     nbonded_forces.extend(
         _parse_coulombic(
             top=top,
-            nlist=nlist,
+            nlist=nlist_coul,
             scaling_factors=coulombic_scalings,
             resolution=pppm_kwargs["resolution"],
             order=pppm_kwargs["order"],
@@ -954,7 +984,7 @@ def _parse_nonbonded_forces(
                 atypes=groups[group],
                 combining_rule=top.combining_rule,
                 r_cut=r_cut,
-                nlist=nlist,
+                nlist=nlist_nb,
                 scaling_factors=nb_scalings,
             )
         )

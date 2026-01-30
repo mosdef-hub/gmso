@@ -398,3 +398,82 @@ class TestHoomd(BaseTest):
         assert "CT-CT-CT-HC" in list(forces["dihedrals"][0].params)
         for conntype in snapshot.dihedrals.types:
             assert conntype in list(forces["dihedrals"][0].params)
+
+    def test_pass_nlist(self):
+        from gmso.external.convert_hoomd import get_cell_nlist
+
+        compound = mb.load("CC", smiles=True)
+        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=2)
+        base_units = {
+            "mass": u.amu,
+            "length": u.nm,
+            "energy": u.kJ / u.mol,
+        }
+
+        top = com_box.to_gmso()
+        oplsaa = ForceField("oplsaa")
+        oplsaa.scaling_factors = {
+            "nonBonded12Scale": 0.0,
+            "nonBonded13Scale": 0.5,
+            "nonBonded14Scale": 1.0,
+            "electrostatics12Scale": 1.0,
+            "electrostatics13Scale": 0.5,
+            "electrostatics14scale": 0,
+        }
+        top = apply(top, oplsaa, remove_untyped=True, identify_connections=True)
+        nlist_nb, nlist_coul = get_cell_nlist(top, buffer=1)
+
+        gmso_forces, forces_base_units = to_hoomd_forcefield(
+            top,
+            r_cut=1.4,
+            base_units=base_units,
+            pppm_kwargs={"resolution": (32, 32, 32), "order": 5},
+            nlist=(nlist_nb, nlist_coul),
+        )
+        for force in gmso_forces["nonbonded"]:
+            if isinstance(force, hoomd.md.pair.LJ):
+                assert force.nlist == nlist_nb
+                assert list(force.nlist.exclusions) == ["bond", "1-3"]
+                assert force.nlist.buffer == 1
+            elif isinstance(force, hoomd.md.pair.Ewald):
+                assert force.nlist == nlist_coul
+                assert list(force.nlist.exclusions) == ["1-3", "1-4"]
+                assert force.nlist.buffer == 1
+            elif isinstance(force, hoomd.md.long_range.pppm.Coulomb):
+                assert force.nlist == nlist_coul
+                assert list(force.nlist.exclusions) == ["1-3", "1-4"]
+                assert force.nlist.buffer == 1
+                assert force.r_cut == 1.4
+
+        oplsaa.scaling_factors = {
+            "nonBonded12Scale": 0.0,
+            "nonBonded13Scale": 0.0,
+            "nonBonded14Scale": 0.5,
+            "electrostatics12Scale": 0.0,
+            "electrostatics13Scale": 0.0,
+            "electrostatics14scale": 0.5,
+        }
+        top = com_box.to_gmso()
+        top = apply(top, oplsaa, remove_untyped=True, identify_connections=True)
+        nlist_nb, nlist_coul = get_cell_nlist(top, buffer=1)
+        gmso_forces, forces_base_units = to_hoomd_forcefield(
+            top,
+            r_cut=1.4,
+            base_units=base_units,
+            pppm_kwargs={"resolution": (32, 32, 32), "order": 5},
+            nlist=(nlist_nb, nlist_coul),
+        )
+        for force in gmso_forces["nonbonded"]:
+            if isinstance(force, hoomd.md.pair.LJ):
+                assert force.nlist == nlist_nb
+                assert list(force.nlist.exclusions) == ["bond", "1-3", "1-4"]
+                assert force.nlist.buffer == 1
+            elif isinstance(force, hoomd.md.pair.Ewald):
+                assert force.nlist == nlist_nb
+                assert list(force.nlist.exclusions) == ["bond", "1-3", "1-4"]
+                assert force.nlist.buffer == 1
+            elif isinstance(force, hoomd.md.long_range.pppm.Coulomb):
+                assert force.nlist == nlist_nb
+                assert list(force.nlist.exclusions) == ["bond", "1-3", "1-4"]
+                assert force.nlist.buffer == 1
+                assert force.r_cut == 1.4
