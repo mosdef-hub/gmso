@@ -1,4 +1,3 @@
-import forcefield_utilities as ffutils
 import hoomd
 import numpy as np
 import pytest
@@ -185,7 +184,7 @@ class TestHoomd(BaseTest):
 
         top = from_mbuild(com_box)
         top.identify_connections()
-        oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
+        oplsaa = ForceField("oplsaa")
         top = apply(top, oplsaa, remove_untyped=True)
 
         gmso_snapshot, _ = to_hoomd_snapshot(top, base_units=base_units)
@@ -210,7 +209,7 @@ class TestHoomd(BaseTest):
 
         top = from_mbuild(com_box)
         top.identify_connections()
-        oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
+        oplsaa = ForceField("oplsaa")
         top = apply(top, oplsaa, remove_untyped=True)
 
         gmso_snapshot, _ = to_hoomd_snapshot(
@@ -240,7 +239,7 @@ class TestHoomd(BaseTest):
 
         top = from_mbuild(com_box)
         top.identify_connections()
-        oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
+        oplsaa = ForceField("oplsaa")
         top = apply(top, oplsaa, remove_untyped=True)
 
         gmso_snapshot, snapshot_base_units = to_hoomd_snapshot(
@@ -264,7 +263,7 @@ class TestHoomd(BaseTest):
 
         top = from_mbuild(com_box)
         top.identify_connections()
-        oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
+        oplsaa = ForceField("oplsaa")
         top = apply(top, oplsaa, remove_untyped=True)
 
         gmso_snapshot, snapshot_base_units = to_hoomd_snapshot(top)
@@ -279,9 +278,7 @@ class TestHoomd(BaseTest):
         ethane = mb.lib.molecules.Ethane()
         top = from_mbuild(ethane)
         top.identify_connections()
-        ff_zero_param = (
-            ffutils.FoyerFFs().load(get_path("ethane_zero_parameter.xml")).to_gmso_ff()
-        )
+        ff_zero_param = ForceField(get_path("ethane_zero_parameter.xml"))
         top = apply(top, ff_zero_param, remove_untyped=True)
         base_units = {
             "mass": u.g / u.mol,
@@ -313,7 +310,7 @@ class TestHoomd(BaseTest):
         com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=2)
         top = from_mbuild(com_box)
         top.identify_connections()
-        oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
+        oplsaa = ForceField("oplsaa")
         top = apply(top, oplsaa, remove_untyped=True)
         for site in top.sites:
             site.charge = 0
@@ -478,7 +475,7 @@ class TestHoomd(BaseTest):
                 assert force.nlist.buffer == 1
                 assert force.r_cut == 1.4
         with pytest.raises(ValueError):
-            gmso_forces, forces_base_units = to_hoomd_forcefield(
+            to_hoomd_forcefield(
                 top,
                 r_cut=1.4,
                 nlist="Error",
