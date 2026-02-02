@@ -340,7 +340,7 @@ class Topology(object):
         return unique_tags
 
     @property
-    def atom_types(self):
+    def atom_types(self, include_virtual_types=False):
         """Return all atom_types in the topology.
 
         Notes
@@ -384,7 +384,10 @@ class Topology(object):
             An iterator of the atom_types in the system filtered according to the
             filter function supplied.
         """
-        return TopologyPotentialView(self._sites)
+        if include_virtual_types:
+            return TopologyPotentialView(itertools.chain(self._sites, self._virtual_sites))
+        else:
+            return TopologyPotentialView(self._sites)
 
     @property
     def connection_types(self):
@@ -1393,7 +1396,7 @@ class Topology(object):
 
         return ff
 
-    def iter_sites(self, key, value):
+    def iter_sites_and_virtual_sites(self, key, value):
         """Iterate through this topology's sites based on certain attribute and their values.
 
         Parameters
@@ -1408,6 +1411,62 @@ class Topology(object):
         gmso.abc.abstract_site.Site
             The site where getattr(site, key) == value
         """
+
+        if key not in Site.__iterable_attributes__:
+            raise ValueError(
+                f"`{key}` is not an iterable attribute for Site. "
+                f"To check what the iterable attributes are see gmso.abc.abstract_site module."
+            )
+
+        if value is None:
+            raise ValueError(
+                "Expected `value` to be something other than None. Provided None."
+            )
+        if key in ("molecule", "residue") and isinstance(value, str):
+            for site in itertools.chain(self._sites, self._virtual_sites):
+                if getattr(site, key) and getattr(site, key).name == value:
+                    yield site
+        elif isinstance(value, (tuple, list)):
+            containers_dict = {"molecule": Molecule, "residue": Residue}
+            if len(value) == 2:
+                tmp = containers_dict[key](name=value[0], number=value[1])
+            elif len(value) == 3:
+                tmp = containers_dict[key](
+                    name=value[0], number=value[1], isrigid=value[2]
+                )
+            else:
+                raise ValueError(
+                    f"""
+                        Argument value was passed as {value},
+                        but should be an indexible iterable of
+                        [name, number, isrigid] where name is type string,
+                        number is type int, and isrigid is type bool.
+                    """
+                )
+            for site in itertools.chain(self._sites, self._virtual_sites):
+                if getattr(site, key) and getattr(site, key) == tmp:
+                    yield site
+        else:
+            for site in itertools.chain(self._sites, self._virtual_sites):
+                if getattr(site, key) == value:
+                    yield site
+            
+    def iter_sites(self, key, value):
+        """Iterate through this topology's sites and virtual_sites based on certain attribute and their values.
+
+        Parameters
+        ----------
+        key: str
+            The attribute of the site to look for
+        value:
+            The value that the given attribute should be equal to
+
+        Yields
+        ------
+        gmso.abc.abstract_site.Site
+            The site where getattr(site, key) == value
+        """
+
         if key not in Site.__iterable_attributes__:
             raise ValueError(
                 f"`{key}` is not an iterable attribute for Site. "
