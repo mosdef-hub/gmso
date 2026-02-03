@@ -385,7 +385,9 @@ class Topology(object):
             filter function supplied.
         """
         if include_virtual_types:
-            return TopologyPotentialView(itertools.chain(self._sites, self._virtual_sites))
+            return TopologyPotentialView(
+                itertools.chain(self._sites, self._virtual_sites)
+            )
         else:
             return TopologyPotentialView(self._sites)
 
@@ -1450,7 +1452,7 @@ class Topology(object):
             for site in itertools.chain(self._sites, self._virtual_sites):
                 if getattr(site, key) == value:
                     yield site
-            
+
     def iter_sites(self, key, value):
         """Iterate through this topology's sites and virtual_sites based on certain attribute and their values.
 

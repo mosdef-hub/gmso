@@ -11,14 +11,14 @@ import numpy as np
 import unyt as u
 from unyt.array import allclose_units
 
+from gmso.core.views import PotentialFilters
 from gmso.core.virtual_site import VirtualSite
 from gmso.core.virtual_type import VirtualType
-from gmso.core.views import PotentialFilters
 from gmso.exceptions import EngineIncompatibilityError, NotYetImplementedWarning
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.connectivity import generate_pairs_lists
 from gmso.utils.conversions import convert_ryckaert_to_opls
-from gmso.utils.geometry import coord_shift, moment_of_inertia
+from gmso.utils.geometry import moment_of_inertia
 from gmso.utils.io import has_gsd, has_hoomd
 from gmso.utils.sorting import (
     sort_by_classes,
@@ -26,12 +26,6 @@ from gmso.utils.sorting import (
     sort_connection_members,
 )
 from gmso.utils.units import convert_params_units
-from gmso.parameterization.molecule_utils import (
-    molecule_angles,
-    molecule_bonds,
-    molecule_dihedrals,
-    molecule_impropers,
-)
 
 if has_gsd:
     import gsd.hoomd
@@ -324,15 +318,17 @@ def to_hoomd_snapshot(
         "Special pairs are not currently written to GSD files",
     )
 
-    moleculeDict, indexMap, uniqueMoleculeList = _organize_generate_topology_molecule_info(top)
+    moleculeDict, indexMap, uniqueMoleculeList = (
+        _organize_generate_topology_molecule_info(top)
+    )
     n_rigid, rigid_info = _parse_particle_information(
         hoomd_snapshot,
         top,
         base_units,
         shift_coords,
         u.unyt_array([lx, ly, lz]),
-        moleculeDict, 
-        uniqueMoleculeList
+        moleculeDict,
+        uniqueMoleculeList,
     )
     if parse_special_pairs:
         _parse_pairs_information(hoomd_snapshot, top, indexMap, n_rigid)
@@ -358,8 +354,8 @@ def _parse_particle_information(
     base_units,
     shift_coords,
     box_lengths,
-    moleculeDict, 
-    uniqueMoleculeList
+    moleculeDict,
+    uniqueMoleculeList,
 ):
     """Parse site information from topology.
 
@@ -384,7 +380,7 @@ def _parse_particle_information(
 
     # all per particle quants
     # xyz, types, masses, charges, moments, orientations, typeids, rigid_ids
-    # across all props: unique_types, 
+    # across all props: unique_types,
     # for molecule in top.iter_sites_by_molecule:
     xyz = []
     types = []
@@ -393,16 +389,22 @@ def _parse_particle_information(
     moments = []
     orientations = []
     rigid_ids = []
-    for moleculeName in uniqueMoleculeList :
+    for moleculeName in uniqueMoleculeList:
         for moleculeNumber, sitesList in enumerate(moleculeDict[moleculeName]):
-            for site in sitesList: # list of sites for that molecule
+            for site in sitesList:  # list of sites for that molecule
                 if isinstance(site, VirtualSite):
                     xyz.append(site.position())
-                    types.append(site.name if site.virtual_type is None else site.virtual_type.name)
-                    masses.append(0*u.amu)
+                    types.append(
+                        site.name
+                        if site.virtual_type is None
+                        else site.virtual_type.name
+                    )
+                    masses.append(0 * u.amu)
                 else:
                     xyz.append(site.position)
-                    types.append(site.name if site.atom_type is None else site.atom_type.name)
+                    types.append(
+                        site.name if site.atom_type is None else site.atom_type.name
+                    )
                     masses.append(site.mass)
                 charges.append(site.charge)
                 moments.append([1, 0, 0])
@@ -565,9 +567,7 @@ def _parse_pairs_information(snapshot, top, indexMap, n_rigid=0):
         if pair_type not in pair_types:
             pair_types.append(pair_type)
         pair_typeids.append(pair_types.index(pair_type))
-        pairs.append(
-            (indexMap[pair[0]] + n_rigid, indexMap[pair[1]] + n_rigid)
-        )
+        pairs.append((indexMap[pair[0]] + n_rigid, indexMap[pair[1]] + n_rigid))
 
     if isinstance(snapshot, hoomd.Snapshot):
         snapshot.pairs.N = len(pairs)
@@ -959,7 +959,11 @@ def _parse_nonbonded_forces(
         The dictionary holding base units (mass, length, and energy)
     """
     unique_atypes = set(top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS))
-    unique_atypes = unique_atypes | set({site.virtual_type.name:site.virtual_type for site in top.virtual_sites}.values())
+    unique_atypes = unique_atypes | set(
+        {
+            site.virtual_type.name: site.virtual_type for site in top.virtual_sites
+        }.values()
+    )
 
     # Grouping atomtype by group name
     groups = dict()
@@ -1710,32 +1714,42 @@ def _convert_single_param_units(
     potential.parameters = converted_params
     return potential
 
+
 def _organize_generate_topology_molecule_info(top):
     """Generate a dictionary of unique molecules by tag."""
-    moleculeDict = {} # ordering of all molecules
-    indexMap = {} # map to hash sites to index
-    uniqueMoleculeList = [] # list of molecules as they appear in top
-    n_sites_in_molecule = {} # number of expected sites in molecule
+    moleculeDict = {}  # ordering of all molecules
+    indexMap = {}  # map to hash sites to index
+    uniqueMoleculeList = []  # list of molecules as they appear in top
+    n_sites_in_molecule = {}  # number of expected sites in molecule
     molecule_indexOffset = 0
     last_molecule = None
-    for molecule in top.unique_site_labels("molecule", name_only=False): # assume molecules are in 0 to N order
+    for molecule in top.unique_site_labels(
+        "molecule", name_only=False
+    ):  # assume molecules are in 0 to N order
         if molecule.name not in moleculeDict:
-            if not last_molecule is None:
-                molecule_indexOffset += n_sites_in_molecule[last_molecule.name] * (last_molecule.number + 1)
+            if last_molecule is not None:
+                molecule_indexOffset += n_sites_in_molecule[last_molecule.name] * (
+                    last_molecule.number + 1
+                )
             else:
-                molecule_indexOffset = 0 # only start adding this to the index after the first molecule has been tabulated
+                molecule_indexOffset = 0  # only start adding this to the index after the first molecule has been tabulated
             uniqueMoleculeList.append(molecule.name)
             moleculeDict[molecule.name] = []
-            n_sites_in_molecule[molecule.name] = len(list(top.iter_sites_and_virtual_sites(key="molecule", value=molecule)))
-        moleculeDict[molecule.name].append([]) # new siteList to add sites to
+            n_sites_in_molecule[molecule.name] = len(
+                list(top.iter_sites_and_virtual_sites(key="molecule", value=molecule))
+            )
+        moleculeDict[molecule.name].append([])  # new siteList to add sites to
         for site in top.iter_sites_and_virtual_sites(key="molecule", value=molecule):
             moleculeDict[molecule.name][-1].append(site)
             indexMap[site] = (
-                molecule_indexOffset # baseline counter from previous molecule indices
-                + molecule.number * n_sites_in_molecule[molecule.name] # starting index for this molecule numbers
-                + len(moleculeDict[molecule.name][-1]) - 1  # site number in this molecule
+                molecule_indexOffset  # baseline counter from previous molecule indices
+                + molecule.number
+                * n_sites_in_molecule[
+                    molecule.name
+                ]  # starting index for this molecule numbers
+                + len(moleculeDict[molecule.name][-1])
+                - 1  # site number in this molecule
             )
         last_molecule = molecule
-    
-    
+
     return moleculeDict, indexMap, uniqueMoleculeList

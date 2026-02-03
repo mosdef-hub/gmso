@@ -65,12 +65,12 @@ def check_compatibility(
             )
         else:
             potential_forms_dict.update(potential_form)
-    
+
     checkedTypes = set()
     for site in topology.virtual_sites:
         vtype = site.virtual_type
         if vtype in checkedTypes:
-            continue # skip already checked values
+            continue  # skip already checked values
         potential_form = _check_single_potential(
             vtype.virtual_potential,
             accepted_potentials,
@@ -82,7 +82,6 @@ def check_compatibility(
         else:
             potential_forms_dict.update(potential_form)
         checkedTypes.add(vtype.name)
-
 
     for connection_type in topology.connection_types(filter_by=conn_pfilter):
         potential_form = _check_single_potential(

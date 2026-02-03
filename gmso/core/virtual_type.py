@@ -347,7 +347,7 @@ class VirtualType(GMSOBase):
                 parametersDict["position"] = self.virtual_position.parameters
 
         return parametersDict
-    
+
     def __hash__(self):
         """Return the unique hash of the object."""
         return id(self)
