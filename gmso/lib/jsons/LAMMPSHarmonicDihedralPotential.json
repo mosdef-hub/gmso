@@ -5,6 +5,6 @@
   "expected_parameters_dimensions": {
     "k":"energy/angle**2",
     "d":"dimensionless",
-    "n":"dimensionless" 
+    "n":"dimensionless"
   }
 }
