@@ -122,7 +122,76 @@ class TestVirturalSite(BaseTest):
         assert ptop.virtual_sites[0].charge == 1 * u.elementary_charge
 
     def test_tip5p_water(self):
-        pass
+        water_ff = ForceField(get_fn("gmso_xmls/test_molecules/tip5p.xml"))
+        assert_allclose_units(
+            water_ff.virtual_types["HW~OW~HW"].charge, -0.241 * u.elementary_charge
+        )
+        doh = 0.09572  # nm
+        dhh = 0.1513900654  # nm
+        dom = 0.070  # nm
+        ahoh = 104.52  # degrees
+        # amom = 109.47  # degrees
+        top = Topology(name="water")
+        h1posx = doh * np.sin(ahoh / 360 * np.pi)
+        h1posy = doh * np.cos(ahoh / 360 * np.pi)
+        poso1 = np.array([0.00000, 0, 0.00000])
+        posh1 = np.array([h1posx, h1posy, 0.00000])
+        posh2 = np.array([-1 * h1posx, h1posy, 0.00000])
+        o1 = Atom(name="O", element=element_by_symbol("O"), position=poso1)
+        h1 = Atom(element=element_by_symbol("H"), position=posh1)
+        h2 = Atom(element=element_by_symbol("H"), position=posh2)
+        np.testing.assert_allclose(
+            np.linalg.norm(o1.position - h1.position), doh, rtol=1e-4
+        )
+        np.testing.assert_allclose(
+            np.linalg.norm(h1.position - h2.position), dhh, rtol=1e-4
+        )
+        for part in [o1, h1, h2]:
+            top.add_site(part)
+        top.add_connection(Bond(connection_members=(o1, h1)))
+        top.add_connection(Bond(connection_members=(o1, h2)))
+
+        ptop = apply(top, water_ff, ignore_params=["bond"], remove_untyped=False)
+        np.testing.assert_allclose(
+            np.linalg.norm(o1.position - h1.position).value, doh, rtol=1e-4
+        )
+        np.testing.assert_allclose(
+            np.linalg.norm(h1.position - h2.position).value, dhh, rtol=1e-4
+        )
+        np.testing.assert_allclose(
+            np.asin(dhh / 2 / doh), ahoh / 360 * np.pi, rtol=1e-4
+        )
+        # manually calculate virtual position
+        # use position function to get virtual_position
+
+        assert ptop.virtual_sites[0].position().shape == (3,)
+        np.testing.assert_allclose(
+            ptop.virtual_sites[0].position().value,
+            [0.0, -0.0404151276, -0.0571543301],
+            atol=1e-4,
+        )
+        np.testing.assert_allclose(
+            ptop.virtual_sites[0].position().value,
+            (
+                o1.position.value
+                - 0.344908268 * (h1.position - o1.position).value
+                - 0.344908268 * (h2.position - o1.position).value
+                - 6.4437903
+                * np.cross(
+                    (h1.position - o1.position).value, (h2.position - o1.position).value
+                )
+            ),
+            atol=1e-4,
+        )
+        np.testing.assert_allclose(
+            np.linalg.norm(ptop.virtual_sites[0].position() - o1.position).value,
+            dom,
+            rtol=1e-4,
+        )
+        assert_allclose_units(
+            ptop.virtual_sites[0].charge, -0.241 * u.elementary_charge
+        )
+        # assert len(ptop.virtual_sites) == 2 # TODO: This fails because the virtual sites have the same member_classes, so they get the same key
 
     def test_virtual_type(self):
         v_pot = VirtualPotentialType(
