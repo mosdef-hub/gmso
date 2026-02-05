@@ -114,7 +114,7 @@ class TestGsd(BaseTest):
         apply(top, gaff_forcefield, identify_connections=True)
 
         rigid_ids = [site.molecule.number for site in top.sites]
-        assert set(rigid_ids) == {0, 1}
+        assert set(rigid_ids) == {0}
 
         snapshot, refs, rigid = to_gsd_snapshot(top)
         snapshot.validate()

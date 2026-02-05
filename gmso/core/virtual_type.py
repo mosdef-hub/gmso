@@ -2,14 +2,20 @@ import logging
 from typing import Callable, Optional, Tuple, Union
 
 import unyt as u
+from lxml import etree
 from pydantic import ConfigDict, Field, field_serializer, field_validator
 
 from gmso.abc.gmso_base import GMSOBase
 from gmso.abc.serialization_utils import unyt_to_dict
 from gmso.core.parametric_potential import ParametricPotential
+from gmso.exceptions import GMSOError
 from gmso.utils._constants import UNIT_WARNING_STRING
 from gmso.utils.expression import PotentialExpression
-from gmso.utils.misc import ensure_valid_dimensions, unyt_compare
+from gmso.utils.misc import (
+    ensure_valid_dimensions,
+    get_xml_representation,
+    unyt_compare,
+)
 from gmso.utils.units import GMSO_UnitRegistry
 
 logger = logging.getLogger(__name__)
@@ -351,3 +357,92 @@ class VirtualType(GMSOBase):
     def __hash__(self):
         """Return the unique hash of the object."""
         return id(self)
+
+    def _etree_attrib(self):
+        """Return the XML equivalent representation of this ParametricPotential"""
+        attrib = {
+            key: get_xml_representation(value)
+            for key, value in self.model_dump(
+                by_alias=True,
+                exclude_none=True,
+                exclude={
+                    "topology_",
+                    "set_ref_",
+                    "member_types_",
+                    "member_classes_",
+                    "potential_expression_",
+                    "tags_",
+                    "virtual_position",
+                    "virtual_potential",
+                },
+            ).items()
+            if value != ""
+        }
+        charge = eval(attrib["charge"])
+        attrib["charge"] = str(charge["array"])
+
+        return attrib
+
+    def etree(self, units=None):
+        """Return an lxml.ElementTree for the parametric potential adhering to gmso XML schema"""
+
+        attrib = self._etree_attrib()
+
+        if hasattr(self, "member_types") and hasattr(self, "member_classes"):
+            if self.member_types:
+                iterating_attribute = self.member_types
+                prefix = "type"
+            elif self.member_classes:
+                iterating_attribute = self.member_classes
+                prefix = "class"
+            else:
+                raise GMSOError(
+                    f"Cannot convert {self.__class__.__name__} into an XML."
+                    f"Please specify member_classes or member_types attribute."
+                )
+            for idx, value in enumerate(iterating_attribute):
+                attrib[f"{prefix}{idx + 1}"] = str(value)
+
+        xml_element = etree.Element("VirtualSiteType", attrib=attrib)
+
+        position = etree.SubElement(xml_element, "Position")
+        position_params = etree.SubElement(position, "Parameters")
+        potential = etree.SubElement(xml_element, "Potential")
+        potential_params = etree.SubElement(potential, "Parameters")
+
+        for params, sub_potential in zip(
+            [position_params, potential_params],
+            [self.virtual_position, self.virtual_potential],
+        ):
+            for key, value in sub_potential.parameters.items():
+                value_unit = None
+                if units is not None:
+                    value_unit = units[key]
+                if isinstance(value, u.array.unyt_quantity):
+                    etree.SubElement(
+                        params,
+                        "Parameter",
+                        attrib={
+                            "name": key,
+                            "value": get_xml_representation(
+                                value.in_units(value_unit) if value_unit else value
+                            ),
+                        },
+                    )
+                elif isinstance(value, u.array.unyt_array):
+                    params_list = etree.SubElement(
+                        params,
+                        "Parameter",
+                        attrib={
+                            "name": key,
+                        },
+                    )
+                    for listed_val in value:
+                        xml_repr = get_xml_representation(
+                            listed_val.in_units(value_unit)
+                            if value_unit
+                            else listed_val
+                        )
+                        etree.SubElement(params_list, "Value").text = xml_repr
+
+        return xml_element

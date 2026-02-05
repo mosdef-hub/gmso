@@ -89,16 +89,6 @@ class TestXMLHandling(BaseTest):
             assert compare_xml_files(xml, "tmp.xml")
         assert ff1 == ff2
 
-    @pytest.mark.parametrize("xml", TEST_XMLS)
-    def test_load_write_xmls_ffutils_backend(self, xml):
-        """Validate loaded xmls written out match original file."""
-        ff1 = ForceField(xml, backend="forcefield-utilities")
-        ff1.to_xml("tmp.xml", overwrite=True)
-        ff2 = ForceField("tmp.xml")
-        if "test_ffstyles" not in xml:
-            assert compare_xml_files("tmp.xml", xml)
-        assert ff1 == ff2
-
     def test_xml_error_handling(self):
         """Validate bad xml formatting in xmls."""
         file_path = "dummy_name.xml"

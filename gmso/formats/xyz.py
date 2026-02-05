@@ -85,7 +85,6 @@ def write_xyz(top, filename, decimals=3):
             )
         )
         out_file.write(_prepare_particles(top, decimals))
-        out_file.write(_prepare_particles(top, decimals))
 
 
 def _prepare_particles(top: Topology, decimals: int) -> str:

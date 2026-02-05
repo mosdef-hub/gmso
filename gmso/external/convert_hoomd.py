@@ -6,6 +6,7 @@ import copy
 import itertools
 import json
 import re
+from collections import OrderedDict
 
 import numpy as np
 import unyt as u
@@ -186,24 +187,29 @@ def to_gsd_snapshot(
         "Only writing particle, bond, sangle, proper and improper dihedral information."
         "Special pairs are not currently written to GSD files",
     )
-
+    moleculeDict, indexMap, uniqueMoleculeODict = (
+        _organize_generate_topology_molecule_info(top)
+    )
     n_rigid, rigid_info = _parse_particle_information(
         gsd_snapshot,
         top,
         base_units,
         shift_coords,
         u.unyt_array([lx, ly, lz]),
+        moleculeDict,
+        uniqueMoleculeODict,
     )
+
     if parse_special_pairs:
-        _parse_pairs_information(gsd_snapshot, top, n_rigid)
+        _parse_pairs_information(gsd_snapshot, top, indexMap, n_rigid)
     if top.n_bonds > 0:
-        _parse_bond_information(gsd_snapshot, top, n_rigid)
+        _parse_bond_information(gsd_snapshot, top, indexMap, n_rigid)
     if top.n_angles > 0:
-        _parse_angle_information(gsd_snapshot, top, n_rigid)
+        _parse_angle_information(gsd_snapshot, top, indexMap, n_rigid)
     if top.n_dihedrals > 0:
-        _parse_dihedral_information(gsd_snapshot, top, n_rigid)
+        _parse_dihedral_information(gsd_snapshot, top, indexMap, n_rigid)
     if top.n_impropers > 0:
-        _parse_improper_information(gsd_snapshot, top, n_rigid)
+        _parse_improper_information(gsd_snapshot, top, indexMap, n_rigid)
 
     if rigid_info:
         return gsd_snapshot, base_units, rigid_info
@@ -318,7 +324,7 @@ def to_hoomd_snapshot(
         "Special pairs are not currently written to GSD files",
     )
 
-    moleculeDict, indexMap, uniqueMoleculeList = (
+    moleculeDict, indexMap, uniqueMoleculeODict = (
         _organize_generate_topology_molecule_info(top)
     )
     n_rigid, rigid_info = _parse_particle_information(
@@ -328,7 +334,7 @@ def to_hoomd_snapshot(
         shift_coords,
         u.unyt_array([lx, ly, lz]),
         moleculeDict,
-        uniqueMoleculeList,
+        uniqueMoleculeODict,
     )
     if parse_special_pairs:
         _parse_pairs_information(hoomd_snapshot, top, indexMap, n_rigid)
@@ -355,7 +361,7 @@ def _parse_particle_information(
     shift_coords,
     box_lengths,
     moleculeDict,
-    uniqueMoleculeList,
+    uniqueMoleculeODict,
 ):
     """Parse site information from topology.
 
@@ -373,15 +379,10 @@ def _parse_particle_information(
         Lengths of box in x, y, z
     moleculeDict : dictionary of molecule.name : [[sites_molecule2],[sites_molecule1]...]
         Sorted info about all sites to index into topology
-    uniqueMoleculeList : list() of str
-        Sorted list of moleculesNames as strings
+    uniqueMoleculeODict : ordered_dict with keys of str, values of int
+        Sorted list of moleculesNames as strings, with indexes being the molecule start index.
     """
     # Set up all require
-
-    # all per particle quants
-    # xyz, types, masses, charges, moments, orientations, typeids, rigid_ids
-    # across all props: unique_types,
-    # for molecule in top.iter_sites_by_molecule:
     xyz = []
     types = []
     masses = []
@@ -389,7 +390,8 @@ def _parse_particle_information(
     moments = []
     orientations = []
     rigid_ids = []
-    for moleculeName in uniqueMoleculeList:
+    n_prior_molecules = 0
+    for moleculeName in uniqueMoleculeODict:
         for moleculeNumber, sitesList in enumerate(moleculeDict[moleculeName]):
             for site in sitesList:  # list of sites for that molecule
                 if isinstance(site, VirtualSite):
@@ -406,10 +408,15 @@ def _parse_particle_information(
                         site.name if site.atom_type is None else site.atom_type.name
                     )
                     masses.append(site.mass)
-                charges.append(site.charge)
+                charges.append(site.charge if site.charge else 0 * u.elementary_charge)
                 moments.append([1, 0, 0])
                 orientations.append([1, 0, 0, 0])
-                rigid_ids.append(site.molecule.number if site.molecule.isrigid else -1)
+                rigid_ids.append(
+                    site.molecule.number + n_prior_molecules
+                    if site.molecule.isrigid
+                    else -1
+                )
+        n_prior_molecules += site.molecule.number + 1  # take last site
     # convert to correct unyt_arrays
     xyz = u.unyt_array(xyz).in_units(base_units["length"])
     masses = u.unyt_array(masses).in_units(base_units["mass"])
@@ -434,9 +441,13 @@ def _parse_particle_information(
         for site in top.sites:
             if site.molecule.isrigid:
                 if site.molecule.name in rigid_body_sets.keys():
-                    rigid_body_sets[site.molecule.name].add(site.molecule.number)
+                    rigid_body_sets[site.molecule.name].add(
+                        site.molecule.number + uniqueMoleculeODict[site.molecule.name]
+                    )
                 else:
-                    rigid_body_sets[site.molecule.name] = {site.molecule.number}
+                    rigid_body_sets[site.molecule.name] = {
+                        site.molecule.number + uniqueMoleculeODict[site.molecule.name]
+                    }
         # Number of unique types of rigid molecules
         n_rigid_types = len(rigid_body_sets.keys())
         # Total number of rigid molecules
@@ -1719,7 +1730,7 @@ def _organize_generate_topology_molecule_info(top):
     """Generate a dictionary of unique molecules by tag."""
     moleculeDict = {}  # ordering of all molecules
     indexMap = {}  # map to hash sites to index
-    uniqueMoleculeList = []  # list of molecules as they appear in top
+    uniqueMoleculeODict = OrderedDict()  # list of molecules as they appear in top
     n_sites_in_molecule = {}  # number of expected sites in molecule
     molecule_indexOffset = 0
     last_molecule = None
@@ -1731,9 +1742,12 @@ def _organize_generate_topology_molecule_info(top):
                 molecule_indexOffset += n_sites_in_molecule[last_molecule.name] * (
                     last_molecule.number + 1
                 )
+                uniqueMoleculeODict[molecule.name] = (
+                    uniqueMoleculeODict[last_molecule.name] + 1 + last_molecule.number
+                )
             else:
                 molecule_indexOffset = 0  # only start adding this to the index after the first molecule has been tabulated
-            uniqueMoleculeList.append(molecule.name)
+                uniqueMoleculeODict[molecule.name] = 0  # first number
             moleculeDict[molecule.name] = []
             n_sites_in_molecule[molecule.name] = len(
                 list(top.iter_sites_and_virtual_sites(key="molecule", value=molecule))
@@ -1752,4 +1766,4 @@ def _organize_generate_topology_molecule_info(top):
             )
         last_molecule = molecule
 
-    return moleculeDict, indexMap, uniqueMoleculeList
+    return moleculeDict, indexMap, uniqueMoleculeODict
