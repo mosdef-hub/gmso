@@ -197,6 +197,11 @@ class BaseTest:
         return top
 
     @pytest.fixture
+    def fene_ethane(self, ethane):
+        ff = get_fn("FENE-alkane.xml")
+        return apply(ethane, ff)
+
+    @pytest.fixture
     def typed_ethane(self):
         from mbuild.lib.molecules import Ethane
 
