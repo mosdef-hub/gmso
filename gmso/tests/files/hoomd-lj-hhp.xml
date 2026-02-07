@@ -1,0 +1,54 @@
+<ForceField version="0.0.1" name="HOOMD-BeadSpring">
+    <FFMetaData combiningRule="lorentz">
+        <Units energy="kJ/mol" distance="nm" mass="amu" charge="coulomb"/>
+    </FFMetaData>
+    <AtomTypes>
+       <AtomType name="A" element="A" atomclass="A" mass="1.0" charge="0.0" definition="A" description="CG Bead">
+       </AtomType>
+    </AtomTypes>
+    <BondTypes expression="0.5 * k * (r-r_eq)**2">
+        <ParametersUnitDef parameter="r_eq" unit="nm"/>
+        <ParametersUnitDef parameter="k" unit="kJ/mol*nm**2"/>
+        <BondType name="HarmonicBondPotential" type1='A' type2='A'>
+            <Parameters>
+                <Parameter name="r_eq" value="1.0"/>
+                <Parameter name="k" value="10"/>
+            </Parameters>
+        </BondType>
+    </BondTypes>
+    <AngleTypes expression="0.5 * k * (theta-theta_eq)**2">
+        <ParametersUnitDef parameter="theta_eq" unit="radians"/>
+        <ParametersUnitDef parameter="k" unit="kJ/mol*radians**2"/>
+        <AngleType name="HarmonicAnglePotential" type1="A" type2="A" type3="A">
+            <Parameters>
+                <Parameter name="theta_eq" value="1.0"/>
+                <Parameter name="k" value="10"/>
+            </Parameters>
+        </AngleType>
+    </AngleTypes>
+    <DihedralTypes expression="0.5 * k * (1 + d * cos(n*phi-phi_eq)">
+        <ParametersUnitDef parameter="phi_eq" unit="radians"/>
+        <ParametersUnitDef parameter="k" unit="kJ/mol*radians**2"/>
+        <ParametersUnitDef parameter="d"/>
+        <ParametersUnitDef parameter="n"/>
+        <DihedralType name="HOOMDPeriodicDihedralPotential" type1="A" type2="A" type3="A" type4="A">
+            <Parameters>
+                <Parameter name="phi_eq" value="0"/>
+                <Parameter name="k" value="10"/>
+                <Parameter name="d" value="-1"/>
+                <Parameter name="n" value="3"/>
+            </Parameters>
+        </DihedralType>
+    </DihedralTypes>
+
+  <PairPotentialTypes expression="4 * epsilon * ((sigma/r)**12 - (sigma/r)**6)">
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <PairPotentialType name="LennardJonesPotential" type1="A" type2="A">
+        <Parameters>
+            <Parameter name="epsilon" value="1.0"/>
+            <Parameter name="sigma" value="1.0"/>
+        </Parameters>
+    </PairPotentialType>
+  </PairPotentialTypes>
+</ForceField>
