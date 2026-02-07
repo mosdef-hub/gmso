@@ -1,0 +1,11 @@
+{
+  "name": "PeriodicImproperPotential",
+  "expression": "k * (1 + d * cos(n * phi - phi_eq))",
+  "independent_variables": "phi",
+  "expected_parameters_dimensions": {
+    "k": "energy",
+    "n": "dimensionless",
+    "phi_eq": "angle",
+    "d": "dimensionless"
+  }
+}
