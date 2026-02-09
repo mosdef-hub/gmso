@@ -1,5 +1,5 @@
 {
-  "name": "PeriodicImproperPotential",
+  "name": "HOOMDPeriodicImproperPotential",
   "expression": "k * (1 + d * cos(n * phi - phi_eq))",
   "independent_variables": "phi",
   "expected_parameters_dimensions": {

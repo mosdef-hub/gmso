@@ -197,8 +197,9 @@ class BaseTest:
         return top
 
     @pytest.fixture
-    def fene_ethane(self, ethane):
-        ff = get_fn("FENE-alkane.xml")
+    def fene_ethane(self):
+        ethane = mb.load("CC", smiles=True).to_gmso()
+        ff = ForceField(get_fn("gmso_xmls/test_ffstyles/FENE-alkane.xml"))
         return apply(ethane, ff)
 
     @pytest.fixture

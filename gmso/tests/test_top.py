@@ -258,9 +258,6 @@ class TestTop(BaseTest):
         fene_ethane.save("ethane.top")
         with open("ethane.top") as f:
             current = f.readlines()
-        import pdb
-
-        pdb.set_trace()
 
         with open(get_path("fene_ethane.top"), "r") as f2:
             ref = f2.readlines()

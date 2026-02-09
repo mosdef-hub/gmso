@@ -46,13 +46,13 @@
   <BondTypes expression="-0.5 * k * r_eq**2 * log(1-r/r_eq)**2">
     <ParametersUnitDef parameter="k" unit="kJ/(mol*nm**2)"/>
     <ParametersUnitDef parameter="r_eq" unit="nm"/>
-    <BondType name="FENE-CT-HC" types="CT-HC">
+    <BondType name="FENE-CT-HC" classes="CT-HC">
       <Parameters>
         <Parameter name="k" value="284512.0"/>
         <Parameter name="r_eq" value="0.109"/>
       </Parameters>
     </BondType>
-    <BondType name="FENE-CT-CT" types="CT-CT">
+    <BondType name="FENE-CT-CT" classes="CT-CT">
       <Parameters>
         <Parameter name="k" value="284512.0"/>
         <Parameter name="r_eq" value="0.154"/>

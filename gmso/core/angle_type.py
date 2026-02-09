@@ -37,12 +37,18 @@ class AngleType(ParametricPotential):
         "defining the members of this angle type",
         alias="member_classes",
     )
+    identifier_: Optional[str] = Field(
+        None,
+        description="ForceField key identifier",
+        alias="identifier",
+    )
     model_config = ConfigDict(
         alias_to_fields=dict(
             **ParametricPotential.model_config["alias_to_fields"],
             **{
                 "member_types": "member_types_",
                 "member_classes": "member_classes_",
+                "identifier": "identifier_",
             },
         ),
     )
@@ -56,6 +62,7 @@ class AngleType(ParametricPotential):
         potential_expression=None,
         member_types=None,
         member_classes=None,
+        identifier=None,
         tags=None,
     ):
         super(AngleType, self).__init__(
@@ -66,6 +73,7 @@ class AngleType(ParametricPotential):
             potential_expression=potential_expression,
             member_types=member_types,
             member_classes=member_classes,
+            identifier=identifier,
             tags=tags,
         )
 
@@ -87,3 +95,7 @@ class AngleType(ParametricPotential):
     @property
     def member_classes(self):
         return self.__dict__.get("member_classes_")
+
+    @property
+    def identifier(self):
+        return self.__dict__.get("identifier_")
