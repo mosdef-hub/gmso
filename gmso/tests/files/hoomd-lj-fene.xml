@@ -6,18 +6,19 @@
        <AtomType name="A" element="A" atomclass="A" mass="1.0" charge="0.0" definition="A" description="CG Bead">
        </AtomType>
     </AtomTypes>
-    <BondTypes expression="-0.5 * K * R0**2 * log(1-((r-delta)/R0)**2) + 4 * epsilon * ((sigma/(r-delta))**12 - (sigma/(r-delta))**6) + epsilon">
-        <ParametersUnitDef parameter="R0" unit="nm"/>
-        <ParametersUnitDef parameter="K" unit="kJ/mol*nm**2"/>
+    <BondTypes expression="-0.5 * k * r0**2 * log(1-((r-delta)/r0)**2) + 4 * epsilon * ((sigma/(r-delta))**12 - (sigma/(r-delta))**6) + epsilon">
+        <ParametersUnitDef parameter="r0" unit="nm"/>
+        <ParametersUnitDef parameter="k" unit="kJ/mol/(nm**2)"/>
         <ParametersUnitDef parameter="sigma" unit="nm"/>
         <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
         <ParametersUnitDef parameter="delta" unit="nm"/>
         <BondType name="HOOMDFENEWCABondPotential" type1="A" type2="A">
             <Parameters>
-                <Parameter name='R0' value="1.0"/>
-                <Parameter name='K' value="10"/>
+                <Parameter name='r0' value="1.0"/>
+                <Parameter name='k' value="10"/>
                 <Parameter name='sigma' value="1.0"/>
                 <Parameter name='epsilon' value="1.0"/>
+                <Parameter name='delta' value="0.0"/>
             </Parameters>
         </BondType>
     </BondTypes>
