@@ -608,7 +608,7 @@ def _accepted_potentials():
     templates = PotentialTemplateLibrary()
     lennard_jones_potential = templates["LennardJonesPotential"]
     harmonic_bond_potential = templates["LAMMPSHarmonicBondPotential"]
-    fene_bond_potential = templates["FENEBondPotential"]
+    fene_bond_potential = templates["HOOMDFENEWCABondPotential"]
     harmonic_angle_potential = templates["LAMMPSHarmonicAnglePotential"]
     periodic_torsion_potential = templates["PeriodicTorsionPotential"]
     harmonic_improper_potential = templates["HarmonicImproperPotential"]
@@ -831,7 +831,7 @@ def _write_bondtypes(out_file, top, base_unyts, cfactorsDict):
     out_file.write(f"\nBond Coeffs #{first_bondtype.name}\n")
     worker_functions = {
         "LAMMPSHarmonicBondPotential": _write_harmonic_bonds,
-        "FENEBondPotential": _write_fene_bonds,
+        "HOOMDFENEWCABondPotential": _write_fene_bonds,
     }
     return worker_functions[first_bondtype.name](
         out_file, top, first_bondtype, base_unyts, cfactorsDict
@@ -873,7 +873,8 @@ def _write_harmonic_bonds(out_file, top, first_bondtype, base_unyts, cfactorsDic
 
 def _write_fene_bonds(out_file, top, first_bondtype, base_unyts, cfactorsDict):
     """Setup `bond_style fene` Bond Type with 0 for sigma and epsilon parameters."""
-    bond_style_orderTuple = ("k", "r_eq")
+    # NOTE: delta from HOOMDFENEWCABondPotential is always 0
+    bond_style_orderTuple = ("K", "R0", "epsilon", "sigma")
     param_labels = [
         write_out_parameter_and_units(
             key,
@@ -889,7 +890,7 @@ def _write_fene_bonds(out_file, top, first_bondtype, base_unyts, cfactorsDict):
     for idx, bond_type in enumerate(bond_types):
         member_types = sorted([bond_type.member_types[0], bond_type.member_types[1]])
         out_file.write(
-            "{}\t{:7}\t{:7}\t0.0\t0.0\t# {}\t{}\n".format(
+            "{}\t{:7}\t{:7}\t{:7}\t{:7}\t# {}\t{}\n".format(
                 idx + 1,
                 *[
                     base_unyts.convert_parameter(

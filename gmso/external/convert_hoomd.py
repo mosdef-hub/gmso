@@ -878,6 +878,7 @@ def _validate_compatibility(top):
     templates = PotentialTemplateLibrary()
     lennard_jones_potential = templates["LennardJonesPotential"]
     harmonic_bond_potential = templates["HarmonicBondPotential"]
+    fene_bond_potential = templates["HOOMDFENEWCABondPotential"]
     harmonic_angle_potential = templates["HarmonicAnglePotential"]
     periodic_torsion_potential = templates["PeriodicTorsionPotential"]
     harmonic_torsion_potential = templates["HarmonicTorsionPotential"]
@@ -886,6 +887,7 @@ def _validate_compatibility(top):
     accepted_potentials = (
         lennard_jones_potential,
         harmonic_bond_potential,
+        fene_bond_potential,
         harmonic_angle_potential,
         periodic_torsion_potential,
         harmonic_torsion_potential,
@@ -1014,7 +1016,7 @@ def _parse_coulombic(
         )
 
     # Handle 1-2, 1-3, and 1-4 scaling
-    # TODO: Fiure out a more general way to do this and handle molecule scaling factors
+    # TODO: Figure out a more general way to do this and handle molecule scaling factors
     special_coulombic = hoomd.md.special_pair.Coulomb()
 
     # Use same method as to_hoomd_snapshot to generate pairs list
@@ -1194,7 +1196,6 @@ def _parse_harmonic_bond(
     btypes,
 ):
     for btype in btypes:
-        # TODO: Unit conversion
         members = sort_by_classes(btype)
         # If wild card in class, sort by types instead
         if "*" in members:
@@ -1211,13 +1212,14 @@ def _parse_fene_bond(
     btypes,
 ):
     for btype in btypes:
-        # TODO: Unit conversion
         members = sort_by_classes(btype)
         # If wild card in class, sort by types instead
         if "*" in members:
             members = sort_by_types(btype)
         container.params["-".join(members)] = {
-            key: btype.parameters.getattr(key)
+            key: btype.parameters.getattr(
+                key, 0.0
+            )  # defaults to 0 if no sigma or epsilon
             for key in ["K", "R0", "epsilon", "sigma", "delta"]
         }
     return container
