@@ -6,7 +6,6 @@ from lxml import etree
 from pydantic import ConfigDict
 
 from gmso.abc.abstract_potential import AbstractPotential
-from gmso.exceptions import GMSOError
 from gmso.utils.expression import PotentialExpression
 from gmso.utils.misc import get_xml_representation, unyt_compare
 
@@ -207,6 +206,9 @@ class ParametricPotential(AbstractPotential):
                 copy(self.member_types) if self.member_types else None
             )
 
+        if hasattr(self, "identifier"):
+            kwargs["identifier"] = copy(self.identifier) if self.identifier else None
+
         return Creator(
             name=self.name,
             potential_expression=self.potential_expression.clone(fast_copy),
@@ -225,6 +227,7 @@ class ParametricPotential(AbstractPotential):
                     "set_ref_",
                     "member_types_",
                     "member_classes_",
+                    "identifier_",
                     "potential_expression_",
                     "tags_",
                 },
@@ -236,23 +239,19 @@ class ParametricPotential(AbstractPotential):
 
     def etree(self, units=None):
         """Return an lxml.ElementTree for the parametric potential adhering to gmso XML schema"""
-
         attrib = self._etree_attrib()
 
-        if hasattr(self, "member_types") and hasattr(self, "member_classes"):
-            if self.member_types:
-                iterating_attribute = self.member_types
-                prefix = "type"
-            elif self.member_classes:
-                iterating_attribute = self.member_classes
-                prefix = "class"
-            else:
-                raise GMSOError(
-                    f"Cannot convert {self.__class__.__name__} into an XML."
-                    f"Please specify member_classes or member_types attribute."
-                )
-            for idx, value in enumerate(iterating_attribute):
-                attrib[f"{prefix}{idx + 1}"] = str(value)
+        if getattr(self, "identifier", None) and hasattr(self, "member_types"):
+            attrib["types"] = self.identifier
+        elif getattr(self, "identifier", None) and hasattr(self, "member_classes"):
+            attrib["classes"] = self.identifier
+        elif hasattr(self, "member_types"):
+            for idx, value in enumerate(self.member_types):
+                attrib[f"type{idx + 1}"] = str(value)
+        elif hasattr(self, "member_classes"):
+            for idx, value in enumerate(self.member_classes):
+                attrib[f"class{idx + 1}"] = str(value)
+
         xml_element = etree.Element(self.__class__.__name__, attrib=attrib)
         params = etree.SubElement(xml_element, "Parameters")
 

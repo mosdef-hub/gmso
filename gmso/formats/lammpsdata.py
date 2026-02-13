@@ -260,8 +260,8 @@ def read_lammpsdata(
     Currently supporting the following unit styles: 'real', "real", "lj", "metal", "si", "cgs",
     "electron", "micro", "nano".
 
-    Currently supporting the following potential styles: 'lj'
-    Currently supporting the following bond styles: 'harmonic'
+    Currently supporting the following pair potential styles: 'lj'
+    Currently supporting the following bond styles: 'harmonic', 'fene'
     Currently supporting the following angle styles: 'harmonic'
     Currently supporting the following dihedral styles: 'opls'
     Currently supporting the following improper styles: 'harmonic'
@@ -608,6 +608,7 @@ def _accepted_potentials():
     templates = PotentialTemplateLibrary()
     lennard_jones_potential = templates["LennardJonesPotential"]
     harmonic_bond_potential = templates["LAMMPSHarmonicBondPotential"]
+    fene_bond_potential = templates["HOOMDFENEWCABondPotential"]
     harmonic_angle_potential = templates["LAMMPSHarmonicAnglePotential"]
     periodic_torsion_potential = templates["PeriodicTorsionPotential"]
     harmonic_improper_potential = templates["HarmonicImproperPotential"]
@@ -615,6 +616,7 @@ def _accepted_potentials():
     accepted_potentialsList = [
         lennard_jones_potential,
         harmonic_bond_potential,
+        fene_bond_potential,
         harmonic_angle_potential,
         periodic_torsion_potential,
         harmonic_improper_potential,
@@ -824,15 +826,24 @@ def _write_pairtypes(out_file, top, base_unyts, cfactorsDict):
 
 
 def _write_bondtypes(out_file, top, base_unyts, cfactorsDict):
-    """Write out bonds to LAMMPS file."""
-    # TODO: Use any accepted lammps styles (only takes harmonic now)
-    test_bondtype = top.bonds[0].bond_type
-    out_file.write(f"\nBond Coeffs #{test_bondtype.name}\n")
+    """Write out bonds to LAMMPS file, using either Harmonic or FENE bonds."""
+    first_bondtype = top.bonds[0].bond_type
+    out_file.write(f"\nBond Coeffs #{first_bondtype.name}\n")
+    worker_functions = {
+        "LAMMPSHarmonicBondPotential": _write_harmonic_bonds,
+        "HOOMDFENEWCABondPotential": _write_fene_bonds,
+    }
+    return worker_functions[first_bondtype.name](
+        out_file, top, first_bondtype, base_unyts, cfactorsDict
+    )
+
+
+def _write_harmonic_bonds(out_file, top, first_bondtype, base_unyts, cfactorsDict):
     bond_style_orderTuple = ("k", "r_eq")
     param_labels = [
         write_out_parameter_and_units(
             key,
-            convert_kelvin_to_energy_units(test_bondtype.parameters[key], "kJ"),
+            convert_kelvin_to_energy_units(first_bondtype.parameters[key], "kJ"),
             base_unyts,
         )
         for key in bond_style_orderTuple
@@ -845,6 +856,41 @@ def _write_bondtypes(out_file, top, base_unyts, cfactorsDict):
         member_types = sorted([bond_type.member_types[0], bond_type.member_types[1]])
         out_file.write(
             "{}\t{:7}\t{:7}\t\t# {}\t{}\n".format(
+                idx + 1,
+                *[
+                    base_unyts.convert_parameter(
+                        convert_kelvin_to_energy_units(bond_type.parameters[key], "kJ"),
+                        cfactorsDict,
+                        n_decimals=6,
+                    )
+                    for key in bond_style_orderTuple
+                ],
+                *member_types,
+            )
+        )
+    return bond_types
+
+
+def _write_fene_bonds(out_file, top, first_bondtype, base_unyts, cfactorsDict):
+    """Setup `bond_style fene` Bond Type with 0 for sigma and epsilon parameters."""
+    # NOTE: delta from HOOMDFENEWCABondPotential is always 0
+    bond_style_orderTuple = ("K", "R0", "epsilon", "sigma")
+    param_labels = [
+        write_out_parameter_and_units(
+            key,
+            convert_kelvin_to_energy_units(first_bondtype.parameters[key], "kJ"),
+            base_unyts,
+        )
+        for key in bond_style_orderTuple
+    ]
+
+    out_file.write("#\t" + "\t".join(param_labels) + "\n")
+    bond_types = list(top.bond_types(filter_by=pfilter))
+    bond_types.sort(key=lambda x: sorted(x.member_types))
+    for idx, bond_type in enumerate(bond_types):
+        member_types = sorted([bond_type.member_types[0], bond_type.member_types[1]])
+        out_file.write(
+            "{}\t{:7}\t{:7}\t{:7}\t{:7}\t# {}\t{}\n".format(
                 idx + 1,
                 *[
                     base_unyts.convert_parameter(
