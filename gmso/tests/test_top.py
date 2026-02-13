@@ -253,3 +253,14 @@ class TestTop(BaseTest):
 
             else:
                 assert sections[section] == ref_sections[ref_section]
+
+    def test_fene(self, fene_ethane):
+        fene_ethane.save("ethane.top")
+        with open("ethane.top") as f:
+            current = f.readlines()
+
+        with open(get_path("fene_ethane.top"), "r") as f2:
+            ref = f2.readlines()
+
+        for line, ref_line in zip(current[1:], ref[1:]):
+            assert " ".join(line.split()) == " ".join(ref_line.split())

@@ -302,12 +302,14 @@ def _accepted_potentials():
     templates = PotentialTemplateLibrary()
     lennard_jones_potential = templates["LennardJonesPotential"]
     harmonic_bond_potential = templates["HarmonicBondPotential"]
+    fene_bond_potential = templates["FENEBondPotential"]
     harmonic_angle_potential = templates["HarmonicAnglePotential"]
     periodic_torsion_potential = templates["PeriodicTorsionPotential"]
     rb_torsion_potential = templates["RyckaertBellemansTorsionPotential"]
     accepted_potentials = (
         lennard_jones_potential,
         harmonic_bond_potential,
+        fene_bond_potential,
         harmonic_angle_potential,
         periodic_torsion_potential,
         rb_torsion_potential,
@@ -442,6 +444,7 @@ def _write_connection(top, connection, potential_name, shifted_idx_map):
     """Worker function to write various connection information."""
     worker_functions = {
         "HarmonicBondPotential": _harmonic_bond_potential_writer,
+        "FENEBondPotential": _fene_bond_potential_writer,
         "HarmonicAnglePotential": _harmonic_angle_potential_writer,
         "RyckaertBellemansTorsionPotential": _ryckaert_bellemans_torsion_writer,
         "PeriodicTorsionPotential": _periodic_torsion_writer,
@@ -459,6 +462,21 @@ def _harmonic_bond_potential_writer(top, bond, shifted_idx_map):
         str(shifted_idx_map[sorted_indicesList[0]] + 1),
         str(shifted_idx_map[sorted_indicesList[1]] + 1),
         "1",
+        bond.connection_type.parameters["r_eq"].in_units(u.nm).value,
+        bond.connection_type.parameters["k"].in_units(u.Unit("kJ / (mol*nm**2)")).value,
+    )
+    return line
+
+
+def _fene_bond_potential_writer(top, bond, shifted_idx_map):
+    """Write FENE bond information."""
+    eq_connsList = bond.equivalent_members()
+    indexList = [tuple(map(lambda x: top.get_index(x), conn)) for conn in eq_connsList]
+    sorted_indicesList = sorted(indexList)[0]
+    line = "{0:8s}{1:8s}{2:4s}{3:15.5f}{4:15.5f}\n".format(
+        str(shifted_idx_map[sorted_indicesList[0]] + 1),
+        str(shifted_idx_map[sorted_indicesList[1]] + 1),
+        "7",
         bond.connection_type.parameters["r_eq"].in_units(u.nm).value,
         bond.connection_type.parameters["k"].in_units(u.Unit("kJ / (mol*nm**2)")).value,
     )

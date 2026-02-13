@@ -1,0 +1,43 @@
+; File Topology written by GMSO at 2026-02-09 15:43:11.901191
+
+[ defaults ]
+; nbfunc	comb-rule	gen-pairs	fudgeLJ		fudgeQQ
+1		3		yes		0.5		0.5
+
+[ atomtypes ]
+; name	at.num		mass	charge		ptype	sigma	epsilon
+opls_135    6       12.01078    -0.18000	A        0.27614     0.35000
+opls_140    1        1.00800     0.06000	A        0.12552     0.25000
+
+[ moleculetype ]
+; name	nrexcl
+Compound	3
+
+[ atoms ]
+; nr	type	resnr	residue		atom	cgnr	charge	mass
+1       opls_135    1       Compound    C       1       -0.18000    12.01078
+2       opls_135    1       Compound    C       1       -0.18000    12.01078
+3       opls_140    1       Compound    H       1        0.06000     1.00800
+4       opls_140    1       Compound    H       1        0.06000     1.00800
+5       opls_140    1       Compound    H       1        0.06000     1.00800
+6       opls_140    1       Compound    H       1        0.06000     1.00800
+7       opls_140    1       Compound    H       1        0.06000     1.00800
+8       opls_140    1       Compound    H       1        0.06000     1.00800
+
+[ bonds ]
+; ai	aj	funct	b0		kb
+1       2       7           0.15400   284512.00000
+1       3       7           0.10900   284512.00000
+1       4       7           0.10900   284512.00000
+1       5       7           0.10900   284512.00000
+2       6       7           0.10900   284512.00000
+2       7       7           0.10900   284512.00000
+2       8       7           0.10900   284512.00000
+
+[ system ]
+; name
+Topology
+
+[ molecules ]
+; molecule	nmols
+Compound	1
