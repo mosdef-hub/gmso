@@ -881,6 +881,7 @@ def _validate_compatibility(top):
     fene_bond_potential = templates["HOOMDFENEWCABondPotential"]
     harmonic_angle_potential = templates["HarmonicAnglePotential"]
     periodic_torsion_potential = templates["PeriodicTorsionPotential"]
+    hoomd_periodic_torsion_potential = templates["HOOMDPeriodicDihedralPotential"]
     harmonic_torsion_potential = templates["HarmonicTorsionPotential"]
     opls_torsion_potential = templates["OPLSTorsionPotential"]
     rb_torsion_potential = templates["RyckaertBellemansTorsionPotential"]
@@ -890,6 +891,7 @@ def _validate_compatibility(top):
         fene_bond_potential,
         harmonic_angle_potential,
         periodic_torsion_potential,
+        hoomd_periodic_torsion_potential,
         harmonic_torsion_potential,
         opls_torsion_potential,
         rb_torsion_potential,
@@ -1217,10 +1219,8 @@ def _parse_fene_bond(
         if "*" in members:
             members = sort_by_types(btype)
         container.params["-".join(members)] = {
-            key: btype.parameters.getattr(
-                key, 0.0
-            )  # defaults to 0 if no sigma or epsilon
-            for key in ["K", "R0", "epsilon", "sigma", "delta"]
+            key: btype.parameters.get(key, 0.0)  # defaults to 0 if no sigma or epsilon
+            for key in ["k", "r0", "epsilon", "sigma", "delta"]
         }
     return container
 
@@ -1354,6 +1354,10 @@ def _parse_dihedral_forces(
             "container": hoomd.md.dihedral.Harmonic,
             "parser": _parse_periodic_dihedral,
         }
+        dtype_group_map["HOOMDPeriodicTorsionPotential"] = {
+            "container": hoomd.md.dihedral.Harmonic,
+            "parser": _parse_hoomd_periodic_dihedral,
+        }
 
     dihedral_forces = list()
     for group in groups:
@@ -1390,7 +1394,7 @@ def _parse_periodic_dihedral(container, dihedrals, expected_units_dim, base_unit
         member_classes = [site.atom_type.atomclass for site in member_sites]
         if isinstance(dtype.parameters["k"], u.array.unyt_quantity):
             containersList[0].params["-".join(member_classes)] = {
-                "k": dtype.parameters["k"].to_value(),
+                "k": dtype.parameters["k"].to_value() * 2,  # convert to K/2 form
                 "d": 1,
                 "n": dtype.parameters["n"].to_value(),
                 "phi0": dtype.parameters["phi_eq"].to_value(),
@@ -1399,8 +1403,52 @@ def _parse_periodic_dihedral(container, dihedrals, expected_units_dim, base_unit
             paramsLen = len(dtype.parameters["k"])
             for nIndex in range(paramsLen):
                 containersList[nIndex].params["-".join(member_classes)] = {
-                    "k": dtype.parameters["k"].to_value()[nIndex],
+                    "k": dtype.parameters["k"].to_value()[nIndex] * 2,
                     "d": 1,
+                    "n": dtype.parameters["n"].to_value()[nIndex],
+                    "phi0": dtype.parameters["phi_eq"].to_value()[nIndex],
+                }
+    filled_containersList = []
+    for i in range(5):  # take only periodic terms that have parameters
+        if len(tuple(containersList[i].params.keys())) == 0:
+            continue
+        # add in extra parameters
+        for key in containersList[0].params.keys():
+            if key not in tuple(containersList[i].params.keys()):
+                containersList[i].params[key] = {
+                    "k": 0,
+                    "d": 1,
+                    "n": 0,
+                    "phi0": 0,
+                }
+        filled_containersList.append(containersList[i])
+    return filled_containersList
+
+
+def _parse_hoomd_periodic_dihedral(
+    container, dihedrals, expected_units_dim, base_units
+):
+    containersList = []
+    for _ in range(5):
+        containersList.append(copy.deepcopy(container))
+    for dihedral in dihedrals:
+        dtype = dihedral.dihedral_type
+        dtype = _convert_single_param_units(dtype, expected_units_dim, base_units)
+        member_sites = sort_connection_members(dihedral, "atomclass")
+        member_classes = [site.atom_type.atomclass for site in member_sites]
+        if isinstance(dtype.parameters["k"], u.array.unyt_quantity):
+            containersList[0].params["-".join(member_classes)] = {
+                "k": dtype.parameters["k"].to_value(),
+                "d": dtype.parameters["k"].to_value(),
+                "n": dtype.parameters["n"].to_value(),
+                "phi0": dtype.parameters["phi_eq"].to_value(),
+            }
+        elif isinstance(dtype.parameters["k"], u.array.unyt_array):
+            paramsLen = len(dtype.parameters["k"])
+            for nIndex in range(paramsLen):
+                containersList[nIndex].params["-".join(member_classes)] = {
+                    "k": dtype.parameters["k"].to_value()[nIndex],
+                    "d": dtype.parameters["k"].to_value()[nIndex],
                     "n": dtype.parameters["n"].to_value()[nIndex],
                     "phi0": dtype.parameters["phi_eq"].to_value()[nIndex],
                 }
@@ -1505,9 +1553,9 @@ def _parse_improper_forces(
                 "container": hoomd.md.improper.Periodic,
                 "parser": _parse_periodic_improper,
             },
-            "HOOMDPeriodicImproperPotential": {
+            "HOOMDPeriodicDihedralPotential": {
                 "container": hoomd.md.improper.Periodic,
-                "parser": _parse_periodic_improper,
+                "parser": _parse_hoomd_periodic_improper,
             },
         }
     else:
@@ -1540,7 +1588,7 @@ def _parse_harmonic_improper(
             members = sort_by_types(itype)
         container.params["-".join(members)] = {
             "k": itype.parameters["k"],
-            "chi0": itype.parameters["phi_eq"],  # diff nomenclature?
+            "chi0": itype.parameters["phi_eq"],
         }
     return container
 
@@ -1555,10 +1603,28 @@ def _parse_periodic_improper(
         if "*" in members:
             members = sort_by_types(itype)
         container.params["-".join(members)] = {
-            "k": itype.parameters["k"],
+            "k": itype.parameters["k"] * 2,  # convert to k/2
             "chi0": itype.parameters["phi_eq"],
             "n": itype.parameters["n"],
             "d": itype.parameters.get("d", 1.0),
+        }
+    return container
+
+
+def _parse_hoomd_periodic_improper(
+    container,
+    itypes,
+):
+    for itype in itypes:
+        members = sort_by_classes(itype)
+        # If wild card in class, sort by types instead
+        if "*" in members:
+            members = sort_by_types(itype)
+        container.params["-".join(members)] = {
+            "k": itype.parameters["k"],
+            "chi0": itype.parameters["phi0"],
+            "n": itype.parameters["n"],
+            "d": itype.parameters.get("d"),
         }
     return container
 
