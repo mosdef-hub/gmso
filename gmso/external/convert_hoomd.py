@@ -6,17 +6,20 @@ import copy
 import itertools
 import json
 import re
+from collections import OrderedDict
 
 import numpy as np
 import unyt as u
 from unyt.array import allclose_units
 
 from gmso.core.views import PotentialFilters
+from gmso.core.virtual_site import VirtualSite
+from gmso.core.virtual_type import VirtualType
 from gmso.exceptions import EngineIncompatibilityError, NotYetImplementedWarning
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.connectivity import generate_pairs_lists
 from gmso.utils.conversions import convert_ryckaert_to_opls
-from gmso.utils.geometry import coord_shift, moment_of_inertia
+from gmso.utils.geometry import moment_of_inertia
 from gmso.utils.io import has_gsd, has_hoomd
 from gmso.utils.sorting import (
     sort_by_classes,
@@ -184,24 +187,29 @@ def to_gsd_snapshot(
         "Only writing particle, bond, sangle, proper and improper dihedral information."
         "Special pairs are not currently written to GSD files",
     )
-
+    moleculeDict, indexMap, uniqueMoleculeODict = (
+        _organize_generate_topology_molecule_info(top)
+    )
     n_rigid, rigid_info = _parse_particle_information(
         gsd_snapshot,
         top,
         base_units,
         shift_coords,
         u.unyt_array([lx, ly, lz]),
+        moleculeDict,
+        uniqueMoleculeODict,
     )
+
     if parse_special_pairs:
-        _parse_pairs_information(gsd_snapshot, top, n_rigid)
+        _parse_pairs_information(gsd_snapshot, top, indexMap, n_rigid)
     if top.n_bonds > 0:
-        _parse_bond_information(gsd_snapshot, top, n_rigid)
+        _parse_bond_information(gsd_snapshot, top, indexMap, n_rigid)
     if top.n_angles > 0:
-        _parse_angle_information(gsd_snapshot, top, n_rigid)
+        _parse_angle_information(gsd_snapshot, top, indexMap, n_rigid)
     if top.n_dihedrals > 0:
-        _parse_dihedral_information(gsd_snapshot, top, n_rigid)
+        _parse_dihedral_information(gsd_snapshot, top, indexMap, n_rigid)
     if top.n_impropers > 0:
-        _parse_improper_information(gsd_snapshot, top, n_rigid)
+        _parse_improper_information(gsd_snapshot, top, indexMap, n_rigid)
 
     if rigid_info:
         return gsd_snapshot, base_units, rigid_info
@@ -316,23 +324,28 @@ def to_hoomd_snapshot(
         "Special pairs are not currently written to GSD files",
     )
 
+    moleculeDict, indexMap, uniqueMoleculeODict = (
+        _organize_generate_topology_molecule_info(top)
+    )
     n_rigid, rigid_info = _parse_particle_information(
         hoomd_snapshot,
         top,
         base_units,
         shift_coords,
         u.unyt_array([lx, ly, lz]),
+        moleculeDict,
+        uniqueMoleculeODict,
     )
     if parse_special_pairs:
-        _parse_pairs_information(hoomd_snapshot, top, n_rigid)
+        _parse_pairs_information(hoomd_snapshot, top, indexMap, n_rigid)
     if top.n_bonds > 0:
-        _parse_bond_information(hoomd_snapshot, top, n_rigid)
+        _parse_bond_information(hoomd_snapshot, top, indexMap, n_rigid)
     if top.n_angles > 0:
-        _parse_angle_information(hoomd_snapshot, top, n_rigid)
+        _parse_angle_information(hoomd_snapshot, top, indexMap, n_rigid)
     if top.n_dihedrals > 0:
-        _parse_dihedral_information(hoomd_snapshot, top, n_rigid)
+        _parse_dihedral_information(hoomd_snapshot, top, indexMap, n_rigid)
     if top.n_impropers > 0:
-        _parse_improper_information(hoomd_snapshot, top, n_rigid)
+        _parse_improper_information(hoomd_snapshot, top, indexMap, n_rigid)
 
     hoomd_snapshot.wrap()
     if rigid_info:
@@ -347,6 +360,8 @@ def _parse_particle_information(
     base_units,
     shift_coords,
     box_lengths,
+    moleculeDict,
+    uniqueMoleculeODict,
 ):
     """Parse site information from topology.
 
@@ -362,41 +377,58 @@ def _parse_particle_information(
         If True, shift coordinates from (0, L) to (-L/2, L/2) if neccessary.
     box_lengths : list() of length 3
         Lengths of box in x, y, z
+    moleculeDict : dictionary of molecule.name : [[sites_molecule2],[sites_molecule1]...]
+        Sorted info about all sites to index into topology
+    uniqueMoleculeODict : ordered_dict with keys of str, values of int
+        Sorted list of moleculesNames as strings, with indexes being the molecule start index.
     """
     # Set up all require
-    xyz = u.unyt_array(
-        [site.position.to_value(base_units["length"]) for site in top.sites]
-    )
-    if shift_coords:
-        logger.info("Shifting coordinates to [-L/2, L/2]")
-        xyz = coord_shift(xyz, box_lengths)
-
-    types = [
-        site.name if site.atom_type is None else site.atom_type.name
-        for site in top.sites
-    ]
-    masses = u.unyt_array(
-        [
-            site.mass.to_value(base_units["mass"])
-            if site.mass
-            else 1 * base_units["mass"]
-            for site in top.sites
-        ]
-    )
-    charges = u.unyt_array(
-        [site.charge if site.charge else 0 * u.elementary_charge for site in top.sites]
-    )
-    moment_of_inertias = [[1, 0, 0] for i in xyz]
-    # GMSO and mBuild don't store particle orientation; use default
-    orientations = [[1, 0, 0, 0] for i in xyz]
+    xyz = []
+    types = []
+    masses = []
+    charges = []
+    moments = []
+    orientations = []
+    rigid_ids = []
+    n_prior_molecules = 0
+    for moleculeName in uniqueMoleculeODict:
+        for moleculeNumber, sitesList in enumerate(moleculeDict[moleculeName]):
+            for site in sitesList:  # list of sites for that molecule
+                if isinstance(site, VirtualSite):
+                    xyz.append(site.position())
+                    types.append(
+                        site.name
+                        if site.virtual_type is None
+                        else site.virtual_type.name
+                    )
+                    masses.append(0 * u.amu)
+                else:
+                    xyz.append(site.position)
+                    types.append(
+                        site.name if site.atom_type is None else site.atom_type.name
+                    )
+                    masses.append(site.mass)
+                charges.append(site.charge if site.charge else 0 * u.elementary_charge)
+                moments.append([1, 0, 0])
+                orientations.append([1, 0, 0, 0])
+                rigid_ids.append(
+                    site.molecule.number + n_prior_molecules
+                    if site.molecule.isrigid
+                    else -1
+                )
+        n_prior_molecules += site.molecule.number + 1  # take last site
+    # convert to correct unyt_arrays
+    xyz = u.unyt_array(xyz).in_units(base_units["length"])
+    masses = u.unyt_array(masses).in_units(base_units["mass"])
+    charges = u.unyt_array(charges).in_units(u.elementary_charge)
     unique_types = sorted(list(set(types)))
     typeids = np.array([unique_types.index(t) for t in types])
     # Check for rigid molecules
     rigid_mols = any([site.molecule.isrigid for site in top.sites])
     if rigid_mols:
-        rigid_ids = [
-            site.molecule.number if site.molecule.isrigid else -1 for site in top.sites
-        ]
+        # rigid_ids = [
+        #     site.molecule.number if site.molecule.isrigid else -1 for site in itertools.chain(top.sites, top.virtual_sites)
+        # ]
         # Check that the hierarchy is correct
         if -1 in rigid_ids:
             first_neg_index = rigid_ids.index(-1)
@@ -409,9 +441,13 @@ def _parse_particle_information(
         for site in top.sites:
             if site.molecule.isrigid:
                 if site.molecule.name in rigid_body_sets.keys():
-                    rigid_body_sets[site.molecule.name].add(site.molecule.number)
+                    rigid_body_sets[site.molecule.name].add(
+                        site.molecule.number + uniqueMoleculeODict[site.molecule.name]
+                    )
                 else:
-                    rigid_body_sets[site.molecule.name] = {site.molecule.number}
+                    rigid_body_sets[site.molecule.name] = {
+                        site.molecule.number + uniqueMoleculeODict[site.molecule.name]
+                    }
         # Number of unique types of rigid molecules
         n_rigid_types = len(rigid_body_sets.keys())
         # Total number of rigid molecules
@@ -420,7 +456,7 @@ def _parse_particle_information(
         rigid_charges = np.zeros(n_rigid) * charges.units
         rigid_masses = np.zeros(n_rigid) * masses.units
         rigid_xyz = np.zeros((n_rigid, 3)) * xyz.units
-        rigid_moits = np.zeros((n_rigid, 3)) * xyz.units
+        rigid_moits = np.zeros((n_rigid, 3))
         rigid_orientations = [[1, 0, 0, 0] for i in rigid_xyz]
         # Rigid particles get type IDs from 0 to n_rigid_types
         rigid_type_ids = []
@@ -434,8 +470,8 @@ def _parse_particle_information(
             for idx, _id in enumerate(rigid_body_sets[rigid_mol]):
                 # Get values for rigid body properties from their constituent particles
                 group_indices = np.where(np.array(rigid_ids) == _id)[0]
-                group_positions = xyz[group_indices]
-                group_masses = masses[group_indices]
+                group_positions = xyz[group_indices].value
+                group_masses = masses[group_indices].value
                 group_orientations = [[1, 0, 0, 0] for i in group_indices]
                 com_xyz = np.sum(group_positions.T * group_masses, axis=1) / sum(
                     group_masses
@@ -464,7 +500,7 @@ def _parse_particle_information(
         xyz = np.concatenate((rigid_xyz, xyz))
         charges = np.concatenate((rigid_charges, charges))
         orientations = rigid_orientations + orientations
-        moment_of_inertias = np.concatenate((rigid_moits, moment_of_inertias))
+        moments = np.concatenate((rigid_moits, moments))
         rigid_id_tags = np.concatenate((np.arange(n_rigid), rigid_ids))
     else:
         n_rigid = 0
@@ -483,7 +519,7 @@ def _parse_particle_information(
     ) ** 0.5
     # Write out all of the snapshot attributes
     if isinstance(snapshot, hoomd.Snapshot):
-        snapshot.particles.N = top.n_sites + n_rigid
+        snapshot.particles.N = top.n_sites + n_rigid + top.n_virtual_sites
         snapshot.particles.types = unique_types
         snapshot.particles.position[0:] = xyz
         snapshot.particles.typeid[0:] = typeids
@@ -492,7 +528,7 @@ def _parse_particle_information(
         snapshot.particles.orientation[0:] = orientations
         if n_rigid:
             snapshot.particles.body[0:] = rigid_id_tags
-            snapshot.particles.moment_inertia[0:] = moment_of_inertias
+            snapshot.particles.moment_inertia[0:] = moments
     elif isinstance(snapshot, gsd.hoomd.Frame):
         snapshot.particles.N = top.n_sites + n_rigid
         snapshot.particles.types = unique_types
@@ -503,11 +539,11 @@ def _parse_particle_information(
         snapshot.particles.orientation = orientations
         if n_rigid:
             snapshot.particles.body = rigid_id_tags
-            snapshot.particles.moment_inertia = moment_of_inertias
+            snapshot.particles.moment_inertia = moments
     return n_rigid, rigid_constraint
 
 
-def _parse_pairs_information(snapshot, top, n_rigid=0):
+def _parse_pairs_information(snapshot, top, indexMap, n_rigid=0):
     """Parse sacled pair types.
 
     Parameters
@@ -516,6 +552,8 @@ def _parse_pairs_information(snapshot, top, n_rigid=0):
         The target Snapshot object.
     top : gmso.Topology
         Topology object holding system information
+    indexMap : Dict of site : index
+        Preorganized hashable map for site indexes
     n_rigid : int
         The number of rigid bodies found in `_parse_particle_information()`
         Used to adjust pair group indices.
@@ -540,9 +578,7 @@ def _parse_pairs_information(snapshot, top, n_rigid=0):
         if pair_type not in pair_types:
             pair_types.append(pair_type)
         pair_typeids.append(pair_types.index(pair_type))
-        pairs.append(
-            (top.get_index(pair[0]) + n_rigid, top.get_index(pair[1]) + n_rigid)
-        )
+        pairs.append((indexMap[pair[0]] + n_rigid, indexMap[pair[1]] + n_rigid))
 
     if isinstance(snapshot, hoomd.Snapshot):
         snapshot.pairs.N = len(pairs)
@@ -556,7 +592,7 @@ def _parse_pairs_information(snapshot, top, n_rigid=0):
         snapshot.pairs.typeid = pair_typeids
 
 
-def _parse_bond_information(snapshot, top, n_rigid=0):
+def _parse_bond_information(snapshot, top, indexMap, n_rigid=0):
     """Parse bonds information from topology.
 
     Parameters
@@ -565,6 +601,8 @@ def _parse_bond_information(snapshot, top, n_rigid=0):
         The target Snapshot object.
     top : gmso.Topology
         Topology object holding system information
+    indexMap : Dict of site : index
+        Preorganized hashable map for site indexes
     n_rigid : int
         The number of rigid bodies found in `_parse_particle_information()`
         Used to adjust bond group indices.
@@ -588,7 +626,7 @@ def _parse_bond_information(snapshot, top, n_rigid=0):
 
         bond_types.append(bond_type)
         bond_groups.append(
-            sorted(tuple(top.get_index(site) + n_rigid for site in connection_members))
+            sorted(tuple(indexMap[site] + n_rigid for site in connection_members))
         )
 
     unique_bond_types = list(set(bond_types))
@@ -606,7 +644,7 @@ def _parse_bond_information(snapshot, top, n_rigid=0):
     logger.info(f"{len(unique_bond_types)} unique bond types detected")
 
 
-def _parse_angle_information(snapshot, top, n_rigid=0):
+def _parse_angle_information(snapshot, top, indexMap, n_rigid=0):
     """Parse angles information from topology.
 
     Parameters
@@ -615,6 +653,8 @@ def _parse_angle_information(snapshot, top, n_rigid=0):
         The target Snapshot object.
     top : gmso.Topology
         Topology object holding system information
+    indexMap : Dict of site : index
+        Preorganized hashable map for site indexes
     n_rigid : int
         The number of rigid bodies found in `_parse_particle_information()`
         Used to adjust angle group indices.
@@ -638,7 +678,7 @@ def _parse_angle_information(snapshot, top, n_rigid=0):
 
         angle_types.append(angle_type)
         angle_groups.append(
-            tuple(top.get_index(site) + n_rigid for site in connection_members)
+            tuple(indexMap[site] + n_rigid for site in connection_members)
         )
 
     unique_angle_types = list(set(angle_types))
@@ -657,7 +697,7 @@ def _parse_angle_information(snapshot, top, n_rigid=0):
     logger.info(f"{len(unique_angle_types)} unique angle types detected")
 
 
-def _parse_dihedral_information(snapshot, top, n_rigid=0):
+def _parse_dihedral_information(snapshot, top, indexMap, n_rigid=0):
     """Parse dihedral information from topology.
 
     Parameters
@@ -666,6 +706,8 @@ def _parse_dihedral_information(snapshot, top, n_rigid=0):
         The target Snapshot object.
     top : gmso.Topology
         Topology object holding system information
+    indexMap : Dict of site : index
+        Preorganized hashable map for site indexes
     n_rigid : int
         The number of rigid bodies found in `_parse_particle_information()`
         Used to adjust dihedral group indices.
@@ -687,7 +729,7 @@ def _parse_dihedral_information(snapshot, top, n_rigid=0):
 
         dihedral_types.append(dihedral_type)
         dihedral_groups.append(
-            tuple(top.get_index(site) + n_rigid for site in connection_members)
+            tuple(indexMap[site] + n_rigid for site in connection_members)
         )
 
     unique_dihedral_types = list(set(dihedral_types))
@@ -706,7 +748,7 @@ def _parse_dihedral_information(snapshot, top, n_rigid=0):
     logger.info(f"{len(unique_dihedral_types)} unique dihedral types detected")
 
 
-def _parse_improper_information(snapshot, top, n_rigid=0):
+def _parse_improper_information(snapshot, top, indexMap, n_rigid=0):
     """Parse impropers information from topology.
 
     Parameters
@@ -715,6 +757,8 @@ def _parse_improper_information(snapshot, top, n_rigid=0):
         The target Snapshot object.
     top : gmso.Topology
         Topology object holding system information
+    indexMap : Dict of site : index
+        Preorganized hashable map for site indexes
     n_rigid : int
         The number of rigid bodies found in `_parse_particle_information()`
 
@@ -735,7 +779,7 @@ def _parse_improper_information(snapshot, top, n_rigid=0):
 
         improper_types.append(improper_type)
         improper_groups.append(
-            tuple(top.get_index(site) + n_rigid for site in connection_members)
+            tuple(indexMap[site] + n_rigid for site in connection_members)
         )
 
     unique_improper_types = list(set(improper_types))
@@ -927,16 +971,29 @@ def _parse_nonbonded_forces(
     base_units : dict
         The dictionary holding base units (mass, length, and energy)
     """
-    unique_atypes = top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS)
+    unique_atypes = set(top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS))
+    unique_atypes = unique_atypes | set(
+        {
+            site.virtual_type.name: site.virtual_type for site in top.virtual_sites
+        }.values()
+    )
 
     # Grouping atomtype by group name
     groups = dict()
     for atype in unique_atypes:
-        group = potential_types[atype]
-        if group not in groups:
-            groups[group] = [atype]
+        if isinstance(atype, VirtualType):
+            atype.virtual_potential.name = atype.name
+            group = potential_types[atype.virtual_potential]
+            if group not in groups:
+                groups[group] = [atype.virtual_potential]
+            else:
+                groups[group].append(atype.virtual_potential)
         else:
-            groups[group].append(atype)
+            group = potential_types[atype]
+            if group not in groups:
+                groups[group] = [atype]
+            else:
+                groups[group].append(atype)
 
     # Perform units conversion based on the provided base_units
     for group in groups:
@@ -1694,3 +1751,46 @@ def _convert_single_param_units(
         converted_params[parameter] = potential.parameters[parameter].to(unit_dim)
     potential.parameters = converted_params
     return potential
+
+
+def _organize_generate_topology_molecule_info(top):
+    """Generate a dictionary of unique molecules by tag."""
+    moleculeDict = {}  # ordering of all molecules
+    indexMap = {}  # map to hash sites to index
+    uniqueMoleculeODict = OrderedDict()  # list of molecules as they appear in top
+    n_sites_in_molecule = {}  # number of expected sites in molecule
+    molecule_indexOffset = 0
+    last_molecule = None
+    for molecule in top.unique_site_labels(
+        "molecule", name_only=False
+    ):  # assume molecules are in 0 to N order
+        if molecule.name not in moleculeDict:
+            if last_molecule is not None:
+                molecule_indexOffset += n_sites_in_molecule[last_molecule.name] * (
+                    last_molecule.number + 1
+                )
+                uniqueMoleculeODict[molecule.name] = (
+                    uniqueMoleculeODict[last_molecule.name] + 1 + last_molecule.number
+                )
+            else:
+                molecule_indexOffset = 0  # only start adding this to the index after the first molecule has been tabulated
+                uniqueMoleculeODict[molecule.name] = 0  # first number
+            moleculeDict[molecule.name] = []
+            n_sites_in_molecule[molecule.name] = len(
+                list(top.iter_sites_and_virtual_sites(key="molecule", value=molecule))
+            )
+        moleculeDict[molecule.name].append([])  # new siteList to add sites to
+        for site in top.iter_sites_and_virtual_sites(key="molecule", value=molecule):
+            moleculeDict[molecule.name][-1].append(site)
+            indexMap[site] = (
+                molecule_indexOffset  # baseline counter from previous molecule indices
+                + molecule.number
+                * n_sites_in_molecule[
+                    molecule.name
+                ]  # starting index for this molecule numbers
+                + len(moleculeDict[molecule.name][-1])
+                - 1  # site number in this molecule
+            )
+        last_molecule = molecule
+
+    return moleculeDict, indexMap, uniqueMoleculeODict
