@@ -583,3 +583,41 @@ class TestLammpsWriter(BaseTest):
         ptop = apply(top, ff, identify_connections=True)
         ptop.save("test.lammps", unit_style="real", overwrite=True)
         assert compare_lammps_files("test.lammps", get_path("charmm.lammps"))
+
+    def test_lammps_fene(self, typed_ethane):
+        from gmso.core.bond_type import BondType
+        from gmso.lib.potential_templates import PotentialTemplateLibrary
+
+        fene_type = PotentialTemplateLibrary()["LAMMPSFENEBondPotential"]
+        params = {
+            "K": 1 * u.Unit("kJ / mol / nm**2"),
+            "R0": 1 * u.Unit("nm"),
+            "epsilon": 1 * u.Unit("kcal / mol"),
+            "sigma": 1 * u.Unit("nm"),
+        }
+        bondtype = BondType.from_template(
+            potential_template=fene_type, parameters=params
+        )
+        bondtype.member_classes = ("CT", "HC")
+        bondtype.member_types = ("opls_136", "opls_140")
+
+        for bond in typed_ethane.bonds:
+            bond.connection_type = bondtype
+
+        typed_ethane.save("ethane.lammps")
+        with open("ethane.lammps", "r") as f:
+            lines = f.readlines()
+        start = 0
+        for i in range(len(lines)):
+            if "Bond Coeffs" in lines[i]:
+                start = i
+            if start > 0 and lines[i] == "\n":
+                break
+        coeffs = lines[start + 2].split()
+
+        np.testing.assert_allclose(
+            float(coeffs[1]), 0.00239
+        )  # 0.01/4.184 for kCal/mol/angstrom**2
+        np.testing.assert_allclose(float(coeffs[2]), 10)
+        np.testing.assert_allclose(float(coeffs[3]), 1)
+        np.testing.assert_allclose(float(coeffs[4]), 10)
