@@ -8,8 +8,8 @@
     </AtomTypes>
     <BondTypes expression="0.5 * k * (r-r_eq)**2">
         <ParametersUnitDef parameter="r_eq" unit="nm"/>
-        <ParametersUnitDef parameter="k" unit="kJ/mol*nm**2"/>
-        <BondType name="HarmonicBondPotential" type1='A' type2='A'>
+        <ParametersUnitDef parameter="k" unit="kJ/mol/(nm**2)"/>
+        <BondType name="HarmonicBondPotential" type1="A" type2="A">
             <Parameters>
                 <Parameter name="r_eq" value="1.0"/>
                 <Parameter name="k" value="10"/>
@@ -18,7 +18,7 @@
     </BondTypes>
     <AngleTypes expression="0.5 * k * (theta-theta_eq)**2">
         <ParametersUnitDef parameter="theta_eq" unit="radians"/>
-        <ParametersUnitDef parameter="k" unit="kJ/mol*radians**2"/>
+        <ParametersUnitDef parameter="k" unit="kJ/mol/(radians**2)"/>
         <AngleType name="HarmonicAnglePotential" type1="A" type2="A" type3="A">
             <Parameters>
                 <Parameter name="theta_eq" value="1.0"/>
@@ -26,9 +26,9 @@
             </Parameters>
         </AngleType>
     </AngleTypes>
-    <DihedralTypes expression="0.5 * k * (1 + d * cos(n*phi-phi_eq)">
+    <DihedralTypes expression="0.5 * k * (1 + d * cos(n*phi-phi_eq))">
         <ParametersUnitDef parameter="phi_eq" unit="radians"/>
-        <ParametersUnitDef parameter="k" unit="kJ/mol*radians**2"/>
+        <ParametersUnitDef parameter="k" unit="kJ/mol"/>
         <ParametersUnitDef parameter="d"/>
         <ParametersUnitDef parameter="n"/>
         <DihedralType name="HOOMDPeriodicDihedralPotential" type1="A" type2="A" type3="A" type4="A">

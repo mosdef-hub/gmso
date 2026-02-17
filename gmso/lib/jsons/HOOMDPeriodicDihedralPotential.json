@@ -1,11 +1,11 @@
 {
-  "name": "HOOMDPeriodicImproperPotential",
-  "expression": "k * (1 + d * cos(n * phi - phi_eq))",
+  "name": "HOOMDPeriodicDihedralPotential",
+  "expression": "0.5 * k * (1 + d * cos(n * phi - phi0))",
   "independent_variables": "phi",
   "expected_parameters_dimensions": {
     "k": "energy",
     "n": "dimensionless",
-    "phi_eq": "angle",
+    "phi0": "angle",
     "d": "dimensionless"
   }
 }

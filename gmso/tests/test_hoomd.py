@@ -10,6 +10,7 @@ from gmso.external.convert_hoomd import (
     to_hoomd_forcefield,
     to_hoomd_snapshot,
 )
+from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.parameterization import apply
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
@@ -480,3 +481,72 @@ class TestHoomd(BaseTest):
                 r_cut=1.4,
                 nlist="Error",
             )
+
+    def test_periodic_impropers(self, typed_ethane):
+        from gmso.core.improper_type import ImproperType
+
+        per_torsion = PotentialTemplateLibrary()["PeriodicTorsionPotential"]
+        params = {
+            "k": 10 * u.Unit("kJ / mol"),
+            "phi_eq": 15 * u.Unit("degree"),
+            "n": 3 * u.Unit("dimensionless"),
+        }
+        periodic_dihedral_type = ImproperType.from_template(
+            potential_template=per_torsion, parameters=params
+        )
+        periodic_dihedral_type.member_classes = ("CT", "HC", "HC", "HC")
+        typed_ethane.identify_connections()
+        for improper in typed_ethane.impropers:
+            improper.connection_type = periodic_dihedral_type
+
+        forces, _ = to_hoomd_forcefield(typed_ethane, r_cut=1.2)
+        assert forces["impropers"][0].params["CT-HC-HC-HC"]["k"] == 20.0
+        assert forces["impropers"][0].params["CT-HC-HC-HC"]["chi0"] == 15 / 180 * np.pi
+        assert forces["impropers"][0].params["CT-HC-HC-HC"]["n"] == 3
+        assert forces["impropers"][0].params["CT-HC-HC-HC"]["d"] == 1
+
+        per_torsion = PotentialTemplateLibrary()["HOOMDPeriodicDihedralPotential"]
+        params = {
+            "k": 10 * u.Unit("kJ / mol"),
+            "phi0": 15 * u.Unit("degree"),
+            "n": 3 * u.Unit("dimensionless"),
+            "d": 2 * u.Unit("dimensionless"),
+        }
+        hoomd_periodic_dihedral_type = ImproperType.from_template(
+            potential_template=per_torsion, parameters=params
+        )
+        hoomd_periodic_dihedral_type.member_classes = ("CT", "HC", "HC", "HC")
+        for improper in typed_ethane.impropers:
+            improper.connection_type = hoomd_periodic_dihedral_type
+
+        forces, _ = to_hoomd_forcefield(typed_ethane, r_cut=1.2)
+        assert forces["impropers"][0].params["CT-HC-HC-HC"]["k"] == 10.0
+        assert forces["impropers"][0].params["CT-HC-HC-HC"]["chi0"] == 15 / 180 * np.pi
+        assert forces["impropers"][0].params["CT-HC-HC-HC"]["n"] == 3
+        assert forces["impropers"][0].params["CT-HC-HC-HC"]["d"] == 2
+
+    def test_fene_bond(self, typed_ethane):
+        from gmso.core.bond_type import BondType
+
+        fene_type = PotentialTemplateLibrary()["HOOMDFENEWCABondPotential"]
+        params = {
+            "k": 1 * u.Unit("kJ / mol / nm**2"),
+            "r0": 1 * u.Unit("nm"),
+            "epsilon": 1 * u.Unit("kcal / mol"),
+            "sigma": 1 * u.Unit("nm"),
+            "delta": 1 * u.Unit("angstrom"),
+        }
+        bondtype = BondType.from_template(
+            potential_template=fene_type, parameters=params
+        )
+        bondtype.member_classes = ("CT", "HC")
+
+        for bond in typed_ethane.bonds:
+            bond.connection_type = bondtype
+
+        forces, _ = to_hoomd_forcefield(typed_ethane, r_cut=1.2)
+        np.testing.assert_allclose(forces["bonds"][0].params["CT-HC"]["k"], 1)
+        np.testing.assert_allclose(forces["bonds"][0].params["CT-HC"]["r0"], 1)
+        np.testing.assert_allclose(forces["bonds"][0].params["CT-HC"]["epsilon"], 4.184)
+        np.testing.assert_allclose(forces["bonds"][0].params["CT-HC"]["sigma"], 1)
+        np.testing.assert_allclose(forces["bonds"][0].params["CT-HC"]["delta"], 0.1)

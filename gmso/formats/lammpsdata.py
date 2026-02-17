@@ -608,8 +608,9 @@ def _accepted_potentials():
     templates = PotentialTemplateLibrary()
     lennard_jones_potential = templates["LennardJonesPotential"]
     harmonic_bond_potential = templates["LAMMPSHarmonicBondPotential"]
-    fene_bond_potential = templates["HOOMDFENEWCABondPotential"]
+    fene_bond_potential = templates["LAMMPSFENEBondPotential"]
     harmonic_angle_potential = templates["LAMMPSHarmonicAnglePotential"]
+    harmonic_dihedral_potential = templates["LAMMPSHarmonicDihedralPotential"]
     periodic_torsion_potential = templates["PeriodicTorsionPotential"]
     harmonic_improper_potential = templates["HarmonicImproperPotential"]
     opls_torsion_potential = templates["OPLSTorsionPotential"]
@@ -618,6 +619,7 @@ def _accepted_potentials():
         harmonic_bond_potential,
         fene_bond_potential,
         harmonic_angle_potential,
+        harmonic_dihedral_potential,
         periodic_torsion_potential,
         harmonic_improper_potential,
         opls_torsion_potential,
@@ -831,7 +833,7 @@ def _write_bondtypes(out_file, top, base_unyts, cfactorsDict):
     out_file.write(f"\nBond Coeffs #{first_bondtype.name}\n")
     worker_functions = {
         "LAMMPSHarmonicBondPotential": _write_harmonic_bonds,
-        "HOOMDFENEWCABondPotential": _write_fene_bonds,
+        "LAMMPSFENEBondPotential": _write_fene_bonds,
     }
     return worker_functions[first_bondtype.name](
         out_file, top, first_bondtype, base_unyts, cfactorsDict
@@ -873,7 +875,6 @@ def _write_harmonic_bonds(out_file, top, first_bondtype, base_unyts, cfactorsDic
 
 def _write_fene_bonds(out_file, top, first_bondtype, base_unyts, cfactorsDict):
     """Setup `bond_style fene` Bond Type with 0 for sigma and epsilon parameters."""
-    # NOTE: delta from HOOMDFENEWCABondPotential is always 0
     bond_style_orderTuple = ("K", "R0", "epsilon", "sigma")
     param_labels = [
         write_out_parameter_and_units(
