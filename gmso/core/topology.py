@@ -1461,13 +1461,18 @@ class Topology(object):
                     if site.molecule and getattr(site, "residue").name == residue_tag:
                         yield site
                 elif residue_number and residue_tag is None:
-                    if site.molecule and getattr(site, "residue").number == residue_number:
+                    if (
+                        site.molecule
+                        and getattr(site, "residue").number == residue_number
+                    ):
                         yield site
                 else:
                     if all(
                         [
-                            site.molecule and getattr(site, "residue").name == residue_tag,
-                            site.molecule and getattr(site, "residue").number == residue_number
+                            site.molecule
+                            and getattr(site, "residue").name == residue_tag,
+                            site.molecule
+                            and getattr(site, "residue").number == residue_number,
                         ]
                     ):
                         yield site
@@ -1488,13 +1493,18 @@ class Topology(object):
                     if site.molecule and getattr(site, "molecule").name == molecule_tag:
                         yield site
                 elif molecule_number and molecule_tag is None:
-                    if site.molecule and getattr(site, "molecule").number == molecule_number:
+                    if (
+                        site.molecule
+                        and getattr(site, "molecule").number == molecule_number
+                    ):
                         yield site
                 else:
                     if all(
                         [
-                            site.molecule and getattr(site, "molecule").name == molecule_tag,
-                            site.molecule and getattr(site, "molecule").number == molecule_number
+                            site.molecule
+                            and getattr(site, "molecule").name == molecule_tag,
+                            site.molecule
+                            and getattr(site, "molecule").number == molecule_number,
                         ]
                     ):
                         yield site

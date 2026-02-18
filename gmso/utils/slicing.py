@@ -11,7 +11,7 @@ def slice_topology_by_molecule(topology, molecule_tag, molecule_number=None):
     molecule_tag : str
         The name of the gmso.abstract_site.Molecule object to include in the slice
     molecule_number : int, default None
-        If given, only include a single molecule's sites 
+        If given, only include a single molecule's sites
         If None, then all sites in every molecule matching `molecule_tag` are included
         in the sliced topology.
 
@@ -20,7 +20,12 @@ def slice_topology_by_molecule(topology, molecule_tag, molecule_number=None):
     gmso.core.topology.Topology
         A new Topology instance containing only sites and connections from matching molecules.
     """
-    sites = [s for s in topology.iter_sites_by_molecule(molecule_tag=molecule_tag, molecule_number=molecule_number)]
+    sites = [
+        s
+        for s in topology.iter_sites_by_molecule(
+            molecule_tag=molecule_tag, molecule_number=molecule_number
+        )
+    ]
     return slice_by_sites(topology=topology, sites=sites)
 
 
@@ -34,8 +39,8 @@ def slice_topology_by_residue(topology, residue_tag, residue_number=None):
     residue_tag : str
         The name of the gmso.abstract_site.Residue object to include in the slice.
     residue_number : int, default None
-        If given, only include a single residue's sites 
-        If None, then all sites in every residue matching `residue_tag` are included 
+        If given, only include a single residue's sites
+        If None, then all sites in every residue matching `residue_tag` are included
         in the sliced topology.
 
     Returns
@@ -43,7 +48,12 @@ def slice_topology_by_residue(topology, residue_tag, residue_number=None):
     gmso.core.topology.Topology
         A new Topology instance containing only sites and connections from matching molecules.
     """
-    sites = [s for s in topology.iter_sites_by_residue(residue_tag=residue_tag, residue_number=residue_number)]
+    sites = [
+        s
+        for s in topology.iter_sites_by_residue(
+            residue_tag=residue_tag, residue_number=residue_number
+        )
+    ]
     return slice_by_sites(topology=topology, sites=sites)
 
 
