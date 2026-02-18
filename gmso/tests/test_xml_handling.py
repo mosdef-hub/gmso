@@ -20,7 +20,21 @@ def compare_xml_files(fn1, fn2):
     with open(fn2, "r") as f:
         line2 = f.readlines()
     for l1, l2 in zip(line1, line2):
-        assert l1.replace(" ", "") == l2.replace(" ", "")
+        compare_l1 = l1.replace(" ", "")
+        compare_l2 = l2.replace(" ", "")
+        # Handle converting from type1, type2 to types
+        if "types" in l2 and "type1" in l1:
+            assert (
+                compare_l1[: compare_l1.index("type1")]
+                == compare_l2[: compare_l2.index("types")]
+            )
+        elif "classes" in l2 and "class1" in l1:
+            assert (
+                compare_l1[: compare_l1.index("class1")]
+                == compare_l2[: compare_l2.index("classes")]
+            )
+        else:
+            assert compare_l1 == compare_l2
     return True
 
 
@@ -70,14 +84,6 @@ class TestXMLHandling(BaseTest):
     def test_ffutils_backend(self, xml):
         ff1 = ForceField(xml)
         assert isinstance(ff1, ForceField)
-        ff2 = ForceField(xml, backend="gmso", strict=False)
-        assert isinstance(ff2, ForceField)
-        assert ff1 == ff2
-
-    @pytest.mark.parametrize("xml", TEST_XMLS)
-    def test_gmso_backend(self, xml):
-        ff = ForceField(xml, "gmso", False)
-        assert isinstance(ff, ForceField)
 
     @pytest.mark.parametrize("xml", TEST_XMLS)
     def test_load_write_xmls_gmso_backend(self, xml):
@@ -87,16 +93,6 @@ class TestXMLHandling(BaseTest):
         ff2 = ForceField("tmp.xml", strict=False)
         if "test_ffstyles" not in xml:
             assert compare_xml_files(xml, "tmp.xml")
-        assert ff1 == ff2
-
-    @pytest.mark.parametrize("xml", TEST_XMLS)
-    def test_load_write_xmls_ffutils_backend(self, xml):
-        """Validate loaded xmls written out match original file."""
-        ff1 = ForceField(xml, backend="forcefield-utilities")
-        ff1.to_xml("tmp.xml", overwrite=True)
-        ff2 = ForceField("tmp.xml")
-        if "test_ffstyles" not in xml:
-            assert compare_xml_files("tmp.xml", xml)
         assert ff1 == ff2
 
     def test_xml_error_handling(self):

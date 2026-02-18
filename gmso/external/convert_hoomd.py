@@ -52,6 +52,30 @@ AKMA_UNITS = {
 }
 
 
+def get_cell_nlist(top, buffer=0.4):
+    """Create a cell neighborlist for use in hoomd-blue based on top.scaling_factors"""
+    nb_scaling_factors, coul_scaling_factors = top.scaling_factors
+    if all(top.scaling_factors[0] == top.scaling_factors[1]):
+        outVals = None
+    else:
+        outVals = []  # store neighborlists
+    for scalar in [nb_scaling_factors, coul_scaling_factors]:
+        exclusions = list()
+        for i, val in enumerate(scalar):
+            if val == 1:  # skip values that are not exclusions
+                continue
+            if i == 0:
+                exclusions.append("bond")
+            else:
+                exclusions.append(f"1-{i + 2}")
+        if outVals is None:
+            outVals = hoomd.md.nlist.Cell(exclusions=exclusions, buffer=buffer)
+            return outVals, outVals  # return same neighborlist twice
+        else:
+            outVals.append(hoomd.md.nlist.Cell(exclusions=exclusions, buffer=buffer))
+    return outVals
+
+
 def to_gsd_snapshot(
     top,
     base_units=None,
@@ -751,7 +775,7 @@ def _prepare_box_information(top):
 def to_hoomd_forcefield(
     top,
     r_cut,
-    nlist_buffer=0.4,
+    nlist=None,
     pppm_kwargs={"resolution": (8, 8, 8), "order": 4},
     base_units=None,
     auto_scale=False,
@@ -764,9 +788,10 @@ def to_hoomd_forcefield(
         The typed topology to be converted
     r_cut : float
         r_cut for the nonbonded forces.
-    nlist_buffer : float, optional, default=0.4
-        Neighborlist buffer for simulation cell. Its unit is the same as that
-        used to defined GMSO Topology Box.
+    nlist : hoomd.md.nlist.NeighborList or tuple or list or None, optional, default=None
+        Neighborlist object to use for nonbonded forcefield. Can also be a list or tuple of neighborlists
+        where the first neighborlist is used for nonbonded pair forces, and the second with coulombic forces.
+        If None, the default value used will be a hoomd.md.nlist.Cell(exclusions=exclusions, buffer=0.4).
     pppm_kwargs : dict
         Keyword arguments to pass to hoomd.md.long_range.make_pppm_coulomb_forces().
     base_units : dict or str, optional, default=None
@@ -811,7 +836,7 @@ def to_hoomd_forcefield(
         "nonbonded": _parse_nonbonded_forces(
             top,
             r_cut,
-            nlist_buffer,
+            nlist,
             potential_types,
             potential_refs,
             pppm_kwargs,
@@ -853,16 +878,20 @@ def _validate_compatibility(top):
     templates = PotentialTemplateLibrary()
     lennard_jones_potential = templates["LennardJonesPotential"]
     harmonic_bond_potential = templates["HarmonicBondPotential"]
+    fene_bond_potential = templates["HOOMDFENEWCABondPotential"]
     harmonic_angle_potential = templates["HarmonicAnglePotential"]
     periodic_torsion_potential = templates["PeriodicTorsionPotential"]
+    hoomd_periodic_torsion_potential = templates["HOOMDPeriodicDihedralPotential"]
     harmonic_torsion_potential = templates["HarmonicTorsionPotential"]
     opls_torsion_potential = templates["OPLSTorsionPotential"]
     rb_torsion_potential = templates["RyckaertBellemansTorsionPotential"]
     accepted_potentials = (
         lennard_jones_potential,
         harmonic_bond_potential,
+        fene_bond_potential,
         harmonic_angle_potential,
         periodic_torsion_potential,
+        hoomd_periodic_torsion_potential,
         harmonic_torsion_potential,
         opls_torsion_potential,
         rb_torsion_potential,
@@ -874,7 +903,7 @@ def _validate_compatibility(top):
 def _parse_nonbonded_forces(
     top,
     r_cut,
-    nlist_buffer,
+    nlist,
     potential_types,
     potential_refs,
     pppm_kwargs,
@@ -888,8 +917,9 @@ def _parse_nonbonded_forces(
         Topology object holding system information.
     r_cut : float
         Cut-off radius in simulation units
-    nlist_buffer : float
-        Buffer argument ot pass to hoomd.md.nlist.Cell.
+    nlist : hoomd.md.nlist.NeighborList or tuple or list
+        neighborlist object to use for nonbonded forcefield. Can also be a list or tuple of neighborlists
+        where the first neighborlist is used for nonbonded pair forces, and the second with coulombic forces.
     potential_types : dict
         Output from _validate_compatibility().
     potential_refs : dict
@@ -928,19 +958,24 @@ def _parse_nonbonded_forces(
     # Use Topology scaling factor to determine exclusion
     # TODO: Use molecule scaling factor
     nb_scalings, coulombic_scalings = top.scaling_factors
-    exclusions = list()
-    for i in range(len(nb_scalings)):
-        if i == 0:
-            exclusions.append("bond")
-        else:
-            exclusions.append(f"1-{i + 2}")
-    nlist = hoomd.md.nlist.Cell(exclusions=exclusions, buffer=nlist_buffer)
+    if nlist is None:
+        nlist_nb, nlist_coul = get_cell_nlist(top)
+    elif isinstance(nlist, hoomd.md.nlist.NeighborList):
+        nlist_nb = nlist
+        nlist_coul = nlist
+    elif isinstance(nlist, (tuple, list)):
+        nlist_nb = nlist[0]
+        nlist_coul = nlist[1]
+    else:
+        raise ValueError(
+            "Incorrect values supplied for nlist. Should be of type hoomd.md.nlist"
+        )
 
     nbonded_forces = list()
     nbonded_forces.extend(
         _parse_coulombic(
             top=top,
-            nlist=nlist,
+            nlist=nlist_coul,
             scaling_factors=coulombic_scalings,
             resolution=pppm_kwargs["resolution"],
             order=pppm_kwargs["order"],
@@ -954,7 +989,7 @@ def _parse_nonbonded_forces(
                 atypes=groups[group],
                 combining_rule=top.combining_rule,
                 r_cut=r_cut,
-                nlist=nlist,
+                nlist=nlist_nb,
                 scaling_factors=nb_scalings,
             )
         )
@@ -983,7 +1018,7 @@ def _parse_coulombic(
         )
 
     # Handle 1-2, 1-3, and 1-4 scaling
-    # TODO: Fiure out a more general way to do this and handle molecule scaling factors
+    # TODO: Figure out a more general way to do this and handle molecule scaling factors
     special_coulombic = hoomd.md.special_pair.Coulomb()
 
     # Use same method as to_hoomd_snapshot to generate pairs list
@@ -1142,6 +1177,10 @@ def _parse_bond_forces(
             "container": hoomd.md.bond.Harmonic,
             "parser": _parse_harmonic_bond,
         },
+        "HOOMDFENEWCABondPotential": {
+            "container": hoomd.md.bond.FENEWCA,
+            "parser": _parse_fene_bond,
+        },
     }
     bond_forces = list()
     for group in groups:
@@ -1159,7 +1198,6 @@ def _parse_harmonic_bond(
     btypes,
 ):
     for btype in btypes:
-        # TODO: Unit conversion
         members = sort_by_classes(btype)
         # If wild card in class, sort by types instead
         if "*" in members:
@@ -1167,6 +1205,22 @@ def _parse_harmonic_bond(
         container.params["-".join(members)] = {
             "k": btype.parameters["k"],
             "r0": btype.parameters["r_eq"],
+        }
+    return container
+
+
+def _parse_fene_bond(
+    container,
+    btypes,
+):
+    for btype in btypes:
+        members = sort_by_classes(btype)
+        # If wild card in class, sort by types instead
+        if "*" in members:
+            members = sort_by_types(btype)
+        container.params["-".join(members)] = {
+            key: btype.parameters.get(key, 0.0)  # defaults to 0 if no sigma or epsilon
+            for key in ["k", "r0", "epsilon", "sigma", "delta"]
         }
     return container
 
@@ -1300,6 +1354,10 @@ def _parse_dihedral_forces(
             "container": hoomd.md.dihedral.Harmonic,
             "parser": _parse_periodic_dihedral,
         }
+        dtype_group_map["HOOMDPeriodicTorsionPotential"] = {
+            "container": hoomd.md.dihedral.Harmonic,
+            "parser": _parse_hoomd_periodic_dihedral,
+        }
 
     dihedral_forces = list()
     for group in groups:
@@ -1336,7 +1394,7 @@ def _parse_periodic_dihedral(container, dihedrals, expected_units_dim, base_unit
         member_classes = [site.atom_type.atomclass for site in member_sites]
         if isinstance(dtype.parameters["k"], u.array.unyt_quantity):
             containersList[0].params["-".join(member_classes)] = {
-                "k": dtype.parameters["k"].to_value(),
+                "k": dtype.parameters["k"].to_value() * 2,  # convert to K/2 form
                 "d": 1,
                 "n": dtype.parameters["n"].to_value(),
                 "phi0": dtype.parameters["phi_eq"].to_value(),
@@ -1345,8 +1403,52 @@ def _parse_periodic_dihedral(container, dihedrals, expected_units_dim, base_unit
             paramsLen = len(dtype.parameters["k"])
             for nIndex in range(paramsLen):
                 containersList[nIndex].params["-".join(member_classes)] = {
-                    "k": dtype.parameters["k"].to_value()[nIndex],
+                    "k": dtype.parameters["k"].to_value()[nIndex] * 2,
                     "d": 1,
+                    "n": dtype.parameters["n"].to_value()[nIndex],
+                    "phi0": dtype.parameters["phi_eq"].to_value()[nIndex],
+                }
+    filled_containersList = []
+    for i in range(5):  # take only periodic terms that have parameters
+        if len(tuple(containersList[i].params.keys())) == 0:
+            continue
+        # add in extra parameters
+        for key in containersList[0].params.keys():
+            if key not in tuple(containersList[i].params.keys()):
+                containersList[i].params[key] = {
+                    "k": 0,
+                    "d": 1,
+                    "n": 0,
+                    "phi0": 0,
+                }
+        filled_containersList.append(containersList[i])
+    return filled_containersList
+
+
+def _parse_hoomd_periodic_dihedral(
+    container, dihedrals, expected_units_dim, base_units
+):
+    containersList = []
+    for _ in range(5):
+        containersList.append(copy.deepcopy(container))
+    for dihedral in dihedrals:
+        dtype = dihedral.dihedral_type
+        dtype = _convert_single_param_units(dtype, expected_units_dim, base_units)
+        member_sites = sort_connection_members(dihedral, "atomclass")
+        member_classes = [site.atom_type.atomclass for site in member_sites]
+        if isinstance(dtype.parameters["k"], u.array.unyt_quantity):
+            containersList[0].params["-".join(member_classes)] = {
+                "k": dtype.parameters["k"].to_value(),
+                "d": dtype.parameters["k"].to_value(),
+                "n": dtype.parameters["n"].to_value(),
+                "phi0": dtype.parameters["phi_eq"].to_value(),
+            }
+        elif isinstance(dtype.parameters["k"], u.array.unyt_array):
+            paramsLen = len(dtype.parameters["k"])
+            for nIndex in range(paramsLen):
+                containersList[nIndex].params["-".join(member_classes)] = {
+                    "k": dtype.parameters["k"].to_value()[nIndex],
+                    "d": dtype.parameters["k"].to_value()[nIndex],
                     "n": dtype.parameters["n"].to_value()[nIndex],
                     "phi0": dtype.parameters["phi_eq"].to_value()[nIndex],
                 }
@@ -1451,6 +1553,10 @@ def _parse_improper_forces(
                 "container": hoomd.md.improper.Periodic,
                 "parser": _parse_periodic_improper,
             },
+            "HOOMDPeriodicDihedralPotential": {
+                "container": hoomd.md.improper.Periodic,
+                "parser": _parse_hoomd_periodic_improper,
+            },
         }
     else:
         itype_group_map = {
@@ -1482,7 +1588,7 @@ def _parse_harmonic_improper(
             members = sort_by_types(itype)
         container.params["-".join(members)] = {
             "k": itype.parameters["k"],
-            "chi0": itype.parameters["phi_eq"],  # diff nomenclature?
+            "chi0": itype.parameters["phi_eq"],
         }
     return container
 
@@ -1497,10 +1603,28 @@ def _parse_periodic_improper(
         if "*" in members:
             members = sort_by_types(itype)
         container.params["-".join(members)] = {
-            "k": itype.parameters["k"],
+            "k": itype.parameters["k"] * 2,  # convert to k/2
             "chi0": itype.parameters["phi_eq"],
             "n": itype.parameters["n"],
             "d": itype.parameters.get("d", 1.0),
+        }
+    return container
+
+
+def _parse_hoomd_periodic_improper(
+    container,
+    itypes,
+):
+    for itype in itypes:
+        members = sort_by_classes(itype)
+        # If wild card in class, sort by types instead
+        if "*" in members:
+            members = sort_by_types(itype)
+        container.params["-".join(members)] = {
+            "k": itype.parameters["k"],
+            "chi0": itype.parameters["phi0"],
+            "n": itype.parameters["n"],
+            "d": itype.parameters.get("d"),
         }
     return container
 

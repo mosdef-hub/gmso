@@ -1,4 +1,3 @@
-import forcefield_utilities as ffutils
 import hoomd
 import numpy as np
 import pytest
@@ -11,6 +10,7 @@ from gmso.external.convert_hoomd import (
     to_hoomd_forcefield,
     to_hoomd_snapshot,
 )
+from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.parameterization import apply
 from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
@@ -185,7 +185,7 @@ class TestHoomd(BaseTest):
 
         top = from_mbuild(com_box)
         top.identify_connections()
-        oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
+        oplsaa = ForceField("oplsaa")
         top = apply(top, oplsaa, remove_untyped=True)
 
         gmso_snapshot, _ = to_hoomd_snapshot(top, base_units=base_units)
@@ -210,7 +210,7 @@ class TestHoomd(BaseTest):
 
         top = from_mbuild(com_box)
         top.identify_connections()
-        oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
+        oplsaa = ForceField("oplsaa")
         top = apply(top, oplsaa, remove_untyped=True)
 
         gmso_snapshot, _ = to_hoomd_snapshot(
@@ -240,7 +240,7 @@ class TestHoomd(BaseTest):
 
         top = from_mbuild(com_box)
         top.identify_connections()
-        oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
+        oplsaa = ForceField("oplsaa")
         top = apply(top, oplsaa, remove_untyped=True)
 
         gmso_snapshot, snapshot_base_units = to_hoomd_snapshot(
@@ -264,7 +264,7 @@ class TestHoomd(BaseTest):
 
         top = from_mbuild(com_box)
         top.identify_connections()
-        oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
+        oplsaa = ForceField("oplsaa")
         top = apply(top, oplsaa, remove_untyped=True)
 
         gmso_snapshot, snapshot_base_units = to_hoomd_snapshot(top)
@@ -279,9 +279,7 @@ class TestHoomd(BaseTest):
         ethane = mb.lib.molecules.Ethane()
         top = from_mbuild(ethane)
         top.identify_connections()
-        ff_zero_param = (
-            ffutils.FoyerFFs().load(get_path("ethane_zero_parameter.xml")).to_gmso_ff()
-        )
+        ff_zero_param = ForceField(get_path("ethane_zero_parameter.xml"))
         top = apply(top, ff_zero_param, remove_untyped=True)
         base_units = {
             "mass": u.g / u.mol,
@@ -313,7 +311,7 @@ class TestHoomd(BaseTest):
         com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=2)
         top = from_mbuild(com_box)
         top.identify_connections()
-        oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
+        oplsaa = ForceField("oplsaa")
         top = apply(top, oplsaa, remove_untyped=True)
         for site in top.sites:
             site.charge = 0
@@ -398,3 +396,157 @@ class TestHoomd(BaseTest):
         assert "CT-CT-CT-HC" in list(forces["dihedrals"][0].params)
         for conntype in snapshot.dihedrals.types:
             assert conntype in list(forces["dihedrals"][0].params)
+
+    def test_pass_nlist(self):
+        from gmso.external.convert_hoomd import get_cell_nlist
+
+        compound = mb.load("CC", smiles=True)
+        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=2)
+        base_units = {
+            "mass": u.amu,
+            "length": u.nm,
+            "energy": u.kJ / u.mol,
+        }
+
+        top = com_box.to_gmso()
+        oplsaa = ForceField("oplsaa")
+        oplsaa.scaling_factors = {
+            "nonBonded12Scale": 0.0,
+            "nonBonded13Scale": 0.5,
+            "nonBonded14Scale": 1.0,
+            "electrostatics12Scale": 1.0,
+            "electrostatics13Scale": 0.5,
+            "electrostatics14scale": 0,
+        }
+        top = apply(top, oplsaa, remove_untyped=True, identify_connections=True)
+        nlist_nb, nlist_coul = get_cell_nlist(top, buffer=1)
+
+        gmso_forces, forces_base_units = to_hoomd_forcefield(
+            top,
+            r_cut=1.4,
+            base_units=base_units,
+            pppm_kwargs={"resolution": (32, 32, 32), "order": 5},
+            nlist=(nlist_nb, nlist_coul),
+        )
+        for force in gmso_forces["nonbonded"]:
+            if isinstance(force, hoomd.md.pair.LJ):
+                assert force.nlist == nlist_nb
+                assert list(force.nlist.exclusions) == ["bond", "1-3"]
+                assert force.nlist.buffer == 1
+            elif isinstance(force, hoomd.md.pair.Ewald):
+                assert force.nlist == nlist_coul
+                assert list(force.nlist.exclusions) == ["1-3", "1-4"]
+                assert force.nlist.buffer == 1
+            elif isinstance(force, hoomd.md.long_range.pppm.Coulomb):
+                assert force.nlist == nlist_coul
+                assert list(force.nlist.exclusions) == ["1-3", "1-4"]
+                assert force.nlist.buffer == 1
+                assert force.r_cut == 1.4
+
+        oplsaa.scaling_factors = {
+            "nonBonded12Scale": 0.0,
+            "nonBonded13Scale": 0.0,
+            "nonBonded14Scale": 0.5,
+            "electrostatics12Scale": 0.0,
+            "electrostatics13Scale": 0.0,
+            "electrostatics14scale": 0.5,
+        }
+        top = com_box.to_gmso()
+        top = apply(top, oplsaa, remove_untyped=True, identify_connections=True)
+        nlist_nb, nlist_coul = get_cell_nlist(top, buffer=1)
+        gmso_forces, forces_base_units = to_hoomd_forcefield(
+            top,
+            r_cut=1.4,
+            base_units=base_units,
+            pppm_kwargs={"resolution": (32, 32, 32), "order": 5},
+            nlist=nlist_coul,
+        )
+        for force in gmso_forces["nonbonded"]:
+            if isinstance(force, hoomd.md.pair.LJ):
+                assert force.nlist == nlist_nb
+                assert list(force.nlist.exclusions) == ["bond", "1-3", "1-4"]
+                assert force.nlist.buffer == 1
+            elif isinstance(force, hoomd.md.pair.Ewald):
+                assert force.nlist == nlist_nb
+                assert list(force.nlist.exclusions) == ["bond", "1-3", "1-4"]
+                assert force.nlist.buffer == 1
+            elif isinstance(force, hoomd.md.long_range.pppm.Coulomb):
+                assert force.nlist == nlist_nb
+                assert list(force.nlist.exclusions) == ["bond", "1-3", "1-4"]
+                assert force.nlist.buffer == 1
+                assert force.r_cut == 1.4
+        with pytest.raises(ValueError):
+            to_hoomd_forcefield(
+                top,
+                r_cut=1.4,
+                nlist="Error",
+            )
+
+    def test_periodic_impropers(self, typed_ethane):
+        from gmso.core.improper_type import ImproperType
+
+        per_torsion = PotentialTemplateLibrary()["PeriodicTorsionPotential"]
+        params = {
+            "k": 10 * u.Unit("kJ / mol"),
+            "phi_eq": 15 * u.Unit("degree"),
+            "n": 3 * u.Unit("dimensionless"),
+        }
+        periodic_dihedral_type = ImproperType.from_template(
+            potential_template=per_torsion, parameters=params
+        )
+        periodic_dihedral_type.member_classes = ("CT", "HC", "HC", "HC")
+        typed_ethane.identify_connections()
+        for improper in typed_ethane.impropers:
+            improper.connection_type = periodic_dihedral_type
+
+        forces, _ = to_hoomd_forcefield(typed_ethane, r_cut=1.2)
+        assert forces["impropers"][0].params["CT-HC-HC-HC"]["k"] == 20.0
+        assert forces["impropers"][0].params["CT-HC-HC-HC"]["chi0"] == 15 / 180 * np.pi
+        assert forces["impropers"][0].params["CT-HC-HC-HC"]["n"] == 3
+        assert forces["impropers"][0].params["CT-HC-HC-HC"]["d"] == 1
+
+        per_torsion = PotentialTemplateLibrary()["HOOMDPeriodicDihedralPotential"]
+        params = {
+            "k": 10 * u.Unit("kJ / mol"),
+            "phi0": 15 * u.Unit("degree"),
+            "n": 3 * u.Unit("dimensionless"),
+            "d": 2 * u.Unit("dimensionless"),
+        }
+        hoomd_periodic_dihedral_type = ImproperType.from_template(
+            potential_template=per_torsion, parameters=params
+        )
+        hoomd_periodic_dihedral_type.member_classes = ("CT", "HC", "HC", "HC")
+        for improper in typed_ethane.impropers:
+            improper.connection_type = hoomd_periodic_dihedral_type
+
+        forces, _ = to_hoomd_forcefield(typed_ethane, r_cut=1.2)
+        assert forces["impropers"][0].params["CT-HC-HC-HC"]["k"] == 10.0
+        assert forces["impropers"][0].params["CT-HC-HC-HC"]["chi0"] == 15 / 180 * np.pi
+        assert forces["impropers"][0].params["CT-HC-HC-HC"]["n"] == 3
+        assert forces["impropers"][0].params["CT-HC-HC-HC"]["d"] == 2
+
+    def test_fene_bond(self, typed_ethane):
+        from gmso.core.bond_type import BondType
+
+        fene_type = PotentialTemplateLibrary()["HOOMDFENEWCABondPotential"]
+        params = {
+            "k": 1 * u.Unit("kJ / mol / nm**2"),
+            "r0": 1 * u.Unit("nm"),
+            "epsilon": 1 * u.Unit("kcal / mol"),
+            "sigma": 1 * u.Unit("nm"),
+            "delta": 1 * u.Unit("angstrom"),
+        }
+        bondtype = BondType.from_template(
+            potential_template=fene_type, parameters=params
+        )
+        bondtype.member_classes = ("CT", "HC")
+
+        for bond in typed_ethane.bonds:
+            bond.connection_type = bondtype
+
+        forces, _ = to_hoomd_forcefield(typed_ethane, r_cut=1.2)
+        np.testing.assert_allclose(forces["bonds"][0].params["CT-HC"]["k"], 1)
+        np.testing.assert_allclose(forces["bonds"][0].params["CT-HC"]["r0"], 1)
+        np.testing.assert_allclose(forces["bonds"][0].params["CT-HC"]["epsilon"], 4.184)
+        np.testing.assert_allclose(forces["bonds"][0].params["CT-HC"]["sigma"], 1)
+        np.testing.assert_allclose(forces["bonds"][0].params["CT-HC"]["delta"], 0.1)

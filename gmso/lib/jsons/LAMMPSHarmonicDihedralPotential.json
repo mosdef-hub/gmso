@@ -1,0 +1,10 @@
+{
+  "name": "LAMMPSHarmonicDihedralPotential",
+  "expression": "K * (1 + d * cos(n*phi))",
+  "independent_variables": "phi",
+  "expected_parameters_dimensions": {
+    "K":"energy",
+    "d":"dimensionless",
+    "n":"dimensionless"
+  }
+}
