@@ -1447,7 +1447,7 @@ class Topology(object):
                 if getattr(site, key) == value:
                     yield site
 
-    def iter_sites_by_residue(self, residue_tag):
+    def iter_sites_by_residue(self, residue_tag, residue_number=None):
         """Iterate through this topology's sites which contain this specific residue name.
 
         See Also
@@ -1457,12 +1457,24 @@ class Topology(object):
         """
         if isinstance(residue_tag, str):
             for site in self._sites:
-                if site.residue and getattr(site, "residue").name == residue_tag:
-                    yield site
+                if residue_tag and residue_number is None:
+                    if site.molecule and getattr(site, "residue").name == residue_tag:
+                        yield site
+                elif residue_number and residue_tag is None:
+                    if site.molecule and getattr(site, "residue").number == residue_number:
+                        yield site
+                else:
+                    if all(
+                        [
+                            site.molecule and getattr(site, "residue").name == residue_tag,
+                            site.molecule and getattr(site, "residue").number == residue_number
+                        ]
+                    ):
+                        yield site
         else:
             return self.iter_sites("residue", residue_tag)
 
-    def iter_sites_by_molecule(self, molecule_tag):
+    def iter_sites_by_molecule(self, molecule_tag, molecule_number=None):
         """Iterate through this topology's sites which contain this specific molecule name.
 
         See Also
@@ -1472,8 +1484,20 @@ class Topology(object):
         """
         if isinstance(molecule_tag, str):
             for site in self._sites:
-                if site.molecule and getattr(site, "molecule").name == molecule_tag:
-                    yield site
+                if molecule_tag and molecule_number is None:
+                    if site.molecule and getattr(site, "molecule").name == molecule_tag:
+                        yield site
+                elif molecule_number and molecule_tag is None:
+                    if site.molecule and getattr(site, "molecule").number == molecule_number:
+                        yield site
+                else:
+                    if all(
+                        [
+                            site.molecule and getattr(site, "molecule").name == molecule_tag,
+                            site.molecule and getattr(site, "molecule").number == molecule_number
+                        ]
+                    ):
+                        yield site
         else:
             return self.iter_sites("molecule", molecule_tag)
 
