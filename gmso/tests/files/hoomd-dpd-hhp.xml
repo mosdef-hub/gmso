@@ -1,0 +1,56 @@
+<ForceField version="0.0.1" name="DPD-Harmonic">
+    <FFMetaData combiningRule="lorentz">
+        <Units energy="energy" distance="length" mass="amu" charge="charge"/>
+    </FFMetaData>
+    <AtomTypes>
+       <AtomType name="A" element="A" atomclass="A" mass="1.0" charge="0.0" definition="A" description="CG Bead">
+       </AtomType>
+    </AtomTypes>
+    <BondTypes name="HarmonicBond" expression="0.5 * k * (r-r_eq)**2">
+        <ParametersUnitDef parameter="r_eq" unit="nm"/>
+        <ParametersUnitDef parameter="k" unit="kJ/mol"/>
+        <BondType name="HOOMDHarmonicBondPotential" type1='A' type2='A'>
+            <Parameters>
+                <Parameter name='r_eq' value="10.0"/>
+                <Parameter name='k' value="10000"/>
+            </Parameters>
+        </BondType>
+    </BondTypes>
+
+
+#DPD is a pair force, only part is a pair potential
+#reminds me I was working on AA DPD simulations
+#how does GMSO handle information? Does it just store it an runs checks on it?
+#can we store parameters without an expression
+#does gmso care if vectors are in the expression?
+  <PairPotentialTypes expression="A * (1-(r/r_cut))">
+    <ParametersUnitDef parameter="A" unit="N"/>
+    <ParametersUnitDef parameter="r_cut" unit="nm"/>
+    <PairPotentialType name="HOOMDDPDConservativePotential" type1="A" type2="A">
+        <Parameters>
+            <Parameter name="A" value="40.0"/>
+            <Parameter name="r_cut" value="1.0"/>
+        </Parameters>
+    </PairPotentialType>
+  </PairPotentialTypes>
+<  <PairPotentialTypes expression="A * (1-(r/r_cut))">
+    <ParametersUnitDef parameter="A" unit="N"/>
+    <ParametersUnitDef parameter="r_cut" unit="nm"/>
+    <PairPotentialType name="HOOMDDPDConservativePotential" type1="A" type2="A">
+        <Parameters>
+            <Parameter name="A" value="40.0"/>
+            <Parameter name="r_cut" value="1.0"/>
+        </Parameters>
+    </PairPotentialType>
+  </PairPotentialTypes>
+/  <PairPotentialTypes expression="A * (1-(r/r_cut))">
+    <ParametersUnitDef parameter="A" unit="N"/>
+    <ParametersUnitDef parameter="r_cut" unit="nm"/>
+    <PairPotentialType name="HOOMDDPDConservativePotential" type1="A" type2="A">
+        <Parameters>
+            <Parameter name="A" value="40.0"/>
+            <Parameter name="r_cut" value="1.0"/>
+        </Parameters>
+    </PairPotentialType>
+  </PairPotentialTypes>
+</ForceField>
