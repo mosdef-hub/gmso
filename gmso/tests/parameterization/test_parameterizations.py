@@ -24,8 +24,9 @@ def get_foyer_opls_test_dirs():
     parent_dirs = map(Path, all_dirs)
     parent_dirs = list(
         filter(
-            lambda p: p.name in correctly_implemented
-            and (p / f"{p.name}.top").exists(),
+            lambda p: (
+                p.name in correctly_implemented and (p / f"{p.name}.top").exists()
+            ),
             parent_dirs,
         )
     )
