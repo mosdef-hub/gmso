@@ -550,3 +550,10 @@ class TestHoomd(BaseTest):
         np.testing.assert_allclose(forces["bonds"][0].params["CT-HC"]["epsilon"], 4.184)
         np.testing.assert_allclose(forces["bonds"][0].params["CT-HC"]["sigma"], 1)
         np.testing.assert_allclose(forces["bonds"][0].params["CT-HC"]["delta"], 0.1)
+
+    def test_no_special(self, typed_ethane):
+        typed_ethane.scaling_factors[0][2] = 0
+        typed_ethane.scaling_factors[1][2] = 0
+        # 1-4 lj and charge
+        forces, _ = to_hoomd_forcefield(typed_ethane, r_cut=1.2)
+        assert len(forces["nonbonded"]) == 3  # no special_pairs forces

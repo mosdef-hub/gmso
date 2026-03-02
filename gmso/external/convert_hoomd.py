@@ -1016,7 +1016,8 @@ def _parse_coulombic(
         coulombic = hoomd.md.long_range.pppm.make_pppm_coulomb_forces(
             nlist=nlist, resolution=resolution, order=order, r_cut=r_cut
         )
-
+    if not np.all(scaling_factors):
+        return [*coulombic]  # return early
     # Handle 1-2, 1-3, and 1-4 scaling
     # TODO: Figure out a more general way to do this and handle molecule scaling factors
     special_coulombic = hoomd.md.special_pair.Coulomb()
@@ -1031,7 +1032,6 @@ def _parse_coulombic(
                 )
                 special_coulombic.params[pair_name] = dict(alpha=scaling_factors[i])
                 special_coulombic.r_cut[pair_name] = r_cut
-
     return [*coulombic, special_coulombic]
 
 
@@ -1067,6 +1067,8 @@ def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
     # Handle 1-2, 1-3, and 1-4 scaling
     # TODO: Figure out a more general way to do this
     # and handle molecule scaling factors
+    if not np.all(scaling_factors):
+        return [lj]
     special_lj = hoomd.md.special_pair.LJ()
 
     pairs_dict = generate_pairs_lists(top)
