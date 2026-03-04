@@ -77,6 +77,17 @@ def check_compatibility(
             )
         else:
             potential_forms_dict.update(potential_form)
+    for pair_type in topology.pairpotential_types:
+        potential_form = _check_single_potential(
+            pair_type,
+            accepted_potentials,
+        )
+        if not potential_form:
+            raise EngineIncompatibilityError(
+                f"Potential {pair_type} is not in the list of accepted_potentials {accepted_potentials}"
+            )
+        else:
+            potential_forms_dict.update(potential_form)
 
     return potential_forms_dict
 
