@@ -1,0 +1,9 @@
+{
+  "name": "HOOMDDPDConservativePotential",
+  "expression": "A * (1-(r/r_cut))",
+  "independent_variables": "r",
+  "expected_parameters_dimensions": {
+    "A": "force",
+    "r_cut": "length"
+  }
+}
