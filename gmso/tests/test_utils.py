@@ -1,3 +1,4 @@
+import mbuild as mb
 import numpy as np
 import pytest
 import unyt as u
@@ -7,6 +8,10 @@ from gmso.core.dihedral import Dihedral
 from gmso.utils.geometry import moment_of_inertia
 from gmso.utils.io import run_from_ipython
 from gmso.utils.misc import unyt_to_hashable
+from gmso.utils.slicing import (
+    slice_topology_by_molecule,
+    slice_topology_by_residue,
+)
 from gmso.utils.sorting import sort_connection_members, sort_connection_strings
 
 
@@ -81,3 +86,37 @@ def test_moment_of_inertia():
         masses=np.array([1.0 for i in xyz]),
     )
     assert np.array_equal(tensor, np.array([1, 1, 2]))
+
+
+def test_slice_by_molecule():
+    benzene = mb.load("c1ccccc1", smiles=True)
+    benzene.name = "Benzene"
+    ethane = mb.load("CC", smiles=True)
+    ethane.name = "Ethane"
+
+    system = mb.fill_box(compound=[benzene, ethane], n_compounds=[2, 2], box=[2, 2, 2])
+    topology = system.to_gmso()
+    topology.identify_connections()
+
+    single_benzene_top = slice_topology_by_molecule(topology, "Benzene", 0)
+    assert single_benzene_top.n_sites == 12
+
+    all_benzene_top = slice_topology_by_molecule(topology, "Benzene")
+    assert all_benzene_top.n_sites == 24
+
+
+def test_slice_by_residue():
+    benzene = mb.load("c1ccccc1", smiles=True)
+    benzene.name = "Benzene"
+    ethane = mb.load("CC", smiles=True)
+    ethane.name = "Ethane"
+
+    system = mb.fill_box(compound=[benzene, ethane], n_compounds=[2, 2], box=[2, 2, 2])
+    topology = system.to_gmso()
+    topology.identify_connections()
+
+    single_ethane_top = slice_topology_by_residue(topology, "Ethane", 0)
+    assert single_ethane_top.n_sites == 8
+
+    all_ethane_top = slice_topology_by_residue(topology, "Ethane")
+    assert all_ethane_top.n_sites == 16

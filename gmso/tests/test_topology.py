@@ -886,6 +886,17 @@ class TestTopology(BaseTest):
             for site in labeled_top.iter_sites_by_molecule(molecule_name):
                 assert site.molecule.name == molecule_name
 
+    def test_iter_sites_by_molecule_tag_and_number(self, labeled_top):
+        molecules = labeled_top.unique_site_labels("molecule", name_only=False)
+        for molecule in molecules:
+            for site in labeled_top.iter_sites_by_molecule(molecule):
+                assert site.residue == molecule
+
+        molecule_names = labeled_top.unique_site_labels("molecule", name_only=True)
+        for molecule_name in molecule_names:
+            for site in labeled_top.iter_sites_by_molecule(molecule_name):
+                assert site.molecule.name == molecule_name
+
     @pytest.mark.parametrize(
         "connections",
         ["bonds", "angles", "dihedrals", "impropers"],

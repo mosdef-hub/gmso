@@ -4,6 +4,7 @@
 """Convert to and from an OpenMM Topology or System object."""
 
 import unyt as u
+from openff.toolkit import Molecule as openFF_Molecule
 
 from gmso.utils.io import has_openmm, has_openmm_unit, import_
 
@@ -11,6 +12,49 @@ if has_openmm & has_openmm_unit:
     openmm_unit = import_("openmm.unit")
     from openmm import *
     from openmm.app import *
+
+
+def to_openff_molecule(topology):
+    """Converts a GMSO topology into an OpenFF Molecule."""
+    mol = openFF_Molecule()
+    # Bond order not available at the site level
+    # But, it can be set during openFF's add_atom'
+    # Build up a list of sites first to track their bond orders later
+    sites = []
+    for site in topology.sites:
+        sites.append(site)
+
+    # Index-to-index mapping with sites list
+    is_aromatic = [False for i in sites]
+    bond_pairs = []
+    bond_orders = []
+
+    for bond in topology.bonds:
+        bond_pair = []
+        bond_orders.append(bond.bond_order)
+        for site in bond.connection_members:
+            site_index = sites.index(site)
+            if bond.bond_order == 1.5:
+                is_aromatic[site_index] = True
+            bond_pair.append(site_index)
+        bond_pairs.append(bond_pair)
+    # Now that we have parsed all sites for aromaticity, add each to Molecule
+    for site, aromatic in zip(sites, is_aromatic):
+        mol.add_atom(
+            atomic_number=site.element.atomic_number,
+            is_aromatic=aromatic,
+            formal_charge=0,
+        )
+
+    for bond, border in zip(bond_pairs, bond_orders):
+        mol.add_bond(
+            atom1=bond[0],
+            atom2=bond[1],
+            bond_order=int(border),
+            fractional_bond_order=border,
+            is_aromatic=True if border == 1.5 else False,
+        )
+    return mol
 
 
 def to_openmm(topology, openmm_object="topology"):
