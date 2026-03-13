@@ -48,6 +48,23 @@ def _group_by_expression(potential_types):
     return expr_group
 
 
+def _group_vtype_by_expression(potential_types):
+    """Group a dictionary of virtual potentials by their expression."""
+    expr_group = {}
+
+    for potential in potential_types:
+        potential_type = potential_types[potential]
+        key = (
+            str(potential_type.virtual_potential.expression),
+            str(potential_type.virtual_position.expression),
+        )
+        atom_types_list = expr_group.get(key, [])
+        atom_types_list.append(potential_type)
+        expr_group[key] = atom_types_list
+
+    return expr_group
+
+
 class ForceField(object):
     """A generic implementation of the forcefield class.
 
@@ -267,6 +284,21 @@ class ForceField(object):
             A dictionary where the key, value -> expression, list of PairPotentialTypes with that expression
         """
         return _group_by_expression(self.pairpotential_types)
+
+    def group_virtual_types_by_expression(self):
+        """Return all VirtualTypes in this ForceField with grouped by expression.
+
+        See Also
+        --------
+        _group_by_expression
+            Groups a dictionary of gmso.ParametricPotentials by their expression
+
+        Returns
+        -------
+        dict
+            A dictionary where the key, value -> expression, list of VirtualTypes with that expression
+        """
+        return _group_vtype_by_expression(self.virtual_types)
 
     def get_potential(self, group, key, exact_match=False):
         """Return a specific potential by key in this ForceField.
@@ -535,6 +567,7 @@ class ForceField(object):
             f"{len(self.dihedral_types)} DihedralTypes,\n "
             f"{len(self.improper_types)} ImproperType,\n "
             f"{len(self.pairpotential_types)} PairPotentialType,\n "
+            f"{len(self.virtual_types)} VirtualSiteType,\n "
             f"id: {id(self)}>"
         )
 
@@ -676,6 +709,8 @@ class ForceField(object):
         angle_types_groups = self.group_angle_types_by_expression()
         dihedral_types_groups = self.group_dihedral_types_by_expression()
         improper_types_groups = self.group_improper_types_by_expression()
+        virtual_types_groups = self.group_virtual_types_by_expression()
+        # ("VirtualTypes", virtual_types_groups),
 
         for tag, potential_group in [
             ("BondTypes", bond_types_groups),
@@ -703,6 +738,55 @@ class ForceField(object):
                             )
 
                     potential_group.append(potential.etree(params_units_def))
+
+        # handle virtual types writing
+        tag = "VirtualSiteTypes"
+        for expr, virtual_types in virtual_types_groups.items():
+            virtualsite_group = etree.SubElement(
+                ff_el,
+                tag,
+            )
+            position_group = etree.SubElement(
+                virtualsite_group, "Position", attrib={"expression": expr[1]}
+            )
+            potential_group = etree.SubElement(
+                virtualsite_group, "Potential", attrib={"expression": expr[0]}
+            )
+
+            params_units_def = None  # stores both potential and position keys
+            for virtual_type in virtual_types:
+                if params_units_def is None:
+                    params_units_def = {}
+                    for (
+                        param,
+                        value,
+                    ) in virtual_type.virtual_position.parameters.items():
+                        params_units_def[param] = value.units
+                        etree.SubElement(
+                            position_group,
+                            "ParametersUnitDef",
+                            attrib={
+                                "parameter": param,
+                                "unit": str(value.units),
+                            },
+                        )
+                    for (
+                        param,
+                        value,
+                    ) in virtual_type.virtual_potential.parameters.items():
+                        params_units_def[param] = value.units
+                        etree.SubElement(
+                            potential_group,
+                            "ParametersUnitDef",
+                            attrib={
+                                "parameter": param,
+                                "unit": str(value.units),
+                            },
+                        )
+                # attach potential to VirtualSitType
+                virtualsite_group.append(virtual_type.etree(params_units_def))
+                # potential_group.append(virtual_type.virtual_potential.etree(potential_params_units_def))
+                # position_group.append(virtual_type.virtual_position.etree(position_params_units_def))
 
         ff_etree = etree.ElementTree(element=ff_el)
 

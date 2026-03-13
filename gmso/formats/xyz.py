@@ -74,6 +74,8 @@ def write_xyz(top, filename, decimals=3):
         Path to file location.
     decimals : int, default 3
         Number of decimals to write out in file for coordinates.
+    decimals : int, default 3
+        Number of decimals to write out in file for coordinates.
     """
     with open(filename, "w") as out_file:
         out_file.write("{:d}\n".format(top.n_sites))

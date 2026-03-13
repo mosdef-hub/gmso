@@ -28,7 +28,25 @@ class norm(Function):
 # Evaluate vector norm
 def norm_evaluation(matrix_arg):
     """Evaluation method for norm of a sympy matrix"""
-    return np.linalg.norm(matrix_arg)
+    v = np.asarray(matrix_arg).flatten()
+    return np.linalg.norm(v)
+
+
+class cross(Function):
+    """Sympy functions for use in lambdify"""
+
+    @classmethod
+    def eval(cls, arg1, arg2):
+        return None
+
+
+def cross_evaluation(matrix_arg1, matrix_arg2):
+    """Evaluation method for norm of a sympy matrix"""
+    v1 = np.asarray(matrix_arg1).flatten()
+    v2 = np.asarray(matrix_arg2).flatten()
+    cross_result = np.cross(v1, v2)
+    # Return as column vector (3, 1) to match other matrices
+    return cross_result.reshape(3, 1)
 
 
 def _are_equal_parameters(u1, u2):
@@ -499,24 +517,29 @@ class PotentialExpression:
         # prep namespace for sympify
         if independent_namespace is None:
             namespace = {}
-            args = []
+            symbol_args = []
         else:  # grab symbols from namespace
-            args = [Symbol(key) for key in independent_parameters]
-            namespace = (
-                independent_namespace.copy()
-            )  # make copies to not overwrite dictionary objects
+            # Create symbols for the VECTORS, not the scalar parameters
+            symbol_args = [Symbol(key) for key in independent_namespace.keys()]
+            # Create a namespace with SYMBOLS
+            namespace = {key: Symbol(key) for key in independent_namespace.keys()}
+
         namespace.update(
             {sym: Symbol(sym) for sym in self.parameters}
         )  # expression parameters
-        namespace["norm"] = norm  # handle Matrix/Vector normalization
-        args.extend([namespace[sym] for sym in self.parameters])  # args to lambdify
+        namespace["norm"] = norm
+        namespace["cross"] = cross
+
+        # Add parameter symbols to args
+        symbol_args.extend([namespace[sym] for sym in self.parameters])
+
         expr_string = str(self.expression)
         if independent_parameters is None:
             parameters = {}
         else:
             parameters = independent_parameters.copy()
 
-        # parse expression
+        # parse expression with SYMBOLS
         try:
             expr = sympify(expr_string, locals=namespace)
         except (ValueError, TypeError):
@@ -524,15 +547,49 @@ class PotentialExpression:
                 f"Expression {expr_string=} was not viable in sympy for PotentialExpression object:{self}."
             )
 
-        f = lambdify(args, expr, modules=[{"norm": norm_evaluation}, "numpy"])
+        lambdify_namespace = {
+            "norm": norm_evaluation,
+            "cross": cross_evaluation,
+        }
 
-        # evaluate
-        parameters.update(
-            {param: val.to_value() for param, val in self.parameters.items()}
+        f = lambdify(
+            symbol_args,  # [ri, rj, rk, a, b, c]
+            expr,
+            modules=[lambdify_namespace, "numpy"],
         )
-        # apply parameters here into lamdify'ed object
+
+        # Substitute numeric values into the symbolic matrices
+        from sympy import symbols as sp_symbols
+
+        # Create a substitution dict from independent_parameters (use parameters dict, already copied)
+        if independent_parameters is not None:
+            substitutions = {
+                sp_symbols(key): val for key, val in independent_parameters.items()
+            }
+        else:
+            substitutions = {}
+
+        # Substitute the numeric values into the matrices and convert to numpy
+        numeric_namespace = {}
+        if independent_namespace is not None:
+            for key, matrix_val in independent_namespace.items():
+                if hasattr(matrix_val, "subs"):  # Check if it's a sympy object
+                    substituted = matrix_val.subs(substitutions)
+                    # Convert sympy matrix to numpy array, keep column vector shape (3, 1)
+                    numeric_namespace[key] = np.asarray(substituted, dtype=float)
+                else:
+                    numeric_namespace[key] = matrix_val
+
+        # Build call parameters
+        call_parameters = {
+            **numeric_namespace,  # ri, rj, rk as NUMPY ARRAYS (3, 1)
+            **{
+                param: self.parameters[param].to_value() for param in self.parameters
+            },  # a, b, c
+        }
+
         try:
-            result = f(**parameters)
+            result = f(**call_parameters)
         except ZeroDivisionError:
             raise GMSOError(
                 f"PotentialExpression {self} is unabel to be evaluated since the result was a divide by 0 issue."
@@ -552,6 +609,10 @@ class PotentialExpression:
         elif any(np.isnan(result)):
             raise GMSOError(
                 f"Failed evaluation of {self=} with {expr_string=} and {parameters=}."
+            )
+        elif any(np.isinf(result)):  # Add this check
+            raise GMSOError(
+                f"Failed evaluation of {self=} with {expr_string=} and {parameters=} - result contains infinity (likely divide by zero)."
             )
         if len(result) > 1:  # return a vector
             result = np.array(result).T[0]
