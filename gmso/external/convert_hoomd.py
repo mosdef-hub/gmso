@@ -508,7 +508,7 @@ def _parse_particle_information(
 
 
 def _parse_pairs_information(snapshot, top, n_rigid=0):
-    """Parse sacled pair types.
+    """Parse scaled pair types.
 
     Parameters
     ----------
@@ -779,6 +779,7 @@ def to_hoomd_forcefield(
     pppm_kwargs={"resolution": (8, 8, 8), "order": 4},
     base_units=None,
     auto_scale=False,
+    kT=None,
 ):
     """Convert the potential portion of a typed GMSO to hoomd forces.
 
@@ -806,6 +807,10 @@ def to_hoomd_forcefield(
         If the referenced scaling values cannot be determined (e.g., when the topology is not typed),
         all reference scaling values is set to 1.
         A dictionary specifying the referenced scaling values may also be provided for this argument.
+    kT : float, optional, default None
+        Set the kT parameter for running simulations with hoomd.md.pair.DPD forces. If none and these forces are
+        present in top.pairpotential_types, will raise an error. Please convert to units of [energy]
+        using base_units to ensure proper value is passed.
 
     Returns
     -------
@@ -841,6 +846,7 @@ def to_hoomd_forcefield(
             potential_refs,
             pppm_kwargs,
             base_units,
+            kT,
         ),
         "bonds": _parse_bond_forces(
             top,
@@ -885,6 +891,7 @@ def _validate_compatibility(top):
     harmonic_torsion_potential = templates["HarmonicTorsionPotential"]
     opls_torsion_potential = templates["OPLSTorsionPotential"]
     rb_torsion_potential = templates["RyckaertBellemansTorsionPotential"]
+    dpd_force = templates["HOOMDDPDConservativeForce"]
     accepted_potentials = (
         lennard_jones_potential,
         harmonic_bond_potential,
@@ -895,6 +902,7 @@ def _validate_compatibility(top):
         harmonic_torsion_potential,
         opls_torsion_potential,
         rb_torsion_potential,
+        dpd_force,
     )
     potential_types = check_compatibility(top, accepted_potentials)
     return potential_types
@@ -908,6 +916,7 @@ def _parse_nonbonded_forces(
     potential_refs,
     pppm_kwargs,
     base_units,
+    kT,
 ):
     """Parse nonbonded forces from topology.
 
@@ -928,6 +937,8 @@ def _parse_nonbonded_forces(
         Keyword arguments to pass to hoomd.md.long_range.make_pppm_coulomb_forces().
     base_units : dict
         The dictionary holding base units (mass, length, and energy)
+    kT : float
+        The temperature used for setting hoomd.md.pair.DPD object
     """
     unique_atypes = top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS)
 
@@ -994,6 +1005,36 @@ def _parse_nonbonded_forces(
             )
         )
 
+    # pair potentials here
+    if not top.pairpotential_types:
+        return nbonded_forces
+    if not isinstance(kT, (float, int)):
+        raise EngineIncompatibilityError(
+            f"kT must be set to use 'HOOMDDPDConservativeForce' in the topology {top}"
+        )
+    pairtype_parsers = {
+        "HOOMDDPDConservativeForce": _parse_dpd,
+    }
+    # Grouping pairtype by group name
+    pair_categoryDict = dict()
+    for pairtype in top.pairpotential_types:
+        pair_category = potential_types[pairtype]
+        if pair_category not in pair_categoryDict:
+            pair_categoryDict[pair_category] = [pairtype]
+        else:
+            pair_categoryDict[pair_category].append(pairtype)
+
+    for pair_category in pair_categoryDict:
+        nbonded_forces.extend(
+            pairtype_parsers[pair_category](
+                top=top,
+                pairtypes=pair_categoryDict[pair_category],
+                r_cut=r_cut,
+                nlist=nlist_nb,
+                kT=kT,
+            )
+        )
+
     return nbonded_forces
 
 
@@ -1033,6 +1074,24 @@ def _parse_coulombic(
                 special_coulombic.params[pair_name] = dict(alpha=scaling_factors[i])
                 special_coulombic.r_cut[pair_name] = r_cut
     return [*coulombic, special_coulombic]
+
+
+def _parse_dpd(top, pairtypes, r_cut, nlist, kT):
+    dpd_force = hoomd.md.pair.DPD(
+        nlist=nlist, kT=kT, default_r_cut=r_cut
+    )  # allow passable rcut to this
+    for pair_potential in pairtypes:
+        pairs = list(pair_potential.member_types)
+        pairs.sort()
+        dpd_force.params[tuple(pairs)] = {
+            "A": pair_potential.parameters["A"],
+            "gamma": pair_potential.parameters["γ"],
+        }
+        dpd_force.r_cut[tuple(pairs)] = (
+            r_cut  # TODO: Do we need this and default_r_cut?
+        )
+
+    return [dpd_force]
 
 
 def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):

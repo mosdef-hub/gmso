@@ -557,3 +557,33 @@ class TestHoomd(BaseTest):
         # 1-4 lj and charge
         forces, _ = to_hoomd_forcefield(typed_ethane, r_cut=1.2)
         assert len(forces["nonbonded"]) == 3  # no special_pairs forces
+
+    def test_dpd(self, typed_ethane):
+        from gmso.core.pairpotential_type import PairPotentialType
+
+        dpd_type = PotentialTemplateLibrary()["HOOMDDPDConservativeForce"]
+        params = {
+            "A": 1 * u.Unit("kJ / mol / nm"),
+            "r_cut": 1.2 * u.Unit("nm"),
+            "γ": 1.2 * u.amu / u.nm / u.ps,
+        }
+        typesList = [
+            ("opls_135", "opls_140"),
+            ("opls_135", "opls_135"),
+            ("opls_140", "opls_140"),
+        ]
+        for types in typesList:
+            pairtype = PairPotentialType.from_template(
+                potential_template=dpd_type, parameters=params
+            )
+            pairtype.member_types = types
+            typed_ethane.add_pairpotentialtype(pairtype)
+
+        forces, _ = to_hoomd_forcefield(typed_ethane, r_cut=1.2, kT=1)
+        for force in forces["nonbonded"]:
+            if isinstance(force, hoomd.md.pair.DPD):
+                break
+        assert force.params[("opls_135", "opls_140")]["A"] == 1
+        assert force.r_cut[("opls_135", "opls_140")] == 1.2
+        assert force.kT.value == 1
+        assert set(typesList) == set(force.params.keys())
