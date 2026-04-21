@@ -389,9 +389,7 @@ def _parse_particle_information(
         types[i] = site.name if site.atom_type is None else site.atom_type.name
         masses_raw[i] = site.mass.to_value(mass_unit) if site.mass else default_mass
         charges_list[i] = (
-            site.charge.to_value(u.elementary_charge)
-            if site.charge
-            else zero_charge
+            site.charge.to_value(u.elementary_charge) if site.charge else zero_charge
         )
         if not has_rigid and site.molecule.isrigid:
             has_rigid = True
@@ -545,6 +543,7 @@ def _parse_particle_information(
 
     return n_rigid, rigid_constraint
 
+
 def _parse_pairs_information(snapshot, top, site_indexMap, n_rigid=0):
     """Parse sacled pair types.
 
@@ -626,7 +625,9 @@ def _parse_bond_information(snapshot, top, site_indexMap, n_rigid=0):
 
         bond_types.append(bond_type)
         bond_groups.append(
-            sorted(tuple(site_indexMap[id(site)] + n_rigid for site in connection_members))
+            sorted(
+                tuple(site_indexMap[id(site)] + n_rigid for site in connection_members)
+            )
         )
 
     unique_bond_types = list(set(bond_types))
@@ -677,7 +678,9 @@ def _parse_angle_information(snapshot, top, site_indexMap, n_rigid=0):
 
         angle_types.append(angle_type)
         angle_groups.append(
-            sorted(tuple(site_indexMap[id(site)] + n_rigid for site in connection_members))
+            sorted(
+                tuple(site_indexMap[id(site)] + n_rigid for site in connection_members)
+            )
         )
 
     unique_angle_types = list(set(angle_types))
@@ -727,7 +730,9 @@ def _parse_dihedral_information(snapshot, top, site_indexMap, n_rigid=0):
 
         dihedral_types.append(dihedral_type)
         dihedral_groups.append(
-            sorted(tuple(site_indexMap[id(site)] + n_rigid for site in connection_members))
+            sorted(
+                tuple(site_indexMap[id(site)] + n_rigid for site in connection_members)
+            )
         )
 
     unique_dihedral_types = list(set(dihedral_types))
@@ -776,7 +781,9 @@ def _parse_improper_information(snapshot, top, site_indexMap, n_rigid=0):
 
         improper_types.append(improper_type)
         improper_groups.append(
-            sorted(tuple(site_indexMap[id(site)] + n_rigid for site in connection_members))
+            sorted(
+                tuple(site_indexMap[id(site)] + n_rigid for site in connection_members)
+            )
         )
 
     unique_improper_types = list(set(improper_types))
