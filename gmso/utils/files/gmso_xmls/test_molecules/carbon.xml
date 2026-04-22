@@ -16,7 +16,7 @@
   <BondTypes expression="0.5*k*(r - r_eq)**2">
     <ParametersUnitDef parameter="r_eq" unit="nm"/>
     <ParametersUnitDef parameter="k" unit="kJ/(mol*nm**2)"/>
-    <BondType name="BondType1" type1="C" type2="C">
+    <BondType name="BondType1" types="C~C">
       <Parameters>
         <Parameter name="r_eq" value="0.1324"/>
         <Parameter name="k" value="493460.96"/>
@@ -26,7 +26,7 @@
   <AngleTypes expression="0.5*k*(theta - theta_eq)**2">
     <ParametersUnitDef parameter="theta_eq" unit="rad"/>
     <ParametersUnitDef parameter="k" unit="kJ/(mol*rad**2)"/>
-    <AngleType name="AngleType1" type1="C" type2="C" type3="C">
+    <AngleType name="AngleType1" types="C~C~C">
       <Parameters>
         <Parameter name="theta_eq" value="2.12598556185"/>
         <Parameter name="k" value="584.42112"/>
@@ -37,7 +37,7 @@
     <ParametersUnitDef parameter="k" unit="kJ/mol"/>
     <ParametersUnitDef parameter="n" unit="dimensionless"/>
     <ParametersUnitDef parameter="theta_0" unit="rad"/>
-    <DihedralType name="DihedralType1" type1="*" type2="C" type3="C" type4="*">
+    <DihedralType name="DihedralType1" types="*~C~C~*">
       <Parameters>
         <Parameter name="k" value="27.8236"/>
         <Parameter name="n" value="2.0"/>

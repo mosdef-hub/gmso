@@ -1,10 +1,10 @@
 {
   "name": "HOOMDFENEWCABondPotential",
-  "expression": "-0.5 * K * R0**2 * log(1-((r-delta)/R0)**2) + 4 * epsilon * ((sigma/(r-delta))**12 - (sigma/(r-delta))**6) + epsilon",
+  "expression": "-0.5 * k * r0**2 * log(1-((r-delta)/r0)**2) + 4 * epsilon * ((sigma/(r-delta))**12 - (sigma/(r-delta))**6) + epsilon",
   "independent_variables": "r",
   "expected_parameters_dimensions": {
-    "K": "energy/length**2",
-    "R0": "length",
+    "k": "energy/(length**2)",
+    "r0": "length",
     "epsilon": "energy",
     "sigma": "length",
     "delta": "length"

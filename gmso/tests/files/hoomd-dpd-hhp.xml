@@ -1,4 +1,4 @@
-<ForceField version="0.0.1" name="HOOMD-BeadSpring">
+<ForceField version="0.0.1" name="HOOMD-DPD">
     <FFMetaData combiningRule="lorentz">
         <Units energy="kJ/mol" distance="nm" mass="amu" charge="coulomb"/>
     </FFMetaData>
@@ -41,13 +41,13 @@
         </DihedralType>
     </DihedralTypes>
 
-  <PairPotentialTypes expression="4 * epsilon * ((sigma/r)**12 - (sigma/r)**6)">
-    <ParametersUnitDef parameter="sigma" unit="nm"/>
-    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
-    <PairPotentialType name="LennardJonesPotential" type1="A" type2="A">
+  <PairPotentialTypes expression="A * (1-(r/r_cut))">
+    <ParametersUnitDef parameter="A" unit="N"/>
+    <ParametersUnitDef parameter="r_cut" unit="nm"/>
+    <PairPotentialType name="HOOMDDPDConservativePotential" type1="A" type2="A">
         <Parameters>
-            <Parameter name="epsilon" value="1.0"/>
-            <Parameter name="sigma" value="1.0"/>
+            <Parameter name="A" value="40.0"/>
+            <Parameter name="r_cut" value="1.0"/>
         </Parameters>
     </PairPotentialType>
   </PairPotentialTypes>

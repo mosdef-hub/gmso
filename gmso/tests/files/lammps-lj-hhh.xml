@@ -8,7 +8,7 @@
     </AtomTypes>
     <BondTypes expression="k * (r-r_eq)**2">
         <ParametersUnitDef parameter="r_eq" unit="nm"/>
-        <ParametersUnitDef parameter="k" unit="kJ/mol*nm**2"/>
+        <ParametersUnitDef parameter="k" unit="kJ/mol/nm**2"/>
         <BondType name="LAMMPSHarmonicBondPotential" type1='A' type2='A'>
             <Parameters>
                 <Parameter name="r_eq" value="1.0"/>
@@ -18,7 +18,7 @@
     </BondTypes>
     <AngleTypes expression="k * (theta-theta_eq)**2">
         <ParametersUnitDef parameter="theta_eq" unit="radians"/>
-        <ParametersUnitDef parameter="k" unit="kJ/mol*radians**2"/>
+        <ParametersUnitDef parameter="k" unit="kJ/mol/radians**2"/>
         <AngleType name="LAMMPSHarmonicAnglePotential" type1="A" type2="A" type3="A">
             <Parameters>
                 <Parameter name="theta_eq" value="1.0"/>
@@ -26,13 +26,13 @@
             </Parameters>
         </AngleType>
     </AngleTypes>
-    <DihedralTypes expression="k * (1 + d * cos(n*phi)">
-        <ParametersUnitDef parameter="k" unit="kJ/mol*radians**2"/>
+    <DihedralTypes expression="K * (1 + d * cos(n*phi))">
+        <ParametersUnitDef parameter="K" unit="kJ/mol"/>
         <ParametersUnitDef parameter="d"/>
         <ParametersUnitDef parameter="n"/>
         <DihedralType name="LAMMPSHarmonicDihedralPotential" type1="A" type2="A" type3="A" type4="A">
             <Parameters>
-                <Parameter name="k" value="5"/>
+                <Parameter name="K" value="5"/>
                 <Parameter name="d" value="-1"/>
                 <Parameter name="n" value="3"/>
             </Parameters>

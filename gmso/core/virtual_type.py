@@ -211,6 +211,11 @@ class VirtualType(GMSOBase):
         min_length=0,
         max_length=12,
     )
+    identifier_: Optional[str] = Field(
+        None,
+        description="ForceField key identifier",
+        alias="identifier",
+    )
 
     charge_: Optional[u.unyt_array] = Field(
         0.0 * u.elementary_charge,
@@ -247,6 +252,7 @@ class VirtualType(GMSOBase):
                 "doi": "doi_",
                 "member_classes": "member_classes_",
                 "member_types": "member_types_",
+                "identifier": "identifier_",
             },
         ),
     )
@@ -270,6 +276,10 @@ class VirtualType(GMSOBase):
     @property
     def member_classes(self):
         return self.__dict__.get("member_classes_")
+
+    @property
+    def identifier(self):
+        return self.__dict__.get("identifier_")
 
     @property
     def charge(self):
@@ -310,6 +320,7 @@ class VirtualType(GMSOBase):
             and self.virtual_potential == other.virtual_potential
             and self.member_types == other.member_types
             and self.member_classes == other.member_classes
+            and self.identifier == other.identifier
             and self.doi == other.doi
             and self.charge == other.charge
         )
@@ -322,6 +333,7 @@ class VirtualType(GMSOBase):
             virtual_potential=self.virtual_potential.clone(fast_copy),
             member_types=self.member_types,
             member_classes=self.member_classes,
+            identifier=self.identifier,
             charge=self.charge,
             doi=self.doi,
         )

@@ -6,9 +6,9 @@
        <AtomType name="A" element="A" atomclass="A" mass="1.0" charge="0.0" definition="A" description="CG Bead">
        </AtomType>
     </AtomTypes>
-    <BondTypes expression="-0.5 * K * R0**2 * log(1-(r/R0)**2) + 4 * epsilon * ((sigma/r)**12 - (sigma/r)**6) + epsilon">
+    <BondTypes expression="-0.5 * K * R0**2 * log(1-((r/R0)**2)) + 4 * epsilon * ((sigma/r)**12 - (sigma/r)**6) + epsilon">
         <ParametersUnitDef parameter="R0" unit="nm"/>
-        <ParametersUnitDef parameter="K" unit="kJ/mol*nm**2"/>
+        <ParametersUnitDef parameter="K" unit="kJ/mol/(nm**2)"/>
         <ParametersUnitDef parameter="sigma" unit="nm"/>
         <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
         <BondType name="LAMMPSFENEBondPotential" type1="A" type2="A">
