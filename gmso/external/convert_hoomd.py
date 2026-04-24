@@ -651,10 +651,16 @@ def _parse_bond_information(snapshot, top, site_indexMap, n_rigid=0):
 
     for bond in top.bonds:
         if all([site.atom_type for site in bond.connection_members]):
-            connection_members = sort_connection_members(bond, "atomclass")
-            bond_type = "-".join(
-                [site.atom_type.atomclass for site in connection_members]
-            )
+            if not bond.connection_members[0].atom_type.atomclass == "":
+                connection_members = sort_connection_members(bond, "atomclass")
+                bond_type = "-".join(
+                    [site.atom_type.name for site in connection_members]
+                )
+            else:
+                connection_members = sort_connection_members(bond, "atom_type")
+                bond_type = "-".join(
+                    [site.atom_type.atomclass for site in connection_members]
+                )
         else:
             connection_members = sort_connection_members(bond, "name")
             bond_type = "-".join([site.name for site in connection_members])
@@ -663,7 +669,6 @@ def _parse_bond_information(snapshot, top, site_indexMap, n_rigid=0):
         bond_groups.append(
             sorted(tuple(site_indexMap[site] + n_rigid for site in connection_members))
         )
-
     unique_bond_types = list(set(bond_types))
     type_to_id = {btype: i for i, btype in enumerate(unique_bond_types)}
     bond_typeids = [type_to_id[btype] for btype in bond_types]  # O(n)
@@ -1862,41 +1867,43 @@ def _convert_single_param_units(
 
 def _organize_generate_topology_molecule_info(top):
     """Generate a dictionary of unique molecules by tag."""
-    moleculeDict = {}  # ordering of all molecules
-    indexMap = {}  # map to hash sites to index
-    uniqueMoleculeODict = OrderedDict()  # list of molecules as they appear in top
-    n_sites_in_molecule = {}  # number of expected sites in molecule
+    moleculeDict = {}
+    indexMap = {}
+    uniqueMoleculeODict = OrderedDict()
+    n_sites_in_molecule = {}
     molecule_indexOffset = 0
     last_molecule = None
-    for molecule in top.unique_site_labels(
-        "molecule", name_only=False
-    ):  # assume molecules are in 0 to N order
+
+    def _safe_number(molecule):
+        """Treat molecule number -1 (unknown) as 0 (single instance)."""
+        return max(molecule.number, 0)
+
+    for molecule in top.unique_site_labels("molecule", name_only=False):
         if molecule.name not in moleculeDict:
             if last_molecule is not None:
                 molecule_indexOffset += n_sites_in_molecule[last_molecule.name] * (
-                    last_molecule.number + 1
+                    _safe_number(last_molecule) + 1
                 )
                 uniqueMoleculeODict[molecule.name] = (
-                    uniqueMoleculeODict[last_molecule.name] + 1 + last_molecule.number
+                    uniqueMoleculeODict[last_molecule.name]
+                    + 1
+                    + _safe_number(last_molecule)
                 )
             else:
-                molecule_indexOffset = 0  # only start adding this to the index after the first molecule has been tabulated
-                uniqueMoleculeODict[molecule.name] = 0  # first number
+                molecule_indexOffset = 0
+                uniqueMoleculeODict[molecule.name] = 0
             moleculeDict[molecule.name] = []
             n_sites_in_molecule[molecule.name] = len(
                 list(top.iter_sites_and_virtual_sites(key="molecule", value=molecule))
             )
-        moleculeDict[molecule.name].append([])  # new siteList to add sites to
+        moleculeDict[molecule.name].append([])
         for site in top.iter_sites_and_virtual_sites(key="molecule", value=molecule):
             moleculeDict[molecule.name][-1].append(site)
             indexMap[site] = (
-                molecule_indexOffset  # baseline counter from previous molecule indices
-                + molecule.number
-                * n_sites_in_molecule[
-                    molecule.name
-                ]  # starting index for this molecule numbers
+                molecule_indexOffset
+                + _safe_number(molecule) * n_sites_in_molecule[molecule.name]
                 + len(moleculeDict[molecule.name][-1])
-                - 1  # site number in this molecule
+                - 1
             )
         last_molecule = molecule
 
