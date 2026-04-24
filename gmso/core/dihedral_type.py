@@ -43,12 +43,18 @@ class DihedralType(ParametricPotential):
         "members of this dihedral type",
         alias="member_classes",
     )
+    identifier_: Optional[str] = Field(
+        None,
+        description="ForceField key identifier",
+        alias="identifier",
+    )
     model_config = ConfigDict(
         alias_to_fields=dict(
             **ParametricPotential.model_config["alias_to_fields"],
             **{
                 "member_types": "member_types_",
                 "member_classes": "member_classes_",
+                "identifier": "identifier_",
             },
         ),
     )
@@ -62,6 +68,7 @@ class DihedralType(ParametricPotential):
         potential_expression=None,
         member_types=None,
         member_classes=None,
+        identifier=None,
         tags=None,
     ):
         super(DihedralType, self).__init__(
@@ -72,6 +79,7 @@ class DihedralType(ParametricPotential):
             potential_expression=potential_expression,
             member_types=member_types,
             member_classes=member_classes,
+            identifier=identifier,
             tags=tags,
         )
 
@@ -82,6 +90,10 @@ class DihedralType(ParametricPotential):
     @property
     def member_classes(self):
         return self.__dict__.get("member_classes_")
+
+    @property
+    def identifier(self):
+        return self.__dict__.get("identifier_")
 
     @staticmethod
     def _default_potential_expr():

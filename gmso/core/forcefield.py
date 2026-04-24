@@ -783,10 +783,8 @@ class ForceField(object):
                                 "unit": str(value.units),
                             },
                         )
-                # attach potential to VirtualSitType
+                # attach potential to VirtualSiteType
                 virtualsite_group.append(virtual_type.etree(params_units_def))
-                # potential_group.append(virtual_type.virtual_potential.etree(potential_params_units_def))
-                # position_group.append(virtual_type.virtual_position.etree(position_params_units_def))
 
         ff_etree = etree.ElementTree(element=ff_el)
 

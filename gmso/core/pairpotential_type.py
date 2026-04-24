@@ -32,11 +32,17 @@ class PairPotentialType(ParametricPotential):
         "defining the members of this pair potential type",
         alias="member_types",
     )
+    identifier_: Optional[str] = Field(
+        None,
+        description="ForceField key identifier",
+        alias="identifier",
+    )
     model_config = ConfigDict(
         alias_to_fields=dict(
             **ParametricPotential.model_config["alias_to_fields"],
             **{
                 "member_types": "member_types_",
+                "identifier": "identifier_",
             },
         ),
     )
@@ -49,6 +55,7 @@ class PairPotentialType(ParametricPotential):
         independent_variables=None,
         potential_expression=None,
         member_types=None,
+        identifier=None,
         tags=None,
     ):
         super(PairPotentialType, self).__init__(
@@ -57,6 +64,7 @@ class PairPotentialType(ParametricPotential):
             parameters=parameters,
             independent_variables=independent_variables,
             member_types=member_types,
+            identifier=identifier,
             potential_expression=potential_expression,
             tags=tags,
         )
@@ -64,6 +72,10 @@ class PairPotentialType(ParametricPotential):
     @property
     def member_types(self):
         return self.__dict__.get("member_types_")
+
+    @property
+    def identifier(self):
+        return self.__dict__.get("identifier_")
 
     @staticmethod
     def _default_potential_expr():

@@ -1,0 +1,62 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ForceField name="FENE-Ethane" version="0.0.1">
+  <FFMetaData electrostatics14Scale="0.5" nonBonded14Scale="0.5" combiningRule="geometric">
+    <Units energy="kJ" distance="nm" mass="amu" charge="elementary_charge"/>
+  </FFMetaData>
+  <AtomTypes expression="4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)">
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <AtomType name="opls_135" mass="12.01078" charge="-0.18" atomclass="CT" definition="[C;X4](C)(H)(H)H">
+      <Parameters>
+        <Parameter name="epsilon" value="0.35"/>
+        <Parameter name="sigma" value="0.276144"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="opls_136" mass="12.01078" charge="-0.12" atomclass="CT" definition="[C;X4](C)(C)(H)H">
+      <Parameters>
+        <Parameter name="epsilon" value="0.35"/>
+        <Parameter name="sigma" value="0.276144"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="opls_137" mass="12.01078" charge="-0.06" atomclass="CT" definition="[C;X4](C)(C)(C)(H)">
+      <Parameters>
+        <Parameter name="epsilon" value="0.35"/>
+        <Parameter name="sigma" value="0.276144"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="opls_138" mass="12.01078" charge="-0.24" atomclass="CT" definition="[C;X4](H)(H)(H)H">
+      <Parameters>
+        <Parameter name="epsilon" value="0.35"/>
+        <Parameter name="sigma" value="0.276144"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="opls_139" mass="12.01078" charge="0.0" atomclass="CT" definition="[C;X4](C)(C)(C)C">
+      <Parameters>
+        <Parameter name="epsilon" value="0.35"/>
+        <Parameter name="sigma" value="0.276144"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="opls_140" mass="1.008" charge="0.06" atomclass="HC" definition="H[C;X4]">
+      <Parameters>
+        <Parameter name="epsilon" value="0.25"/>
+        <Parameter name="sigma" value="0.12552"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+  <BondTypes expression="-0.5 * k * r_eq**2 * log(1-r/r_eq)**2">
+    <ParametersUnitDef parameter="k" unit="kJ/(mol*nm**2)"/>
+    <ParametersUnitDef parameter="r_eq" unit="nm"/>
+    <BondType name="FENE-CT-HC" types="CT-HC">
+      <Parameters>
+        <Parameter name="k" value="284512.0"/>
+        <Parameter name="r_eq" value="0.109"/>
+      </Parameters>
+    </BondType>
+    <BondType name="FENE-CT-CT" types="CT-CT">
+      <Parameters>
+        <Parameter name="k" value="284512.0"/>
+        <Parameter name="r_eq" value="0.154"/>
+      </Parameters>
+    </BondType>
+  </BondTypes>
+</ForceField>

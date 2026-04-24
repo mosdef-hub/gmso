@@ -1454,7 +1454,7 @@ class Topology(object):
                     yield site
 
     def iter_sites(self, key, value):
-        """Iterate through this topology's sites and virtual_sites based on certain attribute and their values.
+        """Iterate through this topology's sites based on certain attribute and their values.
 
         Parameters
         ----------

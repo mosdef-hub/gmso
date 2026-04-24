@@ -19,7 +19,7 @@ from gmso.exceptions import EngineIncompatibilityError, NotYetImplementedWarning
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.connectivity import generate_pairs_lists
 from gmso.utils.conversions import convert_ryckaert_to_opls
-from gmso.utils.geometry import moment_of_inertia
+from gmso.utils.geometry import moment_of_inertia, coord_shift
 from gmso.utils.io import has_gsd, has_hoomd
 from gmso.utils.sorting import (
     sort_by_classes,
@@ -187,9 +187,11 @@ def to_gsd_snapshot(
         "Only writing particle, bond, sangle, proper and improper dihedral information."
         "Special pairs are not currently written to GSD files",
     )
-    moleculeDict, indexMap, uniqueMoleculeODict = (
+    # Create Molecule and Site index map Info 
+    moleculeDict, site_indexMap, uniqueMoleculeODict = (
         _organize_generate_topology_molecule_info(top)
     )
+
     n_rigid, rigid_info = _parse_particle_information(
         gsd_snapshot,
         top,
@@ -201,15 +203,15 @@ def to_gsd_snapshot(
     )
 
     if parse_special_pairs:
-        _parse_pairs_information(gsd_snapshot, top, indexMap, n_rigid)
+        _parse_pairs_information(gsd_snapshot, top, site_indexMap, n_rigid)
     if top.n_bonds > 0:
-        _parse_bond_information(gsd_snapshot, top, indexMap, n_rigid)
+        _parse_bond_information(gsd_snapshot, top, site_indexMap, n_rigid)
     if top.n_angles > 0:
-        _parse_angle_information(gsd_snapshot, top, indexMap, n_rigid)
+        _parse_angle_information(gsd_snapshot, top, site_indexMap, n_rigid)
     if top.n_dihedrals > 0:
-        _parse_dihedral_information(gsd_snapshot, top, indexMap, n_rigid)
+        _parse_dihedral_information(gsd_snapshot, top, site_indexMap, n_rigid)
     if top.n_impropers > 0:
-        _parse_improper_information(gsd_snapshot, top, indexMap, n_rigid)
+        _parse_improper_information(gsd_snapshot, top, site_indexMap, n_rigid)
 
     if rigid_info:
         return gsd_snapshot, base_units, rigid_info
@@ -324,9 +326,10 @@ def to_hoomd_snapshot(
         "Special pairs are not currently written to GSD files",
     )
 
-    moleculeDict, indexMap, uniqueMoleculeODict = (
+    moleculeDict, site_indexMap, uniqueMoleculeODict = (
         _organize_generate_topology_molecule_info(top)
     )
+    
     n_rigid, rigid_info = _parse_particle_information(
         hoomd_snapshot,
         top,
@@ -337,22 +340,21 @@ def to_hoomd_snapshot(
         uniqueMoleculeODict,
     )
     if parse_special_pairs:
-        _parse_pairs_information(hoomd_snapshot, top, indexMap, n_rigid)
+        _parse_pairs_information(hoomd_snapshot, top, site_indexMap, n_rigid)
     if top.n_bonds > 0:
-        _parse_bond_information(hoomd_snapshot, top, indexMap, n_rigid)
+        _parse_bond_information(hoomd_snapshot, top, site_indexMap, n_rigid)
     if top.n_angles > 0:
-        _parse_angle_information(hoomd_snapshot, top, indexMap, n_rigid)
+        _parse_angle_information(hoomd_snapshot, top, site_indexMap, n_rigid)
     if top.n_dihedrals > 0:
-        _parse_dihedral_information(hoomd_snapshot, top, indexMap, n_rigid)
+        _parse_dihedral_information(hoomd_snapshot, top, site_indexMap, n_rigid)
     if top.n_impropers > 0:
-        _parse_improper_information(hoomd_snapshot, top, indexMap, n_rigid)
+        _parse_improper_information(hoomd_snapshot, top, site_indexMap, n_rigid)
 
     hoomd_snapshot.wrap()
     if rigid_info:
         return hoomd_snapshot, base_units, rigid_info
     else:
         return hoomd_snapshot, base_units
-
 
 def _parse_particle_information(
     snapshot,
@@ -382,18 +384,22 @@ def _parse_particle_information(
     uniqueMoleculeODict : ordered_dict with keys of str, values of int
         Sorted list of moleculesNames as strings, with indexes being the molecule start index.
     """
-    # Set up all require
+    length_unit = base_units["length"]
+    mass_unit = base_units["mass"]
+    energy_unit = base_units["energy"]
+
+    # --- Collect per-site data, handling both regular sites and virtual sites ---
     xyz = []
     types = []
     masses = []
     charges = []
-    moments = []
-    orientations = []
     rigid_ids = []
     n_prior_molecules = 0
+    has_rigid = False
+
     for moleculeName in uniqueMoleculeODict:
         for moleculeNumber, sitesList in enumerate(moleculeDict[moleculeName]):
-            for site in sitesList:  # list of sites for that molecule
+            for site in sitesList:
                 if isinstance(site, VirtualSite):
                     xyz.append(site.position())
                     types.append(
@@ -409,38 +415,52 @@ def _parse_particle_information(
                     )
                     masses.append(site.mass)
                 charges.append(site.charge if site.charge else 0 * u.elementary_charge)
-                moments.append([1, 0, 0])
-                orientations.append([1, 0, 0, 0])
                 rigid_ids.append(
                     site.molecule.number + n_prior_molecules
                     if site.molecule.isrigid
                     else -1
                 )
-        n_prior_molecules += site.molecule.number + 1  # take last site
-    # convert to correct unyt_arrays
-    xyz = u.unyt_array(xyz).in_units(base_units["length"])
-    masses = u.unyt_array(masses).in_units(base_units["mass"])
-    charges = u.unyt_array(charges).in_units(u.elementary_charge)
-    unique_types = sorted(list(set(types)))
-    typeids = np.array([unique_types.index(t) for t in types])
-    # Check for rigid molecules
-    rigid_mols = any([site.molecule.isrigid for site in top.sites])
-    if rigid_mols:
-        # rigid_ids = [
-        #     site.molecule.number if site.molecule.isrigid else -1 for site in itertools.chain(top.sites, top.virtual_sites)
-        # ]
-        # Check that the hierarchy is correct
-        if -1 in rigid_ids:
-            first_neg_index = rigid_ids.index(-1)
-            if not all(i == -1 for i in rigid_ids[first_neg_index:]):
+                if not has_rigid and site.molecule.isrigid:
+                    has_rigid = True
+        n_prior_molecules += site.molecule.number + 1
+
+    # Convert to correct units, then strip to plain numpy for speed
+    xyz = u.unyt_array(xyz).to_value(length_unit)
+    masses = u.unyt_array(masses).to_value(mass_unit)
+    charges = u.unyt_array(charges).to_value(u.elementary_charge)
+    n_particles = len(types)
+
+    if shift_coords:
+        logger.info("Shifting coordinates to [-L/2, L/2]")
+        xyz = coord_shift(xyz, box_lengths)
+
+    # --- Build type IDs with dict lookup instead of list.index() ---
+    unique_types = sorted(set(types))
+    type_to_id = {t: idx for idx, t in enumerate(unique_types)}
+    typeids = np.array([type_to_id[t] for t in types], dtype=np.int32)
+
+    # Default orientations and moments of inertia
+    moment_of_inertias = np.tile([1.0, 0.0, 0.0], (n_particles, 1))
+    orientations = np.tile([1.0, 0.0, 0.0, 0.0], (n_particles, 1))
+
+    # --- Rigid body handling ---
+    if has_rigid:
+        rigid_ids = np.array(rigid_ids, dtype=np.int64)
+
+        # Validate hierarchy: all rigid sites must precede non-rigid sites
+        non_rigid_mask = rigid_ids == -1
+        if non_rigid_mask.any():
+            first_neg_index = int(np.argmax(non_rigid_mask))
+            if not non_rigid_mask[first_neg_index:].all():
                 raise RuntimeError(
-                    "When using a combination of rigid and non-rigid molecules, ",
-                    "all of the rigid molecules must come first in the mBuild/GMSO hierarchy. ",
+                    "When using a combination of rigid and non-rigid molecules, "
+                    "all of the rigid molecules must come first in the mBuild/GMSO hierarchy."
                 )
+
         rigid_body_sets = dict()
         for site in top.sites:
             if site.molecule.isrigid:
-                if site.molecule.name in rigid_body_sets.keys():
+                if site.molecule.name in rigid_body_sets:
                     rigid_body_sets[site.molecule.name].add(
                         site.molecule.number + uniqueMoleculeODict[site.molecule.name]
                     )
@@ -448,79 +468,93 @@ def _parse_particle_information(
                     rigid_body_sets[site.molecule.name] = {
                         site.molecule.number + uniqueMoleculeODict[site.molecule.name]
                     }
-        # Number of unique types of rigid molecules
-        n_rigid_types = len(rigid_body_sets.keys())
-        # Total number of rigid molecules
-        n_rigid = sum([len(mols) for mols in rigid_body_sets.values()])
-        # Create place holder arrays for rigid particle properties
-        rigid_charges = np.zeros(n_rigid) * charges.units
-        rigid_masses = np.zeros(n_rigid) * masses.units
-        rigid_xyz = np.zeros((n_rigid, 3)) * xyz.units
+
+        n_rigid_types = len(rigid_body_sets)
+        n_rigid = sum(len(mols) for mols in rigid_body_sets.values())
+
+        # Plain numpy placeholders (units already stripped above)
+        rigid_charges = np.zeros(n_rigid)
+        rigid_masses = np.zeros(n_rigid)
+        rigid_xyz = np.zeros((n_rigid, 3))
         rigid_moits = np.zeros((n_rigid, 3))
-        rigid_orientations = [[1, 0, 0, 0] for i in rigid_xyz]
-        # Rigid particles get type IDs from 0 to n_rigid_types
-        rigid_type_ids = []
-        for i, rigid_type in enumerate(rigid_body_sets.keys()):
-            rigid_type_ids.extend([i] * len(rigid_body_sets[rigid_type]))
-        # Hoomd rigid constraint obj needed to run rigid body simulations
+        rigid_orientations = np.tile([1.0, 0.0, 0.0, 0.0], (n_rigid, 1))
+
+        # Build rigid type IDs
+        rigid_type_ids = np.empty(n_rigid, dtype=np.int32)
+        offset = 0
+        for i, rigid_type in enumerate(rigid_body_sets):
+            count = len(rigid_body_sets[rigid_type])
+            rigid_type_ids[offset : offset + count] = i
+            offset += count
+
+        # Precompute group indices for each rigid body ID
+        group_indices_map = {}
+        for i in range(n_particles):
+            rid = rigid_ids[i]
+            if rid != -1:
+                if rid not in group_indices_map:
+                    group_indices_map[rid] = []
+                group_indices_map[rid].append(i)
+        for rid in group_indices_map:
+            group_indices_map[rid] = np.array(group_indices_map[rid], dtype=np.intp)
+
         rigid_constraint = hoomd.md.constrain.Rigid()
         mol_count = 0
-        # Populate rigid particle placeholder arrays created above
-        for rigid_mol in rigid_body_sets.keys():
-            for idx, _id in enumerate(rigid_body_sets[rigid_mol]):
-                # Get values for rigid body properties from their constituent particles
-                group_indices = np.where(np.array(rigid_ids) == _id)[0]
-                group_positions = xyz[group_indices].value
-                group_masses = masses[group_indices].value
-                group_orientations = [[1, 0, 0, 0] for i in group_indices]
-                com_xyz = np.sum(group_positions.T * group_masses, axis=1) / sum(
-                    group_masses
-                )
-                rigid_masses[idx + mol_count] = sum(group_masses)
-                rigid_xyz[idx + mol_count] = com_xyz
-                rigid_moits[idx + mol_count] = moment_of_inertia(
+
+        for rigid_mol in rigid_body_sets:
+            sorted_ids = sorted(rigid_body_sets[rigid_mol])
+            for idx, _id in enumerate(sorted_ids):
+                group_indices = group_indices_map[_id]
+                group_positions = xyz[group_indices]
+                group_masses = masses[group_indices]
+
+                total_mass = group_masses.sum()
+                com_xyz = (group_positions.T * group_masses).sum(axis=1) / total_mass
+
+                pos_idx = idx + mol_count
+                rigid_masses[pos_idx] = total_mass
+                rigid_xyz[pos_idx] = com_xyz
+                rigid_moits[pos_idx] = moment_of_inertia(
                     group_positions, group_masses, com_xyz
                 )
-                # Only need to make one entry per rigid body type
+
                 if idx == 0:
                     const_ids = typeids[group_indices]
                     const_types = [unique_types[i] for i in const_ids]
-
+                    group_orientations = [[1, 0, 0, 0] for _ in group_indices]
                     rigid_constraint.body[rigid_mol] = {
                         "constituent_types": const_types,
                         "positions": group_positions,
                         "orientations": group_orientations,
                     }
             mol_count += len(rigid_body_sets[rigid_mol])
-        # Combine properties for rigid body particles and constituent particles
-        # All rigid body propeties should be at the beginning, others get bumped
+
+        # Prepend rigid body data
         unique_types = list(rigid_body_sets.keys()) + unique_types
-        typeids = np.concatenate((np.array(rigid_type_ids), typeids + n_rigid_types))
+        typeids = np.concatenate((rigid_type_ids, typeids + n_rigid_types))
         masses = np.concatenate((rigid_masses, masses))
         xyz = np.concatenate((rigid_xyz, xyz))
         charges = np.concatenate((rigid_charges, charges))
-        orientations = rigid_orientations + orientations
-        moments = np.concatenate((rigid_moits, moments))
+        orientations = np.concatenate((rigid_orientations, orientations), axis=0)
+        moment_of_inertias = np.concatenate((rigid_moits, moment_of_inertias), axis=0)
         rigid_id_tags = np.concatenate((np.arange(n_rigid), rigid_ids))
     else:
         n_rigid = 0
         rigid_constraint = None
 
-    """
-    Permittivity of free space = 2.39725e-4 e^2/((kcal/mol)(angstrom)),
-    where e is the elementary charge
-    """
-
+    # Compute charge factor (strip to float for consistency)
     e0 = u.physical_constants.eps_0.in_units(
-        u.elementary_charge**2 / (base_units["energy"] * base_units["length"])
+        u.elementary_charge**2 / (energy_unit * length_unit)
     )
-    charge_factor = (
-        4.0 * np.pi * e0 * base_units["length"] * base_units["energy"]
-    ) ** 0.5
-    # Write out all of the snapshot attributes
-    if isinstance(snapshot, hoomd.Snapshot):
-        snapshot.particles.N = top.n_sites + n_rigid + top.n_virtual_sites
-        snapshot.particles.types = unique_types
+    charge_factor = (4.0 * np.pi * e0 * length_unit * energy_unit) ** 0.5
+    charge_factor = charge_factor.to_value(u.elementary_charge)
+
+    # --- Write snapshot ---
+    is_hoomd_snapshot = isinstance(snapshot, hoomd.Snapshot)
+    snapshot.particles.N = n_particles + n_rigid
+    snapshot.particles.types = unique_types
+
+    if is_hoomd_snapshot:
         snapshot.particles.position[0:] = xyz
         snapshot.particles.typeid[0:] = typeids
         snapshot.particles.mass[0:] = masses
@@ -528,10 +562,8 @@ def _parse_particle_information(
         snapshot.particles.orientation[0:] = orientations
         if n_rigid:
             snapshot.particles.body[0:] = rigid_id_tags
-            snapshot.particles.moment_inertia[0:] = moments
-    elif isinstance(snapshot, gsd.hoomd.Frame):
-        snapshot.particles.N = top.n_sites + n_rigid
-        snapshot.particles.types = unique_types
+            snapshot.particles.moment_inertia[0:] = moment_of_inertias
+    else:  # gsd.hoomd.Frame
         snapshot.particles.position = xyz
         snapshot.particles.typeid = typeids
         snapshot.particles.mass = masses
@@ -539,12 +571,11 @@ def _parse_particle_information(
         snapshot.particles.orientation = orientations
         if n_rigid:
             snapshot.particles.body = rigid_id_tags
-            snapshot.particles.moment_inertia = moments
+            snapshot.particles.moment_inertia = moment_of_inertias
     return n_rigid, rigid_constraint
 
-
-def _parse_pairs_information(snapshot, top, indexMap, n_rigid=0):
-    """Parse sacled pair types.
+def _parse_pairs_information(snapshot, top, site_indexMap, n_rigid=0):
+    """Parse scaled pair types.
 
     Parameters
     ----------
@@ -578,7 +609,9 @@ def _parse_pairs_information(snapshot, top, indexMap, n_rigid=0):
         if pair_type not in pair_types:
             pair_types.append(pair_type)
         pair_typeids.append(pair_types.index(pair_type))
-        pairs.append((indexMap[pair[0]] + n_rigid, indexMap[pair[1]] + n_rigid))
+        pairs.append(
+            (site_indexMap[pair[0]] + n_rigid, site_indexMap[pair[1]] + n_rigid)
+        )
 
     if isinstance(snapshot, hoomd.Snapshot):
         snapshot.pairs.N = len(pairs)
@@ -592,7 +625,7 @@ def _parse_pairs_information(snapshot, top, indexMap, n_rigid=0):
         snapshot.pairs.typeid = pair_typeids
 
 
-def _parse_bond_information(snapshot, top, indexMap, n_rigid=0):
+def _parse_bond_information(snapshot, top, site_indexMap, n_rigid=0):
     """Parse bonds information from topology.
 
     Parameters
@@ -626,11 +659,14 @@ def _parse_bond_information(snapshot, top, indexMap, n_rigid=0):
 
         bond_types.append(bond_type)
         bond_groups.append(
-            sorted(tuple(indexMap[site] + n_rigid for site in connection_members))
+            sorted(
+                tuple(site_indexMap[site] + n_rigid for site in connection_members)
+            )
         )
 
     unique_bond_types = list(set(bond_types))
-    bond_typeids = [unique_bond_types.index(i) for i in bond_types]
+    type_to_id = {btype: i for i, btype in enumerate(unique_bond_types)}
+    bond_typeids = [type_to_id[btype] for btype in bond_types]  # O(n)
 
     if isinstance(snapshot, hoomd.Snapshot):
         snapshot.bonds.types = unique_bond_types
@@ -644,7 +680,7 @@ def _parse_bond_information(snapshot, top, indexMap, n_rigid=0):
     logger.info(f"{len(unique_bond_types)} unique bond types detected")
 
 
-def _parse_angle_information(snapshot, top, indexMap, n_rigid=0):
+def _parse_angle_information(snapshot, top, site_indexMap, n_rigid=0):
     """Parse angles information from topology.
 
     Parameters
@@ -678,11 +714,14 @@ def _parse_angle_information(snapshot, top, indexMap, n_rigid=0):
 
         angle_types.append(angle_type)
         angle_groups.append(
-            tuple(indexMap[site] + n_rigid for site in connection_members)
+            sorted(
+                tuple(site_indexMap[site] + n_rigid for site in connection_members)
+            )
         )
 
     unique_angle_types = list(set(angle_types))
-    angle_typeids = [unique_angle_types.index(i) for i in angle_types]
+    type_to_id = {atype: i for i, atype in enumerate(unique_angle_types)}
+    angle_typeids = [type_to_id[atype] for atype in angle_types]
 
     if isinstance(snapshot, hoomd.Snapshot):
         snapshot.angles.types = unique_angle_types
@@ -697,7 +736,7 @@ def _parse_angle_information(snapshot, top, indexMap, n_rigid=0):
     logger.info(f"{len(unique_angle_types)} unique angle types detected")
 
 
-def _parse_dihedral_information(snapshot, top, indexMap, n_rigid=0):
+def _parse_dihedral_information(snapshot, top, site_indexMap, n_rigid=0):
     """Parse dihedral information from topology.
 
     Parameters
@@ -729,11 +768,14 @@ def _parse_dihedral_information(snapshot, top, indexMap, n_rigid=0):
 
         dihedral_types.append(dihedral_type)
         dihedral_groups.append(
-            tuple(indexMap[site] + n_rigid for site in connection_members)
+            sorted(
+                tuple(site_indexMap[site] + n_rigid for site in connection_members)
+            )
         )
 
     unique_dihedral_types = list(set(dihedral_types))
-    dihedral_typeids = [unique_dihedral_types.index(i) for i in dihedral_types]
+    type_to_id = {dtype: i for i, dtype in enumerate(unique_dihedral_types)}
+    dihedral_typeids = [type_to_id[dtype] for dtype in dihedral_types]
 
     if isinstance(snapshot, hoomd.Snapshot):
         snapshot.dihedrals.types = unique_dihedral_types
@@ -748,7 +790,7 @@ def _parse_dihedral_information(snapshot, top, indexMap, n_rigid=0):
     logger.info(f"{len(unique_dihedral_types)} unique dihedral types detected")
 
 
-def _parse_improper_information(snapshot, top, indexMap, n_rigid=0):
+def _parse_improper_information(snapshot, top, site_indexMap, n_rigid=0):
     """Parse impropers information from topology.
 
     Parameters
@@ -779,11 +821,14 @@ def _parse_improper_information(snapshot, top, indexMap, n_rigid=0):
 
         improper_types.append(improper_type)
         improper_groups.append(
-            tuple(indexMap[site] + n_rigid for site in connection_members)
+            sorted(
+                tuple(site_indexMap[site] + n_rigid for site in connection_members)
+            )
         )
 
     unique_improper_types = list(set(improper_types))
-    improper_typeids = [unique_improper_types.index(i) for i in improper_types]
+    type_to_id = {itype: i for i, itype in enumerate(unique_improper_types)}
+    improper_typeids = [type_to_id[itype] for itype in improper_types]
 
     if isinstance(snapshot, hoomd.Snapshot):
         snapshot.impropers.types = unique_improper_types
@@ -922,16 +967,20 @@ def _validate_compatibility(top):
     templates = PotentialTemplateLibrary()
     lennard_jones_potential = templates["LennardJonesPotential"]
     harmonic_bond_potential = templates["HarmonicBondPotential"]
+    fene_bond_potential = templates["HOOMDFENEWCABondPotential"]
     harmonic_angle_potential = templates["HarmonicAnglePotential"]
     periodic_torsion_potential = templates["PeriodicTorsionPotential"]
+    hoomd_periodic_torsion_potential = templates["HOOMDPeriodicDihedralPotential"]
     harmonic_torsion_potential = templates["HarmonicTorsionPotential"]
     opls_torsion_potential = templates["OPLSTorsionPotential"]
     rb_torsion_potential = templates["RyckaertBellemansTorsionPotential"]
     accepted_potentials = (
         lennard_jones_potential,
         harmonic_bond_potential,
+        fene_bond_potential,
         harmonic_angle_potential,
         periodic_torsion_potential,
+        hoomd_periodic_torsion_potential,
         harmonic_torsion_potential,
         opls_torsion_potential,
         rb_torsion_potential,
@@ -1069,9 +1118,10 @@ def _parse_coulombic(
         coulombic = hoomd.md.long_range.pppm.make_pppm_coulomb_forces(
             nlist=nlist, resolution=resolution, order=order, r_cut=r_cut
         )
-
+    if not np.any(scaling_factors):
+        return [*coulombic]  # return early
     # Handle 1-2, 1-3, and 1-4 scaling
-    # TODO: Fiure out a more general way to do this and handle molecule scaling factors
+    # TODO: Figure out a more general way to do this and handle molecule scaling factors
     special_coulombic = hoomd.md.special_pair.Coulomb()
 
     # Use same method as to_hoomd_snapshot to generate pairs list
@@ -1084,7 +1134,6 @@ def _parse_coulombic(
                 )
                 special_coulombic.params[pair_name] = dict(alpha=scaling_factors[i])
                 special_coulombic.r_cut[pair_name] = r_cut
-
     return [*coulombic, special_coulombic]
 
 
@@ -1120,6 +1169,8 @@ def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
     # Handle 1-2, 1-3, and 1-4 scaling
     # TODO: Figure out a more general way to do this
     # and handle molecule scaling factors
+    if not np.any(scaling_factors):
+        return [lj]
     special_lj = hoomd.md.special_pair.LJ()
 
     pairs_dict = generate_pairs_lists(top)
@@ -1230,6 +1281,10 @@ def _parse_bond_forces(
             "container": hoomd.md.bond.Harmonic,
             "parser": _parse_harmonic_bond,
         },
+        "HOOMDFENEWCABondPotential": {
+            "container": hoomd.md.bond.FENEWCA,
+            "parser": _parse_fene_bond,
+        },
     }
     bond_forces = list()
     for group in groups:
@@ -1247,7 +1302,6 @@ def _parse_harmonic_bond(
     btypes,
 ):
     for btype in btypes:
-        # TODO: Unit conversion
         members = sort_by_classes(btype)
         # If wild card in class, sort by types instead
         if "*" in members:
@@ -1255,6 +1309,22 @@ def _parse_harmonic_bond(
         container.params["-".join(members)] = {
             "k": btype.parameters["k"],
             "r0": btype.parameters["r_eq"],
+        }
+    return container
+
+
+def _parse_fene_bond(
+    container,
+    btypes,
+):
+    for btype in btypes:
+        members = sort_by_classes(btype)
+        # If wild card in class, sort by types instead
+        if "*" in members:
+            members = sort_by_types(btype)
+        container.params["-".join(members)] = {
+            key: btype.parameters.get(key, 0.0)  # defaults to 0 if no sigma or epsilon
+            for key in ["k", "r0", "epsilon", "sigma", "delta"]
         }
     return container
 
@@ -1388,6 +1458,10 @@ def _parse_dihedral_forces(
             "container": hoomd.md.dihedral.Harmonic,
             "parser": _parse_periodic_dihedral,
         }
+        dtype_group_map["HOOMDPeriodicTorsionPotential"] = {
+            "container": hoomd.md.dihedral.Harmonic,
+            "parser": _parse_hoomd_periodic_dihedral,
+        }
 
     dihedral_forces = list()
     for group in groups:
@@ -1424,7 +1498,7 @@ def _parse_periodic_dihedral(container, dihedrals, expected_units_dim, base_unit
         member_classes = [site.atom_type.atomclass for site in member_sites]
         if isinstance(dtype.parameters["k"], u.array.unyt_quantity):
             containersList[0].params["-".join(member_classes)] = {
-                "k": dtype.parameters["k"].to_value(),
+                "k": dtype.parameters["k"].to_value() * 2,  # convert to K/2 form
                 "d": 1,
                 "n": dtype.parameters["n"].to_value(),
                 "phi0": dtype.parameters["phi_eq"].to_value(),
@@ -1433,8 +1507,52 @@ def _parse_periodic_dihedral(container, dihedrals, expected_units_dim, base_unit
             paramsLen = len(dtype.parameters["k"])
             for nIndex in range(paramsLen):
                 containersList[nIndex].params["-".join(member_classes)] = {
-                    "k": dtype.parameters["k"].to_value()[nIndex],
+                    "k": dtype.parameters["k"].to_value()[nIndex] * 2,
                     "d": 1,
+                    "n": dtype.parameters["n"].to_value()[nIndex],
+                    "phi0": dtype.parameters["phi_eq"].to_value()[nIndex],
+                }
+    filled_containersList = []
+    for i in range(5):  # take only periodic terms that have parameters
+        if len(tuple(containersList[i].params.keys())) == 0:
+            continue
+        # add in extra parameters
+        for key in containersList[0].params.keys():
+            if key not in tuple(containersList[i].params.keys()):
+                containersList[i].params[key] = {
+                    "k": 0,
+                    "d": 1,
+                    "n": 0,
+                    "phi0": 0,
+                }
+        filled_containersList.append(containersList[i])
+    return filled_containersList
+
+
+def _parse_hoomd_periodic_dihedral(
+    container, dihedrals, expected_units_dim, base_units
+):
+    containersList = []
+    for _ in range(5):
+        containersList.append(copy.deepcopy(container))
+    for dihedral in dihedrals:
+        dtype = dihedral.dihedral_type
+        dtype = _convert_single_param_units(dtype, expected_units_dim, base_units)
+        member_sites = sort_connection_members(dihedral, "atomclass")
+        member_classes = [site.atom_type.atomclass for site in member_sites]
+        if isinstance(dtype.parameters["k"], u.array.unyt_quantity):
+            containersList[0].params["-".join(member_classes)] = {
+                "k": dtype.parameters["k"].to_value(),
+                "d": dtype.parameters["k"].to_value(),
+                "n": dtype.parameters["n"].to_value(),
+                "phi0": dtype.parameters["phi_eq"].to_value(),
+            }
+        elif isinstance(dtype.parameters["k"], u.array.unyt_array):
+            paramsLen = len(dtype.parameters["k"])
+            for nIndex in range(paramsLen):
+                containersList[nIndex].params["-".join(member_classes)] = {
+                    "k": dtype.parameters["k"].to_value()[nIndex],
+                    "d": dtype.parameters["k"].to_value()[nIndex],
                     "n": dtype.parameters["n"].to_value()[nIndex],
                     "phi0": dtype.parameters["phi_eq"].to_value()[nIndex],
                 }
@@ -1539,6 +1657,10 @@ def _parse_improper_forces(
                 "container": hoomd.md.improper.Periodic,
                 "parser": _parse_periodic_improper,
             },
+            "HOOMDPeriodicDihedralPotential": {
+                "container": hoomd.md.improper.Periodic,
+                "parser": _parse_hoomd_periodic_improper,
+            },
         }
     else:
         itype_group_map = {
@@ -1570,7 +1692,7 @@ def _parse_harmonic_improper(
             members = sort_by_types(itype)
         container.params["-".join(members)] = {
             "k": itype.parameters["k"],
-            "chi0": itype.parameters["phi_eq"],  # diff nomenclature?
+            "chi0": itype.parameters["phi_eq"],
         }
     return container
 
@@ -1585,10 +1707,28 @@ def _parse_periodic_improper(
         if "*" in members:
             members = sort_by_types(itype)
         container.params["-".join(members)] = {
-            "k": itype.parameters["k"],
+            "k": itype.parameters["k"] * 2,  # convert to k/2
             "chi0": itype.parameters["phi_eq"],
             "n": itype.parameters["n"],
             "d": itype.parameters.get("d", 1.0),
+        }
+    return container
+
+
+def _parse_hoomd_periodic_improper(
+    container,
+    itypes,
+):
+    for itype in itypes:
+        members = sort_by_classes(itype)
+        # If wild card in class, sort by types instead
+        if "*" in members:
+            members = sort_by_types(itype)
+        container.params["-".join(members)] = {
+            "k": itype.parameters["k"],
+            "chi0": itype.parameters["phi0"],
+            "n": itype.parameters["n"],
+            "d": itype.parameters.get("d"),
         }
     return container
 
