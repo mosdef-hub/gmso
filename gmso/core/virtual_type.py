@@ -386,6 +386,7 @@ class VirtualType(GMSOBase):
                     "tags_",
                     "virtual_position",
                     "virtual_potential",
+                    "identifier_",
                 },
             ).items()
             if value != ""
