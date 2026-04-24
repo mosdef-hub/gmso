@@ -710,7 +710,6 @@ class ForceField(object):
         dihedral_types_groups = self.group_dihedral_types_by_expression()
         improper_types_groups = self.group_improper_types_by_expression()
         virtual_types_groups = self.group_virtual_types_by_expression()
-        # ("VirtualTypes", virtual_types_groups),
 
         for tag, potential_group in [
             ("BondTypes", bond_types_groups),
@@ -783,7 +782,7 @@ class ForceField(object):
                                 "unit": str(value.units),
                             },
                         )
-                # attach potential to VirtualSiteType
+                # attach potential to VirtualSitType
                 virtualsite_group.append(virtual_type.etree(params_units_def))
 
         ff_etree = etree.ElementTree(element=ff_el)
