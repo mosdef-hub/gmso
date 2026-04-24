@@ -19,7 +19,7 @@ from gmso.exceptions import EngineIncompatibilityError, NotYetImplementedWarning
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.connectivity import generate_pairs_lists
 from gmso.utils.conversions import convert_ryckaert_to_opls
-from gmso.utils.geometry import moment_of_inertia, coord_shift
+from gmso.utils.geometry import coord_shift, moment_of_inertia
 from gmso.utils.io import has_gsd, has_hoomd
 from gmso.utils.sorting import (
     sort_by_classes,
@@ -187,7 +187,7 @@ def to_gsd_snapshot(
         "Only writing particle, bond, sangle, proper and improper dihedral information."
         "Special pairs are not currently written to GSD files",
     )
-    # Create Molecule and Site index map Info 
+    # Create Molecule and Site index map Info
     moleculeDict, site_indexMap, uniqueMoleculeODict = (
         _organize_generate_topology_molecule_info(top)
     )
@@ -329,7 +329,7 @@ def to_hoomd_snapshot(
     moleculeDict, site_indexMap, uniqueMoleculeODict = (
         _organize_generate_topology_molecule_info(top)
     )
-    
+
     n_rigid, rigid_info = _parse_particle_information(
         hoomd_snapshot,
         top,
@@ -355,6 +355,7 @@ def to_hoomd_snapshot(
         return hoomd_snapshot, base_units, rigid_info
     else:
         return hoomd_snapshot, base_units
+
 
 def _parse_particle_information(
     snapshot,
@@ -574,6 +575,7 @@ def _parse_particle_information(
             snapshot.particles.moment_inertia = moment_of_inertias
     return n_rigid, rigid_constraint
 
+
 def _parse_pairs_information(snapshot, top, site_indexMap, n_rigid=0):
     """Parse scaled pair types.
 
@@ -659,9 +661,7 @@ def _parse_bond_information(snapshot, top, site_indexMap, n_rigid=0):
 
         bond_types.append(bond_type)
         bond_groups.append(
-            sorted(
-                tuple(site_indexMap[site] + n_rigid for site in connection_members)
-            )
+            sorted(tuple(site_indexMap[site] + n_rigid for site in connection_members))
         )
 
     unique_bond_types = list(set(bond_types))
@@ -714,9 +714,7 @@ def _parse_angle_information(snapshot, top, site_indexMap, n_rigid=0):
 
         angle_types.append(angle_type)
         angle_groups.append(
-            sorted(
-                tuple(site_indexMap[site] + n_rigid for site in connection_members)
-            )
+            sorted(tuple(site_indexMap[site] + n_rigid for site in connection_members))
         )
 
     unique_angle_types = list(set(angle_types))
@@ -768,9 +766,7 @@ def _parse_dihedral_information(snapshot, top, site_indexMap, n_rigid=0):
 
         dihedral_types.append(dihedral_type)
         dihedral_groups.append(
-            sorted(
-                tuple(site_indexMap[site] + n_rigid for site in connection_members)
-            )
+            sorted(tuple(site_indexMap[site] + n_rigid for site in connection_members))
         )
 
     unique_dihedral_types = list(set(dihedral_types))
@@ -821,9 +817,7 @@ def _parse_improper_information(snapshot, top, site_indexMap, n_rigid=0):
 
         improper_types.append(improper_type)
         improper_groups.append(
-            sorted(
-                tuple(site_indexMap[site] + n_rigid for site in connection_members)
-            )
+            sorted(tuple(site_indexMap[site] + n_rigid for site in connection_members))
         )
 
     unique_improper_types = list(set(improper_types))
