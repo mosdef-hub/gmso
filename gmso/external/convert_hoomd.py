@@ -654,12 +654,12 @@ def _parse_bond_information(snapshot, top, site_indexMap, n_rigid=0):
             if not bond.connection_members[0].atom_type.atomclass == "":
                 connection_members = sort_connection_members(bond, "atomclass")
                 bond_type = "-".join(
-                    [site.atom_type.name for site in connection_members]
+                    [site.atom_type.atomclass for site in connection_members]
                 )
             else:
                 connection_members = sort_connection_members(bond, "atom_type")
                 bond_type = "-".join(
-                    [site.atom_type.atomclass for site in connection_members]
+                    [site.atom_type.name for site in connection_members]
                 )
         else:
             connection_members = sort_connection_members(bond, "name")
