@@ -6,7 +6,6 @@ from itertools import combinations
 from typing import TYPE_CHECKING, List
 
 import networkx as nx
-from boltons.setutils import IndexedSet
 from networkx.algorithms import shortest_path_length
 
 if TYPE_CHECKING:
@@ -77,7 +76,7 @@ def identify_connections(top, index_only=False):
         adj[i].add(j)
         adj[j].add(i)
 
-    angle_matches    = _enumerate_angles(adj)
+    angle_matches = _enumerate_angles(adj)
     dihedral_matches = _enumerate_dihedrals(adj)
     improper_matches = _enumerate_impropers(adj)
 
