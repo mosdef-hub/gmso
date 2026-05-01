@@ -537,7 +537,7 @@ class TestHoomd(BaseTest):
     def test_dpd(self, typed_ethane):
         from gmso.core.pairpotential_type import PairPotentialType
 
-        dpd_type = PotentialTemplateLibrary()["HOOMDDPDConservativeForce"]
+        dpd_type = PotentialTemplateLibrary()["HOOMDDPDForce"]
         params = {
             "A": 1 * u.Unit("kJ / mol / nm"),
             "r_cut": 1.2 * u.Unit("nm"),

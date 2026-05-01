@@ -982,7 +982,7 @@ def _validate_compatibility(top):
     harmonic_torsion_potential = templates["HarmonicTorsionPotential"]
     opls_torsion_potential = templates["OPLSTorsionPotential"]
     rb_torsion_potential = templates["RyckaertBellemansTorsionPotential"]
-    dpd_force = templates["HOOMDDPDConservativeForce"]
+    dpd_force = templates["HOOMDDPDForce"]
     accepted_potentials = (
         lennard_jones_potential,
         harmonic_bond_potential,
@@ -1114,10 +1114,10 @@ def _parse_nonbonded_forces(
         return nbonded_forces
     if not isinstance(kT, (float, int)):
         raise EngineIncompatibilityError(
-            f"kT must be set to use 'HOOMDDPDConservativeForce' in the topology {top}"
+            f"kT must be set to use 'HOOMDDPDForce' in the topology {top}"
         )
     pairtype_parsers = {
-        "HOOMDDPDConservativeForce": _parse_dpd,
+        "HOOMDDPDForce": _parse_dpd,
     }
     # Grouping pairtype by group name
     pair_categoryDict = dict()
