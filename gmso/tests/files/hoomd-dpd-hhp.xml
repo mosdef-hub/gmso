@@ -1,6 +1,6 @@
 <ForceField version="0.0.1" name="HOOMD-DPD">
     <FFMetaData combiningRule="lorentz">
-        <Units energy="kJ/mol" distance="nm" mass="amu" charge="coulomb"/>
+        <Units energy="kJ/mol" distance="nm" mass="amu" time="s" charge="coulomb"/>
     </FFMetaData>
     <AtomTypes>
        <AtomType name="A" element="A" atomclass="A" mass="1.0" charge="0.0" definition="A" description="CG Bead">
@@ -41,13 +41,15 @@
         </DihedralType>
     </DihedralTypes>
 
-  <PairPotentialTypes expression="A * (1-(r/r_cut))">
+  <PairPotentialTypes expression="A * (1-(r/r_cut)) - γ">
     <ParametersUnitDef parameter="A" unit="N"/>
     <ParametersUnitDef parameter="r_cut" unit="nm"/>
-    <PairPotentialType name="HOOMDDPDConservativePotential" type1="A" type2="A">
+    <ParametersUnitDef parameter="γ" unit="amu/s"/>
+    <PairPotentialType name="HOOMDDPDForce" type1="A" type2="A">
         <Parameters>
             <Parameter name="A" value="40.0"/>
-            <Parameter name="r_cut" value="1.0"/>
+	    <Parameter name="r_cut" value="1.0"/>
+	    <Parameter name="γ" value="8.0"/>
         </Parameters>
     </PairPotentialType>
   </PairPotentialTypes>
