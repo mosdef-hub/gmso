@@ -563,7 +563,7 @@ class TestHoomd(BaseTest):
         assert force.r_cut[("opls_135", "opls_140")] == 1.2
         assert force.kT.value == 1
         assert set(typesList) == set(force.params.keys())
-   
+
     def test_rigid_forces(self):
         benzene = mb.load("c1ccccc1", smiles=True)
         benzene.name = "benzene"

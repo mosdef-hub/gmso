@@ -578,6 +578,7 @@ def _parse_particle_information(
             snapshot.particles.moment_inertia = moment_of_inertias
     return n_rigid, rigid_constraint
 
+
 def _parse_pairs_information(snapshot, top, site_indexMap, n_rigid=0):
     """Parse scaled pair types.
 
