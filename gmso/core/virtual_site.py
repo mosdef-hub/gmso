@@ -5,7 +5,7 @@ import unyt as u
 from pydantic import ConfigDict, Field
 from sympy import Matrix, symbols
 
-from gmso.abc.abstract_site import Site
+from gmso.abc.abstract_site import Molecule, Site
 from gmso.core.virtual_type import VirtualType
 from gmso.exceptions import MissingPotentialError
 
@@ -32,7 +32,7 @@ class VirtualSite(Site):
         alias="parent_sites",
     )
 
-    charge_: Optional[Union[u.unyt_quantity, float]] = Field(
+    charge_: u.unyt_quantity = Field(
         None, description="Charge of the virtual site", alias="charge"
     )
 
@@ -99,3 +99,23 @@ class VirtualSite(Site):
     def virtual_type(self):
         """Return the virtual site type if the virtual site is parametrized."""
         return self.__dict__.get("virtual_type_")
+
+    @property
+    def charge(self) -> Union[u.unyt_quantity, None]:
+        """Return the charge of the virtual site."""
+        charge = self.__dict__.get("charge_", None)
+        vtype = self.__dict__.get("virtual_type_", None)
+        if charge is not None:
+            return charge
+        elif vtype is not None:
+            return vtype.charge
+        else:
+            return 0.0 * u.elementary_charge
+
+    @property
+    def molecule(self) -> Union[Molecule, None]:
+        """Return the molecule associated with the parent sites."""
+        if not self.parent_sites:
+            return None
+        # Assume parent sites are part of the same molecule
+        return self.parent_sites[0].molecule

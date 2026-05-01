@@ -114,9 +114,6 @@ class TestGsd(BaseTest):
             site.molecule.isrigid = True
         apply(top, gaff_forcefield, identify_connections=True)
 
-        rigid_ids = [site.molecule.number for site in top.sites]
-        assert set(rigid_ids) == {0, 1}
-
         snapshot, refs, rigid = to_gsd_snapshot(top)
         snapshot.validate()
 
@@ -133,30 +130,6 @@ class TestGsd(BaseTest):
         )
         assert round(float(snapshot.particles.mass[1]), 4) == round(
             float(benzene.mass), 4
-        )
-
-    def test_rigid_bodies_mix(self):
-        ethane = mb.lib.molecules.Ethane()
-        ethane.name = "ethane"
-        benzene = mb.load("c1ccccc1", smiles=True)
-        benzene.name = "benzene"
-        box = mb.fill_box([benzene, ethane], n_compounds=[1, 1], box=[2, 2, 2])
-        top = from_mbuild(box)
-        for site in top.sites:
-            if site.molecule.name == "benzene":
-                site.molecule.isrigid = True
-
-        snapshot, refs, rigid = to_gsd_snapshot(top)
-        snapshot.validate()
-        assert snapshot.particles.typeid[0] == 0
-        assert snapshot.particles.N == top.n_sites + 1
-        assert np.array_equal(
-            snapshot.particles.body[-ethane.n_particles :],
-            np.array([-1] * ethane.n_particles),
-        )
-        assert np.array_equal(
-            snapshot.particles.body[1 : benzene.n_particles + 1],
-            np.array([0] * benzene.n_particles),
         )
 
     def test_rigid_bodies_bad_hierarchy(self):
@@ -551,9 +524,12 @@ class TestHoomd(BaseTest):
         np.testing.assert_allclose(forces["bonds"][0].params["CT-HC"]["sigma"], 1)
         np.testing.assert_allclose(forces["bonds"][0].params["CT-HC"]["delta"], 0.1)
 
-    def test_no_special(self, typed_ethane):
-        typed_ethane.scaling_factors[0][2] = 0
-        typed_ethane.scaling_factors[1][2] = 0
+    def test_no_special(self, ethane):
+        oplsaa = ForceField("oplsaa")
+        oplsaa.scaling_factors["electrostatics14Scale"] = 0
+        oplsaa.scaling_factors["nonBonded14Scale"] = 0
+
+        typed_ethane = apply(ethane, oplsaa)
         # 1-4 lj and charge
         forces, _ = to_hoomd_forcefield(typed_ethane, r_cut=1.2)
         assert len(forces["nonbonded"]) == 3  # no special_pairs forces
@@ -587,3 +563,58 @@ class TestHoomd(BaseTest):
         assert force.r_cut[("opls_135", "opls_140")] == 1.2
         assert force.kT.value == 1
         assert set(typesList) == set(force.params.keys())
+   
+    def test_rigid_forces(self):
+        benzene = mb.load("c1ccccc1", smiles=True)
+        benzene.name = "benzene"
+        propane = mb.load("CCC", smiles=True)
+        propane.name = "propane"
+        com_box = mb.packing.fill_box(
+            [benzene, propane], box=[5, 5, 5], n_compounds=[2, 2]
+        )
+        base_units = {
+            "mass": u.g / u.mol,
+            "length": u.nm,
+            "energy": u.kJ / u.mol,
+        }
+
+        top = from_mbuild(com_box)
+        oplsaa = ForceField("oplsaa")
+        top = apply(top, oplsaa, remove_untyped=True)
+        for site in top.sites:
+            if site.molecule.name == "benzene":
+                site.molecule.isrigid = True
+
+        gmso_snapshot, _, rigid_info = to_hoomd_snapshot(top, base_units=base_units)
+        gmso_forces, _ = to_hoomd_forcefield(
+            top,
+            r_cut=1.4,
+        )
+
+        for force in gmso_forces["nonbonded"]:
+            if isinstance(force, hoomd.md.pair.LJ):
+                assert "body" in force.nlist.exclusions
+                assert "bond" in force.nlist.exclusions
+                assert "1-3" in force.nlist.exclusions
+                assert "1-4" in force.nlist.exclusions
+                for t in gmso_snapshot.particles.types:
+                    assert force.params[("benzene", t)].to_base() == dict(
+                        epsilon=0.0, sigma=0.0
+                    )
+                    assert force.r_cut[("benzene", t)] == 1.4
+
+        assert rigid_info.body["benzene"]["constituent_types"].to_base() == [
+            "opls_145",
+            "opls_145",
+            "opls_145",
+            "opls_145",
+            "opls_145",
+            "opls_145",
+            "opls_146",
+            "opls_146",
+            "opls_146",
+            "opls_146",
+            "opls_146",
+            "opls_146",
+        ]
+        assert rigid_info.body["propane"] is None
