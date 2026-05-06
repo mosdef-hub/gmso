@@ -30,18 +30,15 @@ def apply(
     ----------
     top : gmso.Topology
         The un-typed topology to parameterize.
-    forcefields : gmso.ForceField or dict of {str: gmso.ForceField}
+    forcefields : gmso.ForceField or dict
         The forcefield(s) to apply.  When a single :class:`~gmso.ForceField`
-        is supplied it is applied to every site in *top*.  When a :class:`dict`
-        is supplied, each key must match a molecule name (or group name, see
-        *match_ff_by*) present in the topology, and the corresponding
-        :class:`~gmso.ForceField` is applied only to sites belonging to that
-        molecule/group.
-
-        .. note::
-           A topology that contains no molecule labels can only accept a
-           single :class:`~gmso.ForceField`; passing a dict will raise an
-           error in that case.
+        is supplied it is applied to every site in *top*.  When a
+        ``dict`` is supplied, each key must match a molecule name (or group
+        name, see *match_ff_by*) present in the topology, and the
+        corresponding :class:`~gmso.ForceField` is applied only to sites
+        belonging to that molecule/group.  A topology with no molecule labels
+        can only accept a single :class:`~gmso.ForceField`; passing a dict
+        in that case will raise an error.
 
     match_ff_by : str, optional, default="molecule"
         Site attribute used to map forcefields when *forcefields* is a dict.

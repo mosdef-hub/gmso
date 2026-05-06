@@ -1,3 +1,5 @@
+:orphan:
+
 .. _data_structures:
 
 Data Structures
@@ -5,11 +7,5 @@ Data Structures
 
 .. note::
 
-   This page has been superseded by the comprehensive API reference.
-   Please see :doc:`api/core_classes` for the full core class documentation and
-   :doc:`api/abstract_classes` for the abstract base classes.
-
-.. toctree::
-
-   api/abstract_classes
-   api/core_classes
+   This page has moved to the comprehensive API reference.
+   See :doc:`api/abstract_classes` and :doc:`api/core_classes`.

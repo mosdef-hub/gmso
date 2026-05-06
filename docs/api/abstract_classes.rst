@@ -20,7 +20,7 @@ JSON-serialisation helpers.
 .. autoclass:: gmso.abc.gmso_base.GMSOBase
    :members:
    :show-inheritance:
-   :exclude-members: model_config, model_fields
+   :exclude-members: model_config, model_fields, model_validate, model_dump, model_dump_json
 
 Site
 ----

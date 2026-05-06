@@ -119,52 +119,53 @@ def to_gsd_snapshot(
         all reference scaling values is set to 1.
         A dictionary specifying the referenced scaling values may also be provided for this argument.
 
-    Return
-    ------
+    Returns
+    -------
     gsd_snapshot : gsd.hoomd.Frame
-        Converted hoomd Snapshot. Always retruned.
+        Converted HOOMD snapshot. Always returned.
     base_units : dict
-        Base units dictionary utilized during the conversion. Always returned.
+        Base units dictionary used during the conversion. Always returned.
     rigid_info : hoomd.md.constrain.Rigid
-        A hoomd constraint object storing constituent particle information
+        A HOOMD constraint object storing constituent particle information
         needed to run rigid body simulations in HOOMD-blue.
-        This is only returned if sites with `site.molecule.isrigid = True`
+        Only returned when sites with ``site.molecule.isrigid = True``
         are found in the topology.
 
     Notes
     -----
     Force field parameters are not written to the GSD file and must be
-    generated using `gmso.external.convert_hoomd.to_hoomd_forcefield()`.
+    generated separately using
+    ``gmso.external.convert_hoomd.to_hoomd_forcefield()``.
 
-    If you are using mBuild and GMSO to initialize rigid body simulations
-    with HOOMD-blue set the `site.molecule.isrigid` property to `True`.
-    If your topology contains a mix of rigid and flexible molecules,
-    the rigid molecules must come first in the hierarchy of the GMSO Toplogy
-    and therefore also in the mBuild Compound hierarchy.
-    For more information about running rigid body simulations in HOOMD-blue,
-    see https://hoomd-blue.readthedocs.io/en/latest/tutorial/06-Modelling-Rigid-Bodies/00-index.html
+    When using mBuild and GMSO to initialise rigid body simulations with
+    HOOMD-blue, set ``site.molecule.isrigid = True``.  If the topology
+    contains a mix of rigid and flexible molecules, the rigid molecules
+    must appear first in the GMSO topology hierarchy (and therefore first
+    in the mBuild Compound hierarchy).
 
-    For more information on the units from `base_units`, see
+    For more information about rigid body simulations in HOOMD-blue see
+    https://hoomd-blue.readthedocs.io/en/latest/tutorial/06-Modelling-Rigid-Bodies/00-index.html
+
+    For information on the ``base_units`` dictionary see
     https://hoomd-blue.readthedocs.io/en/latest/units.html#base-units
 
-    Rigid Body Example
-    ------------------
-    In this example, a system with rigid benzene and flexible ethane
-    is initialized. Since benzene is rigid, it must be passed first
-    into `mb.fill_box` so that benzene molecules are at the top of
-    `box` hierarchy.
-        ::
-            ethane = mb.lib.molecules.Ethane()
-            ethane.name = "ethane"
-            benzene = mb.load("c1ccccc1", smiles=True)
-            benzene.name = "benzene"
-            box = mb.fill_box([benzene, ethane], n_compounds=[1, 1], box=[2, 2, 2])
-            top = from_mbuild(box)
-            for site in top.sites:
-                if site.molecule.name == "benzene":
-                    site.molecule.isrigid = True
+    Examples
+    --------
+    Rigid benzene + flexible ethane system (benzene must be passed first
+    so it sits at the top of the mBuild Compound hierarchy):
 
-            snapshot, refs, rigid = to_gsd_snapshot(top)
+    .. code-block:: python
+
+        ethane = mb.lib.molecules.Ethane()
+        ethane.name = "ethane"
+        benzene = mb.load("c1ccccc1", smiles=True)
+        benzene.name = "benzene"
+        box = mb.fill_box([benzene, ethane], n_compounds=[1, 1], box=[2, 2, 2])
+        top = from_mbuild(box)
+        for site in top.sites:
+            if site.molecule.name == "benzene":
+                site.molecule.isrigid = True
+        snapshot, refs, rigid = to_gsd_snapshot(top)
 
     """
     if int(hoomd_version[0]) < 4:
@@ -259,52 +260,53 @@ def to_hoomd_snapshot(
         all reference scaling values is set to 1.
         A dictionary specifying the referenced scaling values may also be provided for this argument.
 
-    Return
-    ------
+    Returns
+    -------
     hoomd_snapshot : hoomd.Snapshot
-        Converted hoomd Snapshot. Always retruned.
+        Converted HOOMD snapshot. Always returned.
     base_units : dict
-        Base units dictionary utilized during the conversion. Always returned.
+        Base units dictionary used during the conversion. Always returned.
     rigid_info : hoomd.md.constrain.Rigid
-        A hoomd constraint object storing constituent particle information
+        A HOOMD constraint object storing constituent particle information
         needed to run rigid body simulations in HOOMD-blue.
-        This is only returned if sites with `site.molecule.isrigid = True`
+        Only returned when sites with ``site.molecule.isrigid = True``
         are found in the topology.
 
     Notes
     -----
-    Force field parameters are not written to the GSD file and must be
-    generated using `gmso.external.convert_hoomd.to_hoomd_forcefield()`.
+    Force field parameters are not written to the snapshot and must be
+    generated separately using
+    ``gmso.external.convert_hoomd.to_hoomd_forcefield()``.
 
-    If you are using mBuild and GMSO to initialize rigid body simulations
-    with HOOMD-blue set the `site.molecule.isrigid` property to `True`.
-    If your topology contains a mix of rigid and flexible molecules,
-    the rigid molecules must come first in the hierarchy of the GMSO Toplogy
-    and therefore also in the mBuild Compound hierarchy.
-    For more information about running rigid body simulations in HOOMD-blue,
-    see https://hoomd-blue.readthedocs.io/en/latest/tutorial/06-Modelling-Rigid-Bodies/00-index.html
+    When using mBuild and GMSO to initialise rigid body simulations with
+    HOOMD-blue, set ``site.molecule.isrigid = True``.  If the topology
+    contains a mix of rigid and flexible molecules, the rigid molecules
+    must appear first in the GMSO topology hierarchy (and therefore first
+    in the mBuild Compound hierarchy).
 
-    For more information on the units from `base_units`, see
+    For more information about rigid body simulations in HOOMD-blue see
+    https://hoomd-blue.readthedocs.io/en/latest/tutorial/06-Modelling-Rigid-Bodies/00-index.html
+
+    For information on the ``base_units`` dictionary see
     https://hoomd-blue.readthedocs.io/en/latest/units.html#base-units
 
-    Rigid Body Example
-    ------------------
-    In this example, a system with rigid benzene and flexible ethane
-    is initialized. Since benzene is rigid, it must be passed first
-    into `mb.fill_box` so that benzene molecules are at the top of
-    `box` hierarchy.
-        ::
-            ethane = mb.lib.molecules.Ethane()
-            ethane.name = "ethane"
-            benzene = mb.load("c1ccccc1", smiles=True)
-            benzene.name = "benzene"
-            box = mb.fill_box([benzene, ethane], n_compounds=[1, 1], box=[2, 2, 2])
-            top = from_mbuild(box)
-            for site in top.sites:
-                if site.molecule.name == "benzene":
-                    site.molecule.isrigid = True
+    Examples
+    --------
+    Rigid benzene + flexible ethane system (benzene must be passed first
+    so it sits at the top of the mBuild Compound hierarchy):
 
-            snapshot, refs, rigid = to_hoomd_snapshot(top)
+    .. code-block:: python
+
+        ethane = mb.lib.molecules.Ethane()
+        ethane.name = "ethane"
+        benzene = mb.load("c1ccccc1", smiles=True)
+        benzene.name = "benzene"
+        box = mb.fill_box([benzene, ethane], n_compounds=[1, 1], box=[2, 2, 2])
+        top = from_mbuild(box)
+        for site in top.sites:
+            if site.molecule.name == "benzene":
+                site.molecule.isrigid = True
+        snapshot, refs, rigid = to_hoomd_snapshot(top)
     """
     if int(hoomd_version[0]) < 4:
         raise EngineIncompatibilityError(

@@ -1,3 +1,5 @@
+:orphan:
+
 .. _external:
 
 External Library Conversions
@@ -5,9 +7,5 @@ External Library Conversions
 
 .. note::
 
-   This page has been superseded by the comprehensive API reference.
-   Please see :doc:`api/external` for the full external conversions documentation.
-
-.. toctree::
-
-   api/external
+   This page has moved to the comprehensive API reference.
+   See :doc:`api/external`.
