@@ -12,29 +12,39 @@ from gmso.core.topology import Topology
 logger = logging.getLogger(__name__)
 
 
-def from_networkx(graph):
-    """Convert a networkx.Graph to a gmso.Topology.
+def from_networkx(graph: nx.Graph) -> Topology:
+    """Convert a ``networkx.Graph`` to a :class:`~gmso.Topology`.
 
-    Creates a topology from the graph where each node is a site and each
-    edge becomes a connection.
+    Each graph node must be a :class:`~gmso.abc.abstract_site.Site` and
+    each edge becomes a :class:`~gmso.Bond`.
 
     Parameters
     ----------
-    graph : networkX.Graph
-        networkx.Graph instance that need to be converted
+    graph : networkx.Graph
+        Graph whose nodes are :class:`~gmso.abc.abstract_site.Site` instances.
+        Edge data may optionally contain a ``'connection'`` key holding a
+        :class:`~gmso.abc.abstract_connection.Connection` object.
 
     Returns
     -------
-    top : gmso.Topology
+    gmso.Topology
+        Topology containing the sites and bonds from *graph*.
 
     Notes
     -----
-    - While a lot of information is lost from converting to a graph object
-    (e.g. metadata, mixing rules, etc.), the graph representation is a
-    useful way to manipulate and extract connectivity information from
-    Topology objects.
-    - The edge has a `connection` attribute, which stores the Bond
-    object it was created from
+    Much information is lost when converting a topology to a graph (mixing
+    rules, metadata, etc.).  The edge ``'connection'`` attribute stores the
+    original :class:`~gmso.Bond` and is used to reconstruct it during
+    the reverse conversion.
+
+    Angle and dihedral information stored as node attributes is detected but
+    not converted; a warning is logged if such data is found.
+
+    Raises
+    ------
+    TypeError
+        If *graph* is not a ``networkx.Graph`` or if any node is not a
+        :class:`~gmso.abc.abstract_site.Site`.
     """
     if not isinstance(graph, nx.Graph):
         raise TypeError(
@@ -70,31 +80,38 @@ def from_networkx(graph):
     return top
 
 
-def to_networkx(top, parse_angles=True, parse_dihedrals=True):
-    """Convert a gmso.Topology to a networkX.Graph.
+def to_networkx(
+    top: Topology,
+    parse_angles: bool = True,
+    parse_dihedrals: bool = True,
+) -> nx.Graph:
+    """Convert a :class:`~gmso.Topology` to a ``networkx.Graph``.
 
-    Creates a graph from the topology where each node is a site and each
-    edge is a connection.
+    Each site becomes a graph node and each bond becomes an edge.
 
     Parameters
     ----------
     top : gmso.Topology
-        topology.Topology instance that need to be converted
+        The topology to convert.
     parse_angles : bool, optional, default=True
-        Populate angle field of all nodes
-    parse_dihedral : bool, optional default=True
-        Populate dihedral field of all nodes
+        When ``True``, populate an ``'angles'`` attribute on every node
+        with the list of angles that include that site.
+    parse_dihedrals : bool, optional, default=True
+        When ``True``, populate a ``'dihedrals'`` attribute on every node
+        with the list of dihedrals that include that site.
 
     Returns
     -------
-    graph : networkX.Graph
+    networkx.Graph
+        Graph where nodes are :class:`~gmso.Atom` objects and edges carry
+        a ``'connection'`` attribute holding the corresponding
+        :class:`~gmso.Bond`.
 
     Notes
     -----
-    While a lot of information is lost from converting to a graph object
-    (e.g. metadata, mixing rules, etc.), the graph representation is a
-    useful way to manipulate and extract connectivity information from
-    Topology objects.
+    Converting to a graph loses metadata, mixing rules, and all potential
+    type information.  The graph is primarily useful for connectivity
+    analysis.
     """
     graph = nx.Graph()
 

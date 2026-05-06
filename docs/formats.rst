@@ -1,30 +1,13 @@
-Formats
-=======
+.. _formats:
 
-This submodule provides readers and writers for (on-disk) file formats.
+File Formats
+============
 
-GROMACS
--------
-The following methods are available for reading and writing GROMACS files.
+.. note::
 
-    .. autofunction:: gmso.formats.read_gro
-    .. autofunction:: gmso.formats.write_gro
+   This page has been superseded by the comprehensive API reference.
+   Please see :doc:`api/formats` for the full formats documentation.
 
-GSD
----
-The following methods are available for reading and writing GSD files.
+.. toctree::
 
-    .. autofunction:: gmso.formats.write_gsd
-
-xyz
----
-The following methods are available for reading and writing xyz files.
-
-    .. autofunction:: gmso.formats.read_xyz
-    .. autofunction:: gmso.formats.write_xyz
-
-LAMMPS DATA
------------
-The following methods are available for reading and writing LAMMPS data.
-
-    .. autofunction:: gmso.formats.write_lammpsdata
+   api/formats

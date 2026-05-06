@@ -13,23 +13,24 @@ if has_openmm & has_openmm_unit:
     from openmm.app import *
 
 
-def to_openmm(topology, openmm_object="topology"):
-    """Convert an untyped topology object to an untyped OpenMM modeller or topology.
+def to_openmm(topology: "gmso.Topology", openmm_object: str = "topology"):
+    """Convert a :class:`~gmso.Topology` to an untyped OpenMM topology or modeller.
 
-    This is useful if it's preferred to atom-type a system within OpenMM.
-    See http://openmm.org for more information.
+    Useful when atom-typing is performed within OpenMM rather than GMSO.
+    See https://openmm.org for more information.
 
     Parameters
     ----------
-    topology : `Topology` object
-        An untyped topology object
-    open_mm_object : 'topology' or 'modeller' OpenMM object, default='topology'
-        Untyped OpenMM object to convert to
+    topology : gmso.Topology
+        The un-typed GMSO topology to convert.
+    openmm_object : str, optional, default='topology'
+        Target OpenMM object type.  Accepted values: ``'topology'`` or
+        ``'modeller'``.
 
     Returns
     -------
-    open_mm_object : Untyped `topology` or `modeller` object
-
+    openmm.app.Topology or openmm.app.Modeller
+        The converted OpenMM object.
     """
     openmm_top = app.Topology()
 

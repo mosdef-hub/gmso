@@ -1,5 +1,7 @@
 """Functions used to atomtype a gmso.Topology."""
 
+from typing import Dict, List, Set, Tuple, Union
+
 from gmso.parameterization.topology_parameterizer import (
     TopologyParameterizationConfig,
     TopologyParameterizer,
@@ -9,69 +11,89 @@ __all__ = ["apply"]
 
 
 def apply(
-    top,
-    forcefields,
-    match_ff_by="molecule",
-    identify_connections=False,
-    speedup_by_molgraph=False,
-    speedup_by_moltag=False,
-    ignore_params=["improper"],
-    remove_untyped=True,
-    fast_copy=True,
-):
-    """Set Topology parameter types from GMSO ForceFields.
+    top: "gmso.Topology",
+    forcefields: Union["gmso.ForceField", Dict[str, "gmso.ForceField"]],
+    match_ff_by: str = "molecule",
+    identify_connections: bool = False,
+    speedup_by_molgraph: bool = False,
+    speedup_by_moltag: bool = False,
+    ignore_params: Union[List[str], Set[str], Tuple[str, ...]] = ["improper"],
+    remove_untyped: bool = True,
+    fast_copy: bool = True,
+) -> "gmso.Topology":
+    """Apply forcefield parameters to a :class:`~gmso.Topology`.
+
+    Atom-types all sites in *top* using the supplied forcefield(s) and
+    writes the resulting potential types onto the topology.
 
     Parameters
     ----------
-    top : gmso.core.topology.Topology, required
-        The GMSO topology on which to apply forcefields
+    top : gmso.Topology
+        The un-typed topology to parameterize.
+    forcefields : gmso.ForceField or dict of {str: gmso.ForceField}
+        The forcefield(s) to apply.  When a single :class:`~gmso.ForceField`
+        is supplied it is applied to every site in *top*.  When a :class:`dict`
+        is supplied, each key must match a molecule name (or group name, see
+        *match_ff_by*) present in the topology, and the corresponding
+        :class:`~gmso.ForceField` is applied only to sites belonging to that
+        molecule/group.
 
-    forcefields : ForceField or dict, required
-        The forcefield to apply. If a dictionary is used the keys are labels that match
-        the molecule name (specified as a label of site), and the values are gmso ForceField objects that gets applied
-        to the specified molecule.
-        Note: if a Topology with no molecule is provided, this option will only take
-        a ForceField object. If a dictionary of ForceFields is provided, this method will
-        fail.
+        .. note::
+           A topology that contains no molecule labels can only accept a
+           single :class:`~gmso.ForceField`; passing a dict will raise an
+           error in that case.
 
     match_ff_by : str, optional, default="molecule"
-        They site's tag used to match the forcefields provided above to the Topology.
-        Options include "molecule" and "group". This option is only valid if forcefields are provided
-        as a dict.
-
+        Site attribute used to map forcefields when *forcefields* is a dict.
+        Accepted values: ``"molecule"`` or ``"group"``.
     identify_connections : bool, optional, default=False
-        If true, add connections identified using networkx graph matching to match
-        the topology's bonding graph to smaller sub-graphs that correspond to an angle,
-        dihedral, improper etc
-
-    speedup_by_molgraph: bool, optional, default=False
-        A flag to determine whether or not to search the topology for repeated disconnected
-        structures, otherwise known as molecules and type each molecule only once.
-        This option will be usefult to handle systems with many repeated small molecules,
-        but may slow down system with large molecule, e.g., monolayer.
-
+        When ``True``, use NetworkX graph matching to detect angles,
+        dihedrals, and impropers from the bond graph before parameterizing.
+    speedup_by_molgraph : bool, optional, default=False
+        When ``True``, detect repeated disconnected sub-graphs (molecules) and
+        parameterize each unique molecule only once.  Useful for systems with
+        many identical small molecules; may slow down systems with large unique
+        molecules (e.g., monolayers).
     speedup_by_moltag : bool, optional, default=False
-        A flag to determine whether or not to look at site.molecule_name to try to parameterize
-        each molecule only once. This option provides speedup for topologies with properly
-        assigned molecule and residue labels.
-
-    ignore_params : set or list or tuple, optional, default=["improper"]
-        Skipping the checks that make sure all connections (in the list) have a connection types.
-        Available options includes "bond", "angle", "dihedral", and "improper".
-        If you wish to have all connection types checks, provides an empty set/list/tuple.
-
+        When ``True``, use ``site.molecule`` labels to identify repeated
+        molecules and parameterize each unique molecule only once.  Requires
+        that molecule and residue labels have been properly assigned.
+    ignore_params : list, set, or tuple of str, optional, default=["improper"]
+        Connection types whose completeness check is skipped after
+        parameterization.  Valid entries: ``"bond"``, ``"angle"``,
+        ``"dihedral"``, ``"improper"``.  Pass an empty collection to enforce
+        checks for all connection types.
     remove_untyped : bool, optional, default=True
-        If True, after the atomtyping and parameterization step, remove all connection
-        that has no connection_type.
-
+        When ``True``, remove all connections that have no associated
+        connection type after parameterization.
     fast_copy : bool, optional, default=True
-        If True, sympy expressions and parameters will not be deep copied during replicated
-        parameterization. This can lead to the potentials for multiple sites/connections
-        to be changed if a single parameter_type independent variable or expression is
-        modified after the topology is parameterized. However, this leads to much faster
-        application of forcefield parameters, and so is defaulted to True. Note that
-        this should be changed to False if further modification of expressions are
-        necessary post parameterization.
+        When ``True``, sympy expressions and parameter dictionaries are
+        *not* deep-copied when the same potential type is assigned to multiple
+        sites or connections.  This is significantly faster but means that
+        modifying a parameter on one site/connection will affect all others
+        that share the same :class:`~gmso.AtomType` (or connection-type)
+        object.  Set to ``False`` if you need to modify expressions or
+        parameters after parameterization.
+
+    Returns
+    -------
+    gmso.Topology
+        The parameterized topology (modified in-place and returned).
+
+    Examples
+    --------
+    Apply a single forcefield to an entire topology:
+
+    >>> from gmso import ForceField
+    >>> from gmso.parameterization import apply
+    >>> ff = ForceField("oplsaa.xml")
+    >>> typed_top = apply(top, ff)
+
+    Apply different forcefields to different molecule types:
+
+    >>> ff_water = ForceField("spce.xml")
+    >>> ff_ethanol = ForceField("oplsaa.xml")
+    >>> typed_top = apply(top, {"water": ff_water, "ethanol": ff_ethanol})
     """
     ignore_params = set([option.lower().rstrip("s") for option in ignore_params])
     config = TopologyParameterizationConfig.model_validate(

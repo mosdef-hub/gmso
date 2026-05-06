@@ -254,13 +254,13 @@ class Site(GMSOBase):
         return self.__dict__.get("group_")
 
     @property
-    def molecule(self):
-        """Return the molecule of the site."""
+    def molecule(self) -> Optional[Molecule]:
+        """Return the molecule label of the site."""
         return self.__dict__.get("molecule_")
 
     @property
-    def residue(self):
-        """Return the residue assigned to the site."""
+    def residue(self) -> Optional[Residue]:
+        """Return the residue label of the site."""
         return self.__dict__.get("residue_")
 
     @field_serializer("position_")

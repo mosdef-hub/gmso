@@ -1,24 +1,13 @@
-External
-=========
+.. _external:
 
-This submodule includes functions that convert core data structures between external libraries and their internal representation.
+External Library Conversions
+============================
 
-mBuild
--------
-The following methods are available for converting `mBuild <https://mbuild.mosdef.org>`_ objects to and from ``GMSO``.
+.. note::
 
-    .. autofunction:: gmso.external.from_mbuild
-    .. autofunction:: gmso.external.to_mbuild
+   This page has been superseded by the comprehensive API reference.
+   Please see :doc:`api/external` for the full external conversions documentation.
 
+.. toctree::
 
-Parmed
-------
-Conversion methods for `Parmed <https://parmed.github.io/ParmEd/html/index.html>`_ objects to and from ``GMSO``.
-
-    .. autofunction:: gmso.external.from_parmed
-
-OpenMM
--------
-Conversion methods for `OpenMM <http://openmm.org/>`_ objects to and from ``GMSO``.
-
-    .. autofunction:: gmso.external.to_openmm
+   api/external
