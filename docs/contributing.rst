@@ -43,7 +43,9 @@ Document code with comments
 ****************************
 All public-facing functions should have docstrings using the numpy style. This includes concise paragraph-style description
 of what the class or function does, relevant limitations and known issues, and descriptions of arguments. Internal functions
-can have simple one-liner docstrings.
+can have simple one-liner docstrings. Additionally, check if your addition requires a new entry to the documentation
+(e.g., adding a new potential template.).
+If so, make the proper changes in `gmso.docs` as part of your pull-request.
 
 
 Tests
