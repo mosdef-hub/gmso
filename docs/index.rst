@@ -92,6 +92,7 @@ With these driving goals for `GMSO`, the following features are enabled:
 
    installation
    design_principles
+   potential_templates
    contributing
    docker
 
