@@ -81,11 +81,17 @@ LAMMPS data files encode particle positions, topology, and forcefield coefficien
    :nosignatures:
 
    gmso.formats.write_lammpsdata
+   gmso.formats.read_lammpsdata
 
 write_lammpsdata
 ~~~~~~~~~~~~~~~~
 
 .. autofunction:: gmso.formats.write_lammpsdata
+
+read_lammpsdata
+~~~~~~~~~~~~~~~
+
+.. autofunction:: gmso.formats.read_lammpsdata
 
 MOL2
 ----
@@ -96,11 +102,17 @@ Tripos MOL2 is a common format for small-molecule structures.
    :nosignatures:
 
    gmso.formats.read_mol2
+   gmso.formats.write_mol2
 
 read_mol2
 ~~~~~~~~~
 
 .. autofunction:: gmso.formats.read_mol2
+
+write_mol2
+~~~~~~~~~~
+
+.. autofunction:: gmso.formats.write_mol2
 
 MCF
 ---
@@ -126,11 +138,17 @@ GMSO topologies can be serialized to and from JSON for storage and interoperabil
    :nosignatures:
 
    gmso.formats.write_json
+   gmso.formats.load_json
 
 write_json
 ~~~~~~~~~~
 
 .. autofunction:: gmso.formats.write_json
+
+load_json
+~~~~~~~~~
+
+.. autofunction:: gmso.formats.load_json
 
 Format Registry
 ---------------

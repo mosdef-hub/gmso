@@ -8,6 +8,7 @@ import logging
 import os
 from itertools import count
 from pathlib import Path
+from typing import Optional, Union
 
 import numpy as np
 import unyt as u
@@ -45,58 +46,51 @@ pfilter = PotentialFilters.UNIQUE_SORTED_NAMES
 # TODO: write in file header the source of the xml
 @saves_as(".lammps", ".lammpsdata", ".data")
 def write_lammpsdata(
-    top,
-    filename,
-    atom_style="full",
-    unit_style="real",
-    strict_potentials=False,
-    strict_units=False,
-    lj_cfactorsDict=None,
-):
-    """Output a LAMMPS data file.
-
-    Outputs a LAMMPS data file in the 'full' atom style format.
-    Assumes use of 'real' units.
-    See http://lammps.sandia.gov/doc/atom_style.html for more information on atom styles.
+    top: "Topology",
+    filename: Union[str, Path],
+    atom_style: str = "full",
+    unit_style: str = "real",
+    strict_potentials: bool = False,
+    strict_units: bool = False,
+    lj_cfactorsDict: Optional[dict] = None,
+) -> None:
+    """Write a LAMMPS data file from a :class:`~gmso.Topology`.
 
     Parameters
     ----------
-    Topology : `Topology`
-        A Topology Object
-    filename : str
-        Path of the output file
+    top : gmso.Topology
+        Typed topology to write.
+    filename : str or pathlib.Path
+        Path of the output file.
     atom_style : str, optional, default='full'
-        Defines the style of atoms to be saved in a LAMMPS data file.
-        The following atom styles are currently supported: 'full', 'atomic', 'charge', 'molecular'
-        see http://lammps.sandia.gov/doc/atom_style.html for more information on atom styles.
+        LAMMPS atom style.  Supported values: ``'full'``, ``'atomic'``,
+        ``'charge'``, ``'molecular'``.
     unit_style : str, optional, default='real'
-        Can be any of "real", "lj", "metal", "si", "cgs", "electron", "micro", "nano". Otherwise
-        an error will be thrown. These are defined in _unit_style_factory. See
-        https://docs.lammps.org/units.html for LAMMPS documentation.
-    strict_potentials : bool, optional, default False
-        Tells the writer how to treat conversions. If False, then check for conversions
-        to usable potential styles found in default_parameterMaps. If True, then error if
-        potentials are not compatible.
-    strict_units : bool, optional, default False
-        Tells the writer how to treat unit conversions. If False, then check for conversions
-        to unit styles defined in _unit_style_factory. If True, then error if parameter units
-        do not match.
-    lj_cfactorsDict : (None, dict), optional, default None
-        If using unit_style="lj" only, can pass a dictionary with keys of ("mass", "energy",
-        "length", "charge"), or any combination of these, and they will be used to non-
-        dimensionalize all values in the topology. If any key is not passed, default values
-        will be pulled from the topology (see _default_lj_val). These are the largest: sigma,
-        epsilon, atomtype.mass, and atomtype.charge from the topology.
+        LAMMPS unit system.  Supported values: ``'real'``, ``'lj'``,
+        ``'metal'``, ``'si'``, ``'cgs'``, ``'electron'``, ``'micro'``,
+        ``'nano'``.
+    strict_potentials : bool, optional, default=False
+        When ``True``, raise an error if any potential style is not directly
+        supported instead of attempting an automatic conversion.
+    strict_units : bool, optional, default=False
+        When ``True``, raise an error if parameter units do not match the
+        target unit style instead of converting automatically.
+    lj_cfactorsDict : dict, optional, default=None
+        Used only when ``unit_style='lj'``.  A dict with any subset of keys
+        ``'mass'``, ``'energy'``, ``'length'``, ``'charge'`` that override the
+        default non-dimensionalisation factors (which are derived from the
+        largest values found in the topology).
+
+    Returns
+    -------
+    None
+        Writes the LAMMPS data file to *filename* in place.
 
     Notes
     -----
-    See http://lammps.sandia.gov/doc/2001/data_format.html for a full description of the LAMMPS data format.
-    This is a work in progress, as only a subset of everything LAMMPS supports is currently available.
-    However, please raise issues as the current writer has been set up to eventually grow to support
-    all LAMMPS styles.
-
-    Some of this function has been adopted from `mdtraj`'s support of the LAMMPSTRJ trajectory format.
-    See https://github.com/mdtraj/mdtraj/blob/master/mdtraj/formats/lammpstrj.py for details.
+    See https://docs.lammps.org/read_data.html for a full description of the
+    LAMMPS data format.  Only a subset of atom styles, potential styles, and
+    unit styles are currently supported.
 
     """
     if atom_style not in ["full", "atomic", "molecular", "charge"]:
@@ -227,44 +221,39 @@ def write_lammpsdata(
 
 @loads_as(".lammps", ".lammpsdata", ".data")
 def read_lammpsdata(
-    filename,
-    atom_style="full",
-    unit_style="real",
-):
-    """Read in a lammps data file as a GMSO topology.
+    filename: Union[str, Path],
+    atom_style: str = "full",
+    unit_style: str = "real",
+) -> "Topology":
+    """Read a LAMMPS data file and return a :class:`~gmso.Topology`.
 
     Parameters
     ----------
-    filename : str
-        LAMMPS data file
+    filename : str or pathlib.Path
+        Path to the LAMMPS data file.
     atom_style : str, optional, default='full'
-        Inferred atom style defined by LAMMPS, be certain that this is provided
-        accurately.
-    unit_style : str, optional, default='real
-        LAMMPS unit style used for writing the datafile. Can be "real", "lj",
-        "metal", "si", "cgs", "electron", "micro", "nano".
+        LAMMPS atom style used in the data file.  Currently only ``'full'``
+        is supported; supply the correct value or parsing will fail.
+    unit_style : str, optional, default='real'
+        LAMMPS unit style used when the data file was written.  Supported
+        values: ``'real'``, ``'lj'``, ``'metal'``, ``'si'``, ``'cgs'``,
+        ``'electron'``, ``'micro'``, ``'nano'``.
 
     Returns
     -------
-    top : GMSO Topology
-        A GMSO Topology object
+    gmso.Topology
+        Typed topology parsed from *filename*.
 
     Notes
     -----
-    See http://lammps.sandia.gov/doc/2001/data_format.html for a full description of the LAMMPS data format.
+    This reader is a work in progress.  Currently supported styles:
 
-    This is a work in progress, as only several atom styles, potential styles, and unit styes are currently supported.
-
-    Currently supporting the following atom styles: 'full'
-
-    Currently supporting the following unit styles: 'real', "real", "lj", "metal", "si", "cgs",
-    "electron", "micro", "nano".
-
-    Currently supporting the following pair potential styles: 'lj'
-    Currently supporting the following bond styles: 'harmonic', 'fene'
-    Currently supporting the following angle styles: 'harmonic'
-    Currently supporting the following dihedral styles: 'opls'
-    Currently supporting the following improper styles: 'harmonic'
+    * Atom styles: ``'full'``
+    * Pair potential styles: ``'lj'``
+    * Bond styles: ``'harmonic'``, ``'fene'``
+    * Angle styles: ``'harmonic'``
+    * Dihedral styles: ``'opls'``
+    * Improper styles: ``'harmonic'``
 
     """
     top = Topology()

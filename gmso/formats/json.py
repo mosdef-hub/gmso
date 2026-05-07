@@ -4,6 +4,10 @@ import json
 import logging
 from copy import deepcopy
 from pathlib import Path
+from typing import TYPE_CHECKING, Union
+
+if TYPE_CHECKING:
+    from gmso.core.topology import Topology
 
 import unyt as u
 
@@ -271,21 +275,34 @@ def _from_json(json_dict):
 
 
 @saves_as(".json")
-def write_json(top, filename, types=True, update=False, **kwargs):
-    """Save the topology as a JSON file.
+def write_json(
+    top: "Topology",
+    filename: Union[str, Path],
+    types: bool = True,
+    update: bool = False,
+    **kwargs,
+) -> None:
+    """Write a :class:`~gmso.Topology` to a JSON file.
 
     Parameters
     ----------
-    top: gmso.Topology
-        The topology to save
-    filename: str, pathlib.Path
-        The file to save to topology to, must be suffixed with .json
-    types: bool, default=True
-        If true, include type info (i.e. Potentials)
-    update: bool, default=False
-        If true, update the topology before iterating through the files
-    **kwargs: dict
-        The keyword arguments to _to_json and json.dump methods
+    top : gmso.Topology
+        Topology to serialise.
+    filename : str or pathlib.Path
+        Destination file path; must end with ``.json``.
+    types : bool, optional, default=True
+        When ``True``, include potential type information (atom types,
+        bond types, etc.) in the output.
+    update : bool, optional, default=False
+        When ``True``, call :meth:`~gmso.Topology.update_topology` before
+        serialisation.
+    **kwargs
+        Additional keyword arguments forwarded to :func:`json.dump`.
+
+    Returns
+    -------
+    None
+        Writes the JSON file to *filename* in place.
     """
     json_dict = _to_json(
         top,
@@ -300,18 +317,18 @@ def write_json(top, filename, types=True, update=False, **kwargs):
 
 
 @loads_as(".json")
-def load_json(filename):
-    """Load a topology from a json file.
+def load_json(filename: Union[str, Path]) -> "Topology":
+    """Load a :class:`~gmso.Topology` from a JSON file.
 
     Parameters
     ----------
-    filename: str, pathlib.Path
-        The file to load the topology from, must be suffixed with .json
+    filename : str or pathlib.Path
+        Path to the ``.json`` file to read.
 
     Returns
     -------
     gmso.Topology
-        The Topology object obtained by loading the json file
+        Topology deserialised from *filename*.
     """
     if not isinstance(filename, Path):
         filename = Path(filename).resolve()
