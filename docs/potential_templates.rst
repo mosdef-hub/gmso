@@ -12,8 +12,8 @@ Templates are loaded via :class:`~gmso.utils.io.PotentialTemplateLibrary` and
 are used internally by forcefield parsers and writers to validate that
 parameters carry the correct units.
 
-The more common use case will be to use the expressions of these templates in 
-a GMSO `.xml` file, where the independent parameters for the expression are defined 
+The more common use case will be to use the expressions of these templates in
+a GMSO `.xml` file, where the independent parameters for the expression are defined
 for each unique interaction type.
 
 .. contents:: Contents
