@@ -2,7 +2,7 @@
 
 from typing import Dict, List, Set, Tuple, Union
 
-from gmso import Topology, ForceField
+from gmso import ForceField, Topology
 from gmso.parameterization.topology_parameterizer import (
     TopologyParameterizationConfig,
     TopologyParameterizer,
@@ -13,7 +13,7 @@ __all__ = ["apply"]
 
 def apply(
     top: Topology,
-    forcefields: Union["gmso.ForceField", Dict[str, "gmso.ForceField"]],
+    forcefields: Union[ForceField, Dict[str, ForceField]],
     match_ff_by: str = "molecule",
     identify_connections: bool = False,
     speedup_by_molgraph: bool = False,
