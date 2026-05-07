@@ -35,7 +35,7 @@ Sites
 
 Sites are the fundamental interaction points in a topology.  GMSO ships two concrete site
 types: :class:`~gmso.Atom` for element-bearing particles, and
-:class:`~gmso.VirtualSite` for massless interaction centres.
+:class:`~gmso.VirtualSite` for massless interaction centres (e.g., TIP4P water models).
 
 .. autosummary::
    :nosignatures:
@@ -64,7 +64,12 @@ Connections
 
 Connections encode the covalent topology of a system.  They are built from ordered sequences
 of :class:`~gmso.Atom` members and an optional connection type that carries the forcefield
-parameters.
+parameters. 
+
+Bonded connections must be defined, either in the file used to create the `gmso.Topology` or 
+in the conversion from another object into a `gmso.Topology`. If the bond connections are 
+correctly identified, you can use `gmso.utils.connections.identify_connections()` to infer 
+and populate the rest of the connections (i.e., angles, dihedrals and improper dihedrals.)
 
 .. autosummary::
    :nosignatures:
