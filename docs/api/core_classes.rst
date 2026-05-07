@@ -68,7 +68,7 @@ parameters.
 
 Bonded connections must be defined, either in the file used to create the `gmso.Topology` or 
 in the conversion from another object into a `gmso.Topology`. If the bond connections are 
-correctly identified, you can use `gmso.utils.connections.identify_connections()` to infer 
+correctly identified, you can use :func:`gmso.utils.connectivity.identify_connections()` to infer 
 and populate the rest of the connections (i.e., angles, dihedrals and improper dihedrals.)
 
 .. autosummary::

@@ -13,3 +13,4 @@ Documentation is generated from docstrings in the source code.
    formats
    external
    parameterization
+   utils
