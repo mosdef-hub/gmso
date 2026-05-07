@@ -2,7 +2,7 @@
 
 from typing import Dict, List, Set, Tuple, Union
 
-from gmso.core import Topology
+from gmso import Topology, ForceField
 from gmso.parameterization.topology_parameterizer import (
     TopologyParameterizationConfig,
     TopologyParameterizer,
