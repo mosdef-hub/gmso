@@ -1,6 +1,6 @@
 """Abstract representation of a Potential object."""
 
-from typing import Any, Dict, Iterator, List, Set, Union
+from typing import Any, Dict, Iterator, List, Set
 
 import unyt as u
 from pydantic import ConfigDict, Field, field_serializer, field_validator

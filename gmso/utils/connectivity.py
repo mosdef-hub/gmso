@@ -25,7 +25,7 @@ CONNS = {"angle": Angle, "dihedral": Dihedral, "improper": Improper}
 def identify_connections(top: "Topology", index_only: bool = False) -> None:
     """Identify all angle, dihedral and improper connections.
 
-    This requires that the bonded connections are fully defined in 
+    This requires that the bonded connections are fully defined in
     the ``gmso.Topology``.
 
     Parameters
