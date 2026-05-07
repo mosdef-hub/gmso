@@ -2,6 +2,7 @@
 
 from typing import Dict, List, Set, Tuple, Union
 
+from gmso.core import Topology
 from gmso.parameterization.topology_parameterizer import (
     TopologyParameterizationConfig,
     TopologyParameterizer,
@@ -11,7 +12,7 @@ __all__ = ["apply"]
 
 
 def apply(
-    top: "gmso.Topology",
+    top: Topology,
     forcefields: Union["gmso.ForceField", Dict[str, "gmso.ForceField"]],
     match_ff_by: str = "molecule",
     identify_connections: bool = False,
@@ -20,7 +21,7 @@ def apply(
     ignore_params: Union[List[str], Set[str], Tuple[str, ...]] = ["improper"],
     remove_untyped: bool = True,
     fast_copy: bool = True,
-) -> "gmso.Topology":
+) -> Topology:
     """Apply forcefield parameters to a :class:`~gmso.Topology`.
 
     Atom-types all sites in *top* using the supplied forcefield(s) and
