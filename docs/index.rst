@@ -51,7 +51,6 @@ simulation performed, this ranges from:
 
     * particle mass
     * elemental data
-    * etc.
 
 With these driving goals for `GMSO`, the following features are enabled:
 
