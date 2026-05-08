@@ -3,6 +3,7 @@ Contributing
 Contributions are welcomed via `pull requests on GitHub <https://github.com/mosdef-hub/gmso/pulls>`_. Developers and/or
 users will review requested changes and make comments. The rest of this file will serve as a set of general guidelines
 for contributors.
+See :doc:`installation` for instructions on setting up a development environment.
 
 Features
 --------

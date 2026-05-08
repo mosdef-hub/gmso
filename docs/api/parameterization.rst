@@ -23,8 +23,7 @@ TopologyParameterizer
 ---------------------
 
 :class:`~gmso.parameterization.topology_parameterizer.TopologyParameterizer` drives the
-parameterization workflow.  It is instantiated internally by :func:`apply` but may be used
-directly for advanced use-cases.
+parameterization workflow.  It is instantiated internally by :func:`apply`.
 
 .. autoclass:: gmso.parameterization.topology_parameterizer.TopologyParameterizer
    :members:

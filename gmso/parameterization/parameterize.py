@@ -40,8 +40,7 @@ def apply(
         belonging to that molecule/group.  A topology with no molecule labels
         can only accept a single :class:`~gmso.ForceField`; passing a dict
         in that case will raise an error.
-
-    match_ff_by : str, optional, default="molecule"
+    match_ff_by : str, optional, default=``"molecule"``
         Site attribute used to map forcefields when *forcefields* is a dict.
         Accepted values: ``"molecule"`` or ``"group"``.
     identify_connections : bool, optional, default=False
