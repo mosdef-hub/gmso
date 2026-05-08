@@ -910,7 +910,7 @@ def to_hoomd_forcefield(
     forces : dict
         HOOMD forces converted from all available PotentialTypes of the provided
         GMSO Topology. Converted are grouped by their category (as key of the
-        dictionary), namely, "nonbonded", "bonds", rangles", "dihedrals", and "impropers".
+        dictionary), namely, "nonbonded", "bonds", "angles", "dihedrals", and "impropers".
     base_units : dict
         Base units dictionary utilized during the conversion.
 
