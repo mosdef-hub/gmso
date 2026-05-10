@@ -1256,6 +1256,21 @@ class Topology(object):
 
         return index
 
+    def calculate_charges(self, method="am1bcc", slice_by="Molecule"):
+        print("Not implemented yet. We are working on it.")
+        # Get all of the moleucles types in the topology
+        molecules = set()
+        for site in self.sites:
+            molecules.add(site.molecule.name)
+
+        # Figure out how to handle the tags
+        for mol in molecules:
+            mol_slice = slice_topology_by_molecule(topology=self, molecule_tag=0)
+            openff_mol = to_openff_molecule(mol_slice)
+            openff_mol.assign_partial_charges(method=method)
+            for atom in openff_mol.atoms:
+                print(atom.partial_charge)
+
     def write_forcefield(self, filename, overwrite=False):
         """Save an xml file for all parameters found in the topology.
 
@@ -1508,7 +1523,7 @@ class Topology(object):
                 if getattr(site, key) == value:
                     yield site
 
-    def iter_sites_by_residue(self, residue_tag):
+    def iter_sites_by_residue(self, residue_tag, residue_number=None):
         """Iterate through this topology's sites which contain this specific residue name.
 
         See Also
@@ -1518,12 +1533,29 @@ class Topology(object):
         """
         if isinstance(residue_tag, str):
             for site in self._sites:
-                if site.residue and getattr(site, "residue").name == residue_tag:
-                    yield site
+                if residue_tag and residue_number is None:
+                    if site.molecule and getattr(site, "residue").name == residue_tag:
+                        yield site
+                elif residue_number and residue_tag is None:
+                    if (
+                        site.molecule
+                        and getattr(site, "residue").number == residue_number
+                    ):
+                        yield site
+                else:
+                    if all(
+                        [
+                            site.molecule
+                            and getattr(site, "residue").name == residue_tag,
+                            site.molecule
+                            and getattr(site, "residue").number == residue_number,
+                        ]
+                    ):
+                        yield site
         else:
             return self.iter_sites("residue", residue_tag)
 
-    def iter_sites_by_molecule(self, molecule_tag):
+    def iter_sites_by_molecule(self, molecule_tag, molecule_number=None):
         """Iterate through this topology's sites which contain this specific molecule name.
 
         See Also
@@ -1533,8 +1565,25 @@ class Topology(object):
         """
         if isinstance(molecule_tag, str):
             for site in self._sites:
-                if site.molecule and getattr(site, "molecule").name == molecule_tag:
-                    yield site
+                if molecule_tag and molecule_number is None:
+                    if site.molecule and getattr(site, "molecule").name == molecule_tag:
+                        yield site
+                elif molecule_number and molecule_tag is None:
+                    if (
+                        site.molecule
+                        and getattr(site, "molecule").number == molecule_number
+                    ):
+                        yield site
+                else:
+                    if all(
+                        [
+                            site.molecule
+                            and getattr(site, "molecule").name == molecule_tag,
+                            site.molecule
+                            and getattr(site, "molecule").number == molecule_number,
+                        ]
+                    ):
+                        yield site
         else:
             return self.iter_sites("molecule", molecule_tag)
 
