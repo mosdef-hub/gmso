@@ -10,7 +10,7 @@ chemical topologies for molecular simulation. Efforts are made to enable
 lossless, bias-free storage of data, without assuming particular chemistries,
 models, or using any particular engine's ecosystem as a starting point. The
 scope is generally restrained to the preparation, manipulation, and conversion
-of and of input files for molecular simulation, i.e. before engines are called
+of input files for molecular simulation, i.e., before engines are called
 to execute the simulations themselves. ``GMSO`` currently does not support
 conversions between trajectory file formats for analysis codes. In the scope of
 molecular simulation, we loosely define a chemical topology as everything
@@ -48,7 +48,7 @@ of elements with each particle).
 
 
 * Native support for reading and writing many common file formats (``XYZ``,
-  ``GRO``, ``TOP``, ``LAMMPSDATA``) and indirect support, through other
+  ``GRO``, ``TOP``, ``LAMMPSDATA``, ``GSD``) and indirect support, through other
   libraries, for many more!
 
 

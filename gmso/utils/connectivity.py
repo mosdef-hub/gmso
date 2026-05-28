@@ -22,16 +22,26 @@ from gmso.exceptions import MissingParameterError
 CONNS = {"angle": Angle, "dihedral": Dihedral, "improper": Improper}
 
 
-def identify_connections(top, index_only=False):
-    """Identify all possible connections within a topology.
+def identify_connections(top: "Topology", index_only: bool = False) -> None:
+    """Identify all angle, dihedral and improper connections.
+
+    This requires that the bonded connections are fully defined in
+    the ``gmso.Topology``.
 
     Parameters
     ----------
     top : gmso.Topology
         The gmso topology for which to identify connections for.
-    index_only : bool, default=False
+    index_only : bool, optional, default=False
         If True, return integer site indices that would form the connections
         rather than adding the connections to the topology.
+
+    Returns
+    -------
+    None
+        Connections are added to top in-place.  When index_only is
+        ``True``, a dict of integer-index tuples is returned instead and
+        top is not modified.
 
     Notes
     -----

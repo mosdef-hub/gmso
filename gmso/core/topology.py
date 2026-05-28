@@ -961,10 +961,10 @@ class Topology(object):
             The PairPotentialType object to be added
         update: Boolean, default=True
 
-        See Also:
+        See Also
         --------
-        gmso.core.pairpotential_type: Pairwise potential that does not follow
-        combination rules
+        gmso.core.pairpotential_type : Pairwise potential that does not follow
+        combination rules.
         """
         if not isinstance(pairpotentialtype, PairPotentialType):
             raise GMSOError(
@@ -1305,21 +1305,28 @@ class Topology(object):
             for further information.
 
         Examples
-        ________
-        >>> topology.to_dataframe(parameter = 'sites', site_attrs = ['charge'])
-            This will return a dataframe with a listing of the sites and include the charges that correspond to each site.
-        >>> topology.to_dataframe(parameter = 'dihedrals', site_attrs = ['positions'])
-            This will return a dataframe with a listing of the sites that make up each dihedral, the positions of each of
-            those sites, and the parameters that are associated with the dihedrals.
+        --------
+        Return a dataframe with site names and charges:
+
+        >>> topology.to_dataframe(parameter='sites', site_attrs=['charge'])
+
+        Return a dataframe listing the sites and parameters for each dihedral:
+
+        >>> topology.to_dataframe(parameter='dihedrals', site_attrs=['positions'])
 
         Notes
-        ____
-        A dataframe is easily manipulated. In order to change the rounding to two decimals places for a column named `label`:
-            >>> df['label'] = df['label'].round(2)
-        The column labels can also be easily modified. This line can take a dataframe `df` and rename a column labeled
-        `Atom0` to `newname` using a dictionary.
-            >>> df.rename(columns = {'Atom0':'newname'})
-        See https://pandas.pydata.org/pandas-docs/stable/getting_started/intro_tutorials/index.html for further information.
+        -----
+        A dataframe is easily manipulated. To round a column named ``label``
+        to two decimal places:
+
+        >>> df['label'] = df['label'].round(2)
+
+        To rename a column ``Atom0`` to ``newname``:
+
+        >>> df.rename(columns={'Atom0': 'newname'})
+
+        See https://pandas.pydata.org/pandas-docs/stable/getting_started/intro_tutorials/index.html
+        for further information.
         """
         from gmso.utils.io import import_
 
@@ -1930,13 +1937,11 @@ class Topology(object):
             values with dictionary of parameter: expected_dimension
 
         Examples
-        ________
-        top.convert_unit_styles(
-            u.UnitSystem(
-                "lammps_real", "Å", "amu", "fs", "K", "rad",
-            ),
-            {"bond":{"k":"energy/length**2", "r_eq":"length"}},
-        )
+        --------
+        >>> top.convert_unit_styles(
+        ...     u.UnitSystem("lammps_real", "Å", "amu", "fs", "K", "rad"),
+        ...     {"bond": {"k": "energy/length**2", "r_eq": "length"}},
+        ... )
         """
 
         ref_values = {"energy": "kJ/mol", "length": "nm", "angle": "radians"}

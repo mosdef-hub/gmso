@@ -2,17 +2,17 @@
 Installation
 ============
 
-Installing with `conda <https://repo.anaconda.com/miniconda>`__
+Installing with `conda <https://conda-forge.org/download/>`__
 ---------------------------------------------------------------
 
-Starting from ``GMSO`` version ``0.3.0``, you can use `conda <https//repo.anaconda.com/miniconda>`_ to install ``GMSO`` in your preferred environment. This will also install the dependencies of ``GMSO``.
+Starting from ``GMSO`` version ``0.3.0``, you can use `conda <https://conda-forge.org/download/>`_ to install ``GMSO`` in your preferred environment. This will also install the dependencies of ``GMSO``.
 
 .. code-block:: bash
 
     (your-env) $ conda install -c conda-forge gmso
 
 
-Installing from source `conda <https://repo.anaconda.com/miniconda>`__
+Installing from source `conda <https://conda-forge.org/download/>`__
 ----------------------------------------------------------------------
 
 Dependencies of GMSO are listed in the files ``environment.yml`` (lightweight environment specification containing minimal dependencies) and ``environment-dev.yml`` (comprehensive environment specification including optional and testing packages for developers).
@@ -50,11 +50,9 @@ Once all dependencies have been installed and the ``conda`` environment has been
 Supported Python Versions
 -------------------------
 
-Python 3.9-3.11 is the recommend version for users. It is the only version on which
-development and testing consistently takes place.  Older (3.6-3.9) and newer (3.12+)
-versions of Python 3 are likely to work but no guarantee is made and, in
-addition, some dependencies may not be available for other versions.  No effort
-is made to support Python 2 because it is considered obsolete as of early 2020.
+Python 3.10-3.13 is the recommend version for users. It is the only version on which
+development and testing consistently takes place.
+
 
 Testing your installation
 -------------------------
@@ -66,11 +64,12 @@ Testing your installation
     $ conda activate gmso-dev
     $ pip install -e .
 
-And then run the tests with the ``py.test`` executable:
+And then run the tests with the ``pytest`` executable:
 
 .. code-block:: bash
 
-    $ py.test -v
+    $ pytest -v
+
 
 Install pre-commit
 ------------------
@@ -87,7 +86,6 @@ And (optional) all files can be checked by running
 .. code-block:: bash
 
     $ pre-commit run --all-files
-
 
 
 Building the documentation

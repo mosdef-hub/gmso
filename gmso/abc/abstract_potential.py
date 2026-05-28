@@ -1,6 +1,6 @@
 """Abstract representation of a Potential object."""
 
-from typing import Any, Dict, Iterator, List
+from typing import Any, Dict, Iterator, List, Set
 
 import unyt as u
 from pydantic import ConfigDict, Field, field_serializer, field_validator
@@ -74,27 +74,36 @@ class AbstractPotential(GMSOBase):
         super().__init__(name=name, potential_expression=potential_expression, **kwargs)
 
     @property
-    def name(self):
+    def name(self) -> str:
         """The name of the potential."""
         return self.__dict__.get("name_")
 
     @property
-    def independent_variables(self):
-        """Optional[Union[set, str]]\n\tThe independent variables in the `Potential`'s expression."""
+    def independent_variables(self) -> Set:
+        """The independent variables in the potential's expression.
+
+        Returns the set of :mod:`sympy` symbols that are *not* parameters —
+        typically the interparticle distance ``r`` or an angle ``theta``.
+        """
         return self.potential_expression.independent_variables
 
     @property
     def expression(self):
-        """Optional[Union[str, sympy.Expr]]\n\tThe mathematical expression of the functional form of the potential."""
+        """The mathematical expression of the potential as a :class:`sympy.Expr`."""
         return self.potential_expression.expression
 
     @property
-    def potential_expression(self):
-        """Return the functional form of the potential."""
+    def potential_expression(self) -> "PotentialExpression":
+        """The :class:`~gmso.utils.expression.PotentialExpression` for this potential.
+
+        Bundles the sympy expression, the independent variables, and the
+        parameter dictionary into a single validated object.
+        """
         return self.__dict__.get("potential_expression_")
 
     @property
-    def tags(self):
+    def tags(self) -> Dict[str, Any]:
+        """Arbitrary metadata attached to this potential."""
         return self.__dict__.get("tags_")
 
     @property
@@ -131,25 +140,63 @@ class AbstractPotential(GMSOBase):
                 return_dict[key] = val
         return return_dict
 
-    def add_tag(self, tag: str, value: Any, overwrite=True) -> None:
-        """Add metadata for a particular tag"""
+    def add_tag(self, tag: str, value: Any, overwrite: bool = True) -> None:
+        """Add or update a metadata tag on this potential.
+
+        Parameters
+        ----------
+        tag : str
+            Name of the tag to add.
+        value : Any
+            Value to associate with the tag.
+        overwrite : bool, optional, default=True
+            If ``False``, raise :exc:`ValueError` when *tag* already exists.
+        """
         if self.tags.get(tag) and not overwrite:
             raise ValueError(
                 f"Tag {tag} already exists. Please use overwrite=True to overwrite"
             )
         self.tags[tag] = value
 
-    def get_tag(self, tag: str, throw=False) -> Any:
-        """Get value of a particular tag"""
+    def get_tag(self, tag: str, throw: bool = False) -> Any:
+        """Return the value of a metadata tag.
+
+        Parameters
+        ----------
+        tag : str
+            Name of the tag to retrieve.
+        throw : bool, optional, default=False
+            If ``True``, raise :exc:`KeyError` when *tag* does not exist.
+            If ``False``, return ``None`` for missing tags.
+        """
         if throw:
             return self.tags[tag]
         else:
             return self.tags.get(tag)
 
     def delete_tag(self, tag: str) -> None:
+        """Delete a metadata tag.
+
+        Parameters
+        ----------
+        tag : str
+            Name of the tag to delete.
+
+        Raises
+        ------
+        KeyError
+            If *tag* does not exist.
+        """
         del self.tags[tag]
 
     def pop_tag(self, tag: str) -> Any:
+        """Remove and return a metadata tag, or ``None`` if absent.
+
+        Parameters
+        ----------
+        tag : str
+            Name of the tag to pop.
+        """
         return self.tags.pop(tag, None)
 
     @field_validator("potential_expression_", mode="before")

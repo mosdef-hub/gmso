@@ -21,9 +21,9 @@ class BondType(ParametricPotential):
     `member_types`.
 
     Notes
-    ----
+    -----
     Inherits many functions from gmso.ParametricPotential:
-        __eq__, _validate functions
+    ``__eq__``, ``_validate`` functions.
     """
 
     member_types_: Optional[Tuple[str, str]] = Field(

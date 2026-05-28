@@ -26,9 +26,9 @@ class ImproperType(ParametricPotential):
     where m1, m2, m3, and m4 are connection members 1-4, respectively.
 
     Notes
-    ----
+    -----
     Inherits many functions from gmso.ParametricPotential:
-    __eq__, _validate functions
+    ``__eq__``, ``_validate`` functions.
     """
 
     member_types_: Optional[Tuple[str, str, str, str]] = Field(

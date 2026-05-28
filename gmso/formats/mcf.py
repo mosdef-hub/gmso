@@ -2,6 +2,8 @@
 
 import datetime
 import logging
+from pathlib import Path
+from typing import Union
 
 import networkx as nx
 import numpy as np
@@ -28,35 +30,33 @@ potential_templates = PotentialTemplateLibrary()
 
 
 @saves_as(".mcf")
-def write_mcf(top, filename):
-    """Generate a Cassandra MCF from a gmso.core.Topology object.
+def write_mcf(top: "Topology", filename: Union[str, Path]) -> None:
+    """Write a Cassandra Monte Carlo MCF file from a :class:`~gmso.Topology`.
 
-    The MCF file stores the topology information for a single
-    species (i.e., molecule) in the Cassandra Monte Carlo software
-    (https://cassandra.nd.edu). The gmso.Topology object provided to
-    this function should therefore be for a single molecule with the
-    relevant forcefield parameters. One MCF file will be required
-    for each unique species in the system.
+    The MCF file encodes the topology of a single molecular species for the
+    Cassandra Monte Carlo engine.  The supplied topology should contain a
+    single fully parameterised molecule.  One MCF file is required for each
+    unique species in the simulation.
 
     Parameters
     ----------
-    top : gmso.core.Topology
-        Topology object
-    filename : str or list
-        Path of the output file(s). If a string is provided
-        and the Topology object has more than one subtopology,
-        an integer suffix will be appended to the string.
-        If a list is provided and there is more than one subtopology,
-        the names of the output files will be
-        each element in the list. The number of element in the list
-        should match the
-        number of unique subtopologies.
+    top : gmso.Topology
+        Fully parameterised single-molecule topology.
+    filename : str or pathlib.Path
+        Destination file path.  When the topology contains more than one
+        subtopology and a plain string is given, an integer suffix is
+        appended automatically for each subtopology.
+
+    Returns
+    -------
+    None
+        Writes the MCF file(s) to *filename* in place.
 
     Notes
     -----
-    Atom indexing begins at 1. See
-    https://cassandra.nd.edu/index.php/documentation for a complete
-    description of the MCF format.
+    Atom indexing in the MCF format begins at 1.  See the Cassandra
+    documentation at https://cassandra.nd.edu/index.php/documentation
+    for a complete format description.
     """
     subtops = []
     for molecule in top.unique_site_labels(name_only=True):

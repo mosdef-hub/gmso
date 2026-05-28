@@ -4,8 +4,12 @@ import datetime
 import itertools
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING, Union
 
 import unyt as u
+
+if TYPE_CHECKING:
+    from gmso.core.topology import Topology
 
 from gmso import Atom, Bond, Box, Topology
 from gmso import __version__ as gmso_version
@@ -17,40 +21,35 @@ logger = logging.getLogger(__name__)
 
 
 @loads_as(".mol2")
-def read_mol2(filename, site_type="atom", verbose=False):
-    """Read in a TRIPOS mol2 file format into a gmso topology object.
+def read_mol2(
+    filename: Union[str, Path],
+    site_type: str = "atom",
+    verbose: bool = False,
+) -> "Topology":
+    """Read a TRIPOS MOL2 file and return a :class:`~gmso.Topology`.
 
-    Creates a Topology from a mol2 file structure. This will read in the
-    topological structure (sites, bonds, and box) information into gmso.
-    Note that parameterized information can be found in these objects, but
-    will not be converted to the Topology.
+    Parses sites, bonds, and box information from a MOL2 file.
+    Forcefield parameters present in the file are not converted.
 
     Parameters
     ----------
-    filename : string
-        path to the file where the mol2 file is stored.
-    site_type : string ('atom' or 'lj'), default='atom'
-        tells the reader to consider the elements saved in the mol2 file, and
-        if the type is 'lj', to not try to identify the element of the site,
-        instead saving the site name.
+    filename : str or pathlib.Path
+        Path to the ``.mol2`` file.
+    site_type : str, optional, default='atom'
+        Controls element identification.  Use ``'atom'`` to read element
+        symbols from the file; use ``'lj'`` to skip element lookup and store
+        the raw site name instead (useful for coarse-grained systems).
     verbose : bool, optional, default=False
-        If True, raise warnings for any assumptions made during the parsing.
+        When ``True``, emit warnings for any assumptions made during parsing.
 
     Returns
     -------
-    top : gmso.Topology
+    gmso.Topology
+        Topology containing the sites, bonds, and box from *filename*.
 
     Notes
     -----
-    The position of atom in the mol2 file is assumed to be in Angstrom.
-    It may be common to want to create an mBuild compound from a mol2 file. This is possible
-    by installing [mBuild](https://mbuild.mosdef.org/en/stable/index.html)
-    and converting using the following python code:
-
-        >>> from gmso import Topology
-        >>> from gmso.external.convert_mbuild import to_mbuild
-        >>> top = Topology.load('myfile.mol2')
-        >>> mbuild_compound = to_mbuild(top)
+    Atom positions in MOL2 files are assumed to be in Angstroms.
     """
     mol2path = Path(filename)
     if not mol2path.exists():
@@ -93,7 +92,27 @@ def read_mol2(filename, site_type="atom", verbose=False):
 
 
 @saves_as(".mol2")
-def write_mol2(top, filename, n_decimals=4):
+def write_mol2(
+    top: "Topology",
+    filename: Union[str, Path],
+    n_decimals: int = 4,
+) -> None:
+    """Write a :class:`~gmso.Topology` to a TRIPOS MOL2 file.
+
+    Parameters
+    ----------
+    top : gmso.Topology
+        Topology to write.
+    filename : str or pathlib.Path
+        Destination file path.
+    n_decimals : int, optional, default=4
+        Number of decimal places written for each coordinate value.
+
+    Returns
+    -------
+    None
+        Writes the MOL2 file to *filename* in place.
+    """
     with open(filename, "w") as out_file:
         out_file.write(
             "{} written by GMSO {} at {}\n".format(
