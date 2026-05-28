@@ -1,10 +1,9 @@
 name: gmso-docs
 channels:
   - conda-forge
-  - symengine
 dependencies:
-  - python=3.11
-  - numpy
+  - python=3.12
+  - numpy>=2
   - sympy
   - symengine
   - python-symengine
@@ -14,9 +13,9 @@ dependencies:
   - pydantic >= 2
   - networkx
   - ele >= 0.2.0
-  - mbuild
+  - mbuild>=1
   - setuptools
-  - foyer
+  - foyer>=1
   - forcefield-utilities
   - pip
   - pip:
