@@ -44,6 +44,8 @@ autodoc_default_options = {
     "exclude-members": "model_config, model_fields",
 }
 
+autodoc_mock_imports = ["foyer"]
+
 autodoc_typehints = "description"
 autodoc_typehints_format = "short"
 autodoc_typehints_description_target = "documented"
