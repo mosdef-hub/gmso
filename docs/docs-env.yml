@@ -15,6 +15,7 @@ dependencies:
   - networkx
   - ele >= 0.2.0
   - mbuild
+  - setuptools
   - foyer
   - forcefield-utilities
   - pip
