@@ -145,7 +145,7 @@ class TestGsd(BaseTest):
         with pytest.raises(RuntimeError):
             to_gsd_snapshot(top)
 
-    def test_angle_sorting(self):
+    def test_sorting(self):
         methane = mb.load("C", smiles=True)
         top = methane.to_gmso()
         top.identify_connections()
