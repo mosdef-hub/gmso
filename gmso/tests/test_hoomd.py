@@ -150,8 +150,11 @@ class TestGsd(BaseTest):
         top = methane.to_gmso()
         top.identify_connections()
         snap, _ = to_gsd_snapshot(top)
+        for group in snap.bonds.group:
+            assert group[0] < group[1]
         for group in snap.angles.group:
             assert group[1] == 0
+            assert group[0] < group[2]
 
 
 class TestHoomd(BaseTest):
