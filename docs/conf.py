@@ -16,8 +16,8 @@ author = (
     "Nicholas C. Craven, Christopher R. Iacovella, Brad Crawford, and Chris Jones"
 )
 
-version = "0.16.0"
-release = "0.16.0"
+version = "0.16.1"
+release = "0.16.1"
 
 # -- General configuration ---------------------------------------------------
 

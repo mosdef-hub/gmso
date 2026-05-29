@@ -23,7 +23,7 @@ from .core.topology import Topology
 from .core.virtual_site import VirtualSite
 from .core.virtual_type import VirtualType
 
-__version__ = "0.16.0"
+__version__ = "0.16.1"
 
 
 class DeduplicationFilter(logging.Filter):
