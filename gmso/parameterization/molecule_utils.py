@@ -56,3 +56,48 @@ def assert_no_boundary_bonds(top):
         assert site1.molecule == site2.molecule, assertion_msg.format(
             site1.name, site1.molecule, site2.name, site2.molecule
         )
+
+
+def build_molecule_connection_index(top, is_group=False):
+    """Build a dict mapping molecule/group label -> connection lists.
+
+    Scans each connection type once. Use this before a per-molecule
+    parameterization loop to avoid O(M * C) repeated filtering.
+
+    Returns:
+        dict: {
+            label: {
+                "bonds": [...],
+                "angles": [...],
+                "dihedrals": [...],
+                "impropers": [...]
+            }
+        }
+    """
+    index = {}
+
+    def _label_of(site):
+        return getattr(site, "group") if is_group else site.molecule.name
+
+    def _bucket(connections, key):
+        for conn in connections:
+            members = conn.connection_members
+            labels = {_label_of(s) for s in members}
+            if len(labels) == 1:          # all members same molecule
+                label = labels.pop()
+                entry = index.setdefault(
+                    label, {
+                        "bonds": [],
+                        "angles": [],
+                        "dihedrals": [],
+                        "impropers": []
+                    }
+                )
+                entry[key].append(conn)
+
+    _bucket(top.bonds, "bonds")
+    _bucket(top.angles, "angles")
+    _bucket(top.dihedrals, "dihedrals")
+    _bucket(top.impropers, "impropers")
+
+    return index

@@ -24,6 +24,7 @@ from gmso.parameterization.molecule_utils import (
     molecule_bonds,
     molecule_dihedrals,
     molecule_impropers,
+    build_molecule_connection_index,
 )
 from gmso.parameterization.utils import POTENTIAL_GROUPS
 from gmso.utils.connectivity import identify_virtual_sites
@@ -132,19 +133,25 @@ class TopologyParameterizer(GMSOBase):
         ff,
         label_type=None,
         label=None,
+        connection_index=None,
     ):
         """Parameterize connections with appropriate potentials from the forcefield."""
         if label_type and label:
-            bonds = molecule_bonds(top, label, True if label_type == "group" else False)
-            angles = molecule_angles(
-                top, label, True if label_type == "group" else False
-            )
-            dihedrals = molecule_dihedrals(
-                top, label, True if label_type == "group" else False
-            )
-            impropers = molecule_impropers(
-                top, label, True if label_type == "group" else False
-            )
+            if connection_index is not None:
+                entry = connection_index.get(
+                    label,
+                    {"bonds": [],"angles": [], "dihedrals": [], "impropers": []}
+                )
+                bonds = entry["bonds"]
+                angles = entry["angles"]
+                dihedrals = entry["dihedrals"]
+                impropers = entry["impropers"]
+            else:
+                is_group = True if label_type == "group" else False
+                bonds = molecule_bonds(top, label, is_group)
+                angles = molecule_angles(top, label, is_group)
+                dihedrals = molecule_dihedrals(top, label, is_group)
+                impropers = molecule_impropers(top, label, is_group)
         else:
             bonds = top.bonds
             angles = top.angles
@@ -269,7 +276,7 @@ class TopologyParameterizer(GMSOBase):
                     )
 
     def _parameterize(
-        self, top, typemap, label_type=None, label=None, speedup_by_moltag=False
+        self, top, typemap, label_type=None, label=None, speedup_by_moltag=False, connection_index=None
     ):
         """Parameterize a topology/subtopology based on an atomtype map."""
         if label and label_type:
@@ -289,6 +296,7 @@ class TopologyParameterizer(GMSOBase):
             forcefield,
             label_type,
             label,
+            connection_index=connection_index
         )
         if forcefield.virtual_types:
             self._parameterize_virtual_sites(top, sites, bonds, forcefield)
@@ -380,6 +388,8 @@ class TopologyParameterizer(GMSOBase):
                 )
 
             assert_no_boundary_bonds(self.topology)
+            is_group = (self.config.match_ff_by == "group")
+            connection_index = build_molecule_connection_index(self.topology, is_group=is_group)
             for label in labels:
                 if label not in self.forcefields:
                     logger.warning(
@@ -395,12 +405,14 @@ class TopologyParameterizer(GMSOBase):
                         self.config.speedup_by_moltag,
                         self.config.speedup_by_molgraph,
                     )
+
                     self._parameterize(
-                        self.topology,
-                        typemap,
+                        top=self.topology,
+                        typemap=typemap,
                         label_type=self.config.match_ff_by,
                         label=label,
                         speedup_by_moltag=self.config.speedup_by_moltag,  # This will be removed from the future iterations
+                        connection_index=connection_index,
                     )
         else:
             typemap = self._get_atomtypes(
