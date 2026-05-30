@@ -20,11 +20,11 @@ from gmso.parameterization.isomorph import (
 )
 from gmso.parameterization.molecule_utils import (
     assert_no_boundary_bonds,
+    build_molecule_connection_index,
     molecule_angles,
     molecule_bonds,
     molecule_dihedrals,
     molecule_impropers,
-    build_molecule_connection_index,
 )
 from gmso.parameterization.utils import POTENTIAL_GROUPS
 from gmso.utils.connectivity import identify_virtual_sites
@@ -139,8 +139,7 @@ class TopologyParameterizer(GMSOBase):
         if label_type and label:
             if connection_index is not None:
                 entry = connection_index.get(
-                    label,
-                    {"bonds": [],"angles": [], "dihedrals": [], "impropers": []}
+                    label, {"bonds": [], "angles": [], "dihedrals": [], "impropers": []}
                 )
                 bonds = entry["bonds"]
                 angles = entry["angles"]
@@ -201,27 +200,39 @@ class TopologyParameterizer(GMSOBase):
     def _apply_connection_parameters(self, connections, ff, error_on_missing=True):
         """Find and assign potentials from the forcefield for the provided connections."""
         visited = dict()
+        sig_cache = dict()
         for connection in connections:
-            group, connection_identifiers = self.connection_identifier(connection)
-            match = None
-            for identifier_key in connection_identifiers:
-                if tuple(identifier_key) in visited:
-                    match = visited[tuple(identifier_key)]
-                    break
+            sig = tuple(site.atom_type.name for site in connection.connection_members)
+            if getattr(connection, "bonds", None):
+                sig += tuple(b.bond_order for b in connection.bonds)
+            elif hasattr(connection, "bond_order"):
+                sig += (connection.bond_order,)
 
-                match = ff.get_potential(
-                    group=group,
-                    key=identifier_key,
-                    exact_match=True,
-                )
-                if match:
-                    visited[tuple(identifier_key)] = match
-                    break
+            if sig in sig_cache:
+                match = sig_cache[sig]
+            else:
+                group, connection_identifiers = self.connection_identifier(connection)
+                match = None
+                for identifier_key in connection_identifiers:
+                    id_tuple = tuple(identifier_key)
+                    if id_tuple in visited:
+                        match = visited[id_tuple]
+                        break
+                    match = ff.get_potential(
+                        group=group,
+                        key=identifier_key,
+                        exact_match=True,
+                    )
+                    if match:
+                        visited[id_tuple] = match
+                        break
+                sig_cache[sig] = match
 
             if not match and error_on_missing:
+                group = POTENTIAL_GROUPS[type(connection)]
                 raise ParameterizationError(
-                    f"No parameters found for connection {connection}, group: {group}, "
-                    f"identifiers: {connection_identifiers} in the Forcefield."
+                    f"No parameters found for connection {connection}, group: {group} "
+                    f"in the Forcefield."
                 )
             elif match:
                 setattr(connection, group, match[0].clone(self.config.fast_copy))
@@ -276,7 +287,13 @@ class TopologyParameterizer(GMSOBase):
                     )
 
     def _parameterize(
-        self, top, typemap, label_type=None, label=None, speedup_by_moltag=False, connection_index=None
+        self,
+        top,
+        typemap,
+        label_type=None,
+        label=None,
+        speedup_by_moltag=False,
+        connection_index=None,
     ):
         """Parameterize a topology/subtopology based on an atomtype map."""
         if label and label_type:
@@ -292,11 +309,7 @@ class TopologyParameterizer(GMSOBase):
             sites, typemap, forcefield, speedup_by_moltag=speedup_by_moltag
         )
         self._parameterize_connections(
-            top,
-            forcefield,
-            label_type,
-            label,
-            connection_index=connection_index
+            top, forcefield, label_type, label, connection_index=connection_index
         )
         if forcefield.virtual_types:
             self._parameterize_virtual_sites(top, sites, bonds, forcefield)
@@ -388,8 +401,10 @@ class TopologyParameterizer(GMSOBase):
                 )
 
             assert_no_boundary_bonds(self.topology)
-            is_group = (self.config.match_ff_by == "group")
-            connection_index = build_molecule_connection_index(self.topology, is_group=is_group)
+            is_group = self.config.match_ff_by == "group"
+            connection_index = build_molecule_connection_index(
+                self.topology, is_group=is_group
+            )
             for label in labels:
                 if label not in self.forcefields:
                     logger.warning(
@@ -451,12 +466,7 @@ class TopologyParameterizer(GMSOBase):
     ):  # This can extended to incorporate a pluggable object from the forcefield.
         """Return the group and list of identifiers for a connection to query the forcefield for its potential."""
         group = POTENTIAL_GROUPS[type(connection)]
-        return (
-            group,
-            [
-                *connection.get_connection_identifiers(),  # the viable keys made up of the bond orders
-            ],
-        )
+        return group, connection.get_connection_identifiers()
 
     @staticmethod
     def virtual_site_identifier(
