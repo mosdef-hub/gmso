@@ -61,9 +61,6 @@ def assert_no_boundary_bonds(top):
 def build_molecule_connection_index(top, is_group=False):
     """Build a dict mapping molecule/group label -> connection lists.
 
-    Scans each connection type once. Use this before a per-molecule
-    parameterization loop to avoid O(M * C) repeated filtering.
-
     Returns:
         dict: {
             label: {
