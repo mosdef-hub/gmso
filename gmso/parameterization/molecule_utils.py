@@ -83,15 +83,10 @@ def build_molecule_connection_index(top, is_group=False):
         for conn in connections:
             members = conn.connection_members
             labels = {_label_of(s) for s in members}
-            if len(labels) == 1:          # all members same molecule
+            if len(labels) == 1:  # all members same molecule
                 label = labels.pop()
                 entry = index.setdefault(
-                    label, {
-                        "bonds": [],
-                        "angles": [],
-                        "dihedrals": [],
-                        "impropers": []
-                    }
+                    label, {"bonds": [], "angles": [], "dihedrals": [], "impropers": []}
                 )
                 entry[key].append(conn)
 
