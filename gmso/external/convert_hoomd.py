@@ -425,7 +425,9 @@ def _parse_particle_information(
                             site.name if site.atom_type is None else site.atom_type.name
                         )
                         masses.append(site.mass)
-                    charges.append(site.charge if site.charge else 0 * u.elementary_charge)
+                    charges.append(
+                        site.charge if site.charge else 0 * u.elementary_charge
+                    )
                     rigid_ids.append(
                         site.molecule.number + n_prior_molecules
                         if site.molecule.isrigid
@@ -441,9 +443,7 @@ def _parse_particle_information(
             )
                 xyz.append(site.position())
                 types.append(
-                    site.name
-                    if site.virtual_type is None
-                    else site.virtual_type.name
+                    site.name if site.virtual_type is None else site.virtual_type.name
                 )
                 masses.append(0 * u.amu)
             else:
