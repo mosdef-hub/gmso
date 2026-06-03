@@ -2,10 +2,10 @@
 
 import itertools
 import re
+from itertools import combinations
 from typing import TYPE_CHECKING, List
 
 import networkx as nx
-from boltons.setutils import IndexedSet
 from networkx.algorithms import shortest_path_length
 
 if TYPE_CHECKING:
@@ -21,44 +21,74 @@ from gmso.exceptions import MissingParameterError
 
 CONNS = {"angle": Angle, "dihedral": Dihedral, "improper": Improper}
 
-EDGES = {
-    "angle": ((0, 1),),
-    "dihedral": ((0, 1), (1, 2)),
-    "improper": ((0, 1), (0, 2), (1, 2)),
-}
 
+def identify_connections(top: "Topology", index_only: bool = False) -> None:
+    """Identify all angle, dihedral and improper connections.
 
-def identify_connections(top, index_only=False):
-    """Identify all possible connections within a topology.
+    This requires that the bonded connections are fully defined in
+    the ``gmso.Topology``.
 
     Parameters
     ----------
-    top: gmso.Topology
-        The gmso topology for which to identify connections for
-    index_only: bool, default=False
-        If True, return atom indices that would form the actual connections
-        rather than adding the connections to the topology
+    top : gmso.Topology
+        The gmso topology for which to identify connections for.
+    index_only : bool, optional, default=False
+        If True, return integer site indices that would form the connections
+        rather than adding the connections to the topology.
 
-    Notes: We are using networkx graph matching to match
-    the topology's bonding graph to smaller sub-graphs that
-    correspond to an angle, dihedral, improper etc.
-    The matching is actually done via the line-graph of the
-    topology bonding graph.
-    [ahy]: IIRC we chose to use line-graph as opposed the actual graph
-    because the graph-matching (on the actual graph) would miss certain
-    angles/dihedrals/impropers if there were cycles or bridge bonds
-    that would effectively hide the angle/dihedral/dihedral
+    Returns
+    -------
+    None
+        Connections are added to top in-place.  When index_only is
+        ``True``, a dict of integer-index tuples is returned instead and
+        top is not modified.
+
+    Notes
+    -----
+    Connections are detected by direct adjacency enumeration over the
+    topology's bond graph (built with integer site indices as nodes).
+    This replaces the previous approach of VF2 subgraph isomorphism on
+    the line graph of the bond graph.
+
+    The patterns being searched for (bonds, angles, dihedrals, impropers)
+    are simple enough that they can be enumerated by walking the
+    adjacency structure directly, instead of sub-graph matching:
+
+    - Angle (a-b-c):
+        for each node b, enumerate pairs of its neighbors.
+    - Dihedral (a-b-c-d):
+        for each edge (b,c), enumerate (neighbor of b) x
+        (neighbor of c), excluding the b-c bond itself.
+    - Improper (central; b1,b2,b3):
+        for each node with degree >= 3,
+        enumerate all combinations of 3 neighbors.
+
+    Site objects are only touched at two boundaries:
+      - Entry: building the site_index_map (site -> int).
+      - Exit:  _add_connections resolving int indices back to Site objects.
+
+    Everything in between operates on plain Python ints.
     """
-    compound = nx.Graph()
+    # Build site -> index map once up front. top._sites is an IndexedSet
+    site_index_map = {site: i for i, site in enumerate(top.sites)}
 
+    # Build an integer-node adjacency dict directly from bonds.
+    # Using dict[int, set[int]] rather than nx.Graph to avoid networkx
+    # per-node overhead during the enumeration loops.
+    adj: dict[int, set[int]] = {}
     for b in top.bonds:
-        compound.add_edge(b.connection_members[0], b.connection_members[1])
+        i = site_index_map[b.connection_members[0]]
+        j = site_index_map[b.connection_members[1]]
+        if i not in adj:
+            adj[i] = set()
+        if j not in adj:
+            adj[j] = set()
+        adj[i].add(j)
+        adj[j].add(i)
 
-    compound_line_graph = nx.line_graph(compound)
-
-    angle_matches = _detect_connections(compound_line_graph, top, type_="angle")
-    dihedral_matches = _detect_connections(compound_line_graph, top, type_="dihedral")
-    improper_matches = _detect_connections(compound_line_graph, top, type_="improper")
+    angle_matches = _enumerate_angles(adj)
+    dihedral_matches = _enumerate_dihedrals(adj)
+    improper_matches = _enumerate_impropers(adj)
 
     if not index_only:
         for conn_matches, conn_type in zip(
@@ -87,204 +117,117 @@ def _add_connections(top, matches, conn_type):
             key = frozenset([bond, tuple(reversed(bond))])
             bonds.append(top._unique_connections[key])
         to_add_conn = CONNS[conn_type](connection_members=cmembers, bonds=tuple(bonds))
-        # import pdb; pdb.set_trace()
         top.add_connection(to_add_conn, update_types=False)
 
 
-def _detect_connections(compound_line_graph, top, type_="angle"):
-    """Detect available connections in the topology based on bonds."""
-    connection = nx.Graph()
-    for edge in EDGES[type_]:
-        assert len(edge) == 2, "Edges should be of length 2"
-        connection.add_edge(edge[0], edge[1])
+def _enumerate_angles(adj):
+    """Enumerate all angles by direct adjacency traversal.
 
-    matcher = nx.algorithms.isomorphism.GraphMatcher(compound_line_graph, connection)
+    An angle is any triple (a, b, c) where a and c are both bonded to b.
+    For each node b with at least 2 neighbors, we enumerate all unordered
+    pairs of those neighbors.
 
-    formatter_fns = {
-        "angle": _format_subgraph_angle,
-        "dihedral": _format_subgraph_dihedral,
-        "improper": _format_subgraph_improper,
-    }
+    Canonicalization: smaller terminal index first, so (a, b, c) with a < c.
+    This is imposed at construction time so the set handles deduplication.
 
-    conn_matches = IndexedSet()
-    for m in matcher.subgraph_isomorphisms_iter():
-        new_connection = formatter_fns[type_](m, top)
-        conn_matches.add(new_connection)
+    Parameters
+    ----------
+    adj : dict[int, set[int]]
+        Adjacency dict of the integer-node bond graph.
 
-    if conn_matches:
-        conn_matches = _trim_duplicates(conn_matches)
-
-    # Do more sorting of individual connection
-    sorted_conn_matches = list()
-    for match in conn_matches:
-        if type_ in ("angle", "dihedral"):
-            if match[0] < match[-1]:
-                sorted_conn = match
+    Returns
+    -------
+    list of tuple[int, int, int]
+        Sorted list of (end0, middle, end1) triples with end0 < end1,
+        ordered by (middle, end0, end1).
+    """
+    matches = set()
+    for b, neighbors in adj.items():
+        if len(neighbors) < 2:
+            continue
+        for a, c in combinations(neighbors, 2):
+            # Smaller end first.
+            if a < c:
+                matches.add((a, b, c))
             else:
-                sorted_conn = match[::-1]
-        elif type_ == "improper":
-            sorted_conn = [match[0]] + sorted(match[1:])
-        sorted_conn_matches.append(sorted_conn)
-
-    # Final sorting the whole list
-    if type_ == "angle":
-        return sorted(
-            sorted_conn_matches,
-            key=lambda angle: (
-                angle[1],
-                angle[0],
-                angle[2],
-            ),
-        )
-    elif type_ == "dihedral":
-        return sorted(
-            sorted_conn_matches,
-            key=lambda dihedral: (
-                dihedral[1],
-                dihedral[2],
-                dihedral[0],
-                dihedral[3],
-            ),
-        )
-    elif type_ == "improper":
-        return sorted(
-            sorted_conn_matches,
-            key=lambda improper: (
-                improper[0],
-                improper[1],
-                improper[2],
-                improper[3],
-            ),
-        )
+                matches.add((c, b, a))
+    return sorted(matches, key=lambda x: (x[1], x[0], x[2]))
 
 
-def _get_sorted_by_n_connections(m):
-    """Return sorted by n connections for the matching graph."""
-    small = nx.Graph()
-    for k, v in m.items():
-        small.add_edge(k[0], k[1])
-    return sorted(small.adj, key=lambda x: len(small[x])), small
+def _enumerate_dihedrals(adj):
+    """Enumerate all dihedrals by direct adjacency traversal.
 
+    A dihedral is any quadruple (a, b, c, d) where a-b, b-c, and c-d are
+    all bonds and a != c, b != d. For each bond (b, c), we enumerate all
+    valid (a, d) pairs where a is a neighbor of b other than c, and d is a
+    neighbor of c other than b.
 
-def _format_subgraph_angle(m, top):
-    """Format the angle subgraph.
-
-    Since we are matching compound line graphs,
-    back out the actual nodes, not just the edges
+    Each bond is only visited once (enforced by c > b) to avoid emitting
+    both (a,b,c,d) and its mirror (d,c,b,a) before canonicalisation.
+    Canonicalisation (smaller terminal first) then handles any remaining
+    orientation ambiguity.
 
     Parameters
     ----------
-    m : dict
-        keys are the compound line graph nodes
-        Values are the sub-graph matches (to the angle, dihedral, or improper)
-    top : gmso.Topology
-        The original Topology
+    adj : dict[int, set[int]]
+        Adjacency dict of the integer-node bond graph.
 
     Returns
     -------
-    connection : list of nodes, in order of bonding
-        (start, middle, end)
+    list of tuple[int, int, int, int]
+        Sorted list of (a, b, c, d) quadruples with a < d (canonical form),
+        ordered by (b, c, a, d).
     """
-    (sort_by_n_connections, _) = _get_sorted_by_n_connections(m)
-    ends = sorted(
-        [sort_by_n_connections[0], sort_by_n_connections[1]],
-        key=lambda x: top.get_index(x),
-    )
-    middle = sort_by_n_connections[2]
-    return (
-        top.get_index(ends[0]),
-        top.get_index(middle),
-        top.get_index(ends[1]),
-    )
+    matches = set()
+    for b, b_neighbors in adj.items():
+        for c in b_neighbors:
+            if c <= b:
+                # Process each bond once, only add when c > b
+                continue
+            for a in b_neighbors:
+                if a == c:
+                    continue
+                for d in adj[c]:
+                    if d == b:
+                        continue
+                    if d == a:
+                        continue
+                    if a < d:
+                        matches.add((a, b, c, d))
+                    else:
+                        matches.add((d, c, b, a))
+    return sorted(matches, key=lambda x: (x[1], x[2], x[0], x[3]))
 
 
-def _format_subgraph_dihedral(m, top):
-    """Format the dihedral subgraph.
+def _enumerate_impropers(adj):
+    """Enumerate all impropers by direct adjacency traversal.
 
-    Since we are matching compound line graphs,
-    back out the actual nodes, not just the edges
+    An improper is any quadruple (central, b1, b2, b3) where central is
+    bonded to all three of b1, b2, b3. For each node with degree >= 3,
+    we enumerate all combinations of 3 neighbors as the branch atoms.
+
+    Canonicalization: branches are sorted ascending. Central node identity
+    is unambiguous so no further orientation handling is needed.
 
     Parameters
     ----------
-    m : dict
-        keys are the compound line graph nodes
-        Values are the sub-graph matches (to the angle, dihedral, or improper)
-    top : gmso.Topology
-        The original Topology
+    adj : dict[int, set[int]]
+        Adjacency dict of the integer-node bond graph.
 
     Returns
     -------
-    connection : list of nodes, in order of bonding
-        (start, mid1, mid2, end)
+    list of tuple[int, int, int, int]
+        Sorted list of (central, b1, b2, b3) with b1 < b2 < b3,
+        ordered by (central, b1, b2, b3).
     """
-    (sort_by_n_connections, small) = _get_sorted_by_n_connections(m)
-    start = sort_by_n_connections[0]
-    if sort_by_n_connections[2] in small.neighbors(start):
-        mid1 = sort_by_n_connections[2]
-        mid2 = sort_by_n_connections[3]
-    else:
-        mid1 = sort_by_n_connections[3]
-        mid2 = sort_by_n_connections[2]
-
-    end = sort_by_n_connections[1]
-    return (
-        top.get_index(start),
-        top.get_index(mid1),
-        top.get_index(mid2),
-        top.get_index(end),
-    )
-
-
-def _format_subgraph_improper(m, top):
-    """Format the improper dihedral subgraph.
-
-    Since we are matching compound line graphs,
-    back out the actual nodes, not just the edges
-
-    Parameters
-    ----------
-    m : dict
-        keys are the compound line graph nodes
-        Values are the sub-graph matches (to the angle, dihedral, or improper)
-    top : gmso.Topology
-        The original Topology
-
-    Returns
-    -------
-    connection : list of nodes, in order of bonding
-        (central, branch1, branch2, branch3)
-
-    Notes
-    -----
-    Given the way impropers are matched, sometimes a cyclic 3-ring system gets returned
-    """
-    (sort_by_n_connections, _) = _get_sorted_by_n_connections(m)
-    if len(sort_by_n_connections) == 4:
-        central = sort_by_n_connections[3]
-        branch1, branch2, branch3 = sorted(
-            sort_by_n_connections[:3],
-            key=lambda x: top.get_index(x),
-        )
-        return (
-            top.get_index(central),
-            top.get_index(branch1),
-            top.get_index(branch2),
-            top.get_index(branch3),
-        )
-    return None
-
-
-def _trim_duplicates(all_matches):
-    """Remove redundant sub-graph matches.
-
-    Is there a better way to do this? Like when we format the subgraphs,
-    can we impose an ordering so it's easier to eliminate redundant matches?
-    """
-    trimmed_list = IndexedSet()
-    for match in all_matches:
-        if match and match not in trimmed_list and match[::-1] not in trimmed_list:
-            trimmed_list.add(match)
-    return trimmed_list
+    matches = set()
+    for central, neighbors in adj.items():
+        if len(neighbors) < 3:
+            continue
+        for trio in combinations(neighbors, 3):
+            b1, b2, b3 = sorted(trio)
+            matches.add((central, b1, b2, b3))
+    return sorted(matches, key=lambda x: (x[0], x[1], x[2], x[3]))
 
 
 def generate_pairs_lists(
@@ -399,18 +342,21 @@ def identify_virtual_sites(
     topology : gmso.Topology
         Topology to search for parameters.
     sites : List[gmso.core.abstract_site.Site]
-        Sites to use to construct subsearch of topology. Can be all sites in the topology, or a subset of sites.
+        Sites to use to construct subsearch of topology. Can be all sites in
+        the topology, or a subset of sites.
     bonds : List[gmso.core.bonds.Bond]
-        Bonds to use to construct subsearch of topology. Can be all bonds in the topology, or a subset of bonds.
+        Bonds to use to construct subsearch of topology. Can be all bonds in
+        the topology, or a subset of bonds.
     virtual_types : List[gmso.core.virtual_types.VirtualType]
-        Virtual types, presumably from a gmso.ForceField, used to match the parent_atoms in the sites and bonds graph.
+        Virtual types, presumably from a gmso.ForceField, used to match the
+        parent_atoms in the sites and bonds graph.
 
     Returns
     -------
     virtual_sites : List[gmso.core.virtual_site.VirtualSite]
         VirtualSite instances identified in the topology.
     """
-    for site in sites:  # validate subtypes are applied
+    for site in sites:
         if not site.atom_type:
             raise MissingParameterError(site.atom_type, "atom_type")
     compound = nx.Graph()
@@ -491,7 +437,6 @@ def connection_identifier_to_string(identifier):
 def yield_connection_identifiers(identifier):
     """Yield all possible bond identifiers from a tuple or string identifier."""
     n_sites = len(identifier) // 2 + 1
-    # decide if identifier is string or tuple
     if isinstance(identifier, str):
         bond_tokens = r"([\=\~\-\#\:])"
         identifier = re.split(bond_tokens, identifier)

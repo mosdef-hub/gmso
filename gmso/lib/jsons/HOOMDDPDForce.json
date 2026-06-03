@@ -1,0 +1,10 @@
+{
+  "name": "HOOMDDPDForce",
+  "expression": "A * (1-(r/r_cut)) - γ",
+  "independent_variables": "r",
+  "expected_parameters_dimensions": {
+    "A": "force",
+    "r_cut": "length",
+    "γ": "mass / length / time"
+  }
+}

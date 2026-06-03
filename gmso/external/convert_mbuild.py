@@ -24,13 +24,13 @@ logger = logging.getLogger(__name__)
 
 
 def from_mbuild(
-    compound,
-    box=None,
+    compound: "mb.Compound",
+    box: "mb.Box | None" = None,
     search_method=element_by_symbol,
-    parse_label=True,
+    parse_label: bool = True,
     custom_groups=None,
-    infer_elements=False,
-):
+    infer_elements: bool = False,
+) -> Topology:
     """Convert an mbuild.Compound to a gmso.Topology.
 
     This conversion makes the following assumptions about the inputted `Compound`:
@@ -135,19 +135,21 @@ def from_mbuild(
     return top
 
 
-def to_mbuild(topology, infer_hierarchy=True):
-    """Convert a gmso.Topology to mbuild.Compound.
+def to_mbuild(topology: Topology, infer_hierarchy: bool = True) -> "mb.Compound":
+    """Convert a :class:`~gmso.Topology` to an ``mbuild.Compound``.
 
     Parameters
     ----------
     topology : gmso.Topology
-        topology instance that need to be converted
+        The topology to convert.
     infer_hierarchy : bool, optional, default=True
-        Option to infer the hierarchy from Topology's labels
+        When ``True``, reconstruct the mBuild hierarchy from the
+        ``molecule`` and ``residue`` labels on each site.
+
     Returns
     -------
-    compound : mbuild.Compound
-
+    mbuild.Compound
+        A Compound whose particles correspond to the sites in *topology*.
     """
     msg = "Argument topology is not a Topology"
     assert isinstance(topology, Topology), msg
@@ -209,20 +211,19 @@ def to_mbuild(topology, infer_hierarchy=True):
     return compound
 
 
-def from_mbuild_box(mb_box):
-    """Convert an mBuild box to a GMSO box.
-
-    Assumes that the mBuild box dimensions are in nanometers
+def from_mbuild_box(mb_box: "mb.Box") -> "Box | None":
+    """Convert an ``mbuild.Box`` to a :class:`~gmso.Box`.
 
     Parameters
     ----------
     mb_box : mbuild.Box
-        mBuild box object to be converted to a gmso.core.Box object
+        The mBuild box to convert.  All lengths must be in nanometers.
 
     Returns
     -------
-    box : gmso.core.Box
-
+    gmso.Box or None
+        The converted box, or ``None`` when *mb_box* has zero lengths
+        (i.e. no bounding box was set).
     """
     # TODO: Unit tests
 
@@ -309,7 +310,7 @@ def _parse_molecule_residue(site_map, compound):
         if molecule_tag.name in molecule_tracker:
             molecule_tracker[molecule_tag.name] += 1
         else:
-            molecule_tracker[molecule_tag.name] = 0 + total_molecule_count
+            molecule_tracker[molecule_tag.name] = 0
         molecule_number = molecule_tracker[molecule_tag.name]
         total_molecule_count += 1
         """End of molecule parsing"""

@@ -102,7 +102,7 @@ class TopologyParameterizer(GMSOBase):
 
     forcefields: Union[ForceField, Dict[str, ForceField]] = Field(
         ...,
-        description="The gmso forcefield/ a dictionary of gmso "
+        description="The gmso forcefield or a dictionary of gmso "
         "forcefields per molecule/group, where the keys "
         "should match the molecule/group names",
     )

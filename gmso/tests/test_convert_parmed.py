@@ -368,7 +368,7 @@ class TestConvertParmEd(BaseTest):
 
         for j in range(10):
             dih = pmd.Dihedral(
-                *random.sample(struct.atoms, 4),
+                *[struct.atoms[i] for i in range(j, j + 4)],
                 improper=True if j % 2 == 0 else False,
             )
             struct.dihedrals.append(dih)
@@ -400,7 +400,7 @@ class TestConvertParmEd(BaseTest):
 
         for j in range(10):
             dih = pmd.Dihedral(
-                *random.sample(struct.atoms, 4),
+                *[struct.atoms[i] for i in range(j, j + 4)],
                 improper=True if j % 2 == 0 else False,
             )
             struct.dihedrals.append(dih)

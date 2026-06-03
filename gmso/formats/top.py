@@ -2,9 +2,14 @@
 
 import datetime
 import logging
+from pathlib import Path
+from typing import TYPE_CHECKING, Optional, Union
 
 import numpy as np
 import unyt as u
+
+if TYPE_CHECKING:
+    from gmso.core.topology import Topology
 
 from gmso.core.dihedral import Dihedral
 from gmso.core.element import element_by_atom_type
@@ -26,26 +31,40 @@ logger = logging.getLogger(__name__)
 
 
 @saves_as(".top")
-def write_top(top, filename, top_vars=None, settles_tag=None):
-    """Write a gmso.core.Topology object to a GROMACS topology (.TOP) file.
+def write_top(
+    top: "Topology",
+    filename: Union[str, Path],
+    top_vars: Optional[dict] = None,
+    settles_tag: Optional[str] = None,
+) -> None:
+    """Write a :class:`~gmso.Topology` to a GROMACS topology (``.top``) file.
 
     Parameters
     ----------
     top : gmso.Topology
-        A typed Topology Object
-    filename : str
-        Path of the output file
-    settles_tag : str or None, default None
-        Add GROMACS section [ settles ] for rigid 3-Site water models.
-        Note: See https://manual.gromacs.org/2024.4/reference-manual/algorithms/constraint-algorithms.html#settle
-        for more information on the SETTLE implementation.
-        TODO: Add support for 4-Site and 5-Site water models.
+        Fully typed topology to write.
+    filename : str or pathlib.Path
+        Destination file path.
+    top_vars : dict, optional, default=None
+        Override the default GROMACS ``[ defaults ]`` section values.  Keys
+        are GROMACS parameter names (e.g. ``'nbfunc'``, ``'comb-rule'``,
+        ``'gen-pairs'``, ``'fudgeLJ'``, ``'fudgeQQ'``).  Any key not
+        supplied falls back to the value inferred from the topology.
+    settles_tag : str, optional, default=None
+        When provided, write a ``[ settles ]`` section for rigid 3-site water
+        models using the given tag string.
+
+    Returns
+    -------
+    None
+        Writes the GROMACS topology file to *filename* in place.
 
     Notes
     -----
-    See https://manual.gromacs.org/current/reference-manual/topologies/topology-file-formats.html for
-    a full description of the top file format. This method is a work in progress and do not currently
-    support the full GROMACS specs.
+    This writer is a work in progress and does not yet support the full
+    GROMACS topology spec.  See the GROMACS manual at
+    https://manual.gromacs.org/current/reference-manual/topologies/topology-file-formats.html
+    for the complete format description.
     """
     pot_types = _validate_compatibility(top)
     top_vars = _get_top_vars(top, top_vars)

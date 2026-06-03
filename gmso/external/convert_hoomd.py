@@ -6,12 +6,15 @@ import copy
 import itertools
 import json
 import re
+from collections import OrderedDict
 
 import numpy as np
 import unyt as u
 from unyt.array import allclose_units
 
 from gmso.core.views import PotentialFilters
+from gmso.core.virtual_site import VirtualSite
+from gmso.core.virtual_type import VirtualType
 from gmso.exceptions import EngineIncompatibilityError, NotYetImplementedWarning
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.connectivity import generate_pairs_lists
@@ -55,6 +58,7 @@ AKMA_UNITS = {
 def get_cell_nlist(top, buffer=0.4):
     """Create a cell neighborlist for use in hoomd-blue based on top.scaling_factors"""
     nb_scaling_factors, coul_scaling_factors = top.scaling_factors
+    hasRigid = any(site.molecule.isrigid for site in top.sites)
     if all(top.scaling_factors[0] == top.scaling_factors[1]):
         outVals = None
     else:
@@ -68,6 +72,8 @@ def get_cell_nlist(top, buffer=0.4):
                 exclusions.append("bond")
             else:
                 exclusions.append(f"1-{i + 2}")
+        if hasRigid:
+            exclusions.append("body")
         if outVals is None:
             outVals = hoomd.md.nlist.Cell(exclusions=exclusions, buffer=buffer)
             return outVals, outVals  # return same neighborlist twice
@@ -113,52 +119,53 @@ def to_gsd_snapshot(
         all reference scaling values is set to 1.
         A dictionary specifying the referenced scaling values may also be provided for this argument.
 
-    Return
-    ------
+    Returns
+    -------
     gsd_snapshot : gsd.hoomd.Frame
-        Converted hoomd Snapshot. Always retruned.
+        Converted HOOMD snapshot. Always returned.
     base_units : dict
-        Base units dictionary utilized during the conversion. Always returned.
+        Base units dictionary used during the conversion. Always returned.
     rigid_info : hoomd.md.constrain.Rigid
-        A hoomd constraint object storing constituent particle information
+        A HOOMD constraint object storing constituent particle information
         needed to run rigid body simulations in HOOMD-blue.
-        This is only returned if sites with `site.molecule.isrigid = True`
+        Only returned when sites with ``site.molecule.isrigid = True``
         are found in the topology.
 
     Notes
     -----
     Force field parameters are not written to the GSD file and must be
-    generated using `gmso.external.convert_hoomd.to_hoomd_forcefield()`.
+    generated separately using
+    ``gmso.external.convert_hoomd.to_hoomd_forcefield()``.
 
-    If you are using mBuild and GMSO to initialize rigid body simulations
-    with HOOMD-blue set the `site.molecule.isrigid` property to `True`.
-    If your topology contains a mix of rigid and flexible molecules,
-    the rigid molecules must come first in the hierarchy of the GMSO Toplogy
-    and therefore also in the mBuild Compound hierarchy.
-    For more information about running rigid body simulations in HOOMD-blue,
-    see https://hoomd-blue.readthedocs.io/en/latest/tutorial/06-Modelling-Rigid-Bodies/00-index.html
+    When using mBuild and GMSO to initialise rigid body simulations with
+    HOOMD-blue, set ``site.molecule.isrigid = True``.  If the topology
+    contains a mix of rigid and flexible molecules, the rigid molecules
+    must appear first in the GMSO topology hierarchy (and therefore first
+    in the mBuild Compound hierarchy).
 
-    For more information on the units from `base_units`, see
+    For more information about rigid body simulations in HOOMD-blue see
+    https://hoomd-blue.readthedocs.io/en/latest/tutorial/06-Modelling-Rigid-Bodies/00-index.html
+
+    For information on the ``base_units`` dictionary see
     https://hoomd-blue.readthedocs.io/en/latest/units.html#base-units
 
-    Rigid Body Example
-    ------------------
-    In this example, a system with rigid benzene and flexible ethane
-    is initialized. Since benzene is rigid, it must be passed first
-    into `mb.fill_box` so that benzene molecules are at the top of
-    `box` hierarchy.
-        ::
-            ethane = mb.lib.molecules.Ethane()
-            ethane.name = "ethane"
-            benzene = mb.load("c1ccccc1", smiles=True)
-            benzene.name = "benzene"
-            box = mb.fill_box([benzene, ethane], n_compounds=[1, 1], box=[2, 2, 2])
-            top = from_mbuild(box)
-            for site in top.sites:
-                if site.molecule.name == "benzene":
-                    site.molecule.isrigid = True
+    Examples
+    --------
+    Rigid benzene + flexible ethane system (benzene must be passed first
+    so it sits at the top of the mBuild Compound hierarchy):
 
-            snapshot, refs, rigid = to_gsd_snapshot(top)
+    .. code-block:: python
+
+        ethane = mb.lib.molecules.Ethane()
+        ethane.name = "ethane"
+        benzene = mb.load("c1ccccc1", smiles=True)
+        benzene.name = "benzene"
+        box = mb.fill_box([benzene, ethane], n_compounds=[1, 1], box=[2, 2, 2])
+        top = from_mbuild(box)
+        for site in top.sites:
+            if site.molecule.name == "benzene":
+                site.molecule.isrigid = True
+        snapshot, refs, rigid = to_gsd_snapshot(top)
 
     """
     if int(hoomd_version[0]) < 4:
@@ -184,6 +191,10 @@ def to_gsd_snapshot(
         "Only writing particle, bond, sangle, proper and improper dihedral information."
         "Special pairs are not currently written to GSD files",
     )
+    # Create Molecule and Site index map Info
+    moleculeDict, site_indexMap, uniqueMoleculeODict = (
+        _organize_generate_topology_molecule_info(top)
+    )
 
     n_rigid, rigid_info = _parse_particle_information(
         gsd_snapshot,
@@ -191,17 +202,20 @@ def to_gsd_snapshot(
         base_units,
         shift_coords,
         u.unyt_array([lx, ly, lz]),
+        moleculeDict,
+        uniqueMoleculeODict,
     )
+
     if parse_special_pairs:
-        _parse_pairs_information(gsd_snapshot, top, n_rigid)
+        _parse_pairs_information(gsd_snapshot, top, site_indexMap, n_rigid)
     if top.n_bonds > 0:
-        _parse_bond_information(gsd_snapshot, top, n_rigid)
+        _parse_bond_information(gsd_snapshot, top, site_indexMap, n_rigid)
     if top.n_angles > 0:
-        _parse_angle_information(gsd_snapshot, top, n_rigid)
+        _parse_angle_information(gsd_snapshot, top, site_indexMap, n_rigid)
     if top.n_dihedrals > 0:
-        _parse_dihedral_information(gsd_snapshot, top, n_rigid)
+        _parse_dihedral_information(gsd_snapshot, top, site_indexMap, n_rigid)
     if top.n_impropers > 0:
-        _parse_improper_information(gsd_snapshot, top, n_rigid)
+        _parse_improper_information(gsd_snapshot, top, site_indexMap, n_rigid)
 
     if rigid_info:
         return gsd_snapshot, base_units, rigid_info
@@ -246,52 +260,53 @@ def to_hoomd_snapshot(
         all reference scaling values is set to 1.
         A dictionary specifying the referenced scaling values may also be provided for this argument.
 
-    Return
-    ------
+    Returns
+    -------
     hoomd_snapshot : hoomd.Snapshot
-        Converted hoomd Snapshot. Always retruned.
+        Converted HOOMD snapshot. Always returned.
     base_units : dict
-        Base units dictionary utilized during the conversion. Always returned.
+        Base units dictionary used during the conversion. Always returned.
     rigid_info : hoomd.md.constrain.Rigid
-        A hoomd constraint object storing constituent particle information
+        A HOOMD constraint object storing constituent particle information
         needed to run rigid body simulations in HOOMD-blue.
-        This is only returned if sites with `site.molecule.isrigid = True`
+        Only returned when sites with ``site.molecule.isrigid = True``
         are found in the topology.
 
     Notes
     -----
-    Force field parameters are not written to the GSD file and must be
-    generated using `gmso.external.convert_hoomd.to_hoomd_forcefield()`.
+    Force field parameters are not written to the snapshot and must be
+    generated separately using
+    ``gmso.external.convert_hoomd.to_hoomd_forcefield()``.
 
-    If you are using mBuild and GMSO to initialize rigid body simulations
-    with HOOMD-blue set the `site.molecule.isrigid` property to `True`.
-    If your topology contains a mix of rigid and flexible molecules,
-    the rigid molecules must come first in the hierarchy of the GMSO Toplogy
-    and therefore also in the mBuild Compound hierarchy.
-    For more information about running rigid body simulations in HOOMD-blue,
-    see https://hoomd-blue.readthedocs.io/en/latest/tutorial/06-Modelling-Rigid-Bodies/00-index.html
+    When using mBuild and GMSO to initialise rigid body simulations with
+    HOOMD-blue, set ``site.molecule.isrigid = True``.  If the topology
+    contains a mix of rigid and flexible molecules, the rigid molecules
+    must appear first in the GMSO topology hierarchy (and therefore first
+    in the mBuild Compound hierarchy).
 
-    For more information on the units from `base_units`, see
+    For more information about rigid body simulations in HOOMD-blue see
+    https://hoomd-blue.readthedocs.io/en/latest/tutorial/06-Modelling-Rigid-Bodies/00-index.html
+
+    For information on the ``base_units`` dictionary see
     https://hoomd-blue.readthedocs.io/en/latest/units.html#base-units
 
-    Rigid Body Example
-    ------------------
-    In this example, a system with rigid benzene and flexible ethane
-    is initialized. Since benzene is rigid, it must be passed first
-    into `mb.fill_box` so that benzene molecules are at the top of
-    `box` hierarchy.
-        ::
-            ethane = mb.lib.molecules.Ethane()
-            ethane.name = "ethane"
-            benzene = mb.load("c1ccccc1", smiles=True)
-            benzene.name = "benzene"
-            box = mb.fill_box([benzene, ethane], n_compounds=[1, 1], box=[2, 2, 2])
-            top = from_mbuild(box)
-            for site in top.sites:
-                if site.molecule.name == "benzene":
-                    site.molecule.isrigid = True
+    Examples
+    --------
+    Rigid benzene + flexible ethane system (benzene must be passed first
+    so it sits at the top of the mBuild Compound hierarchy):
 
-            snapshot, refs, rigid = to_hoomd_snapshot(top)
+    .. code-block:: python
+
+        ethane = mb.lib.molecules.Ethane()
+        ethane.name = "ethane"
+        benzene = mb.load("c1ccccc1", smiles=True)
+        benzene.name = "benzene"
+        box = mb.fill_box([benzene, ethane], n_compounds=[1, 1], box=[2, 2, 2])
+        top = from_mbuild(box)
+        for site in top.sites:
+            if site.molecule.name == "benzene":
+                site.molecule.isrigid = True
+        snapshot, refs, rigid = to_hoomd_snapshot(top)
     """
     if int(hoomd_version[0]) < 4:
         raise EngineIncompatibilityError(
@@ -316,23 +331,29 @@ def to_hoomd_snapshot(
         "Special pairs are not currently written to GSD files",
     )
 
+    moleculeDict, site_indexMap, uniqueMoleculeODict = (
+        _organize_generate_topology_molecule_info(top)
+    )
+
     n_rigid, rigid_info = _parse_particle_information(
         hoomd_snapshot,
         top,
         base_units,
         shift_coords,
         u.unyt_array([lx, ly, lz]),
+        moleculeDict,
+        uniqueMoleculeODict,
     )
     if parse_special_pairs:
-        _parse_pairs_information(hoomd_snapshot, top, n_rigid)
+        _parse_pairs_information(hoomd_snapshot, top, site_indexMap, n_rigid)
     if top.n_bonds > 0:
-        _parse_bond_information(hoomd_snapshot, top, n_rigid)
+        _parse_bond_information(hoomd_snapshot, top, site_indexMap, n_rigid)
     if top.n_angles > 0:
-        _parse_angle_information(hoomd_snapshot, top, n_rigid)
+        _parse_angle_information(hoomd_snapshot, top, site_indexMap, n_rigid)
     if top.n_dihedrals > 0:
-        _parse_dihedral_information(hoomd_snapshot, top, n_rigid)
+        _parse_dihedral_information(hoomd_snapshot, top, site_indexMap, n_rigid)
     if top.n_impropers > 0:
-        _parse_improper_information(hoomd_snapshot, top, n_rigid)
+        _parse_improper_information(hoomd_snapshot, top, site_indexMap, n_rigid)
 
     hoomd_snapshot.wrap()
     if rigid_info:
@@ -347,6 +368,8 @@ def _parse_particle_information(
     base_units,
     shift_coords,
     box_lengths,
+    moleculeDict,
+    uniqueMoleculeODict,
 ):
     """Parse site information from topology.
 
@@ -362,129 +385,182 @@ def _parse_particle_information(
         If True, shift coordinates from (0, L) to (-L/2, L/2) if neccessary.
     box_lengths : list() of length 3
         Lengths of box in x, y, z
+    moleculeDict : dictionary of molecule.name : [[sites_molecule2],[sites_molecule1]...]
+        Sorted info about all sites to index into topology
+    uniqueMoleculeODict : ordered_dict with keys of str, values of int
+        Sorted list of moleculesNames as strings, with indexes being the molecule start index.
     """
-    # Set up all require
-    xyz = u.unyt_array(
-        [site.position.to_value(base_units["length"]) for site in top.sites]
-    )
+    length_unit = base_units["length"]
+    mass_unit = base_units["mass"]
+    energy_unit = base_units["energy"]
+
+    # --- Collect per-site data, handling both regular sites and virtual sites ---
+    xyz = []
+    types = []
+    masses = []
+    charges = []
+    rigid_ids = []
+    n_prior_molecules = 0
+    has_rigid = False
+
+    for moleculeName in uniqueMoleculeODict:
+        for moleculeNumber, sitesList in enumerate(moleculeDict[moleculeName]):
+            for site in sitesList:
+                if isinstance(site, VirtualSite):
+                    xyz.append(site.position())
+                    types.append(
+                        site.name
+                        if site.virtual_type is None
+                        else site.virtual_type.name
+                    )
+                    masses.append(0 * u.amu)
+                else:
+                    xyz.append(site.position)
+                    types.append(
+                        site.name if site.atom_type is None else site.atom_type.name
+                    )
+                    masses.append(site.mass)
+                charges.append(site.charge if site.charge else 0 * u.elementary_charge)
+                rigid_ids.append(
+                    site.molecule.number + n_prior_molecules
+                    if site.molecule.isrigid
+                    else -1
+                )
+                if not has_rigid and site.molecule.isrigid:
+                    has_rigid = True
+        n_prior_molecules += site.molecule.number + 1
+
+    # Convert to correct units, then strip to plain numpy for speed
+    xyz = u.unyt_array(xyz).to_value(length_unit)
+    masses = u.unyt_array(masses).to_value(mass_unit)
+    charges = u.unyt_array(charges).to_value(u.elementary_charge)
+    n_particles = len(types)
+
     if shift_coords:
         logger.info("Shifting coordinates to [-L/2, L/2]")
         xyz = coord_shift(xyz, box_lengths)
 
-    types = [
-        site.name if site.atom_type is None else site.atom_type.name
-        for site in top.sites
-    ]
-    masses = u.unyt_array(
-        [
-            site.mass.to_value(base_units["mass"])
-            if site.mass
-            else 1 * base_units["mass"]
-            for site in top.sites
-        ]
-    )
-    charges = u.unyt_array(
-        [site.charge if site.charge else 0 * u.elementary_charge for site in top.sites]
-    )
-    moment_of_inertias = [[1, 0, 0] for i in xyz]
-    # GMSO and mBuild don't store particle orientation; use default
-    orientations = [[1, 0, 0, 0] for i in xyz]
-    unique_types = sorted(list(set(types)))
-    typeids = np.array([unique_types.index(t) for t in types])
-    # Check for rigid molecules
-    rigid_mols = any([site.molecule.isrigid for site in top.sites])
-    if rigid_mols:
-        rigid_ids = [
-            site.molecule.number if site.molecule.isrigid else -1 for site in top.sites
-        ]
-        # Check that the hierarchy is correct
-        if -1 in rigid_ids:
-            first_neg_index = rigid_ids.index(-1)
-            if not all(i == -1 for i in rigid_ids[first_neg_index:]):
+    # --- Build type IDs with dict lookup instead of list.index() ---
+    unique_types = sorted(set(types))
+    type_to_id = {t: idx for idx, t in enumerate(unique_types)}
+    typeids = np.array([type_to_id[t] for t in types], dtype=np.int32)
+
+    # Default orientations and moments of inertia
+    moment_of_inertias = np.tile([1.0, 0.0, 0.0], (n_particles, 1))
+    orientations = np.tile([1.0, 0.0, 0.0, 0.0], (n_particles, 1))
+
+    # --- Rigid body handling ---
+    if has_rigid:
+        rigid_ids = np.array(rigid_ids, dtype=np.int64)
+
+        # Validate hierarchy: all rigid sites must precede non-rigid sites
+        non_rigid_mask = rigid_ids == -1
+        if non_rigid_mask.any():
+            first_neg_index = int(np.argmax(non_rigid_mask))
+            if not non_rigid_mask[first_neg_index:].all():
                 raise RuntimeError(
-                    "When using a combination of rigid and non-rigid molecules, ",
-                    "all of the rigid molecules must come first in the mBuild/GMSO hierarchy. ",
+                    "When using a combination of rigid and non-rigid molecules, "
+                    "all of the rigid molecules must come first in the mBuild/GMSO hierarchy."
                 )
+
         rigid_body_sets = dict()
         for site in top.sites:
             if site.molecule.isrigid:
-                if site.molecule.name in rigid_body_sets.keys():
-                    rigid_body_sets[site.molecule.name].add(site.molecule.number)
+                if site.molecule.name in rigid_body_sets:
+                    rigid_body_sets[site.molecule.name].add(
+                        site.molecule.number + uniqueMoleculeODict[site.molecule.name]
+                    )
                 else:
-                    rigid_body_sets[site.molecule.name] = {site.molecule.number}
-        # Number of unique types of rigid molecules
-        n_rigid_types = len(rigid_body_sets.keys())
-        # Total number of rigid molecules
-        n_rigid = sum([len(mols) for mols in rigid_body_sets.values()])
-        # Create place holder arrays for rigid particle properties
-        rigid_charges = np.zeros(n_rigid) * charges.units
-        rigid_masses = np.zeros(n_rigid) * masses.units
-        rigid_xyz = np.zeros((n_rigid, 3)) * xyz.units
-        rigid_moits = np.zeros((n_rigid, 3)) * xyz.units
-        rigid_orientations = [[1, 0, 0, 0] for i in rigid_xyz]
-        # Rigid particles get type IDs from 0 to n_rigid_types
-        rigid_type_ids = []
-        for i, rigid_type in enumerate(rigid_body_sets.keys()):
-            rigid_type_ids.extend([i] * len(rigid_body_sets[rigid_type]))
-        # Hoomd rigid constraint obj needed to run rigid body simulations
+                    rigid_body_sets[site.molecule.name] = {
+                        site.molecule.number + uniqueMoleculeODict[site.molecule.name]
+                    }
+
+        n_rigid_types = len(rigid_body_sets)
+        n_rigid = sum(len(mols) for mols in rigid_body_sets.values())
+
+        # Plain numpy placeholders (units already stripped above)
+        rigid_charges = np.zeros(n_rigid)
+        rigid_masses = np.zeros(n_rigid)
+        rigid_xyz = np.zeros((n_rigid, 3))
+        rigid_moits = np.zeros((n_rigid, 3))
+        rigid_orientations = np.tile([1.0, 0.0, 0.0, 0.0], (n_rigid, 1))
+
+        # Build rigid type IDs
+        rigid_type_ids = np.empty(n_rigid, dtype=np.int32)
+        offset = 0
+        for i, rigid_type in enumerate(rigid_body_sets):
+            count = len(rigid_body_sets[rigid_type])
+            rigid_type_ids[offset : offset + count] = i
+            offset += count
+
+        # Precompute group indices for each rigid body ID
+        group_indices_map = {}
+        for i in range(n_particles):
+            rid = rigid_ids[i]
+            if rid != -1:
+                if rid not in group_indices_map:
+                    group_indices_map[rid] = []
+                group_indices_map[rid].append(i)
+        for rid in group_indices_map:
+            group_indices_map[rid] = np.array(group_indices_map[rid], dtype=np.intp)
+
         rigid_constraint = hoomd.md.constrain.Rigid()
         mol_count = 0
-        # Populate rigid particle placeholder arrays created above
-        for rigid_mol in rigid_body_sets.keys():
-            for idx, _id in enumerate(rigid_body_sets[rigid_mol]):
-                # Get values for rigid body properties from their constituent particles
-                group_indices = np.where(np.array(rigid_ids) == _id)[0]
+
+        for rigid_mol in rigid_body_sets:
+            sorted_ids = sorted(rigid_body_sets[rigid_mol])
+            for idx, _id in enumerate(sorted_ids):
+                group_indices = group_indices_map[_id]
                 group_positions = xyz[group_indices]
                 group_masses = masses[group_indices]
-                group_orientations = [[1, 0, 0, 0] for i in group_indices]
-                com_xyz = np.sum(group_positions.T * group_masses, axis=1) / sum(
-                    group_masses
-                )
-                rigid_masses[idx + mol_count] = sum(group_masses)
-                rigid_xyz[idx + mol_count] = com_xyz
-                rigid_moits[idx + mol_count] = moment_of_inertia(
+
+                total_mass = group_masses.sum()
+                com_xyz = (group_positions.T * group_masses).sum(axis=1) / total_mass
+
+                pos_idx = idx + mol_count
+                rigid_masses[pos_idx] = total_mass
+                rigid_xyz[pos_idx] = com_xyz
+                rigid_moits[pos_idx] = moment_of_inertia(
                     group_positions, group_masses, com_xyz
                 )
-                # Only need to make one entry per rigid body type
+
                 if idx == 0:
                     const_ids = typeids[group_indices]
                     const_types = [unique_types[i] for i in const_ids]
-
+                    group_orientations = [[1, 0, 0, 0] for _ in group_indices]
                     rigid_constraint.body[rigid_mol] = {
                         "constituent_types": const_types,
                         "positions": group_positions,
                         "orientations": group_orientations,
                     }
             mol_count += len(rigid_body_sets[rigid_mol])
-        # Combine properties for rigid body particles and constituent particles
-        # All rigid body propeties should be at the beginning, others get bumped
+
+        # Prepend rigid body data
         unique_types = list(rigid_body_sets.keys()) + unique_types
-        typeids = np.concatenate((np.array(rigid_type_ids), typeids + n_rigid_types))
+        typeids = np.concatenate((rigid_type_ids, typeids + n_rigid_types))
         masses = np.concatenate((rigid_masses, masses))
         xyz = np.concatenate((rigid_xyz, xyz))
         charges = np.concatenate((rigid_charges, charges))
-        orientations = rigid_orientations + orientations
-        moment_of_inertias = np.concatenate((rigid_moits, moment_of_inertias))
+        orientations = np.concatenate((rigid_orientations, orientations), axis=0)
+        moment_of_inertias = np.concatenate((rigid_moits, moment_of_inertias), axis=0)
         rigid_id_tags = np.concatenate((np.arange(n_rigid), rigid_ids))
     else:
         n_rigid = 0
         rigid_constraint = None
 
-    """
-    Permittivity of free space = 2.39725e-4 e^2/((kcal/mol)(angstrom)),
-    where e is the elementary charge
-    """
-
+    # Compute charge factor (strip to float for consistency)
     e0 = u.physical_constants.eps_0.in_units(
-        u.elementary_charge**2 / (base_units["energy"] * base_units["length"])
+        u.elementary_charge**2 / (energy_unit * length_unit)
     )
-    charge_factor = (
-        4.0 * np.pi * e0 * base_units["length"] * base_units["energy"]
-    ) ** 0.5
-    # Write out all of the snapshot attributes
-    if isinstance(snapshot, hoomd.Snapshot):
-        snapshot.particles.N = top.n_sites + n_rigid
-        snapshot.particles.types = unique_types
+    charge_factor = (4.0 * np.pi * e0 * length_unit * energy_unit) ** 0.5
+    charge_factor = charge_factor.to_value(u.elementary_charge)
+
+    # --- Write snapshot ---
+    is_hoomd_snapshot = isinstance(snapshot, hoomd.Snapshot)
+    snapshot.particles.N = n_particles + n_rigid
+    snapshot.particles.types = unique_types
+
+    if is_hoomd_snapshot:
         snapshot.particles.position[0:] = xyz
         snapshot.particles.typeid[0:] = typeids
         snapshot.particles.mass[0:] = masses
@@ -493,9 +569,7 @@ def _parse_particle_information(
         if n_rigid:
             snapshot.particles.body[0:] = rigid_id_tags
             snapshot.particles.moment_inertia[0:] = moment_of_inertias
-    elif isinstance(snapshot, gsd.hoomd.Frame):
-        snapshot.particles.N = top.n_sites + n_rigid
-        snapshot.particles.types = unique_types
+    else:  # gsd.hoomd.Frame
         snapshot.particles.position = xyz
         snapshot.particles.typeid = typeids
         snapshot.particles.mass = masses
@@ -507,8 +581,8 @@ def _parse_particle_information(
     return n_rigid, rigid_constraint
 
 
-def _parse_pairs_information(snapshot, top, n_rigid=0):
-    """Parse sacled pair types.
+def _parse_pairs_information(snapshot, top, site_indexMap, n_rigid=0):
+    """Parse scaled pair types.
 
     Parameters
     ----------
@@ -516,6 +590,8 @@ def _parse_pairs_information(snapshot, top, n_rigid=0):
         The target Snapshot object.
     top : gmso.Topology
         Topology object holding system information
+    indexMap : Dict of site : index
+        Preorganized hashable map for site indexes
     n_rigid : int
         The number of rigid bodies found in `_parse_particle_information()`
         Used to adjust pair group indices.
@@ -541,7 +617,7 @@ def _parse_pairs_information(snapshot, top, n_rigid=0):
             pair_types.append(pair_type)
         pair_typeids.append(pair_types.index(pair_type))
         pairs.append(
-            (top.get_index(pair[0]) + n_rigid, top.get_index(pair[1]) + n_rigid)
+            (site_indexMap[pair[0]] + n_rigid, site_indexMap[pair[1]] + n_rigid)
         )
 
     if isinstance(snapshot, hoomd.Snapshot):
@@ -556,7 +632,7 @@ def _parse_pairs_information(snapshot, top, n_rigid=0):
         snapshot.pairs.typeid = pair_typeids
 
 
-def _parse_bond_information(snapshot, top, n_rigid=0):
+def _parse_bond_information(snapshot, top, site_indexMap, n_rigid=0):
     """Parse bonds information from topology.
 
     Parameters
@@ -565,6 +641,8 @@ def _parse_bond_information(snapshot, top, n_rigid=0):
         The target Snapshot object.
     top : gmso.Topology
         Topology object holding system information
+    indexMap : Dict of site : index
+        Preorganized hashable map for site indexes
     n_rigid : int
         The number of rigid bodies found in `_parse_particle_information()`
         Used to adjust bond group indices.
@@ -578,21 +656,27 @@ def _parse_bond_information(snapshot, top, n_rigid=0):
 
     for bond in top.bonds:
         if all([site.atom_type for site in bond.connection_members]):
-            connection_members = sort_connection_members(bond, "atomclass")
-            bond_type = "-".join(
-                [site.atom_type.atomclass for site in connection_members]
-            )
+            if not bond.connection_members[0].atom_type.atomclass == "":
+                connection_members = sort_connection_members(bond, "atomclass")
+                bond_type = "-".join(
+                    [site.atom_type.atomclass for site in connection_members]
+                )
+            else:
+                connection_members = sort_connection_members(bond, "atom_type")
+                bond_type = "-".join(
+                    [site.atom_type.name for site in connection_members]
+                )
         else:
             connection_members = sort_connection_members(bond, "name")
             bond_type = "-".join([site.name for site in connection_members])
 
         bond_types.append(bond_type)
         bond_groups.append(
-            sorted(tuple(top.get_index(site) + n_rigid for site in connection_members))
+            tuple(site_indexMap[site] + n_rigid for site in connection_members)
         )
-
     unique_bond_types = list(set(bond_types))
-    bond_typeids = [unique_bond_types.index(i) for i in bond_types]
+    type_to_id = {btype: i for i, btype in enumerate(unique_bond_types)}
+    bond_typeids = [type_to_id[btype] for btype in bond_types]  # O(n)
 
     if isinstance(snapshot, hoomd.Snapshot):
         snapshot.bonds.types = unique_bond_types
@@ -606,7 +690,7 @@ def _parse_bond_information(snapshot, top, n_rigid=0):
     logger.info(f"{len(unique_bond_types)} unique bond types detected")
 
 
-def _parse_angle_information(snapshot, top, n_rigid=0):
+def _parse_angle_information(snapshot, top, site_indexMap, n_rigid=0):
     """Parse angles information from topology.
 
     Parameters
@@ -615,6 +699,8 @@ def _parse_angle_information(snapshot, top, n_rigid=0):
         The target Snapshot object.
     top : gmso.Topology
         Topology object holding system information
+    indexMap : Dict of site : index
+        Preorganized hashable map for site indexes
     n_rigid : int
         The number of rigid bodies found in `_parse_particle_information()`
         Used to adjust angle group indices.
@@ -638,11 +724,12 @@ def _parse_angle_information(snapshot, top, n_rigid=0):
 
         angle_types.append(angle_type)
         angle_groups.append(
-            tuple(top.get_index(site) + n_rigid for site in connection_members)
+            tuple(site_indexMap[site] + n_rigid for site in connection_members)
         )
 
     unique_angle_types = list(set(angle_types))
-    angle_typeids = [unique_angle_types.index(i) for i in angle_types]
+    type_to_id = {atype: i for i, atype in enumerate(unique_angle_types)}
+    angle_typeids = [type_to_id[atype] for atype in angle_types]
 
     if isinstance(snapshot, hoomd.Snapshot):
         snapshot.angles.types = unique_angle_types
@@ -657,7 +744,7 @@ def _parse_angle_information(snapshot, top, n_rigid=0):
     logger.info(f"{len(unique_angle_types)} unique angle types detected")
 
 
-def _parse_dihedral_information(snapshot, top, n_rigid=0):
+def _parse_dihedral_information(snapshot, top, site_indexMap, n_rigid=0):
     """Parse dihedral information from topology.
 
     Parameters
@@ -666,6 +753,8 @@ def _parse_dihedral_information(snapshot, top, n_rigid=0):
         The target Snapshot object.
     top : gmso.Topology
         Topology object holding system information
+    indexMap : Dict of site : index
+        Preorganized hashable map for site indexes
     n_rigid : int
         The number of rigid bodies found in `_parse_particle_information()`
         Used to adjust dihedral group indices.
@@ -687,11 +776,12 @@ def _parse_dihedral_information(snapshot, top, n_rigid=0):
 
         dihedral_types.append(dihedral_type)
         dihedral_groups.append(
-            tuple(top.get_index(site) + n_rigid for site in connection_members)
+            tuple(site_indexMap[site] + n_rigid for site in connection_members)
         )
 
     unique_dihedral_types = list(set(dihedral_types))
-    dihedral_typeids = [unique_dihedral_types.index(i) for i in dihedral_types]
+    type_to_id = {dtype: i for i, dtype in enumerate(unique_dihedral_types)}
+    dihedral_typeids = [type_to_id[dtype] for dtype in dihedral_types]
 
     if isinstance(snapshot, hoomd.Snapshot):
         snapshot.dihedrals.types = unique_dihedral_types
@@ -706,7 +796,7 @@ def _parse_dihedral_information(snapshot, top, n_rigid=0):
     logger.info(f"{len(unique_dihedral_types)} unique dihedral types detected")
 
 
-def _parse_improper_information(snapshot, top, n_rigid=0):
+def _parse_improper_information(snapshot, top, site_indexMap, n_rigid=0):
     """Parse impropers information from topology.
 
     Parameters
@@ -715,6 +805,8 @@ def _parse_improper_information(snapshot, top, n_rigid=0):
         The target Snapshot object.
     top : gmso.Topology
         Topology object holding system information
+    indexMap : Dict of site : index
+        Preorganized hashable map for site indexes
     n_rigid : int
         The number of rigid bodies found in `_parse_particle_information()`
 
@@ -735,11 +827,12 @@ def _parse_improper_information(snapshot, top, n_rigid=0):
 
         improper_types.append(improper_type)
         improper_groups.append(
-            tuple(top.get_index(site) + n_rigid for site in connection_members)
+            tuple(site_indexMap[site] + n_rigid for site in connection_members)
         )
 
     unique_improper_types = list(set(improper_types))
-    improper_typeids = [unique_improper_types.index(i) for i in improper_types]
+    type_to_id = {itype: i for i, itype in enumerate(unique_improper_types)}
+    improper_typeids = [type_to_id[itype] for itype in improper_types]
 
     if isinstance(snapshot, hoomd.Snapshot):
         snapshot.impropers.types = unique_improper_types
@@ -779,6 +872,7 @@ def to_hoomd_forcefield(
     pppm_kwargs={"resolution": (8, 8, 8), "order": 4},
     base_units=None,
     auto_scale=False,
+    kT=None,
 ):
     """Convert the potential portion of a typed GMSO to hoomd forces.
 
@@ -806,13 +900,17 @@ def to_hoomd_forcefield(
         If the referenced scaling values cannot be determined (e.g., when the topology is not typed),
         all reference scaling values is set to 1.
         A dictionary specifying the referenced scaling values may also be provided for this argument.
+    kT : float, optional, default None
+        Set the kT parameter for running simulations with hoomd.md.pair.DPD forces. If none and these forces are
+        present in top.pairpotential_types, will raise an error. Please convert to units of [energy]
+        using base_units to ensure proper value is passed.
 
     Returns
     -------
     forces : dict
         HOOMD forces converted from all available PotentialTypes of the provided
         GMSO Topology. Converted are grouped by their category (as key of the
-        dictionary), namely, "nonbonded", "bonds", rangles", "dihedrals", and "impropers".
+        dictionary), namely, "nonbonded", "bonds", "angles", "dihedrals", and "impropers".
     base_units : dict
         Base units dictionary utilized during the conversion.
 
@@ -841,6 +939,7 @@ def to_hoomd_forcefield(
             potential_refs,
             pppm_kwargs,
             base_units,
+            kT,
         ),
         "bonds": _parse_bond_forces(
             top,
@@ -885,6 +984,7 @@ def _validate_compatibility(top):
     harmonic_torsion_potential = templates["HarmonicTorsionPotential"]
     opls_torsion_potential = templates["OPLSTorsionPotential"]
     rb_torsion_potential = templates["RyckaertBellemansTorsionPotential"]
+    dpd_force = templates["HOOMDDPDForce"]
     accepted_potentials = (
         lennard_jones_potential,
         harmonic_bond_potential,
@@ -895,6 +995,7 @@ def _validate_compatibility(top):
         harmonic_torsion_potential,
         opls_torsion_potential,
         rb_torsion_potential,
+        dpd_force,
     )
     potential_types = check_compatibility(top, accepted_potentials)
     return potential_types
@@ -908,6 +1009,7 @@ def _parse_nonbonded_forces(
     potential_refs,
     pppm_kwargs,
     base_units,
+    kT,
 ):
     """Parse nonbonded forces from topology.
 
@@ -928,17 +1030,32 @@ def _parse_nonbonded_forces(
         Keyword arguments to pass to hoomd.md.long_range.make_pppm_coulomb_forces().
     base_units : dict
         The dictionary holding base units (mass, length, and energy)
+    kT : float
+        The temperature used for setting hoomd.md.pair.DPD object
     """
-    unique_atypes = top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS)
+    unique_atypes = set(top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS))
+    unique_atypes = unique_atypes | set(
+        {
+            site.virtual_type.name: site.virtual_type for site in top.virtual_sites
+        }.values()
+    )
 
     # Grouping atomtype by group name
     groups = dict()
     for atype in unique_atypes:
-        group = potential_types[atype]
-        if group not in groups:
-            groups[group] = [atype]
+        if isinstance(atype, VirtualType):
+            atype.virtual_potential.name = atype.name
+            group = potential_types[atype.virtual_potential]
+            if group not in groups:
+                groups[group] = [atype.virtual_potential]
+            else:
+                groups[group].append(atype.virtual_potential)
         else:
-            groups[group].append(atype)
+            group = potential_types[atype]
+            if group not in groups:
+                groups[group] = [atype]
+            else:
+                groups[group].append(atype)
 
     # Perform units conversion based on the provided base_units
     for group in groups:
@@ -994,6 +1111,36 @@ def _parse_nonbonded_forces(
             )
         )
 
+    # pair potentials here
+    if not top.pairpotential_types:
+        return nbonded_forces
+    if not isinstance(kT, (float, int)):
+        raise EngineIncompatibilityError(
+            f"kT must be set to use 'HOOMDDPDForce' in the topology {top}"
+        )
+    pairtype_parsers = {
+        "HOOMDDPDForce": _parse_dpd,
+    }
+    # Grouping pairtype by group name
+    pair_categoryDict = dict()
+    for pairtype in top.pairpotential_types:
+        pair_category = potential_types[pairtype]
+        if pair_category not in pair_categoryDict:
+            pair_categoryDict[pair_category] = [pairtype]
+        else:
+            pair_categoryDict[pair_category].append(pairtype)
+
+    for pair_category in pair_categoryDict:
+        nbonded_forces.extend(
+            pairtype_parsers[pair_category](
+                top=top,
+                pairtypes=pair_categoryDict[pair_category],
+                r_cut=r_cut,
+                nlist=nlist_nb,
+                kT=kT,
+            )
+        )
+
     return nbonded_forces
 
 
@@ -1016,7 +1163,7 @@ def _parse_coulombic(
         coulombic = hoomd.md.long_range.pppm.make_pppm_coulomb_forces(
             nlist=nlist, resolution=resolution, order=order, r_cut=r_cut
         )
-    if not np.all(scaling_factors):
+    if not np.any(scaling_factors):
         return [*coulombic]  # return early
     # Handle 1-2, 1-3, and 1-4 scaling
     # TODO: Figure out a more general way to do this and handle molecule scaling factors
@@ -1033,6 +1180,24 @@ def _parse_coulombic(
                 special_coulombic.params[pair_name] = dict(alpha=scaling_factors[i])
                 special_coulombic.r_cut[pair_name] = r_cut
     return [*coulombic, special_coulombic]
+
+
+def _parse_dpd(top, pairtypes, r_cut, nlist, kT):
+    dpd_force = hoomd.md.pair.DPD(
+        nlist=nlist, kT=kT, default_r_cut=r_cut
+    )  # allow passable rcut to this
+    for pair_potential in pairtypes:
+        pairs = list(pair_potential.member_types)
+        pairs.sort()
+        dpd_force.params[tuple(pairs)] = {
+            "A": pair_potential.parameters["A"],
+            "gamma": pair_potential.parameters["γ"],
+        }
+        dpd_force.r_cut[tuple(pairs)] = (
+            r_cut  # TODO: Do we need this and default_r_cut?
+        )
+
+    return [dpd_force]
 
 
 def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
@@ -1062,12 +1227,27 @@ def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
             "epsilon": comb_epsilon,
         }
         lj.params[type_name] = calculated_params[type_name]
-        lj.r_cut[(type_name)] = r_cut
+        lj.r_cut[type_name] = r_cut
+
+    # add rigid body 0 params
+    rigidSet = set()
+    for site in top.sites:
+        if site.molecule.isrigid and site.molecule.name not in rigidSet:
+            rigidSet.add(site.molecule.name)
+            for mol in atypes:
+                type_name = tuple(sorted([site.molecule.name, mol.name]))
+                lj.params[type_name] = {"sigma": 0.0, "epsilon": 0.0}
+                lj.r_cut[type_name] = r_cut
+            lj.params[(site.molecule.name, site.molecule.name)] = {
+                "sigma": 0.0,
+                "epsilon": 0.0,
+            }
+            lj.r_cut[(site.molecule.name, site.molecule.name)] = r_cut
 
     # Handle 1-2, 1-3, and 1-4 scaling
     # TODO: Figure out a more general way to do this
     # and handle molecule scaling factors
-    if not np.all(scaling_factors):
+    if not np.any(scaling_factors):
         return [lj]
     special_lj = hoomd.md.special_pair.LJ()
 
@@ -1762,3 +1942,48 @@ def _convert_single_param_units(
         converted_params[parameter] = potential.parameters[parameter].to(unit_dim)
     potential.parameters = converted_params
     return potential
+
+
+def _organize_generate_topology_molecule_info(top):
+    """Generate a dictionary of unique molecules by tag."""
+    moleculeDict = {}
+    indexMap = {}
+    uniqueMoleculeODict = OrderedDict()
+    n_sites_in_molecule = {}
+    molecule_indexOffset = 0
+    last_molecule = None
+
+    def _safe_number(molecule):
+        """Treat molecule number -1 (unknown) as 0 (single instance)."""
+        return max(molecule.number, 0)
+
+    for molecule in top.unique_site_labels("molecule", name_only=False):
+        if molecule.name not in moleculeDict:
+            if last_molecule is not None:
+                molecule_indexOffset += n_sites_in_molecule[last_molecule.name] * (
+                    _safe_number(last_molecule) + 1
+                )
+                uniqueMoleculeODict[molecule.name] = (
+                    uniqueMoleculeODict[last_molecule.name]
+                    + 1
+                    + _safe_number(last_molecule)
+                )
+            else:
+                molecule_indexOffset = 0
+                uniqueMoleculeODict[molecule.name] = 0
+            moleculeDict[molecule.name] = []
+            n_sites_in_molecule[molecule.name] = len(
+                list(top.iter_sites_and_virtual_sites(key="molecule", value=molecule))
+            )
+        moleculeDict[molecule.name].append([])
+        for site in top.iter_sites_and_virtual_sites(key="molecule", value=molecule):
+            moleculeDict[molecule.name][-1].append(site)
+            indexMap[site] = (
+                molecule_indexOffset
+                + _safe_number(molecule) * n_sites_in_molecule[molecule.name]
+                + len(moleculeDict[molecule.name][-1])
+                - 1
+            )
+        last_molecule = molecule
+
+    return moleculeDict, indexMap, uniqueMoleculeODict

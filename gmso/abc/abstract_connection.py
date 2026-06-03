@@ -1,5 +1,5 @@
 import itertools
-from typing import Optional, Sequence
+from typing import List, Optional, Sequence
 
 from pydantic import ConfigDict, Field, model_validator
 
@@ -34,21 +34,33 @@ class Connection(GMSOBase):
     )
 
     @property
-    def connection_members(self):
+    def connection_members(self) -> Optional[Sequence[Site]]:
+        """Return the ordered sequence of sites that form this connection."""
         return self.__dict__.get("connection_members_")
 
     @property
-    def name(self):
+    def name(self) -> str:
+        """Return the name of this connection."""
         return self.__dict__.get("name_")
 
     @property
-    def member_types(self):
-        """Return the atomtype of the connection members as a list of string."""
+    def member_types(self) -> Optional[List[str]]:
+        """Return the atom-type name of each connection member.
+
+        Returns the names from the connection's ``connection_type`` when
+        available, otherwise falls back to the individual members' atom types.
+        Returns ``None`` when no type information is present.
+        """
         return self._get_members_types_or_classes("member_types")
 
     @property
-    def member_classes(self):
-        """Return the class of the connection members as a list of string."""
+    def member_classes(self) -> Optional[List[str]]:
+        """Return the atom-type class of each connection member.
+
+        Returns the classes from the connection's ``connection_type`` when
+        available, otherwise falls back to the individual members' atom types.
+        Returns ``None`` when no type information is present.
+        """
         return self._get_members_types_or_classes("member_classes")
 
     def _has_typed_members(self):

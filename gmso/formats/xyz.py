@@ -1,6 +1,8 @@
 """Read and write XYZ files."""
 
 import datetime
+from pathlib import Path
+from typing import Union
 
 import numpy as np
 import unyt as u
@@ -11,20 +13,26 @@ from gmso.formats.formats_registry import loads_as, saves_as
 
 
 @loads_as(".xyz")
-def read_xyz(filename):
-    """Reader for xyz file format.
-
-    Read in an xyz file at the given path and return a Topology object.
+def read_xyz(filename: Union[str, Path]) -> Topology:
+    """Read an XYZ file and return a :class:`~gmso.Topology`.
 
     Parameters
     ----------
-    filename : str
-        Path to .xyz file that need to be read.
+    filename : str or pathlib.Path
+        Path to the ``.xyz`` file to read.
 
-    Return
+    Returns
+    -------
+    gmso.Topology
+        Topology containing the sites parsed from *filename*.  No bonds or
+        box information are set; call :meth:`~gmso.Topology.update_topology`
+        afterwards if needed.
+
+    Raises
     ------
-    top : topology.Topology
-        Topology object
+    ValueError
+        If the number of coordinate lines does not match the atom count in
+        the first line of the file.
     """
     top = Topology()
 
@@ -47,7 +55,6 @@ def read_xyz(filename):
             top.add_site(site)
         top.update_topology()
 
-        # Verify we have read the last line by ensuring the next line in blank
         line = xyz_file.readline().split()
         if line:
             msg = (
@@ -61,19 +68,21 @@ def read_xyz(filename):
 
 
 @saves_as(".xyz")
-def write_xyz(top, filename, decimals=3):
-    """Writer for xyz file format.
-
-    Write a Topology object to an xyz file at the given path.
+def write_xyz(
+    top: Topology,
+    filename: Union[str, Path],
+    decimals: int = 3,
+) -> None:
+    """Write a :class:`~gmso.Topology` to an XYZ file.
 
     Parameters
     ----------
-    top : topology.Topology
-        Topology object that needs to be written out.
-    filename : str
-        Path to file location.
-    decimals : int, default 3
-        Number of decimals to write out in file for coordinates.
+    top : gmso.Topology
+        Topology to write.
+    filename : str or pathlib.Path
+        Destination file path.
+    decimals : int, optional, default=3
+        Number of decimal places written for each coordinate value.
     """
     with open(filename, "w") as out_file:
         out_file.write("{:d}\n".format(top.n_sites))
@@ -88,7 +97,6 @@ def write_xyz(top, filename, decimals=3):
 def _prepare_particles(top: Topology, decimals: int) -> str:
     atom_info = str()
     for _, site in enumerate(top.sites):
-        # TODO: Better handling of element guessing and site naming
         if site.element is not None:
             tmp_name = site.element.symbol
         else:

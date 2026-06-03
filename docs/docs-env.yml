@@ -1,27 +1,30 @@
 name: gmso-docs
 channels:
   - conda-forge
-  - symengine
 dependencies:
-  - python=3.11
-  - numpy
+  - python=3.12
+  - numpy>=2
   - sympy
   - symengine
   - python-symengine
-  - unyt >= 2.4
+  - unyt >= 2.9
   - boltons
   - lxml
   - pydantic >= 2
   - networkx
   - ele >= 0.2.0
-  - mbuild
-  - foyer
+  - mbuild>=1
+  - setuptools
+  - foyer>=1
   - forcefield-utilities
   - pip
   - pip:
-    - numpydoc
-    - sphinx
-    - sphinx_rtd_theme
-    - sphinxcontrib-svg2pdfconverter
-    - nbsphinx
-    - mock
+    - sphinx >= 8.1
+    - sphinx-rtd-theme >= 3.0
+    - sphinx-copybutton >= 0.5
+    - sphinx-autodoc-typehints >= 2.3
+    - numpydoc >= 1.8
+    - nbsphinx >= 0.9
+    - sphinxcontrib-svg2pdfconverter >= 1.2
+    - mock >= 5.0
+    - myst-parser >= 4.0

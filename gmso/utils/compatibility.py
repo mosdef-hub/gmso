@@ -66,6 +66,23 @@ def check_compatibility(
         else:
             potential_forms_dict.update(potential_form)
 
+    checkedTypes = set()
+    for site in topology.virtual_sites:
+        vtype = site.virtual_type
+        if vtype in checkedTypes:
+            continue  # skip already checked values
+        potential_form = _check_single_potential(
+            vtype.virtual_potential,
+            accepted_potentials,
+        )
+        if not potential_form:
+            raise EngineIncompatibilityError(
+                f"Potential {vtype} is not in the list of accepted_potentials {accepted_potentials}"
+            )
+        else:
+            potential_forms_dict.update(potential_form)
+        checkedTypes.add(vtype.name)
+
     for connection_type in topology.connection_types(filter_by=conn_pfilter):
         potential_form = _check_single_potential(
             connection_type,
@@ -74,6 +91,17 @@ def check_compatibility(
         if not potential_form:
             raise EngineIncompatibilityError(
                 f"Potential {connection_type} is not in the list of accepted_potentials {accepted_potentials}"
+            )
+        else:
+            potential_forms_dict.update(potential_form)
+    for pair_type in topology.pairpotential_types:
+        potential_form = _check_single_potential(
+            pair_type,
+            accepted_potentials,
+        )
+        if not potential_form:
+            raise EngineIncompatibilityError(
+                f"Potential {pair_type} is not in the list of accepted_potentials {accepted_potentials}"
             )
         else:
             potential_forms_dict.update(potential_form)

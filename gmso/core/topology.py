@@ -340,7 +340,7 @@ class Topology(object):
         return unique_tags
 
     @property
-    def atom_types(self):
+    def atom_types(self, include_virtual_types=False):
         """Return all atom_types in the topology.
 
         Notes
@@ -384,7 +384,12 @@ class Topology(object):
             An iterator of the atom_types in the system filtered according to the
             filter function supplied.
         """
-        return TopologyPotentialView(self._sites)
+        if include_virtual_types:
+            return TopologyPotentialView(
+                itertools.chain(self._sites, self._virtual_sites)
+            )
+        else:
+            return TopologyPotentialView(self._sites)
 
     @property
     def connection_types(self):
@@ -956,10 +961,10 @@ class Topology(object):
             The PairPotentialType object to be added
         update: Boolean, default=True
 
-        See Also:
+        See Also
         --------
-        gmso.core.pairpotential_type: Pairwise potential that does not follow
-        combination rules
+        gmso.core.pairpotential_type : Pairwise potential that does not follow
+        combination rules.
         """
         if not isinstance(pairpotentialtype, PairPotentialType):
             raise GMSOError(
@@ -1300,21 +1305,28 @@ class Topology(object):
             for further information.
 
         Examples
-        ________
-        >>> topology.to_dataframe(parameter = 'sites', site_attrs = ['charge'])
-            This will return a dataframe with a listing of the sites and include the charges that correspond to each site.
-        >>> topology.to_dataframe(parameter = 'dihedrals', site_attrs = ['positions'])
-            This will return a dataframe with a listing of the sites that make up each dihedral, the positions of each of
-            those sites, and the parameters that are associated with the dihedrals.
+        --------
+        Return a dataframe with site names and charges:
+
+        >>> topology.to_dataframe(parameter='sites', site_attrs=['charge'])
+
+        Return a dataframe listing the sites and parameters for each dihedral:
+
+        >>> topology.to_dataframe(parameter='dihedrals', site_attrs=['positions'])
 
         Notes
-        ____
-        A dataframe is easily manipulated. In order to change the rounding to two decimals places for a column named `label`:
-            >>> df['label'] = df['label'].round(2)
-        The column labels can also be easily modified. This line can take a dataframe `df` and rename a column labeled
-        `Atom0` to `newname` using a dictionary.
-            >>> df.rename(columns = {'Atom0':'newname'})
-        See https://pandas.pydata.org/pandas-docs/stable/getting_started/intro_tutorials/index.html for further information.
+        -----
+        A dataframe is easily manipulated. To round a column named ``label``
+        to two decimal places:
+
+        >>> df['label'] = df['label'].round(2)
+
+        To rename a column ``Atom0`` to ``newname``:
+
+        >>> df.rename(columns={'Atom0': 'newname'})
+
+        See https://pandas.pydata.org/pandas-docs/stable/getting_started/intro_tutorials/index.html
+        for further information.
         """
         from gmso.utils.io import import_
 
@@ -1393,6 +1405,61 @@ class Topology(object):
 
         return ff
 
+    def iter_sites_and_virtual_sites(self, key, value):
+        """Iterate through this topology's sites based on certain attribute and their values.
+
+        Parameters
+        ----------
+        key: str
+            The attribute of the site to look for
+        value:
+            The value that the given attribute should be equal to
+
+        Yields
+        ------
+        gmso.abc.abstract_site.Site
+            The site where getattr(site, key) == value
+        """
+
+        if key not in Site.__iterable_attributes__:
+            raise ValueError(
+                f"`{key}` is not an iterable attribute for Site. "
+                f"To check what the iterable attributes are see gmso.abc.abstract_site module."
+            )
+
+        if value is None:
+            raise ValueError(
+                "Expected `value` to be something other than None. Provided None."
+            )
+        if key in ("molecule", "residue") and isinstance(value, str):
+            for site in itertools.chain(self._sites, self._virtual_sites):
+                if getattr(site, key) and getattr(site, key).name == value:
+                    yield site
+        elif isinstance(value, (tuple, list)):
+            containers_dict = {"molecule": Molecule, "residue": Residue}
+            if len(value) == 2:
+                tmp = containers_dict[key](name=value[0], number=value[1])
+            elif len(value) == 3:
+                tmp = containers_dict[key](
+                    name=value[0], number=value[1], isrigid=value[2]
+                )
+            else:
+                raise ValueError(
+                    f"""
+                        Argument value was passed as {value},
+                        but should be an indexible iterable of
+                        [name, number, isrigid] where name is type string,
+                        number is type int, and isrigid is type bool.
+                    """
+                )
+            for site in itertools.chain(self._sites, self._virtual_sites):
+                if getattr(site, key) and getattr(site, key) == tmp:
+                    yield site
+        else:
+            for site in itertools.chain(self._sites, self._virtual_sites):
+                if getattr(site, key) == value:
+                    yield site
+
     def iter_sites(self, key, value):
         """Iterate through this topology's sites based on certain attribute and their values.
 
@@ -1408,6 +1475,7 @@ class Topology(object):
         gmso.abc.abstract_site.Site
             The site where getattr(site, key) == value
         """
+
         if key not in Site.__iterable_attributes__:
             raise ValueError(
                 f"`{key}` is not an iterable attribute for Site. "
@@ -1869,13 +1937,11 @@ class Topology(object):
             values with dictionary of parameter: expected_dimension
 
         Examples
-        ________
-        top.convert_unit_styles(
-            u.UnitSystem(
-                "lammps_real", "Å", "amu", "fs", "K", "rad",
-            ),
-            {"bond":{"k":"energy/length**2", "r_eq":"length"}},
-        )
+        --------
+        >>> top.convert_unit_styles(
+        ...     u.UnitSystem("lammps_real", "Å", "amu", "fs", "K", "rad"),
+        ...     {"bond": {"k": "energy/length**2", "r_eq": "length"}},
+        ... )
         """
 
         ref_values = {"energy": "kJ/mol", "length": "nm", "angle": "radians"}

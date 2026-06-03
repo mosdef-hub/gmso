@@ -2,6 +2,8 @@
 
 import datetime
 import logging
+from pathlib import Path
+from typing import Union
 
 import numpy as np
 import unyt as u
@@ -17,39 +19,32 @@ logger = logging.getLogger(__name__)
 
 
 @loads_as(".gro")
-def read_gro(filename):
-    """Create a topology from a provided gro file.
+def read_gro(filename: Union[str, Path]) -> Topology:
+    """Read a Gromos87 (GRO) file and return a :class:`~gmso.Topology`.
 
-    The Gromos87 (gro) format is a common plain text structure file used
-    commonly with the GROMACS simulation engine.  This file contains the
-    simulation box parameters, number of atoms, the residue and atom number for
-    each atom, as well as their positions and velocities (velocity is
-    optional).  This method will receive a filepath representation either as a
-    string, or a file object and return a `topology`.
+    The GRO format is a plain-text structure file used by the GROMACS
+    simulation engine.  It encodes simulation-box parameters, atom count,
+    residue/atom names, positions, and (optionally) velocities.
 
     Parameters
     ----------
-    filename : str or file object
-        The path to the gro file either as a string, or a file object that
-        points to the gro file.
+    filename : str or pathlib.Path
+        Path to the ``.gro`` file to read.
 
     Returns
     -------
-    gmso.core.topology
-        A `topology` object containing site information
-
+    gmso.Topology
+        Topology containing the sites and box parsed from *filename*.
 
     Notes
     -----
-    Gro files do not specify connections between atoms, the returned topology
-    will not have connections between sites either.
-
-    Currently this implementation does not support parsing velocities from a gro file or gro file
-    with more than 1 frame.
-
-    All residues and resid information from the gro file are currently lost
-    when converting to `topology`.
-
+    * GRO files do not specify bonds; the returned topology will have no
+      connections.
+    * Velocities are detected but not parsed.
+    * Only single-frame GRO files are supported.
+    * Residue/resid information is mapped to ``site.molecule`` and
+      ``site.residue`` but the original resid integers are rebased to
+      0-indexed integers.
     """
     top = Topology()
 
@@ -106,36 +101,32 @@ def read_gro(filename):
 
 
 @saves_as(".gro")
-def write_gro(top, filename, n_decimals=3, shift_coord=False):
-    """Write a topology to a gro file.
-
-    The Gromos87 (gro) format is a common plain text structure file used
-    commonly with the GROMACS simulation engine.  This file contains the
-    simulation box parameters, number of atoms, the residue and atom number for
-    each atom, as well as their positions and velocities (velocity is
-    optional).  This method takes a topology object and a filepath string or
-    file object and saves a Gromos87 (gro) to disk.
+def write_gro(
+    top: Topology,
+    filename: Union[str, Path],
+    n_decimals: int = 3,
+    shift_coord: bool = False,
+) -> None:
+    """Write a :class:`~gmso.Topology` to a Gromos87 (GRO) file.
 
     Parameters
     ----------
-    top : gmso.core.topology
-        The `topology` to write out to the gro file.
-    filename : str or file object
-        The location and name of file to save to disk.
+    top : gmso.Topology
+        Topology to write.
+    filename : str or pathlib.Path
+        Destination file path.
     n_decimals : int, optional, default=3
-        The number of sig fig to write out the position in.
+        Number of decimal places to use for coordinate values.
     shift_coord : bool, optional, default=False
-        If True, shift the coordinates of all sites by the minimum position
-        to ensure all sites have non-negative positions. This is not a requirement
-        for GRO files, but can be useful for visualizing.
+        When ``True``, shift all coordinates so that the minimum position in
+        each dimension is zero.  Useful for visualisation; not required by the
+        GRO format.
 
     Notes
     -----
-    Multiple residue assignment has not been added, each `site` will belong to
-    the same resid of 1 currently.
-
-    Velocities are not written out.
-
+    * Velocities are not written.
+    * Residue/resid indices cycle back at 99 999 to comply with the fixed-width
+      GRO column format.
     """
     pos_array = np.ndarray.copy(top.positions)
     if shift_coord:

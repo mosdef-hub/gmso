@@ -3,6 +3,7 @@ Contributing
 Contributions are welcomed via `pull requests on GitHub <https://github.com/mosdef-hub/gmso/pulls>`_. Developers and/or
 users will review requested changes and make comments. The rest of this file will serve as a set of general guidelines
 for contributors.
+See :doc:`Installation <installation>` for instructions on setting up a development environment.
 
 Features
 --------
@@ -43,7 +44,9 @@ Document code with comments
 ****************************
 All public-facing functions should have docstrings using the numpy style. This includes concise paragraph-style description
 of what the class or function does, relevant limitations and known issues, and descriptions of arguments. Internal functions
-can have simple one-liner docstrings.
+can have simple one-liner docstrings. Additionally, check if your addition requires a new entry to the documentation
+(e.g., adding a new potential template.).
+If so, make the proper changes in `gmso.docs` as part of your pull-request.
 
 
 Tests

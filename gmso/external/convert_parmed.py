@@ -22,25 +22,27 @@ if has_parmed:
 lib = PotentialTemplateLibrary()
 
 
-def from_parmed(structure, refer_type=True):
-    """Convert a parmed.Structure to a gmso.Topology.
+def from_parmed(structure: "pmd.Structure", refer_type: bool = True) -> "gmso.Topology":
+    """Convert a ``parmed.Structure`` to a :class:`~gmso.Topology`.
 
-    Convert a parametrized or un-parametrized parmed.Structure object to a topology.Topology.
-    Specifically, this method maps Structure to Topology and Atom to Site.
-    This method can only convert AtomType, BondType AngleType, DihedralType, and
-    ImproperType.
+    Maps the Structure hierarchy to GMSO objects:
+    ``Structure`` → :class:`~gmso.Topology`, ``Atom`` → :class:`~gmso.Atom`.
 
     Parameters
     ----------
     structure : parmed.Structure
-        parmed.Structure instance that need to be converted.
+        The ParmEd structure to convert.  May be parametrized or
+        un-parametrized.
     refer_type : bool, optional, default=True
-        Whether or not to transfer AtomType, BondType, AngleType,
-        DihedralType, and ImproperType information
+        When ``True``, transfer :class:`~gmso.AtomType`,
+        :class:`~gmso.BondType`, :class:`~gmso.AngleType`,
+        :class:`~gmso.DihedralType`, and :class:`~gmso.ImproperType`
+        information from the ParmEd structure.
 
     Returns
     -------
-    top : gmso.Topology
+    gmso.Topology
+        Topology constructed from *structure*.
     """
     msg = "Provided argument is not a Parmed Structure"
     assert isinstance(structure, pmd.Structure), msg
@@ -412,24 +414,27 @@ def _add_conn_type_from_pmd(
     setattr(gmso_conn, conntypeStr, top_conntype)
 
 
-def to_parmed(top, refer_type=True):
-    """Convert a gmso.topology.Topology to a parmed.Structure.
+def to_parmed(top: "gmso.Topology", refer_type: bool = True) -> "pmd.Structure":
+    """Convert a :class:`~gmso.Topology` to a ``parmed.Structure``.
 
-    At this point we only assume a three level structure for topology
-    Topology - Molecule - Residue - Sites, which transform to three level of
-    Parmed Structure - Residue - Atoms (gmso Molecule level will be skipped).
+    Maps the GMSO hierarchy to ParmEd objects.  The Molecule level in GMSO
+    is skipped; the three-level mapping is:
+    :class:`~gmso.Topology` → ``Structure``, residue → ``Residue``,
+    :class:`~gmso.Atom` → ``Atom``.
 
     Parameters
     ----------
-    top : topology.Topology
-        topology.Topology instance that need to be converted
+    top : gmso.Topology
+        The topology to convert.
     refer_type : bool, optional, default=True
-        Whether or not to transfer AtomType, BondType, AngleTye,
-        and DihedralType information
+        When ``True``, transfer :class:`~gmso.AtomType`,
+        :class:`~gmso.BondType`, :class:`~gmso.AngleType`, and
+        :class:`~gmso.DihedralType` information to ParmEd parameter types.
 
     Returns
     -------
-    structure : parmed.Structure
+    parmed.Structure
+        ParmEd structure built from *top*.
     """
     # Sanity check
     assert isinstance(top, gmso.Topology)
