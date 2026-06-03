@@ -405,8 +405,8 @@ def _parse_particle_information(
 
     if has_rigid:
         logger.warning(
-            "Rigid bodies are detected. Particles may be grouped " 
-            "and reindexed according to Molecule labels in the Topology. " 
+            "Rigid bodies are detected. Particles may be grouped "
+            "and reindexed according to Molecule labels in the Topology. "
             "Double check the particle ordering in the gsd snapshot."
         )
         for moleculeName in uniqueMoleculeODict:
