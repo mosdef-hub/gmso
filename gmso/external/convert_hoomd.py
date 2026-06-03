@@ -405,7 +405,7 @@ def _parse_particle_information(
 
     if has_rigid:
         logger.warning(
-            "Rigid bodies are detected. Particles may be grouped 
+            "Rigid bodies are detected. Particles may be grouped
             and reindex according to site.molecule.name."
         )
         for moleculeName in uniqueMoleculeODict:
@@ -438,7 +438,7 @@ def _parse_particle_information(
         for site in itertools.chain(top.sites, top.virtual_sites):
             if isinstance(site, VirtualSite):
             logger.warning(
-                "This topology contains gmso.core.VirtualSite particles, but 
+                "This topology contains gmso.core.VirtualSite particles, but
                 no rigid bodies were found. See Atom.Molecule.isrigid to set rigid bodies."
             )
                 xyz.append(site.position())
