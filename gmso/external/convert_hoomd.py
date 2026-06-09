@@ -401,34 +401,56 @@ def _parse_particle_information(
     charges = []
     rigid_ids = []
     n_prior_molecules = 0
-    has_rigid = False
+    has_rigid = any(site.molecule.isrigid for site in top.sites)
 
-    for moleculeName in uniqueMoleculeODict:
-        for moleculeNumber, sitesList in enumerate(moleculeDict[moleculeName]):
-            for site in sitesList:
-                if isinstance(site, VirtualSite):
-                    xyz.append(site.position())
-                    types.append(
-                        site.name
-                        if site.virtual_type is None
-                        else site.virtual_type.name
+    if has_rigid:
+        logger.warning(
+            "Rigid bodies are detected. Particles may be grouped "
+            "and reindexed according to Molecule labels in the Topology. "
+            "Double check the particle ordering in the gsd snapshot."
+        )
+        for moleculeName in uniqueMoleculeODict:
+            for moleculeNumber, sitesList in enumerate(moleculeDict[moleculeName]):
+                for site in sitesList:
+                    if isinstance(site, VirtualSite):
+                        xyz.append(site.position())
+                        types.append(
+                            site.name
+                            if site.virtual_type is None
+                            else site.virtual_type.name
+                        )
+                        masses.append(0 * u.amu)
+                    else:
+                        xyz.append(site.position)
+                        types.append(
+                            site.name if site.atom_type is None else site.atom_type.name
+                        )
+                        masses.append(site.mass)
+                    charges.append(
+                        site.charge if site.charge else 0 * u.elementary_charge
                     )
-                    masses.append(0 * u.amu)
-                else:
-                    xyz.append(site.position)
-                    types.append(
-                        site.name if site.atom_type is None else site.atom_type.name
+                    rigid_ids.append(
+                        site.molecule.number + n_prior_molecules
+                        if site.molecule.isrigid
+                        else -1
                     )
-                    masses.append(site.mass)
-                charges.append(site.charge if site.charge else 0 * u.elementary_charge)
-                rigid_ids.append(
-                    site.molecule.number + n_prior_molecules
-                    if site.molecule.isrigid
-                    else -1
+            n_prior_molecules += site.molecule.number + 1
+    else:
+        for site in itertools.chain(top.sites, top.virtual_sites):
+            if isinstance(site, VirtualSite):
+                xyz.append(site.position())
+                types.append(
+                    site.name if site.virtual_type is None else site.virtual_type.name
                 )
-                if not has_rigid and site.molecule.isrigid:
-                    has_rigid = True
-        n_prior_molecules += site.molecule.number + 1
+                masses.append(0 * u.amu)
+            else:
+                xyz.append(site.position)
+                types.append(
+                    site.name if site.atom_type is None else site.atom_type.name
+                )
+                masses.append(site.mass)
+            charges.append(site.charge if site.charge else 0 * u.elementary_charge)
+            rigid_ids.append(-1)
 
     # Convert to correct units, then strip to plain numpy for speed
     xyz = u.unyt_array(xyz).to_value(length_unit)
@@ -1949,8 +1971,6 @@ def _organize_generate_topology_molecule_info(top):
     moleculeDict = {}
     indexMap = {}
     uniqueMoleculeODict = OrderedDict()
-    n_sites_in_molecule = {}
-    molecule_indexOffset = 0
     last_molecule = None
 
     def _safe_number(molecule):
@@ -1960,30 +1980,29 @@ def _organize_generate_topology_molecule_info(top):
     for molecule in top.unique_site_labels("molecule", name_only=False):
         if molecule.name not in moleculeDict:
             if last_molecule is not None:
-                molecule_indexOffset += n_sites_in_molecule[last_molecule.name] * (
-                    _safe_number(last_molecule) + 1
-                )
                 uniqueMoleculeODict[molecule.name] = (
                     uniqueMoleculeODict[last_molecule.name]
                     + 1
                     + _safe_number(last_molecule)
                 )
             else:
-                molecule_indexOffset = 0
                 uniqueMoleculeODict[molecule.name] = 0
             moleculeDict[molecule.name] = []
-            n_sites_in_molecule[molecule.name] = len(
-                list(top.iter_sites_and_virtual_sites(key="molecule", value=molecule))
-            )
         moleculeDict[molecule.name].append([])
         for site in top.iter_sites_and_virtual_sites(key="molecule", value=molecule):
             moleculeDict[molecule.name][-1].append(site)
-            indexMap[site] = (
-                molecule_indexOffset
-                + _safe_number(molecule) * n_sites_in_molecule[molecule.name]
-                + len(moleculeDict[molecule.name][-1])
-                - 1
-            )
         last_molecule = molecule
+
+    has_rigid = any(site.molecule.isrigid for site in top.sites)
+    if has_rigid:
+        running_index = 0
+        for molecule_name in uniqueMoleculeODict:
+            for sites_list in moleculeDict[molecule_name]:
+                for site in sites_list:
+                    indexMap[site] = running_index
+                    running_index += 1
+    else:
+        for idx, site in enumerate(itertools.chain(top.sites, top.virtual_sites)):
+            indexMap[site] = idx
 
     return moleculeDict, indexMap, uniqueMoleculeODict
