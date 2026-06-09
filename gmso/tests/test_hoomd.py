@@ -156,6 +156,68 @@ class TestGsd(BaseTest):
             assert group[1] == 0
             assert group[0] < group[2]
 
+    def test_nonrigid_particle_order_matches_insertion_order(self):
+        """For non-rigid systems, snapshot particle positions must match top.sites
+        insertion order.
+        """
+        methane0 = mb.load("C", smiles=True)
+        methane0.name = "methane"
+        methane0.translate_to([0.5, 0.5, 0.5])
+
+        ethane0 = mb.load("CC", smiles=True)
+        ethane0.name = "ethane"
+        ethane0.translate_to([1.5, 1.5, 1.5])
+
+        methane1 = mb.load("C", smiles=True)
+        methane1.name = "methane"
+        methane1.translate_to([2.5, 2.5, 2.5])
+
+        ethane1 = mb.load("CC", smiles=True)
+        ethane1.name = "ethane"
+        ethane1.translate_to([3.5, 3.5, 3.5])
+
+        compound = mb.Compound()
+        for mol in [methane0, ethane0, methane1, ethane1]:
+            compound.add(mol)
+
+        top = from_mbuild(compound)
+        sites = list(top.sites)
+
+        snap, _ = to_gsd_snapshot(top, shift_coords=False)
+
+        assert snap.particles.N == len(sites)
+
+        # Snapshot particle i must correspond to sites[i] (insertion order)
+        for i, site in enumerate(sites):
+            expected = site.position.to_value("nm")
+            assert np.allclose(snap.particles.position[i], expected, atol=1e-5)
+
+    def test_same_name_different_size_bond_groups_per_molecule(self):
+        """Bond groups must reference only particles belonging to their own molecule
+        Layout: methane0 [0-4], methane1 [5-9], ethane0 [10-17], ethane1 [18-25]
+        """
+        methane = mb.load("C", smiles=True)
+        methane.name = "alkane"
+        ethane = mb.load("CC", smiles=True)
+        ethane.name = "alkane"
+        system = mb.fill_box(
+            compound=[methane, ethane], n_compounds=[2, 2], box=[5, 5, 5]
+        )
+        top = system.to_gmso()
+        top.identify_connections()
+
+        snap, _ = to_gsd_snapshot(top)
+
+        def bonds_in_range(lo, hi):
+            return [g for g in snap.bonds.group if lo <= min(g) and max(g) <= hi]
+
+        # 4 C-H bonds per methane
+        assert len(bonds_in_range(0, 4)) == 4
+        assert len(bonds_in_range(5, 9)) == 4
+        # 7 bonds per ethane (1 C-C + 6 C-H)
+        assert len(bonds_in_range(10, 17)) == 7
+        assert len(bonds_in_range(18, 25)) == 7
+
 
 class TestHoomd(BaseTest):
     def test_hoomd_simulation(self):
