@@ -202,12 +202,15 @@ class TopologyParameterizer(GMSOBase):
         visited = dict()
         sig_cache = dict()
         for connection in connections:
-            sig = tuple(site.atom_type.name for site in connection.connection_members)
+            use_classes = all([site.atom_type.atomclass for site in connection.connection_members])
+            if use_classes:
+                sig = tuple(site.atom_type.atomclass for site in connection.connection_members)
+            else:
+                sig = tuple(site.atom_type.name for site in connection.connection_members)
             if getattr(connection, "bonds", None):
                 sig += tuple(b.bond_order for b in connection.bonds)
             elif hasattr(connection, "bond_order"):
                 sig += (connection.bond_order,)
-
             if sig in sig_cache:
                 match = sig_cache[sig]
             else:
