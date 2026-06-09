@@ -438,10 +438,6 @@ def _parse_particle_information(
     else:
         for site in itertools.chain(top.sites, top.virtual_sites):
             if isinstance(site, VirtualSite):
-                logger.warning(
-                    "This topology contains gmso.core.VirtualSite particles, but "
-                    "no rigid bodies were found. See Site.Molecule.isrigid to set rigid bodies."
-                )
                 xyz.append(site.position())
                 types.append(
                     site.name if site.virtual_type is None else site.virtual_type.name
