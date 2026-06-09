@@ -231,8 +231,8 @@ class TopologyParameterizer(GMSOBase):
             if not match and error_on_missing:
                 group = POTENTIAL_GROUPS[type(connection)]
                 raise ParameterizationError(
-                    f"No parameters found for connection {connection}, group: {group} "
-                    f"in the Forcefield."
+                    f"No parameters found for connection {connection}, group: {group}, "
+                    f"identifiers: {connection_identifiers} in the force field."
                 )
             elif match:
                 setattr(connection, group, match[0].clone(self.config.fast_copy))
