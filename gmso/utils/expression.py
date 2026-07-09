@@ -624,7 +624,9 @@ class PotentialExpression:
 class NullPotentialExpression(PotentialExpression):
     """A null/empty PotentialExpression for AtomTypes without intrinsic expressions."""
 
-    def __init__(self):
+    def __init__(self):  # noqa: super-init-not-called
+        # Intentionally not calling super().__init__() — this object represents
+        # the absence of a potential expression and overrides all properties.
         self._expression = None
         self._independent_variables = set()
         self._parameters = {}
