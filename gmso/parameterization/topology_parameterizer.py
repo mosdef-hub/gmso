@@ -451,6 +451,7 @@ class TopologyParameterizer(GMSOBase):
                 speedup_by_moltag=self.config.speedup_by_moltag,
             )
 
+        self._apply_pairpotential_types()
         self._set_scaling_factors()  # Set global or per molecule scaling factors
         self.topology.update_topology()
 
@@ -565,3 +566,17 @@ class TopologyParameterizer(GMSOBase):
                 topology_graph=foyer_topology_graph,
                 atomtyping_rules_provider=atom_typing_rules_provider,
             )
+
+    def _apply_pairpotential_types(self):
+        """Add pairpotential types to topology object."""
+        if isinstance(self.forcefields, Dict):
+            for key in self.forcefields:
+                forcefield = self.forcefields[key]
+                for ptype in forcefield.pairpotential_types.values():
+                    # TODO: assert types are valid in atom_type names and virtual type names
+                    self.topology.pairpotential_types.add(ptype)
+        else:
+            forcefield = self.forcefields
+            for ptype in forcefield.pairpotential_types.values():
+                # TODO: assert types are valid in atom_type names and virtual type names
+                self.topology.pairpotential_types.add(ptype)

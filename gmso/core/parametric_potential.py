@@ -79,7 +79,7 @@ class ParametricPotential(AbstractPotential):
                 "a potential, you are expected to provide all the values "
                 "or none of them to use defaults. However, you provided "
                 "the following and there's not enough information to form "
-                "a set of expression, idependent_variables and parameters.\n"
+                "a set of expression, independent_variables and parameters.\n"
                 f"expression: {expression}\n"
                 f"parameters: {parameters}\n"
                 f"independent_variables: {indep_vars}\n"

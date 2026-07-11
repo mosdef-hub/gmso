@@ -695,3 +695,6 @@ class NullPotentialExpression(PotentialExpression):
     def __bool__(self):
         """Returns False, allowing `if not atom_type.potential_expression:` checks."""
         return False
+
+    def __hash__(self):
+        return hash(None)
