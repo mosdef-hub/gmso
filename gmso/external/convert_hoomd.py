@@ -1565,7 +1565,7 @@ def _parse_dihedral_forces(
             "container": hoomd.md.dihedral.Harmonic,
             "parser": _parse_periodic_dihedral,
         }
-        dtype_group_map["HOOMDPeriodicTorsionPotential"] = {
+        dtype_group_map["HOOMDPeriodicDihedralPotential"] = {
             "container": hoomd.md.dihedral.Harmonic,
             "parser": _parse_hoomd_periodic_dihedral,
         }
