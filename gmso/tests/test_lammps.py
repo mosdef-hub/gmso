@@ -621,3 +621,177 @@ class TestLammpsWriter(BaseTest):
         np.testing.assert_allclose(float(coeffs[2]), 10)
         np.testing.assert_allclose(float(coeffs[3]), 1)
         np.testing.assert_allclose(float(coeffs[4]), 10)
+
+    def test_gcpm(self):
+        import mbuild as mb
+
+        from gmso.parameterization import apply
+
+        posO = np.array([2.5, 2.5, 2.5])
+        theta = 104.52 / 180 * np.pi  # rad
+        dOH = 0.09572
+        dM = 0.027
+        posH1 = np.array([dOH, 0, 0]) + posO
+        posH2 = np.array([dOH * np.cos(theta), dOH * np.sin(theta), 0]) + posO
+        posM = np.array([dM * np.cos(theta / 2), dM * np.sin(theta / 2), 0]) + posO
+
+        # posO = np.array([1.9397813577, 5.6972356033, 22.4183552067]) / 10  # nm
+        # posH1 = np.array([1.6442699843, 4.9565922701, 21.8888721369]) / 10
+        # posH2 = np.array([1.6248397438, 6.4692075712, 21.9481394044]) / 10
+        # posM = np.array([1.7991197323, 5.7044544011, 22.1880028763]) / 10
+
+        cpd = mb.Compound(name="water")
+        particle1 = mb.Compound(name="O", element="O", pos=posO)
+        particle2 = mb.Compound(name="H", element="H", pos=posH1)
+        particle3 = mb.Compound(name="H", element="H", pos=posH2)
+        for part in [particle1, particle2, particle3]:
+            cpd.add(part)
+        cpd.add_bond((particle1, particle2))
+        cpd.add_bond((particle1, particle3))
+        cpd.box = mb.Box([5, 5, 5])
+
+        top = cpd.to_gmso()
+        top.set_rigid("water")
+        ff = gmso.ForceField(get_path("gcpm.xml"))
+
+        ptop = apply(top, ff, ignore_params=["angle", "bond"])
+        assert ptop.n_virtual_sites == 1
+        assert len(ptop.pairpotential_types) == 3
+        assert ptop.pairpotential_types[0].name == "GCPMPairPotential"
+        assert ptop.n_sites == 3
+
+        v_site = ptop.virtual_sites[0]
+        assert v_site.charge.value == -1.226
+        assert np.allclose(
+            ptop.sites[0].position, posO
+        )  # hand validate position of O-site
+        assert np.allclose(
+            ptop.sites[1].position, posH1
+        )  # hand validate position of H1-site
+        assert np.allclose(
+            ptop.sites[2].position, posH2
+        )  # hand validate position of H2-site
+        assert np.allclose(v_site.position(), posM)  # hand validate position of M-site
+        ptop.save(
+            "test.lammps", atom_style="full + dipole + sphere"
+        )  # should error, maybe should be gcpm
+
+        expected_file = [
+            "\n",
+            "\n",
+            "4 atoms\n",
+            "3 atom types\n",
+            "\n",
+            "0.000000 50.000000 xlo xhi\n",
+            "0.000000 50.000000 ylo yhi\n",
+            "0.000000 50.000000 zlo zhi\n",
+            "0.000000 0.000000 0.000000 xy xz yz\n",
+            "\n",
+            "Masses\n",
+            "#\tmass (amu)\n",
+            "1\t15.999\t# 1\n",
+            "2\t1.008\t# 2\n",
+            "3\t1e-100\t# 3\n",
+            "\n",
+            "Pair Coeffs # alpha + epsilon*(-sigma**6/rOO**6 + 6*exp(gamma_exp6*(-rOO/sigma + 1))/gamma_exp6)/(1 - 6/gamma_exp6) + sigmai\n",
+            "#\tepsilon (kcal/mol)\tsigma (Å)\tgamma_exp6 (dimensionless)\talpha (Å**3)\tsigmai (Å)\n",
+            "1\t1      \t1      \t\t# 0.218592\t3.690000\n",
+            "2\t2      \t2      \t\t# 0.000000\t1.000000\n",
+            "3\t3      \t3      \t\t# 0.000000\t1.000000\n",
+            "\n",
+            "Atoms #full + dipole + sphere\n",
+            "\n",
+            f"1\t1\t{posO[0] * 10:.6f}\t{posO[1] * 10:.6f}\t{round(posO[2] * 10, 6):.6f}\t1\t0.000000\t0.0\t0.0\t0.0\t0.0\t1.0\n",
+            f"2\t2\t{posH1[0] * 10:.6f}\t{posH1[1] * 10:.6f}\t{posH1[2] * 10:.6f}\t1\t0.611300\t0.0\t0.0\t0.0\t0.0\t1.0\n",
+            f"3\t2\t{posH2[0] * 10:.6f}\t{posH2[1] * 10:.6f}\t{posH2[2] * 10:.6f}\t1\t0.611300\t0.0\t0.0\t0.0\t0.0\t1.0\n",
+            f"4\t3\t{posM[0] * 10:.6f}\t{posM[1] * 10:.6f}\t{posM[2] * 10:.6f}\t1\t-1.22600\t0.0\t0.0\t0.01\t0.0\t1.0\n",
+        ]
+        with open("test.lammps", "r") as f:
+            readlines = f.readlines()
+        for l1, l2 in zip(readlines[1:], expected_file):
+            assert l1.strip() == l2.strip(), (l1, l2)
+
+    def test_box_gcpm(self):
+        import mbuild as mb
+
+        from gmso.parameterization import apply
+
+        posO = np.array([0, 0, 0])
+        theta = 104.52 / 180 * np.pi  # rad
+        dOH = 0.09572
+        # dM = 0.027
+        posH1 = np.array([dOH, 0, 0])
+        posH2 = np.array([dOH * np.cos(theta), dOH * np.sin(theta), 0])
+
+        posO = np.array([1.9397813577, 5.6972356033, 22.4183552067]) / 10  # nm
+        posH1 = np.array([1.6442699843, 4.9565922701, 21.8888721369]) / 10
+        posH2 = np.array([1.6248397438, 6.4692075712, 21.9481394044]) / 10
+
+        cpd = mb.Compound(name="water")
+        particle1 = mb.Compound(name="O", element="O", pos=posO)
+        particle2 = mb.Compound(name="H", element="H", pos=posH1)
+        particle3 = mb.Compound(name="H", element="H", pos=posH2)
+        for part in [particle1, particle2, particle3]:
+            cpd.add(part)
+        cpd.add_bond((particle1, particle2))
+        cpd.add_bond((particle1, particle3))
+        box = mb.Box([10, 10, 10])
+        n_molecules = 2
+        filled_box = mb.fill_box(cpd, n_molecules, box)
+
+        top = filled_box.to_gmso()
+        top.set_rigid("water")
+        ff = gmso.ForceField(get_path("gcpm.xml"))
+
+        ptop = apply(top, ff, ignore_params=["angle", "bond"])
+        assert ptop.n_virtual_sites == n_molecules
+        assert len(ptop.pairpotential_types) == 3
+        assert ptop.n_sites == 3 * n_molecules
+        assert ptop.pairpotential_types[0].name == "GCPMPairPotential"
+
+        ptop.save("test.lammps", atom_style="full + dipole + sphere")
+        assert os.path.exists("./test.lammps")  # check that file was correctly run
+
+    def test_lammps_gcpm_mixture(self, capsys):
+        import textwrap
+
+        import mbuild as mb
+
+        from gmso.parameterization import apply
+
+        # create system with gcpm water and ethanol
+        water = mb.load("O", smiles=True)
+        water.name = "Water"
+        ethanol = mb.load("CCO", smiles=True)
+        ethanol.name = "Ethanol"
+        box = mb.fill_box([water, ethanol], [1, 1], box=[3, 3, 3])
+        # forcefield with two different forcefields
+        ffgcpm = gmso.ForceField(get_path("gcpm.xml"))
+        ffgcpm.combining_rule = "geometric"
+        ffopls = gmso.ForceField("oplsaa")
+
+        top = box.to_gmso()
+        top.set_rigid("Water")
+        ptop = apply(
+            top,
+            {"Water": ffgcpm, "Ethanol": ffopls},
+            identify_connections=True,
+            ignore_params=["bond", "angle", "dihedral", "improper"],
+        )
+        ptop.save("out.lammps")
+        # Should we just print out pair_styles for lammps input script?
+        output_script = """
+        pair_style hybrid gcpm lj/cut/coul/cut {r_cut}
+        pair_modify mix {mixing} #arithmetic or geometric
+        pair_coeff 1 1 gcpm 0.218592 3.690000
+        pair_coeff 2 2 gcpm 0.000000 1.000000
+        pair_coeff 3 3 gcpm 0.000000 1.000000
+        pair_coeff 4 4 lj/cut/coul/cut 0.276144 0.35
+        pair_coeff 5 5 lj/cut/coul/cut  0.276144 0.35
+        pair_coeff 6 6 lj/cut/coul/cut 0.71128 0.312
+        pair_coeff 7 7 lj/cut/coul/cut 0.0 1.0
+        pair_coeff 8 8 lj/cut/coul/cut 0.12552 0.25\n"""
+        output_script = textwrap.dedent(output_script).strip()
+        print(output_script)
+        captured_script = capsys.readouterr()
+        assert output_script + "\n" == captured_script.out

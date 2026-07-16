@@ -6,7 +6,7 @@ import copy
 import datetime
 import logging
 import os
-from itertools import count
+from itertools import chain, count
 from pathlib import Path
 from typing import Optional, Union
 
@@ -30,6 +30,7 @@ from gmso.formats.formats_registry import loads_as, saves_as
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.compatibility import check_compatibility
 from gmso.utils.conversions import convert_kelvin_to_energy_units
+from gmso.utils.expression import NullPotentialExpression
 from gmso.utils.sorting import (
     reindex_molecules,
     sort_by_types,
@@ -64,7 +65,7 @@ def write_lammpsdata(
         Path of the output file.
     atom_style : str, optional, default='full'
         LAMMPS atom style.  Supported values: ``'full'``, ``'atomic'``,
-        ``'charge'``, ``'molecular'``.
+        ``'charge'``, ``'molecular'``, ``'full + dipole + sphere'``.
     unit_style : str, optional, default='real'
         LAMMPS unit system.  Supported values: ``'real'``, ``'lj'``,
         ``'metal'``, ``'si'``, ``'cgs'``, ``'electron'``, ``'micro'``,
@@ -93,7 +94,13 @@ def write_lammpsdata(
     unit styles are currently supported.
 
     """
-    if atom_style not in ["full", "atomic", "molecular", "charge"]:
+    if atom_style not in [
+        "full",
+        "atomic",
+        "molecular",
+        "charge",
+        "full + dipole + sphere",
+    ]:
         raise ValueError(
             'Atom style "{}" is invalid or is not currently supported'.format(
                 atom_style
@@ -596,6 +603,7 @@ def _accepted_potentials():
     """List of accepted potentials that LAMMPS can support."""
     templates = PotentialTemplateLibrary()
     lennard_jones_potential = templates["LennardJonesPotential"]
+    BuckinghamExp6_pair_potential = templates["GCPMPairPotential"]
     harmonic_bond_potential = templates["LAMMPSHarmonicBondPotential"]
     fene_bond_potential = templates["LAMMPSFENEBondPotential"]
     harmonic_angle_potential = templates["LAMMPSHarmonicAnglePotential"]
@@ -603,6 +611,7 @@ def _accepted_potentials():
     periodic_torsion_potential = templates["PeriodicTorsionPotential"]
     harmonic_improper_potential = templates["HarmonicImproperPotential"]
     opls_torsion_potential = templates["OPLSTorsionPotential"]
+    null_atom_potential = NullPotentialExpression()
     accepted_potentialsList = [
         lennard_jones_potential,
         harmonic_bond_potential,
@@ -612,6 +621,8 @@ def _accepted_potentials():
         periodic_torsion_potential,
         harmonic_improper_potential,
         opls_torsion_potential,
+        null_atom_potential,
+        BuckinghamExp6_pair_potential,
     ]
     return accepted_potentialsList
 
@@ -656,7 +667,7 @@ def _write_header(out_file, top, atom_style, dihedral_parser):
             str(datetime.datetime.now()),
         )
     )
-    out_file.write("{:d} atoms\n".format(top.n_sites))
+    out_file.write("{:d} atoms\n".format(top.n_sites + top.n_virtual_sites))
     if atom_style in ["full", "molecular"]:
         out_file.write("{:d} bonds\n".format(top.n_bonds))
         out_file.write("{:d} angles\n".format(top.n_angles))
@@ -676,7 +687,15 @@ def _write_header(out_file, top, atom_style, dihedral_parser):
         out_file.write("{:d} impropers\n\n".format(top.n_impropers))
 
     # TODO: allow users to specify filter_by syntax
-    out_file.write("{:d} atom types\n".format(len(top.atom_types(filter_by=pfilter))))
+    n_atomtypes = len(top.atom_types(filter_by=pfilter))
+    n_atomtypes += len(
+        set(
+            {
+                site.virtual_type.name: site.virtual_type for site in top.virtual_sites
+            }.values()
+        )
+    )
+    out_file.write("{:d} atom types\n".format(n_atomtypes))
     if top.n_bonds > 0 and atom_style in ["full", "molecular"]:
         out_file.write(
             "{:d} bond types\n".format(len(top.bond_types(filter_by=pfilter)))
@@ -769,23 +788,76 @@ def _write_atomtypes(out_file, top, base_unyts, cfactorsDict):
     out_file.write("\nMasses\n")
     out_file.write(f"#\tmass ({base_unyts.usystem['mass']})\n")
     atypesView = sorted(top.atom_types(filter_by=pfilter), key=lambda x: x.name)
+    atypesView += sorted(
+        set([vsite.virtual_type for vsite in top.virtual_sites]), key=lambda x: x.name
+    )
     for atom_type in atypesView:
+        if isinstance(atom_type, gmso.VirtualType):
+            mass = 1e-100
+        else:
+            mass = float(base_unyts.convert_parameter(atom_type.mass, cfactorsDict))
         out_file.write(
-            "{:d}\t{}\t# {}\n".format(
-                atypesView.index(atom_type) + 1,
-                base_unyts.convert_parameter(atom_type.mass, cfactorsDict),
-                atom_type.name,
-            )
+            (f"{atypesView.index(atom_type) + 1:d}\t{mass:.6g}\t# {atom_type.name}\n")
         )
 
 
 def _write_pairtypes(out_file, top, base_unyts, cfactorsDict):
     """Write out pair interaction to LAMMPS file."""
-    # TODO: Handling of modified cross-interactions is not considered from top.pairpotential_types
+    worker_functions = {
+        "GCPMPairPotential": _write_gcpm_pairstyle,
+        "LennardJonesPotential": _write_lj_pairstyle,
+    }
+    # check for pairpotentials or atomtype potentials
+    if top.pairpotential_types:
+        first_pairtype = top.pairpotential_types[0]
+        return worker_functions[first_pairtype.name](
+            out_file, top, first_pairtype, base_unyts, cfactorsDict
+        )
+    elif top.atom_types:  # By default try to write lj pairstyles
+        return _write_lj_pairstyle(out_file, top, base_unyts, cfactorsDict)
+    else:
+        raise ValueError(f"Unknown pairpotential type in {top}")
+
+
+def _write_gcpm_pairstyle(out_file, top, first_pairtype, base_unyts, cfactorsDict):
+    test_pairtype = top.pairpotential_types[0]
+    out_file.write(f"\nPair Coeffs # {test_pairtype.expression}\n")
+    pair_style_orderTuple = ("epsilon", "sigma", "gamma_exp6", "alpha", "sigmai")
+    param_labels = [
+        write_out_parameter_and_units(
+            key,
+            convert_kelvin_to_energy_units(first_pairtype.parameters[key], "kJ"),
+            base_unyts,
+        )
+        for key in pair_style_orderTuple
+    ]
+
+    out_file.write("#\t" + "\t".join(param_labels) + "\n")
+    pair_types = list(top.pairpotential_types)
+    pair_types.sort(key=lambda x: sorted(x.member_types))
+    for idx, pair_type in enumerate(pair_types):
+        member_types = sorted([mem for mem in pair_type.member_types])
+        out_file.write(
+            "{}\t{:7}\t{:7}\t\t# {}\t{}\n".format(
+                idx + 1,
+                *member_types,
+                *[
+                    base_unyts.convert_parameter(
+                        convert_kelvin_to_energy_units(pair_type.parameters[key], "kJ"),
+                        cfactorsDict,
+                        n_decimals=6,
+                    )
+                    for key in pair_style_orderTuple
+                ],
+            )
+        )
+
+
+def _write_lj_pairstyle(out_file, top, base_unyts, cfactorsDict):
     # Pair coefficients
     test_atomtype = top.sites[0].atom_type
     out_file.write(f"\nPair Coeffs # {test_atomtype.expression}\n")
-    nb_style_orderTuple = (
+    nb_style_orderTuple = (  # TODO: Handle different pair types
         "epsilon",
         "sigma",
     )  # this will vary with new pair styles
@@ -1138,6 +1210,7 @@ def parse_harmonic_style_improper(improper_type):
 def _write_site_data(out_file, top, atom_style, base_unyts, cfactorsDict):
     """Write atomic positions and charges to LAMMPS file.."""
     out_file.write(f"\nAtoms #{atom_style}\n\n")
+    extraVarsDict = {}  # dict for extra formatting
     if atom_style == "atomic":
         atom_line = "{index:d}\t{type_index:d}\t{x:.8}\t{y:.8}\t{z:.8}\n"
     elif atom_style == "charge":
@@ -1148,34 +1221,54 @@ def _write_site_data(out_file, top, atom_style, base_unyts, cfactorsDict):
         )
     elif atom_style == "full":
         atom_line = "{index:d}\t{moleculeid:d}\t{type_index:d}\t{charge:.8}\t{x:.8}\t{y:.8}\t{z:.8}\n"
+    elif atom_style == "full + dipole + sphere":
+        extraVarsDict = {
+            "mux": 0.0,
+            "muy": 0.0,
+            "muz": 0.0,
+            "radius": 0.0,
+            "rmass": 1.0,
+        }
+        atom_line = "{index:d}\t{type_index:d}\t{x}\t{y}\t{z}\t{moleculeid:d}\t{charge:.8}\t{mux:.8}\t{muy:.8}\t{muz:.8}\t{radius:.8}\t{rmass:.8}\n"
 
     unique_sorted_typesList = sorted(
         top.atom_types(filter_by=pfilter), key=lambda x: x.name
     )
-    for i, site in enumerate(top.sites):
+    unique_sorted_typesList += sorted(  # append virtual types
+        set(site.virtual_type for site in top.virtual_sites), key=lambda x: x.name
+    )
+    for i, site in enumerate(chain(top._sites, top._virtual_sites)):
+        if isinstance(site, gmso.Atom):
+            position = site.position
+            type_index = unique_sorted_typesList.index(site.atom_type) + 1
+        elif isinstance(site, gmso.VirtualSite):
+            position = site.position()  # callable function
+            type_index = unique_sorted_typesList.index(site.virtual_type) + 1
+            # set muz to 0.01 to allow for polarizeability of site
+            extraVarsDict["muz"] = 0.01
+
         out_file.write(
             atom_line.format(
                 index=i + 1,
                 moleculeid=site.molecule.number + 1,  # index is 0-based in GMSO
-                type_index=unique_sorted_typesList.index(site.atom_type) + 1,
+                type_index=type_index,
                 charge=base_unyts.convert_parameter(
                     site.charge,
                     cfactorsDict,
                     n_decimals=6,
                 ),
                 x=base_unyts.convert_parameter(
-                    site.position[0],
+                    position[0],
                     cfactorsDict,
                     n_decimals=6,
                 ),
-                y=base_unyts.convert_parameter(
-                    site.position[1], cfactorsDict, n_decimals=6
-                ),
-                z=base_unyts.convert_parameter(
-                    site.position[2], cfactorsDict, n_decimals=6
-                ),
+                y=base_unyts.convert_parameter(position[1], cfactorsDict, n_decimals=6),
+                z=base_unyts.convert_parameter(position[2], cfactorsDict, n_decimals=6),
+                **extraVarsDict,
             )
         )
+        if extraVarsDict.get("muz"):  # reset muz for non virtual types
+            extraVarsDict["muz"] = 0.0
 
 
 def _angle_order_sorter(angle_typesList):

@@ -225,7 +225,7 @@ class Topology(object):
     @combining_rule.setter
     def combining_rule(self, rule):
         """Set the combining rule for the topology."""
-        if rule not in ["lorentz", "geometric"]:
+        if rule not in ["lorentz", "geometric", "None"]:
             raise GMSOError("Combining rule must be `lorentz` or `geometric`")
         self._combining_rule = rule
 
