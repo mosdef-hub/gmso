@@ -19,6 +19,7 @@ from gmso.exceptions import EngineIncompatibilityError, NotYetImplementedWarning
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.connectivity import generate_pairs_lists
 from gmso.utils.conversions import convert_ryckaert_to_opls
+from gmso.utils.expression import NullPotentialExpression
 from gmso.utils.geometry import coord_shift, moment_of_inertia
 from gmso.utils.io import has_gsd, has_hoomd
 from gmso.utils.sorting import (
@@ -58,7 +59,9 @@ AKMA_UNITS = {
 def get_cell_nlist(top, buffer=0.4):
     """Create a cell neighborlist for use in hoomd-blue based on top.scaling_factors"""
     nb_scaling_factors, coul_scaling_factors = top.scaling_factors
-    hasRigid = any(site.molecule.isrigid for site in top.sites)
+    hasRigid = any(
+        getattr(site.molecule, "isrigid") for site in top.sites if site.molecule
+    )
     if all(top.scaling_factors[0] == top.scaling_factors[1]):
         outVals = None
     else:
@@ -1007,6 +1010,7 @@ def _validate_compatibility(top):
     opls_torsion_potential = templates["OPLSTorsionPotential"]
     rb_torsion_potential = templates["RyckaertBellemansTorsionPotential"]
     dpd_force = templates["HOOMDDPDForce"]
+    null_atom_potential = NullPotentialExpression()
     accepted_potentials = (
         lennard_jones_potential,
         harmonic_bond_potential,
@@ -1018,6 +1022,7 @@ def _validate_compatibility(top):
         opls_torsion_potential,
         rb_torsion_potential,
         dpd_force,
+        null_atom_potential,
     )
     potential_types = check_compatibility(top, accepted_potentials)
     return potential_types
@@ -1074,6 +1079,8 @@ def _parse_nonbonded_forces(
                 groups[group].append(atype.virtual_potential)
         else:
             group = potential_types[atype]
+            if isinstance(group, NullPotentialExpression):
+                continue  # skip adding null atom_type expressions
             if group not in groups:
                 groups[group] = [atype]
             else:
@@ -1205,9 +1212,7 @@ def _parse_coulombic(
 
 
 def _parse_dpd(top, pairtypes, r_cut, nlist, kT):
-    dpd_force = hoomd.md.pair.DPD(
-        nlist=nlist, kT=kT, default_r_cut=r_cut
-    )  # allow passable rcut to this
+    dpd_force = hoomd.md.pair.DPD(nlist=nlist, kT=kT, default_r_cut=r_cut)
     for pair_potential in pairtypes:
         pairs = list(pair_potential.member_types)
         pairs.sort()
@@ -1215,9 +1220,11 @@ def _parse_dpd(top, pairtypes, r_cut, nlist, kT):
             "A": pair_potential.parameters["A"],
             "gamma": pair_potential.parameters["γ"],
         }
-        dpd_force.r_cut[tuple(pairs)] = (
-            r_cut  # TODO: Do we need this and default_r_cut?
-        )
+        dynamic_rcut = pair_potential.parameters.get("r_cut")
+        if dynamic_rcut:
+            dpd_force.r_cut[tuple(pairs)] = dynamic_rcut
+        else:
+            dpd_force.r_cut[tuple(pairs)] = r_cut
 
     return [dpd_force]
 
@@ -1558,7 +1565,7 @@ def _parse_dihedral_forces(
             "container": hoomd.md.dihedral.Harmonic,
             "parser": _parse_periodic_dihedral,
         }
-        dtype_group_map["HOOMDPeriodicTorsionPotential"] = {
+        dtype_group_map["HOOMDPeriodicDihedralPotential"] = {
             "container": hoomd.md.dihedral.Harmonic,
             "parser": _parse_hoomd_periodic_dihedral,
         }

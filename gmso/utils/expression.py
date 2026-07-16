@@ -14,7 +14,7 @@ from gmso.exceptions import GMSOError
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["PotentialExpression"]
+__all__ = ["PotentialExpression", "NullPotentialExpression"]
 
 
 class norm(Function):
@@ -619,3 +619,82 @@ class PotentialExpression:
         else:
             result = np.array(result)
         return result
+
+
+class NullPotentialExpression(PotentialExpression):
+    """A null/empty PotentialExpression for AtomTypes without intrinsic expressions."""
+
+    def __init__(self):  # noqa: super-init-not-called
+        # Intentionally not calling super().__init__() — this object represents
+        # the absence of a potential expression and overrides all properties.
+        self._expression = None
+        self._independent_variables = set()
+        self._parameters = {}
+        self._is_parametric = False
+
+    @property
+    def expression(self):
+        return None
+
+    @expression.setter
+    def expression(self, expr):
+        raise AttributeError(
+            "Cannot set expression on a NullPotentialExpression. "
+            "Replace the potential_expression on the parent object instead."
+        )
+
+    @property
+    def parameters(self):
+        return {}
+
+    @parameters.setter
+    def parameters(self, new_params):
+        raise AttributeError(
+            "Cannot set parameters on a NullPotentialExpression. "
+            "Replace the potential_expression on the parent object instead."
+        )
+
+    @property
+    def independent_variables(self):
+        return set()
+
+    @independent_variables.setter
+    def independent_variables(self, indep_vars):
+        raise AttributeError(
+            "Cannot set independent_variables on a NullPotentialExpression. "
+            "Replace the potential_expression on the parent object instead."
+        )
+
+    @property
+    def is_parametric(self):
+        return False
+
+    def set(self, expression=None, parameters=None, independent_variables=None):
+        raise AttributeError("Cannot modify a NullPotentialExpression")
+
+    def clone(self, fast_copy=False):
+        return NullPotentialExpression()
+
+    @staticmethod
+    def json(potential_expression):
+        return {
+            "expression": None,
+            "independent_variables": [],
+            "parameters": {},
+        }
+
+    def evaluate(self, independent_namespace=None, independent_parameters=None):
+        raise ValueError("Cannot evaluate a NullPotentialExpression")
+
+    def __eq__(self, other):
+        return isinstance(other, NullPotentialExpression)
+
+    def __repr__(self):
+        return "<NullPotentialExpression>"
+
+    def __bool__(self):
+        """Returns False, allowing `if not atom_type.potential_expression:` checks."""
+        return False
+
+    def __hash__(self):
+        return hash(None)

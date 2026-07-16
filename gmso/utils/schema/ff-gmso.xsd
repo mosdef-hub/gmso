@@ -206,13 +206,7 @@
         <xsd:complexType>
             <xsd:sequence>
                 <xsd:element name="ParametersUnitDef" type="ParametersUnitDef" minOccurs="0" maxOccurs="unbounded"/>
-                <xsd:element name="PairPotentialType" type="PairPotentialType" maxOccurs="unbounded" minOccurs="0">
-                    <xsd:key name="mutuallyExclusiveAttributesPairPotentialType">
-                        <xsd:selector xpath="."/>
-                        <xsd:field xpath="@type1|@class1"/>
-                        <xsd:field xpath="@type2|@class2"/>
-                    </xsd:key>
-                </xsd:element>
+                <xsd:element name="PairPotentialType" type="PairPotentialType" maxOccurs="unbounded" minOccurs="0"/>
             </xsd:sequence>
             <xsd:attribute name="expression" type="xsd:string"/>
             <xsd:attribute name="name" type="xsd:string" use="optional"/>
@@ -220,6 +214,8 @@
         <xsd:key name="pairpotentialtype_name_key">
             <xsd:selector xpath="PairPotentialType"/>
             <xsd:field xpath="@name"/>
+            <xsd:field xpath="@type1|@class1"/>
+            <xsd:field xpath="@type2|@class2"/>
         </xsd:key>
     </xsd:element>
 
