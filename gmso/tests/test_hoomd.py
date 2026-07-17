@@ -691,3 +691,29 @@ class TestHoomd(BaseTest):
             "opls_146",
         ]
         assert rigid_info.body["propane"] is None
+
+    def test_pairpotential_only_forces(self, dpd_pairpotential):
+        assert dpd_pairpotential.pairpotential_types
+        gmso_forces, _ = to_hoomd_forcefield(dpd_pairpotential, r_cut=1.2, kT=1)
+
+        # validate that there are no LJ forces
+        # validate that there are no charge forces
+        for force in gmso_forces["nonbonded"]:
+            assert not isinstance(force, hoomd.md.pair.LJ)
+            if isinstance(force, hoomd.md.pair.DPD):
+                dpd_force = force
+
+        assert "bond" in dpd_force.nlist.exclusions
+        assert "1-3" in dpd_force.nlist.exclusions
+        assert "1-4" in dpd_force.nlist.exclusions
+        assert len(dpd_force.params.keys()) == 3
+
+        expected_potentials = {
+            ("_A", "_A"): dict(A=40.0, gamma=8.0),
+            ("_A", "_B"): dict(A=20.0, gamma=1.0),
+            ("_B", "_B"): dict(A=20.0, gamma=1.0),
+        }
+        for potential in dpd_pairpotential.pairpotential_types:
+            pair = potential.member_types
+            assert dpd_force.params[pair].to_base() == expected_potentials[pair]
+            assert force.r_cut[pair] == 1

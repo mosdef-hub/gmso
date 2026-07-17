@@ -5,6 +5,7 @@ import sympy
 
 from gmso.core.views import PotentialFilters
 from gmso.exceptions import EngineIncompatibilityError
+from gmso.utils.expression import NullPotentialExpression
 
 
 def check_compatibility(
@@ -54,7 +55,15 @@ def check_compatibility(
 
     """
     potential_forms_dict = dict()
-    for atom_type in topology.atom_types(filter_by=site_pfilter):
+    for atom_type in topology.atom_types(
+        filter_by=site_pfilter
+    ):  # skip empty atomtypes
+        if NullPotentialExpression() in accepted_potentials and isinstance(
+            atom_type.potential_expression, NullPotentialExpression
+        ):
+            potential_forms_dict.update({atom_type: NullPotentialExpression()})
+            continue
+
         potential_form = _check_single_potential(
             atom_type,
             accepted_potentials,
@@ -123,6 +132,8 @@ def _check_single_potential(potential, accepted_potentials):
             u_dims[i] = energy_dimsStr
     u_dims = set(u_dims)
     for ref in accepted_potentials:
+        if isinstance(ref, NullPotentialExpression):
+            continue
         ref_ind_var = ref.independent_variables
         ref_u_dims = set(
             map(symplify_str_eqn, ref.expected_parameters_dimensions.values())

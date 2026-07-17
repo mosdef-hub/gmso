@@ -742,3 +742,15 @@ class BaseTest:
     @pytest.fixture
     def oplsaa_forcefield(self):
         return ForceField("oplsaa")
+
+    @pytest.fixture
+    def dpd_pairpotential(self):
+        fn = "hoomd-dpd-hhp.xml"
+        ff = ForceField(get_path(fn))
+
+        siteA = Atom(name="_A", position=np.array([0, 0, 0]))  # LJ bead
+        siteB = Atom(name="_B", position=np.array([1, 1, 1]))  # LJ bead
+        top = Topology()
+        top.add_site(siteA)
+        top.add_site(siteB)
+        return apply(top, ff)
