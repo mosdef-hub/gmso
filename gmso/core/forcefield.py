@@ -604,10 +604,10 @@ class ForceField(object):
             loader = GMSOFFs()
             ff = loader.load(filename).to_gmso_ff()
         # Temporarily opt out, pending new forcefield-utilities release
-        except (ForceFieldParseError, FileNotFoundError, ValidationError):
+        except (ForceFieldParseError, FileNotFoundError, ValidationError, IndexError):
             loader = FoyerFFs()
             ff = loader.load(filename).to_gmso_ff()
-            ff.units = {
+            ff.units = {  # have to assume foyer units
                 "energy": "kJ",
                 "distance": "nm",
                 "mass": "amu",
