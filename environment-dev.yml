@@ -4,7 +4,7 @@ channels:
 dependencies:
   - python>=3.11,<=3.14
   - boltons
-  - numpy>=2.3
+  - numpy>=2,<2.6
   - sympy
   - unyt>=2.9.5
   - boltons
@@ -13,7 +13,7 @@ dependencies:
   - intermol
   - mdtraj
   - pydantic>=2
-  - networkx
+  - networkx>=2.5
   - nglview>=3
   - pytest
   - garnett>=0.7.1
