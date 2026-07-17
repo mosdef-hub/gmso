@@ -6,7 +6,7 @@ from lxml import etree
 from pydantic import ConfigDict
 
 from gmso.abc.abstract_potential import AbstractPotential
-from gmso.utils.expression import PotentialExpression
+from gmso.utils.expression import NullPotentialExpression, PotentialExpression
 from gmso.utils.misc import get_xml_representation, unyt_compare
 
 AbstractSetIntStr = Type["AbstractSetIntStr"]
@@ -79,7 +79,7 @@ class ParametricPotential(AbstractPotential):
                 "a potential, you are expected to provide all the values "
                 "or none of them to use defaults. However, you provided "
                 "the following and there's not enough information to form "
-                "a set of expression, idependent_variables and parameters.\n"
+                "a set of expression, independent_variables and parameters.\n"
                 f"expression: {expression}\n"
                 f"parameters: {parameters}\n"
                 f"independent_variables: {indep_vars}\n"
@@ -105,9 +105,28 @@ class ParametricPotential(AbstractPotential):
         return self.potential_expression.parameters
 
     def __setattr__(self, key: Any, value: Any) -> None:
-        """Set the attributes of the potential."""
-        if key == "parameters":
-            self.potential_expression_.parameters = value
+        """Set attributes of the potential."""
+        if key == "expression":
+            if isinstance(self.potential_expression, NullPotentialExpression):
+                # Upgrade: replace null with a real non-parametric expression
+                self.__dict__["potential_expression_"] = PotentialExpression(
+                    expression=value,
+                    independent_variables=set(),
+                    parameters=None,
+                )
+            else:
+                self.potential_expression.expression = value
+        elif key == "independent_variables":
+            if isinstance(self.potential_expression, NullPotentialExpression):
+                self.__dict__["potential_expression_"] = PotentialExpression(
+                    expression="x",  # placeholder
+                    independent_variables=value if isinstance(value, set) else {value},
+                    parameters=None,
+                )
+            else:
+                self.potential_expression.independent_variables = value
+        elif key == "parameters":
+            self.potential_expression.parameters = value
         else:
             super().__setattr__(key, value)
 
