@@ -1798,8 +1798,8 @@ def _parse_harmonic_improper(
         if "*" in members:
             members = sort_by_types(itype)
         container.params["-".join(members)] = {
-            "k": itype.parameters["k"],
-            "chi0": itype.parameters["phi_eq"],
+            "k": float(itype.parameters["k"].flatten()[0].to_value()),
+            "chi0": float(itype.parameters["phi_eq"].flatten()[0].to_value()),
         }
     return container
 
@@ -1814,10 +1814,13 @@ def _parse_periodic_improper(
         if "*" in members:
             members = sort_by_types(itype)
         container.params["-".join(members)] = {
-            "k": itype.parameters["k"] * 2,  # convert to k/2
-            "chi0": itype.parameters["phi_eq"],
-            "n": itype.parameters["n"],
-            "d": itype.parameters.get("d", 1.0),
+            "k": float(itype.parameters["k"].flatten()[0].to_value())
+            * 2,  # convert to k/2
+            "chi0": float(itype.parameters["phi_eq"].flatten()[0].to_value()),
+            "n": int(itype.parameters["n"].flatten()[0].to_value()),
+            "d": float(itype.parameters["d"].flatten()[0].to_value())
+            if "d" in itype.parameters
+            else 1.0,
         }
     return container
 
@@ -1832,10 +1835,12 @@ def _parse_hoomd_periodic_improper(
         if "*" in members:
             members = sort_by_types(itype)
         container.params["-".join(members)] = {
-            "k": itype.parameters["k"],
-            "chi0": itype.parameters["phi0"],
-            "n": itype.parameters["n"],
-            "d": itype.parameters.get("d"),
+            "k": float(itype.parameters["k"].flatten()[0].to_value()),
+            "chi0": float(itype.parameters["phi0"].flatten()[0].to_value()),
+            "n": int(itype.parameters["n"].flatten()[0].to_value()),
+            "d": float(itype.parameters["d"].flatten()[0].to_value())
+            if "d" in itype.parameters
+            else None,
         }
     return container
 
