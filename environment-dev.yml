@@ -4,10 +4,9 @@ channels:
 dependencies:
   - python>=3.11,<=3.14
   - boltons
-  - numpy>=2,<2.6
+  - numpy>=2.0,<2.6
   - sympy
   - unyt>=2.9.5
-  - boltons
   - lark>=1.2
   - lxml
   - intermol

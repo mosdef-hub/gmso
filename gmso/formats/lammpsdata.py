@@ -1091,48 +1091,58 @@ def _write_impropertypes(out_file, top, base_unyts, parser, cfactorsDict):
     if (
         parser.__name__ == "parse_cvff_style_improper"
         or "parse_harmonic_style_improper"
-    ):  # one cvff parameter per dihedral type
+    ):  # one cvff set per improper layer
         ndecimalsDict = {"k": 6, "n": 0, "phi_eq": 0}
         idx = 0
+        improper_typesList = []
         for improper_type, members in index_membersList:
-            param_labels = parser(improper_type)
-            variable_msg = "{:8}\t" * len(param_labels[1])
+            parameter_termList, parameterStrList = parser(improper_type)
+            variable_msg = "{:8}\t" * len(parameterStrList)
             full_msg = base_msg + variable_msg + end_msg
-            out_file.write(
-                full_msg.format(
-                    idx + 1,
-                    *[
-                        base_unyts.convert_parameter(
-                            convert_kelvin_to_energy_units(parameter, "kJ"),
-                            cfactorsDict,
-                            n_decimals=ndecimalsDict[parameterStr],
-                            name=parameterStr,
-                        )
-                        for parameter, parameterStr in zip(*parser(improper_type))
-                    ],
-                    *members,
+            for parameter_terms in parameter_termList:  # list of params on each line
+                out_file.write(
+                    full_msg.format(
+                        idx + 1,
+                        *[
+                            base_unyts.convert_parameter(
+                                convert_kelvin_to_energy_units(parameter, "kJ"),
+                                cfactorsDict,
+                                n_decimals=ndecimalsDict[parameterStr],
+                                name=parameterStr,
+                            )
+                            for parameter, parameterStr in zip(
+                                parameter_terms, parameterStrList
+                            )
+                        ],
+                        *members,
+                    )
                 )
-            )
-            idx += 1
-    return index_membersList  # cvff is not layered, so no added to list
+                improper_typesList.append(
+                    improper_type
+                )  # add improper type multiple times if it is layered
+                idx += 1
+    return improper_typesList
 
 
 def parse_cvff_style_improper(improper_type):
-    """Take a dihedral type and list parameters as expected in lammps outputs."""
-    parametersList = []
-    namesList = ["k", "n", "phi_eq"]
-    for k in namesList:
-        parametersList.append(improper_type.parameters[k])
-    return parametersList, namesList
+    """Take an improper type and list parameters as expected in lammps outputs."""
+    kArray = improper_type.parameters["k"].flatten()
+    nArray = improper_type.parameters["n"].flatten()
+    phi_eqArray = improper_type.parameters["phi_eq"].flatten()
+    allParamsList = []
+    for a, b, c in zip(kArray, nArray, phi_eqArray):
+        allParamsList.append([a, b, c])
+    return allParamsList, ["k", "n", "phi_eq"]
 
 
 def parse_harmonic_style_improper(improper_type):
-    """Take a dihedral type and list parameters as expected in lammps outputs."""
-    parametersList = []
-    namesList = ["k", "phi_eq"]
-    for k in namesList:
-        parametersList.append(improper_type.parameters[k])
-    return parametersList, namesList
+    """Take an improper type and list parameters as expected in lammps outputs."""
+    kArray = improper_type.parameters["k"].flatten()
+    phi_eqArray = improper_type.parameters["phi_eq"].flatten()
+    allParamsList = []
+    for a, b in zip(kArray, phi_eqArray):
+        allParamsList.append([a, b])
+    return allParamsList, ["k", "phi_eq"]
 
 
 def _write_site_data(out_file, top, atom_style, base_unyts, cfactorsDict):
