@@ -19,18 +19,18 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13"]
 
     defaults:
       run:
         shell: bash -l {0}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         name: Checkout Branch / Pull Request
 
       - name: Install Mamba (Linux)
-        uses: mamba-org/setup-micromamba@v2
+        uses: mamba-org/setup-micromamba@v3
         with:
           micromamba-version: 'latest'
           cache-environment: false
@@ -46,7 +46,7 @@ jobs:
         run: python -m pytest -v --cov=gmso --cov-report=xml --cov-append --cov-config=setup.cfg --color yes --pyargs gmso
 
       - name: Upload Coverage Report
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           name: GMSO-Coverage
           verbose: true
@@ -60,18 +60,18 @@ jobs:
       fail-fast: false
       matrix:
         os: [macOS-latest, macOS-14, ubuntu-latest]
-        python-version: ["3.13"]
+        python-version: ["3.14"]
 
     defaults:
       run:
         shell: bash -l {0}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         name: Checkout Branch / Pull Request
 
       - name: Install Mamba (Linux)
-        uses: mamba-org/setup-micromamba@v2
+        uses: mamba-org/setup-micromamba@v3
         with:
           micromamba-version: 'latest'
           cache-environment: false
@@ -92,10 +92,10 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         name: Checkout Branch / Pull Request
 
-      - uses: Vampire/setup-wsl@v6
+      - uses: Vampire/setup-wsl@v7
         with:
           distribution: Ubuntu-24.04
           wsl-shell-user: runner
