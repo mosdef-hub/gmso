@@ -584,6 +584,34 @@ class TestLammpsWriter(BaseTest):
         ptop.save("test.lammps", unit_style="real", overwrite=True)
         assert compare_lammps_files("test.lammps", get_path("charmm.lammps"))
 
+    def test_gaff_improper_ff(self, gaff_forcefield):
+        # GAFF impropers come through as length-1 unyt_arrays rather than
+        # scalars; ensure the improper writer handles them.
+        import mbuild as mb
+
+        from gmso.parameterization import apply
+
+        benzene = mb.load("c1ccccc1", smiles=True)
+        benzene.box = mb.Box([5, 5, 5])
+        top = apply(benzene.to_gmso(), gaff_forcefield, identify_connections=True)
+        assert top.improper_types
+
+        top.save("gaff.lammps", overwrite=True)
+        with open("gaff.lammps") as f:
+            lines = f.readlines()
+
+        found_impropers = False
+        for i, line in enumerate(lines):
+            if "Improper Coeffs" in line:
+                found_impropers = True
+                coeffs = lines[i + 2].split("#")[0].split()
+                assert coeffs[0] == "1"
+                # k, n, phi_eq must be written as plain scalars
+                assert len(coeffs) == 4
+                for value in coeffs[1:]:
+                    float(value)
+        assert found_impropers
+
     def test_lammps_fene(self, typed_ethane):
         from gmso.core.bond_type import BondType
         from gmso.lib.potential_templates import PotentialTemplateLibrary
