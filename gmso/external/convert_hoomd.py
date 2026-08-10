@@ -1,7 +1,5 @@
 """Convert GMSO Topology to GSD snapshot."""
 
-from __future__ import division
-
 import copy
 import itertools
 import json
@@ -59,9 +57,7 @@ AKMA_UNITS = {
 def get_cell_nlist(top, buffer=0.4):
     """Create a cell neighborlist for use in hoomd-blue based on top.scaling_factors"""
     nb_scaling_factors, coul_scaling_factors = top.scaling_factors
-    hasRigid = any(
-        getattr(site.molecule, "isrigid") for site in top.sites if site.molecule
-    )
+    hasRigid = any(site.molecule.isrigid for site in top.sites if site.molecule)
     if all(top.scaling_factors[0] == top.scaling_factors[1]):
         outVals = None
     else:
@@ -1970,7 +1966,7 @@ def _convert_single_param_units(
         for unit in ind_units:
             unit_dim = unit_dim.replace(
                 unit,
-                f"({str(base_units[unit].value)} * {str(base_units[unit].units)})",
+                f"({base_units[unit].value!s} * {base_units[unit].units!s})",
             )
 
         converted_params[parameter] = potential.parameters[parameter].to(unit_dim)

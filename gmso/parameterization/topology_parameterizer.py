@@ -1,7 +1,5 @@
 """The parameterizer module for a gmso Topology."""
 
-from typing import Dict, Union
-
 import networkx as nx
 from boltons.setutils import IndexedSet
 
@@ -101,7 +99,7 @@ class TopologyParameterizer(GMSOBase):
 
     topology: Topology = Field(..., description="The gmso topology.")
 
-    forcefields: Union[ForceField, Dict[str, ForceField]] = Field(
+    forcefields: ForceField | dict[str, ForceField] = Field(
         ...,
         description="The gmso forcefield or a dictionary of gmso "
         "forcefields per molecule/group, where the keys "
@@ -114,7 +112,7 @@ class TopologyParameterizer(GMSOBase):
 
     def get_ff(self, key=None):
         """Return the forcefield of choice by looking up the forcefield dictionary."""
-        if isinstance(self.forcefields, Dict):
+        if isinstance(self.forcefields, dict):
             return self.forcefields.get(key)
         else:
             return self.forcefields
@@ -352,7 +350,7 @@ class TopologyParameterizer(GMSOBase):
             for interaction in ["12", "13", "14"]
         }
 
-        if isinstance(self.forcefields, Dict):
+        if isinstance(self.forcefields, dict):
             for group_or_molecule, ff in self.forcefields.items():
                 for name, interaction in lj_scales.items():
                     if ff.scaling_factors.get(name) is not None:
@@ -396,7 +394,7 @@ class TopologyParameterizer(GMSOBase):
             errors. So, here we should use index only option"""
             self.topology.identify_connections()
 
-        if isinstance(self.forcefields, Dict):
+        if isinstance(self.forcefields, dict):
             labels = self.topology.unique_site_labels(
                 self.config.match_ff_by, name_only=True
             )
@@ -569,7 +567,7 @@ class TopologyParameterizer(GMSOBase):
 
     def _apply_pairpotential_types(self):
         """Add pairpotential types to topology object."""
-        if isinstance(self.forcefields, Dict):
+        if isinstance(self.forcefields, dict):
             for key in self.forcefields:
                 forcefield = self.forcefields[key]
                 for ptype in forcefield.pairpotential_types.values():

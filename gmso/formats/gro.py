@@ -3,7 +3,6 @@
 import datetime
 import logging
 from pathlib import Path
-from typing import Union
 
 import numpy as np
 import unyt as u
@@ -19,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 @loads_as(".gro")
-def read_gro(filename: Union[str, Path]) -> Topology:
+def read_gro(filename: str | Path) -> Topology:
     """Read a Gromos87 (GRO) file and return a :class:`~gmso.Topology`.
 
     The GRO format is a plain-text structure file used by the GROMACS
@@ -103,7 +102,7 @@ def read_gro(filename: Union[str, Path]) -> Topology:
 @saves_as(".gro")
 def write_gro(
     top: Topology,
-    filename: Union[str, Path],
+    filename: str | Path,
     n_decimals: int = 3,
     shift_coord: bool = False,
 ) -> None:
@@ -140,7 +139,7 @@ def write_gro(
                 str(datetime.datetime.now()),
             )
         )
-        out_file.write("{:d}\n".format(top.n_sites))
+        out_file.write(f"{top.n_sites:d}\n")
         out_file.write(_prepare_atoms(top, pos_array, n_decimals))
         out_file.write(_prepare_box(top))
 
@@ -161,7 +160,7 @@ def _validate_positions(pos_array):
 
 
 def _prepare_atoms(top, updated_positions, n_decimals):
-    out_str = str()
+    out_str = ""
     logger.info(
         "Residue information is parsed from site.molecule,"
         "or site.residue if site.molecule does not exist."
@@ -227,47 +226,31 @@ def _prepare_atoms(top, updated_positions, n_decimals):
         crt_x = crdfmt.format(pos[0].in_units(u.nm).value)[:varwidth]
         crt_y = crdfmt.format(pos[1].in_units(u.nm).value)[:varwidth]
         crt_z = crdfmt.format(pos[2].in_units(u.nm).value)[:varwidth]
-        out_str = out_str + "{0:5d}{1:5s}{2:>5s}{3:5d}{4}{5}{6}\n".format(
-            res_id,
-            res_name,
-            atom_name,
-            atom_id,
-            crt_x,
-            crt_y,
-            crt_z,
+        out_str = (
+            out_str
+            + f"{res_id:5d}{res_name:5s}{atom_name:>5s}{atom_id:5d}{crt_x}{crt_y}{crt_z}\n"
         )
 
     return out_str
 
 
 def _prepare_box(top):
-    out_str = str()
+    out_str = ""
     if allclose_units(
         top.box.angles,
         u.degree * [90, 90, 90],
         rtol=1e-5,
         atol=0.1 * u.degree,
     ):
-        out_str = out_str + " {:0.5f} {:0.5f} {:0.5f}\n".format(
-            top.box.lengths[0].in_units(u.nm).value.round(6),
-            top.box.lengths[1].in_units(u.nm).value.round(6),
-            top.box.lengths[2].in_units(u.nm).value.round(6),
+        out_str = (
+            out_str
+            + f" {top.box.lengths[0].in_units(u.nm).value.round(6):0.5f} {top.box.lengths[1].in_units(u.nm).value.round(6):0.5f} {top.box.lengths[2].in_units(u.nm).value.round(6):0.5f}\n"
         )
     else:
         # TODO: Work around GROMACS's triclinic limitations #30
         vectors = top.box.get_vectors()
         out_str = (
             out_str
-            + " {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} {:0.5f} \n".format(
-                vectors[0, 0].in_units(u.nm).value.round(6),
-                vectors[1, 1].in_units(u.nm).value.round(6),
-                vectors[2, 2].in_units(u.nm).value.round(6),
-                vectors[0, 1].in_units(u.nm).value.round(6),
-                vectors[0, 2].in_units(u.nm).value.round(6),
-                vectors[1, 0].in_units(u.nm).value.round(6),
-                vectors[1, 2].in_units(u.nm).value.round(6),
-                vectors[2, 0].in_units(u.nm).value.round(6),
-                vectors[2, 1].in_units(u.nm).value.round(6),
-            )
+            + f" {vectors[0, 0].in_units(u.nm).value.round(6):0.5f} {vectors[1, 1].in_units(u.nm).value.round(6):0.5f} {vectors[2, 2].in_units(u.nm).value.round(6):0.5f} {vectors[0, 1].in_units(u.nm).value.round(6):0.5f} {vectors[0, 2].in_units(u.nm).value.round(6):0.5f} {vectors[1, 0].in_units(u.nm).value.round(6):0.5f} {vectors[1, 2].in_units(u.nm).value.round(6):0.5f} {vectors[2, 0].in_units(u.nm).value.round(6):0.5f} {vectors[2, 1].in_units(u.nm).value.round(6):0.5f} \n"
         )
     return out_str

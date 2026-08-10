@@ -4,7 +4,7 @@ import datetime
 import itertools
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import unyt as u
 
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 @loads_as(".mol2")
 def read_mol2(
-    filename: Union[str, Path],
+    filename: str | Path,
     site_type: str = "atom",
     verbose: bool = False,
 ) -> "Topology":
@@ -94,7 +94,7 @@ def read_mol2(
 @saves_as(".mol2")
 def write_mol2(
     top: "Topology",
-    filename: Union[str, Path],
+    filename: str | Path,
     n_decimals: int = 4,
 ) -> None:
     """Write a :class:`~gmso.Topology` to a TRIPOS MOL2 file.

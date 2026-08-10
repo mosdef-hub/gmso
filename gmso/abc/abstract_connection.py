@@ -1,5 +1,5 @@
 import itertools
-from typing import List, Optional, Sequence
+from collections.abc import Sequence
 
 from pydantic import ConfigDict, Field, model_validator
 
@@ -21,7 +21,7 @@ class Connection(GMSOBase):
         alias="name",
     )
 
-    connection_members_: Optional[Sequence[Site]] = Field(
+    connection_members_: Sequence[Site] | None = Field(
         default=None,
         description="A list of constituents in this connection, in order.",
         alias="connection_members",
@@ -34,7 +34,7 @@ class Connection(GMSOBase):
     )
 
     @property
-    def connection_members(self) -> Optional[Sequence[Site]]:
+    def connection_members(self) -> Sequence[Site] | None:
         """Return the ordered sequence of sites that form this connection."""
         return self.__dict__.get("connection_members_")
 
@@ -44,7 +44,7 @@ class Connection(GMSOBase):
         return self.__dict__.get("name_")
 
     @property
-    def member_types(self) -> Optional[List[str]]:
+    def member_types(self) -> list[str] | None:
         """Return the atom-type name of each connection member.
 
         Returns the names from the connection's ``connection_type`` when
@@ -54,7 +54,7 @@ class Connection(GMSOBase):
         return self._get_members_types_or_classes("member_types")
 
     @property
-    def member_classes(self) -> Optional[List[str]]:
+    def member_classes(self) -> list[str] | None:
         """Return the atom-type class of each connection member.
 
         Returns the classes from the connection's ``connection_type`` when
@@ -72,7 +72,7 @@ class Connection(GMSOBase):
     def _get_members_types_or_classes(self, to_return):
         """Return types or classes for connection members if they exist."""
         assert to_return in {"member_types", "member_classes"}
-        ctype = getattr(self, "connection_type")
+        ctype = self.connection_type
         ctype_attr = getattr(ctype, to_return) if ctype else None
 
         if ctype_attr:
@@ -118,7 +118,7 @@ class Connection(GMSOBase):
         return (
             f"<{self.__class__.__name__} {self.name},\n "
             f"connection_members: {self.connection_members},\n "
-            f"potential: {str(self.connection_type)},\n "
+            f"potential: {self.connection_type!s},\n "
             f"id: {id(self)}>"
         )
 

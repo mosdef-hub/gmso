@@ -339,9 +339,9 @@ def _parse_group(site_map, compound, custom_groups):
     if custom_groups:
         if isinstance(custom_groups, str):
             custom_groups = [custom_groups]
-        elif not hasattr(custom_groups, "__iter__"):
-            raise TypeError(f"Please pass groups {custom_groups} as a list of strings.")
-        elif not np.all([isinstance(g, str) for g in custom_groups]):
+        elif not hasattr(custom_groups, "__iter__") or not np.all(
+            [isinstance(g, str) for g in custom_groups]
+        ):
             raise TypeError(f"Please pass groups {custom_groups} as a list of strings.")
         for part in _traverse_down_hierarchy(compound, custom_groups):
             for particle in part.particles():
@@ -354,12 +354,9 @@ def _parse_group(site_map, compound, custom_groups):
                 f"""Not all custom groups ({custom_groups}, is are being used when
             traversing compound hierachy. Only {applied_groups} are used.)"""
             )
-    elif not compound.children:
-        for particle in compound.particles():
-            site_map[particle]["group"] = compound.name
-    elif not np.any(
+    elif not compound.children or not np.any(
         list(map(lambda c: len(c.children), compound.children))
-    ):  # compound is a 2 level hierarchy
+    ):
         for particle in compound.particles():
             site_map[particle]["group"] = compound.name
     else:  # set compund name to se

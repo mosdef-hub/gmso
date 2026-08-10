@@ -29,8 +29,6 @@ or
 class DelayImportError(ImportError, SkipTest):
     """Delay an import error for testing utilities."""
 
-    pass
-
 
 def get_fn(filename):
     """Get the full path to one of the reference files shipped for utils.
@@ -51,7 +49,7 @@ def get_fn(filename):
     """
     fn = files("gmso") / "utils/files" / filename
     if not os.path.exists(fn):
-        raise IOError("Sorry! {} does not exists.".format(fn))
+        raise OSError(f"Sorry! {fn} does not exists.")
     return str(fn)
 
 
@@ -111,7 +109,7 @@ def import_(module):
             + "\033[0m"
         )
 
-        print("", file=sys.stderr)
+        print(file=sys.stderr)
         print(bar, file=sys.stderr)
         print(m, file=sys.stderr)
         print(bar, file=sys.stderr)

@@ -1,6 +1,7 @@
 """Abstract representation of a Potential object."""
 
-from typing import Any, Dict, Iterator, List, Set
+from collections.abc import Iterator
+from typing import Any
 
 import unyt as u
 from pydantic import ConfigDict, Field, field_serializer, field_validator
@@ -34,7 +35,7 @@ class AbstractPotential(GMSOBase):
         alias="potential_expression",
     )
 
-    tags_: Dict[str, Any] = Field(
+    tags_: dict[str, Any] = Field(
         {},
         description="Tags associated with the potential",
         alias="tags",
@@ -79,7 +80,7 @@ class AbstractPotential(GMSOBase):
         return self.__dict__.get("name_")
 
     @property
-    def independent_variables(self) -> Set:
+    def independent_variables(self) -> set:
         """The independent variables in the potential's expression.
 
         Returns the set of :mod:`sympy` symbols that are *not* parameters —
@@ -102,12 +103,12 @@ class AbstractPotential(GMSOBase):
         return self.__dict__.get("potential_expression_")
 
     @property
-    def tags(self) -> Dict[str, Any]:
+    def tags(self) -> dict[str, Any]:
         """Arbitrary metadata attached to this potential."""
         return self.__dict__.get("tags_")
 
     @property
-    def tag_names(self) -> List[str]:
+    def tag_names(self) -> list[str]:
         return list(self.__dict__.get("tags_"))
 
     @property

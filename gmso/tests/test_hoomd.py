@@ -508,11 +508,9 @@ class TestHoomd(BaseTest):
             nlist=nlist_coul,
         )
         for force in gmso_forces["nonbonded"]:
-            if isinstance(force, hoomd.md.pair.LJ):
-                assert force.nlist == nlist_nb
-                assert list(force.nlist.exclusions) == ["bond", "1-3", "1-4"]
-                assert force.nlist.buffer == 1
-            elif isinstance(force, hoomd.md.pair.Ewald):
+            if isinstance(force, hoomd.md.pair.LJ) or isinstance(
+                force, hoomd.md.pair.Ewald
+            ):
                 assert force.nlist == nlist_nb
                 assert list(force.nlist.exclusions) == ["bond", "1-3", "1-4"]
                 assert force.nlist.buffer == 1

@@ -103,9 +103,9 @@ def improper_equivalents_string_identifier(identifier: str):
     tokens = r"([\=\~\-\#\:])"
     items = re.split(tokens, identifier)
     return [
-        "".join((items[:1] + items[3:5] + items[1:3] + items[5:])),
-        "".join((items[:1] + items[3:5] + items[1:3] + items[5:])),
-        "".join((items[:1] + items[5:] + items[3:5] + items[1:3])),
-        "".join((items[:1] + items[5:] + items[1:3] + items[3:5])),
-        "".join((items[:1] + items[1:3] + items[5:] + items[3:5])),
+        "".join(items[:1] + items[3:5] + items[1:3] + items[5:]),
+        "".join(items[:1] + items[3:5] + items[1:3] + items[5:]),
+        "".join(items[:1] + items[5:] + items[3:5] + items[1:3]),
+        "".join(items[:1] + items[5:] + items[1:3] + items[3:5]),
+        "".join(items[:1] + items[1:3] + items[5:] + items[3:5]),
     ]

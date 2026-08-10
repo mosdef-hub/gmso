@@ -3,7 +3,6 @@
 import datetime
 import logging
 from pathlib import Path
-from typing import Union
 
 import networkx as nx
 import numpy as np
@@ -30,7 +29,7 @@ potential_templates = PotentialTemplateLibrary()
 
 
 @saves_as(".mcf")
-def write_mcf(top: "Topology", filename: Union[str, Path]) -> None:
+def write_mcf(top: "Topology", filename: str | Path) -> None:
     """Write a Cassandra Monte Carlo MCF file from a :class:`~gmso.Topology`.
 
     The MCF file encodes the topology of a single molecular species for the
@@ -89,7 +88,7 @@ def write_mcf(top: "Topology", filename: Union[str, Path]) -> None:
                 "!***************************************"
                 "****************************************\n"
                 f"!File {filename} written by gmso {__version__} "
-                f"at {str(datetime.datetime.now())}\n\n"
+                f"at {datetime.datetime.now()!s}\n\n"
             )
 
             mcf.write(header)
@@ -314,16 +313,10 @@ def _write_atom_information(mcf, top, in_ring):
     )
 
     mcf.write(header)
-    mcf.write("{:d}\n".format(len(top.sites)))
+    mcf.write(f"{len(top.sites):d}\n")
     for idx, site in enumerate(top.sites):
         mcf.write(
-            "{:<4d}  {:<6s}  {:<2s}  {:8.4f}  {:12.8f}  ".format(
-                idx + 1,
-                atypes_list[idx],
-                names[idx],
-                site.atom_type.mass.in_units(u.amu).value,
-                site.charge.in_units(u.elementary_charge).value,
-            )
+            f"{idx + 1:<4d}  {atypes_list[idx]:<6s}  {names[idx]:<2s}  {site.atom_type.mass.in_units(u.amu).value:8.4f}  {site.charge.in_units(u.elementary_charge).value:12.8f}  "
         )
         if vdw_style == "LJ":
             mcf.write(
@@ -362,7 +355,7 @@ def _write_bond_information(mcf, top):
     mcf.write("\n!Bond Format\n")
     mcf.write("!index i j type parameters\n" + '!type="fixed", parms=bondLength\n')
     mcf.write("\n# Bond_Info\n")
-    mcf.write("{:d}\n".format(len(top.bonds)))
+    mcf.write(f"{len(top.bonds):d}\n")
     for idx, bond in enumerate(top.bonds):
         mcf.write(
             "{:<4d}  {:<4d}  {:<4d}  {:s}  {:10.5f}\n".format(
@@ -394,7 +387,7 @@ def _write_angle_information(mcf, top):
     )
 
     mcf.write(header)
-    mcf.write("{:d}\n".format(len(top.angles)))
+    mcf.write(f"{len(top.angles):d}\n")
     for idx, angle in enumerate(top.angles):
         mcf.write(
             f"{idx + 1:<4d}  "
@@ -451,16 +444,10 @@ def _write_dihedral_information(mcf, top):
 
     mcf.write(header)
 
-    mcf.write("{:d}\n".format(len(top.dihedrals)))
+    mcf.write(f"{len(top.dihedrals):d}\n")
     for idx, dihedral in enumerate(top.dihedrals):
         mcf.write(
-            "{:<4d}  {:<4d}  {:<4d}  {:<4d}  {:<4d}  ".format(
-                idx + 1,
-                top.get_index(dihedral.connection_members[0]) + 1,
-                top.get_index(dihedral.connection_members[1]) + 1,
-                top.get_index(dihedral.connection_members[2]) + 1,
-                top.get_index(dihedral.connection_members[3]) + 1,
-            )
+            f"{idx + 1:<4d}  {top.get_index(dihedral.connection_members[0]) + 1:<4d}  {top.get_index(dihedral.connection_members[1]) + 1:<4d}  {top.get_index(dihedral.connection_members[2]) + 1:<4d}  {top.get_index(dihedral.connection_members[3]) + 1:<4d}  "
         )
         dihedral_style = _get_dihedral_style(dihedral)
         dihedral_style = dihedral_style.upper()
@@ -555,7 +542,7 @@ def _write_improper_information(mcf, top):
     )
 
     mcf.write(header)
-    mcf.write("{:d}\n".format(len(top.impropers)))
+    mcf.write(f"{len(top.impropers):d}\n")
 
     improper_style = "harmonic"
     for i, improper in enumerate(top.impropers):
@@ -608,17 +595,17 @@ def _write_fragment_information(mcf, top, frag_list, frag_conn):
             logger.info("More than two atoms present but no fragments identified.")
             mcf.write("0\n")
     else:
-        mcf.write("{:d}\n".format(len(frag_list)))
+        mcf.write(f"{len(frag_list):d}\n")
         for i, frag in enumerate(frag_list):
-            mcf.write("{:d}    {:d}".format(i + 1, len(frag)))
+            mcf.write(f"{i + 1:d}    {len(frag):d}")
             for idx in frag:
-                mcf.write("    {:d}".format(idx + 1))
+                mcf.write(f"    {idx + 1:d}")
             mcf.write("\n")
 
     mcf.write("\n\n# Fragment_Connectivity\n")
-    mcf.write("{:d}\n".format(len(frag_conn)))
+    mcf.write(f"{len(frag_conn):d}\n")
     for i, conn in enumerate(frag_conn):
-        mcf.write("{:d}    {:d}    {:d}\n".format(i + 1, conn[0] + 1, conn[1] + 1))
+        mcf.write(f"{i + 1:d}    {conn[0] + 1:d}    {conn[1] + 1:d}\n")
 
 
 def _write_intrascaling_information(mcf, top):

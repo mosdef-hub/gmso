@@ -1,7 +1,6 @@
 """Support non-bonded interactions between sites."""
 
 import logging
-from typing import Optional, Set, Union
 
 import unyt as u
 from pydantic import ConfigDict, Field, field_serializer, field_validator
@@ -29,55 +28,53 @@ class AtomType(ParametricPotential):
     are stored explicitly.
     """
 
-    mass_: Optional[u.unyt_array] = Field(
+    mass_: u.unyt_array | None = Field(
         0.0 * u.gram / u.mol,
         description="The mass of the atom type",
         alias="mass",
     )
 
-    charge_: Optional[u.unyt_array] = Field(
+    charge_: u.unyt_array | None = Field(
         0.0 * u.elementary_charge,
         description="The charge of the atom type",
         alias="charge",
     )
 
-    atomclass_: Optional[str] = Field(
+    atomclass_: str | None = Field(
         "", description="The class of the atomtype", alias="atomclass"
     )
 
-    doi_: Optional[str] = Field(
+    doi_: str | None = Field(
         "",
         description="Digital Object Identifier of publication where this atom type was introduced",
         alias="doi",
     )
 
-    overrides_: Optional[Set[str]] = Field(
+    overrides_: set[str] | None = Field(
         set(),
         description="Set of other atom types that this atom type overrides",
         alias="overrides",
     )
 
-    definition_: Optional[str] = Field(
+    definition_: str | None = Field(
         "",
         description="SMARTS string defining this atom type",
         alias="definition",
     )
 
-    description_: Optional[str] = Field(
+    description_: str | None = Field(
         "", description="Description for the AtomType", alias="description"
     )
     model_config = ConfigDict(
         alias_to_fields=dict(
             **ParametricPotential.model_config["alias_to_fields"],
-            **{
-                "mass": "mass_",
-                "charge": "charge_",
-                "atomclass": "atomclass_",
-                "doi": "doi_",
-                "overrides": "overrides_",
-                "definition": "definition_",
-                "description": "description_",
-            },
+            mass="mass_",
+            charge="charge_",
+            atomclass="atomclass_",
+            doi="doi_",
+            overrides="overrides_",
+            definition="definition_",
+            description="description_",
         ),
     )
 
@@ -100,7 +97,7 @@ class AtomType(ParametricPotential):
         if overrides is None:
             overrides = set()
 
-        super(AtomType, self).__init__(
+        super().__init__(
             name=name,
             expression=expression,
             parameters=parameters,
@@ -152,14 +149,14 @@ class AtomType(ParametricPotential):
         return self.__dict__.get("definition_")
 
     @field_serializer("charge_")
-    def serialize_charge(self, charge_: Union[u.unyt_quantity, None]):
+    def serialize_charge(self, charge_: u.unyt_quantity | None):
         if charge_ is None:
             return None
         else:
             return unyt_to_dict(charge_)
 
     @field_serializer("mass_")
-    def serialize_mass(self, mass_: Union[u.unyt_quantity, None]):
+    def serialize_mass(self, mass_: u.unyt_quantity | None):
         if mass_ is None:
             return None
         else:

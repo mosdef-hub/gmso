@@ -1,4 +1,5 @@
-from typing import Callable, ClassVar, Optional, Tuple
+from collections.abc import Callable
+from typing import ClassVar
 
 from pydantic import ConfigDict, Field, model_validator
 
@@ -29,15 +30,15 @@ class Dihedral(Connection):
 
     __members_creator__: ClassVar[Callable] = Atom.model_validate
 
-    connectivity: ClassVar[Tuple[Tuple[int]]] = ((0, 1), (1, 2), (2, 3))
+    connectivity: ClassVar[tuple[tuple[int]]] = ((0, 1), (1, 2), (2, 3))
 
-    connection_members_: Tuple[Atom, Atom, Atom, Atom] = Field(
+    connection_members_: tuple[Atom, Atom, Atom, Atom] = Field(
         ...,
         description="The 4 atoms involved in the dihedral.",
         alias="connection_members",
     )
 
-    bonds_: Tuple[Bond, Bond, Bond] = Field(
+    bonds_: tuple[Bond, Bond, Bond] = Field(
         default=None,
         description="""
         List of connection bonds.
@@ -47,13 +48,13 @@ class Dihedral(Connection):
         alias="bonds",
     )
 
-    dihedral_type_: Optional[DihedralType] = Field(
+    dihedral_type_: DihedralType | None = Field(
         default=None,
         description="DihedralType of this dihedral.",
         alias="dihedral_type",
     )
 
-    restraint_: Optional[dict] = Field(
+    restraint_: dict | None = Field(
         default=None,
         description="""
         Restraint for this dihedral, must be a dict with the following keys:
@@ -67,10 +68,8 @@ class Dihedral(Connection):
     model_config = ConfigDict(
         alias_to_fields=dict(
             **Connection.model_config["alias_to_fields"],
-            **{
-                "dihedral_type": "dihedral_type_",
-                "restraint": "restraint_",
-            },
+            dihedral_type="dihedral_type_",
+            restraint="restraint_",
         )
     )
 
@@ -123,9 +122,9 @@ class Dihedral(Connection):
 
     def __setattr__(self, key, value):
         if key == "connection_type":
-            super(Dihedral, self).__setattr__("dihedral_type_", value)
+            super().__setattr__("dihedral_type_", value)
         else:
-            super(Dihedral, self).__setattr__(key, value)
+            super().__setattr__(key, value)
 
     @model_validator(mode="before")
     @classmethod

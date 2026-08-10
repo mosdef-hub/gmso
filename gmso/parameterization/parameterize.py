@@ -1,7 +1,5 @@
 """Functions used to atomtype a gmso.Topology."""
 
-from typing import Dict, List, Set, Tuple, Union
-
 from gmso import ForceField, Topology
 from gmso.parameterization.topology_parameterizer import (
     TopologyParameterizationConfig,
@@ -13,12 +11,12 @@ __all__ = ["apply"]
 
 def apply(
     top: Topology,
-    forcefields: Union[ForceField, Dict[str, ForceField]],
+    forcefields: ForceField | dict[str, ForceField],
     match_ff_by: str = "molecule",
     identify_connections: bool = False,
     speedup_by_molgraph: bool = False,
     speedup_by_moltag: bool = False,
-    ignore_params: Union[List[str], Set[str], Tuple[str, ...]] = ["improper"],
+    ignore_params: list[str] | set[str] | tuple[str, ...] = ["improper"],
     remove_untyped: bool = True,
     fast_copy: bool = True,
 ) -> Topology:

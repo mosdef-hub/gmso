@@ -512,7 +512,7 @@ class TestLammpsWriter(BaseTest):
         }
         for i, line in enumerate(lines):
             if "Coeffs" in line:
-                styleLine = lines[i].split()
+                styleLine = line.split()
                 if styleLine[0] == "Pair":
                     assert "".join(styleLine[-3:]) == stylesDict[styleLine[0]]
                 else:

@@ -4,20 +4,14 @@
 def _conn_in_molecule(connection, label, is_group=False):
     """Check if all the members in a connection belong to a molecule (namedtuple)."""
     if is_group:
-        return all(
-            getattr(site, "group") == label for site in connection.connection_members
-        )
+        return all(site.group == label for site in connection.connection_members)
     else:
         if isinstance(label, str):
             return all(
-                getattr(site, "molecule").name == label
-                for site in connection.connection_members
+                site.molecule.name == label for site in connection.connection_members
             )
         else:
-            return all(
-                getattr(site, "molecule") == label
-                for site in connection.connection_members
-            )
+            return all(site.molecule == label for site in connection.connection_members)
 
 
 def _molecule_connections(top, molecule, attr, is_group=False):
@@ -74,7 +68,7 @@ def build_molecule_connection_index(top, is_group=False):
     index = {}
 
     def _label_of(site):
-        return getattr(site, "group") if is_group else site.molecule.name
+        return site.group if is_group else site.molecule.name
 
     def _bucket(connections, key):
         for conn in connections:
