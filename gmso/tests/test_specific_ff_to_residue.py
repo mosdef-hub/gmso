@@ -49,7 +49,7 @@ class TestSpecificFFToResidue(BaseTest):
         with pytest.raises(
             GMSOError,
             match="A particle named C cannot be associated with the\n        "
-            "custom_groups \['ETH'\]. "
+            r"custom_groups \['ETH'\]. "
             "Be sure to specify a list of group names that will cover\n        "
             "all particles in the compound. This particle is one level below ETO.",
         ):
@@ -296,7 +296,7 @@ class TestSpecificFFToResidue(BaseTest):
             match=r"If you are not providing an empty box, "
             r"you need to specify the atoms/beads as children in the mb.Compound. "
             r"If you are providing and empty box, please do so by specifying and "
-            r"mbuild Box \({}\)".format(type(Box(lengths=[1, 1, 1]))),
+            rf"mbuild Box \({type(Box(lengths=[1, 1, 1]))}\)",
         ):
             specific_ff_to_residue(
                 empty_box,

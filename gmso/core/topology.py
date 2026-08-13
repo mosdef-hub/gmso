@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 scaling_interaction_idxes = {"12": 0, "13": 1, "14": 2}
 
 
-class Topology(object):
+class Topology:
     """A topology.
 
     A topology represents a chemical structure wherein lie the collection
@@ -967,16 +967,12 @@ class Topology(object):
         combination rules.
         """
         if not isinstance(pairpotentialtype, PairPotentialType):
-            raise GMSOError(
-                "Non-PairPotentialType {} provided".format(pairpotentialtype)
-            )
+            raise GMSOError(f"Non-PairPotentialType {pairpotentialtype} provided")
         for atype in pairpotentialtype.member_types:
             if atype not in {t.name for t in self.atom_types}:
                 if atype not in {t.atomclass for t in self.atom_types}:
                     raise GMSOError(
-                        "There is no name/atomclass of AtomType {} in current topology".format(
-                            atype
-                        )
+                        f"There is no name/atomclass of AtomType {atype} in current topology"
                     )
         self._pairpotential_types.add(pairpotentialtype)
 
@@ -1249,7 +1245,7 @@ class Topology(object):
 
         member_type = type(member)
 
-        if member_type not in refs.keys():
+        if member_type not in refs:
             raise TypeError(f"Cannot index member of type {member_type.__name__}")
 
         index = refs[member_type].index(member)
@@ -1357,9 +1353,9 @@ class Topology(object):
             df = self._parse_parameter_expression(df, parameter, unyts_bool)
         else:
             raise AttributeError(
-                "{} is not yet supported for outputting parameters to a dataframe. \
+                f"{parameter!s} is not yet supported for outputting parameters to a dataframe. \
             Please use  one of 'sites', 'bonds', 'angles', 'dihedrals', or \
-            'impropers'".format(str(parameter))
+            'impropers'"
             )
 
         return df
@@ -1398,7 +1394,9 @@ class Topology(object):
 
             for connection_type in self.connection_types:
                 data = connection_type.model_dump(exclude={"topology", "set_ref"})
-                data = {**data, **({})}
+                data = {
+                    **data,
+                }
                 ff_conn_types[type(connection_type)][
                     FF_TOKENS_SEPARATOR.join(connection_type.member_types)
                 ] = connection_type.model_validate(data)
@@ -1525,7 +1523,7 @@ class Topology(object):
         """
         if isinstance(residue_tag, str):
             for site in self._sites:
-                if site.residue and getattr(site, "residue").name == residue_tag:
+                if site.residue and site.residue.name == residue_tag:
                     yield site
         else:
             return self.iter_sites("residue", residue_tag)
@@ -1540,7 +1538,7 @@ class Topology(object):
         """
         if isinstance(molecule_tag, str):
             for site in self._sites:
-                if site.molecule and getattr(site, "molecule").name == molecule_tag:
+                if site.molecule and site.molecule.name == molecule_tag:
                     yield site
         else:
             return self.iter_sites("molecule", molecule_tag)
@@ -1765,7 +1763,7 @@ class Topology(object):
             elif attr == "positions" or attr == "position":
                 for i, dimension in enumerate(["x", "y", "z"]):
                     df[dimension] = list(
-                        _return_float_for_unyt(getattr(site, "position")[i], unyts_bool)
+                        _return_float_for_unyt(site.position[i], unyts_bool)
                         for site in self.sites
                     )
             elif attr == "charge" or attr == "charges":
@@ -1811,41 +1809,29 @@ class Topology(object):
                 elif attr == "positions" or attr == "position":
                     df["x Atom" + str(site_index) + " (nm)"] = list(
                         _return_float_for_unyt(
-                            getattr(
-                                connection.connection_members[site_index],
-                                "position",
-                            )[0],
+                            connection.connection_members[site_index].position[0],
                             unyts_bool,
                         )
                         for connection in getattr(self, parameter)
                     )
                     df["y Atom" + str(site_index) + " (nm)"] = list(
                         _return_float_for_unyt(
-                            getattr(
-                                connection.connection_members[site_index],
-                                "position",
-                            )[1],
+                            connection.connection_members[site_index].position[1],
                             unyts_bool,
                         )
                         for connection in getattr(self, parameter)
                     )
                     df["z Atom" + str(site_index) + " (nm)"] = list(
                         _return_float_for_unyt(
-                            getattr(
-                                connection.connection_members[site_index],
-                                "position",
-                            )[2],
+                            connection.connection_members[site_index].position[2],
                             unyts_bool,
                         )
                         for connection in getattr(self, parameter)
                     )
                 elif attr == "charge" or attr == "charges":
                     df["charge Atom" + str(site_index) + " (e)"] = list(
-                        getattr(
-                            connection.connection_members[site_index],
-                            "charge",
-                        )
-                        .in_units(
+                        connection.connection_members[site_index]
+                        .charge.in_units(
                             u.Unit(
                                 "elementary_charge",
                                 registry=UnitReg.default_reg(),

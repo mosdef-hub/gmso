@@ -58,9 +58,7 @@ def parse_mcf(filename):
 
 def run_cassandra(cassandra, inp_file):
     """Calls Cassandra. Taken from mosdef_cassandra v0.3.2"""
-    cassandra_cmd = "{cassandra} {inp_file}".format(
-        cassandra=cassandra, inp_file=inp_file
-    )
+    cassandra_cmd = f"{cassandra} {inp_file}"
     p = subprocess.Popen(
         cassandra_cmd,
         shell=True,
@@ -418,8 +416,7 @@ class TestMCF(BaseTest):
             "1.0",
         ]
         with open("gmso.mcf", mode="w") as f:
-            for line in mcf_data:
-                f.write(" ".join(line) + "\n")
+            f.writelines(" ".join(line) + "\n" for line in mcf_data)
 
         inp_file = write_input(
             system=system,
@@ -516,7 +513,7 @@ class TestMCF(BaseTest):
 
         assert mcf_data[mcf_idx["Atom_Info"] + 1][0] == "6"
 
-        for idx in range(0, 6):
+        for idx in range(6):
             last_label = mcf_data[mcf_idx["Atom_Info"] + 2 + idx][-1]
             assert last_label == "ring"
 

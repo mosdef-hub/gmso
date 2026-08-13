@@ -17,9 +17,8 @@ def get_foyer_opls_test_dirs():
     fn = files("foyer") / "opls_validation"
     all_dirs = fn.glob("*")
     tests_fn = files("foyer") / "tests/implemented_opls_tests.txt"
-    with as_file(tests_fn) as tempPath:
-        with open(tempPath) as impl_file:
-            correctly_implemented = set(impl_file.read().strip().split("\n"))
+    with as_file(tests_fn) as tempPath, open(tempPath) as impl_file:
+        correctly_implemented = set(impl_file.read().strip().split("\n"))
 
     parent_dirs = map(Path, all_dirs)
     parent_dirs = list(

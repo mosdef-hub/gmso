@@ -1,7 +1,6 @@
 """Represent general atomic information in GMSO."""
 
 import logging
-from typing import Optional, Union
 
 import unyt as u
 from pydantic import ConfigDict, Field, field_serializer, field_validator
@@ -44,27 +43,27 @@ class Atom(Site):
         the gmso.abc.abstract site class
     """
 
-    charge_: Optional[Union[u.unyt_quantity, float]] = Field(
+    charge_: u.unyt_quantity | float | None = Field(
         None, description="Charge of the atom", alias="charge"
     )
 
-    mass_: Optional[Union[u.unyt_quantity, float]] = Field(
+    mass_: u.unyt_quantity | float | None = Field(
         None,
         description="Mass of the atom",
         alias="mass",
     )
 
-    element_: Optional[Element] = Field(
+    element_: Element | None = Field(
         None,
         description="Element associated with the atom",
         alias="element",
     )
 
-    atom_type_: Optional[AtomType] = Field(
+    atom_type_: AtomType | None = Field(
         None, description="AtomType associated with the atom", alias="atom_type"
     )
 
-    restraint_: Optional[dict] = Field(
+    restraint_: dict | None = Field(
         default=None,
         description="""
         Restraint for this atom, must be a dict with the following keys:
@@ -78,18 +77,16 @@ class Atom(Site):
     model_config = ConfigDict(
         alias_to_fields=dict(
             **Site.model_config["alias_to_fields"],
-            **{
-                "charge": "charge_",
-                "mass": "mass_",
-                "element": "element_",
-                "atom_type": "atom_type_",
-                "restraint": "restraint_",
-            },
+            charge="charge_",
+            mass="mass_",
+            element="element_",
+            atom_type="atom_type_",
+            restraint="restraint_",
         ),
     )
 
     @property
-    def charge(self) -> Union[u.unyt_quantity, None]:
+    def charge(self) -> u.unyt_quantity | None:
         """Return the charge of the atom."""
         charge = self.__dict__.get("charge_", None)
         atom_type = self.__dict__.get("atom_type_", None)
@@ -101,7 +98,7 @@ class Atom(Site):
             return None
 
     @property
-    def mass(self) -> Union[u.unyt_quantity, None]:
+    def mass(self) -> u.unyt_quantity | None:
         """Return the mass of the atom."""
         mass = self.__dict__.get("mass_", property)
         atom_type = self.__dict__.get("atom_type_", None)
@@ -113,12 +110,12 @@ class Atom(Site):
             return None
 
     @property
-    def element(self) -> Union[Element, None]:
+    def element(self) -> Element | None:
         """Return the element associated with the atom."""
         return self.__dict__.get("element_", None)
 
     @property
-    def atom_type(self) -> Union[AtomType, property]:
+    def atom_type(self) -> AtomType | property:
         """Return the atom_type associated with the atom."""
         return self.__dict__.get("atom_type_", None)
 
@@ -128,21 +125,21 @@ class Atom(Site):
         return self.__dict__.get("restraint_")
 
     @field_serializer("charge_")
-    def serialize_charge(self, charge_: Union[u.unyt_quantity, None]):
+    def serialize_charge(self, charge_: u.unyt_quantity | None):
         if charge_ is None:
             return None
         else:
             return unyt_to_dict(charge_)
 
     @field_serializer("mass_")
-    def serialize_mass(self, mass_: Union[u.unyt_quantity, None]):
+    def serialize_mass(self, mass_: u.unyt_quantity | None):
         if mass_ is None:
             return None
         else:
             return unyt_to_dict(mass_)
 
     @field_serializer("restraint_")
-    def serialize_restraint(self, restraint_: Union[dict, None]):
+    def serialize_restraint(self, restraint_: dict | None):
         if restraint_ is None:
             return None
         else:

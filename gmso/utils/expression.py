@@ -3,7 +3,6 @@
 import logging
 from copy import deepcopy
 from functools import lru_cache
-from typing import Dict
 
 import numpy as np
 import sympy
@@ -14,7 +13,7 @@ from gmso.exceptions import GMSOError
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["PotentialExpression", "NullPotentialExpression"]
+__all__ = ["NullPotentialExpression", "PotentialExpression"]
 
 
 class norm(Function):
@@ -96,10 +95,10 @@ class PotentialExpression:
     """
 
     __slots__ = (
-        "_parameters",
         "_expression",
         "_independent_variables",
         "_is_parametric",
+        "_parameters",
     )
 
     def __init__(
@@ -278,12 +277,12 @@ class PotentialExpression:
             if isinstance(val, list):
                 for params in val:
                     if not isinstance(params, u.unyt_array):
-                        raise ValueError("Parameter value {} lacks a unyt".format(val))
+                        raise ValueError(f"Parameter value {val} lacks a unyt")
             else:
                 if not isinstance(val, u.unyt_array):
-                    raise ValueError("Parameter value {} lacks a unyt".format(val))
+                    raise ValueError(f"Parameter value {val} lacks a unyt")
             if not isinstance(key, str):
-                raise ValueError("Parameter key {} is not a str".format(key))
+                raise ValueError(f"Parameter key {key} is not a str")
 
         return parameters
 
@@ -434,7 +433,7 @@ class PotentialExpression:
     def from_non_parametric(
         cls,
         non_parametric: "PotentialExpression",
-        parameters: Dict[str, u.unyt_array],
+        parameters: dict[str, u.unyt_array],
         valid: bool = False,
     ) -> "PotentialExpression":
         """Create a parametric expression from a non-parametric one.
@@ -520,9 +519,9 @@ class PotentialExpression:
             symbol_args = []
         else:  # grab symbols from namespace
             # Create symbols for the VECTORS, not the scalar parameters
-            symbol_args = [Symbol(key) for key in independent_namespace.keys()]
+            symbol_args = [Symbol(key) for key in independent_namespace]
             # Create a namespace with SYMBOLS
-            namespace = {key: Symbol(key) for key in independent_namespace.keys()}
+            namespace = {key: Symbol(key) for key in independent_namespace}
 
         namespace.update(
             {sym: Symbol(sym) for sym in self.parameters}

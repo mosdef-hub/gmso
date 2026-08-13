@@ -36,7 +36,7 @@ def _validate_lengths(lengths):
     ):
         raise ValueError(
             "Negative length(s) passed. Lengths must be a value "
-            "greater than 0.0. You passed {}".format(lengths)
+            f"greater than 0.0. You passed {lengths}"
         )
 
     if np.any(
@@ -53,7 +53,7 @@ def _validate_lengths(lengths):
             raise ValueError(
                 "Length(s) of value 0 were passed. Lengths must "
                 "be a value greater than 0.0. You passed "
-                "{}".format(lengths)
+                f"{lengths}"
             )
     return lengths
 
@@ -79,7 +79,7 @@ def _validate_angles(angles):
     return angles
 
 
-class Box(object):
+class Box:
     """A box that bounds a `Topology`.
 
     The `Box` data structure contains the relevant information to fully
@@ -164,9 +164,9 @@ class Box(object):
             mat_coef_z = np.sqrt(mat_coef_z)
         else:
             raise Warning(
-                "Non-positive z-vector. Angles {} "
+                f"Non-positive z-vector. Angles {self._angles} "
                 "do not generate a box with the z-vector in the"
-                "positive z direction".format(self._angles)
+                "positive z direction"
             )
 
         # Note that our box vectors are always aligned along the x-axis

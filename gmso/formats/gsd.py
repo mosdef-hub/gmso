@@ -1,9 +1,7 @@
 """Write GSD files from GMSO topologies."""
 
-from __future__ import division
-
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 from gmso.external.convert_hoomd import to_gsd_snapshot
 from gmso.formats.formats_registry import saves_as
@@ -21,8 +19,8 @@ if has_gsd:
 @saves_as(".gsd")
 def write_gsd(
     top: "Topology",
-    filename: Union[str, Path],
-    base_units: Optional[dict] = None,
+    filename: str | Path,
+    base_units: dict | None = None,
     shift_coords: bool = True,
     write_special_pairs: bool = True,
 ) -> None:

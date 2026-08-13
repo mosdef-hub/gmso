@@ -68,11 +68,9 @@ class TestXMLHandling(BaseTest):
 
     def test_foyer_xml_conversion(self):
         """Validate xml converted from Foyer can be written out correctly."""
-        pass
 
     def test_write_xml_from_topology(self):
         """Validate xml from a typed topology matches loaded xmls."""
-        pass
 
     @pytest.mark.parametrize("xml", TEST_XMLS)
     def test_load__direct_from_forcefield_utilities(self, xml):

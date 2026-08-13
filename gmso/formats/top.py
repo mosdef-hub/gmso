@@ -3,7 +3,7 @@
 import datetime
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 import unyt as u
@@ -33,9 +33,9 @@ logger = logging.getLogger(__name__)
 @saves_as(".top")
 def write_top(
     top: "Topology",
-    filename: Union[str, Path],
-    top_vars: Optional[dict] = None,
-    settles_tag: Optional[str] = None,
+    filename: str | Path,
+    top_vars: dict | None = None,
+    settles_tag: str | None = None,
 ) -> None:
     """Write a :class:`~gmso.Topology` to a GROMACS topology (``.top``) file.
 
@@ -105,18 +105,18 @@ def write_top(
             "[ atomtypes ]\n; name\tat.num\t\tmass\tcharge\t\tptype\tsigma\tepsilon\n"
         )
 
-        for atom_type in top.atom_types(PotentialFilters.UNIQUE_NAME_CLASS):
-            out_file.write(
-                "{0:12s}{1:4s}{2:12.5f}{3:12.5f}\t{4:4s}{5:12.5f}{6:12.5f}\n".format(
-                    atom_type.name,
-                    str(_lookup_atomic_number(atom_type)),
-                    atom_type.mass.in_units(u.amu).value,
-                    atom_type.charge.in_units(u.elementary_charge).value,
-                    "A",
-                    atom_type.parameters["sigma"].in_units(u.nanometer).value,
-                    atom_type.parameters["epsilon"].in_units(u.Unit("kJ/mol")).value,
-                )
+        out_file.writelines(
+            "{0:12s}{1:4s}{2:12.5f}{3:12.5f}\t{4:4s}{5:12.5f}{6:12.5f}\n".format(
+                atom_type.name,
+                str(_lookup_atomic_number(atom_type)),
+                atom_type.mass.in_units(u.amu).value,
+                atom_type.charge.in_units(u.elementary_charge).value,
+                "A",
+                atom_type.parameters["sigma"].in_units(u.nanometer).value,
+                atom_type.parameters["epsilon"].in_units(u.Unit("kJ/mol")).value,
             )
+            for atom_type in top.atom_types(PotentialFilters.UNIQUE_NAME_CLASS)
+        )
 
         # Define unique molecule by name only
         unique_molecules = _get_unique_molecules(top)
@@ -238,8 +238,10 @@ def write_top(
                 if unique_molecules[tag][conn_group]:
                     if conn_group == "pairs":
                         out_file.write(headers[conn_group])
-                        for conn in unique_molecules[tag][conn_group]:
-                            out_file.write(_write_pairs(top, conn, shifted_idx_map))
+                        out_file.writelines(
+                            _write_pairs(top, conn, shifted_idx_map)
+                            for conn in unique_molecules[tag][conn_group]
+                        )
                     elif conn_group in ["dihedrals", "impropers"]:
                         proper_groups = {
                             "RyckaertBellemansTorsionPotential": list(),
@@ -259,25 +261,27 @@ def write_top(
                             for conn in proper_groups[
                                 "RyckaertBellemansTorsionPotential"
                             ]:
-                                for line in _write_connection(
-                                    top,
-                                    conn,
-                                    pot_types[conn.connection_type],
-                                    shifted_idx_map,
-                                ):
-                                    out_file.write(line)
+                                out_file.writelines(
+                                    _write_connection(
+                                        top,
+                                        conn,
+                                        pot_types[conn.connection_type],
+                                        shifted_idx_map,
+                                    )
+                                )
                         if proper_groups["PeriodicTorsionPotential"]:
                             out_file.write(
                                 headers["dihedrals"]["PeriodicTorsionPotential"]
                             )
                             for conn in proper_groups["PeriodicTorsionPotential"]:
-                                for line in _write_connection(
-                                    top,
-                                    conn,
-                                    pot_types[conn.connection_type],
-                                    shifted_idx_map,
-                                ):
-                                    out_file.write(line)
+                                out_file.writelines(
+                                    _write_connection(
+                                        top,
+                                        conn,
+                                        pot_types[conn.connection_type],
+                                        shifted_idx_map,
+                                    )
+                                )
                     elif "restraints" in conn_group:
                         out_file.write(headers[conn_group])
                         for conn in unique_molecules[tag][conn_group]:
@@ -307,7 +311,7 @@ def write_top(
                                 )
                             )
 
-        out_file.write("\n[ system ]\n; name\n{0}\n\n".format(top.name))
+        out_file.write(f"\n[ system ]\n; name\n{top.name}\n\n")
 
         out_file.write("[ molecules ]\n; molecule\tnmols\n")
         for tag in unique_molecules:

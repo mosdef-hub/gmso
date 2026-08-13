@@ -250,7 +250,7 @@ class TestConvertParmEd(BaseTest):
 
         for site in top_from_struc.sites:
             assert site.residue.name == "HEX"
-            assert site.residue.number in list(range(0, 6))
+            assert site.residue.number in list(range(6))
 
         struc_from_top = to_parmed(top_from_struc)
         assert len(struc_from_top.residues) == len(struc.residues)
@@ -322,8 +322,8 @@ class TestConvertParmEd(BaseTest):
     def test_from_parmed_impropers(self):
         mol = "NN-dimethylformamide"
         pmd_structure = pmd.load_file(
-            get_fn("{}.top".format(mol)),
-            xyz=get_fn("{}.gro".format(mol)),
+            get_fn(f"{mol}.top"),
+            xyz=get_fn(f"{mol}.gro"),
             parametrize=False,
         )
         assert all(dihedral.improper for dihedral in pmd_structure.dihedrals)

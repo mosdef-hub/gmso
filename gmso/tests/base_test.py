@@ -492,9 +492,9 @@ class BaseTest:
             if not np.allclose(top1.scaling_factors, top2.scaling_factors):
                 return False, "Mismatch in scaling factors"
             for k, v in top1.molecule_scaling_factors.items():
-                if k not in top2.scaling_factors:
-                    return False, "Mismatch in scaling factors"
-                elif not np.allclose(v, top2.molecule_scaling_factors[k]):
+                if k not in top2.scaling_factors or not np.allclose(
+                    v, top2.molecule_scaling_factors[k]
+                ):
                     return False, "Mismatch in scaling factors"
             if not have_equivalent_boxes(top1, top2):
                 return (

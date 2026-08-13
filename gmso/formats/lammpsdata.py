@@ -1,14 +1,11 @@
 """Read and write LAMMPS data files."""
 
-from __future__ import division
-
 import copy
 import datetime
 import logging
 import os
 from itertools import count
 from pathlib import Path
-from typing import Optional, Union
 
 import numpy as np
 import unyt as u
@@ -47,12 +44,12 @@ pfilter = PotentialFilters.UNIQUE_SORTED_NAMES
 @saves_as(".lammps", ".lammpsdata", ".data")
 def write_lammpsdata(
     top: "Topology",
-    filename: Union[str, Path],
+    filename: str | Path,
     atom_style: str = "full",
     unit_style: str = "real",
     strict_potentials: bool = False,
     strict_units: bool = False,
-    lj_cfactorsDict: Optional[dict] = None,
+    lj_cfactorsDict: dict | None = None,
 ) -> None:
     """Write a LAMMPS data file from a :class:`~gmso.Topology`.
 
@@ -95,9 +92,7 @@ def write_lammpsdata(
     """
     if atom_style not in ["full", "atomic", "molecular", "charge"]:
         raise ValueError(
-            'Atom style "{}" is invalid or is not currently supported'.format(
-                atom_style
-            )
+            f'Atom style "{atom_style}" is invalid or is not currently supported'
         )
 
     if unit_style not in [
@@ -111,9 +106,7 @@ def write_lammpsdata(
         "nano",
     ]:
         raise ValueError(
-            'Unit style "{}" is invalid or is not currently supported'.format(
-                unit_style
-            )
+            f'Unit style "{unit_style}" is invalid or is not currently supported'
         )
     if unit_style != "lj" and lj_cfactorsDict:
         raise ValueError("lj_cfactorsDict argument is only used if unit_style is lj.")
@@ -221,7 +214,7 @@ def write_lammpsdata(
 
 @loads_as(".lammps", ".lammpsdata", ".data")
 def read_lammpsdata(
-    filename: Union[str, Path],
+    filename: str | Path,
     atom_style: str = "full",
     unit_style: str = "real",
 ) -> "Topology":
@@ -261,9 +254,7 @@ def read_lammpsdata(
     # Validate 'atom_style'
     if atom_style not in ["full"]:
         raise ValueError(
-            'Atom Style "{}" is invalid or is not currently supported'.format(
-                atom_style
-            )
+            f'Atom Style "{atom_style}" is invalid or is not currently supported'
         )
 
     # Validate 'unit_style'
@@ -278,9 +269,7 @@ def read_lammpsdata(
         "nano",
     ]:
         raise ValueError(
-            'Unit Style "{}" is invalid or is not currently supported'.format(
-                unit_style
-            )
+            f'Unit Style "{unit_style}" is invalid or is not currently supported'
         )
     base_unyts = LAMMPS_UnitSystems(unit_style)
 
@@ -349,7 +338,7 @@ def _get_connection(filename, topology, base_unyts, connection_type):
             name = template_potential.name
             expression = template_potential.expression
             variables = template_potential.independent_variables
-            c_type = getattr(gmso, "BondType")(
+            c_type = gmso.BondType(
                 name=name,
                 parameters=conn_params,
                 expression=expression,
@@ -368,7 +357,7 @@ def _get_connection(filename, topology, base_unyts, connection_type):
             name = template_potential.name
             expression = template_potential.expression
             variables = template_potential.independent_variables
-            c_type = getattr(gmso, "AngleType")(
+            c_type = gmso.AngleType(
                 name=name,
                 parameters=conn_params,
                 expression=expression,
@@ -385,7 +374,7 @@ def _get_connection(filename, topology, base_unyts, connection_type):
             name = template_potential.name
             expression = template_potential.expression
             variables = template_potential.independent_variables
-            c_type = getattr(gmso, "DihedralType")(
+            c_type = gmso.DihedralType(
                 name=name,
                 parameters=conn_params,
                 expression=expression,
@@ -403,7 +392,7 @@ def _get_connection(filename, topology, base_unyts, connection_type):
             name = template_potential.name
             expression = template_potential.expression
             variables = template_potential.independent_variables
-            c_type = getattr(gmso, "ImproperType")(
+            c_type = gmso.ImproperType(
                 name=name,
                 parameters=conn_params,
                 expression=expression,
@@ -656,10 +645,10 @@ def _write_header(out_file, top, atom_style, dihedral_parser):
             str(datetime.datetime.now()),
         )
     )
-    out_file.write("{:d} atoms\n".format(top.n_sites))
+    out_file.write(f"{top.n_sites:d} atoms\n")
     if atom_style in ["full", "molecular"]:
-        out_file.write("{:d} bonds\n".format(top.n_bonds))
-        out_file.write("{:d} angles\n".format(top.n_angles))
+        out_file.write(f"{top.n_bonds:d} bonds\n")
+        out_file.write(f"{top.n_angles:d} angles\n")
         if dihedral_parser in [parse_opls_style_dihedral]:  # no layered dihedrals
             n_dihedrals = top.n_dihedrals
         elif dihedral_parser in [parse_charmm_style_dihedral]:  # layered dihedrals
@@ -672,19 +661,15 @@ def _write_header(out_file, top, atom_style, dihedral_parser):
                     n_dihedrals += len(param)
         elif dihedral_parser is None:
             n_dihedrals = 0
-        out_file.write("{:d} dihedrals\n".format(n_dihedrals))
-        out_file.write("{:d} impropers\n\n".format(top.n_impropers))
+        out_file.write(f"{n_dihedrals:d} dihedrals\n")
+        out_file.write(f"{top.n_impropers:d} impropers\n\n")
 
     # TODO: allow users to specify filter_by syntax
-    out_file.write("{:d} atom types\n".format(len(top.atom_types(filter_by=pfilter))))
+    out_file.write(f"{len(top.atom_types(filter_by=pfilter)):d} atom types\n")
     if top.n_bonds > 0 and atom_style in ["full", "molecular"]:
-        out_file.write(
-            "{:d} bond types\n".format(len(top.bond_types(filter_by=pfilter)))
-        )
+        out_file.write(f"{len(top.bond_types(filter_by=pfilter)):d} bond types\n")
     if top.n_angles > 0 and atom_style in ["full", "molecular"]:
-        out_file.write(
-            "{:d} angle types\n".format(len(top.angle_types(filter_by=pfilter)))
-        )
+        out_file.write(f"{len(top.angle_types(filter_by=pfilter)):d} angle types\n")
     if top.n_dihedrals > 0 and atom_style in ["full", "molecular"]:
         unique_dtypes = top.dihedral_types(filter_by=pfilter)
         nkeys = len(next(iter(unique_dtypes)).parameters.keys())
@@ -700,10 +685,10 @@ def _write_header(out_file, top, atom_style, dihedral_parser):
         ntypes = int(
             nparams / nkeys
         )  # allows us to count multiples for ones stored in a single object
-        out_file.write("{:d} dihedral types\n".format(ntypes))
+        out_file.write(f"{ntypes:d} dihedral types\n")
     if top.n_impropers > 0 and atom_style in ["full", "molecular"]:
         out_file.write(
-            "{:d} improper types\n".format(len(top.improper_types(filter_by=pfilter)))
+            f"{len(top.improper_types(filter_by=pfilter)):d} improper types\n"
         )
 
     out_file.write("\n")
@@ -722,9 +707,7 @@ def _write_box(out_file, top, base_unyts, cfactorsDict):
             for i in range(3)
         ]
         for i, dim in enumerate(["x", "y", "z"]):
-            out_file.write(
-                "{0:.6f} {1:.6f} {2}lo {2}hi\n".format(0, box_lengths[i], dim)
-            )
+            out_file.write(f"{0:.6f} {box_lengths[i]:.6f} {dim}lo {dim}hi\n")
         out_file.write("0.000000 0.000000 0.000000 xy xz yz\n")
     else:
         box_lengths = [
@@ -750,18 +733,10 @@ def _write_box(out_file, top, base_unyts, cfactorsDict):
         zlo_bound = zlo
         zhi_bound = zhi
 
-        out_file.write(
-            "{0:.6f} {1:.6f} xlo xhi\n".format(xlo_bound.value, xhi_bound.value)
-        )
-        out_file.write(
-            "{0:.6f} {1:.6f} ylo yhi\n".format(ylo_bound.value, yhi_bound.value)
-        )
-        out_file.write(
-            "{0:.6f} {1:.6f} zlo zhi\n".format(zlo_bound.value, zhi_bound.value)
-        )
-        out_file.write(
-            "{0:.6f} {1:.6f} {2:.6f} xy xz yz\n".format(xy.value, xz.value, yz.value)
-        )
+        out_file.write(f"{xlo_bound.value:.6f} {xhi_bound.value:.6f} xlo xhi\n")
+        out_file.write(f"{ylo_bound.value:.6f} {yhi_bound.value:.6f} ylo yhi\n")
+        out_file.write(f"{zlo_bound.value:.6f} {zhi_bound.value:.6f} zlo zhi\n")
+        out_file.write(f"{xy.value:.6f} {xz.value:.6f} {yz.value:.6f} xy xz yz\n")
 
 
 def _write_atomtypes(out_file, top, base_unyts, cfactorsDict):
@@ -771,11 +746,7 @@ def _write_atomtypes(out_file, top, base_unyts, cfactorsDict):
     atypesView = sorted(top.atom_types(filter_by=pfilter), key=lambda x: x.name)
     for atom_type in atypesView:
         out_file.write(
-            "{:d}\t{}\t# {}\n".format(
-                atypesView.index(atom_type) + 1,
-                base_unyts.convert_parameter(atom_type.mass, cfactorsDict),
-                atom_type.name,
-            )
+            f"{atypesView.index(atom_type) + 1:d}\t{base_unyts.convert_parameter(atom_type.mass, cfactorsDict)}\t# {atom_type.name}\n"
         )
 
 
@@ -1267,7 +1238,7 @@ def _default_lj_val(top, source):
 
 
 def _identify_dihedral_parser(top, potential_typesDict):
-    if not getattr(top, "dihedral_types"):
+    if not top.dihedral_types:
         return None
     # This is where dihedral_parser should get found
     parserDict = {
@@ -1282,7 +1253,7 @@ def _identify_dihedral_parser(top, potential_typesDict):
 
 
 def _identify_improper_parser(top, potential_typesDict):
-    if not getattr(top, "improper_types"):
+    if not top.improper_types:
         return None
     # This is where improper_parser should be stored
     parserDict = {

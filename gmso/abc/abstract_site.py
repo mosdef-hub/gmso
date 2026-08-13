@@ -1,7 +1,8 @@
 """Basic interaction site in GMSO that all other sites will derive from."""
 
 import logging
-from typing import Any, ClassVar, Optional, Sequence, TypeVar, Union
+from collections.abc import Sequence
+from typing import Any, ClassVar, TypeVar, Union
 
 import numpy as np
 import unyt as u
@@ -198,19 +199,19 @@ class Site(GMSOBase):
         "", description="Label to be assigned to the site", alias="label"
     )
 
-    group_: Optional[StrictStr] = Field(
+    group_: StrictStr | None = Field(
         None,
         description="Flexible alternative label relative to site",
         alias="group",
     )
 
-    molecule_: Optional[Union[Molecule, list, tuple]] = Field(
+    molecule_: Molecule | list | tuple | None = Field(
         None,
         description="Molecule label for the site, format of (molecule_name, molecule_number)",
         alias="molecule",
     )
 
-    residue_: Optional[Union[Residue, list, tuple]] = Field(
+    residue_: Residue | list | tuple | None = Field(
         None,
         description="Residue label for the site, format of (residue_name, residue_number)",
         alias="residue",
@@ -254,12 +255,12 @@ class Site(GMSOBase):
         return self.__dict__.get("group_")
 
     @property
-    def molecule(self) -> Optional[Molecule]:
+    def molecule(self) -> Molecule | None:
         """Return the molecule label of the site."""
         return self.__dict__.get("molecule_")
 
     @property
-    def residue(self) -> Optional[Residue]:
+    def residue(self) -> Residue | None:
         """Return the residue label of the site."""
         return self.__dict__.get("residue_")
 

@@ -54,7 +54,7 @@ def _try_sympy_conversions(pot1, pot2):
 
 def _conversion_from_template_name(
     top, connStr: str, conn_typeStr: str, convStr: str
-) -> "gmso.Topology":
+) -> gmso.Topology:
     """Use the name of convStr to identify function to convert sympy expressions."""
     conversions_map = {  # these are predefined between template types
         # More functions, and `(to, from)` key pairs added to this dictionary
@@ -98,7 +98,7 @@ def _conversion_from_template_name(
 
 
 def _conversion_from_template_obj(
-    top: "gmso.Topology",
+    top: gmso.Topology,
     connStr: str,
     conn_typeStr: str,
     potential_template: gmso.core.ParametricPotential,
@@ -388,7 +388,7 @@ def convert_kelvin_to_energy_units(
     if not isinstance(energy_output_unyt_units_str, str):
         print_error_message = (
             f"ERROR: The entered energy_output_unyt_units_str value is a {type(energy_output_unyt_units_str)}, "
-            f"not a {type('string')}."
+            f"not a {str}."
         )
         raise ValueError(print_error_message)
 

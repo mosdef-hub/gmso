@@ -2,7 +2,6 @@
 
 import datetime
 from pathlib import Path
-from typing import Union
 
 import numpy as np
 import unyt as u
@@ -13,7 +12,7 @@ from gmso.formats.formats_registry import loads_as, saves_as
 
 
 @loads_as(".xyz")
-def read_xyz(filename: Union[str, Path]) -> Topology:
+def read_xyz(filename: str | Path) -> Topology:
     """Read an XYZ file and return a :class:`~gmso.Topology`.
 
     Parameters
@@ -70,7 +69,7 @@ def read_xyz(filename: Union[str, Path]) -> Topology:
 @saves_as(".xyz")
 def write_xyz(
     top: Topology,
-    filename: Union[str, Path],
+    filename: str | Path,
     decimals: int = 3,
 ) -> None:
     """Write a :class:`~gmso.Topology` to an XYZ file.
@@ -85,17 +84,15 @@ def write_xyz(
         Number of decimal places written for each coordinate value.
     """
     with open(filename, "w") as out_file:
-        out_file.write("{:d}\n".format(top.n_sites))
+        out_file.write(f"{top.n_sites:d}\n")
         out_file.write(
-            "{} {} written by topology at {}\n".format(
-                top.name, filename, str(datetime.datetime.now())
-            )
+            f"{top.name} {filename} written by topology at {datetime.datetime.now()!s}\n"
         )
         out_file.write(_prepare_particles(top, decimals))
 
 
 def _prepare_particles(top: Topology, decimals: int) -> str:
-    atom_info = str()
+    atom_info = ""
     for _, site in enumerate(top.sites):
         if site.element is not None:
             tmp_name = site.element.symbol

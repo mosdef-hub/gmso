@@ -573,9 +573,7 @@ def _atom_types_from_gmso(top, structure, atom_map):
     # Maps
     atype_map = dict()
     for atom_type in top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS):
-        msg = "Atom type {} expression does not match Parmed AtomType default expression".format(
-            atom_type.name
-        )
+        msg = f"Atom type {atom_type.name} expression does not match Parmed AtomType default expression"
         assert expand(atom_type.expression) == expand(
             "4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)"
         ), msg
@@ -627,9 +625,7 @@ def _bond_types_from_gmso(top, structure, bond_map):
     """
     btype_map = dict()
     for bond_type in top.bond_types(filter_by=pfilter):
-        msg = "Bond type {} expression does not match Parmed BondType default expression".format(
-            bond_type.name
-        )
+        msg = f"Bond type {bond_type.name} expression does not match Parmed BondType default expression"
         assert expand(bond_type.expression) == expand("0.5 * k * (r-r_eq)**2"), msg
         # Extract Topology bond_type information
         btype_k = 0.5 * float(
@@ -665,9 +661,7 @@ def _angle_types_from_gmso(top, structure, angle_map):
     """
     agltype_map = dict()
     for angle_type in top.angle_types(filter_by=pfilter):
-        msg = "Angle type {} expression does not match Parmed AngleType default expression".format(
-            angle_type.name
-        )
+        msg = f"Angle type {angle_type.name} expression does not match Parmed AngleType default expression"
         assert expand(angle_type.expression) == expand(
             "0.5 * k * (theta-theta_eq)**2"
         ), msg
@@ -712,9 +706,7 @@ def _dihedral_types_from_gmso(top, structure, dihedral_map):
     """
     dtype_map = dict()
     for dihedral_type in top.dihedral_types(filter_by=pfilter):
-        msg = "Dihedral type {} expression does not match Parmed DihedralType default expressions (Periodics, RBTorsions)".format(
-            dihedral_type.name
-        )
+        msg = f"Dihedral type {dihedral_type.name} expression does not match Parmed DihedralType default expressions (Periodics, RBTorsions)"
         if expand(dihedral_type.expression) == expand(
             "k * (1 + cos(n * phi - phi_eq))**2"
         ):

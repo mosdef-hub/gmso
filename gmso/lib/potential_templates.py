@@ -3,7 +3,6 @@
 import json
 from copy import deepcopy
 from pathlib import Path
-from typing import Dict
 
 import sympy
 import unyt as u
@@ -46,7 +45,7 @@ def _load_template_json(item, json_dir=JSON_DIR):
 class PotentialTemplate(AbstractPotential):
     """Template for potential objects to be re-used."""
 
-    expected_parameters_dimensions_: Dict[str, sympy.Expr] = Field(
+    expected_parameters_dimensions_: dict[str, sympy.Expr] = Field(
         ...,
         description="The expected dimensions for parameters.",
         alias="expected_parameters_dimensions",
@@ -56,9 +55,7 @@ class PotentialTemplate(AbstractPotential):
         frozen=True,
         alias_to_fields=dict(
             **AbstractPotential.model_config["alias_to_fields"],
-            **{
-                "expected_parameters_dimensions": "expected_parameters_dimensions_",
-            },
+            expected_parameters_dimensions="expected_parameters_dimensions_",
         ),
     )
 
@@ -81,7 +78,7 @@ class PotentialTemplate(AbstractPotential):
         else:
             _potential_expression = potential_expression
 
-        super(PotentialTemplate, self).__init__(
+        super().__init__(
             name=name,
             potential_expression=_potential_expression,
             expected_parameters_dimensions=expected_parameters_dimensions,
@@ -90,7 +87,7 @@ class PotentialTemplate(AbstractPotential):
     @field_validator("expected_parameters_dimensions_", mode="before")
     def validate_expected_parameters(cls, dim_dict):
         """Validate the expected parameters and dimensions for this template."""
-        if not isinstance(dim_dict, Dict):
+        if not isinstance(dim_dict, dict):
             raise TypeError(
                 f"Expected expected_parameters_dimensions to be a "
                 f"dictionary but found {type(dim_dict)}"
@@ -121,7 +118,7 @@ class PotentialTemplate(AbstractPotential):
         return copied_template
 
     def assert_can_parameterize_with(
-        self, parameters: Dict[str, u.unyt_quantity]
+        self, parameters: dict[str, u.unyt_quantity]
     ) -> None:
         """Assert that a ParametricPotential can be instantiated from this template and provided parameters."""
         if not isinstance(parameters, dict):

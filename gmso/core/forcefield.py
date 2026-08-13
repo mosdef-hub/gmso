@@ -4,8 +4,8 @@ import copy
 import itertools
 import logging
 from collections import ChainMap
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 from lxml import etree
 from pydantic import ValidationError
@@ -65,7 +65,7 @@ def _group_vtype_by_expression(potential_types):
     return expr_group
 
 
-class ForceField(object):
+class ForceField:
     """A generic implementation of the forcefield class.
 
     The ForceField class is one of the core data structures in gmso, which is
@@ -794,7 +794,7 @@ class ForceField(object):
             from gmso.exceptions import ForceFieldError
 
             raise ForceFieldError(
-                f"The filename {str(filename)} is not an XML file. "
+                f"The filename {filename!s} is not an XML file. "
                 f"Please provide filename with .xml extension"
             )
 

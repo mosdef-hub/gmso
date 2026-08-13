@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Optional, Tuple, Union
+from collections.abc import Callable
 
 import unyt as u
 from lxml import etree
@@ -44,7 +44,6 @@ class VirtualPositionType(ParametricPotential):
     model_config = ConfigDict(
         alias_to_fields=dict(
             **ParametricPotential.model_config["alias_to_fields"],
-            **{},
         ),
     )
 
@@ -57,7 +56,7 @@ class VirtualPositionType(ParametricPotential):
         potential_expression=None,
         tags=None,
     ):
-        super(VirtualPositionType, self).__init__(
+        super().__init__(
             name=name,
             expression=expression,
             parameters=parameters,
@@ -104,7 +103,6 @@ class VirtualPotentialType(ParametricPotential):
     model_config = ConfigDict(
         alias_to_fields=dict(
             **ParametricPotential.model_config["alias_to_fields"],
-            **{},
         ),
     )
 
@@ -117,7 +115,7 @@ class VirtualPotentialType(ParametricPotential):
         independent_variables=None,
         tags=None,
     ):
-        super(VirtualPotentialType, self).__init__(
+        super().__init__(
             name=name,
             expression=expression,
             parameters=parameters,
@@ -200,7 +198,7 @@ class VirtualType(GMSOBase):
     name_: str = Field(
         "VirtualType-3fd", description="Identifying Virtual Type", alias="name"
     )
-    member_types_: Optional[Tuple[str, ...]] = Field(
+    member_types_: tuple[str, ...] | None = Field(
         None,
         description="List-like of gmso.AtomType.name "
         "defining the members of this angle type",
@@ -209,7 +207,7 @@ class VirtualType(GMSOBase):
         max_length=12,
     )
 
-    member_classes_: Optional[Tuple[str, ...]] = Field(
+    member_classes_: tuple[str, ...] | None = Field(
         None,
         description="List-like of gmso.AtomType.atomclass "
         "defining the members of this angle type",
@@ -217,13 +215,13 @@ class VirtualType(GMSOBase):
         min_length=0,
         max_length=12,
     )
-    identifier_: Optional[str] = Field(
+    identifier_: str | None = Field(
         None,
         description="ForceField key identifier",
         alias="identifier",
     )
 
-    charge_: Optional[u.unyt_array] = Field(
+    charge_: u.unyt_array | None = Field(
         0.0 * u.elementary_charge,
         description="The charge of the atom type",
         alias="charge",
@@ -231,19 +229,19 @@ class VirtualType(GMSOBase):
 
     position_: Callable = Field(None, description="", alias="position")
 
-    virtual_position_: Optional[VirtualPositionType] = Field(
+    virtual_position_: VirtualPositionType | None = Field(
         default=VirtualPositionType(),
         description="virtual type for a virtual site.",
         alias="virtual_position",
     )
 
-    virtual_potential_: Optional[VirtualPotentialType] = Field(
+    virtual_potential_: VirtualPotentialType | None = Field(
         default=VirtualPotentialType(),
         description="virtual type for a virtual site.",
         alias="virtual_potential",
     )
 
-    doi_: Optional[str] = Field(
+    doi_: str | None = Field(
         "",
         description="Digital Object Identifier of publication where this atom type was introduced",
         alias="doi",
@@ -251,15 +249,13 @@ class VirtualType(GMSOBase):
     model_config = ConfigDict(
         alias_to_fields=dict(
             **ParametricPotential.model_config["alias_to_fields"],
-            **{
-                "charge": "charge_",
-                "virtual_position": "virtual_position_",
-                "virtual_potential": "virtual_potential_",
-                "doi": "doi_",
-                "member_classes": "member_classes_",
-                "member_types": "member_types_",
-                "identifier": "identifier_",
-            },
+            charge="charge_",
+            virtual_position="virtual_position_",
+            virtual_potential="virtual_potential_",
+            doi="doi_",
+            member_classes="member_classes_",
+            member_types="member_types_",
+            identifier="identifier_",
         ),
     )
 
@@ -309,7 +305,7 @@ class VirtualType(GMSOBase):
         return charge
 
     @field_serializer("charge_")
-    def serialize_charge(self, charge_: Union[u.unyt_quantity, None]):
+    def serialize_charge(self, charge_: u.unyt_quantity | None):
         if charge_ is None:
             return None
         else:

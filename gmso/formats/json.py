@@ -4,7 +4,7 @@ import json
 import logging
 from copy import deepcopy
 from pathlib import Path
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from gmso.core.topology import Topology
@@ -277,7 +277,7 @@ def _from_json(json_dict):
 @saves_as(".json")
 def write_json(
     top: "Topology",
-    filename: Union[str, Path],
+    filename: str | Path,
     types: bool = True,
     update: bool = False,
     **kwargs,
@@ -317,7 +317,7 @@ def write_json(
 
 
 @loads_as(".json")
-def load_json(filename: Union[str, Path]) -> "Topology":
+def load_json(filename: str | Path) -> "Topology":
     """Load a :class:`~gmso.Topology` from a JSON file.
 
     Parameters

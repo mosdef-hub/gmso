@@ -459,8 +459,8 @@ class TestTopology(BaseTest):
     def test_topology_atom_type_changes(self):
         top = Topology()
         for i in range(100):
-            site = Atom(name="site{}".format(i))
-            atom_type = AtomType(name="atom_type{}".format(i % 10))
+            site = Atom(name=f"site{i}")
+            atom_type = AtomType(name=f"atom_type{i % 10}")
             site.atom_type = atom_type
             top.add_site(site, update_types=False)
         top.update_topology()
@@ -946,7 +946,7 @@ class TestTopology(BaseTest):
             .to_value(),
             -0.18,
         )
-        conversion = 10 * getattr(u.physical_constants, "elementary_charge").value
+        conversion = 10 * u.physical_constants.elementary_charge.value
         reg.register_unit(
             "test_charge",
             conversion,

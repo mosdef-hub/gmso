@@ -13,7 +13,7 @@ from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
 from gmso.utils.sorting import sort_by_types
 
-__all__ = ["TopologyPotentialView", "PotentialFilters"]
+__all__ = ["PotentialFilters", "TopologyPotentialView"]
 
 potential_attribute_map = {
     Atom: "atom_type",

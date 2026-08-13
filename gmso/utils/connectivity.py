@@ -3,7 +3,7 @@
 import itertools
 import re
 from itertools import combinations
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 import networkx as nx
 from networkx.algorithms import shortest_path_length
@@ -331,9 +331,9 @@ def generate_pairs_lists(
 
 def identify_virtual_sites(
     topology: "Topology",
-    sites: List["Site"],
-    bonds: List["Bond"],
-    virtual_types: List[VirtualSite],
+    sites: list["Site"],
+    bonds: list["Bond"],
+    virtual_types: list[VirtualSite],
 ):
     """Identify virtual sites within an already typed topology based on the virtual_types.
 

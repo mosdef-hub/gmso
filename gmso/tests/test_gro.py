@@ -122,7 +122,7 @@ class TestGro(BaseTest):
         # ensure that residues are labeled with the same mol number
 
         top = Topology()
-        for i in range(0, 2):
+        for i in range(2):
             ref = Atom(name="atom", position=[0.0, 0.0, 0.0])
             top.add_site(ref)
         box = Box(2 * u.nm * np.ones(3))
@@ -137,7 +137,7 @@ class TestGro(BaseTest):
         ref = Atom(name="mol_atom", position=[0.0, 0.0, 0.0], molecule=("test", 0))
         top.add_site(ref)
 
-        for i in range(0, 2):
+        for i in range(2):
             ref = Atom(name="atom", position=[0.0, 0.0, 0.0])
         top.add_site(ref)
         box = Box(2 * u.nm * np.ones(3))
@@ -160,7 +160,7 @@ class TestGro(BaseTest):
         ref = Atom(name="mol_atom", position=[0.0, 0.0, 0.0], molecule=("test", 1))
         top.add_site(ref)
 
-        for i in range(0, 2):
+        for i in range(2):
             ref = Atom(name="atom", position=[0.0, 0.0, 0.0])
             top.add_site(ref)
         box = Box(2 * u.nm * np.ones(3))
@@ -182,7 +182,7 @@ class TestGro(BaseTest):
         ref = Atom(name="resB", position=[0.0, 0.0, 0.0], residue=("resB", 1))
         top.add_site(ref)
 
-        for i in range(0, 2):
+        for i in range(2):
             ref = Atom(name="atom", position=[0.0, 0.0, 0.0])
             top.add_site(ref)
         box = Box(2 * u.nm * np.ones(3))

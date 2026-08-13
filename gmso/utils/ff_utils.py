@@ -28,11 +28,11 @@ from gmso.exceptions import (
 from gmso.utils._constants import FF_TOKENS_SEPARATOR
 
 __all__ = [
-    "validate",
-    "parse_ff_metadata",
     "parse_ff_atomtypes",
     "parse_ff_connection_types",
+    "parse_ff_metadata",
     "parse_ff_pairpotential_types",
+    "validate",
 ]
 
 
@@ -109,7 +109,7 @@ def _consolidate_params(params_dict, expression, update_orig=True):
     new_dict = {}
     match_string = "|".join(str(symbol) for symbol in sympify(expression).free_symbols)
     for param in params_dict:
-        match = re.match(r"({0})([0-9]+)".format(match_string), param)
+        match = re.match(rf"({match_string})([0-9]+)", param)
         if match:
             new_dict[match.groups()[0]] = new_dict.get(match.groups()[0], [])
             new_dict[match.groups()[0]].append(params_dict[param])
@@ -370,7 +370,7 @@ def parse_ff_atomtypes(atomtypes_el, ff_meta):
         if atom_types_expression:
             ctor_kwargs["expression"] = atom_types_expression
 
-        for kwarg in ctor_kwargs.keys():
+        for kwarg in ctor_kwargs:
             ctor_kwargs[kwarg] = atom_type.attrib.get(kwarg, ctor_kwargs[kwarg])
 
         tags = {"tags": {"element": ctor_kwargs.pop("element", "")}}
@@ -432,7 +432,7 @@ def parse_ff_connection_types(connectiontypes_el, child_tag="BondType"):
         if connectiontype_expression:
             ctor_kwargs["expression"] = connectiontype_expression
 
-        for kwarg in ctor_kwargs.keys():
+        for kwarg in ctor_kwargs:
             ctor_kwargs[kwarg] = connection_type.attrib.get(kwarg, ctor_kwargs[kwarg])
 
         ctor_kwargs["member_types"] = _get_member_types(connection_type)
@@ -492,7 +492,7 @@ def parse_ff_virtual_types(
             "member_classes": None,
         }
 
-        for kwarg in ctor_kwargs.keys():  # get directly from etree
+        for kwarg in ctor_kwargs:  # get directly from etree
             ctor_kwargs[kwarg] = virtual_type.attrib.get(kwarg, ctor_kwargs[kwarg])
 
         for expressStr, virtualClass in zip(
@@ -555,7 +555,7 @@ def parse_ff_pairpotential_types(pairpotentialtypes_el):
         if pairpotentialtype_expression:
             ctor_kwargs["expression"] = pairpotentialtype_expression
 
-        for kwarg in ctor_kwargs.keys():
+        for kwarg in ctor_kwargs:
             ctor_kwargs[kwarg] = pairpotential_type.attrib.get(
                 kwarg, ctor_kwargs[kwarg]
             )
@@ -597,7 +597,7 @@ def _parse_unit_string(string):
         except KeyError:
             raise u.exceptions.UnitParseError(
                 "Could not find unit symbol",
-                "'{}' in the provided symbols.".format(symbol.name),
+                f"'{symbol.name}' in the provided symbols.",
             )
         if isinstance(symbol_unit, u.Unit):
             sympy_subs.append((symbol.name, symbol_unit.base_value))

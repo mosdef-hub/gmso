@@ -1,17 +1,15 @@
-from typing import Union
-
 import numpy as np
 import unyt as u
 
 from gmso.utils.units import GMSO_UnitRegistry
 
 # TODO: Add GMSOJSONHandler method?
-__all__ = ["unyt_to_dict", "dict_to_unyt"]
+__all__ = ["dict_to_unyt", "unyt_to_dict"]
 
 uregistry = GMSO_UnitRegistry()
 
 
-def unyt_to_dict(unyt_qt: Union[u.unyt_array, u.unyt_quantity]) -> dict:
+def unyt_to_dict(unyt_qt: u.unyt_array | u.unyt_quantity) -> dict:
     """Convert a unyt quantity into json serializable dictionary"""
     if not isinstance(unyt_qt, u.unyt_array):
         raise TypeError("Please provide a value of type unyt array or unyt quantity")
