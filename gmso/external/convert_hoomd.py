@@ -1197,13 +1197,16 @@ def _parse_coulombic(
     # Use same method as to_hoomd_snapshot to generate pairs list
     pairs_dict = generate_pairs_lists(top)
     for i, pair_type in enumerate(pairs_dict):
-        if scaling_factors[i] and pairs_dict[pair_type]:
+        if not scaling_factors[i] in (0, 1) and pairs_dict[pair_type]:
             for pair in pairs_dict[pair_type]:
                 pair_name = "-".join(
                     sorted([pair[0].atom_type.name, pair[1].atom_type.name])
                 )
                 special_coulombic.params[pair_name] = dict(alpha=scaling_factors[i])
                 special_coulombic.r_cut[pair_name] = r_cut
+    # remove special_coulombic if necessary
+    if len(list(special_coulombic.params.keys())) == 0:
+        return [*coulombic]
     return [*coulombic, special_coulombic]
 
 
@@ -1269,24 +1272,19 @@ def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
             }
             lj.r_cut[(site.molecule.name, site.molecule.name)] = r_cut
 
-    # Handle 1-2, 1-3, and 1-4 scaling
-    # TODO: Figure out a more general way to do this
-    # and handle molecule scaling factors
+    # TODO: handle per-molecule scaling factors
     if not np.any(scaling_factors):
         return [lj]
     special_lj = hoomd.md.special_pair.LJ()
 
     pairs_dict = generate_pairs_lists(top)
     for i, pair_type in enumerate(pairs_dict):
-        if scaling_factors[i] and pairs_dict[pair_type]:
+        # NOTE: special pairs cannot use tuple keys, must use a string
+        if not scaling_factors[i] in (0, 1) and pairs_dict[pair_type]:
             for pair in pairs_dict[pair_type]:
                 if pair[0].atom_type in atypes and pair[1].atom_type in atypes:
                     adjscale = scaling_factors[i]
-                    pair.sort(key=lambda site: site.atom_type.name)
-                    pair_name = (
-                        pair[0].atom_type.name,
-                        pair[1].atom_type.name,
-                    )
+                    pair_name = tuple(sorted([x.atom_type.name for x in pair]))
                     scaled_epsilon = adjscale * calculated_params[pair_name]["epsilon"]
                     sigma = calculated_params[pair_name]["sigma"]
                     special_lj.params["-".join(pair_name)] = {
@@ -1294,6 +1292,9 @@ def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
                         "epsilon": scaled_epsilon,
                     }
                     special_lj.r_cut["-".join(pair_name)] = r_cut
+    # remove special_lj if necessary
+    if len(list(special_lj.params.keys())) == 0:
+        return [lj]
 
     return [lj, special_lj]
 

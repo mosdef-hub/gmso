@@ -372,6 +372,82 @@ class TestHoomd(BaseTest):
                 assert not isinstance(force, hoomd.md.long_range.pppm.Coulomb)
                 assert not isinstance(force, hoomd.md.special_pair.Coulomb)
 
+    def test_skip_special_pairs(self):
+        compound = mb.load("CC", smiles=True)
+        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=2)
+        top = from_mbuild(com_box)
+        top.identify_connections()
+        oplsaa = ForceField("oplsaa")
+        oplsaa.scaling_factors["nonBonded14Scale"] = 1  # no special pairs
+        oplsaa.scaling_factors["electrostatics14Scale"] = (
+            1  # no scaling of special pairs
+        )
+        top = apply(top, oplsaa, remove_untyped=True)
+
+        gmso_forces, _ = to_hoomd_forcefield(
+            top=top,
+            r_cut=1.4,
+        )
+        for force in gmso_forces["nonbonded"]:
+            assert not isinstance(force, hoomd.md.special_pair.Coulomb)
+            assert not isinstance(force, hoomd.md.special_pair.LJ)
+            if isinstance(
+                force,
+                (
+                    hoomd.md.pair.LJ,
+                    hoomd.md.long_range.pppm.Coulomb,
+                    hoomd.md.pair.Ewald,
+                ),
+            ):
+                assert force.nlist.exclusions == [
+                    "bond",
+                    "1-3",
+                ]  # 1-4 are not excluded here.
+
+    def test_special_pairs(self):
+        compound = mb.load("CC", smiles=True)
+        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=2)
+        top = from_mbuild(com_box)
+        top.identify_connections()
+        oplsaa = ForceField("oplsaa")
+        # use 1-2, 1-3, 1-4 special pairs
+        for scale_factor in ["12", "13", "14"]:
+            oplsaa.scaling_factors[f"nonBonded{scale_factor}Scale"] = 0.5
+            oplsaa.scaling_factors[f"electrostatics{scale_factor}Scale"] = 0.25
+        top = apply(top, oplsaa, remove_untyped=True)
+
+        gmso_forces, _ = to_hoomd_forcefield(
+            top=top,
+            r_cut=1.4,
+        )
+        for force in gmso_forces["nonbonded"]:
+            if isinstance(
+                force,
+                hoomd.md.pair.LJ,
+            ):
+                lj_force = force
+                break
+        for force in gmso_forces["nonbonded"]:
+            if isinstance(
+                force,
+                (
+                    hoomd.md.pair.LJ,
+                    hoomd.md.long_range.pppm.Coulomb,
+                    hoomd.md.pair.Ewald,
+                ),
+            ):
+                assert force.nlist.exclusions == ["bond", "1-3", "1-4"]
+            elif isinstance(force, hoomd.md.special_pair.Coulomb):
+                for key in force.params.keys():
+                    assert force.params[key]["alpha"] == 0.25
+            elif isinstance(force, hoomd.md.special_pair.LJ):
+                for key in force.params.keys():
+                    ljKey = tuple(key.split("-"))
+                    assert (
+                        force.params[key]["epsilon"]
+                        == lj_force.params[ljKey]["epsilon"] * 0.5
+                    )
+
     @pytest.mark.skipif(not has_hoomd, reason="hoomd is not installed")
     @pytest.mark.skipif(not has_mbuild, reason="mbuild not installed")
     @pytest.mark.skipif(
