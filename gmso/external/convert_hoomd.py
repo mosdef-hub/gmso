@@ -522,7 +522,7 @@ def _parse_particle_information(
                 if rid not in group_indices_map:
                     group_indices_map[rid] = []
                 group_indices_map[rid].append(i)
-        for rid, item in group_indices_map.items:
+        for rid, item in group_indices_map.items():
             group_indices_map[rid] = np.array(item, dtype=np.intp)
 
         rigid_constraint = hoomd.md.constrain.Rigid()
