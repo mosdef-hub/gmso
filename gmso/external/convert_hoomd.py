@@ -63,7 +63,7 @@ def get_cell_nlist(top, buffer=0.4):
     else:
         outVals = []  # store neighborlists
     for scalar in [nb_scaling_factors, coul_scaling_factors]:
-        exclusions = list()
+        exclusions = []
         for i, val in enumerate(scalar):
             if val == 1:  # skip values that are not exclusions
                 continue
@@ -382,7 +382,7 @@ def _parse_particle_information(
         The dictionary holding base units (mass, length, and energy)
     shift_coords : bool
         If True, shift coordinates from (0, L) to (-L/2, L/2) if neccessary.
-    box_lengths : list() of length 3
+    box_lengths : [] of length 3
         Lengths of box in x, y, z
     moleculeDict : dictionary of molecule.name : [[sites_molecule2],[sites_molecule1]...]
         Sorted info about all sites to index into topology
@@ -484,7 +484,7 @@ def _parse_particle_information(
                     "all of the rigid molecules must come first in the mBuild/GMSO hierarchy."
                 )
 
-        rigid_body_sets = dict()
+        rigid_body_sets = {}
         for site in top.sites:
             if site.molecule.isrigid:
                 if site.molecule.name in rigid_body_sets:
@@ -522,14 +522,14 @@ def _parse_particle_information(
                 if rid not in group_indices_map:
                     group_indices_map[rid] = []
                 group_indices_map[rid].append(i)
-        for rid in group_indices_map:
-            group_indices_map[rid] = np.array(group_indices_map[rid], dtype=np.intp)
+        for rid, item in group_indices_map.items:
+            group_indices_map[rid] = np.array(item, dtype=np.intp)
 
         rigid_constraint = hoomd.md.constrain.Rigid()
         mol_count = 0
 
-        for rigid_mol in rigid_body_sets:
-            sorted_ids = sorted(rigid_body_sets[rigid_mol])
+        for rigid_mol, value in rigid_body_sets.items():
+            sorted_ids = sorted(value)
             for idx, _id in enumerate(sorted_ids):
                 group_indices = group_indices_map[_id]
                 group_positions = xyz[group_indices]
@@ -554,7 +554,7 @@ def _parse_particle_information(
                         "positions": group_positions,
                         "orientations": group_orientations,
                     }
-            mol_count += len(rigid_body_sets[rigid_mol])
+            mol_count += len(value)
 
         # Prepend rigid body data
         unique_types = list(rigid_body_sets.keys()) + unique_types
@@ -618,11 +618,11 @@ def _parse_pairs_information(snapshot, top, site_indexMap, n_rigid=0):
         Used to adjust pair group indices.
 
     """
-    pair_types = list()
-    pair_typeids = list()
-    pairs = list()
+    pair_types = []
+    pair_typeids = []
+    pairs = []
 
-    scaled_pairs = list()
+    scaled_pairs = []
     pairs_dict = generate_pairs_lists(top, refer_from_scaling_factor=True)
     for pair_type in pairs_dict:
         scaled_pairs.extend(pairs_dict[pair_type])
@@ -630,10 +630,10 @@ def _parse_pairs_information(snapshot, top, site_indexMap, n_rigid=0):
     for pair in scaled_pairs:
         if pair[0].atom_type and pair[1].atom_type:
             pair.sort(key=lambda site: site.atom_type.name)
-            pair_type = "-".join([pair[0].atom_type.name, pair[1].atom_type.name])
+            pair_type = f"{pair[0].atom_type.name}-{pair[1].atom_type.name}"
         else:
             pair.sort(key=lambda site: site.name)
-            pair_type = "-".join([pair[0].name, pair[1].name])
+            pair_type = f"{pair[0].name}-{pair[1].name}"
         if pair_type not in pair_types:
             pair_types.append(pair_type)
         pair_typeids.append(pair_types.index(pair_type))
@@ -676,8 +676,8 @@ def _parse_bond_information(snapshot, top, site_indexMap, n_rigid=0):
     bond_types = []
 
     for bond in top.bonds:
-        if all([site.atom_type for site in bond.connection_members]):
-            if not bond.connection_members[0].atom_type.atomclass == "":
+        if all(site.atom_type for site in bond.connection_members):
+            if bond.connection_members[0].atom_type.atomclass != "":
                 connection_members = sort_connection_members(bond, "atomclass")
                 bond_type = "-".join(
                     [site.atom_type.atomclass for site in connection_members]
@@ -734,7 +734,7 @@ def _parse_angle_information(snapshot, top, site_indexMap, n_rigid=0):
     angle_types = []
 
     for angle in top.angles:
-        if all([site.atom_type for site in angle.connection_members]):
+        if all(site.atom_type for site in angle.connection_members):
             connection_members = sort_connection_members(angle, "atomclass")
             angle_type = "-".join(
                 [site.atom_type.atomclass for site in connection_members]
@@ -786,7 +786,7 @@ def _parse_dihedral_information(snapshot, top, site_indexMap, n_rigid=0):
     dihedral_types = []
 
     for dihedral in top.dihedrals:
-        if all([site.atom_type for site in dihedral.connection_members]):
+        if all(site.atom_type for site in dihedral.connection_members):
             connection_members = sort_connection_members(dihedral, "atomclass")
             dihedral_type = "-".join(
                 [site.atom_type.atomclass for site in connection_members]
@@ -837,7 +837,7 @@ def _parse_improper_information(snapshot, top, site_indexMap, n_rigid=0):
     improper_types = []
 
     for improper in top.impropers:
-        if all([site.atom_type for site in improper.connection_members]):
+        if all(site.atom_type for site in improper.connection_members):
             connection_members = sort_connection_members(improper, "atomclass")
             improper_type = "-".join(
                 [site.atom_type.atomclass for site in connection_members]
@@ -890,7 +890,7 @@ def to_hoomd_forcefield(
     top,
     r_cut,
     nlist=None,
-    pppm_kwargs={"resolution": (8, 8, 8), "order": 4},
+    pppm_kwargs=None,
     base_units=None,
     auto_scale=False,
     kT=None,
@@ -909,6 +909,7 @@ def to_hoomd_forcefield(
         If None, the default value used will be a hoomd.md.nlist.Cell(exclusions=exclusions, buffer=0.4).
     pppm_kwargs : dict
         Keyword arguments to pass to hoomd.md.long_range.make_pppm_coulomb_forces().
+        Default is {"resolution": (8, 8, 8), "order": 4}
     base_units : dict or str, optional, default=None
         The dictionary of base units to be converted to. Entries restricted to
         "energy", "length", and "mass". There is also option to used predefined
@@ -940,11 +941,13 @@ def to_hoomd_forcefield(
         raise EngineIncompatibilityError(
             "GMSO is only compatible with HOOMD-blue >= 4.0"
         )
+    if pppm_kwargs is None:
+        pppm_kwargs = {"resolution": (8, 8, 8), "order": 4}
     potential_types = _validate_compatibility(top)
     base_units = _validate_base_units(base_units, top, auto_scale, potential_types)
 
     # Reference json dict of all the potential in the PotentialTemplate
-    potential_refs = dict()
+    potential_refs = {}
     for json_file in PotentialTemplateLibrary().json_refs:
         with open(json_file) as f:
             cont = json.load(f)
@@ -1064,7 +1067,7 @@ def _parse_nonbonded_forces(
     )
 
     # Grouping atomtype by group name
-    groups = dict()
+    groups = {}
     for atype in unique_atypes:
         if isinstance(atype, VirtualType):
             atype.virtual_potential.name = atype.name
@@ -1083,10 +1086,10 @@ def _parse_nonbonded_forces(
                 groups[group].append(atype)
 
     # Perform units conversion based on the provided base_units
-    for group in groups:
+    for group, value in groups.items():
         expected_units_dim = potential_refs[group]["expected_parameters_dimensions"]
         groups[group] = convert_params_units(
-            groups[group],
+            value,
             expected_units_dim,
             base_units,
         )
@@ -1113,7 +1116,7 @@ def _parse_nonbonded_forces(
             "Incorrect values supplied for nlist. Should be of type hoomd.md.nlist"
         )
 
-    nbonded_forces = list()
+    nbonded_forces = []
     nbonded_forces.extend(
         _parse_coulombic(
             top=top,
@@ -1124,11 +1127,11 @@ def _parse_nonbonded_forces(
             r_cut=r_cut,
         )
     )
-    for group in groups:
+    for group, value in groups.items():
         nbonded_forces.extend(
             atype_parsers[group](
                 top=top,
-                atypes=groups[group],
+                atypes=value,
                 combining_rule=top.combining_rule,
                 r_cut=r_cut,
                 nlist=nlist_nb,
@@ -1147,7 +1150,7 @@ def _parse_nonbonded_forces(
         "HOOMDDPDForce": _parse_dpd,
     }
     # Grouping pairtype by group name
-    pair_categoryDict = dict()
+    pair_categoryDict = {}
     for pairtype in top.pairpotential_types:
         pair_category = potential_types[pairtype]
         if pair_category not in pair_categoryDict:
@@ -1155,11 +1158,11 @@ def _parse_nonbonded_forces(
         else:
             pair_categoryDict[pair_category].append(pairtype)
 
-    for pair_category in pair_categoryDict:
+    for pair_category, value in pair_categoryDict.items():
         nbonded_forces.extend(
             pairtype_parsers[pair_category](
                 top=top,
-                pairtypes=pair_categoryDict[pair_category],
+                pairtypes=value,
                 r_cut=r_cut,
                 nlist=nlist_nb,
                 kT=kT,
@@ -1178,9 +1181,7 @@ def _parse_coulombic(
     r_cut,
 ):
     """Parse coulombic forces."""
-    charge_groups = any(
-        [site.charge.to_value(u.elementary_charge) for site in top.sites]
-    )
+    charge_groups = any(site.charge.to_value(u.elementary_charge) for site in top.sites)
     if not charge_groups:
         logger.info("No charged group detected, skipping electrostatics.")
         return []
@@ -1202,7 +1203,7 @@ def _parse_coulombic(
                 pair_name = "-".join(
                     sorted([pair[0].atom_type.name, pair[1].atom_type.name])
                 )
-                special_coulombic.params[pair_name] = dict(alpha=scaling_factors[i])
+                special_coulombic.params[pair_name] = {"alpha": scaling_factors[i]}
                 special_coulombic.r_cut[pair_name] = r_cut
     # remove special_coulombic if necessary
     if len(list(special_coulombic.params.keys())) == 0:
@@ -1231,7 +1232,7 @@ def _parse_dpd(top, pairtypes, r_cut, nlist, kT):
 def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
     """Parse LJ forces and special pairs LJ forces."""
     lj = hoomd.md.pair.LJ(nlist=nlist)
-    calculated_params = dict()
+    calculated_params = {}
     for pairs in itertools.combinations_with_replacement(atypes, 2):
         pairs = list(pairs)
         pairs.sort(key=lambda atype: atype.name)
@@ -1364,7 +1365,7 @@ def _parse_bond_forces(
         The dictionary holding base units (mass, length, and energy)
     """
     unique_btypes = top.bond_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS)
-    groups = dict()
+    groups = {}
     for btype in unique_btypes:
         group = potential_types[btype]
         if group not in groups:
@@ -1372,10 +1373,10 @@ def _parse_bond_forces(
         else:
             groups[group].append(btype)
 
-    for group in groups:
+    for group, value in groups.items():
         expected_units_dim = potential_refs[group]["expected_parameters_dimensions"]
         groups[group] = convert_params_units(
-            groups[group],
+            value,
             expected_units_dim,
             base_units,
         )
@@ -1390,12 +1391,12 @@ def _parse_bond_forces(
             "parser": _parse_fene_bond,
         },
     }
-    bond_forces = list()
-    for group in groups:
+    bond_forces = []
+    for group, value in groups.items():
         bond_forces.append(
             btype_group_map[group]["parser"](
                 container=btype_group_map[group]["container"](),
-                btypes=groups[group],
+                btypes=value,
             )
         )
     return bond_forces
@@ -1453,7 +1454,7 @@ def _parse_angle_forces(
         The dictionary holding base units (mass, length, and energy)
     """
     unique_agtypes = top.angle_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS)
-    groups = dict()
+    groups = {}
     for agtype in unique_agtypes:
         group = potential_types[agtype]
         if group not in groups:
@@ -1461,10 +1462,10 @@ def _parse_angle_forces(
         else:
             groups[group].append(agtype)
 
-    for group in groups:
+    for group, value in groups.items():
         expected_units_dim = potential_refs[group]["expected_parameters_dimensions"]
         groups[group] = convert_params_units(
-            groups[group],
+            value,
             expected_units_dim,
             base_units,
         )
@@ -1475,12 +1476,12 @@ def _parse_angle_forces(
             "parser": _parse_harmonic_angle,
         },
     }
-    angle_forces = list()
-    for group in groups:
+    angle_forces = []
+    for group, value in groups.items():
         angle_forces.append(
             agtype_group_map[group]["parser"](
                 container=agtype_group_map[group]["container"](),
-                agtypes=groups[group],
+                agtypes=value,
             )
         )
     return angle_forces
@@ -1527,7 +1528,7 @@ def _parse_dihedral_forces(
             [site.atom_type.atomclass for site in dihedral.connection_members]
         )
         unique_dihedrals[unique_members] = dihedral
-    groups = dict()
+    groups = {}
     for dihedral in unique_dihedrals.values():
         group = potential_types[dihedral.dihedral_type]
         if group not in groups:
@@ -1567,14 +1568,14 @@ def _parse_dihedral_forces(
             "parser": _parse_hoomd_periodic_dihedral,
         }
 
-    dihedral_forces = list()
-    for group in groups:
+    dihedral_forces = []
+    for group, value in groups.items():
         container = dtype_group_map[group]["container"]
         if isinstance(container(), hoomd.md.dihedral.OPLS):
             dihedral_forces.append(
                 dtype_group_map[group]["parser"](
                     container=container(),
-                    dihedrals=groups[group],
+                    dihedrals=value,
                     expected_units_dim=expected_unitsDict[group],
                     base_units=base_units,
                 )
@@ -1583,7 +1584,7 @@ def _parse_dihedral_forces(
             dihedral_forces.extend(
                 dtype_group_map[group]["parser"](
                     container=dtype_group_map[group]["container"](),
-                    dihedrals=groups[group],
+                    dihedrals=value,
                     expected_units_dim=expected_unitsDict[group],
                     base_units=base_units,
                 )
@@ -1621,7 +1622,7 @@ def _parse_periodic_dihedral(container, dihedrals, expected_units_dim, base_unit
         if len(tuple(containersList[i].params.keys())) == 0:
             continue
         # add in extra parameters
-        for key in containersList[0].params.keys():
+        for key in containersList[0].params:
             if key not in tuple(containersList[i].params.keys()):
                 containersList[i].params[key] = {
                     "k": 0,
@@ -1665,7 +1666,7 @@ def _parse_hoomd_periodic_dihedral(
         if len(tuple(containersList[i].params.keys())) == 0:
             continue
         # add in extra parameters
-        for key in containersList[0].params.keys():
+        for key in containersList[0].params:
             if key not in tuple(containersList[i].params.keys()):
                 containersList[i].params[key] = {
                     "k": 0,
@@ -1735,7 +1736,7 @@ def _parse_improper_forces(
         The dictionary holding base units (mass, length, and energy)
     """
     unique_dtypes = top.improper_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS)
-    groups = dict()
+    groups = {}
     for itype in unique_dtypes:
         group = potential_types[itype]
         if group not in groups:
@@ -1743,10 +1744,10 @@ def _parse_improper_forces(
         else:
             groups[group].append(itype)
 
-    for group in groups:
+    for group, item in groups.items():
         expected_units_dim = potential_refs[group]["expected_parameters_dimensions"]
         groups[group] = convert_params_units(
-            groups[group],
+            item,
             expected_units_dim,
             base_units,
         )
@@ -1774,12 +1775,12 @@ def _parse_improper_forces(
             },
         }
 
-    improper_forces = list()
-    for group in groups:
+    improper_forces = []
+    for group, value in groups.items():
         improper_forces.append(
             itype_group_map[group]["parser"](
                 container=itype_group_map[group]["container"](),
-                itypes=groups[group],
+                itypes=value,
             )
         )
     return improper_forces
@@ -1871,7 +1872,7 @@ def _validate_base_units(base_units, top, auto_scale, potential_types=None):
         if unique_atypes:
             if not potential_types:
                 potential_types = _validate_compatibility(top)
-            atype_classes = dict()
+            atype_classes = {}
             # Separate atypes by their classes
             for atype in unique_atypes:
                 if potential_types[atype] not in atype_classes:
@@ -1880,7 +1881,7 @@ def _validate_base_units(base_units, top, auto_scale, potential_types=None):
                     atype_classes[potential_types[atype]].append(atype)
 
         # Appending lengths and energy
-        lengths, energies = list(), list()
+        lengths, energies = [], []
         for atype_class in atype_classes:
             if atype_class == "LennardJonesPotential":
                 for atype in unique_atypes:
@@ -1916,7 +1917,7 @@ def _validate_base_units(base_units, top, auto_scale, potential_types=None):
                     f"Base unit of {key} must be of type u.Unit or u.unyt_quantity."
                 )
 
-        missing = list()
+        missing = []
         for base in ["energy", "mass", "length"]:
             if base not in base_units:
                 missing.append(base)
@@ -1960,7 +1961,7 @@ def _convert_single_param_units(
     base_units,
 ):
     """Convert parameters' units in the potential to that specified in the base_units."""
-    converted_params = dict()
+    converted_params = {}
     for parameter in potential.parameters:
         unit_dim = expected_units_dim[parameter]
         ind_units = re.sub("[^a-zA-Z]+", " ", unit_dim).split()
