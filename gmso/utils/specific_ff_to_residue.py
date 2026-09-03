@@ -299,7 +299,6 @@ def specific_ff_to_residue(
 
     # identify the bonded atoms and hence the molecule, label the GMSO objects
     # and create the function outputs.
-    molecule_number = 0  # 0 sets the 1st molecule_number at 1
     molecules_atom_number_dict = {}
     unique_topology_groups_list = []
     unique_topologies_groups_dict = {}
@@ -374,9 +373,8 @@ def specific_ff_to_residue(
 
     # create a molecule number to atom number dict
     # Example:  {molecule_number_x: {atom_number_1, ..., atom_number_y}, ...}
-    for molecule in molecules_atom_number_list:
+    for molecule_number, molecule in enumerate(molecules_atom_number_list):
         molecules_atom_number_dict.update({molecule_number: molecule})
-        molecule_number += 1
 
     for site in new_gmso_topology.sites:
         site_atom_number_iter = new_gmso_topology.get_index(site)
@@ -410,7 +408,7 @@ def specific_ff_to_residue(
             atom_types_dict.update(
                 {
                     unique_top_group_name_iter: {
-                        "expression": list(atom_type_expression_set)[0],
+                        "expression": next(iter(atom_type_expression_set)),
                         "atom_types": unique_top_iter.atom_types(
                             filter_by=PotentialFilters.UNIQUE_NAME_CLASS
                         ),
@@ -435,7 +433,7 @@ def specific_ff_to_residue(
             bond_types_dict.update(
                 {
                     unique_top_group_name_iter: {
-                        "expression": list(bond_type_expression_set)[0],
+                        "expression": next(iter(bond_type_expression_set)),
                         "bond_types": unique_top_iter.bond_types(
                             filter_by=PotentialFilters.UNIQUE_NAME_CLASS
                         ),
@@ -460,7 +458,7 @@ def specific_ff_to_residue(
             angle_types_dict.update(
                 {
                     unique_top_group_name_iter: {
-                        "expression": list(angle_type_expression_set)[0],
+                        "expression": next(iter(angle_type_expression_set)),
                         "angle_types": unique_top_iter.angle_types(
                             filter_by=PotentialFilters.UNIQUE_NAME_CLASS
                         ),
@@ -485,7 +483,7 @@ def specific_ff_to_residue(
             dihedral_types_dict.update(
                 {
                     unique_top_group_name_iter: {
-                        "expression": list(dihedral_type_expression_set)[0],
+                        "expression": next(iter(dihedral_type_expression_set)),
                         "dihedral_types": unique_top_iter.dihedral_types(
                             filter_by=PotentialFilters.UNIQUE_NAME_CLASS
                         ),
@@ -510,7 +508,7 @@ def specific_ff_to_residue(
             improper_types_dict.update(
                 {
                     unique_top_group_name_iter: {
-                        "expression": list(improper_type_expression_set)[0],
+                        "expression": next(iter(improper_type_expression_set)),
                         "improper_types": unique_top_iter.improper_types(
                             filter_by=PotentialFilters.UNIQUE_NAME_CLASS
                         ),
@@ -567,13 +565,13 @@ def _validate_structure(structure, residues):
     """Validate if input is an mb.Compound with initialized box or mb.Box."""
     if isinstance(structure, (Compound, mb.Box)):
         error_msg = f"The structure, {mb.Compound} or {mb.Box}, needs to have have box lengths and angles."
-        if isinstance(structure, Compound):
-            if structure.box is None:
-                raise TypeError(error_msg)
-
-        elif isinstance(structure, mb.Box):
-            if structure.lengths is None or structure.angles is None:
-                raise TypeError(error_msg)
+        if (
+            isinstance(structure, Compound)
+            and structure.box is None
+            or isinstance(structure, mb.Box)
+            and (structure.lengths is None or structure.angles is None)
+        ):
+            raise TypeError(error_msg)
     else:
         error_msg = (
             "The structure expected to be of type: "

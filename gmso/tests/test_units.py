@@ -96,24 +96,22 @@ class TestUnitHandling(BaseTest):
 
     def test_get_dimensions(self):
         usys = LAMMPS_UnitSystems("electron")
-        parametersList = list(
-            map(
-                lambda x: 1 * u.Unit(x, registry=usys.reg),
-                [
-                    "nm",
-                    "kJ",
-                    "kJ/mol",
-                    "K",
-                    "degree/angstrom",
-                    "elementary_charge/mm",
-                    "dimensionless",
-                    "kg*m**2/s**2",
-                    "coulomb",
-                    "kcal/nm**2",
-                    "K/nm",
-                ],
-            )
-        )
+        parametersList = [
+            1 * u.Unit(x, registry=usys.reg)
+            for x in [
+                "nm",
+                "kJ",
+                "kJ/mol",
+                "K",
+                "degree/angstrom",
+                "elementary_charge/mm",
+                "dimensionless",
+                "kg*m**2/s**2",
+                "coulomb",
+                "kcal/nm**2",
+                "K/nm",
+            ]
+        ]
 
         output_dimensionsList = [
             "length",

@@ -40,7 +40,7 @@ def get_parameters(potential):
     """Return hashable version of parameters for a potential."""
     return (
         tuple(potential.get_parameters().keys()),
-        tuple(map(lambda x: x.to_value(), potential.get_parameters().values())),
+        tuple(x.to_value() for x in potential.get_parameters().values()),
     )
 
 
@@ -72,11 +72,11 @@ class PotentialFilters:
 
     @staticmethod
     def all():
-        return set(
+        return {
             f"{PotentialFilters.__name__}.{k}"
             for k, v in PotentialFilters.__dict__.items()
             if not k.startswith("__") and not callable(v)
-        )
+        }
 
 
 potential_identifiers = {

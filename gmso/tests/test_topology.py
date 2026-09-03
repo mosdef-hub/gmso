@@ -121,8 +121,8 @@ class TestTopology(BaseTest):
         atom1 = Atom(name="atom1", position=[0.0, 0.0, 0.0])
         top.add_site(atom1)
 
-        assert set([type(site.position) for site in top.sites]) == {u.unyt_array}
-        assert set([site.position.units for site in top.sites]) == {u.nm}
+        assert {type(site.position) for site in top.sites} == {u.unyt_array}
+        assert {site.position.units for site in top.sites} == {u.nm}
 
         assert top.positions.dtype == float
         assert top.positions.units == u.nm
@@ -613,7 +613,7 @@ class TestTopology(BaseTest):
         )
 
     def test_topology_get_bonds_for(self, typed_methylnitroaniline):
-        site = list(typed_methylnitroaniline.sites)[0]
+        site = next(iter(typed_methylnitroaniline.sites))
         converted_bonds_list = typed_methylnitroaniline._get_bonds_for(site)
         top_bonds_containing_site = []
         for bond in typed_methylnitroaniline.bonds:
@@ -623,7 +623,7 @@ class TestTopology(BaseTest):
         assert len(top_bonds_containing_site) == len(converted_bonds_list)
 
     def test_topology_get_angles_for(self, typed_methylnitroaniline):
-        site = list(typed_methylnitroaniline.sites)[0]
+        site = next(iter(typed_methylnitroaniline.sites))
         converted_angles_list = typed_methylnitroaniline._get_angles_for(site)
         top_angles_containing_site = []
         for angle in typed_methylnitroaniline.angles:
@@ -633,7 +633,7 @@ class TestTopology(BaseTest):
         assert len(top_angles_containing_site) == len(converted_angles_list)
 
     def test_topology_get_dihedrals_for(self, typed_methylnitroaniline):
-        site = list(typed_methylnitroaniline.sites)[0]
+        site = next(iter(typed_methylnitroaniline.sites))
         converted_dihedrals_list = typed_methylnitroaniline._get_dihedrals_for(site)
         top_dihedrals_containing_site = []
         for dihedral in typed_methylnitroaniline.dihedrals:

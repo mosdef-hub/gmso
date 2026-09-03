@@ -523,7 +523,7 @@ class TestForceField(BaseTest):
         params = ff.get_parameters("virtual_type", key=["Xe"])
 
         assert allclose_units_mixed(
-            list([val.values() for val in params.values()][0]),
+            list(next(val.values() for val in params.values())),
             [
                 12 * u.dimensionless,
                 6 * u.dimensionless,
@@ -618,7 +618,7 @@ class TestForceField(BaseTest):
         reloaded_xml = ForceField("test_xml_writer.xml")
 
         def get_names(ff, param):
-            return [typed for typed in getattr(ff, param).keys()]
+            return [typed for typed in getattr(ff, param)]
 
         for param in [
             "atom_types",

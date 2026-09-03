@@ -66,9 +66,9 @@ class TestGsd(BaseTest):
         rigid_ids = [site.molecule.number for site in top.sites]
         assert set(rigid_ids) == {0, 1}
 
-        snapshot, refs, rigid = to_gsd_snapshot(top)
+        snapshot, _, rigid = to_gsd_snapshot(top)
         snapshot.validate()
-        snapshot_no_rigid, refs = to_gsd_snapshot(top_no_rigid)
+        snapshot_no_rigid, _refs = to_gsd_snapshot(top_no_rigid)
         # Check that snapshot has rigid particles added
         assert "Ethane" in snapshot.particles.types
         assert "Ethane" not in snapshot_no_rigid.particles.types
@@ -114,7 +114,7 @@ class TestGsd(BaseTest):
             site.molecule.isrigid = True
         apply(top, gaff_forcefield, identify_connections=True)
 
-        snapshot, refs, rigid = to_gsd_snapshot(top)
+        snapshot, _refs, rigid = to_gsd_snapshot(top)
         snapshot.validate()
 
         for site in top.iter_sites_by_molecule("Ethane"):
@@ -289,10 +289,10 @@ class TestHoomd(BaseTest):
         oplsaa = ForceField("oplsaa")
         top = apply(top, oplsaa, remove_untyped=True)
 
-        gmso_snapshot, snapshot_base_units = to_hoomd_snapshot(
+        _gmso_snapshot, _snapshot_base_units = to_hoomd_snapshot(
             top, base_units=base_units
         )
-        gmso_forces, forces_base_units = to_hoomd_forcefield(
+        _gmso_forces, _forces_base_units = to_hoomd_forcefield(
             top,
             r_cut=1.4,
             base_units=base_units,
@@ -313,8 +313,8 @@ class TestHoomd(BaseTest):
         oplsaa = ForceField("oplsaa")
         top = apply(top, oplsaa, remove_untyped=True)
 
-        gmso_snapshot, snapshot_base_units = to_hoomd_snapshot(top)
-        gmso_forces, forces_base_units = to_hoomd_forcefield(
+        _gmso_snapshot, _snapshot_base_units = to_hoomd_snapshot(top)
+        _gmso_forces, _forces_base_units = to_hoomd_forcefield(
             top=top,
             r_cut=1.4,
             pppm_kwargs={"resolution": (64, 64, 64), "order": 7},
@@ -332,16 +332,15 @@ class TestHoomd(BaseTest):
             "length": u.nm,
             "energy": u.kJ / u.mol,
         }
-        gmso_forces, forces_base_units = to_hoomd_forcefield(
+        gmso_forces, _forces_base_units = to_hoomd_forcefield(
             top,
             r_cut=1.4,
             base_units=base_units,
             pppm_kwargs={"resolution": (64, 64, 64), "order": 7},
         )
-        integrator_forces = list()
-        for cat in gmso_forces:
-            for force in gmso_forces[cat]:
-                integrator_forces.append(force)
+        integrator_forces = [
+            item for sublist in gmso_forces.values() for item in sublist
+        ]
         for force in integrator_forces:
             if isinstance(force, hoomd.md.pair.LJ):
                 keys = force.params.param_dict.keys()
@@ -438,10 +437,10 @@ class TestHoomd(BaseTest):
             ):
                 assert force.nlist.exclusions == ["bond", "1-3", "1-4"]
             elif isinstance(force, hoomd.md.special_pair.Coulomb):
-                for key in force.params.keys():
+                for key in force.params:
                     assert force.params[key]["alpha"] == 0.25
             elif isinstance(force, hoomd.md.special_pair.LJ):
-                for key in force.params.keys():
+                for key in force.params:
                     ljKey = tuple(key.split("-"))
                     assert (
                         force.params[key]["epsilon"]
@@ -496,7 +495,7 @@ class TestHoomd(BaseTest):
         assert "CT-HC" in snapshot.bonds.types
 
         forces, _ = to_hoomd_forcefield(top=top, r_cut=1.4, base_units=base_units)
-        assert "CT-HC" in forces["bonds"][0].params.keys()
+        assert "CT-HC" in forces["bonds"][0].params
 
     def test_forces_wildcards(self):
         compound = mb.load("CCCC", smiles=True)
@@ -543,7 +542,7 @@ class TestHoomd(BaseTest):
         top = apply(top, oplsaa, remove_untyped=True, identify_connections=True)
         nlist_nb, nlist_coul = get_cell_nlist(top, buffer=1)
 
-        gmso_forces, forces_base_units = to_hoomd_forcefield(
+        gmso_forces, _ = to_hoomd_forcefield(
             top,
             r_cut=1.4,
             base_units=base_units,
@@ -576,7 +575,7 @@ class TestHoomd(BaseTest):
         top = com_box.to_gmso()
         top = apply(top, oplsaa, remove_untyped=True, identify_connections=True)
         nlist_nb, nlist_coul = get_cell_nlist(top, buffer=1)
-        gmso_forces, forces_base_units = to_hoomd_forcefield(
+        gmso_forces, _forces_base_units = to_hoomd_forcefield(
             top,
             r_cut=1.4,
             base_units=base_units,
@@ -584,9 +583,7 @@ class TestHoomd(BaseTest):
             nlist=nlist_coul,
         )
         for force in gmso_forces["nonbonded"]:
-            if isinstance(force, hoomd.md.pair.LJ) or isinstance(
-                force, hoomd.md.pair.Ewald
-            ):
+            if isinstance(force, (hoomd.md.pair.LJ, hoomd.md.pair.Ewald)):
                 assert force.nlist == nlist_nb
                 assert list(force.nlist.exclusions) == ["bond", "1-3", "1-4"]
                 assert force.nlist.buffer == 1
@@ -745,9 +742,10 @@ class TestHoomd(BaseTest):
                 assert "1-3" in force.nlist.exclusions
                 assert "1-4" in force.nlist.exclusions
                 for t in gmso_snapshot.particles.types:
-                    assert force.params[("benzene", t)].to_base() == dict(
-                        epsilon=0.0, sigma=0.0
-                    )
+                    assert force.params[("benzene", t)].to_base() == {
+                        "epsilon": 0.0,
+                        "sigma": 0.0,
+                    }
                     assert force.r_cut[("benzene", t)] == 1.4
 
         assert rigid_info.body["benzene"]["constituent_types"].to_base() == [
@@ -783,9 +781,9 @@ class TestHoomd(BaseTest):
         assert len(dpd_force.params.keys()) == 3
 
         expected_potentials = {
-            ("_A", "_A"): dict(A=40.0, gamma=8.0),
-            ("_A", "_B"): dict(A=20.0, gamma=1.0),
-            ("_B", "_B"): dict(A=20.0, gamma=1.0),
+            ("_A", "_A"): {"A": 40.0, "gamma": 8.0},
+            ("_A", "_B"): {"A": 20.0, "gamma": 1.0},
+            ("_B", "_B"): {"A": 20.0, "gamma": 1.0},
         }
         for potential in dpd_pairpotential.pairpotential_types:
             pair = potential.member_types

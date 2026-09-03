@@ -28,7 +28,7 @@ class TestConversions(BaseTest):
         template = template.set_expression(
             template.expression / 4
         )  # use setter to not set in place
-        atype = list(typed_ethane.atom_types)[0]
+        atype = next(iter(typed_ethane.atom_types))
         assert atype.expression == sympify("4*epsilon*((sigma/r)**12 - (sigma/r)**6)")
         typed_ethane.convert_potential_styles({"sites": template})
         assert atype.expression == sympify("epsilon*((sigma/r)**12 - (sigma/r)**6)")
@@ -68,8 +68,8 @@ class TestConversions(BaseTest):
 
     def test_input_not_unyt_units(self):
         with pytest.raises(
-            ValueError,
-            match=r"ERROR: The entered energy_input_unyt value is a <class 'float'>, "
+            TypeError,
+            match=r"The entered energy_input_unyt value is a <class 'float'>, "
             r"not a <class 'unyt.unit_object.Unit'>.",
         ):
             input_value = 2.0
@@ -80,8 +80,8 @@ class TestConversions(BaseTest):
 
     def test_kcal_per_mol_to_float_output(self):
         with pytest.raises(
-            ValueError,
-            match=r"ERROR: The entered energy_output_unyt_units_str value is a <class 'float'>, "
+            TypeError,
+            match=r"The entered energy_output_unyt_units_str value is a <class 'float'>, "
             r"not a <class 'str'>.",
         ):
             input_value = 2 * u.kcal / u.mol * u.gram**2
@@ -131,7 +131,7 @@ class TestConversions(BaseTest):
         )
 
     def test_conversion_for_topology_angles(self, typed_ethane):
-        expected_units_dim = dict(k="energy/angle**2", theta_eq="angle")
+        expected_units_dim = {"k": "energy/angle**2", "theta_eq": "angle"}
         base_units = u.UnitSystem("atomic", "Å", "mp", "fs", "nK", "rad")
         base_units["energy"] = "kcal/mol"
         potentials = _convert_potential_types(
@@ -146,7 +146,7 @@ class TestConversions(BaseTest):
         )
 
     def test_conversion_for_topology_bonds(self, typed_ethane):
-        expected_units_dim = dict(k="energy/length**2", r_eq="length")
+        expected_units_dim = {"k": "energy/length**2", "r_eq": "length"}
         base_units = u.UnitSystem("atomic", "Å", "mp", "fs", "nK", "rad")
         base_units["energy"] = "kcal/mol"
         potentials = _convert_potential_types(
@@ -161,7 +161,7 @@ class TestConversions(BaseTest):
         )
 
     def test_conversion_for_topology_sites(self, typed_ethane):
-        expected_units_dim = dict(sigma="length", epsilon="energy")
+        expected_units_dim = {"sigma": "length", "epsilon": "energy"}
         base_units = u.UnitSystem("atomic", "Å", "mp", "fs", "nK", "rad")
         base_units["energy"] = "kcal/mol"
         potentials = _convert_potential_types(

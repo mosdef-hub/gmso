@@ -112,16 +112,16 @@ class TestEqnCompare(BaseTest):
         )
 
         [
-            test_topology,
-            test_residues_applied_list,
-            test_electrostatics14Scale_dict,
-            test_nonBonded14Scale_dict,
+            _test_topology,
+            _test_residues_applied_list,
+            _test_electrostatics14Scale_dict,
+            _test_nonBonded14Scale_dict,
             test_atom_types_dict,
-            test_bond_types_dict,
-            test_angle_types_dict,
-            test_dihedral_types_dict,
-            test_improper_types_dict,
-            test_combining_rule_dict,
+            _test_bond_types_dict,
+            _test_angle_types_dict,
+            _test_dihedral_types_dict,
+            _test_improper_types_dict,
+            _test_combining_rule_dict,
         ] = specific_ff_to_residue(
             test_box,
             forcefield_selection={
@@ -176,16 +176,16 @@ class TestEqnCompare(BaseTest):
             )
 
             [
-                test_topology,
-                test_residues_applied_list,
-                test_electrostatics14Scale_dict,
-                test_nonBonded14Scale_dict,
+                _test_topology,
+                _test_residues_applied_list,
+                _test_electrostatics14Scale_dict,
+                _test_nonBonded14Scale_dict,
                 test_atom_types_dict,
-                test_bond_types_dict,
-                test_angle_types_dict,
-                test_dihedral_types_dict,
-                test_improper_types_dict,
-                test_combining_rule_dict,
+                _test_bond_types_dict,
+                _test_angle_types_dict,
+                _test_dihedral_types_dict,
+                _test_improper_types_dict,
+                _test_combining_rule_dict,
             ] = specific_ff_to_residue(
                 test_box,
                 forcefield_selection={

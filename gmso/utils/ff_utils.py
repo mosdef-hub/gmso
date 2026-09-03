@@ -39,7 +39,7 @@ __all__ = [
 # Create a dictionary of units
 _unyt_dictionary = {}
 for name, item in vars(u).items():
-    if isinstance(item, u.Unit) or isinstance(item, u.unyt_quantity):
+    if isinstance(item, (u.Unit, u.unyt_quantity)):
         _unyt_dictionary.update({name: item})
 
 
@@ -320,9 +320,9 @@ def _parse_scaling_factors(meta_tag):
         "electrostatics14Scale": meta_tag.get("electrostatics14Scale", 1.0),
         "nonBonded14Scale": meta_tag.get("nonBonded14Scale", 1.0),
     }
-    for key in scaling_factors:
-        if not isinstance(scaling_factors[key], float):
-            scaling_factors[key] = float(scaling_factors[key])
+    for key, val in scaling_factors.items():
+        if not isinstance(val, float):
+            scaling_factors[key] = float(val)
     return scaling_factors
 
 
@@ -370,8 +370,8 @@ def parse_ff_atomtypes(atomtypes_el, ff_meta):
         if atom_types_expression:
             ctor_kwargs["expression"] = atom_types_expression
 
-        for kwarg in ctor_kwargs:
-            ctor_kwargs[kwarg] = atom_type.attrib.get(kwarg, ctor_kwargs[kwarg])
+        for kwarg, val in ctor_kwargs.items():
+            ctor_kwargs[kwarg] = atom_type.attrib.get(kwarg, val)
 
         tags = {"tags": {"element": ctor_kwargs.pop("element", "")}}
 
@@ -382,9 +382,9 @@ def parse_ff_atomtypes(atomtypes_el, ff_meta):
                 float(ctor_kwargs["mass"]), units_dict["mass"]
             )
         if isinstance(ctor_kwargs["overrides"], str):
-            ctor_kwargs["overrides"] = set(
+            ctor_kwargs["overrides"] = {
                 override.strip() for override in ctor_kwargs["overrides"].split(",")
-            )
+            }
         if isinstance(ctor_kwargs["charge"], str):
             ctor_kwargs["charge"] = u.unyt_quantity(
                 float(ctor_kwargs["charge"]), units_dict["charge"]
@@ -392,7 +392,7 @@ def parse_ff_atomtypes(atomtypes_el, ff_meta):
         params_dict = _parse_params_values(atom_type, param_unit_dict, "AtomType")
         if not ctor_kwargs["parameters"] and params_dict:
             ctor_kwargs["parameters"] = params_dict
-            valued_param_vars = set(sympify(param) for param in params_dict.keys())
+            valued_param_vars = {sympify(param) for param in params_dict}
             ctor_kwargs["independent_variables"] = (
                 sympify(atom_types_expression).free_symbols - valued_param_vars
             )
@@ -432,8 +432,8 @@ def parse_ff_connection_types(connectiontypes_el, child_tag="BondType"):
         if connectiontype_expression:
             ctor_kwargs["expression"] = connectiontype_expression
 
-        for kwarg in ctor_kwargs:
-            ctor_kwargs[kwarg] = connection_type.attrib.get(kwarg, ctor_kwargs[kwarg])
+        for kwarg, val in ctor_kwargs.items():
+            ctor_kwargs[kwarg] = connection_type.attrib.get(kwarg, val)
 
         ctor_kwargs["member_types"] = _get_member_types(connection_type)
         if not ctor_kwargs["member_types"]:
@@ -447,9 +447,7 @@ def parse_ff_connection_types(connectiontypes_el, child_tag="BondType"):
                 ctor_kwargs["expression"],
             )
 
-        valued_param_vars = set(
-            sympify(param) for param in ctor_kwargs["parameters"].keys()
-        )
+        valued_param_vars = {sympify(param) for param in ctor_kwargs["parameters"]}
         ctor_kwargs["independent_variables"] = (
             sympify(connectiontype_expression).free_symbols - valued_param_vars
         )
@@ -464,10 +462,10 @@ def parse_ff_connection_types(connectiontypes_el, child_tag="BondType"):
     return connectiontypes_dict
 
 
-def parse_ff_virtual_types(
-    virtualtypes_el, child_tag="VirtualSiteType", ff_meta=dict()
-):
+def parse_ff_virtual_types(virtualtypes_el, child_tag="VirtualSiteType", ff_meta=None):
     """Parse an XML etree Element rooted at VirtualSiteType to create topology.core.VirtualType."""
+    if ff_meta is None:
+        ff_meta = {}
     virtualtypes_dict = {}
     units_dict = ff_meta.get("Units")
 
@@ -492,8 +490,8 @@ def parse_ff_virtual_types(
             "member_classes": None,
         }
 
-        for kwarg in ctor_kwargs:  # get directly from etree
-            ctor_kwargs[kwarg] = virtual_type.attrib.get(kwarg, ctor_kwargs[kwarg])
+        for kwarg, val in ctor_kwargs.items():  # get directly from etree
+            ctor_kwargs[kwarg] = virtual_type.attrib.get(kwarg, val)
 
         for expressStr, virtualClass in zip(
             ("potential_", "position_"), (VirtualPotentialType, VirtualPositionType)
@@ -508,9 +506,7 @@ def parse_ff_virtual_types(
                     child_tag,
                     kwargs["expression"],
                 )
-            valued_param_vars = set(
-                sympify(param) for param in kwargs["parameters"].keys()
-            )
+            valued_param_vars = {sympify(param) for param in kwargs["parameters"]}
             kwargs["independent_variables"] = (
                 sympify(expressionDict[expressStr]).free_symbols - valued_param_vars
             )
@@ -555,10 +551,8 @@ def parse_ff_pairpotential_types(pairpotentialtypes_el):
         if pairpotentialtype_expression:
             ctor_kwargs["expression"] = pairpotentialtype_expression
 
-        for kwarg in ctor_kwargs:
-            ctor_kwargs[kwarg] = pairpotential_type.attrib.get(
-                kwarg, ctor_kwargs[kwarg]
-            )
+        for kwarg, val in ctor_kwargs.items():
+            ctor_kwargs[kwarg] = pairpotential_type.attrib.get(kwarg, val)
 
         ctor_kwargs["member_types"] = _get_member_types(pairpotential_type)
         if not ctor_kwargs["parameters"]:
@@ -569,9 +563,7 @@ def parse_ff_pairpotential_types(pairpotentialtypes_el):
                 ctor_kwargs["expression"],
             )
 
-        valued_param_vars = set(
-            sympify(param) for param in ctor_kwargs["parameters"].keys()
-        )
+        valued_param_vars = {sympify(param) for param in ctor_kwargs["parameters"]}
         ctor_kwargs["independent_variables"] = (
             sympify(pairpotentialtype_expression).free_symbols - valued_param_vars
         )

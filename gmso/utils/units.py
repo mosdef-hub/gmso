@@ -350,7 +350,7 @@ class LAMMPS_UnitSystems:
             return dims
         energySym = Symbol("(energy)")  # create dummy symbol to replace in equation
         dim_info = dims.as_terms()
-        time_idx = np.where(list(map(lambda x: x.name == "(time)", dim_info[1])))[0][0]
+        time_idx = np.where([x.name == "(time)" for x in dim_info[1]])[0][0]
         energy_exp = (
             dim_info[0][0][1][1][time_idx] // 2
         )  # energy has 1/time**2 in it, so this is the hint of how many
@@ -365,9 +365,7 @@ class LAMMPS_UnitSystems:
             return dims
         chargeSym = Symbol("(charge)")  # create dummy symbol to replace in equation
         dim_info = dims.as_terms()
-        current_idx = np.where(
-            list(map(lambda x: x.name == "(current_mks)", dim_info[1]))
-        )[0][0]
+        current_idx = np.where([x.name == "(current_mks)" for x in dim_info[1]])[0][0]
         charge_exp = dim_info[0][0][1][1][
             current_idx
         ]  # charge has (current_mks) in it, so this is the hint of how many
@@ -382,9 +380,7 @@ class LAMMPS_UnitSystems:
             return dims
         energySym = Symbol("(energy)")  # create dummy symbol to replace in equation
         dim_info = dims.as_terms()
-        temp_idx = np.where(
-            list(map(lambda x: x.name == "(temperature)", dim_info[1]))
-        )[0][0]
+        temp_idx = np.where([x.name == "(temperature)" for x in dim_info[1]])[0][0]
         temp_exp = dim_info[0][0][1][1][
             temp_idx
         ]  # energy has 1/time**2 in it, so this is the hint of how many
@@ -496,9 +492,9 @@ def convert_params_units(
         the input potentials converted into the base units given by
         base_units `dict`.
     """
-    converted_potentials = list()
+    converted_potentials = []
     for potential in potentials:
-        converted_params = dict()
+        converted_params = {}
         for parameter in potential.parameters:
             unit_dim = expected_units_dim[parameter]
             ind_units = re.sub("[^a-zA-Z]+", " ", unit_dim).split()

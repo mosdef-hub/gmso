@@ -17,8 +17,8 @@ class TestExpression(BaseTest):
         )
 
         assert expression.expression == sympy.sympify("a*x+b")
-        assert "a" in expression.parameters.keys()
-        assert "b" in expression.parameters.keys()
+        assert "a" in expression.parameters
+        assert "b" in expression.parameters
         assert expression.parameters["a"] == 1.0 * u.dimensionless
         assert expression.parameters["b"] == 2.0 * u.dimensionless
 

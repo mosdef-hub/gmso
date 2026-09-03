@@ -56,7 +56,7 @@ class TestXMLHandling(BaseTest):
         reloaded_xml = ForceField("test_xml_writer.xml")
 
         def get_names(ff, param):
-            return [typed for typed in getattr(ff, param).keys()]
+            return [typed for typed in getattr(ff, param)]
 
         for param in [
             "atom_types",

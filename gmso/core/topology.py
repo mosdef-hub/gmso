@@ -339,6 +339,7 @@ class Topology:
                 unique_tags.add(copy(getattr(site, label_type)))
         return unique_tags
 
+    @property
     def atom_types(self, include_virtual_types=False):
         """Return all atom_types in the topology.
 
@@ -938,11 +939,11 @@ class Topology:
 
     def _bookkeep_potentials(self):
         self._potentials_count = {
-            "atom_types": len(self.atom_types),
-            "bond_types": len(self.bond_types),
-            "angle_types": len(self.angle_types),
-            "dihedral_types": len(self.dihedral_types),
-            "improper_types": len(self.improper_types),
+            "atom_types": len(self.atom_types()),
+            "bond_types": len(self.bond_types()),
+            "angle_types": len(self.angle_types()),
+            "dihedral_types": len(self.dihedral_types()),
+            "improper_types": len(self.improper_types()),
             "pairpotential_types": len(self._pairpotential_types),
         }
 

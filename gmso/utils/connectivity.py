@@ -111,7 +111,7 @@ def _add_connections(top, matches, conn_type):
     """Add connections to the topology."""
     for sorted_conn in matches:
         cmembers = [top.sites[idx] for idx in sorted_conn]
-        bonds = list()
+        bonds = []
         for i, j in CONNS[conn_type].connectivity:
             bond = (cmembers[i], cmembers[j])
             key = frozenset([bond, tuple(reversed(bond))])
@@ -272,14 +272,14 @@ def generate_pairs_lists(
 
     graph = to_networkx(top, parse_angles=False, parse_dihedrals=False)
 
-    pairs_dict = dict()
+    pairs_dict = {}
     if refer_from_scaling_factor:
         for i in range(3):
             if nb_scalings[i] or coulombic_scalings[i]:
-                pairs_dict[f"pairs1{i + 2}"] = list()
+                pairs_dict[f"pairs1{i + 2}"] = []
     else:
         for i in range(3):
-            pairs_dict = {f"pairs1{i + 2}": list() for i in range(3)}
+            pairs_dict = {f"pairs1{i + 2}": [] for i in range(3)}
 
     if molecule is None:
         bonds, angles, dihedrals = top.bonds, top.angles, top.dihedrals
@@ -384,7 +384,7 @@ def _get_graph_isomorphism_matches(g1, g2, match_by="identifier"):
     graph_matcher = nx.algorithms.isomorphism.GraphMatcher(
         g1, g2, node_match=node_match
     )
-    acceptedMaps = dict()
+    acceptedMaps = {}
     for mapping in graph_matcher.subgraph_isomorphisms_iter():
         possibleMap = {g1id: g2id for g1id, g2id in mapping.items()}
         acceptedMaps[frozenset(possibleMap.keys())] = possibleMap

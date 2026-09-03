@@ -61,12 +61,12 @@ def read_mol2(
     with open(filename, "r") as f:
         fcontents = f.readlines()
 
-    sections = {"Meta": list()}
+    sections = {"Meta": []}
     section_key = "Meta"  # Used to parse the meta info at top of the file
     for line in fcontents:
         if "@<TRIPOS>" in line:
             section_key = line.strip("\n")
-            sections[section_key] = list()
+            sections[section_key] = []
         else:
             sections[section_key].append(line)
 
@@ -78,14 +78,14 @@ def read_mol2(
         "@<TRIPOS>FF_PBC": _parse_box,
         "@<TRIPOS>MOLECULE": _parse_molecule,
     }
-    for section in sections:
+    for section, value in sections.items():
         if section not in supported_rti:
             logger.info(
                 f"The record type indicator {section} is not supported. "
                 "Skipping current section and moving to the next RTI header."
             )
         else:
-            supported_rti[section](topology, sections[section], verbose)
+            supported_rti[section](topology, value, verbose)
 
     # TODO: read in parameters to correct attribute as well. This can be saved in various rti sections.
     return topology
@@ -118,7 +118,7 @@ def write_mol2(
             "{} written by GMSO {} at {}\n".format(
                 top.name if top.name is not None else "",
                 gmso_version,
-                str(datetime.datetime.now()),
+                str(datetime.datetime.now(datetime.timezone.utc).astimezone()),
             )
         )
         _write_molecule_info(top, out_file)

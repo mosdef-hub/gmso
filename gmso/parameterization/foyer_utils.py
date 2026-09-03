@@ -41,7 +41,7 @@ def get_topology_graph(
 
     if label_type:
         assert label_type in ("group", "molecule"), label_type
-        is_group = True if label_type == "group" else False
+        is_group = label_type == "group"
         pseudo_top = namedtuple("PseudoTop", ("sites", "bonds"))
         gmso_topology = pseudo_top(
             tuple(gmso_topology.iter_sites(label_type, label)),

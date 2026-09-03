@@ -148,7 +148,7 @@ def interactive_networkx_bonds(topology, additional_labels=None):
             widgets.Dropdown(
                 options=names_tuple,
                 layout=widgets.Layout(width="30%"),
-                style=dict(description_width="initial"),
+                style={"description_width": "initial"},
                 description=descriptions[i],
             )
         )
@@ -227,7 +227,7 @@ def interactive_networkx_angles(topology):
             widgets.Dropdown(
                 options=names_tuple,
                 layout=widgets.Layout(width="30%"),
-                style=dict(description_width="initial"),
+                style={"description_width": "initial"},
                 description=descriptions[i],
             )
         )
@@ -312,7 +312,7 @@ def interactive_networkx_dihedrals(topology):
             widgets.Dropdown(
                 options=(names_tuple),
                 layout=widgets.Layout(width="30%"),
-                style=dict(description_width="initial"),
+                style={"description_width": "initial"},
                 description=descriptions[i],
             )
         )
