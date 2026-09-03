@@ -202,13 +202,8 @@ class Box:
         if self is other:
             return True
 
-        if not isinstance(other, Box):
-            return False
-
-        if not allclose_units(self.lengths, other.lengths, rtol=1e-5, atol=1e-8):
-            return False
-
-        if not allclose_units(self.angles, other.angles, rtol=1e-5, atol=1e-8):
-            return False
-
-        return True
+        return (
+            isinstance(other, Box)
+            and allclose_units(self.lengths, other.lengths, rtol=1e-5, atol=1e-8)
+            and allclose_units(self.angles, other.angles, rtol=1e-5, atol=1e-8)
+        )

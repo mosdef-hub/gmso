@@ -2,7 +2,7 @@
 
 import logging
 from collections.abc import Sequence
-from typing import Any, ClassVar, TypeVar, Union
+from typing import Any, ClassVar, TypeVar
 
 import numpy as np
 import unyt as u
@@ -21,7 +21,7 @@ from gmso.exceptions import GMSOError
 
 logger = logging.getLogger(__name__)
 
-PositionType = Union[Sequence[float], np.ndarray, u.unyt_array]
+PositionType = Sequence[float] | np.ndarray | u.unyt_array
 
 
 class Molecule(GMSOBase):
@@ -83,7 +83,7 @@ class Molecule(GMSOBase):
         """Test if two objects are equivalent."""
         if isinstance(other, (list, tuple)):
             return all(
-                [val1 == val2 for val1, val2 in zip(self.__dict__.values(), other)]
+                val1 == val2 for val1, val2 in zip(self.__dict__.values(), other)
             )
         else:
             return self.__dict__ == other.__dict__
@@ -135,7 +135,7 @@ class Residue(GMSOBase):
         """Test if two objects are equivalent."""
         if isinstance(other, (list, tuple)):
             return all(
-                [val1 == val2 for val1, val2 in zip(self.__dict__.values(), other)]
+                val1 == val2 for val1, val2 in zip(self.__dict__.values(), other)
             )
         else:
             return self.__dict__ == other.__dict__

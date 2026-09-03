@@ -173,10 +173,10 @@ class ForceField:
         """Get the non-element types in the ForceField."""
         non_element_types = set()
 
-        for name, atom_type in self.atom_types.items():
+        for atom_type in self.atom_types.values():
             element_symbol = atom_type.get_tag(
                 "element"
-            )  # FixMe: Should we make this a first class citizen?
+            )  # TODO: Should we make this a first class citizen?
             if element_symbol:
                 element = element_by_symbol(element_symbol)
                 non_element_types.add(element_symbol) if not element else None
@@ -842,8 +842,8 @@ class ForceField:
 
         should_parse_xml = False
         if not (
-            all(map(lambda x: isinstance(x, str), xmls_or_etrees))
-            or all(map(lambda x: isinstance(x, etree._ElementTree), xmls_or_etrees))
+            all(isinstance(x, str) for x in xmls_or_etrees)
+            or all(isinstance(x, etree._ElementTree) for x in xmls_or_etrees)
         ):
             raise TypeError(
                 "Please provide an iterable of strings "
@@ -851,7 +851,7 @@ class ForceField:
                 "or equivalent element Trees"
             )
 
-        if all(map(lambda x: isinstance(x, str), xmls_or_etrees)):
+        if all(isinstance(x, str) for x in xmls_or_etrees):
             should_parse_xml = True
 
         versions = []
