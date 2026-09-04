@@ -320,10 +320,9 @@ def _get_connection(filename, topology, base_unyts, connection_type):
     if types is False:
         return topology
     templates = PotentialTemplateLibrary()
-    connection_type_lines = open(filename, "r").readlines()[
-        i + 2 : i + n_connection_types + 2
-    ]
-    connection_type_list = list()
+    with open(filename, "r") as f:
+        connection_type_lines = f.readlines()[i + 2 : i + n_connection_types + 2]
+    connection_type_list = []
     for line in connection_type_lines:
         if connection_type == "bond":
             template_potential = templates["LAMMPSHarmonicBondPotential"]
@@ -407,7 +406,8 @@ def _get_connection(filename, topology, base_unyts, connection_type):
                 n_connections = int(line.split()[0])
             if connection_type.capitalize() + "s" in line.split():
                 break
-    connection_lines = open(filename, "r").readlines()[i + 2 : i + n_connections + 2]
+    with open(filename, "r") as f:
+        connection_lines = f.readlines()[i + 2 : i + n_connections + 2]
     # Determine number of sites to generate
     if connection_type == "bond":
         n_sites = 2
@@ -416,12 +416,12 @@ def _get_connection(filename, topology, base_unyts, connection_type):
     else:
         n_sites = 4
     for i, line in enumerate(connection_lines):
-        site_list = list()
+        site_list = []
         for j in range(n_sites):
             site = topology.sites[int(line.split()[j + 2]) - 1]
             site_list.append(site)
         ctype = copy.copy(connection_type_list[int(line.split()[1]) - 1])
-        ctype.member_types = tuple(map(lambda x: x.atom_type.name, site_list))
+        ctype.member_types = tuple(x.atom_type.name for x in site_list)
         ctype.member_classes = ctype.member_types
         if connection_type == "bond":
             connection = Bond(
@@ -456,7 +456,8 @@ def _get_atoms(filename, topology, base_unyts, type_list):
                 n_atoms = int(line.split()[0])
             if "Atoms" in line.split():
                 break
-    atom_lines = open(filename, "r").readlines()[i + 2 : i + n_atoms + 2]
+    with open(filename, "r") as f:
+        atom_lines = f.readlines()[i + 2 : i + n_atoms + 2]
     for line in atom_lines:
         atom_line = line.split()
         atom_type = atom_line[2]
@@ -544,8 +545,9 @@ def _get_ff_information(filename, base_unyts, topology):
                 break
     if types is False:
         return topology
-    mass_lines = open(filename, "r").readlines()[i + 2 : i + n_atomtypes + 2]
-    type_list = list()
+    with open(filename, "r") as f:
+        mass_lines = f.readlines()[i + 2 : i + n_atomtypes + 2]
+    type_list = []
     for line in mass_lines:
         atom_type = AtomType(
             name=line.split()[0],
@@ -560,7 +562,8 @@ def _get_ff_information(filename, base_unyts, topology):
     # Need to figure out if we're going have mixing rules printed out
     # Currently only reading in LJ params
     warn_ljcutBool = False
-    pair_lines = open(filename, "r").readlines()[i + 2 : i + n_atomtypes + 2]
+    with open(filename, "r") as f:
+        pair_lines = f.readlines()[i + 2 : i + n_atomtypes + 2]
     for i, pair in enumerate(pair_lines):
         if len(pair.split()) == 3:
             type_list[i].parameters["sigma"] = float(pair.split()[2]) * get_units(
@@ -642,7 +645,7 @@ def _write_header(out_file, top, atom_style, dihedral_parser):
         "{} written by {} at {} using the GMSO LAMMPS Writer\n\n\n".format(
             top.name if top.name is not None else "Topology",
             os.environ.get("USER"),
-            str(datetime.datetime.now()),
+            str(datetime.datetime.now(datetime.timezone.utc).astimezone()),
         )
     )
     out_file.write(f"{top.n_sites:d} atoms\n")
@@ -1059,39 +1062,35 @@ def _write_impropertypes(out_file, top, base_unyts, parser, cfactorsDict):
     base_msg = "{}\t"  # handles index
     end_msg = "# {}\t{}\t{}\t{}\n"
 
-    if (
-        parser.__name__ == "parse_cvff_style_improper"
-        or "parse_harmonic_style_improper"
-    ):  # one cvff set per improper layer
-        ndecimalsDict = {"k": 6, "n": 0, "phi_eq": 0}
-        idx = 0
-        improper_typesList = []
-        for improper_type, members in index_membersList:
-            parameter_termList, parameterStrList = parser(improper_type)
-            variable_msg = "{:8}\t" * len(parameterStrList)
-            full_msg = base_msg + variable_msg + end_msg
-            for parameter_terms in parameter_termList:  # list of params on each line
-                out_file.write(
-                    full_msg.format(
-                        idx + 1,
-                        *[
-                            base_unyts.convert_parameter(
-                                convert_kelvin_to_energy_units(parameter, "kJ"),
-                                cfactorsDict,
-                                n_decimals=ndecimalsDict[parameterStr],
-                                name=parameterStr,
-                            )
-                            for parameter, parameterStr in zip(
-                                parameter_terms, parameterStrList
-                            )
-                        ],
-                        *members,
-                    )
+    ndecimalsDict = {"k": 6, "n": 0, "phi_eq": 0}
+    idx = 0
+    improper_typesList = []
+    for improper_type, members in index_membersList:
+        parameter_termList, parameterStrList = parser(improper_type)
+        variable_msg = "{:8}\t" * len(parameterStrList)
+        full_msg = base_msg + variable_msg + end_msg
+        for parameter_terms in parameter_termList:  # list of params on each line
+            out_file.write(
+                full_msg.format(
+                    idx + 1,
+                    *[
+                        base_unyts.convert_parameter(
+                            convert_kelvin_to_energy_units(parameter, "kJ"),
+                            cfactorsDict,
+                            n_decimals=ndecimalsDict[parameterStr],
+                            name=parameterStr,
+                        )
+                        for parameter, parameterStr in zip(
+                            parameter_terms, parameterStrList
+                        )
+                    ],
+                    *members,
                 )
-                improper_typesList.append(
-                    improper_type
-                )  # add improper type multiple times if it is layered
-                idx += 1
+            )
+            improper_typesList.append(
+                improper_type
+            )  # add improper type multiple times if it is layered
+            idx += 1
     return improper_typesList
 
 
@@ -1220,17 +1219,13 @@ def _try_default_potential_conversions(top, potentialsDict):
 def _default_lj_val(top, source):
     """Generate default lj non-dimensional values from topology."""
     if source == "length":
-        return copy.deepcopy(
-            max(list(map(lambda x: x.parameters["sigma"], top.atom_types)))
-        )
+        return copy.deepcopy(max([x.parameters["sigma"] for x in top.atom_types]))
     elif source == "energy":
-        return copy.deepcopy(
-            max(list(map(lambda x: x.parameters["epsilon"], top.atom_types)))
-        )
+        return copy.deepcopy(max([x.parameters["epsilon"] for x in top.atom_types]))
     elif source == "mass":
-        return copy.deepcopy(max(list(map(lambda x: x.mass, top.atom_types))))
+        return copy.deepcopy(max([x.mass for x in top.atom_types]))
     elif source == "charge":
-        return copy.deepcopy(max(list(map(lambda x: x.charge, top.atom_types))))
+        return copy.deepcopy(max([x.charge for x in top.atom_types]))
     else:
         raise ValueError(
             f"Provided {source} for default LJ cannot be found in the topology."

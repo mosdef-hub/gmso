@@ -31,7 +31,7 @@ def _constant_multiplier(pot1, pot2):
                 if eq_term.is_symbol:
                     key = str(eq_term)
                     return {key: pot1.parameters[key] * float(constant)}
-    except Exception:
+    except (ValueError, TypeError):
         # return nothing if the sympy conversion errors out
         pass
     return None
@@ -117,7 +117,7 @@ def _conversion_from_template_obj(
             current_expression.parameters.update(modified_connection_parametersDict)
 
 
-def convert_topology_expressions(top, expressionMap={}):
+def convert_topology_expressions(top, expressionMap=None):
     """Convert from one parameter form to another.
 
     Parameters
@@ -144,6 +144,8 @@ def convert_topology_expressions(top, expressionMap={}):
     """
     # Apply from predefined conversions or easy sympy conversions
     # handler for various keys passed to expressionMap for conversion
+    if expressionMap is None:
+        expressionMap = {}
     for connStr, conv in expressionMap.items():
         possible_connections = ["bond", "angle", "dihedral", "improper"]
         if connStr.lower() in [
@@ -170,7 +172,7 @@ def convert_topology_expressions(top, expressionMap={}):
         elif isinstance(conv, PotentialTemplate):
             _conversion_from_template_obj(top, connStr, conn_typeStr, conv)
         else:
-            connType = list(getattr(top, conn_typeStr))[0]
+            connType = next(iter(getattr(top, conn_typeStr)))
             errormsg = f"""
             Failed to convert {top} for {connStr} components, with conversion
             of {connType.name}: Attempted to convert {connType} with style {conv}, which is a {type(conv)}.
@@ -198,14 +200,13 @@ def convert_opls_to_ryckaert(opls_connection_type):
     if (
         opls_connection_type.independent_variables
         == opls_torsion_potential.independent_variables
+    ) and (
+        sympy.simplify(
+            opls_connection_type.expression - opls_torsion_potential.expression
+        )
+        == 0
     ):
-        if (
-            sympy.simplify(
-                opls_connection_type.expression - opls_torsion_potential.expression
-            )
-            == 0
-        ):
-            valid_connection_type = True
+        valid_connection_type = True
     if not valid_connection_type:
         raise GMSOError(
             "Cannot use convert_opls_to_ryckaert "
@@ -293,15 +294,14 @@ def convert_ryckaert_to_fourier(ryckaert_connection_type):
     if (
         ryckaert_connection_type.independent_variables
         == ryckaert_bellemans_torsion_potential.independent_variables
+    ) and (
+        sympy.simplify(
+            ryckaert_connection_type.expression
+            - ryckaert_bellemans_torsion_potential.expression
+        )
+        == 0
     ):
-        if (
-            sympy.simplify(
-                ryckaert_connection_type.expression
-                - ryckaert_bellemans_torsion_potential.expression
-            )
-            == 0
-        ):
-            valid_connection_type = True
+        valid_connection_type = True
     if not valid_connection_type:
         raise GMSOError(
             "Cannot use convert_ryckaert_to_fourier "
@@ -383,14 +383,14 @@ def convert_kelvin_to_energy_units(
             f"ERROR: The entered energy_input_unyt value is a {type(energy_input_unyt)}, "
             f"not a {type(u.Kelvin)}."
         )
-        raise ValueError(print_error_message)
+        raise TypeError(print_error_message)
 
     if not isinstance(energy_output_unyt_units_str, str):
         print_error_message = (
-            f"ERROR: The entered energy_output_unyt_units_str value is a {type(energy_output_unyt_units_str)}, "
+            f"The entered energy_output_unyt_units_str value is a {type(energy_output_unyt_units_str)}, "
             f"not a {str}."
         )
-        raise ValueError(print_error_message)
+        raise TypeError(print_error_message)
 
     # check for K energy units and convert them to normal energy units;
     # otherwise, just pass thru the original unyt units
@@ -428,9 +428,9 @@ def convert_kelvin_to_energy_units(
 
 def convert_params_units(potentials, expected_units_dim, base_units, ref_values):
     """Convert parameters' units in the potential to that specified in the base_units."""
-    converted_potentials = list()
+    converted_potentials = []
     for potential in potentials:
-        converted_params = dict()
+        converted_params = {}
         for parameter in potential.parameters:
             unit_dim = expected_units_dim[parameter]
             ind_units = re.sub("[^a-zA-Z]+", " ", unit_dim).split()

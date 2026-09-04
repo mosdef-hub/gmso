@@ -69,9 +69,7 @@ class TestPotential(BaseTest):
 
         symbol_x, symbol_y, symbol_z = sympy.symbols("x y z")
         correct_expr = sympy.sympify("x+y*z")
-        assert new_potential.expression.free_symbols == set(
-            [symbol_x, symbol_y, symbol_z]
-        )
+        assert new_potential.expression.free_symbols == {symbol_x, symbol_y, symbol_z}
         assert correct_expr == new_potential.expression
 
     def test_equivalance(self):
@@ -292,7 +290,7 @@ class TestPotential(BaseTest):
             "improper_types",
         ]
         for connection_type in labelsList:
-            conn = list(getattr(top, connection_type)())[0]
+            conn = next(iter(getattr(top, connection_type)()))
             assert sort_by_classes(conn) == sort_by_types(conn)
 
     def test_numpy_potential(self):

@@ -447,11 +447,9 @@ class BaseTest:
                 return False
             if conn1.name != conn2.name:
                 return False
-            if getattr(conn1, connection_types_attrs_map[type(conn1)]) != getattr(
+            return getattr(conn1, connection_types_attrs_map[type(conn1)]) == getattr(
                 conn2, connection_types_attrs_map[type(conn2)]
-            ):
-                return False
-            return True
+            )
 
         return test_connection_equality
 
@@ -462,10 +460,7 @@ class BaseTest:
                 return u.allclose_units(
                     top1.box.lengths, top2.box.lengths
                 ) and u.allclose_units(top1.box.angles, top2.box.angles)
-            elif not top1.box and not top2.box:
-                return True
-            else:
-                return False
+            return bool(not top1.box and not top2.box)
 
         return test_box_equivalence
 
@@ -557,7 +552,7 @@ class BaseTest:
             expression="r + 1",
             independent_variables="r",
             parameters={},
-            member_types=tuple(["a1", "a2"]),
+            member_types=("a1", "a2"),
         )
 
         top.add_pairpotentialtype(pptype12)

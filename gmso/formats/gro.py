@@ -136,7 +136,7 @@ def write_gro(
             "{} written by GMSO {} at {}\n".format(
                 top.name if top.name is not None else "",
                 gmso.__version__,
-                str(datetime.datetime.now()),
+                str(datetime.datetime.now(datetime.timezone.utc).astimezone()),
             )
         )
         out_file.write(f"{top.n_sites:d}\n")
@@ -168,8 +168,8 @@ def _prepare_atoms(top, updated_positions, n_decimals):
     )
     # we need to sort through the sites to provide a unique number for each molecule/residue
     # we will store the unique id in dictionary where the key is the idx
-    site_res_id = dict()
-    seen = dict()
+    site_res_id = {}
+    seen = {}
     for idx, site in enumerate(top.sites):
         if site.molecule:
             if site.molecule not in seen:

@@ -118,9 +118,7 @@ class AbstractPotential(GMSOBase):
     @field_serializer("potential_expression_")
     def serialize_expression(self, potential_expression_: PotentialExpression):
         expr = str(potential_expression_.expression)
-        ind = sorted(
-            list(str(ind) for ind in potential_expression_.independent_variables)
-        )
+        ind = sorted(str(ind) for ind in potential_expression_.independent_variables)
         params = {
             param: unyt_to_dict(val)
             for param, val in potential_expression_.parameters.items()
@@ -133,7 +131,7 @@ class AbstractPotential(GMSOBase):
 
     @field_serializer("tags_")
     def serialize_tags(self, tags_):
-        return_dict = dict()
+        return_dict = {}
         for key, val in tags_.items():
             if isinstance(val, u.unyt_array):
                 return_dict[key] = unyt_to_dict(val)

@@ -175,7 +175,7 @@ class AtomType(ParametricPotential):
             charge=u.unyt_quantity(self.charge.value, self.charge.units),
             atomclass=self.atomclass,
             doi=self.doi,
-            overrides=(set(o for o in self.overrides) if self.overrides else None),
+            overrides=(set(self.overrides) if self.overrides else None),
             description=self.description,
             definition=self.definition,
         )

@@ -145,7 +145,7 @@ class TestConvertMBuild(BaseTest):
         assert_allclose_units(top.box.lengths, [3, 3, 3] * u.nm, rtol=1e-5, atol=1e-8)
 
     def test_pass_failed_box(self, mb_ethane):
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             from_mbuild(mb_ethane, box=[3, 3, 3], parse_label=True)
 
     def test_pass_box_bounding(self, mb_ethane):

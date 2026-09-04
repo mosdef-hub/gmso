@@ -85,14 +85,14 @@ def write_top(
         out_file.write(
             "; File {} written by GMSO at {}\n\n".format(
                 top.name if top.name is not None else "",
-                str(datetime.datetime.now()),
+                str(datetime.datetime.now(datetime.timezone.utc).astimezone()),
             )
         )
         out_file.write(
             "[ defaults ]\n; nbfunc\tcomb-rule\tgen-pairs\tfudgeLJ\t\tfudgeQQ\n"
         )
         out_file.write(
-            "{0}\t\t{1}\t\t{2}\t\t{3}\t\t{4}\n\n".format(
+            "{}\t\t{}\t\t{}\t\t{}\t\t{}\n\n".format(
                 top_vars["nbfunc"],
                 top_vars["comb-rule"],
                 top_vars["gen-pairs"],
@@ -106,7 +106,7 @@ def write_top(
         )
 
         out_file.writelines(
-            "{0:12s}{1:4s}{2:12.5f}{3:12.5f}\t{4:4s}{5:12.5f}{6:12.5f}\n".format(
+            "{:12s}{:4s}{:12.5f}{:12.5f}\t{:4s}{:12.5f}{:12.5f}\n".format(
                 atom_type.name,
                 str(_lookup_atomic_number(atom_type)),
                 atom_type.mass.in_units(u.amu).value,
@@ -148,7 +148,7 @@ def write_top(
             out_file.write("\n[ moleculetype ]\n; name\tnrexcl\n")
 
             # TODO: Lookup and join nrexcl from each molecule object
-            out_file.write("{0}\t{1}\n\n".format(tag, top_vars["nrexcl"]))
+            out_file.write("{}\t{}\n\n".format(tag, top_vars["nrexcl"]))
 
             """Write out atoms for each unique molecule."""
             out_file.write(
@@ -157,11 +157,11 @@ def write_top(
             # Each unique molecule need to be reindexed (restarting from 0)
             # The shifted_idx_map is needed to make sure all the atom index used in
             # latter connection sections are acurate
-            shifted_idx_map = dict()
+            shifted_idx_map = {}
             for idx, site in enumerate(unique_molecules[tag]["sites"]):
                 shifted_idx_map[top.get_index(site)] = idx
                 out_file.write(
-                    "{0:8s}{1:12s}{2:8s}{3:12s}{4:8s}{5:4s}{6:12.5f}{7:12.5f}\n".format(
+                    "{:8s}{:12s}{:8s}{:12s}{:8s}{:4s}{:12.5f}{:12.5f}\n".format(
                         str(idx + 1),
                         site.atom_type.name,
                         str(site.molecule.number + 1 if site.molecule else 1),
@@ -209,9 +209,7 @@ def write_top(
                     "; OW_idx\tfunct\tdoh\tdhh\n"
                 )
                 out_file.write(
-                    "{0:4s}{1:4s}{2:15.5f}{3:15.5f}\n".format(
-                        str(ow_idx), "1", doh, dhh
-                    )
+                    "{:4s}{:4s}{:15.5f}{:15.5f}\n".format(str(ow_idx), "1", doh, dhh)
                 )
 
                 # Write exclusion
@@ -244,8 +242,8 @@ def write_top(
                         )
                     elif conn_group in ["dihedrals", "impropers"]:
                         proper_groups = {
-                            "RyckaertBellemansTorsionPotential": list(),
-                            "PeriodicTorsionPotential": list(),
+                            "RyckaertBellemansTorsionPotential": [],
+                            "PeriodicTorsionPotential": [],
                         }
                         for dihedral in unique_molecules[tag][conn_group]:
                             ptype = pot_types[dihedral.connection_type]
@@ -316,7 +314,7 @@ def write_top(
         out_file.write("[ molecules ]\n; molecule\tnmols\n")
         for tag in unique_molecules:
             out_file.write(
-                "{0}\t{1}\n".format(tag, len(unique_molecules[tag]["subtags"]))
+                "{}\t{}\n".format(tag, len(unique_molecules[tag]["subtags"]))
             )
 
 
@@ -349,7 +347,7 @@ def _validate_compatibility(top):
 def _get_top_vars(top, top_vars):
     """Generate a dictionary of values for the defaults directive."""
     combining_rule_to_gmx = {"lorentz": 2, "geometric": 3}
-    default_top_vars = dict()
+    default_top_vars = {}
     default_top_vars["nbfunc"] = 1  # modify this to check for lj or buckingham
     default_top_vars["comb-rule"] = combining_rule_to_gmx[top.combining_rule]
     default_top_vars["gen-pairs"] = "yes"
@@ -366,7 +364,7 @@ def _get_top_vars(top, top_vars):
 def _get_unique_molecules(top):
     unique_molecules = {
         tag: {
-            "subtags": list(),
+            "subtags": [],
         }
         for tag in top.unique_site_labels("molecule", name_only=True)
     }
@@ -375,58 +373,54 @@ def _get_unique_molecules(top):
         unique_molecules[molecule.name]["subtags"].append(molecule)
 
     if len(unique_molecules) == 0:
-        unique_molecules[top.name] = dict()
+        unique_molecules[top.name] = {}
         unique_molecules[top.name]["subtags"] = [top.name]
         unique_molecules[top.name]["sites"] = list(top.sites)
-        unique_molecules[top.name]["position_restraints"] = list(
+        unique_molecules[top.name]["position_restraints"] = [
             site for site in top.sites if site.restraint
-        )
+        ]
         unique_molecules[top.name]["pairs"] = generate_pairs_lists(
             top, refer_from_scaling_factor=True
         )["pairs14"]
         unique_molecules[top.name]["bonds"] = list(top.bonds)
-        unique_molecules[top.name]["bond_restraints"] = list(
+        unique_molecules[top.name]["bond_restraints"] = [
             bond for bond in top.bonds if bond.restraint
-        )
+        ]
         unique_molecules[top.name]["angles"] = list(top.angles)
-        unique_molecules[top.name]["angle_restraints"] = list(
+        unique_molecules[top.name]["angle_restraints"] = [
             angle for angle in top.angles if angle.restraint
-        )
+        ]
         unique_molecules[top.name]["dihedrals"] = list(top.dihedrals)
-        unique_molecules[top.name]["dihedral_restraints"] = list(
+        unique_molecules[top.name]["dihedral_restraints"] = [
             dihedral for dihedral in top.dihedrals if dihedral.restraint
-        )
+        ]
         unique_molecules[molecule.name]["impropers"] = list(top.impropers)
 
     else:
-        for tag in unique_molecules:
-            molecule = unique_molecules[tag]["subtags"][0]
-            unique_molecules[tag]["sites"] = list(
-                top.iter_sites(key="molecule", value=molecule)
-            )
-            unique_molecules[tag]["position_restraints"] = list(
+        for molecules in unique_molecules.values():
+            molecule = molecules["subtags"][0]
+            molecules["sites"] = list(top.iter_sites(key="molecule", value=molecule))
+            molecules["position_restraints"] = [
                 site
                 for site in top.sites
                 if (site.restraint and site.molecule == molecule)
-            )
-            unique_molecules[tag]["pairs"] = generate_pairs_lists(top, molecule)[
-                "pairs14"
             ]
-            unique_molecules[tag]["bonds"] = list(molecule_bonds(top, molecule))
-            unique_molecules[tag]["bond_restraints"] = list(
+            molecules["pairs"] = generate_pairs_lists(top, molecule)["pairs14"]
+            molecules["bonds"] = list(molecule_bonds(top, molecule))
+            molecules["bond_restraints"] = [
                 bond for bond in molecule_bonds(top, molecule) if bond.restraint
-            )
-            unique_molecules[tag]["angles"] = list(molecule_angles(top, molecule))
-            unique_molecules[tag]["angle_restraints"] = list(
+            ]
+            molecules["angles"] = list(molecule_angles(top, molecule))
+            molecules["angle_restraints"] = [
                 angle for angle in molecule_angles(top, molecule) if angle.restraint
-            )
-            unique_molecules[tag]["dihedrals"] = list(molecule_dihedrals(top, molecule))
-            unique_molecules[tag]["dihedral_restraints"] = list(
+            ]
+            molecules["dihedrals"] = list(molecule_dihedrals(top, molecule))
+            molecules["dihedral_restraints"] = [
                 dihedral
                 for dihedral in molecule_dihedrals(top, molecule)
                 if dihedral.restraint
-            )
-            unique_molecules[tag]["impropers"] = list(molecule_impropers(top, molecule))
+            ]
+            molecules["impropers"] = list(molecule_impropers(top, molecule))
     return unique_molecules
 
 
@@ -455,7 +449,7 @@ def _write_pairs(top, pair, shifted_idx_map):
         shifted_idx_map[top.get_index(pair[1])] + 1,
     ]
 
-    line = "{0:8s}{1:8s}{2:4s}\n".format(
+    line = "{:8s}{:8s}{:4s}\n".format(
         str(pair_idx[0]),
         str(pair_idx[1]),
         "1",
@@ -479,9 +473,9 @@ def _write_connection(top, connection, potential_name, shifted_idx_map):
 def _harmonic_bond_potential_writer(top, bond, shifted_idx_map):
     """Write harmonic bond information."""
     eq_connsList = bond.equivalent_members()
-    indexList = [tuple(map(lambda x: top.get_index(x), conn)) for conn in eq_connsList]
-    sorted_indicesList = sorted(indexList)[0]
-    line = "{0:8s}{1:8s}{2:4s}{3:15.5f}{4:15.5f}\n".format(
+    indexList = [tuple(top.get_index(x) for x in conn) for conn in eq_connsList]
+    sorted_indicesList = min(indexList)
+    line = "{:8s}{:8s}{:4s}{:15.5f}{:15.5f}\n".format(
         str(shifted_idx_map[sorted_indicesList[0]] + 1),
         str(shifted_idx_map[sorted_indicesList[1]] + 1),
         "1",
@@ -494,9 +488,9 @@ def _harmonic_bond_potential_writer(top, bond, shifted_idx_map):
 def _fene_bond_potential_writer(top, bond, shifted_idx_map):
     """Write FENE bond information."""
     eq_connsList = bond.equivalent_members()
-    indexList = [tuple(map(lambda x: top.get_index(x), conn)) for conn in eq_connsList]
-    sorted_indicesList = sorted(indexList)[0]
-    line = "{0:8s}{1:8s}{2:4s}{3:15.5f}{4:15.5f}\n".format(
+    indexList = [tuple(top.get_index(x) for x in conn) for conn in eq_connsList]
+    sorted_indicesList = min(indexList)
+    line = "{:8s}{:8s}{:4s}{:15.5f}{:15.5f}\n".format(
         str(shifted_idx_map[sorted_indicesList[0]] + 1),
         str(shifted_idx_map[sorted_indicesList[1]] + 1),
         "7",
@@ -509,10 +503,10 @@ def _fene_bond_potential_writer(top, bond, shifted_idx_map):
 def _harmonic_angle_potential_writer(top, angle, shifted_idx_map):
     """Write harmonic angle information."""
     eq_connsList = angle.equivalent_members()
-    indexList = [tuple(map(lambda x: top.get_index(x), conn)) for conn in eq_connsList]
-    sorted_indicesList = sorted(indexList)[0]
+    indexList = [tuple(top.get_index(x) for x in conn) for conn in eq_connsList]
+    sorted_indicesList = min(indexList)
 
-    line = "{0:8s}{1:8s}{2:8s}{3:4s}{4:15.5f}{5:15.5f}\n".format(
+    line = "{:8s}{:8s}{:8s}{:4s}{:15.5f}{:15.5f}\n".format(
         str(shifted_idx_map[sorted_indicesList[0]] + 1),
         str(shifted_idx_map[sorted_indicesList[1]] + 1),
         str(shifted_idx_map[sorted_indicesList[2]] + 1),
@@ -525,7 +519,7 @@ def _harmonic_angle_potential_writer(top, angle, shifted_idx_map):
 
 def _ryckaert_bellemans_torsion_writer(top, dihedral, shifted_idx_map):
     """Write Ryckaert-Bellemans Torsion information."""
-    line = "{0:8s}{1:8s}{2:8s}{3:8s}{4:4s}{5:15.5f}{6:15.5f}{7:15.5f}{8:15.5f}{9:15.5f}{10:15.5f}\n".format(
+    line = "{:8s}{:8s}{:8s}{:8s}{:4s}{:15.5f}{:15.5f}{:15.5f}{:15.5f}{:15.5f}{:15.5f}\n".format(
         str(shifted_idx_map[top.get_index(dihedral.connection_members[0])] + 1),
         str(shifted_idx_map[top.get_index(dihedral.connection_members[1])] + 1),
         str(shifted_idx_map[top.get_index(dihedral.connection_members[2])] + 1),
@@ -560,9 +554,9 @@ def _periodic_torsion_writer(top, dihedral, shifted_idx_map):
     else:
         raise TypeError(f"Type {type(dihedral)} not supported.")
 
-    lines = list()
+    lines = []
     for i in range(layers):
-        line = "{0:8s}{1:8s}{2:8s}{3:8s}{4:4s}{5:15.5f}{6:15.5f}{7:4}\n".format(
+        line = "{:8s}{:8s}{:8s}{:8s}{:4s}{:15.5f}{:15.5f}{:4}\n".format(
             str(shifted_idx_map[top.get_index(dihedral.connection_members[0])] + 1),
             str(shifted_idx_map[top.get_index(dihedral.connection_members[1])] + 1),
             str(shifted_idx_map[top.get_index(dihedral.connection_members[2])] + 1),
@@ -592,7 +586,7 @@ def _write_restraint(top, site_or_conn, type, shifted_idx_map):
 
 def _position_restraints_writer(top, site, shifted_idx_map):
     """Write site position restraint information."""
-    line = "{0:8s}{1:4s}{2:15.5f}{3:15.5f}{4:15.5f}\n".format(
+    line = "{:8s}{:4s}{:15.5f}{:15.5f}{:15.5f}\n".format(
         str(shifted_idx_map[top.get_index(site)] + 1),
         "1",
         site.restraint["kx"].in_units(u.Unit("kJ/(mol * nm**2)")).value,
@@ -604,7 +598,7 @@ def _position_restraints_writer(top, site, shifted_idx_map):
 
 def _bond_restraint_writer(top, bond, shifted_idx_map):
     """Write bond restraint information."""
-    line = "{0:8s}{1:8s}{2:4s}{3:15.5f}{4:15.5f}\n".format(
+    line = "{:8s}{:8s}{:4s}{:15.5f}{:15.5f}\n".format(
         str(shifted_idx_map[top.get_index(bond.connection_members[0])] + 1),
         str(shifted_idx_map[top.get_index(bond.connection_members[1])] + 1),
         "6",
@@ -616,7 +610,7 @@ def _bond_restraint_writer(top, bond, shifted_idx_map):
 
 def _angle_restraint_writer(top, angle, shifted_idx_map):
     """Write angle restraint information."""
-    line = "{0:8s}{1:8s}{2:8s}{3:8s}{4:4s}{5:15.5f}{6:15.5f}{7:4}\n".format(
+    line = "{:8s}{:8s}{:8s}{:8s}{:4s}{:15.5f}{:15.5f}{:4}\n".format(
         str(shifted_idx_map[top.get_index(angle.connection_members[1])] + 1),
         str(shifted_idx_map[top.get_index(angle.connection_members[0])] + 1),
         str(shifted_idx_map[top.get_index(angle.connection_members[1])] + 1),
@@ -631,7 +625,7 @@ def _angle_restraint_writer(top, angle, shifted_idx_map):
 
 def _dihedral_restraint_writer(top, dihedral, shifted_idx_map):
     """Write dihedral restraint information."""
-    line = "{0:8s}{1:8s}{2:8s}{3:8s}{4:4s}{5:15.5f}{6:15.5f}{7:15.5f}\n".format(
+    line = "{:8s}{:8s}{:8s}{:8s}{:4s}{:15.5f}{:15.5f}{:15.5f}\n".format(
         str(shifted_idx_map[top.get_index(dihedral.connection_members[0])] + 1),
         str(shifted_idx_map[top.get_index(dihedral.connection_members[1])] + 1),
         str(shifted_idx_map[top.get_index(dihedral.connection_members[2])] + 1),

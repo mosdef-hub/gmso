@@ -23,7 +23,7 @@ from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
 from gmso.core.pairpotential_type import PairPotentialType
-from gmso.core.views import TopologyPotentialView
+from gmso.core.views import AtomTypesView, TopologyPotentialView
 from gmso.exceptions import GMSOError
 from gmso.utils.connectivity import (
     identify_connections as _identify_connections,
@@ -340,12 +340,12 @@ class Topology:
         return unique_tags
 
     @property
-    def atom_types(self, include_virtual_types=False):
+    def atom_types(self):
         """Return all atom_types in the topology.
 
         Notes
         -----
-        This returns a TopologyPotentialView object which can be used as
+        This returns a AtomTypesView object which can be used as
         an iterator. By default, this will return a view with all the atom_types
         in the topology (if multiple sites point to the same atom_type, only a
         single reference is returned/iterated upon). Use, different filters(builtin or custom) to suit your needs.
@@ -380,16 +380,11 @@ class Topology:
 
         Returns
         -------
-        gmso.core.views.TopologyPotentialView
+        gmso.core.views.AtomTypesView
             An iterator of the atom_types in the system filtered according to the
             filter function supplied.
         """
-        if include_virtual_types:
-            return TopologyPotentialView(
-                itertools.chain(self._sites, self._virtual_sites)
-            )
-        else:
-            return TopologyPotentialView(self._sites)
+        return AtomTypesView(self)
 
     @property
     def connection_types(self):
@@ -622,36 +617,36 @@ class Topology:
     @property
     def atom_type_expressions(self):
         """Return all atom_type expressions in the topology."""
-        return list(set([atype.expression for atype in self.atom_types]))
+        return list({atype.expression for atype in self.atom_types})
 
     @property
     def connection_type_expressions(self):
         """Return all connection_type expressions in the topology."""
-        return list(set([contype.expression for contype in self.connection_types]))
+        return list({contype.expression for contype in self.connection_types})
 
     @property
     def bond_type_expressions(self):
         """Return all bond_type expressions in the topology."""
-        return list(set([btype.expression for btype in self.bond_types]))
+        return list({btype.expression for btype in self.bond_types})
 
     @property
     def angle_type_expressions(self):
         """Return all angle_type expressions in the topology."""
-        return list(set([atype.expression for atype in self.angle_types]))
+        return list({atype.expression for atype in self.angle_types})
 
     @property
     def dihedral_type_expressions(self):
         """Return all dihedral_type expressions in the topology."""
-        return list(set([dtype.expression for dtype in self.dihedral_types]))
+        return list({dtype.expression for dtype in self.dihedral_types})
 
     @property
     def improper_type_expressions(self):
         """Return all improper_type expressions in the topology."""
-        return list(set([itype.expression for itype in self.improper_types]))
+        return list({itype.expression for itype in self.improper_types})
 
     @property
     def pairpotential_type_expressions(self):
-        return list(set([ptype.expression for ptype in self._pairpotential_types]))
+        return list({ptype.expression for ptype in self._pairpotential_types})
 
     def get_lj_scale(self, *, molecule_id=None, interaction=None):
         """Return the selected lj_scales defined for this topology."""
@@ -939,11 +934,11 @@ class Topology:
 
     def _bookkeep_potentials(self):
         self._potentials_count = {
-            "atom_types": len(self.atom_types),
-            "bond_types": len(self.bond_types),
-            "angle_types": len(self.angle_types),
-            "dihedral_types": len(self.dihedral_types),
-            "improper_types": len(self.improper_types),
+            "atom_types": len(self.atom_types()),
+            "bond_types": len(self.bond_types()),
+            "angle_types": len(self.angle_types()),
+            "dihedral_types": len(self.dihedral_types()),
+            "improper_types": len(self.improper_types()),
             "pairpotential_types": len(self._pairpotential_types),
         }
 
@@ -969,11 +964,12 @@ class Topology:
         if not isinstance(pairpotentialtype, PairPotentialType):
             raise GMSOError(f"Non-PairPotentialType {pairpotentialtype} provided")
         for atype in pairpotentialtype.member_types:
-            if atype not in {t.name for t in self.atom_types}:
-                if atype not in {t.atomclass for t in self.atom_types}:
-                    raise GMSOError(
-                        f"There is no name/atomclass of AtomType {atype} in current topology"
-                    )
+            if atype not in {t.name for t in self.atom_types} and atype not in {
+                t.atomclass for t in self.atom_types
+            }:
+                raise GMSOError(
+                    f"There is no name/atomclass of AtomType {atype} in current topology"
+                )
         self._pairpotential_types.add(pairpotentialtype)
 
     def remove_pairpotentialtype(self, pair_of_types):
@@ -1047,9 +1043,9 @@ class Topology:
         }
 
         if group == "topology":
-            result = list()
-            for subgroup in typed_status:
-                result.append(typed_status[subgroup](self))
+            result = []
+            for extractor in typed_status.values():
+                result.append(extractor(self))
             return all(result)
         elif group in typed_status:
             return typed_status[group](self)
@@ -1075,7 +1071,7 @@ class Topology:
             Dictionary of all untyped object, key of the dictionary corresponds to
             object group names define above.
         """
-        untyped = dict()
+        untyped = {}
         untyped_extractors = {
             "sites": self._get_untyped_sites,
             "bonds": self._get_untyped_bonds,
@@ -1084,8 +1080,8 @@ class Topology:
             "impropers": self._get_untyped_impropers,
         }
         if group == "topology":
-            for subgroup in untyped_extractors:
-                untyped.update(untyped_extractors[subgroup]())
+            for extractor in untyped_extractors.values():
+                untyped.update(extractor())
         elif isinstance(group, (list, tuple, set)):
             for subgroup in group:
                 untyped.update(untyped_extractors[subgroup]())
@@ -1104,7 +1100,7 @@ class Topology:
 
     def _get_untyped_sites(self):
         "Return a list of untyped sites"
-        untyped = {"sites": list()}
+        untyped = {"sites": []}
         for site in self._sites:
             if not site.atom_type:
                 untyped["sites"].append(site)
@@ -1112,7 +1108,7 @@ class Topology:
 
     def _get_untyped_bonds(self):
         "Return a list of untyped bonds"
-        untyped = {"bonds": list()}
+        untyped = {"bonds": []}
         for bond in self._bonds:
             if not bond.bond_type:
                 untyped["bonds"].append(bond)
@@ -1120,7 +1116,7 @@ class Topology:
 
     def _get_untyped_angles(self):
         "Return a list of untyped angles"
-        untyped = {"angles": list()}
+        untyped = {"angles": []}
         for angle in self._angles:
             if not angle.angle_type:
                 untyped["angles"].append(angle)
@@ -1128,7 +1124,7 @@ class Topology:
 
     def _get_untyped_dihedrals(self):
         "Return a list of untyped dihedrals"
-        untyped = {"dihedrals": list()}
+        untyped = {"dihedrals": []}
         for dihedral in self._dihedrals:
             if not dihedral.dihedral_type:
                 untyped["dihedrals"].append(dihedral)
@@ -1136,7 +1132,7 @@ class Topology:
 
     def _get_untyped_impropers(self):
         "Return a list of untyped impropers"
-        untyped = {"impropers": list()}
+        untyped = {"impropers": []}
         for improper in self._impropers:
             if not improper.improper_type:
                 untyped["impropers"].append(improper)
@@ -1335,8 +1331,8 @@ class Topology:
                 "This topology is not typed, please type this object before converting to a pandas dataframe"
             )
         if parameter == "sites":
-            df["atom_types"] = list(site.atom_type.name for site in self.sites)
-            df["names"] = list(site.name for site in self.sites)
+            df["atom_types"] = [site.atom_type.name for site in self.sites]
+            df["names"] = [site.name for site in self.sites]
             for attr in site_attrs:
                 df = self._parse_dataframe_attrs(df, attr, parameter, unyts_bool)
         elif parameter in ["bonds", "angles", "dihedrals", "impropers"]:
@@ -1567,7 +1563,7 @@ class Topology:
         if connections is None:
             connections = ["bonds", "angles", "dihedrals", "impropers"]
         else:
-            connections = set([option.lower() for option in connections])
+            connections = {option.lower() for option in connections}
             for option in connections:
                 if option not in ["bonds", "angles", "dihedrals", "impropers"]:
                     raise ValueError(
@@ -1600,7 +1596,7 @@ class Topology:
             molecule_impropers,
         )
 
-        of_group = True if label_type == "group" else False
+        of_group = label_type == "group"
         sites_dict = {
             site: (idx, site.clone())
             for idx, site in enumerate(self.iter_sites(label_type, label))
@@ -1631,7 +1627,7 @@ class Topology:
 
         new_top = gmso.Topology(name=label if isinstance(label, str) else label[0])
 
-        for ref_site, new_site in sites_dict.items():
+        for new_site in sites_dict.values():
             new_top.add_site(new_site[1])
         for ref_conn, conn_idx in bonds_dict.items():
             bond = gmso.Bond(
@@ -1729,11 +1725,11 @@ class Topology:
             site_attrs = []
         sites_per_connection = len(getattr(self, parameter)[0].connection_members)
         for site_index in np.arange(sites_per_connection):
-            df["Atom" + str(site_index)] = list(
+            df["Atom" + str(site_index)] = [
                 str(connection.connection_members[site_index].name)
                 + f"({self.get_index(connection.connection_members[site_index])})"
                 for connection in getattr(self, parameter)
-            )
+            ]
         for attr in site_attrs:
             df = self._parse_dataframe_attrs(
                 df, attr, parameter, sites_per_connection, unyts_bool
@@ -1749,36 +1745,36 @@ class Topology:
             if "." in attr:
                 try:
                     attr1, attr2 = attr.split(".")
-                    df[attr] = list(
+                    df[attr] = [
                         _return_float_for_unyt(
                             getattr(getattr(site, attr1), attr2),
                             unyts_bool,
                         )
                         for site in self.sites
-                    )
+                    ]
                 except AttributeError:
                     raise AttributeError(
                         f"The attribute {attr} is not in this gmso object."
                     )
             elif attr == "positions" or attr == "position":
                 for i, dimension in enumerate(["x", "y", "z"]):
-                    df[dimension] = list(
+                    df[dimension] = [
                         _return_float_for_unyt(site.position[i], unyts_bool)
                         for site in self.sites
-                    )
+                    ]
             elif attr == "charge" or attr == "charges":
-                df["charge (e)"] = list(
+                df["charge (e)"] = [
                     site.charge.in_units(
                         u.Unit("elementary_charge", registry=UnitReg.default_reg())
                     ).to_value()
                     for site in self.sites
-                )
+                ]
             else:
                 try:
-                    df[attr] = list(
+                    df[attr] = [
                         _return_float_for_unyt(getattr(site, attr), unyts_bool)
                         for site in self.sites
-                    )
+                    ]
                 except AttributeError:
                     raise AttributeError(
                         f"The attribute {attr} is not in this gmso object."
@@ -1789,7 +1785,7 @@ class Topology:
                 if "." in attr:
                     try:
                         attr1, attr2 = attr.split(".")
-                        df[attr + " Atom" + str(site_index)] = list(
+                        df[attr + " Atom" + str(site_index)] = [
                             _return_float_for_unyt(
                                 getattr(
                                     getattr(
@@ -1801,35 +1797,35 @@ class Topology:
                                 unyts_bool,
                             )
                             for connection in getattr(self, parameter)
-                        )
+                        ]
                     except AttributeError:
                         raise AttributeError(
                             f"The attribute {attr} is not in this gmso object."
                         )
                 elif attr == "positions" or attr == "position":
-                    df["x Atom" + str(site_index) + " (nm)"] = list(
+                    df["x Atom" + str(site_index) + " (nm)"] = [
                         _return_float_for_unyt(
                             connection.connection_members[site_index].position[0],
                             unyts_bool,
                         )
                         for connection in getattr(self, parameter)
-                    )
-                    df["y Atom" + str(site_index) + " (nm)"] = list(
+                    ]
+                    df["y Atom" + str(site_index) + " (nm)"] = [
                         _return_float_for_unyt(
                             connection.connection_members[site_index].position[1],
                             unyts_bool,
                         )
                         for connection in getattr(self, parameter)
-                    )
-                    df["z Atom" + str(site_index) + " (nm)"] = list(
+                    ]
+                    df["z Atom" + str(site_index) + " (nm)"] = [
                         _return_float_for_unyt(
                             connection.connection_members[site_index].position[2],
                             unyts_bool,
                         )
                         for connection in getattr(self, parameter)
-                    )
+                    ]
                 elif attr == "charge" or attr == "charges":
-                    df["charge Atom" + str(site_index) + " (e)"] = list(
+                    df["charge Atom" + str(site_index) + " (e)"] = [
                         connection.connection_members[site_index]
                         .charge.in_units(
                             u.Unit(
@@ -1839,10 +1835,10 @@ class Topology:
                         )
                         .value
                         for connection in getattr(self, parameter)
-                    )
+                    ]
                 else:
                     try:
-                        df[f"{attr} Atom {site_index}"] = list(
+                        df[f"{attr} Atom {site_index}"] = [
                             _return_float_for_unyt(
                                 getattr(
                                     connection.connection_members[site_index],
@@ -1851,7 +1847,7 @@ class Topology:
                                 unyts_bool,
                             )
                             for connection in getattr(self, parameter)
-                        )
+                        ]
                     except AttributeError:
                         raise AttributeError(
                             f"The attribute {attr} is not in this gmso object."
@@ -1870,13 +1866,13 @@ class Topology:
         ):
             df[
                 f"Parameter {i} ({param}) {getattr(getattr(self, parameter)[0], parameter[:-1] + '_type').parameters[param].units}"
-            ] = list(
+            ] = [
                 _return_float_for_unyt(
                     getattr(connection, parameter[:-1] + "_type").parameters[param],
                     unyts_bool,
                 )
                 for connection in getattr(self, parameter)
-            )
+            ]
         return df
 
     @classmethod
@@ -1888,12 +1884,12 @@ class Topology:
         loader = LoadersRegistry.get_callable(filename.suffix)
         return loader(filename, **kwargs)
 
-    def convert_potential_styles(self, expressionMap={}):
+    def convert_potential_styles(self, expressionMap=None):
         """Convert from one parameter form to another.
 
         Parameters
         ----------
-        expressionMap : dict, default={}
+        expressionMap : dict, default=None
             Map where the keys represent the current potential
             type and the corresponding values represent the desired
             potential type. The desired potential style can be
@@ -1907,6 +1903,9 @@ class Topology:
         # TODO: convert_potential_styles with PotentialExpression
         """
         # TODO: raise warnings for improper values or keys in expressionMap
+
+        if expressionMap is None:
+            expressionMap = {}
 
         return convert_topology_expressions(self, expressionMap)
 

@@ -19,12 +19,14 @@ from gmso.tests.utils import get_path
 pfilter = PotentialFilters.UNIQUE_SORTED_NAMES
 
 
-def compare_lammps_files(line1, line2, skip_linesList=[], offsets=None):
+def compare_lammps_files(line1, line2, skip_linesList=None, offsets=None):
     """Check for line by line equality between lammps files, by any values.
 
     offsets = [file1: [(start, step)], file2: [(start, step)]
     """
 
+    if skip_linesList is None:
+        skip_linesList = []
     length1 = len(line1)
     length2 = len(line2)
     line_counter1 = 0
@@ -89,10 +91,12 @@ class TestLammpsWriter(BaseTest):
         read_top = Topology.load("water.lammps")
         assert are_equivalent_topologies(read_top, typed_water_system)
 
-    def test_read_lammps(self, filename=get_path("data.lammps")):
+    def test_read_lammps(self):
+        filename = get_path("data.lammps")
         gmso.Topology.load(filename)
 
-    def test_read_box(self, filename=get_path("data.lammps")):
+    def test_read_box(self):
+        filename = get_path("data.lammps")
         read = gmso.Topology.load(filename)
         assert read.box == Box(lengths=[1, 1, 1])
 
@@ -101,7 +105,8 @@ class TestLammpsWriter(BaseTest):
         read = gmso.Topology.load("ar.lammps")
         assert read.n_sites == 100
 
-    def test_read_mass(self, filename=get_path("data.lammps")):
+    def test_read_mass(self):
+        filename = get_path("data.lammps")
         read = gmso.Topology.load(filename)
         masses = [i.mass for i in read.atom_types]
 
@@ -109,23 +114,26 @@ class TestLammpsWriter(BaseTest):
             masses, u.unyt_array(1.0079, u.g / u.mol), rtol=1e-5, atol=1e-8
         )
 
-    def test_read_charge(self, filename=get_path("data.lammps")):
+    def test_read_charge(self):
+        filename = get_path("data.lammps")
         read = gmso.Topology.load(filename)
         charge = [i.charge for i in read.atom_types]
 
         assert_allclose_units(charge, u.unyt_array(0, u.C), rtol=1e-5, atol=1e-8)
 
-    def test_read_sigma(self, filename=get_path("data.lammps")):
+    def test_read_sigma(self):
+        filename = get_path("data.lammps")
         read = gmso.Topology.load(filename)
-        lj = [i.parameters for i in read.atom_types][0]
+        lj = next(i.parameters for i in read.atom_types)
 
         assert_allclose_units(
             lj["sigma"], u.unyt_array(3, u.angstrom), rtol=1e-5, atol=1e-8
         )
 
-    def test_read_epsilon(self, filename=get_path("data.lammps")):
+    def test_read_epsilon(self):
+        filename = get_path("data.lammps")
         read = gmso.Topology.load(filename)
-        lj = [i.parameters for i in read.atom_types][0]
+        lj = next(i.parameters for i in read.atom_types)
 
         assert_allclose_units(
             lj["epsilon"],
@@ -333,7 +341,8 @@ class TestLammpsWriter(BaseTest):
             skip_linesList=[0],
             offsets=[[[0, 1], [17, 1]], []],
         )
-        out_lammps = open("gmso.lammps", "r").readlines()
+        with open("gmso.lammps", "r") as f:
+            out_lammps = f.readlines()
         found_impropers = False
         for i, line in enumerate(out_lammps):
             if "Improper Coeffs" in line:
@@ -417,16 +426,9 @@ class TestLammpsWriter(BaseTest):
         assert real_top.sites[0].charge.units == charge_unit
         if unit_style == "lj":
             largest_eps = max(
-                list(
-                    map(
-                        lambda x: x.parameters["epsilon"],
-                        typed_ethane.atom_types,
-                    )
-                )
+                [x.parameters["epsilon"] for x in typed_ethane.atom_types]
             )
-            largest_sig = max(
-                list(map(lambda x: x.parameters["sigma"], typed_ethane.atom_types))
-            )
+            largest_sig = max([x.parameters["sigma"] for x in typed_ethane.atom_types])
             assert_allclose_units(
                 real_top.dihedrals[0].dihedral_type.parameters["k1"],
                 (
@@ -519,14 +521,7 @@ class TestLammpsWriter(BaseTest):
                     assert styleLine[-1] == stylesDict[styleLine[0]]
 
     def test_lj_passed_units(self, typed_ethane):
-        largest_eps = max(
-            list(
-                map(
-                    lambda x: x.parameters["epsilon"],
-                    typed_ethane.atom_types,
-                )
-            )
-        )
+        largest_eps = max([x.parameters["epsilon"] for x in typed_ethane.atom_types])
         typed_ethane.save(
             "ethane.lammps",
             unit_style="lj",
@@ -543,7 +538,7 @@ class TestLammpsWriter(BaseTest):
                 end = i
                 break
         largest_eps_written = max(
-            [obj for obj in map(lambda x: float(x.split()[1]), lines[start + 2 : end])]
+            [obj for obj in (float(x.split()[1]) for x in lines[start + 2 : end])]
         )
         assert largest_eps_written == 0.5
 

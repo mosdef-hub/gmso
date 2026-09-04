@@ -48,7 +48,7 @@ def from_parmed(structure: "pmd.Structure", refer_type: bool = True) -> "gmso.To
     assert isinstance(structure, pmd.Structure), msg
 
     top = gmso.Topology(name=structure.title)
-    site_map = dict()
+    site_map = {}
 
     if np.all(structure.box):
         # add gmso box from structure
@@ -377,13 +377,9 @@ def _add_conn_type_from_pmd(
         The independent variables.
     """
     try:
-        member_types = list(
-            map(lambda x: x.atom_type.name, gmso_conn.connection_members)
-        )
+        member_types = [x.atom_type.name for x in gmso_conn.connection_members]
     except AttributeError:
-        member_types = list(
-            map(lambda x: f"{x}: {x.atom_type})", gmso_conn.connection_members)
-        )
+        member_types = [f"{x}: {x.atom_type})" for x in gmso_conn.connection_members]
         raise AttributeError(
             f"Parmed structure is missing atomtypes. One of the atomtypes in \
             {member_types} is missing a type from the ParmEd structure.\
@@ -396,12 +392,9 @@ def _add_conn_type_from_pmd(
 
         member_classes = list(map(get_classes, gmso_conn.connection_members))
     except AttributeError:
-        member_classes = list(
-            map(
-                lambda x: f"{x}: {x.atom_type.name})",
-                gmso_conn.connection_members,
-            )
-        )
+        member_classes = [
+            f"{x}: {x.atom_type.name})" for x in gmso_conn.connection_members
+        ]
     top_conntype = getattr(gmso, connStr)(
         name=name,
         parameters=conn_params,
@@ -454,10 +447,10 @@ def to_parmed(top: "gmso.Topology", refer_type: bool = True) -> "pmd.Structure":
     )
 
     # Maps
-    atom_map = dict()  # Map site to atom
-    bond_map = dict()  # Map top's bond to structure's bond
-    angle_map = dict()  # Map top's angle to strucutre's angle
-    dihedral_map = dict()  # Map top's dihedral to structure's dihedral
+    atom_map = {}  # Map site to atom
+    bond_map = {}  # Map top's bond to structure's bond
+    angle_map = {}  # Map top's angle to strucutre's angle
+    dihedral_map = {}  # Map top's dihedral to structure's dihedral
 
     # Set up unparametrized system
     # Build up atom
@@ -543,7 +536,7 @@ def _check_independent_residues(structure):
     """Check to see if residues will constitute independent graphs."""
     # Copy from foyer forcefield.py
     for res in structure.residues:
-        atoms_in_residue = set([*res.atoms])
+        atoms_in_residue = {*res.atoms}
         bond_partners_in_residue = [
             item
             for sublist in [atom.bond_partners for atom in res.atoms]
@@ -571,12 +564,13 @@ def _atom_types_from_gmso(top, structure, atom_map):
         The destination parmed Structure
     """
     # Maps
-    atype_map = dict()
+    atype_map = {}
     for atom_type in top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS):
         msg = f"Atom type {atom_type.name} expression does not match Parmed AtomType default expression"
-        assert expand(atom_type.expression) == expand(
+        if not expand(atom_type.expression) == expand(
             "4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)"
-        ), msg
+        ):
+            raise GMSOError(msg)
         # Extract Topology atom type information
         atype_name = atom_type.name
         # Convert charge to elementary_charge
@@ -623,10 +617,11 @@ def _bond_types_from_gmso(top, structure, bond_map):
     structure: parmed.Structure
         The destination parmed Structure
     """
-    btype_map = dict()
+    btype_map = {}
     for bond_type in top.bond_types(filter_by=pfilter):
         msg = f"Bond type {bond_type.name} expression does not match Parmed BondType default expression"
-        assert expand(bond_type.expression) == expand("0.5 * k * (r-r_eq)**2"), msg
+        if not expand(bond_type.expression) == expand("0.5 * k * (r-r_eq)**2"):
+            raise GMSOError(msg)
         # Extract Topology bond_type information
         btype_k = 0.5 * float(
             bond_type.parameters["k"].to("kcal / (angstrom**2 * mol)").value
@@ -659,12 +654,11 @@ def _angle_types_from_gmso(top, structure, angle_map):
     structure: parmed.Structure
         The destination parmed Structure
     """
-    agltype_map = dict()
+    agltype_map = {}
     for angle_type in top.angle_types(filter_by=pfilter):
         msg = f"Angle type {angle_type.name} expression does not match Parmed AngleType default expression"
-        assert expand(angle_type.expression) == expand(
-            "0.5 * k * (theta-theta_eq)**2"
-        ), msg
+        if not expand(angle_type.expression) == expand("0.5 * k * (theta-theta_eq)**2"):
+            raise GMSOError(msg)
         # Extract Topology angle_type information
         agltype_k = 0.5 * float(
             angle_type.parameters["k"].to("kcal / (radian**2 * mol)").value
@@ -674,7 +668,7 @@ def _angle_types_from_gmso(top, structure, angle_map):
         agltype = pmd.AngleType(agltype_k, agltype_theta_eq)
         # Type map to match Topology AngleType with Parmed AngleType
         #
-        for key, value in agltype_map.items():
+        for value in agltype_map.values():
             if value == agltype:
                 agltype = value
                 break
@@ -704,7 +698,7 @@ def _dihedral_types_from_gmso(top, structure, dihedral_map):
     structure: parmed.Structure
         The destination parmed Structure
     """
-    dtype_map = dict()
+    dtype_map = {}
     for dihedral_type in top.dihedral_types(filter_by=pfilter):
         msg = f"Dihedral type {dihedral_type.name} expression does not match Parmed DihedralType default expressions (Periodics, RBTorsions)"
         if expand(dihedral_type.expression) == expand(
