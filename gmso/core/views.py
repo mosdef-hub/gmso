@@ -1,3 +1,4 @@
+import itertools
 import uuid
 from collections import defaultdict
 
@@ -212,3 +213,52 @@ class TopologyPotentialView:
 
     def __len__(self):
         return len(list(self.yield_view()))  # This will be costly? But How frequent?
+
+
+class AtomTypesView(TopologyPotentialView):
+    """A view of a Topology's atom types, extending TopologyPotentialView."""
+
+    def __init__(
+        self,
+        topology,
+        filter_by=PotentialFilters.UNIQUE_ID,
+        include_virtual_types=False,
+    ):
+        self.topology = topology
+        self.include_virtual_types = include_virtual_types
+        iterator = self._build_iterator(topology, include_virtual_types)
+        super().__init__(iterator, filter_by=filter_by)
+
+    @staticmethod
+    def _build_iterator(topology, include_virtual_types):
+        if include_virtual_types:
+            return itertools.chain(topology._sites, topology._virtual_sites)
+        return topology._sites
+
+    def __call__(
+        self,
+        filter_by=PotentialFilters.UNIQUE_ID,
+        *,
+        include_virtual_types=False,
+    ):
+        """Return a view of the atom types, possibly with new options.
+
+        Parameters
+        ----------
+        filter_by : str, callable, or None, default=PotentialFilters.UNIQUE_ID
+            Positional-compatible with ``TopologyPotentialView.__call__``,
+            e.g. ``top.atom_types(PotentialFilters.UNIQUE_NAME_CLASS)``.
+        include_virtual_types : bool, keyword-only, default=False
+            If True, include atom types from virtual sites as well.
+        """
+        if (
+            filter_by == self.filter_by
+            and include_virtual_types == self.include_virtual_types
+        ):
+            return self
+
+        return AtomTypesView(
+            self.topology,
+            filter_by=filter_by,
+            include_virtual_types=include_virtual_types,
+        )

@@ -23,7 +23,7 @@ from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
 from gmso.core.pairpotential_type import PairPotentialType
-from gmso.core.views import TopologyPotentialView
+from gmso.core.views import AtomTypesView, TopologyPotentialView
 from gmso.exceptions import GMSOError
 from gmso.utils.connectivity import (
     identify_connections as _identify_connections,
@@ -340,12 +340,12 @@ class Topology:
         return unique_tags
 
     @property
-    def atom_types(self, include_virtual_types=False):
+    def atom_types(self):
         """Return all atom_types in the topology.
 
         Notes
         -----
-        This returns a TopologyPotentialView object which can be used as
+        This returns a AtomTypesView object which can be used as
         an iterator. By default, this will return a view with all the atom_types
         in the topology (if multiple sites point to the same atom_type, only a
         single reference is returned/iterated upon). Use, different filters(builtin or custom) to suit your needs.
@@ -380,16 +380,11 @@ class Topology:
 
         Returns
         -------
-        gmso.core.views.TopologyPotentialView
+        gmso.core.views.AtomTypesView
             An iterator of the atom_types in the system filtered according to the
             filter function supplied.
         """
-        if include_virtual_types:
-            return TopologyPotentialView(
-                itertools.chain(self._sites, self._virtual_sites)
-            )
-        else:
-            return TopologyPotentialView(self._sites)
+        return AtomTypesView(self)
 
     @property
     def connection_types(self):
