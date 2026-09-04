@@ -289,10 +289,8 @@ class TestHoomd(BaseTest):
         oplsaa = ForceField("oplsaa")
         top = apply(top, oplsaa, remove_untyped=True)
 
-        _gmso_snapshot, _snapshot_base_units = to_hoomd_snapshot(
-            top, base_units=base_units
-        )
-        _gmso_forces, _forces_base_units = to_hoomd_forcefield(
+        to_hoomd_snapshot(top, base_units=base_units)
+        to_hoomd_forcefield(
             top,
             r_cut=1.4,
             base_units=base_units,
@@ -313,8 +311,8 @@ class TestHoomd(BaseTest):
         oplsaa = ForceField("oplsaa")
         top = apply(top, oplsaa, remove_untyped=True)
 
-        _gmso_snapshot, _snapshot_base_units = to_hoomd_snapshot(top)
-        _gmso_forces, _forces_base_units = to_hoomd_forcefield(
+        to_hoomd_snapshot(top)
+        to_hoomd_forcefield(
             top=top,
             r_cut=1.4,
             pppm_kwargs={"resolution": (64, 64, 64), "order": 7},

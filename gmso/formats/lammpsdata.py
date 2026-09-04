@@ -1062,36 +1062,35 @@ def _write_impropertypes(out_file, top, base_unyts, parser, cfactorsDict):
     base_msg = "{}\t"  # handles index
     end_msg = "# {}\t{}\t{}\t{}\n"
 
-    if True:  # one cvff set per improper layer
-        ndecimalsDict = {"k": 6, "n": 0, "phi_eq": 0}
-        idx = 0
-        improper_typesList = []
-        for improper_type, members in index_membersList:
-            parameter_termList, parameterStrList = parser(improper_type)
-            variable_msg = "{:8}\t" * len(parameterStrList)
-            full_msg = base_msg + variable_msg + end_msg
-            for parameter_terms in parameter_termList:  # list of params on each line
-                out_file.write(
-                    full_msg.format(
-                        idx + 1,
-                        *[
-                            base_unyts.convert_parameter(
-                                convert_kelvin_to_energy_units(parameter, "kJ"),
-                                cfactorsDict,
-                                n_decimals=ndecimalsDict[parameterStr],
-                                name=parameterStr,
-                            )
-                            for parameter, parameterStr in zip(
-                                parameter_terms, parameterStrList
-                            )
-                        ],
-                        *members,
-                    )
+    ndecimalsDict = {"k": 6, "n": 0, "phi_eq": 0}
+    idx = 0
+    improper_typesList = []
+    for improper_type, members in index_membersList:
+        parameter_termList, parameterStrList = parser(improper_type)
+        variable_msg = "{:8}\t" * len(parameterStrList)
+        full_msg = base_msg + variable_msg + end_msg
+        for parameter_terms in parameter_termList:  # list of params on each line
+            out_file.write(
+                full_msg.format(
+                    idx + 1,
+                    *[
+                        base_unyts.convert_parameter(
+                            convert_kelvin_to_energy_units(parameter, "kJ"),
+                            cfactorsDict,
+                            n_decimals=ndecimalsDict[parameterStr],
+                            name=parameterStr,
+                        )
+                        for parameter, parameterStr in zip(
+                            parameter_terms, parameterStrList
+                        )
+                    ],
+                    *members,
                 )
-                improper_typesList.append(
-                    improper_type
-                )  # add improper type multiple times if it is layered
-                idx += 1
+            )
+            improper_typesList.append(
+                improper_type
+            )  # add improper type multiple times if it is layered
+            idx += 1
     return improper_typesList
 
 
