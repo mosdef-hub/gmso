@@ -144,7 +144,7 @@ class TopologyParameterizer(GMSOBase):
                 dihedrals = entry["dihedrals"]
                 impropers = entry["impropers"]
             else:
-                is_group = True if label_type == "group" else False
+                is_group = label_type == "group"
                 bonds = molecule_bonds(top, label, is_group)
                 angles = molecule_angles(top, label, is_group)
                 dihedrals = molecule_dihedrals(top, label, is_group)
@@ -156,20 +156,20 @@ class TopologyParameterizer(GMSOBase):
             impropers = top.impropers
 
         self._apply_connection_parameters(
-            bonds, ff, False if "bond" in self.config.ignore_params else True
+            bonds, ff, not "bond" in self.config.ignore_params
         )
         self._apply_connection_parameters(
-            angles, ff, False if "angle" in self.config.ignore_params else True
+            angles, ff, not "angle" in self.config.ignore_params
         )
         self._apply_connection_parameters(
             dihedrals,
             ff,
-            False if "dihedral" in self.config.ignore_params else True,
+            not "dihedral" in self.config.ignore_params,
         )
         self._apply_connection_parameters(
             impropers,
             ff,
-            False if "improper" in self.config.ignore_params else True,
+            not "improper" in self.config.ignore_params,
         )
 
     def _parameterize_virtual_sites(self, top, sites, bonds, ff):
@@ -192,16 +192,16 @@ class TopologyParameterizer(GMSOBase):
         self._apply_virtual_site_parameters(
             virtual_sites,
             ff,
-            False if "virtual_site" in self.config.ignore_params else True,
+            not "virtual_site" in self.config.ignore_params,
         )
 
     def _apply_connection_parameters(self, connections, ff, error_on_missing=True):
         """Find and assign potentials from the forcefield for the provided connections."""
-        visited = dict()
-        sig_cache = dict()
+        visited = {}
+        sig_cache = {}
         for connection in connections:
             use_classes = all(
-                [site.atom_type.atomclass for site in connection.connection_members]
+                site.atom_type.atomclass for site in connection.connection_members
             )
             if use_classes:
                 sig = tuple(
@@ -257,7 +257,7 @@ class TopologyParameterizer(GMSOBase):
 
     def _apply_virtual_site_parameters(self, virtual_sites, ff, error_on_missing=True):
         """Find and assign potentials from the forcefield for the provided virtual_sites."""
-        visited = dict()
+        visited = {}
 
         for virtual_site in virtual_sites:
             group, vtype_identifiers = self.virtual_site_identifier(virtual_site)
@@ -306,7 +306,7 @@ class TopologyParameterizer(GMSOBase):
         if label and label_type:
             forcefield = self.get_ff(label)
             sites = top.iter_sites(label_type, label)
-            bonds = molecule_bonds(top, label, True if label_type == "group" else False)
+            bonds = molecule_bonds(top, label, label_type == "group")
         else:
             forcefield = self.get_ff(top.name)
             sites = top.sites
@@ -324,7 +324,7 @@ class TopologyParameterizer(GMSOBase):
     def _set_combining_rule(self):
         """Verify all the provided forcefields have the same combining rule and set it for the Topology."""
         if isinstance(self.forcefields, dict):
-            all_comb_rules = set(ff.combining_rule for ff in self.forcefields.values())
+            all_comb_rules = {ff.combining_rule for ff in self.forcefields.values()}
         else:
             all_comb_rules = {self.forcefields.combining_rule}
 
@@ -483,8 +483,8 @@ class TopologyParameterizer(GMSOBase):
         """Return the group and list of identifiers for a virtual site to query the forcefield for its potential."""
         group = POTENTIAL_GROUPS[type(virtual_site)]
         return group, [
-            list(member.atom_type.name for member in virtual_site.parent_sites),
-            list(member.atom_type.atomclass for member in virtual_site.parent_sites),
+            [member.atom_type.name for member in virtual_site.parent_sites],
+            [member.atom_type.atomclass for member in virtual_site.parent_sites],
         ]
 
     @staticmethod
@@ -506,7 +506,7 @@ class TopologyParameterizer(GMSOBase):
 
         if speedup_by_moltag:
             # Iterate through foyer_topology_graph, which is a subgraph of label_type
-            typemap, reference = dict(), dict()
+            typemap, reference = {}, {}
             for connected_component in nx.connected_components(foyer_topology_graph):
                 subgraph = foyer_topology_graph.subgraph(connected_component)
                 nodes_idx = tuple(subgraph.nodes)

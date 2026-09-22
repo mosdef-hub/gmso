@@ -86,7 +86,7 @@ def write_xyz(
     with open(filename, "w") as out_file:
         out_file.write(f"{top.n_sites:d}\n")
         out_file.write(
-            f"{top.name} {filename} written by topology at {datetime.datetime.now()!s}\n"
+            f"{top.name} {filename} written by topology at {datetime.datetime.now(datetime.timezone.utc).astimezone()!s}\n"
         )
         out_file.write(_prepare_particles(top, decimals))
 

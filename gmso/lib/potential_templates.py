@@ -131,7 +131,7 @@ class PotentialTemplate(AbstractPotential):
         for param_name, param_value in parameters.items():
             quantity = param_value
             if not (isinstance(param_value, u.unyt_array)):
-                raise ValueError(f"Parameter {param_name} lacks a unit.")
+                raise TypeError(f"Parameter {param_name} lacks a unit.")
 
             if param_name not in self.expected_parameters_dimensions:
                 raise UnknownParameterError(
@@ -157,9 +157,7 @@ class PotentialTemplateLibrary(Singleton):
     """A singleton collection of all the potential templates."""
 
     def __init__(self):
-        try:
-            self.json_refs
-        except AttributeError:
+        if getattr(self, "json_refs", None) is None:
             self.json_refs = POTENTIAL_JSONS
             potential_names = [pot_json.name for pot_json in POTENTIAL_JSONS]
             self._ref_dict = {

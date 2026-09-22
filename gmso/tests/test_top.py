@@ -77,13 +77,13 @@ class TestTop(BaseTest):
 
         top.update_topology()
 
-        list(top.atom_types)[0].set_expression("sigma + epsilon*r")
+        next(iter(top.atom_types)).set_expression("sigma + epsilon*r")
 
         with pytest.raises(EngineIncompatibilityError):
             top.save("out.top")
 
         alternate_lj = "4*epsilon*sigma**12/r**12 - 4*epsilon*sigma**6/r**6"
-        list(top.atom_types)[0].set_expression(alternate_lj)
+        next(iter(top.atom_types)).set_expression(alternate_lj)
 
         top.save("ar.top")
 
@@ -217,8 +217,8 @@ class TestTop(BaseTest):
 
         assert len(f_cont) == len(ref_cont)
 
-        ref_sections = dict()
-        sections = dict()
+        ref_sections = {}
+        sections = {}
         current_section = None
         for line, ref in zip(f_cont[1:], ref_cont[1:]):
             if line.startswith("["):
@@ -237,8 +237,8 @@ class TestTop(BaseTest):
             if "dihedral" in section:
                 # Need to deal with these separately due to member's order issue
                 # Each dict will have the keys be members and values be their parameters
-                members = dict()
-                ref_members = dict()
+                members = {}
+                ref_members = {}
                 for line, ref in zip(sections[section], ref_sections[ref_section]):
                     line = line.split()
                     ref = ref.split()
@@ -248,8 +248,8 @@ class TestTop(BaseTest):
                     ref_members["-".join(reversed(ref[:4]))] = ref[4:]
 
                 assert members == ref_members
-                for member in members:
-                    assert members[member] == ref_members[member]
+                for member, val in members.items():
+                    assert val == ref_members[member]
 
             else:
                 assert sections[section] == ref_sections[ref_section]

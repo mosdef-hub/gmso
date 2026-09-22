@@ -86,7 +86,7 @@ class TestAtomType(BaseTest):
 
         symbol_x, symbol_y, symbol_z = sympy.symbols("x y z")
         correct_expr = sympy.sympify("x+y*z")
-        assert new_type.expression.free_symbols == set([symbol_x, symbol_y, symbol_z])
+        assert new_type.expression.free_symbols == {symbol_x, symbol_y, symbol_z}
         assert correct_expr == new_type.expression
 
     def test_equivalance(self, charge):
@@ -328,8 +328,8 @@ class TestAtomType(BaseTest):
         assert list(atomtype_metadata.tag_names_iter) == []
 
     def test_metadata_add_tags(self, atomtype_metadata):
-        atomtype_metadata.add_tag("tag1", dict([("tag_name_1", "value_1")]))
-        atomtype_metadata.add_tag("tag2", dict([("tag_name_2", "value_2")]))
+        atomtype_metadata.add_tag("tag1", {"tag_name_1": "value_1"})
+        atomtype_metadata.add_tag("tag2", {"tag_name_2": "value_2"})
         atomtype_metadata.add_tag("int_tag", 1)
         assert len(atomtype_metadata.tag_names) == 3
 

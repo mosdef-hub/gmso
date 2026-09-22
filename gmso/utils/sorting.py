@@ -219,9 +219,7 @@ def sort_connection_strings(namesList, improperBool=False):
         else:
             return tuple(namesList)
     elif len(namesList) == 4 and improperBool:
-        return tuple(
-            [namesList[0], *sorted(namesList[1:])],
-        )
+        return (namesList[0], *sorted(namesList[1:]))
     elif len(namesList) == 4 and not improperBool:
         if namesList[1] > namesList[2] or (
             namesList[1] == namesList[2] and namesList[0] > namesList[3]
@@ -247,8 +245,8 @@ def reindex_molecules(top):
             unique_moleculesDict[molecule.name] = {molecule.number}
 
     offsetDict = {}
-    for molecule in unique_moleculesDict:
-        min_val = min(unique_moleculesDict[molecule])
+    for molecule, val in unique_moleculesDict.items():
+        min_val = min(val)
         offsetDict[molecule] = min_val
 
     for site in top.sites:

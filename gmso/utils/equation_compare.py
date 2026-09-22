@@ -31,9 +31,9 @@ def evaluate_nonbonded_lj_format_with_scaler(new_lj_form, base_lj_form):
     try:
         (
             eqn_ratio,
-            epsilon,
+            _epsilon,
             sigma,
-            r,
+            _r,
             Rmin,
             two,
         ) = sympy.symbols("eqn_ratio epsilon sigma r Rmin two")
@@ -46,7 +46,7 @@ def evaluate_nonbonded_lj_format_with_scaler(new_lj_form, base_lj_form):
             [eqn_ratio, Rmin, two],
         )
 
-        form_scalar = float(list(values)[0][0])
+        form_scalar = float(next(iter(values))[0])
         form_output = "LJ"
 
     except (UnsolvableFactorError, TypeError):
@@ -83,10 +83,10 @@ def evaluate_nonbonded_mie_format_with_scaler(new_mie_form, base_mie_form):
     try:
         (
             eqn_ratio,
-            epsilon,
-            sigma,
-            r,
-            n,
+            _epsilon,
+            _sigma,
+            _r,
+            _n,
         ) = sympy.symbols("eqn_ratio epsilon sigma r n")
         values = sympy.nonlinsolve(
             [
@@ -95,7 +95,7 @@ def evaluate_nonbonded_mie_format_with_scaler(new_mie_form, base_mie_form):
             [eqn_ratio],
         )
 
-        form_scalar = float(list(values)[0][0])
+        form_scalar = float(next(iter(values))[0])
         form_output = "Mie"
 
     except (UnsolvableFactorError, TypeError):
@@ -132,11 +132,11 @@ def evaluate_nonbonded_exp6_format_with_scaler(new_exp6_form, base_exp6_form):
     try:
         (
             eqn_ratio,
-            epsilon,
-            sigma,
-            r,
-            Rmin,
-            alpha,
+            _epsilon,
+            _sigma,
+            _r,
+            _Rmin,
+            _alpha,
         ) = sympy.symbols("eqn_ratio epsilon sigma r Rmin alpha")
         values = sympy.nonlinsolve(
             [
@@ -146,7 +146,7 @@ def evaluate_nonbonded_exp6_format_with_scaler(new_exp6_form, base_exp6_form):
             [eqn_ratio],
         )
 
-        form_scalar = float(list(values)[0][0])
+        form_scalar = float(next(iter(values))[0])
         form_output = "Exp6"
 
     except (UnsolvableFactorError, TypeError):
@@ -213,7 +213,7 @@ def get_atom_type_expressions_and_scalars(atom_types_dict):
     }
 
     atomtypes_data_expression_data_dict = {}
-    for res_i in atom_types_dict.keys():
+    for res_i in atom_types_dict:
         for atom_type_m in atom_types_dict[res_i]["atom_types"]:
             modified_atom_type_iter = f"{res_i}_{atom_type_m.name}"
             atomtypes_data_dict_iter = {
@@ -345,7 +345,7 @@ def evaluate_harmonic_bond_format_with_scaler(new_bond_form, base_bond_form):
             None, if the new_bond_form variable is not a harmonic bond.
     """
     try:
-        eqn_ratio, k, r, r_eq = sympy.symbols("eqn_ratio k r r_eq")
+        eqn_ratio, _k, _r, _r_eq = sympy.symbols("eqn_ratio k r r_eq")
         values = sympy.nonlinsolve(
             [
                 eqn_ratio
@@ -354,7 +354,7 @@ def evaluate_harmonic_bond_format_with_scaler(new_bond_form, base_bond_form):
             [eqn_ratio],
         )
 
-        form_scalar = float(list(values)[0][0])
+        form_scalar = float(next(iter(values))[0])
         form_output = "HarmonicBondPotential"
 
     except (UnsolvableFactorError, TypeError):
@@ -389,7 +389,7 @@ def evaluate_harmonic_angle_format_with_scaler(new_angle_form, base_angle_form):
             None, if the new_angle_form variable is not a harmonic.
     """
     try:
-        eqn_ratio, k, theta, theta_eq = sympy.symbols("eqn_ratio k theta theta_eq")
+        eqn_ratio, _k, _theta, _theta_eq = sympy.symbols("eqn_ratio k theta theta_eq")
         values = sympy.nonlinsolve(
             [
                 eqn_ratio
@@ -398,7 +398,7 @@ def evaluate_harmonic_angle_format_with_scaler(new_angle_form, base_angle_form):
             [eqn_ratio],
         )
 
-        form_scalar = float(list(values)[0][0])
+        form_scalar = float(next(iter(values))[0])
         form_output = "HarmonicAnglePotential"
 
     except (UnsolvableFactorError, TypeError):
@@ -433,7 +433,7 @@ def evaluate_harmonic_torsion_format_with_scaler(new_torsion_form, base_torsion_
             None, if the new_torsion_form variable is not a harmonic torsion.
     """
     try:
-        eqn_ratio, k, phi, phi_eq = sympy.symbols("eqn_ratio k phi phi_eq")
+        eqn_ratio, _k, _phi, _phi_eq = sympy.symbols("eqn_ratio k phi phi_eq")
         values = sympy.nonlinsolve(
             [
                 eqn_ratio
@@ -442,7 +442,7 @@ def evaluate_harmonic_torsion_format_with_scaler(new_torsion_form, base_torsion_
             [eqn_ratio],
         )
 
-        form_scalar = float(list(values)[0][0])
+        form_scalar = float(next(iter(values))[0])
         form_output = "HarmonicTorsionPotential"
 
     except (UnsolvableFactorError, TypeError):
@@ -477,7 +477,7 @@ def evaluate_OPLS_torsion_format_with_scaler(new_torsion_form, base_torsion_form
             None, if the new_torsion_form variable is not an OPLS torsion.
     """
     try:
-        eqn_ratio, k0, k1, k2, k3, k4, phi = sympy.symbols(
+        eqn_ratio, _k0, _k1, _k2, _k3, _k4, _phi = sympy.symbols(
             "eqn_ratio k0 k1 k2 k3 k4 phi"
         )
         values = sympy.nonlinsolve(
@@ -489,7 +489,7 @@ def evaluate_OPLS_torsion_format_with_scaler(new_torsion_form, base_torsion_form
             [eqn_ratio],
         )
 
-        form_scalar = float(list(values)[0][0])
+        form_scalar = float(next(iter(values))[0])
         form_output = "OPLSTorsionPotential"
 
     except (UnsolvableFactorError, TypeError):
@@ -524,7 +524,7 @@ def evaluate_periodic_torsion_format_with_scaler(new_torsion_form, base_torsion_
             None, if the new_torsion_form variable is not a periodic torsion.
     """
     try:
-        eqn_ratio, k, n, phi, phi_eq = sympy.symbols("eqn_ratio k n phi phi_eq")
+        eqn_ratio, _k, _n, _phi, _phi_eq = sympy.symbols("eqn_ratio k n phi phi_eq")
         values = sympy.nonlinsolve(
             [
                 eqn_ratio
@@ -533,7 +533,7 @@ def evaluate_periodic_torsion_format_with_scaler(new_torsion_form, base_torsion_
             [eqn_ratio],
         )
 
-        form_scalar = float(list(values)[0][0])
+        form_scalar = float(next(iter(values))[0])
         form_output = "PeriodicTorsionPotential"
 
     except (UnsolvableFactorError, TypeError):
@@ -568,7 +568,7 @@ def evaluate_RB_torsion_format_with_scaler(new_torsion_form, base_torsion_form):
             None, if the new_torsion_form variable is not an RB torsion.
     """
     try:
-        eqn_ratio, c0, c1, c2, c3, c4, c5, psi = sympy.symbols(
+        eqn_ratio, _c0, _c1, _c2, _c3, _c4, _c5, _psi = sympy.symbols(
             "eqn_ratio c0 c1 c2 c3 c4 c5 psi"
         )
         values = sympy.nonlinsolve(
@@ -579,7 +579,7 @@ def evaluate_RB_torsion_format_with_scaler(new_torsion_form, base_torsion_form):
             [eqn_ratio],
         )
 
-        form_scalar = float(list(values)[0][0])
+        form_scalar = float(next(iter(values))[0])
         form_output = "RyckaertBellemansTorsionPotential"
 
     except (UnsolvableFactorError, TypeError):
@@ -616,7 +616,7 @@ def evaluate_harmonic_improper_format_with_scaler(
             None, if the new_improper_form variable is not a harmonic improper.
     """
     try:
-        eqn_ratio, k, phi, phi_eq = sympy.symbols("eqn_ratio k phi phi_eq")
+        eqn_ratio, _k, _phi, _phi_eq = sympy.symbols("eqn_ratio k phi phi_eq")
         values = sympy.nonlinsolve(
             [
                 eqn_ratio
@@ -625,7 +625,7 @@ def evaluate_harmonic_improper_format_with_scaler(
             [eqn_ratio],
         )
 
-        form_scalar = float(list(values)[0][0])
+        form_scalar = float(next(iter(values))[0])
         form_output = "HarmonicImproperPotential"
 
     except (UnsolvableFactorError, TypeError):
@@ -662,7 +662,7 @@ def evaluate_periodic_improper_format_with_scaler(
             None, if the new_improper_form variable is not a periodic improper.
     """
     try:
-        eqn_ratio, k, n, phi, phi_eq = sympy.symbols("eqn_ratio k n phi phi_eq")
+        eqn_ratio, _k, _n, _phi, _phi_eq = sympy.symbols("eqn_ratio k n phi phi_eq")
         values = sympy.nonlinsolve(
             [
                 eqn_ratio
@@ -671,7 +671,7 @@ def evaluate_periodic_improper_format_with_scaler(
             [eqn_ratio],
         )
 
-        form_scalar = float(list(values)[0][0])
+        form_scalar = float(next(iter(values))[0])
         form_output = "PeriodicImproperPotential"
 
     except (UnsolvableFactorError, TypeError):

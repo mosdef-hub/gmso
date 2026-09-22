@@ -52,23 +52,21 @@ class ParameterizationBaseTest(BaseTest):
             for connection in getattr(top1, connection_type):
                 eq_connsList = connection.equivalent_members()
                 indexList = [
-                    tuple(map(lambda x: top1.get_index(x), conn))
-                    for conn in eq_connsList
+                    tuple(top1.get_index(x) for x in conn) for conn in eq_connsList
                 ]
-                atom_indicesList = sorted(indexList)[0]
+                atom_indicesList = min(indexList)
                 connection_types_top1[atom_indicesList] = connection
             connection_types_top2 = {}
             for connection in getattr(top2, connection_type):
                 eq_connsList = connection.equivalent_members()
                 indexList = [
-                    tuple(map(lambda x: top2.get_index(x), conn))
-                    for conn in eq_connsList
+                    tuple(top2.get_index(x) for x in conn) for conn in eq_connsList
                 ]
-                atom_indicesList = sorted(indexList)[0]
+                atom_indicesList = min(indexList)
                 connection_types_top2[atom_indicesList] = connection
 
-            for key in connection_types_top1:
-                conn1 = connection_types_top1[key]
+            for key, val in connection_types_top1.items():
+                conn1 = val
                 conn2 = connection_types_top2[key]
                 conn_type_attr = connection_type[:-1] + "_type"
                 conn_type1 = getattr(conn1, conn_type_attr)

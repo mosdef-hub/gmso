@@ -27,7 +27,7 @@ def dict_to_unyt(dict_obj) -> None:
                 dict_to_unyt(value)
             else:
                 np_array = np.array(value["array"], dtype=float)
-                if np_array.shape == tuple():
+                if np_array.shape == ():
                     unyt_func = u.unyt_quantity
                 else:
                     unyt_func = u.unyt_array

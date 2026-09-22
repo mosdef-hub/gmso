@@ -53,7 +53,7 @@ class TestGro(BaseTest):
         top.save("out.gro", shift_coord=True)
 
         read_top = Topology.load("out.gro")
-        assert np.all(list(map(lambda x: x.position >= 0, read_top.sites)))
+        assert np.all([x.position >= 0 for x in read_top.sites])
 
     def test_write_gro_non_orthogonal(self):
         top = from_parmed(pmd.load_file(get_fn("ethane.gro"), structure=True))
@@ -114,7 +114,7 @@ class TestGro(BaseTest):
         top.save("ethane_methane.gro")
 
         reread = Topology.load("ethane_methane.gro")
-        nums = set([site.molecule.number for site in reread.sites])
+        nums = {site.molecule.number for site in reread.sites}
         assert nums == {0, 1, 2, 3}
 
     def test_no_mol_name(self):
@@ -129,7 +129,7 @@ class TestGro(BaseTest):
         top.box = box
         top.save("temp_system.gro")
         reread = Topology.load("temp_system.gro")
-        nums = set([site.molecule.number for site in reread.sites])
+        nums = {site.molecule.number for site in reread.sites}
         assert nums == {0}
 
     def test_res_naming(self):
@@ -146,7 +146,7 @@ class TestGro(BaseTest):
         top.save("temp1.gro", overwrite=True)
 
         reread = Topology.load("temp1.gro")
-        nums = set([site.molecule.number for site in reread.sites])
+        nums = {site.molecule.number for site in reread.sites}
         assert nums == {0, 1}
 
         top = Topology()
@@ -168,7 +168,7 @@ class TestGro(BaseTest):
         top.save("temp2.gro", overwrite=True)
 
         reread = Topology.load("temp2.gro")
-        nums = set([site.molecule.number for site in reread.sites])
+        nums = {site.molecule.number for site in reread.sites}
         assert nums == {0, 1, 2}
 
         top = Topology()
@@ -190,7 +190,7 @@ class TestGro(BaseTest):
         top.save("temp3.gro", overwrite=True)
 
         reread = Topology.load("temp3.gro")
-        nums = set([site.molecule.number for site in reread.sites])
+        nums = {site.molecule.number for site in reread.sites}
         assert nums == {0, 1, 2, 3}
 
     @pytest.mark.parametrize("fixture", ["benzene_ua_box", "benzene_aa_box"])
