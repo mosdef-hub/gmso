@@ -58,10 +58,7 @@ class TestSubTopologyUtils(ParameterizationBaseTest):
             for bond in bonds:
                 assert _conn_in_molecule(bond, molecule)
 
-            bond_members = map(
-                lambda b: tuple(map(lambda s: s.name, b.connection_members)),
-                bonds,
-            )
+            bond_members = (tuple(s.name for s in b.connection_members) for b in bonds)
             expected_members = {("C", "H"), ("C", "C"), ("H", "C")}
             assert all(b_member in expected_members for b_member in bond_members)
 
@@ -72,9 +69,8 @@ class TestSubTopologyUtils(ParameterizationBaseTest):
             for angle in angles:
                 assert _conn_in_molecule(angle, molecule)
 
-            angle_members = map(
-                lambda a: tuple(map(lambda s: s.name, a.connection_members)),
-                angles,
+            angle_members = (
+                tuple(s.name for s in a.connection_members) for a in angles
             )
             expected_members = {
                 ("H", "C", "H"),
@@ -90,9 +86,8 @@ class TestSubTopologyUtils(ParameterizationBaseTest):
             for dihedral in dihedrals:
                 assert _conn_in_molecule(dihedral, molecule)
 
-            dihedral_members = map(
-                lambda d: tuple(map(lambda s: s.name, d.connection_members)),
-                dihedrals,
+            dihedral_members = (
+                tuple(s.name for s in d.connection_members) for d in dihedrals
             )
             expected_members = {("H", "C", "C", "H")}
             assert all(a_member in expected_members for a_member in dihedral_members)
@@ -104,12 +99,9 @@ class TestSubTopologyUtils(ParameterizationBaseTest):
             for improper in impropers:
                 assert _conn_in_molecule(improper, molecule)
 
-            improper_members = list(
-                map(
-                    lambda i: tuple(map(lambda s: s.name, i.connection_members)),
-                    impropers,
-                )
-            )
+            improper_members = [
+                tuple(s.name for s in i.connection_members) for i in impropers
+            ]
             expected_members = {
                 ("C", "C", "H", "H"),
                 ("C", "H", "H", "C"),

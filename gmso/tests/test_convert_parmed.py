@@ -9,6 +9,7 @@ import unyt as u
 from unyt.testing import assert_allclose_units
 
 from gmso.core.views import PotentialFilters
+from gmso.exceptions import GMSOError
 from gmso.external.convert_parmed import from_parmed, to_parmed
 from gmso.tests.base_test import BaseTest
 from gmso.utils.io import get_fn, has_parmed, import_
@@ -146,24 +147,31 @@ class TestConvertParmEd(BaseTest):
             assert struc_from_top.rb_torsions[i].type == struc.rb_torsions[i].type
 
     def test_to_parmed_incompatible_expression(self):
+        from copy import deepcopy
+
+        import sympy
+
         struc = pmd.load_file(get_fn("ethane.top"), xyz=get_fn("ethane.gro"))
         top = from_parmed(struc)
+        top0 = deepcopy(top)
+        top0.sites[0].atom_type.expression = sympy.sympify("sigma + epsilon/r")
 
-        with pytest.raises(Exception):
-            top.atom_types[0] = "sigma + epsilon"
-            to_parmed(top)
+        with pytest.raises(GMSOError):
+            to_parmed(top0)
 
-        with pytest.raises(Exception):
-            top.bond_types[0] = "k * r_eq"
-            to_parmed(top)
+        top0.bonds[0].bond_type.expression = "k * r_eq/r"
+        with pytest.raises(GMSOError):
+            to_parmed(top0)
 
-        with pytest.raises(Exception):
-            top.angle_types[0] = "k - theta_eq"
-            to_parmed(top)
+        top0 = deepcopy(top)
+        top0.angles[0].angle_type.expression = "k - theta_eq/theta"
+        with pytest.raises(GMSOError):
+            to_parmed(top0)
 
-        with pytest.raises(Exception):
-            top.dihedral_types[0] = "c0 - c1 + c2 - c3 + c4 - c5"
-            to_parmed(top)
+        top0 = deepcopy(top)
+        top0.dihedrals[0].dihedral_type.expression = "c0 - c1 + c2 - c3 + c4 - c5 + phi"
+        with pytest.raises(GMSOError):
+            to_parmed(top0)
 
     def test_to_parmed_loop(
         self, parmed_methylnitroaniline, parmed_chloroethanol, parmed_ethane
@@ -334,13 +342,11 @@ class TestConvertParmEd(BaseTest):
         for gmso_improper, pmd_improper in zip(
             gmso_top.impropers, pmd_structure.dihedrals
         ):
-            pmd_member_names = list(
+            pmd_member_names = [
                 atom.name
                 for atom in [getattr(pmd_improper, f"atom{j + 1}") for j in range(4)]
-            )
-            gmso_member_names = list(
-                map(lambda a: a.name, gmso_improper.connection_members)
-            )
+            ]
+            gmso_member_names = [a.name for a in gmso_improper.connection_members]
             assert pmd_member_names[0] == gmso_member_names[0] and set(
                 pmd_member_names[1:]
             ) == set(gmso_member_names[1:])
@@ -369,7 +375,7 @@ class TestConvertParmEd(BaseTest):
         for j in range(10):
             dih = pmd.Dihedral(
                 *[struct.atoms[i] for i in range(j, j + 4)],
-                improper=True if j % 2 == 0 else False,
+                improper=j % 2 == 0,
             )
             struct.dihedrals.append(dih)
         gmso_top = from_parmed(struct, refer_type=False)
@@ -401,7 +407,7 @@ class TestConvertParmEd(BaseTest):
         for j in range(10):
             dih = pmd.Dihedral(
                 *[struct.atoms[i] for i in range(j, j + 4)],
-                improper=True if j % 2 == 0 else False,
+                improper=j % 2 == 0,
             )
             struct.dihedrals.append(dih)
             dtype = pmd.DihedralType(random.random(), random.random(), random.random())

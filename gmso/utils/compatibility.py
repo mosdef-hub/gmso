@@ -54,7 +54,7 @@ def check_compatibility(
         scheme for the potentials in the topology.
 
     """
-    potential_forms_dict = dict()
+    potential_forms_dict = {}
     for atom_type in topology.atom_types(
         filter_by=site_pfilter
     ):  # skip empty atomtypes

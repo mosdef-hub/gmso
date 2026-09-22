@@ -31,7 +31,7 @@ def coord_shift(xyz, box_lengths):
     return xyz
 
 
-def moment_of_inertia(xyz, masses, center=np.zeros(3)):
+def moment_of_inertia(xyz, masses, center=None):
     """Find the moment of inertia tensor given a set of
     particle coordinates and their corresponding masses.
 
@@ -52,6 +52,8 @@ def moment_of_inertia(xyz, masses, center=np.zeros(3)):
     numpy.ndarray (3,)
         Diagonal components of the moment of inertia tensor.
     """
+    if center is None:
+        center = np.zeros(3)
     xyz -= np.asarray(center)
     x = xyz[:, 0]
     y = xyz[:, 1]

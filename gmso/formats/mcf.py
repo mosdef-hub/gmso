@@ -61,11 +61,10 @@ def write_mcf(top: "Topology", filename: str | Path) -> None:
     for molecule in top.unique_site_labels(name_only=True):
         subtops.append(top.create_subtop("molecule", (molecule, 0)))
 
-    if len(subtops) > 1:
-        if len(filename) != len(subtops):
-            raise ValueError(
-                "write_mcf: Number of filenames must match number of unique species in the Topology object"
-            )
+    if len(subtops) > 1 and len(filename) != len(subtops):
+        raise ValueError(
+            "write_mcf: Number of filenames must match number of unique species in the Topology object"
+        )
 
     for idx, subtop in enumerate(subtops):
         _check_compatibility(subtop)
@@ -88,7 +87,7 @@ def write_mcf(top: "Topology", filename: str | Path) -> None:
                 "!***************************************"
                 "****************************************\n"
                 f"!File {filename} written by gmso {__version__} "
-                f"at {datetime.datetime.now()!s}\n\n"
+                f"at {datetime.datetime.now(datetime.timezone.utc).astimezone()!s}\n\n"
             )
 
             mcf.write(header)
@@ -193,12 +192,12 @@ def _id_rings_fragments(top):
         for idx in adjacent_atoms:
             adj_to_ring[idx] = True
     # Now ID the other fragments
-    for idx in neigh_dict:
-        if len(neigh_dict[idx]) > 1:
+    for idx, value in neigh_dict.items():
+        if len(value) > 1:
             if in_ring[idx] is True:
                 continue
             else:
-                frag_list.append([idx] + neigh_dict[idx])
+                frag_list.append([idx] + value)
     # Now find connectivity (shared bonds)
     for i in range(len(frag_list)):
         frag1 = frag_list[i]
@@ -639,7 +638,7 @@ def _check_compatibility(top):
     """Check Topology object for compatibility with Cassandra MCF format."""
     if not isinstance(top, Topology):
         raise GMSOError("MCF writer requires a Topology object.")
-    if not all([site.atom_type for site in top.sites]):
+    if not all(site.atom_type for site in top.sites):
         raise GMSOError("MCF writing not supported without parameterized forcefield.")
     accepted_potentials = (
         potential_templates["LennardJonesPotential"],
@@ -692,7 +691,9 @@ def _get_dihedral_style(dihedral):
 def _get_potential_style(styles, potential):
     """Return the potential style."""
     for style, ref in styles.items():
-        if ref.independent_variables == potential.independent_variables:
-            if symengine.expand(ref.expression - potential.expression) == 0:
-                return style
+        if (
+            ref.independent_variables == potential.independent_variables
+            and symengine.expand(ref.expression - potential.expression) == 0
+        ):
+            return style
     return False

@@ -31,27 +31,20 @@ def parse_mcf(filename):
             mcf_data.append(line.strip().split())
 
     for idx, line in enumerate(mcf_data):
-        if len(line) > 1:
-            if line[1] == "Atom_Info":
-                mcf_idx["Atom_Info"] = idx
-        if len(line) > 1:
-            if line[1] == "Bond_Info":
-                mcf_idx["Bond_Info"] = idx
-        if len(line) > 1:
-            if line[1] == "Angle_Info":
-                mcf_idx["Angle_Info"] = idx
-        if len(line) > 1:
-            if line[1] == "Dihedral_Info":
-                mcf_idx["Dihedral_Info"] = idx
-        if len(line) > 1:
-            if line[1] == "Fragment_Info":
-                mcf_idx["Fragment_Info"] = idx
-        if len(line) > 1:
-            if line[1] == "Fragment_Connectivity":
-                mcf_idx["Fragment_Connectivity"] = idx
-        if len(line) > 1:
-            if line[1] == "Intra_Scaling":
-                mcf_idx["Intra_Scaling"] = idx
+        if len(line) > 1 and line[1] == "Atom_Info":
+            mcf_idx["Atom_Info"] = idx
+        if len(line) > 1 and line[1] == "Bond_Info":
+            mcf_idx["Bond_Info"] = idx
+        if len(line) > 1 and line[1] == "Angle_Info":
+            mcf_idx["Angle_Info"] = idx
+        if len(line) > 1 and line[1] == "Dihedral_Info":
+            mcf_idx["Dihedral_Info"] = idx
+        if len(line) > 1 and line[1] == "Fragment_Info":
+            mcf_idx["Fragment_Info"] = idx
+        if len(line) > 1 and line[1] == "Fragment_Connectivity":
+            mcf_idx["Fragment_Connectivity"] = idx
+        if len(line) > 1 and line[1] == "Intra_Scaling":
+            mcf_idx["Intra_Scaling"] = idx
 
     return mcf_data, mcf_idx
 
@@ -392,7 +385,7 @@ class TestMCF(BaseTest):
             seeds=[12356, 64321],
         )
 
-        py, fraglib_setup, cassandra = detect_cassandra_binaries()
+        _py, _fraglib_setup, cassandra = detect_cassandra_binaries()
 
         # TODO: not sure why the cassandra MCF writer of mBuild
         # outputs a different intramolecular exclusions relative
@@ -443,7 +436,7 @@ class TestMCF(BaseTest):
             f.writelines(lines)
 
         # Run the simulation with the GMSO MCF file
-        code, out, err = run_cassandra(cassandra, inp_file)
+        code, out, _err = run_cassandra(cassandra, inp_file)
 
         assert code == 0
         assert "complete" in out
@@ -479,8 +472,8 @@ class TestMCF(BaseTest):
         top = from_parmed(parmed_ethane)
         write_mcf(top, "gmso-ethane.mcf")
 
-        mcf_data_pmd, mcf_idx_pmd = parse_mcf(get_path("parmed-ethane.mcf"))
-        mcf_data_gmso, mcf_idx_gmso = parse_mcf("gmso-ethane.mcf")
+        mcf_data_pmd, _mcf_idx_pmd = parse_mcf(get_path("parmed-ethane.mcf"))
+        mcf_data_gmso, _mcf_idx_gmso = parse_mcf("gmso-ethane.mcf")
         skip_lines = [3]
         float_pattern = r"[+-]?[0-9]*[.][0-9]*"
         for i, (line_pmd, line_gmso) in enumerate(zip(mcf_data_pmd, mcf_data_gmso)):
@@ -523,4 +516,4 @@ class TestMCF(BaseTest):
 
         assert mcf_data[mcf_idx["Fragment_Info"] + 1][0] == "1"
         frag_atoms = mcf_data[mcf_idx["Fragment_Info"] + 2][1:]
-        assert set(frag_atoms) == set([str(i) for i in range(1, 7)])
+        assert set(frag_atoms) == {str(i) for i in range(1, 7)}
