@@ -739,6 +739,31 @@ class BaseTest:
         return ForceField("oplsaa")
 
     @pytest.fixture
+    def pairpot_cg_top(self):
+        def _factory(fn):
+            ff = ForceField(get_path(fn))
+            top = Topology()
+            for i, name in enumerate(("_A", "_B", "_C")):
+                top.add_site(
+                    Atom(
+                        name=name,
+                        position=np.array([i * 0.5, 0.0, 0.0]),
+                        molecule=("CG", 0),
+                    )
+                )
+            return apply(top, ff)
+
+        return _factory
+
+    @pytest.fixture
+    def pairpot_one_cross_top(self, pairpot_cg_top):
+        return pairpot_cg_top("ff-pairpot-one-cross.xml")
+
+    @pytest.fixture
+    def pairpot_all_cross_top(self, pairpot_cg_top):
+        return pairpot_cg_top("ff-pairpot-all-cross.xml")
+
+    @pytest.fixture
     def dpd_pairpotential(self):
         fn = "hoomd-dpd-hhp.xml"
         ff = ForceField(get_path(fn))

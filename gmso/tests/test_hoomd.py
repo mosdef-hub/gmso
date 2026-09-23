@@ -706,6 +706,27 @@ class TestHoomd(BaseTest):
         assert force.kT.value == 1
         assert set(typesList) == set(force.params.keys())
 
+    def test_pairpotential_lj_override(self, pairpot_one_cross_top):
+        forces, _ = to_hoomd_forcefield(pairpot_one_cross_top, r_cut=1.2)
+        lj_forces = [f for f in forces["nonbonded"] if isinstance(f, hoomd.md.pair.LJ)]
+        assert len(lj_forces) == 1
+        lj = lj_forces[0]
+        assert lj.params[("_A", "_B")]["sigma"] == pytest.approx(2.22222)
+        assert lj.params[("_A", "_B")]["epsilon"] == pytest.approx(9.11111)
+        # pairs without an override still follow the lorentz combining rule
+        assert lj.params[("_A", "_C")]["sigma"] == pytest.approx(0.40)
+        assert lj.params[("_B", "_C")]["sigma"] == pytest.approx(0.45)
+
+    def test_pairpotential_lj_override_all_cross(self, pairpot_all_cross_top):
+        forces, _ = to_hoomd_forcefield(pairpot_all_cross_top, r_cut=1.2)
+        lj_forces = [f for f in forces["nonbonded"] if isinstance(f, hoomd.md.pair.LJ)]
+        assert len(lj_forces) == 1
+        lj = lj_forces[0]
+        assert lj.params[("_A", "_B")]["sigma"] == pytest.approx(2.22222)
+        assert lj.params[("_A", "_C")]["sigma"] == pytest.approx(3.33333)
+        assert lj.params[("_B", "_C")]["sigma"] == pytest.approx(4.44444)
+        assert lj.params[("_A", "_A")]["sigma"] == pytest.approx(0.30)
+
     def test_rigid_forces(self):
         benzene = mb.load("c1ccccc1", smiles=True)
         benzene.name = "benzene"
