@@ -1127,35 +1127,36 @@ def _parse_nonbonded_forces(
             r_cut=r_cut,
         )
     )
-    # Pairtypes whose expression matches one the atom types already use get explicit
-    # parameters instead of the combining rule; any other expression gets its own force.
-    overrides, standalone_pairtypes = {}, {}
+    # Pairtypes whose expression has an atom type parser are explicit parameters for
+    # that pair, handled by that parser; any other expression gets its own force.
+    explicit_pairs, standalone_pairtypes = {}, {}
     for pairtype in top.pairpotential_types:
         pair_category = potential_types[pairtype]
-        if pair_category in groups:
-            overrides.setdefault(pair_category, []).append(pairtype)
+        if pair_category in atype_parsers:
+            explicit_pairs.setdefault(pair_category, []).append(pairtype)
         else:
             standalone_pairtypes.setdefault(pair_category, []).append(pairtype)
 
-    for pair_category, value in overrides.items():
+    for pair_category, value in explicit_pairs.items():
         expected_units_dim = potential_refs[pair_category][
             "expected_parameters_dimensions"
         ]
-        overrides[pair_category] = {
+        explicit_pairs[pair_category] = {
             sort_by_types(pairtype): pairtype
             for pairtype in convert_params_units(value, expected_units_dim, base_units)
         }
 
-    for group, value in groups.items():
+    # An expression may come from the atom types, the pairtypes, or both.
+    for group in sorted(groups.keys() | explicit_pairs.keys()):
         nbonded_forces.extend(
             atype_parsers[group](
                 top=top,
-                atypes=value,
+                atypes=groups.get(group, []),
                 combining_rule=top.combining_rule,
                 r_cut=r_cut,
                 nlist=nlist_nb,
                 scaling_factors=nb_scalings,
-                overrides=overrides.get(group, {}),
+                explicit_pairs=explicit_pairs.get(group, {}),
             )
         )
 
@@ -1244,21 +1245,26 @@ def _parse_dpd(top, pairtypes, r_cut, nlist, kT):
 
 
 def _parse_lj(
-    top, atypes, combining_rule, r_cut, nlist, scaling_factors, overrides=None
+    top, atypes, combining_rule, r_cut, nlist, scaling_factors, explicit_pairs=None
 ):
     """Parse LJ forces and special pairs LJ forces."""
     lj = hoomd.md.pair.LJ(nlist=nlist)
-    overrides = overrides or {}
+    explicit_pairs = explicit_pairs or {}
+    atypes_by_name = {atype.name: atype for atype in atypes}
+    # A pair is mixed from the atom types unless a pairtype states it explicitly.
+    # An explicit pair may name a type that has no atom type parameters at all.
+    mixed_pairs = {
+        tuple(sorted(names))
+        for names in itertools.combinations_with_replacement(atypes_by_name, 2)
+    }
     calculated_params = {}
-    for pairs in itertools.combinations_with_replacement(atypes, 2):
-        pairs = list(pairs)
-        pairs.sort(key=lambda atype: atype.name)
-        type_name = (pairs[0].name, pairs[1].name)
-        override = overrides.get(type_name)
-        if override:
-            comb_sigma = override.parameters["sigma"].value
-            comb_epsilon = override.parameters["epsilon"].value
+    for type_name in sorted(mixed_pairs | set(explicit_pairs)):
+        explicit = explicit_pairs.get(type_name)
+        if explicit:
+            comb_sigma = explicit.parameters["sigma"].value
+            comb_epsilon = explicit.parameters["epsilon"].value
         else:
+            pairs = [atypes_by_name[name] for name in type_name]
             comb_epsilon = np.sqrt(
                 pairs[0].parameters["epsilon"].value
                 * pairs[1].parameters["epsilon"].value
@@ -1335,7 +1341,7 @@ def _parse_buckingham(
     r_cut,
     nlist,
     scaling_factors,
-    overrides=None,
+    explicit_pairs=None,
 ):
     return None
 
@@ -1347,7 +1353,7 @@ def _parse_lj0804(
     r_cut,
     nlist,
     scaling_factors,
-    overrides=None,
+    explicit_pairs=None,
 ):
     return None
 
@@ -1359,7 +1365,7 @@ def _parse_lj1208(
     r_cut,
     nlist,
     scaling_factors,
-    overrides=None,
+    explicit_pairs=None,
 ):
     return None
 
@@ -1371,7 +1377,7 @@ def _parse_mie(
     r_cut,
     nlist,
     scaling_factors,
-    overrides=None,
+    explicit_pairs=None,
 ):
     return None
 
