@@ -31,6 +31,7 @@ if has_gsd:
     import gsd.hoomd
 if has_hoomd:
     import hoomd
+    from hoomd.data.typeconverter import RequiredArg
 
     hoomd_version = hoomd.version.version.split(".")
 else:
@@ -51,6 +52,12 @@ AKMA_UNITS = {
     "energy": u.kcal / u.mol,
     "length": u.angstrom,
     "mass": u.g / u.mol,  # aka amu
+}
+
+# Parameters that make a pair contribute no force, keyed by hoomd.md.pair class name.
+OFF_PARAMETERS = {
+    "LJ": {"sigma": 0.0, "epsilon": 0.0},
+    "DPD": {"A": 0.0, "gamma": 0.0},
 }
 
 
@@ -1146,6 +1153,9 @@ def _parse_nonbonded_forces(
             for pairtype in convert_params_units(value, expected_units_dim, base_units)
         }
 
+    # Coulombic forces are pair forces too, but hoomd sets all of their type pairs.
+    pair_force_start = len(nbonded_forces)
+
     # An expression may come from the atom types, the pairtypes, or both.
     for group in sorted(groups.keys() | explicit_pairs.keys()):
         nbonded_forces.extend(
@@ -1181,7 +1191,85 @@ def _parse_nonbonded_forces(
             )
         )
 
+    # A single expression already covers every type pair it is given. With more than
+    # one, each force needs parameters stating it does not act on the other's pairs.
+    expressions = groups.keys() | explicit_pairs.keys() | standalone_pairtypes.keys()
+    if len(expressions) > 1:
+        _set_uncovered_pairs(
+            top,
+            [
+                force
+                for force in nbonded_forces[pair_force_start:]
+                if isinstance(force, hoomd.md.pair.Pair)
+            ],
+        )
+
     return nbonded_forces
+
+
+def _particle_type_names(top):
+    """Return the name of every particle type in the hoomd snapshot of a topology."""
+    names = {
+        site.name if site.atom_type is None else site.atom_type.name
+        for site in top.sites
+    }
+    names |= {
+        site.name if site.virtual_type is None else site.virtual_type.name
+        for site in top.virtual_sites
+    }
+    names |= {site.molecule.name for site in top.sites if site.molecule.isrigid}
+    return names
+
+
+def _is_unset(force, pair):
+    """Return whether a pair force is missing parameters for a type pair."""
+    return any(value is RequiredArg for value in force.params[pair].values())
+
+
+def _set_uncovered_pairs(top, pair_forces):
+    """Give each pair force parameters for the type pairs it does not act on.
+
+    Parameters
+    ----------
+    pair_forces : list of hoomd.md.pair.Pair
+        The nonbonded pair forces built from the topology's expressions.
+
+    Raises
+    ------
+    EngineIncompatibilityError
+        If a type pair is left unset by every force, or if a force has no entry
+        in OFF_PARAMETERS.
+    """
+    all_pairs = sorted(
+        itertools.combinations_with_replacement(sorted(_particle_type_names(top)), 2)
+    )
+    # Rigid body centers are not interaction sites, so no expression sets them.
+    rigid_types = {site.molecule.name for site in top.sites if site.molecule.isrigid}
+    missing = [
+        pair
+        for pair in all_pairs
+        if not rigid_types.intersection(pair)
+        and all(_is_unset(force, pair) for force in pair_forces)
+    ]
+    if missing:
+        raise EngineIncompatibilityError(
+            f"No expression in the topology {top} defines parameters for the type "
+            f"pairs {missing}. Give those atom types parameters of one of the "
+            "expressions in use, or add a PairPotentialType for each pair."
+        )
+
+    for force in pair_forces:
+        class_name = type(force).__name__
+        if class_name not in OFF_PARAMETERS:
+            raise EngineIncompatibilityError(
+                f"Pair force {class_name} in the topology {top} cannot be combined "
+                "with another pair expression, because it has no parameters defined "
+                "for the pairs it does not act on."
+            )
+        for pair in all_pairs:
+            if _is_unset(force, pair):
+                force.params[pair] = dict(OFF_PARAMETERS[class_name])
+                force.r_cut[pair] = 0
 
 
 def _parse_coulombic(

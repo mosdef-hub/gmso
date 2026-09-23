@@ -706,6 +706,80 @@ class TestHoomd(BaseTest):
         assert force.kT.value == 1
         assert set(typesList) == set(force.params.keys())
 
+    def test_dpd_zero_fill(self, typed_ethane):
+        from gmso.core.pairpotential_type import PairPotentialType
+
+        dpd_type = PotentialTemplateLibrary()["HOOMDDPDForce"]
+        pairtype = PairPotentialType.from_template(
+            potential_template=dpd_type,
+            parameters={
+                "A": 1 * u.Unit("kJ / mol / nm"),
+                "r_cut": 1.2 * u.Unit("nm"),
+                "γ": 1.2 * u.amu / u.nm / u.ps,
+            },
+        )
+        pairtype.member_types = ("opls_135", "opls_140")
+        typed_ethane.add_pairpotentialtype(pairtype)
+
+        forces, _ = to_hoomd_forcefield(typed_ethane, r_cut=1.2, kT=1)
+        dpd = next(f for f in forces["nonbonded"] if isinstance(f, hoomd.md.pair.DPD))
+        assert dpd.params[("opls_135", "opls_140")]["A"] == 1
+        # the LJ force covers these pairs, so DPD must contribute nothing to them
+        for pair in (("opls_135", "opls_135"), ("opls_140", "opls_140")):
+            assert dpd.params[pair]["A"] == 0
+            assert dpd.params[pair]["gamma"] == 0
+            assert dpd.r_cut[pair] == 0
+
+    def test_undefined_type_pair_raises(self):
+        from gmso.core.atom import Atom
+        from gmso.core.atom_type import AtomType
+        from gmso.core.pairpotential_type import PairPotentialType
+        from gmso.core.topology import Topology
+        from gmso.exceptions import EngineIncompatibilityError
+        from gmso.utils.expression import NullPotentialExpression
+
+        lj_type = AtomType(
+            name="_A",
+            charge=0 * u.elementary_charge,
+            mass=1 * u.amu,
+            parameters={"sigma": 0.3 * u.nm, "epsilon": 0.4 * u.Unit("kJ/mol")},
+            expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
+            independent_variables="r",
+        )
+        null_type = AtomType(
+            name="_D",
+            charge=0 * u.elementary_charge,
+            mass=1 * u.amu,
+            potential_expression=NullPotentialExpression(),
+        )
+        top = Topology()
+        for i, atype in enumerate((lj_type, null_type)):
+            top.add_site(
+                Atom(
+                    name=atype.name,
+                    position=np.array([i * 0.5, 0.0, 0.0]),
+                    atom_type=atype,
+                    molecule=("CG", 0),
+                )
+            )
+        top.update_topology()
+        # covers (_D, _D) but leaves (_A, _D) defined by nothing
+        top.add_pairpotentialtype(
+            PairPotentialType(
+                name="HOOMDDPDForce",
+                expression="A * (1-(r/r_cut)) - γ",
+                independent_variables="r",
+                parameters={
+                    "A": 40.0 * u.N,
+                    "r_cut": 1.0 * u.nm,
+                    "γ": 8.0 * u.amu / u.s / u.nm,
+                },
+                member_types=("_D", "_D"),
+            )
+        )
+        with pytest.raises(EngineIncompatibilityError, match=r"\('_A', '_D'\)"):
+            to_hoomd_forcefield(top, r_cut=1.2, kT=1)
+
     def test_pairpotential_lj_override(self, pairpot_one_cross_top):
         forces, _ = to_hoomd_forcefield(pairpot_one_cross_top, r_cut=1.2)
         lj_forces = [f for f in forces["nonbonded"] if isinstance(f, hoomd.md.pair.LJ)]
