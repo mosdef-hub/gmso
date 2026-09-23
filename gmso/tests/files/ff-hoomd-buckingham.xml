@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Buckingham beads in the spelling hoomd.md.pair.Buckingham uses. Buckingham
+  parameters are not combined, so the _A-_B pair is stated explicitly.
+-->
+<ForceField version="0.0.1" name="HOOMDBuckinghamDemo">
+  <FFMetaData combiningRule="lorentz">
+    <Units energy="kJ/mol" distance="nm" mass="amu" charge="coulomb"/>
+  </FFMetaData>
+
+  <AtomTypes expression="A*exp(-r/rho) - C/r**6">
+    <ParametersUnitDef parameter="A" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="rho" unit="nm"/>
+    <ParametersUnitDef parameter="C" unit="kJ/mol*nm**6"/>
+    <AtomType name="_A" element="_A" atomclass="_A" mass="1.0" charge="0.0" definition="_A" description="Buckingham bead A">
+      <Parameters>
+        <Parameter name="A" value="100.0"/>
+        <Parameter name="rho" value="0.030"/>
+        <Parameter name="C" value="0.001"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="_B" element="_B" atomclass="_B" mass="1.0" charge="0.0" definition="_B" description="Buckingham bead B">
+      <Parameters>
+        <Parameter name="A" value="200.0"/>
+        <Parameter name="rho" value="0.040"/>
+        <Parameter name="C" value="0.002"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+
+  <PairPotentialTypes expression="A*exp(-r/rho) - C/r**6">
+    <ParametersUnitDef parameter="A" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="rho" unit="nm"/>
+    <ParametersUnitDef parameter="C" unit="kJ/mol*nm**6"/>
+    <PairPotentialType name="HOOMDBuckinghamPotential" type1="_A" type2="_B">
+      <Parameters>
+        <Parameter name="A" value="300.0"/>
+        <Parameter name="rho" value="0.050"/>
+        <Parameter name="C" value="0.003"/>
+      </Parameters>
+    </PairPotentialType>
+  </PairPotentialTypes>
+</ForceField>
