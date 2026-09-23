@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Two nonbonded expressions in one force field: _A is Lennard-Jones, _K is
+  Buckingham. Each AtomTypes block carries its own expression.
+-->
+<ForceField version="0.0.1" name="LJBuckingham">
+  <FFMetaData combiningRule="lorentz">
+    <Units energy="kJ/mol" distance="nm" mass="amu" charge="coulomb"/>
+  </FFMetaData>
+
+  <AtomTypes expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)">
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <AtomType name="_A" element="_A" atomclass="_A" mass="1.0" charge="0.0" definition="_A" description="LJ bead">
+      <Parameters>
+        <Parameter name="sigma" value="0.30"/>
+        <Parameter name="epsilon" value="0.40"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+
+  <AtomTypes expression="a*exp(-b*r) - c*r**-6">
+    <ParametersUnitDef parameter="a" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="b" unit="1/nm"/>
+    <ParametersUnitDef parameter="c" unit="kJ/mol*nm**6"/>
+    <AtomType name="_K" element="_K" atomclass="_K" mass="1.0" charge="0.0" definition="_K" description="Buckingham bead">
+      <Parameters>
+        <Parameter name="a" value="100.0"/>
+        <Parameter name="b" value="30.0"/>
+        <Parameter name="c" value="0.001"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+</ForceField>

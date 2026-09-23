@@ -780,6 +780,30 @@ class TestHoomd(BaseTest):
         with pytest.raises(EngineIncompatibilityError, match=r"\('_A', '_D'\)"):
             to_hoomd_forcefield(top, r_cut=1.2, kT=1)
 
+    def test_two_nonbonded_expressions(self):
+        from gmso.core.atom import Atom
+        from gmso.core.topology import Topology
+        from gmso.exceptions import EngineIncompatibilityError
+
+        ff = ForceField(get_path("ff-lj-buckingham.xml"))
+        assert len({str(ff.atom_types[name].expression) for name in ("_A", "_K")}) == 2
+
+        top = Topology()
+        for i, name in enumerate(("_A", "_K")):
+            top.add_site(
+                Atom(
+                    name=name,
+                    position=np.array([i * 0.5, 0.0, 0.0]),
+                    molecule=("CG", 0),
+                )
+            )
+        top = apply(top, ff)
+        assert sorted(atype.name for atype in top.atom_types) == ["_A", "_K"]
+
+        # Buckingham has no hoomd parser yet, so the compatibility gate refuses it
+        with pytest.raises(EngineIncompatibilityError, match="_K"):
+            to_hoomd_forcefield(top, r_cut=1.2)
+
     def test_pairpotential_lj_override(self, pairpot_one_cross_top):
         forces, _ = to_hoomd_forcefield(pairpot_one_cross_top, r_cut=1.2)
         lj_forces = [f for f in forces["nonbonded"] if isinstance(f, hoomd.md.pair.LJ)]
