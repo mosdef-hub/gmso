@@ -1127,6 +1127,25 @@ def _parse_nonbonded_forces(
             r_cut=r_cut,
         )
     )
+    # Pairtypes whose expression matches one the atom types already use get explicit
+    # parameters instead of the combining rule; any other expression gets its own force.
+    overrides, standalone_pairtypes = {}, {}
+    for pairtype in top.pairpotential_types:
+        pair_category = potential_types[pairtype]
+        if pair_category in groups:
+            overrides.setdefault(pair_category, []).append(pairtype)
+        else:
+            standalone_pairtypes.setdefault(pair_category, []).append(pairtype)
+
+    for pair_category, value in overrides.items():
+        expected_units_dim = potential_refs[pair_category][
+            "expected_parameters_dimensions"
+        ]
+        overrides[pair_category] = {
+            sort_by_types(pairtype): pairtype
+            for pairtype in convert_params_units(value, expected_units_dim, base_units)
+        }
+
     for group, value in groups.items():
         nbonded_forces.extend(
             atype_parsers[group](
@@ -1136,29 +1155,21 @@ def _parse_nonbonded_forces(
                 r_cut=r_cut,
                 nlist=nlist_nb,
                 scaling_factors=nb_scalings,
+                overrides=overrides.get(group, {}),
             )
         )
 
-    # pair potentials here
-    if not top.pairpotential_types:
-        return nbonded_forces
-    if not isinstance(kT, (float, int)):
-        raise EngineIncompatibilityError(
-            f"kT must be set to use 'HOOMDDPDForce' in the topology {top}"
-        )
     pairtype_parsers = {
         "HOOMDDPDForce": _parse_dpd,
     }
-    # Grouping pairtype by group name
-    pair_categoryDict = {}
-    for pairtype in top.pairpotential_types:
-        pair_category = potential_types[pairtype]
-        if pair_category not in pair_categoryDict:
-            pair_categoryDict[pair_category] = [pairtype]
-        else:
-            pair_categoryDict[pair_category].append(pairtype)
-
-    for pair_category, value in pair_categoryDict.items():
+    for pair_category, value in standalone_pairtypes.items():
+        if pair_category not in pairtype_parsers:
+            raise EngineIncompatibilityError(
+                f"Pair potential '{pair_category}' in the topology {top} has no "
+                "atom types of the same expression to override, and no parser of "
+                "its own. Give the pair's atom types that expression, or use a "
+                f"pair potential expression with a parser: {sorted(pairtype_parsers)}"
+            )
         nbonded_forces.extend(
             pairtype_parsers[pair_category](
                 top=top,
@@ -1212,10 +1223,13 @@ def _parse_coulombic(
 
 
 def _parse_dpd(top, pairtypes, r_cut, nlist, kT):
+    if not isinstance(kT, (float, int)):
+        raise EngineIncompatibilityError(
+            f"kT must be set to use 'HOOMDDPDForce' in the topology {top}"
+        )
     dpd_force = hoomd.md.pair.DPD(nlist=nlist, kT=kT, default_r_cut=r_cut)
     for pair_potential in pairtypes:
-        pairs = list(pair_potential.member_types)
-        pairs.sort()
+        pairs = sort_by_types(pair_potential)
         dpd_force.params[tuple(pairs)] = {
             "A": pair_potential.parameters["A"],
             "gamma": pair_potential.parameters["γ"],
@@ -1229,27 +1243,40 @@ def _parse_dpd(top, pairtypes, r_cut, nlist, kT):
     return [dpd_force]
 
 
-def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
+def _parse_lj(
+    top, atypes, combining_rule, r_cut, nlist, scaling_factors, overrides=None
+):
     """Parse LJ forces and special pairs LJ forces."""
     lj = hoomd.md.pair.LJ(nlist=nlist)
+    overrides = overrides or {}
     calculated_params = {}
     for pairs in itertools.combinations_with_replacement(atypes, 2):
         pairs = list(pairs)
         pairs.sort(key=lambda atype: atype.name)
         type_name = (pairs[0].name, pairs[1].name)
-        comb_epsilon = np.sqrt(
-            pairs[0].parameters["epsilon"].value * pairs[1].parameters["epsilon"].value
-        )
-        if top.combining_rule == "lorentz":
-            comb_sigma = np.mean(
-                [pairs[0].parameters["sigma"], pairs[1].parameters["sigma"]]
-            )
-        elif top.combining_rule == "geometric":
-            comb_sigma = np.sqrt(
-                pairs[0].parameters["sigma"].value * pairs[1].parameters["sigma"].value
-            )
+        override = overrides.get(type_name)
+        if override:
+            comb_sigma = override.parameters["sigma"].value
+            comb_epsilon = override.parameters["epsilon"].value
         else:
-            raise ValueError(f"Invalid combining rule provided ({combining_rule})")
+            comb_epsilon = np.sqrt(
+                pairs[0].parameters["epsilon"].value
+                * pairs[1].parameters["epsilon"].value
+            )
+            if top.combining_rule == "lorentz":
+                comb_sigma = np.mean(
+                    [
+                        pairs[0].parameters["sigma"].value,
+                        pairs[1].parameters["sigma"].value,
+                    ]
+                )
+            elif top.combining_rule == "geometric":
+                comb_sigma = np.sqrt(
+                    pairs[0].parameters["sigma"].value
+                    * pairs[1].parameters["sigma"].value
+                )
+            else:
+                raise ValueError(f"Invalid combining rule provided ({combining_rule})")
 
         calculated_params[type_name] = {
             "sigma": comb_sigma,
@@ -1308,6 +1335,7 @@ def _parse_buckingham(
     r_cut,
     nlist,
     scaling_factors,
+    overrides=None,
 ):
     return None
 
@@ -1319,6 +1347,7 @@ def _parse_lj0804(
     r_cut,
     nlist,
     scaling_factors,
+    overrides=None,
 ):
     return None
 
@@ -1330,6 +1359,7 @@ def _parse_lj1208(
     r_cut,
     nlist,
     scaling_factors,
+    overrides=None,
 ):
     return None
 
@@ -1341,6 +1371,7 @@ def _parse_mie(
     r_cut,
     nlist,
     scaling_factors,
+    overrides=None,
 ):
     return None
 
