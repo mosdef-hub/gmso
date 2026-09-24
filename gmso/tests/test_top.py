@@ -264,3 +264,55 @@ class TestTop(BaseTest):
 
         for line, ref_line in zip(current[1:], ref[1:]):
             assert " ".join(line.split()) == " ".join(ref_line.split())
+
+    def test_pairpotential_lj_override(self, pairpot_one_cross_top):
+        pairpot_one_cross_top.save("one_cross.top", overwrite=True)
+        with open("one_cross.top") as f:
+            contents = f.read()
+        assert "[ nonbond_params ]" in contents
+        assert "2.22222" in contents
+
+        nbfix = pmd.load_file(
+            "one_cross.top", parametrize=False
+        ).parameterset.nbfix_types
+        # parmed reports (epsilon in kcal/mol, rmin in angstrom)
+        assert nbfix[("_A", "_B")][0] == pytest.approx(9.11111 / 4.184)
+        assert nbfix[("_A", "_B")][1] == pytest.approx(22.2222 * 2 ** (1 / 6))
+        # the pairs without an override are left for gromacs to mix
+        assert ("_A", "_C") not in nbfix
+        assert ("_B", "_C") not in nbfix
+
+    def test_pairpotential_lj_override_all_cross(self, pairpot_all_cross_top):
+        pairpot_all_cross_top.save("all_cross.top", overwrite=True)
+        nbfix = pmd.load_file(
+            "all_cross.top", parametrize=False
+        ).parameterset.nbfix_types
+        for pair, sigma in (
+            (("_A", "_B"), 2.22222),
+            (("_A", "_C"), 3.33333),
+            (("_B", "_C"), 4.44444),
+        ):
+            assert nbfix[pair][1] == pytest.approx(sigma * 10 * 2 ** (1 / 6))
+
+    def test_no_pairpotential_types_writes_no_section(self, typed_ethane):
+        typed_ethane.save("ethane.top", overwrite=True)
+        with open("ethane.top") as f:
+            assert "[ nonbond_params ]" not in f.read()
+
+    def test_pairpotential_absent_atom_type_skipped(self, pairpot_cg_top):
+        # the force field overrides _A-_B, but only _A and _C are in the topology
+        top = pairpot_cg_top("ff-pairpot-one-cross.xml", bead_names=("_A", "_C"))
+        assert len(top.pairpotential_types) == 1
+        top.save("absent.top", overwrite=True)
+        with open("absent.top") as f:
+            assert "[ nonbond_params ]" not in f.read()
+
+    def test_pairpotential_diagonal_override(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-pairpot-one-cross.xml", bead_names=("_A", "_B"))
+        pairtype = next(iter(top.pairpotential_types))
+        pairtype.member_types = ("_A", "_A")
+        top.save("diagonal.top", overwrite=True)
+        nbfix = pmd.load_file(
+            "diagonal.top", parametrize=False
+        ).parameterset.nbfix_types
+        assert nbfix[("_A", "_A")][1] == pytest.approx(22.2222 * 2 ** (1 / 6))

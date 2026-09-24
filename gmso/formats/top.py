@@ -26,6 +26,7 @@ from gmso.parameterization.molecule_utils import (
 )
 from gmso.utils.compatibility import check_compatibility
 from gmso.utils.connectivity import generate_pairs_lists
+from gmso.utils.sorting import sort_by_types
 
 logger = logging.getLogger(__name__)
 
@@ -117,6 +118,13 @@ def write_top(
             )
             for atom_type in top.atom_types(PotentialFilters.UNIQUE_NAME_CLASS)
         )
+
+        # GROMACS reads [ nonbond_params ] only between [ atomtypes ] and the
+        # first [ moleculetype ].
+        nonbond_params = _write_nonbond_params(top)
+        if nonbond_params:
+            out_file.write("\n[ nonbond_params ]\n; i\tj\tfunc\tsigma\t\tepsilon\n")
+            out_file.writelines(nonbond_params)
 
         # Define unique molecule by name only
         unique_molecules = _get_unique_molecules(top)
@@ -359,6 +367,45 @@ def _get_top_vars(top, top_vars):
         default_top_vars.update(top_vars)
 
     return default_top_vars
+
+
+def _write_nonbond_params(top):
+    """Write a row for each pair whose parameters are given explicitly.
+
+    GROMACS applies the combining rule to every pair left out of this section.
+
+    Returns
+    -------
+    list of str
+        One formatted row per pair potential type that applies to the topology.
+    """
+    atom_type_names = {
+        atom_type.name
+        for atom_type in top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS)
+    }
+    lines = []
+    for pairpotential_type in sorted(top.pairpotential_types, key=sort_by_types):
+        members = sort_by_types(pairpotential_type)
+        # GROMACS rejects a row naming a type that [ atomtypes ] does not define.
+        if not atom_type_names.issuperset(members):
+            logger.debug(
+                f"Pair potential type {pairpotential_type} is not written, because "
+                f"the atom types {set(members) - atom_type_names} are not in the "
+                f"topology {top}."
+            )
+            continue
+        lines.append(
+            "{:12s}{:12s}{:4s}{:12.5f}{:12.5f}\n".format(
+                members[0],
+                members[1],
+                "1",
+                pairpotential_type.parameters["sigma"].in_units(u.nanometer).value,
+                pairpotential_type.parameters["epsilon"]
+                .in_units(u.Unit("kJ/mol"))
+                .value,
+            )
+        )
+    return lines
 
 
 def _get_unique_molecules(top):
