@@ -833,6 +833,24 @@ class TestHoomd(BaseTest):
         ):
             to_hoomd_forcefield(top, r_cut=1.2)
 
+    @pytest.mark.parametrize(
+        "fn,pair_class",
+        [
+            ("ff-lj0804.xml", "LJ0804"),
+            ("ff-lj1208.xml", "LJ1208"),
+        ],
+    )
+    def test_lj_variants(self, pairpot_cg_top, fn, pair_class):
+        top = pairpot_cg_top(fn, bead_names=("_A", "_B"))
+        forces, _ = to_hoomd_forcefield(top, r_cut=1.2)
+        force = next(f for f in forces["nonbonded"] if type(f).__name__ == pair_class)
+        assert force.params[("_A", "_A")]["sigma"] == pytest.approx(0.30)
+        assert force.params[("_B", "_B")]["sigma"] == pytest.approx(0.40)
+        assert force.params[("_A", "_B")]["sigma"] == pytest.approx(0.35)
+        assert force.params[("_A", "_B")]["epsilon"] == pytest.approx(
+            np.sqrt(0.4 * 0.9)
+        )
+
     def test_pairtype_suppresses_mixing_across_expressions(self, pairpot_cg_top):
         top = pairpot_cg_top("ff-cross-expression-pair.xml", bead_names=("_A", "_B"))
         forces, _ = to_hoomd_forcefield(top, r_cut=1.2)

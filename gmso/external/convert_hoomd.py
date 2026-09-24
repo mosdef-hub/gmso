@@ -58,6 +58,8 @@ AKMA_UNITS = {
 # Exponents and decay lengths keep valid values, since only the prefactors vanish.
 OFF_PARAMETERS = {
     "LJ": {"sigma": 0.0, "epsilon": 0.0},
+    "LJ0804": {"sigma": 0.0, "epsilon": 0.0},
+    "LJ1208": {"sigma": 0.0, "epsilon": 0.0},
     "DPD": {"A": 0.0, "gamma": 0.0},
     "Buckingham": {"A": 0.0, "rho": 1.0, "C": 0.0},
     "Mie": {"epsilon": 0.0, "sigma": 0.0, "n": 12.0, "m": 6.0},
@@ -1010,6 +1012,8 @@ def _validate_compatibility(top):
 
     templates = PotentialTemplateLibrary()
     lennard_jones_potential = templates["LennardJonesPotential"]
+    lennard_jones_0804_potential = templates["LennardJones0804Potential"]
+    lennard_jones_1208_potential = templates["LennardJones1208Potential"]
     hoomd_buckingham_potential = templates["HOOMDBuckinghamPotential"]
     mie_potential = templates["MiePotential"]
     harmonic_bond_potential = templates["HarmonicBondPotential"]
@@ -1024,6 +1028,8 @@ def _validate_compatibility(top):
     null_atom_potential = NullPotentialExpression()
     accepted_potentials = (
         lennard_jones_potential,
+        lennard_jones_0804_potential,
+        lennard_jones_1208_potential,
         hoomd_buckingham_potential,
         mie_potential,
         harmonic_bond_potential,
@@ -1110,6 +1116,8 @@ def _parse_nonbonded_forces(
 
     atype_parsers = {
         "LennardJonesPotential": _parse_lj,
+        "LennardJones0804Potential": _parse_lj0804,
+        "LennardJones1208Potential": _parse_lj1208,
         "HOOMDBuckinghamPotential": _parse_buckingham,
         "MiePotential": _parse_mie,
     }
@@ -1519,7 +1527,30 @@ def _parse_lj0804(
     explicit_pairs=None,
     all_explicit_pairs=frozenset(),
 ):
-    return None
+    """Parse Lennard-Jones 8-4 forces."""
+    lj0804 = hoomd.md.pair.LJ0804(nlist=nlist)
+    explicit_pairs = explicit_pairs or {}
+    other_expression_pairs = set(all_explicit_pairs) - set(explicit_pairs)
+    atypes_by_name = {atype.name: atype for atype in atypes}
+    _warn_unscalable(scaling_factors, "LJ0804")
+
+    for type_name in _mixed_and_explicit_pairs(
+        atypes_by_name, explicit_pairs, other_expression_pairs
+    ):
+        explicit = explicit_pairs.get(type_name)
+        if explicit:
+            comb_sigma = explicit.parameters["sigma"].value
+            comb_epsilon = explicit.parameters["epsilon"].value
+        else:
+            comb_sigma, comb_epsilon = _mix_sigma_epsilon(
+                [atypes_by_name[name] for name in type_name], combining_rule
+            )
+        lj0804.params[type_name] = {"sigma": comb_sigma, "epsilon": comb_epsilon}
+        lj0804.r_cut[type_name] = r_cut
+
+    _set_rigid_body_pairs(lj0804, top, atypes, r_cut)
+
+    return [lj0804]
 
 
 def _parse_lj1208(
@@ -1532,7 +1563,30 @@ def _parse_lj1208(
     explicit_pairs=None,
     all_explicit_pairs=frozenset(),
 ):
-    return None
+    """Parse Lennard-Jones 12-8 forces."""
+    lj1208 = hoomd.md.pair.LJ1208(nlist=nlist)
+    explicit_pairs = explicit_pairs or {}
+    other_expression_pairs = set(all_explicit_pairs) - set(explicit_pairs)
+    atypes_by_name = {atype.name: atype for atype in atypes}
+    _warn_unscalable(scaling_factors, "LJ1208")
+
+    for type_name in _mixed_and_explicit_pairs(
+        atypes_by_name, explicit_pairs, other_expression_pairs
+    ):
+        explicit = explicit_pairs.get(type_name)
+        if explicit:
+            comb_sigma = explicit.parameters["sigma"].value
+            comb_epsilon = explicit.parameters["epsilon"].value
+        else:
+            comb_sigma, comb_epsilon = _mix_sigma_epsilon(
+                [atypes_by_name[name] for name in type_name], combining_rule
+            )
+        lj1208.params[type_name] = {"sigma": comb_sigma, "epsilon": comb_epsilon}
+        lj1208.r_cut[type_name] = r_cut
+
+    _set_rigid_body_pairs(lj1208, top, atypes, r_cut)
+
+    return [lj1208]
 
 
 def _parse_mie(
