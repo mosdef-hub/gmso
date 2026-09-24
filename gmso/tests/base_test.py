@@ -740,10 +740,10 @@ class BaseTest:
 
     @pytest.fixture
     def pairpot_cg_top(self):
-        def _factory(fn):
+        def _factory(fn, bead_names=("_A", "_B", "_C")):
             ff = ForceField(get_path(fn))
             top = Topology()
-            for i, name in enumerate(("_A", "_B", "_C")):
+            for i, name in enumerate(bead_names):
                 top.add_site(
                     Atom(
                         name=name,

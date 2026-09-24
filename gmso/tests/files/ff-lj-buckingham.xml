@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   Two nonbonded expressions in one force field: _A is Lennard-Jones, _K is
-  Buckingham. Each AtomTypes block carries its own expression.
+  Buckingham. The _A-_K pair belongs to neither atom type group, so it is given
+  Lennard-Jones parameters explicitly.
 -->
 <ForceField version="0.0.1" name="LJBuckingham">
   <FFMetaData combiningRule="lorentz">
@@ -19,16 +20,27 @@
     </AtomType>
   </AtomTypes>
 
-  <AtomTypes expression="a*exp(-b*r) - c*r**-6">
-    <ParametersUnitDef parameter="a" unit="kJ/mol"/>
-    <ParametersUnitDef parameter="b" unit="1/nm"/>
-    <ParametersUnitDef parameter="c" unit="kJ/mol*nm**6"/>
+  <AtomTypes expression="A*exp(-r/rho) - C/r**6">
+    <ParametersUnitDef parameter="A" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="rho" unit="nm"/>
+    <ParametersUnitDef parameter="C" unit="kJ/mol*nm**6"/>
     <AtomType name="_K" element="_K" atomclass="_K" mass="1.0" charge="0.0" definition="_K" description="Buckingham bead">
       <Parameters>
-        <Parameter name="a" value="100.0"/>
-        <Parameter name="b" value="30.0"/>
-        <Parameter name="c" value="0.001"/>
+        <Parameter name="A" value="100.0"/>
+        <Parameter name="rho" value="0.030"/>
+        <Parameter name="C" value="0.001"/>
       </Parameters>
     </AtomType>
   </AtomTypes>
+
+  <PairPotentialTypes expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)">
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <PairPotentialType name="LennardJonesPotential" type1="_A" type2="_K">
+      <Parameters>
+        <Parameter name="sigma" value="2.22222"/>
+        <Parameter name="epsilon" value="9.11111"/>
+      </Parameters>
+    </PairPotentialType>
+  </PairPotentialTypes>
 </ForceField>

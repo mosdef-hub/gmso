@@ -780,28 +780,92 @@ class TestHoomd(BaseTest):
         with pytest.raises(EngineIncompatibilityError, match=r"\('_A', '_D'\)"):
             to_hoomd_forcefield(top, r_cut=1.2, kT=1)
 
-    def test_two_nonbonded_expressions(self):
-        from gmso.core.atom import Atom
-        from gmso.core.topology import Topology
+    def test_two_nonbonded_expressions(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-lj-buckingham.xml", bead_names=("_A", "_K"))
+        assert len({str(atype.expression) for atype in top.atom_types}) == 2
+
+        forces, _ = to_hoomd_forcefield(top, r_cut=1.2)
+        lj = next(f for f in forces["nonbonded"] if isinstance(f, hoomd.md.pair.LJ))
+        buckingham = next(
+            f for f in forces["nonbonded"] if isinstance(f, hoomd.md.pair.Buckingham)
+        )
+        assert lj.params[("_A", "_A")]["sigma"] == pytest.approx(0.30)
+        assert lj.params[("_A", "_K")]["sigma"] == pytest.approx(2.22222)
+        assert buckingham.params[("_K", "_K")]["A"] == pytest.approx(100.0)
+
+        # each force contributes nothing to the pairs the other one covers
+        assert lj.params[("_K", "_K")]["epsilon"] == 0
+        assert lj.r_cut[("_K", "_K")] == 0
+        for pair in (("_A", "_A"), ("_A", "_K")):
+            assert buckingham.params[pair]["A"] == 0
+            assert buckingham.r_cut[pair] == 0
+
+    def test_mie_mixing(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-mie.xml", bead_names=("_A", "_B"))
+        forces, _ = to_hoomd_forcefield(top, r_cut=1.2)
+        mie = next(f for f in forces["nonbonded"] if isinstance(f, hoomd.md.pair.Mie))
+        # shared exponents, so the cross pair follows the lorentz combining rule
+        assert mie.params[("_A", "_B")]["sigma"] == pytest.approx(0.35)
+        assert mie.params[("_A", "_B")]["epsilon"] == pytest.approx(np.sqrt(0.4 * 0.9))
+        for pair in (("_A", "_A"), ("_A", "_B"), ("_B", "_B")):
+            assert mie.params[pair]["n"] == 12
+            assert mie.params[pair]["m"] == 6
+
+    def test_mie_explicit_cross_pair(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-mie-mismatch.xml", bead_names=("_A", "_B"))
+        forces, _ = to_hoomd_forcefield(top, r_cut=1.2)
+        mie = next(f for f in forces["nonbonded"] if isinstance(f, hoomd.md.pair.Mie))
+        assert mie.params[("_A", "_B")]["sigma"] == pytest.approx(2.22222)
+        assert mie.params[("_A", "_B")]["epsilon"] == pytest.approx(9.11111)
+        assert mie.params[("_A", "_B")]["n"] == 13
+        # the atom types keep their own exponents where they pair with themselves
+        assert mie.params[("_A", "_A")]["n"] == 12
+        assert mie.params[("_B", "_B")]["n"] == 14
+
+    def test_mie_exponent_mismatch_raises(self, pairpot_cg_top):
         from gmso.exceptions import EngineIncompatibilityError
 
-        ff = ForceField(get_path("ff-lj-buckingham.xml"))
-        assert len({str(ff.atom_types[name].expression) for name in ("_A", "_K")}) == 2
+        top = pairpot_cg_top("ff-mie-mismatch.xml", bead_names=("_A", "_B"))
+        top.remove_pairpotentialtype(("_A", "_B"))
+        assert not top.pairpotential_types
+        with pytest.raises(
+            EngineIncompatibilityError, match="exponents are not combined"
+        ):
+            to_hoomd_forcefield(top, r_cut=1.2)
 
-        top = Topology()
-        for i, name in enumerate(("_A", "_K")):
-            top.add_site(
-                Atom(
-                    name=name,
-                    position=np.array([i * 0.5, 0.0, 0.0]),
-                    molecule=("CG", 0),
-                )
-            )
-        top = apply(top, ff)
-        assert sorted(atype.name for atype in top.atom_types) == ["_A", "_K"]
+    def test_pairtype_suppresses_mixing_across_expressions(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-cross-expression-pair.xml", bead_names=("_A", "_B"))
+        forces, _ = to_hoomd_forcefield(top, r_cut=1.2)
+        lj = next(f for f in forces["nonbonded"] if isinstance(f, hoomd.md.pair.LJ))
+        buckingham = next(
+            f for f in forces["nonbonded"] if isinstance(f, hoomd.md.pair.Buckingham)
+        )
+        assert buckingham.params[("_A", "_B")]["A"] == pytest.approx(300.0)
+        # the pairtype owns this pair, so the atom types must not also mix it
+        assert lj.params[("_A", "_B")]["epsilon"] == 0
+        assert lj.params[("_A", "_B")]["sigma"] == 0
+        assert lj.r_cut[("_A", "_B")] == 0
+        # pairs without a pairtype still mix
+        assert lj.params[("_A", "_A")]["sigma"] == pytest.approx(0.30)
+        assert lj.params[("_B", "_B")]["sigma"] == pytest.approx(0.40)
 
-        # Buckingham has no hoomd parser yet, so the compatibility gate refuses it
-        with pytest.raises(EngineIncompatibilityError, match="_K"):
+    def test_hoomd_buckingham(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-hoomd-buckingham.xml", bead_names=("_A", "_B"))
+        forces, _ = to_hoomd_forcefield(top, r_cut=1.2)
+        buckingham = next(
+            f for f in forces["nonbonded"] if isinstance(f, hoomd.md.pair.Buckingham)
+        )
+        assert buckingham.params[("_A", "_A")] == {"A": 100.0, "rho": 0.03, "C": 0.001}
+        assert buckingham.params[("_B", "_B")] == {"A": 200.0, "rho": 0.04, "C": 0.002}
+        # the cross pair comes only from the PairPotentialType
+        assert buckingham.params[("_A", "_B")] == {"A": 300.0, "rho": 0.05, "C": 0.003}
+
+    def test_buckingham_missing_cross_pair_raises(self, pairpot_cg_top):
+        from gmso.exceptions import EngineIncompatibilityError
+
+        top = pairpot_cg_top("ff-hoomd-buckingham.xml", bead_names=("_A", "_B"))
+        top.remove_pairpotentialtype(("_A", "_B"))
+        with pytest.raises(EngineIncompatibilityError, match="are not combined"):
             to_hoomd_forcefield(top, r_cut=1.2)
 
     def test_pairpotential_lj_override(self, pairpot_one_cross_top):
