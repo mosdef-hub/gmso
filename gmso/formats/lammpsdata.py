@@ -23,10 +23,17 @@ from gmso.core.element import element_by_mass
 from gmso.core.improper import Improper
 from gmso.core.topology import Topology
 from gmso.core.views import PotentialFilters
+from gmso.exceptions import EngineIncompatibilityError
 from gmso.formats.formats_registry import loads_as, saves_as
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.compatibility import check_compatibility
 from gmso.utils.conversions import convert_kelvin_to_energy_units
+from gmso.utils.expression import NullPotentialExpression
+from gmso.utils.nonbonded import (
+    explicit_pair_types,
+    mix_sigma_epsilon,
+    uncovered_null_pairs,
+)
 from gmso.utils.sorting import (
     reindex_molecules,
     sort_by_types,
@@ -37,6 +44,12 @@ from gmso.utils.units import LAMMPS_UnitSystems, write_out_parameter_and_units
 logger = logging.getLogger(__name__)
 
 pfilter = PotentialFilters.UNIQUE_SORTED_NAMES
+
+# Order of the coefficients LAMMPS expects in a pair coefficient row, keyed by
+# the potential template each form matches.
+PAIR_STYLE_PARAMETERS = {
+    "LennardJonesPotential": ("epsilon", "sigma"),
+}
 
 
 # TODO: Write in header of each potential type any conversions that happened
@@ -176,7 +189,7 @@ def write_lammpsdata(
         all_ordered_typesDict = {}
         if top.is_fully_typed():
             _write_atomtypes(out_file, top, base_unyts, lj_cfactorsDict)
-            _write_pairtypes(out_file, top, base_unyts, lj_cfactorsDict)
+            _write_pairtypes(out_file, top, potentialsMap, base_unyts, lj_cfactorsDict)
             if top.bond_types:
                 sorted_bondsList = _write_bondtypes(
                     out_file, top, base_unyts, lj_cfactorsDict
@@ -597,6 +610,7 @@ def _accepted_potentials():
     opls_torsion_potential = templates["OPLSTorsionPotential"]
     accepted_potentialsList = [
         lennard_jones_potential,
+        NullPotentialExpression(),
         harmonic_bond_potential,
         fene_bond_potential,
         harmonic_angle_potential,
@@ -753,41 +767,102 @@ def _write_atomtypes(out_file, top, base_unyts, cfactorsDict):
         )
 
 
-def _write_pairtypes(out_file, top, base_unyts, cfactorsDict):
-    """Write out pair interaction to LAMMPS file."""
-    # TODO: Handling of modified cross-interactions is not considered from top.pairpotential_types
-    # Pair coefficients
-    test_atomtype = top.sites[0].atom_type
-    out_file.write(f"\nPair Coeffs # {test_atomtype.expression}\n")
-    nb_style_orderTuple = (
-        "epsilon",
-        "sigma",
-    )  # this will vary with new pair styles
+def _check_null_pairs_covered(top, sorted_atomtypes, explicit_pairs):
+    """Check that a PairPotentialType covers every type pair of a bare atom type.
+
+    Raises
+    ------
+    EngineIncompatibilityError
+        If a type pair has neither atom type parameters to mix nor a pair type.
+    """
+    null_names, uncovered = uncovered_null_pairs(sorted_atomtypes, explicit_pairs)
+    if uncovered:
+        raise EngineIncompatibilityError(
+            f"The atom types {null_names} of the topology {top} have no "
+            "parameters of their own, and no PairPotentialType covers the type "
+            f"pairs {uncovered}. Add a PairPotentialType for each of those pairs."
+        )
+
+
+def _pair_coefficients(parameters, param_keys, base_unyts, cfactorsDict):
+    """Return each pair coefficient as a string in the output unit style."""
+    return [
+        base_unyts.convert_parameter(
+            convert_kelvin_to_energy_units(parameters[key], "kJ"),
+            cfactorsDict,
+            n_decimals=5,
+        )
+        for key in param_keys
+    ]
+
+
+def _write_pairtypes(out_file, top, potentialsMap, base_unyts, cfactorsDict):
+    """Write out pair interaction to LAMMPS file.
+
+    Writes a PairIJ Coeffs section when any PairPotentialType applies to the
+    topology. LAMMPS requires every i <= j pair there and does no mixing of its
+    own, so the pairs without a pair type are mixed here. With no pair types,
+    writes the diagonal Pair Coeffs section and leaves mixing to LAMMPS.
+    """
+    sorted_atomtypes = sorted(top.atom_types(filter_by=pfilter), key=lambda x: x.name)
+    explicit_pairs = explicit_pair_types(
+        top, {atom_type.name for atom_type in sorted_atomtypes}
+    )
+    _check_null_pairs_covered(top, sorted_atomtypes, explicit_pairs)
+
+    reference_atomtype = next(
+        atom_type
+        for atom_type in top.atom_types(filter_by=PotentialFilters.UNIQUE_EXPRESSION)
+        if not isinstance(atom_type.potential_expression, NullPotentialExpression)
+    )
+    nb_style_orderTuple = PAIR_STYLE_PARAMETERS[potentialsMap[reference_atomtype]]
+    section = "PairIJ Coeffs" if explicit_pairs else "Pair Coeffs"
+    out_file.write(f"\n{section} # {reference_atomtype.expression}\n")
     param_labels = [
         write_out_parameter_and_units(
             key,
-            convert_kelvin_to_energy_units(test_atomtype.parameters[key], "kJ"),
+            convert_kelvin_to_energy_units(reference_atomtype.parameters[key], "kJ"),
             base_unyts,
         )
         for key in nb_style_orderTuple
     ]
     out_file.write("#\t" + "\t".join(param_labels) + "\n")
-    sorted_atomtypes = sorted(top.atom_types(filter_by=pfilter), key=lambda x: x.name)
-    for idx, param in enumerate(sorted_atomtypes):
-        out_file.write(
-            "{}\t{:7}\t\t{:7}\t\t# {}\n".format(
-                idx + 1,
-                *[
-                    base_unyts.convert_parameter(
-                        convert_kelvin_to_energy_units(param.parameters[key], "kJ"),
+
+    if not explicit_pairs:
+        for idx, atom_type in enumerate(sorted_atomtypes):
+            out_file.write(
+                "{}\t{:7}\t\t{:7}\t\t# {}\n".format(
+                    idx + 1,
+                    *_pair_coefficients(
+                        atom_type.parameters,
+                        nb_style_orderTuple,
+                        base_unyts,
                         cfactorsDict,
-                        n_decimals=5,
-                    )
-                    for key in nb_style_orderTuple
-                ],
-                param.name,
+                    ),
+                    atom_type.name,
+                )
             )
-        )
+        return
+
+    for i, itype in enumerate(sorted_atomtypes):
+        for j, jtype in enumerate(sorted_atomtypes[i:], start=i):
+            pairpotential_type = explicit_pairs.get((itype.name, jtype.name))
+            if pairpotential_type:
+                parameters = pairpotential_type.parameters
+            else:
+                sigma, epsilon = mix_sigma_epsilon((itype, jtype), top.combining_rule)
+                parameters = {"sigma": sigma, "epsilon": epsilon}
+            out_file.write(
+                "{}\t{}\t{:7}\t\t{:7}\t\t# {}\t{}\n".format(
+                    i + 1,
+                    j + 1,
+                    *_pair_coefficients(
+                        parameters, nb_style_orderTuple, base_unyts, cfactorsDict
+                    ),
+                    itype.name,
+                    jtype.name,
+                )
+            )
 
 
 def _write_bondtypes(out_file, top, base_unyts, cfactorsDict):

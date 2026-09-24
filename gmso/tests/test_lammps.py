@@ -19,6 +19,19 @@ from gmso.tests.utils import get_path
 pfilter = PotentialFilters.UNIQUE_SORTED_NAMES
 
 
+def pair_coeff_rows(filename, section):
+    """Return the split coefficient rows of a data file's pair coefficient section."""
+    with open(filename) as f:
+        lines = f.readlines()
+    start = next(i for i, line in enumerate(lines) if line.startswith(section))
+    rows = []
+    for line in lines[start + 2 :]:
+        if not line.strip():
+            break
+        rows.append(line.split())
+    return rows
+
+
 def compare_lammps_files(line1, line2, skip_linesList=None, offsets=None):
     """Check for line by line equality between lammps files, by any values.
 
@@ -644,3 +657,61 @@ class TestLammpsWriter(BaseTest):
         np.testing.assert_allclose(float(coeffs[2]), 10)
         np.testing.assert_allclose(float(coeffs[3]), 1)
         np.testing.assert_allclose(float(coeffs[4]), 10)
+
+    def test_pairpotential_lj_override(self, pairpot_one_cross_top):
+        pairpot_one_cross_top.box = Box(lengths=[5, 5, 5] * u.nm)
+        pairpot_one_cross_top.save("one_cross.lammps", overwrite=True)
+        rows = pair_coeff_rows("one_cross.lammps", "PairIJ Coeffs")
+        assert len(rows) == 6
+        coeffs = {(row[5], row[6]): (float(row[2]), float(row[3])) for row in rows}
+        assert coeffs[("_A", "_B")] == pytest.approx(
+            (9.11111 / 4.184, 22.2222), rel=1e-4
+        )
+        # PairIJ Coeffs turns off mixing in LAMMPS, so the rest is mixed here
+        assert coeffs[("_A", "_C")] == pytest.approx((0.489898 / 4.184, 4.0), rel=1e-4)
+        assert coeffs[("_B", "_C")] == pytest.approx((0.547723 / 4.184, 4.5), rel=1e-4)
+
+    def test_pairpotential_lj_override_all_cross(self, pairpot_all_cross_top):
+        pairpot_all_cross_top.box = Box(lengths=[5, 5, 5] * u.nm)
+        pairpot_all_cross_top.save("all_cross.lammps", overwrite=True)
+        rows = pair_coeff_rows("all_cross.lammps", "PairIJ Coeffs")
+        coeffs = {(row[5], row[6]): float(row[3]) for row in rows}
+        for pair, sigma in (
+            (("_A", "_B"), 2.22222),
+            (("_A", "_C"), 3.33333),
+            (("_B", "_C"), 4.44444),
+        ):
+            assert coeffs[pair] == pytest.approx(sigma * 10)
+
+    def test_no_pairpotential_types_writes_pair_coeffs(self, typed_ethane):
+        typed_ethane.save("ethane.lammps", overwrite=True)
+        with open("ethane.lammps") as f:
+            contents = f.read()
+        assert "PairIJ Coeffs" not in contents
+        assert "Pair Coeffs" in contents
+
+    def test_pairpotential_absent_atom_type_skipped(self, pairpot_cg_top):
+        # the force field overrides _A-_B, but only _A and _C are in the topology
+        top = pairpot_cg_top("ff-pairpot-one-cross.xml", bead_names=("_A", "_C"))
+        top.box = Box(lengths=[5, 5, 5] * u.nm)
+        assert len(top.pairpotential_types) == 1
+        top.save("absent.lammps", overwrite=True)
+        with open("absent.lammps") as f:
+            assert "PairIJ Coeffs" not in f.read()
+
+    def test_null_atom_type(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-pairpot-null-bead.xml", bead_names=("_A", "_B", "_D"))
+        top.box = Box(lengths=[5, 5, 5] * u.nm)
+        top.save("null_bead.lammps", overwrite=True)
+        rows = pair_coeff_rows("null_bead.lammps", "PairIJ Coeffs")
+        coeffs = {(row[5], row[6]): float(row[3]) for row in rows}
+        assert coeffs[("_A", "_D")] == pytest.approx(22.2222)
+        assert coeffs[("_B", "_D")] == pytest.approx(33.3333)
+        assert coeffs[("_D", "_D")] == pytest.approx(44.4444)
+
+    def test_null_atom_type_uncovered_pair_raises(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-pairpot-null-bead.xml", bead_names=("_A", "_B", "_D"))
+        top.box = Box(lengths=[5, 5, 5] * u.nm)
+        top.remove_pairpotentialtype(("_A", "_D"))
+        with pytest.raises(EngineIncompatibilityError, match=r"\('_A', '_D'\)"):
+            top.save("uncovered.lammps", overwrite=True)
