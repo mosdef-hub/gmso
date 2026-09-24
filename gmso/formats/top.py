@@ -1,7 +1,6 @@
 """Write a GROMACS topology (.TOP) file."""
 
 import datetime
-import itertools
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -28,6 +27,7 @@ from gmso.parameterization.molecule_utils import (
 from gmso.utils.compatibility import check_compatibility
 from gmso.utils.connectivity import generate_pairs_lists
 from gmso.utils.expression import NullPotentialExpression
+from gmso.utils.nonbonded import explicit_pair_types, uncovered_null_pairs
 from gmso.utils.sorting import sort_by_types
 
 logger = logging.getLogger(__name__)
@@ -394,25 +394,11 @@ def _warn_uncovered_null_pairs(top):
     those beads pass through each other with nothing else reporting it.
     """
     atom_types = list(top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS))
-    null_names = {
-        atom_type.name
-        for atom_type in atom_types
-        if isinstance(atom_type.potential_expression, NullPotentialExpression)
-    }
-    if not null_names:
-        return
-
     covered = {sort_by_types(ptype) for ptype in top.pairpotential_types}
-    uncovered = [
-        pair
-        for pair in itertools.combinations_with_replacement(
-            sorted(atom_type.name for atom_type in atom_types), 2
-        )
-        if null_names.intersection(pair) and pair not in covered
-    ]
+    null_names, uncovered = uncovered_null_pairs(atom_types, covered)
     if uncovered:
         logger.warning(
-            f"The atom types {sorted(null_names)} of the topology {top} have no "
+            f"The atom types {null_names} of the topology {top} have no "
             f"parameters of their own, and no PairPotentialType covers the pairs "
             f"{uncovered}. Those pairs are written with an epsilon of zero and "
             "contribute no force."
@@ -434,16 +420,9 @@ def _write_nonbond_params(top):
         for atom_type in top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS)
     }
     lines = []
-    for pairpotential_type in sorted(top.pairpotential_types, key=sort_by_types):
-        members = sort_by_types(pairpotential_type)
-        # GROMACS rejects a row naming a type that [ atomtypes ] does not define.
-        if not atom_type_names.issuperset(members):
-            logger.debug(
-                f"Pair potential type {pairpotential_type} is not written, because "
-                f"the atom types {set(members) - atom_type_names} are not in the "
-                f"topology {top}."
-            )
-            continue
+    for members, pairpotential_type in explicit_pair_types(
+        top, atom_type_names
+    ).items():
         lines.append(
             "{:12s}{:12s}{:4s}{:12.5f}{:12.5f}\n".format(
                 members[0],

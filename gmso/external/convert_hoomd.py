@@ -20,6 +20,7 @@ from gmso.utils.conversions import convert_ryckaert_to_opls
 from gmso.utils.expression import NullPotentialExpression
 from gmso.utils.geometry import coord_shift, moment_of_inertia
 from gmso.utils.io import has_gsd, has_hoomd
+from gmso.utils.nonbonded import mix_sigma_epsilon
 from gmso.utils.sorting import (
     sort_by_classes,
     sort_by_types,
@@ -1355,18 +1356,9 @@ def _parse_dpd(top, pairtypes, r_cut, nlist, kT):
 
 
 def _mix_sigma_epsilon(pairs, combining_rule):
-    """Return the combined sigma and epsilon of two atom types."""
-    epsilon = np.sqrt(
-        pairs[0].parameters["epsilon"].value * pairs[1].parameters["epsilon"].value
-    )
-    sigmas = [pair.parameters["sigma"].value for pair in pairs]
-    if combining_rule == "lorentz":
-        sigma = np.mean(sigmas)
-    elif combining_rule == "geometric":
-        sigma = np.sqrt(sigmas[0] * sigmas[1])
-    else:
-        raise ValueError(f"Invalid combining rule provided ({combining_rule})")
-    return sigma, epsilon
+    """Return the combined sigma and epsilon of two atom types, as bare floats."""
+    sigma, epsilon = mix_sigma_epsilon(pairs, combining_rule)
+    return sigma.value, epsilon.value
 
 
 def _set_rigid_body_pairs(force, top, atypes, r_cut):
