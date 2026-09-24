@@ -1,6 +1,7 @@
 """Write a GROMACS topology (.TOP) file."""
 
 import datetime
+import itertools
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -26,6 +27,7 @@ from gmso.parameterization.molecule_utils import (
 )
 from gmso.utils.compatibility import check_compatibility
 from gmso.utils.connectivity import generate_pairs_lists
+from gmso.utils.expression import NullPotentialExpression
 from gmso.utils.sorting import sort_by_types
 
 logger = logging.getLogger(__name__)
@@ -68,6 +70,7 @@ def write_top(
     for the complete format description.
     """
     pot_types = _validate_compatibility(top)
+    _warn_uncovered_null_pairs(top)
     top_vars = _get_top_vars(top, top_vars)
 
     # Sanity checks
@@ -113,8 +116,7 @@ def write_top(
                 atom_type.mass.in_units(u.amu).value,
                 atom_type.charge.in_units(u.elementary_charge).value,
                 "A",
-                atom_type.parameters["sigma"].in_units(u.nanometer).value,
-                atom_type.parameters["epsilon"].in_units(u.Unit("kJ/mol")).value,
+                *_atomtype_parameters(atom_type),
             )
             for atom_type in top.atom_types(PotentialFilters.UNIQUE_NAME_CLASS)
         )
@@ -337,6 +339,7 @@ def _accepted_potentials():
     rb_torsion_potential = templates["RyckaertBellemansTorsionPotential"]
     accepted_potentials = (
         lennard_jones_potential,
+        NullPotentialExpression(),
         harmonic_bond_potential,
         fene_bond_potential,
         harmonic_angle_potential,
@@ -367,6 +370,53 @@ def _get_top_vars(top, top_vars):
         default_top_vars.update(top_vars)
 
     return default_top_vars
+
+
+def _atomtype_parameters(atom_type):
+    """Return an atom type's sigma in nm and epsilon in kJ/mol.
+
+    A bare atom type has no parameters of its own and gets zeros. Every pair it
+    takes part in then mixes to an epsilon of zero, so only its
+    PairPotentialTypes act on it.
+    """
+    if isinstance(atom_type.potential_expression, NullPotentialExpression):
+        return 0.0, 0.0
+    return (
+        atom_type.parameters["sigma"].in_units(u.nanometer).value,
+        atom_type.parameters["epsilon"].in_units(u.Unit("kJ/mol")).value,
+    )
+
+
+def _warn_uncovered_null_pairs(top):
+    """Warn about pairs of a bare atom type that no PairPotentialType covers.
+
+    GROMACS mixes such a pair to an epsilon of zero instead of refusing it, so
+    those beads pass through each other with nothing else reporting it.
+    """
+    atom_types = list(top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS))
+    null_names = {
+        atom_type.name
+        for atom_type in atom_types
+        if isinstance(atom_type.potential_expression, NullPotentialExpression)
+    }
+    if not null_names:
+        return
+
+    covered = {sort_by_types(ptype) for ptype in top.pairpotential_types}
+    uncovered = [
+        pair
+        for pair in itertools.combinations_with_replacement(
+            sorted(atom_type.name for atom_type in atom_types), 2
+        )
+        if null_names.intersection(pair) and pair not in covered
+    ]
+    if uncovered:
+        logger.warning(
+            f"The atom types {sorted(null_names)} of the topology {top} have no "
+            f"parameters of their own, and no PairPotentialType covers the pairs "
+            f"{uncovered}. Those pairs are written with an epsilon of zero and "
+            "contribute no force."
+        )
 
 
 def _write_nonbond_params(top):

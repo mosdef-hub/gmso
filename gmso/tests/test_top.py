@@ -1,3 +1,5 @@
+import logging
+
 import parmed as pmd
 import pytest
 import unyt as u
@@ -306,6 +308,37 @@ class TestTop(BaseTest):
         top.save("absent.top", overwrite=True)
         with open("absent.top") as f:
             assert "[ nonbond_params ]" not in f.read()
+
+    def test_null_atom_type(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-pairpot-null-bead.xml", bead_names=("_A", "_B", "_D"))
+        top.save("null_bead.top", overwrite=True)
+        with open("null_bead.top") as f:
+            contents = f.read()
+
+        # the bare bead carries zeros, so mixing gives its pairs no force
+        atomtypes = contents.split("[ atomtypes ]")[1].split("[")[0].strip().split("\n")
+        assert atomtypes[3].split()[:2] == ["_D", "1"]
+        assert atomtypes[3].split()[-2:] == ["0.00000", "0.00000"]
+
+        # every _D pair comes from the pair potential types instead
+        nbfix = pmd.load_file(
+            "null_bead.top", parametrize=False
+        ).parameterset.nbfix_types
+        assert nbfix[("_A", "_D")][1] == pytest.approx(22.2222 * 2 ** (1 / 6))
+        assert nbfix[("_B", "_D")][1] == pytest.approx(33.3333 * 2 ** (1 / 6))
+        assert nbfix[("_D", "_D")][1] == pytest.approx(44.4444 * 2 ** (1 / 6))
+
+    def test_null_atom_type_uncovered_pair_warns(self, pairpot_cg_top, caplog):
+        top = pairpot_cg_top("ff-pairpot-null-bead.xml", bead_names=("_A", "_B", "_D"))
+        top.remove_pairpotentialtype(("_B", "_D"))
+        with caplog.at_level(logging.WARNING):
+            top.save("uncovered.top", overwrite=True)
+        assert "('_B', '_D')" in caplog.text
+
+    def test_no_null_atom_types_does_not_warn(self, pairpot_one_cross_top, caplog):
+        with caplog.at_level(logging.WARNING):
+            pairpot_one_cross_top.save("one_cross.top", overwrite=True)
+        assert "no parameters of their own" not in caplog.text
 
     def test_pairpotential_diagonal_override(self, pairpot_cg_top):
         top = pairpot_cg_top("ff-pairpot-one-cross.xml", bead_names=("_A", "_B"))
