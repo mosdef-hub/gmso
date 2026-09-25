@@ -1015,7 +1015,7 @@ def _validate_compatibility(top):
     lennard_jones_potential = templates["LennardJonesPotential"]
     lennard_jones_0804_potential = templates["LennardJones0804Potential"]
     lennard_jones_1208_potential = templates["LennardJones1208Potential"]
-    hoomd_buckingham_potential = templates["HOOMDBuckinghamPotential"]
+    hoomd_buckingham_potential = templates["BuckinghamPotential"]
     mie_potential = templates["MiePotential"]
     harmonic_bond_potential = templates["HarmonicBondPotential"]
     fene_bond_potential = templates["HOOMDFENEWCABondPotential"]
@@ -1119,7 +1119,7 @@ def _parse_nonbonded_forces(
         "LennardJonesPotential": _parse_lj,
         "LennardJones0804Potential": _parse_lj0804,
         "LennardJones1208Potential": _parse_lj1208,
-        "HOOMDBuckinghamPotential": _parse_buckingham,
+        "BuckinghamPotential": _parse_buckingham,
         "MiePotential": _parse_mie,
     }
 

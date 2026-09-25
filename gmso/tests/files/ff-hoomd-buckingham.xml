@@ -32,7 +32,7 @@
     <ParametersUnitDef parameter="A" unit="kJ/mol"/>
     <ParametersUnitDef parameter="rho" unit="nm"/>
     <ParametersUnitDef parameter="C" unit="kJ/mol*nm**6"/>
-    <PairPotentialType name="HOOMDBuckinghamPotential" type1="_A" type2="_B">
+    <PairPotentialType name="BuckinghamPotential" type1="_A" type2="_B">
       <Parameters>
         <Parameter name="A" value="300.0"/>
         <Parameter name="rho" value="0.050"/>
