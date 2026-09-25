@@ -1,4 +1,5 @@
 import copy
+import logging
 import os
 
 import numpy as np
@@ -518,8 +519,10 @@ class TestLammpsWriter(BaseTest):
         with open("ethane.lammps", "r") as f:
             lines = f.readlines()
 
+        # read_data reads the comment on a Pair Coeffs line as the pair style
+        # name and warns when it does not match the input script's
         stylesDict = {
-            "Pair": "4*epsilon*(-sigma**6/r**6+sigma**12/r**12)",
+            "Pair": "lj/cut",
             "Bond": "#LAMMPSHarmonicBondPotential",
             "Angle": "#LAMMPSHarmonicAnglePotential",
             "Dihedral": "#OPLSTorsionPotential",
@@ -528,10 +531,7 @@ class TestLammpsWriter(BaseTest):
         for i, line in enumerate(lines):
             if "Coeffs" in line:
                 styleLine = line.split()
-                if styleLine[0] == "Pair":
-                    assert "".join(styleLine[-3:]) == stylesDict[styleLine[0]]
-                else:
-                    assert styleLine[-1] == stylesDict[styleLine[0]]
+                assert styleLine[-1] == stylesDict[styleLine[0]]
 
     def test_lj_passed_units(self, typed_ethane):
         largest_eps = max([x.parameters["epsilon"] for x in typed_ethane.atom_types])
@@ -736,3 +736,60 @@ class TestLammpsWriter(BaseTest):
                 rtol=1e-4,
                 atol=1e-8,
             )
+
+    def test_pairpotential_hybrid_pair_styles(self, pairpot_cg_top, caplog):
+        top = pairpot_cg_top("ff-lj-buckingham.xml", bead_names=("_A", "_K"))
+        top.box = Box(lengths=[5, 5, 5] * u.nm)
+        with caplog.at_level(logging.INFO, logger="gmso.formats.lammpsdata"):
+            top.save("hybrid.lammps", overwrite=True)
+        assert "pair_style hybrid buck lj/cut" in caplog.text
+
+        with open("hybrid.lammps") as f:
+            # read_data reads this comment as the pair style name and warns on
+            # a mismatch, so it holds the style and nothing else
+            assert "PairIJ Coeffs # hybrid\n" in f.read()
+
+        rows = pair_coeff_rows("hybrid.lammps", "PairIJ Coeffs")
+        assert {(row[0], row[1]): row[2] for row in rows} == {
+            ("1", "1"): "lj/cut",
+            ("1", "2"): "lj/cut",
+            ("2", "2"): "buck",
+        }
+        # the _A-_K override is Lennard-Jones, so it carries sigma and epsilon
+        cross = next(row for row in rows if (row[0], row[1]) == ("1", "2"))
+        assert float(cross[4]) == pytest.approx(22.2222, rel=1e-4)
+        # buck takes A, rho and C, in that order
+        buckingham = next(row for row in rows if row[2] == "buck")
+        assert [float(value) for value in buckingham[3:6]] == pytest.approx(
+            [23.90057, 0.30000, 239.00574], rel=1e-4
+        )
+
+    def test_pairpotential_buckingham_only(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-hoomd-buckingham.xml", bead_names=("_A", "_B"))
+        top.box = Box(lengths=[5, 5, 5] * u.nm)
+        top.save("buck.lammps", overwrite=True)
+        with open("buck.lammps") as f:
+            contents = f.read()
+        # buck does not combine, so LAMMPS cannot be left to mix the unlike pair
+        assert "PairIJ Coeffs" in contents
+        assert "hybrid" not in contents
+
+        rows = pair_coeff_rows("buck.lammps", "PairIJ Coeffs")
+        assert len(rows) == 3
+        assert [float(value) for value in rows[0][2:5]] == pytest.approx(
+            [23.90057, 0.30000, 239.00574], rel=1e-4
+        )
+
+    def test_buckingham_uncovered_cross_pair_raises(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-hoomd-buckingham.xml", bead_names=("_A", "_B"))
+        top.box = Box(lengths=[5, 5, 5] * u.nm)
+        top.remove_pairpotentialtype(("_A", "_B"))
+        with pytest.raises(EngineIncompatibilityError, match=r"\('_A', '_B'\)"):
+            top.save("uncovered_buck.lammps", overwrite=True)
+
+    def test_cross_expression_uncovered_pair_raises(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-lj-buckingham.xml", bead_names=("_A", "_K"))
+        top.box = Box(lengths=[5, 5, 5] * u.nm)
+        top.remove_pairpotentialtype(("_A", "_K"))
+        with pytest.raises(EngineIncompatibilityError, match=r"\('_A', '_K'\)"):
+            top.save("uncovered_cross.lammps", overwrite=True)
