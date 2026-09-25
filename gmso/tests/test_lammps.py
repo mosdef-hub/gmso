@@ -715,3 +715,24 @@ class TestLammpsWriter(BaseTest):
         top.remove_pairpotentialtype(("_A", "_D"))
         with pytest.raises(EngineIncompatibilityError, match=r"\('_A', '_D'\)"):
             top.save("uncovered.lammps", overwrite=True)
+
+    def test_read_pair_coeffs_roundtrip(self, typed_ethane):
+        typed_ethane.save("ethane.lammps", overwrite=True)
+        read = gmso.Topology.load("ethane.lammps")
+        # the writer orders atom types by name, the reader by their lammps index
+        written = sorted(
+            typed_ethane.atom_types(filter_by=pfilter), key=lambda x: x.name
+        )
+        for original, parsed in zip(written, read.atom_types(filter_by=pfilter)):
+            assert_allclose_units(
+                parsed.parameters["sigma"],
+                original.parameters["sigma"].in_units(u.angstrom),
+                rtol=1e-4,
+                atol=1e-8,
+            )
+            assert_allclose_units(
+                parsed.parameters["epsilon"],
+                original.parameters["epsilon"].in_units(u.Unit("kcal/mol")),
+                rtol=1e-4,
+                atol=1e-8,
+            )

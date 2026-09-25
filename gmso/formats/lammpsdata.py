@@ -578,15 +578,18 @@ def _get_ff_information(filename, base_unyts, topology):
     with open(filename, "r") as f:
         pair_lines = f.readlines()[i + 2 : i + n_atomtypes + 2]
     for i, pair in enumerate(pair_lines):
-        if len(pair.split()) == 3:
-            type_list[i].parameters["sigma"] = float(pair.split()[2]) * get_units(
-                base_unyts, "length"
-            )
-            type_list[i].parameters["epsilon"] = float(pair.split()[1]) * get_units(
-                base_unyts, "energy"
-            )
-        elif len(pair.split()) == 4:
+        # A row carries the atom type name in a trailing comment when GMSO wrote it.
+        columns = pair.split("#")[0].split()
+        if len(columns) < 3:
+            continue
+        if len(columns) > 3:
             warn_ljcutBool = True
+        type_list[i].parameters["epsilon"] = float(columns[1]) * get_units(
+            base_unyts, "energy"
+        )
+        type_list[i].parameters["sigma"] = float(columns[2]) * get_units(
+            base_unyts, "length"
+        )
 
     if warn_ljcutBool:
         logger.info(
