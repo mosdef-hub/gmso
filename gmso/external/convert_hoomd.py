@@ -1089,6 +1089,7 @@ def _parse_nonbonded_forces(
 
     # Grouping atomtype by group name
     groups = {}
+    has_null_atypes = False
     for atype in unique_atypes:
         if isinstance(atype, VirtualType):
             atype.virtual_potential.name = atype.name
@@ -1100,6 +1101,7 @@ def _parse_nonbonded_forces(
         else:
             group = potential_types[atype]
             if isinstance(group, NullPotentialExpression):
+                has_null_atypes = True
                 continue  # skip adding null atom_type expressions
             if group not in groups:
                 groups[group] = [atype]
@@ -1214,10 +1216,11 @@ def _parse_nonbonded_forces(
             )
         )
 
-    # A single expression already covers every type pair it is given. With more than
-    # one, each force needs parameters stating it does not act on the other's pairs.
+    # An expression covers every pair of its own atom types, so one expression and
+    # no bare atom types leaves nothing uncovered. Otherwise each force needs
+    # parameters stating it does not act on the pairs it does not own.
     expressions = groups.keys() | explicit_pairs.keys() | standalone_pairtypes.keys()
-    if len(expressions) > 1:
+    if len(expressions) > 1 or has_null_atypes:
         _set_uncovered_pairs(
             top,
             [
@@ -1240,7 +1243,11 @@ def _particle_type_names(top):
         site.name if site.virtual_type is None else site.virtual_type.name
         for site in top.virtual_sites
     }
-    names |= {site.molecule.name for site in top.sites if site.molecule.isrigid}
+    names |= {
+        site.molecule.name
+        for site in top.sites
+        if site.molecule and site.molecule.isrigid
+    }
     return names
 
 
@@ -1267,7 +1274,11 @@ def _set_uncovered_pairs(top, pair_forces):
         itertools.combinations_with_replacement(sorted(_particle_type_names(top)), 2)
     )
     # Rigid body centers are not interaction sites, so no expression sets them.
-    rigid_types = {site.molecule.name for site in top.sites if site.molecule.isrigid}
+    rigid_types = {
+        site.molecule.name
+        for site in top.sites
+        if site.molecule and site.molecule.isrigid
+    }
     missing = [
         pair
         for pair in all_pairs
@@ -1367,7 +1378,11 @@ def _set_rigid_body_pairs(force, top, atypes, r_cut):
     A rigid body center is a particle type but not an interaction site, so no
     expression parameterizes its pairs. Does nothing without rigid bodies.
     """
-    rigid_names = {site.molecule.name for site in top.sites if site.molecule.isrigid}
+    rigid_names = {
+        site.molecule.name
+        for site in top.sites
+        if site.molecule and site.molecule.isrigid
+    }
     if not rigid_names:
         return
     off_parameters = OFF_PARAMETERS[type(force).__name__]

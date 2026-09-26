@@ -988,3 +988,10 @@ class TestHoomd(BaseTest):
             pair = potential.member_types
             assert dpd_force.params[pair].to_base() == expected_potentials[pair]
             assert force.r_cut[pair] == 1
+
+    def test_pairpotential_only_missing_pair_raises(self, dpd_pairpotential):
+        from gmso.exceptions import EngineIncompatibilityError
+
+        dpd_pairpotential.remove_pairpotentialtype(("_B", "_B"))
+        with pytest.raises(EngineIncompatibilityError, match=r"\('_B', '_B'\)"):
+            to_hoomd_forcefield(dpd_pairpotential, r_cut=1.2, kT=1)
