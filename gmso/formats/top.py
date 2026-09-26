@@ -15,7 +15,7 @@ from gmso.core.dihedral import Dihedral
 from gmso.core.element import element_by_atom_type
 from gmso.core.improper import Improper
 from gmso.core.views import PotentialFilters
-from gmso.exceptions import GMSOError
+from gmso.exceptions import EngineIncompatibilityError, GMSOError
 from gmso.formats.formats_registry import saves_as
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.parameterization.molecule_utils import (
@@ -70,7 +70,7 @@ def write_top(
     for the complete format description.
     """
     pot_types = _validate_compatibility(top)
-    _warn_uncovered_null_pairs(top)
+    _check_uncovered_null_pairs(top)
     top_vars = _get_top_vars(top, top_vars)
 
     # Sanity checks
@@ -387,21 +387,25 @@ def _atomtype_parameters(atom_type):
     )
 
 
-def _warn_uncovered_null_pairs(top):
-    """Warn about pairs of a bare atom type that no PairPotentialType covers.
+def _check_uncovered_null_pairs(top):
+    """Check that a PairPotentialType covers every pair of a bare atom type.
 
-    GROMACS mixes such a pair to an epsilon of zero instead of refusing it, so
-    those beads pass through each other with nothing else reporting it.
+    Raises
+    ------
+    EngineIncompatibilityError
+        If a bare atom type takes part in a type pair no PairPotentialType
+        covers.
     """
     atom_types = list(top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS))
     covered = {sort_by_types(ptype) for ptype in top.pairpotential_types}
     null_names, uncovered = uncovered_null_pairs(atom_types, covered)
     if uncovered:
-        logger.warning(
-            f"The atom types {null_names} of the topology {top} have no "
-            f"parameters of their own, and no PairPotentialType covers the pairs "
-            f"{uncovered}. Those pairs are written with an epsilon of zero and "
-            "contribute no force."
+        raise EngineIncompatibilityError(
+            f"The atom types {null_names} of the topology {top} have no parameters "
+            f"of their own, and no PairPotentialType covers the type pairs "
+            f"{uncovered}. GROMACS combines those pairs to an epsilon of zero, so "
+            "add a PairPotentialType for each of them, or give those atom types "
+            "parameters."
         )
 
 

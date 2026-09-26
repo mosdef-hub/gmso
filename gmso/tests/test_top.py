@@ -1,5 +1,3 @@
-import logging
-
 import parmed as pmd
 import pytest
 import unyt as u
@@ -328,17 +326,11 @@ class TestTop(BaseTest):
         assert nbfix[("_B", "_D")][1] == pytest.approx(33.3333 * 2 ** (1 / 6))
         assert nbfix[("_D", "_D")][1] == pytest.approx(44.4444 * 2 ** (1 / 6))
 
-    def test_null_atom_type_uncovered_pair_warns(self, pairpot_cg_top, caplog):
+    def test_null_atom_type_uncovered_pair_raises(self, pairpot_cg_top):
         top = pairpot_cg_top("ff-pairpot-null-bead.xml", bead_names=("_A", "_B", "_D"))
         top.remove_pairpotentialtype(("_B", "_D"))
-        with caplog.at_level(logging.WARNING):
+        with pytest.raises(EngineIncompatibilityError, match=r"\('_B', '_D'\)"):
             top.save("uncovered.top", overwrite=True)
-        assert "('_B', '_D')" in caplog.text
-
-    def test_no_null_atom_types_does_not_warn(self, pairpot_one_cross_top, caplog):
-        with caplog.at_level(logging.WARNING):
-            pairpot_one_cross_top.save("one_cross.top", overwrite=True)
-        assert "no parameters of their own" not in caplog.text
 
     def test_pairpotential_diagonal_override(self, pairpot_cg_top):
         top = pairpot_cg_top("ff-pairpot-one-cross.xml", bead_names=("_A", "_B"))
