@@ -57,6 +57,13 @@ PairRow = namedtuple(
     "PairRow", ("i", "j", "style", "parameters", "expression", "iname", "jname")
 )
 
+# A resolved pair coefficient section. engine_mixes is True when only the self
+# interactions are written and LAMMPS combines the unlike pairs itself.
+PairSection = namedtuple(
+    "PairSection",
+    ("rows", "used_styles", "name", "pair_style", "hybrid", "engine_mixes"),
+)
+
 
 # TODO: Write in header of each potential type any conversions that happened
 # TODO: write in file header the source of the xml
@@ -184,6 +191,11 @@ def write_lammpsdata(
                 )
 
     reindex_molecules(top)  # reset the topology molecule index to match with lammps
+    # Resolved before the file is opened so an uncovered type pair raises
+    # without leaving a partly written file behind.
+    pair_section = (
+        _resolve_pairtypes(top, potentialsMap) if top.is_fully_typed() else None
+    )
     path = Path(filename)
     if not path.parent.exists():
         msg = "Provided path to file that does not exist"
@@ -195,7 +207,7 @@ def write_lammpsdata(
         all_ordered_typesDict = {}
         if top.is_fully_typed():
             _write_atomtypes(out_file, top, base_unyts, lj_cfactorsDict)
-            _write_pairtypes(out_file, top, potentialsMap, base_unyts, lj_cfactorsDict)
+            _write_pairtypes(out_file, pair_section, base_unyts, lj_cfactorsDict)
             if top.bond_types:
                 sorted_bondsList = _write_bondtypes(
                     out_file, top, base_unyts, lj_cfactorsDict
@@ -830,16 +842,20 @@ def _pair_coefficients(parameters, param_keys, base_unyts, cfactorsDict):
     ]
 
 
-def _write_pairtypes(out_file, top, potentialsMap, base_unyts, cfactorsDict):
-    """Write out pair interaction to LAMMPS file.
+def _resolve_pairtypes(top, potentialsMap):
+    """Return the contents of a topology's pair coefficient section.
 
-    Writes a Pair Coeffs section holding only the self interactions (A-A) when
-    one pair style covers the topology, that style combines parameters, and no
-    PairPotentialType applies, which leaves the unlike pairs (A-B) to LAMMPS.
-    Otherwise writes PairIJ Coeffs, which LAMMPS requires to hold every i <= j
+    Resolves a Pair Coeffs section holding only the self interactions (A-A)
+    when one pair style covers the topology, that style combines parameters,
+    and no PairPotentialType applies, which leaves the unlike pairs (A-B) to
+    LAMMPS. Otherwise PairIJ Coeffs, which LAMMPS requires to hold every i <= j
     pair and which turns its mixing off, so the unlike pairs are combined here.
     With more than one pair style every row names its own, for pair_style
     hybrid.
+
+    Returns
+    -------
+    PairSection
 
     Raises
     ------
@@ -883,25 +899,36 @@ def _write_pairtypes(out_file, top, potentialsMap, base_unyts, cfactorsDict):
     # When true, only self interactions (A-A) are written and LAMMPS mixes the
     # unlike pairs (A-B) itself.
     engine_mixes = not explicit_pairs and not hybrid and used_styles[0].combines
+    if hybrid:
+        name = "PairIJ Coeffs"
+        pair_style = "hybrid " + " ".join(style.name for style in used_styles)
+    else:
+        name = "Pair Coeffs" if engine_mixes else "PairIJ Coeffs"
+        pair_style = used_styles[0].name
+    return PairSection(rows, used_styles, name, pair_style, hybrid, engine_mixes)
+
+
+def _write_pairtypes(out_file, pair_section, base_unyts, cfactorsDict):
+    """Write a resolved pair coefficient section to LAMMPS file."""
+    rows = pair_section.rows
+    hybrid = pair_section.hybrid
+    engine_mixes = pair_section.engine_mixes
+    section = pair_section.name
 
     # read_data takes the comment on the section line as the pair style name and
     # warns when it does not match the one the input script defines.
     if hybrid:
-        section = "PairIJ Coeffs"
-        pair_style = "hybrid " + " ".join(style.name for style in used_styles)
         out_file.write(f"\n{section} # hybrid\n")
         out_file.write("#\ti\tj\tstyle\tcoefficients\n")
     else:
-        section = "Pair Coeffs" if engine_mixes else "PairIJ Coeffs"
-        pair_style = used_styles[0].name
-        out_file.write(f"\n{section} # {pair_style}\n")
+        out_file.write(f"\n{section} # {pair_section.pair_style}\n")
         param_labels = [
             write_out_parameter_and_units(
                 key,
                 convert_kelvin_to_energy_units(rows[0].parameters[key], "kJ"),
                 base_unyts,
             )
-            for key in used_styles[0].parameters
+            for key in pair_section.used_styles[0].parameters
         ]
         out_file.write("#\t" + "\t".join(param_labels) + "\n")
 
@@ -911,7 +938,8 @@ def _write_pairtypes(out_file, top, potentialsMap, base_unyts, cfactorsDict):
     )
     logger.info(
         f"Wrote {len(rows)} rows to {section} using {forms}. The input script "
-        f"must define pair_style {pair_style} with its cutoffs before read_data."
+        f"must define pair_style {pair_section.pair_style} with its cutoffs "
+        "before read_data."
     )
 
     for row in rows:

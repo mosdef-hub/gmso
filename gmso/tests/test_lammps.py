@@ -716,6 +716,26 @@ class TestLammpsWriter(BaseTest):
         with pytest.raises(EngineIncompatibilityError, match=r"\('_A', '_D'\)"):
             top.save("uncovered.lammps", overwrite=True)
 
+    def test_failed_write_leaves_no_file(self, pairpot_cg_top, tmp_path):
+        good = pairpot_cg_top("ff-pairpot-null-bead.xml", bead_names=("_A", "_B", "_D"))
+        good.box = Box(lengths=[5, 5, 5] * u.nm)
+        bad = pairpot_cg_top("ff-pairpot-null-bead.xml", bead_names=("_A", "_B", "_D"))
+        bad.box = Box(lengths=[5, 5, 5] * u.nm)
+        bad.remove_pairpotentialtype(("_A", "_D"))
+
+        target = tmp_path / "partial.lammps"
+        with pytest.raises(EngineIncompatibilityError):
+            bad.save(target, overwrite=True)
+        assert list(tmp_path.iterdir()) == []
+
+        # an overwrite that fails leaves the file already on disk untouched
+        good.save(target, overwrite=True)
+        contents = target.read_text()
+        with pytest.raises(EngineIncompatibilityError):
+            bad.save(target, overwrite=True)
+        assert target.read_text() == contents
+        assert list(tmp_path.iterdir()) == [target]
+
     def test_read_pair_coeffs_roundtrip(self, typed_ethane):
         typed_ethane.save("ethane.lammps", overwrite=True)
         read = gmso.Topology.load("ethane.lammps")
