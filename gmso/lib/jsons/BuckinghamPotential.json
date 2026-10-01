@@ -1,10 +1,10 @@
 {
   "name": "BuckinghamPotential",
-  "expression": "a*exp(-b*r) - c*r**-6",
+  "expression": "A*exp(-r/rho) - C/r**6",
   "independent_variables": "r",
   "expected_parameters_dimensions": {
-    "a": "energy",
-    "b": "1/length",
-    "c": "energy*length**6"
+    "A": "energy",
+    "rho": "length",
+    "C": "energy*length**6"
   }
 }

@@ -214,6 +214,19 @@ class TestPotentialTemplates(BaseTest):
     def test_buckingham_potential(self, templates):
         buckingham_potential = templates["BuckinghamPotential"]
         assert buckingham_potential.name == "BuckinghamPotential"
+        assert buckingham_potential.expression == sympy.sympify(
+            "A*exp(-r/rho) - C/r**6"
+        )
+        assert buckingham_potential.independent_variables == sympy.sympify({"r"})
+        assert buckingham_potential.expected_parameters_dimensions == {
+            "A": ud.energy,
+            "rho": ud.length,
+            "C": ud.energy * ud.length**6,
+        }
+
+    def test_gromacs_buckingham_potential(self, templates):
+        buckingham_potential = templates["GROMACSBuckinghamPotential"]
+        assert buckingham_potential.name == "GROMACSBuckinghamPotential"
         assert buckingham_potential.expression == sympy.sympify("a*exp(-b*r) - c*r**-6")
         assert buckingham_potential.independent_variables == sympy.sympify({"r"})
         assert buckingham_potential.expected_parameters_dimensions == {

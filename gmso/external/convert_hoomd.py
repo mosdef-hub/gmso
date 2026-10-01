@@ -20,6 +20,7 @@ from gmso.utils.conversions import convert_ryckaert_to_opls
 from gmso.utils.expression import NullPotentialExpression
 from gmso.utils.geometry import coord_shift, moment_of_inertia
 from gmso.utils.io import has_gsd, has_hoomd
+from gmso.utils.nonbonded import mix_sigma_epsilon
 from gmso.utils.sorting import (
     sort_by_classes,
     sort_by_types,
@@ -31,6 +32,7 @@ if has_gsd:
     import gsd.hoomd
 if has_hoomd:
     import hoomd
+    from hoomd.data.typeconverter import RequiredArg
 
     hoomd_version = hoomd.version.version.split(".")
 else:
@@ -51,6 +53,17 @@ AKMA_UNITS = {
     "energy": u.kcal / u.mol,
     "length": u.angstrom,
     "mass": u.g / u.mol,  # aka amu
+}
+
+# Parameters that make a pair contribute no force, keyed by hoomd.md.pair class name.
+# Exponents and decay lengths keep valid values, since only the prefactors vanish.
+OFF_PARAMETERS = {
+    "LJ": {"sigma": 0.0, "epsilon": 0.0},
+    "LJ0804": {"sigma": 0.0, "epsilon": 0.0},
+    "LJ1208": {"sigma": 0.0, "epsilon": 0.0},
+    "DPD": {"A": 0.0, "gamma": 0.0},
+    "Buckingham": {"A": 0.0, "rho": 1.0, "C": 0.0},
+    "Mie": {"epsilon": 0.0, "sigma": 0.0, "n": 12.0, "m": 6.0},
 }
 
 
@@ -359,6 +372,114 @@ def to_hoomd_snapshot(
         return hoomd_snapshot, base_units, rigid_info
     else:
         return hoomd_snapshot, base_units
+
+
+def to_hoomd_forcefield(
+    top,
+    r_cut,
+    nlist=None,
+    pppm_kwargs=None,
+    base_units=None,
+    auto_scale=False,
+    kT=None,
+):
+    """Convert the potential portion of a typed GMSO to hoomd forces.
+
+    Parameters
+    ----------
+    top : gmso.Topology
+        The typed topology to be converted
+    r_cut : float
+        r_cut for the nonbonded forces.
+    nlist : hoomd.md.nlist.NeighborList or tuple or list or None, optional, default=None
+        Neighborlist object to use for nonbonded forcefield. Can also be a list or tuple of neighborlists
+        where the first neighborlist is used for nonbonded pair forces, and the second with coulombic forces.
+        If None, the default value used will be a hoomd.md.nlist.Cell(exclusions=exclusions, buffer=0.4).
+    pppm_kwargs : dict
+        Keyword arguments to pass to hoomd.md.long_range.make_pppm_coulomb_forces().
+        Default is {"resolution": (8, 8, 8), "order": 4}
+    base_units : dict or str, optional, default=None
+        The dictionary of base units to be converted to. Entries restricted to
+        "energy", "length", and "mass". There is also option to used predefined
+        unit systems ("MD" or "AKMA" provided as string). If None is provided,
+        this method will perform no units conversion.
+    auto_scale : bool or dict, optional, default=False
+        Automatically scaling relevant length, energy and mass units.
+        Referenced mass unit is obtained from sites' masses.
+        Referenced energy and distance are refered from sites' atom types (when applicable).
+        If the referenced scaling values cannot be determined (e.g., when the topology is not typed),
+        all reference scaling values is set to 1.
+        A dictionary specifying the referenced scaling values may also be provided for this argument.
+    kT : float, optional, default None
+        Set the kT parameter for running simulations with hoomd.md.pair.DPD forces. If none and these forces are
+        present in top.pairpotential_types, will raise an error. Please convert to units of [energy]
+        using base_units to ensure proper value is passed.
+
+    Returns
+    -------
+    forces : dict
+        HOOMD forces converted from all available PotentialTypes of the provided
+        GMSO Topology. Converted are grouped by their category (as key of the
+        dictionary), namely, "nonbonded", "bonds", "angles", "dihedrals", and "impropers".
+    base_units : dict
+        Base units dictionary utilized during the conversion.
+
+    """
+    if int(hoomd_version[0]) < 4:
+        raise EngineIncompatibilityError(
+            "GMSO is only compatible with HOOMD-blue >= 4.0"
+        )
+    if pppm_kwargs is None:
+        pppm_kwargs = {"resolution": (8, 8, 8), "order": 4}
+    potential_types = _validate_compatibility(top)
+    base_units = _validate_base_units(base_units, top, auto_scale, potential_types)
+
+    # Reference json dict of all the potential in the PotentialTemplate
+    potential_refs = {}
+    for json_file in PotentialTemplateLibrary().json_refs:
+        with open(json_file) as f:
+            cont = json.load(f)
+        potential_refs[cont["name"]] = cont
+
+    # convert nonbonded potentials
+    forces = {
+        "nonbonded": _parse_nonbonded_forces(
+            top,
+            r_cut,
+            nlist,
+            potential_types,
+            potential_refs,
+            pppm_kwargs,
+            base_units,
+            kT,
+        ),
+        "bonds": _parse_bond_forces(
+            top,
+            potential_types,
+            potential_refs,
+            base_units,
+        ),
+        "angles": _parse_angle_forces(
+            top,
+            potential_types,
+            potential_refs,
+            base_units,
+        ),
+        "dihedrals": _parse_dihedral_forces(
+            top,
+            potential_types,
+            potential_refs,
+            base_units,
+        ),
+        "impropers": _parse_improper_forces(
+            top,
+            potential_types,
+            potential_refs,
+            base_units,
+        ),
+    }
+
+    return forces, base_units
 
 
 def _parse_particle_information(
@@ -886,120 +1007,16 @@ def _prepare_box_information(top):
     return lx, ly, lz, xy, xz, yz
 
 
-def to_hoomd_forcefield(
-    top,
-    r_cut,
-    nlist=None,
-    pppm_kwargs=None,
-    base_units=None,
-    auto_scale=False,
-    kT=None,
-):
-    """Convert the potential portion of a typed GMSO to hoomd forces.
-
-    Parameters
-    ----------
-    top : gmso.Topology
-        The typed topology to be converted
-    r_cut : float
-        r_cut for the nonbonded forces.
-    nlist : hoomd.md.nlist.NeighborList or tuple or list or None, optional, default=None
-        Neighborlist object to use for nonbonded forcefield. Can also be a list or tuple of neighborlists
-        where the first neighborlist is used for nonbonded pair forces, and the second with coulombic forces.
-        If None, the default value used will be a hoomd.md.nlist.Cell(exclusions=exclusions, buffer=0.4).
-    pppm_kwargs : dict
-        Keyword arguments to pass to hoomd.md.long_range.make_pppm_coulomb_forces().
-        Default is {"resolution": (8, 8, 8), "order": 4}
-    base_units : dict or str, optional, default=None
-        The dictionary of base units to be converted to. Entries restricted to
-        "energy", "length", and "mass". There is also option to used predefined
-        unit systems ("MD" or "AKMA" provided as string). If None is provided,
-        this method will perform no units conversion.
-    auto_scale : bool or dict, optional, default=False
-        Automatically scaling relevant length, energy and mass units.
-        Referenced mass unit is obtained from sites' masses.
-        Referenced energy and distance are refered from sites' atom types (when applicable).
-        If the referenced scaling values cannot be determined (e.g., when the topology is not typed),
-        all reference scaling values is set to 1.
-        A dictionary specifying the referenced scaling values may also be provided for this argument.
-    kT : float, optional, default None
-        Set the kT parameter for running simulations with hoomd.md.pair.DPD forces. If none and these forces are
-        present in top.pairpotential_types, will raise an error. Please convert to units of [energy]
-        using base_units to ensure proper value is passed.
-
-    Returns
-    -------
-    forces : dict
-        HOOMD forces converted from all available PotentialTypes of the provided
-        GMSO Topology. Converted are grouped by their category (as key of the
-        dictionary), namely, "nonbonded", "bonds", "angles", "dihedrals", and "impropers".
-    base_units : dict
-        Base units dictionary utilized during the conversion.
-
-    """
-    if int(hoomd_version[0]) < 4:
-        raise EngineIncompatibilityError(
-            "GMSO is only compatible with HOOMD-blue >= 4.0"
-        )
-    if pppm_kwargs is None:
-        pppm_kwargs = {"resolution": (8, 8, 8), "order": 4}
-    potential_types = _validate_compatibility(top)
-    base_units = _validate_base_units(base_units, top, auto_scale, potential_types)
-
-    # Reference json dict of all the potential in the PotentialTemplate
-    potential_refs = {}
-    for json_file in PotentialTemplateLibrary().json_refs:
-        with open(json_file) as f:
-            cont = json.load(f)
-        potential_refs[cont["name"]] = cont
-
-    # convert nonbonded potentials
-    forces = {
-        "nonbonded": _parse_nonbonded_forces(
-            top,
-            r_cut,
-            nlist,
-            potential_types,
-            potential_refs,
-            pppm_kwargs,
-            base_units,
-            kT,
-        ),
-        "bonds": _parse_bond_forces(
-            top,
-            potential_types,
-            potential_refs,
-            base_units,
-        ),
-        "angles": _parse_angle_forces(
-            top,
-            potential_types,
-            potential_refs,
-            base_units,
-        ),
-        "dihedrals": _parse_dihedral_forces(
-            top,
-            potential_types,
-            potential_refs,
-            base_units,
-        ),
-        "impropers": _parse_improper_forces(
-            top,
-            potential_types,
-            potential_refs,
-            base_units,
-        ),
-    }
-
-    return forces, base_units
-
-
 def _validate_compatibility(top):
     """Check and sort all the potential objects in the topology."""
     from gmso.utils.compatibility import check_compatibility
 
     templates = PotentialTemplateLibrary()
     lennard_jones_potential = templates["LennardJonesPotential"]
+    lennard_jones_0804_potential = templates["LennardJones0804Potential"]
+    lennard_jones_1208_potential = templates["LennardJones1208Potential"]
+    hoomd_buckingham_potential = templates["BuckinghamPotential"]
+    mie_potential = templates["MiePotential"]
     harmonic_bond_potential = templates["HarmonicBondPotential"]
     fene_bond_potential = templates["HOOMDFENEWCABondPotential"]
     harmonic_angle_potential = templates["HarmonicAnglePotential"]
@@ -1012,6 +1029,10 @@ def _validate_compatibility(top):
     null_atom_potential = NullPotentialExpression()
     accepted_potentials = (
         lennard_jones_potential,
+        lennard_jones_0804_potential,
+        lennard_jones_1208_potential,
+        hoomd_buckingham_potential,
+        mie_potential,
         harmonic_bond_potential,
         fene_bond_potential,
         harmonic_angle_potential,
@@ -1068,6 +1089,7 @@ def _parse_nonbonded_forces(
 
     # Grouping atomtype by group name
     groups = {}
+    has_null_atypes = False
     for atype in unique_atypes:
         if isinstance(atype, VirtualType):
             atype.virtual_potential.name = atype.name
@@ -1079,6 +1101,7 @@ def _parse_nonbonded_forces(
         else:
             group = potential_types[atype]
             if isinstance(group, NullPotentialExpression):
+                has_null_atypes = True
                 continue  # skip adding null atom_type expressions
             if group not in groups:
                 groups[group] = [atype]
@@ -1096,6 +1119,8 @@ def _parse_nonbonded_forces(
 
     atype_parsers = {
         "LennardJonesPotential": _parse_lj,
+        "LennardJones0804Potential": _parse_lj0804,
+        "LennardJones1208Potential": _parse_lj1208,
         "BuckinghamPotential": _parse_buckingham,
         "MiePotential": _parse_mie,
     }
@@ -1127,38 +1152,60 @@ def _parse_nonbonded_forces(
             r_cut=r_cut,
         )
     )
-    for group, value in groups.items():
+    # Pairtypes whose expression has an atom type parser are explicit parameters for
+    # that pair, handled by that parser; any other expression gets its own force.
+    explicit_pairs, standalone_pairtypes = {}, {}
+    for pairtype in top.pairpotential_types:
+        pair_category = potential_types[pairtype]
+        if pair_category in atype_parsers:
+            explicit_pairs.setdefault(pair_category, []).append(pairtype)
+        else:
+            standalone_pairtypes.setdefault(pair_category, []).append(pairtype)
+
+    for pair_category, value in explicit_pairs.items():
+        expected_units_dim = potential_refs[pair_category][
+            "expected_parameters_dimensions"
+        ]
+        explicit_pairs[pair_category] = {
+            sort_by_types(pairtype): pairtype
+            for pairtype in convert_params_units(value, expected_units_dim, base_units)
+        }
+
+    # Coulombic forces are pair forces too, but hoomd sets all of their type pairs.
+    pair_force_start = len(nbonded_forces)
+
+    # A pair with a pairtype belongs to that expression alone, so the others leave
+    # it out instead of mixing it or asking for a pairtype of their own.
+    all_explicit_pairs = (
+        set().union(*explicit_pairs.values()) if explicit_pairs else set()
+    )
+
+    # An expression may come from the atom types, the pairtypes, or both.
+    for group in sorted(groups.keys() | explicit_pairs.keys()):
         nbonded_forces.extend(
             atype_parsers[group](
                 top=top,
-                atypes=value,
+                atypes=groups.get(group, []),
                 combining_rule=top.combining_rule,
                 r_cut=r_cut,
                 nlist=nlist_nb,
                 scaling_factors=nb_scalings,
+                explicit_pairs=explicit_pairs.get(group, {}),
+                all_explicit_pairs=all_explicit_pairs,
             )
         )
 
-    # pair potentials here
-    if not top.pairpotential_types:
-        return nbonded_forces
-    if not isinstance(kT, (float, int)):
-        raise EngineIncompatibilityError(
-            f"kT must be set to use 'HOOMDDPDForce' in the topology {top}"
-        )
     pairtype_parsers = {
         "HOOMDDPDForce": _parse_dpd,
     }
-    # Grouping pairtype by group name
-    pair_categoryDict = {}
-    for pairtype in top.pairpotential_types:
-        pair_category = potential_types[pairtype]
-        if pair_category not in pair_categoryDict:
-            pair_categoryDict[pair_category] = [pairtype]
-        else:
-            pair_categoryDict[pair_category].append(pairtype)
-
-    for pair_category, value in pair_categoryDict.items():
+    for pair_category, value in standalone_pairtypes.items():
+        if pair_category not in pairtype_parsers:
+            raise EngineIncompatibilityError(
+                f"Pair potential '{pair_category}' in the topology {top} has no "
+                "atom types of the same expression to override, and no parser of "
+                "its own. Give the pair's atom types that expression, or use a "
+                f"pair potential expression with a parser: {sorted(pairtype_parsers)}"
+            )
         nbonded_forces.extend(
             pairtype_parsers[pair_category](
                 top=top,
@@ -1169,7 +1216,94 @@ def _parse_nonbonded_forces(
             )
         )
 
+    # An expression covers every pair of its own atom types, so one expression and
+    # no bare atom types leaves nothing uncovered. Otherwise each force needs
+    # parameters stating it does not act on the pairs it does not own.
+    expressions = groups.keys() | explicit_pairs.keys() | standalone_pairtypes.keys()
+    if len(expressions) > 1 or has_null_atypes:
+        _set_uncovered_pairs(
+            top,
+            [
+                force
+                for force in nbonded_forces[pair_force_start:]
+                if isinstance(force, hoomd.md.pair.Pair)
+            ],
+        )
+
     return nbonded_forces
+
+
+def _particle_type_names(top):
+    """Return the name of every particle type in the hoomd snapshot of a topology."""
+    names = {
+        site.name if site.atom_type is None else site.atom_type.name
+        for site in top.sites
+    }
+    names |= {
+        site.name if site.virtual_type is None else site.virtual_type.name
+        for site in top.virtual_sites
+    }
+    names |= {
+        site.molecule.name
+        for site in top.sites
+        if site.molecule and site.molecule.isrigid
+    }
+    return names
+
+
+def _is_unset(force, pair):
+    """Return whether a pair force is missing parameters for a type pair."""
+    return any(value is RequiredArg for value in force.params[pair].values())
+
+
+def _set_uncovered_pairs(top, pair_forces):
+    """Give each pair force parameters for the type pairs it does not act on.
+
+    Parameters
+    ----------
+    pair_forces : list of hoomd.md.pair.Pair
+        The nonbonded pair forces built from the topology's expressions.
+
+    Raises
+    ------
+    EngineIncompatibilityError
+        If a type pair is left unset by every force, or if a force has no entry
+        in OFF_PARAMETERS.
+    """
+    all_pairs = sorted(
+        itertools.combinations_with_replacement(sorted(_particle_type_names(top)), 2)
+    )
+    # Rigid body centers are not interaction sites, so no expression sets them.
+    rigid_types = {
+        site.molecule.name
+        for site in top.sites
+        if site.molecule and site.molecule.isrigid
+    }
+    missing = [
+        pair
+        for pair in all_pairs
+        if not rigid_types.intersection(pair)
+        and all(_is_unset(force, pair) for force in pair_forces)
+    ]
+    if missing:
+        raise EngineIncompatibilityError(
+            f"No expression in the topology {top} defines parameters for the type "
+            f"pairs {missing}. Give those atom types parameters of one of the "
+            "expressions in use, or add a PairPotentialType for each pair."
+        )
+
+    for force in pair_forces:
+        class_name = type(force).__name__
+        if class_name not in OFF_PARAMETERS:
+            raise EngineIncompatibilityError(
+                f"Pair force {class_name} in the topology {top} cannot be combined "
+                "with another pair expression, because it has no parameters defined "
+                "for the pairs it does not act on."
+            )
+        for pair in all_pairs:
+            if _is_unset(force, pair):
+                force.params[pair] = dict(OFF_PARAMETERS[class_name])
+                force.r_cut[pair] = 0
 
 
 def _parse_coulombic(
@@ -1212,10 +1346,13 @@ def _parse_coulombic(
 
 
 def _parse_dpd(top, pairtypes, r_cut, nlist, kT):
+    if not isinstance(kT, (float, int)):
+        raise EngineIncompatibilityError(
+            f"kT must be set to use 'HOOMDDPDForce' in the topology {top}"
+        )
     dpd_force = hoomd.md.pair.DPD(nlist=nlist, kT=kT, default_r_cut=r_cut)
     for pair_potential in pairtypes:
-        pairs = list(pair_potential.member_types)
-        pairs.sort()
+        pairs = sort_by_types(pair_potential)
         dpd_force.params[tuple(pairs)] = {
             "A": pair_potential.parameters["A"],
             "gamma": pair_potential.parameters["γ"],
@@ -1229,27 +1366,72 @@ def _parse_dpd(top, pairtypes, r_cut, nlist, kT):
     return [dpd_force]
 
 
-def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
+def _mix_sigma_epsilon(pairs, combining_rule):
+    """Return the combined sigma and epsilon of two atom types, as bare floats."""
+    sigma, epsilon = mix_sigma_epsilon(pairs, combining_rule)
+    return sigma.value, epsilon.value
+
+
+def _set_rigid_body_pairs(force, top, atypes, r_cut):
+    """Give a pair force no-force parameters for every rigid body center pair.
+
+    A rigid body center is a particle type but not an interaction site, so no
+    expression parameterizes its pairs. Does nothing without rigid bodies.
+    """
+    rigid_names = {
+        site.molecule.name
+        for site in top.sites
+        if site.molecule and site.molecule.isrigid
+    }
+    if not rigid_names:
+        return
+    off_parameters = OFF_PARAMETERS[type(force).__name__]
+    type_names = [atype.name for atype in atypes] + sorted(rigid_names)
+    for rigid_name in sorted(rigid_names):
+        for type_name in type_names:
+            pair = tuple(sorted([rigid_name, type_name]))
+            force.params[pair] = dict(off_parameters)
+            force.r_cut[pair] = r_cut
+
+
+def _mixed_and_explicit_pairs(atypes_by_name, explicit_pairs, other_expression_pairs):
+    """Return every type pair an expression parameterizes, mixed or explicit."""
+    mixed_pairs = {
+        tuple(sorted(names))
+        for names in itertools.combinations_with_replacement(atypes_by_name, 2)
+    }
+    return sorted((mixed_pairs | set(explicit_pairs)) - other_expression_pairs)
+
+
+def _parse_lj(
+    top,
+    atypes,
+    combining_rule,
+    r_cut,
+    nlist,
+    scaling_factors,
+    explicit_pairs=None,
+    all_explicit_pairs=frozenset(),
+):
     """Parse LJ forces and special pairs LJ forces."""
     lj = hoomd.md.pair.LJ(nlist=nlist)
+    explicit_pairs = explicit_pairs or {}
+    other_expression_pairs = set(all_explicit_pairs) - set(explicit_pairs)
+    atypes_by_name = {atype.name: atype for atype in atypes}
     calculated_params = {}
-    for pairs in itertools.combinations_with_replacement(atypes, 2):
-        pairs = list(pairs)
-        pairs.sort(key=lambda atype: atype.name)
-        type_name = (pairs[0].name, pairs[1].name)
-        comb_epsilon = np.sqrt(
-            pairs[0].parameters["epsilon"].value * pairs[1].parameters["epsilon"].value
-        )
-        if top.combining_rule == "lorentz":
-            comb_sigma = np.mean(
-                [pairs[0].parameters["sigma"], pairs[1].parameters["sigma"]]
-            )
-        elif top.combining_rule == "geometric":
-            comb_sigma = np.sqrt(
-                pairs[0].parameters["sigma"].value * pairs[1].parameters["sigma"].value
-            )
+    # A pair is mixed from the atom types unless a pairtype states it explicitly.
+    # An explicit pair may name a type that has no atom type parameters at all.
+    for type_name in _mixed_and_explicit_pairs(
+        atypes_by_name, explicit_pairs, other_expression_pairs
+    ):
+        explicit = explicit_pairs.get(type_name)
+        if explicit:
+            comb_sigma = explicit.parameters["sigma"].value
+            comb_epsilon = explicit.parameters["epsilon"].value
         else:
-            raise ValueError(f"Invalid combining rule provided ({combining_rule})")
+            comb_sigma, comb_epsilon = _mix_sigma_epsilon(
+                [atypes_by_name[name] for name in type_name], combining_rule
+            )
 
         calculated_params[type_name] = {
             "sigma": comb_sigma,
@@ -1258,20 +1440,7 @@ def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
         lj.params[type_name] = calculated_params[type_name]
         lj.r_cut[type_name] = r_cut
 
-    # add rigid body 0 params
-    rigidSet = set()
-    for site in top.sites:
-        if site.molecule.isrigid and site.molecule.name not in rigidSet:
-            rigidSet.add(site.molecule.name)
-            for mol in atypes:
-                type_name = tuple(sorted([site.molecule.name, mol.name]))
-                lj.params[type_name] = {"sigma": 0.0, "epsilon": 0.0}
-                lj.r_cut[type_name] = r_cut
-            lj.params[(site.molecule.name, site.molecule.name)] = {
-                "sigma": 0.0,
-                "epsilon": 0.0,
-            }
-            lj.r_cut[(site.molecule.name, site.molecule.name)] = r_cut
+    _set_rigid_body_pairs(lj, top, atypes, r_cut)
 
     # TODO: handle per-molecule scaling factors
     if not np.any(scaling_factors):
@@ -1300,7 +1469,17 @@ def _parse_lj(top, atypes, combining_rule, r_cut, nlist, scaling_factors):
     return [lj, special_lj]
 
 
-# TODO: adding supports for the following nonbonded potentials
+def _warn_unscalable(scaling_factors, class_name):
+    """Warn that scaled pairs are excluded from a force that cannot scale them."""
+    if any(factor not in (0, 1) for factor in np.asarray(scaling_factors).flatten()):
+        logger.warning(
+            f"Scaling factors {scaling_factors} exclude those pairs from the shared "
+            f"neighborlist, and hoomd has no special pair force for {class_name} to "
+            f"add them back scaled, so they contribute no {class_name} force. Assign "
+            "a different nlist to the force to change this."
+        )
+
+
 def _parse_buckingham(
     top,
     atypes,
@@ -1308,8 +1487,41 @@ def _parse_buckingham(
     r_cut,
     nlist,
     scaling_factors,
+    explicit_pairs=None,
+    all_explicit_pairs=frozenset(),
 ):
-    return None
+    """Parse Buckingham forces."""
+    buckingham = hoomd.md.pair.Buckingham(nlist=nlist)
+    explicit_pairs = explicit_pairs or {}
+    other_expression_pairs = set(all_explicit_pairs) - set(explicit_pairs)
+    atypes_by_name = {atype.name: atype for atype in atypes}
+    _warn_unscalable(scaling_factors, "Buckingham")
+
+    # Buckingham parameters are not combined, so the atom types only give the
+    # pair of a type with itself.
+    cross_pairs = {
+        tuple(sorted(names)) for names in itertools.combinations(atypes_by_name, 2)
+    }
+    missing = sorted(cross_pairs - set(explicit_pairs) - other_expression_pairs)
+    if missing:
+        raise EngineIncompatibilityError(
+            f"Buckingham parameters are not combined, so the cross pairs {missing} "
+            f"in the topology {top} each need a Buckingham PairPotentialType."
+        )
+
+    diagonal_pairs = {(name, name) for name in atypes_by_name}
+    for type_name in sorted(
+        (diagonal_pairs | set(explicit_pairs)) - other_expression_pairs
+    ):
+        source = explicit_pairs.get(type_name) or atypes_by_name[type_name[0]]
+        buckingham.params[type_name] = {
+            key: source.parameters[key].value for key in ("A", "rho", "C")
+        }
+        buckingham.r_cut[type_name] = r_cut
+
+    _set_rigid_body_pairs(buckingham, top, atypes, r_cut)
+
+    return [buckingham]
 
 
 def _parse_lj0804(
@@ -1319,8 +1531,33 @@ def _parse_lj0804(
     r_cut,
     nlist,
     scaling_factors,
+    explicit_pairs=None,
+    all_explicit_pairs=frozenset(),
 ):
-    return None
+    """Parse Lennard-Jones 8-4 forces."""
+    lj0804 = hoomd.md.pair.LJ0804(nlist=nlist)
+    explicit_pairs = explicit_pairs or {}
+    other_expression_pairs = set(all_explicit_pairs) - set(explicit_pairs)
+    atypes_by_name = {atype.name: atype for atype in atypes}
+    _warn_unscalable(scaling_factors, "LJ0804")
+
+    for type_name in _mixed_and_explicit_pairs(
+        atypes_by_name, explicit_pairs, other_expression_pairs
+    ):
+        explicit = explicit_pairs.get(type_name)
+        if explicit:
+            comb_sigma = explicit.parameters["sigma"].value
+            comb_epsilon = explicit.parameters["epsilon"].value
+        else:
+            comb_sigma, comb_epsilon = _mix_sigma_epsilon(
+                [atypes_by_name[name] for name in type_name], combining_rule
+            )
+        lj0804.params[type_name] = {"sigma": comb_sigma, "epsilon": comb_epsilon}
+        lj0804.r_cut[type_name] = r_cut
+
+    _set_rigid_body_pairs(lj0804, top, atypes, r_cut)
+
+    return [lj0804]
 
 
 def _parse_lj1208(
@@ -1330,8 +1567,33 @@ def _parse_lj1208(
     r_cut,
     nlist,
     scaling_factors,
+    explicit_pairs=None,
+    all_explicit_pairs=frozenset(),
 ):
-    return None
+    """Parse Lennard-Jones 12-8 forces."""
+    lj1208 = hoomd.md.pair.LJ1208(nlist=nlist)
+    explicit_pairs = explicit_pairs or {}
+    other_expression_pairs = set(all_explicit_pairs) - set(explicit_pairs)
+    atypes_by_name = {atype.name: atype for atype in atypes}
+    _warn_unscalable(scaling_factors, "LJ1208")
+
+    for type_name in _mixed_and_explicit_pairs(
+        atypes_by_name, explicit_pairs, other_expression_pairs
+    ):
+        explicit = explicit_pairs.get(type_name)
+        if explicit:
+            comb_sigma = explicit.parameters["sigma"].value
+            comb_epsilon = explicit.parameters["epsilon"].value
+        else:
+            comb_sigma, comb_epsilon = _mix_sigma_epsilon(
+                [atypes_by_name[name] for name in type_name], combining_rule
+            )
+        lj1208.params[type_name] = {"sigma": comb_sigma, "epsilon": comb_epsilon}
+        lj1208.r_cut[type_name] = r_cut
+
+    _set_rigid_body_pairs(lj1208, top, atypes, r_cut)
+
+    return [lj1208]
 
 
 def _parse_mie(
@@ -1341,8 +1603,45 @@ def _parse_mie(
     r_cut,
     nlist,
     scaling_factors,
+    explicit_pairs=None,
+    all_explicit_pairs=frozenset(),
 ):
-    return None
+    """Parse Mie forces."""
+    mie = hoomd.md.pair.Mie(nlist=nlist)
+    explicit_pairs = explicit_pairs or {}
+    other_expression_pairs = set(all_explicit_pairs) - set(explicit_pairs)
+    atypes_by_name = {atype.name: atype for atype in atypes}
+    _warn_unscalable(scaling_factors, "Mie")
+
+    for type_name in _mixed_and_explicit_pairs(
+        atypes_by_name, explicit_pairs, other_expression_pairs
+    ):
+        explicit = explicit_pairs.get(type_name)
+        if explicit:
+            parameters = {
+                key: explicit.parameters[key].value
+                for key in ("epsilon", "sigma", "n", "m")
+            }
+        else:
+            pairs = [atypes_by_name[name] for name in type_name]
+            exponents = {}
+            for key in ("n", "m"):
+                values = [pair.parameters[key].value for pair in pairs]
+                if values[0] != values[1]:
+                    raise EngineIncompatibilityError(
+                        f"Mie exponents are not combined, so the pair {type_name} in "
+                        f"the topology {top} needs a Mie PairPotentialType. Its atom "
+                        f"types give {key} as {values[0]} and {values[1]}."
+                    )
+                exponents[key] = values[0]
+            sigma, epsilon = _mix_sigma_epsilon(pairs, combining_rule)
+            parameters = {"epsilon": epsilon, "sigma": sigma, **exponents}
+        mie.params[type_name] = parameters
+        mie.r_cut[type_name] = r_cut
+
+    _set_rigid_body_pairs(mie, top, atypes, r_cut)
+
+    return [mie]
 
 
 def _parse_bond_forces(
