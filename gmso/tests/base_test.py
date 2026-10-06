@@ -1,3 +1,5 @@
+import itertools
+
 import foyer
 import mbuild as mb
 import numpy as np
@@ -740,18 +742,23 @@ class BaseTest:
 
     @pytest.fixture
     def pairpot_cg_top(self):
-        def _factory(fn, bead_names=("_A", "_B", "_C")):
+        def _factory(fn, bead_names=("_A", "_B", "_C"), bonded=False):
+            """Build one molecule of beads, as a linear chain if bonded is True."""
             ff = ForceField(get_path(fn))
             top = Topology()
+            sites = []
             for i, name in enumerate(bead_names):
-                top.add_site(
-                    Atom(
-                        name=name,
-                        position=np.array([i * 0.5, 0.0, 0.0]),
-                        molecule=("CG", 0),
-                    )
+                site = Atom(
+                    name=name,
+                    position=np.array([i * 0.5, 0.0, 0.0]),
+                    molecule=("CG", 0),
                 )
-            return apply(top, ff)
+                top.add_site(site)
+                sites.append(site)
+            if bonded:
+                for site1, site2 in itertools.pairwise(sites):
+                    top.add_connection(Bond(connection_members=[site1, site2]))
+            return apply(top, ff, identify_connections=bonded)
 
         return _factory
 

@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Bonded chains of LJ beads for testing scaled 1-4 pairs with PairPotentialTypes.
+  _D has no parameters of its own, so its pairs come from LJ PairPotentialTypes.
+  The _A-_B pair is Buckingham, so the LJ force does not act on it.
+-->
+<ForceField version="0.0.1" name="PairPotentialDemo-Bonded">
+  <FFMetaData combiningRule="lorentz">
+    <Units energy="kJ/mol" distance="nm" mass="amu" charge="coulomb"/>
+  </FFMetaData>
+
+  <AtomTypes expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)">
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <AtomType name="_A" element="_A" atomclass="_A" mass="1.0" charge="0.0" definition="_A" description="CG bead A">
+      <Parameters>
+        <Parameter name="sigma" value="0.30"/>
+        <Parameter name="epsilon" value="0.40"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="_B" element="_B" atomclass="_B" mass="1.0" charge="0.0" definition="_B" description="CG bead B">
+      <Parameters>
+        <Parameter name="sigma" value="0.40"/>
+        <Parameter name="epsilon" value="0.50"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="_X" element="_X" atomclass="_X" mass="1.0" charge="0.0" definition="_X" description="CG bead X">
+      <Parameters>
+        <Parameter name="sigma" value="0.35"/>
+        <Parameter name="epsilon" value="0.45"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+
+  <AtomTypes>
+    <AtomType name="_D" element="_D" atomclass="_D" mass="1.0" charge="0.0" definition="_D" description="CG bead D"/>
+  </AtomTypes>
+
+  <BondTypes expression="0.5 * k * (r-r_eq)**2">
+    <ParametersUnitDef parameter="k" unit="kJ/mol/nm**2"/>
+    <ParametersUnitDef parameter="r_eq" unit="nm"/>
+    <BondType name="HarmonicBondPotential" type1="_A" type2="_X">
+      <Parameters>
+        <Parameter name="k" value="1000.0"/>
+        <Parameter name="r_eq" value="0.5"/>
+      </Parameters>
+    </BondType>
+    <BondType name="HarmonicBondPotential" type1="_X" type2="_X">
+      <Parameters>
+        <Parameter name="k" value="1000.0"/>
+        <Parameter name="r_eq" value="0.5"/>
+      </Parameters>
+    </BondType>
+    <BondType name="HarmonicBondPotential" type1="_B" type2="_X">
+      <Parameters>
+        <Parameter name="k" value="1000.0"/>
+        <Parameter name="r_eq" value="0.5"/>
+      </Parameters>
+    </BondType>
+    <BondType name="HarmonicBondPotential" type1="_A" type2="_A">
+      <Parameters>
+        <Parameter name="k" value="1000.0"/>
+        <Parameter name="r_eq" value="0.5"/>
+      </Parameters>
+    </BondType>
+    <BondType name="HarmonicBondPotential" type1="_A" type2="_D">
+      <Parameters>
+        <Parameter name="k" value="1000.0"/>
+        <Parameter name="r_eq" value="0.5"/>
+      </Parameters>
+    </BondType>
+  </BondTypes>
+
+  <AngleTypes expression="0.5 * k * (theta-theta_eq)**2">
+    <ParametersUnitDef parameter="k" unit="kJ/mol/radian**2"/>
+    <ParametersUnitDef parameter="theta_eq" unit="radian"/>
+    <AngleType name="HarmonicAnglePotential" type1="_A" type2="_X" type3="_X">
+      <Parameters>
+        <Parameter name="k" value="100.0"/>
+        <Parameter name="theta_eq" value="2.0"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="HarmonicAnglePotential" type1="_X" type2="_X" type3="_B">
+      <Parameters>
+        <Parameter name="k" value="100.0"/>
+        <Parameter name="theta_eq" value="2.0"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="HarmonicAnglePotential" type1="_X" type2="_B" type3="_X">
+      <Parameters>
+        <Parameter name="k" value="100.0"/>
+        <Parameter name="theta_eq" value="2.0"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="HarmonicAnglePotential" type1="_A" type2="_A" type3="_A">
+      <Parameters>
+        <Parameter name="k" value="100.0"/>
+        <Parameter name="theta_eq" value="2.0"/>
+      </Parameters>
+    </AngleType>
+    <AngleType name="HarmonicAnglePotential" type1="_A" type2="_A" type3="_D">
+      <Parameters>
+        <Parameter name="k" value="100.0"/>
+        <Parameter name="theta_eq" value="2.0"/>
+      </Parameters>
+    </AngleType>
+  </AngleTypes>
+
+  <DihedralTypes expression="k * (1 + cos(n * phi - phi_eq))">
+    <ParametersUnitDef parameter="k" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="n" unit="dimensionless"/>
+    <ParametersUnitDef parameter="phi_eq" unit="radian"/>
+    <DihedralType name="PeriodicTorsionPotential" type1="_A" type2="_X" type3="_X" type4="_B">
+      <Parameters>
+        <Parameter name="k" value="1.0"/>
+        <Parameter name="n" value="1"/>
+        <Parameter name="phi_eq" value="0.0"/>
+      </Parameters>
+    </DihedralType>
+    <DihedralType name="PeriodicTorsionPotential" type1="_X" type2="_X" type3="_B" type4="_X">
+      <Parameters>
+        <Parameter name="k" value="1.0"/>
+        <Parameter name="n" value="1"/>
+        <Parameter name="phi_eq" value="0.0"/>
+      </Parameters>
+    </DihedralType>
+    <DihedralType name="PeriodicTorsionPotential" type1="_A" type2="_A" type3="_A" type4="_D">
+      <Parameters>
+        <Parameter name="k" value="1.0"/>
+        <Parameter name="n" value="1"/>
+        <Parameter name="phi_eq" value="0.0"/>
+      </Parameters>
+    </DihedralType>
+  </DihedralTypes>
+
+  <PairPotentialTypes expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)">
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <PairPotentialType name="LennardJonesPotential" type1="_A" type2="_D">
+      <Parameters>
+        <Parameter name="sigma" value="0.32"/>
+        <Parameter name="epsilon" value="2.0"/>
+      </Parameters>
+    </PairPotentialType>
+    <PairPotentialType name="LennardJonesPotential" type1="_D" type2="_D">
+      <Parameters>
+        <Parameter name="sigma" value="0.34"/>
+        <Parameter name="epsilon" value="3.0"/>
+      </Parameters>
+    </PairPotentialType>
+  </PairPotentialTypes>
+
+  <PairPotentialTypes expression="A*exp(-r/rho) - C/r**6">
+    <ParametersUnitDef parameter="A" unit="kJ/mol"/>
+    <ParametersUnitDef parameter="rho" unit="nm"/>
+    <ParametersUnitDef parameter="C" unit="kJ/mol*nm**6"/>
+    <PairPotentialType name="BuckinghamPotential" type1="_A" type2="_B">
+      <Parameters>
+        <Parameter name="A" value="100.0"/>
+        <Parameter name="rho" value="0.03"/>
+        <Parameter name="C" value="0.001"/>
+      </Parameters>
+    </PairPotentialType>
+  </PairPotentialTypes>
+</ForceField>

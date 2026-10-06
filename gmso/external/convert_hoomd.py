@@ -1452,19 +1452,33 @@ def _parse_lj(
         # NOTE: special pairs cannot use tuple keys, must use a string
         if not scaling_factors[i] in (0, 1) and pairs_dict[pair_type]:
             for pair in pairs_dict[pair_type]:
-                if pair[0].atom_type in atypes and pair[1].atom_type in atypes:
-                    adjscale = scaling_factors[i]
-                    pair_name = tuple(sorted([x.atom_type.name for x in pair]))
-                    scaled_epsilon = adjscale * calculated_params[pair_name]["epsilon"]
-                    sigma = calculated_params[pair_name]["sigma"]
-                    special_lj.params["-".join(pair_name)] = {
-                        "sigma": sigma,
-                        "epsilon": scaled_epsilon,
-                    }
-                    special_lj.r_cut["-".join(pair_name)] = r_cut
+                pair_name = tuple(sorted([x.atom_type.name for x in pair]))
+                # Only pairs this LJ force parameterizes, mixed or explicit
+                if pair_name not in calculated_params:
+                    continue
+                adjscale = scaling_factors[i]
+                scaled_epsilon = adjscale * calculated_params[pair_name]["epsilon"]
+                sigma = calculated_params[pair_name]["sigma"]
+                special_lj.params["-".join(pair_name)] = {
+                    "sigma": sigma,
+                    "epsilon": scaled_epsilon,
+                }
+                special_lj.r_cut["-".join(pair_name)] = r_cut
     # remove special_lj if necessary
     if len(list(special_lj.params.keys())) == 0:
         return [lj]
+
+    # hoomd requires parameters for every pair type in the snapshot, so the
+    # remaining pair types contribute no force
+    set_pairs = set(special_lj.params.keys())
+    scaled_pairs = generate_pairs_lists(top, refer_from_scaling_factor=True)
+    for pairs in scaled_pairs.values():
+        for pair in pairs:
+            pair_name = "-".join(sorted([x.atom_type.name for x in pair]))
+            if pair_name not in set_pairs:
+                special_lj.params[pair_name] = {"sigma": 0.0, "epsilon": 0.0}
+                special_lj.r_cut[pair_name] = 0
+                set_pairs.add(pair_name)
 
     return [lj, special_lj]
 

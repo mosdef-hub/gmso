@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 import unyt as u
 
-from gmso import ForceField
+from gmso import Box, ForceField
 from gmso.external import from_mbuild
 from gmso.external.convert_hoomd import (
     to_gsd_snapshot,
@@ -906,6 +906,40 @@ class TestHoomd(BaseTest):
         assert lj.params[("_A", "_C")]["sigma"] == pytest.approx(3.33333)
         assert lj.params[("_B", "_C")]["sigma"] == pytest.approx(4.44444)
         assert lj.params[("_A", "_A")]["sigma"] == pytest.approx(0.30)
+
+    def test_special_pairs_other_expression(self, pairpot_cg_top):
+        # 1-4 pairs are _A-_B (Buckingham pairtype) and _X-_X (LJ)
+        top = pairpot_cg_top(
+            "ff-pairpot-bonded.xml",
+            bead_names=("_A", "_X", "_X", "_B", "_X"),
+            bonded=True,
+        )
+        top.box = Box(lengths=[5, 5, 5])
+        snapshot, _ = to_hoomd_snapshot(top, base_units=None)
+        forces, _ = to_hoomd_forcefield(top, r_cut=1.2)
+        special_lj = next(
+            f for f in forces["nonbonded"] if isinstance(f, hoomd.md.special_pair.LJ)
+        )
+        assert special_lj.params["_X-_X"]["sigma"] == pytest.approx(0.35)
+        assert special_lj.params["_X-_X"]["epsilon"] == pytest.approx(0.5 * 0.45)
+        assert special_lj.params["_A-_B"]["epsilon"] == 0
+        assert special_lj.r_cut["_A-_B"] == 0
+
+        sim = run_hoomd_nvt(snapshot, forces)
+        sim.run(0)
+
+    def test_special_pairs_null_atom_type(self, pairpot_cg_top):
+        top = pairpot_cg_top(
+            "ff-pairpot-bonded.xml",
+            bead_names=("_A", "_A", "_A", "_D"),
+            bonded=True,
+        )
+        forces, _ = to_hoomd_forcefield(top, r_cut=1.2)
+        special_lj = next(
+            f for f in forces["nonbonded"] if isinstance(f, hoomd.md.special_pair.LJ)
+        )
+        assert special_lj.params["_A-_D"]["sigma"] == pytest.approx(0.32)
+        assert special_lj.params["_A-_D"]["epsilon"] == pytest.approx(0.5 * 2.0)
 
     def test_rigid_forces(self):
         benzene = mb.load("c1ccccc1", smiles=True)
