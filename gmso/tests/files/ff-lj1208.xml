@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ForceField version="0.0.1" name="LJ1208Demo">
+  <FFMetaData combiningRule="lorentz">
+    <Units energy="kJ/mol" distance="nm" mass="amu" charge="coulomb"/>
+  </FFMetaData>
+
+  <AtomTypes expression="4*epsilon*((sigma/r)**12 - (sigma/r)**8)">
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <AtomType name="_A" element="_A" atomclass="_A" mass="1.0" charge="0.0" definition="_A">
+      <Parameters>
+        <Parameter name="sigma" value="0.30"/>
+        <Parameter name="epsilon" value="0.40"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="_B" element="_B" atomclass="_B" mass="1.0" charge="0.0" definition="_B">
+      <Parameters>
+        <Parameter name="sigma" value="0.40"/>
+        <Parameter name="epsilon" value="0.90"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+</ForceField>

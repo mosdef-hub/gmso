@@ -12,6 +12,6 @@ dependencies:
   - networkx>=2.5
   - ele>=0.2.0
   - foyer>=1.0
-  - forcefield-utilities>=0.5.0
+  - forcefield-utilities>=0.6.0
   - symengine
   - python-symengine

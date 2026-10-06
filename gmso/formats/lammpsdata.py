@@ -4,6 +4,7 @@ import copy
 import datetime
 import logging
 import os
+from collections import namedtuple
 from itertools import count
 from pathlib import Path
 
@@ -23,10 +24,13 @@ from gmso.core.element import element_by_mass
 from gmso.core.improper import Improper
 from gmso.core.topology import Topology
 from gmso.core.views import PotentialFilters
+from gmso.exceptions import EngineIncompatibilityError
 from gmso.formats.formats_registry import loads_as, saves_as
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.compatibility import check_compatibility
 from gmso.utils.conversions import convert_kelvin_to_energy_units
+from gmso.utils.expression import NullPotentialExpression
+from gmso.utils.nonbonded import explicit_pair_types, mix_sigma_epsilon
 from gmso.utils.sorting import (
     reindex_molecules,
     sort_by_types,
@@ -37,6 +41,28 @@ from gmso.utils.units import LAMMPS_UnitSystems, write_out_parameter_and_units
 logger = logging.getLogger(__name__)
 
 pfilter = PotentialFilters.UNIQUE_SORTED_NAMES
+
+# The LAMMPS pair style of each potential form, the order it expects the
+# coefficients in, and whether it combines parameters for unlike pairs. Only
+# lj/cut combines, so every other cross pair needs a PairPotentialType.
+PairStyle = namedtuple("PairStyle", ("name", "parameters", "combines"))
+PAIR_STYLES = {
+    "LennardJonesPotential": PairStyle("lj/cut", ("epsilon", "sigma"), True),
+    "BuckinghamPotential": PairStyle("buck", ("A", "rho", "C"), False),
+}
+
+# One row of a pair coefficient section. i and j are zero based indices into the
+# sorted atom types, so the written type ids are i + 1 and j + 1.
+PairRow = namedtuple(
+    "PairRow", ("i", "j", "style", "parameters", "expression", "iname", "jname")
+)
+
+# A resolved pair coefficient section. engine_mixes is True when only the self
+# interactions are written and LAMMPS combines the unlike pairs itself.
+PairSection = namedtuple(
+    "PairSection",
+    ("rows", "used_styles", "name", "pair_style", "hybrid", "engine_mixes"),
+)
 
 
 # TODO: Write in header of each potential type any conversions that happened
@@ -76,7 +102,9 @@ def write_lammpsdata(
         Used only when ``unit_style='lj'``.  A dict with any subset of keys
         ``'mass'``, ``'energy'``, ``'length'``, ``'charge'`` that override the
         default non-dimensionalisation factors (which are derived from the
-        largest values found in the topology).
+        largest values found in the topology). The default ``'length'`` and
+        ``'energy'`` come from atom type sigma and epsilon, so they must be
+        given when no atom type has those parameters.
 
     Returns
     -------
@@ -165,6 +193,11 @@ def write_lammpsdata(
                 )
 
     reindex_molecules(top)  # reset the topology molecule index to match with lammps
+    # Resolved before the file is opened so an uncovered type pair raises
+    # without leaving a partly written file behind.
+    pair_section = (
+        _resolve_pairtypes(top, potentialsMap) if top.is_fully_typed() else None
+    )
     path = Path(filename)
     if not path.parent.exists():
         msg = "Provided path to file that does not exist"
@@ -176,7 +209,7 @@ def write_lammpsdata(
         all_ordered_typesDict = {}
         if top.is_fully_typed():
             _write_atomtypes(out_file, top, base_unyts, lj_cfactorsDict)
-            _write_pairtypes(out_file, top, base_unyts, lj_cfactorsDict)
+            _write_pairtypes(out_file, pair_section, base_unyts, lj_cfactorsDict)
             if top.bond_types:
                 sorted_bondsList = _write_bondtypes(
                     out_file, top, base_unyts, lj_cfactorsDict
@@ -555,25 +588,41 @@ def _get_ff_information(filename, base_unyts, topology):
         )
         type_list.append(atom_type)
 
+    pair_start = None
     with open(filename, "r") as lammps_file:
         for i, line in enumerate(lammps_file):
-            if "Pair" in line:
+            # The comment on a section line names the pair style
+            section = line.split("#")[0].strip()
+            if section == "Pair Coeffs":
+                pair_start = i
                 break
+            elif section == "PairIJ Coeffs":
+                logger.warning(
+                    "Reading PairIJ Coeffs is not supported, so the atom types "
+                    f"in {filename} keep their default parameters."
+                )
+                break
+    if pair_start is None:
+        return topology, type_list
+
     # Need to figure out if we're going have mixing rules printed out
     # Currently only reading in LJ params
     warn_ljcutBool = False
     with open(filename, "r") as f:
-        pair_lines = f.readlines()[i + 2 : i + n_atomtypes + 2]
+        pair_lines = f.readlines()[pair_start + 2 : pair_start + n_atomtypes + 2]
     for i, pair in enumerate(pair_lines):
-        if len(pair.split()) == 3:
-            type_list[i].parameters["sigma"] = float(pair.split()[2]) * get_units(
-                base_unyts, "length"
-            )
-            type_list[i].parameters["epsilon"] = float(pair.split()[1]) * get_units(
-                base_unyts, "energy"
-            )
-        elif len(pair.split()) == 4:
+        # A row carries the atom type name in a trailing comment when GMSO wrote it.
+        columns = pair.split("#")[0].split()
+        if len(columns) < 3:
+            continue
+        if len(columns) > 3:
             warn_ljcutBool = True
+        type_list[i].parameters["epsilon"] = float(columns[1]) * get_units(
+            base_unyts, "energy"
+        )
+        type_list[i].parameters["sigma"] = float(columns[2]) * get_units(
+            base_unyts, "length"
+        )
 
     if warn_ljcutBool:
         logger.info(
@@ -588,6 +637,7 @@ def _accepted_potentials():
     """List of accepted potentials that LAMMPS can support."""
     templates = PotentialTemplateLibrary()
     lennard_jones_potential = templates["LennardJonesPotential"]
+    buckingham_potential = templates["BuckinghamPotential"]
     harmonic_bond_potential = templates["LAMMPSHarmonicBondPotential"]
     fene_bond_potential = templates["LAMMPSFENEBondPotential"]
     harmonic_angle_potential = templates["LAMMPSHarmonicAnglePotential"]
@@ -597,6 +647,8 @@ def _accepted_potentials():
     opls_torsion_potential = templates["OPLSTorsionPotential"]
     accepted_potentialsList = [
         lennard_jones_potential,
+        buckingham_potential,
+        NullPotentialExpression(),
         harmonic_bond_potential,
         fene_bond_potential,
         harmonic_angle_potential,
@@ -753,40 +805,173 @@ def _write_atomtypes(out_file, top, base_unyts, cfactorsDict):
         )
 
 
-def _write_pairtypes(out_file, top, base_unyts, cfactorsDict):
-    """Write out pair interaction to LAMMPS file."""
-    # TODO: Handling of modified cross-interactions is not considered from top.pairpotential_types
-    # Pair coefficients
-    test_atomtype = top.sites[0].atom_type
-    out_file.write(f"\nPair Coeffs # {test_atomtype.expression}\n")
-    nb_style_orderTuple = (
-        "epsilon",
-        "sigma",
-    )  # this will vary with new pair styles
-    param_labels = [
-        write_out_parameter_and_units(
-            key,
-            convert_kelvin_to_energy_units(test_atomtype.parameters[key], "kJ"),
-            base_unyts,
+def _atom_type_styles(top, potentialsMap):
+    """Map each atom type name to its pair style, None when it has no parameters."""
+    by_expression = {
+        str(atom_type.expression): PAIR_STYLES[potentialsMap[atom_type]]
+        for atom_type in top.atom_types(filter_by=PotentialFilters.UNIQUE_EXPRESSION)
+        if not isinstance(atom_type.potential_expression, NullPotentialExpression)
+    }
+    return {
+        atom_type.name: (
+            None
+            if isinstance(atom_type.potential_expression, NullPotentialExpression)
+            else by_expression[str(atom_type.expression)]
         )
-        for key in nb_style_orderTuple
+        for atom_type in top.atom_types(filter_by=pfilter)
+    }
+
+
+def _pair_row(itype, jtype, styles, explicit_pairs, combining_rule):
+    """Return the pair style, parameters and expression of one type pair.
+
+    Returns
+    -------
+    tuple
+        The PairStyle, the parameters to write, and the expression they came
+        from. All three are None when nothing parameterizes the pair.
+    """
+    explicit = explicit_pairs.get((itype.name, jtype.name))
+    if explicit:
+        return explicit
+    style = styles[itype.name]
+    if style is None:
+        return None, None, None
+    if itype.name == jtype.name:
+        return style, itype.parameters, itype.expression
+    if style != styles[jtype.name] or not style.combines:
+        return None, None, None
+    sigma, epsilon = mix_sigma_epsilon((itype, jtype), combining_rule)
+    return style, {"sigma": sigma, "epsilon": epsilon}, itype.expression
+
+
+def _pair_coefficients(parameters, param_keys, base_unyts, cfactorsDict):
+    """Return each pair coefficient as a string in the output unit style."""
+    return [
+        base_unyts.convert_parameter(
+            convert_kelvin_to_energy_units(parameters[key], "kJ"),
+            cfactorsDict,
+            n_decimals=5,
+        )
+        for key in param_keys
     ]
-    out_file.write("#\t" + "\t".join(param_labels) + "\n")
+
+
+def _resolve_pairtypes(top, potentialsMap):
+    """Return the contents of a topology's pair coefficient section.
+
+    Resolves a Pair Coeffs section holding only the self interactions (A-A)
+    when one pair style covers the topology, that style combines parameters,
+    and no PairPotentialType applies, which leaves the unlike pairs (A-B) to
+    LAMMPS. Otherwise PairIJ Coeffs, which LAMMPS requires to hold every i <= j
+    pair and which turns its mixing off, so the unlike pairs are combined here.
+    With more than one pair style every row names its own, for pair_style
+    hybrid.
+
+    Returns
+    -------
+    PairSection
+
+    Raises
+    ------
+    EngineIncompatibilityError
+        If no atom type parameters or PairPotentialType cover a type pair.
+    """
     sorted_atomtypes = sorted(top.atom_types(filter_by=pfilter), key=lambda x: x.name)
-    for idx, param in enumerate(sorted_atomtypes):
-        out_file.write(
-            "{}\t{:7}\t\t{:7}\t\t# {}\n".format(
-                idx + 1,
-                *[
-                    base_unyts.convert_parameter(
-                        convert_kelvin_to_energy_units(param.parameters[key], "kJ"),
-                        cfactorsDict,
-                        n_decimals=5,
-                    )
-                    for key in nb_style_orderTuple
-                ],
-                param.name,
+    explicit_pairs = {
+        members: (
+            PAIR_STYLES[potentialsMap[pairpotential_type]],
+            pairpotential_type.parameters,
+            pairpotential_type.expression,
+        )
+        for members, pairpotential_type in explicit_pair_types(
+            top, {atom_type.name for atom_type in sorted_atomtypes}
+        ).items()
+    }
+    styles = _atom_type_styles(top, potentialsMap)
+
+    rows, uncovered = [], []
+    for i, itype in enumerate(sorted_atomtypes):
+        for j, jtype in enumerate(sorted_atomtypes[i:], start=i):
+            style, parameters, expression = _pair_row(
+                itype, jtype, styles, explicit_pairs, top.combining_rule
             )
+            if style is None:
+                uncovered.append((itype.name, jtype.name))
+            else:
+                rows.append(
+                    PairRow(i, j, style, parameters, expression, itype.name, jtype.name)
+                )
+    if uncovered:
+        raise EngineIncompatibilityError(
+            f"Nothing parameterizes the type pairs {uncovered} of the topology "
+            f"{top}. Parameters are combined only within a pair style that "
+            "supports it, so add a PairPotentialType for each of those pairs."
+        )
+
+    used_styles = sorted({row.style for row in rows})
+    hybrid = len(used_styles) > 1
+    # When true, only self interactions (A-A) are written and LAMMPS mixes the
+    # unlike pairs (A-B) itself.
+    engine_mixes = not explicit_pairs and not hybrid and used_styles[0].combines
+    if hybrid:
+        name = "PairIJ Coeffs"
+        pair_style = "hybrid " + " ".join(style.name for style in used_styles)
+    else:
+        name = "Pair Coeffs" if engine_mixes else "PairIJ Coeffs"
+        pair_style = used_styles[0].name
+    return PairSection(rows, used_styles, name, pair_style, hybrid, engine_mixes)
+
+
+def _write_pairtypes(out_file, pair_section, base_unyts, cfactorsDict):
+    """Write a resolved pair coefficient section to LAMMPS file."""
+    rows = pair_section.rows
+    hybrid = pair_section.hybrid
+    engine_mixes = pair_section.engine_mixes
+    section = pair_section.name
+
+    # read_data takes the comment on the section line as the pair style name and
+    # warns when it does not match the one the input script defines.
+    if hybrid:
+        out_file.write(f"\n{section} # hybrid\n")
+        out_file.write("#\ti\tj\tstyle\tcoefficients\n")
+    else:
+        out_file.write(f"\n{section} # {pair_section.pair_style}\n")
+        param_labels = [
+            write_out_parameter_and_units(
+                key,
+                convert_kelvin_to_energy_units(rows[0].parameters[key], "kJ"),
+                base_unyts,
+            )
+            for key in pair_section.used_styles[0].parameters
+        ]
+        out_file.write("#\t" + "\t".join(param_labels) + "\n")
+
+    forms = ", ".join(
+        f"{style.name} for {expression}"
+        for style, expression in {row.style: row.expression for row in rows}.items()
+    )
+    logger.info(
+        f"Wrote {len(rows)} rows to {section} using {forms}. The input script "
+        f"must define pair_style {pair_section.pair_style} with its cutoffs "
+        "before read_data."
+    )
+
+    for row in rows:
+        coefficients = "\t\t".join(
+            f"{coefficient:7}"
+            for coefficient in _pair_coefficients(
+                row.parameters, row.style.parameters, base_unyts, cfactorsDict
+            )
+        )
+        if engine_mixes:
+            if row.i == row.j:
+                out_file.write(f"{row.i + 1}\t{coefficients}\t\t# {row.iname}\n")
+            continue
+        style_name = f"{row.style.name}\t" if hybrid else ""
+        out_file.write(
+            f"{row.i + 1}\t{row.j + 1}\t{style_name}{coefficients}"
+            f"\t\t# {row.iname}\t{row.jname}\n"
         )
 
 
@@ -1218,10 +1403,18 @@ def _try_default_potential_conversions(top, potentialsDict):
 
 def _default_lj_val(top, source):
     """Generate default lj non-dimensional values from topology."""
-    if source == "length":
-        return copy.deepcopy(max([x.parameters["sigma"] for x in top.atom_types]))
-    elif source == "energy":
-        return copy.deepcopy(max([x.parameters["epsilon"] for x in top.atom_types]))
+    if source in ("length", "energy"):
+        # Only atom types with Lennard-Jones parameters set the reference
+        parameter = "sigma" if source == "length" else "epsilon"
+        values = [
+            x.parameters[parameter] for x in top.atom_types if parameter in x.parameters
+        ]
+        if not values:
+            raise ValueError(
+                f"No atom type has a {parameter} to use as the default lj {source}. "
+                f"Provide one with lj_cfactorsDict={{'{source}': ...}}."
+            )
+        return copy.deepcopy(max(values))
     elif source == "mass":
         return copy.deepcopy(max([x.mass for x in top.atom_types]))
     elif source == "charge":

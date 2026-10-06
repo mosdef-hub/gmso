@@ -1,4 +1,5 @@
 import copy
+import logging
 import os
 
 import numpy as np
@@ -17,6 +18,19 @@ from gmso.tests.base_test import BaseTest
 from gmso.tests.utils import get_path
 
 pfilter = PotentialFilters.UNIQUE_SORTED_NAMES
+
+
+def pair_coeff_rows(filename, section):
+    """Return the split coefficient rows of a data file's pair coefficient section."""
+    with open(filename) as f:
+        lines = f.readlines()
+    start = next(i for i, line in enumerate(lines) if line.startswith(section))
+    rows = []
+    for line in lines[start + 2 :]:
+        if not line.strip():
+            break
+        rows.append(line.split())
+    return rows
 
 
 def compare_lammps_files(line1, line2, skip_linesList=None, offsets=None):
@@ -505,8 +519,10 @@ class TestLammpsWriter(BaseTest):
         with open("ethane.lammps", "r") as f:
             lines = f.readlines()
 
+        # read_data reads the comment on a Pair Coeffs line as the pair style
+        # name and warns when it does not match the input script's
         stylesDict = {
-            "Pair": "4*epsilon*(-sigma**6/r**6+sigma**12/r**12)",
+            "Pair": "lj/cut",
             "Bond": "#LAMMPSHarmonicBondPotential",
             "Angle": "#LAMMPSHarmonicAnglePotential",
             "Dihedral": "#OPLSTorsionPotential",
@@ -515,10 +531,7 @@ class TestLammpsWriter(BaseTest):
         for i, line in enumerate(lines):
             if "Coeffs" in line:
                 styleLine = line.split()
-                if styleLine[0] == "Pair":
-                    assert "".join(styleLine[-3:]) == stylesDict[styleLine[0]]
-                else:
-                    assert styleLine[-1] == stylesDict[styleLine[0]]
+                assert styleLine[-1] == stylesDict[styleLine[0]]
 
     def test_lj_passed_units(self, typed_ethane):
         largest_eps = max([x.parameters["epsilon"] for x in typed_ethane.atom_types])
@@ -644,3 +657,194 @@ class TestLammpsWriter(BaseTest):
         np.testing.assert_allclose(float(coeffs[2]), 10)
         np.testing.assert_allclose(float(coeffs[3]), 1)
         np.testing.assert_allclose(float(coeffs[4]), 10)
+
+    def test_pairpotential_lj_override(self, pairpot_one_cross_top):
+        pairpot_one_cross_top.box = Box(lengths=[5, 5, 5] * u.nm)
+        pairpot_one_cross_top.save("one_cross.lammps", overwrite=True)
+        rows = pair_coeff_rows("one_cross.lammps", "PairIJ Coeffs")
+        assert len(rows) == 6
+        coeffs = {(row[5], row[6]): (float(row[2]), float(row[3])) for row in rows}
+        assert coeffs[("_A", "_B")] == pytest.approx(
+            (9.11111 / 4.184, 22.2222), rel=1e-4
+        )
+        # PairIJ Coeffs turns off mixing in LAMMPS, so the rest is mixed here
+        assert coeffs[("_A", "_C")] == pytest.approx((0.489898 / 4.184, 4.0), rel=1e-4)
+        assert coeffs[("_B", "_C")] == pytest.approx((0.547723 / 4.184, 4.5), rel=1e-4)
+
+    def test_pairpotential_lj_override_all_cross(self, pairpot_all_cross_top):
+        pairpot_all_cross_top.box = Box(lengths=[5, 5, 5] * u.nm)
+        pairpot_all_cross_top.save("all_cross.lammps", overwrite=True)
+        rows = pair_coeff_rows("all_cross.lammps", "PairIJ Coeffs")
+        coeffs = {(row[5], row[6]): float(row[3]) for row in rows}
+        for pair, sigma in (
+            (("_A", "_B"), 2.22222),
+            (("_A", "_C"), 3.33333),
+            (("_B", "_C"), 4.44444),
+        ):
+            assert coeffs[pair] == pytest.approx(sigma * 10)
+
+    def test_no_pairpotential_types_writes_pair_coeffs(self, typed_ethane):
+        typed_ethane.save("ethane.lammps", overwrite=True)
+        with open("ethane.lammps") as f:
+            contents = f.read()
+        assert "PairIJ Coeffs" not in contents
+        assert "Pair Coeffs" in contents
+
+    def test_pairpotential_absent_atom_type_skipped(self, pairpot_cg_top):
+        # the force field overrides _A-_B, but only _A and _C are in the topology
+        top = pairpot_cg_top("ff-pairpot-one-cross.xml", bead_names=("_A", "_C"))
+        top.box = Box(lengths=[5, 5, 5] * u.nm)
+        assert len(top.pairpotential_types) == 1
+        top.save("absent.lammps", overwrite=True)
+        with open("absent.lammps") as f:
+            assert "PairIJ Coeffs" not in f.read()
+
+    def test_null_atom_type(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-pairpot-null-bead.xml", bead_names=("_A", "_B", "_D"))
+        top.box = Box(lengths=[5, 5, 5] * u.nm)
+        top.save("null_bead.lammps", overwrite=True)
+        rows = pair_coeff_rows("null_bead.lammps", "PairIJ Coeffs")
+        coeffs = {(row[5], row[6]): float(row[3]) for row in rows}
+        assert coeffs[("_A", "_D")] == pytest.approx(22.2222)
+        assert coeffs[("_B", "_D")] == pytest.approx(33.3333)
+        assert coeffs[("_D", "_D")] == pytest.approx(44.4444)
+
+    def test_null_atom_type_uncovered_pair_raises(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-pairpot-null-bead.xml", bead_names=("_A", "_B", "_D"))
+        top.box = Box(lengths=[5, 5, 5] * u.nm)
+        top.remove_pairpotentialtype(("_A", "_D"))
+        with pytest.raises(EngineIncompatibilityError, match=r"\('_A', '_D'\)"):
+            top.save("uncovered.lammps", overwrite=True)
+
+    def test_failed_write_leaves_no_file(self, pairpot_cg_top, tmp_path):
+        good = pairpot_cg_top("ff-pairpot-null-bead.xml", bead_names=("_A", "_B", "_D"))
+        good.box = Box(lengths=[5, 5, 5] * u.nm)
+        bad = pairpot_cg_top("ff-pairpot-null-bead.xml", bead_names=("_A", "_B", "_D"))
+        bad.box = Box(lengths=[5, 5, 5] * u.nm)
+        bad.remove_pairpotentialtype(("_A", "_D"))
+
+        target = tmp_path / "partial.lammps"
+        with pytest.raises(EngineIncompatibilityError):
+            bad.save(target, overwrite=True)
+        assert list(tmp_path.iterdir()) == []
+
+        # an overwrite that fails leaves the file already on disk untouched
+        good.save(target, overwrite=True)
+        contents = target.read_text()
+        with pytest.raises(EngineIncompatibilityError):
+            bad.save(target, overwrite=True)
+        assert target.read_text() == contents
+        assert list(tmp_path.iterdir()) == [target]
+
+    def test_read_pair_coeffs_roundtrip(self, typed_ethane):
+        typed_ethane.save("ethane.lammps", overwrite=True)
+        read = gmso.Topology.load("ethane.lammps")
+        # the writer orders atom types by name, the reader by their lammps index
+        written = sorted(
+            typed_ethane.atom_types(filter_by=pfilter), key=lambda x: x.name
+        )
+        for original, parsed in zip(written, read.atom_types(filter_by=pfilter)):
+            assert_allclose_units(
+                parsed.parameters["sigma"],
+                original.parameters["sigma"].in_units(u.angstrom),
+                rtol=1e-4,
+                atol=1e-8,
+            )
+            assert_allclose_units(
+                parsed.parameters["epsilon"],
+                original.parameters["epsilon"].in_units(u.Unit("kcal/mol")),
+                rtol=1e-4,
+                atol=1e-8,
+            )
+
+    def test_read_pairij_coeffs_skipped(self, pairpot_one_cross_top, caplog):
+        pairpot_one_cross_top.box = Box(lengths=[5, 5, 5] * u.nm)
+        pairpot_one_cross_top.save("one_cross.lammps", overwrite=True)
+        with caplog.at_level(logging.WARNING, logger="gmso.formats.lammpsdata"):
+            read = gmso.Topology.load("one_cross.lammps")
+        assert "PairIJ Coeffs is not supported" in caplog.text
+
+        default_parameters = gmso.AtomType(name="default").parameters
+        for atom_type in read.atom_types(filter_by=pfilter):
+            for key in ("sigma", "epsilon"):
+                assert_allclose_units(
+                    atom_type.parameters[key], default_parameters[key]
+                )
+
+    def test_pairpotential_hybrid_pair_styles(self, pairpot_cg_top, caplog):
+        top = pairpot_cg_top("ff-lj-buckingham.xml", bead_names=("_A", "_K"))
+        top.box = Box(lengths=[5, 5, 5] * u.nm)
+        with caplog.at_level(logging.INFO, logger="gmso.formats.lammpsdata"):
+            top.save("hybrid.lammps", overwrite=True)
+        assert "pair_style hybrid buck lj/cut" in caplog.text
+
+        with open("hybrid.lammps") as f:
+            # read_data reads this comment as the pair style name and warns on
+            # a mismatch, so it holds the style and nothing else
+            assert "PairIJ Coeffs # hybrid\n" in f.read()
+
+        rows = pair_coeff_rows("hybrid.lammps", "PairIJ Coeffs")
+        assert {(row[0], row[1]): row[2] for row in rows} == {
+            ("1", "1"): "lj/cut",
+            ("1", "2"): "lj/cut",
+            ("2", "2"): "buck",
+        }
+        # the _A-_K override is Lennard-Jones, so it carries sigma and epsilon
+        cross = next(row for row in rows if (row[0], row[1]) == ("1", "2"))
+        assert float(cross[4]) == pytest.approx(22.2222, rel=1e-4)
+        # buck takes A, rho and C, in that order
+        buckingham = next(row for row in rows if row[2] == "buck")
+        assert [float(value) for value in buckingham[3:6]] == pytest.approx(
+            [23.90057, 0.30000, 239.00574], rel=1e-4
+        )
+
+    def test_pairpotential_buckingham_only(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-hoomd-buckingham.xml", bead_names=("_A", "_B"))
+        top.box = Box(lengths=[5, 5, 5] * u.nm)
+        top.save("buck.lammps", overwrite=True)
+        with open("buck.lammps") as f:
+            contents = f.read()
+        # buck does not combine, so LAMMPS cannot be left to mix the unlike pair
+        assert "PairIJ Coeffs" in contents
+        assert "hybrid" not in contents
+
+        rows = pair_coeff_rows("buck.lammps", "PairIJ Coeffs")
+        assert len(rows) == 3
+        assert [float(value) for value in rows[0][2:5]] == pytest.approx(
+            [23.90057, 0.30000, 239.00574], rel=1e-4
+        )
+
+    def test_lj_units_buckingham(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-lj-buckingham.xml", bead_names=("_A", "_K"))
+        top.box = Box(lengths=[5, 5, 5] * u.nm)
+        # elementary_charge units are not yet supported with lj units
+        for site in top.sites:
+            site.charge = 0 * u.C
+        top.save("hybrid_lj.lammps", unit_style="lj", overwrite=True)
+
+        # sigma and epsilon of _A, the only LJ atom type, set the reference
+        rows = pair_coeff_rows("hybrid_lj.lammps", "PairIJ Coeffs")
+        assert rows[2][:3] == ["2", "2", "buck"]
+        assert [float(value) for value in rows[2][3:6]] == pytest.approx(
+            [100.0 / 0.40, 0.03 / 0.30, 0.001 / (0.40 * 0.30**6)], rel=1e-4
+        )
+
+    def test_lj_units_no_lj_atom_types_raises(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-hoomd-buckingham.xml", bead_names=("_A", "_B"))
+        top.box = Box(lengths=[5, 5, 5] * u.nm)
+        with pytest.raises(ValueError, match="lj_cfactorsDict"):
+            top.save("buck_lj.lammps", unit_style="lj", overwrite=True)
+
+    def test_buckingham_uncovered_cross_pair_raises(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-hoomd-buckingham.xml", bead_names=("_A", "_B"))
+        top.box = Box(lengths=[5, 5, 5] * u.nm)
+        top.remove_pairpotentialtype(("_A", "_B"))
+        with pytest.raises(EngineIncompatibilityError, match=r"\('_A', '_B'\)"):
+            top.save("uncovered_buck.lammps", overwrite=True)
+
+    def test_cross_expression_uncovered_pair_raises(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-lj-buckingham.xml", bead_names=("_A", "_K"))
+        top.box = Box(lengths=[5, 5, 5] * u.nm)
+        top.remove_pairpotentialtype(("_A", "_K"))
+        with pytest.raises(EngineIncompatibilityError, match=r"\('_A', '_K'\)"):
+            top.save("uncovered_cross.lammps", overwrite=True)

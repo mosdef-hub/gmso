@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ForceField version="0.0.1" name="PairPotentialDemo-NullBead">
+  <FFMetaData combiningRule="lorentz">
+    <Units energy="kJ/mol" distance="nm" mass="amu" charge="coulomb"/>
+  </FFMetaData>
+
+  <AtomTypes expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)">
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <AtomType name="_A" element="_A" atomclass="_A" mass="1.0" charge="0.0" definition="_A" description="CG bead A">
+      <Parameters>
+        <Parameter name="sigma" value="0.30"/>
+        <Parameter name="epsilon" value="0.40"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="_B" element="_B" atomclass="_B" mass="1.0" charge="0.0" definition="_B" description="CG bead B">
+      <Parameters>
+        <Parameter name="sigma" value="0.40"/>
+        <Parameter name="epsilon" value="0.50"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+
+  <!-- _D carries no Parameters, so every _D interaction comes from
+       PairPotentialTypes. It needs its own block with no expression attribute;
+       a bare AtomType inside a block that declares one fails to load. -->
+  <AtomTypes>
+    <AtomType name="_D" element="_D" atomclass="_D" mass="1.0" charge="0.0" definition="_D" description="CG bead D"/>
+  </AtomTypes>
+
+  <PairPotentialTypes expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)">
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <PairPotentialType name="LennardJonesPotential" type1="_A" type2="_D">
+      <Parameters>
+        <Parameter name="sigma" value="2.22222"/>
+        <Parameter name="epsilon" value="9.11111"/>
+      </Parameters>
+    </PairPotentialType>
+    <PairPotentialType name="LennardJonesPotential" type1="_B" type2="_D">
+      <Parameters>
+        <Parameter name="sigma" value="3.33333"/>
+        <Parameter name="epsilon" value="9.22222"/>
+      </Parameters>
+    </PairPotentialType>
+    <PairPotentialType name="LennardJonesPotential" type1="_D" type2="_D">
+      <Parameters>
+        <Parameter name="sigma" value="4.44444"/>
+        <Parameter name="epsilon" value="9.33333"/>
+      </Parameters>
+    </PairPotentialType>
+  </PairPotentialTypes>
+</ForceField>
