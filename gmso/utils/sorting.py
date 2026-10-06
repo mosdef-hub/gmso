@@ -231,7 +231,7 @@ def sort_connection_strings(namesList, improperBool=False):
         else:
             return tuple(namesList)
     else:
-        return ValueError(
+        raise ValueError(
             f"Cannot sort {namesList}. It is not a length of 2,3, or 4 members."
         )
 
