@@ -800,6 +800,27 @@ class TestLammpsWriter(BaseTest):
             [23.90057, 0.30000, 239.00574], rel=1e-4
         )
 
+    def test_lj_units_buckingham(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-lj-buckingham.xml", bead_names=("_A", "_K"))
+        top.box = Box(lengths=[5, 5, 5] * u.nm)
+        # elementary_charge units are not yet supported with lj units
+        for site in top.sites:
+            site.charge = 0 * u.C
+        top.save("hybrid_lj.lammps", unit_style="lj", overwrite=True)
+
+        # sigma and epsilon of _A, the only LJ atom type, set the reference
+        rows = pair_coeff_rows("hybrid_lj.lammps", "PairIJ Coeffs")
+        assert rows[2][:3] == ["2", "2", "buck"]
+        assert [float(value) for value in rows[2][3:6]] == pytest.approx(
+            [100.0 / 0.40, 0.03 / 0.30, 0.001 / (0.40 * 0.30**6)], rel=1e-4
+        )
+
+    def test_lj_units_no_lj_atom_types_raises(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-hoomd-buckingham.xml", bead_names=("_A", "_B"))
+        top.box = Box(lengths=[5, 5, 5] * u.nm)
+        with pytest.raises(ValueError, match="lj_cfactorsDict"):
+            top.save("buck_lj.lammps", unit_style="lj", overwrite=True)
+
     def test_buckingham_uncovered_cross_pair_raises(self, pairpot_cg_top):
         top = pairpot_cg_top("ff-hoomd-buckingham.xml", bead_names=("_A", "_B"))
         top.box = Box(lengths=[5, 5, 5] * u.nm)

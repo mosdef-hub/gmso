@@ -102,7 +102,9 @@ def write_lammpsdata(
         Used only when ``unit_style='lj'``.  A dict with any subset of keys
         ``'mass'``, ``'energy'``, ``'length'``, ``'charge'`` that override the
         default non-dimensionalisation factors (which are derived from the
-        largest values found in the topology).
+        largest values found in the topology). The default ``'length'`` and
+        ``'energy'`` come from atom type sigma and epsilon, so they must be
+        given when no atom type has those parameters.
 
     Returns
     -------
@@ -1388,10 +1390,18 @@ def _try_default_potential_conversions(top, potentialsDict):
 
 def _default_lj_val(top, source):
     """Generate default lj non-dimensional values from topology."""
-    if source == "length":
-        return copy.deepcopy(max([x.parameters["sigma"] for x in top.atom_types]))
-    elif source == "energy":
-        return copy.deepcopy(max([x.parameters["epsilon"] for x in top.atom_types]))
+    if source in ("length", "energy"):
+        # Only atom types with Lennard-Jones parameters set the reference
+        parameter = "sigma" if source == "length" else "epsilon"
+        values = [
+            x.parameters[parameter] for x in top.atom_types if parameter in x.parameters
+        ]
+        if not values:
+            raise ValueError(
+                f"No atom type has a {parameter} to use as the default lj {source}. "
+                f"Provide one with lj_cfactorsDict={{'{source}': ...}}."
+            )
+        return copy.deepcopy(max(values))
     elif source == "mass":
         return copy.deepcopy(max([x.mass for x in top.atom_types]))
     elif source == "charge":
