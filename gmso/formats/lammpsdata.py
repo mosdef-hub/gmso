@@ -588,15 +588,28 @@ def _get_ff_information(filename, base_unyts, topology):
         )
         type_list.append(atom_type)
 
+    pair_start = None
     with open(filename, "r") as lammps_file:
         for i, line in enumerate(lammps_file):
-            if "Pair" in line:
+            # The comment on a section line names the pair style
+            section = line.split("#")[0].strip()
+            if section == "Pair Coeffs":
+                pair_start = i
                 break
+            elif section == "PairIJ Coeffs":
+                logger.warning(
+                    "Reading PairIJ Coeffs is not supported, so the atom types "
+                    f"in {filename} keep their default parameters."
+                )
+                break
+    if pair_start is None:
+        return topology, type_list
+
     # Need to figure out if we're going have mixing rules printed out
     # Currently only reading in LJ params
     warn_ljcutBool = False
     with open(filename, "r") as f:
-        pair_lines = f.readlines()[i + 2 : i + n_atomtypes + 2]
+        pair_lines = f.readlines()[pair_start + 2 : pair_start + n_atomtypes + 2]
     for i, pair in enumerate(pair_lines):
         # A row carries the atom type name in a trailing comment when GMSO wrote it.
         columns = pair.split("#")[0].split()

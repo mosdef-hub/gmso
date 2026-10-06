@@ -757,6 +757,20 @@ class TestLammpsWriter(BaseTest):
                 atol=1e-8,
             )
 
+    def test_read_pairij_coeffs_skipped(self, pairpot_one_cross_top, caplog):
+        pairpot_one_cross_top.box = Box(lengths=[5, 5, 5] * u.nm)
+        pairpot_one_cross_top.save("one_cross.lammps", overwrite=True)
+        with caplog.at_level(logging.WARNING, logger="gmso.formats.lammpsdata"):
+            read = gmso.Topology.load("one_cross.lammps")
+        assert "PairIJ Coeffs is not supported" in caplog.text
+
+        default_parameters = gmso.AtomType(name="default").parameters
+        for atom_type in read.atom_types(filter_by=pfilter):
+            for key in ("sigma", "epsilon"):
+                assert_allclose_units(
+                    atom_type.parameters[key], default_parameters[key]
+                )
+
     def test_pairpotential_hybrid_pair_styles(self, pairpot_cg_top, caplog):
         top = pairpot_cg_top("ff-lj-buckingham.xml", bead_names=("_A", "_K"))
         top.box = Box(lengths=[5, 5, 5] * u.nm)
