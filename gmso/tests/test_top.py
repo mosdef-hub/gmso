@@ -326,6 +326,26 @@ class TestTop(BaseTest):
         assert nbfix[("_B", "_D")][1] == pytest.approx(33.3333 * 2 ** (1 / 6))
         assert nbfix[("_D", "_D")][1] == pytest.approx(44.4444 * 2 ** (1 / 6))
 
+    def test_pairpotential_pairtypes(self, pairpot_cg_top):
+        # _A-_D is a 1-4 pair, given by a pair potential type
+        top = pairpot_cg_top(
+            "ff-pairpot-bonded.xml",
+            bead_names=("_A", "_A", "_A", "_D"),
+            bonded=True,
+        )
+        top.remove_pairpotentialtype(("_A", "_B"))
+        top.save("bonded.top", overwrite=True)
+        parameterset = pmd.load_file("bonded.top", parametrize=False).parameterset
+
+        # parmed reports (epsilon in kcal/mol, rmin in angstrom)
+        assert parameterset.nbfix_types[("_A", "_D")][0] == pytest.approx(2.0 / 4.184)
+        pairtype = parameterset.pair_types[("_A", "_D")]
+        assert pairtype.epsilon == pytest.approx(0.5 * 2.0 / 4.184)
+        assert pairtype.rmin == pytest.approx(3.2 * 2 ** (1 / 6))
+        assert parameterset.pair_types[("_D", "_D")].epsilon == pytest.approx(
+            0.5 * 3.0 / 4.184
+        )
+
     def test_null_atom_type_uncovered_pair_raises(self, pairpot_cg_top):
         top = pairpot_cg_top("ff-pairpot-null-bead.xml", bead_names=("_A", "_B", "_D"))
         top.remove_pairpotentialtype(("_B", "_D"))

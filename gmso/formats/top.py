@@ -121,12 +121,18 @@ def write_top(
             for atom_type in top.atom_types(PotentialFilters.UNIQUE_NAME_CLASS)
         )
 
-        # GROMACS reads [ nonbond_params ] only between [ atomtypes ] and the
-        # first [ moleculetype ].
-        nonbond_params = _write_nonbond_params(top)
+        # GROMACS reads [ nonbond_params ] and [ pairtypes ] only between
+        # [ atomtypes ] and the first [ moleculetype ].
+        nonbond_params = _write_explicit_pairs(top)
         if nonbond_params:
             out_file.write("\n[ nonbond_params ]\n; i\tj\tfunc\tsigma\t\tepsilon\n")
             out_file.writelines(nonbond_params)
+            # 1-4 pairs ignore [ nonbond_params ], and fudgeLJ only scales the
+            # pairs GROMACS generates, so explicit pairs are scaled here
+            out_file.write("\n[ pairtypes ]\n; i\tj\tfunc\tsigma\t\tepsilon\n")
+            out_file.writelines(
+                _write_explicit_pairs(top, epsilon_scale=float(top_vars["fudgeLJ"]))
+            )
 
         # Define unique molecule by name only
         unique_molecules = _get_unique_molecules(top)
@@ -409,10 +415,18 @@ def _check_uncovered_null_pairs(top):
         )
 
 
-def _write_nonbond_params(top):
+def _write_explicit_pairs(top, epsilon_scale=1.0):
     """Write a row for each pair whose parameters are given explicitly.
 
-    GROMACS applies the combining rule to every pair left out of this section.
+    The rows serve both [ nonbond_params ] and [ pairtypes ]. GROMACS applies
+    the combining rule to every pair left out of these sections.
+
+    Parameters
+    ----------
+    top : gmso.Topology
+        The topology whose pairpotential_types to write.
+    epsilon_scale : float, optional, default=1.0
+        Factor applied to each epsilon, such as fudgeLJ for [ pairtypes ].
 
     Returns
     -------
@@ -433,7 +447,8 @@ def _write_nonbond_params(top):
                 members[1],
                 "1",
                 pairpotential_type.parameters["sigma"].in_units(u.nanometer).value,
-                pairpotential_type.parameters["epsilon"]
+                epsilon_scale
+                * pairpotential_type.parameters["epsilon"]
                 .in_units(u.Unit("kJ/mol"))
                 .value,
             )
