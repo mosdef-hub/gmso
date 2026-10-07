@@ -92,17 +92,22 @@ def check_compatibility(
             potential_forms_dict.update(potential_form)
         checkedTypes.add(vtype.name)
 
+    # Connections often carry their own copy of the same type
+    # check each distinct potential form once and reuse the result.
+    checked_forms = {}
     for connection_type in topology.connection_types(filter_by=conn_pfilter):
-        potential_form = _check_single_potential(
-            connection_type,
-            accepted_potentials,
-        )
-        if not potential_form:
-            raise EngineIncompatibilityError(
-                f"Potential {connection_type} is not in the list of accepted_potentials {accepted_potentials}"
+        key = _potential_form_key(connection_type)
+        if key not in checked_forms:
+            potential_form = _check_single_potential(
+                connection_type,
+                accepted_potentials,
             )
-        else:
-            potential_forms_dict.update(potential_form)
+            if not potential_form:
+                raise EngineIncompatibilityError(
+                    f"Potential {connection_type} is not in the list of accepted_potentials {accepted_potentials}"
+                )
+            checked_forms[key] = potential_form[connection_type]
+        potential_forms_dict[connection_type] = checked_forms[key]
     for pair_type in topology.pairpotential_types:
         potential_form = _check_single_potential(
             pair_type,
@@ -116,6 +121,19 @@ def check_compatibility(
             potential_forms_dict.update(potential_form)
 
     return potential_forms_dict
+
+
+def _potential_form_key(potential):
+    """Return what _check_single_potential depends on: expression, variables and parameter dimensions."""
+    # sympy objects hash by value; converting them to strings is slow
+    return (
+        potential.expression,
+        frozenset(potential.independent_variables),
+        frozenset(
+            (name, param.units.dimensions)
+            for name, param in potential.parameters.items()
+        ),
+    )
 
 
 def _check_single_potential(potential, accepted_potentials):
