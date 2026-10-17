@@ -13,14 +13,14 @@ from unyt.array import allclose_units
 from gmso.core.views import PotentialFilters
 from gmso.core.virtual_site import VirtualSite
 from gmso.core.virtual_type import VirtualType
-from gmso.exceptions import EngineIncompatibilityError, NotYetImplementedWarning
+from gmso.exceptions import EngineIncompatibilityError
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.connectivity import generate_pairs_lists
 from gmso.utils.conversions import convert_ryckaert_to_opls
 from gmso.utils.expression import NullPotentialExpression
 from gmso.utils.geometry import coord_shift, moment_of_inertia
 from gmso.utils.io import has_gsd, has_hoomd
-from gmso.utils.nonbonded import mix_sigma_epsilon
+from gmso.utils.nonbonded import lj_reference_potentials, mix_sigma_epsilon
 from gmso.utils.sorting import (
     sort_by_classes,
     sort_by_types,
@@ -123,13 +123,13 @@ def to_gsd_snapshot(
     parse_special_pairs : bool, optional, default=True
         Writes out special pair information necessary to correctly use the OPLS
         fudged 1,4 interactions in HOOMD.
-    auto_scale : bool or dict, optional, default=False
+    auto_scale : bool, optional, default=False
         Automatically scaling relevant length, energy and mass units.
         Referenced mass unit is obtained from sites' masses.
-        Referenced energy and distance are refered from sites' atom types (when applicable).
-        If the referenced scaling values cannot be determined (e.g., when the topology is not typed),
-        all reference scaling values is set to 1.
-        A dictionary specifying the referenced scaling values may also be provided for this argument.
+        Referenced energy and distance are the largest sigma and epsilon of the atom types
+        and PairPotentialTypes. This requires every nonbonded expression to be Lennard-Jones
+        12-6, 8-4, 12-8 or Mie; otherwise, provide base_units instead.
+        If the topology is not typed, the referenced length and energy are set to 1.
 
     Returns
     -------
@@ -264,13 +264,13 @@ def to_hoomd_snapshot(
     parse_special_pairs : bool, optional, default=True
         Writes out special pair information necessary to correctly use the OPLS
         fudged 1,4 interactions in HOOMD.
-    auto_scale : bool or dict, optional, default=False
+    auto_scale : bool, optional, default=False
         Automatically scaling relevant length, energy and mass units.
         Referenced mass unit is obtained from sites' masses.
-        Referenced energy and distance are refered from sites' atom types (when applicable).
-        If the referenced scaling values cannot be determined (e.g., when the topology is not typed),
-        all reference scaling values is set to 1.
-        A dictionary specifying the referenced scaling values may also be provided for this argument.
+        Referenced energy and distance are the largest sigma and epsilon of the atom types
+        and PairPotentialTypes. This requires every nonbonded expression to be Lennard-Jones
+        12-6, 8-4, 12-8 or Mie; otherwise, provide base_units instead.
+        If the topology is not typed, the referenced length and energy are set to 1.
 
     Returns
     -------
@@ -403,13 +403,13 @@ def to_hoomd_forcefield(
         "energy", "length", and "mass". There is also option to used predefined
         unit systems ("MD" or "AKMA" provided as string). If None is provided,
         this method will perform no units conversion.
-    auto_scale : bool or dict, optional, default=False
+    auto_scale : bool, optional, default=False
         Automatically scaling relevant length, energy and mass units.
         Referenced mass unit is obtained from sites' masses.
-        Referenced energy and distance are refered from sites' atom types (when applicable).
-        If the referenced scaling values cannot be determined (e.g., when the topology is not typed),
-        all reference scaling values is set to 1.
-        A dictionary specifying the referenced scaling values may also be provided for this argument.
+        Referenced energy and distance are the largest sigma and epsilon of the atom types
+        and PairPotentialTypes. This requires every nonbonded expression to be Lennard-Jones
+        12-6, 8-4, 12-8 or Mie; otherwise, provide base_units instead.
+        If the topology is not typed, the referenced length and energy are set to 1.
     kT : float, optional, default None
         Set the kT parameter for running simulations with hoomd.md.pair.DPD forces. If none and these forces are
         present in top.pairpotential_types, will raise an error. Please convert to units of [energy]
@@ -432,7 +432,7 @@ def to_hoomd_forcefield(
     if pppm_kwargs is None:
         pppm_kwargs = {"resolution": (8, 8, 8), "order": 4}
     potential_types = _validate_compatibility(top)
-    base_units = _validate_base_units(base_units, top, auto_scale, potential_types)
+    base_units = _validate_base_units(base_units, top, auto_scale)
 
     # Reference json dict of all the potential in the PotentialTemplate
     potential_refs = {}
@@ -2156,7 +2156,7 @@ def _parse_hoomd_periodic_improper(
     return container
 
 
-def _validate_base_units(base_units, top, auto_scale, potential_types=None):
+def _validate_base_units(base_units, top, auto_scale):
     """Validate the provided base units, infer units (based on top's positions and masses) if none is provided."""
     if base_units and auto_scale:
         logger.info(
@@ -2178,36 +2178,29 @@ def _validate_base_units(base_units, top, auto_scale, potential_types=None):
         masses = [site.mass.to(base_units["mass"]) for site in top.sites]
         if masses:
             base_units["mass"] = max(masses)
-            # Refer lengths and energies from sites' atom types if possible
-        unique_atypes = top.atom_types(
-            filter_by=PotentialFilters.UNIQUE_NAME_CLASS,
-        )
-        if unique_atypes:
-            if not potential_types:
-                potential_types = _validate_compatibility(top)
-            atype_classes = {}
-            # Separate atypes by their classes
-            for atype in unique_atypes:
-                if potential_types[atype] not in atype_classes:
-                    atype_classes[potential_types[atype]] = [atype]
-                else:
-                    atype_classes[potential_types[atype]].append(atype)
 
-        # Appending lengths and energy
-        lengths, energies = [], []
-        for atype_class in atype_classes:
-            if atype_class == "LennardJonesPotential":
-                for atype in unique_atypes:
-                    lengths.append(atype.parameters["sigma"].to(base_units["length"]))
-                    energies.append(
-                        atype.parameters["epsilon"].to(base_units["energy"])
-                    )
-            else:
-                raise NotYetImplementedWarning(
-                    f"Currently cannot infer referenced lengths and energies from {atype_class}"
+        # Refer lengths and energies from the largest sigma and epsilon
+        if not top.atom_types:
+            base_units["length"] = 1 * base_units["length"]
+            base_units["energy"] = 1 * base_units["energy"]
+        else:
+            potentials = lj_reference_potentials(top)
+            if not potentials:
+                raise ValueError(
+                    "auto_scale takes the reference length and energy from the "
+                    "largest sigma and epsilon, which is only defined when every "
+                    "nonbonded expression of the topology "
+                    f"{top} is Lennard-Jones 12-6, 8-4, 12-8 or Mie. Provide the "
+                    "reference values with "
+                    "base_units={'length': ..., 'energy': ..., 'mass': ...} and "
+                    "auto_scale=False instead."
                 )
-        base_units["length"] = max(lengths)
-        base_units["energy"] = max(energies)
+            base_units["length"] = max(
+                x.parameters["sigma"].to(base_units["length"]) for x in potentials
+            )
+            base_units["energy"] = max(
+                x.parameters["epsilon"].to(base_units["energy"]) for x in potentials
+            )
 
     elif isinstance(base_units, str):
         base_units = unit_systems[base_units]
@@ -2235,7 +2228,7 @@ def _validate_base_units(base_units, top, auto_scale, potential_types=None):
             if base not in base_units:
                 missing.append(base)
         if missing:
-            raise (f"base_units is not fully provided, missing {missing}")
+            raise ValueError(f"base_units is not fully provided, missing {missing}")
     else:
         base_units = _infer_units(top)
         for key in base_units:

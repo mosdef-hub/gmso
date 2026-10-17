@@ -30,7 +30,11 @@ from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.compatibility import check_compatibility
 from gmso.utils.conversions import convert_kelvin_to_energy_units
 from gmso.utils.expression import NullPotentialExpression
-from gmso.utils.nonbonded import explicit_pair_types, mix_sigma_epsilon
+from gmso.utils.nonbonded import (
+    explicit_pair_types,
+    lj_reference_potentials,
+    mix_sigma_epsilon,
+)
 from gmso.utils.sorting import (
     reindex_molecules,
     sort_by_types,
@@ -103,8 +107,9 @@ def write_lammpsdata(
         ``'mass'``, ``'energy'``, ``'length'``, ``'charge'`` that override the
         default non-dimensionalisation factors (which are derived from the
         largest values found in the topology). The default ``'length'`` and
-        ``'energy'`` come from atom type sigma and epsilon, so they must be
-        given when no atom type has those parameters.
+        ``'energy'`` are the largest sigma and epsilon of the atom types and
+        PairPotentialTypes, so they must be given when any nonbonded
+        expression is not Lennard-Jones.
 
     Returns
     -------
@@ -191,6 +196,10 @@ def write_lammpsdata(
                 lj_cfactorsDict[source_factor] = lj_cfactorsDict.get(
                     source_factor, default_val_from_topology
                 )
+            # Reduced temperatures and timesteps depend on these, so report them
+            logger.info(
+                f"Writing in lj units with the reference values {lj_cfactorsDict}."
+            )
 
     reindex_molecules(top)  # reset the topology molecule index to match with lammps
     # Resolved before the file is opened so an uncovered type pair raises
@@ -1404,17 +1413,16 @@ def _try_default_potential_conversions(top, potentialsDict):
 def _default_lj_val(top, source):
     """Generate default lj non-dimensional values from topology."""
     if source in ("length", "energy"):
-        # Only atom types with Lennard-Jones parameters set the reference
         parameter = "sigma" if source == "length" else "epsilon"
-        values = [
-            x.parameters[parameter] for x in top.atom_types if parameter in x.parameters
-        ]
-        if not values:
+        potentials = lj_reference_potentials(top)
+        if not potentials:
             raise ValueError(
-                f"No atom type has a {parameter} to use as the default lj {source}. "
-                f"Provide one with lj_cfactorsDict={{'{source}': ...}}."
+                f"The default lj {source} is the largest {parameter}, which is only "
+                "defined when every nonbonded expression of the topology "
+                f"{top} is Lennard-Jones. Provide the reference values with "
+                "lj_cfactorsDict={'length': ..., 'energy': ...}."
             )
-        return copy.deepcopy(max(values))
+        return copy.deepcopy(max(x.parameters[parameter] for x in potentials))
     elif source == "mass":
         return copy.deepcopy(max([x.mass for x in top.atom_types]))
     elif source == "charge":

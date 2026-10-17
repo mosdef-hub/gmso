@@ -5,6 +5,9 @@ from itertools import combinations_with_replacement
 
 import numpy as np
 
+from gmso.core.views import PotentialFilters
+from gmso.lib.potential_templates import PotentialTemplateLibrary
+from gmso.utils.compatibility import _check_single_potential
 from gmso.utils.expression import NullPotentialExpression
 from gmso.utils.sorting import sort_by_types
 
@@ -120,3 +123,50 @@ def uncovered_null_pairs(atom_types, covered_pairs):
         if null_names.intersection(pair) and pair not in covered_pairs
     ]
     return sorted(null_names), uncovered
+
+
+# Forms parameterized by a zero crossing sigma and an energy scale epsilon. The
+# well depth is epsilon for all but the 12-8 form, where it is 16/27 epsilon.
+SIGMA_EPSILON_FORMS = (
+    "LennardJonesPotential",
+    "LennardJones0804Potential",
+    "LennardJones1208Potential",
+    "MiePotential",
+)
+
+
+def lj_reference_potentials(top):
+    """Return the potentials a default Lennard-Jones reference scale comes from.
+
+    Reduced units default to the largest sigma and epsilon in the topology.
+    That is only well defined when every nonbonded expression is one of
+    SIGMA_EPSILON_FORMS, where sigma and epsilon mean the same thing. The
+    energy parameters of other forms, such as the Buckingham prefactor A, are
+    not energy scales that can be compared with epsilon.
+
+    Parameters
+    ----------
+    top : gmso.Topology
+        The topology whose atom types and pairpotential_types to check.
+
+    Returns
+    -------
+    list or None
+        The atom types with parameters of their own and the applicable
+        PairPotentialTypes. None when any of them uses an expression outside
+        SIGMA_EPSILON_FORMS, so the reference has to be given explicitly.
+    """
+    atom_types = list(top.atom_types(filter_by=PotentialFilters.UNIQUE_NAME_CLASS))
+    potentials = [
+        atom_type
+        for atom_type in atom_types
+        if not isinstance(atom_type.potential_expression, NullPotentialExpression)
+    ]
+    potentials.extend(
+        explicit_pair_types(top, {atom_type.name for atom_type in atom_types}).values()
+    )
+    templates = PotentialTemplateLibrary()
+    forms = [templates[name] for name in SIGMA_EPSILON_FORMS]
+    if not all(_check_single_potential(potential, forms) for potential in potentials):
+        return None
+    return potentials

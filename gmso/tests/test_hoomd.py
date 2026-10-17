@@ -941,6 +941,44 @@ class TestHoomd(BaseTest):
         assert special_lj.params["_A-_D"]["sigma"] == pytest.approx(0.32)
         assert special_lj.params["_A-_D"]["epsilon"] == pytest.approx(0.5 * 2.0)
 
+    @pytest.mark.parametrize(
+        "fn,bead_names,sigma,epsilon",
+        [
+            ("ff-lj0804.xml", ("_A", "_B"), 0.40, 0.90),
+            ("ff-lj1208.xml", ("_A", "_B"), 0.40, 0.90),
+            ("ff-mie.xml", ("_A", "_B"), 0.40, 0.90),
+            # _A-_M is an explicit Lennard-Jones pair between 12-6 and Mie
+            ("ff-lj-mie.xml", ("_A", "_M"), 0.45, 0.90),
+            # The PairPotentialTypes of the bare _D set the reference
+            ("ff-pairpot-null-bead.xml", ("_A", "_B", "_D"), 4.44444, 9.33333),
+        ],
+    )
+    def test_auto_scale_sigma_epsilon_forms(
+        self, pairpot_cg_top, fn, bead_names, sigma, epsilon
+    ):
+        top = pairpot_cg_top(fn, bead_names=bead_names)
+        _, base_units = to_hoomd_forcefield(top, r_cut=1.2, auto_scale=True)
+        assert base_units["length"].to_value(u.nm) == pytest.approx(sigma)
+        assert base_units["energy"].to_value(u.kJ / u.mol) == pytest.approx(epsilon)
+
+    def test_auto_scale_other_expression_raises(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-lj-buckingham.xml", bead_names=("_A", "_K"))
+        with pytest.raises(ValueError, match="base_units"):
+            to_hoomd_forcefield(top, r_cut=1.2, auto_scale=True)
+        # Explicit base units are still accepted
+        to_hoomd_forcefield(
+            top,
+            r_cut=1.2,
+            base_units={"length": u.nm, "energy": u.kJ / u.mol, "mass": u.amu},
+        )
+
+    def test_partial_base_units_raises(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-pairpot-one-cross.xml")
+        with pytest.raises(ValueError, match="missing"):
+            to_hoomd_forcefield(
+                top, r_cut=1.2, base_units={"length": u.nm, "energy": u.kJ / u.mol}
+            )
+
     def test_rigid_forces(self):
         benzene = mb.load("c1ccccc1", smiles=True)
         benzene.name = "benzene"

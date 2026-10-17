@@ -820,13 +820,36 @@ class TestLammpsWriter(BaseTest):
         # elementary_charge units are not yet supported with lj units
         for site in top.sites:
             site.charge = 0 * u.C
-        top.save("hybrid_lj.lammps", unit_style="lj", overwrite=True)
+        # Buckingham A is not an energy scale like epsilon, so there is no default
+        with pytest.raises(ValueError, match="lj_cfactorsDict"):
+            top.save("hybrid_lj.lammps", unit_style="lj", overwrite=True)
 
-        # sigma and epsilon of _A, the only LJ atom type, set the reference
+        top.save(
+            "hybrid_lj.lammps",
+            unit_style="lj",
+            lj_cfactorsDict={"length": 0.30 * u.nm, "energy": 0.40 * u.kJ / u.mol},
+            overwrite=True,
+        )
         rows = pair_coeff_rows("hybrid_lj.lammps", "PairIJ Coeffs")
         assert rows[2][:3] == ["2", "2", "buck"]
         assert [float(value) for value in rows[2][3:6]] == pytest.approx(
             [100.0 / 0.40, 0.03 / 0.30, 0.001 / (0.40 * 0.30**6)], rel=1e-4
+        )
+
+    def test_lj_units_pairpotential_reference(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-pairpot-null-bead.xml", bead_names=("_A", "_B", "_D"))
+        top.box = Box(lengths=[5, 5, 5] * u.nm)
+        # elementary_charge units are not yet supported with lj units
+        for site in top.sites:
+            site.charge = 0 * u.C
+        top.save("null_lj.lammps", unit_style="lj", overwrite=True)
+
+        # _D-_D, a PairPotentialType of the bare _D, has the largest sigma and epsilon
+        rows = pair_coeff_rows("null_lj.lammps", "PairIJ Coeffs")
+        assert rows[5][:2] == ["3", "3"]
+        assert [float(value) for value in rows[5][2:4]] == pytest.approx([1.0, 1.0])
+        assert [float(value) for value in rows[0][2:4]] == pytest.approx(
+            [0.40 / 9.33333, 0.30 / 4.44444], rel=1e-4
         )
 
     def test_lj_units_no_lj_atom_types_raises(self, pairpot_cg_top):
