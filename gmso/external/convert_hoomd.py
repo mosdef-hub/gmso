@@ -20,7 +20,11 @@ from gmso.utils.conversions import convert_ryckaert_to_opls
 from gmso.utils.expression import NullPotentialExpression
 from gmso.utils.geometry import coord_shift, moment_of_inertia
 from gmso.utils.io import has_gsd, has_hoomd
-from gmso.utils.nonbonded import lj_reference_potentials, mix_sigma_epsilon
+from gmso.utils.nonbonded import (
+    explicit_pair_types,
+    lj_reference_potentials,
+    mix_sigma_epsilon,
+)
 from gmso.utils.sorting import (
     sort_by_classes,
     sort_by_types,
@@ -1154,8 +1158,12 @@ def _parse_nonbonded_forces(
     )
     # Pairtypes whose expression has an atom type parser are explicit parameters for
     # that pair, handled by that parser; any other expression gets its own force.
+    # Pairtypes naming an atom type outside the topology are left out, so they
+    # do not create a force that acts on nothing.
     explicit_pairs, standalone_pairtypes = {}, {}
-    for pairtype in top.pairpotential_types:
+    for pairtype in explicit_pair_types(
+        top, {atype.name for atype in unique_atypes}
+    ).values():
         pair_category = potential_types[pairtype]
         if pair_category in atype_parsers:
             explicit_pairs.setdefault(pair_category, []).append(pairtype)

@@ -867,6 +867,17 @@ class TestHoomd(BaseTest):
         assert lj.params[("_A", "_A")]["sigma"] == pytest.approx(0.30)
         assert lj.params[("_B", "_B")]["sigma"] == pytest.approx(0.40)
 
+    def test_pairpotential_absent_atom_type_skipped(self, pairpot_cg_top):
+        # the force field has a Buckingham _A-_B pairtype, but only _A is used
+        top = pairpot_cg_top("ff-cross-expression-pair.xml", bead_names=("_A",))
+        assert len(top.pairpotential_types) == 1
+        forces, _ = to_hoomd_forcefield(top, r_cut=1.2)
+        pair_forces = [
+            f for f in forces["nonbonded"] if isinstance(f, hoomd.md.pair.Pair)
+        ]
+        assert [type(f) for f in pair_forces] == [hoomd.md.pair.LJ]
+        assert list(pair_forces[0].params.keys()) == [("_A", "_A")]
+
     def test_hoomd_buckingham(self, pairpot_cg_top):
         top = pairpot_cg_top("ff-hoomd-buckingham.xml", bead_names=("_A", "_B"))
         forces, _ = to_hoomd_forcefield(top, r_cut=1.2)
