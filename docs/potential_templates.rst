@@ -52,12 +52,106 @@ interactions in atomistic and united-atom forcefields.
 
 ----
 
+LennardJones0804Potential
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Lennard-Jones 8-4 pair potential.  A softer repulsive wall than 12-6, used in
+coarse-grained models where each bead stands for several atoms.
+
+.. math::
+
+   U(r) = 4\epsilon\left[\left(\frac{\sigma}{r}\right)^{8}
+          - \left(\frac{\sigma}{r}\right)^{4}\right]
+
+.. list-table::
+   :header-rows: 1
+   :widths: 15 25 60
+
+   * - Parameter
+     - Dimensions
+     - Description
+   * - ``epsilon``
+     - energy
+     - Well depth; controls the strength of the interaction.
+   * - ``sigma``
+     - length
+     - Finite distance at which the potential is zero.
+
+----
+
+LennardJones1208Potential
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Lennard-Jones 12-8 pair potential.  Keeps the 12-6 repulsive wall with a
+shorter-ranged attractive term.
+
+.. math::
+
+   U(r) = 4\epsilon\left[\left(\frac{\sigma}{r}\right)^{12}
+          - \left(\frac{\sigma}{r}\right)^{8}\right]
+
+.. list-table::
+   :header-rows: 1
+   :widths: 15 25 60
+
+   * - Parameter
+     - Dimensions
+     - Description
+   * - ``epsilon``
+     - energy
+     - Well depth; controls the strength of the interaction.
+   * - ``sigma``
+     - length
+     - Finite distance at which the potential is zero.
+
+----
+
 BuckinghamPotential
 ~~~~~~~~~~~~~~~~~~~
 
 Exponential-6 (Buckingham) pair potential.  Replaces the steep repulsive
 :math:`r^{-12}` wall of Lennard-Jones with a physically motivated exponential
-repulsion term.
+repulsion term.  This is the form LAMMPS (``pair_style buck``) and HOOMD both
+use.  For the GROMACS form, see :ref:`GROMACSBuckinghamPotential`; the two are
+the same potential written differently, with :math:`b = 1/\rho`.
+
+.. math::
+
+   U(r) = A\exp\left(-\frac{r}{\rho}\right) - \frac{C}{r^{6}}
+
+.. list-table::
+   :header-rows: 1
+   :widths: 15 25 60
+
+   * - Parameter
+     - Dimensions
+     - Description
+   * - ``A``
+     - energy
+     - Prefactor for the repulsive exponential term.
+   * - ``rho``
+     - length
+     - Decay length of the repulsion.
+   * - ``C``
+     - energy·length\ :sup:`6`
+     - Prefactor for the attractive dispersion term.
+
+----
+
+.. _GROMACSBuckinghamPotential:
+
+GROMACSBuckinghamPotential
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The Buckingham potential as GROMACS writes it, with the repulsion range given
+as a rate :math:`b` rather than a decay length :math:`\rho`.  Identical to
+``BuckinghamPotential`` with :math:`b = 1/\rho`, but kept separate because
+templates are matched on the dimensions of their parameters, and ``rho``
+(length) never matches ``b`` (1/length).
+
+Current GROMACS no longer runs Buckingham, so no writer emits this form.  The
+template is kept so that a forcefield using it is still identified by name and
+rejected with a useful error.
 
 .. math::
 
@@ -118,6 +212,8 @@ Generalised Mie pair potential.  Lennard-Jones is the special case
 
 Bond Potentials
 ---------------
+
+.. _HarmonicBondPotential:
 
 HarmonicBondPotential
 ~~~~~~~~~~~~~~~~~~~~~
