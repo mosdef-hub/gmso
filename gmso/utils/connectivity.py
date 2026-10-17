@@ -294,18 +294,21 @@ def generate_pairs_lists(
             pairs_dict["pairs12"].append(pairs)
 
     if "pairs13" in pairs_dict:
+        found = set()  # set lookup speeds up checking membership
         for angle in angles:
             pairs = sorted(
                 (angle.connection_members[0], angle.connection_members[-1]),
                 key=sort_key,
             )
             if (
-                pairs not in pairs_dict["pairs13"]
+                tuple(pairs) not in found
                 and shortest_path_length(graph, pairs[0], pairs[1]) == 2
             ):
+                found.add(tuple(pairs))
                 pairs_dict["pairs13"].append(pairs)
 
     if "pairs14" in pairs_dict:
+        found = set()  # set lookup speeds up checking membership
         for dihedral in dihedrals:
             pairs = sorted(
                 (
@@ -315,9 +318,10 @@ def generate_pairs_lists(
                 key=sort_key,
             )
             if (
-                pairs not in pairs_dict["pairs14"]
+                tuple(pairs) not in found
                 and shortest_path_length(graph, pairs[0], pairs[1]) == 3
             ):
+                found.add(tuple(pairs))
                 pairs_dict["pairs14"].append(pairs)
 
     for key in pairs_dict:
