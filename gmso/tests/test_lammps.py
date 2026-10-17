@@ -771,6 +771,49 @@ class TestLammpsWriter(BaseTest):
                     atom_type.parameters[key], default_parameters[key]
                 )
 
+    def test_read_non_lj_pair_coeffs_skipped(self, typed_ethane, caplog):
+        typed_ethane.save("ethane.lammps", overwrite=True)
+        with open("ethane.lammps") as f:
+            contents = f.read()
+        assert "Pair Coeffs # lj/cut" in contents
+        # write_data from a buck simulation names its style the same way
+        with open("buck.lammps", "w") as f:
+            f.write(contents.replace("Pair Coeffs # lj/cut", "Pair Coeffs # buck"))
+        with caplog.at_level(logging.WARNING, logger="gmso.formats.lammpsdata"):
+            read = gmso.Topology.load("buck.lammps")
+        assert "not buck" in caplog.text
+
+        default_parameters = gmso.AtomType(name="default").parameters
+        for atom_type in read.atom_types(filter_by=pfilter):
+            for key in ("sigma", "epsilon"):
+                assert_allclose_units(
+                    atom_type.parameters[key], default_parameters[key]
+                )
+
+    def test_read_pair_coeffs_expression_comment(self, typed_ethane):
+        # GMSO used to write the expression where lammps expects the pair style
+        typed_ethane.save("ethane.lammps", overwrite=True)
+        with open("ethane.lammps") as f:
+            contents = f.read()
+        with open("old.lammps", "w") as f:
+            f.write(
+                contents.replace(
+                    "Pair Coeffs # lj/cut",
+                    "Pair Coeffs # 4*epsilon*(-sigma**6/r**6 + sigma**12/r**12)",
+                )
+            )
+        read = gmso.Topology.load("old.lammps")
+        written = sorted(
+            typed_ethane.atom_types(filter_by=pfilter), key=lambda x: x.name
+        )
+        for original, parsed in zip(written, read.atom_types(filter_by=pfilter)):
+            assert_allclose_units(
+                parsed.parameters["sigma"],
+                original.parameters["sigma"].in_units(u.angstrom),
+                rtol=1e-4,
+                atol=1e-8,
+            )
+
     def test_pairpotential_hybrid_pair_styles(self, pairpot_cg_top, caplog):
         top = pairpot_cg_top("ff-lj-buckingham.xml", bead_names=("_A", "_K"))
         top.box = Box(lengths=[5, 5, 5] * u.nm)

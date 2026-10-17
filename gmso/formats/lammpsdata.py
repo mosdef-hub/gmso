@@ -4,6 +4,7 @@ import copy
 import datetime
 import logging
 import os
+import re
 from collections import namedtuple
 from itertools import count
 from pathlib import Path
@@ -54,6 +55,11 @@ PAIR_STYLES = {
     "LennardJonesPotential": PairStyle("lj/cut", ("epsilon", "sigma"), True),
     "BuckinghamPotential": PairStyle("buck", ("A", "rho", "C"), False),
 }
+
+# Pair styles whose Pair Coeffs rows begin with the 12-6 epsilon and sigma, the
+# only ones the reader parses. lj/cut also covers lj/cut/coul/long and the like.
+# A bare "lj", which some files carry though it is no lammps style, is read too.
+LJ_PAIR_STYLES = ("lj/cut", "lj/charmm", "lj/long")
 
 # One row of a pair coefficient section. i and j are zero based indices into the
 # sorted atom types, so the written type ids are i + 1 and j + 1.
@@ -598,12 +604,15 @@ def _get_ff_information(filename, base_unyts, topology):
         type_list.append(atom_type)
 
     pair_start = None
+    pair_style = None
     with open(filename, "r") as lammps_file:
         for i, line in enumerate(lammps_file):
             # The comment on a section line names the pair style
-            section = line.split("#")[0].strip()
+            section, _, comment = line.partition("#")
+            section = section.strip()
             if section == "Pair Coeffs":
                 pair_start = i
+                pair_style = _pair_style_name(comment)
                 break
             elif section == "PairIJ Coeffs":
                 logger.warning(
@@ -612,6 +621,13 @@ def _get_ff_information(filename, base_unyts, topology):
                 )
                 break
     if pair_start is None:
+        return topology, type_list
+    if pair_style not in (None, "lj") and not pair_style.startswith(LJ_PAIR_STYLES):
+        logger.warning(
+            f"Reading Pair Coeffs is only supported for Lennard-Jones pair styles, "
+            f"not {pair_style}, so the atom types in {filename} keep their default "
+            "parameters."
+        )
         return topology, type_list
 
     # Need to figure out if we're going have mixing rules printed out
@@ -640,6 +656,18 @@ def _get_ff_information(filename, base_unyts, topology):
         )
 
     return topology, type_list
+
+
+def _pair_style_name(comment):
+    """Return the pair style named by a section line's comment, or None.
+
+    GMSO versions before PairIJ Coeffs support wrote the expression there
+    instead, which is not a pair style name.
+    """
+    words = comment.split()
+    if words and re.fullmatch(r"[a-z][\w/.-]*", words[0]):
+        return words[0]
+    return None
 
 
 def _accepted_potentials():
