@@ -716,6 +716,15 @@ class TestLammpsWriter(BaseTest):
         with pytest.raises(EngineIncompatibilityError, match=r"\('_A', '_D'\)"):
             top.save("uncovered.lammps", overwrite=True)
 
+    def test_duplicate_pairpotential_types_raises(
+        self, pairpot_duplicate_top, tmp_path
+    ):
+        pairpot_duplicate_top.box = Box(lengths=[5, 5, 5] * u.nm)
+        target = tmp_path / "duplicate.lammps"
+        with pytest.raises(EngineIncompatibilityError, match="more than one"):
+            pairpot_duplicate_top.save(target, overwrite=True)
+        assert list(tmp_path.iterdir()) == []
+
     def test_failed_write_leaves_no_file(self, pairpot_cg_top, tmp_path):
         good = pairpot_cg_top("ff-pairpot-null-bead.xml", bead_names=("_A", "_B", "_D"))
         good.box = Box(lengths=[5, 5, 5] * u.nm)

@@ -771,6 +771,15 @@ class BaseTest:
         return pairpot_cg_top("ff-pairpot-all-cross.xml")
 
     @pytest.fixture
+    def pairpot_duplicate_top(self, pairpot_cg_top):
+        """Give _A-_B a second PairPotentialType, with its members reversed."""
+        top = pairpot_cg_top("ff-pairpot-one-cross.xml")
+        duplicate = next(iter(top.pairpotential_types)).clone()
+        duplicate.member_types = ("_B", "_A")
+        top.add_pairpotentialtype(duplicate)
+        return top
+
+    @pytest.fixture
     def dpd_pairpotential(self):
         fn = "hoomd-dpd-hhp.xml"
         ff = ForceField(get_path(fn))

@@ -1072,6 +1072,12 @@ class TestHoomd(BaseTest):
             assert dpd_force.params[pair].to_base() == expected_potentials[pair]
             assert force.r_cut[pair] == 1
 
+    def test_duplicate_pairpotential_types_raises(self, pairpot_duplicate_top):
+        from gmso.exceptions import EngineIncompatibilityError
+
+        with pytest.raises(EngineIncompatibilityError, match="more than one"):
+            to_hoomd_forcefield(pairpot_duplicate_top, r_cut=1.2)
+
     def test_pairpotential_only_missing_pair_raises(self, dpd_pairpotential):
         from gmso.exceptions import EngineIncompatibilityError
 

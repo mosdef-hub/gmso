@@ -6,6 +6,7 @@ from itertools import combinations_with_replacement
 import numpy as np
 
 from gmso.core.views import PotentialFilters
+from gmso.exceptions import EngineIncompatibilityError
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.compatibility import _check_single_potential
 from gmso.utils.expression import NullPotentialExpression
@@ -74,6 +75,13 @@ def explicit_pair_types(top, atom_type_names):
     -------
     dict
         Sorted member type tuple to gmso.PairPotentialType.
+
+    Raises
+    ------
+    EngineIncompatibilityError
+        If more than one applicable PairPotentialType names the same type pair,
+        in either order. Overlaying nonbonded potentials on a pair (summing
+        them, as LAMMPS pair_style hybrid/overlay does) is not yet supported.
     """
     pair_types = {}
     for pairpotential_type in sorted(top.pairpotential_types, key=sort_by_types):
@@ -85,8 +93,21 @@ def explicit_pair_types(top, atom_type_names):
                 f"topology {top}."
             )
             continue
+        if members in pair_types:
+            raise EngineIncompatibilityError(
+                f"The type pair {members} of the topology {top} has more than one "
+                f"PairPotentialType: {_describe(pair_types[members])} and "
+                f"{_describe(pairpotential_type)}. Overlaying nonbonded potentials "
+                "on a type pair (summing them, as LAMMPS pair_style hybrid/overlay "
+                "does) is not yet supported, so remove all but one of them."
+            )
         pair_types[members] = pairpotential_type
     return pair_types
+
+
+def _describe(pairpotential_type):
+    """Return a pair type's name and expression, for error messages."""
+    return f"{pairpotential_type.name} ({pairpotential_type.expression})"
 
 
 def uncovered_null_pairs(atom_types, covered_pairs):

@@ -85,6 +85,11 @@ def write_top(
             f"Argument settles_tag {settles_tag} must be of type string, but passed type {type(settles_tag)}"
         )
 
+    # Resolved before the file is opened so a rejected pair raises without
+    # leaving a partly written file behind.
+    nonbond_params = _write_explicit_pairs(top)
+    pairtypes = _write_explicit_pairs(top, epsilon_scale=float(top_vars["fudgeLJ"]))
+
     with open(filename, "w") as out_file:
         out_file.write(
             "; File {} written by GMSO at {}\n\n".format(
@@ -123,16 +128,13 @@ def write_top(
 
         # GROMACS reads [ nonbond_params ] and [ pairtypes ] only between
         # [ atomtypes ] and the first [ moleculetype ].
-        nonbond_params = _write_explicit_pairs(top)
         if nonbond_params:
             out_file.write("\n[ nonbond_params ]\n; i\tj\tfunc\tsigma\t\tepsilon\n")
             out_file.writelines(nonbond_params)
             # 1-4 pairs ignore [ nonbond_params ], and fudgeLJ only scales the
             # pairs GROMACS generates, so explicit pairs are scaled here
             out_file.write("\n[ pairtypes ]\n; i\tj\tfunc\tsigma\t\tepsilon\n")
-            out_file.writelines(
-                _write_explicit_pairs(top, epsilon_scale=float(top_vars["fudgeLJ"]))
-            )
+            out_file.writelines(pairtypes)
 
         # Define unique molecule by name only
         unique_molecules = _get_unique_molecules(top)

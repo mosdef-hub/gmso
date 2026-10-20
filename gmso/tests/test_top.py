@@ -352,6 +352,14 @@ class TestTop(BaseTest):
         with pytest.raises(EngineIncompatibilityError, match=r"\('_B', '_D'\)"):
             top.save("uncovered.top", overwrite=True)
 
+    def test_duplicate_pairpotential_types_raises(
+        self, pairpot_duplicate_top, tmp_path
+    ):
+        target = tmp_path / "duplicate.top"
+        with pytest.raises(EngineIncompatibilityError, match="more than one"):
+            pairpot_duplicate_top.save(target, overwrite=True)
+        assert list(tmp_path.iterdir()) == []
+
     def test_pairpotential_diagonal_override(self, pairpot_cg_top):
         top = pairpot_cg_top("ff-pairpot-one-cross.xml", bead_names=("_A", "_B"))
         pairtype = next(iter(top.pairpotential_types))
