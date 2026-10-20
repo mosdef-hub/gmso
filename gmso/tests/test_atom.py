@@ -66,7 +66,8 @@ class TestSite(BaseTest):
         ],
     )
     def test_bad_pos_input(self, position):
-        with pytest.raises((u.exceptions.InvalidUnitOperation, ValueError)):
+        # unyt >= 3.2 raises TypeError for a Unit times a list of strings
+        with pytest.raises((u.exceptions.InvalidUnitOperation, ValueError, TypeError)):
             Atom(name="atom", position=u.nm * position)
 
     def test_pos_restraint(self, spce_water):
