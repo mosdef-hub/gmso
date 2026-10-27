@@ -66,9 +66,7 @@ class TestSite(BaseTest):
         ],
     )
     def test_bad_pos_input(self, position):
-        with pytest.raises(
-            (u.exceptions.InvalidUnitOperation, ValueError, TypeError)
-        ):
+        with pytest.raises((u.exceptions.InvalidUnitOperation, ValueError, TypeError)):
             Atom(name="atom", position=u.nm * position)
 
     def test_pos_restraint(self, spce_water):
