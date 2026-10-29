@@ -1,0 +1,9 @@
+{
+  "name": "LennardJones0804Potential",
+  "expression": "4*epsilon*((sigma/r)**8 - (sigma/r)**4)",
+  "independent_variables": "r",
+  "expected_parameters_dimensions": {
+    "sigma": "length",
+    "epsilon": "energy"
+  }
+}
