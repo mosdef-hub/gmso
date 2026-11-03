@@ -1,3 +1,5 @@
+import logging
+
 import hoomd
 import numpy as np
 import pytest
@@ -951,6 +953,31 @@ class TestHoomd(BaseTest):
         )
         assert special_lj.params["_A-_D"]["sigma"] == pytest.approx(0.32)
         assert special_lj.params["_A-_D"]["epsilon"] == pytest.approx(0.5 * 2.0)
+
+    @pytest.mark.parametrize(
+        "bead_names,bonded,lj_scale,warned",
+        [
+            # No bonds, so no pairs are scaled
+            (("_A", "_B"), False, None, False),
+            # The 1-4 pair _A-_B is Buckingham
+            (("_A", "_X", "_X", "_B", "_X"), True, None, True),
+            # Only 1-3 pairs are scaled, and they are all LJ
+            (("_A", "_X", "_X", "_B", "_X"), True, [0.0, 0.5, 1.0], False),
+        ],
+    )
+    def test_warn_unscalable_scaled_pairs(
+        self, pairpot_cg_top, caplog, bead_names, bonded, lj_scale, warned
+    ):
+        top = pairpot_cg_top(
+            "ff-pairpot-bonded.xml", bead_names=bead_names, bonded=bonded
+        )
+        if lj_scale:
+            top.set_lj_scale(lj_scale)
+        with caplog.at_level(logging.WARNING, logger="gmso.external.convert_hoomd"):
+            to_hoomd_forcefield(top, r_cut=1.2)
+        assert ("no special pair force for Buckingham" in caplog.text) == warned
+        if warned:
+            assert "[('_A', '_B')]" in caplog.text
 
     @pytest.mark.parametrize(
         "fn,bead_names,sigma,epsilon",

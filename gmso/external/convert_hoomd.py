@@ -1491,14 +1491,32 @@ def _parse_lj(
     return [lj, special_lj]
 
 
-def _warn_unscalable(scaling_factors, class_name):
-    """Warn that scaled pairs are excluded from a force that cannot scale them."""
-    if any(factor not in (0, 1) for factor in np.asarray(scaling_factors).flatten()):
+def _warn_unscalable(top, scaling_factors, force, class_name):
+    """Warn when pairs of a force that cannot scale them are scaled.
+
+    Only fractional factors matter: a factor of 0 excludes the pair as intended,
+    and a factor of 1 leaves it in the neighborlist.
+    """
+    fractional = [factor not in (0, 1) for factor in scaling_factors]
+    # Without bonds there are no 1-2, 1-3 or 1-4 pairs to scale
+    if not any(fractional) or not top.n_bonds:
+        return
+    force_pairs = {tuple(sorted(type_name)) for type_name in force.params.keys()}
+    scaled_pairs = set()
+    for is_fractional, pairs in zip(fractional, generate_pairs_lists(top).values()):
+        if not is_fractional:
+            continue
+        for pair in pairs:
+            type_name = tuple(sorted(site.atom_type.name for site in pair))
+            if type_name in force_pairs:
+                scaled_pairs.add(type_name)
+    if scaled_pairs:
         logger.warning(
-            f"Scaling factors {scaling_factors} exclude those pairs from the shared "
-            f"neighborlist, and hoomd has no special pair force for {class_name} to "
-            f"add them back scaled, so they contribute no {class_name} force. Assign "
-            "a different nlist to the force to change this."
+            f"Scaling factors {scaling_factors} exclude the bonded pairs of types "
+            f"{sorted(scaled_pairs)} from the shared neighborlist, and hoomd has no "
+            f"special pair force for {class_name} to add them back scaled, so they "
+            f"contribute no {class_name} force. Assign a different nlist to the force "
+            "to change this."
         )
 
 
@@ -1517,7 +1535,6 @@ def _parse_buckingham(
     explicit_pairs = explicit_pairs or {}
     other_expression_pairs = set(all_explicit_pairs) - set(explicit_pairs)
     atypes_by_name = {atype.name: atype for atype in atypes}
-    _warn_unscalable(scaling_factors, "Buckingham")
 
     # Buckingham parameters are not combined, so the atom types only give the
     # pair of a type with itself.
@@ -1541,6 +1558,7 @@ def _parse_buckingham(
         }
         buckingham.r_cut[type_name] = r_cut
 
+    _warn_unscalable(top, scaling_factors, buckingham, "Buckingham")
     _set_rigid_body_pairs(buckingham, top, atypes, r_cut)
 
     return [buckingham]
@@ -1561,7 +1579,6 @@ def _parse_lj0804(
     explicit_pairs = explicit_pairs or {}
     other_expression_pairs = set(all_explicit_pairs) - set(explicit_pairs)
     atypes_by_name = {atype.name: atype for atype in atypes}
-    _warn_unscalable(scaling_factors, "LJ0804")
 
     for type_name in _mixed_and_explicit_pairs(
         atypes_by_name, explicit_pairs, other_expression_pairs
@@ -1577,6 +1594,7 @@ def _parse_lj0804(
         lj0804.params[type_name] = {"sigma": comb_sigma, "epsilon": comb_epsilon}
         lj0804.r_cut[type_name] = r_cut
 
+    _warn_unscalable(top, scaling_factors, lj0804, "LJ0804")
     _set_rigid_body_pairs(lj0804, top, atypes, r_cut)
 
     return [lj0804]
@@ -1597,7 +1615,6 @@ def _parse_lj1208(
     explicit_pairs = explicit_pairs or {}
     other_expression_pairs = set(all_explicit_pairs) - set(explicit_pairs)
     atypes_by_name = {atype.name: atype for atype in atypes}
-    _warn_unscalable(scaling_factors, "LJ1208")
 
     for type_name in _mixed_and_explicit_pairs(
         atypes_by_name, explicit_pairs, other_expression_pairs
@@ -1613,6 +1630,7 @@ def _parse_lj1208(
         lj1208.params[type_name] = {"sigma": comb_sigma, "epsilon": comb_epsilon}
         lj1208.r_cut[type_name] = r_cut
 
+    _warn_unscalable(top, scaling_factors, lj1208, "LJ1208")
     _set_rigid_body_pairs(lj1208, top, atypes, r_cut)
 
     return [lj1208]
@@ -1633,7 +1651,6 @@ def _parse_mie(
     explicit_pairs = explicit_pairs or {}
     other_expression_pairs = set(all_explicit_pairs) - set(explicit_pairs)
     atypes_by_name = {atype.name: atype for atype in atypes}
-    _warn_unscalable(scaling_factors, "Mie")
 
     for type_name in _mixed_and_explicit_pairs(
         atypes_by_name, explicit_pairs, other_expression_pairs
@@ -1661,6 +1678,7 @@ def _parse_mie(
         mie.params[type_name] = parameters
         mie.r_cut[type_name] = r_cut
 
+    _warn_unscalable(top, scaling_factors, mie, "Mie")
     _set_rigid_body_pairs(mie, top, atypes, r_cut)
 
     return [mie]
