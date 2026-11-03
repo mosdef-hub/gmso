@@ -683,6 +683,49 @@ class TestLammpsWriter(BaseTest):
         ):
             assert coeffs[pair] == pytest.approx(sigma * 10)
 
+    @pytest.mark.parametrize("explicit_pairs", [False, True])
+    @pytest.mark.parametrize("kelvin_name", ["_A", "_C"])
+    def test_mixed_kelvin_energy_epsilon(
+        self, pairpot_one_cross_top, explicit_pairs, kelvin_name
+    ):
+        top = pairpot_one_cross_top
+        top.box = Box(lengths=[5, 5, 5] * u.nm)
+        if not explicit_pairs:
+            top.remove_pairpotentialtype(("_A", "_B"))
+        atom_types = {atype.name: atype for atype in top.atom_types}
+        atom_types[kelvin_name].parameters["epsilon"] = 120 * u.K
+        original_parameters = {
+            name: copy.deepcopy(atype.parameters) for name, atype in atom_types.items()
+        }
+        # Expected LAMMPS real-unit energies, independently using unyt's
+        # thermal equivalence for the temperature-valued epsilon.
+        epsilons = {"_A": 0.4 / 4.184, "_B": 0.5 / 4.184, "_C": 0.6 / 4.184}
+        epsilons[kelvin_name] = (120 * u.K).to_value("kcal/mol", equivalence="thermal")
+
+        top.save("mixed_units.lammps")
+
+        if explicit_pairs:
+            rows = pair_coeff_rows("mixed_units.lammps", "PairIJ Coeffs")
+            coeffs = {(row[5], row[6]): (float(row[2]), float(row[3])) for row in rows}
+            assert coeffs[(kelvin_name, kelvin_name)][0] == pytest.approx(
+                epsilons[kelvin_name], rel=1e-4
+            )
+            assert coeffs[("_A", "_C")] == pytest.approx(
+                (np.sqrt(epsilons["_A"] * epsilons["_C"]), 4.0), rel=1e-4
+            )
+            assert coeffs[("_A", "_B")] == pytest.approx(
+                (9.11111 / 4.184, 22.2222), rel=1e-4
+            )
+        else:
+            rows = pair_coeff_rows("mixed_units.lammps", "Pair Coeffs")
+            coeffs = {row[4]: float(row[1]) for row in rows}
+            assert coeffs == pytest.approx(epsilons, rel=1e-4)
+
+        for name, atype in atom_types.items():
+            for key, original in original_parameters[name].items():
+                assert atype.parameters[key].units == original.units
+                assert_allclose_units(atype.parameters[key], original)
+
     def test_no_pairpotential_types_writes_pair_coeffs(self, typed_ethane):
         typed_ethane.save("ethane.lammps", overwrite=True)
         with open("ethane.lammps") as f:

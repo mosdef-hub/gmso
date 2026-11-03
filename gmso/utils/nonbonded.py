@@ -9,6 +9,7 @@ from gmso.core.views import PotentialFilters
 from gmso.exceptions import EngineIncompatibilityError
 from gmso.lib.potential_templates import PotentialTemplateLibrary
 from gmso.utils.compatibility import _check_single_potential
+from gmso.utils.conversions import convert_kelvin_to_energy_units
 from gmso.utils.expression import NullPotentialExpression
 from gmso.utils.sorting import sort_by_types
 
@@ -28,7 +29,8 @@ def mix_sigma_epsilon(atom_types, combining_rule):
     Returns
     -------
     tuple of unyt.array.unyt_quantity
-        The combined sigma and epsilon, in the units of the first atom type.
+        The combined sigma and epsilon, in the units of the first atom type,
+        with temperature-valued epsilons converted to kJ/mol before mixing.
 
     Raises
     ------
@@ -38,15 +40,16 @@ def mix_sigma_epsilon(atom_types, combining_rule):
     # Combine the magnitudes, not the quantities: unyt resolves mol against
     # Avogadro's number in a product, so kJ/mol * kJ/mol gives kJ**2.
     sigma_unit = atom_types[0].parameters["sigma"].units
-    epsilon_unit = atom_types[0].parameters["epsilon"].units
     sigmas = [
         atom_type.parameters["sigma"].in_units(sigma_unit).value
         for atom_type in atom_types
     ]
     epsilons = [
-        atom_type.parameters["epsilon"].in_units(epsilon_unit).value
+        convert_kelvin_to_energy_units(atom_type.parameters["epsilon"], "kJ/mol")
         for atom_type in atom_types
     ]
+    epsilon_unit = epsilons[0].units
+    epsilons = [epsilon.in_units(epsilon_unit).value for epsilon in epsilons]
     if combining_rule == "lorentz":
         sigma = np.mean(sigmas)
     elif combining_rule == "geometric":
