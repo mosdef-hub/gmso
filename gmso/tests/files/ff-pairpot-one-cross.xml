@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ForceField version="0.0.1" name="PairPotentialDemo-OneCross">
+  <FFMetaData combiningRule="lorentz">
+    <Units energy="kJ/mol" distance="nm" mass="amu" charge="coulomb"/>
+  </FFMetaData>
+
+  <!-- CG bead names carry a leading underscore: foyer rejects non-element types
+       that do not ("Non-element types must start with an underscore"). -->
+  <AtomTypes expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)">
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <AtomType name="_A" element="_A" atomclass="_A" mass="1.0" charge="0.0" definition="_A" description="CG bead A">
+      <Parameters>
+        <Parameter name="sigma" value="0.30"/>
+        <Parameter name="epsilon" value="0.40"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="_B" element="_B" atomclass="_B" mass="1.0" charge="0.0" definition="_B" description="CG bead B">
+      <Parameters>
+        <Parameter name="sigma" value="0.40"/>
+        <Parameter name="epsilon" value="0.50"/>
+      </Parameters>
+    </AtomType>
+    <AtomType name="_C" element="_C" atomclass="_C" mass="1.0" charge="0.0" definition="_C" description="CG bead C">
+      <Parameters>
+        <Parameter name="sigma" value="0.50"/>
+        <Parameter name="epsilon" value="0.60"/>
+      </Parameters>
+    </AtomType>
+  </AtomTypes>
+
+  <!-- Only _A-_B is overridden. _A-_C and _B-_C carry no PairPotentialType and
+       must fall back to the lorentz combining rule: _A-_C sigma 0.40 /
+       epsilon 0.48990, _B-_C sigma 0.45 / epsilon 0.54772. -->
+  <PairPotentialTypes expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)">
+    <ParametersUnitDef parameter="sigma" unit="nm"/>
+    <ParametersUnitDef parameter="epsilon" unit="kJ/mol"/>
+    <PairPotentialType name="LennardJonesPotential" type1="_A" type2="_B">
+      <Parameters>
+        <Parameter name="sigma" value="2.22222"/>
+        <Parameter name="epsilon" value="9.11111"/>
+      </Parameters>
+    </PairPotentialType>
+  </PairPotentialTypes>
+</ForceField>

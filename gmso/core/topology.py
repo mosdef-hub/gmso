@@ -32,6 +32,7 @@ from gmso.utils.conversions import (
     convert_params_units,
     convert_topology_expressions,
 )
+from gmso.utils.sorting import sort_by_types, sort_connection_strings
 from gmso.utils.units import GMSO_UnitRegistry as UnitReg
 
 logger = logging.getLogger(__name__)
@@ -981,9 +982,10 @@ class Topology:
             The pair (or set) of names or atomclasses of gmso.AtomTypes of which
             the custom pairwise potential should be removed
         """
+        key = sort_connection_strings(list(pair_of_types))
         to_delete = []
         for t in self._pairpotential_types:
-            if t.member_types == tuple(pair_of_types):
+            if sort_by_types(t) == key:
                 to_delete.append(t)
         if len(to_delete) > 0:
             for t in to_delete:
