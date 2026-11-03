@@ -1501,7 +1501,7 @@ def _warn_unscalable(top, scaling_factors, force, class_name):
     # Without bonds there are no 1-2, 1-3 or 1-4 pairs to scale
     if not any(fractional) or not top.n_bonds:
         return
-    force_pairs = {tuple(sorted(type_name)) for type_name in force.params.keys()}
+    force_pairs = {tuple(sorted(type_name)) for type_name in force.params}
     scaled_pairs = set()
     for is_fractional, pairs in zip(fractional, generate_pairs_lists(top).values()):
         if not is_fractional:
