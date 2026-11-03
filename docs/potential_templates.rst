@@ -8,9 +8,10 @@ GMSO ships a library of built-in potential templates stored as JSON files in
 mathematical expression (as a SymPy-compatible string), and the physical
 dimensions expected for each parameter.
 
-Templates are loaded via :class:`~gmso.utils.io.PotentialTemplateLibrary` and
-are used internally by forcefield parsers and writers to validate that
-parameters carry the correct units.
+Templates are loaded via
+:class:`~gmso.lib.potential_templates.PotentialTemplateLibrary` and are used
+internally by forcefield parsers and writers to validate that parameters carry
+the correct units.
 
 The more common use case will be to use the expressions of these templates in
 a GMSO `.xml` file, where the independent parameters for the expression are defined
@@ -24,6 +25,16 @@ for each unique interaction type.
 
 Non-bonded Potentials
 ---------------------
+
+The LAMMPS, GROMACS and HOOMD writers support explicit pair parameters through
+``PairPotentialType``. Pair members refer to ``AtomType.name``. For the forms
+below, explicit parameters override the combining rule for that type pair.
+Pairs without an override use the combining rule where supported.
+
+Buckingham cross pairs and pairs between different potential forms need
+explicit parameters. An atom type with no potential needs explicit parameters
+for every pair it takes part in. More than one ``PairPotentialType`` for the
+same type pair is not supported.
 
 LennardJonesPotential
 ~~~~~~~~~~~~~~~~~~~~~
@@ -99,7 +110,7 @@ shorter-ranged attractive term.
      - Description
    * - ``epsilon``
      - energy
-     - Well depth; controls the strength of the interaction.
+     - Energy scale; the well depth is :math:`16\epsilon/27`.
    * - ``sigma``
      - length
      - Finite distance at which the potential is zero.
@@ -149,9 +160,7 @@ as a rate :math:`b` rather than a decay length :math:`\rho`.  Identical to
 templates are matched on the dimensions of their parameters, and ``rho``
 (length) never matches ``b`` (1/length).
 
-Current GROMACS no longer runs Buckingham, so no writer emits this form.  The
-template is kept so that a forcefield using it is still identified by name and
-rejected with a useful error.
+This form is not supported by the writers.
 
 .. math::
 

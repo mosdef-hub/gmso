@@ -11,8 +11,8 @@ file formats.  All public functions are importable from ``gmso.formats``.
 GROMACS
 -------
 
-GROMACS coordinate files (`.gro`) and topology/parameter files (`.top`, `.itp`) are
-supported for both reading and writing.
+GROMACS coordinate files (``.gro``) can be read and written. Topology files
+(``.top``) can be written.
 
 .. autosummary::
    :nosignatures:

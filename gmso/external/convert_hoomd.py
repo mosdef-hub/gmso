@@ -117,11 +117,11 @@ def to_gsd_snapshot(
         gmso.Topology object
     filename : str
         Path of the output file.
-    base_units : dict, optinoal, default=None
+    base_units : dict or str, optional, default=None
         The dictionary of base units to be converted to. Entries restricted to
         "energy", "length", and "mass". There is also option to used predefined
         unit systems ("MD" or "AKMA" provided as string). If None is provided,
-        this method will perform no units conversion.
+        base units are inferred from the topology.
     shift_coords : bool, optional, default=True
         Shift coordinates from (0, L) to (-L/2, L/2) if necessary.
     parse_special_pairs : bool, optional, default=True
@@ -258,11 +258,11 @@ def to_hoomd_snapshot(
         gmso.Topology object
     filename : str
         Path of the output file.
-    base_units : dict, optinoal, default=None
+    base_units : dict or str, optional, default=None
         The dictionary of base units to be converted to. Entries restricted to
         "energy", "length", and "mass". There is also option to used predefined
         unit systems ("MD" or "AKMA" provided as string). If None is provided,
-        this method will perform no units conversion.
+        base units are inferred from the topology.
     shift_coords : bool, optional, default=True
         Shift coordinates from (0, L) to (-L/2, L/2) if necessary.
     parse_special_pairs : bool, optional, default=True
@@ -406,7 +406,7 @@ def to_hoomd_forcefield(
         The dictionary of base units to be converted to. Entries restricted to
         "energy", "length", and "mass". There is also option to used predefined
         unit systems ("MD" or "AKMA" provided as string). If None is provided,
-        this method will perform no units conversion.
+        base units are inferred from the topology.
     auto_scale : bool, optional, default=False
         Automatically scaling relevant length, energy and mass units.
         Referenced mass unit is obtained from sites' masses.
@@ -427,6 +427,17 @@ def to_hoomd_forcefield(
         dictionary), namely, "nonbonded", "bonds", "angles", "dihedrals", and "impropers".
     base_units : dict
         Base units dictionary utilized during the conversion.
+
+    Notes
+    -----
+    Lennard-Jones 12-6, 8-4, 12-8, Buckingham and Mie PairPotentialTypes
+    override the corresponding type pairs. Mie exponents are not combined;
+    unlike exponents require an explicit pair.
+
+    Special-pair scaling is supported for Lennard-Jones 12-6. With the default
+    neighbor list, fractionally scaled pairs for Buckingham, Mie, LJ 8-4 and
+    LJ 12-8 are excluded and contribute no force. A warning lists the affected
+    type pairs.
 
     """
     if int(hoomd_version[0]) < 4:

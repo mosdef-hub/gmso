@@ -114,8 +114,8 @@ def write_lammpsdata(
         default non-dimensionalisation factors (which are derived from the
         largest values found in the topology). The default ``'length'`` and
         ``'energy'`` are the largest sigma and epsilon of the atom types and
-        PairPotentialTypes, so they must be given when any nonbonded
-        expression is not Lennard-Jones.
+        PairPotentialTypes. For Buckingham potentials, supply both
+        ``'length'`` and ``'energy'`` explicitly.
 
     Returns
     -------
@@ -124,9 +124,29 @@ def write_lammpsdata(
 
     Notes
     -----
+    Applicable PairPotentialTypes are written as ``PairIJ Coeffs``, including
+    all cross terms. Buckingham also requires ``PairIJ Coeffs`` because its
+    parameters are not combined. A Lennard-Jones-only topology without
+    explicit pairs uses ``Pair Coeffs`` and leaves mixing to LAMMPS. For
+    Lorentz mixing, set ``pair_modify mix arithmetic`` in the input script.
+
+    Lennard-Jones epsilon values in Kelvin are converted to energy before
+    mixing and writing.
+
     See https://docs.lammps.org/read_data.html for a full description of the
     LAMMPS data format.  Only a subset of atom styles, potential styles, and
     unit styles are currently supported.
+
+    Examples
+    --------
+    Input setup for a charged LJ/Buckingham system written in real units::
+
+        units real
+        atom_style full
+        pair_style hybrid/overlay buck 12.0 lj/cut 12.0 coul/long 12.0
+        read_data system.data
+        pair_coeff * * coul/long
+        kspace_style pppm 1.0e-8
 
     """
     if atom_style not in ["full", "atomic", "molecular", "charge"]:
@@ -290,11 +310,14 @@ def read_lammpsdata(
     This reader is a work in progress.  Currently supported styles:
 
     * Atom styles: ``'full'``
-    * Pair potential styles: ``'lj'``
+    * Pair potential styles: 12-6 Lennard-Jones
     * Bond styles: ``'harmonic'``, ``'fene'``
     * Angle styles: ``'harmonic'``
     * Dihedral styles: ``'opls'``
     * Improper styles: ``'harmonic'``
+
+    ``PairIJ Coeffs`` and non-Lennard-Jones ``Pair Coeffs`` are not read.
+    A warning is logged and atom types keep their default parameters.
 
     """
     top = Topology()

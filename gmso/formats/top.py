@@ -64,6 +64,11 @@ def write_top(
 
     Notes
     -----
+    Explicit Lennard-Jones pairs are written to ``[ nonbond_params ]`` and
+    ``[ pairtypes ]``. The latter supplies 1-4 parameters, with epsilon scaled
+    by ``fudgeLJ``. Bare atom types are written with zero sigma and epsilon;
+    every pair involving one must have explicit parameters.
+
     This writer is a work in progress and does not yet support the full
     GROMACS topology spec.  See the GROMACS manual at
     https://manual.gromacs.org/current/reference-manual/topologies/topology-file-formats.html
