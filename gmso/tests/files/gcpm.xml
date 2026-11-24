@@ -1,0 +1,58 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ForceField name="GCPM" version="0.0.1">
+  <FFMetaData electrostatics14Scale="0.0" nonBonded14Scale="0.0" combiningRule="None">
+    <Units energy="K" distance="angstrom" mass="amu" charge="elementary_charge"/>
+  </FFMetaData>
+  <AtomTypes>
+    <AtomType name="1" mass="15.9994" element="O" charge="0.0" doi="10.1063/1.1940033" definition="[O;X2](H)(H)" description="O in GCPM"/>
+    <AtomType name="2" mass="1.008" element="H" charge="0.6113" doi="10.1063/1.1940033" definition="[H;X1][O;X2](H)" description="H in GCPM"/>
+  </AtomTypes>
+  <VirtualSiteTypes>
+    <Position expression="rj + b*(ri-rj+a*(rk-rj))/norm(ri-rj+a*(rk-rj))">
+      <ParametersUnitDef parameter="a" unit="dimensionless"/>
+      <ParametersUnitDef parameter="b" unit="dimensionless"/>
+    </Position>
+    <VirtualSiteType name="3" charge="-1.226" type1="2" type2="1" type3="2">
+      <Position>
+        <Parameters>
+          <Parameter name="a" value="1"/>
+          <Parameter name="b" value="0.027"/>
+        </Parameters>
+      </Position>
+    </VirtualSiteType>
+  </VirtualSiteTypes>
+  <PairPotentialTypes expression="epsilon/(1-6/gamma_exp6)*(6/gamma_exp6*exp(gamma_exp6*(1-rOO/sigma))-(sigma/rOO)**6)+alpha+sigmai">
+    <ParametersUnitDef parameter="epsilon" unit="K"/>
+    <ParametersUnitDef parameter="sigma" unit="angstrom"/>
+    <ParametersUnitDef parameter="gamma_exp6" unit="dimensionless"/>
+    <ParametersUnitDef parameter="alpha" unit="angstrom**3"/>
+    <ParametersUnitDef parameter="sigmai" unit="angstrom"/>
+    <PairPotentialType name="GCPMPairPotential" type1="1" type2="1">
+      <Parameters>
+        <Parameter name="epsilon" value="110"/>
+        <Parameter name="sigma" value="3.69"/>
+        <Parameter name="gamma_exp6" value="12.75"/>
+        <Parameter name="alpha" value="0.0"/>
+        <Parameter name="sigmai" value="0.0"/>
+      </Parameters>
+      </PairPotentialType>
+    <PairPotentialType name="GCPMPairPotential" type1="2" type2="2">
+      <Parameters>
+        <Parameter name="epsilon" value="0"/>
+        <Parameter name="sigma" value="1.0"/>
+        <Parameter name="gamma_exp6" value="12.75"/>
+        <Parameter name="alpha" value="0.0"/>
+        <Parameter name="sigmai" value="0.455"/>
+      </Parameters>
+      </PairPotentialType>
+    <PairPotentialType name="GCPMPairPotential" type1="3" type2="3">
+      <Parameters>
+        <Parameter name="epsilon" value="0"/>
+        <Parameter name="sigma" value="1.0"/>
+        <Parameter name="gamma_exp6" value="12.75"/>
+        <Parameter name="alpha" value="1.444"/>
+        <Parameter name="sigmai" value="0.610"/>
+      </Parameters>
+    </PairPotentialType>
+  </PairPotentialTypes>
+</ForceField>

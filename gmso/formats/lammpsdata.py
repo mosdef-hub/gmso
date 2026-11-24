@@ -6,7 +6,7 @@ import logging
 import os
 import re
 from collections import namedtuple
-from itertools import count
+from itertools import chain, count
 from pathlib import Path
 
 import numpy as np
@@ -97,7 +97,7 @@ def write_lammpsdata(
         Path of the output file.
     atom_style : str, optional, default='full'
         LAMMPS atom style.  Supported values: ``'full'``, ``'atomic'``,
-        ``'charge'``, ``'molecular'``.
+        ``'charge'``, ``'molecular'``, ``'full + dipole + sphere'``.
     unit_style : str, optional, default='real'
         LAMMPS unit system.  Supported values: ``'real'``, ``'lj'``,
         ``'metal'``, ``'si'``, ``'cgs'``, ``'electron'``, ``'micro'``,
@@ -149,7 +149,13 @@ def write_lammpsdata(
         kspace_style pppm 1.0e-8
 
     """
-    if atom_style not in ["full", "atomic", "molecular", "charge"]:
+    if atom_style not in [
+        "full",
+        "atomic",
+        "molecular",
+        "charge",
+        "full + dipole + sphere",
+    ]:
         raise ValueError(
             f'Atom style "{atom_style}" is invalid or is not currently supported'
         )
@@ -230,8 +236,11 @@ def write_lammpsdata(
     reindex_molecules(top)  # reset the topology molecule index to match with lammps
     # Resolved before the file is opened so an uncovered type pair raises
     # without leaving a partly written file behind.
+    write_gcpm = _has_gcpm_pairtypes(top)
     pair_section = (
-        _resolve_pairtypes(top, potentialsMap) if top.is_fully_typed() else None
+        _resolve_pairtypes(top, potentialsMap)
+        if top.is_fully_typed() and not write_gcpm
+        else None
     )
     path = Path(filename)
     if not path.parent.exists():
@@ -244,7 +253,10 @@ def write_lammpsdata(
         all_ordered_typesDict = {}
         if top.is_fully_typed():
             _write_atomtypes(out_file, top, base_unyts, lj_cfactorsDict)
-            _write_pairtypes(out_file, pair_section, base_unyts, lj_cfactorsDict)
+            if write_gcpm:
+                _write_gcpm_pairstyle(out_file, top, base_unyts, lj_cfactorsDict)
+            else:
+                _write_pairtypes(out_file, pair_section, base_unyts, lj_cfactorsDict)
             if top.bond_types:
                 sorted_bondsList = _write_bondtypes(
                     out_file, top, base_unyts, lj_cfactorsDict
@@ -697,6 +709,7 @@ def _accepted_potentials():
     """List of accepted potentials that LAMMPS can support."""
     templates = PotentialTemplateLibrary()
     lennard_jones_potential = templates["LennardJonesPotential"]
+    gcpm_pair_potential = templates["GCPMPairPotential"]
     buckingham_potential = templates["BuckinghamPotential"]
     harmonic_bond_potential = templates["LAMMPSHarmonicBondPotential"]
     fene_bond_potential = templates["LAMMPSFENEBondPotential"]
@@ -716,6 +729,7 @@ def _accepted_potentials():
         periodic_torsion_potential,
         harmonic_improper_potential,
         opls_torsion_potential,
+        gcpm_pair_potential,
     ]
     return accepted_potentialsList
 
@@ -760,7 +774,7 @@ def _write_header(out_file, top, atom_style, dihedral_parser):
             str(datetime.datetime.now(datetime.timezone.utc).astimezone()),
         )
     )
-    out_file.write(f"{top.n_sites:d} atoms\n")
+    out_file.write(f"{top.n_sites + top.n_virtual_sites:d} atoms\n")
     if atom_style in ["full", "molecular"]:
         out_file.write(f"{top.n_bonds:d} bonds\n")
         out_file.write(f"{top.n_angles:d} angles\n")
@@ -780,7 +794,15 @@ def _write_header(out_file, top, atom_style, dihedral_parser):
         out_file.write(f"{top.n_impropers:d} impropers\n\n")
 
     # TODO: allow users to specify filter_by syntax
-    out_file.write(f"{len(top.atom_types(filter_by=pfilter)):d} atom types\n")
+    n_atomtypes = len(top.atom_types(filter_by=pfilter))
+    n_atomtypes += len(
+        set(
+            {
+                site.virtual_type.name: site.virtual_type for site in top.virtual_sites
+            }.values()
+        )
+    )
+    out_file.write(f"{n_atomtypes:d} atom types\n")
     if top.n_bonds > 0 and atom_style in ["full", "molecular"]:
         out_file.write(f"{len(top.bond_types(filter_by=pfilter)):d} bond types\n")
     if top.n_angles > 0 and atom_style in ["full", "molecular"]:
@@ -859,9 +881,58 @@ def _write_atomtypes(out_file, top, base_unyts, cfactorsDict):
     out_file.write("\nMasses\n")
     out_file.write(f"#\tmass ({base_unyts.usystem['mass']})\n")
     atypesView = sorted(top.atom_types(filter_by=pfilter), key=lambda x: x.name)
+    atypesView += sorted(
+        {vsite.virtual_type for vsite in top.virtual_sites}, key=lambda x: x.name
+    )
     for atom_type in atypesView:
+        if isinstance(atom_type, gmso.VirtualType):
+            mass = 1e-100
+        else:
+            mass = float(base_unyts.convert_parameter(atom_type.mass, cfactorsDict))
         out_file.write(
-            f"{atypesView.index(atom_type) + 1:d}\t{base_unyts.convert_parameter(atom_type.mass, cfactorsDict)}\t# {atom_type.name}\n"
+            f"{atypesView.index(atom_type) + 1:d}\t{mass:.6g}\t# {atom_type.name}\n"
+        )
+
+
+def _has_gcpm_pairtypes(top):
+    """Return True when the topology's pair potential types are GCPM."""
+    return bool(top.pairpotential_types) and (
+        top.pairpotential_types[0].name == "GCPMPairPotential"
+    )
+
+
+def _write_gcpm_pairstyle(out_file, top, base_unyts, cfactorsDict):
+    """Write GCPM pair potential types to LAMMPS file."""
+    first_pairtype = top.pairpotential_types[0]
+    out_file.write(f"\nPair Coeffs # {first_pairtype.expression}\n")
+    pair_style_orderTuple = ("epsilon", "sigma", "gamma_exp6", "alpha", "sigmai")
+    param_labels = [
+        write_out_parameter_and_units(
+            key,
+            convert_kelvin_to_energy_units(first_pairtype.parameters[key], "kJ"),
+            base_unyts,
+        )
+        for key in pair_style_orderTuple
+    ]
+
+    out_file.write("#\t" + "\t".join(param_labels) + "\n")
+    pair_types = list(top.pairpotential_types)
+    pair_types.sort(key=lambda x: sorted(x.member_types))
+    for idx, pair_type in enumerate(pair_types):
+        member_types = sorted([mem for mem in pair_type.member_types])
+        out_file.write(
+            "{}\t{:7}\t{:7}\t\t# {}\t{}\n".format(
+                idx + 1,
+                *member_types,
+                *[
+                    base_unyts.convert_parameter(
+                        convert_kelvin_to_energy_units(pair_type.parameters[key], "kJ"),
+                        cfactorsDict,
+                        n_decimals=6,
+                    )
+                    for key in pair_style_orderTuple
+                ],
+            )
         )
 
 
@@ -1363,6 +1434,7 @@ def parse_harmonic_style_improper(improper_type):
 def _write_site_data(out_file, top, atom_style, base_unyts, cfactorsDict):
     """Write atomic positions and charges to LAMMPS file.."""
     out_file.write(f"\nAtoms #{atom_style}\n\n")
+    extraVarsDict = {}  # dict for extra formatting
     if atom_style == "atomic":
         atom_line = "{index:d}\t{type_index:d}\t{x:.8}\t{y:.8}\t{z:.8}\n"
     elif atom_style == "charge":
@@ -1373,34 +1445,54 @@ def _write_site_data(out_file, top, atom_style, base_unyts, cfactorsDict):
         )
     elif atom_style == "full":
         atom_line = "{index:d}\t{moleculeid:d}\t{type_index:d}\t{charge:.8}\t{x:.8}\t{y:.8}\t{z:.8}\n"
+    elif atom_style == "full + dipole + sphere":
+        extraVarsDict = {
+            "mux": 0.0,
+            "muy": 0.0,
+            "muz": 0.0,
+            "radius": 0.0,
+            "rmass": 1.0,
+        }
+        atom_line = "{index:d}\t{type_index:d}\t{x}\t{y}\t{z}\t{moleculeid:d}\t{charge:.8}\t{mux:.8}\t{muy:.8}\t{muz:.8}\t{radius:.8}\t{rmass:.8}\n"
 
     unique_sorted_typesList = sorted(
         top.atom_types(filter_by=pfilter), key=lambda x: x.name
     )
-    for i, site in enumerate(top.sites):
+    unique_sorted_typesList += sorted(  # append virtual types
+        {site.virtual_type for site in top.virtual_sites}, key=lambda x: x.name
+    )
+    for i, site in enumerate(chain(top._sites, top._virtual_sites)):
+        if isinstance(site, gmso.Atom):
+            position = site.position
+            type_index = unique_sorted_typesList.index(site.atom_type) + 1
+        elif isinstance(site, gmso.VirtualSite):
+            position = site.position()  # callable function
+            type_index = unique_sorted_typesList.index(site.virtual_type) + 1
+            # set muz to 0.01 to allow for polarizeability of site
+            extraVarsDict["muz"] = 0.01
+
         out_file.write(
             atom_line.format(
                 index=i + 1,
                 moleculeid=site.molecule.number + 1,  # index is 0-based in GMSO
-                type_index=unique_sorted_typesList.index(site.atom_type) + 1,
+                type_index=type_index,
                 charge=base_unyts.convert_parameter(
                     site.charge,
                     cfactorsDict,
                     n_decimals=6,
                 ),
                 x=base_unyts.convert_parameter(
-                    site.position[0],
+                    position[0],
                     cfactorsDict,
                     n_decimals=6,
                 ),
-                y=base_unyts.convert_parameter(
-                    site.position[1], cfactorsDict, n_decimals=6
-                ),
-                z=base_unyts.convert_parameter(
-                    site.position[2], cfactorsDict, n_decimals=6
-                ),
+                y=base_unyts.convert_parameter(position[1], cfactorsDict, n_decimals=6),
+                z=base_unyts.convert_parameter(position[2], cfactorsDict, n_decimals=6),
+                **extraVarsDict,
             )
         )
+        if extraVarsDict.get("muz"):  # reset muz for non virtual types
+            extraVarsDict["muz"] = 0.0
 
 
 def _angle_order_sorter(angle_typesList):

@@ -1,0 +1,12 @@
+{
+  "name": "GCPMPairPotential",
+  "expression": "epsilon/(1-6/gamma_exp6)*(6/gamma_exp6*exp(gamma_exp6*(1-rOO/sigma))-(sigma/rOO)**6)+alpha+sigmai",
+  "independent_variables": "rOO",
+  "expected_parameters_dimensions": {
+    "epsilon": "energy",
+    "sigma": "length",
+    "gamma_exp6": "dimensionless",
+    "alpha": "length**3",
+    "sigmai": "length"
+  }
+}
