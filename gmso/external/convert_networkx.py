@@ -49,7 +49,7 @@ def from_networkx(graph: nx.Graph) -> Topology:
     if not isinstance(graph, nx.Graph):
         raise TypeError(
             "Type mismatch, graph object is expected to be "
-            "an instance of networkx.Graph, was provided: {}".format(type(graph))
+            f"an instance of networkx.Graph, was provided: {type(graph)}"
         )
     top = Topology()
 

@@ -1,5 +1,5 @@
 import string
-from typing import Callable, List, Optional, Union
+from collections.abc import Callable
 
 import unyt as u
 from pydantic import ConfigDict, Field
@@ -26,7 +26,7 @@ class VirtualSite(Site):
         the virtual site's interactions and positions
     """
 
-    parent_sites_: List[Site] = Field(
+    parent_sites_: list[Site] = Field(
         default=[],
         description="The parent sites of the virtual site.",
         alias="parent_sites",
@@ -38,7 +38,7 @@ class VirtualSite(Site):
 
     position_: Callable = Field(None, description="", alias="position")
 
-    virtual_type_: Optional[VirtualType] = Field(
+    virtual_type_: VirtualType | None = Field(
         default=None,
         description="virtual type for a virtual site.",
         alias="virtual_type",
@@ -47,16 +47,14 @@ class VirtualSite(Site):
     model_config = ConfigDict(
         alias_to_fields=dict(
             **Site.model_config["alias_to_fields"],
-            **{
-                "charge": "charge_",
-                "virtual_type": "virtual_type_",
-                "parent_sites": "parent_sites_",
-            },
+            charge="charge_",
+            virtual_type="virtual_type_",
+            parent_sites="parent_sites_",
         ),
     )
 
     @property
-    def parent_sites(self) -> List[Site]:
+    def parent_sites(self) -> list[Site]:
         """Reminder that the order of sites is fixed, such that site index 1 corresponds to ri in the self.virtual_type.virtual_position expression."""
         return self.__dict__.get("parent_sites_", [])
 
@@ -101,7 +99,7 @@ class VirtualSite(Site):
         return self.__dict__.get("virtual_type_")
 
     @property
-    def charge(self) -> Union[u.unyt_quantity, None]:
+    def charge(self) -> u.unyt_quantity | None:
         """Return the charge of the virtual site."""
         charge = self.__dict__.get("charge_", None)
         vtype = self.__dict__.get("virtual_type_", None)
@@ -113,7 +111,7 @@ class VirtualSite(Site):
             return 0.0 * u.elementary_charge
 
     @property
-    def molecule(self) -> Union[Molecule, None]:
+    def molecule(self) -> Molecule | None:
         """Return the molecule associated with the parent sites."""
         if not self.parent_sites:
             return None

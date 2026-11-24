@@ -224,13 +224,13 @@ def _add_parameters(root, params_dict):
 def _get_dihedral_or_improper_parameters(dihedral_type):
     parameters = {}
     j = 1
-    while dihedral_type.get("k{}".format(j)):
-        param_k_name = "k{}".format(j)
+    while dihedral_type.get(f"k{j}"):
+        param_k_name = f"k{j}"
         param_k_value = dihedral_type.get(param_k_name)
-        param_n_name = "n{}".format(j)
-        param_n_value = dihedral_type.get("periodicity{}".format(j))
-        param_delta_name = "delta{}".format(j)
-        param_delta_value = dihedral_type.get("phase{}".format(j))
+        param_n_name = f"n{j}"
+        param_n_value = dihedral_type.get(f"periodicity{j}")
+        param_delta_name = f"delta{j}"
+        param_delta_value = dihedral_type.get(f"phase{j}")
         parameters[param_k_name] = param_k_value
         parameters[param_n_name] = param_n_value
         parameters[param_delta_name] = param_delta_value
@@ -241,13 +241,9 @@ def _get_dihedral_or_improper_parameters(dihedral_type):
 def _populate_class_or_type_attrib(root, type_):
     for j, item in enumerate(type_.items()):
         if "type" in item[0]:
-            root.attrib["type{}".format(j + 1)] = type_.get(
-                "type{}".format(j + 1), "c{}".format(j + 1)
-            )
+            root.attrib[f"type{j + 1}"] = type_.get(f"type{j + 1}", f"c{j + 1}")
         elif "class" in item[0]:
-            root.attrib["class{}".format(j + 1)] = type_.get(
-                "class{}".format(j + 1), "c{}".format(j + 1)
-            )
+            root.attrib[f"class{j + 1}"] = type_.get(f"class{j + 1}", f"c{j + 1}")
 
 
 def _write_nbforces(forcefield, ff_kwargs):
@@ -314,7 +310,7 @@ def _write_harmonic_bonds(forcefield, ff_kwargs):
             harmonicBondTypes,
             "BondType",
             attrib_dict={
-                "name": bond_type.get("name", "BondType-Harmonic-{}".format(i + 1)),
+                "name": bond_type.get("name", f"BondType-Harmonic-{i + 1}"),
             },
         )
         _populate_class_or_type_attrib(thisBondType, bond_type)
@@ -345,7 +341,7 @@ def _write_harmonic_angles(forcefield, ff_kwargs):
             harmonicAngleTypes,
             "AngleType",
             attrib_dict={
-                "name": angle_type.get("name", "AngleType-Harmonic-{}".format(i + 1)),
+                "name": angle_type.get("name", f"AngleType-Harmonic-{i + 1}"),
             },
         )
 
@@ -377,9 +373,7 @@ def _write_ub_angles(forcefield, ff_kwargs):
             ureybradleyAngleTypes,
             "AngleType",
             attrib_dict={
-                "name": angle_type.get(
-                    "name", "AngleType-UreyBradley-{}".format(i + 1)
-                ),
+                "name": angle_type.get("name", f"AngleType-UreyBradley-{i + 1}"),
                 "type1": angle_type.get("type1", "t1"),
                 "type2": angle_type.get("type2", "t2"),
                 "type3": angle_type.get("type3", "t3"),
@@ -408,7 +402,7 @@ def _write_periodic_dihedrals(forcefield, ff_kwargs):
             "DihedralType",
             attrib_dict={
                 "name": dihedral_type.get(
-                    "name", "DihedralType-Periodic-Proper-{}".format(i + 1)
+                    "name", f"DihedralType-Periodic-Proper-{i + 1}"
                 ),
             },
         )
@@ -416,20 +410,17 @@ def _write_periodic_dihedrals(forcefield, ff_kwargs):
         _populate_class_or_type_attrib(thisDihedralType, dihedral_type)
 
         parameters, max_index = _get_dihedral_or_improper_parameters(dihedral_type)
-        if max_index > max_j:
-            max_j = max_index
+        max_j = max(max_j, max_index)
 
         _add_parameters(thisDihedralType, parameters)
 
-    for k in range(0, max_j):
+    for k in range(max_j):
+        _insert_parameters_units_def(periodicTorsionDihedralTypes, f"k{k}", "kJ/mol")
         _insert_parameters_units_def(
-            periodicTorsionDihedralTypes, "k{}".format(k), "kJ/mol"
+            periodicTorsionDihedralTypes, f"n{k}", "dimensionless"
         )
         _insert_parameters_units_def(
-            periodicTorsionDihedralTypes, "n{}".format(k), "dimensionless"
-        )
-        _insert_parameters_units_def(
-            periodicTorsionDihedralTypes, "delta{}".format(k), "radian"
+            periodicTorsionDihedralTypes, f"delta{k}", "radian"
         )
 
 
@@ -448,7 +439,7 @@ def _write_periodic_impropers(forcefield, ff_kwargs):
             "ImproperType",
             attrib_dict={
                 "name": dihedral_type.get(
-                    "name", "DihedralType-Periodic-Improper-{}".format(i + 1)
+                    "name", f"DihedralType-Periodic-Improper-{i + 1}"
                 ),
             },
         )
@@ -456,19 +447,14 @@ def _write_periodic_impropers(forcefield, ff_kwargs):
         _populate_class_or_type_attrib(thisImproperType, dihedral_type)
 
         parameters, max_index = _get_dihedral_or_improper_parameters(dihedral_type)
-        if max_index > max_j:
-            max_j = max_index
+        max_j = max(max_j, max_index)
 
         _add_parameters(thisImproperType, parameters)
 
-    for k in range(0, max_j):
-        _insert_parameters_units_def(periodicImproperTypes, "k{}".format(k), "kJ/mol")
-        _insert_parameters_units_def(
-            periodicImproperTypes, "n{}".format(k), "dimensionless"
-        )
-        _insert_parameters_units_def(
-            periodicImproperTypes, "delta{}".format(k), "degree"
-        )
+    for k in range(max_j):
+        _insert_parameters_units_def(periodicImproperTypes, f"k{k}", "kJ/mol")
+        _insert_parameters_units_def(periodicImproperTypes, f"n{k}", "dimensionless")
+        _insert_parameters_units_def(periodicImproperTypes, f"delta{k}", "degree")
 
 
 def _write_rb_torsions(forcefield, ff_kwargs):
@@ -488,9 +474,7 @@ def _write_rb_torsions(forcefield, ff_kwargs):
             rbTorsionDihedralTypes,
             "DihedralType",
             attrib_dict={
-                "name": dihedral_type.get(
-                    "name", "DihedralType-RB-Proper-{}".format(i + 1)
-                ),
+                "name": dihedral_type.get("name", f"DihedralType-RB-Proper-{i + 1}"),
             },
         )
 
@@ -499,18 +483,17 @@ def _write_rb_torsions(forcefield, ff_kwargs):
         parameters = {}
 
         j = 0
-        while dihedral_type.get("c{}".format(j)):
-            param_c_name = "c{}".format(j)
+        while dihedral_type.get(f"c{j}"):
+            param_c_name = f"c{j}"
             param_c_value = dihedral_type.get(param_c_name)
             parameters[param_c_name] = param_c_value
             j += 1
 
         _add_parameters(thisDihedralType, parameters)
 
-        if j > max_j:
-            max_j = j
-    for k in range(0, max_j):
-        _insert_parameters_units_def(rbTorsionDihedralTypes, "c{}".format(k), "kJ/mol")
+        max_j = max(max_j, j)
+    for k in range(max_j):
+        _insert_parameters_units_def(rbTorsionDihedralTypes, f"c{k}", "kJ/mol")
 
 
 def _create_sub_element(root_el, name, attrib_dict=None):

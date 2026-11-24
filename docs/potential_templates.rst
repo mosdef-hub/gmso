@@ -8,9 +8,10 @@ GMSO ships a library of built-in potential templates stored as JSON files in
 mathematical expression (as a SymPy-compatible string), and the physical
 dimensions expected for each parameter.
 
-Templates are loaded via :class:`~gmso.utils.io.PotentialTemplateLibrary` and
-are used internally by forcefield parsers and writers to validate that
-parameters carry the correct units.
+Templates are loaded via
+:class:`~gmso.lib.potential_templates.PotentialTemplateLibrary` and are used
+internally by forcefield parsers and writers to validate that parameters carry
+the correct units.
 
 The more common use case will be to use the expressions of these templates in
 a GMSO `.xml` file, where the independent parameters for the expression are defined
@@ -24,6 +25,16 @@ for each unique interaction type.
 
 Non-bonded Potentials
 ---------------------
+
+The LAMMPS, GROMACS and HOOMD writers support explicit pair parameters through
+``PairPotentialType``. Pair members refer to ``AtomType.name``. For the forms
+below, explicit parameters override the combining rule for that type pair.
+Pairs without an override use the combining rule where supported.
+
+Buckingham cross pairs and pairs between different potential forms need
+explicit parameters. An atom type with no potential needs explicit parameters
+for every pair it takes part in. More than one ``PairPotentialType`` for the
+same type pair is not supported.
 
 LennardJonesPotential
 ~~~~~~~~~~~~~~~~~~~~~
@@ -52,12 +63,104 @@ interactions in atomistic and united-atom forcefields.
 
 ----
 
+LennardJones0804Potential
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Lennard-Jones 8-4 pair potential.  A softer repulsive wall than 12-6, used in
+coarse-grained models where each bead stands for several atoms.
+
+.. math::
+
+   U(r) = 4\epsilon\left[\left(\frac{\sigma}{r}\right)^{8}
+          - \left(\frac{\sigma}{r}\right)^{4}\right]
+
+.. list-table::
+   :header-rows: 1
+   :widths: 15 25 60
+
+   * - Parameter
+     - Dimensions
+     - Description
+   * - ``epsilon``
+     - energy
+     - Well depth; controls the strength of the interaction.
+   * - ``sigma``
+     - length
+     - Finite distance at which the potential is zero.
+
+----
+
+LennardJones1208Potential
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Lennard-Jones 12-8 pair potential.  Keeps the 12-6 repulsive wall with a
+shorter-ranged attractive term.
+
+.. math::
+
+   U(r) = 4\epsilon\left[\left(\frac{\sigma}{r}\right)^{12}
+          - \left(\frac{\sigma}{r}\right)^{8}\right]
+
+.. list-table::
+   :header-rows: 1
+   :widths: 15 25 60
+
+   * - Parameter
+     - Dimensions
+     - Description
+   * - ``epsilon``
+     - energy
+     - Energy scale; the well depth is :math:`16\epsilon/27`.
+   * - ``sigma``
+     - length
+     - Finite distance at which the potential is zero.
+
+----
+
 BuckinghamPotential
 ~~~~~~~~~~~~~~~~~~~
 
 Exponential-6 (Buckingham) pair potential.  Replaces the steep repulsive
 :math:`r^{-12}` wall of Lennard-Jones with a physically motivated exponential
-repulsion term.
+repulsion term.  This is the form LAMMPS (``pair_style buck``) and HOOMD both
+use.  For the GROMACS form, see :ref:`GROMACSBuckinghamPotential`; the two are
+the same potential written differently, with :math:`b = 1/\rho`.
+
+.. math::
+
+   U(r) = A\exp\left(-\frac{r}{\rho}\right) - \frac{C}{r^{6}}
+
+.. list-table::
+   :header-rows: 1
+   :widths: 15 25 60
+
+   * - Parameter
+     - Dimensions
+     - Description
+   * - ``A``
+     - energy
+     - Prefactor for the repulsive exponential term.
+   * - ``rho``
+     - length
+     - Decay length of the repulsion.
+   * - ``C``
+     - energy·length\ :sup:`6`
+     - Prefactor for the attractive dispersion term.
+
+----
+
+.. _GROMACSBuckinghamPotential:
+
+GROMACSBuckinghamPotential
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The Buckingham potential as GROMACS writes it, with the repulsion range given
+as a rate :math:`b` rather than a decay length :math:`\rho`.  Identical to
+``BuckinghamPotential`` with :math:`b = 1/\rho`, but kept separate because
+templates are matched on the dimensions of their parameters, and ``rho``
+(length) never matches ``b`` (1/length).
+
+This form is not supported by the writers.
 
 .. math::
 
@@ -118,6 +221,8 @@ Generalised Mie pair potential.  Lennard-Jones is the special case
 
 Bond Potentials
 ---------------
+
+.. _HarmonicBondPotential:
 
 HarmonicBondPotential
 ~~~~~~~~~~~~~~~~~~~~~

@@ -1,3 +1,5 @@
+import itertools
+
 import foyer
 import mbuild as mb
 import numpy as np
@@ -447,11 +449,9 @@ class BaseTest:
                 return False
             if conn1.name != conn2.name:
                 return False
-            if getattr(conn1, connection_types_attrs_map[type(conn1)]) != getattr(
+            return getattr(conn1, connection_types_attrs_map[type(conn1)]) == getattr(
                 conn2, connection_types_attrs_map[type(conn2)]
-            ):
-                return False
-            return True
+            )
 
         return test_connection_equality
 
@@ -462,10 +462,7 @@ class BaseTest:
                 return u.allclose_units(
                     top1.box.lengths, top2.box.lengths
                 ) and u.allclose_units(top1.box.angles, top2.box.angles)
-            elif not top1.box and not top2.box:
-                return True
-            else:
-                return False
+            return bool(not top1.box and not top2.box)
 
         return test_box_equivalence
 
@@ -492,9 +489,9 @@ class BaseTest:
             if not np.allclose(top1.scaling_factors, top2.scaling_factors):
                 return False, "Mismatch in scaling factors"
             for k, v in top1.molecule_scaling_factors.items():
-                if k not in top2.scaling_factors:
-                    return False, "Mismatch in scaling factors"
-                elif not np.allclose(v, top2.molecule_scaling_factors[k]):
+                if k not in top2.scaling_factors or not np.allclose(
+                    v, top2.molecule_scaling_factors[k]
+                ):
                     return False, "Mismatch in scaling factors"
             if not have_equivalent_boxes(top1, top2):
                 return (
@@ -557,7 +554,7 @@ class BaseTest:
             expression="r + 1",
             independent_variables="r",
             parameters={},
-            member_types=tuple(["a1", "a2"]),
+            member_types=("a1", "a2"),
         )
 
         top.add_pairpotentialtype(pptype12)
@@ -742,6 +739,45 @@ class BaseTest:
     @pytest.fixture
     def oplsaa_forcefield(self):
         return ForceField("oplsaa")
+
+    @pytest.fixture
+    def pairpot_cg_top(self):
+        def _factory(fn, bead_names=("_A", "_B", "_C"), bonded=False):
+            """Build one molecule of beads, as a linear chain if bonded is True."""
+            ff = ForceField(get_path(fn))
+            top = Topology()
+            sites = []
+            for i, name in enumerate(bead_names):
+                site = Atom(
+                    name=name,
+                    position=np.array([i * 0.5, 0.0, 0.0]),
+                    molecule=("CG", 0),
+                )
+                top.add_site(site)
+                sites.append(site)
+            if bonded:
+                for site1, site2 in itertools.pairwise(sites):
+                    top.add_connection(Bond(connection_members=[site1, site2]))
+            return apply(top, ff, identify_connections=bonded)
+
+        return _factory
+
+    @pytest.fixture
+    def pairpot_one_cross_top(self, pairpot_cg_top):
+        return pairpot_cg_top("ff-pairpot-one-cross.xml")
+
+    @pytest.fixture
+    def pairpot_all_cross_top(self, pairpot_cg_top):
+        return pairpot_cg_top("ff-pairpot-all-cross.xml")
+
+    @pytest.fixture
+    def pairpot_duplicate_top(self, pairpot_cg_top):
+        """Give _A-_B a second PairPotentialType, with its members reversed."""
+        top = pairpot_cg_top("ff-pairpot-one-cross.xml")
+        duplicate = next(iter(top.pairpotential_types)).clone()
+        duplicate.member_types = ("_B", "_A")
+        top.add_pairpotentialtype(duplicate)
+        return top
 
     @pytest.fixture
     def dpd_pairpotential(self):

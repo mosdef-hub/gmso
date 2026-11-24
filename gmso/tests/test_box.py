@@ -96,7 +96,7 @@ class TestBox(BaseTest):
         assert vectors.units == u.nm
 
     def test_eq(self, box):
-        assert box == box
+        assert box == Box(lengths=u.nm * np.ones(3))
 
     def test_eq_bad_lengths(self, box):
         diff_lengths = deepcopy(box)

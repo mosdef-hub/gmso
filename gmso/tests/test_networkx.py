@@ -37,8 +37,8 @@ if has_ipywidgets:
 @pytest.mark.skipif(not has_matplotlib, reason="Matplotlib is not installed")
 class TestNetworkx(BaseTest):
     def test_highlight_networkx_edges(self, typed_ethane):
-        list(typed_ethane.angles)[0].angle_type = None
-        list(typed_ethane.dihedrals)[0].dihedral_type = None
+        next(iter(typed_ethane.angles)).angle_type = None
+        next(iter(typed_ethane.dihedrals)).dihedral_type = None
         graph = to_networkx(typed_ethane)
         list_edges = list(graph.edges)[0:3]
         test_edge_weights, test_edge_colors = highlight_networkx_edges(
@@ -78,33 +78,33 @@ class TestNetworkx(BaseTest):
     def test_select_params_on_networkx_output(self, typed_ethane, capsys):
         graph = to_networkx(typed_ethane)
         select_params_on_networkx(graph, [None, None, None])
-        captured, err = capsys.readouterr()
+        captured, _ = capsys.readouterr()
         assert captured.startswith("All angles")
         select_params_on_networkx(graph, [None, None, None, None])
-        captured, err = capsys.readouterr()
+        captured, _ = capsys.readouterr()
         assert captured.startswith("All dihedrals")
-        for node, angles in graph.nodes(data="angles"):
+        for _, angles in graph.nodes(data="angles"):
             if angles[0]:
                 angles[0].angle_type = None
         select_params_on_networkx(graph, [None, None, None])
-        captured, err = capsys.readouterr()
+        captured, _ = capsys.readouterr()
         assert captured.startswith("Since no sites are input, angles")
-        for node, dihedrals in graph.nodes(data="dihedrals"):
+        for _, dihedrals in graph.nodes(data="dihedrals"):
             if dihedrals[0]:
                 dihedrals[0].dihedral_type = None
         select_params_on_networkx(graph, [None, None, None, None])
-        captured, err = capsys.readouterr()
+        captured, _ = capsys.readouterr()
         assert captured.startswith("Since no sites are input, dihedrals")
         nx.set_node_attributes(graph, None, name="angles")
         select_params_on_networkx(graph, [None, None, None])
-        captured, err = capsys.readouterr()
+        captured, _ = capsys.readouterr()
         assert captured.startswith("No angle")
         nx.set_node_attributes(graph, None, name="dihedrals")
         select_params_on_networkx(graph, [None, None, None, None])
-        captured, err = capsys.readouterr()
+        captured, _ = capsys.readouterr()
         assert captured.startswith("No dihedral")
         select_params_on_networkx(graph, [None, None])
-        captured, err = capsys.readouterr()
+        captured, _ = capsys.readouterr()
         assert captured.startswith("invalid")
 
     def test__get_formatted_atom_types_names_for(self, typed_ethane):
@@ -139,18 +139,18 @@ class TestNetworkx(BaseTest):
         graph = to_networkx(typed_ethane)
         select_dihedrals_from_sites(graph, typed_ethane)
         select_dihedrals_from_sites(graph, "C", "C", "H", "H")
-        captured, err = capsys.readouterr()
+        _captured, err = capsys.readouterr()
         assert isinstance(err, str)
 
     def test_select_dihedrals_without_sites(self, typed_ethane, capsys):
         graph = to_networkx(typed_ethane)
         select_dihedrals_from_sites(graph, typed_ethane)
-        captured, err = capsys.readouterr()
+        _captured, err = capsys.readouterr()
         assert isinstance(err, str)
 
     def test_plot_networkx_nodes(self, typed_ethane):
         graph = to_networkx(typed_ethane)
-        fig, ax = plt.subplots(1, 1)
+        _fig, ax = plt.subplots(1, 1)
         plot_networkx_nodes(graph, ax, edge_weights={1: 5}, edge_colors={1: "r"})
 
     def test_plot_networkx_params(self, typed_ethane):
@@ -171,7 +171,7 @@ class TestNetworkx(BaseTest):
         graph = to_networkx(typed_ethane)
         edges = select_params_on_networkx(graph, ["C", "C", "H"])
         select_edges_on_networkx(graph, typed_ethane, edges[0][1])
-        captured, err = capsys.readouterr()
+        _captured, err = capsys.readouterr()
         assert isinstance(err, str)
 
     def test_report_parameter_expression(self, typed_ethane, capsys):
@@ -181,7 +181,7 @@ class TestNetworkx(BaseTest):
         report_parameter_expression(
             typed_ethane, list(typed_ethane.angles[0].connection_members)
         )
-        captured, err = capsys.readouterr()
+        _captured, err = capsys.readouterr()
         assert isinstance(err, str)
 
     def test_get_edges(self, typed_ethane):
@@ -192,7 +192,7 @@ class TestNetworkx(BaseTest):
 
     def test_report_bond_parameters(self, typed_ethane, capsys):
         report_bond_parameters(typed_ethane, [typed_ethane.bonds[0].connection_members])
-        captured, err = capsys.readouterr()
+        _captured, err = capsys.readouterr()
         assert isinstance(err, str)
 
     def test_return_labels_for_nodes(self, typed_ethane):
@@ -206,13 +206,13 @@ class TestNetworkx(BaseTest):
             == 8
         )
         assert (
-            list(return_labels_for_nodes(graph.nodes, ["atom_type.error"]).values())[0][
-                -8:
-            ]
+            next(
+                iter(return_labels_for_nodes(graph.nodes, ["atom_type.error"]).values())
+            )[-8:]
             == "NoneType"
         )
         assert (
-            list(return_labels_for_nodes(graph.nodes, ["error"]).values())[0][-8:]
+            next(iter(return_labels_for_nodes(graph.nodes, ["error"]).values()))[-8:]
             == "NoneType"
         )
 
@@ -220,7 +220,7 @@ class TestNetworkx(BaseTest):
         graph = to_networkx(typed_ethane)
         select_angles_from_sites(graph, typed_ethane, Atom1="C", Atom2="H", Atom3="C")
         select_angles_from_sites(graph, typed_ethane, Atom1="O", Atom2="H", Atom3="C")
-        captured, err = capsys.readouterr()
+        _captured, err = capsys.readouterr()
         assert isinstance(err, str)
 
     def test_call_interactive_sites(self, typed_ethane):

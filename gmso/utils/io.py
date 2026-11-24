@@ -8,7 +8,7 @@ import textwrap
 from importlib.resources import files
 from unittest import SkipTest
 
-MESSAGES = dict()
+MESSAGES = {}
 MESSAGES["matplotlib.pyplot"] = """
 The code at {filename}:{line_number} requires the "matplotlib" package
 matplotlib can be installed using:
@@ -28,8 +28,6 @@ or
 
 class DelayImportError(ImportError, SkipTest):
     """Delay an import error for testing utilities."""
-
-    pass
 
 
 def get_fn(filename):
@@ -51,7 +49,7 @@ def get_fn(filename):
     """
     fn = files("gmso") / "utils/files" / filename
     if not os.path.exists(fn):
-        raise IOError("Sorry! {} does not exists.".format(fn))
+        raise OSError(f"Sorry! {fn} does not exists.")
     return str(fn)
 
 
@@ -91,15 +89,15 @@ def import_(module):
                 + module
                 + " package"
             )
-            raise ImportError("No module named %s" % module)
+            raise ImportError(f"No module named {module}")
 
         (
-            frame,
+            _frame,
             filename,
             line_number,
-            function_name,
-            lines,
-            index,
+            _function_name,
+            _lines,
+            _index,
         ) = inspect.getouterframes(inspect.currentframe())[1]
 
         m = message.format(filename=os.path.basename(filename), line_number=line_number)
@@ -111,7 +109,7 @@ def import_(module):
             + "\033[0m"
         )
 
-        print("", file=sys.stderr)
+        print(file=sys.stderr)
         print(bar, file=sys.stderr)
         print(m, file=sys.stderr)
         print(bar, file=sys.stderr)
@@ -210,7 +208,7 @@ except ImportError:
 def run_from_ipython():
     """Verify that the code is running in an ipython kernel."""
     try:
-        __IPYTHON__
-        return True
+        shell = get_ipython().__class__.__name__
+        return shell == "ZMQInteractiveShell"
     except NameError:
         return False

@@ -1,7 +1,5 @@
 """Defined interactions for improper-style connections."""
 
-from typing import Optional, Tuple
-
 import unyt as u
 from pydantic import ConfigDict, Field
 
@@ -31,20 +29,20 @@ class ImproperType(ParametricPotential):
     ``__eq__``, ``_validate`` functions.
     """
 
-    member_types_: Optional[Tuple[str, str, str, str]] = Field(
+    member_types_: tuple[str, str, str, str] | None = Field(
         None,
         description="List-like of gmso.AtomType.name "
         "defining the members of this improper type",
         alias="member_types",
     )
 
-    member_classes_: Optional[Tuple[str, str, str, str]] = Field(
+    member_classes_: tuple[str, str, str, str] | None = Field(
         None,
         description="List-like of gmso.AtomType.atomclass "
         "defining the members of this improper type",
         alias="member_classes",
     )
-    identifier_: Optional[str] = Field(
+    identifier_: str | None = Field(
         None,
         description="ForceField key identifier",
         alias="identifier",
@@ -52,10 +50,8 @@ class ImproperType(ParametricPotential):
     model_config = ConfigDict(
         alias_to_fields=dict(
             **ParametricPotential.model_config["alias_to_fields"],
-            **{
-                "member_types": "member_types_",
-                "member_classes": "member_classes_",
-            },
+            member_types="member_types_",
+            member_classes="member_classes_",
         ),
     )
 
@@ -71,7 +67,7 @@ class ImproperType(ParametricPotential):
         identifier=None,
         tags=None,
     ):
-        super(ImproperType, self).__init__(
+        super().__init__(
             name=name,
             expression=expression,
             parameters=parameters,

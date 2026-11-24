@@ -4,7 +4,6 @@ import json
 import logging
 from importlib.resources import as_file, files
 from re import sub
-from typing import Union
 
 import numpy as np
 import unyt as u
@@ -44,7 +43,7 @@ class Element(GMSOBase):
     mass: u.unyt_quantity = Field(..., description="Mass of the element.")
 
     @field_serializer("mass")
-    def serialize_mass(self, mass: Union[u.unyt_quantity, None]):
+    def serialize_mass(self, mass: u.unyt_quantity | None):
         if mass is None:
             return None
         else:

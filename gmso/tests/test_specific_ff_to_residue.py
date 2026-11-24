@@ -49,7 +49,7 @@ class TestSpecificFFToResidue(BaseTest):
         with pytest.raises(
             GMSOError,
             match="A particle named C cannot be associated with the\n        "
-            "custom_groups \['ETH'\]. "
+            r"custom_groups \['ETH'\]. "
             "Be sure to specify a list of group names that will cover\n        "
             "all particles in the compound. This particle is one level below ETO.",
         ):
@@ -233,16 +233,16 @@ class TestSpecificFFToResidue(BaseTest):
         )
 
         [
-            test_topology,
+            _test_topology,
             test_residues_applied_list,
             test_electrostatics14Scale_dict,
             test_nonBonded14Scale_dict,
-            test_atom_types_dict,
-            test_bond_types_dict,
-            test_angle_types_dict,
-            test_dihedral_types_dict,
-            test_improper_types_dict,
-            test_combining_rule_dict,
+            _test_atom_types_dict,
+            _test_bond_types_dict,
+            _test_angle_types_dict,
+            _test_dihedral_types_dict,
+            _test_improper_types_dict,
+            _test_combining_rule_dict,
         ] = specific_ff_to_residue(
             test_box_ethane_gomc,
             forcefield_selection={
@@ -296,7 +296,7 @@ class TestSpecificFFToResidue(BaseTest):
             match=r"If you are not providing an empty box, "
             r"you need to specify the atoms/beads as children in the mb.Compound. "
             r"If you are providing and empty box, please do so by specifying and "
-            r"mbuild Box \({}\)".format(type(Box(lengths=[1, 1, 1]))),
+            rf"mbuild Box \({type(Box(lengths=[1, 1, 1]))}\)",
         ):
             specific_ff_to_residue(
                 empty_box,
@@ -328,12 +328,12 @@ class TestSpecificFFToResidue(BaseTest):
             test_residues_applied_list,
             test_electrostatics14Scale_dict,
             test_nonBonded14Scale_dict,
-            test_atom_types_dict,
-            test_bond_types_dict,
-            test_angle_types_dict,
-            test_dihedral_types_dict,
-            test_improper_types_dict,
-            test_combining_rule_dict,
+            _test_atom_types_dict,
+            _test_bond_types_dict,
+            _test_angle_types_dict,
+            _test_dihedral_types_dict,
+            _test_improper_types_dict,
+            _test_combining_rule_dict,
         ] = specific_ff_to_residue(
             box_reservior_3,
             forcefield_selection={
@@ -380,6 +380,9 @@ class TestSpecificFFToResidue(BaseTest):
     def test_charmm_all_residues_not_in_dict_boxes_for_simulation_2(
         self, ethane_gomc, ethanol_gomc
     ):
+        box_reservior_0 = mb.fill_box(
+            compound=[ethane_gomc], box=[1, 1, 1], n_compounds=[1]
+        )
         with pytest.warns(
             UserWarning,
             match=f"The {'ETO'} residues were not used from the forcefield_selection string or dictionary. "
@@ -392,9 +395,6 @@ class TestSpecificFFToResidue(BaseTest):
             f"NOTE: This warning will appear if you are using the CHARMM pdb and psf writers "
             f"2 boxes, and the boxes do not contain all the residues in each box.",
         ):
-            box_reservior_0 = mb.fill_box(
-                compound=[ethane_gomc], box=[1, 1, 1], n_compounds=[1]
-            )
             specific_ff_to_residue(
                 box_reservior_0,
                 forcefield_selection={
@@ -511,10 +511,10 @@ class TestSpecificFFToResidue(BaseTest):
             test_electrostatics14Scale_dict,
             test_nonBonded14Scale_dict,
             test_atom_types_dict,
-            test_bond_types_dict,
-            test_angle_types_dict,
-            test_dihedral_types_dict,
-            test_improper_types_dict,
+            _test_bond_types_dict,
+            _test_angle_types_dict,
+            _test_dihedral_types_dict,
+            _test_improper_types_dict,
             test_combining_rule_dict,
         ] = specific_ff_to_residue(
             methane_box,

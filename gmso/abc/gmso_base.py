@@ -3,17 +3,17 @@
 import json
 import logging
 from abc import ABC
-from typing import Any, Type
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, validators
 
 from gmso.abc.serialization_utils import dict_to_unyt
 
 dict_validator = validators.getattr_migration("dict_validator")
-Model = Type["Model"]
-DictStrAny = Type["DictStrAny"]
-TupleGenerator = Type["TupleGenerator"]
-CallableGenerator = Type["CallableGenerator"]
+Model = type["Model"]
+DictStrAny = type["DictStrAny"]
+TupleGenerator = type["TupleGenerator"]
+CallableGenerator = type["CallableGenerator"]
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ class GMSOBase(BaseModel, ABC):
     @classmethod
     def model_validate(cls: Model, obj: Any) -> Model:
         dict_to_unyt(obj)
-        return super(GMSOBase, cls).model_validate(obj)
+        return super().model_validate(obj)
 
     def model_dump(self, **kwargs) -> DictStrAny:
         kwargs["by_alias"] = True
@@ -62,7 +62,7 @@ class GMSOBase(BaseModel, ABC):
                 if term in self.model_config["alias_to_fields"]:
                     additional_excludes.add(self.model_config["alias_to_fields"][term])
             kwargs["exclude"] = kwargs["exclude"].union(additional_excludes)
-        super_dict = super(GMSOBase, self).model_dump(**kwargs)
+        super_dict = super().model_dump(**kwargs)
         return super_dict
 
     def model_dump_json(self, **kwargs):
@@ -74,7 +74,7 @@ class GMSOBase(BaseModel, ABC):
                 if term in self.model_config["alias_to_fields"]:
                     additional_excludes.add(self.model_config["alias_to_fields"][term])
             kwargs["exclude"] = kwargs["exclude"].union(additional_excludes)
-        super_dict = super(GMSOBase, self).model_dump_json(**kwargs)
+        super_dict = super().model_dump_json(**kwargs)
 
         return super_dict
 

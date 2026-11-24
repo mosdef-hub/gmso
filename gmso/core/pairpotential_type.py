@@ -1,5 +1,3 @@
-from typing import Optional, Tuple
-
 import unyt as u
 from pydantic import ConfigDict, Field
 
@@ -26,13 +24,13 @@ class PairPotentialType(ParametricPotential):
         __eq__, _validate functions
     """
 
-    member_types_: Optional[Tuple[str, str]] = Field(
+    member_types_: tuple[str, str] | None = Field(
         None,
         description="List-like of strs, referring to gmso.Atomtype.name or gmso.Atomtype.atomclass, "
         "defining the members of this pair potential type",
         alias="member_types",
     )
-    identifier_: Optional[str] = Field(
+    identifier_: str | None = Field(
         None,
         description="ForceField key identifier",
         alias="identifier",
@@ -40,10 +38,8 @@ class PairPotentialType(ParametricPotential):
     model_config = ConfigDict(
         alias_to_fields=dict(
             **ParametricPotential.model_config["alias_to_fields"],
-            **{
-                "member_types": "member_types_",
-                "identifier": "identifier_",
-            },
+            member_types="member_types_",
+            identifier="identifier_",
         ),
     )
 
@@ -58,7 +54,7 @@ class PairPotentialType(ParametricPotential):
         identifier=None,
         tags=None,
     ):
-        super(PairPotentialType, self).__init__(
+        super().__init__(
             name=name,
             expression=expression,
             parameters=parameters,

@@ -1,6 +1,7 @@
 """Support for 3-partner connections between gmso.core.Atoms."""
 
-from typing import Callable, ClassVar, Optional, Tuple
+from collections.abc import Callable
+from typing import ClassVar
 
 from pydantic import ConfigDict, Field, model_validator
 
@@ -29,15 +30,15 @@ class Angle(Connection):
 
     __members_creator__: ClassVar[Callable] = Atom.model_validate
 
-    connectivity: ClassVar[Tuple[Tuple[int]]] = ((0, 1), (1, 2))
+    connectivity: ClassVar[tuple[tuple[int]]] = ((0, 1), (1, 2))
 
-    connection_members_: Tuple[Atom, Atom, Atom] = Field(
+    connection_members_: tuple[Atom, Atom, Atom] = Field(
         ...,
         description="The 3 atoms involved in the angle.",
         alias="connection_members",
     )
 
-    bonds_: Tuple[Bond, Bond] = Field(
+    bonds_: tuple[Bond, Bond] = Field(
         default=None,
         description="""
         List of connection bonds.
@@ -47,13 +48,13 @@ class Angle(Connection):
         alias="bonds",
     )
 
-    angle_type_: Optional[AngleType] = Field(
+    angle_type_: AngleType | None = Field(
         default=None,
         description="AngleType of this angle.",
         alias="angle_type",
     )
 
-    restraint_: Optional[dict] = Field(
+    restraint_: dict | None = Field(
         default=None,
         description="""
         Restraint for this angle, must be a dict with the following keys:
@@ -67,10 +68,8 @@ class Angle(Connection):
     model_config = ConfigDict(
         alias_to_fields=dict(
             **Connection.model_config["alias_to_fields"],
-            **{
-                "angle_type": "angle_type_",
-                "restraint": "restraint_",
-            },
+            angle_type="angle_type_",
+            restraint="restraint_",
         )
     )
 
@@ -122,9 +121,9 @@ class Angle(Connection):
     def __setattr__(self, key, value):
         """Set the attributes of the angle."""
         if key == "connection_type":
-            super(Angle, self).__setattr__("angle_type", value)
+            super().__setattr__("angle_type", value)
         else:
-            super(Angle, self).__setattr__(key, value)
+            super().__setattr__(key, value)
 
     @model_validator(mode="before")
     @classmethod

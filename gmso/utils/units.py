@@ -9,7 +9,7 @@ from sympy import Symbol
 from gmso.exceptions import NotYetImplementedWarning
 
 
-class GMSO_UnitRegistry(object):
+class GMSO_UnitRegistry:
     """A default unit registry class.
 
     The basic units that need to be added for various unit conversions done
@@ -82,9 +82,7 @@ class GMSO_UnitRegistry(object):
 
 def register_general_units(reg: u.UnitRegistry):
     """Register units that are generally useful to a basic unyt UnitSystem."""
-    elementary_charge_conversion = (
-        1 * getattr(u.physical_constants, "elementary_charge").value
-    )
+    elementary_charge_conversion = 1 * u.physical_constants.elementary_charge.value
     charge_dim = u.dimensions.current_mks * u.dimensions.time
     reg.add(
         "elementary_charge",
@@ -93,7 +91,7 @@ def register_general_units(reg: u.UnitRegistry):
         r"\rm{e}",
     )  # proton charge
 
-    kb_conversion = 1 * getattr(u.physical_constants, "boltzmann_constant_mks").value
+    kb_conversion = 1 * u.physical_constants.boltzmann_constant_mks.value
     kb_dim = u.dimensions.energy / u.dimensions.temperature
     reg.add(
         "kb", base_value=kb_conversion, dimensions=kb_dim, tex_repr=r"\rm{kb}"
@@ -102,11 +100,11 @@ def register_general_units(reg: u.UnitRegistry):
     bohr_rad_conversion = (
         4
         * np.pi
-        * getattr(u.physical_constants, "reduced_planck_constant").value ** 2
-        * getattr(u.physical_constants, "eps_0").value
+        * u.physical_constants.reduced_planck_constant.value**2
+        * u.physical_constants.eps_0.value
         / (
-            getattr(u.physical_constants, "electron_charge").value ** 2
-            * getattr(u.physical_constants, "electron_mass").value
+            u.physical_constants.electron_charge.value**2
+            * u.physical_constants.electron_mass.value
         )
     )
     bohr_rad_dim = u.dimensions.length
@@ -118,9 +116,9 @@ def register_general_units(reg: u.UnitRegistry):
     )  # bohr radius
 
     hartree_conversion = (
-        getattr(u.physical_constants, "reduced_planck_constant").value ** 2
+        u.physical_constants.reduced_planck_constant.value**2
         / u.Unit("a0", registry=reg).base_value ** 2
-        / getattr(u.physical_constants, "electron_mass").value
+        / u.physical_constants.electron_mass.value
     )
     hartree_dim = u.dimensions.energy
     reg.add(
@@ -131,7 +129,7 @@ def register_general_units(reg: u.UnitRegistry):
     )  # Hartree energy
 
     static_coulomb_conversion = np.sqrt(
-        10**9 / (4 * np.pi * getattr(u.physical_constants, "eps_0").value)
+        10**9 / (4 * np.pi * u.physical_constants.eps_0.value)
     )
     charge_dim = u.dimensions.charge
     reg.add(
@@ -352,7 +350,7 @@ class LAMMPS_UnitSystems:
             return dims
         energySym = Symbol("(energy)")  # create dummy symbol to replace in equation
         dim_info = dims.as_terms()
-        time_idx = np.where(list(map(lambda x: x.name == "(time)", dim_info[1])))[0][0]
+        time_idx = np.where([x.name == "(time)" for x in dim_info[1]])[0][0]
         energy_exp = (
             dim_info[0][0][1][1][time_idx] // 2
         )  # energy has 1/time**2 in it, so this is the hint of how many
@@ -367,9 +365,7 @@ class LAMMPS_UnitSystems:
             return dims
         chargeSym = Symbol("(charge)")  # create dummy symbol to replace in equation
         dim_info = dims.as_terms()
-        current_idx = np.where(
-            list(map(lambda x: x.name == "(current_mks)", dim_info[1]))
-        )[0][0]
+        current_idx = np.where([x.name == "(current_mks)" for x in dim_info[1]])[0][0]
         charge_exp = dim_info[0][0][1][1][
             current_idx
         ]  # charge has (current_mks) in it, so this is the hint of how many
@@ -384,9 +380,7 @@ class LAMMPS_UnitSystems:
             return dims
         energySym = Symbol("(energy)")  # create dummy symbol to replace in equation
         dim_info = dims.as_terms()
-        temp_idx = np.where(
-            list(map(lambda x: x.name == "(temperature)", dim_info[1]))
-        )[0][0]
+        temp_idx = np.where([x.name == "(temperature)" for x in dim_info[1]])[0][0]
         temp_exp = dim_info[0][0][1][1][
             temp_idx
         ]  # energy has 1/time**2 in it, so this is the hint of how many
@@ -498,16 +492,16 @@ def convert_params_units(
         the input potentials converted into the base units given by
         base_units `dict`.
     """
-    converted_potentials = list()
+    converted_potentials = []
     for potential in potentials:
-        converted_params = dict()
+        converted_params = {}
         for parameter in potential.parameters:
             unit_dim = expected_units_dim[parameter]
             ind_units = re.sub("[^a-zA-Z]+", " ", unit_dim).split()
             for unit in ind_units:
                 unit_dim = unit_dim.replace(
                     unit,
-                    f"({str(base_units[unit].value)} * {str(base_units[unit].units)})",
+                    f"({base_units[unit].value!s} * {base_units[unit].units!s})",
                 )
 
             converted_params[parameter] = potential.parameters[parameter].to(unit_dim)

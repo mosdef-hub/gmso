@@ -302,7 +302,7 @@ class TestForceFieldFromXML(BaseTest):
         assert len(ff.angle_types) == 0
         assert len(ff.dihedral_types) == 0
 
-        for name, atom_type in ff.atom_types.items():
+        for atom_type in ff.atom_types.values():
             assert sympy.simplify(atom_type.expression - ref_expr) == 0
 
         assert_allclose_units(
@@ -547,11 +547,9 @@ class TestForceFieldFromXML(BaseTest):
         )
 
     def test_error_duplicated_types(self):
-        # Temporarily opt out, pending new forcefield-utilities release
-        # with pytest.raises(ValueError) as e:
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError) as e:
             ForceField(get_path("ff-nonunique-dihedral.xml"))
-            # assert (
-            #     e
-            #     == "Duplicate identifier found for DihedralTypes: ('CT', 'CT', 'CT', 'HC')"
-            # )
+            assert (
+                e
+                == "Duplicate identifier found for DihedralTypes: ('CT', 'CT', 'CT', 'HC')"
+            )

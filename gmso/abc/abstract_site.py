@@ -1,7 +1,8 @@
 """Basic interaction site in GMSO that all other sites will derive from."""
 
 import logging
-from typing import Any, ClassVar, Optional, Sequence, TypeVar, Union
+from collections.abc import Sequence
+from typing import Any, ClassVar, TypeVar
 
 import numpy as np
 import unyt as u
@@ -20,7 +21,7 @@ from gmso.exceptions import GMSOError
 
 logger = logging.getLogger(__name__)
 
-PositionType = Union[Sequence[float], np.ndarray, u.unyt_array]
+PositionType = Sequence[float] | np.ndarray | u.unyt_array
 
 
 class Molecule(GMSOBase):
@@ -82,7 +83,7 @@ class Molecule(GMSOBase):
         """Test if two objects are equivalent."""
         if isinstance(other, (list, tuple)):
             return all(
-                [val1 == val2 for val1, val2 in zip(self.__dict__.values(), other)]
+                val1 == val2 for val1, val2 in zip(self.__dict__.values(), other)
             )
         else:
             return self.__dict__ == other.__dict__
@@ -134,7 +135,7 @@ class Residue(GMSOBase):
         """Test if two objects are equivalent."""
         if isinstance(other, (list, tuple)):
             return all(
-                [val1 == val2 for val1, val2 in zip(self.__dict__.values(), other)]
+                val1 == val2 for val1, val2 in zip(self.__dict__.values(), other)
             )
         else:
             return self.__dict__ == other.__dict__
@@ -198,19 +199,19 @@ class Site(GMSOBase):
         "", description="Label to be assigned to the site", alias="label"
     )
 
-    group_: Optional[StrictStr] = Field(
+    group_: StrictStr | None = Field(
         None,
         description="Flexible alternative label relative to site",
         alias="group",
     )
 
-    molecule_: Optional[Union[Molecule, list, tuple]] = Field(
+    molecule_: Molecule | list | tuple | None = Field(
         None,
         description="Molecule label for the site, format of (molecule_name, molecule_number)",
         alias="molecule",
     )
 
-    residue_: Optional[Union[Residue, list, tuple]] = Field(
+    residue_: Residue | list | tuple | None = Field(
         None,
         description="Residue label for the site, format of (residue_name, residue_number)",
         alias="residue",
@@ -254,12 +255,12 @@ class Site(GMSOBase):
         return self.__dict__.get("group_")
 
     @property
-    def molecule(self) -> Optional[Molecule]:
+    def molecule(self) -> Molecule | None:
         """Return the molecule label of the site."""
         return self.__dict__.get("molecule_")
 
     @property
-    def residue(self) -> Optional[Residue]:
+    def residue(self) -> Residue | None:
         """Return the residue label of the site."""
         return self.__dict__.get("residue_")
 

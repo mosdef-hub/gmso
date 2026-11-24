@@ -3,7 +3,6 @@
 import datetime
 import logging
 from pathlib import Path
-from typing import Union
 
 import networkx as nx
 import numpy as np
@@ -30,7 +29,7 @@ potential_templates = PotentialTemplateLibrary()
 
 
 @saves_as(".mcf")
-def write_mcf(top: "Topology", filename: Union[str, Path]) -> None:
+def write_mcf(top: "Topology", filename: str | Path) -> None:
     """Write a Cassandra Monte Carlo MCF file from a :class:`~gmso.Topology`.
 
     The MCF file encodes the topology of a single molecular species for the
@@ -62,11 +61,10 @@ def write_mcf(top: "Topology", filename: Union[str, Path]) -> None:
     for molecule in top.unique_site_labels(name_only=True):
         subtops.append(top.create_subtop("molecule", (molecule, 0)))
 
-    if len(subtops) > 1:
-        if len(filename) != len(subtops):
-            raise ValueError(
-                "write_mcf: Number of filenames must match number of unique species in the Topology object"
-            )
+    if len(subtops) > 1 and len(filename) != len(subtops):
+        raise ValueError(
+            "write_mcf: Number of filenames must match number of unique species in the Topology object"
+        )
 
     for idx, subtop in enumerate(subtops):
         _check_compatibility(subtop)
@@ -89,7 +87,7 @@ def write_mcf(top: "Topology", filename: Union[str, Path]) -> None:
                 "!***************************************"
                 "****************************************\n"
                 f"!File {filename} written by gmso {__version__} "
-                f"at {str(datetime.datetime.now())}\n\n"
+                f"at {datetime.datetime.now(datetime.timezone.utc).astimezone()!s}\n\n"
             )
 
             mcf.write(header)
@@ -194,12 +192,12 @@ def _id_rings_fragments(top):
         for idx in adjacent_atoms:
             adj_to_ring[idx] = True
     # Now ID the other fragments
-    for idx in neigh_dict:
-        if len(neigh_dict[idx]) > 1:
+    for idx, value in neigh_dict.items():
+        if len(value) > 1:
             if in_ring[idx] is True:
                 continue
             else:
-                frag_list.append([idx] + neigh_dict[idx])
+                frag_list.append([idx] + value)
     # Now find connectivity (shared bonds)
     for i in range(len(frag_list)):
         frag1 = frag_list[i]
@@ -314,16 +312,10 @@ def _write_atom_information(mcf, top, in_ring):
     )
 
     mcf.write(header)
-    mcf.write("{:d}\n".format(len(top.sites)))
+    mcf.write(f"{len(top.sites):d}\n")
     for idx, site in enumerate(top.sites):
         mcf.write(
-            "{:<4d}  {:<6s}  {:<2s}  {:8.4f}  {:12.8f}  ".format(
-                idx + 1,
-                atypes_list[idx],
-                names[idx],
-                site.atom_type.mass.in_units(u.amu).value,
-                site.charge.in_units(u.elementary_charge).value,
-            )
+            f"{idx + 1:<4d}  {atypes_list[idx]:<6s}  {names[idx]:<2s}  {site.atom_type.mass.in_units(u.amu).value:8.4f}  {site.charge.in_units(u.elementary_charge).value:12.8f}  "
         )
         if vdw_style == "LJ":
             mcf.write(
@@ -362,7 +354,7 @@ def _write_bond_information(mcf, top):
     mcf.write("\n!Bond Format\n")
     mcf.write("!index i j type parameters\n" + '!type="fixed", parms=bondLength\n')
     mcf.write("\n# Bond_Info\n")
-    mcf.write("{:d}\n".format(len(top.bonds)))
+    mcf.write(f"{len(top.bonds):d}\n")
     for idx, bond in enumerate(top.bonds):
         mcf.write(
             "{:<4d}  {:<4d}  {:<4d}  {:s}  {:10.5f}\n".format(
@@ -394,7 +386,7 @@ def _write_angle_information(mcf, top):
     )
 
     mcf.write(header)
-    mcf.write("{:d}\n".format(len(top.angles)))
+    mcf.write(f"{len(top.angles):d}\n")
     for idx, angle in enumerate(top.angles):
         mcf.write(
             f"{idx + 1:<4d}  "
@@ -451,16 +443,10 @@ def _write_dihedral_information(mcf, top):
 
     mcf.write(header)
 
-    mcf.write("{:d}\n".format(len(top.dihedrals)))
+    mcf.write(f"{len(top.dihedrals):d}\n")
     for idx, dihedral in enumerate(top.dihedrals):
         mcf.write(
-            "{:<4d}  {:<4d}  {:<4d}  {:<4d}  {:<4d}  ".format(
-                idx + 1,
-                top.get_index(dihedral.connection_members[0]) + 1,
-                top.get_index(dihedral.connection_members[1]) + 1,
-                top.get_index(dihedral.connection_members[2]) + 1,
-                top.get_index(dihedral.connection_members[3]) + 1,
-            )
+            f"{idx + 1:<4d}  {top.get_index(dihedral.connection_members[0]) + 1:<4d}  {top.get_index(dihedral.connection_members[1]) + 1:<4d}  {top.get_index(dihedral.connection_members[2]) + 1:<4d}  {top.get_index(dihedral.connection_members[3]) + 1:<4d}  "
         )
         dihedral_style = _get_dihedral_style(dihedral)
         dihedral_style = dihedral_style.upper()
@@ -555,7 +541,7 @@ def _write_improper_information(mcf, top):
     )
 
     mcf.write(header)
-    mcf.write("{:d}\n".format(len(top.impropers)))
+    mcf.write(f"{len(top.impropers):d}\n")
 
     improper_style = "harmonic"
     for i, improper in enumerate(top.impropers):
@@ -608,17 +594,17 @@ def _write_fragment_information(mcf, top, frag_list, frag_conn):
             logger.info("More than two atoms present but no fragments identified.")
             mcf.write("0\n")
     else:
-        mcf.write("{:d}\n".format(len(frag_list)))
+        mcf.write(f"{len(frag_list):d}\n")
         for i, frag in enumerate(frag_list):
-            mcf.write("{:d}    {:d}".format(i + 1, len(frag)))
+            mcf.write(f"{i + 1:d}    {len(frag):d}")
             for idx in frag:
-                mcf.write("    {:d}".format(idx + 1))
+                mcf.write(f"    {idx + 1:d}")
             mcf.write("\n")
 
     mcf.write("\n\n# Fragment_Connectivity\n")
-    mcf.write("{:d}\n".format(len(frag_conn)))
+    mcf.write(f"{len(frag_conn):d}\n")
     for i, conn in enumerate(frag_conn):
-        mcf.write("{:d}    {:d}    {:d}\n".format(i + 1, conn[0] + 1, conn[1] + 1))
+        mcf.write(f"{i + 1:d}    {conn[0] + 1:d}    {conn[1] + 1:d}\n")
 
 
 def _write_intrascaling_information(mcf, top):
@@ -652,7 +638,7 @@ def _check_compatibility(top):
     """Check Topology object for compatibility with Cassandra MCF format."""
     if not isinstance(top, Topology):
         raise GMSOError("MCF writer requires a Topology object.")
-    if not all([site.atom_type for site in top.sites]):
+    if not all(site.atom_type for site in top.sites):
         raise GMSOError("MCF writing not supported without parameterized forcefield.")
     accepted_potentials = (
         potential_templates["LennardJonesPotential"],
@@ -705,7 +691,9 @@ def _get_dihedral_style(dihedral):
 def _get_potential_style(styles, potential):
     """Return the potential style."""
     for style, ref in styles.items():
-        if ref.independent_variables == potential.independent_variables:
-            if symengine.expand(ref.expression - potential.expression) == 0:
-                return style
+        if (
+            ref.independent_variables == potential.independent_variables
+            and symengine.expand(ref.expression - potential.expression) == 0
+        ):
+            return style
     return False

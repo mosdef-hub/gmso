@@ -1,7 +1,5 @@
 """Functions used to atomtype a gmso.Topology."""
 
-from typing import Dict, List, Set, Tuple, Union
-
 from gmso import ForceField, Topology
 from gmso.parameterization.topology_parameterizer import (
     TopologyParameterizationConfig,
@@ -13,12 +11,12 @@ __all__ = ["apply"]
 
 def apply(
     top: Topology,
-    forcefields: Union[ForceField, Dict[str, ForceField]],
+    forcefields: ForceField | dict[str, ForceField],
     match_ff_by: str = "molecule",
     identify_connections: bool = False,
     speedup_by_molgraph: bool = False,
     speedup_by_moltag: bool = False,
-    ignore_params: Union[List[str], Set[str], Tuple[str, ...]] = ["improper"],
+    ignore_params: list[str] | set[str] | tuple[str, ...] | None = None,
     remove_untyped: bool = True,
     fast_copy: bool = True,
 ) -> Topology:
@@ -92,17 +90,19 @@ def apply(
     >>> ff_ethanol = ForceField("oplsaa.xml")
     >>> typed_top = apply(top, {"water": ff_water, "ethanol": ff_ethanol})
     """
-    ignore_params = set([option.lower().rstrip("s") for option in ignore_params])
+    if ignore_params is None:
+        ignore_params = ["improper"]
+    ignore_params = {option.lower().rstrip("s") for option in ignore_params}
     config = TopologyParameterizationConfig.model_validate(
-        dict(
-            match_ff_by=match_ff_by,
-            identify_connections=identify_connections,
-            speedup_by_molgraph=speedup_by_molgraph,
-            speedup_by_moltag=speedup_by_moltag,
-            ignore_params=ignore_params,
-            remove_untyped=remove_untyped,
-            fast_copy=fast_copy,
-        )
+        {
+            "match_ff_by": match_ff_by,
+            "identify_connections": identify_connections,
+            "speedup_by_molgraph": speedup_by_molgraph,
+            "speedup_by_moltag": speedup_by_moltag,
+            "ignore_params": ignore_params,
+            "remove_untyped": remove_untyped,
+            "fast_copy": fast_copy,
+        }
     )
     parameterizer = TopologyParameterizer(
         topology=top, forcefields=forcefields, config=config

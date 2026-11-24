@@ -3,7 +3,7 @@
 import itertools
 import re
 from itertools import combinations
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 import networkx as nx
 from networkx.algorithms import shortest_path_length
@@ -111,7 +111,7 @@ def _add_connections(top, matches, conn_type):
     """Add connections to the topology."""
     for sorted_conn in matches:
         cmembers = [top.sites[idx] for idx in sorted_conn]
-        bonds = list()
+        bonds = []
         for i, j in CONNS[conn_type].connectivity:
             bond = (cmembers[i], cmembers[j])
             key = frozenset([bond, tuple(reversed(bond))])
@@ -272,14 +272,14 @@ def generate_pairs_lists(
 
     graph = to_networkx(top, parse_angles=False, parse_dihedrals=False)
 
-    pairs_dict = dict()
+    pairs_dict = {}
     if refer_from_scaling_factor:
         for i in range(3):
             if nb_scalings[i] or coulombic_scalings[i]:
-                pairs_dict[f"pairs1{i + 2}"] = list()
+                pairs_dict[f"pairs1{i + 2}"] = []
     else:
         for i in range(3):
-            pairs_dict = {f"pairs1{i + 2}": list() for i in range(3)}
+            pairs_dict = {f"pairs1{i + 2}": [] for i in range(3)}
 
     if molecule is None:
         bonds, angles, dihedrals = top.bonds, top.angles, top.dihedrals
@@ -294,18 +294,21 @@ def generate_pairs_lists(
             pairs_dict["pairs12"].append(pairs)
 
     if "pairs13" in pairs_dict:
+        found = set()  # set lookup speeds up checking membership
         for angle in angles:
             pairs = sorted(
                 (angle.connection_members[0], angle.connection_members[-1]),
                 key=sort_key,
             )
             if (
-                pairs not in pairs_dict["pairs13"]
+                tuple(pairs) not in found
                 and shortest_path_length(graph, pairs[0], pairs[1]) == 2
             ):
+                found.add(tuple(pairs))
                 pairs_dict["pairs13"].append(pairs)
 
     if "pairs14" in pairs_dict:
+        found = set()  # set lookup speeds up checking membership
         for dihedral in dihedrals:
             pairs = sorted(
                 (
@@ -315,9 +318,10 @@ def generate_pairs_lists(
                 key=sort_key,
             )
             if (
-                pairs not in pairs_dict["pairs14"]
+                tuple(pairs) not in found
                 and shortest_path_length(graph, pairs[0], pairs[1]) == 3
             ):
+                found.add(tuple(pairs))
                 pairs_dict["pairs14"].append(pairs)
 
     for key in pairs_dict:
@@ -331,9 +335,9 @@ def generate_pairs_lists(
 
 def identify_virtual_sites(
     topology: "Topology",
-    sites: List["Site"],
-    bonds: List["Bond"],
-    virtual_types: List[VirtualSite],
+    sites: list["Site"],
+    bonds: list["Bond"],
+    virtual_types: list[VirtualSite],
 ):
     """Identify virtual sites within an already typed topology based on the virtual_types.
 
@@ -384,7 +388,7 @@ def _get_graph_isomorphism_matches(g1, g2, match_by="identifier"):
     graph_matcher = nx.algorithms.isomorphism.GraphMatcher(
         g1, g2, node_match=node_match
     )
-    acceptedMaps = dict()
+    acceptedMaps = {}
     for mapping in graph_matcher.subgraph_isomorphisms_iter():
         possibleMap = {g1id: g2id for g1id, g2id in mapping.items()}
         acceptedMaps[frozenset(possibleMap.keys())] = possibleMap

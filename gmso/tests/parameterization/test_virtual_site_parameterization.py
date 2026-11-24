@@ -25,7 +25,6 @@ class TestTIP4PGMSO(ParameterizationBaseTest):
             speedup_by_molgraph=False,
             identify_connections=True,
         )
-        gmso_top.virtual_sites
         assert len(gmso_top.virtual_sites) == 1
         vtype = gmso_top.virtual_sites[0].virtual_type
         assert ("HW", "OW", "HW") == vtype.member_classes

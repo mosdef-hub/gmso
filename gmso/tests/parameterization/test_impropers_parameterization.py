@@ -17,7 +17,7 @@ from gmso.tests.utils import get_path
 class TestImpropersParameterization(ParameterizationBaseTest):
     def test_improper_parameterization(self, fake_improper_ff_gmso, ethane):
         ethane.identify_connections()
-        apply(ethane, fake_improper_ff_gmso, ignore_params=list())
+        apply(ethane, fake_improper_ff_gmso, ignore_params=[])
 
         lib = PotentialTemplateLibrary()
         template_improper_type = lib["PeriodicImproperPotential"]
@@ -57,7 +57,7 @@ class TestImpropersParameterization(ParameterizationBaseTest):
 
     def test_improper_assertion_error(self, ethane_methane_top, oplsaa_gmso):
         with pytest.raises(ParameterizationError):
-            apply(ethane_methane_top, oplsaa_gmso, ignore_params=list())
+            apply(ethane_methane_top, oplsaa_gmso, ignore_params=[])
 
     @pytest.mark.parametrize(
         "mol2_loc",
@@ -85,7 +85,7 @@ class TestImpropersParameterization(ParameterizationBaseTest):
                 elif [
                     improper.member_types[0],
                     set(improper.member_types[1:]),
-                ] == ["C_sp2", {"CH3_sp3", "CH_sp2", "CH_sp2"}]:
+                ] == ["C_sp2", {"CH3_sp3", "CH_sp2"}]:
                     params = improper.improper_type.get_parameters()
                     assert u.allclose_units(params["k"], 4.0 * u.kJ / u.mol)
                     assert u.allclose_units(params["n"], 1.0 * u.dimensionless)
@@ -95,6 +95,6 @@ class TestImpropersParameterization(ParameterizationBaseTest):
             else:
                 assert len(improper.member_classes) == 4
                 assert set(improper.member_classes) not in [
-                    {"CE", "HCE", "CE", "CE"},
-                    {"CE", "CT", "CE", "CE"},
+                    {"CE", "HCE"},
+                    {"CE", "CT"},
                 ]

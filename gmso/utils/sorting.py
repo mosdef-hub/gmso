@@ -13,6 +13,7 @@ from gmso.core.dihedral import Dihedral
 from gmso.core.dihedral_type import DihedralType
 from gmso.core.improper import Improper
 from gmso.core.improper_type import ImproperType
+from gmso.core.pairpotential_type import PairPotentialType
 
 potential_attribute_map = {
     Atom: "atom_type",
@@ -143,7 +144,7 @@ def sort_by_classes(potential):
             *sorted(potential.member_classes[1:3]),
             potential.member_classes[3],
         )
-    return ValueError(
+    raise ValueError(
         f"Potential {potential} not one of {potential_attribute_map.values()}"
     )
 
@@ -196,7 +197,9 @@ def sort_by_types(potential):
             *sorted(potential.member_types[1:3]),
             potential.member_types[3],
         )
-    return ValueError(
+    elif isinstance(potential, PairPotentialType):
+        return tuple(sorted(potential.member_types))
+    raise ValueError(
         f"Potential {potential} not one of {potential_attribute_map.values()}"
     )
 
@@ -219,9 +222,7 @@ def sort_connection_strings(namesList, improperBool=False):
         else:
             return tuple(namesList)
     elif len(namesList) == 4 and improperBool:
-        return tuple(
-            [namesList[0], *sorted(namesList[1:])],
-        )
+        return (namesList[0], *sorted(namesList[1:]))
     elif len(namesList) == 4 and not improperBool:
         if namesList[1] > namesList[2] or (
             namesList[1] == namesList[2] and namesList[0] > namesList[3]
@@ -230,7 +231,7 @@ def sort_connection_strings(namesList, improperBool=False):
         else:
             return tuple(namesList)
     else:
-        return ValueError(
+        raise ValueError(
             f"Cannot sort {namesList}. It is not a length of 2,3, or 4 members."
         )
 
@@ -247,8 +248,8 @@ def reindex_molecules(top):
             unique_moleculesDict[molecule.name] = {molecule.number}
 
     offsetDict = {}
-    for molecule in unique_moleculesDict:
-        min_val = min(unique_moleculesDict[molecule])
+    for molecule, val in unique_moleculesDict.items():
+        min_val = min(val)
         offsetDict[molecule] = min_val
 
     for site in top.sites:

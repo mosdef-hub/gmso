@@ -4,8 +4,8 @@ import copy
 import itertools
 import logging
 from collections import ChainMap
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 from lxml import etree
 from pydantic import ValidationError
@@ -65,7 +65,7 @@ def _group_vtype_by_expression(potential_types):
     return expr_group
 
 
-class ForceField(object):
+class ForceField:
     """A generic implementation of the forcefield class.
 
     The ForceField class is one of the core data structures in gmso, which is
@@ -173,10 +173,10 @@ class ForceField(object):
         """Get the non-element types in the ForceField."""
         non_element_types = set()
 
-        for name, atom_type in self.atom_types.items():
+        for atom_type in self.atom_types.values():
             element_symbol = atom_type.get_tag(
                 "element"
-            )  # FixMe: Should we make this a first class citizen?
+            )  # TODO: Should we make this a first class citizen?
             if element_symbol:
                 element = element_by_symbol(element_symbol)
                 non_element_types.add(element_symbol) if not element else None
@@ -794,7 +794,7 @@ class ForceField(object):
             from gmso.exceptions import ForceFieldError
 
             raise ForceFieldError(
-                f"The filename {str(filename)} is not an XML file. "
+                f"The filename {filename!s} is not an XML file. "
                 f"Please provide filename with .xml extension"
             )
 
@@ -842,8 +842,8 @@ class ForceField(object):
 
         should_parse_xml = False
         if not (
-            all(map(lambda x: isinstance(x, str), xmls_or_etrees))
-            or all(map(lambda x: isinstance(x, etree._ElementTree), xmls_or_etrees))
+            all(isinstance(x, str) for x in xmls_or_etrees)
+            or all(isinstance(x, etree._ElementTree) for x in xmls_or_etrees)
         ):
             raise TypeError(
                 "Please provide an iterable of strings "
@@ -851,7 +851,7 @@ class ForceField(object):
                 "or equivalent element Trees"
             )
 
-        if all(map(lambda x: isinstance(x, str), xmls_or_etrees)):
+        if all(isinstance(x, str) for x in xmls_or_etrees):
             should_parse_xml = True
 
         versions = []

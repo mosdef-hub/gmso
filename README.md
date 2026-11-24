@@ -22,16 +22,15 @@ from mbuild.lib.molecules import Ethane
 from gmso.external.convert_mbuild import from_mbuild
 from gmso.parameterization import apply
 from gmso.formats.lammpsdata import write_lammpsdata
+
 # Start with a mBuild compound
 mb_ethane = Ethane()
-oplsaa = ffutils.FoyerFFs().load('oplsaa').to_gmso_ff()
+oplsaa = ffutils.FoyerFFs().load("oplsaa").to_gmso_ff()
 # atomtype the system with foyer, and convert the resulting structure to a topology
 gmso_ethane = from_mbuild(mb_ethane)
-apply(top=gmso_ethane,
-      forcefields=oplsaa,
-      identify_connections=True)
+apply(top=gmso_ethane, forcefields=oplsaa, identify_connections=True)
 # Write out lammps datafile
-write_lammpsdata(gmso_ethane, filename='ethane.lammps', atom_style='full')
+write_lammpsdata(gmso_ethane, filename="ethane.lammps", atom_style="full")
 ```
 
 Introduction

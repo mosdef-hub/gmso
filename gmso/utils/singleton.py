@@ -1,7 +1,7 @@
 """Create an object based on the singleton design pattern."""
 
 
-class Singleton(object):
+class Singleton:
     """A helper super class to create singletons.
 
     A singleton class is a class for which no more than one
@@ -14,5 +14,5 @@ class Singleton(object):
     def __new__(cls):
         """Ensure that there is only 1 instance of the singleton ever."""
         if cls._inst is None:
-            cls._inst = super(Singleton, cls).__new__(cls)
+            cls._inst = super().__new__(cls)
         return cls._inst

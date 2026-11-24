@@ -60,7 +60,7 @@ def mark_WIP(message=""):
         @functools.wraps(function)
         def _inner(*args, **kwargs):
             logger.info(
-                "Call to function {} is WIP.".format(function.__name__),
+                f"Call to function {function.__name__} is WIP.",
                 category=UserWarning,
                 stacklevel=2,
             )

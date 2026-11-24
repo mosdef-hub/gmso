@@ -1,6 +1,7 @@
 """Module for 2-partner connections between sites."""
 
-from typing import Callable, ClassVar, Optional, Tuple
+from collections.abc import Callable
+from typing import ClassVar
 
 from pydantic import ConfigDict, Field
 
@@ -26,19 +27,19 @@ class Bond(Connection):
 
     __members_creator__: ClassVar[Callable] = Atom.model_validate
 
-    connectivity: ClassVar[Tuple[Tuple[int]]] = ((0, 1),)
+    connectivity: ClassVar[tuple[tuple[int]]] = ((0, 1),)
 
-    connection_members_: Tuple[Atom, Atom] = Field(
+    connection_members_: tuple[Atom, Atom] = Field(
         ...,
         description="The 2 atoms involved in the bond.",
         alias="connection_members",
     )
-    bond_type_: Optional[BondType] = Field(
+    bond_type_: BondType | None = Field(
         default=None,
         description="BondType of this bond.",
         alias="bond_type",
     )
-    restraint_: Optional[dict] = Field(
+    restraint_: dict | None = Field(
         default=None,
         description="""
         Restraint for this bond, must be a dict with the following keys:
@@ -49,7 +50,7 @@ class Bond(Connection):
         alias="restraint",
     )
 
-    bond_order_: Optional[float] = Field(
+    bond_order_: float | None = Field(
         default=None,
         description="Bond order of this bond.",
         alias="bond_order",
@@ -58,11 +59,9 @@ class Bond(Connection):
     model_config = ConfigDict(
         alias_to_fields=dict(
             **Connection.model_config["alias_to_fields"],
-            **{
-                "bond_type": "bond_type_",
-                "restraint": "restraint_",
-                "bond_order": "bond_order_",
-            },
+            bond_type="bond_type_",
+            restraint="restraint_",
+            bond_order="bond_order_",
         )
     )
 
@@ -114,6 +113,6 @@ class Bond(Connection):
     def __setattr__(self, key, value):
         """Handle attribute assignment."""
         if key == "connection_type":
-            super(Bond, self).__setattr__("bond_type", value)
+            super().__setattr__("bond_type", value)
         else:
-            super(Bond, self).__setattr__(key, value)
+            super().__setattr__(key, value)

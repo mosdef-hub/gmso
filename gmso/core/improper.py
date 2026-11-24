@@ -1,6 +1,7 @@
 """Support for improper style connections (4-member connection)."""
 
-from typing import Callable, ClassVar, Optional, Tuple
+from collections.abc import Callable
+from typing import ClassVar
 
 from pydantic import ConfigDict, Field, model_validator
 
@@ -32,16 +33,16 @@ class Improper(Connection):
 
     __members_creator__: ClassVar[Callable] = Atom.model_validate
 
-    connectivity: ClassVar[Tuple[Tuple[int]]] = ((0, 1), (0, 2), (0, 3))
+    connectivity: ClassVar[tuple[tuple[int]]] = ((0, 1), (0, 2), (0, 3))
 
-    connection_members_: Tuple[Atom, Atom, Atom, Atom] = Field(
+    connection_members_: tuple[Atom, Atom, Atom, Atom] = Field(
         ...,
         description="The 4 atoms of this improper. Central atom first, "
         "then the three atoms connected to the central site.",
         alias="connection_members",
     )
 
-    bonds_: Tuple[Bond, Bond, Bond] = Field(
+    bonds_: tuple[Bond, Bond, Bond] = Field(
         default=None,
         description="""
         List of connection bonds.
@@ -51,13 +52,13 @@ class Improper(Connection):
         alias="bonds",
     )
 
-    improper_type_: Optional[ImproperType] = Field(
+    improper_type_: ImproperType | None = Field(
         default=None,
         description="ImproperType of this improper.",
         alias="improper_type",
     )
 
-    bond_orders_: Optional[Tuple[str, str]] = Field(
+    bond_orders_: tuple[str, str] | None = Field(
         default=None,
         description="""
         List of connection members bond orders.
@@ -67,10 +68,8 @@ class Improper(Connection):
     model_config = ConfigDict(
         alias_to_fields=dict(
             **Connection.model_config["alias_to_fields"],
-            **{
-                "improper_type": "improper_type_",
-                "bond_orders": "bond_orders_",
-            },
+            improper_type="improper_type_",
+            bond_orders="bond_orders_",
         )
     )
 
@@ -126,9 +125,9 @@ class Improper(Connection):
     def __setattr__(self, key, value):
         """Set attribute override to support connection_type key."""
         if key == "connection_type":
-            super(Improper, self).__setattr__("improper_type_", value)
+            super().__setattr__("improper_type_", value)
         else:
-            super(Improper, self).__setattr__(key, value)
+            super().__setattr__(key, value)
 
     @model_validator(mode="before")
     @classmethod

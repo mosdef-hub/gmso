@@ -3,7 +3,6 @@
 import logging
 from copy import deepcopy
 from functools import lru_cache
-from typing import Dict
 
 import numpy as np
 import sympy
@@ -14,7 +13,7 @@ from gmso.exceptions import GMSOError
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["PotentialExpression", "NullPotentialExpression"]
+__all__ = ["NullPotentialExpression", "PotentialExpression"]
 
 
 class norm(Function):
@@ -96,10 +95,10 @@ class PotentialExpression:
     """
 
     __slots__ = (
-        "_parameters",
         "_expression",
         "_independent_variables",
         "_is_parametric",
+        "_parameters",
     )
 
     def __init__(
@@ -273,17 +272,17 @@ class PotentialExpression:
     def _validate_parameters(parameters):
         """Check to see that parameters is a valid dictionary with units."""
         if not isinstance(parameters, dict):
-            raise ValueError("Please enter a dictionary for parameters")
+            raise TypeError("Please enter a dictionary for parameters")
         for key, val in parameters.items():
             if isinstance(val, list):
                 for params in val:
                     if not isinstance(params, u.unyt_array):
-                        raise ValueError("Parameter value {} lacks a unyt".format(val))
+                        raise TypeError(f"Parameter value {val} lacks a unyt")
             else:
                 if not isinstance(val, u.unyt_array):
-                    raise ValueError("Parameter value {} lacks a unyt".format(val))
+                    raise TypeError(f"Parameter value {val} lacks a unyt")
             if not isinstance(key, str):
-                raise ValueError("Parameter key {} is not a str".format(key))
+                raise TypeError(f"Parameter key {key} is not a str")
 
         return parameters
 
@@ -313,19 +312,19 @@ class PotentialExpression:
         elif isinstance(indep_vars, sympy.Symbol):
             indep_vars = {indep_vars}
         elif isinstance(indep_vars, (list, set)):
-            if all([isinstance(val, sympy.Symbol) for val in indep_vars]):
+            if all(isinstance(val, sympy.Symbol) for val in indep_vars):
                 pass
-            elif all([isinstance(val, str) for val in indep_vars]):
-                indep_vars = set([sympy.symbols(val) for val in indep_vars])
+            elif all(isinstance(val, str) for val in indep_vars):
+                indep_vars = {sympy.symbols(val) for val in indep_vars}
             else:
-                raise ValueError(
+                raise TypeError(
                     "`independent_variables` argument was a list "
                     "or set of mixed variables. Please enter a "
                     "list or set of either only strings or only "
                     "sympy symbols"
                 )
         else:
-            raise ValueError(
+            raise TypeError(
                 "Please enter a string, sympy expression, "
                 "list or set thereof for independent_variables"
             )
@@ -381,9 +380,9 @@ class PotentialExpression:
         else:
             json_dict = {
                 "expression": str(potential_expression.expression),
-                "independent_variables": list(
+                "independent_variables": [
                     str(idep) for idep in potential_expression.independent_variables
-                ),
+                ],
             }
             if potential_expression.is_parametric:
                 json_dict["parameters"] = potential_expression.parameters
@@ -434,7 +433,7 @@ class PotentialExpression:
     def from_non_parametric(
         cls,
         non_parametric: "PotentialExpression",
-        parameters: Dict[str, u.unyt_array],
+        parameters: dict[str, u.unyt_array],
         valid: bool = False,
     ) -> "PotentialExpression":
         """Create a parametric expression from a non-parametric one.
@@ -478,7 +477,9 @@ class PotentialExpression:
             )
 
     def evaluate(
-        self, independent_namespace: dict = None, independent_parameters: dict = None
+        self,
+        independent_namespace: dict | None = None,
+        independent_parameters: dict | None = None,
     ):
         """Evaluate the sympy expression with the given parameters
 
@@ -520,9 +521,9 @@ class PotentialExpression:
             symbol_args = []
         else:  # grab symbols from namespace
             # Create symbols for the VECTORS, not the scalar parameters
-            symbol_args = [Symbol(key) for key in independent_namespace.keys()]
+            symbol_args = [Symbol(key) for key in independent_namespace]
             # Create a namespace with SYMBOLS
-            namespace = {key: Symbol(key) for key in independent_namespace.keys()}
+            namespace = {key: Symbol(key) for key in independent_namespace}
 
         namespace.update(
             {sym: Symbol(sym) for sym in self.parameters}
@@ -624,7 +625,7 @@ class PotentialExpression:
 class NullPotentialExpression(PotentialExpression):
     """A null/empty PotentialExpression for AtomTypes without intrinsic expressions."""
 
-    def __init__(self):  # noqa: super-init-not-called
+    def __init__(self):
         # Intentionally not calling super().__init__() — this object represents
         # the absence of a potential expression and overrides all properties.
         self._expression = None

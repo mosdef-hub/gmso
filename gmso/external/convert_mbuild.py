@@ -160,7 +160,7 @@ def to_mbuild(topology: Topology, infer_hierarchy: bool = True) -> "mb.Compound"
     else:
         compound.name = topology.name
 
-    particle_map = dict()
+    particle_map = {}
     if not infer_hierarchy:
         particle_list = []
         for site in topology.sites:
@@ -173,8 +173,8 @@ def to_mbuild(topology: Topology, infer_hierarchy: bool = True) -> "mb.Compound"
         for molecule_tag in topology.unique_site_labels(label_type="molecule"):
             mb_molecule = mb.Compound()
             mb_molecule.name = molecule_tag.name if molecule_tag else "DefaultMolecule"
-            residue_dict = dict()
-            residue_dict_particles = dict()
+            residue_dict = {}
+            residue_dict_particles = {}
 
             if molecule_tag:
                 sites_iter = topology.iter_sites("molecule", molecule_tag)
@@ -228,7 +228,7 @@ def from_mbuild_box(mb_box: "mb.Box") -> "Box | None":
     # TODO: Unit tests
 
     if not isinstance(mb_box, mb.Box):
-        raise ValueError("Argument mb_box is not an mBuild Box")
+        raise TypeError("Argument mb_box is not an mBuild Box")
 
     if np.allclose(mb_box.lengths, [0, 0, 0]):
         logger.info("No box or boundingbox information detected, setting box to None")
@@ -287,10 +287,9 @@ def _parse_site(site_map, particle, search_method, infer_element=False):
 def _parse_molecule_residue(site_map, compound):
     """Parse information necessary for residue and molecule labels when converting from mbuild."""
     connected_subgraph = compound.bond_graph.connected_components()
-    molecule_tracker = dict()
-    residue_tracker = dict()
-    total_molecule_count = 0
-    for molecule in connected_subgraph:
+    molecule_tracker = {}
+    residue_tracker = {}
+    for total_molecule_coun, molecule in enumerate(connected_subgraph):
         if len(molecule) == 1:
             ancestors = [molecule[0]]
         else:
@@ -312,7 +311,6 @@ def _parse_molecule_residue(site_map, compound):
         else:
             molecule_tracker[molecule_tag.name] = 0
         molecule_number = molecule_tracker[molecule_tag.name]
-        total_molecule_count += 1
         """End of molecule parsing"""
 
         for particle in molecule:
@@ -339,27 +337,24 @@ def _parse_group(site_map, compound, custom_groups):
     if custom_groups:
         if isinstance(custom_groups, str):
             custom_groups = [custom_groups]
-        elif not hasattr(custom_groups, "__iter__"):
-            raise TypeError(f"Please pass groups {custom_groups} as a list of strings.")
-        elif not np.all([isinstance(g, str) for g in custom_groups]):
+        elif not hasattr(custom_groups, "__iter__") or not np.all(
+            [isinstance(g, str) for g in custom_groups]
+        ):
             raise TypeError(f"Please pass groups {custom_groups} as a list of strings.")
         for part in _traverse_down_hierarchy(compound, custom_groups):
             for particle in part.particles():
                 site_map[particle]["group"] = part.name
         try:
-            applied_groups = set(map(lambda x: x["group"], site_map.values()))
+            applied_groups = {x["group"] for x in site_map.values()}
             assert applied_groups == set(custom_groups)
         except AssertionError:
             logger.info(
                 f"""Not all custom groups ({custom_groups}, is are being used when
             traversing compound hierachy. Only {applied_groups} are used.)"""
             )
-    elif not compound.children:
-        for particle in compound.particles():
-            site_map[particle]["group"] = compound.name
-    elif not np.any(
-        list(map(lambda c: len(c.children), compound.children))
-    ):  # compound is a 2 level hierarchy
+    elif not compound.children or not np.any(
+        [len(c.children) for c in compound.children]
+    ):
         for particle in compound.particles():
             site_map[particle]["group"] = compound.name
     else:  # set compund name to se

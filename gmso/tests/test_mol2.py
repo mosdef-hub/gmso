@@ -22,9 +22,9 @@ class TestMol2(BaseTest):
             rtol=1e-5,
             atol=1e-8,
         )
-        assert list(top.sites)[0].element.name == "carbon"
+        assert next(iter(top.sites)).element.name == "carbon"
         assert_allclose_units(
-            list(top.sites)[0].element.mass,
+            next(iter(top.sites)).element.mass,
             np.array(1.9944733e-26) * u.kg,
             rtol=1e-5,
             atol=1e-8,
@@ -60,7 +60,7 @@ class TestMol2(BaseTest):
         with caplog.at_level(logging.INFO, logger="gmso"):
             top = Topology.load(get_fn("ethane.mol2"), verbose=True)
         assert match in caplog.text
-        assert list(top.sites)[0].charge is None
+        assert next(iter(top.sites)).charge is None
 
     def test_residue(self):
         top = Topology.load(get_fn("ethanol_aa.mol2"))

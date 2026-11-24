@@ -1,5 +1,5 @@
 from copy import copy, deepcopy
-from typing import Any, Type, Union
+from typing import Any
 
 import unyt as u
 from lxml import etree
@@ -9,8 +9,8 @@ from gmso.abc.abstract_potential import AbstractPotential
 from gmso.utils.expression import NullPotentialExpression, PotentialExpression
 from gmso.utils.misc import get_xml_representation, unyt_compare
 
-AbstractSetIntStr = Type["AbstractSetIntStr"]
-MappingIntStrAny = Type["MappingIntStrAny"]
+AbstractSetIntStr = type["AbstractSetIntStr"]
+MappingIntStrAny = type["MappingIntStrAny"]
 
 
 class ParametricPotential(AbstractPotential):
@@ -28,7 +28,8 @@ class ParametricPotential(AbstractPotential):
     model_config = ConfigDict(
         alias_to_fields=dict(
             **AbstractPotential.model_config["alias_to_fields"],
-            **{"topology": "topology_", "set_ref": "set_ref_"},
+            topology="topology_",
+            set_ref="set_ref_",
         ),
         validate_assignment=True,
     )
@@ -160,8 +161,8 @@ class ParametricPotential(AbstractPotential):
     def model_dump(
         self,
         *,
-        include: Union[AbstractSetIntStr, MappingIntStrAny] = None,
-        exclude: Union[AbstractSetIntStr, MappingIntStrAny] = None,
+        include: AbstractSetIntStr | MappingIntStrAny = None,
+        exclude: AbstractSetIntStr | MappingIntStrAny = None,
         by_alias: bool = False,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,

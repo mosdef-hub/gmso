@@ -119,7 +119,7 @@ class TestTemplate(BaseTest):
             },
         )
 
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             template.assert_can_parameterize_with({"a": 1.0, "b": 2.0})
 
     def test_dimensionless_errors(self):

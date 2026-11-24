@@ -56,7 +56,7 @@ class TestXMLHandling(BaseTest):
         reloaded_xml = ForceField("test_xml_writer.xml")
 
         def get_names(ff, param):
-            return [typed for typed in getattr(ff, param).keys()]
+            return [typed for typed in getattr(ff, param)]
 
         for param in [
             "atom_types",
@@ -68,11 +68,9 @@ class TestXMLHandling(BaseTest):
 
     def test_foyer_xml_conversion(self):
         """Validate xml converted from Foyer can be written out correctly."""
-        pass
 
     def test_write_xml_from_topology(self):
         """Validate xml from a typed topology matches loaded xmls."""
-        pass
 
     @pytest.mark.parametrize("xml", TEST_XMLS)
     def test_load__direct_from_forcefield_utilities(self, xml):

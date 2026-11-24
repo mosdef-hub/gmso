@@ -1,9 +1,11 @@
+import logging
+
 import hoomd
 import numpy as np
 import pytest
 import unyt as u
 
-from gmso import ForceField
+from gmso import Box, ForceField
 from gmso.external import from_mbuild
 from gmso.external.convert_hoomd import (
     to_gsd_snapshot,
@@ -66,9 +68,9 @@ class TestGsd(BaseTest):
         rigid_ids = [site.molecule.number for site in top.sites]
         assert set(rigid_ids) == {0, 1}
 
-        snapshot, refs, rigid = to_gsd_snapshot(top)
+        snapshot, _, rigid = to_gsd_snapshot(top)
         snapshot.validate()
-        snapshot_no_rigid, refs = to_gsd_snapshot(top_no_rigid)
+        snapshot_no_rigid, _refs = to_gsd_snapshot(top_no_rigid)
         # Check that snapshot has rigid particles added
         assert "Ethane" in snapshot.particles.types
         assert "Ethane" not in snapshot_no_rigid.particles.types
@@ -114,7 +116,7 @@ class TestGsd(BaseTest):
             site.molecule.isrigid = True
         apply(top, gaff_forcefield, identify_connections=True)
 
-        snapshot, refs, rigid = to_gsd_snapshot(top)
+        snapshot, _refs, rigid = to_gsd_snapshot(top)
         snapshot.validate()
 
         for site in top.iter_sites_by_molecule("Ethane"):
@@ -289,10 +291,8 @@ class TestHoomd(BaseTest):
         oplsaa = ForceField("oplsaa")
         top = apply(top, oplsaa, remove_untyped=True)
 
-        gmso_snapshot, snapshot_base_units = to_hoomd_snapshot(
-            top, base_units=base_units
-        )
-        gmso_forces, forces_base_units = to_hoomd_forcefield(
+        to_hoomd_snapshot(top, base_units=base_units)
+        to_hoomd_forcefield(
             top,
             r_cut=1.4,
             base_units=base_units,
@@ -313,8 +313,8 @@ class TestHoomd(BaseTest):
         oplsaa = ForceField("oplsaa")
         top = apply(top, oplsaa, remove_untyped=True)
 
-        gmso_snapshot, snapshot_base_units = to_hoomd_snapshot(top)
-        gmso_forces, forces_base_units = to_hoomd_forcefield(
+        to_hoomd_snapshot(top)
+        to_hoomd_forcefield(
             top=top,
             r_cut=1.4,
             pppm_kwargs={"resolution": (64, 64, 64), "order": 7},
@@ -332,16 +332,15 @@ class TestHoomd(BaseTest):
             "length": u.nm,
             "energy": u.kJ / u.mol,
         }
-        gmso_forces, forces_base_units = to_hoomd_forcefield(
+        gmso_forces, _forces_base_units = to_hoomd_forcefield(
             top,
             r_cut=1.4,
             base_units=base_units,
             pppm_kwargs={"resolution": (64, 64, 64), "order": 7},
         )
-        integrator_forces = list()
-        for cat in gmso_forces:
-            for force in gmso_forces[cat]:
-                integrator_forces.append(force)
+        integrator_forces = [
+            item for sublist in gmso_forces.values() for item in sublist
+        ]
         for force in integrator_forces:
             if isinstance(force, hoomd.md.pair.LJ):
                 keys = force.params.param_dict.keys()
@@ -371,6 +370,82 @@ class TestHoomd(BaseTest):
                 assert not isinstance(force, hoomd.md.pair.pair.Ewald)
                 assert not isinstance(force, hoomd.md.long_range.pppm.Coulomb)
                 assert not isinstance(force, hoomd.md.special_pair.Coulomb)
+
+    def test_skip_special_pairs(self):
+        compound = mb.load("CC", smiles=True)
+        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=2)
+        top = from_mbuild(com_box)
+        top.identify_connections()
+        oplsaa = ForceField("oplsaa")
+        oplsaa.scaling_factors["nonBonded14Scale"] = 1  # no special pairs
+        oplsaa.scaling_factors["electrostatics14Scale"] = (
+            1  # no scaling of special pairs
+        )
+        top = apply(top, oplsaa, remove_untyped=True)
+
+        gmso_forces, _ = to_hoomd_forcefield(
+            top=top,
+            r_cut=1.4,
+        )
+        for force in gmso_forces["nonbonded"]:
+            assert not isinstance(force, hoomd.md.special_pair.Coulomb)
+            assert not isinstance(force, hoomd.md.special_pair.LJ)
+            if isinstance(
+                force,
+                (
+                    hoomd.md.pair.LJ,
+                    hoomd.md.long_range.pppm.Coulomb,
+                    hoomd.md.pair.Ewald,
+                ),
+            ):
+                assert force.nlist.exclusions == [
+                    "bond",
+                    "1-3",
+                ]  # 1-4 are not excluded here.
+
+    def test_special_pairs(self):
+        compound = mb.load("CC", smiles=True)
+        com_box = mb.packing.fill_box(compound, box=[5, 5, 5], n_compounds=2)
+        top = from_mbuild(com_box)
+        top.identify_connections()
+        oplsaa = ForceField("oplsaa")
+        # use 1-2, 1-3, 1-4 special pairs
+        for scale_factor in ["12", "13", "14"]:
+            oplsaa.scaling_factors[f"nonBonded{scale_factor}Scale"] = 0.5
+            oplsaa.scaling_factors[f"electrostatics{scale_factor}Scale"] = 0.25
+        top = apply(top, oplsaa, remove_untyped=True)
+
+        gmso_forces, _ = to_hoomd_forcefield(
+            top=top,
+            r_cut=1.4,
+        )
+        for force in gmso_forces["nonbonded"]:
+            if isinstance(
+                force,
+                hoomd.md.pair.LJ,
+            ):
+                lj_force = force
+                break
+        for force in gmso_forces["nonbonded"]:
+            if isinstance(
+                force,
+                (
+                    hoomd.md.pair.LJ,
+                    hoomd.md.long_range.pppm.Coulomb,
+                    hoomd.md.pair.Ewald,
+                ),
+            ):
+                assert force.nlist.exclusions == ["bond", "1-3", "1-4"]
+            elif isinstance(force, hoomd.md.special_pair.Coulomb):
+                for key in force.params:
+                    assert force.params[key]["alpha"] == 0.25
+            elif isinstance(force, hoomd.md.special_pair.LJ):
+                for key in force.params:
+                    ljKey = tuple(key.split("-"))
+                    assert (
+                        force.params[key]["epsilon"]
+                        == lj_force.params[ljKey]["epsilon"] * 0.5
+                    )
 
     @pytest.mark.skipif(not has_hoomd, reason="hoomd is not installed")
     @pytest.mark.skipif(not has_mbuild, reason="mbuild not installed")
@@ -420,7 +495,7 @@ class TestHoomd(BaseTest):
         assert "CT-HC" in snapshot.bonds.types
 
         forces, _ = to_hoomd_forcefield(top=top, r_cut=1.4, base_units=base_units)
-        assert "CT-HC" in forces["bonds"][0].params.keys()
+        assert "CT-HC" in forces["bonds"][0].params
 
     def test_forces_wildcards(self):
         compound = mb.load("CCCC", smiles=True)
@@ -467,7 +542,7 @@ class TestHoomd(BaseTest):
         top = apply(top, oplsaa, remove_untyped=True, identify_connections=True)
         nlist_nb, nlist_coul = get_cell_nlist(top, buffer=1)
 
-        gmso_forces, forces_base_units = to_hoomd_forcefield(
+        gmso_forces, _ = to_hoomd_forcefield(
             top,
             r_cut=1.4,
             base_units=base_units,
@@ -500,7 +575,7 @@ class TestHoomd(BaseTest):
         top = com_box.to_gmso()
         top = apply(top, oplsaa, remove_untyped=True, identify_connections=True)
         nlist_nb, nlist_coul = get_cell_nlist(top, buffer=1)
-        gmso_forces, forces_base_units = to_hoomd_forcefield(
+        gmso_forces, _forces_base_units = to_hoomd_forcefield(
             top,
             r_cut=1.4,
             base_units=base_units,
@@ -508,11 +583,7 @@ class TestHoomd(BaseTest):
             nlist=nlist_coul,
         )
         for force in gmso_forces["nonbonded"]:
-            if isinstance(force, hoomd.md.pair.LJ):
-                assert force.nlist == nlist_nb
-                assert list(force.nlist.exclusions) == ["bond", "1-3", "1-4"]
-                assert force.nlist.buffer == 1
-            elif isinstance(force, hoomd.md.pair.Ewald):
+            if isinstance(force, (hoomd.md.pair.LJ, hoomd.md.pair.Ewald)):
                 assert force.nlist == nlist_nb
                 assert list(force.nlist.exclusions) == ["bond", "1-3", "1-4"]
                 assert force.nlist.buffer == 1
@@ -637,6 +708,315 @@ class TestHoomd(BaseTest):
         assert force.kT.value == 1
         assert set(typesList) == set(force.params.keys())
 
+    def test_dpd_zero_fill(self, typed_ethane):
+        from gmso.core.pairpotential_type import PairPotentialType
+
+        dpd_type = PotentialTemplateLibrary()["HOOMDDPDForce"]
+        pairtype = PairPotentialType.from_template(
+            potential_template=dpd_type,
+            parameters={
+                "A": 1 * u.Unit("kJ / mol / nm"),
+                "r_cut": 1.2 * u.Unit("nm"),
+                "γ": 1.2 * u.amu / u.nm / u.ps,
+            },
+        )
+        pairtype.member_types = ("opls_135", "opls_140")
+        typed_ethane.add_pairpotentialtype(pairtype)
+
+        forces, _ = to_hoomd_forcefield(typed_ethane, r_cut=1.2, kT=1)
+        dpd = next(f for f in forces["nonbonded"] if isinstance(f, hoomd.md.pair.DPD))
+        assert dpd.params[("opls_135", "opls_140")]["A"] == 1
+        # the LJ force covers these pairs, so DPD must contribute nothing to them
+        for pair in (("opls_135", "opls_135"), ("opls_140", "opls_140")):
+            assert dpd.params[pair]["A"] == 0
+            assert dpd.params[pair]["gamma"] == 0
+            assert dpd.r_cut[pair] == 0
+
+    def test_undefined_type_pair_raises(self):
+        from gmso.core.atom import Atom
+        from gmso.core.atom_type import AtomType
+        from gmso.core.pairpotential_type import PairPotentialType
+        from gmso.core.topology import Topology
+        from gmso.exceptions import EngineIncompatibilityError
+        from gmso.utils.expression import NullPotentialExpression
+
+        lj_type = AtomType(
+            name="_A",
+            charge=0 * u.elementary_charge,
+            mass=1 * u.amu,
+            parameters={"sigma": 0.3 * u.nm, "epsilon": 0.4 * u.Unit("kJ/mol")},
+            expression="4*epsilon*((sigma/r)**12 - (sigma/r)**6)",
+            independent_variables="r",
+        )
+        null_type = AtomType(
+            name="_D",
+            charge=0 * u.elementary_charge,
+            mass=1 * u.amu,
+            potential_expression=NullPotentialExpression(),
+        )
+        top = Topology()
+        for i, atype in enumerate((lj_type, null_type)):
+            top.add_site(
+                Atom(
+                    name=atype.name,
+                    position=np.array([i * 0.5, 0.0, 0.0]),
+                    atom_type=atype,
+                    molecule=("CG", 0),
+                )
+            )
+        top.update_topology()
+        # covers (_D, _D) but leaves (_A, _D) defined by nothing
+        top.add_pairpotentialtype(
+            PairPotentialType(
+                name="HOOMDDPDForce",
+                expression="A * (1-(r/r_cut)) - γ",
+                independent_variables="r",
+                parameters={
+                    "A": 40.0 * u.N,
+                    "r_cut": 1.0 * u.nm,
+                    "γ": 8.0 * u.amu / u.s / u.nm,
+                },
+                member_types=("_D", "_D"),
+            )
+        )
+        with pytest.raises(EngineIncompatibilityError, match=r"\('_A', '_D'\)"):
+            to_hoomd_forcefield(top, r_cut=1.2, kT=1)
+
+    def test_two_nonbonded_expressions(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-lj-buckingham.xml", bead_names=("_A", "_K"))
+        assert len({str(atype.expression) for atype in top.atom_types}) == 2
+
+        forces, _ = to_hoomd_forcefield(top, r_cut=1.2)
+        lj = next(f for f in forces["nonbonded"] if isinstance(f, hoomd.md.pair.LJ))
+        buckingham = next(
+            f for f in forces["nonbonded"] if isinstance(f, hoomd.md.pair.Buckingham)
+        )
+        assert lj.params[("_A", "_A")]["sigma"] == pytest.approx(0.30)
+        assert lj.params[("_A", "_K")]["sigma"] == pytest.approx(2.22222)
+        assert buckingham.params[("_K", "_K")]["A"] == pytest.approx(100.0)
+
+        # each force contributes nothing to the pairs the other one covers
+        assert lj.params[("_K", "_K")]["epsilon"] == 0
+        assert lj.r_cut[("_K", "_K")] == 0
+        for pair in (("_A", "_A"), ("_A", "_K")):
+            assert buckingham.params[pair]["A"] == 0
+            assert buckingham.r_cut[pair] == 0
+
+    def test_mie_mixing(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-mie.xml", bead_names=("_A", "_B"))
+        forces, _ = to_hoomd_forcefield(top, r_cut=1.2)
+        mie = next(f for f in forces["nonbonded"] if isinstance(f, hoomd.md.pair.Mie))
+        # shared exponents, so the cross pair follows the lorentz combining rule
+        assert mie.params[("_A", "_B")]["sigma"] == pytest.approx(0.35)
+        assert mie.params[("_A", "_B")]["epsilon"] == pytest.approx(np.sqrt(0.4 * 0.9))
+        for pair in (("_A", "_A"), ("_A", "_B"), ("_B", "_B")):
+            assert mie.params[pair]["n"] == 12
+            assert mie.params[pair]["m"] == 6
+
+    def test_mie_explicit_cross_pair(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-mie-mismatch.xml", bead_names=("_A", "_B"))
+        forces, _ = to_hoomd_forcefield(top, r_cut=1.2)
+        mie = next(f for f in forces["nonbonded"] if isinstance(f, hoomd.md.pair.Mie))
+        assert mie.params[("_A", "_B")]["sigma"] == pytest.approx(2.22222)
+        assert mie.params[("_A", "_B")]["epsilon"] == pytest.approx(9.11111)
+        assert mie.params[("_A", "_B")]["n"] == 13
+        # the atom types keep their own exponents where they pair with themselves
+        assert mie.params[("_A", "_A")]["n"] == 12
+        assert mie.params[("_B", "_B")]["n"] == 14
+
+    def test_mie_exponent_mismatch_raises(self, pairpot_cg_top):
+        from gmso.exceptions import EngineIncompatibilityError
+
+        top = pairpot_cg_top("ff-mie-mismatch.xml", bead_names=("_A", "_B"))
+        top.remove_pairpotentialtype(("_A", "_B"))
+        assert not top.pairpotential_types
+        with pytest.raises(
+            EngineIncompatibilityError, match="exponents are not combined"
+        ):
+            to_hoomd_forcefield(top, r_cut=1.2)
+
+    @pytest.mark.parametrize(
+        "fn,pair_class",
+        [
+            ("ff-lj0804.xml", "LJ0804"),
+            ("ff-lj1208.xml", "LJ1208"),
+        ],
+    )
+    def test_lj_variants(self, pairpot_cg_top, fn, pair_class):
+        top = pairpot_cg_top(fn, bead_names=("_A", "_B"))
+        forces, _ = to_hoomd_forcefield(top, r_cut=1.2)
+        force = next(f for f in forces["nonbonded"] if type(f).__name__ == pair_class)
+        assert force.params[("_A", "_A")]["sigma"] == pytest.approx(0.30)
+        assert force.params[("_B", "_B")]["sigma"] == pytest.approx(0.40)
+        assert force.params[("_A", "_B")]["sigma"] == pytest.approx(0.35)
+        assert force.params[("_A", "_B")]["epsilon"] == pytest.approx(
+            np.sqrt(0.4 * 0.9)
+        )
+
+    def test_pairtype_suppresses_mixing_across_expressions(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-cross-expression-pair.xml", bead_names=("_A", "_B"))
+        forces, _ = to_hoomd_forcefield(top, r_cut=1.2)
+        lj = next(f for f in forces["nonbonded"] if isinstance(f, hoomd.md.pair.LJ))
+        buckingham = next(
+            f for f in forces["nonbonded"] if isinstance(f, hoomd.md.pair.Buckingham)
+        )
+        assert buckingham.params[("_A", "_B")]["A"] == pytest.approx(300.0)
+        # the pairtype owns this pair, so the atom types must not also mix it
+        assert lj.params[("_A", "_B")]["epsilon"] == 0
+        assert lj.params[("_A", "_B")]["sigma"] == 0
+        assert lj.r_cut[("_A", "_B")] == 0
+        # pairs without a pairtype still mix
+        assert lj.params[("_A", "_A")]["sigma"] == pytest.approx(0.30)
+        assert lj.params[("_B", "_B")]["sigma"] == pytest.approx(0.40)
+
+    def test_pairpotential_absent_atom_type_skipped(self, pairpot_cg_top):
+        # the force field has a Buckingham _A-_B pairtype, but only _A is used
+        top = pairpot_cg_top("ff-cross-expression-pair.xml", bead_names=("_A",))
+        assert len(top.pairpotential_types) == 1
+        forces, _ = to_hoomd_forcefield(top, r_cut=1.2)
+        pair_forces = [
+            f for f in forces["nonbonded"] if isinstance(f, hoomd.md.pair.Pair)
+        ]
+        assert [type(f) for f in pair_forces] == [hoomd.md.pair.LJ]
+        assert list(pair_forces[0].params.keys()) == [("_A", "_A")]
+
+    def test_hoomd_buckingham(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-hoomd-buckingham.xml", bead_names=("_A", "_B"))
+        forces, _ = to_hoomd_forcefield(top, r_cut=1.2)
+        buckingham = next(
+            f for f in forces["nonbonded"] if isinstance(f, hoomd.md.pair.Buckingham)
+        )
+        assert buckingham.params[("_A", "_A")] == {"A": 100.0, "rho": 0.03, "C": 0.001}
+        assert buckingham.params[("_B", "_B")] == {"A": 200.0, "rho": 0.04, "C": 0.002}
+        # the cross pair comes only from the PairPotentialType
+        assert buckingham.params[("_A", "_B")] == {"A": 300.0, "rho": 0.05, "C": 0.003}
+
+    def test_buckingham_missing_cross_pair_raises(self, pairpot_cg_top):
+        from gmso.exceptions import EngineIncompatibilityError
+
+        top = pairpot_cg_top("ff-hoomd-buckingham.xml", bead_names=("_A", "_B"))
+        top.remove_pairpotentialtype(("_A", "_B"))
+        with pytest.raises(EngineIncompatibilityError, match="are not combined"):
+            to_hoomd_forcefield(top, r_cut=1.2)
+
+    def test_pairpotential_lj_override(self, pairpot_one_cross_top):
+        forces, _ = to_hoomd_forcefield(pairpot_one_cross_top, r_cut=1.2)
+        lj_forces = [f for f in forces["nonbonded"] if isinstance(f, hoomd.md.pair.LJ)]
+        assert len(lj_forces) == 1
+        lj = lj_forces[0]
+        assert lj.params[("_A", "_B")]["sigma"] == pytest.approx(2.22222)
+        assert lj.params[("_A", "_B")]["epsilon"] == pytest.approx(9.11111)
+        # pairs without an override still follow the lorentz combining rule
+        assert lj.params[("_A", "_C")]["sigma"] == pytest.approx(0.40)
+        assert lj.params[("_B", "_C")]["sigma"] == pytest.approx(0.45)
+
+    def test_pairpotential_lj_override_all_cross(self, pairpot_all_cross_top):
+        forces, _ = to_hoomd_forcefield(pairpot_all_cross_top, r_cut=1.2)
+        lj_forces = [f for f in forces["nonbonded"] if isinstance(f, hoomd.md.pair.LJ)]
+        assert len(lj_forces) == 1
+        lj = lj_forces[0]
+        assert lj.params[("_A", "_B")]["sigma"] == pytest.approx(2.22222)
+        assert lj.params[("_A", "_C")]["sigma"] == pytest.approx(3.33333)
+        assert lj.params[("_B", "_C")]["sigma"] == pytest.approx(4.44444)
+        assert lj.params[("_A", "_A")]["sigma"] == pytest.approx(0.30)
+
+    def test_special_pairs_other_expression(self, pairpot_cg_top):
+        # 1-4 pairs are _A-_B (Buckingham pairtype) and _X-_X (LJ)
+        top = pairpot_cg_top(
+            "ff-pairpot-bonded.xml",
+            bead_names=("_A", "_X", "_X", "_B", "_X"),
+            bonded=True,
+        )
+        top.box = Box(lengths=[5, 5, 5])
+        snapshot, _ = to_hoomd_snapshot(top, base_units=None)
+        forces, _ = to_hoomd_forcefield(top, r_cut=1.2)
+        special_lj = next(
+            f for f in forces["nonbonded"] if isinstance(f, hoomd.md.special_pair.LJ)
+        )
+        assert special_lj.params["_X-_X"]["sigma"] == pytest.approx(0.35)
+        assert special_lj.params["_X-_X"]["epsilon"] == pytest.approx(0.5 * 0.45)
+        assert special_lj.params["_A-_B"]["epsilon"] == 0
+        assert special_lj.r_cut["_A-_B"] == 0
+
+        sim = run_hoomd_nvt(snapshot, forces)
+        sim.run(0)
+
+    def test_special_pairs_null_atom_type(self, pairpot_cg_top):
+        top = pairpot_cg_top(
+            "ff-pairpot-bonded.xml",
+            bead_names=("_A", "_A", "_A", "_D"),
+            bonded=True,
+        )
+        forces, _ = to_hoomd_forcefield(top, r_cut=1.2)
+        special_lj = next(
+            f for f in forces["nonbonded"] if isinstance(f, hoomd.md.special_pair.LJ)
+        )
+        assert special_lj.params["_A-_D"]["sigma"] == pytest.approx(0.32)
+        assert special_lj.params["_A-_D"]["epsilon"] == pytest.approx(0.5 * 2.0)
+
+    @pytest.mark.parametrize(
+        "bead_names,bonded,lj_scale,warned",
+        [
+            # No bonds, so no pairs are scaled
+            (("_A", "_B"), False, None, False),
+            # The 1-4 pair _A-_B is Buckingham
+            (("_A", "_X", "_X", "_B", "_X"), True, None, True),
+            # Only 1-3 pairs are scaled, and they are all LJ
+            (("_A", "_X", "_X", "_B", "_X"), True, [0.0, 0.5, 1.0], False),
+        ],
+    )
+    def test_warn_unscalable_scaled_pairs(
+        self, pairpot_cg_top, caplog, bead_names, bonded, lj_scale, warned
+    ):
+        top = pairpot_cg_top(
+            "ff-pairpot-bonded.xml", bead_names=bead_names, bonded=bonded
+        )
+        if lj_scale:
+            top.set_lj_scale(lj_scale)
+        with caplog.at_level(logging.WARNING, logger="gmso.external.convert_hoomd"):
+            to_hoomd_forcefield(top, r_cut=1.2)
+        assert ("no special pair force for Buckingham" in caplog.text) == warned
+        if warned:
+            assert "[('_A', '_B')]" in caplog.text
+
+    @pytest.mark.parametrize(
+        "fn,bead_names,sigma,epsilon",
+        [
+            ("ff-lj0804.xml", ("_A", "_B"), 0.40, 0.90),
+            ("ff-lj1208.xml", ("_A", "_B"), 0.40, 0.90),
+            ("ff-mie.xml", ("_A", "_B"), 0.40, 0.90),
+            # _A-_M is an explicit Lennard-Jones pair between 12-6 and Mie
+            ("ff-lj-mie.xml", ("_A", "_M"), 0.45, 0.90),
+            # The PairPotentialTypes of the bare _D set the reference
+            ("ff-pairpot-null-bead.xml", ("_A", "_B", "_D"), 4.44444, 9.33333),
+        ],
+    )
+    def test_auto_scale_sigma_epsilon_forms(
+        self, pairpot_cg_top, fn, bead_names, sigma, epsilon
+    ):
+        top = pairpot_cg_top(fn, bead_names=bead_names)
+        _, base_units = to_hoomd_forcefield(top, r_cut=1.2, auto_scale=True)
+        assert base_units["length"].to_value(u.nm) == pytest.approx(sigma)
+        assert base_units["energy"].to_value(u.kJ / u.mol) == pytest.approx(epsilon)
+
+    def test_auto_scale_other_expression_raises(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-lj-buckingham.xml", bead_names=("_A", "_K"))
+        with pytest.raises(ValueError, match="base_units"):
+            to_hoomd_forcefield(top, r_cut=1.2, auto_scale=True)
+        # Explicit base units are still accepted
+        to_hoomd_forcefield(
+            top,
+            r_cut=1.2,
+            base_units={"length": u.nm, "energy": u.kJ / u.mol, "mass": u.amu},
+        )
+
+    def test_partial_base_units_raises(self, pairpot_cg_top):
+        top = pairpot_cg_top("ff-pairpot-one-cross.xml")
+        with pytest.raises(ValueError, match="missing"):
+            to_hoomd_forcefield(
+                top, r_cut=1.2, base_units={"length": u.nm, "energy": u.kJ / u.mol}
+            )
+
     def test_rigid_forces(self):
         benzene = mb.load("c1ccccc1", smiles=True)
         benzene.name = "benzene"
@@ -671,9 +1051,10 @@ class TestHoomd(BaseTest):
                 assert "1-3" in force.nlist.exclusions
                 assert "1-4" in force.nlist.exclusions
                 for t in gmso_snapshot.particles.types:
-                    assert force.params[("benzene", t)].to_base() == dict(
-                        epsilon=0.0, sigma=0.0
-                    )
+                    assert force.params[("benzene", t)].to_base() == {
+                        "epsilon": 0.0,
+                        "sigma": 0.0,
+                    }
                     assert force.r_cut[("benzene", t)] == 1.4
 
         assert rigid_info.body["benzene"]["constituent_types"].to_base() == [
@@ -709,11 +1090,24 @@ class TestHoomd(BaseTest):
         assert len(dpd_force.params.keys()) == 3
 
         expected_potentials = {
-            ("_A", "_A"): dict(A=40.0, gamma=8.0),
-            ("_A", "_B"): dict(A=20.0, gamma=1.0),
-            ("_B", "_B"): dict(A=20.0, gamma=1.0),
+            ("_A", "_A"): {"A": 40.0, "gamma": 8.0},
+            ("_A", "_B"): {"A": 20.0, "gamma": 1.0},
+            ("_B", "_B"): {"A": 20.0, "gamma": 1.0},
         }
         for potential in dpd_pairpotential.pairpotential_types:
             pair = potential.member_types
             assert dpd_force.params[pair].to_base() == expected_potentials[pair]
             assert force.r_cut[pair] == 1
+
+    def test_duplicate_pairpotential_types_raises(self, pairpot_duplicate_top):
+        from gmso.exceptions import EngineIncompatibilityError
+
+        with pytest.raises(EngineIncompatibilityError, match="more than one"):
+            to_hoomd_forcefield(pairpot_duplicate_top, r_cut=1.2)
+
+    def test_pairpotential_only_missing_pair_raises(self, dpd_pairpotential):
+        from gmso.exceptions import EngineIncompatibilityError
+
+        dpd_pairpotential.remove_pairpotentialtype(("_B", "_B"))
+        with pytest.raises(EngineIncompatibilityError, match=r"\('_B', '_B'\)"):
+            to_hoomd_forcefield(dpd_pairpotential, r_cut=1.2, kT=1)

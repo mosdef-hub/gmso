@@ -76,10 +76,6 @@ def interactive_networkx_atomtypes(topology, list_of_labels=None):
         # Plot atom types for the widget inputs
         nx_utils.plot_networkx_atomtypes(topology, Atom_Name, [Label])
 
-        return
-
-    return
-
 
 def interactive_networkx_bonds(topology, additional_labels=None):
     """Get an interactive networkx plot showing the bond types of a topology object.
@@ -152,7 +148,7 @@ def interactive_networkx_bonds(topology, additional_labels=None):
             widgets.Dropdown(
                 options=names_tuple,
                 layout=widgets.Layout(width="30%"),
-                style=dict(description_width="initial"),
+                style={"description_width": "initial"},
                 description=descriptions[i],
             )
         )
@@ -164,8 +160,6 @@ def interactive_networkx_bonds(topology, additional_labels=None):
         networkx_graph=fixed(networkx_graph),
         topology=fixed(topology),
     )
-
-    return
 
 
 def interactive_networkx_angles(topology):
@@ -233,7 +227,7 @@ def interactive_networkx_angles(topology):
             widgets.Dropdown(
                 options=names_tuple,
                 layout=widgets.Layout(width="30%"),
-                style=dict(description_width="initial"),
+                style={"description_width": "initial"},
                 description=descriptions[i],
             )
         )
@@ -245,8 +239,6 @@ def interactive_networkx_angles(topology):
         Atom2=atom_selection[1],
         Atom3=atom_selection[2],
     )
-
-    return
 
 
 def interactive_networkx_dihedrals(topology):
@@ -320,7 +312,7 @@ def interactive_networkx_dihedrals(topology):
             widgets.Dropdown(
                 options=(names_tuple),
                 layout=widgets.Layout(width="30%"),
-                style=dict(description_width="initial"),
+                style={"description_width": "initial"},
                 description=descriptions[i],
             )
         )
@@ -333,5 +325,3 @@ def interactive_networkx_dihedrals(topology):
         Atom3=atom_selection[2],
         Atom4=atom_selection[3],
     )
-
-    return
